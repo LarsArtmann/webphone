@@ -1,8 +1,6 @@
 package views
 
-import (
-	"github.com/larsartmann/webphone/internal/domain"
-)
+import "github.com/larsartmann/webphone/internal/domain"
 
 // ContactsPanel merges per-extension personal contacts (stored on this
 // server) with operator-provided shared contacts (from config). The dial
@@ -24,8 +22,8 @@ templ ContactsPanel(props ContactsPanelProps) {
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
 		>
-			<input name="name" required placeholder="Name" aria-label="Contact name"></input>
-			<input name="number" inputmode="tel" required placeholder="Number" aria-label="Contact number"></input>
+			<input name="name" required placeholder="Name" aria-label="Contact name"/>
+			<input name="number" inputmode="tel" required placeholder="Number" aria-label="Contact number"/>
 			<button type="submit" class="wp-primary">Save</button>
 		</form>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {

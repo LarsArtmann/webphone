@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -17,7 +17,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		Extension string `json:"extension"`
 		Password  string `json:"password"`
 	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body); err != nil {
+	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -39,7 +39,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]string{"extension": extension.String()}) //nolint:erraudit // best-effort write; the response is already committed
+	_ = json.MarshalWrite(w, map[string]string{"extension": extension.String()}) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // destroySession signs the tab session out (island logout).

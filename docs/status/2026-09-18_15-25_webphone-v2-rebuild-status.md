@@ -14,6 +14,7 @@ everything" mandate with Go + templ-components + cqrs-htmx.
 ## a) FULLY DONE ✅
 
 ### Research & planning
+
 - Read the entire webphone codebase (13 island JS modules, nix packaging,
   DOM/bundle contract), cqrs-htmx (root library, setup bundle, examples,
   transport/SSE internals), templ-components (consumer guide, Base props,
@@ -24,12 +25,13 @@ everything" mandate with Go + templ-components + cqrs-htmx.
 - **Architecture decision, documented:** Go service on cqrs-htmx root
   (embedded HTMX, CSRF, SSE broadcaster) + templ-components Base +
   go-sse per-extension hubs + SQLite (modernc, pure Go). **Rejected**
-  cqrs-htmx `setup` bundle with reason: it wires event-sourced *usermgmt*
+  cqrs-htmx `setup` bundle with reason: it wires event-sourced _usermgmt_
   users, but the softphone's identity is the PBX extension + directory
   password — a second user database would be a split brain. Session =
   extension credentials proven by the island's SIP REGISTER.
 
 ### The application (one binary, `cmd/webphone`)
+
 - **Domain layer** (`internal/domain`): branded IDs via go-branded-id
   (Thread/Message/Attachment/Fax/Contact), defined `Extension`/`Phone`
   types whose sanitization mirrors the island's dial regex exactly, SMS/MMS
@@ -72,6 +74,7 @@ everything" mandate with Go + templ-components + cqrs-htmx.
   run inside the build, vendorHash pinned); treefmt covers nix+go+prettier.
 
 ### Tests — all green
+
 - Domain: sanitization (incl. Unicode direction marks), channel
   derivation, branded-id round trip.
 - Store: full message lifecycle (**the test caught a real unread-count
@@ -86,6 +89,7 @@ everything" mandate with Go + templ-components + cqrs-htmx.
   including an SSE live push while a stream was open.
 
 ### Quality gates — all green
+
 - `go build ./...`, `go vet ./...`, `go test ./...` ✅
 - `nix build .#webphone` ✅ (runs tests in the sandbox), `nix flake check` ✅
 - **`buildflow` exit 0** after fixing every actionable finding:
@@ -147,7 +151,7 @@ all green). The honest list of session mishaps:
    were still present. Caught because the erraudit count didn't drop;
    wasted a cycle.
 2. **Wrong smoke assertions:** my python smoke suite expected a thread
-   view after a *new* conversation send (design returns the list). I
+   view after a _new_ conversation send (design returns the list). I
    debugged a correct app for one cycle.
 3. **Stale-edit guards bit twice:** a route-fix edit silently didn't land
    (stale read), so the mux-panic repeated; also the first .buildflow.yml
@@ -172,7 +176,7 @@ all green). The honest list of session mishaps:
 2. Return the open thread view after a new-conversation send (better UX
    than dropping to the list).
 3. Dedicated `http.Client` (timeout, keep-alive) for the pbx proxy +
-  client.
+   client.
 4. Proxy + SSE handler tests.
 5. Login rate limiting (per-IP token bucket via stdlib x/time/rate).
 6. Replace the 29 `//nolint:erraudit` sites with a tiny `besteffort`
@@ -222,8 +226,8 @@ merely reverse-proxies to this binary (my current assumption, matching the
 v1 split where that stack owned TLS/config/proxy)? This decides the shape
 of task 3 and 4 above — and it changes what "done" means for the switchover.
 
-*Secondary (smaller): for a NEW conversation, should sending open the
-thread view instead of returning to the list?*
+_Secondary (smaller): for a NEW conversation, should sending open the
+thread view instead of returning to the list?_
 
 ---
 

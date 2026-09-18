@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"strings"
 	"time"
+
+	"encoding/json/jsontext"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -171,8 +173,8 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, out any) error {
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 40<<20))
-	if err := decoder.Decode(out); err != nil {
+	decoder := jsontext.NewDecoder(http.MaxBytesReader(w, r.Body, 40<<20))
+	if err := json.UnmarshalDecode(decoder, out); err != nil {
 		http.Error(w, "invalid JSON body: "+err.Error(), http.StatusBadRequest)
 		return err
 	}

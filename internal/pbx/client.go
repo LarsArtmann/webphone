@@ -7,7 +7,7 @@ package pbx
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"net/http"
@@ -189,7 +189,7 @@ func (c *Client) do(
 		return fmt.Errorf("phone api: HTTP %d", resp.StatusCode)
 	}
 	if out != nil {
-		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		if err := json.UnmarshalRead(resp.Body, out); err != nil {
 			return fmt.Errorf("decode phone api response: %w", err)
 		}
 	}

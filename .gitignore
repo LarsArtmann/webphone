@@ -48,6 +48,17 @@ workflow-audit-log.*
 /coverage
 reports/
 
+## Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.work
+go.work.sum
+
 ## Nix
 .envrc
 
@@ -67,4 +78,5 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 # <<< buildflow-managed (.gitignore) <<<
+
 /webphone

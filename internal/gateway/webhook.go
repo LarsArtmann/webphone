@@ -2,7 +2,7 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -136,7 +136,7 @@ func (p provider) post(
 	var receipt struct {
 		ProviderRef string `json:"provider_ref"`
 	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 4096)).Decode(&receipt); err != nil {
+	if err := json.UnmarshalRead(io.LimitReader(resp.Body, 4096), &receipt); err != nil {
 		return Receipt{}, fmt.Errorf("decode provider receipt (content-type %s): %w", contentType, err)
 	}
 

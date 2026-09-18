@@ -3,7 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"mime/multipart"
 	"net/http"
