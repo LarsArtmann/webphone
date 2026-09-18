@@ -111,6 +111,7 @@ func New(deps Deps) http.Handler {
 		hookLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		eventsLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		unread:        newUnreadCache(5 * time.Second),
+		hooksIdem:     newIdemStore(hookIdempotencyTTL),
 	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the

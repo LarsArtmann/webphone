@@ -18,6 +18,8 @@ type handlers struct {
 	loginLimiter  *httputil.KeyedRateLimiter
 	hookLimiter   *httputil.KeyedRateLimiter
 	eventsLimiter *httputil.KeyedRateLimiter
+	// Dedupe memory for replayed provider status callbacks (provider_ref).
+	hooksIdem *idemStore
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
 }
