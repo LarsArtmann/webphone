@@ -36,4 +36,43 @@
   };
   document.addEventListener("htmx:afterSwap", scrollTranscript);
   scrollTranscript();
+
+  // 4. Manual theme override: cycles auto (prefers-color-scheme) →
+  //    light → dark, persisted in localStorage. data-theme on <html>
+  //    beats both stylesheets' media queries via attribute specificity.
+  var THEME_KEY = "wp-theme";
+  var THEMES = ["auto", "light", "dark"];
+  var storedTheme = null;
+  try {
+    storedTheme = localStorage.getItem(THEME_KEY);
+  } catch (err) {
+    /* storage unavailable (private mode) — fall through to auto */
+  }
+  var themeIndex = THEMES.indexOf(storedTheme);
+  if (themeIndex < 0) themeIndex = 0;
+
+  var applyTheme = function () {
+    var theme = THEMES[themeIndex];
+    if (theme === "auto") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    var button = document.getElementById("theme-toggle");
+    if (button) button.textContent = "Theme: " + theme;
+  };
+  applyTheme();
+
+  var toggle = document.getElementById("theme-toggle");
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      themeIndex = (themeIndex + 1) % THEMES.length;
+      try {
+        localStorage.setItem(THEME_KEY, THEMES[themeIndex]);
+      } catch (err) {
+        /* best-effort persistence only */
+      }
+      applyTheme();
+    });
+  }
 })();

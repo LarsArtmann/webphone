@@ -11,6 +11,9 @@ type HistoryPanelProps struct {
 	Enabled bool
 	Entries []pbx.CDR
 	Error   string
+	// Current filter (echoed back into the form after a re-render).
+	Query string
+	Dir   string
 }
 
 templ HistoryPanel(props HistoryPanelProps) {
@@ -19,6 +22,29 @@ templ HistoryPanel(props HistoryPanelProps) {
 			<h2>History</h2>
 			<p class="wp-panel-sub">Server call records for your extension.</p>
 		</header>
+		if props.Enabled {
+			<form
+				class="wp-filter"
+				hx-get="/partials/history"
+				hx-target="#history-panel"
+				hx-swap="outerHTML"
+				hx-trigger="submit"
+			>
+				<input
+					type="search"
+					name="q"
+					placeholder="Number or name"
+					value={ props.Query }
+					aria-label="Filter calls by number or name"
+				/>
+				<select name="dir" aria-label="Call direction">
+					<option value="" selected?={ props.Dir == "" }>Any direction</option>
+					<option value="in" selected?={ props.Dir == "in" }>Incoming</option>
+					<option value="out" selected?={ props.Dir == "out" }>Outgoing</option>
+				</select>
+				<button type="submit">Filter</button>
+			</form>
+		}
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}

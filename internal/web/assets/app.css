@@ -3,7 +3,8 @@
  * one surface family, one dark/light behavior via prefers-color-scheme.
  * The tokens below mirror the island's :root block; keep them in sync. */
 
-:root {
+:root,
+:root[data-theme="dark"] {
   color-scheme: dark light;
   --bg: #10161a;
   --surface: #182125;
@@ -21,8 +22,15 @@
   --radius-lg: 14px;
 }
 
+/* Manual theme override (shell.js toggles data-theme on <html>): an
+ * explicit choice must win over the media query in BOTH stylesheets,
+ * which the higher specificity of the attribute selectors guarantees. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #edf1f2;
     --surface: #fbfdfd;
     --surface-2: #f1f5f6;
@@ -36,6 +44,22 @@
     --warn: #9a6b13;
     --ok: #0f766e;
   }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #edf1f2;
+  --surface: #fbfdfd;
+  --surface-2: #f1f5f6;
+  --border: #d3dcdf;
+  --text: #1a252a;
+  --muted: #5d6f77;
+  --accent: #0f766e;
+  --accent-strong: #0d655e;
+  --accent-soft: rgb(15 118 110 / 10%);
+  --danger: #c43d3d;
+  --warn: #9a6b13;
+  --ok: #0f766e;
 }
 
 * {
@@ -100,9 +124,31 @@ body {
 }
 
 .wp-signed-in {
-  margin-left: auto;
   color: var(--muted);
   font-size: 0.9em;
+}
+
+.wp-header-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wp-theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.wp-theme-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 .wp-body {

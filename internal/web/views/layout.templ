@@ -97,9 +97,12 @@ templ ShellBody(props ShellProps) {
 			</svg>
 			<span>WebPhone</span>
 		</a>
-		if props.SignedIn != "" {
-			<span class="wp-signed-in">{ props.SignedIn }</span>
-		}
+		<div class="wp-header-actions">
+			if props.SignedIn != "" {
+				<span class="wp-signed-in">{ props.SignedIn }</span>
+			}
+			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
+		</div>
 	</header>
 	<div class="wp-body">
 		<aside class="wp-island" aria-label="Phone">
