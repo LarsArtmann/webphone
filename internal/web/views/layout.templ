@@ -3,7 +3,6 @@ package views
 import (
 	"github.com/a-h/templ"
 	"github.com/larsartmann/templ-components/layout"
-	"github.com/larsartmann/templ-components/utils"
 )
 
 // Tab is one switchable content region; navigation swaps them with HTMX
@@ -88,8 +87,8 @@ templ Shell(props ShellProps) {
 					</svg>
 					<span>WebPhone</span>
 				</a>
-				@if props.SignedIn != "" {
-					<span class="wp-signed-in" data-ext={ templ.Raw(props.SignedIn) }>{ props.SignedIn }</span>
+				if props.SignedIn != "" {
+					<span class="wp-signed-in">{ props.SignedIn }</span>
 				}
 			</header>
 			<div class="wp-body">
