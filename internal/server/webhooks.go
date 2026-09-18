@@ -2,13 +2,14 @@ package server
 
 import (
 	"encoding/base64"
+	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
-
-	"encoding/json/jsontext"
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
@@ -130,11 +131,54 @@ func (h *handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// flexPages accepts a page count as a JSON number or a numeric string
+// ("2"), so providers that format the count differently still update
+// the job instead of failing the whole webhook with a type error.
+type flexPages int
+
+func (p *flexPages) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	value, err := dec.ReadValue()
+	if err != nil {
+		return err
+	}
+	if raw := strings.TrimSpace(string(value)); raw == "null" {
+		*p = 0
+		return nil
+	}
+	trimmed := strings.Trim(strings.TrimSpace(string(value)), `"`)
+	pages, err := strconv.Atoi(trimmed)
+	if err != nil {
+		return fmt.Errorf("page count must be a number, got %s", value)
+	}
+	if pages < 0 {
+		return fmt.Errorf("page count must not be negative, got %d", pages)
+	}
+	*p = flexPages(pages)
+	return nil
+}
+
+// faxStatusPages collects the field names providers actually use for
+// page counts; the first non-zero wins.
+type faxStatusPages struct {
+	Pages    flexPages `json:"pages"`
+	PageCount flexPages `json:"page_count"`
+	NumPages flexPages `json:"num_pages"`
+}
+
+func (p faxStatusPages) count() int {
+	for _, candidate := range []flexPages{p.Pages, p.PageCount, p.NumPages} {
+		if candidate != 0 {
+			return int(candidate)
+		}
+	}
+	return 0
+}
+
 func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Owner       string `json:"owner"`
 		From        string `json:"from"`
-		Pages       int    `json:"pages"`
+		faxStatusPages
 		ProviderRef string `json:"provider_ref"`
 		PDFB64      string `json:"pdf_base64"`
 	}
@@ -152,7 +196,7 @@ func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Fax.Receive(r.Context(), domain.InboundFax{
-		Owner: owner, From: from, Pages: payload.Pages, PDFBytes: pdf,
+		Owner: owner, From: from, Pages: payload.count(), PDFBytes: pdf,
 		Received: time.Now(), ProviderRef: payload.ProviderRef,
 	}); err != nil {
 		http.Error(w, "could not store fax: "+err.Error(), http.StatusInternalServerError)
@@ -165,8 +209,8 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		ProviderRef string `json:"provider_ref"`
 		Status      string `json:"status"`
-		Pages       int    `json:"pages"`
-		Error       string `json:"error"`
+		faxStatusPages
+		Error string `json:"error"`
 	}
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
@@ -179,7 +223,7 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.Pages, payload.Error); err != nil {
+	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.count(), payload.Error); err != nil {
 		http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
 		return
 	}
