@@ -1,11 +1,8 @@
 package server
 
 import (
-	"context"
-	"log/slog"
 	"net/http"
 	"sync"
-	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/go-sse"

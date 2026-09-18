@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bufio"
+	"context"
 	"net/http"
 	"strings"
 	"testing"
@@ -99,5 +101,68 @@ func TestSSEPushesSwapSafeFragments(t *testing.T) {
 		if strings.Contains(fax.Data, forbidden) {
 			t.Errorf("fax payload must not contain %q: %.200s", forbidden, fax.Data)
 		}
+	}
+}
+
+// TestSSEStreamCarriesConnectedThenEvents pins the wire shape the library
+// ServeSSE produces: the stream opens with the library's `connected` frame,
+// and broadcasts still arrive as `event: <name>` + swap-safe data. A v4.9.0
+// fact (tag-verified, correcting the audit): ServeSSE sends NO `retry:`
+// hint at this tag — reconnect timing stays the browser EventSource default.
+func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL+"/events", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("events status %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/event-stream") {
+		t.Fatalf("events content-type %q", ct)
+	}
+
+	reader := bufio.NewReader(resp.Body)
+
+	// First frame: the connected handshake.
+	head, err := reader.ReadBytes('\n')
+	if err != nil {
+		t.Fatalf("no connected frame: %v", err)
+	}
+	if string(head) != "event: connected\n" {
+		t.Errorf("first stream line %q, want %q", head, "event: connected\n")
+	}
+	data, err := reader.ReadBytes('\n')
+	if err != nil {
+		t.Fatalf("no connected data line: %v", err)
+	}
+	if string(data) != "data: connected\n" {
+		t.Errorf("connected data line %q, want %q", data, "data: connected\n")
+	}
+
+	// Broadcast after connect: arrives as event + data on the same stream.
+	extension := domain.MustParseExtension("1001")
+	server.hubs.Publish(extension, sseEventThreads, "<div class=\"wp-thread-row\">wire</div>")
+
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		t.Fatalf("no threads event line: %v", err)
+	}
+	if line != "event: threads\n" {
+		t.Errorf("event line %q, want %q", line, "event: threads\n")
+	}
+	dataLine, err := reader.ReadString('\n')
+	if err != nil {
+		t.Fatalf("no threads data line: %v", err)
+	}
+	if !strings.Contains(dataLine, "wp-thread-row") {
+		t.Errorf("threads data line missing the fragment: %q", dataLine)
 	}
 }
