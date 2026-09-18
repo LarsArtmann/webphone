@@ -50,7 +50,26 @@ exclude:
 #     * golangci-config — BuildFlow's own golangci-lint step owns that
 #       responsibility (see the buildflow skill); a hand-curated config
 #       would fight auto-configuration.
+# - cqrs-lint: triaged 2026-09-18. All findings contradict this repo's
+#   design, not defects:
+#     * stack/preset x1 — the cqrs-htmx `setup` bundle was rejected
+#       DELIBERATELY (AGENTS.md): product identity is the PBX extension +
+#       directory password proven by the island's SIP REGISTER; a second
+#       event-sourced user database would be a split brain.
+#     * dead-import x1 — go-cqrs-lite/* arrive TRANSITIVELY via cqrs-htmx
+#       (root-library-only by design); this repo never calls
+#       Save/Publish/Dispatch directly, which is exactly the design.
+#     * dispatcher/v4 version skew x1 — the v4 pins live in cqrs-htmx's
+#       own go.mod; aligning them here would force direct requires and
+#       break the root-library-only rule. Upstream concern.
+# - nix-hash-fix: buildflow itself warns it computes the right vendorHash
+#   but never writes it in this repo layout (10/10 chronic failures) —
+#   AGENTS.md documents the manual deviation (placeholder hash →
+#   `nix build` → read `got:` → apply, only when go.mod/go.sum changed).
+#   The real gate still exists: `nix flake check` builds in the sandbox.
 skip_steps:
   - pytest-test
   - branching-flow
   - go-structure-linter
+  - cqrs-lint
+  - nix-hash-fix

@@ -28,6 +28,7 @@ Code wins when doc and code disagree.
 | Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)       |
 | Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal   |
 | Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)            |
+| Transcript pagination         | 🟢 FULLY_FUNCTIONAL | "Load older messages" fetches prior pages (`?older=`); LIMIT+1 hasMore      |
 | Delivery receipts             | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge updates live via SSE |
 
 ## Fax
@@ -37,8 +38,8 @@ Code wins when doc and code disagree.
 | Send PDF                 | 🟢 FULLY_FUNCTIONAL | `%PDF-` sniff, ≤20 MiB, spooled to blob store                       |
 | Inbound fax via webhook  | 🟢 FULLY_FUNCTIONAL | `/hooks/fax` with base64 PDF, page count, provider ref              |
 | Provider status callback | 🟢 FULLY_FUNCTIONAL | `/hooks/fax/status` flips job to transmitted/failed with error text |
-| Document download        | 🟢 FULLY_FUNCTIONAL | Session-gated, owner-scoped PDF streaming                           |
-| Page-count parsing       | ⚪ PLANNED          | Status payloads may quote pages; nothing parses richer details yet  |
+| Page-count parsing       | 🟢 FULLY_FUNCTIONAL | flexPages: `pages`/`page_count`/`num_pages` as number or string (tested) |
+| Document download        | 🟢 FULLY_FUNCTIONAL | Session-gated, owner-scoped PDF streaming                                |
 
 ## Voicemail & history (phone API)
 
@@ -46,6 +47,7 @@ Code wins when doc and code disagree.
 | -------------------------- | -------------------- | ------------------------------------------------------------------------ |
 | Voicemail list/play/delete | 🟢 FULLY_FUNCTIONAL  | Per-extension API with the session's credentials; needs `phone_api_url`  |
 | CDR call history           | 🟢 FULLY_FUNCTIONAL  | Server-rendered tab + island panel via the same API                      |
+| History search/filter      | 🟢 FULLY_FUNCTIONAL  | `?q=` text + `?dir=` in/out filter, widened fetch when filtering         |
 | Honest disabled states     | 🟢 FULLY_FUNCTIONAL  | Tabs say what is missing instead of pretending when no API is configured |
 | Live voicemail refresh     | 🟢 FULLY_FUNCTIONAL  | Payload-less SSE nudge on deletes and island polls                       |
 | Phone-api reverse proxy    | 🟢 FULLY_FUNCTIONAL  | Same paths/JSON as the static era, Basic auth injected server-side       |
@@ -57,9 +59,10 @@ Code wins when doc and code disagree.
 | ------------------------------ | ------------------- | ------------------------------------------------------------------ |
 | Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                    |
 | Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island            |
+| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it |
 | Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design    |
-| Login rate limiting            | ⚪ PLANNED          | `/api/session` currently trusts the island's proven REGISTER       |
+| Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate) |
 
 ## Live updates (SSE)
 
@@ -76,6 +79,7 @@ Code wins when doc and code disagree.
 | Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)     |
 | Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback) |
 | Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                      |
+| Keyboard shortcuts          | 🟢 FULLY_FUNCTIONAL | A answer · H hangup · M mute · P hold · Esc + headset media keys (island `shortcuts.js`) |
 | ICE/media diagnostics panel | 🟢 FULLY_FUNCTIONAL | Candidate path, RTT, loss, jitter, codec + plain-language hints   |
 | Event log                   | 🟢 FULLY_FUNCTIONAL | Operator-facing, English-only (runbook greps it), 100 entries     |
 
@@ -89,23 +93,19 @@ Code wins when doc and code disagree.
 | Strict-CSP compatible        | 🟢 FULLY_FUNCTIONAL     | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN      |
 | Security posture             | 🟢 FULLY_FUNCTIONAL     | CSRF on all mutations, security headers, owner-scoped queries everywhere |
 | DOM contract test            | 🟢 FULLY_FUNCTIONAL     | 35 island element ids asserted by `internal/server/server_test.go`       |
-| i18n (en/de)                 | 🟡 PARTIALLY_FUNCTIONAL | Island fully en/de; the server-rendered tabs are English-only            |
-| Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`                              |
+| NixOS module                 | 🟢 FULLY_FUNCTIONAL     | `nixosModules.default`: hardened systemd unit, JSON settings via `WEBPHONE_CONFIG`, `environmentFile` for secrets, optional nginx WSS vhost; evalModules-checked |
+| Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent |
+| i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL     | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
+| Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`) |
 | Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Suite exists for the v1 surface; must be re-run after the v2 switchover  |
 
 ## PLANNED / WORTH_CONSIDERING
 
 | Idea                                  | Status               | Notes                                                      |
 | ------------------------------------- | -------------------- | ---------------------------------------------------------- |
-| German translations for the tabs      | ⚪ PLANNED           | Island i18n is the pattern to follow                       |
-| Session persistence across restarts   | ⚪ PLANNED           | Passwords in RAM only today; persistence has security cost |
-| Message pagination/virtualization     | ⚪ PLANNED           | Window is 200 per thread                                   |
-| vCard contact import/export           | ⚪ PLANNED           |                                                            |
-| History search/filter                 | ⚪ PLANNED           |                                                            |
+| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost |
 | Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                 |
 | Richer /healthz (store, gateway mode) | ⚪ WORTH_CONSIDERING | For load balancers                                         |
-| Manual theme override (toggle)        | ⚪ PLANNED           | Tokens exist; only the media-query hook is wired           |
-| Keyboard shortcuts / media keys       | ⚪ PLANNED           | Carried over from v1                                       |
 | Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface               |
 | PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                     |
-| sip.js 0.22 evaluation                | ⚪ PLANNED           | `./update.sh` exists; bundle-contract strings must survive |
+| sip.js 0.22 bump                      | ⚪ PLANNED           | Evaluation report in docs/reviews/; gated on the upstream browser E2E |

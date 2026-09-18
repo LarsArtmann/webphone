@@ -13,6 +13,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Bearer secret, fail-closed like every hook) with the `provider_ref`
   from the send receipt; the transcript's status badge flips to
   delivered/failed live over SSE, mirroring the fax status callback.
+- German for the server-rendered tabs: ~90-key en/de dictionary, chosen
+  per extension (settings tab, remembered server-side), with a header
+  toggle that writes the `wp-lang` cookie and hot-swaps the tab without a
+  reload; SSE-pushed fragments follow the extension's language.
+- NixOS module (`nixosModules.default`): hardened systemd unit, all
+  settings via a JSON file (`WEBPHONE_CONFIG`), `environmentFile` for
+  secrets, optional nginx vhost with the WSS `/sip` proxy; evaluated by
+  a flake check. The stale v1 `package/default.nix` is gone.
+- Login rate limiting: per-IP token buckets on `/api/session` and the
+  inbound `/hooks/*` endpoints (the hook limiter sits outside the
+  secret gate so unknown secrets are throttled too).
+- vCard import/export for personal contacts: `/contacts/import`
+  (upsert-by-number) and `/contacts/export`.
+- Transcript pagination: "Load older messages" fetches prior pages
+  instead of a fixed window.
+- History search/filter: `?q=` text and `?dir=` direction, with a wider
+  fetch while filtering.
+- Keyboard shortcuts in the island: A answer, H hangup, M mute, P hold,
+  Esc reject/cancel, plus headset media keys.
+- Manual theme toggle: cycles auto → light → dark, persists the choice
+  (`wp-theme` in localStorage), overrides `prefers-color-scheme`.
+- Fax page-count parsing: provider status payloads may quote pages as
+  number or string (`pages`/`page_count`/`num_pages`); stored as a
+  count.
+- Architecture enforcement tests (`internal/arch`): the domain imports
+  nothing internal, services never import server/web, and the island's
+  calls/ice/connection modules stay pairwise independent.
+- Expanded test coverage: config loader, gateway webhook mode, pbx
+  client error paths, login rate limiting, history filter, vCard, i18n
+  dictionary sync, unread-cache invalidation, webhook gates.
+
+### Changed
+
+- The unread badge count is cached per extension (5s TTL, invalidated
+  on inbound/status/deletes) instead of rescanning every thread on each
+  shell render.
+
+### Fixed
+
+- The phone-api client percent-encoded `?` in request URLs
+  (`history%3Flimit=30`), so history/voicemail requests 404'd upstream;
+  path and query are now joined correctly (caught by the new client
+  tests).
 
 ## [2.0.0] - 2026-09-18
 
