@@ -35,6 +35,7 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
 ## a) FULLY DONE ✅
 
 ### SSE liveness (the report's #2 gap)
+
 - **Swap-safe fragments:** `ThreadsList`, `Transcript`, `FaxList`
   extracted in the views; `sse-swap` now targets inner list regions
   (`.wp-thread-list`, `.wp-fax-list`, `#thread-transcript`). Live
@@ -58,6 +59,7 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
   construction; `keepalive` DELETE so the session dies even mid-nav).
 
 ### Proxy & client hardening (report's #6 gap)
+
 - `/phone-api` proxy rides `pbx.Client.HTTPClient()` (15s timeout)
   instead of the timeout-less `http.DefaultClient`.
 - Fixed a real latent bug in `pbx.Client.do()`: request bodies were
@@ -68,6 +70,7 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
   (14)". Found by the smoke suite, not by code review.
 
 ### Tests (all green, `-count=1`)
+
 - `TestSSEPushesSwapSafeFragments` — threads/thread/fax events carry
   fragments; asserts the forbidden strings (`<section`, `wp-compose`,
   `wp-back`, `wp-panel-head`) stay out of payloads.
@@ -81,6 +84,7 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
   `newTestServerWithPhoneAPI`, `clientFor` helpers.
 
 ### Verification
+
 - Live smoke over real HTTP (fresh binary, fresh data dir): **14/14
   PASS** — CSRF, session, signed-in SSE connect, voicemail trigger,
   thread list + transcript swap regions, unknown hook 404, inbound
@@ -95,6 +99,7 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
   clean.
 
 ### Docs overhaul (the report's #1 gap) — docs-health BUILD+HARVEST+VERIFY
+
 - **README** rewritten for v2: quick start (loopback = whole product,
   zero PBX), full config reference incl. the `__` env convention,
   integration contracts (PBX_CONFIG, phone API, outbound gateway,

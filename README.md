@@ -18,20 +18,20 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 
 ## What it does
 
-| Capability          | Notes                                                                        |
-| ------------------- | ---------------------------------------------------------------------------- |
-| Phone calls         | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad          |
-| Resilience         | Bounded reconnect watchdog with re-registration; live calls survive          |
-| SMS & MMS          | Threads with unread badges, attachments in/out, live transcript updates      |
-| Fax                | Send PDFs, receive documents, provider status (transmitted/failed), download |
-| Voicemail          | List, play, delete — straight from the PBX's per-extension API               |
-| Call history       | Server-side CDR records through the same API                                 |
-| Contacts           | Shared (config) + personal (per extension), click-to-dial into the island    |
-| Live updates       | Per-extension SSE feed: threads, open transcripts, fax list, voicemail       |
-| Sign-in            | The island's SIP REGISTER proves the credentials; the tabs share that login  |
-| Diagnostics        | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)      |
-| i18n / themes      | Island UI in English + German; dark + light themes                           |
-| Deployment         | Single static binary, SQLite + content-addressed blob store, `/healthz`      |
+| Capability    | Notes                                                                           |
+| ------------- | ------------------------------------------------------------------------------- |
+| Phone calls   | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad             |
+| Resilience    | Bounded reconnect watchdog with re-registration; live calls survive             |
+| SMS & MMS     | Threads with unread badges, attachments in/out, delivery receipts, live updates |
+| Fax           | Send PDFs, receive documents, provider status (transmitted/failed), download    |
+| Voicemail     | List, play, delete — straight from the PBX's per-extension API                  |
+| Call history  | Server-side CDR records through the same API                                    |
+| Contacts      | Shared (config) + personal (per extension), click-to-dial into the island       |
+| Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail          |
+| Sign-in       | The island's SIP REGISTER proves the credentials; the tabs share that login     |
+| Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)         |
+| i18n / themes | Island UI in English + German; dark + light themes                              |
+| Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`         |
 
 ## Quick start
 
@@ -68,19 +68,19 @@ environment variables. Env keys use `__` to nest:
 literal: `WEBPHONE_DATA_DIR` → `data_dir`. Scalars are env-friendly;
 nested lists (`ice_servers`, `contacts`) belong in the JSON file.
 
-| Key                   | Default              | Meaning                                                         |
-| --------------------- | -------------------- | --------------------------------------------------------------- |
-| `addr`                | `:8080`              | Listen address                                                  |
-| `data_dir`            | `/var/lib/webphone`  | SQLite DB + content-addressed attachment/fax files (created if missing) |
-| `sip_domain`          | _empty_              | SIP domain the island registers at (rendered into `/config.js`) |
-| `websocket_path`      | `/sip`               | WSS path the island connects to (must be proxied to the PBX)    |
-| `phone_api_url`       | _empty_ = disabled   | Base URL of the per-extension API, e.g. `https://pbx.example.com` |
-| `session_ttl`         | `24h`                | Tab-session lifetime (cookie + server store)                    |
-| `ice_servers`         | _empty_              | STUN/TURN entries handed to the island (`urls`, `username`, `credential`) |
-| `contacts`            | _empty_              | Shared directory entries (`name`, `number`)                     |
-| `gateway.mode`        | `loopback`           | `loopback` or `webhook`                                         |
-| `gateway.webhook_url` | _empty_              | Provider base URL in webhook mode (required there)              |
-| `gateway.webhook_secret` | _empty_           | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)** |
+| Key                      | Default             | Meaning                                                                                                    |
+| ------------------------ | ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `addr`                   | `:8080`             | Listen address                                                                                             |
+| `data_dir`               | `/var/lib/webphone` | SQLite DB + content-addressed attachment/fax files (created if missing)                                    |
+| `sip_domain`             | _empty_             | SIP domain the island registers at (rendered into `/config.js`)                                            |
+| `websocket_path`         | `/sip`              | WSS path the island connects to (must be proxied to the PBX)                                               |
+| `phone_api_url`          | _empty_ = disabled  | Base URL of the per-extension API, e.g. `https://pbx.example.com`                                          |
+| `session_ttl`            | `24h`               | Tab-session lifetime (cookie + server store)                                                               |
+| `ice_servers`            | _empty_             | STUN/TURN entries handed to the island (`urls`, `username`, `credential`)                                  |
+| `contacts`               | _empty_             | Shared directory entries (`name`, `number`)                                                                |
+| `gateway.mode`           | `loopback`          | `loopback` or `webhook`                                                                                    |
+| `gateway.webhook_url`    | _empty_             | Provider base URL in webhook mode (required there)                                                         |
+| `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)** |
 
 Example file:
 
@@ -125,12 +125,12 @@ The server calls these with the signed-in extension's credentials (Basic
 auth), both directly and through the transparent `/phone-api/*` proxy the
 island uses:
 
-| Method & path                             | Response                                        |
-| ----------------------------------------- | ----------------------------------------------- |
-| `GET /phone-api/history?limit=N`          | `{"entries":[{caller_id_number, destination_number, start, billsec, …}]}` |
-| `GET /phone-api/voicemail/{ext}/summary`  | `{"new":1,"old":0}`                             |
-| `GET /phone-api/voicemail/{ext}/messages` | `{"messages":[{uuid, cid_number, cid_name, seconds, created, read, audio_url}]}` |
-| `DELETE /phone-api/voicemail/{ext}/messages/{uuid}` | _(2xx)_                           |
+| Method & path                                       | Response                                                                         |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `GET /phone-api/history?limit=N`                    | `{"entries":[{caller_id_number, destination_number, start, billsec, …}]}`        |
+| `GET /phone-api/voicemail/{ext}/summary`            | `{"new":1,"old":0}`                                                              |
+| `GET /phone-api/voicemail/{ext}/messages`           | `{"messages":[{uuid, cid_number, cid_name, seconds, created, read, audio_url}]}` |
+| `DELETE /phone-api/voicemail/{ext}/messages/{uuid}` | _(2xx)_                                                                          |
 
 ### Outbound gateway (webhook mode)
 
