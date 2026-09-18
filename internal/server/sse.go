@@ -84,38 +84,19 @@ func (h *ExtensionHubs) Publish(extension domain.Extension, eventName string, ht
 }
 
 // events is the session-gated SSE feed for the signed-in extension.
+// Webphone authenticates and remembers the negotiated UI language, then
+// hands the connection to the library's ServeSSE: subscribe, an initial
+// "connected" frame, a 15 s heartbeat, pump until disconnect, unsubscribe,
+// close. The hand loop that duplicated that lifecycle is gone — and with
+// it, the heartbeat that outlived its request context.
 func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(w, r)
 	if !ok {
 		return
 	}
 
-	stream := sse.NewStream(w, r)
 	hub := h.deps.Hubs.get(sess.Extension)
 	h.deps.Hubs.SetLang(sess.Extension, h.lang(r))
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go stream.Heartbeat(ctx, 15*time.Second)
-
-	ch := hub.Hub().Subscribe()
-	defer hub.Hub().Unsubscribe(ch)
-
-	for {
-		select {
-		case <-stream.Context().Done():
-			_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-			return
-		case event, open := <-ch:
-			if !open {
-				_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-				return
-			}
-			if err := stream.Send(event); err != nil {
-				slog.Debug("sse send failed", "error", err)
-				_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-				return
-			}
-		}
-	}
+	hub.ServeSSE(w, r)
 }

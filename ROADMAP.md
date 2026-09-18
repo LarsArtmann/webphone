@@ -18,5 +18,7 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   a reconnect-hang fix, a security advisory, or a needed capability —
   any future bump re-runs the upstream browser E2E.
 - Stack-side switchover of nix-international-telephony onto this
-  service (input swap, WSS proxy, config migration, E2E re-run) —
-  decided in principle, execution pending (TODO_LIST).
+  service: DONE 2026-09-18 (stack imports `nixosModules.default`,
+  nginx vhost proxies the service, browser E2E green after the
+  accept/reject wiring fix). Residual: push the fix and bump the
+  stack's input lock to it (TODO_LIST).

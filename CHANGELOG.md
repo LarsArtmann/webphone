@@ -52,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The on-screen Accept and Reject buttons did nothing: the island's
+  module split left them calling `answerIncoming`/`rejectIncoming`
+  without importing those functions, so every click died with a silent
+  ReferenceError (keyboard shortcuts kept working). Incoming calls
+  could not be answered from the UI; the upstream browser E2E caught
+  it (callee never sent its 200 OK, the PBX timed the ring out at 60s).
 - Strict-CSP console errors on every page load: htmx no longer injects
   its inline indicator styles (disabled via the `htmx-config` meta, with
   htmx deferred after it and the same rules shipped in `app.css`); the
