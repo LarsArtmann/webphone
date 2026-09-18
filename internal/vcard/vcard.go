@@ -127,8 +127,13 @@ func splitProperty(line string) (property, string, bool) {
 	return property{}, "", false
 }
 
-// sanitizeNumber strips separators that leak out of phone fields.
+// sanitizeNumber strips separators that leak out of phone fields and
+// the "tel:" URI scheme vCard 4.0 allows.
 func sanitizeNumber(value string) string {
+	value = strings.TrimSpace(value)
+	if scheme, rest, found := strings.Cut(value, ":"); found && strings.EqualFold(scheme, "tel") {
+		value = rest
+	}
 	return strings.TrimSpace(strings.Map(func(r rune) rune {
 		switch r {
 		case ' ', '-', '(', ')', '.':

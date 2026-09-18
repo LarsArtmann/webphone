@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/a-h/templ"
@@ -13,6 +14,7 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/vcard"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -322,6 +324,11 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 	for _, card := range vcard.Decode(data) {
 		phone, err := domain.ParsePhone(card.Number)
 		if err != nil {
+			continue
+		}
+		// The dialable alphabet also carries letters (SIP user parts);
+		// a vCard number without a single digit can never be dialed.
+		if !strings.ContainsAny(phone.String(), "0123456789") {
 			continue
 		}
 		contact := domain.Contact{

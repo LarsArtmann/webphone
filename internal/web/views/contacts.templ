@@ -26,6 +26,19 @@ templ ContactsPanel(props ContactsPanelProps) {
 			<input name="number" inputmode="tel" required placeholder="Number" aria-label="Contact number"/>
 			<button type="submit" class="wp-primary">Save</button>
 		</form>
+		<div class="wp-compose">
+			<form
+				class="wp-compose"
+				hx-post="/contacts/import"
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-encoding="multipart/form-data"
+			>
+				<input type="file" name="vcard" accept=".vcf,text/vcard" required aria-label="vCard file to import"/>
+				<button type="submit">Import</button>
+			</form>
+			<a class="wp-export-link" href="/contacts/export">Export vCard</a>
+		</div>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
 			<p class="wp-empty">No contacts yet — add one above.</p>
 		}

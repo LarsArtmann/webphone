@@ -557,3 +557,14 @@ a:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+.wp-export-link {
+  align-self: center;
+  color: var(--accent);
+  font-size: 0.9em;
+  text-decoration: none;
+}
+
+.wp-export-link:hover {
+  text-decoration: underline;
+}
