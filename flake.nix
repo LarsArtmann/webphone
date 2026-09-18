@@ -93,20 +93,25 @@
                 evaluated = pkgs.lib.evalModules {
                   modules = [
                     { _module.args.pkgs = pkgs; }
-                    # Minimal stand-in for the NixOS nginx module: the
-                    # webphone module writes services.nginx config when
-                    # its vhost option is enabled.
+                    # Minimal stand-ins for the NixOS nginx/systemd/users
+                    # modules: the webphone module writes services.nginx,
+                    # systemd.services, and users.{users,groups} config.
                     {
-                      options.services.nginx = {
-                        enable = pkgs.lib.mkOption {
-                          type = pkgs.lib.types.bool;
-                          default = false;
+                      options = {
+                        services.nginx = {
+                          enable = pkgs.lib.mkOption {
+                            type = pkgs.lib.types.bool;
+                            default = false;
+                          };
+                          recommendedProxySettings = pkgs.lib.mkOption {
+                            type = pkgs.lib.types.bool;
+                            default = false;
+                          };
+                          virtualHosts = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
                         };
-                        recommendedProxySettings = pkgs.lib.mkOption {
-                          type = pkgs.lib.types.bool;
-                          default = false;
-                        };
-                        virtualHosts = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
+                        systemd.services = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
+                        users.users = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
+                        users.groups = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
                       };
                     }
                     (import ./package/nixos-module.nix)
