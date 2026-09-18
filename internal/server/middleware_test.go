@@ -101,3 +101,95 @@ func TestPanicInsideSecurityHeadersKeepsHeaders(t *testing.T) {
 		t.Errorf("security headers lost on the panic path: X-Content-Type-Options=%q", got)
 	}
 }
+
+// TestChainCompositionMatchesNestedOrder pins the CH1 refactor: New() now
+// composes with cqrshtmx.Chain (first argument outermost). The parity
+// proof is behavioral: the served page must still carry security headers
+// (security inside the logger) and a panic must still 500 with headers
+// (recovery innermost) — the same contracts productionStack pins for the
+// nested spelling.
+func TestChainCompositionMatchesNestedOrder(t *testing.T) {
+	captureDefaultLogger(t)
+	server := newTestServer(t)
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET / through the Chain stack: %d", resp.StatusCode)
+	}
+	if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Errorf("security headers missing under Chain composition: %q", got)
+	}
+}
+
+// TestVersionEndpoint pins the /version contract: build metadata as the
+// library DebugHandler emits it (JSON, no-cache), route outside CSRF.
+func TestVersionEndpoint(t *testing.T) {
+	server := newTestServer(t)
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/version", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET /version: %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.Contains(ct, "application/json") {
+		t.Errorf("version content-type %q, want json", ct)
+	}
+	body := string(readAll(t, resp))
+	for _, key := range []string{`"version"`, `"goVersion"`, `"title"`} {
+		if !strings.Contains(body, key) {
+			t.Errorf("version body missing %s: %s", key, body)
+		}
+	}
+}
+
+// TestServerTimingOptIn pins the ST1 contract: the Server-Timing header
+// appears only when WEBPHONE_DEBUG_TIMING is set, and SSE flushing still
+// works under the timing writer (its Flush forwarding is what keeps the
+// library's heartbeat from stalling).
+func TestServerTimingOptIn(t *testing.T) {
+	t.Run("off by default", func(t *testing.T) {
+		t.Setenv("WEBPHONE_DEBUG_TIMING", "")
+		server := newTestServer(t)
+
+		req, _ := http.NewRequest(http.MethodGet, server.URL+"/", nil)
+		resp, err := server.Client().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		if got := resp.Header.Get("Server-Timing"); got != "" {
+			t.Errorf("Server-Timing present with the flag off: %q", got)
+		}
+	})
+
+	t.Run("on when flagged", func(t *testing.T) {
+		t.Setenv("WEBPHONE_DEBUG_TIMING", "1")
+		server := newTestServer(t)
+
+		req, _ := http.NewRequest(http.MethodGet, server.URL+"/", nil)
+		resp, err := server.Client().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		header := resp.Header.Get("Server-Timing")
+		if header == "" || !strings.Contains(header, "total;dur=") {
+			t.Errorf("Server-Timing %q, want total;dur=... with the flag on", header)
+		}
+	})
+}

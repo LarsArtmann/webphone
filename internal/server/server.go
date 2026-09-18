@@ -7,10 +7,13 @@ package server
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
+	"runtime"
+	"runtime/debug"
 	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
@@ -163,6 +166,7 @@ func New(deps Deps) http.Handler {
 		cqrshtmx.NewNamedCheck("blob-dir", func() error { return probeBlobDir(deps.BlobRoot) }),
 	)
 	open.Handle("GET /healthz", readiness)
+	open.Handle("GET /version", versionHandler())
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
@@ -173,6 +177,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/config.js", open)
 	root.Handle("/events", open)
 	root.Handle("/healthz", open)
+	root.Handle("/version", open)
 	root.Handle("/hooks/", open)
 	root.Handle("/favicon.svg", open)
 
@@ -185,10 +190,14 @@ func New(deps Deps) http.Handler {
 
 	// requestLog outermost: it sees every status written anywhere below
 	// (429s, panics, SSE disconnects) — the server's blind twin of the
-	// browser event log, runbook-greppable at 3 a.m.
-	requestLog := cqrshtmx.RequestLoggingSlog(slog.Default())
-
-	return requestLog(security(cqrshtmx.RecoveryMiddleware(root)))
+	// browser event log, runbook-greppable at 3 a.m. Chain composes
+	// first-argument-outermost, so this reads in execution order.
+	return cqrshtmx.Chain(
+		cqrshtmx.RequestLoggingSlog(slog.Default()),
+		timingMiddleware,
+		security,
+		cqrshtmx.RecoveryMiddleware,
+	)(root)
 }
 
 // probeBlobDir proves the blob store accepts writes: temp file in the
@@ -227,5 +236,49 @@ func versionHandler() http.HandlerFunc {
 		"version":   version,
 		"goVersion": goVersion,
 		"title":     title,
+	})
+}
+
+// timingMiddleware optionally emits a Server-Timing header (total request
+// duration) when WEBPHONE_DEBUG_TIMING is set in the environment — an
+// operator opt-in for latency debugging, off by default so the header
+// never ships in normal operation. It sits just inside the request log,
+// so the measured span is the whole route stack. The writer forwards
+// Flush (SSE streams below must keep flushing) and Unwrap.
+type timingWriter struct {
+	http.ResponseWriter
+	start time.Time
+	wrote bool
+}
+
+func (w *timingWriter) WriteHeader(code int) {
+	if !w.wrote {
+		w.wrote = true
+		w.Header().Set("Server-Timing", fmt.Sprintf("total;dur=%.2f", float64(time.Since(w.start).Microseconds())/1000.0))
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *timingWriter) Write(p []byte) (int, error) {
+	if !w.wrote {
+		w.WriteHeader(http.StatusOK) // implicit-200 path: net/http skips WriteHeader
+	}
+	return w.ResponseWriter.Write(p)
+}
+
+func (w *timingWriter) Flush() {
+	if f, ok := w.ResponseWriter.(interface{ Flush() }); ok {
+		f.Flush()
+	}
+}
+
+func (w *timingWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
+func timingMiddleware(next http.Handler) http.Handler {
+	if os.Getenv("WEBPHONE_DEBUG_TIMING") == "" {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(&timingWriter{ResponseWriter: w, start: time.Now()}, r)
 	})
 }
