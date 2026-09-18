@@ -1,0 +1,84 @@
+package views
+
+import (
+	"github.com/a-h/templ"
+	"github.com/larsartmann/webphone/internal/domain"
+)
+
+// FaxPanel is the Fax tab: PDF upload form plus the job list (outbox and
+// inbox). sse-swap="fax" lets the server push job updates live.
+type FaxPanelProps struct {
+	Jobs   []domain.FaxJob
+	Error  string
+}
+
+templ FaxPanel(props FaxPanelProps) {
+	<section class="wp-panel" id="fax-panel" sse-swap="fax">
+		<header class="wp-panel-head">
+			<h2>Fax</h2>
+			<p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p>
+		</header>
+		if props.Error != "" {
+			<p class="wp-error" role="alert">{ props.Error }</p>
+		}
+		<form
+			class="wp-compose wp-compose-fax"
+			hx-post="/fax/send"
+			hx-target="#tab-content"
+			hx-swap="innerHTML"
+			hx-encoding="multipart/form-data"
+			enctype="multipart/form-data"
+		>
+			<input name="to" inputmode="tel" required placeholder="Fax number" aria-label="Fax number"></input>
+			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label="PDF document"></input>
+			<button type="submit" class="wp-primary">Send fax</button>
+		</form>
+		if len(props.Jobs) == 0 {
+			<p class="wp-empty">No faxes yet — send a PDF above.</p>
+		}
+		for _, job := range props.Jobs {
+			@FaxRow(job)
+		}
+	</section>
+}
+
+templ FaxRow(job domain.FaxJob) {
+	<article class={ "wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
+		<span class="wp-fax-dir">
+			if job.Direction == domain.FaxInbound {
+				← received from
+			} else {
+				→ sent to
+			}
+		</span>
+		<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
+		<span class="wp-thread-when">{ job.CreatedAt.Local().Format("Jan 2, 15:04") }</span>
+		@FaxStatusBadge(job)
+		if job.Pages > 0 {
+			<span class="wp-muted">{ fmtInt(job.Pages) } page(s)</span>
+		}
+		if job.Error != "" {
+			<span class="wp-error" role="alert">{ job.Error }</span>
+		}
+		if job.DocumentPath != "" {
+			<a class="wp-link" href={ "/fax/" + job.ID.String() + "/document" } download>PDF</a>
+		}
+	</article>
+}
+
+templ FaxStatusBadge(job domain.FaxJob) {
+	switch job.Status {
+	case domain.FaxQueued:
+		<span class="wp-status wp-status-queued">queued</span>
+	case domain.FaxSending:
+		<span class="wp-status wp-status-queued">sending…</span>
+	case domain.FaxTransmitted:
+		<span class="wp-status wp-status-sent">transmitted</span>
+	case domain.FaxReceived:
+		<span class="wp-status wp-status-sent">received</span>
+	case domain.FaxFailed:
+		<span class="wp-status wp-status-failed">failed</span>
+	default:
+		<span class="wp-status">{ string(job.Status) }</span>
+	}
+}

@@ -1,0 +1,81 @@
+package views
+
+import (
+	"github.com/larsartmann/webphone/internal/pbx"
+)
+
+// HistoryPanel shows the extension's server-side call records (CDR) from
+// the phone API. The browser-local "recent calls" of the island stay in the
+// phone panel — this tab is the operator's view.
+type HistoryPanelProps struct {
+	Enabled bool
+	Entries []pbx.CDR
+	Error   string
+}
+
+templ HistoryPanel(props HistoryPanelProps) {
+	<section class="wp-panel" id="history-panel">
+		<header class="wp-panel-head">
+			<h2>History</h2>
+			<p class="wp-panel-sub">Server call records for your extension.</p>
+		</header>
+		if props.Error != "" {
+			<p class="wp-error" role="alert">{ props.Error }</p>
+		}
+		if !props.Enabled {
+			<p class="wp-empty">Needs the operator phone API (<code>phone_api_url</code>).</p>
+		}
+		if props.Enabled && len(props.Entries) == 0 {
+			<p class="wp-empty">No calls recorded yet.</p>
+		}
+		for _, cdr := range props.Entries {
+			@CDRRow(cdr)
+		}
+	</section>
+}
+
+templ CDRRow(cdr pbx.CDR) {
+	<article class="wp-fax-row">
+		<span class="wp-fax-dir">
+			if cdr.Context == "public" {
+				← from
+			} else {
+				→ to
+			}
+		</span>
+		<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>
+		<span class="wp-thread-when">{ cdr.Start }</span>
+		<span class="wp-muted">{ durationLabel(cdr.Billsec) }</span>
+	</article>
+}
+
+func cdrTarget(cdr pbx.CDR) string {
+	if cdr.Context == "public" {
+		return firstNonEmpty(cdr.CallerIDNumber, cdr.CallerIDName, "unknown")
+	}
+	return firstNonEmpty(cdr.DestinationNumber, "unknown")
+}
+
+func durationLabel(seconds int) string {
+	if seconds <= 0 {
+		return "—"
+	}
+	minutes := seconds / 60
+	return fmtInt(minutes) + ":" + pad2(seconds%60)
+}
+
+func pad2(n int) string {
+	if n < 10 {
+		return "0" + fmtInt(n)
+	}
+	return fmtInt(n)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
+}

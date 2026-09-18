@@ -1,0 +1,54 @@
+package views
+
+// SettingsPanel is read-only runtime facts about this deployment: what the
+// server is wired to and which capabilities are live. Changes happen in the
+// server's config file, not in the browser — this page tells the truth
+// about what is configured.
+type SettingsPanelProps struct {
+	SIPDomain    string
+	WebsocketURL string
+	GatewayMode  string
+	PhoneAPI     bool
+	ICEServers   int
+	SharedContacts int
+}
+
+templ SettingsPanel(props SettingsPanelProps) {
+	<section class="wp-panel" id="settings-panel">
+		<header class="wp-panel-head">
+			<h2>Settings</h2>
+			<p class="wp-panel-sub">What this server is wired to. Operators change these in the config file.</p>
+		</header>
+		<dl class="wp-settings">
+			<dt>SIP domain</dt>
+			<dd>{ orUnset(props.SIPDomain) }</dd>
+			<dt>SIP WebSocket</dt>
+			<dd>{ props.WebsocketURL }</dd>
+			<dt>ICE servers</dt>
+			<dd>{ fmtInt(props.ICEServers) }</dd>
+			<dt>Message &amp; fax gateway</dt>
+			<dd>{ props.GatewayMode }</dd>
+			<dt>Voicemail &amp; history API</dt>
+			<dd>
+				if props.PhoneAPI {
+					connected
+				} else {
+					not configured
+				}
+			</dd>
+			<dt>Shared contacts</dt>
+			<dd>{ fmtInt(props.SharedContacts) }</dd>
+		</dl>
+		<p class="wp-empty">
+			Theme follows your system; the phone panel's language switch (EN/DE)
+			controls the call UI. Sign out from the phone panel.
+		</p>
+	</section>
+}
+
+func orUnset(value string) string {
+	if value == "" {
+		return "(request host)"
+	}
+	return value
+}

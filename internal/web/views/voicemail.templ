@@ -1,0 +1,80 @@
+package views
+
+import (
+	"time"
+
+	"github.com/a-h/templ"
+	"github.com/larsartmann/webphone/internal/pbx"
+)
+
+// VoicemailPanel lists the extension's voicemail from the phone API. When
+// no API is configured the tab says so instead of pretending.
+type VoicemailPanelProps struct {
+	Enabled bool
+	Summary pbx.VoicemailSummary
+	Messages []pbx.VoicemailMessage
+	Error   string
+}
+
+templ VoicemailPanel(props VoicemailPanelProps) {
+	<section class="wp-panel" id="voicemail-panel" sse-swap="voicemail">
+		<header class="wp-panel-head">
+			<h2>Voicemail</h2>
+			<p class="wp-panel-sub">
+				if props.Enabled {
+					{ fmtInt(props.Summary.New) } new · { fmtInt(props.Summary.Old) } saved
+				} else {
+					Needs the operator phone API.
+				}
+			</p>
+		</header>
+		if props.Error != "" {
+			<p class="wp-error" role="alert">{ props.Error }</p>
+		}
+		if !props.Enabled {
+			<p class="wp-empty">
+				Voicemail lives on the PBX. Ask the operator to enable the phone API
+				(<code>phone_api_url</code>); messages will appear here and in the phone panel.
+			</p>
+		}
+		for _, msg := range props.Messages {
+			@VoicemailRow(msg)
+		}
+		if props.Enabled && len(props.Messages) == 0 {
+			<p class="wp-empty">No messages.</p>
+		}
+	</section>
+}
+
+templ VoicemailRow(msg pbx.VoicemailMessage) {
+	<article class={ "wp-fax-row", templ.KV("wp-unread", !msg.Read) }>
+		<span class="wp-fax-dir">from</span>
+		<strong class="wp-thread-remote">{ vmCaller(msg) }</strong>
+		<span class="wp-thread-when">{ vmWhen(msg.Created) }</span>
+		<span class="wp-muted">{ fmtInt(msg.Seconds) }s</span>
+		if msg.AudioURL != "" {
+			<audio class="wp-audio" controls preload="none" src={ msg.AudioURL }></audio>
+		}
+		<button
+			class="wp-danger"
+			hx-post={ "/voicemail/delete?uuid=" + msg.UUID }
+			hx-target="#tab-content"
+			hx-swap="innerHTML"
+			hx-confirm="Delete this message?"
+		>Delete</button>
+	</article>
+}
+
+func vmCaller(msg pbx.VoicemailMessage) string {
+	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber {
+		return msg.CIDName + " (" + msg.CIDNumber + ")"
+	}
+	if msg.CIDNumber != "" {
+		return msg.CIDNumber
+	}
+	return "unknown"
+}
+
+func vmWhen(createdUnix int64) string {
+	return time.Unix(createdUnix, 0).Local().Format("Jan 2, 15:04")
+}

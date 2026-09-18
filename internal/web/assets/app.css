@@ -1,3 +1,473 @@
-/* Compiled Tailwind v4 stylesheet for the webphone shell.
-   Regenerate with: nix run .#assets  (or: tailwindcss -i assets.css -o internal/web/assets/app.css --minify)
-   Placeholder until the first real build. */
+/* WebPhone shell + tabs — speaks the same design tokens as the island
+ * stylesheet (loaded after this file): the whole app shares one accent,
+ * one surface family, one dark/light behavior via prefers-color-scheme.
+ * The tokens below mirror the island's :root block; keep them in sync. */
+
+:root {
+  color-scheme: dark light;
+  --bg: #10161a;
+  --surface: #182125;
+  --surface-2: #1f2a30;
+  --border: #2c3a41;
+  --text: #e9eff2;
+  --muted: #93a5ae;
+  --accent: #2aa884;
+  --accent-strong: #3fbf9a;
+  --accent-soft: rgb(42 168 132 / 14%);
+  --danger: #e05252;
+  --warn: #d9a53f;
+  --ok: #3fbf9a;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #edf1f2;
+    --surface: #fbfdfd;
+    --surface-2: #f1f5f6;
+    --border: #d3dcdf;
+    --text: #1a252a;
+    --muted: #5d6f77;
+    --accent: #0f766e;
+    --accent-strong: #0d655e;
+    --accent-soft: rgb(15 118 110 / 10%);
+    --danger: #c43d3d;
+    --warn: #9a6b13;
+    --ok: #0f766e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+/* --- shell layout -------------------------------------------------------- */
+
+.wp-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.wp-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.wp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.wp-brand-mark {
+  width: 26px;
+  height: 26px;
+}
+
+.wp-mark-bg {
+  fill: var(--accent);
+}
+
+.wp-mark-fg {
+  fill: #ffffff;
+}
+
+.wp-signed-in {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.wp-body {
+  display: grid;
+  grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+  align-items: start;
+  flex: 1;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.wp-island {
+  position: sticky;
+  top: 76px;
+}
+
+.wp-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* --- navigation ---------------------------------------------------------- */
+
+.wp-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.wp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.wp-nav-link:hover {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.wp-nav-link.wp-active {
+  color: var(--accent-strong);
+  border-bottom-color: var(--accent);
+}
+
+.wp-nav-badge {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75em;
+  padding: 1px 7px;
+  font-weight: 600;
+}
+
+/* --- panels --------------------------------------------------------------- */
+
+.wp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.wp-panel-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.wp-panel-sub {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.wp-empty {
+  color: var(--muted);
+  padding: 18px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.wp-error {
+  color: var(--danger);
+  margin: 0;
+}
+
+.wp-muted {
+  color: var(--muted);
+}
+
+.wp-link {
+  color: var(--accent-strong);
+}
+
+/* --- forms ---------------------------------------------------------------- */
+
+.wp-compose {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wp-compose input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.wp-compose input[type="file"] {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.wp-compose button,
+button.wp-primary,
+button.wp-danger {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
+button.wp-primary {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.wp-primary:hover {
+  background: var(--accent-strong);
+}
+
+button.wp-danger {
+  color: var(--danger);
+}
+
+button.wp-danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+input {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* --- threads & bubbles ---------------------------------------------------- */
+
+.wp-thread-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.wp-thread-row:hover {
+  border-color: var(--accent);
+}
+
+.wp-thread-remote {
+  font-weight: 600;
+}
+
+.wp-thread-preview {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-thread-when {
+  color: var(--muted);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.wp-thread-head {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.wp-back {
+  color: var(--accent-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wp-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 4px;
+  scroll-behavior: smooth;
+}
+
+.wp-bubble {
+  max-width: 78%;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+
+.wp-bubble.wp-out {
+  align-self: flex-end;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.wp-bubble-body {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.wp-bubble-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75em;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.wp-attachment {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent-strong);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.wp-status {
+  font-weight: 600;
+}
+
+.wp-status-queued {
+  color: var(--warn);
+}
+
+.wp-status-sent {
+  color: var(--ok);
+}
+
+.wp-status-failed {
+  color: var(--danger);
+}
+
+/* --- fax / voicemail / history rows --------------------------------------- */
+
+.wp-fax-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.wp-fax-in {
+  border-left: 3px solid var(--accent);
+}
+
+.wp-unread {
+  border-left: 3px solid var(--warn);
+}
+
+.wp-fax-dir {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.wp-shared-tag {
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75em;
+}
+
+.wp-audio {
+  height: 36px;
+}
+
+/* --- settings -------------------------------------------------------------- */
+
+.wp-settings {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  margin: 0;
+}
+
+.wp-settings dt {
+  color: var(--muted);
+}
+
+.wp-settings dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- responsive ------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .wp-body {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .wp-island {
+    position: static;
+    order: 2;
+  }
+
+  .wp-main-col {
+    order: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

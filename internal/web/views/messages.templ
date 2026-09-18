@@ -3,6 +3,7 @@ package views
 import (
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
@@ -175,14 +176,10 @@ func relativeTime(t time.Time) string {
 	case delta < time.Minute:
 		return "now"
 	case delta < time.Hour:
-		return fmtDurationMinutes(int(delta.Minutes())) + "m"
+		return fmtInt(int(delta.Minutes())) + "m"
 	case delta < 24*time.Hour:
-		return fmtDurationMinutes(int(delta.Hours())) + "h"
+		return fmtInt(int(delta.Hours())) + "h"
 	default:
 		return t.Local().Format("Jan 2, 15:04")
 	}
-}
-
-func fmtDurationMinutes(n int) string {
-	return fmtInt(n)
 }
