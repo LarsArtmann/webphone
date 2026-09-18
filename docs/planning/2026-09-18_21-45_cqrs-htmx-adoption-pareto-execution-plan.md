@@ -14,7 +14,7 @@
 
 ## 1. The Pareto breakdown (READ THIS FIRST)
 
-Universe: 50 TODOs ≈ 20–24 h of work. "Result" = operational reliability + debuggability +
+Universe: 50 TODOs ≈ 18–19 h of work (sum of task estimates in sections 3–4). "Result" = operational reliability + debuggability +
 honest ops + code health for a single-binary comms product whose real customers are (a) the
 extension user on the phone page and (b) the operator reading logs at 3 a.m.
 
@@ -191,7 +191,8 @@ Sorted by importance/impact/effort/customer-value (phase order = priority order)
 | M61 | Post-adoption: re-diff cqrs-htmx master for new middleware worth adopting | 12 | 49 | Low | L |
 | M62 | Decision record: `/healthz` exposure (GET-open vs session-gated; detail leakage review) | 10 | 50 | Low | M |
 
-**Totals:** 62 medium tasks ≈ **23 h**. Coverage check: every Src #(1–50) appears at least
+**Totals:** 62 medium tasks ≈ **18.5 h** (sum of estimate midpoints; B1/B2 are 30-min
+monolithic gate runs). Coverage check: every Src #(1–50) appears at least
 once (1→M03/M04, 2→M05/M06, 3→M07/M08, 4→M09, 5→M11/M12, 6→M10, 7→M13, 8→M14/M15,
 9→M17, 10→M18, 11→M02, 12→M20–M22, 13→M23/M24, 14→M25, 15→M19, 16→M29/M30, 17→M31/M32,
 18→M33/M34, 19→M35, 20→M36/M37, 21→M38/M39, 22→M40, 23→M41, 24→M42, 25→M43, 26→M44,
@@ -293,8 +294,9 @@ Sorted by the same priority order (phases P0→P7). "From" = medium task.
 fire-and-verify commands — no further subdivision is meaningful. All other 67 tasks are
 ≤12 min. **Coverage: all 50 status-report TODOs ✅ (mapping identical to section 3).**
 
-**Micro totals:** 69 tasks ≈ **13 h** (+ gate wall-time) ≈ the 23 h medium estimate with
-context-switching slack removed.
+**Micro totals:** 81 tasks ≈ **16 h** including the two 30-min gates (B1/B2 — monolithic
+gate commands, not splittable); the other 79 tasks are each ≤12 min. Micro sum ≈ the
+medium sum minus context-switching slack.
 
 ---
 
