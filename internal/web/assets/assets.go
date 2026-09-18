@@ -9,7 +9,7 @@ import (
 	"io/fs"
 )
 
-//go:embed all:island all:vendor app.css
+//go:embed all:island all:vendor app.css shell.js
 var embedded embed.FS
 
 // FS returns the embedded assets rooted at the package directory, so paths

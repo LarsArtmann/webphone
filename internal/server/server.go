@@ -57,7 +57,14 @@ func New(deps Deps) http.Handler {
 	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{})
 
 	protected := http.NewServeMux()
-	protected.HandleFunc("GET /", h.page)
+	protected.HandleFunc("GET /{$}", h.page)
+	protected.HandleFunc("GET /messages", h.tabPage)
+	protected.HandleFunc("GET /messages/{id}", h.tabPage)
+	protected.HandleFunc("GET /fax", h.tabPage)
+	protected.HandleFunc("GET /voicemail", h.tabPage)
+	protected.HandleFunc("GET /history", h.tabPage)
+	protected.HandleFunc("GET /contacts", h.tabPage)
+	protected.HandleFunc("GET /settings", h.tabPage)
 	protected.HandleFunc("GET /partials/messages", h.partialMessages)
 	protected.HandleFunc("GET /partials/messages/{id}", h.partialThread)
 	protected.HandleFunc("GET /partials/fax", h.partialFax)
@@ -94,6 +101,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/events", open)
 	root.Handle("/healthz", open)
 	root.Handle("/hooks/", open)
+	root.Handle("/favicon.svg", open)
 
 	security := httputil.SecurityHeaders(httputil.SecurityHeadersConfig{
 		ContentTypeNosniff:    true,

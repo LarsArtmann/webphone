@@ -20,7 +20,10 @@ func (h *handlers) assets() http.Handler {
 	vendorServer := http.FileServerFS(assets.FS())
 
 	mux := http.NewServeMux()
-	// /assets/island/... → the island tree (app/*.js, style.css, favicon)
+	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
+	})
+	// /assets/island/... → the island tree (app/*.js, style.css)
 	mux.Handle("/assets/island/", http.StripPrefix("/assets/island/", fileServer))
 	// /assets/vendor/... → vendored sip.min.js + license notice
 	mux.Handle("/assets/vendor/", http.StripPrefix("/assets/", vendorServer))
@@ -31,10 +34,6 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/shell.js", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "shell.js", "application/javascript; charset=utf-8")
 	})
-	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
-		serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
-	})
-
 	return noStore(mux)
 }
 

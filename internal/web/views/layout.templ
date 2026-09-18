@@ -112,6 +112,8 @@ templ ShellBody(props ShellProps) {
 			<main class="wp-content" id="tab-content">
 				if props.TabContent != nil {
 					@props.TabContent
+				} else {
+					@SignInHint()
 				}
 			</main>
 		</div>
@@ -155,4 +157,11 @@ func bodyAttrs(props ShellProps) templ.Attributes {
 	return templ.Attributes{
 		"hx-headers": `{"X-CSRF-Token":"` + props.CSRFToken + `"}`,
 	}
+}
+
+// SignInHint fills the tab region while nobody is signed in.
+templ SignInHint() {
+	<section class="wp-panel">
+		<p class="wp-empty">Sign in on the phone panel — the tabs unlock with the same login.</p>
+	</section>
 }
