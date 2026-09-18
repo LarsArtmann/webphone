@@ -28,7 +28,7 @@ func NewClient(baseURL string) (*Client, error) {
 	}
 	parsed, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse phone api url: %w", err)
+		return nil, fmt.Errorf("parse phone api url %q: %w", baseURL, err)
 	}
 	return &Client{
 		base:   parsed.JoinPath("/phone-api"),

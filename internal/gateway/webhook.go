@@ -94,14 +94,14 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 		}
 		part, err := writer.CreateFormFile("attachment", att.Name)
 		if err != nil {
-			_ = file.Close()
+			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 			return nil, "", fmt.Errorf("create attachment form file: %w", err)
 		}
 		if _, err := io.Copy(part, file); err != nil {
-			_ = file.Close()
+			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 			return nil, "", fmt.Errorf("copy attachment %s: %w", att.Name, err)
 		}
-		_ = file.Close()
+		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	}
 	if err := writer.Close(); err != nil {
 		return nil, "", fmt.Errorf("close message form: %w", err)
@@ -115,7 +115,7 @@ func (p provider) post(
 ) (Receipt, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("build provider request: %w", err)
+		return Receipt{}, fmt.Errorf("build provider request (content-type %s): %w", contentType, err)
 	}
 	req.Header.Set("Content-Type", contentType)
 	if p.cfg.WebhookSecret != "" {
@@ -124,12 +124,12 @@ func (p provider) post(
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("provider call: %w", err)
+		return Receipt{}, fmt.Errorf("provider call to %s: %w", url, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 512)) //nolint:erraudit // best-effort write; the response is already committed
 		return Receipt{}, fmt.Errorf("provider rejected: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(detail)))
 	}
 
@@ -137,7 +137,7 @@ func (p provider) post(
 		ProviderRef string `json:"provider_ref"`
 	}
 	if err := json.NewDecoder(io.LimitReader(resp.Body, 4096)).Decode(&receipt); err != nil {
-		return Receipt{}, fmt.Errorf("decode provider receipt: %w", err)
+		return Receipt{}, fmt.Errorf("decode provider receipt (content-type %s): %w", contentType, err)
 	}
 
 	return Receipt{ProviderRef: receipt.ProviderRef}, nil

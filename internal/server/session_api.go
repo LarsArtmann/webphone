@@ -40,7 +40,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(map[string]string{"extension": extension.String()})
+	_ = json.NewEncoder(w).Encode(map[string]string{"extension": extension.String()}) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // destroySession signs the tab session out (island logout).
@@ -54,7 +54,7 @@ func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 func (h *handlers) sessionStatus(w http.ResponseWriter, r *http.Request) {
 	if _, ok := session.From(r.Context()); !ok {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("anonymous"))
+		_, _ = w.Write([]byte("anonymous")) //nolint:erraudit // best-effort write; the response is already committed
 		return
 	}
 	w.WriteHeader(http.StatusOK)

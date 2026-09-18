@@ -50,5 +50,5 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-	_, _ = io.Copy(w, resp.Body)
+	_, _ = io.Copy(w, resp.Body) //nolint:erraudit // best-effort write; the response is already committed
 }

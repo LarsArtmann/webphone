@@ -74,7 +74,7 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 	if err != nil {
 		return fmt.Errorf("delete contact: %w", err)
 	}
-	if rows, _ := res.RowsAffected(); rows == 0 {
+	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
 		return errors.Join(ErrNotFound, fmt.Errorf("contact %s", id.String()))
 	}
 	return nil

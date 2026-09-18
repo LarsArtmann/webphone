@@ -55,7 +55,7 @@ func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		_ = errorPanel(err.Error()).Render(r.Context(), w)
+		_ = errorPanel(err.Error()).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

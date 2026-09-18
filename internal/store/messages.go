@@ -29,7 +29,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	if err != nil {
 		return fmt.Errorf("begin: %w", err)
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer func() { _ = tx.Rollback() }() //nolint:erraudit // best-effort write; the response is already committed
 
 	threadID := msg.ThreadID.String()
 	if _, err := tx.ExecContext(ctx, `
@@ -40,7 +40,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 			unread = threads.unread + excluded.unread
 	`, threadID, msg.Owner.String(), msg.Remote.String(), msg.CreatedAt.Unix(),
 		incrementIf(domain.DirectionInbound, msg.Direction)); err != nil {
-		return fmt.Errorf("upsert thread: %w", err)
+		return fmt.Errorf("upsert thread %s for %s/%s: %w", threadID, msg.Owner, msg.Remote, err)
 	}
 
 	if _, err := tx.ExecContext(ctx, `
@@ -49,7 +49,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	`, msg.ID.String(), threadID, msg.Owner.String(), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
 		string(msg.Status), msg.ProviderRef, msg.CreatedAt.Unix()); err != nil {
-		return fmt.Errorf("insert message: %w", err)
+		return fmt.Errorf("insert message %s (thread %s): %w", msg.ID, threadID, err)
 	}
 
 	for _, att := range msg.Attachments {
@@ -57,7 +57,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 			INSERT INTO attachments (id, message_id, name, mime_type, size_bytes, path)
 			VALUES (?, ?, ?, ?, ?, ?)
 		`, att.ID.String(), msg.ID.String(), att.Name, att.MimeType, att.SizeBytes, att.Path); err != nil {
-			return fmt.Errorf("insert attachment: %w", err)
+			return fmt.Errorf("insert attachment %s of message %s: %w", att.ID, msg.ID, err)
 		}
 	}
 
@@ -84,9 +84,9 @@ func (s *Messages) UpdateOutboundStatus(
 		UPDATE messages SET status = ?, provider_ref = ? WHERE id = ? AND direction = ?
 	`, string(status), providerRef, id.String(), string(domain.DirectionOutbound))
 	if err != nil {
-		return fmt.Errorf("update status: %w", err)
+		return fmt.Errorf("update status of message %s: %w", id, err)
 	}
-	if rows, _ := res.RowsAffected(); rows == 0 {
+	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
 		return ErrNotFound
 	}
 	return nil
@@ -138,7 +138,7 @@ func scanThreadSummary(rows *sql.Rows) (ThreadSummary, error) {
 		lastBody, lastDir, lastCh sql.NullString
 	)
 	if err := rows.Scan(&id, &owner, &remote, &lastActivity, &unread, &lastBody, &lastDir, &lastCh); err != nil {
-		return ThreadSummary{}, fmt.Errorf("scan thread: %w", err)
+		return ThreadSummary{}, fmt.Errorf("scan thread row: %w", err)
 	}
 
 	sum := ThreadSummary{
@@ -171,7 +171,7 @@ func (s *Messages) ListMessages(
 		LIMIT ?
 	`, owner.String(), threadID.String(), limit)
 	if err != nil {
-		return nil, fmt.Errorf("list messages: %w", err)
+		return nil, fmt.Errorf("list messages of thread %s: %w", threadID, err)
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -208,7 +208,7 @@ func scanMessage(row messageScanner) (domain.Message, error) {
 	)
 	if err := row.Scan(&id, &threadID, &owner, &remote, &direction, &channel,
 		&body, &status, &providerRef, &createdAt); err != nil {
-		return domain.Message{}, fmt.Errorf("scan message: %w", err)
+		return domain.Message{}, fmt.Errorf("scan message %s of thread %s: %w", id, threadID, err)
 	}
 	return domain.Message{
 		ID:          domain.MustMessageID(id),
@@ -242,8 +242,8 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 				size                            int64
 			)
 			if err := rows.Scan(&id, &messageID, &name, &mime, &size, &path); err != nil {
-				_ = rows.Close()
-				return fmt.Errorf("scan attachment: %w", err)
+				_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				return fmt.Errorf("scan attachment %s of message %s: %w", id, messageID, err)
 			}
 			msgs[i].Attachments = append(msgs[i].Attachments, domain.Attachment{
 				ID:        domain.MustAttachmentID(id),
@@ -255,10 +255,10 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 			})
 		}
 		if err := rows.Err(); err != nil {
-			_ = rows.Close()
+			_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 			return fmt.Errorf("attachments rows: %w", err)
 		}
-		_ = rows.Close()
+		_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	}
 	return nil
 }
@@ -282,7 +282,7 @@ func (s *Messages) FindThread(
 		return domain.MustThreadID(id), nil
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
-		return domain.ThreadID{}, fmt.Errorf("find thread: %w", err)
+		return domain.ThreadID{}, fmt.Errorf("find thread for %s/%s: %w", owner, remote, err)
 	}
 
 	newID := domain.GenerateThreadID()
@@ -291,7 +291,7 @@ func (s *Messages) FindThread(
 		VALUES (?, ?, ?, ?, 0)
 		ON CONFLICT(owner, remote) DO UPDATE SET last_activity_at = last_activity_at
 	`, newID.String(), owner.String(), remote.String(), now.Unix()); err != nil {
-		return domain.ThreadID{}, fmt.Errorf("insert thread: %w", err)
+		return domain.ThreadID{}, fmt.Errorf("insert thread %s: %w", newID, err)
 	}
 
 	// The ON CONFLICT above is a no-op update so a concurrent insert cannot
@@ -299,7 +299,7 @@ func (s *Messages) FindThread(
 	if err := s.db.QueryRowContext(ctx, `
 		SELECT id FROM threads WHERE owner = ? AND remote = ?
 	`, owner.String(), remote.String()).Scan(&id); err != nil {
-		return domain.ThreadID{}, fmt.Errorf("re-read thread: %w", err)
+		return domain.ThreadID{}, fmt.Errorf("re-read thread for %s/%s: %w", owner, remote, err)
 	}
 
 	return domain.MustThreadID(id), nil
@@ -321,7 +321,7 @@ func (s *Messages) GetThread(
 		return domain.Thread{}, ErrNotFound
 	}
 	if err != nil {
-		return domain.Thread{}, fmt.Errorf("get thread: %w", err)
+		return domain.Thread{}, fmt.Errorf("get thread %s: %w", id, err)
 	}
 	return domain.Thread{
 		ID:             id,
@@ -338,7 +338,7 @@ func (s *Messages) MarkThreadRead(ctx context.Context, owner domain.Extension, i
 		UPDATE threads SET unread = 0 WHERE id = ? AND owner = ?
 	`, id.String(), owner.String())
 	if err != nil {
-		return fmt.Errorf("mark read: %w", err)
+		return fmt.Errorf("mark thread %s read: %w", id, err)
 	}
 	return nil
 }
@@ -362,7 +362,7 @@ func (s *Messages) AttachmentByID(
 		return domain.Attachment{}, ErrNotFound
 	}
 	if err != nil {
-		return domain.Attachment{}, fmt.Errorf("get attachment: %w", err)
+		return domain.Attachment{}, fmt.Errorf("get attachment %s (row %s of message %s): %w", id, attachmentID, messageID, err)
 	}
 	return domain.Attachment{
 		ID:        domain.MustAttachmentID(attachmentID),

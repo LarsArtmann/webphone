@@ -46,7 +46,7 @@ func (s *Faxes) UpdateStatus(
 	if err != nil {
 		return fmt.Errorf("update fax job: %w", err)
 	}
-	if rows, _ := res.RowsAffected(); rows == 0 {
+	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
 		return ErrNotFound
 	}
 	return nil
@@ -120,7 +120,7 @@ func scanFax(row faxScanner) (domain.FaxJob, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.FaxJob{}, err
 		}
-		return domain.FaxJob{}, fmt.Errorf("scan fax job: %w", err)
+		return domain.FaxJob{}, fmt.Errorf("scan fax job row (document %s): %w", documentPath, err)
 	}
 	return domain.FaxJob{
 		ID:           domain.MustFaxID(id),

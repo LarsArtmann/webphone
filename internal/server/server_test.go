@@ -16,6 +16,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"

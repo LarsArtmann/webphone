@@ -83,16 +83,16 @@ func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-stream.Context().Done():
-			_ = stream.Close()
+			_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 			return
 		case event, open := <-ch:
 			if !open {
-				_ = stream.Close()
+				_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 				return
 			}
 			if err := stream.Send(event); err != nil {
 				slog.Debug("sse send failed", "error", err)
-				_ = stream.Close()
+				_ = stream.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 				return
 			}
 		}

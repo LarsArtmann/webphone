@@ -45,7 +45,7 @@ func serveEmbedded(w http.ResponseWriter, r *http.Request, name, contentType str
 	if r.Method == http.MethodHead {
 		return
 	}
-	_, _ = w.Write(content)
+	_, _ = w.Write(content) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // noStore keeps development honest: a stale island bundle is the worst

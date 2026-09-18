@@ -37,7 +37,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write([]byte("window.PBX_CONFIG = "))
-	_, _ = w.Write(payload)
-	_, _ = w.Write([]byte(";\n"))
+	_, _ = w.Write([]byte("window.PBX_CONFIG = ")) //nolint:erraudit // best-effort write; the response is already committed
+	_, _ = w.Write(payload)                        //nolint:erraudit // best-effort write; the response is already committed
+	_, _ = w.Write([]byte(";\n"))                  //nolint:erraudit // best-effort write; the response is already committed
 }
