@@ -77,6 +77,28 @@ func TestMessageLifecycle(t *testing.T) {
 		t.Fatalf("status update lost: %+v", msgs[0])
 	}
 
+	// The delivery webhook's lookup path: by provider ref, outbound only.
+	byRef, err := messages.MessageByProviderRef(ctx, "ref-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if byRef.ID != outbound.ID {
+		t.Fatalf("provider-ref lookup: got %s, want %s", byRef.ID, outbound.ID)
+	}
+	if _, err := messages.MessageByProviderRef(ctx, inbound.ProviderRef); err == nil {
+		t.Fatal("inbound message must not resolve by provider ref")
+	}
+	if _, err := messages.MessageByProviderRef(ctx, "missing"); err == nil {
+		t.Fatal("unknown provider ref must not resolve")
+	}
+	if err := messages.UpdateOutboundStatus(ctx, byRef.ID, domain.StatusDelivered, byRef.ProviderRef); err != nil {
+		t.Fatal(err)
+	}
+	msgs, _ = messages.ListMessages(ctx, owner, threadID, 10)
+	if msgs[0].Status != domain.StatusDelivered {
+		t.Fatalf("delivered verdict lost: %+v", msgs[0])
+	}
+
 	if err := messages.MarkThreadRead(ctx, owner, threadID); err != nil {
 		t.Fatal(err)
 	}

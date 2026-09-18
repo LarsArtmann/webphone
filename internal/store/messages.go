@@ -93,6 +93,26 @@ func (s *Messages) UpdateOutboundStatus(
 	return nil
 }
 
+// MessageByProviderRef resolves an outbound message by its gateway
+// correlation id — the delivery-status webhook's lookup path.
+func (s *Messages) MessageByProviderRef(ctx context.Context, ref string) (domain.Message, error) {
+	if ref == "" {
+		return domain.Message{}, ErrNotFound
+	}
+	row := s.db.QueryRowContext(ctx, `
+		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
+		FROM messages WHERE provider_ref = ? AND direction = ?
+	`, ref, string(domain.DirectionOutbound))
+	msg, err := scanMessage(row)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Message{}, ErrNotFound
+	}
+	if err != nil {
+		return domain.Message{}, err
+	}
+	return msg, nil
+}
+
 // ThreadSummary is a thread row as shown in the thread list: the thread
 // plus a preview of its last message.
 type ThreadSummary struct {

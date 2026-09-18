@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/base64"
 	"encoding/json/v2"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"encoding/json/jsontext"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/store"
 )
 
 // Webhook contracts (inbound). The gateway secret authenticates both.
@@ -46,6 +48,15 @@ import (
 //	  "pages":    2,
 //	  "error":    "remote hung up"
 //	}
+//
+// POST /hooks/message/status — outbound message verdict from the provider:
+//
+//	{
+//	  "secret":   "...",
+//	  "provider_ref": "gw-123",
+//	  "status":   "delivered" | "failed",
+//	  "error":    "invalid number"
+//	}
 
 // secretGate guards the /hooks/* surface with the configured shared
 // secret. Without a configured secret the hooks stay closed (fail closed).
@@ -69,6 +80,8 @@ func (h *handlers) webhooks(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/hooks/message":
 		h.hookMessage(w, r)
+	case "/hooks/message/status":
+		h.hookMessageStatus(w, r)
 	case "/hooks/fax":
 		h.hookFax(w, r)
 	case "/hooks/fax/status":
@@ -167,6 +180,38 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.Pages, payload.Error); err != nil {
 		http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		ProviderRef string `json:"provider_ref"`
+		Status      string `json:"status"`
+		Error       string `json:"error"`
+	}
+	if err := decodeJSON(w, r, &payload); err != nil {
+		return
+	}
+	if payload.ProviderRef == "" {
+		http.Error(w, "provider_ref is required", http.StatusBadRequest)
+		return
+	}
+	status := domain.OutboundStatus(payload.Status)
+	switch status {
+	case domain.StatusDelivered, domain.StatusFailed:
+	default:
+		http.Error(w, "status must be delivered or failed", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := h.deps.Messaging.DeliveryReceipt(r.Context(), payload.ProviderRef, status, payload.Error); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.Error(w, "could not update message: "+err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, "could not update message: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)

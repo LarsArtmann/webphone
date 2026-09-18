@@ -46,6 +46,7 @@ var contractIDs = []string{
 type testServer struct {
 	*httptest.Server
 	hubs     *ExtensionHubs
+	messages *store.Messages
 	faxes    *store.Faxes
 	phoneAPI *pbx.Client
 }
@@ -97,7 +98,7 @@ func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return &testServer{Server: server, hubs: hubs, faxes: faxes, phoneAPI: phoneAPI}
+	return &testServer{Server: server, hubs: hubs, messages: messages, faxes: faxes, phoneAPI: phoneAPI}
 }
 
 type client struct {
@@ -372,6 +373,83 @@ func TestFaxSendAndDocument(t *testing.T) {
 	resp, _ = c.do(http.MethodPost, "/fax/send", form, contentType)
 	if resp.StatusCode != http.StatusUnprocessableEntity {
 		t.Fatalf("non-pdf fax: %d (want 422)", resp.StatusCode)
+	}
+}
+
+func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
+	server := newTestServer(t)
+
+	// Seed an outbound SMS through the loopback gateway; its receipt
+	// carries the provider_ref the status callback must quote.
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "receipt test"}, nil)
+	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("sms send: %d %s", resp.StatusCode, body)
+	}
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	threads, err := server.messages.ListThreads(context.Background(), owner)
+	if err != nil || len(threads) != 1 {
+		t.Fatalf("seeded threads: %d (err %v)", len(threads), err)
+	}
+	msgs, err := server.messages.ListMessages(context.Background(), owner, threads[0].Thread.ID, 10)
+	if err != nil || len(msgs) != 1 || msgs[0].ProviderRef == "" {
+		t.Fatalf("seeded messages: %d (err %v)", len(msgs), err)
+	}
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(c.do(http.MethodGet, "/partials/messages", nil, ""))
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+
+	// The provider's delivered verdict flips the badge the transcript shows.
+	statusBody, _ := json.Marshal(map[string]string{
+		"provider_ref": msgs[0].ProviderRef, "status": "delivered",
+	})
+	req, _ := http.NewRequest(http.MethodPost, server.URL+"/hooks/message/status", bytes.NewReader(statusBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("message status hook: %d (want 202)", resp.StatusCode)
+	}
+
+	_, body := c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	if !strings.Contains(string(body), "delivered") {
+		t.Fatalf("transcript missing delivered badge: %.300s", body)
+	}
+
+	// Unknown refs, empty refs, and non-verdict statuses are rejected.
+	for name, want := range map[string]int{
+		"unknown ref":  http.StatusNotFound,
+		"empty ref":    http.StatusBadRequest,
+		"sent status":  http.StatusBadRequest,
+		"queued status": http.StatusBadRequest,
+	} {
+		ref := "nope"
+		status := "delivered"
+		switch name {
+		case "empty ref":
+			ref = ""
+		case "sent status":
+			status = "sent"
+		case "queued status":
+			status = "queued"
+		}
+		payload, _ := json.Marshal(map[string]string{"provider_ref": ref, "status": status})
+		req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/message/status", bytes.NewReader(payload))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-secret")
+		if resp, _ := server.Client().Do(req); resp.StatusCode != want {
+			t.Fatalf("%s: %d (want %d)", name, resp.StatusCode, want)
+		}
 	}
 }
 

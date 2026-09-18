@@ -217,6 +217,35 @@ func (s *Service) MarkRead(ctx context.Context, owner domain.Extension, id domai
 	return s.messages.MarkThreadRead(ctx, owner, id)
 }
 
+// DeliveryReceipt applies a provider's verdict (delivered or failed) to
+// the outbound message correlated by provider_ref and notifies listeners,
+// so an open conversation flips its status badge live. errMsg is the
+// provider's failure detail; messages persist the status only, so it is
+// logged for the operator instead.
+func (s *Service) DeliveryReceipt(
+	ctx context.Context, providerRef string, status domain.OutboundStatus, errMsg string,
+) (domain.Message, error) {
+	switch status {
+	case domain.StatusDelivered, domain.StatusFailed:
+	default:
+		return domain.Message{}, fmt.Errorf("%q is not a delivery verdict", status)
+	}
+	msg, err := s.messages.MessageByProviderRef(ctx, providerRef)
+	if err != nil {
+		return domain.Message{}, err
+	}
+	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, status, msg.ProviderRef); err != nil {
+		return domain.Message{}, fmt.Errorf("record delivery status: %w", err)
+	}
+	if status == domain.StatusFailed && errMsg != "" {
+		slog.Warn("messaging: delivery failed", "message", msg.ID.String(),
+			"owner", msg.Owner.String(), "remote", msg.Remote.String(), "error", errMsg)
+	}
+	msg.Status = status
+	s.notify(ctx, msg.Owner, msg.ThreadID)
+	return msg, nil
+}
+
 // AttachmentByID returns one attachment scoped to the owner's messages.
 func (s *Service) AttachmentByID(ctx context.Context, owner domain.Extension, id domain.AttachmentID) (domain.Attachment, error) {
 	return s.messages.AttachmentByID(ctx, owner, id)
