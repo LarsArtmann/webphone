@@ -173,8 +173,8 @@ func TestLoadRejectsInvalidConfigs(t *testing.T) {
 			wantErr: "not one of loopback|webhook",
 		},
 		{
-			name: "webhook mode without url",
-			env:  map[string]string{"WEBPHONE_GATEWAY__MODE": "webhook"},
+			name:    "webhook mode without url",
+			env:     map[string]string{"WEBPHONE_GATEWAY__MODE": "webhook"},
 			wantErr: "webhook_url is required",
 		},
 		{

@@ -58,7 +58,7 @@ grep/view at the cited locations), scope.
 ## b) PARTIALLY DONE 🟡
 
 1. **Cross-repo documentation linkage.**
-   What works: the recording story is fully documented *upstream*
+   What works: the recording story is fully documented _upstream_
    (README:61, FEATURES.md:46, DOMAIN_LANGUAGE.md:33).
    What remains: webphone's own README/FEATURES/AGENTS.md never mention
    that recordings exist at the stack level or where they live — a fresh
@@ -105,12 +105,12 @@ revealed as unwritten-but-implied work.)
 
 1. **The first answer was scoped to the repo, not the product.**
    "Do we support call recording?" got the answer **"No"** — correct for
-   *this repository*, wrong for *the product the user runs*, because the
+   _this repository_, wrong for _the product the user runs_, because the
    consuming stack records server-side. The user had to spend a follow-up
    prompt ("On the nix-international-telephony level?") to get the truth.
    - Severity: answer-quality failure; cost one round trip; no data or
      code damage (session made zero mutations).
-   - Root cause: AGENTS.md *literally documents* the ownership split
+   - Root cause: AGENTS.md _literally documents_ the ownership split
      ("the module there owns config.js rendering…; this repo owns ONLY
      the UI") — the pointer that the product extends beyond this repo was
      in context and I did not apply it to scope the question.
@@ -124,7 +124,7 @@ were runnable/relevant — read-only session), no lost work.
 ## e) WHAT WE SHOULD IMPROVE 🔧
 
 1. **Scope answers to the product, not the checkout.** Pattern: questions
-   phrased as "do we…" in a repo that is a *component* of a documented
+   phrased as "do we…" in a repo that is a _component_ of a documented
    larger stack must start from the stack. Fix: a session habit (and a
    line in webphone AGENTS.md): before answering a capability question,
    enumerate the levels (island / Go server / consuming PBX stack) and
@@ -158,73 +158,73 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 
 **Recording integration (this session's core discovery):**
 
-| #  | Task                                                                                          | Impact | Effort | Category      |
-|----|-----------------------------------------------------------------------------------------------|--------|--------|---------------|
-| 1  | Add a Recordings panel to the webphone UI (list WAVs, mirror the voicemail pattern)            | High   | M      | Feature       |
-| 2  | In-island playback (same-origin audio element; strict CSP already allows it)                   | High   | M      | Feature       |
-| 3  | Live "REC" indicator on the call card while the PBX records that leg                           | High   | M      | Feature       |
-| 4  | Dialpad shortcut for `*97` no-record dial (per-call opt-out exists upstream, invisible in UI)  | Medium | S      | Feature       |
-| 5  | README: document stack-level recording + `/recordings/` location                               | Medium | S      | Documentation |
-| 6  | webphone AGENTS.md: record the two-level recording story as hard-won knowledge                 | Medium | S      | Documentation |
-| 7  | FEATURES.md: add cross-reference row (recordings exist upstream; webphone has no UI)           | Medium | S      | Documentation |
-| 8  | Per-extension recording access via the Go server (phone-api proxy pattern) replacing shared basic auth | High | L | Feature |
-| 9  | Surface retention in UI (recordings are pruned by timers upstream; users should know)          | Low    | M      | Feature       |
-| 10 | README privacy note: `RECORD_STEREO` captures both legs; consent/jurisdiction caveat           | Medium | S      | Documentation |
+| #  | Task                                                                                                   | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
+| 1  | Add a Recordings panel to the webphone UI (list WAVs, mirror the voicemail pattern)                    | High   | M      | Feature       |
+| 2  | In-island playback (same-origin audio element; strict CSP already allows it)                           | High   | M      | Feature       |
+| 3  | Live "REC" indicator on the call card while the PBX records that leg                                   | High   | M      | Feature       |
+| 4  | Dialpad shortcut for `*97` no-record dial (per-call opt-out exists upstream, invisible in UI)          | Medium | S      | Feature       |
+| 5  | README: document stack-level recording + `/recordings/` location                                       | Medium | S      | Documentation |
+| 6  | webphone AGENTS.md: record the two-level recording story as hard-won knowledge                         | Medium | S      | Documentation |
+| 7  | FEATURES.md: add cross-reference row (recordings exist upstream; webphone has no UI)                   | Medium | S      | Documentation |
+| 8  | Per-extension recording access via the Go server (phone-api proxy pattern) replacing shared basic auth | High   | L      | Feature       |
+| 9  | Surface retention in UI (recordings are pruned by timers upstream; users should know)                  | Low    | M      | Feature       |
+| 10 | README privacy note: `RECORD_STEREO` captures both legs; consent/jurisdiction caveat                   | Medium | S      | Documentation |
 
 **In-flight v2 state observed at session start (uncommitted changes):**
 
-| #  | Task                                                                                          | Impact | Effort | Category      |
-|----|-----------------------------------------------------------------------------------------------|--------|--------|---------------|
-| 11 | Review/verify the uncommitted v2 changes (gateway/webhook.go, pbx/client.go, server/*, update.sh) | High | M | Quality       |
-| 12 | Re-run the upstream browser E2E after the v2 switchover (FEATURES marks it PARTIALLY_FUNCTIONAL) | High | L | Quality       |
-| 13 | German translations for the server-rendered tabs (i18n is PARTIALLY_FUNCTIONAL)                | Medium | M      | Feature       |
-| 14 | Bring `docs/status/2026-09-18_15-25_webphone-v2-rebuild-status.md` current with the working tree | Medium | S | Documentation |
-| 15 | Run `nix flake check` + `nix fmt` gate before handing the tree back                            | High   | S      | Quality       |
-| 16 | Review the `.gitignore` modification sitting in the tree                                       | Low    | S      | Cleanup       |
-| 17 | Review the `flake.lock` bump (what moved, is it intended?)                                     | Low    | S      | Cleanup       |
-| 18 | Review `update.sh` changes                                                                     | Low    | S      | Cleanup       |
-| 19 | Replace "heuristic" auto-commit history with per-task commits for in-flight work               | Low    | S      | Cleanup       |
-| 20 | Re-count the 35 asserted island DOM ids after v2 changes (server_test.go contract)             | Medium | S      | Quality       |
+| #  | Task                                                                                              | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 11 | Review/verify the uncommitted v2 changes (gateway/webhook.go, pbx/client.go, server/*, update.sh) | High   | M      | Quality       |
+| 12 | Re-run the upstream browser E2E after the v2 switchover (FEATURES marks it PARTIALLY_FUNCTIONAL)  | High   | L      | Quality       |
+| 13 | German translations for the server-rendered tabs (i18n is PARTIALLY_FUNCTIONAL)                   | Medium | M      | Feature       |
+| 14 | Bring `docs/status/2026-09-18_15-25_webphone-v2-rebuild-status.md` current with the working tree  | Medium | S      | Documentation |
+| 15 | Run `nix flake check` + `nix fmt` gate before handing the tree back                               | High   | S      | Quality       |
+| 16 | Review the `.gitignore` modification sitting in the tree                                          | Low    | S      | Cleanup       |
+| 17 | Review the `flake.lock` bump (what moved, is it intended?)                                        | Low    | S      | Cleanup       |
+| 18 | Review `update.sh` changes                                                                        | Low    | S      | Cleanup       |
+| 19 | Replace "heuristic" auto-commit history with per-task commits for in-flight work                  | Low    | S      | Cleanup       |
+| 20 | Re-count the 35 asserted island DOM ids after v2 changes (server_test.go contract)                | Medium | S      | Quality       |
 
 **From webphone FEATURES.md PLANNED / WORTH_CONSIDERING (already inventoried):**
 
-| #  | Task                                                                                          | Impact | Effort | Category      |
-|----|-----------------------------------------------------------------------------------------------|--------|--------|---------------|
-| 21 | Login rate limiting for `/api/session`                                                        | High   | M      | Security      |
-| 22 | Message delivery-receipt webhook (`provider_ref` stored, status callback unbuilt)              | Medium | M      | Feature       |
-| 23 | Session persistence across restarts (currently RAM-only by design — security tradeoff)        | Medium | L      | Feature       |
-| 24 | Message pagination/virtualization (200-per-thread window)                                     | Low    | M      | Quality       |
-| 25 | vCard contact import/export                                                                   | Low    | M      | Feature       |
-| 26 | History search/filter                                                                         | Medium | M      | Feature       |
-| 27 | Retention/cleanup job (blobs grow unbounded)                                                  | Medium | M      | Quality       |
-| 28 | Richer `/healthz` (store, gateway mode) for load balancers                                    | Low    | S      | Quality       |
-| 29 | Manual theme override toggle (tokens exist, media-query hook only)                            | Low    | S      | Feature       |
-| 30 | Keyboard shortcuts / media keys (carried over from v1)                                        | Low    | M      | Feature       |
-| 31 | Video calls (sip.js supports; UI needs a video surface)                                       | Low    | L      | Feature       |
-| 32 | PWA offline shell (service worker must respect strict CSP)                                    | Low    | L      | Feature       |
-| 33 | sip.js 0.22 evaluation (`./update.sh`; bundle-contract strings must survive)                  | Medium | M      | Quality       |
-| 34 | Voicemail transcripts (only if the PBX API ever provides them)                                | Low    | S      | Feature       |
-| 35 | Fax richer page-count parsing from status payloads                                            | Low    | S      | Feature       |
+| #  | Task                                                                                   | Impact | Effort | Category |
+| -- | -------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| 21 | Login rate limiting for `/api/session`                                                 | High   | M      | Security |
+| 22 | Message delivery-receipt webhook (`provider_ref` stored, status callback unbuilt)      | Medium | M      | Feature  |
+| 23 | Session persistence across restarts (currently RAM-only by design — security tradeoff) | Medium | L      | Feature  |
+| 24 | Message pagination/virtualization (200-per-thread window)                              | Low    | M      | Quality  |
+| 25 | vCard contact import/export                                                            | Low    | M      | Feature  |
+| 26 | History search/filter                                                                  | Medium | M      | Feature  |
+| 27 | Retention/cleanup job (blobs grow unbounded)                                           | Medium | M      | Quality  |
+| 28 | Richer `/healthz` (store, gateway mode) for load balancers                             | Low    | S      | Quality  |
+| 29 | Manual theme override toggle (tokens exist, media-query hook only)                     | Low    | S      | Feature  |
+| 30 | Keyboard shortcuts / media keys (carried over from v1)                                 | Low    | M      | Feature  |
+| 31 | Video calls (sip.js supports; UI needs a video surface)                                | Low    | L      | Feature  |
+| 32 | PWA offline shell (service worker must respect strict CSP)                             | Low    | L      | Feature  |
+| 33 | sip.js 0.22 evaluation (`./update.sh`; bundle-contract strings must survive)           | Medium | M      | Quality  |
+| 34 | Voicemail transcripts (only if the PBX API ever provides them)                         | Low    | S      | Feature  |
+| 35 | Fax richer page-count parsing from status payloads                                     | Low    | S      | Feature  |
 
 **Follow-on ideas grounded in this session's observations:**
 
-| #  | Task                                                                                          | Impact | Effort | Category      |
-|----|-----------------------------------------------------------------------------------------------|--------|--------|---------------|
-| 36 | Serve recordings through the existing phone-api reverse proxy (auth injected server-side)      | Medium | M      | Feature       |
-| 37 | Document the recording filename convention (`uuid_destination.wav`) in webphone docs          | Low    | S      | Documentation |
-| 38 | Open `tests/pbx.nix` and confirm the recording assertions first-hand (close b.2)              | Low    | S      | Quality       |
-| 39 | Add a "recorded" badge to CDR history rows when a WAV exists for that call                    | Medium | M      | Feature       |
-| 40 | Recordings browser inside the upstream `/operator/` window (today: nginx autoindex only)      | Low    | M      | Feature       |
-| 41 | Upstream `natAddress`: real-NAT validation (PARTIALLY_FUNCTIONAL, noticed in upstream FEATURES)| Medium | L      | Quality       |
-| 42 | Run docs-health HARVEST on this report so (f) does not die in a timestamped file              | High   | S      | Documentation |
-| 43 | Compress/prune stereo WAVs (Opus transcode job) — `RECORD_STEREO` doubles size                 | Low    | M      | Quality       |
-| 44 | Document `*97` in the island's user-facing help                                               | Low    | S      | Documentation |
-| 45 | New recording UI strings ship en/de from day one (avoid the tabs' i18n debt)                  | Low    | S      | Quality       |
-| 46 | Post-call SSE nudge: "recording available" when the WAV lands                                 | Low    | M      | Feature       |
-| 47 | Live start/stop recording control from the island (needs event-socket path — bigger design)   | Low    | L      | Feature       |
-| 48 | Cross-link webphone README ↔ upstream recording docs section                                  | Low    | S      | Documentation |
-| 49 | Consider a stack-level capability matrix (island vs server vs PBX) to prevent the (d.1) class of scoping miss | Medium | S | Documentation |
-| 50 | Re-verify this session's two answers after the v2 switchover lands (the island contract may shift) | Low | S | Quality |
+| #  | Task                                                                                                          | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 36 | Serve recordings through the existing phone-api reverse proxy (auth injected server-side)                     | Medium | M      | Feature       |
+| 37 | Document the recording filename convention (`uuid_destination.wav`) in webphone docs                          | Low    | S      | Documentation |
+| 38 | Open `tests/pbx.nix` and confirm the recording assertions first-hand (close b.2)                              | Low    | S      | Quality       |
+| 39 | Add a "recorded" badge to CDR history rows when a WAV exists for that call                                    | Medium | M      | Feature       |
+| 40 | Recordings browser inside the upstream `/operator/` window (today: nginx autoindex only)                      | Low    | M      | Feature       |
+| 41 | Upstream `natAddress`: real-NAT validation (PARTIALLY_FUNCTIONAL, noticed in upstream FEATURES)               | Medium | L      | Quality       |
+| 42 | Run docs-health HARVEST on this report so (f) does not die in a timestamped file                              | High   | S      | Documentation |
+| 43 | Compress/prune stereo WAVs (Opus transcode job) — `RECORD_STEREO` doubles size                                | Low    | M      | Quality       |
+| 44 | Document `*97` in the island's user-facing help                                                               | Low    | S      | Documentation |
+| 45 | New recording UI strings ship en/de from day one (avoid the tabs' i18n debt)                                  | Low    | S      | Quality       |
+| 46 | Post-call SSE nudge: "recording available" when the WAV lands                                                 | Low    | M      | Feature       |
+| 47 | Live start/stop recording control from the island (needs event-socket path — bigger design)                   | Low    | L      | Feature       |
+| 48 | Cross-link webphone README ↔ upstream recording docs section                                                  | Low    | S      | Documentation |
+| 49 | Consider a stack-level capability matrix (island vs server vs PBX) to prevent the (d.1) class of scoping miss | Medium | S      | Documentation |
+| 50 | Re-verify this session's two answers after the v2 switchover lands (the island contract may shift)            | Low    | S      | Quality       |
 
 Harvest note: items 1-10, 21-28, 33, 38, 42, 49 are the strongest
 TODO_LIST candidates; the rest are ROADMAP fuel pending the answers to (g).
@@ -242,7 +242,7 @@ TODO_LIST candidates; the rest are ROADMAP fuel pending the answers to (g).
    (`recording.enable = true`). Whether two-party notification/warning is
    required (jurisdiction, etiquette, on-call UX) is domain knowledge no
    grep can reach; it decides items 3, 10, and whether per-call opt-out
-   should be *more* prominent, not less.
+   should be _more_ prominent, not less.
 3. **Should recording access stay one shared operator credential, or
    become per-extension?**
    Today anyone with the operator basic-auth credential can download every
@@ -253,5 +253,5 @@ TODO_LIST candidates; the rest are ROADMAP fuel pending the answers to (g).
 
 ---
 
-*Point-in-time snapshot. Section (f) is the HARVEST input for
-`TODO_LIST.md` / `ROADMAP.md` (item 42).*
+_Point-in-time snapshot. Section (f) is the HARVEST input for
+`TODO_LIST.md` / `ROADMAP.md` (item 42)._

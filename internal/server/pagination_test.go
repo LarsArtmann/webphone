@@ -24,7 +24,7 @@ func TestThreadPaginationLoadsOlderPages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 205; i++ {
+	for i := range 205 {
 		if err := server.messages.AppendMessage(ctx, domain.Message{
 			ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: owner, Remote: remote,
 			Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,

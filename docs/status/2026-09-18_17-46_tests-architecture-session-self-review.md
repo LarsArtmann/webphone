@@ -53,7 +53,7 @@ stupid / better) are folded into sections (d) and (e).
   in both graphs; domain imports nothing internal; direction correct.
   Rubric 4.0/5. Duplication 0.19% (jscpd, 1 clone — a test helper).
 - **cqrs-lint finding triaged with evidence:** every go-cqrs-lite module
-  is *indirect* (pulled by cqrs-htmx); webphone imports only the root
+  is _indirect_ (pulled by cqrs-htmx); webphone imports only the root
   library (server.go, sse.go) — the deliberate setup-bundle rejection.
   Not a defect.
 - **Two HTML reports shipped:** `docs/status/2026-09-18_16-52_tests-and-
@@ -116,11 +116,11 @@ this session**:
    the failure mode I warn about.
 2. **I ticketed a one-line fix instead of doing it.** The calls.js
    invariant drift (doc says the trio never imports each other; calls.js
-   imports connection.js) got a TODO row — but the *minimal honest
-   action* was correcting AGENTS.md's wording on sight (the 2026-09-06
+   imports connection.js) got a TODO row — but the _minimal honest
+   action_ was correcting AGENTS.md's wording on sight (the 2026-09-06
    owner grant explicitly covers trivial doc staleness, even mid-report).
    I criticized a doc/code split brain and then left it split for a
-   future session. The code-vs-doc *decision* is legitimately yours
+   future session. The code-vs-doc _decision_ is legitimately yours
    (question g2), but the "AGENTS.md is currently inaccurate" fact
    deserved an immediate interim correction.
 3. **AGENTS.md went unupdated despite immediate-update rules** — see
@@ -149,7 +149,7 @@ this session**:
    verified-then-mistranscribed numbers is worse than not verifying.
 2. **Fix on sight, ticket only decisions.** One-line doc corrections
    happen immediately; TODO rows are for work that needs a decision or
-   >5 minutes.
+   > 5 minutes.
 3. **Write session knowledge into AGENTS.md in the same turn it is
    learned** — timestamped reports are where facts go to die.
 4. **Measurements should be reproducible:** the union-coverage merge
@@ -168,6 +168,7 @@ are already in TODO_LIST.md (harvested at 16:52); 11–30 are new from this
 self-review and not yet ticketed.
 
 **Test depth (the product's real gap):**
+
 1. Unit-test the config loader (env `__`, JSON lists, defaults, bad
    input) — High, S.
 2. Unit-test gateway webhook outbound (multipart, Bearer, `provider_ref`)
@@ -188,15 +189,15 @@ self-review and not yet ticketed.
 
 **Boundaries & enforcement:**
 11. Decide + fix the island invariant: move `getUserAgent` to state.js or
-    correct AGENTS.md — High, S.
+correct AGENTS.md — High, S.
 12. Interim AGENTS.md correction marking the current calls.js reality
-    (until 11 lands) — High, S.
+(until 11 lands) — High, S.
 13. Machine-enforce import direction (depguard bans or structure
-    linter) — Medium, M.
+linter) — Medium, M.
 14. Document the cqrs-lint indirect-dep skip in `.buildflow.yml` —
-    Low, S.
+Low, S.
 15. Add a DOM-contract assertion for `#log` English-only rule (the
-    operator-grep contract) — Low, S.
+operator-grep contract) — Low, S.
 
 **Release & supply-chain hygiene:**
 16. Tag v2.0.0 so CHANGELOG compare/release links resolve — Medium, S.
@@ -204,41 +205,41 @@ self-review and not yet ticketed.
 18. Auto-fix the `lo.Reduce` nit in actions.go:240 (`buildflow -s
     go-auto-upgrade --fix`) — Low, S.
 19. Extract the 14-line duplicated test helper while splitting
-    server_test.go — Medium, M (bundled with 20).
+server_test.go — Medium, M (bundled with 20).
 20. Split server_test.go by concern (sse/webhooks/proxy/session) —
-    Medium, M.
+Medium, M.
 21. Decide `reports/coverage.out` lifecycle: artifact to ignore or
-    committed evidence (it is regenerated on every full run) — Low, S.
+committed evidence (it is regenerated on every full run) — Low, S.
 
 **Tooling & measurement:**
 22. Add the `-coverpkg` union metric to the buildflow test-coverage step
-    — Medium, S.
+— Medium, S.
 23. Commit the profile-merge as a tiny script so the union number is
-    reproducible — Medium, S.
+reproducible — Medium, S.
 24. Run `buildflow doctor` and resolve the 9 tools with failed health
-    checks — Medium, S.
+checks — Medium, S.
 25. Inspect `.github/` workflows: confirm CI runs `buildflow --build-mode
     full` (tests + lint fail-closed) — Medium, S.
 26. Confirm whether the upstream browser E2E is wired into any CI, or is
-    manual-only today — Medium, S.
+manual-only today — Medium, S.
 
 **Docs & knowledge:**
 27. Write the union-coverage recipe + cqrs-lint triage into AGENTS.md
-    hard-won knowledge — Medium, S.
+hard-won knowledge — Medium, S.
 28. Record the per-package indirect-coverage table into FEATURES or the
-    next status report so the baseline is comparable over time — Low, S.
+next status report so the baseline is comparable over time — Low, S.
 29. Link both 16:52 reports from the CHANGELOG `Unreleased` entry so the
-    baseline evidence is discoverable from the living docs — Low, S.
+baseline evidence is discoverable from the living docs — Low, S.
 30. After the switchover lands, re-run the upstream browser E2E and
-    record the result as the first E2E evidence in this repo's history —
-    High, M (gated on the switchover TODO).
+record the result as the first E2E evidence in this repo's history —
+High, M (gated on the switchover TODO).
 
 (Stopped at 30: the remaining gaps I could list are restatements of the
 existing 13 TODO_LIST rows — padding to 50 would manufacture work.)
 
 ## g) Up to 3 questions I cannot figure out myself
 
-1. **Coverage gate policy:** should BuildFlow *enforce* a union-coverage
+1. **Coverage gate policy:** should BuildFlow _enforce_ a union-coverage
    floor (e.g. fail below 50% hand-written, or on any regression), or
    stay informational until after the upstream switchover? I can
    implement either; the policy is yours.
@@ -255,4 +256,4 @@ existing 13 TODO_LIST rows — padding to 50 would manufacture work.)
 
 ---
 
-*WAITING FOR INSTRUCTIONS.*
+_WAITING FOR INSTRUCTIONS._

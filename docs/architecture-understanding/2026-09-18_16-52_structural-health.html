@@ -826,7 +826,7 @@
     </style>
   </head>
   <body>
-<!-- Full-bleed top bar -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
       <span>ARCHITECTURE REVIEW</span>
       <span>2026-09-18</span>
@@ -884,11 +884,12 @@
 
         <h2 id="layermap"><span class="num">01</span>Layer Map</h2>
         <p>
-          Internal import graph, extracted this session
-          (<code>go list</code> + import sweep over all non-generated Go, and
-          ES-module imports over the island):
+          Internal import graph, extracted this session (<code>go list</code> +
+          import sweep over all non-generated Go, and ES-module imports over the
+          island):
         </p>
-        <div class="dep-tree"><pre><code>cmd/webphone ──── composition root (127 LOC of wiring only)
+        <div class="dep-tree">
+          <pre><code>cmd/webphone ──── composition root (127 LOC of wiring only)
   └── server ────── HTTP, SSE, webhooks, proxy, panels (11 src files + 1 test, 1,313 src LOC)
         ├── fax ──────── fax jobs → gateway seam → provider
         ├── messaging ── SMS/MMS threads → gateway seam
@@ -900,79 +901,116 @@
         └── domain ───── branded IDs, entities — imports NOTHING internal
 views (templ, generated) → domain, store, pbx
 island JS: main → calls / panels / connection → ice, notify, audio
-                             leaves: state, auth, config, ui, i18n</code></pre></div>
+                             leaves: state, auth, config, ui, i18n</code></pre>
+        </div>
         <p>
           Direction is correct everywhere: stable packages sit at the bottom,
-          <code>domain</code> has zero internal imports (maximally stable,
-          high fan-in), and volatility increases upward toward
-          <code>server</code> and <code>cmd</code>. No cycles in either the
-          Go graph or the island module graph.
+          <code>domain</code> has zero internal imports (maximally stable, high
+          fan-in), and volatility increases upward toward
+          <code>server</code> and <code>cmd</code>. No cycles in either the Go
+          graph or the island module graph.
         </p>
 
         <h2 id="scores"><span class="num">02</span>Rubric Scores</h2>
         <table>
           <thead>
-            <tr><th>Dimension</th><th>Score</th><th>Evidence</th></tr>
+            <tr>
+              <th>Dimension</th>
+              <th>Score</th>
+              <th>Evidence</th>
+            </tr>
           </thead>
           <tbody>
             <tr>
               <td>Dependency Direction</td>
               <td><span class="badge badge-fixed">5</span></td>
-              <td>domain imports nothing internal (verified by sweep); infra depends inward; composition at cmd. Textbook clean architecture for this size.</td>
+              <td>
+                domain imports nothing internal (verified by sweep); infra
+                depends inward; composition at cmd. Textbook clean architecture
+                for this size.
+              </td>
             </tr>
             <tr>
               <td>Cohesion</td>
               <td><span class="badge badge-fixed">5</span></td>
-              <td>Every package passes the one-sentence test; no utils/common/helpers anywhere; server's 1,313 LOC split across 12 focused files (sse, webhooks, proxy, panels...).</td>
+              <td>
+                Every package passes the one-sentence test; no
+                utils/common/helpers anywhere; server's 1,313 LOC split across
+                12 focused files (sse, webhooks, proxy, panels...).
+              </td>
             </tr>
             <tr>
               <td>Coupling</td>
               <td><span class="badge badge-low">4</span></td>
-              <td>server.Deps struct injection; stores constructed, not globalled. Docked: calls.js imports connection.js; templ views read pbx client types directly.</td>
+              <td>
+                server.Deps struct injection; stores constructed, not globalled.
+                Docked: calls.js imports connection.js; templ views read pbx
+                client types directly.
+              </td>
             </tr>
             <tr>
               <td>Modularity</td>
               <td><span class="badge badge-low">4</span></td>
-              <td>Clear bounded contexts matching the domain (calls, messages, faxes, voicemail, contacts). Docked: boundaries enforced by docs only — the structure linter is skipped in .buildflow.yml.</td>
+              <td>
+                Clear bounded contexts matching the domain (calls, messages,
+                faxes, voicemail, contacts). Docked: boundaries enforced by docs
+                only — the structure linter is skipped in .buildflow.yml.
+              </td>
             </tr>
             <tr>
               <td>Composability</td>
               <td><span class="badge badge-low">4</span></td>
-              <td>The gateway loopback|webhook seam makes the whole product testable with zero PBX; notifier/hubs, sessions, stores all injectable.</td>
+              <td>
+                The gateway loopback|webhook seam makes the whole product
+                testable with zero PBX; notifier/hubs, sessions, stores all
+                injectable.
+              </td>
             </tr>
             <tr>
               <td>Scalability</td>
               <td><span class="badge badge-high">3</span></td>
-              <td>SQLite single-node + in-memory sessions + per-render countUnread scan: right for a per-instance PBX appliance, not horizontal scale. Deliberate, documented tradeoffs.</td>
+              <td>
+                SQLite single-node + in-memory sessions + per-render countUnread
+                scan: right for a per-instance PBX appliance, not horizontal
+                scale. Deliberate, documented tradeoffs.
+              </td>
             </tr>
             <tr>
               <td>Service Orientation</td>
               <td><span class="badge badge-high">3</span></td>
-              <td>Monolith with crisp internal module boundaries; fax/messaging/gateway could be extracted with modest effort if ever needed.</td>
+              <td>
+                Monolith with crisp internal module boundaries;
+                fax/messaging/gateway could be extracted with modest effort if
+                ever needed.
+              </td>
             </tr>
           </tbody>
         </table>
         <p>
           <strong>Verdict: 4.0 / 5 — Good.</strong> No urgent restructuring.
           Address the lowest-scoring dimensions (scalability is a product
-          decision, not a defect; the actionable gaps are boundary
-          enforcement and the two coupling dings below).
+          decision, not a defect; the actionable gaps are boundary enforcement
+          and the two coupling dings below).
         </p>
 
         <h2 id="findings"><span class="num">03</span>Findings</h2>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Important</span>
-          <h3>Island invariant drift: the docs forbid an import the code contains</h3>
+          <h3>
+            Island invariant drift: the docs forbid an import the code contains
+          </h3>
           <div class="where">internal/web/assets/island/app/calls.js:11</div>
           <p>
-            AGENTS.md states <em>"the island's state.js + auth.js exist so
-            calls/ice/connection never import each other"</em>. The graph is
-            acyclic, but calls.js imports
-            <code>getUserAgent</code> from connection.js — a direct edge
-            between two of the three names in the invariant. The boundary
-            holds in spirit (one-way, no cycle) but the letter is already
-            stale, which is exactly how doc-enforced boundaries rot.
+            AGENTS.md states
+            <em
+              >"the island's state.js + auth.js exist so calls/ice/connection
+              never import each other"</em
+            >. The graph is acyclic, but calls.js imports
+            <code>getUserAgent</code> from connection.js — a direct edge between
+            two of the three names in the invariant. The boundary holds in
+            spirit (one-way, no cycle) but the letter is already stale, which is
+            exactly how doc-enforced boundaries rot.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong> Either relocate the accessor into state.js
@@ -984,7 +1022,9 @@ island JS: main → calls / panels / connection → ice, notify, audio
         <div class="issue issue-important">
           <span class="severity severity-important">Important</span>
           <h3>Import direction is enforced by discipline, not by tooling</h3>
-          <div class="where">.buildflow.yml (go-structure-linter skipped via config)</div>
+          <div class="where">
+            .buildflow.yml (go-structure-linter skipped via config)
+          </div>
           <p>
             Nothing fails the build if <code>internal/domain</code> grows an
             import of <code>internal/store</code> tomorrow. The purity that
@@ -993,9 +1033,9 @@ island JS: main → calls / panels / connection → ice, notify, audio
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong> Enable go-structure-linter (documented skip
-            exists, revisit its findings) or add a depguard rule to
-            golangci: internal/domain must import no internal package;
-            internal/store may not import services.
+            exists, revisit its findings) or add a depguard rule to golangci:
+            internal/domain must import no internal package; internal/store may
+            not import services.
           </div>
         </div>
 
@@ -1007,22 +1047,24 @@ island JS: main → calls / panels / connection → ice, notify, audio
             cqrs-lint reports "imports go-cqrs-lite but never calls
             Save/Publish/Dispatch" and a dispatcher version skew. Verified:
             every go-cqrs-lite module is <em>indirect</em>, pulled in by
-            cqrs-htmx itself; webphone imports only the cqrs-htmx root
-            library (server.go, sse.go) — the deliberate, documented
-            setup-bundle rejection. Not a defect; worth recording as a
-            documented skip so the warnings stop recurring as noise.
+            cqrs-htmx itself; webphone imports only the cqrs-htmx root library
+            (server.go, sse.go) — the deliberate, documented setup-bundle
+            rejection. Not a defect; worth recording as a documented skip so the
+            warnings stop recurring as noise.
           </p>
         </div>
 
         <div class="issue issue-nice">
           <span class="severity severity-nice">Nice to have</span>
           <h3>Presentation reads PBX DTOs directly</h3>
-          <div class="where">internal/web/views/history.templ, voicemail.templ</div>
+          <div class="where">
+            internal/web/views/history.templ, voicemail.templ
+          </div>
           <p>
-            The generated views import pbx client types to render history
-            and voicemail. Acceptable today (pbx is a stable in-process
-            client); if the PBX API ever churns, map to thin view models at
-            the server boundary first.
+            The generated views import pbx client types to render history and
+            voicemail. Acceptable today (pbx is a stable in-process client); if
+            the PBX API ever churns, map to thin view models at the server
+            boundary first.
           </p>
         </div>
 
@@ -1032,8 +1074,8 @@ island JS: main → calls / panels / connection → ice, notify, audio
           <div class="where">flake.nix:48, package/default.nix:17</div>
           <p>
             Extraction-to-file advisory only. Known deviation documented in
-            AGENTS.md (buildflow nix-hash-fix never writes the hash here).
-            No action required beyond awareness.
+            AGENTS.md (buildflow nix-hash-fix never writes the hash here). No
+            action required beyond awareness.
           </p>
         </div>
 
@@ -1041,28 +1083,60 @@ island JS: main → calls / panels / connection → ice, notify, audio
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Pure domain core</strong>
-              <span>internal/domain imports nothing internal; 41 exported symbols across 4 files (26 in ids.go — branded extension/phone/channel IDs — plus message, fax, contact). Everything may depend on it; it depends on nothing.</span></div>
+            <div class="text">
+              <strong>Pure domain core</strong>
+              <span
+                >internal/domain imports nothing internal; 41 exported symbols
+                across 4 files (26 in ids.go — branded extension/phone/channel
+                IDs — plus message, fax, contact). Everything may depend on it;
+                it depends on nothing.</span
+              >
+            </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>The gateway seam is the architecture's best decision</strong>
-              <span>loopback | webhook modes mean the entire server — SSE, webhooks, proxy, panels — runs and is integration-tested with zero PBX present.</span></div>
+            <div class="text">
+              <strong
+                >The gateway seam is the architecture's best decision</strong
+              >
+              <span
+                >loopback | webhook modes mean the entire server — SSE,
+                webhooks, proxy, panels — runs and is integration-tested with
+                zero PBX present.</span
+              >
+            </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Fail-closed boundaries</strong>
-              <span>/hooks/* return 503 when no secret is configured (tested); every store query is extension-scoped; attachments stream only through session-gated handlers.</span></div>
+            <div class="text">
+              <strong>Fail-closed boundaries</strong>
+              <span
+                >/hooks/* return 503 when no secret is configured (tested);
+                every store query is extension-scoped; attachments stream only
+                through session-gated handlers.</span
+              >
+            </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>The DOM contract is a build tripwire</strong>
-              <span>TestServedPageHoldsTheDomContract asserts all 35 island element ids on every build — the cross-repo browser E2E contract cannot drift silently.</span></div>
+            <div class="text">
+              <strong>The DOM contract is a build tripwire</strong>
+              <span
+                >TestServedPageHoldsTheDomContract asserts all 35 island element
+                ids on every build — the cross-repo browser E2E contract cannot
+                drift silently.</span
+              >
+            </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
-            <div class="text"><strong>Duplication is near zero</strong>
-              <span>jscpd full run: 1 clone, 13 lines, 0.19% — and the clone is a test helper, not product logic.</span></div>
+            <div class="text">
+              <strong>Duplication is near zero</strong>
+              <span
+                >jscpd full run: 1 clone, 13 lines, 0.19% — and the clone is a
+                test helper, not product logic.</span
+              >
+            </div>
           </div>
         </div>
 
@@ -1071,51 +1145,76 @@ island JS: main → calls / panels / connection → ice, notify, audio
           <div class="migration-num">1</div>
           <div class="migration-content">
             <h4>P1 · Resolve the island invariant drift <em>(S)</em></h4>
-            <p>Move getUserAgent to state.js or rewrite the AGENTS.md rule to match reality; re-run TestServedPageHoldsTheDomContract after any island change.</p>
+            <p>
+              Move getUserAgent to state.js or rewrite the AGENTS.md rule to
+              match reality; re-run TestServedPageHoldsTheDomContract after any
+              island change.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
             <h4>P1 · Unit-test the two blind packages <em>(M)</em></h4>
-            <p>config (0% everywhere — env __ nesting, JSON lists, defaults) and gateway webhook-mode outbound (multipart, Bearer, provider_ref receipt). See the companion test status report.</p>
+            <p>
+              config (0% everywhere — env __ nesting, JSON lists, defaults) and
+              gateway webhook-mode outbound (multipart, Bearer, provider_ref
+              receipt). See the companion test status report.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">3</div>
           <div class="migration-content">
             <h4>P2 · Machine-enforce import direction <em>(M)</em></h4>
-            <p>Revisit the go-structure-linter skip or add depguard bans: internal/domain imports no internal package; store never imports fax/messaging/server.</p>
+            <p>
+              Revisit the go-structure-linter skip or add depguard bans:
+              internal/domain imports no internal package; store never imports
+              fax/messaging/server.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">4</div>
           <div class="migration-content">
-            <h4>P2 · Record cqrs-lint noise as a documented skip <em>(S)</em></h4>
-            <p>The go-cqrs-lite findings are indirect-dep noise from the deliberate root-library-only choice; write the skip rationale into .buildflow.yml so sessions stop re-triaging it.</p>
+            <h4>
+              P2 · Record cqrs-lint noise as a documented skip <em>(S)</em>
+            </h4>
+            <p>
+              The go-cqrs-lite findings are indirect-dep noise from the
+              deliberate root-library-only choice; write the skip rationale into
+              .buildflow.yml so sessions stop re-triaging it.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">5</div>
           <div class="migration-content">
             <h4>P3 · pbx.Client error paths <em>(M)</em></h4>
-            <p>Timeouts, 5xx, malformed bodies: only 35% reachable via the integration suite today; the proxy's failure modes deserve direct tests.</p>
+            <p>
+              Timeouts, 5xx, malformed bodies: only 35% reachable via the
+              integration suite today; the proxy's failure modes deserve direct
+              tests.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">6</div>
           <div class="migration-content">
             <h4>P3 · vendorHash extraction <em>(S)</em></h4>
-            <p>nix-checker advisory; purely cosmetic, batch with the next go.mod change.</p>
+            <p>
+              nix-checker advisory; purely cosmetic, batch with the next go.mod
+              change.
+            </p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-09-18 &middot; Dependency graph, coverage profiles,
-          and lint findings all captured this session; companion report:
+          Generated 2026-09-18 &middot; Dependency graph, coverage profiles, and
+          lint findings all captured this session; companion report:
           docs/status/2026-09-18_16-52_tests-and-architecture-status.html
         </footer>
       </main>
     </div>
-</body>
+  </body>
 </html>

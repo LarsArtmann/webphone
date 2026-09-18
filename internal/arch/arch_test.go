@@ -4,7 +4,8 @@
 package arch
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,10 +35,10 @@ func goListInternal(t *testing.T) []listPackage {
 		t.Fatalf("go list: %v", err)
 	}
 	var pkgs []listPackage
-	dec := json.NewDecoder(strings.NewReader(string(out)))
-	for dec.More() {
+	dec := jsontext.NewDecoder(strings.NewReader(string(out)))
+	for dec.PeekKind() != 0 {
 		var pkg listPackage
-		if err := dec.Decode(&pkg); err != nil {
+		if err := json.UnmarshalDecode(dec, &pkg); err != nil {
 			t.Fatal(err)
 		}
 		pkgs = append(pkgs, pkg)
@@ -115,8 +116,8 @@ func TestIslandModulesStayIndependent(t *testing.T) {
 		}
 	}
 
-	for _, module := range strings.Fields(independent) {
-		for _, forbidden := range strings.Fields(independent) {
+	for module := range strings.FieldsSeq(independent) {
+		for forbidden := range strings.FieldsSeq(independent) {
 			if module == forbidden {
 				continue
 			}

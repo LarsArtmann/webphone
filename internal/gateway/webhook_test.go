@@ -250,4 +250,3 @@ func TestFaxWebhookMissingPDFIsAnError(t *testing.T) {
 		t.Error("missing PDF must be an error")
 	}
 }
-

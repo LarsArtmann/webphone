@@ -160,9 +160,9 @@ func (p *flexPages) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 // faxStatusPages collects the field names providers actually use for
 // page counts; the first non-zero wins.
 type faxStatusPages struct {
-	Pages    flexPages `json:"pages"`
+	Pages     flexPages `json:"pages"`
 	PageCount flexPages `json:"page_count"`
-	NumPages flexPages `json:"num_pages"`
+	NumPages  flexPages `json:"num_pages"`
 }
 
 func (p faxStatusPages) count() int {
@@ -176,8 +176,8 @@ func (p faxStatusPages) count() int {
 
 func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
-		Owner       string `json:"owner"`
-		From        string `json:"from"`
+		Owner string `json:"owner"`
+		From  string `json:"from"`
 		faxStatusPages
 		ProviderRef string `json:"provider_ref"`
 		PDFB64      string `json:"pdf_base64"`
