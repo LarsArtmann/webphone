@@ -104,8 +104,9 @@ type Deps struct {
 func New(deps Deps) http.Handler {
 	h := &handlers{
 		deps:         deps,
-		loginLimiter: newKeyedRateLimiter(loginLimit, loginBurst),
-		hookLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
+		loginLimiter:  newKeyedRateLimiter(loginLimit, loginBurst),
+		hookLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
+		eventsLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		unread:       newUnreadCache(5 * time.Second),
 	}
 
@@ -149,7 +150,12 @@ func New(deps Deps) http.Handler {
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
-	open.Handle("GET /events", h.deps.Sessions.Require(http.HandlerFunc(h.events)))
+	// GET /events is rate-limited like the other unauthenticated-by-secret
+	// surfaces: a reconnecting tab (or a broken client) must not churn
+	// unlimited streams. One bucket per peer host reuses the hook budget
+	// (60/min burst 60) — generous for real tabs, bounded for churn.
+	open.Handle("GET /events",
+		h.eventsLimiter.Middleware()(h.deps.Sessions.Require(http.HandlerFunc(h.events))))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
 	// tells the truth about the two backing resources the app needs.
 	readiness := cqrshtmx.ReadinessHandler(

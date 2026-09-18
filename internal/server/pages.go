@@ -13,10 +13,11 @@ import (
 // handlers bundles the deps; every file in this package hangs methods off it.
 type handlers struct {
 	deps Deps
-	// Per-client flood protection for the two unauthenticated-by-session
-	// surfaces: login attempts and inbound webhooks.
-	loginLimiter *httputil.KeyedRateLimiter
-	hookLimiter  *httputil.KeyedRateLimiter
+	// Per-client flood protection for the unauthenticated-by-session
+	// surfaces: login attempts, inbound webhooks, and SSE connects.
+	loginLimiter  *httputil.KeyedRateLimiter
+	hookLimiter   *httputil.KeyedRateLimiter
+	eventsLimiter *httputil.KeyedRateLimiter
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
 }
