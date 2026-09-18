@@ -1,23 +1,27 @@
 # Non-default BuildFlow policy only (rationale per key; do not restate defaults).
 #
-# build_mode: local default is fast. This repo's real gate is
-# `nix flake check` (package build + treefmt + statix + deadnix); it
-# realizes in well under a minute, so there is no fast/full split here.
+# env: templ-components (errorpage) requires encoding/json/v2 until Go 1.27
+# ships it stable; without the experiment every Go step fails to build.
+env:
+  GOEXPERIMENT: jsonv2
+#
+# build_mode: local default is fast; `nix flake check` (go build + tests in
+# the sandbox + treefmt + statix + deadnix) remains the heavyweight gate.
 build_mode: fast
 #
-# exclude: the UI sources in src/ are owned by the flake's treefmt gate
-# (nixfmt + prettier, `nix fmt`): BuildFlow's oxfmt reformats them into a
-# style prettier rejects, so every fix run would re-break checks.format —
-# the same two-formatters-one-file-set war nix-international-telephony
-# fought before excluding its webphone assets there. BuildFlow has no
-# per-tool exclude key, so this global exclude also removes jscpd/lychee
-# coverage of those files — accepted: single-screen app, one HTML file,
-# no outbound links (strict CSP allows same-origin only).
+# exclude: the SIP island sources in internal/web/assets/island/ are owned
+# by the flake's treefmt gate (prettier): BuildFlow's oxfmt would reformat
+# them into a style prettier rejects, re-breaking checks.format on every
+# fix run — the same two-formatters-one-file-set war the static site fought
+# (see git history). The vendored sip.min.js is a third-party bundle;
+# *_templ.go files are generated code.
 exclude:
-  - "src/**"
+  - "internal/web/assets/island/**"
+  - "internal/web/assets/vendor/**"
+  - "**/*_templ.go"
 
 # Whole-tool skips (skip_steps cannot be per-file):
-# - pytest-test: no Python exists in this repo; the consuming stack's VM
-#   suites exercise the served site end to end.
+# - pytest-test: no Python exists; the Go suite plus the upstream browser
+#   E2E (owned by the consuming telephony stack) cover this repo.
 skip_steps:
   - pytest-test
