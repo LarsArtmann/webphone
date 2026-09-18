@@ -1,0 +1,149 @@
+package views
+
+import (
+	"github.com/a-h/templ"
+	"github.com/larsartmann/templ-components/layout"
+	"github.com/larsartmann/templ-components/utils"
+)
+
+// Tab is one switchable content region; navigation swaps them with HTMX
+// partial requests so the SIP island never unloads mid-call.
+type Tab string
+
+const (
+	TabMessages  Tab = "messages"
+	TabFax       Tab = "fax"
+	TabVoicemail Tab = "voicemail"
+	TabHistory   Tab = "history"
+	TabContacts  Tab = "contacts"
+	TabSettings  Tab = "settings"
+)
+
+// AllTabs is the navigation order.
+var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings}
+
+// Label returns the human name of a tab.
+func (t Tab) Label() string {
+	switch t {
+	case TabMessages:
+		return "Messages"
+	case TabFax:
+		return "Fax"
+	case TabVoicemail:
+		return "Voicemail"
+	case TabHistory:
+		return "History"
+	case TabContacts:
+		return "Contacts"
+	case TabSettings:
+		return "Settings"
+	default:
+		return string(t)
+	}
+}
+
+// Path returns the tab's route.
+func (t Tab) Path() string { return "/" + string(t) }
+
+// ShellProps carries everything the outer page needs.
+type ShellProps struct {
+	ActiveTab Tab
+	// SignedIn shows the signed-in extension in the header (empty = the
+	// island still shows its login card).
+	SignedIn string
+	// CSRFToken rides in hx-headers so every HTMX POST is protected.
+	CSRFToken string
+	// TabContent renders the active tab's region.
+	TabContent templ.Component
+	// Unread counts badge the Messages nav item.
+	Unread int
+	// NewVoicemail counts badge the Voicemail nav item.
+	NewVoicemail int
+}
+
+// Shell is the whole application page: header, the persistent SIP island
+// (calls survive tab switches because this markup never unloads), and the
+// HTMX-swapped tab region.
+templ Shell(props ShellProps) {
+	@layout.Base(layout.PageProps{
+		Title:          "WebPhone",
+		Description:    "Self-hosted unified communications: calls, messages, fax and voicemail over SIP/WebRTC.",
+		ThemeColor:     "#0f766e",
+		DarkThemeColor: "#10161a",
+		CSSPath:        "/assets/app.css",
+		HTMXSrc:        "/htmx.min.js",
+		Nonce:          "",
+		SEO:            layout.SEOMeta{NoIndex: true},
+		HeadContent:    headExtras(),
+		BodyDataAttrs:  bodyAttrs(props),
+	}) {
+		<div class="wp-root">
+			<header class="wp-header">
+				<a class="wp-brand" href="/" aria-label="WebPhone home">
+					<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+						<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
+						<path
+							d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
+							class="wp-mark-fg"></path>
+					</svg>
+					<span>WebPhone</span>
+				</a>
+				@if props.SignedIn != "" {
+					<span class="wp-signed-in" data-ext={ templ.Raw(props.SignedIn) }>{ props.SignedIn }</span>
+				}
+			</header>
+			<div class="wp-body">
+				<aside class="wp-island" aria-label="Phone">
+					@PhoneIsland()
+				</aside>
+				<nav class="wp-nav" aria-label="Sections">
+					@NavLinks(props)
+				</nav>
+				<main class="wp-content" id="tab-content">
+					if props.TabContent != nil {
+						@props.TabContent
+					}
+				</main>
+			</div>
+		</div>
+		@IslandScripts()
+	}
+}
+
+templ NavLinks(props ShellProps) {
+	for _, tab := range AllTabs {
+		<a
+			class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
+			href={ tab.Path() }
+			hx-get={ "/partials" + tab.Path() }
+			hx-target="#tab-content"
+			hx-swap="innerHTML show:window:top"
+			hx-push-url={ tab.Path() }
+			data-tab={ string(tab) }
+		>
+			<span>{ tab.Label() }</span>
+			if tab == TabMessages && props.Unread > 0 {
+				<span class="wp-nav-badge">{ fmtInt(props.Unread) }</span>
+			}
+			if tab == TabVoicemail && props.NewVoicemail > 0 {
+				<span class="wp-nav-badge">{ fmtInt(props.NewVoicemail) }</span>
+			}
+		</a>
+	}
+}
+
+// headExtras loads the SSE extension, the island stylesheet (after the
+// Tailwind build so its element rules win), and the tiny shell script that
+// tracks the active nav item across partial swaps.
+templ headExtras() {
+	<script src="/htmx-ext/sse.js" defer></script>
+	<link rel="stylesheet" href="/assets/island/style.css"></link>
+	<script src="/assets/shell.js" defer></script>
+}
+
+// bodyAttrs wires CSRF into every HTMX request.
+func bodyAttrs(props ShellProps) templ.Attributes {
+	return templ.Attributes{
+		"hx-headers": `{"X-CSRF-Token":"` + props.CSRFToken + `"}`,
+	}
+}

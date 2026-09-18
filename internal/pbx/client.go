@@ -1,0 +1,176 @@
+// Package pbx is the server-side client for the per-extension phone API
+// (voicemail, CDR history) that the telephony stack serves. It rides the
+// extension's own SIP credentials via Basic auth — the same contract the
+// browser island uses through the /phone-api proxy.
+package pbx
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+)
+
+// Client talks to one phone API base URL.
+type Client struct {
+	base   *url.URL
+	client *http.Client
+}
+
+// NewClient builds the client; baseURL like "https://pbx.example.com" (the
+// API is mounted at /phone-api there). An empty baseURL means "disabled":
+// every call returns ErrDisabled.
+func NewClient(baseURL string) (*Client, error) {
+	if baseURL == "" {
+		return &Client{}, nil
+	}
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse phone api url: %w", err)
+	}
+	return &Client{
+		base:   parsed.JoinPath("/phone-api"),
+		client: &http.Client{Timeout: 15 * time.Second},
+	}, nil
+}
+
+// ErrDisabled is returned when no phone API is configured.
+var ErrDisabled = fmt.Errorf("phone api not configured")
+
+// Enabled reports whether a phone API is wired up.
+func (c *Client) Enabled() bool { return c != nil && c.base != nil }
+
+// Credentials are the extension's SIP credentials (Basic auth).
+type Credentials struct {
+	Extension string
+	Password  string
+}
+
+// CDR is one call detail record row, field names exactly as the upstream
+// API returns them (see the island's panels.js).
+type CDR struct {
+	Context           string `json:"context"`
+	CallerIDNumber    string `json:"caller_id_number"`
+	CallerIDName      string `json:"caller_id_name"`
+	DestinationNumber string `json:"destination_number"`
+	Start             string `json:"start"`
+	Billsec           int    `json:"billsec"`
+}
+
+// HistoryPage is the /history response shape.
+type HistoryPage struct {
+	Entries []CDR `json:"entries"`
+}
+
+// VoicemailSummary is the /voicemail/{ext}/summary response shape.
+type VoicemailSummary struct {
+	New int `json:"new"`
+	Old int `json:"old"`
+}
+
+// VoicemailMessage is one row of the /voicemail/{ext}/messages response.
+type VoicemailMessage struct {
+	UUID      string `json:"uuid"`
+	CIDNumber string `json:"cid_number"`
+	CIDName   string `json:"cid_name"`
+	Seconds   int    `json:"seconds"`
+	Created   int64  `json:"created"`
+	Read      bool   `json:"read"`
+	AudioURL  string `json:"audio_url"`
+}
+
+// VoicemailPage is the /voicemail/{ext}/messages response shape.
+type VoicemailPage struct {
+	Messages []VoicemailMessage `json:"messages"`
+}
+
+// History fetches the extension's recent calls.
+func (c *Client) History(ctx context.Context, creds Credentials, limit int) (HistoryPage, error) {
+	var page HistoryPage
+	if !c.Enabled() {
+		return page, ErrDisabled
+	}
+	var body struct {
+		Entries []CDR `json:"entries"`
+	}
+	if err := c.getJSON(ctx, creds, fmt.Sprintf("/history?limit=%d", limit), &body); err != nil {
+		return page, err
+	}
+	return HistoryPage{Entries: body.Entries}, nil
+}
+
+// VoicemailSummary fetches the new/old message counts.
+func (c *Client) VoicemailSummary(ctx context.Context, creds Credentials) (VoicemailSummary, error) {
+	var summary VoicemailSummary
+	if !c.Enabled() {
+		return summary, ErrDisabled
+	}
+	err := c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/summary", &summary)
+	return summary, err
+}
+
+// VoicemailMessages lists the extension's voicemail.
+func (c *Client) VoicemailMessages(ctx context.Context, creds Credentials) (VoicemailPage, error) {
+	var page VoicemailPage
+	if !c.Enabled() {
+		return page, ErrDisabled
+	}
+	err := c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/messages", &page)
+	return page, err
+}
+
+// DeleteVoicemail removes one message.
+func (c *Client) DeleteVoicemail(ctx context.Context, creds Credentials, uuid string) error {
+	if !c.Enabled() {
+		return ErrDisabled
+	}
+	return c.do(ctx, creds, http.MethodDelete, "/voicemail/"+creds.Extension+"/messages/"+uuid, nil, nil)
+}
+
+func (c *Client) getJSON(ctx context.Context, creds Credentials, path string, out any) error {
+	return c.do(ctx, creds, http.MethodGet, path, nil, out)
+}
+
+func (c *Client) do(
+	ctx context.Context, creds Credentials, method, path string, in, out any,
+) error {
+	var body []byte
+	if in != nil {
+		encoded, err := json.Marshal(in)
+		if err != nil {
+			return fmt.Errorf("encode request: %w", err)
+		}
+		body = encoded
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.base.JoinPath(path).String(), nil)
+	if err != nil {
+		return fmt.Errorf("build request: %w", err)
+	}
+	req.SetBasicAuth(creds.Extension, creds.Password)
+	if body != nil {
+		req.Body = http.NoBody
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("phone api call: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return fmt.Errorf("phone api rejected the credentials")
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("phone api: HTTP %d", resp.StatusCode)
+	}
+	if out != nil {
+		if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+			return fmt.Errorf("decode phone api response: %w", err)
+		}
+	}
+
+	return nil
+}

@@ -1,3 +1,5 @@
+github.com/Oudwins/tailwind-merge-go v0.2.3 h1:RCiZ/DlLpoJnE5QSs1sRPDtIs3We0RQpsLH7bBWfbUI=
+github.com/Oudwins/tailwind-merge-go v0.2.3/go.mod h1:kkZodgOPvZQ8f7SIrlWkG/w1g9JTbtnptnePIh3V72U=
 github.com/a-h/templ v0.3.1020 h1:ypAT/L5ySWEnZ6Zft/5yfoWXYYkhFNvEFOeeqecg4tw=
 github.com/a-h/templ v0.3.1020/go.mod h1:A2DlK61v+K+NRoGnhmYbNYVmtYHcFO5/AisMvBdDxTM=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
@@ -60,6 +62,10 @@ github.com/larsartmann/httputil/server_timing v0.12.0 h1:1Vqxl4L/3lDw38LlImG/5gl
 github.com/larsartmann/httputil/server_timing v0.12.0/go.mod h1:MBAZ0voPobw5r30Pwa0v3C4c9lHZfgUnHn8S67nqzjQ=
 github.com/larsartmann/templ-components v1.18.0 h1:An0JV1EkWbm4sulf4SOSbI6SZZoJQVKmxe1QbQNhkmw=
 github.com/larsartmann/templ-components v1.18.0/go.mod h1:hrLBd/Usd9nRea3Jg2Qw+zeTpuPdQIbqjmNF0f9D0Ns=
+github.com/larsartmann/templ-components/icons v1.18.0 h1:H38YWeAPqU5X+MKWg73cwiIGsL6TGybJ/Kf66wo6ju4=
+github.com/larsartmann/templ-components/icons v1.18.0/go.mod h1:s4zU0W9ctdcLKfo21E+uz3aJJ2Hw+BDKtvIOJ65SkgQ=
+github.com/larsartmann/templ-components/utils v1.18.0 h1:x3ptwd5S8gqhE0eXeUT7NQ6OQmGd/pvQ76gAQ8GhSn4=
+github.com/larsartmann/templ-components/utils v1.18.0/go.mod h1:LAAnuKcKtPSEgeI9AeGG/j+IEgYAzp8CMVNGqTsqD8M=
 github.com/mattn/go-isatty v0.0.24 h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=
 github.com/mattn/go-isatty v0.0.24/go.mod h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=

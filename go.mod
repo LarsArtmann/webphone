@@ -3,6 +3,7 @@ module github.com/larsartmann/webphone
 go 1.26.7
 
 require (
+	github.com/Oudwins/tailwind-merge-go v0.2.3 // indirect
 	github.com/a-h/templ v0.3.1020 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
@@ -34,6 +35,8 @@ require (
 	github.com/larsartmann/httputil v0.12.0 // indirect
 	github.com/larsartmann/httputil/server_timing v0.12.0 // indirect
 	github.com/larsartmann/templ-components v1.18.0 // indirect
+	github.com/larsartmann/templ-components/icons v1.18.0 // indirect
+	github.com/larsartmann/templ-components/utils v1.18.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
