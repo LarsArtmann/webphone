@@ -12,9 +12,10 @@ site (v1), rebuilt 2026-09-18 as this service on cqrs-htmx (root
 library only) + templ-components `layout.Base` + SQLite (modernc).
 [nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony)
 is the intended consumer: it fronts the binary with TLS and the WSS
-`/sip` proxy. Whether that stack or this repo ships the NixOS module is
-an OPEN decision (see TODO_LIST) — current assumption: the stack owns
-deployment.
+`/sip` proxy. DECIDED 2026-09-18: this repo ships `nixosModules.default`
+(package/nixos-module.nix) so binary and deployment shape stay in sync;
+the stack may import it or keep reverse-proxying — the module is
+additive. Stack-side switchover remains open work (TODO_LIST).
 
 The cqrs-htmx `setup` bundle was rejected deliberately: it wires
 event-sourced usermgmt users, but this product's identity is the PBX
@@ -80,7 +81,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
   succeeds (credentials proven against the PBX); the server keeps them
   in an in-memory TTL store + HttpOnly cookie. `session.js` attaches
   `sse-connect` to `.wp-root` post-login (no reload — the password is
-  memory-only) and reloads the page on logout.
+  memory-only) and reloads the page on logout. Login and hooks are
+  per-IP rate limited (the hook limiter wraps, not sits inside, the
+  secret gate).
+- **Language**: UI language is per extension — `wp-lang` cookie
+  (written by the island's `setLang`, samesite=strict) →
+  `Accept-Language: de*` → English default. `ExtensionHubs` remember
+  the negotiated lang so SSE fragments render in it (the notifier has
+  no request). Service validation reasons stay English: operator-facing,
+  runbook-greppable — same policy as `#log`.
 - **SSE payloads are swap-safe fragments** (`ThreadsList`, `Transcript`,
   `FaxList` — no wrappers, no composers): `sse-swap` replaces
   innerHTML, so a wrapped payload would nest panels and wipe drafts.
@@ -126,9 +135,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
   go.mod/go.sum actually changed.
 - erraudit honors `//nolint:erraudit // reason`; branching-flow honors
   NO nolint — its remaining policy-opinion findings are triaged as a
-  documented skip in `.buildflow.yml` (same for go-structure-linter).
+  documented skip in `.buildflow.yml` (same for go-structure-linter,
+  cqrs-lint, nix-hash-fix).
 - `pbx.Client` owns the timeout-bounded HTTP client; the `/phone-api`
   proxy must ride `PhoneAPI.HTTPClient()`, never `http.DefaultClient`.
+  Join path and query separately — `url.JoinPath` percent-encodes `?`
+  (a test caught upstream receiving `history%3Flimit=30`).
+- i18n dictionaries live in `views/i18n.go`; unknown keys surface
+  themselves in the page (deliberate) and a test keeps en/de in sync —
+  add new keys to BOTH maps.
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony

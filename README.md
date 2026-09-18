@@ -26,12 +26,12 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Fax           | Send PDFs, receive documents, provider status (transmitted/failed), download    |
 | Voicemail     | List, play, delete — straight from the PBX's per-extension API                  |
 | Call history  | Server-side CDR records through the same API                                    |
-| Contacts      | Shared (config) + personal (per extension), click-to-dial into the island       |
+| Contacts      | Shared (config) + personal (per extension), vCard import/export, click-to-dial  |
 | Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail          |
 | Sign-in       | The island's SIP REGISTER proves the credentials; the tabs share that login     |
 | Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)         |
-| i18n / themes | Island UI in English + German; dark + light themes                              |
-| Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`         |
+| i18n / themes | Everything in English + German; dark + light themes with a manual toggle        |
+| Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`, NixOS module |
 
 ## Quick start
 
@@ -206,6 +206,36 @@ location /events {                    # SSE: no buffering
 }
 client_max_body_size 64m;             # attachments (≤5×10 MiB) + PDFs (≤20 MiB)
 ```
+
+### NixOS module
+
+The flake ships `nixosModules.default` so the binary and its deployment
+shape stay in sync:
+
+```nix
+inputs.webphone.nixosModules.default
+
+services.webphone = {
+  enable = true;
+  package = inputs.webphone.packages."${pkgs.system}".webphone;
+  settings = {
+    sip_domain = "pbx.example.com";
+    phone_api_url = "https://pbx.example.com";
+    ice_servers = [{ urls = [ "stun:pbx.example.com:3478" ]; }];
+  };
+  environmentFile = "/run/secrets/webphone-env";   # WEBPHONE_GATEWAY__WEBHOOK_SECRET
+  nginx = {
+    enable = true;
+    hostName = "phone.example.org";
+  };
+};
+```
+
+`settings` is the same JSON config the binary reads (rendered to a
+`WEBPHONE_CONFIG` file); secrets belong in `environmentFile`, not the
+world-readable config. The generated vhost terminates TLS, proxies `/`
+and upgrades the SIP WebSocket path with a long read timeout. A flake
+check evaluates the module, so `nix flake check` catches breakage.
 
 ## Development
 
