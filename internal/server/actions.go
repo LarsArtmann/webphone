@@ -322,8 +322,8 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 
 	imported := 0
 	for _, card := range vcard.Decode(data) {
-		phone, err := domain.ParsePhone(card.Number) //nolint:erraudit // batch import: invalid cards are skipped, not surfaced
-		if err != nil {
+		phone, err := domain.ParsePhone(card.Number)
+		if err != nil { //nolint:erraudit // batch import: invalid cards are skipped, not surfaced
 			continue
 		}
 		// The dialable alphabet also carries letters (SIP user parts);
