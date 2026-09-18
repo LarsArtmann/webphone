@@ -81,19 +81,20 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
 	protected.HandleFunc("POST /api/session", h.createSession)
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
-	protected.Handle("/phone-api/", h.sessionGate(http.HandlerFunc(h.proxyPhoneAPI)))
+	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
 
 	open := http.NewServeMux()
 	open.Handle("/htmx.min.js", cqrshtmx.HTMXScriptHandler())
 	open.Handle("/htmx-ext/sse.js", cqrshtmx.HTMXExtensionHandler("sse"))
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
+	open.HandleFunc("GET /favicon.svg", h.favicon)
 	open.HandleFunc("GET /events", h.events)
 	open.HandleFunc("GET /healthz", h.healthz)
 	open.Handle("/hooks/", h.secretGate(http.HandlerFunc(h.webhooks)))
 
 	root := http.NewServeMux()
-	root.Handle("/", csrf(protected))
+	root.Handle("/", h.deps.Sessions.Attach(csrf(protected)))
 	root.Handle("/htmx.min.js", open)
 	root.Handle("/htmx-ext/sse.js", open)
 	root.Handle("/assets/", open)
@@ -123,10 +124,6 @@ func recovery(next http.Handler) http.Handler {
 		}()
 		next.ServeHTTP(w, r)
 	})
-}
-
-func (h *handlers) sessionGate(next http.Handler) http.Handler {
-	return h.deps.Sessions.Middleware(next)
 }
 
 func (h *handlers) healthz(w http.ResponseWriter, _ *http.Request) {

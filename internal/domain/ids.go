@@ -171,10 +171,16 @@ func GenerateContactID() ContactID { return id.NewID[ContactBrand](nanoid.Must()
 func MustContactID(s string) ContactID { return mustID[ContactBrand](s, "contact") }
 
 // mustID re-brands a stored nanoid-backed identifier, panicking on
-// corruption — malformed ids can only come from a broken database.
+// corruption — malformed ids can only come from a broken database. Both
+// the branded ("Thread:xxx") and raw ("xxx") forms parse.
 func mustID[B any](s string, kind string) id.ID[B, nanoid.ID] {
-	if len(s) != 21 {
+	raw := s
+	if prefix, _, found := strings.Cut(s, ":"); found {
+		_ = prefix
+		raw = s[len(prefix)+1:]
+	}
+	if len(raw) != 21 {
 		panic(fmt.Sprintf("corrupt %s id %q: want 21 nanoid chars", kind, s))
 	}
-	return id.NewID[B](nanoid.ID(s))
+	return id.NewID[B](nanoid.ID(raw))
 }

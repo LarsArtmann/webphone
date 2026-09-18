@@ -20,9 +20,6 @@ func (h *handlers) assets() http.Handler {
 	vendorServer := http.FileServerFS(assets.FS())
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /favicon.svg", func(w http.ResponseWriter, r *http.Request) {
-		serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
-	})
 	// /assets/island/... → the island tree (app/*.js, style.css)
 	mux.Handle("/assets/island/", http.StripPrefix("/assets/island/", fileServer))
 	// /assets/vendor/... → vendored sip.min.js + license notice
@@ -58,4 +55,9 @@ func noStore(next http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-cache")
 		next.ServeHTTP(w, r)
 	})
+}
+
+// favicon serves the embedded island favicon at the site root.
+func (h *handlers) favicon(w http.ResponseWriter, r *http.Request) {
+	serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
 }

@@ -117,10 +117,21 @@ func TokenFromRequest(r *http.Request) string {
 	return cookie.Value
 }
 
-// Middleware gates a handler behind a live session: it stashes the session
-// in the context and rejects anonymous requests with 401 (HTMX clients see
-// the error; the island shows the login card).
-func (store *Store) Middleware(next http.Handler) http.Handler {
+// Attach stashes a live session (when the request carries one) into the
+// context and always continues — pages render for anonymous visitors too.
+// Handlers that need a session call From and reject themselves.
+func (store *Store) Attach(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if sess, ok := store.Get(TokenFromRequest(r)); ok {
+			r = r.WithContext(With(r.Context(), sess))
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Require gates a handler behind a live session: anonymous requests get a
+// 401.
+func (store *Store) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := store.Get(TokenFromRequest(r))
 		if !ok {
