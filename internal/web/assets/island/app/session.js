@@ -60,6 +60,32 @@ function connectLiveUpdates() {
   if (window.htmx) window.htmx.process(root);
 }
 
+// --- SSE live indicator ----------------------------------------------------
+// Live tab updates deserve their own visibility, separate from SIP
+// registration: the feed can drop while calls keep working. htmx's SSE
+// extension fires htmx:sseOpen/-Close/-Error on the sse-connect element
+// and they bubble, so one document-level listener covers both the
+// server-rendered feed and the post-login dynamic attach. The pill is
+// created here (JS-only) so the served markup — and with it the DOM
+// contract and the upstream E2E — is untouched.
+export function initSseLiveIndicator() {
+  if (document.getElementById("wp-sse-live")) return;
+  const pill = document.createElement("div");
+  pill.id = "wp-sse-live";
+  pill.title = "live tab updates";
+  pill.setAttribute("aria-hidden", "true");
+  document.addEventListener("htmx:sseOpen", () => {
+    pill.dataset.live = "1";
+  });
+  document.addEventListener("htmx:sseClose", () => {
+    delete pill.dataset.live;
+  });
+  document.addEventListener("htmx:sseError", () => {
+    delete pill.dataset.live;
+  });
+  document.body.append(pill);
+}
+
 // The server renders the CSRF token into <meta name="csrf-token">; the
 // nosurf double-submit cookie pairs with it.
 function csrfToken() {

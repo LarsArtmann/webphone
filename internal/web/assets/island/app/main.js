@@ -22,7 +22,11 @@ import {
   renderHistory,
 } from "./panels.js";
 import { requestNotifications, titleFlashStop } from "./notify.js";
-import { createSession, destroySession } from "./session.js";
+import {
+  createSession,
+  destroySession,
+  initSseLiveIndicator,
+} from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
 import { els, log, setRegStatus } from "./ui.js";
@@ -121,6 +125,7 @@ els.reject.addEventListener("click", () => {
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 
 initShortcuts();
+initSseLiveIndicator();
 
 els.keypad.querySelectorAll("button[data-tone]").forEach((button) => {
   button.addEventListener("click", () => sendDtmf(button.dataset.tone));

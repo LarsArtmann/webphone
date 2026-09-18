@@ -631,3 +631,29 @@ button.small {
     transform: none;
   }
 }
+
+/* --- sse live indicator ----------------------------------------------------- */
+
+/* Live tab updates pill (created by session.js — never in served markup,
+   so the DOM contract and the upstream E2E stay untouched). Dimmed by
+   default; lit only while the SSE feed is actually connected. */
+#wp-sse-live {
+  position: fixed;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 9999px;
+  background: var(--muted, #9ca3af);
+  opacity: 0.45;
+  transition:
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+  pointer-events: none;
+  z-index: 60;
+}
+
+#wp-sse-live[data-live="1"] {
+  background: var(--ok, #22c55e);
+  opacity: 1;
+}
