@@ -69,6 +69,20 @@ every build; it is the local tripwire, not a replacement for the E2E.
 
 ## Architecture invariants
 
+- **Middleware chain** (server `New`): `RequestLoggingSlog` outermost →
+  `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` → routes. Adopted
+  2026-09-18 per the Pareto plan (links below): panics log full stacks
+  and re-raise `http.ErrAbortHandler`; every request logs exactly one
+  line (method/path/status/duration — never bodies/credentials); the
+  login/hook limiters are `httputil.KeyedRateLimiter` with port-stripped
+  peer-host keys (`remoteHostKey` — port-qualified keys would silently
+  disable limiting behind the stack's proxy; flip to
+  `KeyExtractorFromClientIP` only once the stack proves XFF
+  sanitization); `/healthz` is honest readiness (`sqlite` ping +
+  `blob-dir` write probe, 503 names the failing check, library JSON
+  shape); `/events` rides `Broadcaster.ServeSSE` (its `connected`
+  handshake frame is additive; htmx sse-swap listeners ignore it;
+  payloads stay swap-safe fragments).
 - **The island never unloads.** Tab navigation swaps partials into
   `#tab-content` via HTMX; the SIP island lives outside that region so
   calls survive tab switches. Deep links (`/messages`, `/fax`, …)
@@ -118,6 +132,18 @@ every build; it is the local tripwire, not a replacement for the E2E.
 
 ## Hard-won knowledge
 
+- cqrs-htmx audit trail: deep-dive
+  `docs/research/2026-09-18_cqrs-htmx-deep-dive.html`, execution plan
+  `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`.
+  Adoption posture: middleware + assets only; the `setup` bundle, CQRS
+  dispatch layer and usermgmt stay rejected (split-brain identity, see
+  above); security presets are NEVER adopted wholesale — the library's
+  `RecommendedPermissionsPolicy` denies `microphone`, which would kill
+  the WebRTC phone.
+- Verify dependency internals at the CONSUMED tag (module cache or
+  `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
+  over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only
+  exists on master — tag-checking before the port caught it.
 - `GOEXPERIMENT=jsonv2` is required for every `go` command —
   templ-components/errorpage needs `encoding/json/v2`.
 - `.templ` files must NOT import `github.com/a-h/templ` (the generator

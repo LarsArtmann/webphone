@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- cqrs-htmx middleware adoption (the 2026-09-18 Pareto plan's 1%/4%/20%
+  tiers, `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`):
+  the hand-rolled panic `recovery()` is now `cqrshtmx.RecoveryMiddleware`
+  (full stack trace + method/path in the log, `http.ErrAbortHandler`
+  re-raised per net/http convention); `cqrshtmx.RequestLoggingSlog` sits
+  outermost so every request leaves one structured log line (200/404/401/
+  429/SSE disconnects) with no bodies or credentials; the 83-line
+  `keyedLimiter` is deleted in favor of `httputil.KeyedRateLimiter`
+  (TTL-evicted per-key buckets, `MaxKeys`-cappable, computed
+  `Retry-After`; keys stay port-stripped peer hosts until the stack
+  proves XFF sanitization); `/healthz` no longer answers a constant "ok" —
+  it serves `cqrshtmx.ReadinessHandler` with named `sqlite` (ping) and
+  `blob-dir` (write probe) checks, 503 bodies name the failing check;
+  and the SSE `events` handler's 36-line hand loop collapsed onto
+  `Broadcaster.ServeSSE` (adds the library's `connected` handshake frame;
+  `threads`/`thread`/`fax`/`voicemail` payloads untouched; no `retry:`
+  hint at v4.9.0 — tag-verified).
+
 ### Added
 
 - Message delivery receipts: providers call `/hooks/message/status`
