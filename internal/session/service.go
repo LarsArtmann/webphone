@@ -34,16 +34,18 @@ type Session struct {
 	ExpiresAt time.Time
 }
 
-// Store keeps sessions in memory with TTL-based expiry.
+// Store keeps sessions in memory with TTL-based expiry. Sessions are
+// stored by value: small, immutable after creation, and immune to
+// nil-dereference by construction.
 type Store struct {
 	mu       sync.RWMutex
-	sessions map[string]*Session
+	sessions map[string]Session
 	ttl      time.Duration
 }
 
 // NewStore builds the session store.
 func NewStore(ttl time.Duration) *Store {
-	return &Store{sessions: make(map[string]*Session), ttl: ttl}
+	return &Store{sessions: make(map[string]Session), ttl: ttl}
 }
 
 // Create mints a session for the extension and returns its token.
@@ -57,7 +59,7 @@ func (s *Store) Create(extension domain.Extension, password string) (string, err
 	now := time.Now()
 	s.mu.Lock()
 	s.gcLocked(now)
-	s.sessions[token] = &Session{
+	s.sessions[token] = Session{
 		Extension: extension,
 		Password:  password,
 		CreatedAt: now,
@@ -73,13 +75,10 @@ func (s *Store) Get(token string) (Session, bool) {
 	s.mu.RLock()
 	sess, ok := s.sessions[token]
 	s.mu.RUnlock()
-	if !ok {
+	if !ok || time.Now().After(sess.ExpiresAt) {
 		return Session{}, false
 	}
-	if time.Now().After(sess.ExpiresAt) {
-		return Session{}, false
-	}
-	return *sess, true
+	return sess, true
 }
 
 // Delete drops a session (logout).

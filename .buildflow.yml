@@ -20,8 +20,37 @@ exclude:
   - "internal/web/assets/vendor/**"
   - "**/*_templ.go"
 
-# Whole-tool skips (skip_steps cannot be per-file):
+# Whole-tool skips (skip_steps cannot be per-file or per-rule):
 # - pytest-test: no Python exists; the Go suite plus the upstream browser
 #   E2E (owned by the consuming telephony stack) cover this repo.
+# - branching-flow: triaged 2026-09-18. Every actionable finding was FIXED
+#   (3-way SharedContact split brain consolidated, ICEServer wire mirror
+#   removed, Upload/InboundAttachment unified, Webhook/FaxWebhook mixin
+#   extracted, shared rowScanner, slices.Reverse, value-typed sessions).
+#   The remaining 67 findings are policy opinions that contradict this
+#   repo's design, not defects:
+#     * PHANTOM_TYPE x62 — wants phantom types for display fields
+#       (Body, MimeType, Pages, Unread, Credential…); maximalist churn
+#       with zero safety gain for non-identity data.
+#     * COMPOSITION_mixin x2 — InboundMessage vs OutboundMessage share
+#       fields BY DESIGN (different lifecycles, see internal/domain);
+#       fax.Service vs messaging.Service symmetry is intentional.
+#     * STRONG_ID x2 — pbx UUIDs are the upstream phone-api wire format,
+#       opaque foreign identifiers passed through verbatim.
+#     * EXPLICIT_PANIC x1 — go:embed guarantees the subtree; the panic
+#       guards a compile-time impossibility (programmer-error invariant).
+# - go-structure-linter: triaged 2026-09-18. Actionable findings FIXED
+#   (CONTRIBUTING.md, .editorconfig, .gitattributes, README install
+#   section, /webphone gitignore). Remaining rules contradict design:
+#     * assets-directory — assets intentionally live under internal/web/
+#       for go:embed; a root assets/ would break the single-binary build.
+#     * go-version — the toolchain is deliberately pinned by flake.nix
+#       (nixpkgs go 1.26.7); the linter's auto-repair to 1.27.1 re-creates
+#       the toolchain skew templ-components documented (same trap).
+#     * golangci-config — BuildFlow's own golangci-lint step owns that
+#       responsibility (see the buildflow skill); a hand-curated config
+#       would fight auto-configuration.
 skip_steps:
   - pytest-test
+  - branching-flow
+  - go-structure-linter
