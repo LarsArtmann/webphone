@@ -825,3 +825,234 @@
       }
     </style>
   </head>
+
+  <body>
+    <div class="top-bar">
+      <span>PARETO PLAN</span>
+      <span>2026-09-18</span>
+      <span>webphone → unified communications (Go rebuild)</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#decision">Stack decision</a>
+          <a href="#architecture">Target architecture</a>
+          <a href="#datamodel">Data model</a>
+          <a href="#tiers">Pareto tiers</a>
+          <a href="#plan">Comprehensive plan</a>
+          <a href="#graph">Execution graph</a>
+          <a href="#remaining">Everything else</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Rebuild plan</div>
+          <h1>WebPhone → Unified Communications</h1>
+          <p class="hero-subtitle">
+            Rebuild the static SIP.js softphone as a Go service: phone, SMS/MMS
+            threads, fax, voicemail, history, contacts and settings — one binary,
+            one page, zero page reloads.
+          </p>
+        </div>
+
+        <section id="summary">
+          <h2>Summary</h2>
+          <p>
+            The current webphone is a static site: the browser speaks SIP/WebRTC
+            directly and reads voicemail/history from the PBX's phone-api.
+            That architecture cannot do SMS/MMS threads, fax documents or
+            attachments — there is no server to persist or broker them. The
+            rebuild makes the webphone a Go application (templ + HTMX +
+            templ-components + cqrs-htmx transport) that keeps the proven
+            SIP.js call island byte-for-byte where it matters (same DOM ids,
+            same bundle contract) and grows server-rendered tabs around it.
+          </p>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="label">Tasks</div>
+              <div class="num">16</div>
+            </div>
+            <div class="stat-card stat-good">
+              <div class="label">1% tier → parity</div>
+              <div class="num">3</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">4% tier → SMS live</div>
+              <div class="num">5</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="label">20% tier → long tail</div>
+              <div class="num">8</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="decision">
+          <h2>Stack decision</h2>
+          <div class="card card-solution">
+            <h3>Adopted</h3>
+            <ul>
+              <li><strong>templ + templ-components</strong> — full UI kit (121 components, Tailwind v4, CSP-safe, dark mode)</li>
+              <li><strong>cqrs-htmx root library</strong> — command/query HTTP binding, CSRF, SSE broadcaster, embedded HTMX script, security headers</li>
+              <li><strong>go-cqrs-lite dispatchers</strong> — command/query seams behind every tab action</li>
+              <li><strong>samber/do</strong> DI composition root, <strong>koanf</strong> config, <strong>slog</strong> logging</li>
+              <li><strong>modernc.org/sqlite</strong> — pure-Go persistence (threads, messages, faxes, contacts)</li>
+              <li><strong>net/http ServeMux</strong> routing (cqrs-htmx's documented native shape)</li>
+            </ul>
+          </div>
+          <div class="card card-problem">
+            <h3>Rejected: cqrs-htmx <code>setup</code> bundle</h3>
+            <p>
+              <code>setup.New</code> wires event-sourced <em>usermgmt</em> users
+              (registration, WebAuthn/TOTP, admin panel, dashboard). The
+              softphone's identity is the PBX extension + directory password —
+              a second user database would be a split brain: two identity
+              sources, two passwords, two truths. The root library keeps the
+              transport value (handlers, CSRF, SSE, HTMX embed) without owning
+              identity. Session = extension credentials validated by the PBX
+              itself (successful SIP REGISTER via the island, phone-api 401s
+              on everything else).
+            </p>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <h2>Target architecture</h2>
+          <pre class="code">Browser (one page, zero reloads — tab swaps are HTMX partials)
+├─ SIP call island (src/app/*.js, ported ~verbatim, same DOM contract)
+│    REGISTER/INVITE/REFER/DTMF direct to PBX over wss://…/sip
+│    calls survive tab switches (island never unloads)
+└─ templ shell + tabs: Phone · Messages · Fax · Voicemail · History · Contacts · Settings
+
+Go service (single binary)
+├─ session store (in-memory, cookie) — extension creds, gate middleware
+├─ /phone-api/* proxy (injects Basic auth from session) — island panels unchanged
+├─ messaging service — threads, SMS/MMS, attachments (SQLite)
+│    └─ MessageGateway: loopback (dev) | webhook (provider/PBX bridge)
+├─ fax service — jobs, PDF documents (SQLite + spool dir)
+│    └─ FaxGateway: loopback | webhook
+├─ phone-api client — voicemail, CDR history (server-side, for tabs)
+├─ inbound webhooks /hooks/message /hooks/fax (shared secret)
+└─ SSE /events — message, fax, voicemail events → live tab updates</pre>
+          <p>
+            Gateways are the plugin seam: FreeSWITCH bridges (mod_sms chatplan,
+            spandsp fax) or any HTTP provider implement one small JSON contract;
+            loopback mode makes the whole UI work locally with zero PBX.
+          </p>
+        </section>
+
+        <section id="datamodel">
+          <h2>Data model (first-principles pass)</h2>
+          <ul>
+            <li><strong>Thread</strong> — per extension × remote number; lifecycle: created on first message; fields: last activity, unread count. Conversation axis only.</li>
+            <li><strong>Message</strong> — belongs to one thread; <code>Channel</code> (SMS|MMS) derived from attachments (empty = SMS); <code>Direction</code> (in|out); outbound carries <code>Status</code> (queued|sent|delivered|failed) — inbound never does (make impossible states unrepresentable: separate types).</li>
+            <li><strong>Attachment</strong> — belongs to one message; content-addressed file on disk + mime/size metadata.</li>
+            <li><strong>FaxJob</strong> — document delivery, not a conversation: direction, remote, status machine (queued→sending→transmitted|failed | received), PDF path, provider ref.</li>
+            <li><strong>Contact</strong> — per-extension personal contact (name, number); shared contacts stay server config.</li>
+            <li>Branded IDs (go-branded-id style) for Thread/Message/FaxJob; ULID storage keys; E.164-normalized remote numbers as thread keys.</li>
+          </ul>
+        </section>
+
+        <section id="tiers">
+          <h2>Pareto tiers</h2>
+          <div class="callout callout-solution">
+            <strong>1% → 51%</strong> — Go skeleton serves the island verbatim:
+            same page behavior, same E2E contract, new foundation. Everything
+            else stacks on this.
+          </div>
+          <div class="callout callout-solution">
+            <strong>4% → 64%</strong> — sessions + phone-api proxy + messaging
+            end-to-end with loopback gateway: the app now <em>answers</em> the
+            "everything" question (SMS threads live, MMS/fax seams in place).
+          </div>
+          <div class="callout">
+            <strong>20% → 80%</strong> — MMS attachments, fax send/inbox,
+            voicemail/history/contacts/settings tabs, SSE liveness, provider
+            webhooks, tests + gates + docs.
+          </div>
+        </section>
+
+        <section id="plan">
+          <h2>Comprehensive plan</h2>
+          <table class="tbl">
+            <thead>
+              <tr><th>#</th><th>Task</th><th>Tier</th><th>Impact</th><th>Effort</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>T1</td><td>Go module + flake: buildGoModule, vendor, GOEXPERIMENT=jsonv2, .buildflow.yml</td><td>1%</td><td>foundational</td><td>M</td></tr>
+              <tr><td>T2</td><td>Island asset pipeline: esbuild stage → go:embed + served-page contract smoke test</td><td>1%</td><td>keeps E2E contract</td><td>M</td></tr>
+              <tr><td>T3</td><td>App shell: templ Base, sidebar nav (HTMX partial swaps), island pane, Tailwind CSS build (teal accent)</td><td>1%</td><td>the product surface</td><td>L</td></tr>
+              <tr><td>T4</td><td>Session service: /api/session POST/DELETE, cookie gate middleware, island session.js hook</td><td>4%</td><td>auth spine</td><td>M</td></tr>
+              <tr><td>T5</td><td>PBX integration: /phone-api proxy with Basic injection + /config.js rendered from koanf</td><td>4%</td><td>island parity</td><td>M</td></tr>
+              <tr><td>T6</td><td>Domain types + SQLite stores + migrations (threads, messages, attachments, faxes, contacts)</td><td>4%</td><td>data spine</td><td>L</td></tr>
+              <tr><td>T7</td><td>Messaging service: send/receive, thread upsert, unread counts, loopback MessageGateway</td><td>4%</td><td>SMS works</td><td>L</td></tr>
+              <tr><td>T8</td><td>Messages UI: thread list, thread view, composer, optimistic send, partial rendering</td><td>4%</td><td>the headline feature</td><td>L</td></tr>
+              <tr><td>T9</td><td>MMS: attachment upload (multipart), content-addressed store, bubble rendering, download</td><td>20%</td><td>MMS works</td><td>M</td></tr>
+              <tr><td>T10</td><td>Fax service: job state machine, PDF spool, loopback + webhook FaxGateway</td><td>20%</td><td>fax works</td><td>M</td></tr>
+              <tr><td>T11</td><td>Fax UI: PDF upload form, inbox/outbox, status badges, document download</td><td>20%</td><td>fax visible</td><td>M</td></tr>
+              <tr><td>T12</td><td>Voicemail / History / Contacts / Settings tabs via server-side phone-api client</td><td>20%</td><td>parity + upgrade</td><td>L</td></tr>
+              <tr><td>T13</td><td>SSE hub + htmx sse ext: live threads, fax updates, voicemail badge</td><td>20%</td><td>feels alive</td><td>M</td></tr>
+              <tr><td>T14</td><td>Inbound webhooks (/hooks/message, /hooks/fax) + outbound provider gateway, shared-secret auth</td><td>20%</td><td>production path</td><td>M</td></tr>
+              <tr><td>T15</td><td>Tests: domain table tests, service tests (sqlite), handler httptest, contract smoke</td><td>20%</td><td>trust</td><td>L</td></tr>
+              <tr><td>T16</td><td>Gates + docs: buildflow green, nix build, flake check, README/FEATURES/TODO/CHANGELOG/AGENTS</td><td>20%</td><td>shippable</td><td>M</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="graph">
+          <h2>Execution graph</h2>
+          <img src="2026-09-18_08-31_webphone-uc-rebuild.svg" alt="D2 execution graph: three tiers, T1→T16 with dependencies" style="max-width:100%;height:auto;border:1px solid var(--border);" />
+        </section>
+
+        <section id="remaining">
+          <h2>Everything else (explicitly out of this pass)</h2>
+          <ul>
+            <li>Server-side SIP stack (Go REGISTER/MESSAGE) — the browser island stays the SIP endpoint; a Go SIP UA is a separate project.</li>
+            <li>Browser E2E with a live PBX — owned by the consuming stack's suite; this repo ships the contract smoke test instead.</li>
+            <li>German translations for the new tabs (island stays en/de) — TODO_LIST.</li>
+            <li>Session persistence across restarts (SQLite sessions) — in-memory v1, TODO_LIST.</li>
+            <li>FreeSWITCH ESL adapter implementation — the webhook contract replaces it until a live-PBX verification loop exists (verify-before-filing).</li>
+          </ul>
+          <div class="footer">
+            <span>Pareto plan — point-in-time snapshot 2026-09-18 08:31</span>
+            <span>New durable tasks go to TODO_LIST.md, not here.</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = Array.prototype.slice.call(nav.querySelectorAll("a[href^='#']"));
+        var sections = links
+          .map(function (l) { return document.getElementById(l.getAttribute("href").slice(1)); })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (l) {
+                  l.classList.toggle("active", l.getAttribute("href") === "#" + entry.target.id);
+                });
+              }
+            });
+          },
+          { rootMargin: "-10% 0px -70% 0px" }
+        );
+        sections.forEach(function (s) { observer.observe(s); });
+      });
+    </script>
+  </body>
+</html>
