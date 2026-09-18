@@ -208,3 +208,24 @@ func probeBlobDir(root string) error {
 	}
 	return os.Remove(name)
 }
+
+// versionHandler reports build metadata for the operator's curl one-liner
+// (library DebugHandler pattern): module version, Go version, module path.
+// Captured at construction time — it is build info, not live state.
+func versionHandler() http.HandlerFunc {
+	info, ok := debug.ReadBuildInfo()
+	version := "devel"
+	if ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		version = info.Main.Version
+	}
+	goVersion := runtime.Version()
+	title := "webphone"
+	if ok {
+		title = info.Main.Path
+	}
+	return cqrshtmx.DebugHandler(map[string]any{
+		"version":   version,
+		"goVersion": goVersion,
+		"title":     title,
+	})
+}
