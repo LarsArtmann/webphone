@@ -19,7 +19,7 @@ import (
 
 // Limits for fax uploads.
 const (
-	maxPDFSize = 20 << 20 // 20 MiB
+	MaxPDFSize  = 20 << 20 // 20 MiB
 	faxPageSize = 100
 	pdfSignature = "%PDF-"
 )
@@ -58,9 +58,9 @@ func (s *Service) Send(
 	if !bytes.HasPrefix(pdf, []byte(pdfSignature)) {
 		return domain.FaxJob{}, &ErrInvalidFax{Reason: "only PDF documents can be faxed"}
 	}
-	if len(pdf) > maxPDFSize {
+	if len(pdf) > MaxPDFSize {
 		return domain.FaxJob{}, &ErrInvalidFax{
-			Reason: fmt.Sprintf("PDF larger than %d MiB", maxPDFSize>>20),
+			Reason: fmt.Sprintf("PDF larger than %d MiB", MaxPDFSize>>20),
 		}
 	}
 

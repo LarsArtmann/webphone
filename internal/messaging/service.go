@@ -22,9 +22,9 @@ import (
 
 // Limits keep uploads and bodies honest without a config knob each.
 const (
-	maxAttachments    = 5
-	maxAttachmentSize = 10 << 20 // 10 MiB per attachment
-	maxBodyLength     = 1600
+	MaxAttachments    = 5
+	MaxAttachmentSize = 10 << 20 // 10 MiB per attachment
+	MaxBodyLength     = 1600
 	messagePageSize   = 200
 )
 
