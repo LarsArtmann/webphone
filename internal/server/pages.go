@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"

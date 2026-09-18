@@ -18,26 +18,6 @@ const (
 // AllTabs is the navigation order.
 var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings}
 
-// Label returns the human name of a tab.
-func (t Tab) Label() string {
-	switch t {
-	case TabMessages:
-		return "Messages"
-	case TabFax:
-		return "Fax"
-	case TabVoicemail:
-		return "Voicemail"
-	case TabHistory:
-		return "History"
-	case TabContacts:
-		return "Contacts"
-	case TabSettings:
-		return "Settings"
-	default:
-		return string(t)
-	}
-}
-
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }
 

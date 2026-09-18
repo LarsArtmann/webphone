@@ -38,6 +38,15 @@ if (els.lang) {
     setLang(els.lang.value);
     applyI18n();
     renderCalls();
+    // Re-fetch the open tab partial so the server-rendered tabs switch
+    // language too (htmx.ajax keeps the island alive — no reload).
+    const active = document.querySelector(".wp-nav .wp-nav-link.wp-active");
+    if (active && window.htmx) {
+      window.htmx.ajax("GET", active.getAttribute("hx-get"), {
+        target: "#tab-content",
+        swap: "innerHTML",
+      });
+    }
     log(`language switched to ${els.lang.value}`);
   });
 }

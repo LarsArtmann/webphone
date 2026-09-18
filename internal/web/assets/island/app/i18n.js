@@ -193,6 +193,9 @@ export function getLang() {
 export function setLang(next) {
   lang = next;
   localStorage.setItem(LANG_KEY, lang);
+  // Tell the server: tabs and SSE fragments render in the same language
+  // (cookie read by every request; no reload — the island never unloads).
+  document.cookie = `wp-lang=${lang}; path=/; samesite=strict; max-age=31536000`;
 }
 
 export function applyI18n() {
