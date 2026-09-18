@@ -16,10 +16,10 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		Credential any      `json:"credential,omitempty"`
 	}
 	pbxConfig := struct {
-		SIPDomain     string     `json:"sipDomain"`
-		WebsocketPath string     `json:"websocketPath"`
+		SIPDomain     string      `json:"sipDomain"`
+		WebsocketPath string      `json:"websocketPath"`
 		ICEServers    []iceServer `json:"iceServers,omitempty"`
-		PhoneAPI      bool       `json:"phoneApi"`
+		PhoneAPI      bool        `json:"phoneApi"`
 		Contacts      []struct {
 			Name   string `json:"name"`
 			Number string `json:"number"`

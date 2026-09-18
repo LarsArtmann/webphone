@@ -111,7 +111,7 @@ type faxScanner interface{ Scan(dest ...any) error }
 func scanFax(row faxScanner) (domain.FaxJob, error) {
 	var (
 		id, owner, remote, direction, status string
-		documentPath, providerRef, errMsg   string
+		documentPath, providerRef, errMsg    string
 		pages                                int
 		created, updated                     int64
 	)

@@ -151,7 +151,10 @@ func (c *client) do(method, path string, body []byte, contentType string) (*http
 }
 
 // multipartBody builds a multipart form with fields and files.
-func multipartBody(t *testing.T, fields map[string]string, files map[string]struct{ Name string; Content []byte }) ([]byte, string) {
+func multipartBody(t *testing.T, fields map[string]string, files map[string]struct {
+	Name    string
+	Content []byte
+}) ([]byte, string) {
 	t.Helper()
 	var buf bytes.Buffer
 	writer := multipart.NewWriter(&buf)
@@ -200,14 +203,14 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 func TestStaticAssetsServe(t *testing.T) {
 	c := newClient(t)
 	for path, wantContains := range map[string]string{
-		"/htmx.min.js":            "htmx",
-		"/htmx-ext/sse.js":        "sse",
-		"/assets/app.css":         "--accent",
-		"/assets/shell.js":        "data-dial",
+		"/htmx.min.js":               "htmx",
+		"/htmx-ext/sse.js":           "sse",
+		"/assets/app.css":            "--accent",
+		"/assets/shell.js":           "data-dial",
 		"/assets/island/app/main.js": "loginForm",
 		"/assets/vendor/sip.min.js":  "UserAgent",
-		"/config.js":              "window.PBX_CONFIG",
-		"/favicon.svg":            "<svg",
+		"/config.js":                 "window.PBX_CONFIG",
+		"/favicon.svg":               "<svg",
 	} {
 		resp, body := c.do(http.MethodGet, path, nil, "")
 		if resp.StatusCode != http.StatusOK {

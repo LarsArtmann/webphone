@@ -125,11 +125,11 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 func (h *handlers) settingsPanel() templ.Component {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
 	return views.SettingsPanel(views.SettingsPanelProps{
-		SIPDomain:     h.deps.Config.SIPDomain,
-		WebsocketURL:  websocketURL,
-		GatewayMode:   string(h.deps.Config.Gateway.Mode),
-		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
-		ICEServers:    len(h.deps.Config.ICEServers),
+		SIPDomain:      h.deps.Config.SIPDomain,
+		WebsocketURL:   websocketURL,
+		GatewayMode:    string(h.deps.Config.Gateway.Mode),
+		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
+		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 	})
 }

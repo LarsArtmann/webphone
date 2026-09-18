@@ -18,7 +18,9 @@ export async function createSession(extension, password) {
       body: JSON.stringify({ extension, password }),
     });
     if (!res.ok) {
-      console.warn("webphone: server session not created (HTTP " + res.status + ")");
+      console.warn(
+        "webphone: server session not created (HTTP " + res.status + ")",
+      );
     }
   } catch (err) {
     console.warn("webphone: server session not created (" + err.message + ")");

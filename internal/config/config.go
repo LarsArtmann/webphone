@@ -3,9 +3,9 @@
 package config
 
 import (
-	"strings"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/knadh/koanf/parsers/json"
@@ -28,15 +28,15 @@ const (
 
 // Config is the fully-resolved runtime configuration.
 type Config struct {
-	Addr         string        `json:"addr" koanf:"addr"`
-	DataDir      string        `json:"data_dir" koanf:"data_dir"`
-	SIPDomain    string        `json:"sip_domain" koanf:"sip_domain"`
-	WebsocketPath string       `json:"websocket_path" koanf:"websocket_path"`
-	PhoneAPIURL  string        `json:"phone_api_url" koanf:"phone_api_url"`
-	SessionTTL   time.Duration `json:"session_ttl" koanf:"session_ttl"`
-	ICEServers   []ICEServer   `json:"ice_servers" koanf:"ice_servers"`
-	Contacts     []SharedEntry `json:"contacts" koanf:"contacts"`
-	Gateway      Gateway       `json:"gateway" koanf:"gateway"`
+	Addr          string        `json:"addr" koanf:"addr"`
+	DataDir       string        `json:"data_dir" koanf:"data_dir"`
+	SIPDomain     string        `json:"sip_domain" koanf:"sip_domain"`
+	WebsocketPath string        `json:"websocket_path" koanf:"websocket_path"`
+	PhoneAPIURL   string        `json:"phone_api_url" koanf:"phone_api_url"`
+	SessionTTL    time.Duration `json:"session_ttl" koanf:"session_ttl"`
+	ICEServers    []ICEServer   `json:"ice_servers" koanf:"ice_servers"`
+	Contacts      []SharedEntry `json:"contacts" koanf:"contacts"`
+	Gateway       Gateway       `json:"gateway" koanf:"gateway"`
 }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
@@ -54,9 +54,9 @@ type SharedEntry struct {
 
 // Gateway configures the outbound message/fax gateway.
 type Gateway struct {
-	Mode         GatewayMode `json:"mode" koanf:"mode"`
-	WebhookURL   string      `json:"webhook_url,omitempty" koanf:"webhook_url"`
-	WebhookSecret string     `json:"webhook_secret,omitempty" koanf:"webhook_secret"`
+	Mode          GatewayMode `json:"mode" koanf:"mode"`
+	WebhookURL    string      `json:"webhook_url,omitempty" koanf:"webhook_url"`
+	WebhookSecret string      `json:"webhook_secret,omitempty" koanf:"webhook_secret"`
 }
 
 // defaults keeps the zero-config path working: loopback gateway, local

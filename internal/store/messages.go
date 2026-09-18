@@ -203,8 +203,8 @@ type messageScanner interface{ Scan(dest ...any) error }
 func scanMessage(row messageScanner) (domain.Message, error) {
 	var (
 		id, threadID, owner, remote, direction, channel string
-		body, status, providerRef                      string
-		createdAt                                      int64
+		body, status, providerRef                       string
+		createdAt                                       int64
 	)
 	if err := row.Scan(&id, &threadID, &owner, &remote, &direction, &channel,
 		&body, &status, &providerRef, &createdAt); err != nil {

@@ -4,8 +4,8 @@
 package domain
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 
 	id "github.com/larsartmann/go-branded-id"
 	"github.com/sixafter/nanoid"

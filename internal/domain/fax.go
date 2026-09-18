@@ -51,10 +51,10 @@ type FaxJob struct {
 
 // InboundFax is a received fax document crossing the gateway boundary.
 type InboundFax struct {
-	Owner     Extension
-	From      Phone
-	Pages     int
-	PDFBytes  []byte
-	Received  time.Time
+	Owner       Extension
+	From        Phone
+	Pages       int
+	PDFBytes    []byte
+	Received    time.Time
 	ProviderRef string
 }

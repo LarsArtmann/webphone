@@ -19,8 +19,8 @@ import (
 
 // Limits for fax uploads.
 const (
-	MaxPDFSize  = 20 << 20 // 20 MiB
-	faxPageSize = 100
+	MaxPDFSize   = 20 << 20 // 20 MiB
+	faxPageSize  = 100
 	pdfSignature = "%PDF-"
 )
 
