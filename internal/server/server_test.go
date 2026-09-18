@@ -52,7 +52,10 @@ func newTestServer(t *testing.T) *testServer {
 	return newTestServerWithPhoneAPI(t, "")
 }
 
-func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
+// newTestServerWithPhoneAPI builds the full server; the variadic mutators
+// let a test swap individual Deps (e.g. a closed DB for healthz 503 tests)
+// after the standard wiring but before the handler is built.
+func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string, mutate ...func(*Deps)) *testServer {
 	t.Helper()
 
 	db, err := store.Open(":memory:")
@@ -79,7 +82,7 @@ func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
-	handler := New(Deps{
+	deps := Deps{
 		Config:    cfg,
 		Sessions:  session.NewStore(time.Hour),
 		Messages:  messages,
@@ -90,7 +93,13 @@ func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
 		Shared:    []domain.SharedContact{{Name: "Support", Number: "2000"}},
-	})
+		DB:        db,
+		BlobRoot:  blobs.Root(),
+	}
+	for _, m := range mutate {
+		m(&deps)
+	}
+	handler := New(deps)
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)

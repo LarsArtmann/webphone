@@ -6,11 +6,12 @@
 package server
 
 import (
+	"database/sql"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
 	"time"
-
-	"golang.org/x/time/rate"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/httputil"
@@ -41,13 +42,44 @@ const contentSecurityPolicy = "default-src 'self'; " +
 
 // Rate limits for the two flood-sensitive surfaces, per client IP:
 // login attempts (password guessing) and inbound webhooks (provider
-// floods share one source behind the stack's proxy).
-var (
-	loginRate  = rate.Every(2 * time.Second)
+// floods share one source behind the stack's proxy). Windows are one
+// minute; httputil computes Retry-After from the window instead of a
+// hardcoded guess.
+const (
+	loginLimit = 30
 	loginBurst = 5
-	hookRate   = rate.Every(time.Second)
+	hookLimit  = 60
 	hookBurst  = 60
 )
+
+// newKeyedRateLimiter builds the httputil keyed limiter webphone uses
+// for both flood-sensitive surfaces. MaxKeys stays uncapped here: keys
+// are direct-peer hosts, so the map is bounded by the number of proxy
+// source addresses, and TTL eviction handles the churn.
+func newKeyedRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
+	return httputil.NewKeyedRateLimiter(httputil.KeyedRateLimiterConfig{
+		Limit:        limit,
+		Window:       time.Minute,
+		Burst:        burst,
+		KeyExtractor: remoteHostKey,
+	})
+}
+
+// remoteHostKey keys the bucket by the direct peer's host. The port MUST
+// be stripped: behind the consuming stack's TLS terminator every request
+// arrives from the proxy socket with an ephemeral source port, and a
+// port-qualified key would hand every request its own bucket — rate
+// limiting silently off. The shared secret and the PBX-proven session
+// remain the real boundaries; this only throttles flooding.
+// Flip rule: switch to httputil.KeyExtractorFromClientIP only once the
+// stack proves it sanitizes X-Forwarded-For on these routes.
+func remoteHostKey(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
 
 // Deps are the wired services the handlers ride on.
 type Deps struct {
@@ -61,14 +93,19 @@ type Deps struct {
 	PhoneAPI  *pbx.Client
 	Hubs      *ExtensionHubs
 	Shared    []domain.SharedContact
+	// Readiness probes only (healthz): the SQLite handle for the ping
+	// and the blob files root for the write probe. Nothing else may use
+	// them — data access rides the services above.
+	DB       *sql.DB
+	BlobRoot string
 }
 
 // New builds the full http.Handler.
 func New(deps Deps) http.Handler {
 	h := &handlers{
 		deps:         deps,
-		loginLimiter: newKeyedLimiter(loginRate, loginBurst),
-		hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
+		loginLimiter: newKeyedRateLimiter(loginLimit, loginBurst),
+		hookLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
 		unread:       newUnreadCache(5 * time.Second),
 	}
 
@@ -102,7 +139,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
 	protected.HandleFunc("POST /contacts/import", h.importContacts)
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
-	protected.Handle("POST /api/session", h.loginLimiter.middleware(http.HandlerFunc(h.createSession)))
+	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
 
@@ -113,8 +150,14 @@ func New(deps Deps) http.Handler {
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
 	open.Handle("GET /events", h.deps.Sessions.Require(http.HandlerFunc(h.events)))
-	open.HandleFunc("GET /healthz", h.healthz)
-	open.Handle("/hooks/", h.hookLimiter.middleware(h.secretGate(http.HandlerFunc(h.webhooks))))
+	// readiness replaces the old constant-"ok" healthz: the endpoint now
+	// tells the truth about the two backing resources the app needs.
+	readiness := cqrshtmx.ReadinessHandler(
+		cqrshtmx.NewNamedCheck("sqlite", deps.DB.Ping),
+		cqrshtmx.NewNamedCheck("blob-dir", func() error { return probeBlobDir(deps.BlobRoot) }),
+	)
+	open.Handle("GET /healthz", readiness)
+	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
 	root.Handle("/", h.deps.Sessions.Attach(csrf(protected)))
@@ -142,8 +185,20 @@ func New(deps Deps) http.Handler {
 	return requestLog(security(cqrshtmx.RecoveryMiddleware(root)))
 }
 
-func (h *handlers) healthz(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("ok")) //nolint:erraudit // best-effort write; the response is already committed
+// probeBlobDir proves the blob store accepts writes: temp file in the
+// files root, then remove it. A full disk or a lost mount fails here and
+// the operator sees it in /healthz instead of silently losing attachments.
+func probeBlobDir(root string) error {
+	if err := os.MkdirAll(root, 0o750); err != nil {
+		return err
+	}
+	file, err := os.CreateTemp(root, ".healthz-*")
+	if err != nil {
+		return err
+	}
+	name := file.Name()
+	if err := file.Close(); err != nil {
+		return err
+	}
+	return os.Remove(name)
 }

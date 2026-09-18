@@ -94,6 +94,8 @@ func run() error {
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
 		Shared:    sharedContacts(cfg),
+		DB:        db,
+		BlobRoot:  blobs.Root(),
 	})
 
 	// --- serve ---------------------------------------------------------------

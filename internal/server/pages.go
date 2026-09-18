@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/larsartmann/httputil"
+
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -13,8 +15,8 @@ type handlers struct {
 	deps Deps
 	// Per-client flood protection for the two unauthenticated-by-session
 	// surfaces: login attempts and inbound webhooks.
-	loginLimiter *keyedLimiter
-	hookLimiter  *keyedLimiter
+	loginLimiter *httputil.KeyedRateLimiter
+	hookLimiter  *httputil.KeyedRateLimiter
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
 }
