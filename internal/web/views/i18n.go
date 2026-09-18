@@ -238,5 +238,8 @@ func T(lang Lang, key string) string {
 			return value
 		}
 	}
-	return dictionaries[LangEN][key]
+	if value, ok := dictionaries[LangEN][key]; ok {
+		return value
+	}
+	return key
 }

@@ -47,14 +47,14 @@ func TestGermanLanguageViaCookieAndHeader(t *testing.T) {
 	}
 
 	// English stays the default (no cookie, plain client).
-	plain := clientFor(t, server)
+	plain := signIn(t, server)
 	_, body = plain.do(http.MethodGet, "/partials/contacts", nil, "")
 	if !strings.Contains(string(body), ">Save<") || strings.Contains(string(body), "Speichern") {
 		t.Errorf("default language must be English: %.300s", body)
 	}
 
 	// Accept-Language: de without a cookie.
-	headerClient := clientFor(t, server)
+	headerClient := signIn(t, server)
 	req, err := http.NewRequest(http.MethodGet, server.URL+"/partials/contacts", nil)
 	if err != nil {
 		t.Fatal(err)
