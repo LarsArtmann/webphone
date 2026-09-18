@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/httputil"
@@ -97,18 +98,68 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 }
 
 func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Component, error) {
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	dir := r.URL.Query().Get("dir")
+	if dir != "in" && dir != "out" {
+		dir = ""
+	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{}), nil
 	}
+	// A filter needs a wider window than the unfiltered top-30 view.
+	limit := historyPageSize
+	if query != "" || dir != "" {
+		limit = historyFilterFetchSize
+	}
 	page, err := h.deps.PhoneAPI.History(r.Context(), pbx.Credentials{
 		Extension: sess.Extension.String(), Password: sess.Password,
-	}, 30)
+	}, limit)
 	if err != nil {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Error: "Call records are unreachable right now.",
 		}), nil
 	}
-	return views.HistoryPanel(views.HistoryPanelProps{Enabled: true, Entries: page.Entries}), nil
+	entries := filterCDRs(page.Entries, query, dir)
+	if len(entries) > historyPageSize {
+		entries = entries[:historyPageSize]
+	}
+	return views.HistoryPanel(views.HistoryPanelProps{
+		Enabled: true, Entries: entries, Query: query, Dir: dir,
+	}), nil
+}
+
+// History sizes: the unfiltered view and the upstream window a filter
+// may search before the display cap applies again.
+const (
+	historyPageSize        = 30
+	historyFilterFetchSize = 100
+)
+
+// filterCDRs keeps records whose number/name contains the query (case-
+// insensitive) and whose direction matches "in" (public context) or
+// "out" (internal context).
+func filterCDRs(entries []pbx.CDR, query, dir string) []pbx.CDR {
+	if query == "" && dir == "" {
+		return entries
+	}
+	needle := strings.ToLower(query)
+	filtered := entries[:0:0]
+	for _, cdr := range entries {
+		if dir == "in" && cdr.Context != "public" {
+			continue
+		}
+		if dir == "out" && cdr.Context == "public" {
+			continue
+		}
+		if needle != "" {
+			haystack := strings.ToLower(cdr.CallerIDNumber + " " + cdr.CallerIDName + " " + cdr.DestinationNumber)
+			if !strings.Contains(haystack, needle) {
+				continue
+			}
+		}
+		filtered = append(filtered, cdr)
+	}
+	return filtered
 }
 
 func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.Component, error) {

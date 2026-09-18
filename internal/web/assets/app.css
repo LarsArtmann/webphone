@@ -263,6 +263,32 @@ body {
 
 /* --- forms ---------------------------------------------------------------- */
 
+.wp-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.wp-filter input,
+.wp-filter select {
+  min-width: 0;
+}
+
+.wp-filter input {
+  flex: 1 1 140px;
+}
+
+.wp-filter button {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font: inherit;
+}
+
 .wp-compose {
   display: flex;
   gap: 8px;
