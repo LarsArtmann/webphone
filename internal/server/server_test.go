@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json/v2"
 	"fmt"
@@ -45,6 +46,7 @@ var contractIDs = []string{
 type testServer struct {
 	*httptest.Server
 	hubs     *ExtensionHubs
+	faxes    *store.Faxes
 	phoneAPI *pbx.Client
 }
 
@@ -95,7 +97,7 @@ func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return &testServer{Server: server, hubs: hubs, phoneAPI: phoneAPI}
+	return &testServer{Server: server, hubs: hubs, faxes: faxes, phoneAPI: phoneAPI}
 }
 
 type client struct {
@@ -370,6 +372,71 @@ func TestFaxSendAndDocument(t *testing.T) {
 	resp, _ = c.do(http.MethodPost, "/fax/send", form, contentType)
 	if resp.StatusCode != http.StatusUnprocessableEntity {
 		t.Fatalf("non-pdf fax: %d (want 422)", resp.StatusCode)
+	}
+}
+
+func TestFaxStatusWebhookUpdatesJob(t *testing.T) {
+	server := newTestServer(t)
+
+	// Seed an outbound fax through the loopback gateway; its receipt
+	// carries the provider_ref the status callback must quote.
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	pdf := []byte("%PDF-1.4 status\n%%EOF\n")
+	form, contentType := multipartBody(t,
+		map[string]string{"to": "+441632960961"},
+		map[string]struct {
+			Name    string
+			Content []byte
+		}{"document": {Name: "doc.pdf", Content: pdf}})
+	if resp, body := c.do(http.MethodPost, "/fax/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("fax send: %d %s", resp.StatusCode, body)
+	}
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs, err := server.faxes.List(context.Background(), owner, 10)
+	if err != nil || len(jobs) != 1 {
+		t.Fatalf("seeded fax jobs: %d (err %v)", len(jobs), err)
+	}
+
+	// The provider's failure verdict flips the job and explains why.
+	statusBody, _ := json.Marshal(map[string]string{
+		"provider_ref": jobs[0].ProviderRef, "status": "failed", "error": "remote hung up",
+	})
+	req, _ := http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(statusBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("fax status hook: %d (want 202)", resp.StatusCode)
+	}
+
+	_, body := c.do(http.MethodGet, "/partials/fax", nil, "")
+	if !strings.Contains(string(body), "failed") || !strings.Contains(string(body), "remote hung up") {
+		t.Fatalf("fax panel missing failure: %.300s", body)
+	}
+
+	// Unknown refs and invalid statuses are rejected.
+	badRef, _ := json.Marshal(map[string]string{"provider_ref": "nope", "status": "failed"})
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badRef))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("unknown provider_ref: %d (want 404)", resp.StatusCode)
+	}
+	badStatus, _ := json.Marshal(map[string]string{"provider_ref": jobs[0].ProviderRef, "status": "queued"})
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badStatus))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("invalid status: %d (want 400)", resp.StatusCode)
 	}
 }
 

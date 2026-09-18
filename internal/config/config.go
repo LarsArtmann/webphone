@@ -70,7 +70,9 @@ func defaults() Config {
 
 // Load reads the optional JSON config file (path from WEBPHONE_CONFIG,
 // default /etc/webphone/config.json), then overrides from WEBPHONE_*
-// environment variables (dots become underscores: WEBPHONE_GATEWAY_MODE).
+// environment variables (double underscore nests: WEBPHONE_GATEWAY__MODE
+// → gateway.mode; single underscores stay literal: WEBPHONE_DATA_DIR →
+// data_dir).
 func Load() (Config, error) {
 	k := koanf.New(".")
 
