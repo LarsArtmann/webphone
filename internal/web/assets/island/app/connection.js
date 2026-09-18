@@ -14,7 +14,6 @@ import { t } from "./i18n.js";
 import { sessions, state } from "./state.js";
 import { announce, els, log, setRegStatus } from "./ui.js";
 
-let userAgent = null;
 let registerer = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
@@ -24,10 +23,6 @@ let stopping = false;
 let resetting = false;
 
 const RECONNECT_ATTEMPT_TIMEOUT_MS = 5000;
-
-export function getUserAgent() {
-  return userAgent;
-}
 
 export async function connect(extension, password) {
   stopping = false;
@@ -72,8 +67,8 @@ function withTimeout(promise, ms, label) {
 async function rebuildConnection(reason) {
   log(`reconnect watchdog: ${reason} — rebuilding connection`);
   resetting = true;
-  const old = userAgent;
-  userAgent = null;
+  const old = state.userAgent;
+  state.userAgent = null;
   registerer = null;
   try {
     await withTimeout(
@@ -99,7 +94,7 @@ async function attemptReconnect() {
   try {
     await withTimeout(
       (async () => {
-        await userAgent.reconnect();
+        await state.userAgent.reconnect();
         await registerer.register();
       })(),
       RECONNECT_ATTEMPT_TIMEOUT_MS,
@@ -130,7 +125,7 @@ async function buildConnection() {
   const uri = SIP.UserAgent.makeURI(`sip:${extension}@${sipDomain}`);
   if (!uri) throw new Error(`invalid extension "${extension}"`);
 
-  userAgent = new SIP.UserAgent({
+  state.userAgent = new SIP.UserAgent({
     uri,
     authorizationUsername: extension,
     authorizationPassword: password,
@@ -199,9 +194,9 @@ async function buildConnection() {
     },
   });
 
-  await userAgent.start();
+  await state.userAgent.start();
 
-  registerer = new SIP.Registerer(userAgent);
+  registerer = new SIP.Registerer(state.userAgent);
   registerer.stateChange.addListener((regState) => {
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
@@ -236,6 +231,6 @@ export async function disconnect() {
   ringbackStop();
   // Null the handles like the original single-file app did on logout:
   // a later placeCall must see "not connected", not a stopped agent.
-  userAgent = null;
+  state.userAgent = null;
   registerer = null;
 }

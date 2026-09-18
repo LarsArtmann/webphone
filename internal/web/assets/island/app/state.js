@@ -8,4 +8,7 @@ export const sessions = new Map();
 export const state = {
   focusedId: null,
   incomingSession: null,
+  // The live SIP.UserAgent, written by connection.js only. Lives here so
+  // calls and ice never import the connection module for it.
+  userAgent: null,
 };
