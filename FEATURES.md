@@ -28,7 +28,7 @@ Code wins when doc and code disagree.
 | Threads with unread badges       | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)    |
 | Attachment round trip            | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal |
 | Live thread list + transcript    | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)         |
-| Delivery receipts (delivered)    | ⚪ PLANNED          | `provider_ref` stored; status webhook for messages not built yet         |
+| Delivery receipts                | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge updates live via SSE |
 
 ## Fax
 
@@ -98,7 +98,6 @@ Code wins when doc and code disagree.
 | Idea                                 | Status             | Notes                                                            |
 | ------------------------------------ | ------------------ | ---------------------------------------------------------------- |
 | German translations for the tabs     | ⚪ PLANNED          | Island i18n is the pattern to follow                             |
-| Message delivery-receipt webhook     | ⚪ PLANNED          | Store field exists (`provider_ref`)                             |
 | Session persistence across restarts  | ⚪ PLANNED          | Passwords in RAM only today; persistence has security cost      |
 | Message pagination/virtualization    | ⚪ PLANNED          | Window is 200 per thread                                         |
 | vCard contact import/export          | ⚪ PLANNED          |                                                                  |

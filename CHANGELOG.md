@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Message delivery receipts: providers call `/hooks/message/status`
+  (Bearer secret, fail-closed like every hook) with the `provider_ref`
+  from the send receipt; the transcript's status badge flips to
+  delivered/failed live over SSE, mirroring the fax status callback.
+
 ## [2.0.0] - 2026-09-18
 
 ### Added
@@ -78,5 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.0.0...HEAD
 [2.0.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.0.0
 [0.1.0]: https://github.com/LarsArtmann/webphone/releases/tag/v0.1.0

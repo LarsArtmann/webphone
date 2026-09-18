@@ -156,6 +156,7 @@ POST /hooks/message        {"owner":"1001","from":"+441632960961","body":"hi",
 POST /hooks/fax            {"owner":"1001","from":"+441700000000","pages":2,
                             "provider_ref":"gw-123","pdf_base64":"…"}
 POST /hooks/fax/status     {"provider_ref":"gw-123","status":"transmitted|failed","pages":2,"error":"…"}
+POST /hooks/message/status {"provider_ref":"gw-123","status":"delivered|failed","error":"…"}
 ```
 
 ### Bridging FreeSWITCH (example)

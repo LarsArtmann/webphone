@@ -400,7 +400,8 @@ func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
 	if err != nil || len(msgs) != 1 || msgs[0].ProviderRef == "" {
 		t.Fatalf("seeded messages: %d (err %v)", len(msgs), err)
 	}
-	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(c.do(http.MethodGet, "/partials/messages", nil, ""))
+	_, listBody := c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(listBody)
 	if match == nil {
 		t.Fatal("no thread link in list")
 	}
@@ -428,9 +429,9 @@ func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
 
 	// Unknown refs, empty refs, and non-verdict statuses are rejected.
 	for name, want := range map[string]int{
-		"unknown ref":  http.StatusNotFound,
-		"empty ref":    http.StatusBadRequest,
-		"sent status":  http.StatusBadRequest,
+		"unknown ref":   http.StatusNotFound,
+		"empty ref":     http.StatusBadRequest,
+		"sent status":   http.StatusBadRequest,
 		"queued status": http.StatusBadRequest,
 	} {
 		ref := "nope"
@@ -491,7 +492,7 @@ func TestFaxStatusWebhookUpdatesJob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("fax status hook: %d (want 202)", resp.StatusCode)
 	}

@@ -10,7 +10,6 @@ live in FEATURES.md as WORTH_CONSIDERING.
 | Upstream switchover in nix-international-telephony (swap input to this service, WSS proxy, config.js → server config migration, browser E2E re-run) | 🔴 `TODO` | High | M | Report (f4); DOM contract asserted by `internal/server/server_test.go` |
 | German translations for the server-rendered tabs | 🔴 `TODO` | Medium | M | Island pattern: `internal/web/assets/island/app/i18n.js`; views are en-only |
 | Login rate limiting on `/api/session` (and hooks beyond the secret) | 🔴 `TODO` | Medium | S | `internal/server/session_api.go` trusts the island's proven REGISTER today |
-| SMS delivery-receipt webhook (`status=delivered|failed` by `provider_ref`) | 🔴 `TODO` | Medium | S | Store field already exists (`internal/store/messages.go` `UpdateOutboundStatus`) |
 | Session persistence across restarts (SQLite sessions) | 🔴 `TODO` | Low | M | In-memory by design (`internal/session/service.go`); persistence trades in password-at-rest security |
 | Message pagination/virtualization beyond the 200-message window | 🔴 `TODO` | Low | M | `messaging.MessagePageSize` caps threads and SSE transcripts |
 | Fax page-count parsing from provider status payloads | 🔴 `TODO` | Low | S | `/hooks/fax/status` stores pages verbatim (`internal/fax/service.go`) |
