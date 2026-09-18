@@ -57,9 +57,8 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 
 // partial renders just the tab region for an HTMX swap.
 func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	component, err := h.tabComponent(r, tab, sess)

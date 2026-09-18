@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/go-sse"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -86,9 +85,8 @@ func (h *ExtensionHubs) Publish(extension domain.Extension, eventName string, ht
 
 // events is the session-gated SSE feed for the signed-in extension.
 func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 

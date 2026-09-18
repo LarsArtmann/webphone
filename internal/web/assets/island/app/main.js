@@ -104,6 +104,7 @@ els.dialForm.addEventListener("submit", async (event) => {
 });
 
 els.accept.addEventListener("click", () => {
+  window.__wpDiag = (window.__wpDiag || "") + "|accept-click"; // TEMP-DIAG
   answerIncoming();
 });
 

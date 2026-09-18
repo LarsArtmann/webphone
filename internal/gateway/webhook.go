@@ -16,11 +16,13 @@ import (
 
 // Webhook forwards outbound messages to a provider URL as multipart/form-data:
 //
-//	form fields : kind=message, owner, to, body, secret
+//	form fields : kind=message, owner, to, body
 //	files       : one part per attachment (field "attachment", filename kept)
 //
-// A 2xx answer with body {"provider_ref": "..."} (or a bare token) is the
-// acceptance receipt; anything else is an error and the message stays failed.
+// The secret rides the Authorization header, not a form field. A 2xx
+// answer with body {"provider_ref": "..."} (or a bare token) is the
+// acceptance receipt; anything else is an error and the message stays
+// failed.
 type provider struct {
 	cfg    config.Gateway
 	client *http.Client
@@ -53,29 +55,29 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 	}
 	defer func() { _ = pdf.Close() }()
 
-	var buf strings.Builder
-	writer := multipart.NewWriter(&buf)
-	//nolint:errcheck // documented pattern: writes to a strings.Builder cannot fail
-	writer.WriteField("kind", "fax")
-	//nolint:errcheck // see above
-	writer.WriteField("owner", fax.Owner.String())
-	//nolint:errcheck // see above
-	writer.WriteField("to", fax.To.String())
-	part, err := writer.CreateFormFile("document", "fax.pdf")
+	body, contentType, err := providerForm("fax", fax.Owner.String(), fax.To.String(),
+		func(writer *multipart.Writer) error {
+			part, err := writer.CreateFormFile("document", "fax.pdf")
+			if err != nil {
+				return fmt.Errorf("create fax form file: %w", err)
+			}
+			if _, err := io.Copy(part, pdf); err != nil {
+				return fmt.Errorf("copy fax pdf: %w", err)
+			}
+			return nil
+		})
 	if err != nil {
-		return Receipt{}, fmt.Errorf("create fax form file: %w", err)
-	}
-	if _, err := io.Copy(part, pdf); err != nil {
-		return Receipt{}, fmt.Errorf("copy fax pdf: %w", err)
-	}
-	if err := writer.Close(); err != nil {
-		return Receipt{}, fmt.Errorf("close fax form: %w", err)
+		return Receipt{}, fmt.Errorf("build fax form: %w", err)
 	}
 
-	return w.post(ctx, w.cfg.WebhookURL+"/fax", writer.FormDataContentType(), strings.NewReader(buf.String()))
+	return w.post(ctx, w.cfg.WebhookURL+"/fax", contentType, body)
 }
 
-func messageForm(kind, owner, to, body string, attachments []OutboundAttachment) (io.Reader, string, error) {
+// providerForm writes the provider envelope every webhook shares (the
+// kind/owner/to fields), hands the writer to addFiles for the payload
+// parts, then closes the form. Field writes are infallible: a
+// strings.Builder cannot fail.
+func providerForm(kind, owner, to string, addFiles func(*multipart.Writer) error) (io.Reader, string, error) {
 	var buf strings.Builder
 	writer := multipart.NewWriter(&buf)
 	//nolint:errcheck // documented pattern: writes to a strings.Builder cannot fail
@@ -84,30 +86,39 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 	writer.WriteField("owner", owner)
 	//nolint:errcheck // see above
 	writer.WriteField("to", to)
-	//nolint:errcheck // see above
-	writer.WriteField("body", body)
-
-	for _, att := range attachments {
-		file, err := os.Open(att.Path)
-		if err != nil {
-			return nil, "", fmt.Errorf("open attachment %s: %w", att.Name, err)
-		}
-		part, err := writer.CreateFormFile("attachment", att.Name)
-		if err != nil {
-			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-			return nil, "", fmt.Errorf("create attachment form file: %w", err)
-		}
-		if _, err := io.Copy(part, file); err != nil {
-			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-			return nil, "", fmt.Errorf("copy attachment %s: %w", att.Name, err)
-		}
-		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+	if err := addFiles(writer); err != nil {
+		return nil, "", err
 	}
 	if err := writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("close message form: %w", err)
+		return nil, "", fmt.Errorf("close provider form: %w", err)
 	}
 
 	return strings.NewReader(buf.String()), writer.FormDataContentType(), nil
+}
+
+func messageForm(kind, owner, to, body string, attachments []OutboundAttachment) (io.Reader, string, error) {
+	return providerForm(kind, owner, to, func(writer *multipart.Writer) error {
+		//nolint:errcheck // documented pattern: writes to a strings.Builder cannot fail
+		writer.WriteField("body", body)
+
+		for _, att := range attachments {
+			file, err := os.Open(att.Path)
+			if err != nil {
+				return fmt.Errorf("open attachment %s: %w", att.Name, err)
+			}
+			part, err := writer.CreateFormFile("attachment", att.Name)
+			if err != nil {
+				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				return fmt.Errorf("create attachment form file: %w", err)
+			}
+			if _, err := io.Copy(part, file); err != nil {
+				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				return fmt.Errorf("copy attachment %s: %w", att.Name, err)
+			}
+			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+		}
+		return nil
+	})
 }
 
 func (p provider) post(

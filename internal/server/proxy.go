@@ -4,8 +4,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-
-	"github.com/larsartmann/webphone/internal/session"
 )
 
 // proxyPhoneAPI forwards the island's /phone-api/* calls to the configured
