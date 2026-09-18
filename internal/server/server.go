@@ -89,7 +89,7 @@ func New(deps Deps) http.Handler {
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
-	open.HandleFunc("GET /events", h.events)
+	open.Handle("GET /events", h.deps.Sessions.Require(http.HandlerFunc(h.events)))
 	open.HandleFunc("GET /healthz", h.healthz)
 	open.Handle("/hooks/", h.secretGate(http.HandlerFunc(h.webhooks)))
 

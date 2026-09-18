@@ -239,10 +239,8 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "could not read the form", http.StatusBadRequest)
-		return
-	}
+	// FormValue transparently handles urlencoded AND multipart bodies.
+	name := r.FormValue("name")
 	phone, err := domain.ParsePhone(r.FormValue("number"))
 	if err != nil {
 		http.Error(w, "enter a valid number", http.StatusUnprocessableEntity)
@@ -251,7 +249,7 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 	contact := domain.Contact{
 		ID:        domain.GenerateContactID(),
 		Owner:     sess.Extension,
-		Name:      r.FormValue("name"),
+		Name:      name,
 		Phone:     phone,
 		CreatedAt: time.Now(),
 	}

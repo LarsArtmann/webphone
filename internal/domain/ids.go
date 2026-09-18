@@ -4,6 +4,7 @@
 package domain
 
 import (
+	"strings"
 	"fmt"
 
 	id "github.com/larsartmann/go-branded-id"
@@ -175,9 +176,8 @@ func MustContactID(s string) ContactID { return mustID[ContactBrand](s, "contact
 // the branded ("Thread:xxx") and raw ("xxx") forms parse.
 func mustID[B any](s string, kind string) id.ID[B, nanoid.ID] {
 	raw := s
-	if prefix, _, found := strings.Cut(s, ":"); found {
-		_ = prefix
-		raw = s[len(prefix)+1:]
+	if _, rest, found := strings.Cut(s, ":"); found {
+		raw = rest
 	}
 	if len(raw) != 21 {
 		panic(fmt.Sprintf("corrupt %s id %q: want 21 nanoid chars", kind, s))
