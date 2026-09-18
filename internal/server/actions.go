@@ -322,7 +322,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 
 	imported := 0
 	for _, card := range vcard.Decode(data) {
-		phone, err := domain.ParsePhone(card.Number)
+		phone, err := domain.ParsePhone(card.Number) //nolint:erraudit // batch import: invalid cards are skipped, not surfaced
 		if err != nil {
 			continue
 		}
@@ -338,7 +338,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 			Phone:     phone,
 			CreatedAt: time.Now(),
 		}
-		if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
+		if err := h.deps.Contacts.Save(r.Context(), contact); err != nil { //nolint:erraudit // batch import: per-card store failures skip the card, not the batch
 			continue
 		}
 		imported++
