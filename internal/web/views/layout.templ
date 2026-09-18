@@ -55,6 +55,8 @@ type ShellProps struct {
 	Unread int
 	// NewVoicemail counts badge the Voicemail nav item.
 	NewVoicemail int
+	// Lang drives the server-rendered strings.
+	Lang Lang
 }
 
 // Shell is the whole application page: header, the persistent SIP island
@@ -116,7 +118,7 @@ templ ShellBody(props ShellProps) {
 				if props.TabContent != nil {
 					@props.TabContent
 				} else {
-					@SignInHint()
+					@SignInHint(props.Lang)
 				}
 			</main>
 		</div>
@@ -134,7 +136,7 @@ templ NavLinks(props ShellProps) {
 			hx-push-url={ tab.Path() }
 			data-tab={ string(tab) }
 		>
-			<span>{ tab.Label() }</span>
+			<span>{ T(props.Lang, "tab."+string(tab)) }</span>
 			if tab == TabMessages && props.Unread > 0 {
 				<span class="wp-nav-badge">{ fmtInt(props.Unread) }</span>
 			}
@@ -163,8 +165,8 @@ func bodyAttrs(props ShellProps) templ.Attributes {
 }
 
 // SignInHint fills the tab region while nobody is signed in.
-templ SignInHint() {
+templ SignInHint(lang Lang) {
 	<section class="wp-panel">
-		<p class="wp-empty">Sign in on the phone panel — the tabs unlock with the same login.</p>
+		<p class="wp-empty">{ T(lang, "signin.hint") }</p>
 	</section>
 }

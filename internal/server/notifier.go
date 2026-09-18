@@ -37,13 +37,14 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 // updates live. A failed or missing read is skipped: one lost push is
 // cosmetic, the next change catches up.
 func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
+	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
-		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads))
+		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
 	}
 	if msgs, err := n.messages.ListMessages(ctx, owner, threadID, messaging.MessagePageSize); err == nil {
-		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs))
+		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs, lang))
 	} else {
 		slog.Debug("sse: render transcript failed", "error", err)
 	}
@@ -56,7 +57,7 @@ func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ dom
 		slog.Debug("sse: render fax list failed", "error", err)
 		return
 	}
-	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs))
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.hubs.Lang(owner)))
 }
 
 func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event string, component templ.Component) {

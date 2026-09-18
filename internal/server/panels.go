@@ -24,13 +24,13 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads}), nil
+	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
 	thread, msgs, hasMore, err := h.deps.Messaging.ThreadWindow(r.Context(), sess.Extension, id, page)
 	if errors.Is(err, store.ErrNotFound) {
-		return views.ThreadsPanel(views.ThreadsPanelProps{Error: "That conversation no longer exists."}), nil
+		return views.ThreadsPanel(views.ThreadsPanelProps{Error: "That conversation no longer exists.", Lang: h.lang(r)}), nil
 	}
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	}
 	h.unread.drop(sess.Extension)
 	return views.ThreadView(views.ThreadViewProps{
-		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore,
+		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Lang: h.lang(r),
 	}), nil
 }
 
@@ -74,22 +74,22 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 	if err != nil {
 		return nil, err
 	}
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	if !h.deps.PhoneAPI.Enabled() {
-		return views.VoicemailPanel(views.VoicemailPanelProps{}), nil
+		return views.VoicemailPanel(views.VoicemailPanelProps{Lang: h.lang(r)}), nil
 	}
 	creds := pbx.Credentials{Extension: sess.Extension.String(), Password: sess.Password}
 	summary, messages, err := h.fetchVoicemail(r, creds)
 	if err != nil {
 		return views.VoicemailPanel(views.VoicemailPanelProps{
-			Enabled: true, Error: "Voicemail is unreachable right now.",
+			Enabled: true, Error: h.T(r, "vm.unreachable"), Lang: h.lang(r),
 		}), nil
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
-		Enabled: true, Summary: summary, Messages: messages,
+		Enabled: true, Summary: summary, Messages: messages, Lang: h.lang(r),
 	}), nil
 }
 
@@ -107,13 +107,14 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 }
 
 func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Component, error) {
+	lang := h.lang(r)
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	dir := r.URL.Query().Get("dir")
 	if dir != "in" && dir != "out" {
 		dir = ""
 	}
 	if !h.deps.PhoneAPI.Enabled() {
-		return views.HistoryPanel(views.HistoryPanelProps{}), nil
+		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang}), nil
 	}
 	// A filter needs a wider window than the unfiltered top-30 view.
 	limit := historyPageSize
@@ -125,7 +126,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	}, limit)
 	if err != nil {
 		return views.HistoryPanel(views.HistoryPanelProps{
-			Enabled: true, Error: "Call records are unreachable right now.",
+			Enabled: true, Error: h.T(r, "history.unreachable"), Lang: lang,
 		}), nil
 	}
 	entries := filterCDRs(page.Entries, query, dir)
@@ -133,7 +134,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		entries = entries[:historyPageSize]
 	}
 	return views.HistoryPanel(views.HistoryPanelProps{
-		Enabled: true, Entries: entries, Query: query, Dir: dir,
+		Enabled: true, Entries: entries, Query: query, Dir: dir, Lang: lang,
 	}), nil
 }
 
@@ -176,10 +177,10 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared}), nil
+	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared, Lang: h.lang(r)}), nil
 }
 
-func (h *handlers) settingsPanel() templ.Component {
+func (h *handlers) settingsPanel(r *http.Request) templ.Component {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
@@ -188,6 +189,7 @@ func (h *handlers) settingsPanel() templ.Component {
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
+		Lang:           h.lang(r),
 	})
 }
 
@@ -205,12 +207,12 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 	case views.TabContacts:
 		return h.contactsPanel(r, sess)
 	default:
-		return h.settingsPanel(), nil
+		return h.settingsPanel(r), nil
 	}
 }
 
-func errorPanel(message string) templ.Component {
-	return views.ErrorPanel(message)
+func errorPanel(message string, lang views.Lang) templ.Component {
+	return views.ErrorPanel(message, lang)
 }
 
 func csrfToken(r *http.Request) string {

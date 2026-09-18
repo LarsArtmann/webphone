@@ -30,7 +30,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 
 	to, err := domain.ParsePhone(r.FormValue("to"))
 	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, "Enter a valid number to send to.")
+		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.invalidTo"))
 		return
 	}
 
@@ -38,13 +38,13 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	for _, fileHeader := range r.MultipartForm.File["attachment"] {
 		file, err := fileHeader.Open()
 		if err != nil {
-			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, "Could not read an attachment.")
+			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.attachmentRead"))
 			return
 		}
 		content, readErr := io.ReadAll(io.LimitReader(file, messaging.MaxAttachmentSize+1))
 		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		if readErr != nil || int64(len(content)) > messaging.MaxAttachmentSize {
-			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, "An attachment is too large (10 MiB each).")
+			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.attachmentLarge"))
 			return
 		}
 		uploads = append(uploads, domain.AttachmentContent{
@@ -55,7 +55,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Messaging.Send(r.Context(), sess.Extension, to, r.FormValue("body"), uploads); err != nil {
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, sendErrorMessage(err))
+		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, sendErrorMessage(err, h.lang(r)))
 		return
 	}
 
@@ -76,11 +76,11 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, tabFromPath("/messages"))
 }
 
-func sendErrorMessage(err error) string {
+func sendErrorMessage(err error, lang views.Lang) string {
 	if invalid, ok := errors.AsType[*messaging.ErrInvalidSend](err); ok {
 		return invalid.Reason
 	}
-	return "The gateway rejected the message: " + err.Error()
+	return views.T(lang, "err.gatewayMessage") + err.Error()
 }
 
 // sendFax handles the fax upload form.
@@ -91,33 +91,33 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	}
 	to, err := domain.ParsePhone(r.FormValue("to"))
 	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, "Enter a valid fax number.")
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.invalidFaxTo"))
 		return
 	}
 	file, header, err := r.FormFile("document")
 	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, "Attach a PDF to send.")
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.attachPDF"))
 		return
 	}
 	pdf, readErr := io.ReadAll(io.LimitReader(file, fax.MaxPDFSize+1))
 	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil || int64(len(pdf)) > fax.MaxPDFSize {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, "The PDF is too large (20 MiB maximum).")
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.pdfLarge"))
 		return
 	}
 
 	if _, err := h.deps.Fax.Send(r.Context(), sess.Extension, to, header.Filename, pdf); err != nil {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, faxErrorMessage(err))
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, faxErrorMessage(err, h.lang(r)))
 		return
 	}
 	h.partial(w, r, tabFromPath("/fax"))
 }
 
-func faxErrorMessage(err error) string {
+func faxErrorMessage(err error, lang views.Lang) string {
 	if invalid, ok := errors.AsType[*fax.ErrInvalidFax](err); ok {
 		return invalid.Reason
 	}
-	return "The gateway rejected the fax: " + err.Error()
+	return views.T(lang, "err.gatewayFax") + err.Error()
 }
 
 // faxDocument streams a job's PDF (session-gated).
@@ -181,7 +181,7 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 	if err := h.deps.PhoneAPI.DeleteVoicemail(r.Context(), pbx.Credentials{
 		Extension: sess.Extension.String(), Password: sess.Password,
 	}, uuid); err != nil {
-		h.renderPanelError(w, r, sess, views.TabVoicemail, http.StatusBadGateway, "Could not delete the message — try again.")
+		h.renderPanelError(w, r, sess, views.TabVoicemail, http.StatusBadGateway, h.T(r, "vm.deleteFailed"))
 		return
 	}
 	// Nudge the extension's other tabs: the "voicemail" SSE event carries
@@ -310,13 +310,13 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 	}
 	file, header, err := r.FormFile("vcard")
 	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, "Attach a .vcf file to import.")
+		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, h.T(r, "contacts.attachVCF"))
 		return
 	}
 	data, readErr := io.ReadAll(io.LimitReader(file, 5<<20))
 	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil {
-		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, "Could not read the file.")
+		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, h.T(r, "contacts.readFailed"))
 		return
 	}
 
@@ -345,7 +345,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 	}
 	if imported == 0 {
 		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity,
-			"No importable contacts found in "+templ.EscapeString(header.Filename)+".")
+			h.T(r, "contacts.importNone.pre")+templ.EscapeString(header.Filename)+h.T(r, "contacts.importNone.post"))
 		return
 	}
 	h.partial(w, r, tabFromPath("/contacts"))

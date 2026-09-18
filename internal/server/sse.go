@@ -12,6 +12,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/web/views"
 )
 
 // SSE event names the tabs listen for (sse-swap="..." in the views).
@@ -29,11 +30,32 @@ const (
 type ExtensionHubs struct {
 	mu   sync.RWMutex
 	hubs map[string]*cqrshtmx.Broadcaster
+	// Per-extension UI language, remembered so the notifier renders SSE
+	// fragments (which have no request) in the tabs' language.
+	langs map[string]views.Lang
 }
 
 // NewHubs builds the per-extension hub registry.
 func NewHubs() *ExtensionHubs {
-	return &ExtensionHubs{hubs: make(map[string]*cqrshtmx.Broadcaster)}
+	return &ExtensionHubs{hubs: make(map[string]*cqrshtmx.Broadcaster), langs: make(map[string]views.Lang)}
+}
+
+// SetLang remembers the extension's current UI language (called on shell
+// renders and SSE connects, where the request is available).
+func (h *ExtensionHubs) SetLang(extension domain.Extension, lang views.Lang) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.langs[extension.String()] = lang
+}
+
+// Lang returns the extension's remembered UI language (default English).
+func (h *ExtensionHubs) Lang(extension domain.Extension) views.Lang {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	if lang, ok := h.langs[extension.String()]; ok {
+		return lang
+	}
+	return views.LangEN
 }
 
 func (h *ExtensionHubs) get(extension domain.Extension) *cqrshtmx.Broadcaster {
@@ -72,6 +94,7 @@ func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
 
 	stream := sse.NewStream(w, r)
 	hub := h.deps.Hubs.get(sess.Extension)
+	h.deps.Hubs.SetLang(sess.Extension, h.lang(r))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

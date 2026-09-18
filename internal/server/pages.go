@@ -29,18 +29,22 @@ func (h *handlers) tabPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views.Tab) {
+	lang := h.lang(r)
 	var props views.ShellProps
 	props.ActiveTab = tab
 	props.CSRFToken = csrfToken(r)
+	props.Lang = lang
 
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
+		// Keep the hub's language fresh so SSE fragments match the tabs.
+		h.deps.Hubs.SetLang(sess.Extension, lang)
 		props.Unread = h.countUnread(r, sess)
 		props.NewVoicemail = h.countVoicemail(r, sess)
 		if component, err := h.tabComponent(r, tab, sess); err == nil {
 			props.TabContent = component
 		} else {
-			props.TabContent = errorPanel(err.Error())
+			props.TabContent = errorPanel(err.Error(), lang)
 		}
 	}
 
@@ -61,7 +65,7 @@ func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		_ = errorPanel(err.Error()).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
+		_ = errorPanel(err.Error(), h.lang(r)).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -109,4 +113,26 @@ func tabFromPath(path string) views.Tab {
 	default:
 		return views.TabMessages
 	}
+}
+
+// langCookie carries the island's language choice to the server so the
+// tabs and SSE fragments render in the same language as the phone panel.
+const langCookie = "wp-lang"
+
+// lang resolves the request's UI language: explicit cookie (written by
+// the island's EN/DE switch), then the Accept-Language header, then
+// English.
+func (h *handlers) lang(r *http.Request) views.Lang {
+	if cookie, err := r.Cookie(langCookie); err == nil {
+		return views.ParseLang(cookie.Value)
+	}
+	if accept := r.Header.Get("Accept-Language"); len(accept) >= 2 && strings.EqualFold(accept[:2], "de") {
+		return views.LangDE
+	}
+	return views.LangEN
+}
+
+// T translates a UI string in the request's language.
+func (h *handlers) T(r *http.Request, key string) string {
+	return views.T(h.lang(r), key)
 }
