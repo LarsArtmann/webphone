@@ -889,7 +889,7 @@
           ES-module imports over the island):
         </p>
         <div class="dep-tree"><pre><code>cmd/webphone ──── composition root (127 LOC of wiring only)
-  └── server ────── HTTP, SSE, webhooks, proxy, panels (12 files, 1,313 LOC)
+  └── server ────── HTTP, SSE, webhooks, proxy, panels (11 src files + 1 test, 1,313 src LOC)
         ├── fax ──────── fax jobs → gateway seam → provider
         ├── messaging ── SMS/MMS threads → gateway seam
         ├── gateway ──── loopback | webhook (outbound, fail-closed inbound)
@@ -1042,7 +1042,7 @@ island JS: main → calls / panels / connection → ice, notify, audio
           <div class="strength">
             <div class="check">+</div>
             <div class="text"><strong>Pure domain core</strong>
-              <span>internal/domain imports nothing internal; 26 exported symbols, all domain vocabulary (branded extension/phone/channel IDs). Everything may depend on it; it depends on nothing.</span></div>
+              <span>internal/domain imports nothing internal; 41 exported symbols across 4 files (26 in ids.go — branded extension/phone/channel IDs — plus message, fax, contact). Everything may depend on it; it depends on nothing.</span></div>
           </div>
           <div class="strength">
             <div class="check">+</div>
