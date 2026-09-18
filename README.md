@@ -12,17 +12,17 @@ FreeSWITCH/sofia (or compatible) WebSocket endpoint.
 
 ## What it does
 
-| Capability          | Notes                                                                     |
-| ------------------- | ------------------------------------------------------------------------- |
-| Multi-line calling  | Several concurrent calls, hold/focus/mute per call                        |
-| Transfer            | Blind and attended (REFER / REFER-with-Replaces, executed server-side)    |
-| DTMF                | Keypad via `application/dtmf-relay` INFO (FreeSWITCH-compatible form)     |
-| Incoming calls      | System notification, ring tone, tab-title flash, accept/reject            |
-| Resilience          | Bounded reconnect watchdog with re-registration and call preservation     |
-| Voicemail & history | In-browser playback/deletion and CDR history via a per-extension API      |
-| Diagnostics         | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)   |
-| i18n                | English and German UI                                                     |
-| Dark & light        | Full token-based themes following `prefers-color-scheme`                  |
+| Capability          | Notes                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| Multi-line calling  | Several concurrent calls, hold/focus/mute per call                      |
+| Transfer            | Blind and attended (REFER / REFER-with-Replaces, executed server-side)  |
+| DTMF                | Keypad via `application/dtmf-relay` INFO (FreeSWITCH-compatible form)   |
+| Incoming calls      | System notification, ring tone, tab-title flash, accept/reject          |
+| Resilience          | Bounded reconnect watchdog with re-registration and call preservation   |
+| Voicemail & history | In-browser playback/deletion and CDR history via a per-extension API    |
+| Diagnostics         | Live ICE/media panel that names the suspected cause (e.g. blocked TURN) |
+| i18n                | English and German UI                                                   |
+| Dark & light        | Full token-based themes following `prefers-color-scheme`                |
 
 ## Get started
 
