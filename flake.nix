@@ -1,5 +1,5 @@
 {
-  description = "Webphone: standalone SIP.js WebRTC softphone UI, packaged as a static site";
+  description = "Webphone: self-hosted unified-communications web app (calls, SMS/MMS, fax, voicemail) in one Go binary";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -35,7 +35,45 @@
         {
           packages = {
             default = self'.packages.webphone;
-            webphone = pkgs.callPackage ./package { };
+
+            # One Go binary: templ shell + embedded island assets + SQLite.
+            # GOEXPERIMENT=jsonv2 is required by templ-components (encoding/
+            # json/v2) until Go 1.27 ships it stable.
+            webphone = pkgs.buildGoModule {
+              pname = "webphone";
+              version = "2.0.0";
+
+              src = pkgs.lib.cleanSource self;
+
+              vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+              proxyVendor = true;
+
+              env.GOEXPERIMENT = "jsonv2";
+
+              subPackages = [ "cmd/webphone" ];
+
+              ldflags = [
+                "-s"
+                "-w"
+              ];
+
+              doCheck = true;
+
+              meta = {
+                description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
+                homepage = "https://github.com/LarsArtmann/webphone";
+                license = pkgs.lib.licenses.mit;
+                mainProgram = "webphone";
+                platforms = pkgs.lib.platforms.linux;
+                maintainers = [
+                  {
+                    name = "Lars Artmann";
+                    github = "LarsArtmann";
+                  }
+                ];
+              };
+            };
           };
 
           checks = {
@@ -66,9 +104,11 @@
           devShells.default = pkgs.mkShellNoCC {
             packages = with pkgs; [
               config.treefmt.build.wrapper
+              go
+              templ
+              golangci-lint
               esbuild
               jq
-              curl
               nil
             ];
           };
@@ -77,12 +117,14 @@
             projectRootFile = "flake.nix";
             programs = {
               nixfmt.enable = true;
+              gofmt.enable = true;
               prettier = {
                 enable = true;
                 includes = [
-                  "src/*.html"
-                  "src/*.css"
-                  "src/app/*.js"
+                  "*.html"
+                  "*.css"
+                  "internal/web/assets/shell.js"
+                  "internal/web/assets/island/**/*.js"
                 ];
               };
             };

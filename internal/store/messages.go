@@ -35,7 +35,9 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO threads (id, owner, remote, last_activity_at, unread)
 		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(owner, remote) DO UPDATE SET last_activity_at = excluded.last_activity_at
+		ON CONFLICT(owner, remote) DO UPDATE SET
+			last_activity_at = excluded.last_activity_at,
+			unread = threads.unread + excluded.unread
 	`, threadID, msg.Owner.String(), msg.Remote.String(), msg.CreatedAt.Unix(),
 		incrementIf(domain.DirectionInbound, msg.Direction)); err != nil {
 		return fmt.Errorf("upsert thread: %w", err)

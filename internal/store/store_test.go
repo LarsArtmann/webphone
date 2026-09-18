@@ -108,12 +108,13 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 		Direction: domain.DirectionInbound, Channel: domain.ChannelMMS,
 		Body: "", CreatedAt: time.Now(),
 		Attachments: []domain.Attachment{{
-			ID: domain.GenerateAttachmentID(), MessageID: msg.ID,
-			Name: "pic.png", MimeType: "image/png", SizeBytes: 8, Path: "attachments/x.png",
+			ID:        domain.GenerateAttachmentID(),
+			Name:      "pic.png",
+			MimeType:  "image/png",
+			SizeBytes: 8,
+			Path:      "attachments/x.png",
 		}},
 	}
-	// ID must exist before attachments reference it: fill then append.
-	msg.ID = domain.GenerateMessageID()
 	msg.Attachments[0].MessageID = msg.ID
 	if err := messages.AppendMessage(ctx, msg); err != nil {
 		t.Fatal(err)
