@@ -28,16 +28,16 @@ const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 
 
 // Deps are the wired services the handlers ride on.
 type Deps struct {
-	Config     config.Config
-	Sessions   *session.Store
-	Messages   *store.Messages
-	Faxes      *store.Faxes
-	Contacts   *store.Contacts
-	Messaging  *messaging.Service
-	Fax        *fax.Service
-	PhoneAPI   *pbx.Client
-	Broadcaster *cqrshtmx.Broadcaster
-	Shared     []SharedContactEntry
+	Config    config.Config
+	Sessions  *session.Store
+	Messages  *store.Messages
+	Faxes     *store.Faxes
+	Contacts  *store.Contacts
+	Messaging *messaging.Service
+	Fax       *fax.Service
+	PhoneAPI  *pbx.Client
+	Hubs      *extensionHubs
+	Shared    []SharedContactEntry
 }
 
 // SharedContactEntry mirrors domain.SharedContact without the handlers
