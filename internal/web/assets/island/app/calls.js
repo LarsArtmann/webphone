@@ -8,7 +8,6 @@
 // sipfrag verdict.
 
 import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
-import { getUserAgent } from "./connection.js";
 import { sipDomain } from "./config.js";
 import { startIcePanel, stopIcePanel } from "./ice.js";
 import { t } from "./i18n.js";
@@ -405,7 +404,7 @@ export function sendDtmf(tone) {
 }
 
 export async function placeCall(raw) {
-  const userAgent = getUserAgent();
+  const userAgent = state.userAgent;
   if (!userAgent) {
     announce(t("notConnected"), "error");
     return;

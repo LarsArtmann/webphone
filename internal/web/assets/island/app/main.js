@@ -2,7 +2,7 @@
 // else lives in its feature module — this file is the composition root.
 
 import { ringToneStop } from "./audio.js";
-import { connect, disconnect, getUserAgent } from "./connection.js";
+import { connect, disconnect } from "./connection.js";
 import {
   bindSession,
   placeCall,
@@ -79,10 +79,7 @@ els.logout.addEventListener("click", async () => {
     [...sessions.values()].forEach(({ session }) => {
       session.bye().catch(() => {});
     });
-    if (getUserAgent())
-      await getUserAgent()
-        .stop()
-        .catch(() => {});
+    if (state.userAgent) await state.userAgent.stop().catch(() => {});
   } finally {
     disconnect();
     destroySession();
