@@ -42,7 +42,9 @@ export async function authedFetch(path, options = {}) {
 export function noteThrottled(res, path) {
   if (res.status !== 429) return;
   const waitSeconds = Number.parseInt(res.headers.get("Retry-After") || "", 10);
-  const waitText = Number.isFinite(waitSeconds) ? ` — retry in ${waitSeconds}s` : "";
+  const waitText = Number.isFinite(waitSeconds)
+    ? ` — retry in ${waitSeconds}s`
+    : "";
   console.warn(`webphone: rate limited on ${path}${waitText}`);
   announce(`Too many requests${waitText}`, "warn");
 }

@@ -4,7 +4,12 @@
 // authedFetch — there is no second login.
 
 import { phoneApiEnabled, sharedContacts } from "./config.js";
-import { authedFetch, authHeaderValue, getCredentials, noteThrottled } from "./auth.js";
+import {
+  authedFetch,
+  authHeaderValue,
+  getCredentials,
+  noteThrottled,
+} from "./auth.js";
 import { t } from "./i18n.js";
 import { announce, dialFromUi, els, log } from "./ui.js";
 

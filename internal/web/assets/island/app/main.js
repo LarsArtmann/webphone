@@ -131,7 +131,12 @@ initSseLiveIndicator();
 // ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});
 // htmx dispatches it as a DOM event that bubbles to the body. The
 // library's kind vocabulary maps onto the island's toast styles.
-const TOAST_KINDS = { success: "ok", error: "error", warning: "warn", info: "info" };
+const TOAST_KINDS = {
+  success: "ok",
+  error: "error",
+  warning: "warn",
+  info: "info",
+};
 document.body.addEventListener("showMessage", (event) => {
   const detail = event.detail || {};
   announce(detail.message || "", TOAST_KINDS[detail.kind] || "info");
