@@ -45,7 +45,7 @@
 
               src = pkgs.lib.cleanSource self;
 
-              vendorHash = "sha256-glY+V1e8eILmDaZ9eBk1QQSOKaJPLPDJX9ANwClUF8E=";
+              vendorHash = "sha256-WlFJ83w9VX+alrCHZRC7nVPFU/l9yoUB1JGNrTGU8R0=";
 
               proxyVendor = true;
 

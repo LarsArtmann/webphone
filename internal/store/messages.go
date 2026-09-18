@@ -2,10 +2,10 @@ package store
 
 import (
 	"context"
-	"slices"
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
