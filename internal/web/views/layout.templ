@@ -49,7 +49,7 @@ templ Shell(props ShellProps) {
 		ThemeColor:     "#0f766e",
 		DarkThemeColor: "#10161a",
 		CSSPath:        "/assets/app.css",
-		HTMXSrc:        "/htmx.min.js",
+		Favicon:        "/favicon.svg",
 		Nonce:          "",
 		SEO:            layout.SEOMeta{NoIndex: true},
 		HeadContent:    headExtras(props.CSRFToken),
@@ -127,11 +127,15 @@ templ NavLinks(props ShellProps) {
 	}
 }
 
-// headExtras loads the SSE extension, the island stylesheet (after the
-// Tailwind build so its element rules win), and the tiny shell script that
-// tracks the active nav item across partial swaps.
+// headExtras loads htmx deferred — AFTER the htmx-config meta, so htmx
+// sees it at startup and skips its CSP-hostile inline indicator styles —
+// then the SSE extension, the island stylesheet (after the Tailwind build
+// so its element rules win), and the tiny shell script that tracks the
+// active nav item across partial swaps.
 templ headExtras(csrfToken string) {
 	<meta name="csrf-token" content={ csrfToken }></meta>
+	<meta name="htmx-config" content='{"includeIndicatorStyles":false}'></meta>
+	<script src="/htmx.min.js" defer></script>
 	<script src="/htmx-ext/sse.js" defer></script>
 	<link rel="stylesheet" href="/assets/island/style.css"></link>
 	<script src="/assets/shell.js" defer></script>

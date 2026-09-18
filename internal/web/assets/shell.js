@@ -1,4 +1,4 @@
-// Shell glue: three small behaviors the server-rendered tabs need.
+// Shell glue: small behaviors the server-rendered tabs need.
 // CSP-strict: a plain external script, no inline handlers.
 
 (function () {
@@ -27,6 +27,13 @@
     if (!dest || !form) return;
     dest.value = button.getAttribute("data-dial");
     form.requestSubmit();
+  });
+
+  // 2b. data-reload buttons (error panel): full reload, same as the old
+  //      inline onclick but CSP-safe via this delegated listener.
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest("[data-reload]")) return;
+    location.reload();
   });
 
   // 3. Keep the transcript pinned to the newest message after renders.
