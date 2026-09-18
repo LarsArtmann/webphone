@@ -122,9 +122,8 @@ func faxErrorMessage(err error, lang views.Lang) string {
 
 // faxDocument streams a job's PDF (session-gated).
 func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	job, err := h.deps.Fax.Get(r.Context(), sess.Extension, domain.MustFaxID(r.PathValue("id")))
@@ -145,9 +144,8 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 
 // attachment streams one MMS attachment (session-gated, owner-scoped).
 func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	attachment, err := h.deps.Messaging.AttachmentByID(r.Context(), sess.Extension, domain.MustAttachmentID(r.PathValue("id")))
@@ -168,9 +166,8 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 
 // deleteVoicemail removes a message through the phone API.
 func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	uuid := r.URL.Query().Get("uuid")
@@ -192,9 +189,8 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 
 // saveContact upserts a personal contact.
 func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	// FormValue transparently handles urlencoded AND multipart bodies.
@@ -220,9 +216,8 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 
 // deleteContact removes a personal contact.
 func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	if err := h.deps.Contacts.Delete(r.Context(), sess.Extension, domain.MustContactID(r.URL.Query().Get("id"))); err != nil {
@@ -285,12 +280,24 @@ func (h *handlers) renderPanelError(
 	_, _ = fmt.Fprintf(w, `<p class="wp-error" role="alert">%s</p>`, templ.EscapeString(message)) //nolint:erraudit // best-effort write; the response is already committed
 }
 
-// requireSessionMultipart parses a multipart action form for the signed-in
-// extension; on failure it has already written the error response.
-func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+// requireSession gates a handler behind the signed-in extension; on
+// failure it has already written the error response. Handlers keep their
+// own gate (rather than relying on route middleware) so they are safe by
+// construction no matter how they are wired.
+func (h *handlers) requireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
 	sess, ok := session.From(r.Context())
 	if !ok {
 		http.Error(w, "sign in first", http.StatusUnauthorized)
+		return session.Session{}, false
+	}
+	return sess, true
+}
+
+// requireSessionMultipart parses a multipart action form for the signed-in
+// extension; on failure it has already written the error response.
+func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
 		return session.Session{}, false
 	}
 	if err := r.ParseMultipartForm(uploadLimit); err != nil {
@@ -353,9 +360,8 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 
 // exportContacts streams the extension's personal contacts as vCard.
 func (h *handlers) exportContacts(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	contacts, err := h.deps.Contacts.List(r.Context(), sess.Extension)

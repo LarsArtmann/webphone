@@ -46,9 +46,8 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 }
 
 func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	id := domain.MustThreadID(r.PathValue("id"))

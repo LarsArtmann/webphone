@@ -13,9 +13,8 @@ import (
 // panels (voicemail, history) keep working byte-for-byte: same paths, same
 // JSON, no password in the browser beyond the island's own memory copy.
 func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSession(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
 	if !h.deps.PhoneAPI.Enabled() {
