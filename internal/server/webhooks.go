@@ -223,10 +223,17 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	key := "fax/" + payload.ProviderRef
+	if h.hooksIdem.seen(key) {
+		w.WriteHeader(http.StatusAccepted) // replay: the original verdict already applied
+		return
+	}
+
 	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.count(), payload.Error); err != nil {
 		http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
 		return
 	}
+	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -251,6 +258,12 @@ func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	key := "msg/" + payload.ProviderRef
+	if h.hooksIdem.seen(key) {
+		w.WriteHeader(http.StatusAccepted) // replay: the original verdict already applied
+		return
+	}
+
 	if _, err := h.deps.Messaging.DeliveryReceipt(r.Context(), payload.ProviderRef, status, payload.Error); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			http.Error(w, "could not update message: "+err.Error(), http.StatusNotFound)
@@ -259,6 +272,7 @@ func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not update message: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
 	w.WriteHeader(http.StatusAccepted)
 }
 

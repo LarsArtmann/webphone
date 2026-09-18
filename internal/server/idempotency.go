@@ -30,19 +30,23 @@ func newIdemStore(ttl time.Duration) *idemStore {
 	return &idemStore{ttl: ttl, entries: make(map[string]time.Time)}
 }
 
-// firstTime reports whether key is new. New keys are recorded; replays
-// return false. Expired entries are dropped on sight, so the map never
-// grows beyond live traffic.
-func (s *idemStore) firstTime(key string) bool {
+// seen reports whether key was already recorded as processed.
+func (s *idemStore) seen(key string) bool {
 	now := time.Now()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if at, ok := s.entries[key]; ok {
-		if now.Sub(at) < s.ttl {
-			return false
-		}
+	at, ok := s.entries[key]
+	return ok && now.Sub(at) < s.ttl
+}
+
+// record marks key as processed (with drop-on-sight of expired entries,
+// so the map never grows beyond live traffic).
+func (s *idemStore) record(key string) {
+	now := time.Now()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if at, ok := s.entries[key]; ok && now.Sub(at) >= s.ttl {
 		delete(s.entries, key)
 	}
 	s.entries[key] = now
-	return true
 }
