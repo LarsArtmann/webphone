@@ -1,0 +1,629 @@
+/* WebPhone — desk-phone vernacular: a quiet, hardware-true surface with
+ * one line light (the status pill) and keys that answer the hand.
+ * Everything is driven by the token block below; light and dark are
+ * first-class themes (prefers-color-scheme), the brand mark picks up
+ * its colors from the same tokens. */
+
+:root {
+  color-scheme: dark light;
+  --bg: #10161a;
+  --surface: #182125;
+  --surface-2: #1f2a30;
+  --border: #2c3a41;
+  --text: #e9eff2;
+  --muted: #93a5ae;
+  --accent: #2aa884;
+  --accent-strong: #3fbf9a;
+  --accent-soft: rgb(42 168 132 / 14%);
+  --danger: #e05252;
+  --danger-strong: #ea6a6a;
+  --warn: #d9a53f;
+  --ok: #3fbf9a;
+  --led: #4c555c;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 6px 24px rgb(2 8 10 / 45%);
+  --key: #232f36;
+  --key-down: #2c3b44;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #edf1f2;
+    --surface: #fbfdfd;
+    --surface-2: #f1f5f6;
+    --border: #d3dcdf;
+    --text: #1a252a;
+    --muted: #5d6f77;
+    --accent: #0f766e;
+    --accent-strong: #0d655e;
+    --accent-soft: rgb(15 118 110 / 10%);
+    --danger: #c43d3d;
+    --danger-strong: #ad3232;
+    --warn: #9a6b13;
+    --ok: #0f766e;
+    --led: #a9b6bc;
+    --shadow: 0 6px 20px rgb(26 37 42 / 12%);
+    --key: #ffffff;
+    --key-down: #e6ecee;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+/* --- top bar: brand, language, line light ------------------------------ */
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 650;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
+.brand-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.brand-mark .mark-bg {
+  fill: var(--accent);
+}
+
+.brand-mark .mark-fg {
+  fill: #f4fbf9;
+}
+
+#lang {
+  margin-left: auto;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* The line light: one glanceable indicator for the whole connection. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.7rem;
+  padding: 4px 11px 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--led);
+  flex: none;
+}
+
+.status-registered {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+
+.status-registered::before {
+  background: var(--ok);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--ok) 70%, transparent);
+}
+
+.status-offline {
+  color: var(--muted);
+}
+
+/* --- cards and sections ------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+h1 {
+  font-size: 1.12rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0 0 18px;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 120ms ease;
+}
+
+input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+/* --- buttons: keys that answer the hand --------------------------------- */
+
+button {
+  padding: 11px 16px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--key);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 80ms ease;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:focus-visible,
+input:focus-visible,
+summary:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f4fbf9;
+  font-weight: 600;
+  width: 100%;
+}
+
+button.primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+button.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.danger:hover {
+  background: var(--danger-strong);
+  border-color: var(--danger-strong);
+}
+
+button.ghost {
+  background: transparent;
+}
+
+button.ghost:hover {
+  background: var(--surface-2);
+}
+
+button.small {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  margin-left: 8px;
+  border-radius: 8px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.whoami {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.whoami strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- dialing ------------------------------------------------------------- */
+
+#dial-form {
+  display: flex;
+  gap: 8px;
+}
+
+#dial-form input {
+  margin-top: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+#dial-form .primary {
+  width: auto;
+  white-space: nowrap;
+}
+
+.dial-error {
+  color: var(--danger);
+  margin: 8px 0 0;
+}
+
+/* --- call cards ----------------------------------------------------------- */
+
+.call-state {
+  margin: 20px 0 8px;
+  font-size: 0.95rem;
+}
+
+.call-state .target {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.call-card {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.call-card.focused {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.call-card .call-state {
+  margin: 0 0 10px;
+}
+
+.call-card .call-state-text {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- keypad ---------------------------------------------------------------- */
+
+#keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+#keypad button {
+  padding: 14px 0;
+  font-size: 1.15rem;
+  font-weight: 550;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: var(--key);
+}
+
+#keypad button:active {
+  background: var(--key-down);
+}
+
+#keypad button span {
+  font-size: 0.55rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+}
+
+/* --- incoming call ------------------------------------------------------------ */
+
+.incoming {
+  margin-top: 20px;
+  padding: 14px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  animation: incoming-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes incoming-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+/* --- panels (contacts, history, voicemail, ICE, log) --------------------------- */
+
+.log-wrap {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.log-wrap summary {
+  cursor: pointer;
+  font-weight: 550;
+  color: var(--text);
+  user-select: none;
+}
+
+.log-wrap summary .badge {
+  margin-left: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+#log {
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+#log li[data-level="warn"] {
+  color: var(--warn);
+}
+
+#log li[data-level="error"] {
+  color: var(--danger);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remember input {
+  width: auto;
+  margin-top: 0;
+}
+
+.history {
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.history li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.history .dir {
+  color: var(--accent);
+  width: 1em;
+}
+
+.history .when {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.history .redial,
+.history .save {
+  padding: 0 6px;
+  font-size: 0.72rem;
+}
+
+.contacts,
+.vm {
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.contacts li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.contacts .name {
+  font-weight: 600;
+}
+
+.contacts .number,
+.contacts .origin {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.contacts .call {
+  margin-left: auto;
+  padding: 0 8px;
+}
+
+.vm-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.vm li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.vm li:last-child {
+  border-bottom: none;
+}
+
+.vm li.unread .caller {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.vm .caller {
+  font-weight: 550;
+}
+
+.vm .len,
+.vm .when {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.vm .when {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.ice {
+  padding: 8px 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+}
+
+.ice .hintline {
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* --- toasts ---------------------------------------------------------------- */
+
+#toasts {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(440px, calc(100vw - 24px));
+  z-index: 100;
+}
+
+.toast {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.toast-ok {
+  border-left-color: var(--ok);
+}
+
+.toast-warn {
+  border-left-color: var(--warn);
+}
+
+.toast-error {
+  border-left-color: var(--danger);
+}
+
+/* --- reduced motion ------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .incoming {
+    animation: none;
+  }
+
+  button,
+  input {
+    transition: none;
+  }
+
+  button:active {
+    transform: none;
+  }
+}
