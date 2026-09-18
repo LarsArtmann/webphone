@@ -182,6 +182,9 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 		h.renderPanelError(w, r, sess, views.TabVoicemail, http.StatusBadGateway, "Could not delete the message — try again.")
 		return
 	}
+	// Nudge the extension's other tabs: the "voicemail" SSE event carries
+	// no payload — the voicemail panel re-fetches its partial on receipt.
+	h.deps.Hubs.Publish(sess.Extension, sseEventVoicemail, "")
 	h.partial(w, r, tabFromPath("/voicemail"))
 }
 

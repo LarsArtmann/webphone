@@ -37,7 +37,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		req.Body = io.NopCloser(io.LimitReader(r.Body, 1<<20))
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.deps.PhoneAPI.HTTPClient().Do(req)
 	if err != nil {
 		http.Error(w, "phone api unreachable", http.StatusBadGateway)
 		return
@@ -51,4 +51,13 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(w, resp.Body) //nolint:erraudit // best-effort write; the response is already committed
+
+	// The island polls its voicemail after registration and after each
+	// ended call — exactly when a deposit may have landed. Forwarding
+	// those reads as "voicemail" nudges keeps an open voicemail tab live
+	// without any server-side polling of the PBX. The nudge carries no
+	// payload; the panel re-fetches its partial on receipt.
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 && strings.HasPrefix(rest, "/voicemail/") {
+		h.deps.Hubs.Publish(sess.Extension, sseEventVoicemail, "")
+	}
 }

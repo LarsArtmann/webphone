@@ -25,7 +25,9 @@ const (
 	MaxAttachments    = 5
 	MaxAttachmentSize = 10 << 20 // 10 MiB per attachment
 	MaxBodyLength     = 1600
-	messagePageSize   = 200
+	// MessagePageSize is the transcript window shared by the thread view
+	// and its live SSE pushes.
+	MessagePageSize = 200
 )
 
 // ErrInvalidSend describes a rejected send with a user-facing message.
@@ -203,7 +205,7 @@ func (s *Service) Thread(
 	if err != nil {
 		return domain.Thread{}, nil, err
 	}
-	msgs, err := s.messages.ListMessages(ctx, owner, id, messagePageSize)
+	msgs, err := s.messages.ListMessages(ctx, owner, id, MessagePageSize)
 	if err != nil {
 		return domain.Thread{}, nil, err
 	}

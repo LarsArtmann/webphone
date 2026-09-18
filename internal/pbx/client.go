@@ -5,9 +5,11 @@
 package pbx
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -50,6 +52,16 @@ func (c *Client) ResolvePath(rest, rawQuery string) string {
 		target += "?" + rawQuery
 	}
 	return target
+}
+
+// HTTPClient exposes the client the /phone-api proxy must ride on, so
+// proxied calls share the same timeouts as direct pbx calls instead of
+// the timeout-less http.DefaultClient.
+func (c *Client) HTTPClient() *http.Client {
+	if c.client != nil {
+		return c.client
+	}
+	return &http.Client{Timeout: 15 * time.Second}
 }
 
 // Credentials are the extension's SIP credentials (Basic auth).
@@ -146,22 +158,22 @@ func (c *Client) getJSON(ctx context.Context, creds Credentials, path string, ou
 func (c *Client) do(
 	ctx context.Context, creds Credentials, method, path string, in, out any,
 ) error {
-	var body []byte
+	var bodyReader io.Reader
 	if in != nil {
 		encoded, err := json.Marshal(in)
 		if err != nil {
 			return fmt.Errorf("encode request: %w", err)
 		}
-		body = encoded
+		bodyReader = bytes.NewReader(encoded)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, c.base.JoinPath(path).String(), nil)
+	req, err := http.NewRequestWithContext(ctx, method, c.base.JoinPath(path).String(), bodyReader)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
 	}
 	req.SetBasicAuth(creds.Extension, creds.Password)
-	if body != nil {
-		req.Body = http.NoBody
+	if bodyReader != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	resp, err := c.client.Do(req)

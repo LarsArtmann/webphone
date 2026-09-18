@@ -21,7 +21,9 @@ export async function createSession(extension, password) {
       console.warn(
         "webphone: server session not created (HTTP " + res.status + ")",
       );
+      return;
     }
+    connectLiveUpdates();
   } catch (err) {
     console.warn("webphone: server session not created (" + err.message + ")");
   }
@@ -32,11 +34,30 @@ export async function destroySession() {
     await fetch("/api/session", {
       method: "DELETE",
       headers: { "X-CSRF-Token": csrfToken() },
+      keepalive: true,
     });
   } catch {
     // signing out of the server session is best-effort; the cookie dies
     // with the tab session anyway
   }
+  // Reload: the page was rendered signed-in (SSE feed connected, tabs
+  // unlocked); after logout the server must render the login-card shell
+  // again. Safe by construction — logout ends every call first, so no
+  // live call state is lost.
+  window.location.reload();
+}
+
+// The server only renders sse-connect for already-signed-in pages; this
+// session was created client-side after the island's REGISTER succeeded.
+// Attach the SSE feed dynamically so live tab updates work from this
+// login on — without a reload, which would drop the in-memory password
+// and any call in progress.
+function connectLiveUpdates() {
+  const root = document.querySelector(".wp-root");
+  if (!root || root.hasAttribute("sse-connect")) return;
+  root.setAttribute("hx-ext", "sse");
+  root.setAttribute("sse-connect", "/events");
+  if (window.htmx) window.htmx.process(root);
 }
 
 // The server renders the CSRF token into <meta name="csrf-token">; the

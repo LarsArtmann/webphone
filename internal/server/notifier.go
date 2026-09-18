@@ -3,8 +3,12 @@ package server
 import (
 	"bytes"
 	"context"
+	"log/slog"
+
+	"github.com/a-h/templ"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -12,6 +16,11 @@ import (
 // Notifier turns service-layer changes into per-extension SSE pushes.
 // It is the ChangeFunc target main wires into the messaging and fax
 // services; it queries the stores directly so wiring has no cycle.
+//
+// Every payload is a swap-safe fragment (ThreadsList, Transcript,
+// FaxList): exactly the inner region a sse-swap element replaces, never
+// a wrapper — so live pushes cannot nest sections or wipe a draft that
+// sits in a composer outside the swapped region.
 type Notifier struct {
 	hubs     *ExtensionHubs
 	messages *store.Messages
@@ -23,35 +32,38 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 	return &Notifier{hubs: hubs, messages: messages, faxes: faxes}
 }
 
-// MessagesChanged pushes a fresh thread list to the extension's tabs.
-func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, _ domain.ThreadID) {
-	threads, err := n.messages.ListThreads(ctx, owner)
-	if err != nil {
-		return
+// MessagesChanged pushes a fresh thread list to the extension's tabs and,
+// for the affected thread, a fresh transcript so an open conversation
+// updates live. A failed or missing read is skipped: one lost push is
+// cosmetic, the next change catches up.
+func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
+	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
+		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads))
+	} else {
+		slog.Debug("sse: render thread list failed", "error", err)
 	}
-	var buf bytes.Buffer
-	component := views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads})
-	if err := component.Render(ctx, &buf); err != nil {
-		return
+	if msgs, err := n.messages.ListMessages(ctx, owner, threadID, messaging.MessagePageSize); err == nil {
+		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs))
+	} else {
+		slog.Debug("sse: render transcript failed", "error", err)
 	}
-	n.hubs.Publish(owner, sseEventThreads, buf.String())
 }
 
 // FaxChanged pushes a fresh fax job list to the extension's tabs.
 func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ domain.FaxID) {
 	jobs, err := n.faxes.List(ctx, owner, 100)
 	if err != nil {
+		slog.Debug("sse: render fax list failed", "error", err)
 		return
 	}
-	var buf bytes.Buffer
-	component := views.FaxPanel(views.FaxPanelProps{Jobs: jobs})
-	if err := component.Render(ctx, &buf); err != nil {
-		return
-	}
-	n.hubs.Publish(owner, sseEventFax, buf.String())
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs))
 }
 
-// VoicemailChanged nudges the voicemail tab.
-func (n *Notifier) VoicemailChanged(_ context.Context, owner domain.Extension) {
-	n.hubs.Publish(owner, sseEventVoicemail, "")
+func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event string, component templ.Component) {
+	var buf bytes.Buffer
+	if err := component.Render(ctx, &buf); err != nil {
+		slog.Debug("sse: render push failed", "event", event, "error", err)
+		return
+	}
+	n.hubs.Publish(owner, event, buf.String())
 }
