@@ -1,0 +1,41 @@
+direction: down
+PARITY_1: {
+  label: "1% → 51%  Parity milestone"
+  T1: "T1 Go module + flake\n(buildGoModule, vendor, jsonv2)"
+  T2: "T2 Island pipeline\nesbuild → go:embed + contract test"
+  T3: "T3 App shell page\nBase + sidebar + island pane"
+  T1 -> T2 -> T3
+}
+CORE_4: {
+  label: "4% → 64%  Everything answerable"
+  T4: "T4 Session service\n/api/session + gate + island hook"
+  T5: "T5 PBX integration\n/phone-api proxy + /config.js render"
+  T6: "T6 Domain + SQLite\n(branded ids, migrations, stores)"
+  T7: "T7 Messaging service\nthreads + loopback gateway"
+  T8: "T8 Messages UI\nthreads, composer, partials"
+  T3 -> T4 -> T5
+  T4 -> T6 -> T7 -> T8
+}
+FULL_20: {
+  label: "20% → 80%  The long tail"
+  T9: "T9 MMS attachments\nupload + serve + bubbles"
+  T10: "T10 Fax service\njobs + gateways"
+  T11: "T11 Fax UI\nsend PDF, inbox, status"
+  T12: "T12 VM/History/Contacts\n/Settings tabs"
+  T13: "T13 SSE live updates\nthreads, fax, vm badge"
+  T14: "T14 Webhooks\ninbound + provider gateway"
+  T15: "T15 Tests\nall layers"
+  T16: "T16 Gates + docs\nbuildflow, nix, README…"
+  T8 -> T9
+  T6 -> T10 -> T11
+  T5 -> T12
+  T7 -> T13
+  T10 -> T13
+  T14 -> T13
+  T9 -> T15
+  T11 -> T15
+  T12 -> T15
+  T13 -> T15
+  T15 -> T16
+}
+PARITY_1 -> CORE_4 -> FULL_20
