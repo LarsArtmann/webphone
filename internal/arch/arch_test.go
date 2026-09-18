@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -20,7 +21,13 @@ type listPackage struct {
 
 func goListInternal(t *testing.T) []listPackage {
 	t.Helper()
+	// Run from the module root: this test file lives in internal/arch.
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate the module root")
+	}
 	cmd := exec.Command("go", "list", "-json", "./internal/...")
+	cmd.Dir = filepath.Join(filepath.Dir(thisFile), "..", "..")
 	cmd.Env = append(os.Environ(), "GOEXPERIMENT=jsonv2")
 	out, err := cmd.Output()
 	if err != nil {

@@ -125,3 +125,12 @@ export function stopIcePanel() {
   iceTimer = null;
   els.icePanel.replaceChildren();
 }
+
+// calls.js announces session-table changes as an event because calls and
+// ice must never import each other (module-graph invariant, enforced by
+// the arch test); main.js imports this module for the listener.
+document.addEventListener("wp:calls-changed", () => {
+  els.iceWrap.hidden = sessions.size === 0;
+  if (sessions.size > 0) startIcePanel();
+  else stopIcePanel();
+});

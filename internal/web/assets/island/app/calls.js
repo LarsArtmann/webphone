@@ -9,7 +9,6 @@
 
 import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
 import { sipDomain } from "./config.js";
-import { startIcePanel, stopIcePanel } from "./ice.js";
 import { t } from "./i18n.js";
 import {
   recordHistory,
@@ -146,9 +145,9 @@ export function renderCalls() {
     sessions.get(state.focusedId).session.state ===
       SIP.SessionState.Established;
   els.keypad.hidden = !established;
-  els.iceWrap.hidden = sessions.size === 0;
-  if (sessions.size > 0) startIcePanel();
-  else stopIcePanel();
+  // ice.js listens for this (calls and ice never import each other —
+  // the module-graph invariant the arch test enforces).
+  document.dispatchEvent(new CustomEvent("wp:calls-changed"));
   if (outgoingCount() === 0) ringbackStop();
 }
 

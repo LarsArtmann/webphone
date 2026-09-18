@@ -10,6 +10,7 @@ import {
   teardownAll,
 } from "./calls.js";
 import { sipDomain, websocketUrl } from "./config.js";
+import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
   cancelVoicemailRefresh,
