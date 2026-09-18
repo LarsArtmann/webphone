@@ -15,6 +15,7 @@ type VoicemailPanelProps struct {
 	Summary pbx.VoicemailSummary
 	Messages []pbx.VoicemailMessage
 	Error   string
+	Lang    Lang
 }
 
 templ VoicemailPanel(props VoicemailPanelProps) {
@@ -27,12 +28,12 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 		hx-swap="innerHTML show:window:top"
 	>
 		<header class="wp-panel-head">
-			<h2>Voicemail</h2>
+			<h2>{ T(props.Lang, "tab.voicemail") }</h2>
 			<p class="wp-panel-sub">
 				if props.Enabled {
-					{ fmtInt(props.Summary.New) } new · { fmtInt(props.Summary.Old) } saved
+					{ fmtInt(props.Summary.New) } { T(props.Lang, "vm.new") } · { fmtInt(props.Summary.Old) } { T(props.Lang, "vm.saved") }
 				} else {
-					Needs the operator phone API.
+					{ T(props.Lang, "vm.needsAPI") }
 				}
 			</p>
 		</header>
@@ -41,23 +42,22 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 		}
 		if !props.Enabled {
 			<p class="wp-empty">
-				Voicemail lives on the PBX. Ask the operator to enable the phone API
-				(<code>phone_api_url</code>); messages will appear here and in the phone panel.
+				{ T(props.Lang, "vm.disabled.pre") }<code>phone_api_url</code>{ T(props.Lang, "vm.disabled.post") }
 			</p>
 		}
 		for _, msg := range props.Messages {
-			@VoicemailRow(msg)
+			@VoicemailRow(msg, props.Lang)
 		}
 		if props.Enabled && len(props.Messages) == 0 {
-			<p class="wp-empty">No messages.</p>
+			<p class="wp-empty">{ T(props.Lang, "vm.empty") }</p>
 		}
 	</section>
 }
 
-templ VoicemailRow(msg pbx.VoicemailMessage) {
+templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 	<article class={ "wp-fax-row", templ.KV("wp-unread", !msg.Read) }>
-		<span class="wp-fax-dir">from</span>
-		<strong class="wp-thread-remote">{ vmCaller(msg) }</strong>
+		<span class="wp-fax-dir">{ T(lang, "vm.from") }</span>
+		<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
 		<span class="wp-thread-when">{ vmWhen(msg.Created) }</span>
 		<span class="wp-muted">{ fmtInt(msg.Seconds) }s</span>
 		if msg.AudioURL != "" {
@@ -68,19 +68,19 @@ templ VoicemailRow(msg pbx.VoicemailMessage) {
 			hx-post={ "/voicemail/delete?uuid=" + msg.UUID }
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
-			hx-confirm="Delete this message?"
-		>Delete</button>
+			hx-confirm={ T(lang, "vm.deleteConfirm") }
+		>{ T(lang, "vm.delete") }</button>
 	</article>
 }
 
-func vmCaller(msg pbx.VoicemailMessage) string {
+func vmCaller(msg pbx.VoicemailMessage, lang Lang) string {
 	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber {
 		return msg.CIDName + " (" + msg.CIDNumber + ")"
 	}
 	if msg.CIDNumber != "" {
 		return msg.CIDNumber
 	}
-	return "unknown"
+	return T(lang, "vm.unknown")
 }
 
 func vmWhen(createdUnix int64) string {

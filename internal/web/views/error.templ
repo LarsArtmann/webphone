@@ -2,13 +2,13 @@ package views
 
 // ErrorPanel renders a tab-level failure with the three things a user
 // needs: what happened, reassurance, and what to do next.
-templ ErrorPanel(message string) {
+templ ErrorPanel(message string, lang Lang) {
 	<section class="wp-panel">
 		<header class="wp-panel-head">
-			<h2>Something went wrong</h2>
-			<p class="wp-panel-sub">Nothing was lost — retry in a moment.</p>
+			<h2>{ T(lang, "error.title") }</h2>
+			<p class="wp-panel-sub">{ T(lang, "error.subtitle") }</p>
 		</header>
 		<p class="wp-error" role="alert">{ message }</p>
-		<button class="wp-primary" onclick="location.reload()">Reload</button>
+		<button class="wp-primary" onclick="location.reload()">{ T(lang, "error.reload") }</button>
 	</section>
 }

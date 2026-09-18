@@ -8,13 +8,14 @@ import 	"github.com/larsartmann/webphone/internal/domain"
 type FaxPanelProps struct {
 	Jobs  []domain.FaxJob
 	Error string
+	Lang  Lang
 }
 
 templ FaxPanel(props FaxPanelProps) {
 	<section class="wp-panel" id="fax-panel">
 		<header class="wp-panel-head">
-			<h2>Fax</h2>
-			<p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p>
+			<h2>{ T(props.Lang, "tab.fax") }</h2>
+			<p class="wp-panel-sub">{ T(props.Lang, "fax.subtitle") }</p>
 		</header>
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
@@ -27,41 +28,41 @@ templ FaxPanel(props FaxPanelProps) {
 			hx-encoding="multipart/form-data"
 			enctype="multipart/form-data"
 		>
-			<input name="to" inputmode="tel" required placeholder="Fax number" aria-label="Fax number"></input>
-			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label="PDF document"></input>
-			<button type="submit" class="wp-primary">Send fax</button>
+			<input name="to" inputmode="tel" required placeholder={ T(props.Lang, "fax.number.ph") } aria-label={ T(props.Lang, "fax.number.ph") }></input>
+			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
+			<button type="submit" class="wp-primary">{ T(props.Lang, "fax.send") }</button>
 		</form>
 		<div class="wp-fax-list" sse-swap="fax">
-			@FaxList(props.Jobs)
+			@FaxList(props.Jobs, props.Lang)
 		</div>
 	</section>
 }
 
 // FaxList renders the fax rows (or the empty state). It is the payload of
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
-templ FaxList(jobs []domain.FaxJob) {
+templ FaxList(jobs []domain.FaxJob, lang Lang) {
 	if len(jobs) == 0 {
-		<p class="wp-empty">No faxes yet — send a PDF above.</p>
+		<p class="wp-empty">{ T(lang, "fax.empty") }</p>
 	}
 	for _, job := range jobs {
-		@FaxRow(job)
+		@FaxRow(job, lang)
 	}
 }
 
-templ FaxRow(job domain.FaxJob) {
+templ FaxRow(job domain.FaxJob, lang Lang) {
 	<article class={ "wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class="wp-fax-dir">
 			if job.Direction == domain.FaxInbound {
-				← received from
+				{ T(lang, "fax.in") }
 			} else {
-				→ sent to
+				{ T(lang, "fax.out") }
 			}
 		</span>
 		<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
 		<span class="wp-thread-when">{ job.CreatedAt.Local().Format("Jan 2, 15:04") }</span>
-		@FaxStatusBadge(job)
+		@FaxStatusBadge(job, lang)
 		if job.Pages > 0 {
-			<span class="wp-muted">{ fmtInt(job.Pages) } page(s)</span>
+			<span class="wp-muted">{ fmtInt(job.Pages) + T(lang, "fax.pages") }</span>
 		}
 		if job.Error != "" {
 			<span class="wp-error" role="alert">{ job.Error }</span>
@@ -72,18 +73,18 @@ templ FaxRow(job domain.FaxJob) {
 	</article>
 }
 
-templ FaxStatusBadge(job domain.FaxJob) {
+templ FaxStatusBadge(job domain.FaxJob, lang Lang) {
 	switch job.Status {
 	case domain.FaxQueued:
-		<span class="wp-status wp-status-queued">queued</span>
+		<span class="wp-status wp-status-queued">{ T(lang, "status.queued") }</span>
 	case domain.FaxSending:
-		<span class="wp-status wp-status-queued">sending…</span>
+		<span class="wp-status wp-status-queued">{ T(lang, "status.sending") }</span>
 	case domain.FaxTransmitted:
-		<span class="wp-status wp-status-sent">transmitted</span>
+		<span class="wp-status wp-status-sent">{ T(lang, "status.transmitted") }</span>
 	case domain.FaxReceived:
-		<span class="wp-status wp-status-sent">received</span>
+		<span class="wp-status wp-status-sent">{ T(lang, "status.received") }</span>
 	case domain.FaxFailed:
-		<span class="wp-status wp-status-failed">failed</span>
+		<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
 	default:
 		<span class="wp-status">{ string(job.Status) }</span>
 	}

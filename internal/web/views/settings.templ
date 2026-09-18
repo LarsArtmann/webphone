@@ -11,44 +11,44 @@ type SettingsPanelProps struct {
 	PhoneAPI     bool
 	ICEServers   int
 	SharedContacts int
+	Lang           Lang
 }
 
 templ SettingsPanel(props SettingsPanelProps) {
 	<section class="wp-panel" id="settings-panel">
 		<header class="wp-panel-head">
-			<h2>Settings</h2>
-			<p class="wp-panel-sub">What this server is wired to. Operators change these in the config file.</p>
+			<h2>{ T(props.Lang, "tab.settings") }</h2>
+			<p class="wp-panel-sub">{ T(props.Lang, "settings.subtitle") }</p>
 		</header>
 		<dl class="wp-settings">
-			<dt>SIP domain</dt>
-			<dd>{ orUnset(props.SIPDomain) }</dd>
-			<dt>SIP WebSocket</dt>
+			<dt>{ T(props.Lang, "settings.sipDomain") }</dt>
+			<dd>{ orUnset(props.SIPDomain, props.Lang) }</dd>
+			<dt>{ T(props.Lang, "settings.sipWS") }</dt>
 			<dd>{ props.WebsocketURL }</dd>
-			<dt>ICE servers</dt>
+			<dt>{ T(props.Lang, "settings.ice") }</dt>
 			<dd>{ fmtInt(props.ICEServers) }</dd>
-			<dt>Message &amp; fax gateway</dt>
+			<dt>{ T(props.Lang, "settings.gateway") }</dt>
 			<dd>{ props.GatewayMode }</dd>
-			<dt>Voicemail &amp; history API</dt>
+			<dt>{ T(props.Lang, "settings.phoneAPI") }</dt>
 			<dd>
 				if props.PhoneAPI {
-					connected
+					{ T(props.Lang, "settings.connected") }
 				} else {
-					not configured
+					{ T(props.Lang, "settings.unset") }
 				}
 			</dd>
-			<dt>Shared contacts</dt>
+			<dt>{ T(props.Lang, "settings.shared") }</dt>
 			<dd>{ fmtInt(props.SharedContacts) }</dd>
 		</dl>
 		<p class="wp-empty">
-			Theme follows your system; the phone panel's language switch (EN/DE)
-			controls the call UI. Sign out from the phone panel.
+			{ T(props.Lang, "settings.themeNote") }
 		</p>
 	</section>
 }
 
-func orUnset(value string) string {
+func orUnset(value string, lang Lang) string {
 	if value == "" {
-		return "(request host)"
+		return T(lang, "err.requestHost")
 	}
 	return value
 }

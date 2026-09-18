@@ -14,13 +14,14 @@ type HistoryPanelProps struct {
 	// Current filter (echoed back into the form after a re-render).
 	Query string
 	Dir   string
+	Lang  Lang
 }
 
 templ HistoryPanel(props HistoryPanelProps) {
 	<section class="wp-panel" id="history-panel">
 		<header class="wp-panel-head">
-			<h2>History</h2>
-			<p class="wp-panel-sub">Server call records for your extension.</p>
+			<h2>{ T(props.Lang, "tab.history") }</h2>
+			<p class="wp-panel-sub">{ T(props.Lang, "history.subtitle") }</p>
 		</header>
 		if props.Enabled {
 			<form
@@ -33,40 +34,40 @@ templ HistoryPanel(props HistoryPanelProps) {
 				<input
 					type="search"
 					name="q"
-					placeholder="Number or name"
+					placeholder={ T(props.Lang, "history.filter.ph") }
 					value={ props.Query }
-					aria-label="Filter calls by number or name"
+					aria-label={ T(props.Lang, "history.filter.label") }
 				/>
-				<select name="dir" aria-label="Call direction">
-					<option value="" selected?={ props.Dir == "" }>Any direction</option>
-					<option value="in" selected?={ props.Dir == "in" }>Incoming</option>
-					<option value="out" selected?={ props.Dir == "out" }>Outgoing</option>
+				<select name="dir" aria-label={ T(props.Lang, "history.filter.label") }>
+					<option value="" selected?={ props.Dir == "" }>{ T(props.Lang, "history.dir.any") }</option>
+					<option value="in" selected?={ props.Dir == "in" }>{ T(props.Lang, "history.dir.in") }</option>
+					<option value="out" selected?={ props.Dir == "out" }>{ T(props.Lang, "history.dir.out") }</option>
 				</select>
-				<button type="submit">Filter</button>
+				<button type="submit">{ T(props.Lang, "history.filter") }</button>
 			</form>
 		}
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
 		if !props.Enabled {
-			<p class="wp-empty">Needs the operator phone API (<code>phone_api_url</code>).</p>
+			<p class="wp-empty">{ T(props.Lang, "history.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "history.needsAPI.post") }</p>
 		}
 		if props.Enabled && len(props.Entries) == 0 {
-			<p class="wp-empty">No calls recorded yet.</p>
+			<p class="wp-empty">{ T(props.Lang, "history.empty") }</p>
 		}
 		for _, cdr := range props.Entries {
-			@CDRRow(cdr)
+			@CDRRow(cdr, props.Lang)
 		}
 	</section>
 }
 
-templ CDRRow(cdr pbx.CDR) {
+templ CDRRow(cdr pbx.CDR, lang Lang) {
 	<article class="wp-fax-row">
 		<span class="wp-fax-dir">
 			if cdr.Context == "public" {
-				← from
+				{ T(lang, "history.dirIn") }
 			} else {
-				→ to
+				{ T(lang, "history.dirOut") }
 			}
 		</span>
 		<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>

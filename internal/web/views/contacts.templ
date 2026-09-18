@@ -8,13 +8,14 @@ import "github.com/larsartmann/webphone/internal/domain"
 type ContactsPanelProps struct {
 	Personal []domain.Contact
 	Shared   []domain.SharedContact
+	Lang     Lang
 }
 
 templ ContactsPanel(props ContactsPanelProps) {
 	<section class="wp-panel" id="contacts-panel">
 		<header class="wp-panel-head">
-			<h2>Contacts</h2>
-			<p class="wp-panel-sub">Your contacts, stored on this server, plus shared ones.</p>
+			<h2>{ T(props.Lang, "tab.contacts") }</h2>
+			<p class="wp-panel-sub">{ T(props.Lang, "contacts.subtitle") }</p>
 		</header>
 		<form
 			class="wp-compose wp-compose-new"
@@ -22,9 +23,9 @@ templ ContactsPanel(props ContactsPanelProps) {
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
 		>
-			<input name="name" required placeholder="Name" aria-label="Contact name"/>
-			<input name="number" inputmode="tel" required placeholder="Number" aria-label="Contact number"/>
-			<button type="submit" class="wp-primary">Save</button>
+			<input name="name" required placeholder={ T(props.Lang, "contacts.name.ph") } aria-label={ T(props.Lang, "contacts.name.label") }/>
+			<input name="number" inputmode="tel" required placeholder={ T(props.Lang, "contacts.number.ph") } aria-label={ T(props.Lang, "contacts.number.label") }/>
+			<button type="submit" class="wp-primary">{ T(props.Lang, "contacts.save") }</button>
 		</form>
 		<div class="wp-compose">
 			<form
@@ -34,35 +35,39 @@ templ ContactsPanel(props ContactsPanelProps) {
 				hx-swap="innerHTML"
 				hx-encoding="multipart/form-data"
 			>
-				<input type="file" name="vcard" accept=".vcf,text/vcard" required aria-label="vCard file to import"/>
-				<button type="submit">Import</button>
+				<input type="file" name="vcard" accept=".vcf,text/vcard" required aria-label={ T(props.Lang, "contacts.importFile.label") }/>
+				<button type="submit">{ T(props.Lang, "contacts.import") }</button>
 			</form>
-			<a class="wp-export-link" href="/contacts/export">Export vCard</a>
+			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
 		</div>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
-			<p class="wp-empty">No contacts yet — add one above.</p>
+			<p class="wp-empty">{ T(props.Lang, "contacts.empty") }</p>
 		}
 		for _, contact := range props.Personal {
-			<article class="wp-fax-row">
-				<strong class="wp-thread-remote">{ contact.Name }</strong>
-				<span class="wp-muted">{ contact.Phone.String() }</span>
-				<button class="wp-primary" data-dial={ contact.Phone.String() }>Call</button>
-				<button
-					class="wp-danger"
-					hx-post={ "/contacts/delete?id=" + contact.ID.String() }
-					hx-target="#tab-content"
-					hx-swap="innerHTML"
-					hx-confirm="Remove this contact?"
-				>Remove</button>
-			</article>
+			@ContactRow(contact, props.Lang)
 		}
 		for _, contact := range props.Shared {
 			<article class="wp-fax-row">
 				<strong class="wp-thread-remote">{ contact.Name }</strong>
 				<span class="wp-muted">{ contact.Number }</span>
-				<span class="wp-shared-tag">shared</span>
-				<button class="wp-primary" data-dial={ contact.Number }>Call</button>
+				<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
+				<button class="wp-primary" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
 			</article>
 		}
 	</section>
+}
+
+templ ContactRow(contact domain.Contact, lang Lang) {
+	<article class="wp-fax-row">
+		<strong class="wp-thread-remote">{ contact.Name }</strong>
+		<span class="wp-muted">{ contact.Phone.String() }</span>
+		<button class="wp-primary" data-dial={ contact.Phone.String() }>{ T(lang, "contacts.call") }</button>
+		<button
+			class="wp-danger"
+			hx-post={ "/contacts/delete?id=" + contact.ID.String() }
+			hx-target="#tab-content"
+			hx-swap="innerHTML"
+			hx-confirm={ T(lang, "contacts.removeConfirm") }
+		>{ T(lang, "contacts.remove") }</button>
+	</article>
 }
