@@ -21,13 +21,8 @@ const uploadLimit = 60 << 20
 
 // sendMessage handles the composer forms (new conversation and reply).
 func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSessionMultipart(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
-		return
-	}
-	if err := r.ParseMultipartForm(uploadLimit); err != nil {
-		http.Error(w, "could not read the form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -88,13 +83,8 @@ func sendErrorMessage(err error) string {
 
 // sendFax handles the fax upload form.
 func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
-	sess, ok := session.From(r.Context())
+	sess, ok := h.requireSessionMultipart(w, r)
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
-		return
-	}
-	if err := r.ParseMultipartForm(uploadLimit); err != nil {
-		http.Error(w, "could not read the form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	to, err := domain.ParsePhone(r.FormValue("to"))
@@ -281,4 +271,19 @@ func (h *handlers) renderPanelError(
 		return
 	}
 	_, _ = fmt.Fprintf(w, `<p class="wp-error" role="alert">%s</p>`, templ.EscapeString(message)) //nolint:erraudit // best-effort write; the response is already committed
+}
+
+// requireSessionMultipart parses a multipart action form for the signed-in
+// extension; on failure it has already written the error response.
+func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+	sess, ok := session.From(r.Context())
+	if !ok {
+		http.Error(w, "sign in first", http.StatusUnauthorized)
+		return session.Session{}, false
+	}
+	if err := r.ParseMultipartForm(uploadLimit); err != nil {
+		http.Error(w, "could not read the form: "+err.Error(), http.StatusBadRequest)
+		return session.Session{}, false
+	}
+	return sess, true
 }

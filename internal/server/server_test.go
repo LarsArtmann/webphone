@@ -264,7 +264,7 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 		t.Fatalf("send: %d %s", resp.StatusCode, body)
 	}
 
-	resp, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
 	page := string(body)
 	if !strings.Contains(page, "+441632960961") || !strings.Contains(page, "contract test") {
 		t.Fatalf("thread list missing the new thread: %s", page[:min(200, len(page))])
@@ -274,7 +274,7 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 	if match == nil {
 		t.Fatal("no thread link in list")
 	}
-	resp, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
 	threadView := string(body)
 	if !strings.Contains(threadView, "contract test") || !strings.Contains(threadView, "wp-status-sent") {
 		t.Fatal("thread view missing message or sent badge (loopback gateway)")
@@ -298,9 +298,9 @@ func TestMMSAttachmentRoundTrip(t *testing.T) {
 		t.Fatalf("mms send: %d %s", resp.StatusCode, body)
 	}
 
-	resp, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
 	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
-	resp, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
 	attachment := regexp.MustCompile(`href="(/attachments/[^"]+)"`).FindSubmatch(body)
 	if attachment == nil {
 		t.Fatal("attachment link missing in thread view")

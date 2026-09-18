@@ -90,14 +90,8 @@ func (h *handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
-	owner, err := domain.ParseExtension(payload.Owner)
-	if err != nil {
-		http.Error(w, "invalid owner extension", http.StatusBadRequest)
-		return
-	}
-	from, err := domain.ParsePhone(payload.From)
-	if err != nil {
-		http.Error(w, "invalid from number", http.StatusBadRequest)
+	owner, from, ok := parseOwnerFrom(w, payload.Owner, payload.From)
+	if !ok {
 		return
 	}
 
@@ -131,14 +125,8 @@ func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
-	owner, err := domain.ParseExtension(payload.Owner)
-	if err != nil {
-		http.Error(w, "invalid owner extension", http.StatusBadRequest)
-		return
-	}
-	from, err := domain.ParsePhone(payload.From)
-	if err != nil {
-		http.Error(w, "invalid from number", http.StatusBadRequest)
+	owner, from, ok := parseOwnerFrom(w, payload.Owner, payload.From)
+	if !ok {
 		return
 	}
 	pdf, err := base64.StdEncoding.DecodeString(payload.PDFB64)
@@ -189,4 +177,20 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, out any) error {
 		return err
 	}
 	return nil
+}
+
+// parseOwnerFrom validates the webhook's owner extension and from number;
+// on failure it has already written the error response.
+func parseOwnerFrom(w http.ResponseWriter, ownerRaw, fromRaw string) (domain.Extension, domain.Phone, bool) {
+	owner, err := domain.ParseExtension(ownerRaw)
+	if err != nil {
+		http.Error(w, "invalid owner extension", http.StatusBadRequest)
+		return domain.Extension{}, domain.Phone{}, false
+	}
+	from, err := domain.ParsePhone(fromRaw)
+	if err != nil {
+		http.Error(w, "invalid from number", http.StatusBadRequest)
+		return domain.Extension{}, domain.Phone{}, false
+	}
+	return owner, from, true
 }

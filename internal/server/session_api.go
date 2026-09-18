@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -49,15 +48,3 @@ func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 	session.ClearCookie(w)
 	w.WriteHeader(http.StatusNoContent)
 }
-
-// sessionStatus reports whether a server session exists (debug/health aid).
-func (h *handlers) sessionStatus(w http.ResponseWriter, r *http.Request) {
-	if _, ok := session.From(r.Context()); !ok {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("anonymous")) //nolint:erraudit // best-effort write; the response is already committed
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-var errAnonymous = errors.New("anonymous")
