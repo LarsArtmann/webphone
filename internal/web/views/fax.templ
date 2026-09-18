@@ -3,14 +3,15 @@ package views
 import 	"github.com/larsartmann/webphone/internal/domain"
 
 // FaxPanel is the Fax tab: PDF upload form plus the job list (outbox and
-// inbox). sse-swap="fax" lets the server push job updates live.
+// inbox). Only the list region carries sse-swap="fax" so live pushes
+// never wipe a PDF half-selected into the upload form.
 type FaxPanelProps struct {
-	Jobs   []domain.FaxJob
-	Error  string
+	Jobs  []domain.FaxJob
+	Error string
 }
 
 templ FaxPanel(props FaxPanelProps) {
-	<section class="wp-panel" id="fax-panel" sse-swap="fax">
+	<section class="wp-panel" id="fax-panel">
 		<header class="wp-panel-head">
 			<h2>Fax</h2>
 			<p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p>
@@ -30,13 +31,21 @@ templ FaxPanel(props FaxPanelProps) {
 			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label="PDF document"></input>
 			<button type="submit" class="wp-primary">Send fax</button>
 		</form>
-		if len(props.Jobs) == 0 {
-			<p class="wp-empty">No faxes yet — send a PDF above.</p>
-		}
-		for _, job := range props.Jobs {
-			@FaxRow(job)
-		}
+		<div class="wp-fax-list" sse-swap="fax">
+			@FaxList(props.Jobs)
+		</div>
 	</section>
+}
+
+// FaxList renders the fax rows (or the empty state). It is the payload of
+// the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
+templ FaxList(jobs []domain.FaxJob) {
+	if len(jobs) == 0 {
+		<p class="wp-empty">No faxes yet — send a PDF above.</p>
+	}
+	for _, job := range jobs {
+		@FaxRow(job)
+	}
 }
 
 templ FaxRow(job domain.FaxJob) {

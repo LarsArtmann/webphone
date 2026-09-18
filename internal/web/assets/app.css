@@ -284,6 +284,15 @@ a:focus-visible {
 
 /* --- threads & bubbles ---------------------------------------------------- */
 
+/* The SSE swap targets: only these regions get replaced by live pushes,
+   so a composer draft or a selected file never disappears under one. */
+.wp-thread-list,
+.wp-fax-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .wp-thread-row {
   display: grid;
   grid-template-columns: auto 1fr auto auto;

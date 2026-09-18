@@ -37,9 +37,12 @@ cp "$work/package/LICENSE.md" "$vendor/sip.min.js.LEGAL.txt"
 mv "$work/sip.tgz" "$vendor/sip.js-$version.tgz"
 
 # keep exactly one tarball pin
-rm -f "$vendor"/sip.js-*.tgz."$(ls "$vendor" | grep -c . >/dev/null && echo '')" 2>/dev/null || true
-old_tgz="$(ls "$vendor"/sip.js-*.tgz | grep -v "sip.js-$version.tgz" || true)"
-if [[ -n "$old_tgz" ]]; then rm -f $old_tgz; fi
+shopt -s nullglob
+for tgz in "$vendor"/sip.js-*.tgz; do
+  if [[ "$(basename "$tgz")" != "sip.js-$version.tgz" ]]; then
+    rm -f "$tgz"
+  fi
+done
 
 sha256sum "$vendor/sip.js-$version.tgz" "$vendor/sip.min.js"
 echo "done — commit internal/web/assets/vendor/"

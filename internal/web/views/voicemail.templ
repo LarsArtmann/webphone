@@ -7,7 +7,9 @@ import (
 )
 
 // VoicemailPanel lists the extension's voicemail from the phone API. When
-// no API is configured the tab says so instead of pretending.
+// no API is configured the tab says so instead of pretending. The "voicemail"
+// SSE event carries no payload (voicemail lives behind the extension's own
+// PBX credentials) — it nudges the tab to re-fetch its partial instead.
 type VoicemailPanelProps struct {
 	Enabled bool
 	Summary pbx.VoicemailSummary
@@ -16,7 +18,14 @@ type VoicemailPanelProps struct {
 }
 
 templ VoicemailPanel(props VoicemailPanelProps) {
-	<section class="wp-panel" id="voicemail-panel" sse-swap="voicemail">
+	<section
+		class="wp-panel"
+		id="voicemail-panel"
+		hx-get="/partials/voicemail"
+		hx-trigger="sse:voicemail"
+		hx-target="#tab-content"
+		hx-swap="innerHTML show:window:top"
+	>
 		<header class="wp-panel-head">
 			<h2>Voicemail</h2>
 			<p class="wp-panel-sub">

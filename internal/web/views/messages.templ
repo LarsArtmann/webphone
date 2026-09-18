@@ -8,15 +8,16 @@ import (
 )
 
 // ThreadsPanel is the Messages tab's landing view: the thread list plus a
-// composer for new conversations. sse-swap="threads" lets the server push
-// a fresh list whenever a message arrives or sends.
+// composer for new conversations. Only the list region carries
+// sse-swap="threads" — a live push refreshes the rows without wiping a
+// draft half-typed into the composer.
 type ThreadsPanelProps struct {
 	Threads []store.ThreadSummary
 	Error   string
 }
 
 templ ThreadsPanel(props ThreadsPanelProps) {
-	<section class="wp-panel" id="messages-panel" sse-swap="threads">
+	<section class="wp-panel" id="messages-panel">
 		<header class="wp-panel-head">
 			<h2>Messages</h2>
 			<p class="wp-panel-sub">SMS and MMS threads for your extension.</p>
@@ -25,13 +26,22 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
 		@NewMessageForm("")
-		if len(props.Threads) == 0 {
-			<p class="wp-empty">No conversations yet — send the first message above.</p>
-		}
-		for _, summary := range props.Threads {
-			@ThreadRow(summary)
-		}
+		<div class="wp-thread-list" sse-swap="threads">
+			@ThreadsList(props.Threads)
+		</div>
 	</section>
+}
+
+// ThreadsList renders the thread rows (or the empty state). It is the
+// payload of the SSE "threads" event, so it must stay swap-safe: no
+// wrapper element, no composer.
+templ ThreadsList(threads []store.ThreadSummary) {
+	if len(threads) == 0 {
+		<p class="wp-empty">No conversations yet — send the first message above.</p>
+		}
+	for _, summary := range threads {
+		@ThreadRow(summary)
+	}
 }
 
 templ ThreadRow(summary store.ThreadSummary) {
@@ -99,9 +109,7 @@ templ ThreadView(props ThreadViewProps) {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
 		<div class="wp-transcript" id="thread-transcript" sse-swap="thread">
-			for _, msg := range props.Messages {
-				@Bubble(msg)
-			}
+			@Transcript(props.Messages)
 		</div>
 		<form
 			class="wp-compose"
@@ -123,6 +131,16 @@ templ ThreadView(props ThreadViewProps) {
 			<button type="submit" class="wp-primary">Send</button>
 		</form>
 	</section>
+}
+
+// Transcript renders the message bubbles, oldest first. It is the payload
+// of the SSE "thread" event: the swap replaces #thread-transcript's
+// innerHTML with exactly these bubbles, so an open conversation updates
+// live while the reply composer below stays untouched.
+templ Transcript(messages []domain.Message) {
+	for _, msg := range messages {
+		@Bubble(msg)
+	}
 }
 
 templ Bubble(msg domain.Message) {
