@@ -25,6 +25,11 @@
 
       imports = [ inputs.treefmt-nix.flakeModule ];
 
+      # The NixOS module ships from this repo so the binary and its
+      # deployment shape stay in sync; the consuming telephony stack may
+      # import it or keep its own reverse proxy (see package/nixos-module.nix).
+      flake.nixosModules.default = import ./package/nixos-module.nix;
+
       perSystem =
         {
           config,
@@ -79,6 +84,40 @@
           checks = {
             webphone = self'.packages.webphone;
             format = config.treefmt.build.check self;
+
+            # Evaluate the NixOS module with a minimal config and build
+            # the artifacts it would generate — catches option/syntax
+            # breakage without a full NixOS evaluation.
+            webphone-module =
+              let
+                evaluated = pkgs.lib.evalModules {
+                  modules = [
+                    { _module.args.pkgs = pkgs; }
+                    (import ./package/nixos-module.nix)
+                    {
+                      services.webphone = {
+                        enable = true;
+                        package = self'.packages.webphone;
+                        nginx.enable = true;
+                        nginx.hostName = "phone.example.org";
+                        settings.sip_domain = "pbx.example.org";
+                      };
+                    }
+                  ];
+                };
+                cfg = evaluated.config.services.webphone;
+              in
+              pkgs.linkFarm "webphone-module-check" [
+                {
+                  name = "webphone-config.json";
+                  path = (pkgs.formats.json { }).generate "webphone-config.json" cfg.settings;
+                }
+                {
+                  name = "listen-port";
+                  path = pkgs.writeText "listen-port" (pkgs.lib.last (pkgs.lib.splitString ":" cfg.settings.addr));
+                }
+              ];
+
             statix =
               pkgs.runCommand "statix-check"
                 {

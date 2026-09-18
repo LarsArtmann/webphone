@@ -18,9 +18,7 @@
 let
   cfg = config.services.webphone;
 
-  configFile = pkgs.generateText "webphone-config.json" {
-    inherit (cfg) settings;
-  };
+  configFile = (pkgs.formats.json { }).generate "webphone-config.json" cfg.settings;
 
   # "127.0.0.1:8080" / ":8080" → "8080" (the nginx upstream needs the port).
   listenPort = lib.last (lib.splitString ":" cfg.settings.addr);
@@ -53,6 +51,11 @@ in
             type = lib.types.str;
             default = "127.0.0.1:8080";
             description = "Listen address of the HTTP server.";
+          };
+          websocket_path = lib.mkOption {
+            type = lib.types.str;
+            default = "/sip";
+            description = "Path the SIP WebSocket is served on (the nginx vhost proxies it).";
           };
         };
       };
