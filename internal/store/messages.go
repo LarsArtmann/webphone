@@ -340,3 +340,34 @@ func (s *Messages) MarkThreadRead(ctx context.Context, owner domain.Extension, i
 	}
 	return nil
 }
+
+// AttachmentByID resolves one attachment scoped to the owner (the
+// attachment's message must belong to her).
+func (s *Messages) AttachmentByID(
+	ctx context.Context, owner domain.Extension, id domain.AttachmentID,
+) (domain.Attachment, error) {
+	var (
+		attachmentID, messageID, name, mime, path string
+		size                                      int64
+	)
+	err := s.db.QueryRowContext(ctx, `
+		SELECT a.id, a.message_id, a.name, a.mime_type, a.size_bytes, a.path
+		FROM attachments a
+		JOIN messages m ON m.id = a.message_id
+		WHERE a.id = ? AND m.owner = ?
+	`, id.String(), owner.String()).Scan(&attachmentID, &messageID, &name, &mime, &size, &path)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Attachment{}, ErrNotFound
+	}
+	if err != nil {
+		return domain.Attachment{}, fmt.Errorf("get attachment: %w", err)
+	}
+	return domain.Attachment{
+		ID:        domain.MustAttachmentID(attachmentID),
+		MessageID: domain.MustMessageID(messageID),
+		Name:      name,
+		MimeType:  mime,
+		SizeBytes: size,
+		Path:      path,
+	}, nil
+}

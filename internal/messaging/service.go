@@ -73,16 +73,16 @@ func (s *Service) Send(
 	if body == "" && len(uploads) == 0 {
 		return domain.Message{}, &ErrInvalidSend{Reason: "a message needs text or an attachment"}
 	}
-	if len(body) > maxBodyLength {
-		return domain.Message{}, &ErrInvalidSend{Reason: fmt.Sprintf("message longer than %d characters", maxBodyLength)}
+	if len(body) > MaxBodyLength {
+		return domain.Message{}, &ErrInvalidSend{Reason: fmt.Sprintf("message longer than %d characters", MaxBodyLength)}
 	}
-	if len(uploads) > maxAttachments {
-		return domain.Message{}, &ErrInvalidSend{Reason: fmt.Sprintf("at most %d attachments per message", maxAttachments)}
+	if len(uploads) > MaxAttachments {
+		return domain.Message{}, &ErrInvalidSend{Reason: fmt.Sprintf("at most %d attachments per message", MaxAttachments)}
 	}
 	for _, upload := range uploads {
-		if len(upload.Bytes) > maxAttachmentSize {
+		if len(upload.Bytes) > MaxAttachmentSize {
 			return domain.Message{}, &ErrInvalidSend{
-				Reason: fmt.Sprintf("attachment %s larger than %d MiB", upload.Name, maxAttachmentSize>>20),
+				Reason: fmt.Sprintf("attachment %s larger than %d MiB", upload.Name, MaxAttachmentSize>>20),
 			}
 		}
 	}
@@ -219,6 +219,11 @@ func (s *Service) Thread(
 // MarkRead zeroes the unread counter.
 func (s *Service) MarkRead(ctx context.Context, owner domain.Extension, id domain.ThreadID) error {
 	return s.messages.MarkThreadRead(ctx, owner, id)
+}
+
+// AttachmentByID returns one attachment scoped to the owner's messages.
+func (s *Service) AttachmentByID(ctx context.Context, owner domain.Extension, id domain.AttachmentID) (domain.Attachment, error) {
+	return s.messages.AttachmentByID(ctx, owner, id)
 }
 
 // OpenAttachment streams one attachment's bytes.

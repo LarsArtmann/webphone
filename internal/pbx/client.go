@@ -42,6 +42,16 @@ var ErrDisabled = fmt.Errorf("phone api not configured")
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
+// ResolvePath builds the absolute upstream URL for a /phone-api-relative
+// path (without the "/phone-api" prefix), used by the proxy.
+func (c *Client) ResolvePath(rest, rawQuery string) string {
+	target := c.base.JoinPath(rest).String()
+	if rawQuery != "" {
+		target += "?" + rawQuery
+	}
+	return target
+}
+
 // Credentials are the extension's SIP credentials (Basic auth).
 type Credentials struct {
 	Extension string

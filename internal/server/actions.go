@@ -63,14 +63,18 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	// Reply keeps the thread open; a new conversation returns to the list.
 	threadParam := r.URL.Query().Get("thread")
 	if threadParam != "" {
-		h.partialThread(w, r.WithContext(withThreadID(r, threadParam)))
+		component, err := h.threadPanel(r, sess, domain.MustThreadID(threadParam))
+		if err != nil {
+			http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if err := component.Render(r.Context(), w); err != nil {
+			http.Error(w, "render error", http.StatusInternalServerError)
+		}
 		return
 	}
 	h.partial(w, r, tabFromPath("/messages"))
-}
-
-func withThreadID(r *http.Request, id string) *http.Request {
-	return r.SetParent(r.Context()).Clone(r.Context())
 }
 
 func sendErrorMessage(err error) string {
@@ -172,40 +176,27 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(w, document)
 }
 
-// attachment streams one MMS attachment (session-gated).
+// attachment streams one MMS attachment (session-gated, owner-scoped).
 func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 	sess, ok := session.From(r.Context())
 	if !ok {
 		http.Error(w, "sign in first", http.StatusUnauthorized)
 		return
 	}
-	threads, err := h.deps.Messaging.Threads(r.Context(), sess.Extension)
+	attachment, err := h.deps.Messaging.AttachmentByID(r.Context(), sess.Extension, domain.MustAttachmentID(r.PathValue("id")))
 	if err != nil {
-		http.Error(w, "lookup failed", http.StatusInternalServerError)
+		http.NotFound(w, r)
 		return
 	}
-	id := domain.MustAttachmentID(r.PathValue("id"))
-	for _, summary := range threads {
-		msgs, err := h.deps.Messaging.Thread(r.Context(), sess.Extension, summary.Thread.ID)
-		if err != nil {
-			continue
-		}
-		for _, msg := range msgs[1].Attachments {
-			if msg.ID == id {
-				file, err := h.deps.Messaging.OpenAttachment(msg.Path)
-				if err != nil {
-					http.Error(w, "attachment missing", http.StatusGone)
-					return
-				}
-				defer func() { _ = file.Close() }()
-				w.Header().Set("Content-Type", msg.MimeType)
-				w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", msg.Name))
-				_, _ = io.Copy(w, file)
-				return
-			}
-		}
+	file, err := h.deps.Messaging.OpenAttachment(attachment.Path)
+	if err != nil {
+		http.Error(w, "attachment missing", http.StatusGone)
+		return
 	}
-	http.NotFound(w, r)
+	defer func() { _ = file.Close() }()
+	w.Header().Set("Content-Type", attachment.MimeType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", attachment.Name))
+	_, _ = io.Copy(w, file)
 }
 
 // deleteVoicemail removes a message through the phone API.
