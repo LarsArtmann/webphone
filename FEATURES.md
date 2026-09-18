@@ -33,11 +33,11 @@ Code wins when doc and code disagree.
 
 ## Fax
 
-| Feature                  | Status              | Notes                                                               |
-| ------------------------ | ------------------- | ------------------------------------------------------------------- |
-| Send PDF                 | 🟢 FULLY_FUNCTIONAL | `%PDF-` sniff, ≤20 MiB, spooled to blob store                       |
-| Inbound fax via webhook  | 🟢 FULLY_FUNCTIONAL | `/hooks/fax` with base64 PDF, page count, provider ref              |
-| Provider status callback | 🟢 FULLY_FUNCTIONAL | `/hooks/fax/status` flips job to transmitted/failed with error text |
+| Feature                  | Status              | Notes                                                                    |
+| ------------------------ | ------------------- | ------------------------------------------------------------------------ |
+| Send PDF                 | 🟢 FULLY_FUNCTIONAL | `%PDF-` sniff, ≤20 MiB, spooled to blob store                            |
+| Inbound fax via webhook  | 🟢 FULLY_FUNCTIONAL | `/hooks/fax` with base64 PDF, page count, provider ref                   |
+| Provider status callback | 🟢 FULLY_FUNCTIONAL | `/hooks/fax/status` flips job to transmitted/failed with error text      |
 | Page-count parsing       | 🟢 FULLY_FUNCTIONAL | flexPages: `pages`/`page_count`/`num_pages` as number or string (tested) |
 | Document download        | 🟢 FULLY_FUNCTIONAL | Session-gated, owner-scoped PDF streaming                                |
 
@@ -55,13 +55,13 @@ Code wins when doc and code disagree.
 
 ## Contacts & sessions
 
-| Feature                        | Status              | Notes                                                              |
-| ------------------------------ | ------------------- | ------------------------------------------------------------------ |
-| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                    |
-| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island            |
-| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number |
-| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it |
-| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design    |
+| Feature                        | Status              | Notes                                                                                   |
+| ------------------------------ | ------------------- | --------------------------------------------------------------------------------------- |
+| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                         |
+| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island                                 |
+| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number             |
+| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                      |
+| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                         |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate) |
 
 ## Live updates (SSE)
@@ -74,38 +74,38 @@ Code wins when doc and code disagree.
 
 ## Awareness
 
-| Feature                     | Status              | Notes                                                             |
-| --------------------------- | ------------------- | ----------------------------------------------------------------- |
-| Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)     |
-| Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback) |
-| Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                      |
+| Feature                     | Status              | Notes                                                                                    |
+| --------------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
+| Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)                            |
+| Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback)                        |
+| Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                                             |
 | Keyboard shortcuts          | 🟢 FULLY_FUNCTIONAL | A answer · H hangup · M mute · P hold · Esc + headset media keys (island `shortcuts.js`) |
-| ICE/media diagnostics panel | 🟢 FULLY_FUNCTIONAL | Candidate path, RTT, loss, jitter, codec + plain-language hints   |
-| Event log                   | 🟢 FULLY_FUNCTIONAL | Operator-facing, English-only (runbook greps it), 100 entries     |
+| ICE/media diagnostics panel | 🟢 FULLY_FUNCTIONAL | Candidate path, RTT, loss, jitter, codec + plain-language hints                          |
+| Event log                   | 🟢 FULLY_FUNCTIONAL | Operator-facing, English-only (runbook greps it), 100 entries                            |
 
 ## Platform
 
-| Feature                      | Status                  | Notes                                                                    |
-| ---------------------------- | ----------------------- | ------------------------------------------------------------------------ |
-| Single Go binary             | 🟢 FULLY_FUNCTIONAL     | `cmd/webphone`; SQLite (pure Go) + blob store; data dir auto-created     |
-| Nix package                  | 🟢 FULLY_FUNCTIONAL     | `buildGoModule`, tests run in the sandbox, pinned vendorHash             |
-| aarch64-linux                | 🟢 FULLY_FUNCTIONAL     | Cross-builds cleanly (verified 2026-09-18)                               |
-| Strict-CSP compatible        | 🟢 FULLY_FUNCTIONAL     | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN      |
-| Security posture             | 🟢 FULLY_FUNCTIONAL     | CSRF on all mutations, security headers, owner-scoped queries everywhere |
-| DOM contract test            | 🟢 FULLY_FUNCTIONAL     | 35 island element ids asserted by `internal/server/server_test.go`       |
-| NixOS module                 | 🟢 FULLY_FUNCTIONAL     | `nixosModules.default`: hardened systemd unit, JSON settings via `WEBPHONE_CONFIG`, `environmentFile` for secrets, optional nginx WSS vhost; evalModules-checked |
-| Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent |
+| Feature                      | Status                  | Notes                                                                                                                                                                                   |
+| ---------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single Go binary             | 🟢 FULLY_FUNCTIONAL     | `cmd/webphone`; SQLite (pure Go) + blob store; data dir auto-created                                                                                                                    |
+| Nix package                  | 🟢 FULLY_FUNCTIONAL     | `buildGoModule`, tests run in the sandbox, pinned vendorHash                                                                                                                            |
+| aarch64-linux                | 🟢 FULLY_FUNCTIONAL     | Cross-builds cleanly (verified 2026-09-18)                                                                                                                                              |
+| Strict-CSP compatible        | 🟢 FULLY_FUNCTIONAL     | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN                                                                                                                     |
+| Security posture             | 🟢 FULLY_FUNCTIONAL     | CSRF on all mutations, security headers, owner-scoped queries everywhere                                                                                                                |
+| DOM contract test            | 🟢 FULLY_FUNCTIONAL     | 35 island element ids asserted by `internal/server/server_test.go`                                                                                                                      |
+| NixOS module                 | 🟢 FULLY_FUNCTIONAL     | `nixosModules.default`: hardened systemd unit, JSON settings via `WEBPHONE_CONFIG`, `environmentFile` for secrets, optional nginx WSS vhost; evalModules-checked                        |
+| Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
 | i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL     | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
-| Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`) |
-| Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Suite exists for the v1 surface; must be re-run after the v2 switchover  |
+| Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
+| Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Suite exists for the v1 surface; must be re-run after the v2 switchover                                                                                                                 |
 
 ## PLANNED / WORTH_CONSIDERING
 
-| Idea                                  | Status               | Notes                                                      |
-| ------------------------------------- | -------------------- | ---------------------------------------------------------- |
-| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost |
-| Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                 |
-| Richer /healthz (store, gateway mode) | ⚪ WORTH_CONSIDERING | For load balancers                                         |
-| Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface               |
-| PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                     |
+| Idea                                  | Status               | Notes                                                                 |
+| ------------------------------------- | -------------------- | --------------------------------------------------------------------- |
+| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost            |
+| Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                            |
+| Richer /healthz (store, gateway mode) | ⚪ WORTH_CONSIDERING | For load balancers                                                    |
+| Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                          |
+| PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                |
 | sip.js 0.22 bump                      | ⚪ PLANNED           | Evaluation report in docs/reviews/; gated on the upstream browser E2E |

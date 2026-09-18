@@ -18,19 +18,19 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 
 ## What it does
 
-| Capability    | Notes                                                                           |
-| ------------- | ------------------------------------------------------------------------------- |
-| Phone calls   | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad             |
-| Resilience    | Bounded reconnect watchdog with re-registration; live calls survive             |
-| SMS & MMS     | Threads with unread badges, attachments in/out, delivery receipts, live updates |
-| Fax           | Send PDFs, receive documents, provider status (transmitted/failed), download    |
-| Voicemail     | List, play, delete — straight from the PBX's per-extension API                  |
-| Call history  | Server-side CDR records through the same API                                    |
-| Contacts      | Shared (config) + personal (per extension), vCard import/export, click-to-dial  |
-| Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail          |
-| Sign-in       | The island's SIP REGISTER proves the credentials; the tabs share that login     |
-| Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)         |
-| i18n / themes | Everything in English + German; dark + light themes with a manual toggle        |
+| Capability    | Notes                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------- |
+| Phone calls   | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad                   |
+| Resilience    | Bounded reconnect watchdog with re-registration; live calls survive                   |
+| SMS & MMS     | Threads with unread badges, attachments in/out, delivery receipts, live updates       |
+| Fax           | Send PDFs, receive documents, provider status (transmitted/failed), download          |
+| Voicemail     | List, play, delete — straight from the PBX's per-extension API                        |
+| Call history  | Server-side CDR records through the same API                                          |
+| Contacts      | Shared (config) + personal (per extension), vCard import/export, click-to-dial        |
+| Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                |
+| Sign-in       | The island's SIP REGISTER proves the credentials; the tabs share that login           |
+| Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)               |
+| i18n / themes | Everything in English + German; dark + light themes with a manual toggle              |
 | Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`, NixOS module |
 
 ## Quick start

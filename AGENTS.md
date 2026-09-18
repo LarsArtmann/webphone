@@ -74,9 +74,12 @@ every build; it is the local tripwire, not a replacement for the E2E.
   calls survive tab switches. Deep links (`/messages`, `/fax`, …)
   render the full shell server-side.
 - **Module graph stays acyclic**: the island's `state.js` + `auth.js`
-  exist so calls/ice/connection never import each other; the server
-  mirrors this — `domain` imports nothing internal, services never
-  import `server`.
+  exist so calls/ice/connection never import each other; the UA lives
+  in `state.userAgent` and ice syncs via the `wp:calls-changed`
+  CustomEvent (no direct imports — enforced by
+  `internal/arch/arch_test.go`, which also asserts `domain` imports
+  nothing internal and services never import `server`/`web`); the
+  server mirrors the same rule.
 - **Sessions**: the island POSTs `/api/session` AFTER its REGISTER
   succeeds (credentials proven against the PBX); the server keeps them
   in an in-memory TTL store + HttpOnly cookie. `session.js` attaches

@@ -319,7 +319,7 @@ The honest mishap list:
    it is yours. (And: pushing tags needs your explicit go-ahead.)
 2. **May I touch `nix-international-telephony` in a follow-up session,
    and does its browser E2E run somewhere I can reach from here?** That
-   decides whether "upstream switchover" can ever be *done* from this
+   decides whether "upstream switchover" can ever be _done_ from this
    machine or stays a documented handoff (input swap + config map +
    E2E instructions).
 3. **Should service-layer validation reasons become i18n keys?**
