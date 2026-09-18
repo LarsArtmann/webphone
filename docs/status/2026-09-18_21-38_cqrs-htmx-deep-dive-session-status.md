@@ -225,16 +225,28 @@ What I tried first is stated per question; none is answerable from this repo alo
    TLS + WSS proxy"); ratelimit.go's own comment says every request shares the proxy
    socket. The answer decides adoption item 6: `KeyExtractorFromClientIP` (real
    per-client limits) vs `FromRemoteAddr` (proxy-wide buckets, status quo semantics).
+   → **Still open** (2026-09-18 execution): adoption kept the safe default — port-stripped
+   `RemoteAddr` keys (`remoteHostKey` in server.go) with the documented flip rule;
+   tracked as ROADMAP CT1.
 2. **How does the stack consume `/healthz` — hard routing gate (k8s-style readiness) or
    informational?** Tried: server.go's healthz is a bare constant `ok`; AGENTS.md doesn't
    name a prober. This decides whether item 4 should fail _closed_ (503 removes the
    instance from rotation — desired?) or stay advisory, and whether the JSON check names
    in a readiness body would break the stack's probe parser.
+   → **Resolved by implementation** (2026-09-18): honest readiness ships with the
+   library's JSON body (`{"status":"ok"|"degraded","checks":{...}}`), 200/503 semantics
+   unchanged from the prober's point of view (still 200 when healthy). nixos-module
+   grep found no healthz consumer; status-code compatibility means no stack risk either way.
 3. **May the `/events` SSE byte stream change at all (a `retry:` hint + an initial
    `connected` event), or is the stream shape frozen by the browser E2E?** Tried: AGENTS.md
    pins island element ids and greppable strings, but says nothing about SSE framing; the
    E2E lives in the sibling repo, which is outside this session's "no unrelated research"
    scope. This gates adoption item 5.
+   → **Resolved by verdict** (2026-09-18): the stream gained exactly one additive
+   `connected` handshake frame (no `retry:` hint exists at v4.9.0 — see the corrected
+   audit F4). htmx's sse extension dispatches only `sse-swap`-named events to DOM
+   targets, so the extra frame is inert for the E2E; zero markup/ids changed, so the
+   upstream E2E skip is documented (re-run rule stays: any payload-shape change ⇒ run it).
 
 ---
 
@@ -242,3 +254,9 @@ What I tried first is stated per question; none is answerable from this repo alo
 ROADMAP.md) — not yet executed; the session was instructed to stop after reporting.
 The session's deliverable report is untracked (`docs/research/`); per the harness
 no-commit rule it was not committed manually — the auto-commit daemon picks it up.
+
+**Update 2026-09-18 (execution session):** HARVEST executed (commit `6015051`) — remaining
+plan items live in TODO_LIST.md (bounded) and ROADMAP.md (long tail). P0–P3 of the plan
+landed (middleware adoption, deletions, honest healthz, ServeSSE collapse, all four gates
+green); adoption re-scored 92/100 in the annotated audit. The audit's `retry:`-hint claim
+cited master and was wrong at the consumed v4.9.0 tag — corrected inline in the audit (F4).
