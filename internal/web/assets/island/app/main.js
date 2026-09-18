@@ -4,12 +4,10 @@
 import { ringToneStop } from "./audio.js";
 import { connect, disconnect } from "./connection.js";
 import {
-  bindSession,
   placeCall,
   renderCalls,
   sendDtmf,
   teardownAll,
-  teardownSession,
 } from "./calls.js";
 import { sipDomain, websocketUrl } from "./config.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
@@ -22,8 +20,9 @@ import {
 } from "./panels.js";
 import { requestNotifications, titleFlashStop } from "./notify.js";
 import { createSession, destroySession } from "./session.js";
+import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
-import { announce, els, log, setRegStatus } from "./ui.js";
+import { els, log, setRegStatus } from "./ui.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -99,36 +98,17 @@ els.dialForm.addEventListener("submit", async (event) => {
   await placeCall(els.dest.value.trim());
 });
 
-els.accept.addEventListener("click", async () => {
-  const invitation = state.incomingSession;
-  if (!invitation) return;
-  els.incoming.hidden = true;
-  state.incomingSession = null;
-  ringToneStop();
-  titleFlashStop();
-  bindSession(invitation, els.incomingFrom.textContent);
-  try {
-    await invitation.accept({
-      sessionDescriptionHandlerOptions: {
-        constraints: { audio: true, video: false },
-      },
-    });
-  } catch (err) {
-    log(`accept failed: ${err.message}`, "error");
-    announce(t("acceptFailed")(err.message), "error");
-    teardownSession(invitation.id);
-  }
+els.accept.addEventListener("click", () => {
+  answerIncoming();
 });
 
 els.reject.addEventListener("click", () => {
-  if (state.incomingSession) state.incomingSession.reject();
-  els.incoming.hidden = true;
-  state.incomingSession = null;
-  ringToneStop();
-  titleFlashStop();
+  rejectIncoming();
 });
 
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());
+
+initShortcuts();
 
 els.keypad.querySelectorAll("button[data-tone]").forEach((button) => {
   button.addEventListener("click", () => sendDtmf(button.dataset.tone));

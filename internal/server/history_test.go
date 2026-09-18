@@ -25,11 +25,11 @@ func TestHistorySearchFiltersEntries(t *testing.T) {
 	server := newTestServerWithPhoneAPI(t, upstream.URL)
 	c := signIn(t, server)
 
-	// Unfiltered: everything, capped view.
+	// Unfiltered: everything, capped view. (Rows render numbers, not
+	// caller names.)
 	_, body := c.do(http.MethodGet, "/partials/history", nil, "")
 	page := string(body)
-	t.Logf("FULL PANEL: %s", page)
-	for _, want := range []string{"Alice", "+493012345678", "Bob"} {
+	for _, want := range []string{"+441632960961", "+493012345678", "+491700000000"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("unfiltered history missing %q", want)
 		}
@@ -38,12 +38,12 @@ func TestHistorySearchFiltersEntries(t *testing.T) {
 	// Substring over numbers and names.
 	_, body = c.do(http.MethodGet, "/partials/history?q=4917", nil, "")
 	page = string(body)
-	if !strings.Contains(page, "Bob") || strings.Contains(page, "Alice") {
-		t.Errorf("q=4917 must keep Bob, drop Alice: %.400s", page)
+	if !strings.Contains(page, "+491700000000") || strings.Contains(page, "+441632960961") {
+		t.Errorf("q=4917 must keep the Bob record, drop Alice: %.400s", page)
 	}
 	_, body = c.do(http.MethodGet, "/partials/history?q=alice", nil, "")
 	page = string(body)
-	if !strings.Contains(page, "Alice") || strings.Contains(page, "Bob") {
+	if !strings.Contains(page, "+441632960961") || strings.Contains(page, "+491700000000") {
 		t.Errorf("q=alice must match case-insensitively by name: %.400s", page)
 	}
 
@@ -55,7 +55,7 @@ func TestHistorySearchFiltersEntries(t *testing.T) {
 	}
 	_, body = c.do(http.MethodGet, "/partials/history?dir=out", nil, "")
 	page = string(body)
-	if !strings.Contains(page, "+493012345678") || strings.Contains(page, "Alice") {
+	if !strings.Contains(page, "+493012345678") || strings.Contains(page, "+441632960961") {
 		t.Errorf("dir=out must keep only the outbound record: %.400s", page)
 	}
 

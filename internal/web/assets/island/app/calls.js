@@ -446,3 +446,54 @@ export async function placeCall(raw) {
     teardownSession(inviter.id);
   }
 }
+
+// Keyboard-shortcut surface (shortcuts.js drives these; the call-card
+// buttons and the incoming-call banner share the same primitives).
+
+export function toggleMuteFocused() {
+  const entry = sessions.get(state.focusedId);
+  if (!entry) return;
+  entry.muted = !entry.muted;
+  setTracks(entry, { send: !entry.held && !entry.muted });
+  renderCalls();
+}
+
+export function toggleHoldFocused() {
+  const entry = sessions.get(state.focusedId);
+  if (entry) holdSession(state.focusedId, !entry.held);
+}
+
+export function hangupFocused() {
+  if (state.focusedId) hangup(state.focusedId);
+}
+
+export function answerIncoming() {
+  const invitation = state.incomingSession;
+  if (!invitation) return false;
+  els.incoming.hidden = true;
+  state.incomingSession = null;
+  ringToneStop();
+  titleFlashStop();
+  bindSession(invitation, els.incomingFrom.textContent);
+  invitation
+    .accept({
+      sessionDescriptionHandlerOptions: {
+        constraints: { audio: true, video: false },
+      },
+    })
+    .catch((err) => {
+      log(`accept failed: ${err.message}`, "error");
+      announce(t("acceptFailed")(err.message), "error");
+      teardownSession(invitation.id);
+    });
+  return true;
+}
+
+export function rejectIncoming() {
+  if (!state.incomingSession) return;
+  state.incomingSession.reject();
+  els.incoming.hidden = true;
+  state.incomingSession = null;
+  ringToneStop();
+  titleFlashStop();
+}
