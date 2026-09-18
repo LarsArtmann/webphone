@@ -106,6 +106,10 @@ type ThreadID = id.ID[ThreadBrand, nanoid.ID]
 // GenerateThreadID mints a new thread identifier.
 func GenerateThreadID() ThreadID { return id.NewID[ThreadBrand](nanoid.Must()) }
 
+// MustThreadID parses a stored thread id; it panics on malformed input,
+// which can only come from a corrupted database.
+func MustThreadID(s string) ThreadID { return mustID[ThreadBrand](s, "thread") }
+
 // MessageBrand brands message identifiers.
 type MessageBrand struct{}
 
@@ -117,6 +121,9 @@ type MessageID = id.ID[MessageBrand, nanoid.ID]
 
 // GenerateMessageID mints a new message identifier.
 func GenerateMessageID() MessageID { return id.NewID[MessageBrand](nanoid.Must()) }
+
+// MustMessageID parses a stored message id.
+func MustMessageID(s string) MessageID { return mustID[MessageBrand](s, "message") }
 
 // AttachmentBrand brands attachment identifiers.
 type AttachmentBrand struct{}
@@ -130,6 +137,9 @@ type AttachmentID = id.ID[AttachmentBrand, nanoid.ID]
 // GenerateAttachmentID mints a new attachment identifier.
 func GenerateAttachmentID() AttachmentID { return id.NewID[AttachmentBrand](nanoid.Must()) }
 
+// MustAttachmentID parses a stored attachment id.
+func MustAttachmentID(s string) AttachmentID { return mustID[AttachmentBrand](s, "attachment") }
+
 // FaxBrand brands fax job identifiers.
 type FaxBrand struct{}
 
@@ -142,6 +152,9 @@ type FaxID = id.ID[FaxBrand, nanoid.ID]
 // GenerateFaxID mints a new fax identifier.
 func GenerateFaxID() FaxID { return id.NewID[FaxBrand](nanoid.Must()) }
 
+// MustFaxID parses a stored fax id.
+func MustFaxID(s string) FaxID { return mustID[FaxBrand](s, "fax") }
+
 // ContactBrand brands contact identifiers.
 type ContactBrand struct{}
 
@@ -153,3 +166,15 @@ type ContactID = id.ID[ContactBrand, nanoid.ID]
 
 // GenerateContactID mints a new contact identifier.
 func GenerateContactID() ContactID { return id.NewID[ContactBrand](nanoid.Must()) }
+
+// MustContactID parses a stored contact id.
+func MustContactID(s string) ContactID { return mustID[ContactBrand](s, "contact") }
+
+// mustID re-brands a stored nanoid-backed identifier, panicking on
+// corruption — malformed ids can only come from a broken database.
+func mustID[B any](s string, kind string) id.ID[B, nanoid.ID] {
+	if len(s) != 21 {
+		panic(fmt.Sprintf("corrupt %s id %q: want 21 nanoid chars", kind, s))
+	}
+	return id.NewID[B](nanoid.ID(s))
+}
