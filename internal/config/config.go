@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/domain"
+
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/confmap"
 	"github.com/knadh/koanf/providers/env"
@@ -35,22 +37,18 @@ type Config struct {
 	PhoneAPIURL   string        `json:"phone_api_url" koanf:"phone_api_url"`
 	SessionTTL    time.Duration `json:"session_ttl" koanf:"session_ttl"`
 	ICEServers    []ICEServer   `json:"ice_servers" koanf:"ice_servers"`
-	Contacts      []SharedEntry `json:"contacts" koanf:"contacts"`
+	Contacts      []domain.SharedContact `json:"contacts" koanf:"contacts"`
 	Gateway       Gateway       `json:"gateway" koanf:"gateway"`
 }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
+// The JSON tags ARE the window.PBX_CONFIG wire contract (see README).
 type ICEServer struct {
 	URLs       []string `json:"urls" koanf:"urls"`
 	Username   string   `json:"username,omitempty" koanf:"username"`
 	Credential string   `json:"credential,omitempty" koanf:"credential"`
 }
 
-// SharedEntry is an operator-defined shared contact.
-type SharedEntry struct {
-	Name   string `json:"name" koanf:"name"`
-	Number string `json:"number" koanf:"number"`
-}
 
 // Gateway configures the outbound message/fax gateway.
 type Gateway struct {

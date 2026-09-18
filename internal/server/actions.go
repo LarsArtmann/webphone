@@ -35,7 +35,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploads := make([]messaging.Upload, 0)
+	uploads := make([]domain.AttachmentContent, 0)
 	for _, fileHeader := range r.MultipartForm.File["attachment"] {
 		file, err := fileHeader.Open()
 		if err != nil {
@@ -48,7 +48,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 			h.renderMessagesError(w, r, sess, "An attachment is too large (10 MiB each).")
 			return
 		}
-		uploads = append(uploads, messaging.Upload{
+		uploads = append(uploads, domain.AttachmentContent{
 			Name:     fileHeader.Filename,
 			MimeType: fileHeader.Header.Get("Content-Type"),
 			Bytes:    content,

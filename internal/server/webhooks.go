@@ -108,7 +108,7 @@ func (h *handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "attachment is not valid base64", http.StatusBadRequest)
 			return
 		}
-		inbound.Attachments = append(inbound.Attachments, domain.InboundAttachment{
+		inbound.Attachments = append(inbound.Attachments, domain.AttachmentContent{
 			Name: att.Name, MimeType: att.MimeType, Bytes: data,
 		})
 	}

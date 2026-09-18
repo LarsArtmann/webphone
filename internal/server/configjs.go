@@ -3,6 +3,9 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // configJS renders window.PBX_CONFIG for the island — the same contract
@@ -10,37 +13,20 @@ import (
 // server from its config. TURN credentials can be short-lived because this
 // response is dynamic; today the values come straight from config.
 func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
-	type iceServer struct {
-		URLs       []string `json:"urls"`
-		Username   string   `json:"username,omitempty"`
-		Credential any      `json:"credential,omitempty"`
-	}
+	// config.ICEServer and domain.SharedContact carry the JSON tags of the
+	// window.PBX_CONFIG wire contract (see README) — no local mirror types.
 	pbxConfig := struct {
-		SIPDomain     string      `json:"sipDomain"`
-		WebsocketPath string      `json:"websocketPath"`
-		ICEServers    []iceServer `json:"iceServers,omitempty"`
-		PhoneAPI      bool        `json:"phoneApi"`
-		Contacts      []struct {
-			Name   string `json:"name"`
-			Number string `json:"number"`
-		} `json:"contacts,omitempty"`
+		SIPDomain     string                 `json:"sipDomain"`
+		WebsocketPath string                 `json:"websocketPath"`
+		ICEServers    []config.ICEServer     `json:"iceServers,omitempty"`
+		PhoneAPI      bool                   `json:"phoneApi"`
+		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
 		SIPDomain:     h.deps.Config.SIPDomain,
 		WebsocketPath: h.deps.Config.WebsocketPath,
+		ICEServers:    h.deps.Config.ICEServers,
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
-	}
-	for _, server := range h.deps.Config.ICEServers {
-		entry := iceServer{URLs: server.URLs, Username: server.Username}
-		if server.Credential != "" {
-			entry.Credential = server.Credential
-		}
-		pbxConfig.ICEServers = append(pbxConfig.ICEServers, entry)
-	}
-	for _, contact := range h.deps.Shared {
-		pbxConfig.Contacts = append(pbxConfig.Contacts, struct {
-			Name   string `json:"name"`
-			Number string `json:"number"`
-		}{Name: contact.Name, Number: contact.Number})
+		Contacts:      h.deps.Shared,
 	}
 
 	payload, err := json.Marshal(pbxConfig)

@@ -73,7 +73,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 		Fax:       fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.FaxChanged),
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
-		Shared:    []SharedContactEntry{{Name: "Support", Number: "2000"}},
+		Shared:    []domain.SharedContact{{Name: "Support", Number: "2000"}},
 	})
 
 	server := httptest.NewServer(handler)

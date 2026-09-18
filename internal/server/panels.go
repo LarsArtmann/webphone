@@ -115,11 +115,7 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	shared := make([]domain.SharedContact, 0, len(h.deps.Shared))
-	for _, entry := range h.deps.Shared {
-		shared = append(shared, domain.SharedContact{Name: entry.Name, Number: entry.Number})
-	}
-	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: shared}), nil
+	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared}), nil
 }
 
 func (h *handlers) settingsPanel() templ.Component {

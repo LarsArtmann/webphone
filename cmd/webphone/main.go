@@ -16,6 +16,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
@@ -114,10 +115,6 @@ func run() error {
 	}
 }
 
-func sharedContacts(cfg config.Config) []server.SharedContactEntry {
-	entries := make([]server.SharedContactEntry, 0, len(cfg.Contacts))
-	for _, contact := range cfg.Contacts {
-		entries = append(entries, server.SharedContactEntry{Name: contact.Name, Number: contact.Number})
-	}
-	return entries
+func sharedContacts(cfg config.Config) []domain.SharedContact {
+	return cfg.Contacts
 }

@@ -61,7 +61,7 @@ type FaxGateway interface {
 func NewMessageGateway(cfg config.Gateway, client *http.Client) MessageGateway {
 	switch cfg.Mode {
 	case config.GatewayWebhook:
-		return &Webhook{cfg: cfg, client: client}
+		return &Webhook{provider{cfg: cfg, client: client}}
 	default:
 		return &Loopback{prefix: "loopback-msg"}
 	}
@@ -71,7 +71,7 @@ func NewMessageGateway(cfg config.Gateway, client *http.Client) MessageGateway {
 func NewFaxGateway(cfg config.Gateway, client *http.Client) FaxGateway {
 	switch cfg.Mode {
 	case config.GatewayWebhook:
-		return &FaxWebhook{cfg: cfg, client: client}
+		return &FaxWebhook{provider{cfg: cfg, client: client}}
 	default:
 		return &Loopback{prefix: "loopback-fax"}
 	}

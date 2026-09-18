@@ -92,12 +92,13 @@ type InboundMessage struct {
 	Owner       Extension
 	From        Phone
 	Body        string
-	Attachments []InboundAttachment
+	Attachments []AttachmentContent
 	ReceivedAt  time.Time
 }
 
-// InboundAttachment is attachment content as delivered by a gateway.
-type InboundAttachment struct {
+// AttachmentContent is raw attachment content as it crosses a boundary
+// (upload form or inbound gateway) before being spooled to disk.
+type AttachmentContent struct {
 	Name     string
 	MimeType string
 	Bytes    []byte

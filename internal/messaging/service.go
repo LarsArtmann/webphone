@@ -33,13 +33,6 @@ type ErrInvalidSend struct{ Reason string }
 
 func (e *ErrInvalidSend) Error() string { return e.Reason }
 
-// Upload is one attachment as it arrives from the composer form.
-type Upload struct {
-	Name     string
-	MimeType string
-	Bytes    []byte
-}
-
 // ChangeFunc is called after any thread mutation with the owning
 // extension; listeners re-render the affected thread (SSE fan-out in the
 // server layer).
@@ -68,7 +61,7 @@ func New(messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway,
 // Send validates and delivers one message. It returns the persisted message
 // (already carrying its final status) and the thread it belongs to.
 func (s *Service) Send(
-	ctx context.Context, owner domain.Extension, to domain.Phone, body string, uploads []Upload,
+	ctx context.Context, owner domain.Extension, to domain.Phone, body string, uploads []domain.AttachmentContent,
 ) (domain.Message, error) {
 	body = strings.TrimSpace(body)
 	if body == "" && len(uploads) == 0 {
@@ -175,7 +168,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 		CreatedAt: now,
 	}
 	for _, att := range inbound.Attachments {
-		path, err := s.blobs.Save("attachments", extensionOf(Upload(att)), att.Bytes)
+		path, err := s.blobs.Save("attachments", extensionOf(att), att.Bytes)
 		if err != nil {
 			return domain.Message{}, fmt.Errorf("store inbound attachment: %w", err)
 		}
@@ -238,7 +231,7 @@ func (s *Service) notify(ctx context.Context, owner domain.Extension, threadID d
 	}
 }
 
-func extensionOf(upload Upload) string {
+func extensionOf(upload domain.AttachmentContent) string {
 	ext := strings.ToLower(filepath.Ext(upload.Name))
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".txt", ".vcf", ".amr", ".mp3", ".ogg", ".mp4", ".webm":

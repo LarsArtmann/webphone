@@ -13,6 +13,7 @@ import (
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
@@ -37,14 +38,7 @@ type Deps struct {
 	Fax       *fax.Service
 	PhoneAPI  *pbx.Client
 	Hubs      *ExtensionHubs
-	Shared    []SharedContactEntry
-}
-
-// SharedContactEntry mirrors domain.SharedContact without the handlers
-// importing both.
-type SharedContactEntry struct {
-	Name   string
-	Number string
+	Shared    []domain.SharedContact
 }
 
 // New builds the full http.Handler.

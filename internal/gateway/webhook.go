@@ -21,9 +21,13 @@ import (
 //
 // A 2xx answer with body {"provider_ref": "..."} (or a bare token) is the
 // acceptance receipt; anything else is an error and the message stays failed.
-type Webhook struct {
+type provider struct {
 	cfg    config.Gateway
 	client *http.Client
+}
+
+type Webhook struct {
+	provider
 }
 
 // SendMessage posts the message to the provider.
@@ -32,14 +36,13 @@ func (w *Webhook) SendMessage(ctx context.Context, msg OutboundMessage) (Receipt
 	if err != nil {
 		return Receipt{}, fmt.Errorf("build message form: %w", err)
 	}
-	return postToProvider(ctx, w.client, w.cfg, w.cfg.WebhookURL+"/message", contentType, body)
+	return w.post(ctx, w.cfg.WebhookURL+"/message", contentType, body)
 }
 
 // FaxWebhook forwards outbound faxes to a provider URL as multipart/form-data
 // with the PDF as the sole file part.
 type FaxWebhook struct {
-	cfg    config.Gateway
-	client *http.Client
+	provider
 }
 
 // SendFax posts the fax job to the provider.
@@ -69,7 +72,7 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 		return Receipt{}, fmt.Errorf("close fax form: %w", err)
 	}
 
-	return postToProvider(ctx, w.client, w.cfg, w.cfg.WebhookURL+"/fax", writer.FormDataContentType(), strings.NewReader(buf.String()))
+	return w.post(ctx, w.cfg.WebhookURL+"/fax", writer.FormDataContentType(), strings.NewReader(buf.String()))
 }
 
 func messageForm(kind, owner, to, body string, attachments []OutboundAttachment) (io.Reader, string, error) {
@@ -107,19 +110,19 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 	return strings.NewReader(buf.String()), writer.FormDataContentType(), nil
 }
 
-func postToProvider(
-	ctx context.Context, client *http.Client, cfg config.Gateway, url, contentType string, body io.Reader,
+func (p provider) post(
+	ctx context.Context, url, contentType string, body io.Reader,
 ) (Receipt, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
 		return Receipt{}, fmt.Errorf("build provider request: %w", err)
 	}
 	req.Header.Set("Content-Type", contentType)
-	if cfg.WebhookSecret != "" {
-		req.Header.Set("Authorization", "Bearer "+cfg.WebhookSecret)
+	if p.cfg.WebhookSecret != "" {
+		req.Header.Set("Authorization", "Bearer "+p.cfg.WebhookSecret)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return Receipt{}, fmt.Errorf("provider call: %w", err)
 	}
