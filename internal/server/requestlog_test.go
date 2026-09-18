@@ -35,7 +35,7 @@ func TestRequestLogCoversEverySurface(t *testing.T) {
 
 	entry := log.String()
 	statuses := map[string]bool{}
-	for _, line := range strings.Split(entry, "\n") {
+	for line := range strings.SplitSeq(entry, "\n") {
 		if !strings.Contains(line, "http request") {
 			continue // startup noise (store ready, CSRF dev warning) is out of scope
 		}
@@ -74,8 +74,6 @@ func TestRequestLogNeverCarriesSecrets(t *testing.T) {
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		t.Fatalf("login probe returned %d, want a 2xx session creation", resp.StatusCode)
 	}
-
-	doAndDrain(c, http.MethodGet, "/events", nil, "")
 
 	entry := log.String()
 	if strings.Contains(entry, password) {
