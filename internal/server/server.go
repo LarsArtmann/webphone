@@ -168,6 +168,7 @@ func New(deps Deps) http.Handler {
 	)
 	open.Handle("GET /healthz", readiness)
 	open.Handle("GET /version", versionHandler())
+	open.HandleFunc("GET /openapi.json", openapiHandler)
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
@@ -179,6 +180,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/events", open)
 	root.Handle("/healthz", open)
 	root.Handle("/version", open)
+	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
 	root.Handle("/favicon.svg", open)
 
@@ -282,4 +284,59 @@ func timingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(&timingWriter{ResponseWriter: w, start: time.Now()}, r)
 	})
+}
+
+// openapiSpec is the hand-written OpenAPI 3.1 document for the session
+// API — the one machine-facing contract worth publishing. The spec is a
+// constant: it compiles into the binary and a route test keeps the route
+// and its content-type honest.
+const openapiSpec = `{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "webphone session API",
+    "version": "1.0.0",
+    "description": "Server session for the tabs and the phone-api proxy. Credentials are proven against the PBX by the SIP REGISTER before the island calls this."
+  },
+  "paths": {
+    "/api/session": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "Create a server session (sets the HttpOnly cookie)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["extension", "password"],
+                "properties": {
+                  "extension": {"type": "string", "examples": ["1001"]},
+                  "password": {"type": "string", "format": "password"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {"description": "Session created"},
+          "400": {"description": "Invalid extension or body"},
+          "500": {"description": "Session store failure"}
+        }
+      },
+      "delete": {
+        "operationId": "destroySession",
+        "summary": "Destroy the current session",
+        "responses": {
+          "200": {"description": "Session destroyed"},
+          "401": {"description": "No live session"}
+        }
+      }
+    }
+  }
+}`
+
+func openapiHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/schema+json; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write([]byte(openapiSpec)) //nolint:erraudit // best-effort write; the response is already committed
 }

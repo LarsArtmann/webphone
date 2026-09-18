@@ -4,7 +4,7 @@
 // authedFetch — there is no second login.
 
 import { phoneApiEnabled, sharedContacts } from "./config.js";
-import { authedFetch, authHeaderValue, getCredentials } from "./auth.js";
+import { authedFetch, authHeaderValue, getCredentials, noteThrottled } from "./auth.js";
 import { t } from "./i18n.js";
 import { announce, dialFromUi, els, log } from "./ui.js";
 
@@ -195,6 +195,8 @@ export async function refreshVoicemail() {
       fetch(`/phone-api/voicemail/${extension}/summary`, { headers }),
       fetch(`/phone-api/voicemail/${extension}/messages`, { headers }),
     ]);
+    noteThrottled(summaryRes, "voicemail/summary");
+    noteThrottled(listRes, "voicemail/messages");
     if (summaryRes.status === 401 || listRes.status === 401) {
       els.vmStatus.textContent = t("vmAuthFailed");
       return;

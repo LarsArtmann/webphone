@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json/v2"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -192,4 +193,37 @@ func TestServerTimingOptIn(t *testing.T) {
 			t.Errorf("Server-Timing %q, want total;dur=... with the flag on", header)
 		}
 	})
+}
+
+// TestOpenAPIEndpoint pins the published contract: /openapi.json serves a
+// parseable OpenAPI document describing the session API.
+func TestOpenAPIEndpoint(t *testing.T) {
+	server := newTestServer(t)
+
+	req, _ := http.NewRequest(http.MethodGet, server.URL+"/openapi.json", nil)
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET /openapi.json: %d", resp.StatusCode)
+	}
+	var doc struct {
+		Openapi string `json:"openapi"`
+		Paths   map[string]struct {
+			Post   map[string]any `json:"post"`
+			Delete map[string]any `json:"delete"`
+		} `json:"paths"`
+	}
+	if err := json.Unmarshal(readAll(t, resp), &doc); err != nil {
+		t.Fatalf("openapi body is not JSON: %v", err)
+	}
+	if doc.Openapi == "" {
+		t.Error("openapi field empty")
+	}
+	sess, ok := doc.Paths["/api/session"]
+	if !ok || sess.Post == nil || sess.Delete == nil {
+		t.Error("/api/session must document both POST and DELETE")
+	}
 }
