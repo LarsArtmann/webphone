@@ -103,11 +103,11 @@ type Deps struct {
 // New builds the full http.Handler.
 func New(deps Deps) http.Handler {
 	h := &handlers{
-		deps:         deps,
+		deps:          deps,
 		loginLimiter:  newKeyedRateLimiter(loginLimit, loginBurst),
 		hookLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		eventsLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
-		unread:       newUnreadCache(5 * time.Second),
+		unread:        newUnreadCache(5 * time.Second),
 	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the

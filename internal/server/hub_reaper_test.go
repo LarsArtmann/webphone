@@ -24,10 +24,13 @@ func TestHubReaperDeletesOnlyIdleHubs(t *testing.T) {
 
 	// Age both hubs past the TTL and sweep explicitly (the sweep also
 	// runs opportunistically inside get()'s write path in production).
+	// Resetting sweptAt disarms the sweep-rate gate so the test is
+	// deterministic instead of depending on wall-clock spacing.
 	stale := time.Now().Add(-hubIdleTTL - time.Second)
 	hubs.mu.Lock()
 	hubs.seen[ext.String()] = stale
 	hubs.seen[ext2.String()] = stale
+	hubs.sweptAt = time.Time{}
 	hubs.sweep(time.Now())
 	hubs.mu.Unlock()
 
@@ -65,6 +68,7 @@ func TestHubReaperKeepsFreshIdleHubs(t *testing.T) {
 	hub := hubs.get(ext)
 
 	hubs.mu.Lock()
+	hubs.sweptAt = time.Time{}
 	hubs.sweep(time.Now()) // just-created hub: seen stamp is brand new
 	hubs.mu.Unlock()
 

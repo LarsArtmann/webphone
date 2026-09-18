@@ -42,8 +42,8 @@ type ExtensionHubs struct {
 // The sweep runs opportunistically on the get() write path — no timer
 // goroutine, deterministic under test.
 const (
-	hubIdleTTL     = 10 * time.Minute
-	hubSweepEvery  = time.Minute
+	hubIdleTTL    = 10 * time.Minute
+	hubSweepEvery = time.Minute
 )
 
 // NewHubs builds the per-extension hub registry.
