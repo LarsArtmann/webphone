@@ -50,11 +50,12 @@ func FuzzHookJSONDecode(f *testing.F) {
 		}
 		r2 := httptest.NewRequest(http.MethodPost, "/hooks/fax/status", bytes.NewReader(data))
 		w2 := httptest.NewRecorder()
-		_ = decodeJSON(w2, r2, &fax)
-
-		// Decoded garbage must never silently pass validation.
-		if w2.Code == 200 {
-			t.Fatalf("garbage decoded as valid fax status: %s", data)
+		err := decodeJSON(w2, r2, &fax)
+		if err != nil && w2.Code != http.StatusBadRequest {
+			t.Fatalf("decode error answered %d, want 400: %v", w2.Code, err)
 		}
+		// Semantic validity (status whitelist, ref presence) lives in the
+		// handlers and is covered there; the decode layer's only job is
+		// to never panic and to answer 400 on malformed input.
 	})
 }
