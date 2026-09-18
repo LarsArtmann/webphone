@@ -4,86 +4,143 @@ Enduring context for AI sessions working in this repo.
 
 ## What this is
 
-A standalone SIP.js WebRTC softphone UI (static site derivation),
-extracted 2026-09-17 from `nix-international-telephony`
-(`packages/webphone/`, v0.2.0 lineage). That stack now consumes this
-flake as an input (`github:LarsArtmann/webphone`) and serves the package
-at `https://<domain>/` behind nginx; the module there owns config.js
-rendering, the wss proxy and TLS. This repo owns ONLY the UI and its
-packaging: `src/` (ES modules, entry `app/main.js`) + `package/default.nix`
-(esbuild: pinned sip.js tarball → `sip.min.js` browser global; modules →
-single classic-script `app.js`).
+A single-binary Go unified-communications web app (v2.0.0, 2026-09-18):
+the proven SIP.js call island plus server-rendered tabs (Messages
+SMS/MMS, Fax, Voicemail, History, Contacts, Settings) on one page.
+Extracted 2026-09-17 from `nix-international-telephony` as a static
+site (v1), rebuilt 2026-09-18 as this service on cqrs-htmx (root
+library only) + templ-components `layout.Base` + SQLite (modernc).
+[nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony)
+is the intended consumer: it fronts the binary with TLS and the WSS
+`/sip` proxy. Whether that stack or this repo ships the NixOS module is
+an OPEN decision (see TODO_LIST) — current assumption: the stack owns
+deployment.
+
+The cqrs-htmx `setup` bundle was rejected deliberately: it wires
+event-sourced usermgmt users, but this product's identity is the PBX
+extension + directory password (proven by the island's SIP REGISTER) —
+a second user database would be a split brain.
 
 ## Commands
 
 ```console
-nix flake check          # package build + treefmt + statix + deadnix (fast, <1 min)
-nix fmt                  # treefmt: nixfmt (nix) + prettier (src/**/*.js, html, css)
-nix build .#webphone     # the static site
-./package/update.sh      # repin sip.js (arg: version, default: latest)
+nix develop                        # Go, templ, golangci-lint, esbuild, …
+templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
+GOEXPERIMENT=jsonv2 go test ./...  # jsonv2 REQUIRED for every go command (templ-components)
+buildflow                          # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
+nix flake check                    # package build + tests in sandbox + treefmt
+nix build .#webphone --system aarch64-linux   # cross-builds
+./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 ```
 
-No Makefile, no justfile. BuildFlow local default is fast; a full
-pipeline is unnecessary here (the whole gate realizes in under a minute).
+Smoke a binary quickly (loopback gateway = whole product, zero PBX):
+
+```console
+GOEXPERIMENT=jsonv2 go build -o /tmp/webphone-bin ./cmd/webphone
+WEBPHONE_ADDR=127.0.0.1:18099 WEBPHONE_DATA_DIR=/tmp/wp-data \
+  WEBPHONE_GATEWAY__WEBHOOK_SECRET=devsecret /tmp/webphone-bin
+```
 
 ## The DOM + bundle contract (DO NOT BREAK CASUALLY)
 
-The consuming stack's VM test (`tests/webphone.nix`) and browser E2E
-(`tests/browser-e2e.py`) drive this page remotely. Verified against the
-upstream suites at extraction time; re-run them there after any change
-to markup or the app bundle:
+The consuming stack's browser E2E (`tests/browser-e2e.py` there) drives
+the island remotely — re-run it after any markup change. The Go test
+`TestServedPageHoldsTheDomContract` (`internal/server/server_test.go`)
+asserts all 35 island element ids (`reg-status`, `login-view`, `keypad`,
+`vm-wrap`, `history-list`, `contacts-wrap`, `ice-wrap`, `log`, …) on
+every build; it is the local tripwire, not a replacement for the E2E.
 
-- **Served page asserts**: contains `WebPhone`, links `sip.min.js`;
-  elements `id="keypad"`, `id="remember"`, `id="history-list"`,
-  `id="vm-wrap"`, `id="contacts-wrap"`, `id="ice-wrap"`.
-- **Served app.js asserts these exact strings** (so the bundle is built
-  WITHOUT `--minify` on purpose — minification renames them away):
-  `dtmf-relay`, `userAgent.reconnect()`, `.refer(`, `blindTransfer`,
-  `attendedTransfer`, `Notification.requestPermission`,
+- The island modules under `internal/web/assets/island/app/` are served
+  VERBATIM (no bundling, no minification), so the E2E's greppable
+  strings (`dtmf-relay`, `userAgent.reconnect()`, `.refer(`,
+  `blindTransfer`, `attendedTransfer`, `Notification.requestPermission`,
   `titleFlashStart`, `ringToneStart`, `phone-api/history`,
-  `phone-api/voicemail`, `candidate-pair`, `currentRoundTripTime`.
-- **Browser E2E drives these hooks** (read `.text`/`textContent`,
-  click, type): `#reg-status` (text `registered` /
-  `registration rejected`), `#log`, `#login-error`, `#login-view`,
-  `#phone-view` (`.hidden` toggles), `#ext`, `#pass`, `#dest`,
-  `#incoming-from`, `#accept-btn`, `#ice-wrap summary`, `#ice-panel`
-  (text contains `ice:`), `.call-card`, `.call-state-text`
-  (text `in call`), `.hangup-btn`, `.transfer-btn`, `.transfer-dest`,
-  `.transfer-row button`, keypad `button[data-tone]`, and
-  `window.__pcs` (Map of live RTCPeerConnections — media proof).
+  `phone-api/voicemail`, `candidate-pair`, `currentRoundTripTime`)
+  survive by construction. Keep it that way.
+- E2E also drives `#reg-status` text (`registered` /
+  `registration rejected`), `.hidden` toggles on `#login-view` /
+  `#phone-view`, `.call-card` / `.call-state-text` (`in call`),
+  `.hangup-btn`, `.transfer-btn`, `.transfer-dest`, keypad
+  `button[data-tone]`, and `window.__pcs` (Map of live
+  RTCPeerConnections — media proof).
 - The event log (`#log`) stays **English** in both UI languages: it is
-  operator-facing diagnostics and the runbook greps its phrasings.
+  operator-facing diagnostics and the runbook greps it.
+
+## Architecture invariants
+
+- **The island never unloads.** Tab navigation swaps partials into
+  `#tab-content` via HTMX; the SIP island lives outside that region so
+  calls survive tab switches. Deep links (`/messages`, `/fax`, …)
+  render the full shell server-side.
+- **Module graph stays acyclic**: the island's `state.js` + `auth.js`
+  exist so calls/ice/connection never import each other; the server
+  mirrors this — `domain` imports nothing internal, services never
+  import `server`.
+- **Sessions**: the island POSTs `/api/session` AFTER its REGISTER
+  succeeds (credentials proven against the PBX); the server keeps them
+  in an in-memory TTL store + HttpOnly cookie. `session.js` attaches
+  `sse-connect` to `.wp-root` post-login (no reload — the password is
+  memory-only) and reloads the page on logout.
+- **SSE payloads are swap-safe fragments** (`ThreadsList`, `Transcript`,
+  `FaxList` — no wrappers, no composers): `sse-swap` replaces
+  innerHTML, so a wrapped payload would nest panels and wipe drafts.
+  The `voicemail` event is a payload-less NUDGE: the voicemail panel
+  re-fetches its partial on receipt (it needs per-session PBX
+  credentials the notifier does not have). Event names: `threads`,
+  `thread`, `fax`, `voicemail`.
+- **Gateway seam**: loopback (dev) vs webhook (multipart to
+  `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
+  Inbound hooks `/hooks/*` share the same secret and fail CLOSED
+  (503) when none is configured.
+- **Owner scoping everywhere**: every store query is extension-scoped;
+  attachments/faxes stream through session-gated handlers only.
+- **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
+  webfonts, no inline scripts/styles. Keep it that way.
+- `window.PBX_CONFIG` (`/config.js`, rendered by this server): keys
+  `sipDomain`, `websocketPath`, `iceServers`, `phoneApi`, `contacts`.
 
 ## Hard-won knowledge
 
-- CSP at the serving vhost is `default-src 'self'`-strict: no CDN, no
-  webfonts, no inline styles/scripts — everything ships same-origin
-  from this package. Keep it that way.
-- config.js is generated at runtime by the serving PBX (short-lived
-  TURN REST credentials); it is deliberately NOT in this package.
-  `window.PBX_CONFIG` keys: `sipDomain`, `websocketPath`, `iceServers`,
-  `phoneApi`, `contacts` (all optional; see src/app/config.js).
-- sip.js is pinned by tarball hash (0.21.2). The 0.x series hangs in
-  `userAgent.reconnect()` after transport loss — the bounded watchdog in
-  `src/app/connection.js` (5s per attempt, full rebuild on timeout) is
-  load-bearing; do not "simplify" it away.
-- DTMF must be sent as `application/dtmf-relay` with `Signal=<d>`
-  (equals form) — the colon form is 200-OK'd by FreeSWITCH and silently
-  dropped.
-- Module graph is kept acyclic on purpose: `state.js` (sessions map +
-  focused/incoming ids) and `auth.js` (credentials) exist so that
-  calls/ice/connection never import each other. Preserve that shape.
+- `GOEXPERIMENT=jsonv2` is required for every `go` command —
+  templ-components/errorpage needs `encoding/json/v2`.
+- `.templ` files must NOT import `github.com/a-h/templ` (the generator
+  injects the symbol); conditionals are bare `if x {` statements, not
+  `@if`.
+- go-branded-id: `id.ID.String()` renders `"Brand:value"`; the domain
+  `mustID` parsers strip an optional `"Prefix:"`.
+- DTMF must be `application/dtmf-relay` with `Signal=<d>` (equals form)
+  — the colon form is 200-OK'd by FreeSWITCH and silently dropped.
 - FreeSWITCH executes transfers server-side on the REFER; the browser
   only sends it and parses the NOTIFY sipfrag verdict (`referOnNotify`).
-- Formatting: treefmt (prettier) owns everything under `src/`;
-  `.buildflow.yml` excludes `src/**` so BuildFlow's oxfmt cannot fight
-  prettier (same war the telephony repo fought — pre-settled here).
+- sip.js is pinned at 0.21.2 (vendored tarball + IIFE bundle). The 0.x
+  series hangs in `userAgent.reconnect()` after transport loss; the
+  bounded watchdog in the island's `connection.js` (5s per attempt,
+  full rebuild on timeout) is load-bearing. Do not "simplify" it away.
+- Env config nests with `__`: `WEBPHONE_GATEWAY__MODE` →
+  `gateway.mode`; single underscores stay literal (`WEBPHONE_DATA_DIR`
+  → `data_dir`). Scalars via env; lists (`ice_servers`, `contacts`)
+  via the JSON file.
+- `buildflow -s nix-hash-fix --fix` computes the right vendorHash but
+  never writes it here (buildflow itself warns). Documented deviation:
+  placeholder hash → `nix build` → read `got:` → apply. Only when
+  go.mod/go.sum actually changed.
+- erraudit honors `//nolint:erraudit // reason`; branching-flow honors
+  NO nolint — its remaining policy-opinion findings are triaged as a
+  documented skip in `.buildflow.yml` (same for go-structure-linter).
+- `pbx.Client` owns the timeout-bounded HTTP client; the `/phone-api`
+  proxy must ride `PhoneAPI.HTTPClient()`, never `http.DefaultClient`.
+- Formatting: treefmt (prettier) owns everything under
+  `internal/web/assets/island/`; `.buildflow.yml` excludes the island
+  so BuildFlow's oxfmt cannot fight prettier (same war the telephony
+  repo fought — pre-settled here).
 
 ## Conventions
 
-- One home per fact: README sells, FEATURES inventories status,
-  TODO_LIST holds open work, CHANGELOG logs history, this file keeps
-  session-durable knowledge.
+- One home per fact: README sells + documents contracts, FEATURES
+  inventories status, TODO_LIST holds open work, CHANGELOG logs
+  history, this file keeps session-durable knowledge.
 - Cite stable names (ids, function names, option names), not `file:line`.
-- Behavior parity rules the extraction: when porting logic, port it
-  verbatim first, refactor in a second, separately-verified commit.
+- Behavior parity rules ports: port logic verbatim first, refactor in a
+  second, separately-verified change.
+- An auto-commit daemon commits continuously; do not be surprised by
+  commits you did not make, and never revert changes you did not author.

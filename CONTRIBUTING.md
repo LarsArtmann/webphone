@@ -12,7 +12,7 @@ nix develop        # Go, templ, golangci-lint, treefmt, esbuild
 
 ```console
 nix fmt                    # format everything (nix + go + prettier)
-templ generate ./...       # after editing .templ files
+templ generate ./internal/web/views/   # after editing .templ files
 go test ./...              # the suite
 buildflow                  # the quality gate (lint, audit, checks)
 nix flake check            # build + tests in the sandbox + treefmt

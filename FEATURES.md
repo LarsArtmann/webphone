@@ -88,7 +88,7 @@ Code wins when doc and code disagree.
 | aarch64-linux                  | 🟢 FULLY_FUNCTIONAL | Cross-builds cleanly (verified 2026-09-18)                                 |
 | Strict-CSP compatible          | 🟢 FULLY_FUNCTIONAL | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN        |
 | Security posture               | 🟢 FULLY_FUNCTIONAL | CSRF on all mutations, security headers, owner-scoped queries everywhere   |
-| DOM contract test              | 🟢 FULLY_FUNCTIONAL | 34 island element ids asserted by `internal/server/server_test.go`         |
+| DOM contract test              | 🟢 FULLY_FUNCTIONAL | 35 island element ids asserted by `internal/server/server_test.go`         |
 | i18n (en/de)                   | 🟡 PARTIALLY_FUNCTIONAL | Island fully en/de; the server-rendered tabs are English-only           |
 | Dark + light themes            | 🟢 FULLY_FUNCTIONAL | Token-based, follows `prefers-color-scheme`                               |
 | Browser E2E (upstream stack)   | 🟡 PARTIALLY_FUNCTIONAL | Suite exists for the v1 surface; must be re-run after the v2 switchover |
@@ -99,7 +99,7 @@ Code wins when doc and code disagree.
 | ------------------------------------ | ------------------ | ---------------------------------------------------------------- |
 | German translations for the tabs     | ⚪ PLANNED          | Island i18n is the pattern to follow                             |
 | Message delivery-receipt webhook     | ⚪ PLANNED          | Store field exists (`provider_ref`)                             |
-| Session persistence across restarts  | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost      |
+| Session persistence across restarts  | ⚪ PLANNED          | Passwords in RAM only today; persistence has security cost      |
 | Message pagination/virtualization    | ⚪ PLANNED          | Window is 200 per thread                                         |
 | vCard contact import/export          | ⚪ PLANNED          |                                                                  |
 | History search/filter                | ⚪ PLANNED          |                                                                  |
