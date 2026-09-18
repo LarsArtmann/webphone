@@ -70,7 +70,7 @@ templ Shell(props ShellProps) {
 		HTMXSrc:        "/htmx.min.js",
 		Nonce:          "",
 		SEO:            layout.SEOMeta{NoIndex: true},
-		HeadContent:    headExtras(),
+		HeadContent:    headExtras(props.CSRFToken),
 		BodyDataAttrs:  bodyAttrs(props),
 	}) {
 		if props.SignedIn != "" {
@@ -143,7 +143,8 @@ templ NavLinks(props ShellProps) {
 // headExtras loads the SSE extension, the island stylesheet (after the
 // Tailwind build so its element rules win), and the tiny shell script that
 // tracks the active nav item across partial swaps.
-templ headExtras() {
+templ headExtras(csrfToken string) {
+	<meta name="csrf-token" content={ csrfToken }></meta>
 	<script src="/htmx-ext/sse.js" defer></script>
 	<link rel="stylesheet" href="/assets/island/style.css"></link>
 	<script src="/assets/shell.js" defer></script>

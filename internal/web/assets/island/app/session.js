@@ -11,7 +11,10 @@ export async function createSession(extension, password) {
   try {
     const res = await fetch("/api/session", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken(),
+      },
       body: JSON.stringify({ extension, password }),
     });
     if (!res.ok) {
@@ -24,9 +27,19 @@ export async function createSession(extension, password) {
 
 export async function destroySession() {
   try {
-    await fetch("/api/session", { method: "DELETE" });
+    await fetch("/api/session", {
+      method: "DELETE",
+      headers: { "X-CSRF-Token": csrfToken() },
+    });
   } catch {
     // signing out of the server session is best-effort; the cookie dies
     // with the tab session anyway
   }
+}
+
+// The server renders the CSRF token into <meta name="csrf-token">; the
+// nosurf double-submit cookie pairs with it.
+function csrfToken() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute("content") : "";
 }

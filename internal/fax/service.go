@@ -29,8 +29,9 @@ type ErrInvalidFax struct{ Reason string }
 
 func (e *ErrInvalidFax) Error() string { return e.Reason }
 
-// ChangeFunc is called after any fax-job mutation (SSE fan-out).
-type ChangeFunc func(jobID domain.FaxID)
+// ChangeFunc is called after any fax-job mutation with the owning
+// extension (SSE fan-out).
+type ChangeFunc func(ctx context.Context, owner domain.Extension, jobID domain.FaxID)
 
 // Service wires the fax store, blob store, and outbound gateway.
 type Service struct {
@@ -83,7 +84,7 @@ func (s *Service) Send(
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, fmt.Errorf("persist fax job: %w", err)
 	}
-	s.notify(job.ID)
+	s.notify(ctx, owner, job.ID)
 
 	receipt, err := s.gateway.SendFax(ctx, gateway.OutboundFax{
 		Owner: owner, To: to, PDFPath: s.blobs.Abs(path),
@@ -94,7 +95,7 @@ func (s *Service) Send(
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", job.Error, 0); updateErr != nil {
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
-		s.notify(job.ID)
+		s.notify(ctx, owner, job.ID)
 		return job, fmt.Errorf("gateway: %w", err)
 	}
 
@@ -111,7 +112,7 @@ func (s *Service) Send(
 			slog.Warn("fax: mark transmitted", "error", updateErr)
 		}
 	}
-	s.notify(job.ID)
+	s.notify(ctx, owner, job.ID)
 
 	return job, nil
 }
@@ -145,7 +146,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, fmt.Errorf("persist inbound fax: %w", err)
 	}
-	s.notify(job.ID)
+	s.notify(ctx, inbound.Owner, job.ID)
 
 	return job, nil
 }
@@ -164,7 +165,7 @@ func (s *Service) UpdateProviderStatus(
 	if err := s.faxes.UpdateStatus(ctx, job.ID, status, "", errMsg, pages); err != nil {
 		return domain.FaxJob{}, err
 	}
-	s.notify(job.ID)
+	s.notify(ctx, job.Owner, job.ID)
 
 	job.Status = status
 	job.Pages = pages
@@ -187,9 +188,9 @@ func (s *Service) Document(job domain.FaxJob) (io.ReadSeekCloser, error) {
 	return s.blobs.Open(job.DocumentPath)
 }
 
-func (s *Service) notify(id domain.FaxID) {
+func (s *Service) notify(ctx context.Context, owner domain.Extension, id domain.FaxID) {
 	if s.onChange != nil {
-		s.onChange(id)
+		s.onChange(ctx, owner, id)
 	}
 }
 

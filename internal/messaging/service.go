@@ -40,9 +40,10 @@ type Upload struct {
 	Bytes    []byte
 }
 
-// ChangeFunc is called after any thread mutation; listeners re-render the
-// affected thread (SSE fan-out in the server layer).
-type ChangeFunc func(threadID domain.ThreadID)
+// ChangeFunc is called after any thread mutation with the owning
+// extension; listeners re-render the affected thread (SSE fan-out in the
+// server layer).
+type ChangeFunc func(ctx context.Context, owner domain.Extension, threadID domain.ThreadID)
 
 // Service wires the message store, blob store, and outbound gateway.
 type Service struct {
@@ -128,14 +129,14 @@ func (s *Service) Send(
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
 		return domain.Message{}, fmt.Errorf("persist message: %w", err)
 	}
-	s.notify(threadID)
+	s.notify(ctx, owner, threadID)
 
 	receipt, err := s.gateway.SendMessage(ctx, outbound)
 	switch {
 	case err != nil:
 		msg.Status = domain.StatusFailed
 		sendErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "")
-		s.notify(threadID)
+		s.notify(ctx, owner, threadID)
 		if sendErr != nil {
 			slog.Warn("messaging: mark failed", "error", sendErr)
 		}
@@ -146,7 +147,7 @@ func (s *Service) Send(
 		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusSent, receipt.ProviderRef); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
-		s.notify(threadID)
+		s.notify(ctx, owner, threadID)
 		return msg, nil
 	}
 }
@@ -191,7 +192,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
 		return domain.Message{}, fmt.Errorf("persist inbound message: %w", err)
 	}
-	s.notify(threadID)
+	s.notify(ctx, inbound.Owner, threadID)
 
 	return msg, nil
 }
@@ -231,9 +232,9 @@ func (s *Service) OpenAttachment(path string) (io.ReadSeekCloser, error) {
 	return s.blobs.Open(path)
 }
 
-func (s *Service) notify(threadID domain.ThreadID) {
+func (s *Service) notify(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	if s.onChange != nil {
-		s.onChange(threadID)
+		s.onChange(ctx, owner, threadID)
 	}
 }
 

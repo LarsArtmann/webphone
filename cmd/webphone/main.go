@@ -61,13 +61,13 @@ func run() error {
 	}
 
 	// --- services ----------------------------------------------------------
-	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, messages, faxes)
-
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
 	contacts := store.NewContacts(db)
 	sessions := session.NewStore(cfg.SessionTTL)
+
+	hubs := server.NewHubs()
+	notifier := server.NewNotifier(hubs, messages, faxes)
 
 	messageGateway := gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient())
 	faxGateway := gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient())

@@ -42,9 +42,9 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 			h.renderMessagesError(w, r, sess, "Could not read an attachment.")
 			return
 		}
-		content, readErr := io.ReadAll(io.LimitReader(file, messaging.MaxAttachmentSize()+1))
+		content, readErr := io.ReadAll(io.LimitReader(file, messaging.MaxAttachmentSize+1))
 		_ = file.Close()
-		if readErr != nil || int64(len(content)) > messaging.MaxAttachmentSize() {
+		if readErr != nil || int64(len(content)) > messaging.MaxAttachmentSize {
 			h.renderMessagesError(w, r, sess, "An attachment is too large (10 MiB each).")
 			return
 		}
@@ -79,7 +79,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 
 func sendErrorMessage(err error) string {
 	var invalid *messaging.ErrInvalidSend
-	if errors.As(err, invalid) {
+	if errors.As(err, &invalid) {
 		return invalid.Reason
 	}
 	return "The gateway rejected the message: " + err.Error()
@@ -119,9 +119,9 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 		h.renderFaxError(w, r, sess, "Attach a PDF to send.")
 		return
 	}
-	pdf, readErr := io.ReadAll(io.LimitReader(file, fax.MaxPDFSize()+1))
+	pdf, readErr := io.ReadAll(io.LimitReader(file, fax.MaxPDFSize+1))
 	_ = file.Close()
-	if readErr != nil || int64(len(pdf)) > fax.MaxPDFSize() {
+	if readErr != nil || int64(len(pdf)) > fax.MaxPDFSize {
 		h.renderFaxError(w, r, sess, "The PDF is too large (20 MiB maximum).")
 		return
 	}
@@ -135,7 +135,7 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 
 func faxErrorMessage(err error) string {
 	var invalid *fax.ErrInvalidFax
-	if errors.As(err, invalid) {
+	if errors.As(err, &invalid) {
 		return invalid.Reason
 	}
 	return "The gateway rejected the fax: " + err.Error()

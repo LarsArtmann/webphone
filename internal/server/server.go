@@ -36,7 +36,7 @@ type Deps struct {
 	Messaging *messaging.Service
 	Fax       *fax.Service
 	PhoneAPI  *pbx.Client
-	Hubs      *extensionHubs
+	Hubs      *ExtensionHubs
 	Shared    []SharedContactEntry
 }
 

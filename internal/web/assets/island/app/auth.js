@@ -23,5 +23,9 @@ export function authHeaderValue() {
 export async function authedFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (credentials) headers.set("Authorization", authHeaderValue());
+  // The server's CSRF middleware protects state-changing phone-api calls
+  // (e.g. voicemail delete); the token pairs with the nosurf cookie.
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) headers.set("X-CSRF-Token", meta.getAttribute("content") || "");
   return fetch(path, { ...options, headers });
 }
