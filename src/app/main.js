@@ -12,7 +12,7 @@ import {
   teardownSession,
 } from "./calls.js";
 import { sipDomain, websocketUrl } from "./config.js";
-import { applyI18n, setLang, t } from "./i18n.js";
+import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
   cancelVoicemailRefresh,
   refreshServerHistory,
@@ -33,6 +33,7 @@ if (localStorage.getItem(REMEMBER_KEY)) {
 renderHistory();
 
 if (els.lang) {
+  els.lang.value = getLang();
   els.lang.addEventListener("change", () => {
     setLang(els.lang.value);
     applyI18n();

@@ -7,7 +7,7 @@
 // Replaces) — the browser only sends REFER and waits for the NOTIFY
 // sipfrag verdict.
 
-import { ringbackStart, ringbackStop } from "./audio.js";
+import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
 import { getUserAgent } from "./connection.js";
 import { sipDomain } from "./config.js";
 import { startIcePanel, stopIcePanel } from "./ice.js";
@@ -17,7 +17,6 @@ import {
   refreshServerHistory,
   scheduleVoicemailRefresh,
 } from "./panels.js";
-import { ringToneStop } from "./audio.js";
 import { titleFlashStop } from "./notify.js";
 import { sessions, state } from "./state.js";
 import { announce, els, log, showDialError } from "./ui.js";
