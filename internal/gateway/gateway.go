@@ -13,6 +13,7 @@ package gateway
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
@@ -54,12 +55,6 @@ type OutboundFax struct {
 // FaxGateway transmits outbound faxes.
 type FaxGateway interface {
 	SendFax(ctx context.Context, fax OutboundFax) (Receipt, error)
-}
-
-// HTTPClient is the subset of *http.Client the webhook gateway needs; tests
-// inject a stubbed transport through it.
-type HTTPClient interface {
-	Do(req *httpRequest) (*httpResponse, error)
 }
 
 // NewMessageGateway picks the message gateway by config mode.
