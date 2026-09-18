@@ -3,6 +3,7 @@
 package config
 
 import (
+	"strings"
 	"fmt"
 	"os"
 	"time"
@@ -114,21 +115,16 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-// envKeyToPath maps GATEWAY_MODE (the WEBPHONE_ prefix is already stripped
-// by the provider) to gateway.mode.
+// envKeyToPath maps env names to config paths: WEBPHONE_GATEWAY__MODE →
+// gateway.mode (double underscore nests, single underscores stay literal —
+// WEBPHONE_DATA_DIR → data_dir).
 func envKeyToPath(key string) string {
-	path := make([]rune, 0, len(key))
-	for _, r := range key {
-		switch {
-		case r == '_':
-			path = append(path, '.')
-		case r >= 'A' && r <= 'Z':
-			path = append(path, r+'a'-'A')
-		default:
-			path = append(path, r)
-		}
+	lowered := strings.ToLower(key)
+	lowered = strings.TrimPrefix(lowered, "webphone_")
+	if lowered == "" {
+		return ""
 	}
-	return string(path)
+	return strings.ReplaceAll(lowered, "__", ".")
 }
 
 func validate(cfg Config) error {

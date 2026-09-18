@@ -12,23 +12,14 @@ type handlers struct {
 	deps Deps
 }
 
-// page renders the full shell for a direct URL visit.
+// page renders the full shell for the root URL.
 func (h *handlers) page(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		h.routeTab(w, r)
-		return
-	}
 	h.renderShell(w, r, views.TabMessages)
 }
 
-func (h *handlers) routeTab(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/messages", "/messages/", "/fax", "/fax/", "/voicemail", "/voicemail/",
-		"/history", "/history/", "/contacts", "/contacts/", "/settings", "/settings/":
-		h.renderShell(w, r, tabFromPath(r.URL.Path))
-	default:
-		http.NotFound(w, r)
-	}
+// tabPage renders the full shell for a tab URL (deep links).
+func (h *handlers) tabPage(w http.ResponseWriter, r *http.Request) {
+	h.renderShell(w, r, tabFromPath(r.URL.Path))
 }
 
 func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views.Tab) {
