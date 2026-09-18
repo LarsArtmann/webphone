@@ -90,6 +90,10 @@ type ThreadViewProps struct {
 	Thread   domain.Thread
 	Messages []domain.Message
 	Error    string
+	// Page is the transcript window currently shown (0 = newest); HasMore
+	// reports older pages beyond the window.
+	Page    int
+	HasMore bool
 }
 
 templ ThreadView(props ThreadViewProps) {
@@ -107,6 +111,17 @@ templ ThreadView(props ThreadViewProps) {
 		</header>
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
+		}
+		if props.HasMore {
+			<form
+				class="wp-older"
+				hx-get={ "/partials/messages/" + props.Thread.ID.String() + "?older=" + fmtInt(props.Page+1) }
+				hx-target="#tab-content"
+				hx-swap="innerHTML show:window:top"
+				hx-trigger="submit"
+			>
+				<button type="submit">Load older messages</button>
+			</form>
 		}
 		<div class="wp-transcript" id="thread-transcript" sse-swap="thread">
 			@Transcript(props.Messages)

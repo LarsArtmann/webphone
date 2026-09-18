@@ -568,3 +568,18 @@ a:focus-visible {
 .wp-export-link:hover {
   text-decoration: underline;
 }
+
+.wp-older {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.wp-older button {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font: inherit;
+}

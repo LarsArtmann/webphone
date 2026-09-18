@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
@@ -26,8 +27,8 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads}), nil
 }
 
-func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID) (templ.Component, error) {
-	thread, msgs, err := h.deps.Messaging.Thread(r.Context(), sess.Extension, id)
+func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
+	thread, msgs, hasMore, err := h.deps.Messaging.ThreadWindow(r.Context(), sess.Extension, id, page)
 	if errors.Is(err, store.ErrNotFound) {
 		return views.ThreadsPanel(views.ThreadsPanelProps{Error: "That conversation no longer exists."}), nil
 	}
@@ -39,7 +40,9 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 		_ = err
 	}
 	h.unread.drop(sess.Extension)
-	return views.ThreadView(views.ThreadViewProps{Thread: thread, Messages: msgs}), nil
+	return views.ThreadView(views.ThreadViewProps{
+		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore,
+	}), nil
 }
 
 func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +52,13 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := domain.MustThreadID(r.PathValue("id"))
-	component, err := h.threadPanel(r, sess, id)
+	page := 0
+	if raw := r.URL.Query().Get("older"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 10000 {
+			page = parsed
+		}
+	}
+	component, err := h.threadPanel(r, sess, id, page)
 	if err != nil {
 		http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
 		return

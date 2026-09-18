@@ -62,7 +62,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	// Reply keeps the thread open; a new conversation returns to the list.
 	threadParam := r.URL.Query().Get("thread")
 	if threadParam != "" {
-		component, err := h.threadPanel(r, sess, domain.MustThreadID(threadParam))
+		component, err := h.threadPanel(r, sess, domain.MustThreadID(threadParam), 0)
 		if err != nil {
 			http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
 			return
