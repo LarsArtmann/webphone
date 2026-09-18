@@ -91,6 +91,8 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /voicemail/delete", h.deleteVoicemail)
 	protected.HandleFunc("POST /contacts/save", h.saveContact)
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
+	protected.HandleFunc("POST /contacts/import", h.importContacts)
+	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.middleware(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))

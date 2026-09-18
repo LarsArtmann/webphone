@@ -227,14 +227,15 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 func TestStaticAssetsServe(t *testing.T) {
 	c := newClient(t)
 	for path, wantContains := range map[string]string{
-		"/htmx.min.js":               "htmx",
-		"/htmx-ext/sse.js":           "sse",
-		"/assets/app.css":            "--accent",
-		"/assets/shell.js":           "data-dial",
-		"/assets/island/app/main.js": "loginForm",
-		"/assets/vendor/sip.min.js":  "UserAgent",
-		"/config.js":                 "window.PBX_CONFIG",
-		"/favicon.svg":               "<svg",
+		"/htmx.min.js":                    "htmx",
+		"/htmx-ext/sse.js":                "sse",
+		"/assets/app.css":                 "--accent",
+		"/assets/shell.js":                "data-dial",
+		"/assets/island/app/main.js":      "loginForm",
+		"/assets/island/app/shortcuts.js": "MediaPlayPause",
+		"/assets/vendor/sip.min.js":       "UserAgent",
+		"/config.js":                      "window.PBX_CONFIG",
+		"/favicon.svg":                    "<svg",
 	} {
 		resp, body := c.do(http.MethodGet, path, nil, "")
 		if resp.StatusCode != http.StatusOK {

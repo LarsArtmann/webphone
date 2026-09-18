@@ -297,3 +297,70 @@ func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Reques
 	}
 	return sess, true
 }
+
+// importContacts ingests an uploaded vCard file: every card with a
+// valid number is upserted (same number = rename), invalid numbers are
+// skipped so one bad row cannot block the import.
+func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSessionMultipart(w, r)
+	if !ok {
+		return
+	}
+	file, header, err := r.FormFile("vcard")
+	if err != nil {
+		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, "Attach a .vcf file to import.")
+		return
+	}
+	data, readErr := io.ReadAll(io.LimitReader(file, 5<<20))
+	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+	if readErr != nil {
+		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, "Could not read the file.")
+		return
+	}
+
+	imported := 0
+	for _, card := range vcard.Decode(data) {
+		phone, err := domain.ParsePhone(card.Number)
+		if err != nil {
+			continue
+		}
+		contact := domain.Contact{
+			ID:        domain.GenerateContactID(),
+			Owner:     sess.Extension,
+			Name:      card.Name,
+			Phone:     phone,
+			CreatedAt: time.Now(),
+		}
+		if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
+			continue
+		}
+		imported++
+	}
+	if imported == 0 {
+		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity,
+			"No importable contacts found in "+templ.EscapeString(header.Filename)+".")
+		return
+	}
+	h.partial(w, r, tabFromPath("/contacts"))
+}
+
+// exportContacts streams the extension's personal contacts as vCard.
+func (h *handlers) exportContacts(w http.ResponseWriter, r *http.Request) {
+	sess, ok := session.From(r.Context())
+	if !ok {
+		http.Error(w, "sign in first", http.StatusUnauthorized)
+		return
+	}
+	contacts, err := h.deps.Contacts.List(r.Context(), sess.Extension)
+	if err != nil {
+		http.Error(w, "could not list contacts", http.StatusInternalServerError)
+		return
+	}
+	cards := make([]vcard.Card, 0, len(contacts))
+	for _, contact := range contacts {
+		cards = append(cards, vcard.Card{Name: contact.Name, Number: contact.Phone.String()})
+	}
+	w.Header().Set("Content-Type", "text/vcard; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="webphone-contacts.vcf"`)
+	_, _ = w.Write(vcard.Encode(cards)) //nolint:erraudit // best-effort write; the response is already committed
+}
