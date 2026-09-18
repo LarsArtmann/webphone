@@ -47,7 +47,7 @@ type Thread struct {
 	Owner          Extension
 	Remote         Phone
 	LastActivityAt time.Time
-	Unread         int
+	Unread         int //nolint:branching-flow // display counter, not identity
 }
 
 // Attachment is a stored MMS attachment. Content lives on disk at Path

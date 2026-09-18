@@ -100,6 +100,10 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
+// rowScanner is the shared Scan surface of *sql.Row and *sql.Rows the
+// scan helpers read through.
+type rowScanner interface{ Scan(dest ...any) error }
+
 func firstLine(s string) string {
 	for i := range s {
 		if s[i] == '\n' {

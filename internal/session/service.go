@@ -73,7 +73,10 @@ func (s *Store) Get(token string) (Session, bool) {
 	s.mu.RLock()
 	sess, ok := s.sessions[token]
 	s.mu.RUnlock()
-	if !ok || time.Now().After(sess.ExpiresAt) {
+	if !ok {
+		return Session{}, false
+	}
+	if time.Now().After(sess.ExpiresAt) {
 		return Session{}, false
 	}
 	return *sess, true

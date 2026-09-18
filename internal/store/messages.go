@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"slices"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -198,9 +199,7 @@ func (s *Messages) ListMessages(
 	return msgs, nil
 }
 
-type messageScanner interface{ Scan(dest ...any) error }
-
-func scanMessage(row messageScanner) (domain.Message, error) {
+func scanMessage(row rowScanner) (domain.Message, error) {
 	var (
 		id, threadID, owner, remote, direction, channel string
 		body, status, providerRef                       string
@@ -264,9 +263,7 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 }
 
 func reverseMessages(msgs []domain.Message) {
-	for i, j := 0, len(msgs)-1; i < j; i, j = i+1, j-1 {
-		msgs[i], msgs[j] = msgs[j], msgs[i]
-	}
+	slices.Reverse(msgs)
 }
 
 // FindThread returns the owner's thread for a remote number, creating it

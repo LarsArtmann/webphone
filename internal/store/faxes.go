@@ -106,9 +106,7 @@ func (s *Faxes) ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, e
 	return job, err
 }
 
-type faxScanner interface{ Scan(dest ...any) error }
-
-func scanFax(row faxScanner) (domain.FaxJob, error) {
+func scanFax(row rowScanner) (domain.FaxJob, error) {
 	var (
 		id, owner, remote, direction, status string
 		documentPath, providerRef, errMsg    string
