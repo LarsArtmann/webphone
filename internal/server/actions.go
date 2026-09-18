@@ -68,11 +68,13 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		notifyToast(w, "ok", h.T(r, "toast.messageSent"))
 		if err := component.Render(r.Context(), w); err != nil {
 			http.Error(w, "render error", http.StatusInternalServerError)
 		}
 		return
 	}
+	notifyToast(w, "ok", h.T(r, "toast.messageSent"))
 	h.partial(w, r, tabFromPath("/messages"))
 }
 
@@ -110,6 +112,7 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, faxErrorMessage(err, h.lang(r)))
 		return
 	}
+	notifyToast(w, "ok", h.T(r, "toast.faxSent"))
 	h.partial(w, r, tabFromPath("/fax"))
 }
 
@@ -211,6 +214,7 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not save the contact", http.StatusInternalServerError)
 		return
 	}
+	notifyToast(w, "ok", h.T(r, "toast.contactSaved"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
@@ -224,6 +228,7 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	notifyToast(w, "ok", h.T(r, "toast.contactDeleted"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
@@ -267,6 +272,7 @@ func (h *handlers) countVoicemail(r *http.Request, sess session.Session) int {
 func (h *handlers) renderPanelError(
 	w http.ResponseWriter, r *http.Request, sess session.Session, tab views.Tab, status int, message string,
 ) {
+	notifyToast(w, "error", message) // header rides along with the re-rendered panel
 	component, err := h.tabComponent(r, tab, sess)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err != nil {
@@ -355,6 +361,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 			h.T(r, "contacts.importNone.pre")+templ.EscapeString(header.Filename)+h.T(r, "contacts.importNone.post"))
 		return
 	}
+	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+itoa(imported)+h.T(r, "toast.imported.post"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 

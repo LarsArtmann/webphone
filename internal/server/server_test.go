@@ -295,6 +295,8 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/shell.js":                "data-dial",
 		"/assets/island/app/main.js":      "loginForm",
 		"/assets/island/app/shortcuts.js": "MediaPlayPause",
+		"/assets/island/app/session.js":   "initSseLiveIndicator",
+		"/assets/island/style.css":        "#wp-sse-live",
 		"/assets/vendor/sip.min.js":       "UserAgent",
 		"/config.js":                      "window.PBX_CONFIG",
 		"/favicon.svg":                    "<svg",
