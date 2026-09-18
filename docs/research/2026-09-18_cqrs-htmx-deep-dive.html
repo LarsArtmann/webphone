@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cqrs-htmx v4 — Adoption &amp; Utilization Audit (webphone, 2026-09-18)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+      <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-09-18</span>
+      <span>WEBPHONE &times; CQRS-HTMX</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#usage">Current Usage</a>
+          <a href="#findings">Findings</a>
+          <a href="#non-adoptions">Deliberate Non-Adoptions</a>
+          <a href="#currency">Version Currency</a>
+          <a href="#plan">Action Plan</a>
+          <a href="#conclusion">Conclusion</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-09-18</div>
+          <h1>cqrs-htmx v4 &mdash; Adoption &amp; Utilization Audit</h1>
+          <p class="subtitle">
+            The webphone binary consumes the cqrs-htmx root library (v4.9.0) for embedded HTMX
+            assets and the SSE broadcaster &mdash; 3 of roughly 70 exported capabilities. The core
+            is used canonically and is version-current. The gap is breadth: the HTTP middleware
+            toolkit riding in the same import is partially hand-rolled beside it, weaker than what
+            one line of adoption would provide.
+          </p>
+          <div class="meta">
+            <span class="tag">Consumed: v4.9.0</span>
+            <span class="tag teal">Version: current (latest root tag)</span>
+            <span class="tag amber">Adoption Score: 62/100</span>
+            <span class="tag">Import surface: 2 files, 4 symbols</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard">
+          <h2><span class="num">01</span>Scorecard</h2>
+          <div class="scorecard">
+            <div class="score-card score-warn">
+              <div class="score">62</div>
+              <div class="label">Adoption Score / 100</div>
+            </div>
+            <div class="score-card score-good">
+              <div class="score">2/2</div>
+              <div class="label">Core capabilities leveraged</div>
+            </div>
+            <div class="score-card score-bad">
+              <div class="score">0/4</div>
+              <div class="label">Middleware toolkit adopted</div>
+            </div>
+            <div class="score-card score-warn">
+              <div class="score">2</div>
+              <div class="label">Hand-rolled duplications (~200 lines)</div>
+            </div>
+            <div class="score-card score-good">
+              <div class="score">0</div>
+              <div class="label">Versions behind latest root tag</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">02</span>Summary &mdash; the bottom line</h2>
+          <p>
+            <strong>Are we using cqrs-htmx fully and superbly?</strong> Split verdict. For the
+            three capabilities webphone touches &mdash; the embedded <code>htmx.min.js</code>
+            handler, the embedded SSE extension handler, and the per-extension
+            <code>Broadcaster</code> &mdash; usage is exemplary: version-current, following the
+            library's own documented patterns (<code>Hub()</code> as the canonical fan-out
+            accessor, embedded assets instead of CDN), and correctly extended consumer-side with a
+            per-extension hub registry the library deliberately leaves open.
+          </p>
+          <p>
+            But the library is used as an <em>asset server + event hub</em>, not as the HTTP
+            middleware toolkit the same import provides. Directly beside cqrs-htmx calls, webphone
+            hand-rolls a weaker panic-recovery middleware (no stack trace, and it swallows
+            <code>http.ErrAbortHandler</code>, which net/http convention requires re-raising), a
+            weaker keyed rate limiter (no key-count cap under spoofed floods), ships no request
+            logging at all, and serves a <code>/healthz</code> that always says <code>ok</code>
+            without checking SQLite. All four have first-class equivalents in the already-imported
+            package or its direct re-exports.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Core usage: superb. Breadth: 3 of ~10 applicable capability groups. The Pareto fix is
+            about one hour &mdash; delete <code>recovery()</code>, adopt four ready middlewares
+            &mdash; moves the score to ~90 without touching a single line of the DOM contract the
+            stack's E2E depends on.
+          </div>
+        </section>
+
+        <!-- Current Usage -->
+        <section id="usage">
+          <h2><span class="num">03</span>Current usage &mdash; what the project does today</h2>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Embedded HTMX script &mdash; canonical</strong>
+                <span><code>cqrshtmx.HTMXScriptHandler()</code> serves the version-pinned
+                <code>htmx.min.js</code> at <code>/htmx.min.js</code>
+                (internal/server/server.go:101). CSP-safe: no CDN, no
+                <code>HTMXCDNScriptTag</code> temptation &mdash; matches the
+                same-origin-only CSP invariant.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Embedded SSE extension &mdash; canonical</strong>
+                <span><code>cqrshtmx.HTMXExtensionHandler("sse")</code> serves the vendored
+                <code>sse.min.js</code> (server.go:102) that powers
+                <code>sse-connect</code>/<code>sse-swap</code> in the shell
+                (internal/web/views/layout.templ:59).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Per-extension SSE broadcaster &mdash; canonical + correctly extended</strong>
+                <span><code>cqrshtmx.NewBroadcaster()</code> per extension, events pumped via
+                <code>hub.Hub().Subscribe()</code>/<code>Unsubscribe</code> and pushed with
+                <code>Broadcast(sse.Event{Event, Data})</code> (internal/server/sse.go:75-104).
+                This is exactly the pattern in the library's doc comment; the
+                <code>ExtensionHubs</code> registry adds per-extension isolation (no
+                cross-extension leakage) the library intentionally leaves to the consumer.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">&#10003;</div>
+              <div class="text">
+                <strong>Swap-safe fragment publishing</strong>
+                <span>The notifier renders templ fragments into the SSE
+                <code>Data</code> field so <code>sse-swap</code> replaces exactly the live
+                region (internal/server/notifier.go:63-70) &mdash; the library's intended
+                "data IS the rendered HTML" transport.</span>
+              </div>
+            </div>
+          </div>
+          <p>
+            The whole import surface is two files and four symbols
+            (<code>HTMXScriptHandler</code>, <code>HTMXExtensionHandler</code>,
+            <code>NewBroadcaster</code>/<code>Broadcaster</code>). The <code>setup</code> bundle
+            and everything dispatch-coupled is deliberately not adopted &mdash; a documented
+            architecture decision (AGENTS.md: this product's identity is the PBX extension, not an
+            event-sourced user database). The <code>go-cqrs-lite</code> modules visible as
+            indirect dependencies ride along unused, exactly as that decision implies.
+          </p>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">04</span>Capability assessment &mdash; findings by impact</h2>
+
+          <div class="issue issue-critical" id="f1-recovery">
+            <span class="severity severity-critical">Misused / Anti-pattern &middot; High impact</span>
+            <h3>Hand-rolled <code>recovery()</code> duplicates <code>RecoveryMiddleware</code> &mdash; and is weaker</h3>
+            <div class="where">internal/server/server.go:131-141 &middot; wired at server.go:128</div>
+            <p>
+              The library offers <code>cqrshtmx.RecoveryMiddleware</code>, which (a) re-panics
+              <code>http.ErrAbortHandler</code> per net/http convention, (b) logs a full
+              <code>debug.Stack()</code> with method/path and request/correlation IDs, and (c)
+              writes the 500 through the classified error handler. Webphone's 11-line version
+              swallows <code>http.ErrAbortHandler</code> (misclassifying connection aborts as
+              server bugs and attempting a 500 write on an aborted stream) and logs no stack
+              trace &mdash; a panic in production is debugged from a one-line
+              <code>"panic in handler"</code> record.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Delete <code>recovery()</code> and wrap with the library middleware. Behavior is a
+              strict superset; no DOM or route changes.
+            </div>
+            <div class="compare-header">
+              <div class="compare-before">Before &mdash; hand-rolled</div>
+              <div class="compare-after">After &mdash; library</div>
+            </div>
+            <div class="compare-row">
+              <pre><code>func recovery(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w, r) {
+    defer func() {
+      if rec := recover(); rec != nil {
+        slog.Error("panic in handler",
+          "path", r.URL.Path, "panic", rec)
+        http.Error(w, "internal error", 500)
+      }
+    }()
+    next.ServeHTTP(w, r)
+  })
+}
+// server.go:128
+return security(recovery(root))</code></pre>
+              <pre><code>// no recovery() function at all
+return security(cqrshtmx.RecoveryMiddleware(root))</code></pre>
+            </div>
+          </div>
+
+          <div class="issue issue-critical" id="f2-requestlog">
+            <span class="severity severity-critical">Missed Opportunity &middot; High impact</span>
+            <h3>No request logging anywhere &mdash; <code>RequestLoggingSlog</code> is one line</h3>
+            <div class="where">cmd/webphone/main.go (startup log only) &middot; middleware chain at internal/server/server.go:110-128</div>
+            <p>
+              For a communications product whose runbook greps logs, webphone emits no per-request
+              records: no method/path/status/duration. The library ships
+              <code>cqrshtmx.RequestLoggingSlog(logger)</code> (plus
+              <code>DefaultLogFormatter</code>/<code>JSONLogFormatter</code>) exactly for this;
+              the cqrs-htmx setup bundle composes it outermost by default. It logs the request
+              line only &mdash; never bodies &mdash; so credentials in
+              <code>POST /api/session</code> stay out of logs.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Wrap the outermost handler; pass the process logger.
+            </div>
+            <pre><code>return cqrshtmx.RequestLoggingSlog(slog.Default())(
+  security(cqrshtmx.RecoveryMiddleware(root)),
+)</code></pre>
+          </div>
+
+          <div class="issue issue-important" id="f3-ratelimit">
+            <span class="severity severity-important">Partially Used &middot; Medium-high impact</span>
+            <h3>83-line <code>keyedLimiter</code> reimplements <code>KeyedRateLimiter</code> (re-exported as <code>cqrshtmx.RateLimiterMiddleware</code>)</h3>
+            <div class="where">internal/server/ratelimit.go:1-83 (+ ratelimit_test.go) &middot; used at server.go:61-62, 96, 108</div>
+            <p>
+              The httputil limiter that cqrs-htmx re-exports is a strict superset: a
+              <code>MaxKeys</code> cap with oldest-entry eviction bounds memory under a
+              spoofed-source flood (webphone's 1-minute sweep admits unbounded unique keys
+              <em>within</em> a sweep window), <code>Retry-After</code> is computed from the
+              window instead of hardcoded <code>"2"</code>, configuration is validated with
+              classified errors, and <code>KeyExtractorFromClientIP</code> can resolve real
+              client IPs behind the stack's TLS terminator &mdash; where webphone's own comment
+              concedes every request shares the proxy socket, making its per-IP limit effectively
+              global. (Header trust is a deployment decision: adopt
+              <code>KeyExtractorFromClientIP</code> only if the stack sanitizes
+              <code>X-Forwarded-For</code>; otherwise keep the RemoteAddr extractor.)
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Replace both limiter instances with the httputil middleware (identical family
+              webphone already imports directly for CSRF/security headers; the cqrs-htmx
+              re-export is the same object). Delete ratelimit.go, adapt its two tests.
+            </div>
+            <div class="compare-header">
+              <div class="compare-before">Before &mdash; hand-rolled</div>
+              <div class="compare-after">After &mdash; library</div>
+            </div>
+            <div class="compare-row">
+              <pre><code>loginLimiter: newKeyedLimiter(loginRate, loginBurst),
+hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
+// + 83 lines of buckets, sweep, middleware
+// + hardcoded Retry-After: 2</code></pre>
+              <pre><code>loginLimiter := &amp;httputil.KeyedRateLimiterConfig{
+  Limit: 30, Window: time.Minute, Burst: 5,
+  KeyExtractor: httputil.KeyExtractorFromRemoteAddr(),
+}.Middleware()
+// MaxKeys-capped, computed Retry-After,
+// config errors classified as Rejection</code></pre>
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="f4-servesse">
+            <span class="severity severity-important">Partially Used &middot; Medium impact</span>
+            <h3><code>events</code> handler reimplements <code>Broadcaster.ServeSSE</code> minus two features</h3>
+            <div class="where">internal/server/sse.go:88-123 (36 lines) vs sse_broadcaster.go:155-186 in the library</div>
+            <p>
+              <code>Broadcaster.ServeSSE</code> performs the full lifecycle in one call: stream
+              creation, a <code>retry:</code> reconnect hint
+              (<code>transport.DefaultRetryHintMillis</code>), an initial <code>connected</code>
+              event, the same 15&nbsp;s heartbeat webphone hand-picks, and guaranteed
+              unsubscribe/close. Webphone's hand loop forgoes the <code>retry:</code> hint (the
+              htmx SSE extension then uses the browser default backoff) and the
+              <code>connected</code> event (harmless &mdash; the island's <code>sse-swap</code>
+              listeners ignore unknown event names). The session gate and
+              <code>SetLang</code> compose cleanly in front of it.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Collapse the loop; keep the wrapper for auth + language capture.
+            </div>
+            <pre><code>func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
+  sess, ok := session.From(r.Context())
+  if !ok { http.Error(w, "sign in first", http.StatusUnauthorized); return }
+  h.deps.Hubs.SetLang(sess.Extension, h.lang(r))
+  h.deps.Hubs.serve(sess.Extension)(w, r) // Broadcaster.ServeSSE
+}</code></pre>
+          </div>
+
+          <div class="issue issue-important" id="f5-healthz">
+            <span class="severity severity-important">Missed Opportunity &middot; Medium impact</span>
+            <h3><code>/healthz</code> always says ok &mdash; <code>ReadinessHandler</code> + <code>NamedCheck</code> exist for this</h3>
+            <div class="where">internal/server/server.go:143-147</div>
+            <p>
+              The constant <code>"ok"</code> response cannot detect a broken SQLite handle or an
+              unwritable blob directory; the consuming stack gets no signal to stop routing to a
+              wedged instance. The library's composable readiness surface is
+              <code>cqrshtmx.ReadinessHandler(NamedCheck{...})</code> &mdash; each named check
+              returning an error turns the endpoint 503 with the failing check named.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Keep the route, swap the handler; one ping check covers the real failure mode.
+            </div>
+            <pre><code>open.Handle("GET /healthz", cqrshtmx.ReadinessHandler(
+  cqrshtmx.NamedCheck{Name: "sqlite", Check: db.Ping},
+))</code></pre>
+          </div>
+
+          <div class="issue issue-nice" id="f6-core">
+            <span class="severity severity-nice">Fully Leveraged &middot; builds confidence</span>
+            <h3>The core trio is exactly what the library is for</h3>
+            <div class="where">internal/server/server.go:101-102 &middot; internal/server/sse.go:75-104 &middot; internal/server/notifier.go:63-70</div>
+            <p>
+              Embedded (not CDN) HTMX + SSE extension assets under a strict same-origin CSP; the
+              broadcaster created once per extension and shared via its documented
+              <code>Hub()</code> accessor; rendered-fragment payloads riding
+              <code>sse.Event</code>. Version-current, pattern-canonical, and extended in the
+              seam the library reserves for consumers (per-subscriber scoping). Nothing to fix
+              here &mdash; this is the part to preserve while widening adoption around it.
+            </p>
+          </div>
+        </section>
+
+        <!-- Deliberate non-adoptions -->
+        <section id="non-adoptions">
+          <h2><span class="num">05</span>Deliberate non-adoptions &mdash; verified correct, do not re-litigate</h2>
+          <p>
+            A utilization audit must separate "missed" from "refused with reasons". These
+            capability groups are not adopted on purpose; each refusal was verified against the
+            code and, where applicable, the documented AGENTS.md decisions:
+          </p>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr><th>Capability</th><th>Why not</th><th>Verdict</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>App</code> dispatch layer: <code>CommandTyped</code>/<code>QueryTyped</code>, <code>Decode*</code> handler options, ack hooks, timeouts, body limits</td>
+                  <td>Webphone has no event-sourced domain; writes go straight to SQLite-backed services. Dispatch indirection would buy structure without events. Consistent with the documented <code>setup</code>-bundle rejection.</td>
+                  <td class="no">N.A. &mdash; deliberate</td>
+                </tr>
+                <tr>
+                  <td><code>HTMXMiddleware</code> / <code>HTMXRequest.RenderPartial</code> / <code>RenderPartialOrFull</code></td>
+                  <td>Partials are routed by URL (<code>/partials/*</code>), part of the DOM + browser-E2E contract; merging routes would churn island markup for ~30 saved lines.</td>
+                  <td class="no">N.A. &mdash; deliberate</td>
+                </tr>
+                <tr>
+                  <td><code>RecommendedSecurityMiddleware</code> presets (incl. <code>RecommendedPermissionsPolicy</code>)</td>
+                  <td>The preset PermissionsPolicy denies <code>microphone</code> &mdash; which would break the WebRTC calls that <em>are</em> the product. Webphone's custom CSP is intentionally stricter where they differ.</td>
+                  <td class="no">Correctly refused</td>
+                </tr>
+                <tr>
+                  <td><code>StructuredError</code> / <code>ProblemDetailsErrorHandler</code> / <code>WriteJSON</code></td>
+                  <td>Errors are human-facing, i18n'd panel fragments; the one JSON API is two fields. Error envelopes would serve no client webphone has.</td>
+                  <td class="no">N.A. &mdash; coherent as-is</td>
+                </tr>
+                <tr>
+                  <td><code>OOBHTML</code> out-of-band swaps (e.g. live nav-badge updates)</td>
+                  <td>Genuine enhancement candidate: unread badge currently updates only on shell render. Needs an E2E spike proving <code>hx-swap-oob</code> processing under the SSE extension before adoption.</td>
+                  <td>Flagged &mdash; future spike</td>
+                </tr>
+                <tr>
+                  <td><code>sync/</code> multi-tab client, <code>EventCatalog</code>, <code>OpenAPI</code>, <code>IdempotencyStore</code>, <code>loginpage</code>/<code>usermgmt</code>/<code>datastar</code>/<code>dashboardui</code>/<code>adminui</code> submodules</td>
+                  <td>Dispatch-coupled or product-adjacent modules outside webphone's single-binary, PBX-identity scope.</td>
+                  <td class="no">N.A.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Version currency -->
+        <section id="currency">
+          <h2><span class="num">06</span>Version currency</h2>
+          <div class="callout callout-teal">
+            <strong>Current.</strong>
+            go.mod pins <code>cqrs-htmx/v4 v4.9.0</code>, which <em>is</em> the latest published
+            root-module tag. The repo master runs ~256 commits ahead, but the v4.10.0 wave so far
+            tags submodules only (<code>setup</code>, <code>loginpage</code>,
+            <code>usermgmt</code>) and unreleased root changes target the dispatch path webphone
+            deliberately does not use. The indirect <code>go-cqrs-lite</code> pins are exactly
+            v4.9.0's own requirements. Nothing to bump today.
+          </div>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr><th>Ref</th><th>Type</th><th>Notable change</th><th>Relevance</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>v4.9.0 (consumed)</td>
+                  <td>Latest root tag</td>
+                  <td>SSE Broadcaster + <code>Hub()</code> canonical accessor, embedded assets, middleware toolkit</td>
+                  <td class="yes">All used capabilities present</td>
+                </tr>
+                <tr>
+                  <td>master, ~256 commits</td>
+                  <td>Unreleased root</td>
+                  <td>Command/query context-enrichment hardening (interface asserts), audit-chain work</td>
+                  <td class="no">Dispatch-only &mdash; N.A. without App</td>
+                </tr>
+                <tr>
+                  <td>setup/v4.10.0, loginpage/v4.10.0, usermgmt/v4.10.0</td>
+                  <td>Submodule tags</td>
+                  <td>Composition-root seams (metrics, request logging, machine endpoints)</td>
+                  <td class="no">Setup bundle rejected by design</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Action plan -->
+        <section id="plan">
+          <h2><span class="num">07</span>Top opportunities &mdash; Pareto-ordered</h2>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Priority</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Swap <code>recovery()</code> for <code>cqrshtmx.RecoveryMiddleware</code> (stack traces, <code>ErrAbortHandler</code> correctness)</td>
+                  <td class="yes">4</td><td class="yes">5</td>
+                  <td><span class="highlight">20</span></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Adopt <code>cqrshtmx.RequestLoggingSlog</code> outermost (request lines with status/duration)</td>
+                  <td class="yes">4</td><td class="yes">5</td>
+                  <td><span class="highlight">20</span></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Replace <code>keyedLimiter</code> with <code>httputil.KeyedRateLimiter</code> config (<code>MaxKeys</code> flood cap, computed <code>Retry-After</code>)</td>
+                  <td class="yes">4</td><td class="yes">4</td>
+                  <td><span class="highlight">16</span></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Honest <code>/healthz</code> via <code>ReadinessHandler</code> + SQLite ping check</td>
+                  <td class="yes">3</td><td class="yes">4</td>
+                  <td><span class="highlight">12</span></td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Collapse <code>events</code> loop onto <code>Broadcaster.ServeSSE</code> (retry hint, connected event)</td>
+                  <td class="yes">2</td><td class="yes">4</td>
+                  <td><span class="highlight">8</span></td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>Spike: <code>OOBHTML</code> live unread-badge updates inside SSE payloads (E2E-gated)</td>
+                  <td class="yes">3</td><td>2</td>
+                  <td><span class="highlight">6</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Items 1&ndash;5 are middleware-seam-only: no routes, no markup, no island changes
+            &mdash; the DOM contract test (<code>TestServedPageHoldsTheDomContract</code>) and the
+            stack's browser E2E are untouched by construction. Item 6 is the only one that
+            touches payloads and therefore requires the E2E loop.
+          </p>
+        </section>
+
+        <!-- Conclusion -->
+        <section id="conclusion">
+          <h2><span class="num">08</span>Conclusion</h2>
+          <p>
+            Webphone's cqrs-htmx posture is <strong>narrow but deep where it counts</strong>: the
+            imported core (embedded assets, broadcaster) is current, canonical, and extended in
+            the library's intended seams. The adoption score of 62 reflects breadth, not
+            quality &mdash; four cross-cutting middleware capabilities sit unadopted while
+            weaker hand-rolled copies (recovery, rate limiting) or nothing at all (request
+            logging, readiness) do the job beside them. Executing items 1&ndash;4 of the action
+            plan &mdash; roughly an hour of middleware-seam changes with zero DOM-contract risk
+            &mdash; raises the score to ~90 and deletes ~200 lines of duplication. The refusal
+            record (dispatch layer, security presets, error envelopes) is sound and should stand.
+          </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-09-18 &middot; Reviewed against cqrs-htmx v4.9.0 (go doc) and repo
+            master 6cf46e62 &middot; webphone b390c7a &middot; Every claim verified against
+            source; file references are stable paths, not line-frozen
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+</html>
