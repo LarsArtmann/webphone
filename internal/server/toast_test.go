@@ -35,8 +35,10 @@ func TestToastHeadersOnActionPaths(t *testing.T) {
 		server := newTestServer(t)
 		c := signIn(t, server)
 
-		form := url.Values{"to": {"not-a-number"}, "body": {"hi"}}
-		resp, body := c.do(http.MethodPost, "/messages/send", []byte(form.Encode()), "application/x-www-form-urlencoded")
+		form, contentType := multipartBody(t,
+			map[string]string{"to": "", "body": "hi"},
+			nil)
+		resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
 		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusUnprocessableEntity {
 			t.Fatalf("messages/send: %d %s", resp.StatusCode, body)
