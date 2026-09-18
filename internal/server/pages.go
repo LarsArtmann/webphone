@@ -10,6 +10,10 @@ import (
 // handlers bundles the deps; every file in this package hangs methods off it.
 type handlers struct {
 	deps Deps
+	// Per-client flood protection for the two unauthenticated-by-session
+	// surfaces: login attempts and inbound webhooks.
+	loginLimiter *keyedLimiter
+	hookLimiter  *keyedLimiter
 }
 
 // page renders the full shell for the root URL.

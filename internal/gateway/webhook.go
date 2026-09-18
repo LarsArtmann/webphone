@@ -133,10 +133,20 @@ func (p provider) post(
 		return Receipt{}, fmt.Errorf("provider rejected: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(detail)))
 	}
 
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if err != nil {
+		return Receipt{}, fmt.Errorf("read provider receipt (content-type %s): %w", contentType, err)
+	}
 	var receipt struct {
 		ProviderRef string `json:"provider_ref"`
 	}
-	if err := json.UnmarshalRead(io.LimitReader(resp.Body, 4096), &receipt); err != nil {
+	if err := json.Unmarshal(raw, &receipt); err != nil {
+		// The documented contract also allows a bare provider token as
+		// the acceptance receipt: any small answer that is not a JSON
+		// object is taken verbatim as the ref.
+		if ref := strings.TrimSpace(string(raw)); ref != "" && len(ref) <= 256 && !strings.ContainsRune(ref, '{') {
+			return Receipt{ProviderRef: ref}, nil
+		}
 		return Receipt{}, fmt.Errorf("decode provider receipt (content-type %s): %w", contentType, err)
 	}
 

@@ -8,6 +8,9 @@ package server
 import (
 	"log/slog"
 	"net/http"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/httputil"
@@ -27,6 +30,16 @@ const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 
 	"img-src 'self' data:; media-src 'self'; connect-src 'self' wss:; " +
 	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
+// Rate limits for the two flood-sensitive surfaces, per client IP:
+// login attempts (password guessing) and inbound webhooks (provider
+// floods share one source behind the stack's proxy).
+var (
+	loginRate  = rate.Every(2 * time.Second)
+	loginBurst = 5
+	hookRate   = rate.Every(time.Second)
+	hookBurst  = 60
+)
+
 // Deps are the wired services the handlers ride on.
 type Deps struct {
 	Config    config.Config
@@ -43,7 +56,11 @@ type Deps struct {
 
 // New builds the full http.Handler.
 func New(deps Deps) http.Handler {
-	h := &handlers{deps: deps}
+	h := &handlers{
+		deps:         deps,
+		loginLimiter: newKeyedLimiter(loginRate, loginBurst),
+		hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
+	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the
 	// session API and the phone-api proxy. Assets, SSE, webhooks and
@@ -73,7 +90,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /voicemail/delete", h.deleteVoicemail)
 	protected.HandleFunc("POST /contacts/save", h.saveContact)
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
-	protected.HandleFunc("POST /api/session", h.createSession)
+	protected.Handle("POST /api/session", h.loginLimiter.middleware(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
 
@@ -85,7 +102,7 @@ func New(deps Deps) http.Handler {
 	open.HandleFunc("GET /favicon.svg", h.favicon)
 	open.Handle("GET /events", h.deps.Sessions.Require(http.HandlerFunc(h.events)))
 	open.HandleFunc("GET /healthz", h.healthz)
-	open.Handle("/hooks/", h.secretGate(http.HandlerFunc(h.webhooks)))
+	open.Handle("/hooks/", h.hookLimiter.middleware(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
 	root.Handle("/", h.deps.Sessions.Attach(csrf(protected)))
