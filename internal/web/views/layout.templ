@@ -76,37 +76,49 @@ templ Shell(props ShellProps) {
 		HeadContent:    headExtras(),
 		BodyDataAttrs:  bodyAttrs(props),
 	}) {
-		<div class="wp-root">
-			<header class="wp-header">
-				<a class="wp-brand" href="/" aria-label="WebPhone home">
-					<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-						<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
-						<path
-							d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
-							class="wp-mark-fg"></path>
-					</svg>
-					<span>WebPhone</span>
-				</a>
-				if props.SignedIn != "" {
-					<span class="wp-signed-in">{ props.SignedIn }</span>
-				}
-			</header>
-			<div class="wp-body">
-				<aside class="wp-island" aria-label="Phone">
-					@PhoneIsland()
-				</aside>
-				<nav class="wp-nav" aria-label="Sections">
-					@NavLinks(props)
-				</nav>
-				<main class="wp-content" id="tab-content">
-					if props.TabContent != nil {
-						@props.TabContent
-					}
-				</main>
+		if props.SignedIn != "" {
+			<div class="wp-root" hx-ext="sse" sse-connect="/events">
+				@ShellBody(props)
 			</div>
-		</div>
+		} else {
+			<div class="wp-root">
+				@ShellBody(props)
+			</div>
+		}
 		@IslandScripts()
 	}
+}
+
+templ ShellBody(props ShellProps) {
+	<header class="wp-header">
+		<a class="wp-brand" href="/" aria-label="WebPhone home">
+			<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+				<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
+				<path
+					d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
+					class="wp-mark-fg"></path>
+			</svg>
+			<span>WebPhone</span>
+		</a>
+		if props.SignedIn != "" {
+			<span class="wp-signed-in">{ props.SignedIn }</span>
+		}
+	</header>
+	<div class="wp-body">
+		<aside class="wp-island" aria-label="Phone">
+			@PhoneIsland()
+		</aside>
+		<div class="wp-main-col">
+			<nav class="wp-nav" aria-label="Sections">
+				@NavLinks(props)
+			</nav>
+			<main class="wp-content" id="tab-content">
+				if props.TabContent != nil {
+					@props.TabContent
+				}
+			</main>
+		</div>
+	</div>
 }
 
 templ NavLinks(props ShellProps) {

@@ -53,7 +53,7 @@
   box-sizing: border-box;
 }
 
-body {
+.island {
   margin: 0;
   font-family:
     system-ui,
@@ -63,8 +63,12 @@ body {
     sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
+  min-height: 0;
   line-height: 1.45;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .app {

@@ -21,6 +21,7 @@ import {
   renderHistory,
 } from "./panels.js";
 import { requestNotifications, titleFlashStop } from "./notify.js";
+import { createSession, destroySession } from "./session.js";
 import { sessions, state } from "./state.js";
 import { announce, els, log, setRegStatus } from "./ui.js";
 
@@ -52,6 +53,10 @@ els.loginForm.addEventListener("submit", async (event) => {
   try {
     const extension = els.ext.value.trim();
     await connect(extension, els.pass.value);
+    // The PBX accepted the REGISTER — these credentials are good. Hand
+    // them to the server so the tabs and the /phone-api proxy share the
+    // same login (see session.js).
+    createSession(extension, els.pass.value);
     if (els.remember.checked) localStorage.setItem(REMEMBER_KEY, extension);
     else localStorage.removeItem(REMEMBER_KEY);
     els.whoami.textContent = `${extension}@${sipDomain}`;
@@ -80,6 +85,7 @@ els.logout.addEventListener("click", async () => {
         .catch(() => {});
   } finally {
     disconnect();
+    destroySession();
     teardownAll();
     ringToneStop();
     titleFlashStop();
