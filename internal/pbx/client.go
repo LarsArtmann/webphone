@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -167,7 +168,15 @@ func (c *Client) do(
 		bodyReader = bytes.NewReader(encoded)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, c.base.JoinPath(path).String(), bodyReader)
+	// JoinPath escapes the whole input, so a "?query" suffix would reach
+	// the upstream percent-encoded ("%3F"). Split it off and re-attach it
+	// as a real query string.
+	pathOnly, query, _ := strings.Cut(path, "?")
+	target := c.base.JoinPath(pathOnly).String()
+	if query != "" {
+		target += "?" + query
+	}
+	req, err := http.NewRequestWithContext(ctx, method, target, bodyReader)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
 	}
