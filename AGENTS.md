@@ -80,7 +80,8 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `KeyExtractorFromClientIP` only once the stack proves XFF
   sanitization); `/healthz` is honest readiness (`sqlite` ping +
   `blob-dir` write probe, 503 names the failing check, library JSON
-  shape); `/events` rides `Broadcaster.ServeSSE` (its `connected`
+  shape; GET-open by decision — probers need no session and the body
+  leaks only check names/errors, never secrets); `/events` rides `Broadcaster.ServeSSE` (its `connected`
   handshake frame is additive; htmx sse-swap listeners ignore it;
   payloads stay swap-safe fragments).
 - **The island never unloads.** Tab navigation swaps partials into

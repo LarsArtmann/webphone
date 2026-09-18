@@ -46,6 +46,14 @@ Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan
   interaction test (TT1); cqrs-htmx transitive drift check + root
   v4.10.0 bump trigger note (DR1); periodic vulnix runtime-closure rescan
   (last: buildflow 2026-09-18, clean).
+  STATUS 2026-09-18: fuzz target shipped (844k execs clean), OR1/RA1/TT1
+  shipped; DR1 checked — no newer releases of cqrs-htmx/httputil/go-sse;
+  VL1 re-verified — runtime closure still 8 derivations, unchanged glibc.
+- Root-tag bump trigger (MD1 finding, 2026-09-18): master already adds
+  the SSE `retry:` hint to `Broadcaster.ServeSSE` that v4.9.0 lacks —
+  the next root tag changes the `/events` byte stream. On bump: update
+  the AGENTS.md retry note, re-run `BenchmarkHubFanOut`, and re-run the
+  upstream browser E2E (payload-shape rule).
 - Decision records / doc notes (P7): StructuredError for `/api/session`
   (adopt only if the island branches on codes); sync/ multi-tab module
   N.A. (per-tab SIP UA by design); DecodePagination N.A. (cursor

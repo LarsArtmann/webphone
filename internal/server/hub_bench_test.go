@@ -4,12 +4,14 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/larsartmann/go-sse"
+
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // BenchmarkHubFanOut measures the broadcast cost the notifier adds per
 // tab event: N extensions each with M live tab connections. Baseline
-// (2026-09-18, before the hub reaper): see docs/reviews/ for numbers.
+// numbers (2026-09-18): docs/reviews/2026-09-18_hub-fanout-baseline.md
 func BenchmarkHubFanOut(b *testing.B) {
 	for _, bb := range []struct {
 		hubs, subscribers int
@@ -21,8 +23,6 @@ func BenchmarkHubFanOut(b *testing.B) {
 	} {
 		b.Run("hubs"+strconv.Itoa(bb.hubs)+"xsubs"+strconv.Itoa(bb.subscribers), func(b *testing.B) {
 			hubs := NewHubs()
-			var subs []<-chan struct{}
-			_ = subs
 			for i := 0; i < bb.hubs; i++ {
 				ext, _ := domain.ParseExtension(strconv.Itoa(1000 + i))
 				hub := hubs.get(ext)
@@ -33,7 +33,7 @@ func BenchmarkHubFanOut(b *testing.B) {
 			}
 			ext, _ := domain.ParseExtension("1000")
 			hub := hubs.get(ext)
-			event := sseTestEvent()
+			event := sse.Event{Event: "threads", Data: "<div>bench</div>"}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				hub.Broadcast(event)
