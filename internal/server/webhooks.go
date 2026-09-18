@@ -126,6 +126,7 @@ func (h *handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not store message: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	h.unread.drop(owner)
 	w.WriteHeader(http.StatusAccepted)
 }
 

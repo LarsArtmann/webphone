@@ -230,8 +230,14 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
-// countUnread sums unread messages across threads for the nav badge.
+// countUnread sums unread messages across threads for the nav badge,
+// served from the short-TTL cache; every unread mutation drops its
+// extension's entry (send, inbound webhook, mark-read), so the badge is
+// recomputed only for real changes or after the TTL.
 func (h *handlers) countUnread(r *http.Request, sess session.Session) int {
+	if total, ok := h.unread.get(sess.Extension); ok {
+		return total
+	}
 	threads, err := h.deps.Messaging.Threads(r.Context(), sess.Extension)
 	if err != nil {
 		return 0
@@ -240,6 +246,7 @@ func (h *handlers) countUnread(r *http.Request, sess session.Session) int {
 	for _, summary := range threads {
 		total += summary.Thread.Unread
 	}
+	h.unread.put(sess.Extension, total)
 	return total
 }
 

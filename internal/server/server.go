@@ -60,6 +60,7 @@ func New(deps Deps) http.Handler {
 		deps:         deps,
 		loginLimiter: newKeyedLimiter(loginRate, loginBurst),
 		hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
+		unread:       newUnreadCache(5 * time.Second),
 	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the

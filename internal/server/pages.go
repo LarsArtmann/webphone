@@ -14,6 +14,8 @@ type handlers struct {
 	// surfaces: login attempts and inbound webhooks.
 	loginLimiter *keyedLimiter
 	hookLimiter  *keyedLimiter
+	// Memoized nav-badge totals, invalidated on every unread mutation.
+	unread *unreadCache
 }
 
 // page renders the full shell for the root URL.

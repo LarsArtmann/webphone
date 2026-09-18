@@ -37,6 +37,7 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 		// marking read is cosmetic; a failure must not block the transcript
 		_ = err
 	}
+	h.unread.drop(sess.Extension)
 	return views.ThreadView(views.ThreadViewProps{Thread: thread, Messages: msgs}), nil
 }
 
