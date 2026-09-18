@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -187,6 +188,7 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 	// Nudge the extension's other tabs: the "voicemail" SSE event carries
 	// no payload — the voicemail panel re-fetches its partial on receipt.
 	h.deps.Hubs.Publish(sess.Extension, sseEventVoicemail, "")
+	notifyToast(w, "ok", h.T(r, "toast.voicemailDeleted"))
 	h.partial(w, r, tabFromPath("/voicemail"))
 }
 
@@ -361,7 +363,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 			h.T(r, "contacts.importNone.pre")+templ.EscapeString(header.Filename)+h.T(r, "contacts.importNone.post"))
 		return
 	}
-	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+itoa(imported)+h.T(r, "toast.imported.post"))
+	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+strconv.Itoa(imported)+h.T(r, "toast.imported.post"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 

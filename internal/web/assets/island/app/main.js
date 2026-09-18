@@ -29,7 +29,7 @@ import {
 } from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
-import { els, log, setRegStatus } from "./ui.js";
+import { announce, els, log, setRegStatus } from "./ui.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -126,6 +126,16 @@ els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 
 initShortcuts();
 initSseLiveIndicator();
+
+// Server-driven toasts: tab-action responses carry an HX-Trigger header
+// ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});
+// htmx dispatches it as a DOM event that bubbles to the body. The
+// library's kind vocabulary maps onto the island's toast styles.
+const TOAST_KINDS = { success: "ok", error: "error", warning: "warn", info: "info" };
+document.body.addEventListener("showMessage", (event) => {
+  const detail = event.detail || {};
+  announce(detail.message || "", TOAST_KINDS[detail.kind] || "info");
+});
 
 els.keypad.querySelectorAll("button[data-tone]").forEach((button) => {
   button.addEventListener("click", () => sendDtmf(button.dataset.tone));
