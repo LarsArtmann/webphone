@@ -197,19 +197,30 @@ func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.
 	return s.messages.ListThreads(ctx, owner)
 }
 
-// Thread returns one thread's transcript (oldest first).
+// Thread returns one thread's transcript (oldest first), the newest
+// MessagePageSize messages.
 func (s *Service) Thread(
 	ctx context.Context, owner domain.Extension, id domain.ThreadID,
 ) (domain.Thread, []domain.Message, error) {
+	thread, msgs, _, err := s.ThreadWindow(ctx, owner, id, 0)
+	return thread, msgs, err
+}
+
+// ThreadWindow is one page of an open conversation: page 0 is the newest
+// MessagePageSize messages, higher pages walk back in time. hasMore
+// reports whether still-older messages exist.
+func (s *Service) ThreadWindow(
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, page int,
+) (domain.Thread, []domain.Message, bool, error) {
 	thread, err := s.messages.GetThread(ctx, owner, id)
 	if err != nil {
-		return domain.Thread{}, nil, err
+		return domain.Thread{}, nil, false, err
 	}
-	msgs, err := s.messages.ListMessages(ctx, owner, id, MessagePageSize)
+	msgs, hasMore, err := s.messages.ListMessagesPage(ctx, owner, id, page, MessagePageSize)
 	if err != nil {
-		return domain.Thread{}, nil, err
+		return domain.Thread{}, nil, false, err
 	}
-	return thread, msgs, nil
+	return thread, msgs, hasMore, nil
 }
 
 // MarkRead zeroes the unread counter.

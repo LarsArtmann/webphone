@@ -390,3 +390,51 @@ func (s *Messages) AttachmentByID(
 		Path:      path,
 	}, nil
 }
+
+// ListMessagesPage returns one page of a thread's messages, oldest
+// first. Page 0 is the newest window; hasMore reports whether older
+// pages exist beyond it.
+func (s *Messages) ListMessagesPage(
+	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, page, limit int,
+) ([]domain.Message, bool, error) {
+	if page < 0 {
+		page = 0
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
+		FROM messages
+		WHERE owner = ? AND thread_id = ?
+		ORDER BY created_at DESC, rowid DESC
+		LIMIT ? OFFSET ?
+	`, owner.String(), threadID.String(), limit+1, page*limit)
+	if err != nil {
+		return nil, false, fmt.Errorf("list messages of thread %s: %w", threadID, err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	msgs := make([]domain.Message, 0, limit+1)
+	for rows.Next() {
+		msg, err := scanMessage(rows)
+		if err != nil {
+			return nil, false, err
+		}
+		msgs = append(msgs, msg)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, false, fmt.Errorf("list messages rows: %w", err)
+	}
+
+	hasMore := len(msgs) > limit
+	if hasMore {
+		msgs = msgs[:limit]
+	}
+	if err := s.attachAttachments(ctx, msgs); err != nil {
+		return nil, false, err
+	}
+
+	// Query was newest-first for the LIMIT; the UI wants a chat transcript,
+	// oldest at the top.
+	reverseMessages(msgs)
+
+	return msgs, hasMore, nil
+}
