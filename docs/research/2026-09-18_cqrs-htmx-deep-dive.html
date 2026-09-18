@@ -901,9 +901,12 @@
         <section id="scorecard">
           <h2><span class="num">01</span>Scorecard</h2>
           <div class="scorecard">
+            <!-- Update 2026-09-18 (post-adoption): score 62 → 92; middleware 0/4 → 4/4;
+                 duplications deleted. Original audit values kept below, annotated in place. -->
             <div class="score-card score-warn">
               <div class="score">62</div>
               <div class="label">Adoption Score / 100</div>
+              <div class="label"><s>62</s> → <strong>92</strong> after adoption (same rubric, appendix 09)</div>
             </div>
             <div class="score-card score-good">
               <div class="score">2/2</div>
@@ -912,10 +915,12 @@
             <div class="score-card score-bad">
               <div class="score">0/4</div>
               <div class="label">Middleware toolkit adopted</div>
+              <div class="label"><s>0/4</s> → <strong>4/4</strong> adopted 2026-09-18</div>
             </div>
             <div class="score-card score-warn">
               <div class="score">2</div>
               <div class="label">Hand-rolled duplications (~200 lines)</div>
+              <div class="label"><s>2</s> → <strong>0</strong> (ratelimit.go + recovery() deleted)</div>
             </div>
             <div class="score-card score-good">
               <div class="score">0</div>
@@ -947,11 +952,17 @@
             package or its direct re-exports.
           </p>
           <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            Core usage: superb. Breadth: 3 of ~10 applicable capability groups. The Pareto fix is
-            about one hour &mdash; delete <code>recovery()</code>, adopt four ready middlewares
-            &mdash; moves the score to ~90 without touching a single line of the DOM contract the
-            stack's E2E depends on.
+          <strong>The bottom line</strong>
+          Core usage: superb. Breadth: 3 of ~10 applicable capability groups. The Pareto fix is
+          about one hour &mdash; delete <code>recovery()</code>, adopt four ready middlewares
+          &mdash; moves the score to ~90 without touching a single line of the DOM contract the
+          stack's E2E depends on.
+          </div>
+          <div class="callout callout-teal">
+          <strong>Update 2026-09-18 — executed</strong>
+          All four middlewares adopted, both duplications deleted, honest readiness live;
+          all four gates green (full suite incl. DOM contract, vet/gofmt, buildflow,
+          <code>nix flake check</code>). Re-score: 92 (rubric appendix 09).
           </div>
         </section>
 
@@ -1129,19 +1140,27 @@ hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
             <h3><code>events</code> handler reimplements <code>Broadcaster.ServeSSE</code> minus two features</h3>
             <div class="where">internal/server/sse.go:88-123 (36 lines) vs sse_broadcaster.go:155-186 in the library</div>
             <p>
-              <code>Broadcaster.ServeSSE</code> performs the full lifecycle in one call: stream
+              <s>Broadcaster.ServeSSE performs the full lifecycle in one call: stream
               creation, a <code>retry:</code> reconnect hint
               (<code>transport.DefaultRetryHintMillis</code>), an initial <code>connected</code>
               event, the same 15&nbsp;s heartbeat webphone hand-picks, and guaranteed
-              unsubscribe/close. Webphone's hand loop forgoes the <code>retry:</code> hint (the
-              htmx SSE extension then uses the browser default backoff) and the
-              <code>connected</code> event (harmless &mdash; the island's <code>sse-swap</code>
-              listeners ignore unknown event names). The session gate and
-              <code>SetLang</code> compose cleanly in front of it.
+              unsubscribe/close.</s> Correction (tag-verified 2026-09-18 against the consumed
+              v4.9.0 bytes in the module cache): <code>ServeSSE</code> performs stream creation,
+              the initial <code>connected</code> event, the 15&nbsp;s heartbeat and guaranteed
+              unsubscribe/close &mdash; but sends <strong>no</strong> <code>retry:</code> hint at
+              this tag; <code>transport.DefaultRetryHintMillis</code> does not exist in v4.9.0
+              (master-only, if anywhere). Reconnect timing stays the browser default.
+              <s>Webphone's hand loop forgoes the <code>retry:</code> hint</s> Nothing is lost by
+              adopting: the only real deltas are the <code>connected</code> handshake frame
+              (additive &mdash; the island's <code>sse-swap</code> listeners ignore unknown event
+              names) and a heartbeat that now correctly rides the request context. The session
+              gate and <code>SetLang</code> compose cleanly in front of it.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
               Collapse the loop; keep the wrapper for auth + language capture.
+              <em>Done 2026-09-18 (commit <code>aacae89</code>); wire shape byte-verified by
+              <code>TestSSEStreamCarriesConnectedThenEvents</code>.</em>
             </div>
             <pre><code>func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
   sess, ok := session.From(r.Context())
@@ -1282,44 +1301,50 @@ hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
           <div class="table-wrap">
             <table class="compare">
               <thead>
-                <tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Priority</th></tr>
+                <tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Effort&nbsp;(min)</th><th>Priority</th><th>Status</th></tr>
               </thead>
               <tbody>
                 <tr>
                   <td>1</td>
                   <td>Swap <code>recovery()</code> for <code>cqrshtmx.RecoveryMiddleware</code> (stack traces, <code>ErrAbortHandler</code> correctness)</td>
-                  <td class="yes">4</td><td class="yes">5</td>
+                  <td class="yes">4</td><td class="yes">5</td><td>15–25</td>
                   <td><span class="highlight">20</span></td>
+                  <td class="yes">Done 2026-09-18</td>
                 </tr>
                 <tr>
                   <td>2</td>
                   <td>Adopt <code>cqrshtmx.RequestLoggingSlog</code> outermost (request lines with status/duration)</td>
-                  <td class="yes">4</td><td class="yes">5</td>
+                  <td class="yes">4</td><td class="yes">5</td><td>10–20</td>
                   <td><span class="highlight">20</span></td>
+                  <td class="yes">Done 2026-09-18</td>
                 </tr>
                 <tr>
                   <td>3</td>
                   <td>Replace <code>keyedLimiter</code> with <code>httputil.KeyedRateLimiter</code> config (<code>MaxKeys</code> flood cap, computed <code>Retry-After</code>)</td>
-                  <td class="yes">4</td><td class="yes">4</td>
+                  <td class="yes">4</td><td class="yes">4</td><td>50–70</td>
                   <td><span class="highlight">16</span></td>
+                  <td class="yes">Done 2026-09-18</td>
                 </tr>
                 <tr>
                   <td>4</td>
                   <td>Honest <code>/healthz</code> via <code>ReadinessHandler</code> + SQLite ping check</td>
-                  <td class="yes">3</td><td class="yes">4</td>
+                  <td class="yes">3</td><td class="yes">4</td><td>30–50</td>
                   <td><span class="highlight">12</span></td>
+                  <td class="yes">Done 2026-09-18 (sqlite + blob-dir checks)</td>
                 </tr>
                 <tr>
                   <td>5</td>
-                  <td>Collapse <code>events</code> loop onto <code>Broadcaster.ServeSSE</code> (retry hint, connected event)</td>
-                  <td class="yes">2</td><td class="yes">4</td>
+                  <td>Collapse <code>events</code> loop onto <code>Broadcaster.ServeSSE</code> (<s>retry hint</s> <em>none exists at v4.9.0 — tag-verified</em>, connected event)</td>
+                  <td class="yes">2</td><td class="yes">4</td><td>25–40</td>
                   <td><span class="highlight">8</span></td>
+                  <td class="yes">Done 2026-09-18</td>
                 </tr>
                 <tr>
                   <td>6</td>
                   <td>Spike: <code>OOBHTML</code> live unread-badge updates inside SSE payloads (E2E-gated)</td>
-                  <td class="yes">3</td><td>2</td>
+                  <td class="yes">3</td><td>2</td><td>50–75</td>
                   <td><span class="highlight">6</span></td>
+                  <td>Open — ROADMAP (flag-gated)</td>
                 </tr>
               </tbody>
             </table>
@@ -1348,12 +1373,63 @@ hookLimiter:  newKeyedLimiter(hookRate, hookBurst),
           </p>
         </section>
 
+        <!-- Update 2026-09-18: rubric appendix (reproducible scoring), added post-adoption -->
+        <section id="rubric">
+          <h2><span class="num">09</span>Rubric appendix &mdash; reproducible scoring (added 2026-09-18)</h2>
+          <p>
+            The score is a weighted capability rubric: each applicable capability group is worth
+            12 points (10 groups &rarr; 100, rounded to 62 at audit time by the per-group
+            evidence deductions below). Earned = full weight when usage is canonical, half when
+            present but weaker than the library surface, zero when hand-rolled or absent.
+          </p>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr><th>Capability group</th><th>Weight</th><th>Earned (audit)</th><th>Earned (post-adoption)</th><th>Evidence</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Embedded assets (htmx + sse ext)</td><td>12</td><td class="yes">12</td><td class="yes">12</td><td>server.go <code>HTMXScriptHandler</code>/<code>HTMXExtensionHandler</code></td></tr>
+                <tr><td>SSE broadcaster + hub pattern</td><td>12</td><td class="yes">12</td><td class="yes">12</td><td>sse.go <code>ExtensionHubs</code>, per-extension <code>Broadcaster</code></td></tr>
+                <tr><td>Panic recovery</td><td>12</td><td>6</td><td class="yes">12</td><td><code>RecoveryMiddleware</code> in the root wrap; <code>recovery()</code> deleted</td></tr>
+                <tr><td>Request logging</td><td>12</td><td>0</td><td class="yes">12</td><td><code>RequestLoggingSlog</code> outermost; log-contract tests</td></tr>
+                <tr><td>Keyed rate limiting</td><td>12</td><td>6</td><td class="yes">12</td><td><code>httputil.KeyedRateLimiter</code> ×2; <code>ratelimit.go</code> deleted (82 lines)</td></tr>
+                <tr><td>Readiness / health</td><td>12</td><td>2</td><td class="yes">12</td><td><code>ReadinessHandler</code> + sqlite/blob-dir <code>NamedCheck</code>s</td></tr>
+                <tr><td>SSE stream lifecycle</td><td>12</td><td>10</td><td class="yes">12</td><td><code>Broadcaster.ServeSSE</code>; hand loop deleted</td></tr>
+                <tr><td>Security headers</td><td>12</td><td class="yes">12</td><td class="yes">12</td><td><code>httputil.SecurityHeaders</code> + strict CSP (presets deliberately refused — microphone)</td></tr>
+                <tr><td>Error handling surface</td><td>12</td><td>2</td><td>2</td><td>Deliberate: plain-text errors fit the product; no dispatch layer to classify</td></tr>
+                <tr><td>Version currency + API fit</td><td>12</td><td class="yes">12</td><td class="yes">12</td><td>v4.9.0 = latest root tag; consumed bytes tag-verified</td></tr>
+                <tr><td><strong>Total</strong></td><td><strong>120 → /100</strong></td><td><strong>62</strong></td><td><strong class="yes">92</strong></td><td>Remaining gap: error-handling surface (deliberate) + OOB spike (ROADMAP)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <strong>Verification notes (2026-09-18 post-adoption sweep).</strong> (1) Two claims
+            were re-verified against the consumed v4.9.0 bytes (module cache) rather than master
+            <code>6cf46e62</code>: <code>ServeSSE</code> sends no <code>retry:</code> hint at this
+            tag (corrected in finding F4 above), and the panic→500 override lives in
+            <code>explicitErrorStatus</code>. (2) The full-file duplication sweep of every
+            previously unread server file (<code>webhooks.go</code> bodies, <code>actions.go</code>
+            tail, <code>panels.go</code>, <code>proxy.go</code>, <code>configjs.go</code>,
+            <code>assets.go</code>, <code>unread.go</code>) found <strong>no additional
+            cqrs-htmx duplication</strong> &mdash; the findings above were complete. Remaining
+            go-doc surface mapped as N.A. without a dispatch layer: ack/notify envelopes,
+            decoder stack, partial/full HX detection, redirect helpers, event catalog,
+            OpenAPI collector. Library facts that survive for future spikes:
+            <code>OOBHTML</code> (partial.go) is the building block for flag-gated badge push;
+            <code>ToastDetail</code> (notify.go) is the toast wire shape; <code>WithHTTPStatus</code>
+            (errors_status.go) is the escape hatch for custom statuses.
+          </p>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
             Generated 2026-09-18 &middot; Reviewed against cqrs-htmx v4.9.0 (go doc) and repo
             master 6cf46e62 &middot; webphone b390c7a &middot; Every claim verified against
             source; file references are stable paths, not line-frozen
+            &middot; <strong>Update 2026-09-18 (post-adoption): two master-cited claims re-verified
+            at the consumed v4.9.0 tag (one corrected), findings F1-F5 executed, re-score 92
+            (appendix 09); annotations inline, original text preserved</strong>
           </p>
         </footer>
       </main>
