@@ -148,12 +148,21 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 	}
 
 	// Broadcast after connect: arrives as event + data on the same stream.
-	extension := domain.MustParseExtension("1001")
-	server.hubs.Publish(extension, sseEventThreads, "<div class=\"wp-thread-row\">wire</div>")
+	// Blank lines are frame terminators — skip them while scanning for the
+	// next event line.
+	ext := domain.MustParseExtension("1001")
+	server.hubs.Publish(ext, sseEventThreads, "<div class=\"wp-thread-row\">wire</div>")
 
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no threads event line: %v", err)
+	var line string
+	for {
+		var err error
+		line, err = reader.ReadString('\n')
+		if err != nil {
+			t.Fatalf("no threads event line: %v", err)
+		}
+		if line != "\n" {
+			break
+		}
 	}
 	if line != "event: threads\n" {
 		t.Errorf("event line %q, want %q", line, "event: threads\n")
