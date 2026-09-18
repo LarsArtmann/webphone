@@ -134,19 +134,12 @@ func New(deps Deps) http.Handler {
 		ContentSecurityPolicy: contentSecurityPolicy,
 	})
 
-	return security(recovery(root))
-}
+	// requestLog outermost: it sees every status written anywhere below
+	// (429s, panics, SSE disconnects) — the server's blind twin of the
+	// browser event log, runbook-greppable at 3 a.m.
+	requestLog := cqrshtmx.RequestLoggingSlog(slog.Default())
 
-func recovery(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if rec := recover(); rec != nil {
-				slog.Error("panic in handler", "path", r.URL.Path, "panic", rec)
-				http.Error(w, "internal error", http.StatusInternalServerError)
-			}
-		}()
-		next.ServeHTTP(w, r)
-	})
+	return requestLog(security(cqrshtmx.RecoveryMiddleware(root)))
 }
 
 func (h *handlers) healthz(w http.ResponseWriter, _ *http.Request) {
