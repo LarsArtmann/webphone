@@ -11,12 +11,12 @@
 
 The four reported errors and their dispositions:
 
-| # | Console error | Cause found | Disposition |
-|---|---------------|-------------|-------------|
-| 1 | Inline script violates `script-src 'self'` (hash `sha256-AO4Oq…`) | templ-components `layout.Base` emits its theme-preload script unconditionally (no opt-out knob as of v1.18.0, the latest version); webphone passes `Nonce: ""` so no nonce attribute | **FIXED** — hash-pinned in `contentSecurityPolicy` (server.go) |
-| 2 | htmx "Applying inline style violates `style-src 'self'`" (function `Wn` @ htmx.min.js:3467) | htmx's `insertIndicatorStyles` injects an inline `<style>` at startup (`includeIndicatorStyles`); htmx.min.js loads synchronously BEFORE `HeadContent`, so a config meta in headExtras alone would arrive too late | **FIXED** — `htmx-config` meta + htmx deferred in `headExtras` |
-| 3 | `/favicon.ico` 404 | Shell's `layout.PageProps` never set `Favicon`, so Base emitted no `<link rel="icon">` and the browser probed the default path | **FIXED** — `Favicon: "/favicon.svg"` |
-| 4 | `Unchecked runtime.lastError: The message port closed…` | Chrome-extension artifact, not this app's code | **NOT APPLICABLE** — explicitly not "fixed"; no action possible in this repo |
+| # | Console error                                                                               | Cause found                                                                                                                                                                                                        | Disposition                                                                  |
+| - | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| 1 | Inline script violates `script-src 'self'` (hash `sha256-AO4Oq…`)                           | templ-components `layout.Base` emits its theme-preload script unconditionally (no opt-out knob as of v1.18.0, the latest version); webphone passes `Nonce: ""` so no nonce attribute                               | **FIXED** — hash-pinned in `contentSecurityPolicy` (server.go)               |
+| 2 | htmx "Applying inline style violates `style-src 'self'`" (function `Wn` @ htmx.min.js:3467) | htmx's `insertIndicatorStyles` injects an inline `<style>` at startup (`includeIndicatorStyles`); htmx.min.js loads synchronously BEFORE `HeadContent`, so a config meta in headExtras alone would arrive too late | **FIXED** — `htmx-config` meta + htmx deferred in `headExtras`               |
+| 3 | `/favicon.ico` 404                                                                          | Shell's `layout.PageProps` never set `Favicon`, so Base emitted no `<link rel="icon">` and the browser probed the default path                                                                                     | **FIXED** — `Favicon: "/favicon.svg"`                                        |
+| 4 | `Unchecked runtime.lastError: The message port closed…`                                     | Chrome-extension artifact, not this app's code                                                                                                                                                                     | **NOT APPLICABLE** — explicitly not "fixed"; no action possible in this repo |
 
 ---
 
@@ -153,6 +153,7 @@ exit 0, the 35-element DOM contract intact. But honestly:
 ## e) WHAT WE SHOULD IMPROVE (self-review)
 
 **What did I forget?**
+
 - Did not check whether templ-components is checked out locally before
   declaring the upstream fix out of scope — "exhaust paths first" was
   violated by assumption, not by evidence.
@@ -169,12 +170,14 @@ exit 0, the 35-element DOM contract intact. But honestly:
   closing message instead of proposing concretely who/what/when.
 
 **What is stupid that we do anyway?**
+
 - Shipping "strict CSP" claims with zero browser-level execution
   testing (the structural cause of d1).
 - Three homes for the hash-pin fact (mitigated by the two-way canary,
   but still three homes).
 
 **What could I have done better?**
+
 - Surfaces the fix-choice decision matrix (hash-pin vs nonce vs replace
   layout.Base vs upstream knob) to the user earlier — the chosen fix
   touches a documented architectural invariant, and per my own rules
@@ -188,6 +191,7 @@ exit 0, the 35-element DOM contract intact. But honestly:
   so in a table; the earlier phrasing invites over-reading.
 
 **What could I still improve?**
+
 - Replace "hash in const + comment + docs" with a generated golden
   value (test validates a checked-in golden file; update = one
   deliberate diff).
@@ -340,5 +344,5 @@ class of "shipped CSP violation" rather than this instance.)
 
 ---
 
-*Point-in-time snapshot; goes stale. Feed section (f) to docs-health
-HARVEST; annotate, never rewrite.*
+_Point-in-time snapshot; goes stale. Feed section (f) to docs-health
+HARVEST; annotate, never rewrite._
