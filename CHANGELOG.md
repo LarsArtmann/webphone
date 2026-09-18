@@ -52,6 +52,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Strict-CSP console errors on every page load: htmx no longer injects
+  its inline indicator styles (disabled via the `htmx-config` meta, with
+  htmx deferred after it and the same rules shipped in `app.css`); the
+  error panel's reload button uses a delegated `data-reload` listener
+  instead of an inline `onclick`; and the framework's theme-preload
+  script is allowed by exact CSP hash, two-way-guarded by
+  `TestServedPageSatisfiesStrictCSP`.
+- `/favicon.ico` 404: the shell now declares
+  `<link rel="icon" href="/favicon.svg">`.
 - The phone-api client percent-encoded `?` in request URLs
   (`history%3Flimit=30`), so history/voicemail requests 404'd upstream;
   path and query are now joined correctly (caught by the new client

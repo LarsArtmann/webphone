@@ -107,7 +107,12 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - **Owner scoping everywhere**: every store query is extension-scoped;
   attachments/faxes stream through session-gated handlers only.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
-  webfonts, no inline scripts/styles. Keep it that way.
+  webfonts, no inline handlers. One inline script is allowed by exact
+  hash (templ-components' theme preload — no opt-out knob upstream as
+  of v1.18.0, and it is inert here: theming rides `data-theme`, not the
+  Tailwind dark class); `TestServedPageSatisfiesStrictCSP` checks the
+  hash two ways so a dependency bump that changes the script fails the
+  build until the hash is refreshed deliberately.
 - `window.PBX_CONFIG` (`/config.js`, rendered by this server): keys
   `sipDomain`, `websocketPath`, `iceServers`, `phoneApi`, `contacts`.
 
@@ -140,6 +145,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
   NO nolint — its remaining policy-opinion findings are triaged as a
   documented skip in `.buildflow.yml` (same for go-structure-linter,
   cqrs-lint, nix-hash-fix).
+- htmx loads deferred from `headExtras`, after the `htmx-config` meta
+  that disables its inline indicator-style injection (`app.css` ships
+  the same rules so hx-indicator keeps working). The meta must precede
+  the script or htmx never reads it; Shell leaves `HTMXSrc` unset so
+  `layout.Base` does not also emit a synchronous htmx tag.
+- The app.css `[data-theme]` `color-scheme` rules carry `!important` so
+  the CSP-hash-pinned framework theme script's inline `colorScheme`
+  cannot undo a forced theme. If templ-components ships a ThemeScript
+  opt-out knob, take it and drop the hash plus these `!important`s.
 - `pbx.Client` owns the timeout-bounded HTTP client; the `/phone-api`
   proxy must ride `PhoneAPI.HTTPClient()`, never `http.DefaultClient`.
   Join path and query separately — `url.JoinPath` percent-encodes `?`

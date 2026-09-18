@@ -2,6 +2,8 @@ package server
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -215,6 +217,63 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 	if !strings.Contains(page, "WebPhone") {
 		t.Error("brand missing")
+	}
+}
+
+// TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: every
+// inline script the page serves must be covered by an exact hash in the
+// script-src directive, and vice versa, so a stale hash cannot linger.
+// The single allowed inline script is templ-components' theme preload
+// (see contentSecurityPolicy in server.go); a dependency bump that
+// changes its bytes fails here until the hash is refreshed deliberately.
+// It also pins the htmx-config meta (keeps htmx from injecting
+// CSP-hostile inline indicator styles) and the icon link (without it
+// browsers request /favicon.ico and 404).
+func TestServedPageSatisfiesStrictCSP(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("page status %d", resp.StatusCode)
+	}
+	page := string(body)
+
+	scriptSrc := regexp.MustCompile(`script-src[^;]*`).FindString(resp.Header.Get("Content-Security-Policy"))
+	if scriptSrc == "" {
+		t.Fatal("no script-src directive in CSP header")
+	}
+	allowed := map[string]bool{}
+	for _, hash := range regexp.MustCompile(`'sha256-[^']+'`).FindAllString(scriptSrc, -1) {
+		allowed[hash] = true
+	}
+	served := map[string]bool{}
+	for _, match := range regexp.MustCompile(`(?s)<script([^>]*)>(.*?)</script>`).FindAllSubmatch(body, -1) {
+		if strings.Contains(string(match[1]), "src=") {
+			continue
+		}
+		sum := sha256.Sum256(match[2])
+		served[fmt.Sprintf("'sha256-%s'", base64.StdEncoding.EncodeToString(sum[:]))] = true
+	}
+	for hash := range served {
+		if !allowed[hash] {
+			t.Errorf("served inline script %s is not allowed by script-src", hash)
+		}
+	}
+	for hash := range allowed {
+		if !served[hash] {
+			t.Errorf("script-src allows %s but no served inline script matches it (stale hash?)", hash)
+		}
+	}
+
+	for _, forbidden := range []string{" onclick=", " onload=", " javascript:"} {
+		if strings.Contains(page, forbidden) {
+			t.Errorf("page contains CSP-hostile inline handler %q", forbidden)
+		}
+	}
+	if !strings.Contains(page, `"includeIndicatorStyles":false`) {
+		t.Error("htmx-config meta missing: htmx would inject CSP-hostile inline indicator styles")
+	}
+	if !strings.Contains(page, `<link rel="icon" href="/favicon.svg">`) {
+		t.Error("icon link missing: browsers would request /favicon.ico and 404")
 	}
 }
 

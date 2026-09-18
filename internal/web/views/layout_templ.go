@@ -126,7 +126,7 @@ func Shell(props ShellProps) templ.Component {
 			ThemeColor:     "#0f766e",
 			DarkThemeColor: "#10161a",
 			CSSPath:        "/assets/app.css",
-			HTMXSrc:        "/htmx.min.js",
+			Favicon:        "/favicon.svg",
 			Nonce:          "",
 			SEO:            layout.SEOMeta{NoIndex: true},
 			HeadContent:    headExtras(props.CSRFToken),
@@ -378,9 +378,11 @@ func NavLinks(props ShellProps) templ.Component {
 	})
 }
 
-// headExtras loads the SSE extension, the island stylesheet (after the
-// Tailwind build so its element rules win), and the tiny shell script that
-// tracks the active nav item across partial swaps.
+// headExtras loads htmx deferred — AFTER the htmx-config meta, so htmx
+// sees it at startup and skips its CSP-hostile inline indicator styles —
+// then the SSE extension, the island stylesheet (after the Tailwind build
+// so its element rules win), and the tiny shell script that tracks the
+// active nav item across partial swaps.
 func headExtras(csrfToken string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -409,13 +411,13 @@ func headExtras(csrfToken string) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.ResolveAttributeValue(csrfToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 134, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 136, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><script src=\"/htmx-ext/sse.js\" defer></script><link rel=\"stylesheet\" href=\"/assets/island/style.css\"><script src=\"/assets/shell.js\" defer></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><meta name=\"htmx-config\" content='{\"includeIndicatorStyles\":false}'><script src=\"/htmx.min.js\" defer></script><script src=\"/htmx-ext/sse.js\" defer></script><link rel=\"stylesheet\" href=\"/assets/island/style.css\"><script src=\"/assets/shell.js\" defer></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -459,7 +461,7 @@ func SignInHint(lang Lang) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(T(lang, "signin.hint"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 150, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 154, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
