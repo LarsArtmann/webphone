@@ -3,7 +3,14 @@
 
 import { ringToneStop } from "./audio.js";
 import { connect, disconnect } from "./connection.js";
-import { placeCall, renderCalls, sendDtmf, teardownAll } from "./calls.js";
+import {
+  answerIncoming,
+  placeCall,
+  rejectIncoming,
+  renderCalls,
+  sendDtmf,
+  teardownAll,
+} from "./calls.js";
 import { sipDomain, websocketUrl } from "./config.js";
 import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
@@ -104,7 +111,6 @@ els.dialForm.addEventListener("submit", async (event) => {
 });
 
 els.accept.addEventListener("click", () => {
-  window.__wpDiag = (window.__wpDiag || "") + "|accept-click"; // TEMP-DIAG
   answerIncoming();
 });
 

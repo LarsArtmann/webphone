@@ -467,7 +467,6 @@ export function hangupFocused() {
 }
 
 export function answerIncoming() {
-  window.__wpDiag = (window.__wpDiag || "") + `|answerIncoming(inv=${!!state.incomingSession})`; // TEMP-DIAG
   const invitation = state.incomingSession;
   if (!invitation) return false;
   els.incoming.hidden = true;
