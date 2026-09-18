@@ -11,8 +11,11 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/go-sse"
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
@@ -37,7 +40,20 @@ var contractIDs = []string{
 	"toasts", "remote-audio", "lang",
 }
 
-func newTestServer(t *testing.T) *httptest.Server {
+// testServer bundles the httptest server with the internals the SSE and
+// proxy tests need to reach (hubs for subscriptions, phone API wiring).
+type testServer struct {
+	*httptest.Server
+	hubs     *ExtensionHubs
+	phoneAPI *pbx.Client
+}
+
+func newTestServer(t *testing.T) *testServer {
+	t.Helper()
+	return newTestServerWithPhoneAPI(t, "")
+}
+
+func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string) *testServer {
 	t.Helper()
 
 	db, err := store.Open(":memory:")
@@ -50,7 +66,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatal(err)
 	}
-	phoneAPI, err := pbx.NewClient("")
+	phoneAPI, err := pbx.NewClient(phoneAPIURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,19 +95,23 @@ func newTestServer(t *testing.T) *httptest.Server {
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return server
+	return &testServer{Server: server, hubs: hubs, phoneAPI: phoneAPI}
 }
 
 type client struct {
 	t      *testing.T
 	base   string
-	server *httptest.Server
+	server *testServer
 	token  string
 	http   *http.Client
 }
 
 func newClient(t *testing.T) *client {
-	server := newTestServer(t)
+	return clientFor(t, newTestServer(t))
+}
+
+func clientFor(t *testing.T, server *testServer) *client {
+	t.Helper()
 	httpClient := server.Client()
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -413,5 +433,183 @@ func TestInboundFaxWebhookStoresDocument(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("fax webhook: %d", resp.StatusCode)
+	}
+}
+
+// --- SSE pushes -------------------------------------------------------------
+
+func expectEvent(t *testing.T, events <-chan sse.Event, name string) sse.Event {
+	t.Helper()
+	deadline := time.NewTimer(2 * time.Second)
+	defer deadline.Stop()
+	for {
+		select {
+		case ev := <-events:
+			if ev.Event == name {
+				return ev
+			}
+		case <-deadline.C:
+			t.Fatalf("timed out waiting for SSE event %q", name)
+		}
+	}
+}
+
+func assertNoEvent(t *testing.T, events <-chan sse.Event, name string) {
+	t.Helper()
+	select {
+	case ev := <-events:
+		if ev.Event == name {
+			t.Fatalf("unexpected %q event (data %.80q)", name, ev.Data)
+		}
+	case <-time.After(150 * time.Millisecond):
+	}
+}
+
+// The SSE payloads must be swap-safe fragments: exactly the inner region
+// the sse-swap element replaces — never a wrapper section and never the
+// composer (a live push must not wipe a draft or nest panels).
+func TestSSEPushesSwapSafeFragments(t *testing.T) {
+	server := newTestServer(t)
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hub := server.hubs.get(owner)
+	events := hub.Hub().Subscribe()
+	defer hub.Hub().Unsubscribe(events)
+
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "live push"}, nil)
+	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+
+	threads := expectEvent(t, events, "threads")
+	if !strings.Contains(threads.Data, "wp-thread-row") || !strings.Contains(threads.Data, "+441632960961") {
+		t.Fatalf("threads payload missing the thread row: %.200s", threads.Data)
+	}
+	for _, forbidden := range []string{"<section", "wp-compose", "wp-panel-head"} {
+		if strings.Contains(threads.Data, forbidden) {
+			t.Errorf("threads payload must not contain %q: %.200s", forbidden, threads.Data)
+		}
+	}
+
+	thread := expectEvent(t, events, "thread")
+	if !strings.Contains(thread.Data, "wp-bubble") || !strings.Contains(thread.Data, "live push") {
+		t.Fatalf("thread payload missing the bubble: %.200s", thread.Data)
+	}
+	for _, forbidden := range []string{"<section", "wp-compose", "wp-back", "thread-transcript"} {
+		if strings.Contains(thread.Data, forbidden) {
+			t.Errorf("thread payload must not contain %q: %.200s", forbidden, thread.Data)
+		}
+	}
+
+	pdf := []byte("%PDF-1.4 live\n%%EOF\n")
+	form, contentType = multipartBody(t,
+		map[string]string{"to": "+441632960961"},
+		map[string]struct {
+			Name    string
+			Content []byte
+		}{"document": {Name: "doc.pdf", Content: pdf}})
+	if resp, body := c.do(http.MethodPost, "/fax/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("fax send: %d %s", resp.StatusCode, body)
+	}
+	fax := expectEvent(t, events, "fax")
+	if !strings.Contains(fax.Data, "wp-fax-row") {
+		t.Fatalf("fax payload missing the fax row: %.200s", fax.Data)
+	}
+	for _, forbidden := range []string{"<section", "wp-compose"} {
+		if strings.Contains(fax.Data, forbidden) {
+			t.Errorf("fax payload must not contain %q: %.200s", forbidden, fax.Data)
+		}
+	}
+}
+
+// --- phone-api proxy + voicemail nudge --------------------------------------
+
+func TestPhoneAPIProxyInjectsCredentialsAndNudgesVoicemail(t *testing.T) {
+	var (
+		mu      sync.Mutex
+		sawAuth string
+	)
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case r.URL.Path == "/phone-api/voicemail/1001/summary" && r.Method == http.MethodGet:
+			sawAuth = r.Header.Get("Authorization")
+			_, _ = w.Write([]byte(`{"new":1,"old":0}`))
+		case r.URL.Path == "/phone-api/voicemail/1001/messages" && r.Method == http.MethodGet:
+			_, _ = w.Write([]byte(`{"messages":[{"uuid":"abc-123","cid_number":"+491700000000","cid_name":"Fax Machine","seconds":12,"created":1750000000,"read":false,"audio_url":"/rec/abc.wav"}]}`))
+		case r.URL.Path == "/phone-api/history" && r.Method == http.MethodGet:
+			_, _ = w.Write([]byte(`{"entries":[]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(upstream.Close)
+
+	server := newTestServerWithPhoneAPI(t, upstream.URL)
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hub := server.hubs.get(owner)
+	events := hub.Hub().Subscribe()
+	defer hub.Hub().Unsubscribe(events)
+
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+
+	// Proxied voicemail read: same JSON, session credentials injected.
+	resp, body := c.do(http.MethodGet, "/phone-api/voicemail/1001/summary", nil, "")
+	if resp.StatusCode != http.StatusOK || !strings.Contains(string(body), `"new":1`) {
+		t.Fatalf("proxied summary: %d %s", resp.StatusCode, body)
+	}
+	if got := resp.Header.Get("Content-Type"); !strings.Contains(got, "json") {
+		t.Errorf("content-type not passed through: %q", got)
+	}
+	mu.Lock()
+	wantAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte("1001:pw"))
+	if sawAuth != wantAuth {
+		mu.Unlock()
+		t.Fatalf("upstream auth = %q, want %q", sawAuth, wantAuth)
+	}
+	mu.Unlock()
+
+	// The island's voicemail poll nudges the voicemail tab.
+	nudge := expectEvent(t, events, "voicemail")
+	if nudge.Data != "" {
+		t.Fatalf("voicemail nudge must be payload-less, got %.80q", nudge.Data)
+	}
+
+	// Non-voicemail proxy traffic does not nudge.
+	resp, _ = c.do(http.MethodGet, "/phone-api/history?limit=5", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("proxied history: %d", resp.StatusCode)
+	}
+	assertNoEvent(t, events, "voicemail")
+	assertNoEvent(t, events, "voicemail")
+
+	// Unknown upstream paths surface as 404, not 500.
+	resp, _ = c.do(http.MethodGet, "/phone-api/nope", nil, "")
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("proxied unknown path: %d (want 404)", resp.StatusCode)
+	}
+}
+
+func TestPhoneAPIProxyDisabledReturns503(t *testing.T) {
+	c := newClient(t)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	resp, body := c.do(http.MethodGet, "/phone-api/history", nil, "")
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("proxy without phone api: %d %s (want 503)", resp.StatusCode, body)
 	}
 }

@@ -44,6 +44,13 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// Create the data dir up front: a missing parent directory would
+	// otherwise surface as SQLite's cryptic "unable to open database
+	// file (14)".
+	if err := os.MkdirAll(cfg.DataDir, 0o700); err != nil {
+		return fmt.Errorf("create data dir: %w", err)
+	}
+
 	// --- infrastructure --------------------------------------------------
 	db, err := store.Open(filepath.Join(cfg.DataDir, "webphone.db"))
 	if err != nil {
