@@ -186,6 +186,10 @@ export function t(key) {
   return table[key] !== undefined ? table[key] : I18N.en[key];
 }
 
+export function getLang() {
+  return lang;
+}
+
 export function setLang(next) {
   lang = next;
   localStorage.setItem(LANG_KEY, lang);

@@ -234,4 +234,8 @@ export async function disconnect() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = null;
   ringbackStop();
+  // Null the handles like the original single-file app did on logout:
+  // a later placeCall must see "not connected", not a stopped agent.
+  userAgent = null;
+  registerer = null;
 }
