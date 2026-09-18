@@ -159,8 +159,10 @@
               gofmt.enable = true;
               prettier = {
                 enable = true;
+                # No *.html here: the only HTML in the repo is historical
+                # docs/status + docs/planning snapshots (point-in-time,
+                # never reformatted — and prettier cannot parse one).
                 includes = [
-                  "*.html"
                   "*.css"
                   "internal/web/assets/shell.js"
                   "internal/web/assets/island/**/*.js"
