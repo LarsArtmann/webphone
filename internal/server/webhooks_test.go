@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json/v2"
 	"net/http"
@@ -192,5 +193,178 @@ func TestInboundFaxWebhookAcceptsFlexiblePageCounts(t *testing.T) {
 				t.Fatalf("fax panel missing page count: %.300s", panel)
 			}
 		})
+	}
+}
+
+func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
+	server := newTestServer(t)
+
+	// Seed an outbound SMS through the loopback gateway; its receipt
+	// carries the provider_ref the status callback must quote.
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "receipt test"}, nil)
+	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("sms send: %d %s", resp.StatusCode, body)
+	}
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	threads, err := server.messages.ListThreads(context.Background(), owner)
+	if err != nil || len(threads) != 1 {
+		t.Fatalf("seeded threads: %d (err %v)", len(threads), err)
+	}
+	msgs, err := server.messages.ListMessages(context.Background(), owner, threads[0].Thread.ID, 10)
+	if err != nil || len(msgs) != 1 || msgs[0].ProviderRef == "" {
+		t.Fatalf("seeded messages: %d (err %v)", len(msgs), err)
+	}
+	_, listBody := c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(listBody)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+
+	// The provider's delivered verdict flips the badge the transcript shows.
+	statusBody, _ := json.Marshal(map[string]string{
+		"provider_ref": msgs[0].ProviderRef, "status": "delivered",
+	})
+	req, _ := http.NewRequest(http.MethodPost, server.URL+"/hooks/message/status", bytes.NewReader(statusBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("message status hook: %d (want 202)", resp.StatusCode)
+	}
+
+	_, body := c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	if !strings.Contains(string(body), "delivered") {
+		t.Fatalf("transcript missing delivered badge: %.300s", body)
+	}
+
+	// Unknown refs, empty refs, and non-verdict statuses are rejected.
+	for name, want := range map[string]int{
+		"unknown ref":   http.StatusNotFound,
+		"empty ref":     http.StatusBadRequest,
+		"sent status":   http.StatusBadRequest,
+		"queued status": http.StatusBadRequest,
+	} {
+		ref := "nope"
+		status := "delivered"
+		switch name {
+		case "empty ref":
+			ref = ""
+		case "sent status":
+			status = "sent"
+		case "queued status":
+			status = "queued"
+		}
+		payload, _ := json.Marshal(map[string]string{"provider_ref": ref, "status": status})
+		req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/message/status", bytes.NewReader(payload))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-secret")
+		if resp, _ := server.Client().Do(req); resp.StatusCode != want {
+			t.Fatalf("%s: %d (want %d)", name, resp.StatusCode, want)
+		}
+	}
+}
+
+func TestFaxStatusWebhookUpdatesJob(t *testing.T) {
+	server := newTestServer(t)
+
+	// Seed an outbound fax through the loopback gateway; its receipt
+	// carries the provider_ref the status callback must quote.
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	pdf := []byte("%PDF-1.4 status\n%%EOF\n")
+	form, contentType := multipartBody(t,
+		map[string]string{"to": "+441632960961"},
+		map[string]struct {
+			Name    string
+			Content []byte
+		}{"document": {Name: "doc.pdf", Content: pdf}})
+	if resp, body := c.do(http.MethodPost, "/fax/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("fax send: %d %s", resp.StatusCode, body)
+	}
+	owner, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	jobs, err := server.faxes.List(context.Background(), owner, 10)
+	if err != nil || len(jobs) != 1 {
+		t.Fatalf("seeded fax jobs: %d (err %v)", len(jobs), err)
+	}
+
+	// The provider's failure verdict flips the job and explains why.
+	statusBody, _ := json.Marshal(map[string]string{
+		"provider_ref": jobs[0].ProviderRef, "status": "failed", "error": "remote hung up",
+	})
+	req, _ := http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(statusBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("fax status hook: %d (want 202)", resp.StatusCode)
+	}
+
+	_, body := c.do(http.MethodGet, "/partials/fax", nil, "")
+	if !strings.Contains(string(body), "failed") || !strings.Contains(string(body), "remote hung up") {
+		t.Fatalf("fax panel missing failure: %.300s", body)
+	}
+
+	// Unknown refs and invalid statuses are rejected.
+	badRef, _ := json.Marshal(map[string]string{"provider_ref": "nope", "status": "failed"})
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badRef))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("unknown provider_ref: %d (want 404)", resp.StatusCode)
+	}
+	badStatus, _ := json.Marshal(map[string]string{"provider_ref": jobs[0].ProviderRef, "status": "queued"})
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badStatus))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("invalid status: %d (want 400)", resp.StatusCode)
+	}
+}
+
+func TestWebhooksSecretAndInbound(t *testing.T) {
+	c := newClient(t)
+	server := newTestServer(t)
+	c.base = server.URL
+
+	inbound := map[string]any{"owner": "1001", "from": "+4915112345678", "body": "hooked"}
+	payload, _ := json.Marshal(inbound)
+
+	req, _ := http.NewRequest(http.MethodPost, server.URL+"/hooks/message", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	if badResp, _ := c.http.Do(req); badResp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("webhook without secret: %d (want 401)", badResp.StatusCode)
+	}
+
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/message", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer wrong")
+	if badResp, _ := c.http.Do(req); badResp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("webhook with wrong secret: %d", badResp.StatusCode)
+	}
+
+	// Right secret stores the message; reading it back needs a session.
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/message", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if okResp, _ := c.http.Do(req); okResp.StatusCode != http.StatusAccepted {
+		t.Fatalf("webhook with secret: status %d", okResp.StatusCode)
 	}
 }
