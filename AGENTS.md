@@ -147,6 +147,10 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - i18n dictionaries live in `views/i18n.go`; unknown keys surface
   themselves in the page (deliberate) and a test keeps en/de in sync —
   add new keys to BOTH maps.
+- vulnix against `./result` scans the BUILD closure (bootstrap
+  toolchains, binutils, gcc — dozens of findings that never deploy).
+  The honest number is the runtime closure: `nix-store -qR result`
+  (8 derivations); only glibc carried advisories as of 2026-09-18.
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony

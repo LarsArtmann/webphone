@@ -101,11 +101,11 @@ Code wins when doc and code disagree.
 
 ## PLANNED / WORTH_CONSIDERING
 
-| Idea                                  | Status               | Notes                                                                 |
-| ------------------------------------- | -------------------- | --------------------------------------------------------------------- |
-| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost            |
-| Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                            |
-| Richer /healthz (store, gateway mode) | ⚪ WORTH_CONSIDERING | For load balancers                                                    |
-| Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                          |
-| PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                |
-| sip.js 0.22 bump                      | ⚪ PLANNED           | Evaluation report in docs/reviews/; gated on the upstream browser E2E |
+| Idea                                  | Status               | Notes                                                                                           |
+| ------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- |
+| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                      |
+| Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                      |
+| Richer /healthz (store, gateway mode) | ⚪ WORTH_CONSIDERING | For load balancers                                                                              |
+| Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                    |
+| PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                          |
+| sip.js 0.22 bump                      | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md) |
