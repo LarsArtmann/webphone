@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -55,7 +56,15 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Messaging.Send(r.Context(), sess.Extension, to, r.FormValue("body"), uploads); err != nil {
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, sendErrorMessage(err, h.lang(r)))
+		if invalid := errors.AsType[*messaging.ErrInvalidSend](err); invalid != nil {
+			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, invalid.Reason)
+			return
+		}
+		// Upstream failure, not a user mistake: say 502, keep the detail
+		// in the log (the gateway error can carry internal URLs), and
+		// tell the user the message was saved as failed.
+		slog.ErrorContext(r.Context(), "message send gateway failure", "error", err)
+		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway, h.T(r, "err.gatewayUnavailable"))
 		return
 	}
 
@@ -83,13 +92,6 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, tabFromPath("/messages"))
 }
 
-func sendErrorMessage(err error, lang views.Lang) string {
-	if invalid, ok := errors.AsType[*messaging.ErrInvalidSend](err); ok {
-		return invalid.Reason
-	}
-	return views.T(lang, "err.gatewayMessage") + err.Error()
-}
-
 // sendFax handles the fax upload form.
 func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSessionMultipart(w, r)
@@ -114,18 +116,18 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Fax.Send(r.Context(), sess.Extension, to, header.Filename, pdf); err != nil {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, faxErrorMessage(err, h.lang(r)))
+		if invalid := errors.AsType[*fax.ErrInvalidFax](err); invalid != nil {
+			h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, invalid.Reason)
+			return
+		}
+		// Upstream failure, not a user mistake: 502 + log detail, same
+		// policy as the message send path.
+		slog.ErrorContext(r.Context(), "fax send gateway failure", "error", err)
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway, h.T(r, "err.faxGatewayUnavailable"))
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.faxSent"))
 	h.partial(w, r, tabFromPath("/fax"))
-}
-
-func faxErrorMessage(err error, lang views.Lang) string {
-	if invalid, ok := errors.AsType[*fax.ErrInvalidFax](err); ok {
-		return invalid.Reason
-	}
-	return views.T(lang, "err.gatewayFax") + err.Error()
 }
 
 // faxDocument streams a job's PDF (session-gated).
