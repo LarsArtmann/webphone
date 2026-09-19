@@ -61,6 +61,9 @@
               ldflags = [
                 "-s"
                 "-w"
+                # /version reports the flake's version (kept in lockstep with
+                # the git tag at release) instead of Go's "(devel)".
+                "-X github.com/larsartmann/webphone/internal/server.buildVersion=${version}"
               ];
 
               doCheck = true;

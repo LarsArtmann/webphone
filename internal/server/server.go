@@ -223,13 +223,22 @@ func probeBlobDir(root string) error {
 	return os.Remove(name)
 }
 
+// buildVersion is injected at link time by the flake build
+// (-X ...internal/server.buildVersion=<version>), so /version reports the
+// released version instead of Go's "(devel)" for source builds. Empty in
+// `go build`/`go test` runs — the handler then falls back to build info.
+var buildVersion string
+
 // versionHandler reports build metadata for the operator's curl one-liner
 // (library DebugHandler pattern): module version, Go version, module path.
 // Captured at construction time — it is build info, not live state.
 func versionHandler() http.HandlerFunc {
 	info, ok := debug.ReadBuildInfo()
 	version := "devel"
-	if ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+	switch {
+	case buildVersion != "":
+		version = buildVersion
+	case ok && info.Main.Version != "" && info.Main.Version != "(devel)":
 		version = info.Main.Version
 	}
 	goVersion := runtime.Version()
