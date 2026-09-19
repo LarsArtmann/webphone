@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -249,4 +250,63 @@ func TestFaxWebhookMissingPDFIsAnError(t *testing.T) {
 	}); err == nil {
 		t.Error("missing PDF must be an error")
 	}
+}
+
+// TestProviderFormFieldOrderGolden pins the multipart field order the
+// provider sees on the wire: the shared envelope (kind, owner, to) is
+// written first, then the payload parts (body, attachment(s), document).
+// Some order-sensitive providers parse positionally; a refactor that
+// reorders the envelope must fail here instead of in production.
+func TestProviderFormFieldOrderGolden(t *testing.T) {
+	order := func(t *testing.T, body string, names ...string) {
+		t.Helper()
+		last := -1
+		for _, name := range names {
+			needle := `name="` + name + `"`
+			idx := strings.Index(body, needle)
+			if idx == -1 {
+				t.Fatalf("field %q missing from provider form", name)
+			}
+			if idx < last {
+				t.Fatalf("field %q out of order (at %d, previous ended at %d)", name, idx, last)
+			}
+			last = idx
+		}
+	}
+
+	attPath := writeTempFile(t, t.TempDir(), "pic.jpg", "jpeg-bytes")
+	raw, _, err := messageForm("message", "1001", "+441632960961", "hello", []OutboundAttachment{
+		{Name: "pic.jpg", MimeType: "image/jpeg", Path: attPath},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := io.ReadAll(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	order(t, string(body), "kind", "owner", "to", "body", "attachment")
+
+	pdfPath := writeTempFile(t, t.TempDir(), "fax.pdf", "%PDF-golden")
+	pdf, err := os.Open(pdfPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = pdf.Close() }()
+	faxBody, _, err := providerForm("fax", "1001", "+441632960961", func(w *multipart.Writer) error {
+		part, err := w.CreateFormFile("document", "fax.pdf")
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(part, pdf)
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err = io.ReadAll(faxBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	order(t, string(body), "kind", "owner", "to", "document")
 }

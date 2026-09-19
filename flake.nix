@@ -173,7 +173,13 @@
                 }
                 ''
                   cd ${self}
-                  oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/
+                  if oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/; then
+                    echo "no-undef clean over:" >$out
+                    ls internal/web/assets/island/app/ >>$out
+                  else
+                    echo "island no-undef gate FAILED" >&2
+                    exit 1
+                  fi
                 '';
           };
 
