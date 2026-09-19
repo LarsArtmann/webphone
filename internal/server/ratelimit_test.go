@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json/v2"
 	"io"
 	"net/http"
 	"strconv"
