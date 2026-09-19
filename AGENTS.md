@@ -294,6 +294,18 @@ every build; it is the local tripwire, not a replacement for the E2E.
   series hangs in `userAgent.reconnect()` after transport loss; the
   bounded watchdog in the island's `connection.js` (5s per attempt,
   full rebuild on timeout) is load-bearing. Do not "simplify" it away.
+- SDK decision 2026-09-19 (SUPERB integration plan, all claims
+  primary-source verified): KEEP sip.js 0.21.2; **JsSIP 3.13.8 is the
+  named fallback** (npm-published 2026-05, actively maintained — the
+  only maintained alternative stack; license nuance: npm says MIT,
+  GitHub license field NOASSERTION). Swap ONLY on: Chromium WebRTC
+  API breakage, a sip.js security advisory, or a needed capability —
+  never speculatively; a swap is a full island call-path rewrite plus
+  a stack browser-E2E re-run. All Go-side telephony REJECTED (sipgo
+  signaling proxy, pion B2BUA/SBC, FreeSWITCH ESL — no maintained Go
+  ESL client anyway): the browser terminates media regardless, so
+  server-side signaling only adds state to the hottest path. Research
+  table: docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md.
 - Env config nests with `__`: `WEBPHONE_GATEWAY__MODE` →
   `gateway.mode`; single underscores stay literal (`WEBPHONE_DATA_DIR`
   → `data_dir`). Scalars via env; lists (`ice_servers`, `contacts`)

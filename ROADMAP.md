@@ -16,7 +16,21 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   unreleased 0.21.3 tag adds only a SimpleUser option). Evaluation:
   `docs/reviews/2026-09-18_sip-js-0.22-evaluation.md`. Revisit only on
   a reconnect-hang fix, a security advisory, or a needed capability —
-  any future bump re-runs the upstream browser E2E.
+  any future bump re-runs the upstream browser E2E. SDK sweep
+  2026-09-19 (SUPERB integration plan): **JsSIP 3.13.8 is the named
+  fallback** — actively maintained (npm 2026-05), swap triggers and
+  the full research table live in
+  `docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md`;
+  never swapped speculatively.
+- Server-side telephony inside webphone (Go SIP UA via sipgo,
+  pion/webrtc media or B2BUA, FreeSWITCH ESL for originate): researched
+  and rejected 2026-09-19 — the browser terminates the media either
+  way, so server-side signaling only adds stateful hops to the hottest
+  path, and the Go ESL client landscape is thin (top clients are
+  Java/Python/Node). If server-initiated calls (click-to-call from
+  other systems) ever become a product need, build at the stack/PBX
+  layer — it already records calls and bridges webhooks. Research
+  table: `docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md`.
 - Stack-side switchover of nix-international-telephony onto this
   service: DONE 2026-09-18 (stack imports `nixosModules.default`,
   nginx vhost proxies the service, browser E2E green after the

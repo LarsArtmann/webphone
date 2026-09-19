@@ -4,7 +4,8 @@
 - **Trigger:** owner reaction after the architecture Q&A: the sip.js island
   feels "VERY bad, basically not integrated at all" with the Go side.
 - **Mandate:** make the integration SUPERB; research all possible SDKs/libs.
-- **Status:** plan approved for execution pending owner go.
+- **Status:** EXECUTED 2026-09-19 (P1–P8 complete; all local gates +
+  stack browser E2E green against webphone `a0ce1e6`).
 
 ## TL;DR verdict
 
