@@ -142,54 +142,49 @@ changed markup).
 
 ## b) PARTIALLY DONE ⚠️
 
-1. **`go.mod` tidiness:** `golang.org/x/time` is required and builds,
+1. ~~**`go.mod` tidiness:** `golang.org/x/time` is required and builds,
    but gopls still flags "should be direct" — `go mod tidy` /
    `buildflow -s gomod-check --fix` has not been run yet. One command
-   away.
-2. **server_test.go split (Medium/M):** achieved organically for NEW
+   away.~~ done (06:42 #1: already direct at go.mod:18; the gopls warning was stale)
+2. ~~**server_test.go split (Medium/M):** achieved organically for NEW
    tests (webhooks, history, contacts, rate-limit, pagination, i18n
    live in their own files), but the original monolith still holds the
    sse/proxy/session/fax/contract tests, and the jscpd-flagged 14-line
-   helper clone is NOT deduped.
-3. **NixOS module verification:** flake check exists but `nix flake
+   helper clone is NOT deduped.~~ done (06:42 #5: split into session/messages/fax/sse/proxy test files; twin helpers deduped)
+3. ~~**NixOS module verification:** flake check exists but `nix flake
    check` itself has not been run this session; the module is
    eval-checked, not VM-tested (systemd unit never ran under a real
-   NixOS activation); new Nix files not yet passed through nixfmt.
-4. **Docs for this session:** README/FEATURES/CHANGELOG/AGENTS/
-   TODO_LIST do NOT yet reflect this session's work (theme toggle now
-   contradicts the Settings note it replaced — actually the note was
-   rewritten with the feature; but README's config reference lacks the
-   `wp-lang`/`wp-theme` client-side keys, the NixOS module, rate-limit
-   defaults, and vCard endpoints). TODO_LIST still lists 15 done items.
-   Batched deliberately as the next step before the report landed.
-5. **Session persistence (Low/M):** decision MADE (keep in-memory by
+   NixOS activation); new Nix files not yet passed through nixfmt.~~ done (flake check green 06:42 #11; stack NixOS VM test green 06:42 #15)
+4. ~~**Docs for this session:** README/FEATURES/CHANGELOG/AGENTS/
+   TODO_LIST do NOT yet reflect this session's work~~ done (06:42 #4 docs overhaul)
+5. ~~**Session persistence (Low/M):** decision MADE (keep in-memory by
    design — persistence trades in the password-at-rest posture; route
    to FEATURES as WORTH_CONSIDERING), but the TODO_LIST/FEATURES edit
-   is not written yet.
-6. **Upstream browser E2E:** this session changed markup (header
+   is not written yet.~~ done (FEATURES WORTH_CONSIDERING row)
+6. ~~**Upstream browser E2E:** this session changed markup (header
    actions + theme button, nav labels de, history filter form, contacts
    import/export UI, older-messages button, transcript fragments) — the
-   E2E lives in the telephony stack and has NOT been re-run (see c1).
+   E2E lives in the telephony stack and has NOT been re-run (see c1).~~ done at `00f13fe` (green 06:42 #14); island changed again after — re-run pending (TODO_LIST)
 
 ## c) NOT STARTED ❌
 
 Remaining TODO_LIST items, untouched by design or blocked on (b):
 
-1. **Upstream switchover in nix-international-telephony** (High/M):
+1. ~~**Upstream switchover in nix-international-telephony** (High/M):
    repo exists locally at `~/projects/nix-international-telephony`, not
    yet assessed this session; needs input swap, WSS proxy config,
-   config.js → server config migration, and the browser E2E re-run.
-2. **Tag v2.0.0** (Medium/S): tag not created; needs the right commit
-   picked and (for the CHANGELOG links to resolve) a push.
-3. **`-coverpkg` union coverage** in the buildflow test-coverage step
+   config.js → server config migration, and the browser E2E re-run.~~ done (executed by a parallel session; E2E green after `00f13fe` — ROADMAP)
+2. ~~**Tag v2.0.0** (Medium/S): tag not created; needs the right commit
+   picked and (for the CHANGELOG links to resolve) a push.~~ done at `d9d6d03` (pushed; lychee 0 errors)
+3. ~~**`-coverpkg` union coverage** in the buildflow test-coverage step
    (Medium/S) and **cqrs-lint documented skip** (Low/S): both are
-   `.buildflow.yml` edits; not started.
-4. **Nixpkgs channel bump** to clear the 14 build-chain CVEs
-   (Medium/S): `nix flake update` + rebuild not run.
-5. **sip.js 0.22 evaluation** (Low/M): research + report not started;
-   no bump attempted (E2E re-run is a hard precondition).
-6. **Final verification pass:** `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
-   `nix flake check`, aarch64 cross-build.
+   `.buildflow.yml` edits; not started.~~ cqrs-lint skip: done (06:42 #2); -coverpkg: **Won't implement —** upstream-blocked → ROADMAP
+4. ~~**Nixpkgs channel bump** to clear the 14 build-chain CVEs
+   (Medium/S): `nix flake update` + rebuild not run.~~ done (06:42 #7); glibc story corrected `7ba25cc`
+5. ~~**sip.js 0.22 evaluation** (Low/M): research + report not started;
+   no bump attempted (E2E re-run is a hard precondition).~~ done (evaluation report — stay on 0.21.2)
+6. ~~**Final verification pass:** `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
+   `nix flake check`, aarch64 cross-build.~~ done (06:42 #11: all green)
 
 ## d) TOTALLY FUCKED UP! 💥
 
@@ -236,99 +231,58 @@ The honest mishap list:
 
 ## e) WHAT WE SHOULD IMPROVE! 🛠️
 
-1. **Nav labels don't switch language until a full page load** — the
-   island re-fetches the open tab partial, but the header nav keeps the
-   old language. Needs a decision (nav swap target vs `HX-Trigger`
-   full refresh vs ship nav labels client-side).
-2. **An SSE `thread` push resets an open transcript to page 0** — the
-   "older messages" paging state is lost on live push. A client-side
-   guard (`htmx:sseMessage` awareness of the current `?older=`) would
-   preserve it.
-3. **NixOS module has no runtime test:** eval-checked only; a NixOS
-   VM test (systemd unit actually starts, nginx vhost proxies WSS)
-   would make the deployment claim real.
-4. **Hooks rate limit is per-IP:** behind the stack's proxy every
-   provider shares one source IP — one flooded source could starve the
-   others (secret auth remains the real boundary; a per-secret bucket
-   is the upgrade path).
-5. **countUnread TTL (5 s)** is a deliberate staleness window; if a
-   change ever bypasses the invalidation points, badges lag by up to 5 s.
-   A comment-level contract exists; a debug counter would prove it.
-6. **Shortcut discoverability:** A/H/M/P/Esc have no visible affordance
-   (a `?` help overlay or title text on the call panel would help).
-7. **German coverage boundary is undocumented for users:** service
-   validation reasons (attachment limits, PDF checks) stay English;
-   FEATURES should say so honestly once docs land.
-8. **`server_test.go` remainder** (sse/proxy/session) should complete
-   the split + dedupe the twin helpers (jscpd still flags them).
-9. **The smoke suite still lives in `/tmp`** (prior session's finding,
-   unchanged): 14 checks that prove the product works should live in
-   the repo.
-10. **`RateLimit` defaults are code constants** (`loginRate`/`hookRate`
-    vars) — fine now; if an operator ever needs to tune them they
-    belong in config.
+1. ~~Nav labels don't switch language until a full page load~~ → TODO_LIST (nav-language row)
+2. ~~An SSE `thread` push resets an open transcript to page 0~~ → TODO_LIST (live-polish row)
+3. ~~NixOS module has no runtime test~~ done (stack `telephony-webphone` NixOS VM test, 06:42 #15)
+4. Hooks rate limit is per-IP — improved: now `httputil.KeyedRateLimiter` (same per-host semantics, computed Retry-After); per-secret buckets remain the documented upgrade path (ROADMAP)
+5. countUnread TTL (5 s) is a deliberate staleness window — documented contract; unchanged.
+6. ~~Shortcut discoverability: A/H/M/P/Esc have no visible affordance~~ → ROADMAP (UX polish)
+7. ~~German coverage boundary is undocumented for users~~ done (AGENTS.md language policy + FEATURES i18n row say validation reasons stay English)
+8. ~~`server_test.go` remainder (sse/proxy/session) should complete
+   the split + dedupe the twin helpers~~ done (06:42 #5)
+9. ~~The smoke suite still lives in `/tmp`~~ → TODO_LIST (recreate in-repo; /tmp copy lost)
+10. ~~`RateLimit` defaults are code constants~~ **Won't implement for now —** no operator demand; revisit on request
 
 ## f) Top things to get done next (impact-sorted)
 
-1. Docs overhaul for this session: TODO_LIST (delete 15 done items),
-   FEATURES (theme toggle, i18n tabs, vCard, pagination, rate limiting,
-   NixOS module, shortcuts, history filter, fax pages, session-
-   persistence → WORTH_CONSIDERING), CHANGELOG (2.1.0 entry),
-   README (NixOS module + new endpoints + client keys), AGENTS
-   (wp-lang cookie contract, arch test, event-decoupled ice panel).
-2. Run `buildflow -s gomod-check --fix` (x/time → direct) + formatting
-   over the new files (nixfmt for the module, prettier for island JS).
-3. `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` full gate + `nix flake
-   check` (incl. the new module check) + aarch64 cross-build.
-4. Re-run the upstream browser E2E (markup changed: header, history
-   form, contacts UI, older-messages button, i18n).
-5. Assess + plan the upstream switchover in
-   `~/projects/nix-international-telephony` (input swap, WSS proxy,
-   config migration, E2E).
-6. Tag v2.0.0 (pick the commit, push) so CHANGELOG links resolve.
-7. `.buildflow.yml`: `-coverpkg` union coverage + documented cqrs-lint
-   skip.
-8. `nix flake update` (nixpkgs) to clear the 14 build-chain CVEs.
-9. Complete the server_test.go split + dedupe the twin helpers.
-10. sip.js 0.22 evaluation report (research only; bump gated on E2E).
-11. NixOS VM test for the systemd unit (runtime proof for the module).
-12. Nav label language refresh (decision + fix, see e1).
-13. Transcript paging survives SSE pushes (see e2).
-14. Shortcut help overlay (see e6).
-15. Nginx WSS proxy example tested against the module's generated vhost.
-16. Session-persistence decision recorded in FEATURES (from b5).
-17. Rate-limit tuning knobs in config (only if an operator asks).
-18. German strings for service validation reasons (if g3 answers
-    "keys").
-19. Content-hash guard for the voicemail nudge (prior finding, cheap).
-20. Smoke suite moved into the repo (prior finding).
-21. `/events` endpoint Go test (prior finding).
-22. Nav badges live-update (prior finding, now easier with the unread
-    cache + hubs lang plumbing as the pattern).
+1. ~~Docs overhaul for this session~~ done (06:42 #4)
+2. ~~Run `buildflow -s gomod-check --fix` (x/time → direct) + formatting
+   over the new files (nixfmt for the module, prettier for island JS).~~ done (06:42 #1 verified direct; island prettier `718cbe7`)
+3. ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` full gate + `nix flake
+   check` (incl. the new module check) + aarch64 cross-build.~~ done (06:42 #11: all green)
+4. ~~Re-run the upstream browser E2E (markup changed: header, history
+   form, contacts UI, older-messages button, i18n).~~ done at `00f13fe` (green; later island changes → TODO_LIST re-run row)
+5. ~~Assess + plan the upstream switchover in
+   `~/projects/nix-international-telephony`~~ done (executed; see ROADMAP)
+6. ~~Tag v2.0.0 (pick the commit, push) so CHANGELOG links resolve.~~ done at `d9d6d03`
+7. ~~`.buildflow.yml`: `-coverpkg` union coverage + documented cqrs-lint
+   skip.~~ cqrs-lint: done; -coverpkg: **Won't** (upstream-blocked) → ROADMAP
+8. ~~`nix flake update` (nixpkgs) to clear the 14 build-chain CVEs.~~ done (06:42 #7)
+9. ~~Complete the server_test.go split + dedupe the twin helpers.~~ done (06:42 #5)
+10. ~~sip.js 0.22 evaluation report (research only; bump gated on E2E).~~ done (evaluation report)
+11. ~~NixOS VM test for the systemd unit (runtime proof for the module).~~ done (stack `telephony-webphone` VM test, 06:42 #15)
+12. Nav label language refresh (decision + fix, see e1). → TODO_LIST
+13. Transcript paging survives SSE pushes (see e2). → TODO_LIST
+14. Shortcut help overlay (see e6). → ROADMAP
+15. ~~Nginx WSS proxy example tested against the module's generated vhost.~~ done (module ships the optional vhost; the stack's E2E nginx proxies WSS green, 06:42 #14)
+16. ~~Session-persistence decision recorded in FEATURES (from b5).~~ done
+17. Rate-limit tuning knobs in config (only if an operator asks). **Won't for now**
+18. ~~German strings for service validation reasons (if g3 answers
+    "keys").~~ **Won't implement —** policy: English, operator-facing (AGENTS.md)
+19. Voicemail nudge content-hash guard (prior finding, cheap). → ROADMAP
+20. ~~Smoke suite moved into the repo (prior finding).~~ → TODO_LIST
+21. `/events` endpoint Go test (prior finding). — partially closed (stream + rate-limit tests); 401/heartbeat → ROADMAP
+22. ~~Nav badges live-update (prior finding, now easier with the unread
+    cache + hubs lang plumbing as the pattern).~~ → PARKED (OOB verdict)
 23. aarch64 runtime note for the module (StateDirectory/hardening on
-    aarch64 — build-only verified today).
+    aarch64 — build-only verified today). — still build-only → TODO_LIST (aarch64 re-verify row)
 
 ## g) Top questions I cannot figure out myself (max 3)
 
-1. **Which commit should carry the v2.0.0 tag?** The CHANGELOG's
-   compare links expect v2.0.0 to exist; this session's feature work
-   (15 TODO items) could either fold INTO v2.0.0 (retag current HEAD
-   once committed) or become v2.1.0 at the docs-overhaul commit. I
-   recommend: commit this session as-is, cut **v2.1.0** at the docs
-   commit, tag retroactively — but the call changes release history, so
-   it is yours. (And: pushing tags needs your explicit go-ahead.)
-2. **May I touch `nix-international-telephony` in a follow-up session,
-   and does its browser E2E run somewhere I can reach from here?** That
-   decides whether "upstream switchover" can ever be _done_ from this
-   machine or stays a documented handoff (input swap + config map +
-   E2E instructions).
-3. **Should service-layer validation reasons become i18n keys?**
-   `ErrInvalidSend.Reason`/`ErrInvalidFax.Reason` are English human
-   strings from the service layer (their documented contract). Making
-   them keys translates the last user-facing English strings but leaks
-   presentation into services; keeping them English means German users
-   see English for ~6 rare validation messages. I kept English and
-   documented it — confirm or overrule.
+1. ~~**Which commit should carry the v2.0.0 tag?**~~ Resolved: single `v2.0.0` tagged at the release commit `d9d6d03` (07:43 report); no 2.1.0 was cut.
+2. ~~**May I touch `nix-international-telephony` in a follow-up session,
+   and does its browser E2E run somewhere I can reach from here?**~~ Moot: the switchover was executed and the E2E run green (06:42 #12–15).
+3. ~~**Should service-layer validation reasons become i18n keys?**~~ **Won't implement —** they stay English by policy (operator-facing, runbook-greppable; AGENTS.md language bullet).
 
 ---
 

@@ -168,90 +168,87 @@ self-review and not yet ticketed.
 
 **Test depth (the product's real gap):**
 
-1. Unit-test the config loader (env `__`, JSON lists, defaults, bad
-   input) — High, S.
-2. Unit-test gateway webhook outbound (multipart, Bearer, `provider_ref`)
-   — High, M.
-3. pbx.Client error-path tests (timeout, 5xx, malformed) — Medium, M.
-4. Island JS unit tests, starting with connection.js watchdog — Medium, M.
+1. ~~Unit-test the config loader (env `__`, JSON lists, defaults, bad
+   input) — High, S.~~ done (18:50 #2)
+2. ~~Unit-test gateway webhook outbound (multipart, Bearer, `provider_ref`)
+   — High, M.~~ done (18:50 #3)
+3. ~~pbx.Client error-path tests (timeout, 5xx, malformed) — Medium, M.~~ done (18:50 #8)
+4. Island JS unit tests, starting with connection.js watchdog — Medium, M. → ROADMAP (JS test runner)
 5. Server SSE edge tests (the 0%-coverage sse.go/sse_test branches) —
-   Medium, S.
+   Medium, S. → ROADMAP (stream-shape + rate-limit tests exist; 401/heartbeat remain)
 6. Store contacts CRUD edge tests (contacts.go:23/37/70 at 0%) —
-   Medium, S.
+   Medium, S. → ROADMAP (testing long tail)
 7. Domain message/contact logic tests beyond ID parsing (ids.go 0%
-   funcs: 47, 81, 163–177) — Medium, S.
+   funcs: 47, 81, 163–177) — Medium, S. → ROADMAP (testing long tail)
 8. Coverage-regression tracking: trend file or threshold in the gate —
-   Medium, S.
+   Medium, S. → ROADMAP (union-coverage idea)
 9. Property/round-trip tests for branded ID parsing (ParseExtension ↔
-   String) — Low, M.
-10. Race-stress the SSE hubs (concurrent subscribe/notify) — Low, M.
+   String) — Low, M. → ROADMAP (testing long tail)
+10. Race-stress the SSE hubs (concurrent subscribe/notify) — Low, M. → ROADMAP (testing long tail)
 
 **Boundaries & enforcement:**
-11. Decide + fix the island invariant: move `getUserAgent` to state.js or
-correct AGENTS.md — High, S.
-12. Interim AGENTS.md correction marking the current calls.js reality
-(until 11 lands) — High, S.
-13. Machine-enforce import direction (depguard bans or structure
-linter) — Medium, M.
-14. Document the cqrs-lint indirect-dep skip in `.buildflow.yml` —
-Low, S.
+11. ~~Decide + fix the island invariant: move `getUserAgent` to state.js or
+correct AGENTS.md — High, S.~~ done (18:50 #1: `state.userAgent` + `wp:calls-changed` event decoupling)
+12. ~~Interim AGENTS.md correction marking the current calls.js reality
+(until 11 lands) — High, S.~~ done (18:50 rewrote the invariant; `internal/arch` enforces it)
+13. ~~Machine-enforce import direction (depguard bans or structure
+linter) — Medium, M.~~ done differently (18:50 #15: arch tests, no linter config)
+14. ~~Document the cqrs-lint indirect-dep skip in `.buildflow.yml` —
+Low, S.~~ done (06:42 #2)
 15. Add a DOM-contract assertion for `#log` English-only rule (the
-operator-grep contract) — Low, S.
+operator-grep contract) — Low, S. → ROADMAP (testing long tail)
 
 **Release & supply-chain hygiene:**
-16. Tag v2.0.0 so CHANGELOG compare/release links resolve — Medium, S.
-17. Nixpkgs channel bump for the 14 build-chain CVEs — Medium, S.
-18. Auto-fix the `lo.Reduce` nit in actions.go:240 (`buildflow -s
-    go-auto-upgrade --fix`) — Low, S.
-19. Extract the 14-line duplicated test helper while splitting
-server_test.go — Medium, M (bundled with 20).
-20. Split server_test.go by concern (sse/webhooks/proxy/session) —
-Medium, M.
+16. ~~Tag v2.0.0 so CHANGELOG compare/release links resolve — Medium, S.~~ done at `d9d6d03`
+17. ~~Nixpkgs channel bump for the 14 build-chain CVEs — Medium, S.~~ done (06:42 #7; glibc premise corrected `7ba25cc`)
+18. ~~Auto-fix the `lo.Reduce` nit in actions.go:240 (`buildflow -s
+    go-auto-upgrade --fix`) — Low, S.~~ **Won't implement —** `samber/lo` is not a dependency; warning-level findings deliberately tolerated (22:08 report §b.4)
+19. ~~Extract the 14-line duplicated test helper while splitting
+server_test.go — Medium, M (bundled with 20).~~ done (06:42 #5: `signIn`/`subscribeEvents` helpers)
+20. ~~Split server_test.go by concern (sse/webhooks/proxy/session) —
+Medium, M.~~ done (06:42 #5)
 21. Decide `reports/coverage.out` lifecycle: artifact to ignore or
-committed evidence (it is regenerated on every full run) — Low, S.
+committed evidence (it is regenerated on every full run) — Low, S. — trivial; left to the next gate run that surfaces it
 
 **Tooling & measurement:**
-22. Add the `-coverpkg` union metric to the buildflow test-coverage step
-— Medium, S.
-23. Commit the profile-merge as a tiny script so the union number is
-reproducible — Medium, S.
-24. Run `buildflow doctor` and resolve the 9 tools with failed health
-checks — Medium, S.
-25. Inspect `.github/` workflows: confirm CI runs `buildflow --build-mode
-    full` (tests + lint fail-closed) — Medium, S.
-26. Confirm whether the upstream browser E2E is wired into any CI, or is
-manual-only today — Medium, S.
+22. ~~Add the `-coverpkg` union metric to the buildflow test-coverage step
+— Medium, S.~~ **Won't implement —** upstream-blocked → ROADMAP
+23. ~~Commit the profile-merge as a tiny script so the union number is
+reproducible — Medium, S.~~ **Won't implement —** duplicates a BuildFlow-orchestrated step → ROADMAP
+24. ~~Run `buildflow doctor` and resolve the 9 tools with failed health
+checks — Medium, S.~~ → TODO_LIST
+25. ~~Inspect `.github/` workflows: confirm CI runs `buildflow --build-mode
+    full` (tests + lint fail-closed) — Medium, S.~~ done 2026-09-19: no workflows exist (buildflow is local-only)
+26. ~~Confirm whether the upstream browser E2E is wired into any CI, or is
+manual-only today — Medium, S.~~ done 2026-09-19: manual-only → ROADMAP (CI gate idea)
 
 **Docs & knowledge:**
-27. Write the union-coverage recipe + cqrs-lint triage into AGENTS.md
-hard-won knowledge — Medium, S.
-28. Record the per-package indirect-coverage table into FEATURES or the
-next status report so the baseline is comparable over time — Low, S.
-29. Link both 16:52 reports from the CHANGELOG `Unreleased` entry so the
-baseline evidence is discoverable from the living docs — Low, S.
-30. After the switchover lands, re-run the upstream browser E2E and
+27. ~~Write the union-coverage recipe + cqrs-lint triage into AGENTS.md
+hard-won knowledge — Medium, S.~~ cqrs-lint triage: done (`.buildflow.yml` + AGENTS); coverage recipe: **NOT-DO** (ROADMAP's union-coverage idea owns the need; the hand-merged recipe is niche)
+28. ~~Record the per-package indirect-coverage table into FEATURES or the
+next status report so the baseline is comparable over time — Low, S.~~ done (recorded in this + the 16:52 report)
+29. ~~Link both 16:52 reports from the CHANGELOG `Unreleased` entry so the
+baseline evidence is discoverable from the living docs — Low, S.~~ **NOT-DO —** both reports live under `docs/` and are discoverable; CHANGELOG stays user-facing
+30. ~~After the switchover lands, re-run the upstream browser E2E and
 record the result as the first E2E evidence in this repo's history —
-High, M (gated on the switchover TODO).
+High, M (gated on the switchover TODO).~~ done at `00f13fe` (green 06:42 — first v2-era E2E evidence)
 
 (Stopped at 30: the remaining gaps I could list are restatements of the
 existing 13 TODO_LIST rows — padding to 50 would manufacture work.)
 
 ## g) Up to 3 questions I cannot figure out myself
 
-1. **Coverage gate policy:** should BuildFlow _enforce_ a union-coverage
+1. ~~**Coverage gate policy:** should BuildFlow _enforce_ a union-coverage
    floor (e.g. fail below 50% hand-written, or on any regression), or
-   stay informational until after the upstream switchover? I can
-   implement either; the policy is yours.
-2. **Island invariant intent:** is `state.js`'s purpose "shared leaves so
+   stay informational until after the upstream switchover?~~ → ROADMAP (union-coverage idea; enforcement decision rides on it)
+2. ~~**Island invariant intent:** is `state.js`'s purpose "shared leaves so
    calls/ice/connection never import each other" a hard architectural
    rule (→ I move the `getUserAgent` accessor into state.js), or was the
    AGENTS.md sentence aspirational (→ I correct the doc to describe the
-   real one-way rule)? The code works either way; the contract is yours
-   to set.
-3. **Sequencing:** test-depth hardening (config/gateway/pbx — closes
+   real one-way rule)?~~ Resolved (18:50 #1): hard rule — `state.userAgent` + event decoupling, machine-enforced by `internal/arch`.
+3. ~~**Sequencing:** test-depth hardening (config/gateway/pbx — closes
    blind spots in this repo) vs. the upstream switchover in
-   nix-international-telephony (unblocks the only real browser E2E).
-   Both are High; which first?
+   nix-international-telephony (unblocks the only real browser E2E).~~ Moot: both done (test depth 18:50; switchover + green E2E 06:42).
 
 ---
 

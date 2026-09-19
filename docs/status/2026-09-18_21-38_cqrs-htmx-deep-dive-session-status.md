@@ -48,7 +48,7 @@ Each item verifiably complete this session (evidence cited; no code changed, so 
 
 ## b) PARTIALLY DONE
 
-1. **Consumer-file coverage is incomplete beyond the import surface.**
+1. ~~**Consumer-file coverage is incomplete beyond the import surface.**
    - Works: all files that _import_ cqrs-htmx read in full; hand-rolled counterparts of the
      6 findings read in full (recovery, keyed limiter, events loop, healthz, main).
    - Remains: `actions.go` tail (saveContact onward, contacts import/export),
@@ -57,38 +57,38 @@ Each item verifiably complete this session (evidence cited; no code changed, so 
    - Risk: an additional hand-rolled duplication (e.g. WriteJSON-equivalent, body-limit
      handling) could hide there and would make the audit _understate_ gaps.
    - Blocker: none — out of the session's self-imposed "don't research unrelated" scope.
-   - Effort to close: **S** (<30 min).
-2. **Implementation claims cite the master checkout, not the consumed tag.**
+   - Effort to close: **S** (<30 min).~~ — done: P4 of the execution session read all previously unread server files — no additional duplication (00-05 report §a.6).
+2. ~~**Implementation claims cite the master checkout, not the consumed tag.**
    - Works: `recovery.go`/`ServeSSE`/rate-limiter behavior verified against repo master
      `6cf46e62`.
    - Remains: no `git diff v4.9.0..master` check on those files; if they changed since the
      tag, report claims could be stale (confidence high they didn't — unverified).
-   - Blocker: none. Effort: **S** (`git show v4.9.0:sse_broadcaster.go` etc.).
-3. **Symbol map ~70% deep-read.** Structural index of all exported symbols complete;
+   - Blocker: none. Effort: **S** (`git show v4.9.0:sse_broadcaster.go` etc.).~~ — done: G1/G2 re-verified every claim against the consumed v4.9.0 module-cache bytes (00-05 report §a.1); the retry-hint claim died in that re-check and was corrected inline (F4).
+3. ~~**Symbol map ~70% deep-read.** Structural index of all exported symbols complete;
    ~30% of doc entries never deep-read (ack, notify, decoder, partial, redirect, security,
    openapi collector, event-catalog handlers). Blocker: none; marginal relevance to a
-   consumer that imports 4 symbols. Effort: **S**.
-4. **The audit's 6-item action plan is recommendation-only.** No middleware adopted, no
+   consumer that imports 4 symbols. Effort: **S**.~~ — done: symbol map completed in P4 (00-05 report §a.6).
+4. ~~**The audit's 6-item action plan is recommendation-only.** No middleware adopted, no
    branch, no tests run (nothing ran at all this session — nothing changed, nothing
-   verified by execution). Effort: items 1–4 together ≈ **M** (1 h).
-5. **Session knowledge not yet written into AGENTS.md.** The verified facts worth keeping
+   verified by execution). Effort: items 1–4 together ≈ **M** (1 h).~~ — done: P0–P3 executed 2026-09-18, all four gates green; re-scored 92/100 (00-05 report; plan annotated `44db922`).
+5. ~~**Session knowledge not yet written into AGENTS.md.** The verified facts worth keeping
    (audit location + score; PermissionsPolicy-breaks-mic refusal; partial-by-URL is
-   DOM-contract) are only in the report. Effort: **S**.
-6. **Skill Phase 6 (cross-skill refs) only implicit** — deduplicate-code relevance is stated
-   in prose; data-model-review correctly judged N.A. No explicit action taken. Effort: **S**.
+   DOM-contract) are only in the report. Effort: **S**.~~ — done at `2f6ffee` (adoption posture + audit pointer + tag-verification lesson).
+6. ~~**Skill Phase 6 (cross-skill refs) only implicit** — deduplicate-code relevance is stated
+   in prose; data-model-review correctly judged N.A. No explicit action taken. Effort: **S**.~~ — **NOT-DO —** the dedup angle was later exercised directly by the art-dupl session (22:55 report); no further action needed.
 
 ## c) NOT STARTED
 
 | Planned work                                                            | Why not started                                            | Still wanted?           |
 | ----------------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------- |
-| Adopt `cqrshtmx.RecoveryMiddleware` (delete `recovery()`)               | Audit was report-only by request; awaiting go-ahead        | Yes — top priority (S)  |
-| Add `cqrshtmx.RequestLoggingSlog` outermost                             | Same                                                       | Yes (S)                 |
-| Replace `keyedLimiter` with `httputil.KeyedRateLimiter` ×2 + port tests | Same; also gated on XFF-trust decision (question 1)        | Yes (M)                 |
-| Honest `/healthz` via `ReadinessHandler` + SQLite ping                  | Same; probe semantics of the stack unknown (question 2)    | Yes (S)                 |
-| Collapse `events` loop onto `Broadcaster.ServeSSE`                      | Same; island stream-shape sensitivity unknown (question 3) | Yes (S)                 |
-| `OOBHTML` unread-badge spike                                            | Needs E2E loop; explicitly gated as future spike           | Consider (M)            |
-| `docs-health` HARVEST of section (f) into TODO_LIST/ROADMAP             | Report was just written; user said wait for instructions   | Yes — must not skip (S) |
-| AGENTS.md memory update (posture + audit pointer)                       | Listed in (b)5, not yet done                               | Yes (S)                 |
+| ~~Adopt `cqrshtmx.RecoveryMiddleware` (delete `recovery()`)~~ — done at `bbd74a1`               | ~~Audit was report-only by request; awaiting go-ahead~~        | ~~Yes — top priority (S)~~  |
+| ~~Add `cqrshtmx.RequestLoggingSlog` outermost~~ — done at `fa3bafd`                      | Same                                                       | ~~Yes (S)~~                 |
+| ~~Replace `keyedLimiter` with `httputil.KeyedRateLimiter` ×2 + port tests~~ — done at `5bbe42d`, `753267a` | Same; also gated on XFF-trust decision (question 1)        | ~~Yes (M)~~                 |
+| ~~Honest `/healthz` via `ReadinessHandler` + SQLite ping~~ — done (P2, 00-05 report)                 | Same; probe semantics of the stack unknown (question 2)    | ~~Yes (S)~~                 |
+| ~~Collapse `events` loop onto `Broadcaster.ServeSSE`~~ — done at `aacae89`                     | Same; island stream-shape sensitivity unknown (question 3) | ~~Yes (S)~~                 |
+| ~~`OOBHTML` unread-badge spike~~ — PARKED with written adoption criteria (`docs/reviews/2026-09-18_oob-badge-spike-verdict.md`)           | Needs E2E loop; explicitly gated as future spike           | Consider (M)            |
+| ~~`docs-health` HARVEST of section (f) into TODO_LIST/ROADMAP~~ — done at `6015051`             | Report was just written; user said wait for instructions   | ~~Yes — must not skip (S)~~ |
+| ~~AGENTS.md memory update (posture + audit pointer)~~ — done at `2f6ffee`                      | Listed in (b)5, not yet done                               | ~~Yes (S)~~                 |
 
 ## d) TOTALLY FUCKED UP
 
