@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- NixOS module: `services.webphone.memoryMax` option wiring systemd
+  `MemoryMax` (default null = uncapped), an `/events` SSE location in
+  the module's own nginx vhost (proxy buffering off, HTTP/1.1, 3600s
+  read timeout), and `recommendedProxySettings` on the websocket
+  location.
+- `nixosModules.webphone` alias next to `nixosModules.default`.
+- The `webphone-module` flake check now asserts the generated vhost
+  locations (`/`, the websocket path, `/events`) and the `webphone`
+  systemd unit in the evaluated config, not just the rendered config
+  JSON.
 - Island lint gate: `checks.island-lint` runs oxlint (fail-closed,
   `no-undef` error) over the island modules and `shell.js` on every
   `nix flake check` — the class of silent ReferenceError behind the
@@ -43,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- NixOS module: a `dataDir` outside `/var/lib/` fails evaluation with
+  an explanatory assertion (systemd StateDirectory is derived from it).
+- devShell exports `GOEXPERIMENT=jsonv2` + `GOTOOLCHAIN=local`, so
+  bare `go` commands work inside `nix develop`.
+- Flake style: `lib.*` (flake-parts perSystem lib) instead of
+  `pkgs.lib.*`, no `with pkgs;` in the devShell, and the package `src`
+  narrowed to `cmd/`, `internal/`, `go.mod`, `go.sum` via
+  `lib.fileset` (smaller store source).
 - `/version` reports the build version injected by the flake via
   ldflags (previously `(devel)` outside `go install` contexts).
 - Frontend CSRF wiring is JSON-valid by construction: the shell's

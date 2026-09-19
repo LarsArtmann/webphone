@@ -26,12 +26,39 @@ event-sourced usermgmt users, but this product's identity is the PBX
 extension + directory password (proven by the island's SIP REGISTER) —
 a second user database would be a split brain.
 
+## Tri-repo integration state (2026-09-19)
+
+- The stack (`nix-international-telephony`) imports
+  `nixosModules.default` and RIDES webphone `main` (not tags; pins move
+  fast, the runbook's stack-bump step covers releases). pbx-artmann
+  consumes the stack via a `path:` input — so changes must be PUSHED in
+  webphone before the stack re-pins, and the stack tree must be CLEAN
+  before pbx-artmann re-locks (the path narHash covers the whole tree).
+- The NixOS module this repo ships: options `enable`, `package`,
+  `dataDir` (MUST live under `/var/lib/` — assertion, because systemd
+  StateDirectory is derived from it), `settings` (freeform),
+  `environmentFile`, `memoryMax` (null = uncapped, wires systemd
+  MemoryMax), `nginx.{enable,hostName}`. Its vhost proxies `/`, the
+  websocket path (upgraded, 3600s), and `/events` (SSE: buffering off,
+  HTTP/1.1, 3600s). `nixosModules.webphone` is an alias of `.default`.
+- The `webphone-module` flake check evaluates the module with stand-in
+  options (nginx/systemd/users + `assertions` — NixOS's modules.nix
+  normally provides `assertions`; new config keys the module writes
+  need a stand-in there) and asserts the three vhost locations plus the
+  `webphone` systemd unit. Statix pins single-assignment style: all
+  `locations` in ONE attrset (three `locations.X =` assignments fail
+  the gate).
+- webphone's gateway seam (loopback vs webhook) is consumed by
+  pbx-artmann's `telnyx-webhooks.py` bridge (secrets via LoadCredential/
+  EnvironmentFile under `/var/lib/telephony-secrets`) — contracts in
+  the plan doc `docs/planning/2026-09-19_11-51_SUPERB-*`.
+
 ## Commands
 
 ```console
-nix develop                        # Go, templ, golangci-lint, esbuild, …
+nix develop                        # Go, templ, golangci-lint, esbuild, … — the shell exports GOEXPERIMENT=jsonv2 + GOTOOLCHAIN=local, so bare `go` commands work inside it
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
-GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command (templ-components); -count=1: the result cache has lied during investigations
+GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations
 python3 scripts/webphone-smoke.py          # 21-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
 nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings)
