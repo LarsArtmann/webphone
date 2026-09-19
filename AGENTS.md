@@ -310,6 +310,13 @@ continuously — work in small, explicitly-committed units.
    announcing.
 8. **aarch64**: `nix build .#webphone --system aarch64-linux` — plain
    `nix flake check` silently omits aarch64 (it says so in a warning).
+   Do NOT reach for `nix flake check --all-systems` as the fix: it is
+   evaluation-only for other systems (verified 2026-09-19 — zero
+   derivations built, "running 0 flake checks") and gates nothing.
+   Checks DO cross-build if you name them:
+   `nix build .#checks.aarch64-linux.island-lint` ran green cross-arch
+   (oxlint substitutes from cache.nixos.org), so the aarch64 gate is
+   explicit cross-builds of the package + the checks you care about.
 
 ## Buildflow health warning, itemized (2026-09-19)
 
