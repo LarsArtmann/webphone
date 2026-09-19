@@ -58,8 +58,8 @@ a second user database would be a split brain.
 ```console
 nix develop                        # Go, templ, golangci-lint, esbuild, … — the shell exports GOEXPERIMENT=jsonv2 + GOTOOLCHAIN=local, so bare `go` commands work inside it
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
-GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations
-python3 scripts/webphone-smoke.py          # 26-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server)
+GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations. Since the go 1.27.1 floor, OUTSIDE-the-shell go commands also need the 1.27 toolchain — prefer `nix develop -c` wrappers
+python3 scripts/webphone-smoke.py          # 28-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server; includes /livez + /startupz)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
 nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings)
 nix flake check                            # package build + tests in sandbox + treefmt + island-lint
