@@ -27,7 +27,7 @@ Code wins when doc and code disagree.
 | Inbound SMS/MMS via webhook   | 🟢 FULLY_FUNCTIONAL | `/hooks/message`, base64 attachments, Bearer secret, fail-closed                                                                               |
 | Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)                                                                          |
 | Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal                                                                      |
-| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)                                                                               |
+| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry bare fragments; surfaces morph-swap (idiomorph, 2.4.0) so drafts/focus survive pushes                                        |
 | Transcript pagination         | 🟢 FULLY_FUNCTIONAL | "Load older messages" fetches prior pages (`?older=`); LIMIT+1 hasMore; paging state survives SSE pushes and a live swap marks the thread read |
 | Delivery receipts             | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge live via SSE. `delivered` needs a callback-capable provider (loopback marks `sent`)     |
 
@@ -72,7 +72,7 @@ Code wins when doc and code disagree.
 | Feature                    | Status              | Notes                                                                        |
 | -------------------------- | ------------------- | ---------------------------------------------------------------------------- |
 | Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                            |
-| Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | `threads`/`thread`/`fax` payloads never wipe a composer draft                |
+| Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | Bare-fragment payloads; live surfaces morph-swap (idiomorph via cqrs-htmx, 2.4.0) so drafts, focus and paging survive |
 | Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload              |
 | SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame           |
 | Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy |
@@ -104,7 +104,7 @@ Code wins when doc and code disagree.
 | Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
 | i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
 | Dark + light themes          | 🟢 FULLY_FUNCTIONAL | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
-| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL | Green 2026-09-19 against webphone `a0ce1e6` (dial affordances, presence badge, contacts single-home): E2E-OK, DTMF, reconnect-recovery                                                  |
+| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL | Green 2026-09-20 against the idiomorph merge branch (`--override-input`, 148 s: dial affordances, presence badge, contacts single-home, transfers, DTMF, reconnect-recovery); re-gated in-train on the v2.4.0 stack relock |
 
 ## PLANNED / WORTH_CONSIDERING
 

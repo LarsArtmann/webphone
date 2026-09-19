@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-09-20
+
 ### Fixed
 
 - The NixOS module satisfies statix's repeated-key gate: the three
@@ -388,7 +390,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.4.0
 [2.3.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.3.0
 [2.2.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.2.0
 [2.1.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.1.0
