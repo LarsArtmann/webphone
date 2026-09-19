@@ -62,7 +62,7 @@ Code wins when doc and code disagree.
 | Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | ONE home for tab AND island: upsert-by-number, delete, click-to-dial; the island reads/writes via `/api/contacts`                     |
 | Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears            |
 | vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                          |
-| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                                                                   |
+| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | Login verifies the credentials against the PBX directory server-side (`VerifyCredentials`, fail-closed), then opens the tab session; logout closes it |
 | Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                      |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                              |
 | CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config |
@@ -73,7 +73,7 @@ Code wins when doc and code disagree.
 | -------------------------- | ------------------- | ---------------------------------------------------------------------------- |
 | Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                            |
 | Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | `threads`/`thread`/`fax` payloads never wipe a composer draft                |
-| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-REGISTER without a reload           |
+| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload            |
 | SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame           |
 | Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy |
 
