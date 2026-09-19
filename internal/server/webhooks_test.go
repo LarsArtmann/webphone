@@ -322,13 +322,20 @@ func TestFaxStatusWebhookUpdatesJob(t *testing.T) {
 		t.Fatalf("fax panel missing failure: %.300s", body)
 	}
 
-	// Unknown refs and invalid statuses are rejected.
+	// Unknown refs, empty refs, and invalid statuses are rejected.
 	badRef, _ := json.Marshal(map[string]string{"provider_ref": "nope", "status": "failed"})
 	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badRef))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer test-secret")
 	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusNotFound {
 		t.Fatalf("unknown provider_ref: %d (want 404)", resp.StatusCode)
+	}
+	emptyRef, _ := json.Marshal(map[string]string{"provider_ref": "", "status": "failed"})
+	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(emptyRef))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer test-secret")
+	if resp, _ := server.Client().Do(req); resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("empty provider_ref: %d (want 400, parity with message hook)", resp.StatusCode)
 	}
 	badStatus, _ := json.Marshal(map[string]string{"provider_ref": jobs[0].ProviderRef, "status": "queued"})
 	req, _ = http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", bytes.NewReader(badStatus))

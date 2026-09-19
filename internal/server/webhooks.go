@@ -222,6 +222,10 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "status must be transmitted or failed", http.StatusBadRequest)
 		return
 	}
+	if payload.ProviderRef == "" {
+		http.Error(w, "provider_ref is required", http.StatusBadRequest)
+		return
+	}
 
 	key := "fax/" + payload.ProviderRef
 	if h.hooksIdem.seen(key) {
@@ -229,8 +233,14 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Mirror hookMessageStatus: a missing job is a 404, anything else
+	// (storage broken, ref claimed twice) is a 500 so providers retry.
 	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.count(), payload.Error); err != nil {
-		http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
+		if errors.Is(err, store.ErrNotFound) {
+			http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, "could not update fax: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable

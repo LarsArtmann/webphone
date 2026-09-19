@@ -156,6 +156,39 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 	}
 }
 
+func TestMessageProviderRefUniqueness(t *testing.T) {
+	messages, _, _ := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	remote := domain.MustParsePhone("+441632960961")
+	now := time.Now()
+
+	threadID, err := messages.FindThread(ctx, owner, remote, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mk := func(ref string) domain.Message {
+		return domain.Message{
+			ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: owner, Remote: remote,
+			Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
+			Body: "claiming " + ref, Status: domain.StatusSent, ProviderRef: ref, CreatedAt: now,
+		}
+	}
+
+	if err := messages.AppendMessage(ctx, mk("ref-dup")); err != nil {
+		t.Fatal(err)
+	}
+	// The UNIQUE partial index is the last line of defense against a
+	// replayed status webhook double-claiming one ref.
+	if err := messages.AppendMessage(ctx, mk("ref-dup")); err == nil {
+		t.Fatal("second message with the same provider_ref must be rejected")
+	}
+	// Empty refs (queued, inbound) are exempt: many messages may wait.
+	if err := messages.AppendMessage(ctx, mk("")); err != nil {
+		t.Fatalf("empty provider_ref rows must not collide: %v", err)
+	}
+}
+
 func TestFaxJobStatusMachine(t *testing.T) {
 	_, faxes, _ := newTestDB(t)
 	ctx := context.Background()

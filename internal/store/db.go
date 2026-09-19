@@ -60,6 +60,10 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			created_at   INTEGER NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, created_at)`,
+		// Parity with idx_fax_provider_ref: a provider ref identifies
+		// exactly one outbound message, so replayed status webhooks can
+		// never double-apply. Empty refs (inbound, queued) are exempt.
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_provider_ref ON messages(provider_ref) WHERE provider_ref != ''`,
 		`CREATE TABLE IF NOT EXISTS attachments (
 			id         TEXT PRIMARY KEY,
 			message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
