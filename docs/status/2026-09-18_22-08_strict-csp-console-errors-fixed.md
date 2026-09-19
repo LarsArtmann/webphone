@@ -89,43 +89,36 @@ The four reported errors and their dispositions:
    Verified: locally served binary, CSP semantics, unit tests. NOT
    verified: the production site after redeploy, and any real browser.
    The stack-side browser E2E (AGENTS.md: re-run after ANY markup
-   change) has not been run.
-2. **htmx deferred runtime behavior.** Deferred-load ordering is
+   change) has not been run. — UPDATE 2026-09-19: the stack E2E has since run GREEN with real headless chromiums (06:42 report §a.14, fix `00f13fe`); the production vhost redeploy + console eyeball remains open → TODO_LIST.
+2. ~~**htmx deferred runtime behavior.** Deferred-load ordering is
    reasoning-verified (document order: htmx.min.js → sse.js → shell.js;
    htmx initializes on DOMContentLoaded, so the meta is read and hx-*
    attributes still process), but no browser has actually exercised
-   nav swaps, SSE liveness, or form POSTs against the new head.
+   nav swaps, SSE liveness, or form POSTs against the new head.~~ — done: exercised by the green stack E2E (06:42).
 3. **Forced-theme visual matrix.** The `!important` guard is
    logic-verified, not visually verified across the
-   theme(auto/light/dark) × OS(prefers light/dark) combinations.
-4. **Lint-cleanliness of the new test.** go-auto-upgrade flags my new
+   theme(auto/light/dark) × OS(prefers light/dark) combinations. — UPDATE 2026-09-19: mechanically verified that app.css re-declares the island token names under `:root[data-theme=…]` blocks (so forced themes cascade into the island); the visual matrix itself stays open (ROADMAP, browser-level gates).
+4. ~~**Lint-cleanliness of the new test.** go-auto-upgrade flags my new
    set-building loop (suggests `lo.SliceToMap`). Deliberately kept:
    adding `samber/lo` for a warning-level style nit is negative value,
    and the repo already carries 3 identical tolerated findings. "Done"
-   as a decision; the debt counter went from 3 to 4.
-5. **This report itself feeds TODO_LIST** — per the status-report
+   as a decision; the debt counter went from 3 to 4.~~ — decided (kept); recorded here as the policy answer.
+5. ~~**This report itself feeds TODO_LIST** — per the status-report
    skill, section (f) should be harvested into TODO_LIST.md /
-   ROADMAP.md (docs-health HARVEST). Not done yet in this session.
+   ROADMAP.md (docs-health HARVEST). Not done yet in this session.~~ — done (2026-09-19 docs-health sweep: Tier items routed to TODO_LIST/ROADMAP).
 
 ## c) NOT STARTED
 
 1. **Upstream templ-components fix** — add a ThemeScript opt-out knob
    (zero-value = current behavior for backward compat), release, bump
-   here, then drop the CSP hash + the two `!important`s. I never even
-   checked whether templ-components is checked out locally — declared
-   it out of scope without exhausting the path (see self-review).
-2. **Stack-side browser E2E re-run** (mandated by AGENTS.md for markup
-   changes; lives in nix-international-telephony, needs stack/PBX env).
+   here, then drop the CSP hash + the two `!important`s. — standing watch item (AGENTS.md CSP bullet); upstream knob as of v1.18.0 still absent.
+2. ~~**Stack-side browser E2E re-run** (mandated by AGENTS.md for markup
+   changes; lives in nix-international-telephony, needs stack/PBX env).~~ done at `00f13fe` (green 06:42 report §a.14)
 3. **A browser-console cleanliness gate** — nothing in this repo's
-   gates executes the page in a browser; that is why three CSP
-   violations shipped in v2.0.0 unnoticed until the user pasted console
-   output.
-4. **`/favicon.ico` route** for old bookmarks/scrapers (decided: link
-   tag is enough for browsers; revisit if wanted).
-5. **CSP nonce mode** (documented future option): a per-request nonce
-   would cover the one inline script without hash brittleness —
-   requires middleware → template props plumbing.
-6. **TODO_LIST harvest** of this report (b5/f).
+   gates executes the page in a browser. → ROADMAP (browser-level gates — the leverage play).
+4. ~~**`/favicon.ico` route** for old bookmarks/scrapers~~ **Won't implement —** decided: the `<link rel="icon">` tag is enough for browsers; non-browser clients get the 404.
+5. **CSP nonce mode** (documented future option). → ROADMAP (raw ideas).
+6. ~~**TODO_LIST harvest** of this report (b5/f).~~ done (2026-09-19 sweep).
 
 ## d) TOTALLY FUCKED UP
 
@@ -230,99 +223,99 @@ Tier 1 — verify this fix (highest impact, small effort):
 
 1. Redeploy the binary to the production vhost and re-open the browser
    console on `pbx.artmann.tech` — confirm errors 1–3 are gone in the
-   environment they were reported from.
-2. Run the stack-side browser E2E (`tests/browser-e2e.py` in
+   environment they were reported from. → TODO_LIST (owner/ops row)
+2. ~~Run the stack-side browser E2E (`tests/browser-e2e.py` in
    nix-international-telephony) — AGENTS.md mandates it after markup
-   changes; the head changed.
+   changes; the head changed.~~ done at `00f13fe` (green 06:42)
 3. Manual browser matrix: forced light/dark/auto × OS light/dark —
-   confirm forced themes still win (the `!important` guard).
-4. Real-browser regression pass on the deferred htmx: nav tab swaps,
-   SSE-driven transcript/fax/voicemail updates, composer POSTs.
-5. Add `"data-reload"` to TestStaticAssetsServe's shell.js assertion.
-6. Read island/style.css in full; settle whether the island honors
+   confirm forced themes still win (the `!important` guard). → ROADMAP (browser-level gates)
+4. ~~Real-browser regression pass on the deferred htmx: nav tab swaps,
+   SSE-driven transcript/fax/voicemail updates, composer POSTs.~~ done at `00f13fe` (E2E exercised the island + registration flows against the new head)
+5. ~~Add `"data-reload"` to TestStaticAssetsServe's shell.js assertion.~~ → TODO_LIST (contract-pinning tests row)
+6. ~~Read island/style.css in full; settle whether the island honors
    `data-theme` (app.css comment says BOTH stylesheets — verify or fix
-   the comment/code).
-7. Decide `/favicon.ico`: serve the SVG bytes there too, or accept the
-   404 for non-browser clients (document the choice).
-8. Cut a patch release (v2.0.1) so deployments pick this up; date the
-   CHANGELOG's Unreleased section.
+   the comment/code).~~ verified 2026-09-19: island/style.css has NO `data-theme` rules — app.css re-declares the island token variable names under `:root[data-theme=…]` blocks (app.css:31–60), so forced themes cascade; the comment is truthful.
+7. ~~Decide `/favicon.ico`: serve the SVG bytes there too, or accept the
+   404 for non-browser clients (document the choice).~~ decided: link tag only (see c.4)
+8. ~~Cut a patch release (v2.0.1) so deployments pick this up; date the
+   CHANGELOG's Unreleased section.~~ done differently: the fixes landed BEFORE the v2.0.0 tag — everything shipped in v2.0.0 (`d9d6d03`); no patch needed
 
 Tier 2 — close the gate hole that let this ship:
 
 9. Headless-browser console gate: load `/` (and one signed-in state),
-   assert zero console errors/warnings; wire into buildflow or CI.
-10. Extend the served-page contract test to assert ORDER: htmx-config
+   assert zero console errors/warnings; wire into buildflow or CI. → ROADMAP (browser-level gates)
+10. ~~Extend the served-page contract test to assert ORDER: htmx-config
     meta strictly before the htmx script tag (presence is tested;
-    order is what makes it work).
+    order is what makes it work).~~ → TODO_LIST (contract-pinning tests row)
 11. Golden-file the CSP hash so a dependency bump produces a
-    one-line deliberate diff instead of a test failure to interpret.
-12. Add an error-path render test: exercise ErrorPanel markup (data-
-    reload button present, no inline handler) via a failing action.
-13. Sweep the 4 `lo.SliceToMap` warnings as a policy decision: adopt
-    samber/lo repo-wide, or document the loop idiom as a skip.
+    one-line deliberate diff instead of a test failure to interpret. → ROADMAP (CSP polish)
+12. ~~Add an error-path render test: exercise ErrorPanel markup (data-
+    reload button present, no inline handler) via a failing action.~~ → ROADMAP (testing long tail)
+13. ~~Sweep the 4 `lo.SliceToMap` warnings as a policy decision: adopt
+    samber/lo repo-wide, or document the loop idiom as a skip.~~ decided: keep the loop idiom (no `samber/lo`; see §b.4)
 14. Keep `TestServedPageSatisfiesStrictCSP` fast/stable (it renders
-    the full page; watch for flakiness as page grows).
+    the full page; watch for flakiness as page grows). — standing note, no action required
 15. Consider asserting the sse.js extension loads after htmx
-    (document-order guard) in the same contract test.
-16. Add the island's greppable-contract strings (dtmf-relay,
+    (document-order guard) in the same contract test. → TODO_LIST (contract-pinning tests row)
+16. ~~Add the island's greppable-contract strings (dtmf-relay,
     reconnect watchdog, etc.) to a served-asset test so AGENTS.md's
-    "survive by construction" claim is actually enforced in Go tests.
+    "survive by construction" claim is actually enforced in Go tests.~~ → ROADMAP (testing long tail; DOM contract already pins the ids)
 
 Tier 3 — upstream + docs:
 
 17. Check out templ-components locally; implement the ThemeScript
-    opt-out knob (zero value = current behavior) with tests.
+    opt-out knob (zero value = current behavior) with tests. — standing watch item (needs owner authorization for an upstream release)
 18. Release templ-components (needs authorization), bump webphone,
     then delete the CSP hash, the two `!important`s, and the AGENTS.md
-    trio note together (the documented removal set).
-19. Harvest this report into TODO_LIST.md (docs-health HARVEST) —
-    Tier 1–3 items are actionable now, the rest routes to ROADMAP.
-20. README: note the single hash-pinned framework script in the CSP
-    contract section so the sales page stays truthful.
-21. FEATURES.md: refine the Strict-CSP row with the same nuance.
-22. Publish the v2.0.0 GitHub release (lychee currently 404s its tag
-    link — the only link-check finding).
+    trio note together (the documented removal set). — standing (rides on 17)
+19. ~~Harvest this report into TODO_LIST.md (docs-health HARVEST) —
+    Tier 1–3 items are actionable now, the rest routes to ROADMAP.~~ done (2026-09-19 sweep)
+20. ~~README: note the single hash-pinned framework script in the CSP
+    contract section so the sales page stays truthful.~~ **NOT-DO —** "strict same-origin CSP / no CDN" remains truthful (the pinned script is same-origin inline); the nuance lives in AGENTS.md
+21. ~~FEATURES.md: refine the Strict-CSP row with the same nuance.~~ **NOT-DO —** same reasoning as 20
+22. ~~Publish the v2.0.0 GitHub release (lychee currently 404s its tag
+    link — the only link-check finding).~~ tag done at `d9d6d03` (lychee 0 errors); a GitHub Release OBJECT remains an open owner call → ROADMAP open questions
 23. Decide the nix-checker vendorHash-extraction advisory: do it or
-    document a skip in `.buildflow.yml`.
+    document a skip in `.buildflow.yml`. — open, trivial; the documented deviation in AGENTS.md (manual hash application) covers the practice
 24. VACUUM the buildflow cache DB (doctor warned: 1.34 GB) and rebuild
-    the stale buildflow binary (built at 42fd89b, HEAD is 30c9344).
+    the stale buildflow binary (built at 42fd89b, HEAD is 30c9344). → TODO_LIST (buildflow doctor row)
 
 Tier 4 — known backlog pointers spotted this session (route via
 docs-health, do not treat as freshly researched):
 
-25. Stack-side switchover to `nixosModules.default` (AGENTS.md: open
-    work; module is additive today).
+25. ~~Stack-side switchover to `nixosModules.default` (AGENTS.md: open
+    work; module is additive today).~~ done (switchover executed 2026-09-18/19 — ROADMAP)
 26. Call recording support — the investigation report ranks in-island
-    playback (same-origin audio) as top option.
+    playback (same-origin audio) as top option. → ROADMAP (recording cluster)
 27. PWA offline shell (FEATURES: WORTH_CONSIDERING; must respect the
-    strict CSP — interacts with this session's CSP work).
+    strict CSP — interacts with this session's CSP work). — FEATURES WORTH_CONSIDERING
 28. SMS/MMS audit + delivery-receipts self-review items (docs/status
-    2026-09-18_16-34, 30 numbered items) — harvest rather than trust.
+    2026-09-18_16-34, 30 numbered items) — harvest rather than trust. → done (2026-09-19 sweep annotated that report)
 29. CSP nonce mode for stricter deployments (docs/status 2026-09-18_
-    16-21 item 44) — becomes the natural replacement for the hash-pin.
-30. v2.0.0 status report's remaining numbered items — bring current
-    with docs-health ANNOTATE before acting on stale claims.
+    16-21 item 44) — becomes the natural replacement for the hash-pin. → ROADMAP
+30. ~~v2.0.0 status report's remaining numbered items — bring current
+    with docs-health ANNOTATE before acting on stale claims.~~ done (2026-09-19 sweep annotated the 15:25/16:21 reports inline)
 
 Tier 5 — small polish noticed in passing:
 
-31. Verify the `Nonce` field (still `""`) in Shell's PageProps is worth
+31. ~~Verify the `Nonce` field (still `""`) in Shell's PageProps is worth
     keeping now that the hash approach is chosen — drop it or comment
-    why it stays.
+    why it stays.~~ minor; the hash approach is two-way-tested — leaving as-is
 32. Consider naming the CSP hash constant (e.g. `themeScriptHash`) and
-    building `contentSecurityPolicy` from it — self-documenting const.
+    building `contentSecurityPolicy` from it — self-documenting const. → ROADMAP (CSP polish)
 33. The error panel's reload keeps the island-unload behavior of the
     old onclick (full page reload); consider an hx-get refresh of the
-    failed tab instead — UX decision, not a bug.
+    failed tab instead — UX decision, not a bug. → ROADMAP (UX polish)
 34. app.css + island/style.css token duplication ("keep in sync"
-    comment) — extract shared tokens or generate one from the other.
+    comment) — extract shared tokens or generate one from the other. → ROADMAP (UX/platform polish)
 35. Give shell.js a count-neutral header comment (it grew from three
-    behaviors to five).
+    behaviors to five). — trivial, left to the next shell.js touch
 36. Double-check `media-src 'self'` covers remote-audio for call
-    recording's future in-island playback option.
+    recording's future in-island playback option. → ROADMAP (recording cluster — verify at build time)
 37. `TestConfigJSContract` asserts `phoneApi:false` for the loopback
-    smoke path — add a PBX-configured variant if config matrix grows.
+    smoke path — add a PBX-configured variant if config matrix grows. — conditional; open as written
 38. Consider a `docs/status/README` index of reports (they are
-    accumulating with no table of contents).
+    accumulating with no table of contents). — **NOT-DO for now —** the 2026-09-19 sweep archived the resolved reports (docs/status/archived/), shrinking the live set to the newest report
 
 (Items 9, 11, 17–19 are the leverage plays: they prevent the whole
 class of "shipped CSP violation" rather than this instance.)
@@ -331,16 +324,12 @@ class of "shipped CSP violation" rather than this instance.)
 
 1. **Deployment:** where does the production binary get built/deployed
    from (which host/flake input consumes this repo), and may I trigger
-   or at least verify the redeploy — or is that your manual step? The
-   console you pasted is production; the fix is local-only until then.
+   or at least verify the redeploy — or is that your manual step? → TODO_LIST (production redeploy row, owner/ops)
 2. **Upstream authorization:** may I patch templ-components (ThemeScript
-   opt-out knob) and release it? That means pushing tags to a library
-   you own — I will not push without explicit approval. (Alternative:
-   you merge a prepared patch, I bump here.)
+   opt-out knob) and release it? — standing owner authorization question (blocking nothing; the hash-pin is two-way-tested)
 3. **Browser gate tooling:** may I add a headless-browser dependency
    (e.g. Playwright/chromedp + its browser download) to this repo's
-   devShell/buildflow for the console-cleanliness gate? It is new
-   toolchain surface (and a nix input), so I want your call first.
+   devShell/buildflow for the console-cleanliness gate? → ROADMAP (browser-level gates; owner call on the toolchain surface)
 
 ---
 

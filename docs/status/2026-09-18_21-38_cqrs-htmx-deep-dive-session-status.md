@@ -145,76 +145,76 @@ Brainstorm per the skill's rule: items past the first ~10 are ROADMAP fuel; HARV
 
 | #  | Task                                                                                                          | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 1  | Swap `recovery()` for `cqrshtmx.RecoveryMiddleware`; delete server.go:131-141                                 | High   | S      | Cleanup       |
-| 2  | Wrap chain outermost with `cqrshtmx.RequestLoggingSlog(slog.Default())`; assert no body/credential logging    | High   | S      | Quality       |
-| 3  | Replace both `newKeyedLimiter` uses with `httputil.KeyedRateLimiterConfig` middleware; port ratelimit_test.go | High   | M      | Cleanup       |
-| 4  | `/healthz` → `cqrshtmx.ReadinessHandler` with SQLite ping (`db.Ping`) + blob-dir write check                  | High   | S      | Feature       |
-| 5  | Collapse `events` loop onto `Broadcaster.ServeSSE` (keep session gate + SetLang in front)                     | Medium | S      | Cleanup       |
-| 6  | Decide rate-limit key: `KeyExtractorFromRemoteAddr` vs `FromClientIP` (needs stack XFF answer, question 1)    | Medium | S      | Decision      |
-| 7  | Run `GOEXPERIMENT=jsonv2 go test ./...` + `TestServedPageHoldsTheDomContract` after 1–5                       | High   | S      | Quality       |
-| 8  | `buildflow` + `nix flake check` gate run                                                                      | High   | S      | Quality       |
-| 9  | Update AGENTS.md posture + CHANGELOG entry for the adoption                                                   | Medium | S      | Documentation |
-| 10 | Confirm zero markup change → skip stack E2E; if any doubt, re-run `tests/browser-e2e.py` upstream             | Medium | S      | Quality       |
+| ~~1  | Swap `recovery()` for `cqrshtmx.RecoveryMiddleware`; delete server.go:131-141~~ done at `bbd74a1` | High   | S      | Cleanup       |
+| ~~2  | Wrap chain outermost with `cqrshtmx.RequestLoggingSlog(slog.Default())`; assert no body/credential logging~~ done at `fa3bafd` | High   | S      | Quality       |
+| ~~3  | Replace both `newKeyedLimiter` uses with `httputil.KeyedRateLimiterConfig` middleware; port ratelimit_test.go~~ done at `5bbe42d`, `753267a` | High   | M      | Cleanup       |
+| ~~4  | `/healthz` → `cqrshtmx.ReadinessHandler` with SQLite ping (`db.Ping`) + blob-dir write check~~ done (P2, 00-05 report) | High   | S      | Feature       |
+| ~~5  | Collapse `events` loop onto `Broadcaster.ServeSSE` (keep session gate + SetLang in front)~~ done at `aacae89` | Medium | S      | Cleanup       |
+| ~~6  | Decide rate-limit key: `KeyExtractorFromRemoteAddr` vs `FromClientIP` (needs stack XFF answer, question 1)~~ done as safe default (`remoteHostKey`) + documented flip rule; XFF → ROADMAP open questions | Medium | S      | Decision      |
+| ~~7  | Run `GOEXPERIMENT=jsonv2 go test ./...` + `TestServedPageHoldsTheDomContract` after 1–5~~ done (V1 gate green, 00-05 report §a.4) | High   | S      | Quality       |
+| ~~8  | `buildflow` + `nix flake check` gate run~~ done (B1/B2 green, 00-05 report §a.4) | High   | S      | Quality       |
+| ~~9  | Update AGENTS.md posture + CHANGELOG entry for the adoption~~ done at `2f6ffee`, `6015051` | Medium | S      | Documentation |
+| ~~10 | Confirm zero markup change → skip stack E2E; if any doubt, re-run `tests/browser-e2e.py` upstream~~ done (documented skip verdict; the E2E later ran green anyway at `00f13fe`) | Medium | S      | Quality       |
 
 **Tier 2 — close the audit's own gaps:**
 
 | #  | Task                                                                                                              | Impact | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 11 | Re-verify recovery/ServeSSE/rate-limiter claims against `git show v4.9.0:<file>`                                  | Medium | S      | Quality       |
-| 12 | Read webhooks.go bodies, actions.go tail, panels.go, proxy.go, configjs.go; amend report if new duplication found | Medium | S      | Quality       |
-| 13 | Deep-read remaining go doc sections (ack, notify, decoder, partial, redirect, security, openapi)                  | Low    | S      | Quality       |
-| 14 | Append score rubric table to the report (make 62 reproducible)                                                    | Low    | S      | Documentation |
-| 15 | HARVEST section (f) into TODO_LIST.md / ROADMAP.md via docs-health                                                | High   | S      | Documentation |
+| ~~11 | Re-verify recovery/ServeSSE/rate-limiter claims against `git show v4.9.0:<file>`~~ done (00-05 §a.1, module-cache bytes) | Medium | S      | Quality       |
+| ~~12 | Read webhooks.go bodies, actions.go tail, panels.go, proxy.go, configjs.go; amend report if new duplication found~~ done (P4 — none found) | Medium | S      | Quality       |
+| ~~13 | Deep-read remaining go doc sections (ack, notify, decoder, partial, redirect, security, openapi)~~ done (P4 symbol map complete)   | Low    | S      | Quality       |
+| ~~14 | Append score rubric table to the report (make 62 reproducible)~~ done (rubric appendix; re-scored 92, plan annotated `44db922`)    | Low    | S      | Documentation |
+| ~~15 | HARVEST section (f) into TODO_LIST.md / ROADMAP.md via docs-health~~ done at `6015051` | High   | S      | Documentation |
 
 **Tier 3 — product-grade enhancements unlocked by the library:**
 
 | #  | Task                                                                                                   | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| 16 | OOBHTML spike: live nav unread-badge update inside SSE payloads (E2E-gated)                            | High   | M      | Feature       |
-| 17 | Use the `connected` SSE event to drive an island "live" indicator after #5                             | Medium | S      | Feature       |
-| 18 | Toast feedback via HX-Trigger + `cqrshtmx.ToastDetail` for send/save/error UX (island listener needed) | Medium | M      | Feature       |
-| 19 | Rate-limit `/events` itself (unlimited reconnect churn currently unthrottled)                          | Medium | S      | Quality       |
-| 20 | Per-extension hub teardown after long idle (hubs are never torn down today)                            | Low    | M      | Quality       |
-| 21 | Idempotency guard for `/hooks/*/status` (provider retries double-applying verdicts)                    | Medium | M      | Feature       |
-| 22 | `/version` build-info endpoint (library DebugHandler pattern) for ops                                  | Low    | S      | Feature       |
-| 23 | Server-Timing middleware behind a debug flag (library re-export)                                       | Low    | S      | Quality       |
-| 24 | OpenAPI doc for `/api/session` (3 endpoints, optional)                                                 | Low    | S      | Documentation |
-| 25 | Use `cqrshtmx.Chain` for the middleware stack composition (readability)                                | Low    | S      | Cleanup       |
+| ~~16 | OOBHTML spike: live nav unread-badge update inside SSE payloads (E2E-gated)~~ PARKED (verdict doc)                            | High   | M      | Feature       |
+| ~~17 | Use the `connected` SSE event to drive an island "live" indicator after #5~~ done at `91d018c` (`#wp-sse-live`) | Medium | S      | Feature       |
+| ~~18 | Toast feedback via HX-Trigger + `cqrshtmx.ToastDetail` for send/save/error UX (island listener needed)~~ done at `91d018c` | Medium | M      | Feature       |
+| ~~19 | Rate-limit `/events` itself (unlimited reconnect churn currently unthrottled)~~ done (EL1, P5 — `TestEventsRateLimitBounded`)                         | Medium | S      | Quality       |
+| ~~20 | Per-extension hub teardown after long idle (hubs are never torn down today)~~ done at `238af70` (10-min idle reaper)                           | Low    | M      | Quality       |
+| ~~21 | Idempotency guard for `/hooks/*/status` (provider retries double-applying verdicts)~~ done at `232795e` (`hooksIdem`)                   | Medium | M      | Feature       |
+| ~~22 | `/version` build-info endpoint (library DebugHandler pattern) for ops~~ done at `1e09884`                 | Low    | S      | Feature       |
+| ~~23 | Server-Timing middleware behind a debug flag (library re-export)~~ done at `1e09884` (`WEBPHONE_DEBUG_TIMING`)                        | Low    | S      | Quality       |
+| ~~24 | OpenAPI doc for `/api/session` (3 endpoints, optional)~~ done at `d60c166` (`/openapi.json`)                                  | Low    | S      | Documentation |
+| ~~25 | Use `cqrshtmx.Chain` for the middleware stack composition (readability)~~ done at `1e09884` (parity test)                       | Low    | S      | Cleanup       |
 
 **Tier 4 — hardening / hygiene:**
 
 | #  | Task                                                                                          | Impact | Effort | Category |
 | -- | --------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 26 | Fuzz `/hooks/*` JSON parsing (json/v2) against malformed payloads                             | Medium | M      | Quality  |
-| 27 | Test hook-limiter-wraps-secret-gate ordering invariant explicitly                             | Medium | S      | Quality  |
-| 28 | 429/Retry-After handling test for island fetch wrappers (`phone-api/*`)                       | Low    | S      | Quality  |
-| 29 | Session TTL sweeper interval vs `SessionTTL` config interaction test                          | Low    | S      | Quality  |
-| 30 | Verify `go vet`/lint clean on files touched by Tier 1                                         | Medium | S      | Quality  |
-| 31 | Indirect-dep drift check on cqrs-htmx's transitives (local equivalent of check-version-drift) | Low    | S      | Cleanup  |
-| 32 | Track root `v4.10.0` tag; bump indirect go-cqrs-lite pins when it ships                       | Low    | S      | Cleanup  |
-| 33 | vulnix runtime-closure re-scan at next dep bump (per AGENTS.md method)                        | Low    | S      | Quality  |
+| ~~26 | Fuzz `/hooks/*` JSON parsing (json/v2) against malformed payloads~~ done at `f35dbf3` (844k execs clean)                            | Medium | M      | Quality  |
+| ~~27 | Test hook-limiter-wraps-secret-gate ordering invariant explicitly~~ done (OR1, P5 — `TestHookLimiterWrapsSecretGate`)                           | Medium | S      | Quality  |
+| ~~28 | 429/Retry-After handling test for island fetch wrappers (`phone-api/*`)~~ done (RA1, `d60c166`)                        | Low    | S      | Quality  |
+| ~~29 | Session TTL sweeper interval vs `SessionTTL` config interaction test~~ done (TT1, `f35dbf3`)        | Low    | S      | Quality  |
+| ~~30 | Verify `go vet`/lint clean on files touched by Tier 1~~ done (gates green)                                 | Medium | S      | Quality  |
+| ~~31 | Indirect-dep drift check on cqrs-htmx's transitives (local equivalent of check-version-drift)~~ done (DR1, P5 — no newer releases) | Low    | S      | Cleanup  |
+| ~~32 | Track root `v4.10.0` tag; bump indirect go-cqrs-lite pins when it ships~~ → ROADMAP (MD1 bump checklist)                       | Low    | S      | Cleanup  |
+| ~~33 | vulnix runtime-closure re-scan at next dep bump (per AGENTS.md method)~~ done (VL1, P5 — 8 derivations unchanged)                       | Low    | S      | Quality  |
 
 **Tier 5 — documentation / process / longer tail (ROADMAP fuel):**
 
 | #  | Task                                                                                                                                     | Impact | Effort | Category      |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 34 | AGENTS.md: record "cqrs-htmx adoption posture" + link the audit + mic/PermissionsPolicy refusal fact                                     | High   | S      | Documentation |
-| 35 | Re-score adoption after Tier 1 (target ~90) and ANNOTATE the 2026-09-18 report (docs-health)                                             | Medium | S      | Documentation |
-| 36 | Codify "verify dependency internals at the consumed tag" as a library-deep-dive checklist item                                           | Medium | S      | Documentation |
-| 37 | Write per-item effort estimates (minutes) into the report's action table                                                                 | Low    | S      | Documentation |
-| 38 | Error envelopes (`StructuredError`) for `/api/session` — only if the island starts branching on codes                                    | Low    | S      | Feature       |
-| 39 | Evaluate `sync/` multi-tab module vs island's per-tab SIP UA model (document the N.A. verdict)                                           | Low    | S      | Documentation |
-| 40 | Evaluate `DecodePagination` vs webphone's cursor-style `older=` param (likely N.A.; document)                                            | Low    | S      | Documentation |
-| 41 | Benchmark per-extension hub fan-out (library has broadcaster bench patterns)                                                             | Low    | M      | Quality       |
-| 42 | Emit badge push from unreadCache invalidation points (ties to #16)                                                                       | Low    | S      | Feature       |
-| 43 | Document hx-boost-vs-island-swap non-adoption in views or AGENTS.md (prevents re-litigation)                                             | Low    | S      | Documentation |
-| 44 | Consider `DefaultLogFormatter` vs `JSONLogFormatter` for the stack's log sink                                                            | Low    | S      | Decision      |
-| 45 | Add readiness JSON body contract note for the stack's probes (depends on question 2)                                                     | Low    | S      | Documentation |
-| 46 | Review `notify.go`/`ack.go` docs for anything the island could exploit later (close the symbol map)                                      | Low    | S      | Quality       |
-| 47 | Cross-link the deep-dive from the structural-health HTML report (sibling audit hygiene)                                                  | Low    | S      | Documentation |
-| 48 | If XFF is trusted upstream, contribute a ClientIP-trust note upstream (httputil docs)                                                    | Low    | S      | Documentation |
-| 49 | Post-adoption: rerun `agentic_fetch`-style community check? No — local library; instead re-diff master for new middleware worth adopting | Low    | S      | Quality       |
-| 50 | Decide and record whether `/healthz` stays GET-only-open or moves behind session (security review of readiness detail exposure)          | Low    | S      | Decision      |
+| ~~34 | AGENTS.md: record "cqrs-htmx adoption posture" + link the audit + mic/PermissionsPolicy refusal fact~~ done at `2f6ffee`    | High   | S      | Documentation |
+| ~~35 | Re-score adoption after Tier 1 (target ~90) and ANNOTATE the 2026-09-18 report (docs-health)~~ done at `44db922` (92/100)  | Medium | S      | Documentation |
+| ~~36 | Codify "verify dependency internals at the consumed tag" as a library-deep-dive checklist item~~ done at `2f6ffee` (AGENTS tag-verification lesson)  | Medium | S      | Documentation |
+| ~~37 | Write per-item effort estimates (minutes) into the report's action table~~ done (07:43 report §a.7: effort-minutes column added during annotation)   | Low    | S      | Documentation |
+| ~~38 | Error envelopes (`StructuredError`) for `/api/session` — only if the island starts branching on codes~~ N.A. record (ROADMAP P7)   | Low    | S      | Feature       |
+| ~~39 | Evaluate `sync/` multi-tab module vs island's per-tab SIP UA model (document the N.A. verdict)~~ done (ROADMAP P7: N.A. by design)    | Low    | S      | Documentation |
+| ~~40 | Evaluate `DecodePagination` vs webphone's cursor-style `older=` param (likely N.A.; document)~~ done (ROADMAP P7: N.A.)    | Low    | S      | Documentation |
+| ~~41 | Benchmark per-extension hub fan-out (library has broadcaster bench patterns)~~ done (HB1/HB2: docs/reviews/2026-09-18_hub-fanout-baseline.md)                                | Low    | M      | Quality       |
+| ~~42 | Emit badge push from unreadCache invalidation points (ties to #16)~~ gated on the OOB spike (UB1) — PARKED                                  | Low    | S      | Feature       |
+| ~~43 | Document hx-boost-vs-island-swap non-adoption in views or AGENTS.md (prevents re-litigation)~~ done (ROADMAP P7 record)   | Low    | S      | Documentation |
+| ~~44 | Consider `DefaultLogFormatter` vs `JSONLogFormatter` for the stack's log sink~~ recorded (ROADMAP P7)    | Low    | S      | Decision      |
+| ~~45 | Add readiness JSON body contract note for the stack's probes (depends on question 2)~~ recorded (ROADMAP P7; resolved by implementation — status-code compatible)    | Low    | S      | Documentation |
+| ~~46 | Review `notify.go`/`ack.go` docs for anything the island could exploit later (close the symbol map)~~ done (P4: symbol map complete)                              | Low    | S      | Quality       |
+| ~~47 | Cross-link the deep-dive from the structural-health HTML report (sibling audit hygiene)~~ **NOT-DO —** both reports exist in-tree under `docs/` (research/ + architecture-understanding/); cross-linking historical snapshots adds nothing (closed 2026-09-19)                                 | Low    | S      | Documentation |
+| ~~48 | If XFF is trusted upstream, contribute a ClientIP-trust note upstream (httputil docs)~~ standing — gated on the XFF answer (ROADMAP open questions)                                   | Low    | S      | Documentation |
+| ~~49 | Post-adoption: rerun `agentic_fetch`-style community check? No — local library; instead re-diff master for new middleware worth adopting~~ done (MD1, P5 — only the SSE `retry:` hint, next root tag) | Low    | S      | Quality       |
+| ~~50 | Decide and record whether `/healthz` stays GET-only-open or moves behind session (security review of readiness detail exposure)~~ resolved by implementation: GET-open readiness shipped with named checks (00-05 P2) | Low    | S      | Decision      |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
