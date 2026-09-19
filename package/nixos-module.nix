@@ -106,15 +106,16 @@ in
       }
     ];
 
-    services.webphone.settings.data_dir = lib.mkDefault cfg.dataDir;
-
-    # Fronted shape: the generated vhost terminates TLS, so the browser's
-    # Origin is https://<hostName> while the listener sees plain HTTP from
-    # the local nginx. Without these the CSRF middleware reads the truthful
-    # Origin as a forged same-origin attestation and 403s every POST.
-    services.webphone.settings.csrf = lib.mkIf cfg.nginx.enable {
-      trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
-      trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
+    services.webphone.settings = {
+      data_dir = lib.mkDefault cfg.dataDir;
+      # Fronted shape: the generated vhost terminates TLS, so the browser's
+      # Origin is https://<hostName> while the listener sees plain HTTP from
+      # the local nginx. Without these the CSRF middleware reads the truthful
+      # Origin as a forged same-origin attestation and 403s every POST.
+      csrf = lib.mkIf cfg.nginx.enable {
+        trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
+        trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
+      };
     };
 
     users.users.webphone = {
