@@ -276,7 +276,7 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
 7. The plan-vs-execution split worked, but "blocked on owner" items
    (deploy) still gate the product; a deploy helper that does NOT need
    my ssh (owner-runnable script that also updates the pbx-artmann lock
-   + pre-builds) would shrink M1.3 to one command.
+   - pre-builds) would shrink M1.3 to one command.
 8. Island JS formatting must go through prettier (`nix fmt`), not my
    hand-rolled edits — check before the next gate run.
 
@@ -382,7 +382,7 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
 
 ---
 
-*Report is a point-in-time snapshot. All webphone work is committed
+_Report is a point-in-time snapshot. All webphone work is committed
 (HEAD `3435393`, pushed); stack HEAD `fe60979` has 2 unpushed daemon
 commits at report time. Production still runs v2.0.0 — the login-403
-outage continues until the owner's redeploy (§g.1).*
+outage continues until the owner's redeploy (§g.1)._
