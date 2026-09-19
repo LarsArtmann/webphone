@@ -114,13 +114,17 @@ var _ = Describe("Signing in", func() {
 		})
 	})
 
-	When("the extension is malformed", func() {
+	When("the extension carries no dialable characters", func() {
 		BeforeEach(func() {
 			wp = start(GinkgoT(), "")
 		})
 
 		It("rejects the login without minting a session", func() {
-			wp.loginExpecting("not an extension!", "secret", http.StatusBadRequest)
+			// Punctuation-only is invalid after sanitization. Letters, by
+			// contrast, ARE valid extensions server-side (some PBXs use
+			// alphanumeric SIP user parts) — unlike the island's dial-field
+			// regex, which strips them.
+			wp.loginExpecting("!!!", "secret", http.StatusBadRequest)
 			Expect(wp.sessionCookie()).To(BeNil())
 		})
 	})
@@ -145,7 +149,9 @@ var _ = Describe("Signing out", func() {
 		resp, _ := wp.do(http.MethodDelete, "/api/session", nil)
 		Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 
-		resp, _ = wp.get("/partials/nav?active=messages")
+		// The nav partial renders anonymously by design; a session-gated
+		// tab partial is the honest probe for "signed out".
+		resp, _ = wp.get("/partials/messages")
 		Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
 })

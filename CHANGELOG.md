@@ -20,6 +20,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Found by live-probing the production deployment; deployments without
   a phone API (loopback dev) skip verification and log a warning at
   boot.
+- The CSRF cookie's `Secure` flag is now derived from the configured
+  trusted origins: any `https://` origin marks the cookie `Secure`, so
+  it can never ride a plaintext hop in a TLS-fronted deployment
+  (`TestCSRFSecureFollowsTrustedOrigins` pins the rule).
+
+### Added
+
+- NixOS module: `services.webphone.nginx.hsts.{enable,maxAge}` opt-in
+  Strict-Transport-Security on the generated vhost (default off, with
+  the flake check asserting the header appears when enabled).
+
+### Fixed
+
+- Client-supplied identifiers (path segments, query parameters) that
+  are not valid ids now answer `404` instead of panicking the handler:
+  the domain gained `ParseThreadID`/`ParseFaxID`/`ParseAttachmentID`/
+  `ParseContactID`/`ParseMessageID`, and the handlers use them; the
+  `Must*` forms stay reserved for database rows, where a malformed id
+  means corruption.
+- The `webphone-module` flake check's HSTS variant evaluated the extra
+  module config at the wrong nesting level, failing every
+  `nix flake check` since the HSTS option landed; corrected, the check
+  runs green.
 
 ## [2.1.0] - 2026-09-19
 

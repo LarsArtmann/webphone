@@ -73,7 +73,7 @@
                   ];
                 };
 
-                vendorHash = "sha256-WlFJ83w9VX+alrCHZRC7nVPFU/l9yoUB1JGNrTGU8R0=";
+                vendorHash = "sha256-vpecxGqIG4vUCbXjr3JzvN295fVN7+a0VtCCjbVVaQ0=";
 
                 proxyVendor = true;
 
@@ -150,18 +150,18 @@
                   ]
                   ++ [
                     (import ./package/nixos-module.nix)
-                    (
-                      {
-                        services.webphone = {
-                          enable = true;
-                          package = self'.packages.webphone;
-                          nginx.enable = true;
-                          nginx.hostName = "phone.example.org";
-                          settings.sip_domain = "pbx.example.org";
-                        };
-                      }
-                      // extra
-                    )
+                    {
+                      # recursiveUpdate, not `//`: extras like the HSTS
+                      # variant nest deeper (services.webphone.nginx.hsts)
+                      # and a shallow merge would drop the base attrs.
+                      services.webphone = lib.recursiveUpdate {
+                        enable = true;
+                        package = self'.packages.webphone;
+                        nginx.enable = true;
+                        nginx.hostName = "phone.example.org";
+                        settings.sip_domain = "pbx.example.org";
+                      } extra;
+                    }
                   ];
                 };
                 evaluated = lib.evalModules (moduleSet { });
@@ -222,7 +222,7 @@
                     let
                       hstsEvaluated = lib.evalModules (
                         moduleSet {
-                          nginx.hsts.enable = true;
+                          services.webphone.nginx.hsts.enable = true;
                         }
                       );
                       hstsVhost = hstsEvaluated.config.services.nginx.virtualHosts."phone.example.org";
