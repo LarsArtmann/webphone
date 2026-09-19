@@ -56,7 +56,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Messaging.Send(r.Context(), sess.Extension, to, r.FormValue("body"), uploads); err != nil {
-		if invalid := errors.AsType[*messaging.ErrInvalidSend](err); invalid != nil {
+		if invalid, ok := errors.AsType[*messaging.ErrInvalidSend](err); ok {
 			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, invalid.Reason)
 			return
 		}
@@ -116,7 +116,7 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Fax.Send(r.Context(), sess.Extension, to, header.Filename, pdf); err != nil {
-		if invalid := errors.AsType[*fax.ErrInvalidFax](err); invalid != nil {
+		if invalid, ok := errors.AsType[*fax.ErrInvalidFax](err); ok {
 			h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, invalid.Reason)
 			return
 		}

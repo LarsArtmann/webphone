@@ -57,6 +57,14 @@ func newTestServer(t *testing.T) *testServer {
 // let a test swap individual Deps (e.g. a closed DB for healthz 503 tests)
 // after the standard wiring but before the handler is built.
 func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string, mutate ...func(*Deps)) *testServer {
+	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
+}
+
+// newTestServerWithConfig additionally tweaks the config BEFORE the deps
+// are wired (so services like Messaging pick up the tweaked gateway).
+func newTestServerWithConfig(
+	t *testing.T, phoneAPIURL string, tweakCfg func(*config.Config), mutate ...func(*Deps),
+) *testServer {
 	t.Helper()
 
 	db, err := store.Open(":memory:")
@@ -80,6 +88,9 @@ func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string, mutate ...func(
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
 		Gateway:    config.Gateway{Mode: config.GatewayLoopback, WebhookSecret: "test-secret"},
+	}
+	if tweakCfg != nil {
+		tweakCfg(&cfg)
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)

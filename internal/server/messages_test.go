@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/webphone/internal/config"
 )
 
 func TestMessageSendAndThreadFlow(t *testing.T) {
@@ -143,5 +145,37 @@ func TestNavPartialAndLiveMarkRead(t *testing.T) {
 	}
 	if strings.Contains(navBody, "wp-nav-badge") {
 		t.Errorf("anonymous nav partial must not carry badges: %.200s", navBody)
+	}
+}
+
+// TestSendClassifiesGatewayOutageAs502 pins the error taxonomy: an
+// unreachable send gateway is a server-side failure (502, message saved
+// as failed) while a validation mistake stays 422. Before this pin an
+// outage masqueraded as a client error with the gateway's internal
+// error text leaked into the page.
+func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Gateway = config.Gateway{
+			Mode:          config.GatewayWebhook,
+			WebhookURL:    "http://127.0.0.1:1", // nothing listens there
+			WebhookSecret: "test-secret",
+		}
+	})
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "hi"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("gateway outage: %d %s (want 502)", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), "unreachable") {
+		t.Fatalf("502 body must tell the user the message was saved: %.200s", body)
+	}
+
+	form, contentType = multipartBody(t, map[string]string{"to": "+441632960961", "body": ""}, nil)
+	resp, _ = c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("validation mistake: %d (want 422)", resp.StatusCode)
 	}
 }
