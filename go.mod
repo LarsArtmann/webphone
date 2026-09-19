@@ -13,6 +13,7 @@ require (
 	github.com/larsartmann/go-branded-id v0.6.0
 	github.com/larsartmann/go-sse v0.6.0
 	github.com/larsartmann/httputil v1.2.0
+	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.18.0
 	github.com/sixafter/nanoid v1.64.5
 	modernc.org/sqlite v1.59.0
@@ -39,7 +40,6 @@ require (
 	github.com/larsartmann/go-error-family v0.10.1 // indirect
 	github.com/larsartmann/go-etag v0.3.1 // indirect
 	github.com/larsartmann/go-idempotency v0.2.0 // indirect
-	github.com/larsartmann/httputil/server_timing v1.0.1 // indirect
 	github.com/larsartmann/templ-components/icons v1.18.0 // indirect
 	github.com/larsartmann/templ-components/utils v1.18.0 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect

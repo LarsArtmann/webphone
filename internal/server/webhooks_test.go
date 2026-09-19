@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
+	"errors"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -373,5 +375,25 @@ func TestWebhooksSecretAndInbound(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer test-secret")
 	if okResp, _ := c.http.Do(req); okResp.StatusCode != http.StatusAccepted {
 		t.Fatalf("webhook with secret: status %d", okResp.StatusCode)
+	}
+}
+
+// TestWebhookFailRedactsInternalDetail pins the redaction contract: a
+// provider-facing 5xx must not echo internal error text (store paths, SQL,
+// filesystem state). The full detail belongs in the server log only; the
+// body carries the library's redacted SafeDetail text.
+func TestWebhookFailRedactsInternalDetail(t *testing.T) {
+	rec := httptest.NewRecorder()
+	secret := errors.New("secret internal state: attachments table locked")
+	webhookFail(rec, "test", secret)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("webhookFail status %d, want 500", rec.Code)
+	}
+	if body := rec.Body.String(); strings.Contains(body, "secret internal state") {
+		t.Errorf("internal detail leaked to the webhook body: %q", body)
+	}
+	if body := rec.Body.String(); strings.TrimSpace(body) == "" {
+		t.Error("redacted body must not be empty")
 	}
 }

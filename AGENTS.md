@@ -75,8 +75,23 @@ every build; it is the local tripwire, not a replacement for the E2E.
 
 ## Architecture invariants
 
-- **Middleware chain** (server `New`): `RequestLoggingSlog` outermost →
-  `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` → routes. Adopted
+- **Middleware chain** (server `New`): `ContextEnrichmentMiddleware(nil)`
+  outermost → `RequestLoggingSlog` → `ServerTimingMiddlewareWhen`
+  (env-gated) → `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` →
+  routes (2026-09-19 superb-adoption plan). Enrichment must stay OUTSIDE
+  the request log: the logger reads the request context AFTER the
+  handler returns, so a logger outside enrichment can never see the
+  RequestID — the whole point is `request_id=` in every log line plus
+  the `X-Request-ID` response header. The user extractor stays nil:
+  library user ids are ULIDs from the rejected usermgmt module, and
+  extensions are not ULIDs. Server-Timing uses the library middleware
+  (W3C `total;desc="Total request";dur=…`, CRLF-sanitized, SSE-safe
+  writer) — the hand-rolled `timingWriter` is gone; `securityHeadersConfig()`
+  is the single source for header config (test parity is structural).
+  `Permissions-Policy` ships calibrated: `microphone=(self)`, camera/
+  display-capture/geolocation/payment/usb denied — the library's
+  `RecommendedPermissionsPolicy` stays rejected (denies microphone).
+  Adopted
   2026-09-18 per the Pareto plan (links below): panics log full stacks
   and re-raise `http.ErrAbortHandler`; every request logs exactly one
   line (method/path/status/duration — never bodies/credentials); the

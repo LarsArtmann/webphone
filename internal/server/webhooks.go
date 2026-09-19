@@ -6,14 +6,26 @@ import (
 	"encoding/json/v2"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
+
+// webhookFail answers a provider-facing 5xx without leaking internals:
+// the full error goes to the server log (runbook-greppable), the body gets
+// the library's redacted SafeDetail text. 500, not 503, on purpose — the
+// provider already retries any 5xx, and changing the observed status
+// semantics is not this helper's job.
+func webhookFail(w http.ResponseWriter, kind string, err error) {
+	slog.Warn("webhook apply failed", "kind", kind, "err", err)
+	http.Error(w, cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
+}
 
 // Webhook contracts (inbound). The gateway secret authenticates both.
 //
@@ -124,7 +136,7 @@ func (h *handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Messaging.Receive(r.Context(), inbound); err != nil {
-		http.Error(w, "could not store message: "+err.Error(), http.StatusInternalServerError)
+		webhookFail(w, "message-store", err)
 		return
 	}
 	h.unread.drop(owner)
@@ -199,7 +211,7 @@ func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 		Owner: owner, From: from, Pages: payload.count(), PDFBytes: pdf,
 		Received: time.Now(), ProviderRef: payload.ProviderRef,
 	}); err != nil {
-		http.Error(w, "could not store fax: "+err.Error(), http.StatusInternalServerError)
+		webhookFail(w, "fax-store", err)
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -240,7 +252,7 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
 			return
 		}
-		http.Error(w, "could not update fax: "+err.Error(), http.StatusInternalServerError)
+		webhookFail(w, "fax-status", err)
 		return
 	}
 	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
@@ -279,7 +291,7 @@ func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "could not update message: "+err.Error(), http.StatusNotFound)
 			return
 		}
-		http.Error(w, "could not update message: "+err.Error(), http.StatusInternalServerError)
+		webhookFail(w, "message-status", err)
 		return
 	}
 	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
