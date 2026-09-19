@@ -55,14 +55,14 @@ Code wins when doc and code disagree.
 
 ## Contacts & sessions
 
-| Feature                        | Status              | Notes                                                                                   |
-| ------------------------------ | ------------------- | --------------------------------------------------------------------------------------- |
-| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                         |
-| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island                                 |
-| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number             |
-| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                      |
-| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                         |
-| Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate) |
+| Feature                        | Status              | Notes                                                                                                                                |
+| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                                                                      |
+| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island                                                                              |
+| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                          |
+| Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                                                                   |
+| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                      |
+| Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                              |
 | CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config |
 
 ## Live updates (SSE)

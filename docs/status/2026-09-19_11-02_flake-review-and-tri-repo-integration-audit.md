@@ -92,7 +92,7 @@ Work performed:
    re-verification before fixing. Third strike avoided by a no-pipe re-run.
 3. **One materially wrong claim to the user, caught post-hoc**: I said pbx-artmann
    "has not yet absorbed" today's webphone re-pin. False — its path-lock
-   `lastModified` decodes to **2026-09-19 10:42**, *after* the stack's 10:34 bump.
+   `lastModified` decodes to **2026-09-19 10:42**, _after_ the stack's 10:34 bump.
    I eyeballed a vague "~2026-09-18/19" instead of running one `date -d @…`.
    Corrected here; the integration report's other claims stand as verified.
 4. No intentional lies; no data loss; no unauthorized writes (read-only session).
@@ -215,9 +215,9 @@ Work performed:
 
 ---
 
-*Report is a point-in-time snapshot. No repos were modified this session; the
+_Report is a point-in-time snapshot. No repos were modified this session; the
 auto-commit daemon will pick up this file. HARVEST into TODO_LIST deferred pending
-owner instruction.*
+owner instruction._
 
 ---
 
@@ -236,8 +236,8 @@ Executed same day under `docs/planning/2026-09-19_11-51_SUPERB-tri-repo-function
 - **f.11**: open by design — v2.1.0 release ceremony is the owner's.
 - **f.12–f.14 (stack)**: DONE — contactsJson double-escape and the
   phoneApi flag fixed; the VM test now pins the full config.js key set
-  + a quoted-name contact; browser E2E green against the new pin
-  (`28d4688`).
+  - a quoted-name contact; browser E2E green against the new pin
+    (`28d4688`).
 - **f.19–f.20, f.22–f.25 (pbx-artmann)**: DONE and DEPLOYED to
   pbx.artmann.tech (toplevel `h8y8i78…`), then re-deployed with the
   `$CREDENTIALS_DIR` fix (`xv3infy…`). phoneApi live

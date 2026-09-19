@@ -16,22 +16,22 @@ later). Three process sins committed (detailed below).
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| **T04** webphone module hardening: `memoryMax` option, `dataDir` under-/var/lib assertion, `/events` SSE location (buffering off, HTTP/1.1, 3600s), `recommendedProxySettings` on the websocket location | `package/nixos-module.nix`; negative eval test returned `[ false ]` for `/srv/webphone`; module check outputs verified |
-| **T05** webphone flake QoL: devShell `GOEXPERIMENT=jsonv2`+`GOTOOLCHAIN=local` (verified live via `go env`), `lib.*` migration, `with pkgs` removed, `nixosModules.webphone` alias, fileset-narrowed src, module check asserts the three vhost locations + `webphone` unit | `flake.nix`; `nix eval .#nixosModules` → `["default" "webphone"]` |
-| **T06** webphone gates ALL green | go tests; buildflow exit 0; `nix flake check`; aarch64 cross-build; smoke **21/21** |
-| **T07** webphone docs + push | AGENTS tri-repo section, CHANGELOG Unreleased, TODO_LIST harvest; pushed `4c6bba1`, verified `git ls-remote` |
-| **T08** stack render fixes: contactsJson double-escape (source-verified bug: `escapeJs`+`toJSON` → `O\\\"Brien`), phoneApi flag now mirrors `phoneApi.enable` only; VM test pins full config.js key set + a contact with a quote through a JSON round-trip | `modules/telephony/web.nix`, `tests/webphone.nix` |
-| **T09** stack re-pin webphone `4a1266d` → `4c6bba1`; full stack `nix flake check` green (all VM tests, incl. webphone VM test against the new pin) | flake.lock diff; "all checks passed!" |
-| **T10** browser E2E green (chromium VM derivation success), stack CHANGELOG/TODO, commit `28d4688` pushed + verified | `nix build -L .#telephony-browser` exit 0 |
-| **T01** pbx-artmann wiring: `phoneApi.enable=true`, contacts (Lars 1000 / Alice 1001 / Ring group 2000), `gateway.mode="webhook"` → bridge, `environmentFile` | `nix eval` returned the gateway JSON + `true`; `phone_api_url` resolved |
-| **T02** bridge rewrite `telnyx-webhooks.py`: inbound `message.received` → `/hooks/message` (MMS media fetch, 5 MiB cap), status events → `/hooks/message/status` (final verdicts only), `/gateway/message` → Telnyx API with `{"provider_ref"}` receipts, `/gateway/fax` honest 503, `/gateway/health`, fail-closed+actionable everywhere; **19 stdlib unit tests, all green** | `tests/test_telnyx_bridge.py` |
-| **T03** secrets plumbing: `LoadCredential` + `Environment` unit wiring, `after webphone.service`, AF_INET6; generate.sh 3 new secrets + webphone_env↔gateway_secret consistency check (tested: --test mode, 9 blocks, 9.5 KiB < 32 KiB); local secret pair created 600 | `hosts/pbx/webhooks.nix`, `cloud-init/generate.sh` |
-| **T11** pbx re-lock (telephony narHash + webphone pin moved, nixpkgs stable — verified before/after), toplevel built, **stale-lock lesson applied**: LoadCredential + settings + phone_api_url eval-verified in the built config | toplevel `h8y8i78…` |
-| **T12** DEPLOY: pre-deploy health check, secrets pushed (no restarts — switch activates), the owner-commanded line verbatim; switch clean; **`telephony-operator.service` started NEW** (proof phoneApi went live); second switch after the credential fix | host toplevel `h8y8i78…` = locally built one, then `xv3infy…` |
-| **T13** production verification: `/healthz` ok, `/config.js` `"phoneApi": true` + 3 contacts correctly escaped, `/` 200, `/telnyx/webhooks` GET 404, `/hooks/message` 401 unauth / **202 with Bearer** (marked message `[bridge-verify 2026-09-19]` stored for ext 1000), bridge self-tests (webphone_secret true, 401, actionable 502, honest fax 503), all units active, **0 failed** | fetches + host-side curls |
-| **T14** docs pass: status-report outcome appendix, all three repos' CHANGELOG/TODO/AGENTS current, all pushes verified via `git ls-remote` (webphone `36447ef`, stack `28d4688`, pbx `d5026d1`) | repo states |
+| Item                                                                                                                                                                                                                                                                                                                                                                                    | Evidence                                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **T04** webphone module hardening: `memoryMax` option, `dataDir` under-/var/lib assertion, `/events` SSE location (buffering off, HTTP/1.1, 3600s), `recommendedProxySettings` on the websocket location                                                                                                                                                                                | `package/nixos-module.nix`; negative eval test returned `[ false ]` for `/srv/webphone`; module check outputs verified |
+| **T05** webphone flake QoL: devShell `GOEXPERIMENT=jsonv2`+`GOTOOLCHAIN=local` (verified live via `go env`), `lib.*` migration, `with pkgs` removed, `nixosModules.webphone` alias, fileset-narrowed src, module check asserts the three vhost locations + `webphone` unit                                                                                                              | `flake.nix`; `nix eval .#nixosModules` → `["default" "webphone"]`                                                      |
+| **T06** webphone gates ALL green                                                                                                                                                                                                                                                                                                                                                        | go tests; buildflow exit 0; `nix flake check`; aarch64 cross-build; smoke **21/21**                                    |
+| **T07** webphone docs + push                                                                                                                                                                                                                                                                                                                                                            | AGENTS tri-repo section, CHANGELOG Unreleased, TODO_LIST harvest; pushed `4c6bba1`, verified `git ls-remote`           |
+| **T08** stack render fixes: contactsJson double-escape (source-verified bug: `escapeJs`+`toJSON` → `O\\\"Brien`), phoneApi flag now mirrors `phoneApi.enable` only; VM test pins full config.js key set + a contact with a quote through a JSON round-trip                                                                                                                              | `modules/telephony/web.nix`, `tests/webphone.nix`                                                                      |
+| **T09** stack re-pin webphone `4a1266d` → `4c6bba1`; full stack `nix flake check` green (all VM tests, incl. webphone VM test against the new pin)                                                                                                                                                                                                                                      | flake.lock diff; "all checks passed!"                                                                                  |
+| **T10** browser E2E green (chromium VM derivation success), stack CHANGELOG/TODO, commit `28d4688` pushed + verified                                                                                                                                                                                                                                                                    | `nix build -L .#telephony-browser` exit 0                                                                              |
+| **T01** pbx-artmann wiring: `phoneApi.enable=true`, contacts (Lars 1000 / Alice 1001 / Ring group 2000), `gateway.mode="webhook"` → bridge, `environmentFile`                                                                                                                                                                                                                           | `nix eval` returned the gateway JSON + `true`; `phone_api_url` resolved                                                |
+| **T02** bridge rewrite `telnyx-webhooks.py`: inbound `message.received` → `/hooks/message` (MMS media fetch, 5 MiB cap), status events → `/hooks/message/status` (final verdicts only), `/gateway/message` → Telnyx API with `{"provider_ref"}` receipts, `/gateway/fax` honest 503, `/gateway/health`, fail-closed+actionable everywhere; **19 stdlib unit tests, all green**          | `tests/test_telnyx_bridge.py`                                                                                          |
+| **T03** secrets plumbing: `LoadCredential` + `Environment` unit wiring, `after webphone.service`, AF_INET6; generate.sh 3 new secrets + webphone_env↔gateway_secret consistency check (tested: --test mode, 9 blocks, 9.5 KiB < 32 KiB); local secret pair created 600                                                                                                                  | `hosts/pbx/webhooks.nix`, `cloud-init/generate.sh`                                                                     |
+| **T11** pbx re-lock (telephony narHash + webphone pin moved, nixpkgs stable — verified before/after), toplevel built, **stale-lock lesson applied**: LoadCredential + settings + phone_api_url eval-verified in the built config                                                                                                                                                        | toplevel `h8y8i78…`                                                                                                    |
+| **T12** DEPLOY: pre-deploy health check, secrets pushed (no restarts — switch activates), the owner-commanded line verbatim; switch clean; **`telephony-operator.service` started NEW** (proof phoneApi went live); second switch after the credential fix                                                                                                                              | host toplevel `h8y8i78…` = locally built one, then `xv3infy…`                                                          |
+| **T13** production verification: `/healthz` ok, `/config.js` `"phoneApi": true` + 3 contacts correctly escaped, `/` 200, `/telnyx/webhooks` GET 404, `/hooks/message` 401 unauth / **202 with Bearer** (marked message `[bridge-verify 2026-09-19]` stored for ext 1000), bridge self-tests (webphone_secret true, 401, actionable 502, honest fax 503), all units active, **0 failed** | fetches + host-side curls                                                                                              |
+| **T14** docs pass: status-report outcome appendix, all three repos' CHANGELOG/TODO/AGENTS current, all pushes verified via `git ls-remote` (webphone `36447ef`, stack `28d4688`, pbx `d5026d1`)                                                                                                                                                                                         | repo states                                                                                                            |
 
 ---
 
@@ -149,6 +149,7 @@ later). Three process sins committed (detailed below).
 ## f) Up to 50 things to get done next
 
 **Owner/portal (BLOCKED without you):**
+
 1. Telnyx messaging profile + attach US DID (unblocks inbound SMS).
 2. Real Telnyx V2 API key → `/var/lib/telephony-secrets/telnyx_api_key`, `systemctl restart telnyx-webhooks` (unblocks outbound).
 3. Send one real SMS both directions once 1+2 land.
@@ -210,9 +211,9 @@ later). Three process sins committed (detailed below).
 49. TODO drift_alarm extensions (stack P39 — noticed still open in their TODO).
 50. Re-run `buildflow`/`nix flake check` in all three repos after the daemon's final commits settle (guard against heuristic-commit surprises).
 
-*(Items 24, 27, 28, 6, 7, 33–37 already live in the repos' TODOs; the
+_(Items 24, 27, 28, 6, 7, 33–37 already live in the repos' TODOs; the
 rest are new from this session's observations — candidates for
-docs-health HARVEST on instruction.)*
+docs-health HARVEST on instruction.)_
 
 ---
 
@@ -233,5 +234,5 @@ docs-health HARVEST on instruction.)*
 
 ---
 
-*Point-in-time snapshot of this session's run. The auto-commit daemon
-will pick this file up. WAITING FOR INSTRUCTIONS.*
+_Point-in-time snapshot of this session's run. The auto-commit daemon
+will pick this file up. WAITING FOR INSTRUCTIONS._

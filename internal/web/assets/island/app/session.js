@@ -44,9 +44,14 @@ export async function createSession(extension, password) {
       }
     }
     if (adoptionError) {
-      log(`csrf adoption failed (${adoptionError.message}); reloading page`, "error");
+      log(
+        `csrf adoption failed (${adoptionError.message}); reloading page`,
+        "error",
+      );
       console.warn(
-        "webphone: CSRF token adoption failed (" + adoptionError.message + "), reloading",
+        "webphone: CSRF token adoption failed (" +
+          adoptionError.message +
+          "), reloading",
       );
       // The fresh server session survives a reload (cookie); the served
       // page then carries a matching token again. No call is lost: no

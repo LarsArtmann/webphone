@@ -242,9 +242,12 @@ attestation.
 believed and the https origin is trusted:
 
 ```json
-{ "csrf": {
+{
+  "csrf": {
     "trusted_proxies": ["127.0.0.1"],
-    "trusted_origins": ["https://pbx.example.org"] } }
+    "trusted_origins": ["https://pbx.example.org"]
+  }
+}
 ```
 
 The NixOS module ships exactly these defaults when `nginx.enable` is set

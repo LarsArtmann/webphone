@@ -32,8 +32,8 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from urllib.parse import urlparse
-from typing import Callable
 
 TIMEOUT = 10.0
 
@@ -191,7 +191,7 @@ def secure_csrf_cookie(headers: dict[str, str]) -> str:
 
 def run_checks(
     s: Smoke,
-    boot_configured: "Callable[[], tuple[str, Callable[[], None]]] | None" = None,
+    boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
 ) -> int:
     c = s.check
     print(f"smoke against {s.base}")
@@ -367,9 +367,7 @@ def run_checks(
             )
             if m2:
                 fronted_trusted.csrf = m2.group(1)
-            status, _, _ = fronted_login(
-                fronted_trusted, secure_csrf_cookie(hdrs2)
-            )
+            status, _, _ = fronted_login(fronted_trusted, secure_csrf_cookie(hdrs2))
             c.ok("fronted login 201 when configured", status == 201, f"got {status}")
         finally:
             stop_configured()
