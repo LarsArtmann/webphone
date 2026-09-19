@@ -53,7 +53,7 @@
             # injection — keep it in lockstep with the git tag at release.
             webphone =
               let
-                webphoneVersion = "2.0.0";
+                webphoneVersion = "2.1.0";
               in
               pkgs.buildGoModule {
                 pname = "webphone";

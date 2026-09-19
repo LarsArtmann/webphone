@@ -63,6 +63,7 @@ Code wins when doc and code disagree.
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                      |
 | Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                         |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate) |
+| CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config |
 
 ## Live updates (SSE)
 

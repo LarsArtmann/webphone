@@ -6,8 +6,6 @@ live in ROADMAP.md (raw ideas + open questions); owner calls there too.
 
 | Task                                                                                                                                                            | Status    | Priority | Effort | Evidence / notes                          |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | -------- | ------ | ----------------------------------------- |
-| Cut v2.1.0 per the release runbook (fold CHANGELOG, tag, lychee, stack bump) — HEAD reports `v2.0.0` while dozens of commits newer; `/version` drifts until then | 🔴 `TODO` | Medium   | M      | 11:02 report §f.11; owner ceremony        |
-| CSRF token rotation on login: island must adopt a fresh token post-login (no reload) before `InvalidateCSRFCookie` can ship | 🟡 `PLANNED` | Medium | M | AGENTS CSRF constraint (2); superb-adoption plan residue |
 | idiomorph swap experiment for SSE/HTMX partials, gated on the stack's browser E2E | 🟡 `PLANNED` | Low   | M      | cqrs-htmx superb-adoption plan (open item) |
 | Owner decision: stack pin policy (riding webphone `main` vs release tags) — live PBX runs unreleased commits today | 🔴 `TODO` | Medium   | S      | 11:02 report §g.1                         |
 | Owner decision: pbx-artmann `path:` vs github input for the stack (the live path input burned them once) | 🔴 `TODO` | Medium   | S      | 11:02 report §g.2/§f.28                   |
