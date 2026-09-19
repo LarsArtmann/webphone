@@ -227,3 +227,23 @@ func TestOpenAPIEndpoint(t *testing.T) {
 		t.Error("/api/session must document both POST and DELETE")
 	}
 }
+
+// TestRequestIDEnrichmentWiredIntoTheChain guards the observability wiring:
+// the enrichment middleware sits just inside the request log, so every
+// response carries X-Request-ID and the log line for the same request
+// records the identical id. A chain reorder that drops the middleware must
+// fail here, not at 3 a.m. over an uncorrelatable log.
+func TestRequestIDEnrichmentWiredIntoTheChain(t *testing.T) {
+	log := captureDefaultLogger(t)
+
+	c := newClient(t)
+	resp, _ := c.do(http.MethodGet, "/healthz", nil, "")
+
+	rid := resp.Header.Get("X-Request-ID")
+	if rid == "" {
+		t.Fatal("X-Request-ID response header missing: ContextEnrichmentMiddleware not wired")
+	}
+	if !strings.Contains(log.String(), "request_id="+rid) {
+		t.Errorf("request log missing request_id=%s; got %q", rid, log.String())
+	}
+}
