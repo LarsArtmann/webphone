@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/webphone/internal/config"
 )
 
 func TestSessionGatesAndFlows(t *testing.T) {
@@ -87,6 +89,72 @@ func TestLoginRotatesCsrfToken(t *testing.T) {
 	}
 	if !rotated {
 		t.Fatalf("logout did not invalidate the CSRF cookie: %v", resp.Header.Values("Set-Cookie"))
+	}
+}
+
+// TestCSRFTrustsTheFrontingProxy pins the TLS-fronting deployment shape.
+// nginx terminates TLS, so a truthful browser POST arrives with
+// Origin: https://host and Sec-Fetch-Site: same-origin while the listener
+// sees plain HTTP. Unconfigured, the attestation check reads that as
+// forged and 403s every POST, logins included (the bug v2.0.0 shipped);
+// with the loopback proxy and the vhost origin trusted, it passes.
+func TestCSRFTrustsTheFrontingProxy(t *testing.T) {
+	for name, tc := range map[string]struct {
+		csrf config.CSRF
+		want int
+	}{
+		"unconfigured rejects the fronted origin": {
+			want: http.StatusForbidden,
+		},
+		"trusted proxy and origin accept it": {
+			csrf: config.CSRF{
+				TrustedProxies: []string{"127.0.0.1"},
+				TrustedOrigins: []string{"https://pbx.test"},
+			},
+			want: http.StatusCreated,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+				d.Config.CSRF = tc.csrf
+			})
+			c := clientFor(t, server)
+
+			req, err := http.NewRequest(http.MethodGet, c.base+"/", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Host = "pbx.test"
+			resp, err := c.http.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			body := readAll(t, resp)
+			match := regexp.MustCompile(`name="csrf-token" content="([^"]+)"`).FindSubmatch(body)
+			if match == nil {
+				t.Fatal("no csrf token in page")
+			}
+
+			payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+			req, err = http.NewRequest(http.MethodPost, c.base+"/api/session", bytes.NewReader(payload))
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Host = "pbx.test"
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Origin", "https://pbx.test")
+			req.Header.Set("Sec-Fetch-Site", "same-origin")
+			req.Header.Set("Sec-Fetch-Mode", "cors")
+			req.Header.Set("X-Forwarded-Proto", "https")
+			req.Header.Set("X-CSRF-Token", string(match[1]))
+			resp, err = c.http.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resp.StatusCode != tc.want {
+				t.Fatalf("fronted login: %d (want %d)", resp.StatusCode, tc.want)
+			}
+		})
 	}
 }
 

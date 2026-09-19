@@ -200,6 +200,55 @@ func TestLoadRejectsInvalidConfigs(t *testing.T) {
 	}
 }
 
+// TestLoadValidatesCSRFConfig pins the fronting-deployment validation: the
+// trusted origins must be absolute origins and the trusted proxies valid
+// IP/CIDR entries, because a typo would otherwise surface as a library
+// panic at handler construction instead of a startup error naming the key.
+func TestLoadValidatesCSRFConfig(t *testing.T) {
+	cases := []struct {
+		name    string
+		file    string
+		wantErr string
+	}{
+		{
+			name:    "relative origin",
+			file:    `{"csrf": {"trusted_origins": ["pbx.example.org"]}}`,
+			wantErr: "not an absolute origin",
+		},
+		{
+			name:    "origin without host",
+			file:    `{"csrf": {"trusted_origins": ["https://"]}}`,
+			wantErr: "not an absolute origin",
+		},
+		{
+			name:    "proxy neither IP nor CIDR",
+			file:    `{"csrf": {"trusted_proxies": ["nginx-local"]}}`,
+			wantErr: "not an IP address or CIDR network",
+		},
+		{
+			name:    "valid csrf section loads",
+			file:    `{"csrf": {"trusted_proxies": ["127.0.0.1", "10.8.0.0/24"], "trusted_origins": ["https://pbx.example.org"]}}`,
+			wantErr: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			scrubEnv(t)
+			t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, tc.file))
+			_, err := Load()
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("valid config rejected: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("error %v, want containing %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestEnvKeyToPath(t *testing.T) {
 	cases := []struct{ env, want string }{
 		{"WEBPHONE_ADDR", "addr"},
