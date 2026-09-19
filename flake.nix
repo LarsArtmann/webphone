@@ -203,6 +203,7 @@
               nil
               oxlint
               vulnix
+              go-licenses
             ];
           };
 
