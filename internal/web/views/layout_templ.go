@@ -421,7 +421,7 @@ func headExtras(csrfToken string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><meta name=\"htmx-config\" content='{\"includeIndicatorStyles\":false}'><script src=\"/htmx.min.js\" defer></script><script src=\"/htmx-ext/sse.js\" defer></script><link rel=\"stylesheet\" href=\"/assets/island/style.css\"><script src=\"/assets/shell.js\" defer></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><meta name=\"htmx-config\" content='{\"includeIndicatorStyles\":false}'><script src=\"/htmx.min.js\" defer></script><script src=\"/htmx-ext/sse.js\" defer></script><script src=\"/htmx-ext/idiomorph.js\" defer></script><link rel=\"stylesheet\" href=\"/assets/island/style.css\"><script src=\"/assets/shell.js\" defer></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -468,7 +468,7 @@ func SignInHint(lang Lang) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(T(lang, "signin.hint"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 161, Col: 46}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/layout.templ`, Line: 162, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
