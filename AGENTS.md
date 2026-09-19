@@ -4,7 +4,8 @@ Enduring context for AI sessions working in this repo.
 
 ## What this is
 
-A single-binary Go unified-communications web app (v2.0.0, 2026-09-18):
+A single-binary Go unified-communications web app (v2.0.0, released
+2026-09-19):
 the proven SIP.js call island plus server-rendered tabs (Messages
 SMS/MMS, Fax, Voicemail, History, Contacts, Settings) on one page.
 Extracted 2026-09-17 from `nix-international-telephony` as a static
@@ -118,7 +119,10 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
-  (503) when none is configured.
+  (503) when none is configured. Status hooks are idempotent:
+  `hooksIdem` (in-memory TTL idem store) dedupes replayed
+  `provider_ref` — only successes are recorded, so failures stay
+  retryable, and replays answer `202 Accepted` inertly.
 - **Owner scoping everywhere**: every store query is extension-scoped;
   attachments/faxes stream through session-gated handlers only.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
@@ -189,9 +193,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
   themselves in the page (deliberate) and a test keeps en/de in sync —
   add new keys to BOTH maps.
 - vulnix against `./result` scans the BUILD closure (bootstrap
-  toolchains, binutils, gcc — dozens of findings that never deploy).
-  The honest number is the runtime closure: `nix-store -qR result`
-  (8 derivations); only glibc carried advisories as of 2026-09-18.
+  toolchains, binutils, gcc, zlib — dozens of findings that never
+  deploy). The honest number is the runtime closure:
+  `nix-store -qR result` (8 derivations). vulnix also range-matches
+  distro-patched versions: it still prints glibc CVE-2026-5450
+  against glibc-2.42-84, but the fix shipped in nixpkgs 2.42-67
+  (PR #517918, merged 2026-05-22 — the locked tree's glibc
+  `2.42-master.patch` carries it); NVD ranges cannot see patch
+  suffixes. Runtime closure carries zero real advisories
+  (re-verified 2026-09-19).
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony
