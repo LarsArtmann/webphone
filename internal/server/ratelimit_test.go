@@ -11,14 +11,10 @@ import (
 func TestLoginRateLimitPerClient(t *testing.T) {
 	server := newTestServer(t)
 	c := clientFor(t, server)
-	payload, err := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	limited := false
 	for range loginBurst + 3 {
-		resp, _ := c.do(http.MethodPost, "/api/session", payload, "application/json")
+		resp := c.loginRaw("1001", "pw")
 		if resp.StatusCode == http.StatusTooManyRequests {
 			limited = true
 			retryAfter(t, resp)

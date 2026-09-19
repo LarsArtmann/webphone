@@ -155,22 +155,38 @@ def free_port() -> int:
         return sock.getsockname()[1]
 
 
-def fronted_login(s: Smoke) -> tuple[int, bytes, dict[str, str]]:
+def fronted_login(s: Smoke, csrf_cookie: str = "") -> tuple[int, bytes, dict[str, str]]:
     """POST /api/session the way a browser behind the TLS vhost does:
     Origin/Sec-Fetch-Site https + Host pbx.test while the listener sees
-    plain http and an X-Forwarded-Proto header."""
+    plain http and an X-Forwarded-Proto header. csrf_cookie carries the
+    Secure-flagged csrf_token by hand when the trusted origin is https
+    (a real browser received it over the TLS hop; a plain-http harness
+    must not rely on its cookie policy to resend it)."""
+    headers = {
+        "Host": "pbx.test",
+        "Origin": "https://pbx.test",
+        "Sec-Fetch-Site": "same-origin",
+        "X-Forwarded-Proto": "https",
+    }
+    if csrf_cookie:
+        headers["Cookie"] = csrf_cookie
     return s.request(
         "POST",
         "/api/session",
         json.dumps({"extension": "1001", "password": "pw"}).encode(),
         "application/json",
-        headers={
-            "Host": "pbx.test",
-            "Origin": "https://pbx.test",
-            "Sec-Fetch-Site": "same-origin",
-            "X-Forwarded-Proto": "https",
-        },
+        headers=headers,
     )
+
+
+def secure_csrf_cookie(headers: dict[str, str]) -> str:
+    """Extract a Secure csrf_token cookie from raw Set-Cookie headers."""
+    for raw in headers.get("Set-Cookie", "").split(","):
+        parts = raw.split(";")
+        name_value = parts[0].strip()
+        if name_value.startswith("csrf_token=") and "secure" in raw.lower():
+            return name_value
+    return ""
 
 
 def run_checks(
@@ -344,14 +360,16 @@ def run_checks(
         base2, stop_configured = boot_configured()
         try:
             fronted_trusted = Smoke(base2)
-            _, body2, _ = fronted_trusted.request("GET", "/")
+            _, body2, hdrs2 = fronted_trusted.request("GET", "/")
             m2 = re.search(
                 r'name="csrf-token" content="([^"]+)"',
                 body2.decode("utf-8", "replace"),
             )
             if m2:
                 fronted_trusted.csrf = m2.group(1)
-            status, _, _ = fronted_login(fronted_trusted)
+            status, _, _ = fronted_login(
+                fronted_trusted, secure_csrf_cookie(hdrs2)
+            )
             c.ok("fronted login 201 when configured", status == 201, f"got {status}")
         finally:
             stop_configured()

@@ -5,7 +5,10 @@
 //
 // Failures are deliberately non-fatal: the call UI does not depend on the
 // server session — if it cannot be created, tabs stay gated and the island
-// keeps calling.
+// keeps calling. Every outcome lands in #log (English, operator-facing)
+// so a tab-only breakage is visible in the island's own history.
+
+import { log } from "./ui.js";
 
 export async function createSession(extension, password) {
   try {
@@ -18,18 +21,32 @@ export async function createSession(extension, password) {
       body: JSON.stringify({ extension, password }),
     });
     if (!res.ok) {
+      log(`server session failed (HTTP ${res.status})`, "error");
       console.warn(
         "webphone: server session not created (HTTP " + res.status + ")",
       );
       return;
     }
     // The login response invalidated the old CSRF token (fixation
-    // defense); adopt the fresh one before anything else POSTs.
-    try {
-      await adoptFreshCsrfToken();
-    } catch (err) {
+    // defense); adopt the fresh one before anything else POSTs. A failed
+    // adoption retries with backoff first (transient network/5xx), and
+    // the page reload is the last resort: it keeps the server session
+    // (cookie) but costs the SIP registration this tab just made.
+    let adoptionError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        await adoptFreshCsrfToken();
+        adoptionError = null;
+        break;
+      } catch (err) {
+        adoptionError = err;
+        await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+      }
+    }
+    if (adoptionError) {
+      log(`csrf adoption failed (${adoptionError.message}); reloading page`, "error");
       console.warn(
-        "webphone: CSRF token rotation failed (" + err.message + "), reloading",
+        "webphone: CSRF token adoption failed (" + adoptionError.message + "), reloading",
       );
       // The fresh server session survives a reload (cookie); the served
       // page then carries a matching token again. No call is lost: no
@@ -37,8 +54,10 @@ export async function createSession(extension, password) {
       window.location.reload();
       return;
     }
+    log("server session created; csrf token adopted");
     connectLiveUpdates();
   } catch (err) {
+    log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");
   }
 }

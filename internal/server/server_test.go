@@ -198,6 +198,19 @@ func (c *client) login(extension, password string) {
 	c.adoptCsrfToken()
 }
 
+// loginRaw posts the session create WITHOUT the adoption follow-up:
+// flood/limiter tests inspect the raw status themselves and re-arm via
+// adoptCsrfToken only on the attempts that actually succeeded.
+func (c *client) loginRaw(extension, password string) *http.Response {
+	c.t.Helper()
+	payload, err := json.Marshal(map[string]string{"extension": extension, "password": password})
+	if err != nil {
+		c.t.Fatal(err)
+	}
+	resp, _ := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	return resp
+}
+
 // adoptCsrfToken mirrors the island's post-login token adoption.
 func (c *client) adoptCsrfToken() {
 	c.t.Helper()
