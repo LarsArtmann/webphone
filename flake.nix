@@ -221,14 +221,16 @@
                 ];
                 text = ''
                   out=$(nix build --no-link --print-out-paths .#webphone)
-                  mapfile -t paths < <(nix-store -qR "$out")
-                  echo "webphone-vulnix: scanning the runtime closure ($''{#paths[@]} derivations)"
-                  # NVD caveat: vulnix range-matches distro-patched versions
-                  # and may print advisories nixpkgs has already fixed (e.g.
-                  # glibc CVE-2026-5450 still printed against 2.42-84; the
-                  # fix shipped in 2.42-67). Verify each finding against the
-                  # nixpkgs patch level before acting on it.
-                  if vulnix "''${paths[@]}"; then
+                  echo "webphone-vulnix: scanning the runtime closure of $out ($(nix-store -qR "$out" | wc -l) derivations)"
+                  # --closure: runtime dependencies ONLY. Without it vulnix
+                  # closes over BUILD inputs (bootstrap toolchains, gcc,
+                  # binutils) and drowns the signal. Caveat: NVD cannot see
+                  # distro patch suffixes, so range-matched advisories that
+                  # nixpkgs has already fixed may appear (e.g. glibc
+                  # CVE-2026-5450 printed against 2.42-84; the fix shipped
+                  # in 2.42-67). Verify each finding against the nixpkgs
+                  # patch level before acting on it.
+                  if vulnix --closure "$out"; then
                     echo "webphone-vulnix: no known advisories in the runtime closure"
                   else
                     echo "webphone-vulnix: findings above — triage each against the nixpkgs patched version" >&2
