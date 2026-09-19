@@ -164,6 +164,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
+	protected.HandleFunc("GET /api/csrf", h.refreshCSRF)
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
 
 	open := http.NewServeMux()
@@ -317,6 +318,28 @@ const openapiSpec = `{
         "responses": {
           "200": {"description": "Session destroyed"},
           "401": {"description": "No live session"}
+        }
+      }
+    },
+    "/api/csrf": {
+      "get": {
+        "operationId": "refreshCSRF",
+        "summary": "Fetch the fresh masked CSRF token (login rotation invalidated the old one)",
+        "responses": {
+          "200": {
+            "description": "Current masked CSRF token, pairing with the csrf_token cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["token"],
+                  "properties": {
+                    "token": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
