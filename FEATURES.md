@@ -108,6 +108,7 @@ Code wins when doc and code disagree.
 | Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                      |
 | Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                      |
 | Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                    |
+| Recording UI surface                  | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas |
 | PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                          |
 | sip.js 0.22 bump                      | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md) |
 

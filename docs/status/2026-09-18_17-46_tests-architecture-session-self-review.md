@@ -64,41 +64,40 @@ stupid / better) are folded into sections (d) and (e).
 
 ## b) PARTIALLY DONE
 
-- **AGENTS.md knowledge capture** — the session produced durable
+- ~~**AGENTS.md knowledge capture** — the session produced durable
   knowledge (the union-coverage recipe, cqrs-lint indirect-noise triage,
   the calls.js→connection.js drift) that went into TODO_LIST and the
   reports but **not yet into AGENTS.md's hard-won section**. My own
-  memory rules demand immediate updates; this is open. Effort S.
+  memory rules demand immediate updates; this is open. Effort S.~~ — done by later sessions: arch-test enforcement, cqrs-lint skip rationale (`.buildflow.yml` + AGENTS), island invariant fixed and machine-enforced (18:50 #1/#15).
 - **Island JS assessment is indirect only.** 1,773 LOC reviewed via
   import graph and contract strings, but there are no local JS tests and
   the upstream browser E2E was not run (out of scope this session; no
-  markup changed, so the AGENTS.md re-run rule was not triggered).
-- **Coverage measurement is not reproducible.** The union numbers came
+  markup changed, so the AGENTS.md re-run rule was not triggered). → standing gap: ROADMAP (JS test runner); E2E has since run green (06:42).
+- ~~**Coverage measurement is not reproducible.** The union numbers came
   from ad-hoc `/tmp` profile merging; no committed script or BuildFlow
-  step reproduces them (TODO row exists; nothing built yet).
-- **Daemon sync.** TODO_LIST.md was still `M` at last check (reports
-  already committed); expected daemon pickup, unverified at write time.
+  step reproduces them (TODO row exists; nothing built yet).~~ — closed as upstream-blocked: BuildFlow has no per-step-args mechanism → ROADMAP (union-coverage feature idea).
+- ~~**Daemon sync.** TODO_LIST.md was still `M` at last check (reports
+  already committed); expected daemon pickup, unverified at write time.~~ — moot: landed; the daemon also pushes (AGENTS.md 2026-09-19).
 
 ## c) NOT STARTED
 
 All of these were identified this session, ticketed or noted, none begun:
 
-1. config loader tests (0% coverage anywhere; boot-path parsing).
-2. gateway webhook-mode outbound tests (multipart, Bearer, receipt).
-3. pbx.Client error-path tests (timeout, 5xx, malformed bodies).
+1. ~~config loader tests (0% coverage anywhere; boot-path parsing).~~ done (18:50 #2)
+2. ~~gateway webhook-mode outbound tests (multipart, Bearer, receipt).~~ done (18:50 #3)
+3. ~~pbx.Client error-path tests (timeout, 5xx, malformed bodies).~~ done (18:50 #8)
 4. Island JS unit tests (connection.js watchdog is load-bearing,
-   untested locally).
-5. Import-direction enforcement (structure linter or depguard).
-6. v2.0.0 tagging (CHANGELOG links 404 until then).
-7. Nixpkgs channel bump (14 build-chain CVEs, glibc 9.8 critical).
-8. cqrs-lint documented `.buildflow.yml` skip.
-9. server_test.go split by concern + helper dedupe.
-10. `-coverpkg` union metric inside the buildflow test-coverage step.
-11. Investigation of the **9 buildflow tools that failed their health
-    check** in the full run — noticed in the output, never investigated
-    (`buildflow doctor` was never run).
-12. CI inspection: `.github/` exists; whether CI runs `buildflow --build-
-    mode full` was never checked this session.
+   untested locally). → ROADMAP (JS test runner)
+5. ~~Import-direction enforcement (structure linter or depguard).~~ done differently (18:50 #15: `internal/arch/arch_test.go` — no linter fight)
+6. ~~v2.0.0 tagging (CHANGELOG links 404 until then).~~ done at `d9d6d03`
+7. ~~Nixpkgs channel bump (14 build-chain CVEs, glibc 9.8 critical).~~ done (06:42 #7); the glibc "still unfixed" premise was later corrected — NVD false positive (`7ba25cc`)
+8. ~~cqrs-lint documented `.buildflow.yml` skip.~~ done (06:42 #2)
+9. ~~server_test.go split by concern + helper dedupe.~~ done (06:42 #5)
+10. ~~`-coverpkg` union metric inside the buildflow test-coverage step.~~ **Won't implement —** upstream-blocked (BuildFlow lacks per-step args) → ROADMAP
+11. ~~Investigation of the **9 buildflow tools that failed their health
+    check**~~ → TODO_LIST (`buildflow doctor` row)
+12. ~~CI inspection: `.github/` exists; whether CI runs `buildflow --build-
+    mode full` was never checked this session.~~ done 2026-09-19: no `.github/workflows` exist — buildflow is local-only; CI wiring → ROADMAP
 
 ## d) TOTALLY FUCKED UP
 

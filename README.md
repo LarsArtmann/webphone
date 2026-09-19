@@ -32,6 +32,7 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)               |
 | i18n / themes | Everything in English + German; dark + light themes with a manual toggle              |
 | Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`, NixOS module |
+| Recording     | Done PBX-side by the telephony stack (stereo WAV, `/recordings/` behind operator auth); this app shows CDR history rows only |
 
 ## Quick start
 
