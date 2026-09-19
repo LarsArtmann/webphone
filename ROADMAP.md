@@ -58,11 +58,23 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 - PWA: manifest + service worker so the webphone installs to a home
   screen; the SIP island must survive SW caching rules (no cache for
   `/events`, verbatim island modules pinned by hash).
+- Generated island DOM-contract file: emit the 35-id contract from the
+  test instead of hand-maintaining the AGENTS list (stops enumeration
+  drift; harvested 2026-09-20 from the 01:04 report §f/37).
 - Video calls: SIP.js video negotiation + a `<video>` call card —
   FreeSWITCH side needs a video-capable profile; large surface, only
   on demand.
 - Recording UI (see raw ideas below): product-intent decision first
   (consent/jurisdiction), then the panel.
+- Backup snapshot retention: optional `backup.retentionDays` pruning
+  old snapshots (the module skeleton deliberately leaves retention to
+  operator tooling; self-contained only if wanted) — 01:04 report
+  §f/33, distinct from the blob/CDR retention idea above.
+- Startup probe wiring: gate the systemd unit's `Type=notify`/health
+  on `/startupz` semantics (document the contract first; the unit
+  currently starts and stays up regardless) — §f/35.
+- nginx gzip for text assets (app.css/shell.js/htmx bundles): micro
+  win, one module option — §f/36.
 
 ## Standing watches (SUPERB plan P27 2026-09-19)
 
@@ -81,6 +93,9 @@ re-check:
 - cqrs-htmx root tag: the next release after v4.9.0 changes the
   `/events` byte stream (master already adds the SSE `retry:` hint) —
   on bump, re-run the browser E2E and update the AGENTS retry note.
+- CSP re-audit trigger: assets are same-origin by policy (CDN banned);
+  if that stance ever changes, re-audit CSP against every moved
+  script (idiomorph included) before shipping — 01:04 report §f/46.
 
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
@@ -152,6 +167,17 @@ Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan
   access.
 - Stack-side: keep or revert the TEMP-DIAG answer-phase dump in the
   stack's browser E2E (commit `b96d4c2` there).
+- HSTS on prod (owner call): the `nginx.hsts` option ships opt-in —
+  decide for `pbx.artmann.tech` once https-only is proven
+  (01:04 report §f/21).
+- Release cadence / pin policy (g2, owner call; recommendation
+  recorded 2026-09-20): cut a train when `[Unreleased]` accumulates a
+  user-visible theme (the v2.4.0 fold pattern: fix + feature + story),
+  deploy once per train via the single owner command, and keep the
+  stack riding webphone `main` until a hotfix cadence actually
+  emerges — switching to tag pins buys reproducibility at the cost of
+  a manual bump step on every fix. Revisit when a security fix ever
+  needs to ship inside an hour.
 
 ## Harvested raw ideas (2026-09-19 docs-health sweep)
 
