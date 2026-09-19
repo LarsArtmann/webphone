@@ -18,8 +18,8 @@ is the intended consumer: it fronts the binary with TLS and the WSS
 the stack may import it or keep reverse-proxying — the module is
 additive. Stack-side switchover DONE 2026-09-18/19: the stack imports
 `nixosModules.default`, its nginx vhost proxies the service, its browser
-E2E is green (the accept/reject fix `00f13fe`), and its `webphone` input
-is bumped to the v2.0.0 tag commit (stack commit `fc6bc81`).
+E2E is green, and its `webphone` input rides webphone `main` — bumped to
+the v2.1.0 tag commit `d815004` (stack commit `2289e89`).
 
 The cqrs-htmx `setup` bundle was rejected deliberately: it wires
 event-sourced usermgmt users, but this product's identity is the PBX
