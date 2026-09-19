@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-09-19
+
 ### Added
 
 - Liveness + startup probes complete the health triple: `GET /livez`
@@ -25,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tests pin the split: broken deps degrade `/startupz` to 503 while
   `/livez` stays 200. F2 liveness decision + fleet/CSP options:
   `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`.
+- The `nanoid` dependency is bumped to v1.65.1 (its Go >= 1.27 floor
+  was the watch's blocker; the transitive prng/aes-ctr-drbg siblings
+  came along), unblocked by this release's toolchain floor.
+- The version-drift guard learned the release window: a flake version
+  ahead of the newest tag passes only while a dated CHANGELOG section
+  for it exists (the runbook's fold step), so the guard no longer
+  rejects the runbook itself while still failing real drift.
+- The smoke suite grew to 28 checks: `/livez` and `/startupz`
+  assertions keep the new probe pair honest.
 
 ## [2.2.0] - 2026-09-19
 
