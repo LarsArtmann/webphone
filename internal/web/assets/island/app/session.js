@@ -61,6 +61,11 @@ export async function createSession(extension, password) {
     }
     log("server session created; csrf token adopted");
     connectLiveUpdates();
+    // Panels that need the session (the contacts home) load now — the
+    // cookie is minted and the fresh CSRF token adopted, so their POSTs
+    // ride a live token. Mirrors the wp:lang-changed seam: modules
+    // coordinate through document events, never imports.
+    document.dispatchEvent(new CustomEvent("wp:session-opened"));
   } catch (err) {
     log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");

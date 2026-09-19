@@ -40,7 +40,7 @@ func (h *handlers) apiListContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := struct {
-		Personal []apiContact      `json:"personal"`
+		Personal []apiContact       `json:"personal"`
 		Shared   []apiSharedContact `json:"shared"`
 	}{
 		Personal: make([]apiContact, 0, len(contacts)),

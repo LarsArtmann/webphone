@@ -16,6 +16,7 @@ import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
   cancelVoicemailRefresh,
+  clearContacts,
   refreshServerHistory,
   refreshVoicemail,
   renderContacts,
@@ -105,6 +106,7 @@ els.logout.addEventListener("click", async () => {
     ringToneStop();
     titleFlashStop();
     cancelVoicemailRefresh();
+    clearContacts();
     setRegStatus("status-offline", t("offline"));
     els.phoneView.hidden = true;
     els.loginView.hidden = false;
