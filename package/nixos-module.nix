@@ -83,6 +83,29 @@ in
       '';
     };
 
+    backup = {
+      enable = lib.mkEnableOption ''
+        a daily online-backup timer: sqlite's `.backup` API copies the
+        database while the service keeps running (no phone downtime),
+        and the blob tree is rsynced beside it. The skeleton writes
+        into destDir and leaves retention and off-machine copies to
+        the operator's existing backup tooling - it is a starting
+        point, not a restic replacement. Restores were drill-verified:
+        stop the service, copy db + blobs back, start it.
+      '';
+      destDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/webphone-backup";
+        description = "Directory the daily backup snapshot lands in.";
+      };
+      calendar = lib.mkOption {
+        type = lib.types.str;
+        default = "*-*-* 04:30:00";
+        example = "*-*-* *:00/15:00";
+        description = "systemd OnCalendar schedule for the backup timer.";
+      };
+    };
+
     nginx = {
       enable = lib.mkEnableOption ''
         an nginx vhost that terminates TLS and proxies HTTP and the SIP
@@ -193,6 +216,43 @@ in
         Restart = "on-failure";
         RestartSec = 5;
         MemoryMax = lib.mkIf (cfg.memoryMax != null) cfg.memoryMax;
+      };
+    };
+
+    systemd.services.webphone-backup = lib.mkIf cfg.backup.enable {
+      description = "webphone online backup (sqlite .backup + blob rsync)";
+      serviceConfig = {
+        Type = "oneshot";
+        User = "webphone";
+        Group = "webphone";
+        StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [ cfg.backup.destDir ];
+      };
+      # Online copy: sqlite's .backup API takes a consistent snapshot
+      # while the service runs, so the phone never restarts for a
+      # backup (the cold-copy path is the drill-verified fallback).
+      path = [
+        pkgs.sqlite
+        pkgs.rsync
+      ];
+      script = ''
+        sqlite3 ${cfg.dataDir}/webphone.db ".backup '${cfg.backup.destDir}/webphone.db'"
+        rsync -a --delete ${cfg.dataDir}/files/ ${cfg.backup.destDir}/files/
+      '';
+    };
+
+    systemd.timers.webphone-backup = lib.mkIf cfg.backup.enable {
+      description = "Daily webphone online backup";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = cfg.backup.calendar;
+        Persistent = true;
+        Unit = "webphone-backup.service";
       };
     };
 
