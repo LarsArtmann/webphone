@@ -11,17 +11,17 @@
 
 ## a) FULLY DONE (verified, pushed)
 
-| Task | What shipped | Verification |
-| --- | --- | --- |
-| P1 dial affordances | `data-dial` on History `CDRRow` (CID number inbound / dialled destination outbound, no button without a number), Voicemail `VoicemailRow` (guarded on `CIDNumber`), Messages `ThreadView` header (remote number); reused `contacts.call` i18n key (no new keys) | render tests per tab; DOM contract test untouched and green |
-| P2 logged-out feedback | shell.js `data-dial` guard: hidden `#phone-view` → toast in `#toasts` + focus `#ext`, never a silent submit | manual code path only — see (b) |
-| P3 live-call presence | `wp:calls-changed` → `#call-badge` in header ("on call"/"on call · N", pulsing dot), created/removed purely from shell.js; app.css token-based styles | manual code path only — see (b) |
-| P4 contacts single-home | `GET/POST/DELETE /api/contacts` (JSON, session-gated via `requireSession`, extension-scoped; mutations 204, list is the only id source — store upserts by number and keeps old id on rename); island `panels.js` reads/writes the server store; one-time idempotent localStorage migration (dedupe by number, `removeItem` only after confirmed import, retry next login on failure); `wp:session-opened` dispatched after cookie mint + CSRF adoption; `clearContacts()` on logout | API tests: 401 anon (all verbs), round trip incl. upsert-rename + stable id, 422/400, delete + 404s; cross-extension isolation (GET + DELETE); cross-home test (API ↔ tab partial) |
-| P5 tests | `contacts_api_test.go` (4 tests), `voicemail_test.go`, history + thread render assertions | full suite green |
-| P5 bonus (real bug) | **Test harness fix:** `httptest.Server.Client()` returns one cached `*http.Client`; setting `Jar` on it hijacked the cookies of every client built earlier in a test — surfaced as phantom CSRF 403s in the first two-client test. Each test client now gets a private client sharing only the TLS transport | probe test (deleted after) + isolation tests green |
-| P6 local gates | go test `-count=1 ./...` 11/11 pkgs; `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` exit 0; `nix flake check` all checks passed; smoke script 26/26 | one buildflow failure on the way (see (d)) |
-| P7 stack E2E | pushed webphone, re-pinned stack webphone input `c27a22b` → `a0ce1e6`, ran `nix build -L .#telephony-browser`: **E2E-OK**, `RECV DTMF 5` (media path), clean channel teardown, reconnect-recovery pass. VM script 160.31s (baseline watch: 151s, +6%). Stack lock committed (`902505f`) | E2E log |
-| P8 docs | CHANGELOG `Unreleased` (Added + Fixed), FEATURES (callback/redial row, contacts single-home + JSON API rows, presence + feedback rows, E2E → FULLY against `a0ce1e6`, JsSIP fallback WORTH_CONSIDERING), TODO_LIST row harvested (deleted per docs-health style), AGENTS (one-home invariant incl. 204/list-as-id-source semantics, `wp:session-opened` trigger, shell.js territory rule, JsSIP 3.13.8 fallback decision with triggers + Go-telephony rejection), ROADMAP (server-telephony rejected-for-now with research pointers), plan doc marked EXECUTED | content verified in pushed tree via git grep |
+| Task                    | What shipped                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Verification                                                                                                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1 dial affordances     | `data-dial` on History `CDRRow` (CID number inbound / dialled destination outbound, no button without a number), Voicemail `VoicemailRow` (guarded on `CIDNumber`), Messages `ThreadView` header (remote number); reused `contacts.call` i18n key (no new keys)                                                                                                                                                                                                                                                                                                | render tests per tab; DOM contract test untouched and green                                                                                                                        |
+| P2 logged-out feedback  | shell.js `data-dial` guard: hidden `#phone-view` → toast in `#toasts` + focus `#ext`, never a silent submit                                                                                                                                                                                                                                                                                                                                                                                                                                                    | manual code path only — see (b)                                                                                                                                                    |
+| P3 live-call presence   | `wp:calls-changed` → `#call-badge` in header ("on call"/"on call · N", pulsing dot), created/removed purely from shell.js; app.css token-based styles                                                                                                                                                                                                                                                                                                                                                                                                          | manual code path only — see (b)                                                                                                                                                    |
+| P4 contacts single-home | `GET/POST/DELETE /api/contacts` (JSON, session-gated via `requireSession`, extension-scoped; mutations 204, list is the only id source — store upserts by number and keeps old id on rename); island `panels.js` reads/writes the server store; one-time idempotent localStorage migration (dedupe by number, `removeItem` only after confirmed import, retry next login on failure); `wp:session-opened` dispatched after cookie mint + CSRF adoption; `clearContacts()` on logout                                                                            | API tests: 401 anon (all verbs), round trip incl. upsert-rename + stable id, 422/400, delete + 404s; cross-extension isolation (GET + DELETE); cross-home test (API ↔ tab partial) |
+| P5 tests                | `contacts_api_test.go` (4 tests), `voicemail_test.go`, history + thread render assertions                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | full suite green                                                                                                                                                                   |
+| P5 bonus (real bug)     | **Test harness fix:** `httptest.Server.Client()` returns one cached `*http.Client`; setting `Jar` on it hijacked the cookies of every client built earlier in a test — surfaced as phantom CSRF 403s in the first two-client test. Each test client now gets a private client sharing only the TLS transport                                                                                                                                                                                                                                                   | probe test (deleted after) + isolation tests green                                                                                                                                 |
+| P6 local gates          | go test `-count=1 ./...` 11/11 pkgs; `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` exit 0; `nix flake check` all checks passed; smoke script 26/26                                                                                                                                                                                                                                                                                                                                                                                                                   | one buildflow failure on the way (see (d))                                                                                                                                         |
+| P7 stack E2E            | pushed webphone, re-pinned stack webphone input `c27a22b` → `a0ce1e6`, ran `nix build -L .#telephony-browser`: **E2E-OK**, `RECV DTMF 5` (media path), clean channel teardown, reconnect-recovery pass. VM script 160.31s (baseline watch: 151s, +6%). Stack lock committed (`902505f`)                                                                                                                                                                                                                                                                        | E2E log                                                                                                                                                                            |
+| P8 docs                 | CHANGELOG `Unreleased` (Added + Fixed), FEATURES (callback/redial row, contacts single-home + JSON API rows, presence + feedback rows, E2E → FULLY against `a0ce1e6`, JsSIP fallback WORTH_CONSIDERING), TODO_LIST row harvested (deleted per docs-health style), AGENTS (one-home invariant incl. 204/list-as-id-source semantics, `wp:session-opened` trigger, shell.js territory rule, JsSIP 3.13.8 fallback decision with triggers + Go-telephony rejection), ROADMAP (server-telephony rejected-for-now with research pointers), plan doc marked EXECUTED | content verified in pushed tree via git grep                                                                                                                                       |
 
 Guards honored: no pinned DOM id changes, no sip.js edits, island graph
 acyclic (arch test green), no CSP changes, `#log` English, existing
@@ -110,6 +110,7 @@ HTML-partial routes untouched (`/api/contacts` is additive).
 ## f) NEXT (prioritized, ~30 items)
 
 Verification hardening:
+
 1. Extend stack browser E2E: assert `#call-badge` during a live call.
 2. Extend E2E: `data-dial` while logged out → toast text + `#ext` focus.
 3. Extend E2E: island ☆ save → `/api/contacts` → tab partial shows it.
@@ -124,14 +125,14 @@ Verification hardening:
 
 Seam polish:
 8. SSE `contacts` event → island panel re-fetch (kills re-login
-   staleness; mirror the `voicemail` nudge pattern).
+staleness; mirror the `voicemail` nudge pattern).
 9. Presence badge states: ringing vs established (call-card state is
-   available in `#calls`).
+available in `#calls`).
 10. Badge a11y: `aria-live` announcement on call-state change.
 11. `data-dial` on thread LIST rows (needs button-outside-anchor
-    restructure to stay valid HTML).
+restructure to stay valid HTML).
 12. `data-sms` affordance: history/voicemail rows → Messages compose
-    prefilled.
+prefilled.
 13. History tab rows: ☆ save-as-contact parity with the island panel.
 14. Migration completion toast ("imported N contacts to the server").
 15. Visual marker on legacy (pending-sync) contact rows in the island.
@@ -140,29 +141,29 @@ API/infra:
 16. OpenAPI 3.1 for `/api/contacts` (parity with `/api/session`).
 17. Rate limiter on `POST /api/contacts`.
 18. Contacts count cap / pagination decision on the server store
-    (legacy cap was 50; server is unbounded).
+(legacy cap was 50; server is unbounded).
 19. Decide JS test infra (none today; oxlint no-undef only) — vitest vs
-    staying lint-only; migration logic is the first real candidate.
+staying lint-only; migration logic is the first real candidate.
 20. Stack re-pin to current main (behind by concurrent commits) + full
-    stack flake check — remember pbx-artmann path: re-locks need clean
-    stack trees.
+stack flake check — remember pbx-artmann path: re-locks need clean
+stack trees.
 
 Process/docs:
 21. Commit-race protocol with the daemon (owner call — see questions).
 22. Diff-review `63f8b3c`'s changes to the SUPERB plan doc.
 23. Confirm authorship/intent of the `encoding/json/v2` test change
-    that rode along `7a09f57`.
+that rode along `7a09f57`.
 24. AGENTS.md over buildflow's size budget (~450 lines vs 377 max) —
-    move detail to docs/, keep invariants tight.
+move detail to docs/, keep invariants tight.
 25. Plan doc: tick the Part 8 verification checkboxes (they still read
-    open).
+open).
 26. FEATURES VERIFY pass over the new rows (docs-health discipline).
 27. Release vehicle for the Unreleased block (see questions).
 28. TODO_LIST still carries the 🔴 prod redeploy urgency items (v2.1.1
-    credential verification) — owner ssh action, not mine.
+credential verification) — owner ssh action, not mine.
 29. Watch: JsSIP fallback triggers (standing), sip.js 0.22 (standing).
 30. Consider `wp:session-opened` for the E2E greppable-contract list if
-    the E2E starts driving contacts.
+the E2E starts driving contacts.
 
 ## g) QUESTIONS (cannot be answered from the repo)
 

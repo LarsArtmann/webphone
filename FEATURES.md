@@ -43,29 +43,29 @@ Code wins when doc and code disagree.
 
 ## Voicemail & history (phone API)
 
-| Feature                    | Status               | Notes                                                                    |
-| -------------------------- | -------------------- | ------------------------------------------------------------------------ |
-| Voicemail list/play/delete | 🟢 FULLY_FUNCTIONAL  | Per-extension API with the session's credentials; needs `phone_api_url`  |
-| CDR call history           | 🟢 FULLY_FUNCTIONAL  | Server-rendered tab + island panel via the same API                      |
-| History search/filter      | 🟢 FULLY_FUNCTIONAL  | `?q=` text + `?dir=` in/out filter, widened fetch when filtering         |
-| Honest disabled states     | 🟢 FULLY_FUNCTIONAL  | Tabs say what is missing instead of pretending when no API is configured |
-| Live voicemail refresh     | 🟢 FULLY_FUNCTIONAL  | Payload-less SSE nudge on deletes and island polls                       |
-| Phone-api reverse proxy    | 🟢 FULLY_FUNCTIONAL  | Same paths/JSON as the static era, Basic auth injected server-side       |
+| Feature                    | Status               | Notes                                                                                                                        |
+| -------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Voicemail list/play/delete | 🟢 FULLY_FUNCTIONAL  | Per-extension API with the session's credentials; needs `phone_api_url`                                                      |
+| CDR call history           | 🟢 FULLY_FUNCTIONAL  | Server-rendered tab + island panel via the same API                                                                          |
+| History search/filter      | 🟢 FULLY_FUNCTIONAL  | `?q=` text + `?dir=` in/out filter, widened fetch when filtering                                                             |
+| Honest disabled states     | 🟢 FULLY_FUNCTIONAL  | Tabs say what is missing instead of pretending when no API is configured                                                     |
+| Live voicemail refresh     | 🟢 FULLY_FUNCTIONAL  | Payload-less SSE nudge on deletes and island polls                                                                           |
+| Phone-api reverse proxy    | 🟢 FULLY_FUNCTIONAL  | Same paths/JSON as the static era, Basic auth injected server-side                                                           |
 | Callback/redial from tabs  | 🟢 FULLY_FUNCTIONAL  | `data-dial` on CDR rows (CID in / destination out), voicemail rows (CID number), thread views; guarded when no number exists |
-| Voicemail transcripts      | ⚪ WORTH_CONSIDERING | Surfacing only if the PBX API ever provides them                         |
+| Voicemail transcripts      | ⚪ WORTH_CONSIDERING | Surfacing only if the PBX API ever provides them                                                                             |
 
 ## Contacts & sessions
 
-| Feature                        | Status              | Notes                                                                                                                                |
-| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                                                                      |
-| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | ONE home for tab AND island: upsert-by-number, delete, click-to-dial; the island reads/writes via `/api/contacts`                     |
-| Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears            |
-| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                          |
+| Feature                        | Status              | Notes                                                                                                                                                 |
+| ------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                                                                                       |
+| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | ONE home for tab AND island: upsert-by-number, delete, click-to-dial; the island reads/writes via `/api/contacts`                                     |
+| Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears                             |
+| vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                                           |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | Login verifies the credentials against the PBX directory server-side (`VerifyCredentials`, fail-closed), then opens the tab session; logout closes it |
-| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                      |
-| Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                              |
-| CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config |
+| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                                       |
+| Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                                               |
+| CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config                  |
 
 ## Live updates (SSE)
 
@@ -73,63 +73,63 @@ Code wins when doc and code disagree.
 | -------------------------- | ------------------- | ---------------------------------------------------------------------------- |
 | Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                            |
 | Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | `threads`/`thread`/`fax` payloads never wipe a composer draft                |
-| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload            |
+| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload              |
 | SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame           |
 | Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy |
 
 ## Awareness
 
-| Feature                     | Status              | Notes                                                                                    |
-| --------------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
-| Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)                            |
-| Live-call presence badge   | 🟢 FULLY_FUNCTIONAL | `wp:calls-changed` → shell.js header badge ("on call · N", pulsing) — visible from every tab |
-| Logged-out dial feedback   | 🟢 FULLY_FUNCTIONAL | `data-dial` while signed out: toast + login-field focus instead of a silent dead-end      |
-| Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback)                        |
-| Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                                             |
-| Keyboard shortcuts          | 🟢 FULLY_FUNCTIONAL | A answer · H hangup · M mute · P hold · Esc + headset media keys (island `shortcuts.js`) |
-| ICE/media diagnostics panel | 🟢 FULLY_FUNCTIONAL | Candidate path, RTT, loss, jitter, codec + plain-language hints                          |
-| Event log                   | 🟢 FULLY_FUNCTIONAL | Operator-facing, English-only (runbook greps it), 100 entries                            |
+| Feature                     | Status              | Notes                                                                                        |
+| --------------------------- | ------------------- | -------------------------------------------------------------------------------------------- |
+| Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)                                |
+| Live-call presence badge    | 🟢 FULLY_FUNCTIONAL | `wp:calls-changed` → shell.js header badge ("on call · N", pulsing) — visible from every tab |
+| Logged-out dial feedback    | 🟢 FULLY_FUNCTIONAL | `data-dial` while signed out: toast + login-field focus instead of a silent dead-end         |
+| Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback)                            |
+| Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                                                 |
+| Keyboard shortcuts          | 🟢 FULLY_FUNCTIONAL | A answer · H hangup · M mute · P hold · Esc + headset media keys (island `shortcuts.js`)     |
+| ICE/media diagnostics panel | 🟢 FULLY_FUNCTIONAL | Candidate path, RTT, loss, jitter, codec + plain-language hints                              |
+| Event log                   | 🟢 FULLY_FUNCTIONAL | Operator-facing, English-only (runbook greps it), 100 entries                                |
 
 ## Platform
 
-| Feature                      | Status                  | Notes                                                                                                                                                                                   |
-| ---------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Single Go binary             | 🟢 FULLY_FUNCTIONAL     | `cmd/webphone`; SQLite (pure Go) + blob store; data dir auto-created                                                                                                                    |
-| Nix package                  | 🟢 FULLY_FUNCTIONAL     | `buildGoModule`, tests run in the sandbox, pinned vendorHash                                                                                                                            |
-| aarch64-linux                | 🟢 FULLY_FUNCTIONAL     | Cross-builds cleanly (verified 2026-09-18)                                                                                                                                              |
-| Strict-CSP compatible        | 🟢 FULLY_FUNCTIONAL     | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN                                                                                                                     |
-| Security posture             | 🟢 FULLY_FUNCTIONAL     | CSRF on all mutations, security headers, owner-scoped queries everywhere                                                                                                                |
-| DOM contract test            | 🟢 FULLY_FUNCTIONAL     | 35 island element ids asserted by `internal/server/server_test.go`                                                                                                                      |
-| NixOS module                 | 🟢 FULLY_FUNCTIONAL     | `nixosModules.default`: hardened systemd unit, JSON settings via `WEBPHONE_CONFIG`, `environmentFile` for secrets, optional nginx WSS vhost; evalModules-checked                        |
-| Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
-| i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL     | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
-| Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
-| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL     | Green 2026-09-19 against webphone `a0ce1e6` (dial affordances, presence badge, contacts single-home): E2E-OK, DTMF, reconnect-recovery |
+| Feature                      | Status              | Notes                                                                                                                                                                                   |
+| ---------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single Go binary             | 🟢 FULLY_FUNCTIONAL | `cmd/webphone`; SQLite (pure Go) + blob store; data dir auto-created                                                                                                                    |
+| Nix package                  | 🟢 FULLY_FUNCTIONAL | `buildGoModule`, tests run in the sandbox, pinned vendorHash                                                                                                                            |
+| aarch64-linux                | 🟢 FULLY_FUNCTIONAL | Cross-builds cleanly (verified 2026-09-18)                                                                                                                                              |
+| Strict-CSP compatible        | 🟢 FULLY_FUNCTIONAL | Same-origin only; `default-src 'self'` + `connect-src wss:`; no CDN                                                                                                                     |
+| Security posture             | 🟢 FULLY_FUNCTIONAL | CSRF on all mutations, security headers, owner-scoped queries everywhere                                                                                                                |
+| DOM contract test            | 🟢 FULLY_FUNCTIONAL | 35 island element ids asserted by `internal/server/server_test.go`                                                                                                                      |
+| NixOS module                 | 🟢 FULLY_FUNCTIONAL | `nixosModules.default`: hardened systemd unit, JSON settings via `WEBPHONE_CONFIG`, `environmentFile` for secrets, optional nginx WSS vhost; evalModules-checked                        |
+| Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
+| i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
+| Dark + light themes          | 🟢 FULLY_FUNCTIONAL | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
+| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL | Green 2026-09-19 against webphone `a0ce1e6` (dial affordances, presence badge, contacts single-home): E2E-OK, DTMF, reconnect-recovery                                                  |
 
 ## PLANNED / WORTH_CONSIDERING
 
-| Idea                                | Status               | Notes                                                                                                            |
-| ----------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Session persistence across restarts | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                                       |
-| Retention/cleanup job (blobs, old)  | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                                       |
-| Video calls                         | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                                     |
-| Recording UI surface                | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas |
-| PWA (offline shell)                 | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                                           |
-| sip.js 0.22 bump                    | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md)                  |
+| Idea                                | Status               | Notes                                                                                                                                                                                   |
+| ----------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Session persistence across restarts | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                                                                                                              |
+| Retention/cleanup job (blobs, old)  | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                                                                                                              |
+| Video calls                         | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                                                                                                            |
+| Recording UI surface                | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas                                                                        |
+| PWA (offline shell)                 | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                                                                                                                  |
+| sip.js 0.22 bump                    | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md)                                                                                         |
 | JsSIP fallback swap                 | ⚪ WORTH_CONSIDERING | Only on breakage/security/capability triggers (SDK research 2026-09-19: JsSIP 3.13.8 actively maintained); full island rewrite + E2E re-run — plan doc SUPERB-island-server-integration |
 
 ## Ops & API surface (cqrs-htmx adoption, 2026-09)
 
-| Feature                        | Status              | Notes                                                                                            |
-| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------ |
-| Honest `/healthz` readiness    | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.ReadinessHandler`: named `sqlite` ping + `blob-dir` write probe; 503 names the failure |
+| Feature                        | Status              | Notes                                                                                                                                                                                      |
+| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Honest `/healthz` readiness    | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.ReadinessHandler`: named `sqlite` ping + `blob-dir` write probe; 503 names the failure                                                                                           |
 | `/livez` + `/startupz` probes  | 🟢 FULLY_FUNCTIONAL | go-health v0.3.0 `NewChecks` (container-free): fetch-free liveness; startup 503 until the backing checks first pass, then latched; JSON, session-free, shares `/healthz`'s check functions |
-| Request logging                | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RequestLoggingSlog` outermost: one structured line per request, no bodies/secrets      |
-| Panic recovery                 | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RecoveryMiddleware` (stack + method/path; `http.ErrAbortHandler` re-raised)            |
-| Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate              |
-| Webhook status idempotency     | 🟢 FULLY_FUNCTIONAL | Replayed `provider_ref` callbacks answer `202` inertly; failures stay retryable                  |
-| `/version` endpoint            | 🟢 FULLY_FUNCTIONAL | Library `DebugHandler` pattern                                                                   |
-| OpenAPI 3.1 for `/api/session` | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`                                                                        |
-| Server-Timing (opt-in)         | 🟢 FULLY_FUNCTIONAL | `WEBPHONE_DEBUG_TIMING=1` enables the middleware                                                 |
-| Idle SSE hub reaper            | 🟢 FULLY_FUNCTIONAL | 10-minute idle TTL, double-guarded; fan-out baseline in docs/reviews (hub-fanout-baseline)       |
-| Island 429 surfacing           | 🟢 FULLY_FUNCTIONAL | phone-api fetch wrappers surface `Retry-After` throttles                                         |
+| Request logging                | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RequestLoggingSlog` outermost: one structured line per request, no bodies/secrets                                                                                                |
+| Panic recovery                 | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RecoveryMiddleware` (stack + method/path; `http.ErrAbortHandler` re-raised)                                                                                                      |
+| Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate                                                                                                        |
+| Webhook status idempotency     | 🟢 FULLY_FUNCTIONAL | Replayed `provider_ref` callbacks answer `202` inertly; failures stay retryable                                                                                                            |
+| `/version` endpoint            | 🟢 FULLY_FUNCTIONAL | Library `DebugHandler` pattern                                                                                                                                                             |
+| OpenAPI 3.1 for `/api/session` | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`                                                                                                                                                                  |
+| Server-Timing (opt-in)         | 🟢 FULLY_FUNCTIONAL | `WEBPHONE_DEBUG_TIMING=1` enables the middleware                                                                                                                                           |
+| Idle SSE hub reaper            | 🟢 FULLY_FUNCTIONAL | 10-minute idle TTL, double-guarded; fan-out baseline in docs/reviews (hub-fanout-baseline)                                                                                                 |
+| Island 429 surfacing           | 🟢 FULLY_FUNCTIONAL | phone-api fetch wrappers surface `Retry-After` throttles                                                                                                                                   |
