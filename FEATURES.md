@@ -21,15 +21,15 @@ Code wins when doc and code disagree.
 
 ## Messaging (SMS/MMS)
 
-| Feature                       | Status              | Notes                                                                                                                                      |
-| ----------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Send SMS/MMS                  | 🟢 FULLY_FUNCTIONAL | ≤1600 chars, ≤5 attachments, ≤10 MiB each; loopback + webhook gateways                                                                     |
-| Inbound SMS/MMS via webhook   | 🟢 FULLY_FUNCTIONAL | `/hooks/message`, base64 attachments, Bearer secret, fail-closed                                                                           |
-| Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)                                                                      |
-| Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal                                                                  |
-| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)                                                                           |
+| Feature                       | Status              | Notes                                                                                                                                          |
+| ----------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Send SMS/MMS                  | 🟢 FULLY_FUNCTIONAL | ≤1600 chars, ≤5 attachments, ≤10 MiB each; loopback + webhook gateways                                                                         |
+| Inbound SMS/MMS via webhook   | 🟢 FULLY_FUNCTIONAL | `/hooks/message`, base64 attachments, Bearer secret, fail-closed                                                                               |
+| Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)                                                                          |
+| Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal                                                                      |
+| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)                                                                               |
 | Transcript pagination         | 🟢 FULLY_FUNCTIONAL | "Load older messages" fetches prior pages (`?older=`); LIMIT+1 hasMore; paging state survives SSE pushes and a live swap marks the thread read |
-| Delivery receipts             | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge live via SSE. `delivered` needs a callback-capable provider (loopback marks `sent`) |
+| Delivery receipts             | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge live via SSE. `delivered` needs a callback-capable provider (loopback marks `sent`)     |
 
 ## Fax
 
