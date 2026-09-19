@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Island lint gate: `checks.island-lint` runs oxlint (fail-closed,
+  `no-undef` error) over the island modules and `shell.js` on every
+  `nix flake check` — the class of silent ReferenceError behind the
+  accept/reject bug can no longer ship.
+- Contract-pinning tests: session gates live only in the shared helper
+  (401-writer scan), provider multipart field order, verbatim-served
+  reload asset, and htmx-config-meta-before-script ordering.
+- In-repo live smoke suite (`scripts/webphone-smoke.py`, 21 checks,
+  stdlib-only): builds the binary, boots it on a temp data dir and
+  probes shell/CSRF/session/SSE/webhook/phone-api end to end.
+- `vulnix` flake app scanning the RUNTIME closure (`--closure`), so the
+  honest advisory count (8 derivations, currently zero real findings)
+  is one command instead of tribal knowledge.
+- Transcript paging state (`data-page`) survives SSE `thread` pushes
+  (cancelable `htmx:sseBeforeMessage` guard), and a live transcript swap
+  marks the thread read client-side and refreshes the nav badges via the
+  new `GET /partials/nav` + `POST /messages/{id}/read` endpoints.
+- Nav labels follow the extension language switch without a full reload
+  (`wp:lang-changed`).
 - Request-ID correlation on every request: the cqrs-htmx enrichment
   middleware now sits outermost in the server chain, so each response
   carries an `X-Request-ID` header and each request-log line records the
@@ -24,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/version` reports the build version injected by the flake via
+  ldflags (previously `(devel)` outside `go install` contexts).
 - Frontend CSRF wiring is JSON-valid by construction: the shell's
   `hx-headers` attribute is built with `templ.JSONString` instead of
   string concatenation (a regression test parses the rendered attribute).
@@ -37,6 +58,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The toast wire-shape struct is now a type alias of the library's
   `cqrshtmx.ToastDetail`, so an upstream shape change fails this build
   instead of silently breaking the island's toast listener.
+
+### Fixed
+
+- `hookFaxStatus` error mapping: empty `provider_ref` is now 400 (was
+  404), unknown ref 404, other store failures 500 — parity with the
+  message status hook.
+- `messages.provider_ref` carries the same UNIQUE partial index as
+  `fax_jobs`, closing the duplicate-receipt window on the messages side.
+- Delivered messages render the distinct `wp-status-delivered` badge
+  instead of reusing the sent style.
+- Session→PBX credential construction is centralized
+  (`Session.PBXCredentials()` + `SignInFirst`), removing four inline
+  copies in the server handlers.
 
 ## [2.0.0] - 2026-09-19
 
