@@ -13,6 +13,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
@@ -69,6 +70,19 @@ func securityHeadersConfig() httputil.SecurityHeadersConfig {
 		ContentSecurityPolicy: contentSecurityPolicy,
 		PermissionsPolicy:     "microphone=(self), camera=(), display-capture=(), geolocation=(), payment=(), usb=()",
 	}
+}
+
+// csrfSecureFromOrigins derives the CSRF cookie's Secure flag from the
+// configured trusted origins: any https origin means the deployment is
+// fronted by TLS, so the cookie must never ride a plaintext hop. Plain
+// http origins (loopback dev) keep the flag off.
+func csrfSecureFromOrigins(origins []string) bool {
+	for _, origin := range origins {
+		if strings.HasPrefix(origin, "https://") {
+			return true
+		}
+	}
+	return false
 }
 
 // newKeyedRateLimiter builds the httputil keyed limiter webphone uses
@@ -141,6 +155,7 @@ func New(deps Deps) http.Handler {
 	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{
 		TrustedProxies: deps.Config.CSRF.TrustedProxies,
 		TrustedOrigins: deps.Config.CSRF.TrustedOrigins,
+		Secure:         csrfSecureFromOrigins(deps.Config.CSRF.TrustedOrigins),
 	})
 
 	protected := http.NewServeMux()
