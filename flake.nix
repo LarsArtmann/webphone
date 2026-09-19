@@ -43,45 +43,51 @@
 
             # One Go binary: templ shell + embedded island assets + SQLite.
             # GOEXPERIMENT=jsonv2 is required by templ-components (encoding/
-            # json/v2) until Go 1.27 ships it stable.
-            webphone = pkgs.buildGoModule {
-              pname = "webphone";
-              version = "2.0.0";
+            # json/v2) until Go 1.27 ships it stable. webphoneVersion is the
+            # single source: the package version AND the /version ldflags
+            # injection — keep it in lockstep with the git tag at release.
+            webphone =
+              let
+                webphoneVersion = "2.0.0";
+              in
+              pkgs.buildGoModule {
+                pname = "webphone";
+                version = webphoneVersion;
 
-              src = pkgs.lib.cleanSource self;
+                src = pkgs.lib.cleanSource self;
 
-              vendorHash = "sha256-WlFJ83w9VX+alrCHZRC7nVPFU/l9yoUB1JGNrTGU8R0=";
+                vendorHash = "sha256-WlFJ83w9VX+alrCHZRC7nVPFU/l9yoUB1JGNrTGU8R0=";
 
-              proxyVendor = true;
+                proxyVendor = true;
 
-              env.GOEXPERIMENT = "jsonv2";
+                env.GOEXPERIMENT = "jsonv2";
 
-              subPackages = [ "cmd/webphone" ];
+                subPackages = [ "cmd/webphone" ];
 
-              ldflags = [
-                "-s"
-                "-w"
-                # /version reports the flake's version (kept in lockstep with
-                # the git tag at release) instead of Go's "(devel)".
-                "-X github.com/larsartmann/webphone/internal/server.buildVersion=${version}"
-              ];
-
-              doCheck = true;
-
-              meta = {
-                description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
-                homepage = "https://github.com/LarsArtmann/webphone";
-                license = pkgs.lib.licenses.mit;
-                mainProgram = "webphone";
-                platforms = pkgs.lib.platforms.linux;
-                maintainers = [
-                  {
-                    name = "Lars Artmann";
-                    github = "LarsArtmann";
-                  }
+                ldflags = [
+                  "-s"
+                  "-w"
+                  # /version reports the released version (v-prefixed, like
+                  # the git tag) instead of Go's "(devel)".
+                  "-X github.com/larsartmann/webphone/internal/server.buildVersion=v${webphoneVersion}"
                 ];
+
+                doCheck = true;
+
+                meta = {
+                  description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
+                  homepage = "https://github.com/LarsArtmann/webphone";
+                  license = pkgs.lib.licenses.mit;
+                  mainProgram = "webphone";
+                  platforms = pkgs.lib.platforms.linux;
+                  maintainers = [
+                    {
+                      name = "Lars Artmann";
+                      github = "LarsArtmann";
+                    }
+                  ];
+                };
               };
-            };
           };
 
           checks = {
@@ -196,8 +202,45 @@
               jq
               nil
               oxlint
+              vulnix
             ];
           };
+
+          # Runtime-closure vulnerability scan: `nix run .#vulnix` (repo
+          # root, network required for the advisory DB). Scans ONLY the
+          # runtime closure — the build closure (bootstrap toolchains,
+          # gcc, zlib) never deploys and drowns the signal. Networked by
+          # nature, so it is an app, not a flake check.
+          apps.vulnix =
+            let
+              script = pkgs.writeShellApplication {
+                name = "webphone-vulnix";
+                runtimeInputs = [
+                  pkgs.nix
+                  pkgs.vulnix
+                ];
+                text = ''
+                  out=$(nix build --no-link --print-out-paths .#webphone)
+                  closure=$(nix-store -qR "$out")
+                  echo "webphone-vulnix: scanning the runtime closure ($(echo "$closure" | wc -l) derivations)"
+                  # NVD caveat: vulnix range-matches distro-patched versions
+                  # and may print advisories nixpkgs has already fixed (e.g.
+                  # glibc CVE-2026-5450 still printed against 2.42-84; the
+                  # fix shipped in 2.42-67). Verify each finding against the
+                  # nixpkgs patch level before acting on it.
+                  if vulnix $closure; then
+                    echo "webphone-vulnix: no known advisories in the runtime closure"
+                  else
+                    echo "webphone-vulnix: findings above — triage each against the nixpkgs patched version" >&2
+                    exit 1
+                  fi
+                '';
+              };
+            in
+            {
+              type = "app";
+              program = pkgs.lib.getExe script;
+            };
 
           treefmt = {
             projectRootFile = "flake.nix";
