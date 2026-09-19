@@ -55,6 +55,22 @@ const (
 	hookBurst  = 60
 )
 
+// securityHeadersConfig is the single source for the security-header
+// posture: New wires it for production and the middleware parity test
+// reuses it, so the two can never drift. Permissions-Policy is the
+// calibrated complement of the library's RecommendedPermissionsPolicy
+// (which denies microphone and would kill the WebRTC phone): everything
+// power-adjacent is denied, the microphone stays self-origin only.
+func securityHeadersConfig() httputil.SecurityHeadersConfig {
+	return httputil.SecurityHeadersConfig{
+		ContentTypeNosniff:    true,
+		FrameOptions:          "DENY",
+		ReferrerPolicy:        "strict-origin-when-cross-origin",
+		ContentSecurityPolicy: contentSecurityPolicy,
+		PermissionsPolicy:     "microphone=(self), camera=(), display-capture=(), geolocation=(), payment=(), usb=()",
+	}
+}
+
 // newKeyedRateLimiter builds the httputil keyed limiter webphone uses
 // for both flood-sensitive surfaces. MaxKeys stays uncapped here: keys
 // are direct-peer hosts, so the map is bounded by the number of proxy
@@ -186,12 +202,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/hooks/", open)
 	root.Handle("/favicon.svg", open)
 
-	security := httputil.SecurityHeaders(httputil.SecurityHeadersConfig{
-		ContentTypeNosniff:    true,
-		FrameOptions:          "DENY",
-		ReferrerPolicy:        "strict-origin-when-cross-origin",
-		ContentSecurityPolicy: contentSecurityPolicy,
-	})
+	security := httputil.SecurityHeaders(securityHeadersConfig())
 
 	// Enrichment outermost: it only wraps the request context (RequestID,
 	// echoed back as X-Request-ID) and writes nothing, so the request log

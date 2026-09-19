@@ -4,8 +4,6 @@ import (
 	"encoding/json/v2"
 	"net/http"
 
-	"github.com/larsartmann/httputil"
-
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/session"
 )
@@ -39,9 +37,10 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL)
-	// Rotate the CSRF token on login: a token minted before authentication
-	// must never survive into the authenticated session (CSRF fixation).
-	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
+	// Deliberately NO InvalidateCSRFCookie here: the island logs in without
+	// a page reload, so rotating the CSRF token now would 403 every later
+	// HTMX action (the page keeps the old token). Rotation needs the island
+	// to adopt the fresh token post-login — gated behind the stack E2E.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.MarshalWrite(w, map[string]string{"extension": extension.String()}) //nolint:erraudit // best-effort write; the response is already committed
@@ -51,6 +50,5 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 	h.deps.Sessions.Delete(session.TokenFromRequest(r))
 	session.ClearCookie(w)
-	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
 	w.WriteHeader(http.StatusNoContent)
 }

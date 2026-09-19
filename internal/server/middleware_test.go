@@ -14,14 +14,10 @@ import (
 )
 
 // productionStack mirrors the middleware order built in New, so the panic
-// path is exercised exactly as it runs in production.
+// path is exercised exactly as it runs in production. The header config is
+// shared with New via securityHeadersConfig — no literal to drift.
 func productionStack(next http.Handler) http.Handler {
-	security := httputil.SecurityHeaders(httputil.SecurityHeadersConfig{
-		ContentTypeNosniff:    true,
-		FrameOptions:          "DENY",
-		ReferrerPolicy:        "strict-origin-when-cross-origin",
-		ContentSecurityPolicy: contentSecurityPolicy,
-	})
+	security := httputil.SecurityHeaders(securityHeadersConfig())
 
 	return security(cqrshtmx.RecoveryMiddleware(next))
 }
@@ -245,5 +241,20 @@ func TestRequestIDEnrichmentWiredIntoTheChain(t *testing.T) {
 	}
 	if !strings.Contains(log.String(), "request_id="+rid) {
 		t.Errorf("request log missing request_id=%s; got %q", rid, log.String())
+	}
+}
+
+
+// TestPermissionsPolicyShipsCalibrated pins the calibrated
+// Permissions-Policy: the microphone stays self-origin (the WebRTC phone
+// needs it), everything power-adjacent is denied. The library's
+// RecommendedPermissionsPolicy is deliberately NOT used — it denies
+// microphone outright.
+func TestPermissionsPolicyShipsCalibrated(t *testing.T) {
+	c := newClient(t)
+	resp, _ := c.do(http.MethodGet, "/healthz", nil, "")
+	want := "microphone=(self), camera=(), display-capture=(), geolocation=(), payment=(), usb=()"
+	if pp := resp.Header.Get("Permissions-Policy"); pp != want {
+		t.Errorf("Permissions-Policy = %q, want %q", pp, want)
 	}
 }
