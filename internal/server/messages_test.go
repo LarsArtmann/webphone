@@ -12,8 +12,7 @@ import (
 
 func TestMessageSendAndThreadFlow(t *testing.T) {
 	c := newClient(t)
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	c.login("1001", "pw")
 
 	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "contract test"}, nil)
 	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
@@ -40,8 +39,7 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 
 func TestMMSAttachmentRoundTrip(t *testing.T) {
 	c := newClient(t)
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	c.login("1001", "pw")
 
 	png := append([]byte("\x89PNG\r\n\x1a\n"), bytes.Repeat([]byte{0}, 16)...)
 	form, contentType := multipartBody(t,

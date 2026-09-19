@@ -23,6 +23,22 @@ export async function createSession(extension, password) {
       );
       return;
     }
+    // The login response invalidated the old CSRF token (fixation
+    // defense); adopt the fresh one before anything else POSTs.
+    try {
+      await adoptFreshCsrfToken();
+    } catch (err) {
+      console.warn(
+        "webphone: CSRF token rotation failed (" +
+          err.message +
+          ") — reloading",
+      );
+      // The fresh server session survives a reload (cookie); the served
+      // page then carries a matching token again. No call is lost — no
+      // call can exist before the REGISTER that just succeeded.
+      window.location.reload();
+      return;
+    }
     connectLiveUpdates();
   } catch (err) {
     console.warn("webphone: server session not created (" + err.message + ")");
@@ -91,4 +107,25 @@ export function initSseLiveIndicator() {
 function csrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") : "";
+}
+
+// Login rotates the CSRF token (fixation defense): the login response
+// deletes the cookie, so this fetches the fresh masked token from the
+// CSRF middleware (the GET regenerates the deleted cookie) and updates
+// every token consumer. They all read live — the meta tag here and in
+// auth.js, and htmx re-reads the body's hx-headers per request — so
+// updating those two spots re-arms every later POST.
+async function adoptFreshCsrfToken() {
+  const res = await fetch("/api/csrf");
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
+  if (!data.token) throw new Error("empty token");
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) meta.setAttribute("content", data.token);
+  if (document.body.hasAttribute("hx-headers")) {
+    document.body.setAttribute(
+      "hx-headers",
+      JSON.stringify({ "X-CSRF-Token": data.token }),
+    );
+  }
 }

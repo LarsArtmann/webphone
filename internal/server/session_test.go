@@ -19,11 +19,7 @@ func TestSessionGatesAndFlows(t *testing.T) {
 		t.Fatalf("anonymous partial: %d", resp.StatusCode)
 	}
 
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
-	if resp.StatusCode != http.StatusCreated {
-		t.Fatalf("session create: %d %s", resp.StatusCode, body)
-	}
+	c.login("1001", "pw")
 
 	// Wrong CSRF token is rejected.
 	req, _ := http.NewRequest(http.MethodPost, c.base+"/messages/send", bytes.NewReader(nil))
@@ -36,6 +32,61 @@ func TestSessionGatesAndFlows(t *testing.T) {
 	resp, body = c.do(http.MethodGet, "/partials/messages", nil, "")
 	if resp.StatusCode != http.StatusOK || !strings.Contains(string(body), "No conversations yet") {
 		t.Fatalf("messages partial: %d", resp.StatusCode)
+	}
+}
+
+// TestLoginRotatesCsrfToken pins the full rotation lifecycle: login deletes
+// the CSRF cookie (fixation defense) which kills the page's old token, the
+// island adopts the fresh one via GET /api/csrf, and the adopted token
+// validates again. Logout rotates the cookie a second time.
+func TestLoginRotatesCsrfToken(t *testing.T) {
+	c := newClient(t)
+	old := c.token
+
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("session create: %d %s", resp.StatusCode, body)
+	}
+	rotated := false
+	for _, ck := range resp.Header.Values("Set-Cookie") {
+		if strings.HasPrefix(ck, "csrf_token=") && strings.Contains(ck, "Max-Age=0") {
+			rotated = true
+		}
+	}
+	if !rotated {
+		t.Fatalf("login did not invalidate the CSRF cookie: %v", resp.Header.Values("Set-Cookie"))
+	}
+
+	// The page's pre-login token is dead now — POSTs would 403.
+	resp, _ = c.do(http.MethodPost, "/messages/send", nil, "")
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("stale CSRF token after login: %d (want 403)", resp.StatusCode)
+	}
+
+	// Adoption hands out a different token, and it validates.
+	c.adoptCsrfToken()
+	if c.token == old {
+		t.Fatal("adoption returned the stale token")
+	}
+	resp, _ = c.do(http.MethodPost, "/messages/send", nil, "")
+	if resp.StatusCode == http.StatusForbidden {
+		t.Fatal("adopted CSRF token rejected — island would be bricked")
+	}
+
+	// Logout rotates once more so the token never outlives its session.
+	resp, _ = c.do(http.MethodDelete, "/api/session", nil, "")
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("logout: %d", resp.StatusCode)
+	}
+	rotated = false
+	for _, ck := range resp.Header.Values("Set-Cookie") {
+		if strings.HasPrefix(ck, "csrf_token=") && strings.Contains(ck, "Max-Age=0") {
+			rotated = true
+		}
+	}
+	if !rotated {
+		t.Fatalf("logout did not invalidate the CSRF cookie: %v", resp.Header.Values("Set-Cookie"))
 	}
 }
 

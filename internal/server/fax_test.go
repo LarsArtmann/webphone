@@ -12,8 +12,7 @@ import (
 
 func TestFaxSendAndDocument(t *testing.T) {
 	c := newClient(t)
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	c.login("1001", "pw")
 
 	pdf := []byte("%PDF-1.4\n%test\ntrailer<<>>\n%%EOF\n")
 	form, contentType := multipartBody(t,

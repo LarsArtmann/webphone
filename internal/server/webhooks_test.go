@@ -18,14 +18,7 @@ import (
 func signIn(t *testing.T, server *testServer) *client {
 	t.Helper()
 	c := clientFor(t, server)
-	payload, err := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
-	if resp.StatusCode != http.StatusCreated {
-		t.Fatalf("session create: %d %s", resp.StatusCode, body)
-	}
+	c.login("1001", "pw")
 	return c
 }
 
@@ -204,8 +197,7 @@ func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
 	// Seed an outbound SMS through the loopback gateway; its receipt
 	// carries the provider_ref the status callback must quote.
 	c := clientFor(t, server)
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	c.login("1001", "pw")
 	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "receipt test"}, nil)
 	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
 		t.Fatalf("sms send: %d %s", resp.StatusCode, body)
@@ -282,8 +274,7 @@ func TestFaxStatusWebhookUpdatesJob(t *testing.T) {
 	// Seed an outbound fax through the loopback gateway; its receipt
 	// carries the provider_ref the status callback must quote.
 	c := clientFor(t, server)
-	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
-	c.do(http.MethodPost, "/api/session", payload, "application/json")
+	c.login("1001", "pw")
 	pdf := []byte("%PDF-1.4 status\n%%EOF\n")
 	form, contentType := multipartBody(t,
 		map[string]string{"to": "+441632960961"},

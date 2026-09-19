@@ -179,6 +179,40 @@ func (c *client) do(method, path string, body []byte, contentType string) (*http
 	return resp, readAll(c.t, resp)
 }
 
+// login creates the server session the way the island does and then adopts
+// the CSRF token the login rotated: createSession invalidates the old CSRF
+// cookie (fixation defense), so a fresh masked token must come from
+// GET /api/csrf before any further POST — the same dance session.js
+// performs in the browser.
+func (c *client) login(extension, password string) {
+	c.t.Helper()
+	payload, err := json.Marshal(map[string]string{"extension": extension, "password": password})
+	if err != nil {
+		c.t.Fatal(err)
+	}
+	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp.StatusCode != http.StatusCreated {
+		c.t.Fatalf("session create: %d %s", resp.StatusCode, body)
+	}
+	c.adoptCsrfToken()
+}
+
+// adoptCsrfToken mirrors the island's post-login token adoption.
+func (c *client) adoptCsrfToken() {
+	c.t.Helper()
+	resp, body := c.do(http.MethodGet, "/api/csrf", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		c.t.Fatalf("csrf adoption: %d %s", resp.StatusCode, body)
+	}
+	var got struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(body, &got); err != nil || got.Token == "" {
+		c.t.Fatalf("csrf adoption body %q: %v", body, err)
+	}
+	c.token = got.Token
+}
+
 // multipartBody builds a multipart form with fields and files.
 func multipartBody(t *testing.T, fields map[string]string, files map[string]struct {
 	Name    string
