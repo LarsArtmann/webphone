@@ -146,73 +146,73 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 
 **Recording integration (this session's core discovery):**
 
-| #  | Task                                                                                                   | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| 1  | ~~Add a Recordings panel to the webphone UI (list WAVs, mirror the voicemail pattern)~~ → ROADMAP (recording cluster)                                                    | High   | M      | Feature       |
-| 2  | ~~In-island playback (same-origin audio element; strict CSP already allows it)~~ → ROADMAP                                                                              | High   | M      | Feature       |
-| 3  | ~~Live "REC" indicator on the call card while the PBX records that leg~~ → ROADMAP                                                                                      | High   | M      | Feature       |
-| 4  | ~~Dialpad shortcut for `*97` no-record dial (per-call opt-out exists upstream, invisible in UI)~~ → ROADMAP                                                              | Medium | S      | Feature       |
-| 5  | ~~README: document stack-level recording + `/recordings/` location~~ done 2026-09-19 (capability row)                                                                     | Medium | S      | Documentation |
-| 6  | ~~webphone AGENTS.md: record the two-level recording story as hard-won knowledge~~ done 2026-09-19                                                                        | Medium | S      | Documentation |
-| 7  | ~~FEATURES.md: add cross-reference row (recordings exist upstream; webphone has no UI)~~ done 2026-09-19                                                                  | Medium | S      | Documentation |
-| 8  | ~~Per-extension recording access via the Go server (phone-api proxy pattern) replacing shared basic auth~~ → ROADMAP (open question: access model)                        | High   | L      | Feature       |
-| 9  | ~~Surface retention in UI (recordings are pruned by timers upstream; users should know)~~ → ROADMAP                                                                      | Low    | M      | Feature       |
-| 10 | ~~README privacy note: `RECORD_STEREO` captures both legs; consent/jurisdiction caveat~~ → ROADMAP (consent posture — g2)                                                  | Medium | S      | Documentation |
+| #  | Task                                                                                                                                               | Impact | Effort | Category      |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | ~~Add a Recordings panel to the webphone UI (list WAVs, mirror the voicemail pattern)~~ → ROADMAP (recording cluster)                              | High   | M      | Feature       |
+| 2  | ~~In-island playback (same-origin audio element; strict CSP already allows it)~~ → ROADMAP                                                         | High   | M      | Feature       |
+| 3  | ~~Live "REC" indicator on the call card while the PBX records that leg~~ → ROADMAP                                                                 | High   | M      | Feature       |
+| 4  | ~~Dialpad shortcut for `*97` no-record dial (per-call opt-out exists upstream, invisible in UI)~~ → ROADMAP                                        | Medium | S      | Feature       |
+| 5  | ~~README: document stack-level recording + `/recordings/` location~~ done 2026-09-19 (capability row)                                              | Medium | S      | Documentation |
+| 6  | ~~webphone AGENTS.md: record the two-level recording story as hard-won knowledge~~ done 2026-09-19                                                 | Medium | S      | Documentation |
+| 7  | ~~FEATURES.md: add cross-reference row (recordings exist upstream; webphone has no UI)~~ done 2026-09-19                                           | Medium | S      | Documentation |
+| 8  | ~~Per-extension recording access via the Go server (phone-api proxy pattern) replacing shared basic auth~~ → ROADMAP (open question: access model) | High   | L      | Feature       |
+| 9  | ~~Surface retention in UI (recordings are pruned by timers upstream; users should know)~~ → ROADMAP                                                | Low    | M      | Feature       |
+| 10 | ~~README privacy note: `RECORD_STEREO` captures both legs; consent/jurisdiction caveat~~ → ROADMAP (consent posture — g2)                          | Medium | S      | Documentation |
 
 **In-flight v2 state observed at session start (uncommitted changes):**
 
-| #  | Task                                                                                              | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 11 | ~~Review/verify the uncommitted v2 changes~~ done (v2.0.0 shipped; gates green through 07:43)             | High   | M      | Quality       |
-| 12 | ~~Re-run the upstream browser E2E after the v2 switchover~~ done at `00f13fe` (green 06:42)               | High   | L      | Quality       |
-| 13 | ~~German translations for the server-rendered tabs~~ done (18:50 #14)                                     | Medium | M      | Feature       |
-| 14 | ~~Bring the 15:25 v2-rebuild report current with the working tree~~ done (2026-09-19 docs-health annotate sweep) | Medium | S      | Documentation |
-| 15 | ~~Run `nix flake check` + `nix fmt` gate before handing the tree back~~ done (green through 06:42/07:43)  | High   | S      | Quality       |
-| 16 | ~~Review the `.gitignore` modification sitting in the tree~~ done (swept into reviewed commits; tree clean since) | Low    | S      | Cleanup       |
-| 17 | ~~Review the `flake.lock` bump~~ done (nixpkgs → 2026-09-17, 06:42 #7)                                    | Low    | S      | Cleanup       |
-| 18 | ~~Review `update.sh` changes~~ done (shfmt-fixed + shellcheck-clean, 16:21)                               | Low    | S      | Cleanup       |
+| #  | Task                                                                                                                                                    | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 11 | ~~Review/verify the uncommitted v2 changes~~ done (v2.0.0 shipped; gates green through 07:43)                                                           | High   | M      | Quality       |
+| 12 | ~~Re-run the upstream browser E2E after the v2 switchover~~ done at `00f13fe` (green 06:42)                                                             | High   | L      | Quality       |
+| 13 | ~~German translations for the server-rendered tabs~~ done (18:50 #14)                                                                                   | Medium | M      | Feature       |
+| 14 | ~~Bring the 15:25 v2-rebuild report current with the working tree~~ done (2026-09-19 docs-health annotate sweep)                                        | Medium | S      | Documentation |
+| 15 | ~~Run `nix flake check` + `nix fmt` gate before handing the tree back~~ done (green through 06:42/07:43)                                                | High   | S      | Quality       |
+| 16 | ~~Review the `.gitignore` modification sitting in the tree~~ done (swept into reviewed commits; tree clean since)                                       | Low    | S      | Cleanup       |
+| 17 | ~~Review the `flake.lock` bump~~ done (nixpkgs → 2026-09-17, 06:42 #7)                                                                                  | Low    | S      | Cleanup       |
+| 18 | ~~Review `update.sh` changes~~ done (shfmt-fixed + shellcheck-clean, 16:21)                                                                             | Low    | S      | Cleanup       |
 | 19 | ~~Replace "heuristic" auto-commit history with per-task commits~~ **Won't implement —** daemon-owned history accepted; explicit commits when authorized | Low    | S      | Cleanup       |
-| 20 | ~~Re-count the 35 asserted island DOM ids after v2 changes~~ done (16:21 fixed 34→35; contract test pins them) | Medium | S      | Quality       |
+| 20 | ~~Re-count the 35 asserted island DOM ids after v2 changes~~ done (16:21 fixed 34→35; contract test pins them)                                          | Medium | S      | Quality       |
 
 **From webphone FEATURES.md PLANNED / WORTH_CONSIDERING (already inventoried):**
 
-| #  | Task                                                                                   | Impact | Effort | Category |
-| -- | -------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 21 | ~~Login rate limiting for `/api/session`~~ done (18:50 #4)                                             | High   | M      | Security  |
-| 22 | ~~Message delivery-receipt webhook~~ done (16:34 session)      | Medium | M      | Feature  |
+| #  | Task                                                                                              | Impact | Effort | Category |
+| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| 21 | ~~Login rate limiting for `/api/session`~~ done (18:50 #4)                                        | High   | M      | Security |
+| 22 | ~~Message delivery-receipt webhook~~ done (16:34 session)                                         | Medium | M      | Feature  |
 | 23 | ~~Session persistence across restarts~~ decided: in-memory by design (FEATURES WORTH_CONSIDERING) | Medium | L      | Feature  |
-| 24 | ~~Message pagination/virtualization (200-per-thread window)~~ done (18:50 #13)                              | Low    | M      | Quality  |
-| 25 | ~~vCard contact import/export~~ done (18:50 #12)                                            | Low    | M      | Feature  |
-| 26 | ~~History search/filter~~ done (18:50 #10)                                                                   | Medium | M      | Feature  |
-| 27 | Retention/cleanup job (blobs grow unbounded) — FEATURES WORTH_CONSIDERING                                           | Medium | M      | Quality  |
-| 28 | ~~Richer `/healthz` (store, gateway mode)~~ done (store side: `cqrshtmx.ReadinessHandler`)                             | Low    | S      | Quality  |
-| 29 | ~~Manual theme override toggle~~ done (18:50 #9)                     | Low    | S      | Feature  |
-| 30 | ~~Keyboard shortcuts / media keys~~ done (18:50 #11)                                | Low    | M      | Feature  |
-| 31 | Video calls (sip.js supports; UI needs a video surface) — FEATURES WORTH_CONSIDERING                                | Low    | L      | Feature  |
-| 32 | PWA offline shell (service worker must respect strict CSP) — FEATURES WORTH_CONSIDERING                             | Low    | L      | Feature  |
-| 33 | ~~sip.js 0.22 evaluation~~ done (evaluation report — stay on 0.21.2)           | Medium | M      | Quality  |
-| 34 | Voicemail transcripts (only if the PBX API ever provides them) — FEATURES WORTH_CONSIDERING                         | Low    | S      | Feature  |
-| 35 | ~~Fax richer page-count parsing from status payloads~~ done (18:50 #7)                              | Low    | S      | Feature  |
+| 24 | ~~Message pagination/virtualization (200-per-thread window)~~ done (18:50 #13)                    | Low    | M      | Quality  |
+| 25 | ~~vCard contact import/export~~ done (18:50 #12)                                                  | Low    | M      | Feature  |
+| 26 | ~~History search/filter~~ done (18:50 #10)                                                        | Medium | M      | Feature  |
+| 27 | Retention/cleanup job (blobs grow unbounded) — FEATURES WORTH_CONSIDERING                         | Medium | M      | Quality  |
+| 28 | ~~Richer `/healthz` (store, gateway mode)~~ done (store side: `cqrshtmx.ReadinessHandler`)        | Low    | S      | Quality  |
+| 29 | ~~Manual theme override toggle~~ done (18:50 #9)                                                  | Low    | S      | Feature  |
+| 30 | ~~Keyboard shortcuts / media keys~~ done (18:50 #11)                                              | Low    | M      | Feature  |
+| 31 | Video calls (sip.js supports; UI needs a video surface) — FEATURES WORTH_CONSIDERING              | Low    | L      | Feature  |
+| 32 | PWA offline shell (service worker must respect strict CSP) — FEATURES WORTH_CONSIDERING           | Low    | L      | Feature  |
+| 33 | ~~sip.js 0.22 evaluation~~ done (evaluation report — stay on 0.21.2)                              | Medium | M      | Quality  |
+| 34 | Voicemail transcripts (only if the PBX API ever provides them) — FEATURES WORTH_CONSIDERING       | Low    | S      | Feature  |
+| 35 | ~~Fax richer page-count parsing from status payloads~~ done (18:50 #7)                            | Low    | S      | Feature  |
 
 **Follow-on ideas grounded in this session's observations:**
 
-| #  | Task                                                                                                          | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 36 | ~~Serve recordings through the existing phone-api reverse proxy (auth injected server-side)~~ → ROADMAP (recording cluster)                     | Medium | M      | Feature       |
-| 37 | ~~Document the recording filename convention (`uuid_destination.wav`) in webphone docs~~ → ROADMAP                      | Low    | S      | Documentation |
-| 38 | ~~Open `tests/pbx.nix` and confirm the recording assertions first-hand (close b.2)~~ done 2026-09-19 (assertions verified)                              | Low    | S      | Quality       |
-| 39 | ~~Add a "recorded" badge to CDR history rows when a WAV exists for that call~~ → ROADMAP (recording cluster)                              | Medium | M      | Feature       |
-| 40 | ~~Recordings browser inside the upstream `/operator/` window (today: nginx autoindex only)~~ → ROADMAP (upstream)                     | Low    | M      | Feature       |
-| 41 | ~~Upstream `natAddress`: real-NAT validation~~ → upstream repo                    | Medium | L      | Quality       |
-| 42 | ~~Run docs-health HARVEST on this report so (f) does not die in a timestamped file~~ done (2026-09-19 sweep)                              | High   | S      | Documentation |
-| 43 | ~~Compress/prune stereo WAVs (Opus transcode job)~~ → ROADMAP (recording cluster)                    | Low    | M      | Quality       |
-| 44 | ~~Document `*97` in the island's user-facing help~~ → ROADMAP (recording cluster)                            | Low    | S      | Documentation |
-| 45 | ~~New recording UI strings ship en/de from day one~~ → ROADMAP (applies when the recording UI is built)                    | Low    | S      | Quality       |
-| 46 | ~~Post-call SSE nudge: "recording available" when the WAV lands~~ → ROADMAP (recording cluster)                           | Low    | M      | Feature       |
-| 47 | ~~Live start/stop recording control from the island (needs event-socket path — bigger design)~~ → ROADMAP                  | Low    | L      | Feature       |
-| 48 | ~~Cross-link webphone README ↔ upstream recording docs section~~ done (README capability row references the stack)                           | Low    | S      | Documentation |
-| 49 | ~~Consider a stack-level capability matrix (island vs server vs PBX)~~ → ROADMAP | Medium | S      | Documentation |
-| 50 | ~~Re-verify this session's two answers after the v2 switchover lands~~ done (E2E green post-switchover; contract pinned)                           | Low    | S      | Quality       |
+| #  | Task                                                                                                                        | Impact | Effort | Category      |
+| -- | --------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 36 | ~~Serve recordings through the existing phone-api reverse proxy (auth injected server-side)~~ → ROADMAP (recording cluster) | Medium | M      | Feature       |
+| 37 | ~~Document the recording filename convention (`uuid_destination.wav`) in webphone docs~~ → ROADMAP                          | Low    | S      | Documentation |
+| 38 | ~~Open `tests/pbx.nix` and confirm the recording assertions first-hand (close b.2)~~ done 2026-09-19 (assertions verified)  | Low    | S      | Quality       |
+| 39 | ~~Add a "recorded" badge to CDR history rows when a WAV exists for that call~~ → ROADMAP (recording cluster)                | Medium | M      | Feature       |
+| 40 | ~~Recordings browser inside the upstream `/operator/` window (today: nginx autoindex only)~~ → ROADMAP (upstream)           | Low    | M      | Feature       |
+| 41 | ~~Upstream `natAddress`: real-NAT validation~~ → upstream repo                                                              | Medium | L      | Quality       |
+| 42 | ~~Run docs-health HARVEST on this report so (f) does not die in a timestamped file~~ done (2026-09-19 sweep)                | High   | S      | Documentation |
+| 43 | ~~Compress/prune stereo WAVs (Opus transcode job)~~ → ROADMAP (recording cluster)                                           | Low    | M      | Quality       |
+| 44 | ~~Document `*97` in the island's user-facing help~~ → ROADMAP (recording cluster)                                           | Low    | S      | Documentation |
+| 45 | ~~New recording UI strings ship en/de from day one~~ → ROADMAP (applies when the recording UI is built)                     | Low    | S      | Quality       |
+| 46 | ~~Post-call SSE nudge: "recording available" when the WAV lands~~ → ROADMAP (recording cluster)                             | Low    | M      | Feature       |
+| 47 | ~~Live start/stop recording control from the island (needs event-socket path — bigger design)~~ → ROADMAP                   | Low    | L      | Feature       |
+| 48 | ~~Cross-link webphone README ↔ upstream recording docs section~~ done (README capability row references the stack)          | Low    | S      | Documentation |
+| 49 | ~~Consider a stack-level capability matrix (island vs server vs PBX)~~ → ROADMAP                                            | Medium | S      | Documentation |
+| 50 | ~~Re-verify this session's two answers after the v2 switchover lands~~ done (E2E green post-switchover; contract pinned)    | Low    | S      | Quality       |
 
 Harvest note: items 1-10, 21-28, 33, 38, 42, 49 are the strongest
 TODO_LIST candidates; the rest are ROADMAP fuel pending the answers to (g).

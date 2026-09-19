@@ -32,8 +32,10 @@ a second user database would be a split brain.
 nix develop                        # Go, templ, golangci-lint, esbuild, …
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command (templ-components); -count=1: the result cache has lied during investigations
-buildflow                          # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
-nix flake check                    # package build + tests in sandbox + treefmt
+python3 scripts/webphone-smoke.py          # 21-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server)
+buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
+nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings)
+nix flake check                            # package build + tests in sandbox + treefmt + island-lint
 nix build .#webphone --system aarch64-linux   # cross-builds
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 ```
@@ -211,22 +213,86 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - i18n dictionaries live in `views/i18n.go`; unknown keys surface
   themselves in the page (deliberate) and a test keeps en/de in sync —
   add new keys to BOTH maps.
-- vulnix against `./result` scans the BUILD closure (bootstrap
-  toolchains, binutils, gcc, zlib — dozens of findings that never
-  deploy). The honest number is the runtime closure:
-  `vulnix $(nix-store -qR ./result)` — pass the closure paths as ARGS
-  (8 derivations; bare `vulnix ./result` silently expands the build
-  closure). vulnix also range-matches
-  distro-patched versions: it still prints glibc CVE-2026-5450
-  against glibc-2.42-84, but the fix shipped in nixpkgs 2.42-67
-  (PR #517918, merged 2026-05-22 — the locked tree's glibc
-  `2.42-master.patch` carries it); NVD ranges cannot see patch
-  suffixes. Runtime closure carries zero real advisories
-  (re-verified 2026-09-19).
+- vulnix: `vulnix --closure <out-path>` is the ONLY scoped mode — plain
+  vulnix expands whatever it is given into the BUILD closure (bootstrap
+  toolchains, binutils, gcc: dozens of findings that never deploy), and
+  per my 2026-09-19 verification even passing `$(nix-store -qR <out>)`
+  paths does NOT scope it; `nix run .#vulnix` wraps the correct call.
+  vulnix also range-matches distro-patched versions: it prints glibc
+  CVE-2026-5450 against glibc-2.42-84, but the fix shipped in nixpkgs
+  2.42-67 (PR #517918 — the locked tree's glibc `2.42-master.patch`
+  carries it); NVD ranges cannot see patch suffixes. Runtime closure
+  (8 derivations) carries zero real advisories (re-verified 2026-09-19
+  with `--closure`).
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony
   repo fought — pre-settled here).
+- Island no-undef gate: `nix flake check` runs `island-lint` — oxlint
+  with `internal/web/assets/island/oxlint.json` (all categories off,
+  `no-undef` on, `SIP` declared readonly). It pins exactly the bug class
+  that surfaced as a silent browser ReferenceError (accept/reject):
+  calls to undefined identifiers in the island modules. New browser
+  globals go in the config's `globals` block. The check fails closed
+  and records the scanned file list (a green gate must prove it
+  scanned).
+- Live-transcript contract (shell.js ↔ server): `#thread-transcript`
+  carries `data-page` + `data-thread`. shell.js cancels the sse
+  extension's `htmx:sseBeforeMessage` while `data-page != "0"` (paging
+  state survives live pushes) and POSTs `/messages/{id}/read` plus a
+  `GET /partials/nav?active=<tab>` into `#wp-nav` after a newest-page
+  push (a live swap never re-GETs the partial, so only the client can
+  clear the unread badge). The sse extension (v2.2.4 served by
+  cqrs-htmx v4.9.0) fires cancelable `htmx:sseBeforeMessage` before
+  `htmx:sseMessage` — verified in the extension source, not assumed.
+- Nav language mechanism (decided): the island's language switch is a
+  client-side cookie write with no server round-trip, so it cannot carry
+  HX-Trigger; it dispatches `wp:lang-changed` and shell.js re-fetches
+  `/partials/nav` — nav labels switch language without a full reload.
+  `/partials/nav` renders labels anonymously (no badges) and
+  signed-in with fresh badge caches.
+
+## Release runbook (v2.x)
+
+The dance that cut v2.0.0, written down so the next release is a
+checklist, not archaeology. The auto-commit daemon commits AND pushes
+continuously — work in small, explicitly-committed units.
+
+1. **Fold**: CHANGELOG `Unreleased` → dated section; sync
+   FEATURES/TODO_LIST/ROADMAP; explicit commit per doc group.
+2. **Bump `webphoneVersion`** in flake.nix (package version AND the
+   `/version` ldflags injection — one let-binding; keep it equal to the
+   new tag).
+3. **Gates**: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
+   `GOEXPERIMENT=jsonv2 go test -count=1 ./...`, `nix flake check`,
+   `python3 scripts/webphone-smoke.py`.
+4. **Tag + push**: annotated `git tag -a vX.Y.Z -m ...`, push main +
+   tag (verify with `git ls-remote` — the daemon may have pushed
+   already).
+5. **Link check**: `nix run nixpkgs#lychee -- .` — after the push, so
+   the new tag link resolves.
+6. **Stack bump** (`~/projects/nix-international-telephony`):
+   `nix flake lock --update-input webphone`, commit the lock.
+7. **Stack gates**: `nix build -L .#telephony-browser` (browser E2E,
+   chromium NixOS test — THE island regression gate, deliberately
+   outside `checks` for its ~1-2 GB chromium closure);
+   `nix build -L .#checks.x86_64-linux.telephony-webphone` (webphone
+   VM test); full `nix flake check` with the new lock before
+   announcing.
+8. **aarch64**: `nix build .#webphone --system aarch64-linux` — plain
+   `nix flake check` silently omits aarch64 (it says so in a warning).
+
+## Buildflow health warning, itemized (2026-09-19)
+
+`buildflow` ends with "9 tools unavailable (health check failed)". All
+nine are noise for THIS repo: every one additionally reports "missing
+prerequisite files" and lands in "not applicable" — their steps never
+run (no package.json, no Python package layout): jest, knip, madge,
+publint, svelte-check, vitest, vue-tsc (JS/TS), c8/js-coverage,
+interrogate (Python). The one real prerequisite gap was go-licenses
+(license-scan preflight) — now in the devShell, so run buildflow inside
+`nix develop` or the preflight warns "go-licenses binary not found".
+markdown-lint/gitleaks/codespell only run in build mode `full`.
 
 ## Conventions
 

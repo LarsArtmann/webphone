@@ -80,7 +80,7 @@ closed with evidence that contradicts what it claimed.
    My `git push` therefore moved only the last 5 commits
    (`6cdd75c..44db922`); the earlier 28 reached GitHub by some other
    channel (presumed daemon auto-push, mechanism unconfirmed). End state
-   verified correct via `ls-remote`; the *timing* claim "pushed at
+   verified correct via `ls-remote`; the _timing_ claim "pushed at
    07:0x" is off by minutes for most of the release content. Effort to
    close: confirm the daemon's push behavior (S).
 2. **GitHub Release object does not exist** — only the tag. The
@@ -317,8 +317,8 @@ skill — most non-top items are ROADMAP fuel, not commitments.
     `flake.lock` from heuristic commits so explicit messages win
     (infra change, upstream decision). [S / Medium / Cleanup]
 
-*(34 items — stopping here rather than padding to 50; the remainder of
-"what's next" is already represented by ROADMAP's existing bullets.)*
+_(34 items — stopping here rather than padding to 50; the remainder of
+"what's next" is already represented by ROADMAP's existing bullets.)_
 
 ## g) Three questions I cannot figure out myself
 

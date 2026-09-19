@@ -21,14 +21,14 @@ Code wins when doc and code disagree.
 
 ## Messaging (SMS/MMS)
 
-| Feature                       | Status              | Notes                                                                       |
-| ----------------------------- | ------------------- | --------------------------------------------------------------------------- |
-| Send SMS/MMS                  | 🟢 FULLY_FUNCTIONAL | ≤1600 chars, ≤5 attachments, ≤10 MiB each; loopback + webhook gateways      |
-| Inbound SMS/MMS via webhook   | 🟢 FULLY_FUNCTIONAL | `/hooks/message`, base64 attachments, Bearer secret, fail-closed            |
-| Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)       |
-| Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal   |
-| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)            |
-| Transcript pagination         | 🟢 FULLY_FUNCTIONAL | "Load older messages" fetches prior pages (`?older=`); LIMIT+1 hasMore      |
+| Feature                       | Status              | Notes                                                                                                                                      |
+| ----------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Send SMS/MMS                  | 🟢 FULLY_FUNCTIONAL | ≤1600 chars, ≤5 attachments, ≤10 MiB each; loopback + webhook gateways                                                                     |
+| Inbound SMS/MMS via webhook   | 🟢 FULLY_FUNCTIONAL | `/hooks/message`, base64 attachments, Bearer secret, fail-closed                                                                           |
+| Threads with unread badges    | 🟢 FULLY_FUNCTIONAL | Owner-scoped upsert; unread increments on inbound (regression-tested)                                                                      |
+| Attachment round trip         | 🟢 FULLY_FUNCTIONAL | Content-addressed blob store, owner-scoped streaming, path-escape refusal                                                                  |
+| Live thread list + transcript | 🟢 FULLY_FUNCTIONAL | SSE `threads`/`thread` events carry swap-safe fragments (tested)                                                                           |
+| Transcript pagination         | 🟢 FULLY_FUNCTIONAL | "Load older messages" fetches prior pages (`?older=`); LIMIT+1 hasMore                                                                     |
 | Delivery receipts             | 🟢 FULLY_FUNCTIONAL | `/hooks/message/status` flips by `provider_ref`; badge live via SSE. `delivered` needs a callback-capable provider (loopback marks `sent`) |
 
 ## Fax
@@ -66,12 +66,12 @@ Code wins when doc and code disagree.
 
 ## Live updates (SSE)
 
-| Feature                    | Status              | Notes                                                              |
-| -------------------------- | ------------------- | ------------------------------------------------------------------ |
-| Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                  |
-| Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | `threads`/`thread`/`fax` payloads never wipe a composer draft      |
-| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-REGISTER without a reload |
-| SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame |
+| Feature                    | Status              | Notes                                                                        |
+| -------------------------- | ------------------- | ---------------------------------------------------------------------------- |
+| Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                            |
+| Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | `threads`/`thread`/`fax` payloads never wipe a composer draft                |
+| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-REGISTER without a reload           |
+| SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame           |
 | Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy |
 
 ## Awareness
@@ -99,30 +99,30 @@ Code wins when doc and code disagree.
 | Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
 | i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL     | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
 | Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
-| Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Green 2026-09-19 after the accept/reject fix; island changed since (429 surfacing, toasts, live pill) — re-run pending |
+| Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Green 2026-09-19 after the accept/reject fix; island changed since (429 surfacing, toasts, live pill) — re-run pending                                                                  |
 
 ## PLANNED / WORTH_CONSIDERING
 
-| Idea                                  | Status               | Notes                                                                                           |
-| ------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------- |
-| Session persistence across restarts   | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                      |
-| Retention/cleanup job (blobs, old)    | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                      |
-| Video calls                           | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                    |
-| Recording UI surface                  | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas |
-| PWA (offline shell)                   | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                          |
-| sip.js 0.22 bump                      | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md) |
+| Idea                                | Status               | Notes                                                                                                            |
+| ----------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Session persistence across restarts | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                                       |
+| Retention/cleanup job (blobs, old)  | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                                       |
+| Video calls                         | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                                     |
+| Recording UI surface                | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas |
+| PWA (offline shell)                 | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                                           |
+| sip.js 0.22 bump                    | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md)                  |
 
 ## Ops & API surface (cqrs-htmx adoption, 2026-09)
 
-| Feature                        | Status              | Notes                                                                                        |
-| ------------------------------ | ------------------- | -------------------------------------------------------------------------------------------- |
+| Feature                        | Status              | Notes                                                                                            |
+| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------ |
 | Honest `/healthz` readiness    | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.ReadinessHandler`: named `sqlite` ping + `blob-dir` write probe; 503 names the failure |
-| Request logging                | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RequestLoggingSlog` outermost: one structured line per request, no bodies/secrets   |
-| Panic recovery                 | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RecoveryMiddleware` (stack + method/path; `http.ErrAbortHandler` re-raised)         |
-| Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate           |
-| Webhook status idempotency     | 🟢 FULLY_FUNCTIONAL | Replayed `provider_ref` callbacks answer `202` inertly; failures stay retryable               |
-| `/version` endpoint            | 🟢 FULLY_FUNCTIONAL | Library `DebugHandler` pattern                                                                |
-| OpenAPI 3.1 for `/api/session` | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`                                                                     |
-| Server-Timing (opt-in)         | 🟢 FULLY_FUNCTIONAL | `WEBPHONE_DEBUG_TIMING=1` enables the middleware                                              |
-| Idle SSE hub reaper            | 🟢 FULLY_FUNCTIONAL | 10-minute idle TTL, double-guarded; fan-out baseline in docs/reviews (hub-fanout-baseline)    |
-| Island 429 surfacing           | 🟢 FULLY_FUNCTIONAL | phone-api fetch wrappers surface `Retry-After` throttles                                      |
+| Request logging                | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RequestLoggingSlog` outermost: one structured line per request, no bodies/secrets      |
+| Panic recovery                 | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RecoveryMiddleware` (stack + method/path; `http.ErrAbortHandler` re-raised)            |
+| Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate              |
+| Webhook status idempotency     | 🟢 FULLY_FUNCTIONAL | Replayed `provider_ref` callbacks answer `202` inertly; failures stay retryable                  |
+| `/version` endpoint            | 🟢 FULLY_FUNCTIONAL | Library `DebugHandler` pattern                                                                   |
+| OpenAPI 3.1 for `/api/session` | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`                                                                        |
+| Server-Timing (opt-in)         | 🟢 FULLY_FUNCTIONAL | `WEBPHONE_DEBUG_TIMING=1` enables the middleware                                                 |
+| Idle SSE hub reaper            | 🟢 FULLY_FUNCTIONAL | 10-minute idle TTL, double-guarded; fan-out baseline in docs/reviews (hub-fanout-baseline)       |
+| Island 429 surfacing           | 🟢 FULLY_FUNCTIONAL | phone-api fetch wrappers surface `Retry-After` throttles                                         |

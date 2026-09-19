@@ -53,7 +53,7 @@ scores: **Accuracy 96%** (1 wrong number found, in a tagged CHANGELOG entry),
    AGENTS.md: verify end states with `git ls-remote`, not push logs.
 5. **treefmt/markdown ambiguity closed:** `flake.nix` prettier `includes` is
    only `*.css` + island/shell JS — markdown is NOT in treefmt scope, so the
-   07:43 report's `nix fmt` "0 files" meant *unformatted-by-tooling*, not
+   07:43 report's `nix fmt` "0 files" meant _unformatted-by-tooling_, not
    clean. Documented in AGENTS.md.
 6. **Living docs fixed (6 false/stale claims corrected):**
    AGENTS.md intro said "Stack-side switchover remains open work" — it is
@@ -311,8 +311,8 @@ session — listed here so the report is self-contained, not re-proposed work.
 35. Upstream (stack repo): `natAddress` real-NAT validation; recordings
     browser inside `/operator/`.
 
-*(35 items — the rest of "what's next" is the ROADMAP sections written this
-session; padding to 50 would manufacture work.)*
+_(35 items — the rest of "what's next" is the ROADMAP sections written this
+session; padding to 50 would manufacture work.)_
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
