@@ -5,6 +5,7 @@ import (
 	"encoding/json/v2"
 	"html"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
@@ -34,6 +35,62 @@ func TestSessionGatesAndFlows(t *testing.T) {
 	resp, body := c.do(http.MethodGet, "/partials/messages", nil, "")
 	if resp.StatusCode != http.StatusOK || !strings.Contains(string(body), "No conversations yet") {
 		t.Fatalf("messages partial: %d", resp.StatusCode)
+	}
+}
+
+// TestSessionCreationVerifiesCredentials pins the server-side login
+// gate: the submitted extension/password pair is verified against the
+// PBX directory (same directory the SIP REGISTER checks) before a
+// session is minted. A forged POST must not open a session scoped to
+// another extension — the tab partials, fax and attachment streams,
+// and SSE fragments scope by the session alone.
+func TestSessionCreationVerifiesCredentials(t *testing.T) {
+	pbxStub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if ok && user == "1001" && pass == "good" {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(pbxStub.Close)
+
+	c := clientFor(t, newTestServerWithPhoneAPI(t, pbxStub.URL))
+
+	bad, _ := json.Marshal(map[string]string{"extension": "1001", "password": "wrong"})
+	resp, body := c.do(http.MethodPost, "/api/session", bad, "application/json")
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("wrong password: %d %s (want 401)", resp.StatusCode, body)
+	}
+	if gated, _ := c.do(http.MethodGet, "/partials/messages", nil, ""); gated.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("rejected login must not mint a session: partials %d", gated.StatusCode)
+	}
+
+	good, _ := json.Marshal(map[string]string{"extension": "1001", "password": "good"})
+	resp, body = c.do(http.MethodPost, "/api/session", good, "application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("correct password: %d %s (want 201)", resp.StatusCode, body)
+	}
+	if gated, _ := c.do(http.MethodGet, "/partials/messages", nil, ""); gated.StatusCode != http.StatusOK {
+		t.Fatalf("verified login must open the tabs: partials %d", gated.StatusCode)
+	}
+}
+
+// TestSessionCreationFailsClosedWhenPbxDown pins the availability
+// contract: a PBX outage must fail CLOSED (502), never fail open with
+// an unverified session.
+func TestSessionCreationFailsClosedWhenPbxDown(t *testing.T) {
+	pbxStub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	c := clientFor(t, newTestServerWithPhoneAPI(t, pbxStub.URL))
+	pbxStub.Close()
+
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "good"})
+	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("PBX down: %d %s (want 502)", resp.StatusCode, body)
 	}
 }
 

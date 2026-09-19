@@ -53,6 +53,57 @@ func TestNewClientRejectsInvalidBaseURL(t *testing.T) {
 	}
 }
 
+func TestVerifyCredentials(t *testing.T) {
+	t.Run("accepts valid directory credentials", func(t *testing.T) {
+		client, _ := newUpstream(t, func(w http.ResponseWriter, r *http.Request) {
+			user, pass, ok := r.BasicAuth()
+			if !ok || user != creds.Extension || pass != creds.Password {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":1,"old":2}`))
+		})
+		if err := client.VerifyCredentials(context.Background(), creds); err != nil {
+			t.Fatalf("valid credentials rejected: %v", err)
+		}
+	})
+	t.Run("rejects invalid directory credentials with sentinel", func(t *testing.T) {
+		client, _ := newUpstream(t, func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusUnauthorized)
+		})
+		if err := client.VerifyCredentials(context.Background(), creds); !errors.Is(err, ErrUnauthorized) {
+			t.Fatalf("want ErrUnauthorized, got %v", err)
+		}
+	})
+	t.Run("maps 403 to the sentinel too", func(t *testing.T) {
+		client, _ := newUpstream(t, func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+		})
+		if err := client.VerifyCredentials(context.Background(), creds); !errors.Is(err, ErrUnauthorized) {
+			t.Fatalf("want ErrUnauthorized, got %v", err)
+		}
+	})
+	t.Run("surfaces PBX outages as non-sentinel errors", func(t *testing.T) {
+		client, _ := newUpstream(t, func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		})
+		err := client.VerifyCredentials(context.Background(), creds)
+		if err == nil || errors.Is(err, ErrUnauthorized) {
+			t.Fatalf("outage must not look like bad credentials: %v", err)
+		}
+	})
+	t.Run("disabled client reports ErrDisabled", func(t *testing.T) {
+		client, err := NewClient("")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := client.VerifyCredentials(context.Background(), creds); !errors.Is(err, ErrDisabled) {
+			t.Fatalf("want ErrDisabled, got %v", err)
+		}
+	})
+}
+
 func TestHistorySendsBasicAuthAndDecodes(t *testing.T) {
 	var gotPath, gotAuth, gotMethod string
 	client, _ := newUpstream(t, func(w http.ResponseWriter, r *http.Request) {
