@@ -212,6 +212,7 @@ func TestOpenAPIEndpoint(t *testing.T) {
 		Paths   map[string]struct {
 			Post   map[string]any `json:"post"`
 			Delete map[string]any `json:"delete"`
+			Get    map[string]any `json:"get"`
 		} `json:"paths"`
 	}
 	if err := json.Unmarshal(readAll(t, resp), &doc); err != nil {
@@ -223,6 +224,10 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	sess, ok := doc.Paths["/api/session"]
 	if !ok || sess.Post == nil || sess.Delete == nil {
 		t.Error("/api/session must document both POST and DELETE")
+	}
+	csrf, ok := doc.Paths["/api/csrf"]
+	if !ok || csrf.Get == nil {
+		t.Error("/api/csrf must document GET")
 	}
 }
 

@@ -25,6 +25,42 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   (stack commit `2289e89`), and the stack's FULL `nix flake check` is
   green with that lock (browser E2E, webphone VM test included).
 
+## WORTH_CONSIDERING cluster (one-line specs, SUPERB plan P26 2026-09-19)
+
+- Session persistence: move the in-memory TTL session store behind a
+  restart-survivable backing (SQLite table + TTL sweep) — the island
+  login flow is unchanged; weigh against "sessions are ephemeral by
+  design" before building.
+- Retention/cleanup job: bounded deletion for old CDR rows, read
+  faxes/voicemail blobs, and expired sessions (a `retention_days`
+  setting + a systemd timer in the module).
+- PWA: manifest + service worker so the webphone installs to a home
+  screen; the SIP island must survive SW caching rules (no cache for
+  `/events`, verbatim island modules pinned by hash).
+- Video calls: SIP.js video negotiation + a `<video>` call card —
+  FreeSWITCH side needs a video-capable profile; large surface, only
+  on demand.
+- Recording UI (see raw ideas below): product-intent decision first
+  (consent/jurisdiction), then the panel.
+
+## Standing watches (SUPERB plan P27 2026-09-19)
+
+Drift gets caught by routine, not luck — each row names the trigger to
+re-check:
+
+- sip.js: revisit on a 0.22 release, a reconnect-hang fix, or a
+  security advisory (evaluation: `docs/reviews/2026-09-18_sip-js-0.22-evaluation.md`).
+- templ-components: ship a ThemeScript opt-out knob and this repo drops
+  the CSP hash pin plus the app.css `!important` color-scheme rules.
+- oxlint globals watchlist: any new browser global in the island needs
+  an entry in `internal/web/assets/island/oxlint.json` (the gate fails
+  closed on undeclared identifiers by design).
+- E2E wall-time budget: the stack browser E2E baseline is ~150s; a run
+  drifting far above it is a perf regression signal, not noise.
+- cqrs-htmx root tag: the next release after v4.9.0 changes the
+  `/events` byte stream (master already adds the SSE `retry:` hint) —
+  on bump, re-run the browser E2E and update the AGENTS retry note.
+
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
 Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`

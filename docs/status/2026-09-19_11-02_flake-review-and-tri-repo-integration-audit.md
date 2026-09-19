@@ -136,30 +136,30 @@ Work performed:
 
 **webphone repo**
 
-1. Apply flake fix 1: devShell `GOEXPERIMENT = "jsonv2"` + `GOTOOLCHAIN = "local"`
-   (check `.buildflow.yml` first for overlap).
-2. Apply flake fix 2: `recommendedProxySettings = true;` on the module's websocket
-   location (XFF readiness for the planned `KeyExtractorFromClientIP` flip).
-3. NEW (self-review find): add an `/events` location (buffering off, long read
-   timeout) to the module's own nginx vhost.
-4. Apply flake fix 3: `services.webphone.memoryMax` option + `serviceConfig.MemoryMax`.
-5. Apply flake fix 4: assertion that `dataDir` is under `/var/lib`.
-6. Apply flake fix 5 (style): `lib.*` instead of `pkgs.lib.*`; drop `with pkgs;`.
-7. Consider `nixosModules.webphone` alias next to `.default`.
-8. Optional: narrow `src` via `lib.fileset` (store size only).
-9. Update webphone `AGENTS.md` with the integration-state facts (stack rides main;
-   pbx-artmann defaults; messaging seam unwired; pin `4a1266d` absorbed 10:42).
-10. `TODO_LIST.md` HARVEST from this report (after owner go-ahead).
-11. `webphoneVersion` drift: HEAD reports `v2.0.0` while 36 commits newer — next
-    release per runbook resolves; keep in mind when reading `/version`.
+1. ~~Apply flake fix 1: devShell `GOEXPERIMENT = "jsonv2"` + `GOTOOLCHAIN = "local"`~~ done at `4c6bba1`
+   ~~(check `.buildflow.yml` first for overlap).~~
+2. ~~Apply flake fix 2: `recommendedProxySettings = true;` on the module's websocket~~ done at `4c6bba1`
+   ~~location (XFF readiness for the planned `KeyExtractorFromClientIP` flip).~~
+3. ~~NEW (self-review find): add an `/events` location (buffering off, long read~~ done at `4c6bba1`
+   ~~timeout) to the module's own nginx vhost.~~
+4. ~~Apply flake fix 3: `services.webphone.memoryMax` option + `serviceConfig.MemoryMax`.~~ done at `4c6bba1`
+5. ~~Apply flake fix 4: assertion that `dataDir` is under `/var/lib`.~~ done at `4c6bba1`
+6. ~~Apply flake fix 5 (style): `lib.*` instead of `pkgs.lib.*`; drop `with pkgs;`.~~ done at `4c6bba1`
+7. ~~Consider `nixosModules.webphone` alias next to `.default`.~~ done at `4c6bba1`
+8. ~~Optional: narrow `src` via `lib.fileset` (store size only).~~ done at `4c6bba1`
+9. ~~Update webphone `AGENTS.md` with the integration-state facts (stack rides main;~~ done at `4c6bba1`
+   ~~pbx-artmann defaults; messaging seam unwired; pin `4a1266d` absorbed 10:42).~~
+10. ~~`TODO_LIST.md` HARVEST from this report (after owner go-ahead).~~ done at `4c6bba1`
+11. ~~`webphoneVersion` drift: HEAD reports `v2.0.0` while 36 commits newer — next~~ done at `d815004`
+    ~~release per runbook resolves; keep in mind when reading `/version`.~~
 
 **stack repo (nix-international-telephony)**
 
-12. Re-run browser E2E against `4a1266d` (markup changed since the tag: the
-    `messages.templ` rewrite).
-13. Fix `contactsJson` double-escape in `web.nix` (`escapeJs` + `toJSON` together).
-14. Fix rendered `phoneApi` flag: mirror `cfg.webphone.phoneApi.enable` only, not
-    `|| cfg.operator.enable` (else operator-only config yields erroring panels).
+12. ~~Re-run browser E2E against `4a1266d` (markup changed since the tag: the~~ done at `28d4688`
+    ~~`messages.templ` rewrite).~~
+13. ~~Fix `contactsJson` double-escape in `web.nix` (`escapeJs` + `toJSON` together).~~ done at `28d4688`
+14. ~~Fix rendered `phoneApi` flag: mirror `cfg.webphone.phoneApi.enable` only, not~~ done at `28d4688`
+    ~~`|| cfg.operator.enable` (else operator-only config yields erroring panels).~~
 15. Promote browser E2E CI from `workflow_dispatch` to periodic/per-push (their TODO
     row 31; owner's call).
 16. Operator API: HTTP Range support in `send_file` (voicemail audio seek).
@@ -168,22 +168,22 @@ Work performed:
 
 **pbx-artmann repo**
 
-19. `services.telephony.webphone.phoneApi.enable = true;` — lights History +
-    Voicemail panels in production (biggest single-line win found).
-20. `webphone.contacts = […]` — surface 1000 (Lars), 1001 (Alice), 2000 (ring
-    group) as shared contacts.
+19. ~~`services.telephony.webphone.phoneApi.enable = true;` — lights History +~~ done (deployed to prod, then re-deployed with the d5026d1 credentials fix (see appendix))
+    ~~Voicemail panels in production (biggest single-line win found).~~
+20. ~~`webphone.contacts = […]` — surface 1000 (Lars), 1001 (Alice), 2000 (ring~~ done (deployed to prod with the same pass (see appendix))
+    ~~group) as shared contacts.~~
 21. Owner decisions: `operator.enable`, `recording.serve.enable` on prod.
-22. Build the messaging bridge, inbound leg: `telnyx-webhooks.py` POSTs normalized
-    inbound SMS/MMS to webphone `/hooks/message` (shared secret, `/hooks/fax` for
-    TIFFs).
-23. Messaging bridge, outbound leg: serve `{url}/message` + `/fax` (multipart,
-    Bearer secret, `{"provider_ref"}` receipts) so webphone's webhook gateway mode
-    goes live; wire status-hook callbacks.
-24. Wire `WEBPHONE_GATEWAY__WEBHOOK_SECRET` via
-    `services.webphone.environmentFile` + add to `generate.sh`/`push-secrets.sh`
-    lists (their documented invariant).
-25. Re-verify prod after the phoneApi flip (eval + optionally the stack's
-    `telephony-webphone` VM test).
+22. ~~Build the messaging bridge, inbound leg: `telnyx-webhooks.py` POSTs normalized~~ done (bridge built 2026-09-19, inbound verified end-to-end (see appendix))
+    ~~inbound SMS/MMS to webphone `/hooks/message` (shared secret, `/hooks/fax` for~~
+    ~~TIFFs).~~
+23. ~~Messaging bridge, outbound leg: serve `{url}/message` + `/fax` (multipart,~~ done (outbound leg live, waiting only on Telnyx portal steps (see appendix))
+    ~~Bearer secret, `{"provider_ref"}` receipts) so webphone's webhook gateway mode~~
+    ~~goes live; wire status-hook callbacks.~~
+24. ~~Wire `WEBPHONE_GATEWAY__WEBHOOK_SECRET` via~~ done (shipped with the bridge wiring (see appendix))
+    ~~`services.webphone.environmentFile` + add to `generate.sh`/`push-secrets.sh`~~
+    ~~lists (their documented invariant).~~
+25. ~~Re-verify prod after the phoneApi flip (eval + optionally the stack's~~ done (prod re-verified after the phoneApi flip (see appendix))
+    ~~`telephony-webphone` VM test).~~
 26. Owner/portal BLOCKEDs: Telnyx messaging-profile DID attach (their TODO row 42),
     Warsaw DID re-purchase — prerequisites for real inbound SMS.
 
@@ -193,25 +193,25 @@ Work performed:
     (current de facto) — question g.1 below.
 28. Evaluate replacing pbx-artmann's `path:` input with a github pin (the LIVE path
     input already burned them 2026-09-18), or keep path + lock discipline.
-29. Add a cross-repo contract test: stack's rendered config.js key set vs webphone's
-    `configjs.go` (today only convention + two scattered renderers hold it — a
-    nascent split brain).
-30. Consider teaching webphone's module eval-check to assert the vhost it generates
-    (today it linkFarms config.json + port only).
+29. ~~Add a cross-repo contract test: stack's rendered config.js key set vs webphone's~~ done (stack VM test pins the config.js key set (see appendix))
+    ~~`configjs.go` (today only convention + two scattered renderers hold it — a~~
+    ~~nascent split brain).~~
+30. ~~Consider teaching webphone's module eval-check to assert the vhost it generates~~ done (module-check asserts vhost locations plus the webphone unit (see appendix))
+    ~~(today it linkFarms config.json + port only).~~
 
 ## g) Questions I cannot figure out myself
 
-1. **Pin policy**: should the stack keep riding webphone `main` (velocity — 4 pins
-   in 2 days, but a live PBX runs unreleased commits) or pin release tags and bump
-   per the release runbook? This is an owner risk-appetite call, not discoverable.
-2. **Messaging bridge priority**: build the Telnyx↔webphone bridge now (costs Telnyx
-   messaging profile + portal steps, lights up Messages/Fax in production), or is
-   the Messages tab deliberately parked until the DID/messaging-profile BLOCKEDs
-   clear? Product sequencing only you know.
-3. **Prod trust posture**: enabling `phoneApi` proxies each signed-in extension's
-   SIP password as Basic auth to the loopback operator API, which currently has no
-   auth-failure lockout (stack TODO row 42). Ship the one-liner now and harden
-   after, or harden first? Risk tolerance is yours.
+1. ~~**Pin policy**: should the stack keep riding webphone `main` (velocity — 4 pins~~ done (superseded - the P8 pin-policy decision memo in the SUPERB plan (docs/planning/2026-09-19_15-37) owns it, owner call pending)
+   ~~in 2 days, but a live PBX runs unreleased commits) or pin release tags and bump~~
+   ~~per the release runbook? This is an owner risk-appetite call, not discoverable.~~
+2. ~~**Messaging bridge priority**: build the Telnyx↔webphone bridge now (costs Telnyx~~ done (answered by events - bridge built 2026-09-19 (see appendix))
+   ~~messaging profile + portal steps, lights up Messages/Fax in production), or is~~
+   ~~the Messages tab deliberately parked until the DID/messaging-profile BLOCKEDs~~
+   ~~clear? Product sequencing only you know.~~
+3. ~~**Prod trust posture**: enabling `phoneApi` proxies each signed-in extension's~~ done (answered by events - one-liner shipped per owner blanket go (see appendix))
+   ~~SIP password as Basic auth to the loopback operator API, which currently has no~~
+   ~~auth-failure lockout (stack TODO row 42). Ship the one-liner now and harden~~
+   ~~after, or harden first? Risk tolerance is yours.~~
 
 ---
 
@@ -255,3 +255,28 @@ Executed same day under `docs/planning/2026-09-19_11-51_SUPERB-tri-repo-function
 - **g.3 answered by events**: shipped the one-liner (`phoneApi.enable`)
   per the owner's blanket go; the operator-API hardening items remain
   in the stack's TODO.
+
+## Appendix (2026-09-19 evening): the CSRF fronting bug, timeline
+
+- **2026-09-18 09:23** — CSRF middleware wired into the web server
+  (cqrs-htmx adoption). Correct for direct-HTTP listeners; the fronted
+  shape had no test.
+- **2026-09-18** — the stack's `forceSSL` vhost ships; the Origin
+  `https://` vs plain-HTTP-listener mismatch becomes production's
+  reality, unnoticed.
+- **2026-09-19 morning** — the v2.0.0-era build is live on
+  pbx.artmann.tech: every browser login 403s
+  (`contradictedAttestationOrigin`, scheme-only mismatch). Calls keep
+  working (the island is serverless), so nothing else screams; the
+  stack browser E2E stays green because it never asserted the session
+  POST.
+- **2026-09-19 early afternoon** — v2.1.0 (`d815004`) released with
+  both halves of the fix: `csrf.trusted_proxies`/`trusted_origins`
+  (the trusted proxy's `X-Forwarded-Proto` is believed) and login CSRF
+  rotation with island adoption via `GET /api/csrf`.
+- **2026-09-19 evening** — the stack browser E2E gains the
+  SESSION-CREATED gate (per-browser, negative-tested: stripping the
+  csrf settings fails the run with `SESSION-GATE-FAILED: session=403`).
+  The silent-breakage class dies. The prod redeploy is the owner's one
+  command (SUPERB plan P1; the pbx-artmann lock now rides the v2.1.0
+  chain as of `019093f` there).

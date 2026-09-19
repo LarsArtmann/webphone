@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json/v2"
+	"io"
 	"net/http"
 	"strconv"
 	"testing"
@@ -59,6 +60,34 @@ func TestHookRateLimitPerClient(t *testing.T) {
 	}
 	if !limited {
 		t.Errorf("hooks never hit the rate limit after %d requests", hookBurst+5)
+	}
+}
+
+// TestCSRFRefreshRateLimitPerClient pins the token endpoint's flood
+// bound: GET /api/csrf is anonymous, so without a budget a client could
+// churn masked tokens unbounded. Real traffic is one fetch per login
+// rotation; the shared hook budget (60/min burst 60) is far above that
+// and rejected requests carry the computed Retry-After like every
+// other limited surface.
+func TestCSRFRefreshRateLimitPerClient(t *testing.T) {
+	server := newTestServer(t)
+
+	limited := false
+	for range hookBurst + 5 {
+		resp, err := server.Client().Get(server.URL + "/api/csrf")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+		if resp.StatusCode == http.StatusTooManyRequests {
+			limited = true
+			retryAfter(t, resp)
+			break
+		}
+	}
+	if !limited {
+		t.Errorf("csrf refresh never hit the rate limit after %d requests", hookBurst+5)
 	}
 }
 
