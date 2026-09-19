@@ -246,7 +246,6 @@ func TestRequestIDEnrichmentWiredIntoTheChain(t *testing.T) {
 	}
 }
 
-
 // TestPermissionsPolicyShipsCalibrated pins the calibrated
 // Permissions-Policy: the microphone stays self-origin (the WebRTC phone
 // needs it), everything power-adjacent is denied. The library's

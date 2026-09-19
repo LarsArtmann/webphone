@@ -15,9 +15,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	servertiming "github.com/larsartmann/httputil/server_timing"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/httputil"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
