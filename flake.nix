@@ -220,11 +220,9 @@
                   name = "hsts-opt-in";
                   path = pkgs.writeText "hsts-opt-in" (
                     let
-                      hstsEvaluated = lib.evalModules (
-                        moduleSet {
-                          services.webphone.nginx.hsts.enable = true;
-                        }
-                      );
+                      hstsEvaluated = lib.evalModules (moduleSet {
+                        nginx.hsts.enable = true;
+                      });
                       hstsVhost = hstsEvaluated.config.services.nginx.virtualHosts."phone.example.org";
                     in
                     if lib.hasInfix "Strict-Transport-Security" hstsVhost.extraConfig then
