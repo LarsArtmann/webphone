@@ -172,31 +172,33 @@ in
       enable = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
       virtualHosts.${cfg.nginx.hostName} = {
-        locations."/" = {
-          recommendedProxySettings = true;
-          proxyWebsockets = false;
-          proxyPass = "http://127.0.0.1:${listenPort}";
-        };
-        # The SIP WebSocket path: upgrade + no read timeout (calls are
-        # long-lived; the island's reconnect watchdog handles drops).
-        locations.${cfg.settings.websocket_path} = {
-          proxyPass = "http://127.0.0.1:${listenPort}";
-          recommendedProxySettings = true;
-          proxyWebsockets = true;
-          extraConfig = ''
-            proxy_read_timeout 3600s;
-          '';
-        };
-        # Server-sent events: unbuffered, HTTP/1.1, long read timeout so
-        # the event stream stays open for the whole session.
-        locations."/events" = {
-          proxyPass = "http://127.0.0.1:${listenPort}";
-          recommendedProxySettings = true;
-          extraConfig = ''
-            proxy_buffering off;
-            proxy_read_timeout 3600s;
-            proxy_http_version 1.1;
-          '';
+        locations = {
+          "/" = {
+            recommendedProxySettings = true;
+            proxyWebsockets = false;
+            proxyPass = "http://127.0.0.1:${listenPort}";
+          };
+          # The SIP WebSocket path: upgrade + no read timeout (calls are
+          # long-lived; the island's reconnect watchdog handles drops).
+          ${cfg.settings.websocket_path} = {
+            proxyPass = "http://127.0.0.1:${listenPort}";
+            recommendedProxySettings = true;
+            proxyWebsockets = true;
+            extraConfig = ''
+              proxy_read_timeout 3600s;
+            '';
+          };
+          # Server-sent events: unbuffered, HTTP/1.1, long read timeout so
+          # the event stream stays open for the whole session.
+          "/events" = {
+            proxyPass = "http://127.0.0.1:${listenPort}";
+            recommendedProxySettings = true;
+            extraConfig = ''
+              proxy_buffering off;
+              proxy_read_timeout 3600s;
+              proxy_http_version 1.1;
+            '';
+          };
         };
       };
     };
