@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The NixOS module satisfies statix's repeated-key gate: the three
+  `systemd` assignments (service, backup service, backup timer) are
+  merged into one attrset — eval-equivalent, no behavior change.
+
 ### Added
 
 - Backup story, drill-verified: the NixOS module gains
@@ -372,6 +378,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.3.0
+[2.2.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.2.0
+[2.1.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.1.0
 [2.0.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.0.0
 [0.1.0]: https://github.com/LarsArtmann/webphone/releases/tag/v0.1.0
