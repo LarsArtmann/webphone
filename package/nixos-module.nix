@@ -166,93 +166,97 @@ in
     };
     users.groups.webphone = { };
 
-    systemd.services.webphone = {
-      description = "webphone unified communications (calls, messages, fax, voicemail)";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
+    systemd = {
+      services = {
+        webphone = {
+          description = "webphone unified communications (calls, messages, fax, voicemail)";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
 
-      environment = {
-        WEBPHONE_CONFIG = configFile;
+          environment = {
+            WEBPHONE_CONFIG = configFile;
+          };
+
+          serviceConfig = {
+            ExecStart = lib.getExe cfg.package;
+            EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [ cfg.environmentFile ];
+            User = "webphone";
+            Group = "webphone";
+            StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;
+
+            # Hardening: the service needs almost nothing — network, its state
+            # directory, and nothing else.
+            NoNewPrivileges = true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            ProtectClock = true;
+            ProtectHostname = true;
+            ProtectKernelLogs = true;
+            ProtectKernelModules = true;
+            ProtectKernelTunables = true;
+            ProtectControlGroups = true;
+            ProtectProc = "invisible";
+            RestrictAddressFamilies = [
+              "AF_INET"
+              "AF_INET6"
+              "AF_UNIX"
+            ];
+            RestrictNamespaces = true;
+            RestrictRealtime = true;
+            RestrictSUIDSGID = true;
+            LockPersonality = true;
+            MemoryDenyWriteExecute = true;
+            CapabilityBoundingSet = "";
+            SystemCallArchitectures = "native";
+            SystemCallFilter = [
+              "@system-service"
+              "~@privileged @resources"
+            ];
+            Restart = "on-failure";
+            RestartSec = 5;
+            MemoryMax = lib.mkIf (cfg.memoryMax != null) cfg.memoryMax;
+          };
+        };
+
+        webphone-backup = lib.mkIf cfg.backup.enable {
+          description = "webphone online backup (sqlite .backup + blob rsync)";
+          serviceConfig = {
+            Type = "oneshot";
+            User = "webphone";
+            Group = "webphone";
+            StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
+            NoNewPrivileges = true;
+            PrivateTmp = true;
+            PrivateDevices = true;
+            ProtectSystem = "strict";
+            ProtectHome = true;
+            ReadWritePaths = [ cfg.backup.destDir ];
+          };
+          # Online copy: sqlite's .backup API takes a consistent snapshot
+          # while the service runs, so the phone never restarts for a
+          # backup (the cold-copy path is the drill-verified fallback).
+          path = [
+            pkgs.sqlite
+            pkgs.rsync
+          ];
+          script = ''
+            sqlite3 ${cfg.dataDir}/webphone.db ".backup '${cfg.backup.destDir}/webphone.db'"
+            rsync -a --delete ${cfg.dataDir}/files/ ${cfg.backup.destDir}/files/
+          '';
+        };
       };
 
-      serviceConfig = {
-        ExecStart = lib.getExe cfg.package;
-        EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [ cfg.environmentFile ];
-        User = "webphone";
-        Group = "webphone";
-        StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;
-
-        # Hardening: the service needs almost nothing — network, its state
-        # directory, and nothing else.
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        ProtectClock = true;
-        ProtectHostname = true;
-        ProtectKernelLogs = true;
-        ProtectKernelModules = true;
-        ProtectKernelTunables = true;
-        ProtectControlGroups = true;
-        ProtectProc = "invisible";
-        RestrictAddressFamilies = [
-          "AF_INET"
-          "AF_INET6"
-          "AF_UNIX"
-        ];
-        RestrictNamespaces = true;
-        RestrictRealtime = true;
-        RestrictSUIDSGID = true;
-        LockPersonality = true;
-        MemoryDenyWriteExecute = true;
-        CapabilityBoundingSet = "";
-        SystemCallArchitectures = "native";
-        SystemCallFilter = [
-          "@system-service"
-          "~@privileged @resources"
-        ];
-        Restart = "on-failure";
-        RestartSec = 5;
-        MemoryMax = lib.mkIf (cfg.memoryMax != null) cfg.memoryMax;
-      };
-    };
-
-    systemd.services.webphone-backup = lib.mkIf cfg.backup.enable {
-      description = "webphone online backup (sqlite .backup + blob rsync)";
-      serviceConfig = {
-        Type = "oneshot";
-        User = "webphone";
-        Group = "webphone";
-        StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        PrivateDevices = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        ReadWritePaths = [ cfg.backup.destDir ];
-      };
-      # Online copy: sqlite's .backup API takes a consistent snapshot
-      # while the service runs, so the phone never restarts for a
-      # backup (the cold-copy path is the drill-verified fallback).
-      path = [
-        pkgs.sqlite
-        pkgs.rsync
-      ];
-      script = ''
-        sqlite3 ${cfg.dataDir}/webphone.db ".backup '${cfg.backup.destDir}/webphone.db'"
-        rsync -a --delete ${cfg.dataDir}/files/ ${cfg.backup.destDir}/files/
-      '';
-    };
-
-    systemd.timers.webphone-backup = lib.mkIf cfg.backup.enable {
-      description = "Daily webphone online backup";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = cfg.backup.calendar;
-        Persistent = true;
-        Unit = "webphone-backup.service";
+      timers.webphone-backup = lib.mkIf cfg.backup.enable {
+        description = "Daily webphone online backup";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = cfg.backup.calendar;
+          Persistent = true;
+          Unit = "webphone-backup.service";
+        };
       };
     };
 
