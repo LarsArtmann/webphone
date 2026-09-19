@@ -163,15 +163,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - cqrs-htmx audit trail: deep-dive
   `docs/research/2026-09-18_cqrs-htmx-deep-dive.html`, execution plan
   `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`,
-  and utilization audit
-  `docs/research/2026-09-19_cqrs-htmx-deep-dive.html` (2026-09-19:
-  78/100 — core adoption exemplary; open recommendations:
-  ContextEnrichmentMiddleware for request IDs, httputil
-  CSRFTokenHXHeaders + InvalidateCSRFCookie, servertiming
-  ServerTimingMiddlewareWhen replacing the hand-rolled timingWriter,
-  calibrated Permissions-Policy with microphone=(self), SafeDetail on
-  webhook 5xx, evaluate the embedded idiomorph ext against the
-  draft-wipe constraint).
+  utilization audit
+  `docs/research/2026-09-19_cqrs-htmx-deep-dive.html` (78/100 baseline),
+  and superb-adoption plan
+  `docs/planning/2026-09-19_09-30_cqrs-htmx-superb-100-adoption-plan.md`
+  (executed 2026-09-19: request-ID enrichment, `templ.JSONString` CSRF
+  wiring, calibrated Permissions-Policy, servertiming middleware, webhook
+  5xx redaction via `webhookFail`/`SafeDetail` — all landed with tests).
+  Still open: the idiomorph experiment (gated on the stack's browser E2E)
+  and CSRF token rotation (see next bullet).
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's
@@ -181,6 +181,20 @@ every build; it is the local tripwire, not a replacement for the E2E.
   old "kept local" comment was wrong), so a wire-shape change upstream
   fails this build. Trap: the dispatch-layer `Notify*` options emit
   `{level,message}`, NOT the island's `{message,kind}` shape.
+- Two CSRF constraints discovered 2026-09-19 while hardening the wiring
+  (both test-caught before they shipped):
+  (1) `httputil.CSRFTokenHXHeaders`/`CSRFTokenHTMLMeta` are for RAW-HTML
+  contexts — they HTML-escape their output. templ escapes attribute
+  values itself, so the helpers would double-escape: hx-headers would
+  fail JSON.parse and every HTMX request silently loses CSRF protection.
+  In templ, build the value with `templ.JSONString` (pages.go renderShell)
+  and let templ escape it once. `TestShellRendersValidJSONCSRFHxHeaders`
+  pins this.
+  (2) `httputil.InvalidateCSRFCookie` on LOGIN breaks the island: login
+  happens WITHOUT a page reload, so the loaded page keeps the old token
+  while the cookie is gone — every post-login HTMX action 403s. Rotation
+  requires the island to adopt a fresh token post-login; that is an
+  island+stack-E2E change, not a server one-liner.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only

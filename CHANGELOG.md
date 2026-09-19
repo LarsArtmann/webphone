@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Request-ID correlation on every request: the cqrs-htmx enrichment
+  middleware now sits outermost in the server chain, so each response
+  carries an `X-Request-ID` header and each request-log line records the
+  identical `request_id` — a response can be matched to its 3 a.m. log
+  line.
+- A calibrated `Permissions-Policy` header (`microphone=(self)` for the
+  WebRTC phone; camera, display-capture, geolocation, payment and usb
+  denied). The library's recommended policy stays rejected because it
+  denies the microphone outright.
+- Webhook 5xx responses are redacted: internal error detail (store paths,
+  SQL state) now goes only to the server log (`webhook apply failed`);
+  providers receive the library's redacted SafeDetail text.
+
+### Changed
+
+- Frontend CSRF wiring is JSON-valid by construction: the shell's
+  `hx-headers` attribute is built with `templ.JSONString` instead of
+  string concatenation (a regression test parses the rendered attribute).
+  CSRF token rotation on login remains deliberately absent — the island
+  logs in without a page reload, so rotation would 403 every later
+  action; it is gated behind an island-side token refresh.
+- The `Server-Timing` debug header is produced by the httputil
+  servertiming middleware instead of a hand-rolled response writer
+  (~40 lines deleted), keeping the same `WEBPHONE_DEBUG_TIMING` opt-in
+  gate while adding CRLF sanitization and an SSE-safe writer.
+- The toast wire-shape struct is now a type alias of the library's
+  `cqrshtmx.ToastDetail`, so an upstream shape change fails this build
+  instead of silently breaking the island's toast listener.
+
 ## [2.0.0] - 2026-09-19
 
 ### Added

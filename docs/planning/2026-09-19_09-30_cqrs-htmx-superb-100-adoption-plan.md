@@ -112,3 +112,16 @@ flowchart TD
 | Audit baseline | 78 | 4 partial + 3 missed + 1 latent anti-pattern |
 | T1–T5 + T7 (this plan) | ~95 | CSRF trio, request IDs, timing swap, redaction, toast alias (already landed) |
 | T6 after stack E2E | ~100 | idiomorph dispositioned by experiment, not by omission |
+
+## 7. Re-scope log (learned during execution, test-caught)
+
+| Micro-task | Planned | Actual outcome | Why |
+| --- | --- | --- | --- |
+| 2.1 | Extractor mapping extension → `cqrshtmx.ParseUserID(ext)` | `ContextEnrichmentMiddleware(nil)` — no user mapping | `ParseUserID` requires a **ULID** (`id.Parse` → `ulid.Parse`); extensions are not ULIDs. Forcing them in would misuse the library's usermgmt identity. Request IDs deliver the traceability value alone. |
+| 2.2/2.3 | `request_id` + `user_id` log assertions | `request_id` + `X-Request-ID` header assertion only | follows from 2.1 |
+| Chain order | Enrichment *inside* the request log | Enrichment **outermost**, log second | `RequestLoggingSlog` reads the context after the handler returns — outside enrichment it can never see the RequestID (first test run proved it). Enrichment writes nothing, so the log's "sees every status" invariant is preserved. |
+| 1.3/1.4 | `InvalidateCSRFCookie` on login + logout | **Dropped and dispositioned** (documented in session_api.go + AGENTS.md) | Test-caught Verschlimmbesserung: the island logs in without a page reload, so rotating the CSRF token at login 403s every later HTMX action (`TestFaxStatusWebhookUpdatesJob` caught it). Rotation needs an island-side token refresh, gated behind the stack browser E2E — same gate as T6. |
+| 3.2 | New Server-Timing test | Existing `TestServerTimingOptIn` adapted to the library's W3C format (`total;desc="Total request";dur=…`) | The semantic contract (header only when flagged, carries total duration) is preserved; attribute order is not the contract. |
+
+**Landed:** 2.1–2.2 (re-scoped), 1.1–1.2, 1.5, 4.1–4.2, 3.1–3.3, 5.1–5.2, 7.1–7.5.
+**Gated:** 1.3–1.4 (with 6.x, behind island token refresh + stack E2E), 6.1–6.4.
