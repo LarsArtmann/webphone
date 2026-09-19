@@ -1,0 +1,70 @@
+direction: down
+
+browser: Browser (operator) {
+  island: SIP Island (never unloads) {
+    sip-js: sip.js 0.21.2 (vendored IIFE)
+    reconnect: bounded reconnect watchdog
+  }
+  tabs: HTMX Tabs (Messages / Fax / Voicemail / History / Contacts / Settings)
+  sse: SSE listeners (sse-swap)
+}
+
+webphone: webphone Go binary {
+  middleware: Middleware chain {
+    enrich: ContextEnrichment (RequestID)
+    log: RequestLoggingSlog
+    timing: ServerTiming (env-gated)
+    security: SecurityHeaders (CSP, Permissions-Policy)
+    recovery: Recovery
+    csrf: CSRF (nosurf, proxy-trust config)
+  }
+  routes: HTTP surface {
+    pages: Shell + tab partials (templ)
+    sessionapi: /api/session + /api/csrf (verify-then-mint)
+    ssep: GET /events (per-extension hubs)
+    proxy: /phone-api proxy (session Basic-auth)
+    hooks: /hooks/* (secret gate + idem store)
+    healthz: /healthz (sqlite, blob-dir)
+  }
+  services: Services {
+    messaging: messaging.Service
+    faxsvc: fax.Service
+    sessionsvc: session.Store (TTL, in-memory)
+    notifier: Notifier -> hub fan-out
+  }
+  gateway: Gateway seam {
+    loopback: Loopback (dev)
+    webhook: Webhook (multipart, Bearer secret)
+  }
+  pbx: pbx.Client (directory proof, voicemail, CDR)
+  store: store (SQLite WAL, owner-scoped queries)
+  blobs: blob.Store (nanoid-named files)
+}
+
+pbxstack: Telephony stack (nginx vhost + FreeSWITCH) {
+  nginx: TLS termination, WSS /sip proxy, /events SSE passthrough
+  telnyx: telnyx-webhooks.py bridge -> /hooks/*
+  fs: FreeSWITCH (SIP + recordings server-side)
+}
+
+browser.tabs -> middleware: "hx-*, partial swaps"
+browser.sse -> routes.ssep: "GET /events (cookie)"
+browser.island.sip-js -> nginx: "SIP over WSS"
+nginx -> routes.pages: "proxy /"
+nginx -> browser.island.sip-js: "WSS upgrade (3600s)"
+pbxstack.telnyx -> routes.hooks: "inbound SMS/fax + status"
+routes.hooks -> services.messaging: "Receive"
+routes.sessionapi -> pbx: "VerifyCredentials (5s bound)"
+routes.sessionapi -> services.sessionsvc: "mint session"
+services.messaging -> store: "owner-scoped SQL"
+services.messaging -> gateway: "SendMessage"
+services.faxsvc -> gateway: "SendFax"
+services.faxsvc -> store: "fax_jobs"
+services.messaging -> services.notifier: "ChangeFunc"
+services.faxsvc -> services.notifier: "ChangeFunc"
+services.notifier -> browser.sse: "swap-safe fragments"
+routes.proxy -> pbx: "voicemail / history (Basic auth)"
+routes.healthz -> store: "ping"
+routes.healthz -> blobs: "write probe"
+store: "SQLite file under dataDir" {shape: cylinder}
+blobs: "files under dataDir/files" {shape: cylinder}

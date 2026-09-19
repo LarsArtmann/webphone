@@ -1,0 +1,45 @@
+direction: down
+
+browser: Browser (operator) {
+  island: SIP Island (never unloads)
+  tabs: HTMX Tabs
+  sse: SSE listeners
+}
+
+webphone: webphone Go binary {
+  middleware: Middleware chain (unchanged)
+  routes: HTTP surface
+  services: Services
+  gateway: Gateway seam
+  pbx: pbx.Client
+  store: store
+  blobs: blob.Store
+}
+
+pbxstack: Telephony stack (nginx + FreeSWITCH)
+
+changed: Adopted deltas (this sweep) {
+  color: "#f4d35e"
+  parse404: Parse*/Must* split — malformed ids answer 404
+  sanit: one sanitization alphabet, island + server agree
+  rtimeout: readiness checks bounded by timeout (503 names check)
+  watchdog: systemd WatchdogSec + sd_notify heartbeat (liveness)
+  schemaver: schema_version table before first altering migration
+}
+
+existing edges: {
+  browser.tabs -> webphone.middleware: "HTMX"
+  browser.sse -> webphone.routes: "GET /events"
+  browser.island -> pbxstack.nginx: "SIP over WSS"
+  pbxstack -> webphone.routes.hooks: "webhooks"
+  webphone.services -> webphone.store: "owner-scoped SQL"
+  webphone.routes -> webphone.pbx: "directory proof"
+  webphone.routes.healthz -> webphone.store: "ping"
+  webphone.routes.healthz -> webphone.blobs: "write probe"
+}
+
+changed.parse404 -> webphone.routes: "guards every id input"
+changed.sanit -> browser.island: "same dialable alphabet"
+changed.rtimeout -> webphone.routes.healthz: "bounded checks"
+changed.watchdog -> pbxstack: "restart on missed heartbeat"
+changed.schemaver -> webphone.store: "versioned migrations"
