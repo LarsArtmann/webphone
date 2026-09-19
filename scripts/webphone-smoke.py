@@ -303,6 +303,7 @@ def main() -> int:
             env=env,
             capture_output=True,
             text=True,
+            check=False,
         )
         if build.returncode != 0:
             print(f"build failed: {build.stderr[:400]}", file=sys.stderr)
@@ -339,7 +340,7 @@ def main() -> int:
             server.wait(timeout=5)
         except subprocess.TimeoutExpired:
             server.kill()
-        subprocess.run(["trash", workdir], capture_output=True)
+        subprocess.run(["trash", workdir], capture_output=True, check=False)
 
 
 if __name__ == "__main__":
