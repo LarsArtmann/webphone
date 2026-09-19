@@ -251,102 +251,147 @@ def run_checks(
     )
     c.ok("session CSRF-gated", status in (403, 401), f"got {status}")
 
-    # 6. Session with CSRF token issues the session cookie.
+    # 6. Session with CSRF token issues the session cookie. A FOREIGN
+    # server is probed with bogus credentials on purpose instead: a
+    # hardened build (v2.1.1+, server-side credential verification) must
+    # reject them with 401; a 201 means the server mints sessions without
+    # verification (the forged-session vulnerability fixed in v2.1.1).
+    # Everything downstream that needs a real session, the webhook secret,
+    # or injected traffic is honestly skipped in foreign mode.
     pre_login_token = s.csrf
-    c.ok("session login accepted", s.login(), "POST /api/session != 201")
-    c.ok(
-        "login rotated the CSRF token",
-        s.csrf != pre_login_token and s.adopt_csrf(),
-        "adoption missing or stale token reused",
-    )
-    # 6b. The pre-login token is dead: POSTs with it must 403, while the
-    # same probe with the adopted token passes CSRF (unknown path = 404).
-    status, _, _ = s.request(
-        "POST",
-        "/api/csrf-rotate-probe",
-        b"",
-        "",
-        {"X-CSRF-Token": pre_login_token},
-    )
-    c.ok("stale CSRF token rejected", status == 403, f"got {status}")
-    status, _, _ = s.request(
-        "POST",
-        "/api/csrf-rotate-probe",
-        b"",
-        "",
-        {"X-CSRF-Token": s.csrf},
-    )
-    c.ok("adopted CSRF token accepted", status == 404, f"got {status}")
-    c.ok(
-        "session cookie issued",
-        any(cookie.name == "webphone_session" for cookie in s.jar),
-        "no webphone_session cookie",
-    )
-
-    # 7. Signed-in SSE connects; anonymous SSE is rejected.
-    stop = threading.Event()
     sink: list[tuple[str, str]] = []
-    reader = threading.Thread(target=s.sse_events, args=(stop, sink), daemon=True)
-    reader.start()
-    time.sleep(0.4)
-    c.ok("signed-in SSE stream live", len(sink) > 0, "no frames within 400ms")
+    stop: threading.Event | None = None
+    if foreign:
+        status, _, _ = s.request(
+            "POST",
+            "/api/session",
+            json.dumps({"extension": "1001", "password": "definitely-wrong"}).encode(),
+            "application/json",
+        )
+        c.ok(
+            "bogus credentials rejected",
+            status == 401,
+            f"got {status}"
+            + (
+                " (server mints sessions without verifying credentials: pre-v2.1.1 build)"
+                if status == 201
+                else ""
+            ),
+        )
+        for name in (
+            "login rotated the CSRF token",
+            "stale CSRF token rejected",
+            "adopted CSRF token accepted",
+            "session cookie issued",
+            "signed-in SSE stream live",
+            "unknown hook 404",
+            "inbound webhook 202",
+            "live threads event",
+            "threads fragment swap-safe",
+            "thread list renders row",
+            "transcript bubble",
+            "live thread event",
+            "thread fragment is bubbles only",
+            "live mark-read 204",
+        ):
+            c.skip(name, "needs a self-booted server: real credentials + webhook secret")
+    else:
+        c.ok("session login accepted", s.login(), "POST /api/session != 201")
+        c.ok(
+            "login rotated the CSRF token",
+            s.csrf != pre_login_token and s.adopt_csrf(),
+            "adoption missing or stale token reused",
+        )
+        # 6b. The pre-login token is dead: POSTs with it must 403, while the
+        # same probe with the adopted token passes CSRF (unknown path = 404).
+        status, _, _ = s.request(
+            "POST",
+            "/api/csrf-rotate-probe",
+            b"",
+            "",
+            {"X-CSRF-Token": pre_login_token},
+        )
+        c.ok("stale CSRF token rejected", status == 403, f"got {status}")
+        status, _, _ = s.request(
+            "POST",
+            "/api/csrf-rotate-probe",
+            b"",
+            "",
+            {"X-CSRF-Token": s.csrf},
+        )
+        c.ok("adopted CSRF token accepted", status == 404, f"got {status}")
+        c.ok(
+            "session cookie issued",
+            any(cookie.name == "webphone_session" for cookie in s.jar),
+            "no webphone_session cookie",
+        )
+
+        # 7. Signed-in SSE connects.
+        stop = threading.Event()
+        reader = threading.Thread(target=s.sse_events, args=(stop, sink), daemon=True)
+        reader.start()
+        time.sleep(0.4)
+        c.ok("signed-in SSE stream live", len(sink) > 0, "no frames within 400ms")
     status, _, _ = Smoke(s.base).request("GET", "/events")
     c.ok("anonymous SSE rejected", status == 401, f"got {status}")
 
-    # 8. Unknown hook path is a 404 even with the secret.
-    status, _, _ = s.hook("/hooks/nope", {})
-    c.ok("unknown hook 404", status == 404, f"got {status}")
+    if not foreign:
+        # 8. Unknown hook path is a 404 even with the secret.
+        status, _, _ = s.hook("/hooks/nope", {})
+        c.ok("unknown hook 404", status == 404, f"got {status}")
 
-    # 9. Inbound message webhook accepts.
-    status, _, _ = s.hook(
-        "/hooks/message",
-        {"owner": "1001", "from": "+441632960961", "body": "smoke inbound"},
-    )
-    c.ok("inbound webhook 202", status == 202, f"got {status}")
+        # 9. Inbound message webhook accepts.
+        status, _, _ = s.hook(
+            "/hooks/message",
+            {"owner": "1001", "from": "+441632960961", "body": "smoke inbound"},
+        )
+        c.ok("inbound webhook 202", status == 202, f"got {status}")
 
-    # 10. The push lands live as a swap-safe threads fragment.
-    data = s.wait_for(sink, "threads", time.monotonic() + TIMEOUT)
-    c.ok("live threads event", data is not None, "no threads event in time")
-    c.ok(
-        "threads fragment swap-safe",
-        data is not None and "wp-thread-row" in data and "<section" not in data,
-        f"payload {str(data)[:80]!r}",
-    )
-
-    # 11. Thread row exists; opening it shows the transcript bubble region.
-    _, body, _ = s.request("GET", "/partials/messages")
-    rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode())
-    c.ok("thread list renders row", bool(rows), "no thread row")
-    if rows:
-        _, body, _ = s.request("GET", f"/partials/messages/{rows[0]}")
-        transcript = body.decode()
+        # 10. The push lands live as a swap-safe threads fragment.
+        data = s.wait_for(sink, "threads", time.monotonic() + TIMEOUT)
+        c.ok("live threads event", data is not None, "no threads event in time")
         c.ok(
-            "transcript bubble",
-            'id="thread-transcript"' in transcript
-            and 'sse-swap="thread"' in transcript,
-            "swap region missing",
+            "threads fragment swap-safe",
+            data is not None and "wp-thread-row" in data and "<section" not in data,
+            f"payload {str(data)[:80]!r}",
         )
 
-    # 12. Live thread push carries bubble fragments (not the whole panel).
-    s.hook(
-        "/hooks/message",
-        {"owner": "1001", "from": "+441632960961", "body": "smoke live"},
-    )
-    data = s.wait_for(sink, "thread", time.monotonic() + TIMEOUT)
-    c.ok("live thread event", data is not None, "no thread event in time")
-    c.ok(
-        "thread fragment is bubbles only",
-        data is not None
-        and "wp-bubble" in data
-        and "wp-compose" not in data
-        and "<section" not in data,
-        f"payload {str(data)[:80]!r}",
-    )
+        # 11. Thread row exists; opening it shows the transcript bubble region.
+        _, body, _ = s.request("GET", "/partials/messages")
+        rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode())
+        c.ok("thread list renders row", bool(rows), "no thread row")
+        if rows:
+            _, body, _ = s.request("GET", f"/partials/messages/{rows[0]}")
+            transcript = body.decode()
+            c.ok(
+                "transcript bubble",
+                'id="thread-transcript"' in transcript
+                and 'sse-swap="thread"' in transcript,
+                "swap region missing",
+            )
 
-    # 13. Explicit read endpoint (the live-swap mark-read path).
-    if rows:
-        status, _, _ = s.request("POST", f"/messages/{rows[0]}/read")
-        c.ok("live mark-read 204", status == 204, f"got {status}")
+        # 12. Live thread push carries bubble fragments (not the whole panel).
+        s.hook(
+            "/hooks/message",
+            {"owner": "1001", "from": "+441632960961", "body": "smoke live"},
+        )
+        data = s.wait_for(sink, "thread", time.monotonic() + TIMEOUT)
+        c.ok("live thread event", data is not None, "no thread event in time")
+        c.ok(
+            "thread fragment is bubbles only",
+            data is not None
+            and "wp-bubble" in data
+            and "wp-compose" not in data
+            and "<section" not in data,
+            f"payload {str(data)[:80]!r}",
+        )
+
+        # 13. Explicit read endpoint (the live-swap mark-read path).
+        if rows:
+            status, _, _ = s.request("POST", f"/messages/{rows[0]}/read")
+            c.ok("live mark-read 204", status == 204, f"got {status}")
+            if stop is not None:
+                stop.set()
 
     # 14. Phone-api proxy fails closed while the PBX API is not configured.
     status, _, _ = s.request("GET", "/phone-api/history?limit=5")
@@ -378,8 +423,11 @@ def run_checks(
         finally:
             stop_configured()
 
-    stop.set()
-    print(f"smoke: {c.passed} passed, {len(c.failures)} failed")
+    stop_set = stop is not None and not stop.is_set()
+    if stop_set:
+        stop.set()
+    skipped = f", {c.skipped} skipped (foreign mode)" if c.skipped else ""
+    print(f"smoke: {c.passed} passed, {len(c.failures)} failed{skipped}")
     for failure in c.failures:
         print(f"  FAILED: {failure}")
     return 1 if c.failures else 0
@@ -395,7 +443,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.base:
-        return run_checks(Smoke(args.base))
+        return run_checks(Smoke(args.base), foreign=True)
 
     port = free_port()
     workdir = tempfile.mkdtemp(prefix="webphone-smoke-")
