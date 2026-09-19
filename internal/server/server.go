@@ -8,7 +8,6 @@ package server
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"

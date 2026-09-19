@@ -131,10 +131,18 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 
 	reader := bufio.NewReader(resp.Body)
 
-	// First frame: the connected handshake.
-	head, err := reader.ReadBytes('\n')
-	if err != nil {
-		t.Fatalf("no connected frame: %v", err)
+	// cqrs-htmx v4.11.0 leads the stream with a reconnect hint (`retry:`,
+	// valid SSE, consumed by the htmx sse extension); skip leading field
+	// lines until the connected handshake frame.
+	var head []byte
+	for {
+		head, err = reader.ReadBytes('\n')
+		if err != nil {
+			t.Fatalf("no connected frame: %v", err)
+		}
+		if strings.HasPrefix(string(head), "event:") {
+			break
+		}
 	}
 	if string(head) != "event: connected\n" {
 		t.Errorf("first stream line %q, want %q", head, "event: connected\n")

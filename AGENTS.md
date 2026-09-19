@@ -132,7 +132,9 @@ every build; it is the local tripwire, not a replacement for the E2E.
   leaks only check names/errors, never secrets). Each named check runs
   under a 2s webphone-side bound (`boundedCheck`: a timeout degrades
   the probe to 503 naming the check, the underlying call keeps
-  running) — F1 of the DI/health review closed locally. The probe
+  running) — F1 of the DI/health review closed, now via the UPSTREAM
+  mechanism: cqrs-htmx v4.11.0's `NamedCheck.Timeout` (the local
+  `boundedCheck` wrapper was deleted when webphone bumped). The probe
   triple is completed by go-health v0.3.0's container-free
   `NewChecks` (2026-09-19, F2 DECIDED + shipped: go-health JSON
   probes, the plan's recommended posture): `/livez` is fetch-free
@@ -145,10 +147,7 @@ every build; it is the local tripwire, not a replacement for the E2E.
   options memo:
   `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`.
   samber/do appears only as a TRANSITIVE dep of go-health's recorder
-  interfaces — the container itself stays rejected. The additive
-  upstream per-check timeout shipped inside the cqrs-htmx v4.11.0
-  train; the local `boundedCheck` stays until webphone bumps that tag
-  and swaps to `NamedCheck.Timeout` (tracked in TODO_LIST). The
+  interfaces — the container itself stays rejected. The
   self-health plan
   (`docs/planning/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`)
   is EXECUTED. The review
