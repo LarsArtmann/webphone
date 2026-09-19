@@ -14,39 +14,39 @@ The session set out to answer "are we using cqrs-htmx fully and properly?" (78/1
 
 ## a) FULLY DONE
 
-| Work | Evidence |
-| --- | --- |
-| **Utilization audit** of cqrs-htmx v4.9.0 (all claims verified at the consumed tag via `git show`, never master) | `docs/research/2026-09-19_cqrs-htmx-deep-dive.html`, 78/100, 15 capabilities assessed, every finding cited to code |
-| **Toast wire-shape alias** — `toastDetail = cqrshtmx.ToastDetail`; upstream shape change now fails this build | `internal/server/toast.go` |
-| **T2 — Request-ID correlation**: `ContextEnrichmentMiddleware` outermost, `X-Request-ID` response header + `request_id=` in every log line | `internal/server/server.go` chain; `TestRequestIDEnrichmentWiredIntoTheChain` |
-| **T1 — CSRF wiring JSON-safe**: `hx-headers` built with `templ.JSONString` (raw JSON, templ escapes exactly once); string concat retired | `pages.go renderShell`, `layout.templ bodyAttrs`; `TestShellRendersValidJSONCSRFHxHeaders` |
-| **T4 — Calibrated Permissions-Policy** (`microphone=(self)`, camera/display-capture/geolocation/payment/usb denied) + single-source `securityHeadersConfig()` killing the server↔test literal duplication | `server.go`; `TestPermissionsPolicyShipsCalibrated`; `productionStack` shares the config |
-| **T3 — Server-Timing via library**: hand-rolled `timingWriter`/`timingMiddleware` (~40 lines) deleted; `servertiming.ServerTimingMiddlewareWhen` with the same `WEBPHONE_DEBUG_TIMING` gate | `server.go`; `TestServerTimingOptIn` (both subtests) |
-| **T5 — Webhook 5xx redaction**: `webhookFail` helper, `SafeDetail` body, full detail to the server log only | `webhooks.go`; `TestWebhookFailRedactsInternalDetail` |
-| **Superb-adoption plan** with mermaid execution graph, two task tables, re-scope log | `docs/planning/2026-09-19_09-30_cqrs-htmx-superb-100-adoption-plan.md` |
-| **AGENTS.md current**: new middleware-chain invariant (enrichment outermost — and *why*), the two CSRF constraints, audit-trail pointers, toast alias fact + `Notify*` trap | `AGENTS.md` |
-| **CHANGELOG `[Unreleased]`**: user-visible story for all five adoptions | `CHANGELOG.md` |
-| **Quality gates**: full Go suite 10/10 packages; BuildFlow full run green on the stable tree (vulnix warnings = documented build-closure false positives; runtime closure clean) | session test runs; BuildFlow runs 09:56 |
-| **Pushed**: plan commit `5feecc7`, all implementation (via daemon commits) + docs, `origin/main = aed88dc`, 0 unpushed | `git ls-remote` verified |
+| Work                                                                                                                                                                                                      | Evidence                                                                                                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Utilization audit** of cqrs-htmx v4.9.0 (all claims verified at the consumed tag via `git show`, never master)                                                                                          | `docs/research/2026-09-19_cqrs-htmx-deep-dive.html`, 78/100, 15 capabilities assessed, every finding cited to code |
+| **Toast wire-shape alias** — `toastDetail = cqrshtmx.ToastDetail`; upstream shape change now fails this build                                                                                             | `internal/server/toast.go`                                                                                         |
+| **T2 — Request-ID correlation**: `ContextEnrichmentMiddleware` outermost, `X-Request-ID` response header + `request_id=` in every log line                                                                | `internal/server/server.go` chain; `TestRequestIDEnrichmentWiredIntoTheChain`                                      |
+| **T1 — CSRF wiring JSON-safe**: `hx-headers` built with `templ.JSONString` (raw JSON, templ escapes exactly once); string concat retired                                                                  | `pages.go renderShell`, `layout.templ bodyAttrs`; `TestShellRendersValidJSONCSRFHxHeaders`                         |
+| **T4 — Calibrated Permissions-Policy** (`microphone=(self)`, camera/display-capture/geolocation/payment/usb denied) + single-source `securityHeadersConfig()` killing the server↔test literal duplication | `server.go`; `TestPermissionsPolicyShipsCalibrated`; `productionStack` shares the config                           |
+| **T3 — Server-Timing via library**: hand-rolled `timingWriter`/`timingMiddleware` (~40 lines) deleted; `servertiming.ServerTimingMiddlewareWhen` with the same `WEBPHONE_DEBUG_TIMING` gate               | `server.go`; `TestServerTimingOptIn` (both subtests)                                                               |
+| **T5 — Webhook 5xx redaction**: `webhookFail` helper, `SafeDetail` body, full detail to the server log only                                                                                               | `webhooks.go`; `TestWebhookFailRedactsInternalDetail`                                                              |
+| **Superb-adoption plan** with mermaid execution graph, two task tables, re-scope log                                                                                                                      | `docs/planning/2026-09-19_09-30_cqrs-htmx-superb-100-adoption-plan.md`                                             |
+| **AGENTS.md current**: new middleware-chain invariant (enrichment outermost — and _why_), the two CSRF constraints, audit-trail pointers, toast alias fact + `Notify*` trap                               | `AGENTS.md`                                                                                                        |
+| **CHANGELOG `[Unreleased]`**: user-visible story for all five adoptions                                                                                                                                   | `CHANGELOG.md`                                                                                                     |
+| **Quality gates**: full Go suite 10/10 packages; BuildFlow full run green on the stable tree (vulnix warnings = documented build-closure false positives; runtime closure clean)                          | session test runs; BuildFlow runs 09:56                                                                            |
+| **Pushed**: plan commit `5feecc7`, all implementation (via daemon commits) + docs, `origin/main = aed88dc`, 0 unpushed                                                                                    | `git ls-remote` verified                                                                                           |
 
 ## b) PARTIALLY DONE
 
-| Work | Done | Missing |
-| --- | --- | --- |
-| **Superb goal (~100/100)** | 78 → ~95: five adoptions landed, one latent anti-pattern retired | idiomorph + CSRF rotation gated (below); score not re-audited after landing |
-| **CSRF hardening** | Wiring hardened + tested; constraints documented | Token rotation on login (needs island-side token refresh — server cannot do it alone) |
-| **Audit's CSRF recommendation** | Superseded by a better, tested implementation | The snapshot report still prints the wrong recommendation (double-escape trap), corrected only downstream |
-| **Observability** | Request-ID end-to-end correlation | `user_id` mapping dropped (extensions are not ULIDs — correct, but the "1%" slice delivered smaller than first advertised) |
+| Work                            | Done                                                             | Missing                                                                                                                    |
+| ------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Superb goal (~100/100)**      | 78 → ~95: five adoptions landed, one latent anti-pattern retired | idiomorph + CSRF rotation gated (below); score not re-audited after landing                                                |
+| **CSRF hardening**              | Wiring hardened + tested; constraints documented                 | Token rotation on login (needs island-side token refresh — server cannot do it alone)                                      |
+| **Audit's CSRF recommendation** | Superseded by a better, tested implementation                    | The snapshot report still prints the wrong recommendation (double-escape trap), corrected only downstream                  |
+| **Observability**               | Request-ID end-to-end correlation                                | `user_id` mapping dropped (extensions are not ULIDs — correct, but the "1%" slice delivered smaller than first advertised) |
 
 ## c) NOT STARTED
 
-| Work | Why it exists |
-| --- | --- |
-| **T6 — idiomorph experiment** (serve `HTMXExtIdiomorph`, morph-swap the transcript, kill the draft-wipe class) | Gated on the consuming stack's browser E2E |
-| **CSRF token rotation** (island adopts a fresh token post-login) | Same gate; server-only version proven harmful by the suite |
-| **Stack-side browser E2E re-run** after this session's header/attribute changes | AGENTS.md rule: any markup-adjacent change re-runs it |
-| **`docs-health` HARVEST** of this report's section (f) into `TODO_LIST.md`/`ROADMAP.md` | The 50-item list below is otherwise entombed in a timestamped file |
-| **cqrs-htmx v4.10.0 bump watch** (retry hint, security consolidation — re-verify at the consumed tag) | Upstream is ~256 commits past v4.9.0, unreleased |
+| Work                                                                                                           | Why it exists                                                      |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **T6 — idiomorph experiment** (serve `HTMXExtIdiomorph`, morph-swap the transcript, kill the draft-wipe class) | Gated on the consuming stack's browser E2E                         |
+| **CSRF token rotation** (island adopts a fresh token post-login)                                               | Same gate; server-only version proven harmful by the suite         |
+| **Stack-side browser E2E re-run** after this session's header/attribute changes                                | AGENTS.md rule: any markup-adjacent change re-runs it              |
+| **`docs-health` HARVEST** of this report's section (f) into `TODO_LIST.md`/`ROADMAP.md`                        | The 50-item list below is otherwise entombed in a timestamped file |
+| **cqrs-htmx v4.10.0 bump watch** (retry hint, security consolidation — re-verify at the consumed tag)          | Upstream is ~256 commits past v4.9.0, unreleased                   |
 
 ## d) TOTALLY FUCKED UP
 
@@ -60,19 +60,20 @@ Nothing shipped broken — suite and gate are green, and `origin/main` carries o
 
 1. **What did I forget?** To grep the full test suite before swapping the timing middleware — `TestServerTimingOptIn` sat in the middle of `middleware_test.go` (I had read head and tail, not the middle) and broke. The suite caught what reading should have prevented.
 2. **What is stupid that we do anyway?** Editing files read once at session start while the auto-commit daemon touches the tree: I hit "file modified since read" four times and re-read four times. Also: running quality gates while the daemon is actively committing.
-3. **What could I have done better?** (a) Verify the frontend-escaping context of a recommended API *before* publishing it in a report, not after — the CSRF finding was "verified" against the library source but not against templ's escaper. (b) Re-run the binary smoke path when the middleware chain changes (curl is banned here; a tiny Go smoke or the existing suite suffices — I leaned on tests alone). (c) Not advertise `user_id` enrichment as part of the "1%" slice before checking `ParseUserID`'s ULID requirement — the delivery shrank and the earlier message oversold it.
+3. **What could I have done better?** (a) Verify the frontend-escaping context of a recommended API _before_ publishing it in a report, not after — the CSRF finding was "verified" against the library source but not against templ's escaper. (b) Re-run the binary smoke path when the middleware chain changes (curl is banned here; a tiny Go smoke or the existing suite suffices — I leaned on tests alone). (c) Not advertise `user_id` enrichment as part of the "1%" slice before checking `ParseUserID`'s ULID requirement — the delivery shrank and the earlier message oversold it.
 4. **What could I still improve?** The gated 5% (T6 + rotation) with one stack-E2E session; correction pointers into snapshot reports via an appendix policy instead of silence; HARVEST of section (f) so the list is living, not entombed.
 5. **Did I lie to you?** No. Two claims needed correction mid-session (`user_id` scope; the CSRF helper recommendation) and both were corrected out loud, in the same session, in the durable docs.
-6. **How can we be less stupid?** Treat "verify the API in the *consumer's* context" as part of verification, not research; re-read immediately before every edit batch in daemon-run repos; run gates on a quiet tree.
+6. **How can we be less stupid?** Treat "verify the API in the _consumer's_ context" as part of verification, not research; re-read immediately before every edit batch in daemon-run repos; run gates on a quiet tree.
 7. **Ghost systems?** None created; none found in the touched surface. The idiomorph route was deliberately NOT served to avoid a dead asset — it stays a gated experiment, not a ghost.
-8. **Scope creep trap?** Held. The dispatch layer, usermgmt, casbin, and the microphone-denying security preset all stayed rejected despite "use it 100%" pressure — 100/100 was defined as superb *within* the root-library posture.
+8. **Scope creep trap?** Held. The dispatch layer, usermgmt, casbin, and the microphone-denying security preset all stayed rejected despite "use it 100%" pressure — 100/100 was defined as superb _within_ the root-library posture.
 9. **Did we remove something useful?** Only `timingWriter`/`timingMiddleware` — replaced by a strictly more capable library middleware with the same gate, same header semantics, test-pinned.
 10. **Split brains?** One killed (`securityHeadersConfig()` — the server↔test config literal duplication), one consciously avoided (`toastDetail` is now an alias, not a mirror). Residual risk watched: the audit snapshot vs. the corrected reality (see d1).
-11. **Tests?** Five new/adapted guard tests landed; each behavior change is pinned. Gaps: no test pins the *absence* of the pre-escaped helper value (the JSON-validity test covers it indirectly); no race test on the new chain order (none needed — middleware composition is static); `TestServerTimingOptIn` no longer pins attribute order (deliberate, documented in the test).
+11. **Tests?** Five new/adapted guard tests landed; each behavior change is pinned. Gaps: no test pins the _absence_ of the pre-escaped helper value (the JSON-validity test covers it indirectly); no race test on the new chain order (none needed — middleware composition is static); `TestServerTimingOptIn` no longer pins attribute order (deliberate, documented in the test).
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT (brainstorm — HARVEST fuel, sorted by impact)
 
 **Gated on the stack E2E (do together in one session):**
+
 1. Run the consuming stack's browser E2E against current `main` (this session changed headers/attributes).
 2. T6: serve `cqrshtmx.HTMXExtIdiomorph` and evaluate `sse-swap="morph"` on the transcript panel.
 3. Island-side CSRF token refresh after login; then adopt `InvalidateCSRFCookie` server-side.
