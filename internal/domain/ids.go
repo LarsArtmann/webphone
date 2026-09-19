@@ -151,7 +151,9 @@ type AttachmentID = id.ID[AttachmentBrand, nanoid.ID]
 func GenerateAttachmentID() AttachmentID { return id.NewID[AttachmentBrand](nanoid.Must()) }
 
 // ParseAttachmentID parses a stored attachment id; see ParseThreadID.
-func ParseAttachmentID(s string) (AttachmentID, error) { return parseID[AttachmentBrand](s, "attachment") }
+func ParseAttachmentID(s string) (AttachmentID, error) {
+	return parseID[AttachmentBrand](s, "attachment")
+}
 
 // MustAttachmentID is ParseAttachmentID for database rows; see MustThreadID.
 func MustAttachmentID(s string) AttachmentID { return mustParsed(ParseAttachmentID(s)) }

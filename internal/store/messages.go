@@ -282,11 +282,7 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 	return nil
 }
 
-func reverseMessages(msgs []domain.Message) {
-	slices.Reverse(msgs)
-}
-
-
+// FindThread returns the owner's thread for a remote number, creating it
 // (persisted) when absent. Callers use it to resolve where a message goes.
 func (s *Messages) FindThread(
 	ctx context.Context, owner domain.Extension, remote domain.Phone, now time.Time,
@@ -434,7 +430,7 @@ func (s *Messages) ListMessagesPage(
 
 	// Query was newest-first for the LIMIT; the UI wants a chat transcript,
 	// oldest at the top.
-	reverseMessages(msgs)
+	slices.Reverse(msgs)
 
 	return msgs, hasMore, nil
 }

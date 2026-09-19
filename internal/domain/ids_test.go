@@ -82,6 +82,27 @@ func TestMustIDAcceptsBrandedAndRaw(t *testing.T) {
 	}
 }
 
+func TestParseThreadIDRoundTripsAndRejects(t *testing.T) {
+	valid := GenerateThreadID()
+	got, err := ParseThreadID(valid.String())
+	if err != nil {
+		t.Fatalf("ParseThreadID(%q): %v", valid.String(), err)
+	}
+	if got != valid {
+		t.Fatalf("branded round trip: %q != %q", got, valid)
+	}
+	if raw := valid.String(); len(raw) > 21 {
+		if again, err := ParseThreadID(raw[len(raw)-21:]); err != nil || again != valid {
+			t.Fatalf("raw round trip: %q, %v", again, err)
+		}
+	}
+	for _, bad := range []string{"", "short", "Thread:tooshort", "has spaces 1234567890123"} {
+		if _, err := ParseThreadID(bad); err == nil {
+			t.Fatalf("ParseThreadID(%q) accepted a malformed id", bad)
+		}
+	}
+}
+
 func cut(s string, sep byte) (string, string, bool) {
 	for i := 0; i < len(s); i++ {
 		if s[i] == sep {

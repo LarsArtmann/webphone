@@ -50,7 +50,11 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	id := domain.MustThreadID(r.PathValue("id"))
+	id, err := domain.ParseThreadID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
 	page := 0
 	if raw := r.URL.Query().Get("older"); raw != "" {
 		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 10000 {

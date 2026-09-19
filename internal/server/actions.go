@@ -62,7 +62,12 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	// Reply keeps the thread open; a new conversation returns to the list.
 	threadParam := r.URL.Query().Get("thread")
 	if threadParam != "" {
-		component, err := h.threadPanel(r, sess, domain.MustThreadID(threadParam), 0)
+		threadID, err := domain.ParseThreadID(threadParam)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		component, err := h.threadPanel(r, sess, threadID, 0)
 		if err != nil {
 			http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -129,7 +134,12 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	job, err := h.deps.Fax.Get(r.Context(), sess.Extension, domain.MustFaxID(r.PathValue("id")))
+	faxID, err := domain.ParseFaxID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	job, err := h.deps.Fax.Get(r.Context(), sess.Extension, faxID)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -151,7 +161,12 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	attachment, err := h.deps.Messaging.AttachmentByID(r.Context(), sess.Extension, domain.MustAttachmentID(r.PathValue("id")))
+	attachmentID, err := domain.ParseAttachmentID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	attachment, err := h.deps.Messaging.AttachmentByID(r.Context(), sess.Extension, attachmentID)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -223,7 +238,12 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if err := h.deps.Contacts.Delete(r.Context(), sess.Extension, domain.MustContactID(r.URL.Query().Get("id"))); err != nil {
+	contactID, err := domain.ParseContactID(r.URL.Query().Get("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := h.deps.Contacts.Delete(r.Context(), sess.Extension, contactID); err != nil {
 		http.NotFound(w, r)
 		return
 	}
@@ -292,8 +312,12 @@ func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	id := domain.MustThreadID(r.PathValue("id"))
-	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, id); err != nil {
+	threadID, err := domain.ParseThreadID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, threadID); err != nil {
 		http.Error(w, "could not mark read", http.StatusInternalServerError)
 		return
 	}

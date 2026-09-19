@@ -78,9 +78,15 @@ func Encode(cards []Card) []byte {
 	for _, card := range cards {
 		out.WriteString("BEGIN:VCARD\r\n")
 		out.WriteString("VERSION:3.0\r\n")
-		out.WriteString("FN:" + escape(card.Name) + "\r\n")
-		out.WriteString("N:" + escape(card.Name) + ";;;;\r\n")
-		out.WriteString("TEL;TYPE=CELL:" + card.Number + "\r\n")
+		out.WriteString("FN:")
+		out.WriteString(escape(card.Name))
+		out.WriteString("\r\n")
+		out.WriteString("N:")
+		out.WriteString(escape(card.Name))
+		out.WriteString(";;;;\r\n")
+		out.WriteString("TEL;TYPE=CELL:")
+		out.WriteString(card.Number)
+		out.WriteString("\r\n")
 		out.WriteString("END:VCARD\r\n")
 	}
 	return []byte(out.String())

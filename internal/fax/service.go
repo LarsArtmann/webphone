@@ -5,7 +5,6 @@ package fax
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -193,6 +192,3 @@ func (s *Service) notify(ctx context.Context, owner domain.Extension, id domain.
 		s.onChange(ctx, owner, id)
 	}
 }
-
-// ErrNotFound mirrors store.ErrNotFound for handlers.
-var ErrNotFound = errors.New("fax job not found")
