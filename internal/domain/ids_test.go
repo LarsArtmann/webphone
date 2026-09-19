@@ -55,13 +55,13 @@ func TestParsePhoneSanitizesLikeTheIsland(t *testing.T) {
 }
 
 func TestChannelOf(t *testing.T) {
-	if ChannelOf("hi", 0) != ChannelSMS {
+	if ChannelOf(0) != ChannelSMS {
 		t.Fatal("text only must be SMS")
 	}
-	if ChannelOf("", 1) != ChannelMMS {
+	if ChannelOf(1) != ChannelMMS {
 		t.Fatal("attachment makes MMS")
 	}
-	if ChannelOf("hi", 2) != ChannelMMS {
+	if ChannelOf(2) != ChannelMMS {
 		t.Fatal("text plus attachments makes MMS")
 	}
 }

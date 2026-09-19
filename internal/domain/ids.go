@@ -81,8 +81,12 @@ func (p Phone) String() string { return p.value }
 func (p Phone) IsZero() bool { return p.value == "" }
 
 // sanitizeDialable strips invisible Unicode direction marks and formatting
-// that pasted numbers carry, keeping only dialable characters. Mirrors the
-// island's `raw.replace(/[^\d+*#]/g, "")` exactly.
+// that pasted numbers carry, keeping only dialable characters. The
+// dialable alphabet (digits, +, *, #, letters) matches the island's
+// `raw.replace(/[^\d+*#]/g, "")` for digits and symbols — but the island
+// regex strips letters while this Go side keeps them (some PBXs use
+// alphanumeric SIP user parts). See TODO_LIST "island sanitization
+// alignment" before changing either side.
 func sanitizeDialable(raw string) string {
 	clean := make([]rune, 0, len(raw))
 	for _, r := range raw {
@@ -107,9 +111,14 @@ type ThreadID = id.ID[ThreadBrand, nanoid.ID]
 // GenerateThreadID mints a new thread identifier.
 func GenerateThreadID() ThreadID { return id.NewID[ThreadBrand](nanoid.Must()) }
 
-// MustThreadID parses a stored thread id; it panics on malformed input,
-// which can only come from a corrupted database.
-func MustThreadID(s string) ThreadID { return mustID[ThreadBrand](s, "thread") }
+// ParseThreadID parses a stored thread id (branded "Thread:xxx" or raw
+// nanoid form). Handlers use the Parse form on client-supplied ids so a
+// forged or typoed id answers 404 instead of panicking.
+func ParseThreadID(s string) (ThreadID, error) { return parseID[ThreadBrand](s, "thread") }
+
+// MustThreadID is ParseThreadID for ids read back from the database, where
+// a malformed id means corruption and panicking is the honest response.
+func MustThreadID(s string) ThreadID { return mustParsed(ParseThreadID(s)) }
 
 // MessageBrand brands message identifiers.
 type MessageBrand struct{}
@@ -123,8 +132,11 @@ type MessageID = id.ID[MessageBrand, nanoid.ID]
 // GenerateMessageID mints a new message identifier.
 func GenerateMessageID() MessageID { return id.NewID[MessageBrand](nanoid.Must()) }
 
-// MustMessageID parses a stored message id.
-func MustMessageID(s string) MessageID { return mustID[MessageBrand](s, "message") }
+// ParseMessageID parses a stored message id; see ParseThreadID.
+func ParseMessageID(s string) (MessageID, error) { return parseID[MessageBrand](s, "message") }
+
+// MustMessageID is ParseMessageID for database rows; see MustThreadID.
+func MustMessageID(s string) MessageID { return mustParsed(ParseMessageID(s)) }
 
 // AttachmentBrand brands attachment identifiers.
 type AttachmentBrand struct{}
@@ -138,8 +150,11 @@ type AttachmentID = id.ID[AttachmentBrand, nanoid.ID]
 // GenerateAttachmentID mints a new attachment identifier.
 func GenerateAttachmentID() AttachmentID { return id.NewID[AttachmentBrand](nanoid.Must()) }
 
-// MustAttachmentID parses a stored attachment id.
-func MustAttachmentID(s string) AttachmentID { return mustID[AttachmentBrand](s, "attachment") }
+// ParseAttachmentID parses a stored attachment id; see ParseThreadID.
+func ParseAttachmentID(s string) (AttachmentID, error) { return parseID[AttachmentBrand](s, "attachment") }
+
+// MustAttachmentID is ParseAttachmentID for database rows; see MustThreadID.
+func MustAttachmentID(s string) AttachmentID { return mustParsed(ParseAttachmentID(s)) }
 
 // FaxBrand brands fax job identifiers.
 type FaxBrand struct{}
@@ -153,8 +168,11 @@ type FaxID = id.ID[FaxBrand, nanoid.ID]
 // GenerateFaxID mints a new fax identifier.
 func GenerateFaxID() FaxID { return id.NewID[FaxBrand](nanoid.Must()) }
 
-// MustFaxID parses a stored fax id.
-func MustFaxID(s string) FaxID { return mustID[FaxBrand](s, "fax") }
+// ParseFaxID parses a stored fax id; see ParseThreadID.
+func ParseFaxID(s string) (FaxID, error) { return parseID[FaxBrand](s, "fax") }
+
+// MustFaxID is ParseFaxID for database rows; see MustThreadID.
+func MustFaxID(s string) FaxID { return mustParsed(ParseFaxID(s)) }
 
 // ContactBrand brands contact identifiers.
 type ContactBrand struct{}
@@ -168,19 +186,31 @@ type ContactID = id.ID[ContactBrand, nanoid.ID]
 // GenerateContactID mints a new contact identifier.
 func GenerateContactID() ContactID { return id.NewID[ContactBrand](nanoid.Must()) }
 
-// MustContactID parses a stored contact id.
-func MustContactID(s string) ContactID { return mustID[ContactBrand](s, "contact") }
+// ParseContactID parses a stored contact id; see ParseThreadID.
+func ParseContactID(s string) (ContactID, error) { return parseID[ContactBrand](s, "contact") }
 
-// mustID re-brands a stored nanoid-backed identifier, panicking on
-// corruption — malformed ids can only come from a broken database. Both
-// the branded ("Thread:xxx") and raw ("xxx") forms parse.
-func mustID[B any](s string, kind string) id.ID[B, nanoid.ID] {
+// MustContactID is ParseContactID for database rows; see MustThreadID.
+func MustContactID(s string) ContactID { return mustParsed(ParseContactID(s)) }
+
+// parseID re-brands a stored nanoid-backed identifier. Both the branded
+// ("Thread:xxx") and raw ("xxx") forms parse; anything else is an error.
+func parseID[B any](s string, kind string) (id.ID[B, nanoid.ID], error) {
 	raw := s
 	if _, rest, found := strings.Cut(s, ":"); found {
 		raw = rest
 	}
 	if len(raw) != 21 {
-		panic(fmt.Sprintf("corrupt %s id %q: want 21 nanoid chars", kind, s))
+		return id.ID[B, nanoid.ID]{}, fmt.Errorf("corrupt %s id %q: want 21 nanoid chars", kind, s)
 	}
-	return id.NewID[B](nanoid.ID(raw))
+	return id.NewID[B](nanoid.ID(raw)), nil
+}
+
+// mustParsed unwraps a Parse result, panicking on corruption — with the
+// Must forms only fed from database rows, a malformed id means a broken
+// database, not bad user input.
+func mustParsed[B any](parsed id.ID[B, nanoid.ID], err error) id.ID[B, nanoid.ID] {
+	if err != nil {
+		panic(err)
+	}
+	return parsed
 }

@@ -16,7 +16,6 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
-	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
@@ -107,7 +106,7 @@ func run() error {
 		Fax:       faxService,
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
-		Shared:    sharedContacts(cfg),
+		Shared:    cfg.Contacts,
 		DB:        db,
 		BlobRoot:  blobs.Root(),
 	})
@@ -136,8 +135,4 @@ func run() error {
 		defer cancel()
 		return httpServer.Shutdown(shutdownCtx)
 	}
-}
-
-func sharedContacts(cfg config.Config) []domain.SharedContact {
-	return cfg.Contacts
 }

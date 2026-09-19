@@ -78,7 +78,7 @@ type Message struct {
 
 // ChannelOf derives the channel from a message's shape: any attachment
 // makes it an MMS.
-func ChannelOf(body string, attachmentCount int) Channel {
+func ChannelOf(attachmentCount int) Channel {
 	if attachmentCount > 0 {
 		return ChannelMMS
 	}

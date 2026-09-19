@@ -95,7 +95,7 @@ func (s *Service) Send(
 		Owner:     owner,
 		Remote:    to,
 		Direction: domain.DirectionOutbound,
-		Channel:   domain.ChannelOf(body, len(uploads)),
+		Channel:   domain.ChannelOf(len(uploads)),
 		Body:      body,
 		Status:    domain.StatusQueued,
 		CreatedAt: now,
@@ -165,7 +165,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 		Owner:     inbound.Owner,
 		Remote:    inbound.From,
 		Direction: domain.DirectionInbound,
-		Channel:   domain.ChannelOf(inbound.Body, len(inbound.Attachments)),
+		Channel:   domain.ChannelOf(len(inbound.Attachments)),
 		Body:      inbound.Body,
 		CreatedAt: now,
 	}
