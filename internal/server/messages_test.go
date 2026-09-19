@@ -36,6 +36,10 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 	if !strings.Contains(threadView, "contract test") || !strings.Contains(threadView, "wp-status-sent") {
 		t.Fatal("thread view missing message or sent badge (loopback gateway)")
 	}
+	// The open conversation offers a call to the remote number.
+	if !strings.Contains(threadView, `data-dial="+441632960961"`) {
+		t.Errorf("thread view missing the call button: %.400s", threadView)
+	}
 }
 
 func TestMMSAttachmentRoundTrip(t *testing.T) {

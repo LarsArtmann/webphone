@@ -74,3 +74,45 @@ func TestHistorySearchFiltersEntries(t *testing.T) {
 		t.Errorf("filter form must echo the query: %.400s", page)
 	}
 }
+
+// TestHistoryRowsOfferCallBack pins the dial affordance: every CDR row
+// with a dialable number carries a data-dial button (the caller's CID
+// number for inbound legs, the dialled destination for outbound ones),
+// and rows without a number render no dead button.
+func TestHistoryRowsOfferCallBack(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if !strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"entries":[
+			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"2026-09-18 09:00","billsec":30},
+			{"context":"from-internal","caller_id_number":"1001","caller_id_name":"","destination_number":"+493012345678","start":"2026-09-18 10:00","billsec":12},
+			{"context":"public","caller_id_number":"","caller_id_name":"Withheld","destination_number":"1001","start":"2026-09-18 11:00","billsec":5}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+
+	server := newTestServerWithPhoneAPI(t, upstream.URL)
+	c := signIn(t, server)
+
+	_, body := c.do(http.MethodGet, "/partials/history", nil, "")
+	page := string(body)
+	for _, want := range []string{
+		`data-dial="+441632960961"`, // inbound: call the caller back
+		`data-dial="+493012345678"`, // outbound: redial the destination
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("history row missing %s: %.400s", want, page)
+		}
+	}
+	if got := strings.Count(page, "data-dial="); got != 2 {
+		t.Errorf("rows without a CID number must render no dial button: %d data-dial attributes", got)
+	}
+}
