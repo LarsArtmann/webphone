@@ -218,10 +218,14 @@ func New(deps Deps) http.Handler {
 	// tells the truth about the two backing resources the app needs. Each
 	// check is bounded (see boundedCheck) so a hung resource degrades the
 	// probe to 503 within the budget instead of hanging the prober.
+	// Per-check timeouts ride the library (v4.11.0's NamedCheck.Timeout):
+	// an overdue check is reported failed with "<name>: timed out after
+	// <n>" and the probe answers 503 instead of hanging the prober — the
+	// same contract the local boundedCheck guard used to provide (F1 of
+	// the DI/health review, now upstream).
 	readiness := cqrshtmx.ReadinessHandler(
-		cqrshtmx.NewNamedCheck("sqlite", boundedCheck("sqlite", checkTimeout, deps.DB.Ping)),
-		cqrshtmx.NewNamedCheck("blob-dir", boundedCheck("blob-dir", checkTimeout,
-			func() error { return probeBlobDir(deps.BlobRoot) })),
+		cqrshtmx.NamedCheck{Name: "sqlite", Check: deps.DB.Ping, Timeout: checkTimeout},
+		cqrshtmx.NamedCheck{Name: "blob-dir", Check: func() error { return probeBlobDir(deps.BlobRoot) }, Timeout: checkTimeout},
 	)
 	open.Handle("GET /healthz", readiness)
 
@@ -285,26 +289,11 @@ func New(deps Deps) http.Handler {
 	)(root)
 }
 
-// checkTimeout bounds every /healthz named check: a hung backing
-// resource must degrade the probe to 503 within this budget instead of
-// hanging the prober (the library ReadinessHandler waits unconditionally).
+// checkTimeout bounds every /healthz named check (NamedCheck.Timeout): a
+// hung backing resource must degrade the probe to 503 within this budget
+// instead of hanging the prober. The overdue call keeps running — the
+// timeout bounds the probe's wait, it does not cancel the check.
 const checkTimeout = 2 * time.Second
-
-// boundedCheck runs check under a deadline. On timeout the probe reports
-// "<name>: timed out after <n>" while the underlying call keeps running —
-// the guard stops the prober from hanging, it does not cancel the check.
-func boundedCheck(name string, timeout time.Duration, check func() error) func() error {
-	return func() error {
-		errC := make(chan error, 1)
-		go func() { errC <- check() }()
-		select {
-		case err := <-errC:
-			return err
-		case <-time.After(timeout):
-			return fmt.Errorf("%s: timed out after %s", name, timeout)
-		}
-	}
-}
 
 // probeBlobDir proves the blob store accepts writes: temp file in the
 // files root, then remove it. A full disk or a lost mount fails here and

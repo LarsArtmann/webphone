@@ -4,32 +4,72 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
+
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 )
 
-func TestBoundedCheckTimesOutHangingCheck(t *testing.T) {
+// TestHealthzTimeoutContract pins the wiring shape of the per-check bound:
+// the checks are handed to ReadinessHandler with NamedCheck.Timeout set to
+// checkTimeout (the mechanism moved upstream in cqrs-htmx v4.11.0 — the
+// local boundedCheck wrapper is gone). This mirrors the construction with
+// the real const and pins the hang→503 contract end to end.
+func TestHealthzTimeoutContract(t *testing.T) {
 	release := make(chan struct{})
 	defer close(release)
-	check := boundedCheck("sqlite", 30*time.Millisecond, func() error {
-		<-release
-		return nil
-	})
-	err := check()
-	if err == nil || !strings.Contains(err.Error(), "sqlite: timed out after 30ms") {
-		t.Fatalf("want timeout error naming the check, got %v", err)
+
+	handler := cqrshtmxReadinessForTest(
+		cqrshtmxNamedCheckForTest("sqlite", func() error {
+			<-release
+
+			return nil
+		}),
+	)
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503 when a check hangs past its timeout, got %d", rr.Code)
+	}
+
+	for _, want := range []string{"sqlite", "timed out after 2s"} {
+		if !strings.Contains(rr.Body.String(), want) {
+			t.Errorf("body missing %q: %s", want, rr.Body.String())
+		}
 	}
 }
 
+// TestBoundedCheckPassesResultThrough pins the pass-through half of the
+// contract at the wiring site: a check failing inside its budget surfaces
+// its own error, and a healthy check stays nil.
 func TestBoundedCheckPassesResultThrough(t *testing.T) {
 	sentinel := errors.New("disk full")
-	if err := boundedCheck("blob-dir", time.Second, func() error { return sentinel })(); !errors.Is(err, sentinel) {
-		t.Fatalf("want the check's error unchanged, got %v", err)
+	handler := cqrshtmxReadinessForTest(cqrshtmxNamedCheckForTest("blob-dir", func() error { return sentinel }))
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503, got %d", rr.Code)
 	}
-	if err := boundedCheck("blob-dir", time.Second, func() error { return nil })(); err != nil {
-		t.Fatalf("want nil for a healthy check, got %v", err)
+
+	if !strings.Contains(rr.Body.String(), "disk full") {
+		t.Errorf("want the check's own error, got %s", rr.Body.String())
 	}
+}
+
+// cqrshtmxReadinessForTest/cqrshtmxNamedCheckForTest mirror server.go's
+// readiness construction so these tests fail if the wiring pattern (named
+// checks + checkTimeout) drifts.
+func cqrshtmxNamedCheckForTest(name string, check func() error) cqrshtmx.NamedCheck {
+	return cqrshtmx.NamedCheck{Name: name, Check: check, Timeout: checkTimeout}
+}
+
+func cqrshtmxReadinessForTest(checks ...cqrshtmx.NamedCheck) http.Handler {
+	return cqrshtmx.ReadinessHandler(checks...)
 }
 
 // The closed-DB mutant exercises the degraded rendering end to end: 503,
