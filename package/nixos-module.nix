@@ -204,6 +204,13 @@ in
           add_header Strict-Transport-Security "max-age=${toString cfg.nginx.hsts.maxAge}" always;
         '';
         locations = {
+          # "/" carries the whole app INCLUDING the JSON probe endpoints:
+          # GET /healthz (readiness: sqlite + blob-dir, bounded checks),
+          # GET /livez (process liveness, fetch-free) and GET /startupz
+          # (503 until the backing resources first pass, then latched).
+          # All three are session-free GETs whose bodies name checks and
+          # statuses only, never secrets — safe to expose or scrape by a
+          # fleet health hub.
           "/" = {
             recommendedProxySettings = true;
             proxyWebsockets = false;
