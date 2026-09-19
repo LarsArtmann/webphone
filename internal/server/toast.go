@@ -3,16 +3,15 @@ package server
 import (
 	"encoding/json/v2"
 	"net/http"
+
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 )
 
-// toastDetail mirrors cqrshtmx.ToastDetail — the HX-Trigger wire shape the
-// island's toast listener consumes ({message, kind} under the
-// "showMessage" event). Kept local so the server package does not need
-// the dispatch-layer types for one struct.
-type toastDetail struct {
-	Message string `json:"message"`
-	Kind    string `json:"kind"`
-}
+// toastDetail is the library's HX-Trigger wire shape ({message, kind} under
+// the "showMessage" event) — aliased, not re-declared, so a shape change
+// upstream fails this build instead of silently breaking the island's toast
+// listener (the same aliasing adminui and dashboardui use).
+type toastDetail = cqrshtmx.ToastDetail
 
 // notifyToast queues an island toast through the HX-Trigger response
 // header. Must run BEFORE the response body renders — headers stop riding

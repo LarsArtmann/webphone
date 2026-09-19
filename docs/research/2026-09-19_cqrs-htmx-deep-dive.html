@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>cqrs-htmx Deep Dive — webphone (2026-09-19)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -848,228 +848,667 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
-    <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
-    </div>
+      <!-- Full-bleed top bar -->
+      <div class="top-bar">
+        <span>LIBRARY DEEP DIVE</span>
+        <span>2026-09-19</span>
+        <span>webphone &middot; LarsArtmann</span>
+      </div>
 
-    <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
-      <aside class="sidebar" data-nav>
-        <nav>
-          <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
-          <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
-        </nav>
-      </aside>
+      <div class="layout">
+        <!-- Sidebar TOC -->
+        <aside class="sidebar" data-nav>
+          <nav>
+            <div class="label">Contents</div>
+            <a href="#summary">Summary</a>
+            <a href="#usage">Current Usage</a>
+            <a href="#findings">Capability Assessment</a>
+            <a href="#versions">Version Currency</a>
+            <a href="#opportunities">Top Opportunities</a>
+            <a href="#rejected">Not Applicable</a>
+            <a href="#conclusion">Conclusion</a>
+          </nav>
+        </aside>
 
-      <!-- Main content -->
-      <main class="main">
-        <!-- Hero -->
-        <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
-          <div class="hero-shapes">
-            <div class="bar"></div>
-            <div class="circle"></div>
-            <div class="square"></div>
-            <div class="tri"></div>
-          </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
-          <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
-          </p>
-          <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
-          </div>
-        </header>
-
-        <!-- Scorecard -->
-        <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
-          </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
-          </div>
-          <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
-          </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
-          </div>
-        </section>
-
-        <!-- Summary -->
-        <section id="summary">
-          <h2><span class="num">00</span>Summary</h2>
-          <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
-          </p>
-          <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
-          </div>
-        </section>
-
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
-          <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
-          </p>
-
-          <div class="strengths">
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
-              </div>
+        <main class="main">
+          <!-- Hero -->
+          <header class="hero">
+            <div class="hero-shapes">
+              <div class="bar"></div>
+              <div class="circle"></div>
+              <div class="square"></div>
+              <div class="tri"></div>
             </div>
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
-              </div>
+            <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-09-19</div>
+            <h1>cqrs-htmx — Adoption &amp; Utilization Audit</h1>
+            <p class="subtitle">
+              Does <code>webphone</code> use <code>github.com/larsartmann/cqrs-htmx/v4</code>
+              — including its auth surface — fully and properly, and does it
+              integrate the library well with the frontend parts? Verdict: the
+              core is adopted correctly and verified by tests; the gaps are
+              periphery, small, and cheap to close.
+            </p>
+            <div class="meta">
+              <span class="tag teal">Consumed: v4.9.0</span>
+              <span class="tag">Latest root tag: v4.9.0 (master +256 unreleased)</span>
+              <span class="tag">httputil v1.2.0 (current)</span>
+              <span class="tag amber">Adoption Score: 78/100</span>
             </div>
-          </div>
-        </section>
+          </header>
 
-        <!-- Findings -->
-        <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <!-- Scorecard -->
+          <section id="scorecard" class="scorecard">
+            <div class="score-card score-good">
+              <div class="score">78</div>
+              <div class="label">Adoption score / 100</div>
+            </div>
+            <div class="score-card score-good">
+              <div class="score">7</div>
+              <div class="label">Fully leveraged, of 15 assessed</div>
+            </div>
+            <div class="score-card score-warn">
+              <div class="score">4</div>
+              <div class="label">Partially used</div>
+            </div>
+            <div class="score-card score-warn">
+              <div class="score">3</div>
+              <div class="label">Missed opportunities</div>
+            </div>
+            <div class="score-card score-warn">
+              <div class="score">1</div>
+              <div class="label">Anti-pattern shapes (latent)</div>
+            </div>
+          </section>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
+          <!-- Summary -->
+          <section id="summary">
+            <h2><span class="num">00</span>Summary</h2>
+            <p>
+              webphone consumes cqrs-htmx <strong>root library only</strong> — a
+              posture decided on 2026-09-18 and documented in
+              <code>AGENTS.md</code>: middleware + embedded assets + SSE
+              broadcaster + readiness, with the CQRS dispatch layer and the
+              <code>setup</code>/<code>usermgmt</code>/<code>loginpage</code>
+              auth modules deliberately rejected. This audit re-verified that
+              decision against the <em>consumed tag</em> (v4.9.0, not master)
+              and mapped the touched API surface against everything the root
+              module exports. Seven of fifteen applicable capability areas are
+              fully leveraged; four are partially used; three are genuine
+              missed opportunities. The auth rejection is <strong>correct and
+              correctly executed</strong>: this product's identity is the PBX
+              extension + directory password (proven by the island's SIP
+              REGISTER), and adopting event-sourced usermgmt users would have
+              created a second identity database.
+            </p>
+            <div class="callout callout-amber">
+              <strong>The bottom line</strong>
+              Core adoption is exemplary — the middleware chain, embedded
+              HTMX/SSE assets, per-extension SSE hubs, and honest readiness are
+              exactly how the library wants to be used, and each is pinned by a
+              test. The remaining value is periphery: four hand-rolled spots
+              duplicate hardened library helpers (toast wire shape, CSRF
+              header/meta wiring, Server-Timing, 5xx detail redaction), and
+              three embedded capabilities sit unused (request-ID enrichment,
+              the idiomorph extension, a calibrated Permissions-Policy). None
+              is blocking; the top five fixes are each &le; 20 lines.
+            </div>
+          </section>
+
+          <!-- Current usage -->
+          <section id="usage">
+            <h2><span class="num">&#9670;</span>Current usage — the baseline</h2>
+            <p>
+              Every touchpoint of the library in the codebase, verified by
+              reading the code and the v4.9.0 sources:
+            </p>
+            <div class="strengths">
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Middleware chain via <code>Chain</code></strong>
+                  <span><code>RequestLoggingSlog</code> &rarr; (optional timing) &rarr;
+                  <code>SecurityHeaders</code> &rarr; <code>RecoveryMiddleware</code> &rarr;
+                  routes — internal/server/server.go:198-203. Panic path is
+                  behavior-tested: 500 to the client, stack in the log, no
+                  detail leak (middleware_test.go:40-60).</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Embedded HTMX 2.0.10 + SSE extension 2.2.4</strong>
+                  <span><code>HTMXScriptHandler()</code> and
+                  <code>HTMXExtensionHandler("sse")</code> (server.go:152-153) —
+                  same-origin assets with ETag/304, no CDN, CSP-clean. The
+                  stack's browser E2E greps survive by construction.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Per-extension SSE hubs</strong>
+                  <span><code>NewBroadcaster</code> + <code>ServeSSE</code>
+                  (subscribe, 15&nbsp;s heartbeat, unsubscribe) with the
+                  canonical <code>Hub().SubscriberCount()</code> reaper and a
+                  documented idle-TTL sweep — sse.go:76-118. No deprecated
+                  <code>Raw()</code>/<code>NewBroadcasterFromRaw</code> usage.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Honest readiness + build metadata</strong>
+                  <span><code>ReadinessHandler</code> +
+                  <code>NewNamedCheck</code> for <code>/healthz</code>
+                  (sqlite ping + blob-dir write probe, 503 names the failing
+                  check) and <code>DebugHandler</code> for <code>/version</code>
+                  — server.go:165-169, 227-243.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Correct posture on deprecated re-exports</strong>
+                  <span>Security headers, CSRF middleware, and the keyed rate
+                  limiter are imported from <code>httputil</code> directly —
+                  precisely what cqrs-htmx's deprecation notes on its own
+                  aliases instruct (csrf_reexport.go, ratelimit_reexport.go,
+                  server_timing_reexport.go at v4.9.0).</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Deliberate rejections, all documented</strong>
+                  <span>The <code>setup</code> bundle, <code>usermgmt</code>,
+                  <code>loginpage</code>, and casbin
+                  <code>AuthorizeMiddleware</code> are unused on purpose
+                  (split-brain identity). <code>RecommendedSecurityMiddleware</code>
+                  is correctly avoided: its <code>RecommendedPermissionsPolicy</code>
+                  denies <code>microphone</code>, which would kill the
+                  WebRTC phone.</span>
+                </div>
+              </div>
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              Architecture of the integration: the server package imports the
+              library for infrastructure (chain, assets, SSE, readiness) while
+              handlers are plain <code>http.HandlerFunc</code>s rendering
+              templ components directly; the island JS never unloads and rides
+              the SSE extension through <code>sse-connect</code> on
+              <code>.wp-root</code>. There is no <code>App</code>, no
+              <code>Command</code>/<code>Query</code> dispatch, and no
+              <code>HTMXMiddleware</code> — by design, the tab URLs separate
+              full pages (<code>/messages</code>) from partials
+              (<code>/partials/messages</code>), so no
+              <code>HX-Request</code> branching is needed.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+          </section>
+
+          <!-- Findings -->
+          <section id="findings">
+            <h2><span class="num">01</span>Capability assessment</h2>
+            <p>
+              Findings ordered by impact. Every claim was verified against the
+              consumed tag (<code>git show v4.9.0:&lt;file&gt;</code>), per the
+              repo's own tag-checking rule.
+            </p>
+
+            <!-- M1: request IDs -->
+            <div class="issue issue-critical" id="request-ids">
+              <span class="severity severity-critical">Missed opportunity &middot; High impact, zero risk</span>
+              <h3>Request-ID enrichment unused — logs carry no correlation IDs</h3>
+              <div class="where">internal/server/server.go:198-203 &middot; capability: ContextEnrichmentMiddleware (middleware.go, v4.9.0)</div>
+              <p>
+                The library ships <code>ContextEnrichmentMiddleware</code>,
+                which generates a <code>RequestID</code> when the client did
+                not send one, sets the <code>X-Request-ID</code> response
+                header, and stamps context so the already-adopted
+                <code>RequestLoggingSlog</code> emits
+                <code>request_id</code>/<code>correlation_id</code> fields
+                (logging.go:224-234, v4.9.0). webphone adopts the logging
+                middleware but nothing ever sets the IDs — so every 3&nbsp;a.m.
+                log line is uncorrelated with any response. An optional
+                <code>UserIDExtractor</code> would additionally stamp
+                <code>user_id</code> with the signed-in extension.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Insert the middleware between the request log and security;
+                the extractor returns the session's extension (zero error for
+                anonymous requests — the middleware skips them).
+              </div>
+              <pre><code><span class="tok-comment">// server.go New():</span>
+<span class="tok-keyword">return</span> cqrshtmx.<span class="tok-function">Chain</span>(
+    cqrshtmx.<span class="tok-function">RequestLoggingSlog</span>(slog.<span class="tok-function">Default</span>()),
+    cqrshtmx.<span class="tok-function">ContextEnrichmentMiddleware</span>(extensionExtractor), <span class="tok-comment">// NEW</span>
+    timingMiddleware,
+    security,
+    cqrshtmx.RecoveryMiddleware,
+)(root)
+
+<span class="tok-comment">// extensionExtractor reads the session cookie and reports the</span>
+<span class="tok-comment">// extension as the user id: func(r *http.Request) (cqrshtmx.UserID, error)</span></code></pre>
+            </div>
+
+            <!-- P2: CSRF wiring -->
+            <div class="issue issue-critical" id="csrf-wiring">
+              <span class="severity severity-critical">Anti-pattern shape (latent) &middot; partially used</span>
+              <h3>Frontend CSRF wiring hand-rolled where hardened helpers exist</h3>
+              <div class="where">internal/web/views/layout.templ:136,147 &middot; capability: httputil.CSRFTokenHXHeaders / CSRFTokenHTMLMeta / InvalidateCSRFCookie (csrf.go:902-935, 483)</div>
+              <p>
+                The <code>hx-headers</code> attribute is built by string
+                concatenation:
+                <code>`{"X-CSRF-Token":"` + props.CSRFToken + `"}`</code>.
+                <code>httputil.CSRFTokenHXHeaders</code> exists precisely
+                because that shape is an XSS sink whenever the token is not
+                the middleware's hex token — its own doc comment says so, and
+                it HTML-escapes the JSON for the attribute context
+                (csrf.go:920-923). Today the token is nosurf base64url, so
+                nothing is exploitable — but the construction is one refactor
+                away from the documented footgun, and the same-family helpers
+                are already one import away. Additionally,
+                <code>InvalidateCSRFCookie</code> (rotate-on-login to prevent
+                CSRF fixation) is never called on
+                <code>POST /api/session</code> or logout. The auth-integration
+                verdict: CSRF <em>is</em> integrated correctly end-to-end
+                (middleware &rarr; meta &rarr; <code>hx-headers</code> &rarr;
+                island fetch headers) — it just does not use the library's
+                hardened builders.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Build the attribute from the helper in
+                <code>renderShell</code>, keep the templ-escaped
+                <code>&lt;meta&gt;</code>, and rotate the CSRF cookie on
+                session create/destroy.
+              </div>
+              <pre><code><span class="tok-comment">// pages.go renderShell — before:</span>
+props.CSRFToken = <span class="tok-function">csrfToken</span>(r)
+
+<span class="tok-comment">// after:</span>
+props.CSRFToken = httputil.<span class="tok-function">CSRFTokenFromRequest</span>(r)
+props.CSRFHxHeaders = httputil.<span class="tok-function">CSRFTokenHXHeaders</span>(r)
+
+<span class="tok-comment">// layout.templ bodyAttrs — before:</span>
+<span class="tok-string">"hx-headers"</span>: `{"X-CSRF-Token":"` + props.CSRFToken + `"}`,
+<span class="tok-comment">// after (safe by construction):</span>
+<span class="tok-string">"hx-headers"</span>: props.CSRFHxHeaders,
+
+<span class="tok-comment">// session_api.go createSession — after SetCookie:</span>
+httputil.<span class="tok-function">InvalidateCSRFCookie</span>(w, httputil.CSRFConfig{})</code></pre>
+            </div>
+
+            <!-- M2: idiomorph -->
+            <div class="issue issue-important" id="idiomorph">
+              <span class="severity severity-important">Missed opportunity &middot; medium impact, needs E2E validation</span>
+              <h3>Embedded idiomorph extension unserved — SSE swaps wipe composer drafts</h3>
+              <div class="where">server.go:152-153 (only "sse" served) &middot; capability: HTMXExtIdiomorph, idiomorph 0.7.4 (htmx_extensions.go, v4.9.0)</div>
+              <p>
+                cqrs-htmx embeds the idiomorph extension alongside SSE
+                (<code>cqrshtmx.HTMXExtIdiomorph</code>, version 0.7.4), but
+                webphone serves only <code>sse.js</code>. The fragment design
+                was explicitly shaped by the constraint that
+                <code>sse-swap</code> replaces <code>innerHTML</code> —
+                "a wrapped payload would nest panels and wipe drafts"
+                (AGENTS.md). Morph-based swapping preserves unmodified DOM
+                (input focus, composer drafts) across panel updates, which is
+                the same class of problem. Adoption must keep the browser E2E
+                green and the DOM contract intact, so treat this as a
+                measured experiment, not a drop-in.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Serve it (one line), then evaluate <code>hx-ext="morph"</code>
+                with <code>sse-swap="morph"</code> on the transcript panel
+                only; re-run the stack's browser E2E before keeping it.
+              </div>
+              <pre><code><span class="tok-comment">// server.go — one line:</span>
+open.<span class="tok-function">Handle</span>(<span class="tok-string">"/htmx-ext/idiomorph.js"</span>,
+    cqrshtmx.<span class="tok-function">HTMXExtensionHandler</span>(cqrshtmx.HTMXExtIdiomorph))</code></pre>
+            </div>
+
+            <!-- P3: server timing -->
+            <div class="issue issue-important" id="server-timing">
+              <span class="severity severity-important">Partially used &middot; hand-rolled duplicate</span>
+              <h3>40-line timing writer duplicates servertiming.ServerTimingMiddlewareWhen</h3>
+              <div class="where">internal/server/server.go:245-287 (timingWriter + timingMiddleware) &middot; capability: server_timing v1.0.1 (already an indirect dependency)</div>
+              <p>
+                The env-gated <code>Server-Timing: total;dur</code> middleware
+                is hand-rolled — custom writer, implicit-200 handling, Flush
+                forwarding, Unwrap. The library's
+                <code>ServerTimingMiddlewareWhen(pred)</code> does all of that
+                and more: it auto-prepends
+                <code>total;dur</code> ("Total request",
+                server_timing.go:341), sanitizes values against CRLF
+                injection, delegates Flush/Hijack/Push (SSE-safe), and passes
+                through with zero overhead when the predicate is false —
+                exactly webphone's <code>WEBPHONE_DEBUG_TIMING</code> gating.
+                Swapping deletes ~40 lines and adds named-span support for
+                free (<code>MeasureServerTiming</code> around PBX calls).
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Replace both symbols with the library middleware at the same
+                chain position (just inside the request log, so the measured
+                span stays the whole route stack).
+              </div>
+              <pre><code><span class="tok-comment">// server.go — before: timingMiddleware + timingWriter (~40 lines)</span>
+<span class="tok-comment">// after (3 lines, same position in the chain):</span>
+servertiming.<span class="tok-function">ServerTimingMiddlewareWhen</span>(
+    <span class="tok-keyword">func</span>(*http.Request) <span class="tok-type">bool</span> {
+        <span class="tok-keyword">return</span> os.<span class="tok-function">Getenv</span>(<span class="tok-string">"WEBPHONE_DEBUG_TIMING"</span>) != <span class="tok-string">""</span>
+    },
+)</code></pre>
+            </div>
+
+            <!-- P1: toast -->
+            <div class="issue issue-important" id="toast-alias">
+              <span class="severity severity-important">Partially used &middot; wire-shape drift risk</span>
+              <h3>toastDetail re-declares cqrshtmx.ToastDetail instead of aliasing it</h3>
+              <div class="where">internal/server/toast.go:12-15 &middot; capability: ToastDetail (notify.go:10, v4.9.0) — root package, not dispatch-layer</div>
+              <p>
+                The local struct's comment justifies itself as avoiding
+                "dispatch-layer types" — but <code>ToastDetail</code> lives in
+                the root package webphone already imports, and the server
+                package depends on cqrs-htmx anyway (server.go:19). Both
+                library UI modules (<code>adminui</code>,
+                <code>dashboardui</code>) alias it
+                (<code>type toastDetail = cqrshtmx.ToastDetail</code>) so the
+                <code>{message, kind}</code> wire shape cannot drift from the
+                island's <code>showMessage</code> listener. Worth one caveat
+                to document while touching this: the dispatch-layer
+                <code>Notify*</code> options emit a <em>different</em> shape
+                (<code>{level, message}</code>, notify.go:89-93) — if the
+                dispatch layer were ever adopted, toasts would silently stop
+                matching the island listener.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Two-line change; the island listener comment already names the
+                library type.
+              </div>
+              <pre><code><span class="tok-comment">// toast.go — before:</span>
+<span class="tok-keyword">type</span> <span class="tok-type">toastDetail</span> <span class="tok-keyword">struct</span> {
+    Message <span class="tok-type">string</span> `json:<span class="tok-string">"message"</span>`
+    Kind    <span class="tok-type">string</span> `json:<span class="tok-string">"kind"</span>`
+}
+<span class="tok-comment">// after:</span>
+<span class="tok-keyword">type</span> <span class="tok-type">toastDetail</span> = cqrshtmx.ToastDetail</code></pre>
+            </div>
+
+            <!-- M3: permissions policy -->
+            <div class="issue issue-important" id="permissions-policy">
+              <span class="severity severity-important">Missed opportunity &middot; cheap hardening</span>
+              <h3>Permissions-Policy header absent — the calibrated version is one config field away</h3>
+              <div class="where">internal/server/server.go:187-192 (SecurityHeadersConfig) &middot; capability: PermissionsPolicy field (httputil security.go:56) and RecommendedPermissionsPolicy (v4.9.0)</div>
+              <p>
+                <code>SecurityHeadersConfig.PermissionsPolicy</code> is left
+                empty, so the browser's default allow-posture applies to
+                camera, geolocation, payment, usb, and microphone. The
+                library's <code>RecommendedPermissionsPolicy</code> must stay
+                rejected (it denies <code>microphone</code> and would kill the
+                phone) — but the deliberate rejection of the wholesale preset
+                has left the <em>calibrated</em> policy unshipped. Denying
+                everything except self-originated microphone is strictly more
+                hardening than absence, on the one surface (the login page)
+                that needs nothing at all.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                One field in the existing config literal; the island needs
+                <code>microphone=(self)</code> and nothing else.
+              </div>
+              <pre><code>security := httputil.<span class="tok-function">SecurityHeaders</span>(httputil.SecurityHeadersConfig{
+    ContentTypeNosniff: <span class="tok-keyword">true</span>,
+    <span class="tok-comment">// ...existing fields...</span>
+    PermissionsPolicy: <span class="tok-string">"microphone=(self), camera=(), geolocation=(), payment=(), usb=()"</span>,
+})</code></pre>
+            </div>
+
+            <!-- P4: error details -->
+            <div class="issue issue-important" id="safe-detail">
+              <span class="severity severity-important">Partially used &middot; 5xx detail redaction</span>
+              <h3>Webhook error bodies interpolate err.Error() into 500 responses</h3>
+              <div class="where">internal/server/webhooks.go:127,202,243,282 &middot; capability: SafeDetail / MapError / error-family classification (errors.go, v4.9.0)</div>
+              <p>
+                Provider-facing 500 bodies include raw error strings
+                (<code>"could not store message: "+err.Error()</code>). The
+                library's error model exists to prevent exactly this:
+                <code>SafeDetail(err, status, includeInternal)</code> redacts
+                5xx detail, and <code>MapError</code> resolves statuses from
+                error families so transient store failures answer 503 (retryable)
+                rather than 500. The paths are secret-gated, so exposure is
+                bounded — but the bodies also feed the provider's retry logic,
+                where a 503-vs-500 distinction has behavioral meaning.
+              </p>
+              <div class="callout callout-teal">
+                <strong>Recommendation</strong>
+                Keep the operator-plain style, but route the final string
+                through <code>cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false)</code>
+                and classify store failures as 503.
+              </div>
+            </div>
+          </section>
+
+          <!-- Version currency -->
+          <section id="versions">
+            <h2><span class="num">02</span>Version currency</h2>
+            <p>
+              webphone pins the <strong>latest released root tag</strong> of
+              cqrs-htmx (v4.9.0). The upstream working tree is ~256 commits
+              ahead of a submodule tag (<code>loginpage/v4.10.0-256</code>) —
+              unreleased. Per the repo's own hard-won rule, everything in this
+              report was verified at v4.9.0, not master.
+            </p>
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Module</th>
+                  <th>Consumed</th>
+                  <th>State</th>
+                  <th>Relevance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>cqrs-htmx/v4</td>
+                  <td>v4.9.0</td>
+                  <td>Latest root tag; master carries unreleased security-middleware consolidation and SSE reconnect work</td>
+                  <td class="yes">Bump when v4.10.0 ships — re-verify ServeSSE behavior at the consumed tag (the retry-hint lesson)</td>
+                </tr>
+                <tr>
+                  <td>httputil</td>
+                  <td>v1.2.0</td>
+                  <td>Current (repo at v1.2.0+1)</td>
+                  <td class="yes">Current; supplies the CSRF/SecurityHeaders/ratelimit surface</td>
+                </tr>
+                <tr>
+                  <td>httputil/server_timing</td>
+                  <td>v1.0.1 (indirect)</td>
+                  <td>Already in the module graph via cqrs-htmx</td>
+                  <td class="yes">Adoption costs zero new dependencies</td>
+                </tr>
+                <tr>
+                  <td>go-sse</td>
+                  <td>v0.6.0</td>
+                  <td>Matches cqrs-htmx v4.9.0's pin</td>
+                  <td>Upstream ahead; reconnect improvements arrive via cqrs-htmx bumps</td>
+                </tr>
+                <tr>
+                  <td>templ</td>
+                  <td>v0.3.1020</td>
+                  <td>Rendered via templ-components <code>layout.Base</code></td>
+                  <td class="no">Out of scope for this audit</td>
+                </tr>
+              </tbody>
+            </table>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>No action forced</strong>
+              Being on the newest released tag with pinned, verified behavior
+              is the correct posture for a released product (v2.0.0); the
+              unreleased delta is improvement, not security.
             </div>
-          </div>
+          </section>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <!-- Top opportunities -->
+          <section id="opportunities">
+            <h2><span class="num">03</span>Top opportunities (Pareto)</h2>
+            <p>Impact &times; ease, descending. First five: each &le; 20 lines.</p>
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Opportunity</th>
+                  <th>Impact</th>
+                  <th>Ease</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Adopt <code>CSRFTokenHXHeaders</code> + <code>InvalidateCSRFCookie</code> (finding: csrf-wiring)</td>
+                  <td class="yes">4</td>
+                  <td class="yes">4</td>
+                  <td><span class="highlight">16</span></td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td><code>ContextEnrichmentMiddleware</code> for request IDs + <code>user_id</code> in logs (finding: request-ids)</td>
+                  <td class="yes">4</td>
+                  <td class="yes">4</td>
+                  <td><span class="highlight">16</span></td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Alias <code>toastDetail = cqrshtmx.ToastDetail</code> (finding: toast-alias)</td>
+                  <td class="yes">3</td>
+                  <td class="yes">5</td>
+                  <td><span class="highlight">15</span></td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Swap hand-rolled timing for <code>ServerTimingMiddlewareWhen</code> (finding: server-timing)</td>
+                  <td class="yes">3</td>
+                  <td class="yes">5</td>
+                  <td><span class="highlight">15</span></td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Calibrated <code>Permissions-Policy</code> with <code>microphone=(self)</code> (finding: permissions-policy)</td>
+                  <td class="yes">3</td>
+                  <td class="yes">5</td>
+                  <td><span class="highlight">15</span></td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td><code>SafeDetail</code> + 503 classification on webhook errors (finding: safe-detail)</td>
+                  <td>2</td>
+                  <td class="yes">4</td>
+                  <td><span class="highlight">8</span></td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>Evaluate embedded idiomorph for draft-preserving swaps (finding: idiomorph)</td>
+                  <td class="yes">4</td>
+                  <td>2</td>
+                  <td><span class="highlight">8</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <!-- Not applicable -->
+          <section id="rejected">
+            <h2><span class="num">04</span>Not applicable — assessed and consciously excluded</h2>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              A utilization audit is only honest if it shows the exclusions.
+              These capability areas were assessed and are correct to leave
+              unused; several are the documented product decisions this repo
+              was built on.
             </p>
-          </div>
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Capability (v4.9.0)</th>
+                  <th>Why it does not fit webphone</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>App</code> / <code>CommandTyped</code> / <code>QueryTyped</code> / HandlerOptions</td>
+                  <td>Dispatch layer rejected 2026-09-18: product identity is the PBX, not event-sourced users; handlers are thin session-gated renders. Rejected ≠ missed.</td>
+                </tr>
+                <tr>
+                  <td><code>setup</code> bundle, <code>usermgmt</code>, <code>loginpage</code> (auth modules)</td>
+                  <td>Second identity database (split brain) vs the SIP-REGISTER-proven extension + directory password. The island <em>is</em> the login form.</td>
+                </tr>
+                <tr>
+                  <td>Casbin <code>AuthorizeMiddleware</code> / <code>RequireAuth</code></td>
+                  <td>Single-tenant per-extension scoping enforced in every store query; a policy engine adds a second authorization truth.</td>
+                </tr>
+                <tr>
+                  <td><code>IdempotencyStore</code> / <code>MemoryIdempotencyStore</code></td>
+                  <td>Records-before-process semantics (command dedup). Webhook replays must stay retryable on failure — webphone records <em>only successes</em>. Justified custom; note its <code>seen</code>+<code>record</code> pair is a TOCTOU race an atomic <code>claim</code> would close.</td>
+                </tr>
+                <tr>
+                  <td><code>HTMXMiddleware</code> / <code>RenderPartial</code> / <code>RenderTemplComponent</code></td>
+                  <td>URL design separates full pages from <code>/partials/*</code>; no <code>HX-Request</code> branching exists to centralize.</td>
+                </tr>
+                <tr>
+                  <td><code>BroadcastOnSuccess</code>, ACK/<code>EventCatalog</code>, journal-SSE store</td>
+                  <td>All dispatch-layer; no command stream exists to hook.</td>
+                </tr>
+                <tr>
+                  <td><code>RecommendedSecurityMiddleware</code> / <code>RecommendedPermissionsPolicy</code></td>
+                  <td>Denies <code>microphone</code> — would kill the WebRTC phone. Correctly avoided; see calibrated policy finding.</td>
+                </tr>
+                <tr>
+                  <td><code>datastar</code>, <code>sync</code>, <code>adminui</code>, <code>dashboardui</code>, <code>systemadapter</code>, <code>OpenAPISpecHandler</code> collector</td>
+                  <td>Separate modules / admin surfaces outside this product's scope; the one machine contract (<code>/openapi.json</code>) is a deliberate hand-written constant.</td>
+                </tr>
+                <tr>
+                  <td><code>OOBHTML</code></td>
+                  <td>SSE pushes whole swap-safe panels; no out-of-band region exists yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <!-- Conclusion -->
+          <section id="conclusion">
+            <h2><span class="num">05</span>Conclusion</h2>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              Yes — webphone uses cqrs-htmx properly: the root-only posture is
+              deliberate, documented, and matches what the library is for at
+              this product's identity model, and the auth modules were
+              rejected for the right reason with the right replacement
+              (PBX-proven sessions + httputil CSRF). Integration with the
+              frontend parts is tight where it matters — embedded assets,
+              SSE-driven partials, CSRF reaching both HTMX and the island's
+              fetch calls, and every adoption pinned by a test. The 22-point
+              distance from 100 is periphery: five small adoptions of helpers
+              that already sit one import away, one latent anti-pattern shape
+              to retire, and one measured experiment (idiomorph) that could
+              remove the draft-wipe constraint that shaped the whole fragment
+              design. Doing the top five would take an afternoon and lift the
+              score to the mid-90s.
             </p>
-          </div>
-        </section>
+          </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
-          <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
-          </div>
-        </section>
-
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
-          <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
-          </p>
-          <table class="compare">
-            <thead>
-              <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
-              </tr>
-              <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <!-- Footer -->
-        <footer class="footer">
-          <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
-          </p>
-        </footer>
-      </main>
-    </div>
-
+          <!-- Footer -->
+          <footer class="footer">
+            <p>
+              Generated 2026-09-19 &middot; cqrs-htmx v4.9.0 verified via
+              <code>git show v4.9.0:</code> (not master) &middot; httputil
+              v1.2.0 &middot; server_timing v1.0.1 &middot; All usage claims
+              cited to webphone source; all capability claims cited to library
+              source at the consumed tag
+            </p>
+          </footer>
+        </main>
+      </div>
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
     <script>
       (function () {
