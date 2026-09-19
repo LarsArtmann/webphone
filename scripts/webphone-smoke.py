@@ -92,7 +92,20 @@ class Smoke:
             json.dumps({"extension": extension, "password": password}).encode(),
             "application/json",
         )
-        return status == 201
+        if status != 201:
+            return False
+        return self.adopt_csrf()
+
+    def adopt_csrf(self) -> bool:
+        """Adopt the rotated CSRF token the way the island does (session.js)."""
+        status, body, _ = self.request("GET", "/api/csrf")
+        if status != 200:
+            return False
+        token = json.loads(body).get("token", "")
+        if not token:
+            return False
+        self.csrf = token
+        return True
 
     def hook(self, path: str, payload: dict) -> tuple[int, bytes]:
         body = json.dumps(payload).encode()
@@ -195,7 +208,31 @@ def run_checks(s: Smoke) -> int:
     c.ok("session CSRF-gated", status in (403, 401), f"got {status}")
 
     # 6. Session with CSRF token issues the session cookie.
+    pre_login_token = s.csrf
     c.ok("session login accepted", s.login(), "POST /api/session != 201")
+    c.ok(
+        "login rotated the CSRF token",
+        s.csrf != pre_login_token and s.adopt_csrf(),
+        "adoption missing or stale token reused",
+    )
+    # 6b. The pre-login token is dead: POSTs with it must 403, while the
+    # same probe with the adopted token passes CSRF (unknown path = 404).
+    status, _, _ = s.request(
+        "POST",
+        "/api/csrf-rotate-probe",
+        b"",
+        "",
+        {"X-CSRF-Token": pre_login_token},
+    )
+    c.ok("stale CSRF token rejected", status == 403, f"got {status}")
+    status, _, _ = s.request(
+        "POST",
+        "/api/csrf-rotate-probe",
+        b"",
+        "",
+        {"X-CSRF-Token": s.csrf},
+    )
+    c.ok("adopted CSRF token accepted", status == 404, f"got {status}")
     c.ok(
         "session cookie issued",
         any(cookie.name == "webphone_session" for cookie in s.jar),
