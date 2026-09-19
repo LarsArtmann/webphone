@@ -16,7 +16,10 @@ is the intended consumer: it fronts the binary with TLS and the WSS
 `/sip` proxy. DECIDED 2026-09-18: this repo ships `nixosModules.default`
 (package/nixos-module.nix) so binary and deployment shape stay in sync;
 the stack may import it or keep reverse-proxying — the module is
-additive. Stack-side switchover remains open work (TODO_LIST).
+additive. Stack-side switchover DONE 2026-09-18/19: the stack imports
+`nixosModules.default`, its nginx vhost proxies the service, its browser
+E2E is green (the accept/reject fix `00f13fe`), and its `webphone` input
+is bumped to the v2.0.0 tag commit (stack commit `fc6bc81`).
 
 The cqrs-htmx `setup` bundle was rejected deliberately: it wires
 event-sourced usermgmt users, but this product's identity is the PBX
@@ -28,7 +31,7 @@ a second user database would be a split brain.
 ```console
 nix develop                        # Go, templ, golangci-lint, esbuild, …
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
-GOEXPERIMENT=jsonv2 go test ./...  # jsonv2 REQUIRED for every go command (templ-components)
+GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command (templ-components); -count=1: the result cache has lied during investigations
 buildflow                          # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
 nix flake check                    # package build + tests in sandbox + treefmt
 nix build .#webphone --system aarch64-linux   # cross-builds
@@ -102,7 +105,10 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `sse-connect` to `.wp-root` post-login (no reload — the password is
   memory-only) and reloads the page on logout. Login and hooks are
   per-IP rate limited (the hook limiter wraps, not sits inside, the
-  secret gate).
+  secret gate). Server handlers self-gate through the shared
+  `requireSession` helper; `Sessions.Require` middleware additionally
+  wires `/events` and `/phone-api/` — dual-layer by design (pages must
+  render anonymously; routes stay gated regardless of wiring).
 - **Language**: UI language is per extension — `wp-lang` cookie
   (written by the island's `setLang`, samesite=strict) →
   `Accept-Language: de*` → English default. `ExtensionHubs` remember
@@ -195,7 +201,9 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - vulnix against `./result` scans the BUILD closure (bootstrap
   toolchains, binutils, gcc, zlib — dozens of findings that never
   deploy). The honest number is the runtime closure:
-  `nix-store -qR result` (8 derivations). vulnix also range-matches
+  `vulnix $(nix-store -qR ./result)` — pass the closure paths as ARGS
+  (8 derivations; bare `vulnix ./result` silently expands the build
+  closure). vulnix also range-matches
   distro-patched versions: it still prints glibc CVE-2026-5450
   against glibc-2.42-84, but the fix shipped in nixpkgs 2.42-67
   (PR #517918, merged 2026-05-22 — the locked tree's glibc
@@ -215,5 +223,18 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - Cite stable names (ids, function names, option names), not `file:line`.
 - Behavior parity rules ports: port logic verbatim first, refactor in a
   second, separately-verified change.
-- An auto-commit daemon commits continuously; do not be surprised by
-  commits you did not make, and never revert changes you did not author.
+- An auto-commit daemon commits continuously AND pushes (observed
+  2026-09-19: origin/main tracks HEAD within minutes); never revert
+  changes you did not author, and verify end states with
+  `git ls-remote`, not push logs — a "local" commit may already be
+  public.
+- Markdown is NOT in treefmt scope (flake.nix prettier includes only
+  `*.css` + island/shell JS): `nix fmt` saying "0 files" on `.md` edits
+  means unformatted-by-tooling, not clean — struck tables in annotated
+  reports keep manual alignment.
+- Recording is two-level: the PBX stack records every dialled call
+  server-side (`record_session`, stereo WAV under the stack's
+  `/recordings/`, operator basic-auth; `*97<ext>` skips) — this repo's
+  island and server have NO recording capability, only CDR history
+  rows. Product-level capability questions get answered per level
+  (island / Go server / consuming stack).

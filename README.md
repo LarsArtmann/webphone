@@ -159,6 +159,10 @@ POST /hooks/fax/status     {"provider_ref":"gw-123","status":"transmitted|failed
 POST /hooks/message/status {"provider_ref":"gw-123","status":"delivered|failed","error":"…"}
 ```
 
+Providers may retry status callbacks: replays are deduped and answer
+`202 Accepted` inertly (only successes are recorded, so failures stay
+retryable).
+
 ### Bridging FreeSWITCH (example)
 
 Any component that can POST JSON bridges the PBX; the payloads above are
@@ -172,8 +176,8 @@ POST http://webphone:8080/hooks/message
      {"owner": "$to_ext", "from": "$from", "body": "$body"}
 # outbound: receive the webphone's multipart at {bridge}/message and
 # feed it into FreeSWITCH (event socket, mod_sms, or a carrier API),
-# then answer {"provider_ref": "<id>"} and later call /hooks/fax/status
-# or a message-status hook with that id.
+# then answer {"provider_ref": "<id>"} and later call
+# /hooks/fax/status or /hooks/message/status with that id.
 ```
 
 ## Live updates (SSE)
