@@ -22,6 +22,13 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   the full research table live in
   `docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md`;
   never swapped speculatively.
+- Health-surface long shots (recorded 2026-09-19, options memo:
+  `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`):
+  (a) stack-side go-health federation scraping webphone's `/livez`//`/startupz`
+  for a fleet health view — zero webphone change; (b) a webphone UI health
+  panel ONLY IF the CSP stance changes (the dashboard's Datastar HTML face
+  needs `unsafe-eval`; the JSON probes stay the whole adopted surface
+  otherwise). Owner calls.
 - Server-side telephony inside webphone (Go SIP UA via sipgo,
   pion/webrtc media or B2BUA, FreeSWITCH ESL for originate): researched
   and rejected 2026-09-19 — the browser terminates the media either
