@@ -224,6 +224,33 @@ location /events {                    # SSE: no buffering
 client_max_body_size 64m;             # attachments (≤5×10 MiB) + PDFs (≤20 MiB)
 ```
 
+### Troubleshooting: 403 logins behind a TLS proxy
+
+**Symptom:** every browser login (and every form POST) returns 403 once the
+app is served behind a TLS-terminating proxy, while calls keep working and
+`/healthz` is green. The server log names the cause exactly:
+
+```console
+WARN httputil: CSRF rejected request with forged same-origin attestation method=POST path=/api/session origin=https://pbx.example.org
+```
+
+**Why:** the browser truthfully sends `Origin: https://…` while the listener
+sees plain HTTP; unless the proxy is trusted, that reads as a forged
+attestation.
+
+**Fix:** declare the fronting shape so the proxy's `X-Forwarded-Proto` is
+believed and the https origin is trusted:
+
+```json
+{ "csrf": {
+    "trusted_proxies": ["127.0.0.1"],
+    "trusted_origins": ["https://pbx.example.org"] } }
+```
+
+The NixOS module ships exactly these defaults when `nginx.enable` is set
+(derived from `nginx.hostName`); a startup log line `csrf fronting
+trustedProxies=… trustedOrigins=…` shows the effective shape at boot.
+
 ### NixOS module
 
 The flake ships `nixosModules.default` so the binary and its deployment

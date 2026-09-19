@@ -84,7 +84,12 @@ in
     };
 
     nginx = {
-      enable = lib.mkEnableOption "an nginx vhost that terminates TLS and proxies HTTP and the SIP WebSocket";
+      enable = lib.mkEnableOption ''
+        an nginx vhost that terminates TLS and proxies HTTP and the SIP
+        WebSocket. Enabling it also defaults settings.csrf to trust the
+        loopback proxy and the https://<hostName> origin; without that
+        fronting shape (or a hand-rolled equivalent in settings.csrf)
+        the CSRF middleware rejects every browser POST behind TLS.'';
       hostName = lib.mkOption {
         type = lib.types.str;
         example = "phone.example.org";

@@ -21,5 +21,14 @@ func (h *handlers) refreshCSRF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	// Cache-safety: the answer is bound to THIS client's csrf_token cookie
+	// (nosurf's masked pairing), so a shared cache storing it could hand
+	// one browser's token to another. `no-store` forbids caching outright;
+	// `Vary: Cookie` additionally tells any intermediary that violates
+	// no-store to key on the cookie. The consuming stack's vhost carries
+	// no proxy_cache, so in practice nothing caches this route today;
+	// the headers make the contract explicit rather than incidental.
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Vary", "Cookie")
 	_ = json.MarshalWrite(w, map[string]string{"token": token}) //nolint:erraudit // best-effort write; the paired cookie is already set
 }
