@@ -4,7 +4,7 @@
 approved full execution of the pasted TODO_LIST ("Execute and Verify … until
 everything works") · **Scope:** the 8-row TODO_LIST as of `ac56060`, executed
 against the already-green P0–P7 state of
-`docs/status/2026-09-19_00-05_cqrs-htmx-adoption-execution-status.md`.
+`docs/status/archived/2026-09-19_00-05_cqrs-htmx-adoption-execution-status.md`.
 
 **Headline:** webphone **v2.0.0 is tagged and on GitHub** (`d9d6d03`), all
 lychee 404s resolved, the telephony stack consumes the release
