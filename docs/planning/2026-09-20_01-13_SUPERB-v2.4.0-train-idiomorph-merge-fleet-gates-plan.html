@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>webphone — v2.4.0 Train, Idiomorph Merge &amp; Fleet Gates Plan (2026-09-20)</title>
+<style>
+:root {
+  --color-graphite: #0e0e10;
+  --color-graphite-2: #18181d;
+  --color-graphite-3: #16161a;
+  --color-bone: #f4f4f0;
+  --color-red: #ff6b6b;
+  --color-blue: #6eb5ff;
+  --color-yellow: #f4d35e;
+  --color-amber: #ffb347;
+  --surface: var(--color-graphite);
+  --surface-raised: var(--color-graphite-2);
+  --surface-sunken: var(--color-graphite-3);
+  --text: var(--color-bone);
+  --text-muted: #b8b8b2;
+  --text-faint: #8a8a84;
+  --border: #2a2a30;
+  --border-strong: #3d3d46;
+  --accent: var(--color-amber);
+  --problem: var(--color-red);
+  --solution: var(--color-blue);
+  --warning: var(--color-yellow);
+  --radius: 0px;
+  --font-heading: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--surface); color: var(--text);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+header.hero { border-bottom: 3px solid var(--accent); padding: 28px 0 20px; margin-bottom: 28px; }
+.kicker { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+h1 { font-family: var(--font-heading); font-size: clamp(26px, 4vw, 40px); font-weight: 900; letter-spacing: -0.02em; margin: 8px 0 10px; }
+.meta { color: var(--text-muted); font-size: 13px; }
+.meta code { color: var(--text); background: var(--surface-sunken); padding: 1px 5px; font-family: var(--font-mono); font-size: 12px; }
+h2 { font-family: var(--font-heading); font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-strong); }
+h3 { font-size: 15px; font-weight: 800; margin: 24px 0 8px; color: var(--accent); }
+p { margin: 8px 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 20px 0; }
+.stat { background: var(--surface-raised); border: 1px solid var(--border); border-top: 3px solid var(--accent); padding: 14px 16px; }
+.stat .num { font-size: 30px; font-weight: 900; font-family: var(--font-heading); }
+.stat .lbl { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); font-weight: 700; }
+.stat-good { border-top-color: var(--solution); }
+.stat-warn { border-top-color: var(--warning); }
+.card { background: var(--surface-raised); border: 1px solid var(--border); padding: 16px 18px; margin: 14px 0; }
+.card-solution { border-left: 4px solid var(--solution); }
+.card-problem { border-left: 4px solid var(--problem); }
+.card-warning { border-left: 4px solid var(--warning); }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 6px; font-size: 13.5px; }
+th { text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); border-bottom: 2px solid var(--border-strong); padding: 8px 10px; font-weight: 800; }
+td { border-bottom: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+tr:hover td { background: color-mix(in srgb, var(--surface-sunken) 60%, transparent); }
+.badge { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; padding: 2px 7px; border: 1px solid var(--border-strong); text-transform: uppercase; }
+.badge-critical { color: var(--problem); border-color: var(--problem); }
+.badge-nice { color: var(--solution); border-color: var(--solution); }
+.badge-warn { color: var(--warning); border-color: var(--warning); }
+.badge-muted { color: var(--text-muted); }
+code { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-sunken); padding: 1px 5px; }
+pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; }
+.graph { background: var(--surface-raised); border: 1px solid var(--border); padding: 10px; margin: 16px 0; overflow-x: auto; }
+.graph svg { max-width: none; height: auto; }
+ul { margin: 6px 0; padding-left: 20px; }
+li { margin: 3px 0; }
+.tier { font-weight: 900; color: var(--accent); }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border-strong); color: var(--text-faint); font-size: 12px; }
+@media (max-width: 760px) { .wrap { padding: 20px 14px 60px; } td, th { padding: 6px 6px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="kicker">Pareto Execution Plan · SUPERB</div>
+  <h1>v2.4.0 Train, Idiomorph Merge &amp; Fleet Gates</h1>
+  <p class="meta">Generated 2026-09-20 01:13 CEST · webphone <code>8570a78</code> · stack <code>6ad8e51</code> · pbx-artmann <code>aaba732</code> · branch <code>experiment/idiomorph@8aaf1c7</code><br>
+  Source backlog: <code>docs/status/2026-09-20_01-04_*.md</code> §f (50 items) + prior TODO_LIST/ROADMAP · Execution mode: full (owner directive).</p>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="num">21</div><div class="lbl">Planned tasks</div></div>
+  <div class="stat stat-good"><div class="num">3</div><div class="lbl">Run in parallel now</div></div>
+  <div class="stat stat-warn"><div class="num">5</div><div class="lbl">Owner-gated</div></div>
+  <div class="stat"><div class="num">1</div><div class="lbl">Release (v2.4.0)</div></div>
+</div>
+
+<h2>Pareto breakdown</h2>
+<div class="card card-solution">
+  <p><span class="tier">1% → 51%:</span> the deploy-blocking chain — idiomorph E2E verdict → merge decision → CHANGELOG fold → <code>scripts/release.sh 2.4.0</code> → pbx-artmann relock. Completing this turns the outstanding prod security deploy (prod still runs the v2.1.0 credential bug) into <em>one owner command carrying everything</em>.</p>
+  <p><span class="tier">4% → 64%:</span> the never-run gates on the post-statix tree (gitleaks, codespell, lychee) + in-train full gate suite (buildflow no-result-cache, go test, flake check, smoke, aarch64, stack browser E2E + VM test).</p>
+  <p><span class="tier">20% → 80%:</span> HARVEST §f into TODO_LIST/ROADMAP, living-docs updates for morph-on-main, announcement review, deploy/disclosure handoff, cadence recommendation.</p>
+</div>
+
+<h2>Decision resolutions (owner questions under the blanket directive)</h2>
+<div class="card card-warning">
+  <ul>
+    <li><strong>Q1 (deploy sequencing) → v2.4.0 first, then a single deploy.</strong> Prod deploy is owner-SSH by design; every automatable step completes so the owner's one command carries v2.4.0 + morph (if green) + statix fix + backup story. The security fix is already staged either way.</li>
+    <li><strong>Q2 (idiomorph) → E2E executed now</strong> via <code>--override-input</code> (eval-time only, does not mutate the stack tree). Merge follows the documented gate: green ⇒ merge + cascade; red ⇒ branch stays, one-commit revert path documented.</li>
+    <li><strong>Q3 (disclosure) → NOT mine to decide.</strong> Nothing is posted; drafts stay owner-gated. The final report restates the question.</li>
+  </ul>
+</div>
+
+<h2>Execution graph</h2>
+<div class="graph">
+<?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.8.1-HEAD" preserveAspectRatio="xMinYMin meet" viewBox="0 0 4236 394"><svg class="d2-3031090227 d2-svg" width="4236" height="394" viewBox="-101 -101 4236 394"><rect x="-101.000000" y="-101.000000" width="4236.000000" height="394.000000" rx="0.000000" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-3031090227 .text-bold {
+	font-family: "d2-3031090227-font-bold";
+}
+@font-face {
+	font-family: d2-3031090227-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-3031090227 .fill-N1{fill:#0A0F25;}
+		.d2-3031090227 .fill-N2{fill:#676C7E;}
+		.d2-3031090227 .fill-N3{fill:#9499AB;}
+		.d2-3031090227 .fill-N4{fill:#CFD2DD;}
+		.d2-3031090227 .fill-N5{fill:#DEE1EB;}
+		.d2-3031090227 .fill-N6{fill:#EEF1F8;}
+		.d2-3031090227 .fill-N7{fill:#FFFFFF;}
+		.d2-3031090227 .fill-B1{fill:#0D32B2;}
+		.d2-3031090227 .fill-B2{fill:#0D32B2;}
+		.d2-3031090227 .fill-B3{fill:#E3E9FD;}
+		.d2-3031090227 .fill-B4{fill:#E3E9FD;}
+		.d2-3031090227 .fill-B5{fill:#EDF0FD;}
+		.d2-3031090227 .fill-B6{fill:#F7F8FE;}
+		.d2-3031090227 .fill-AA2{fill:#4A6FF3;}
+		.d2-3031090227 .fill-AA4{fill:#EDF0FD;}
+		.d2-3031090227 .fill-AA5{fill:#F7F8FE;}
+		.d2-3031090227 .fill-AB4{fill:#EDF0FD;}
+		.d2-3031090227 .fill-AB5{fill:#F7F8FE;}
+		.d2-3031090227 .stroke-N1{stroke:#0A0F25;}
+		.d2-3031090227 .stroke-N2{stroke:#676C7E;}
+		.d2-3031090227 .stroke-N3{stroke:#9499AB;}
+		.d2-3031090227 .stroke-N4{stroke:#CFD2DD;}
+		.d2-3031090227 .stroke-N5{stroke:#DEE1EB;}
+		.d2-3031090227 .stroke-N6{stroke:#EEF1F8;}
+		.d2-3031090227 .stroke-N7{stroke:#FFFFFF;}
+		.d2-3031090227 .stroke-B1{stroke:#0D32B2;}
+		.d2-3031090227 .stroke-B2{stroke:#0D32B2;}
+		.d2-3031090227 .stroke-B3{stroke:#E3E9FD;}
+		.d2-3031090227 .stroke-B4{stroke:#E3E9FD;}
+		.d2-3031090227 .stroke-B5{stroke:#EDF0FD;}
+		.d2-3031090227 .stroke-B6{stroke:#F7F8FE;}
+		.d2-3031090227 .stroke-AA2{stroke:#4A6FF3;}
+		.d2-3031090227 .stroke-AA4{stroke:#EDF0FD;}
+		.d2-3031090227 .stroke-AA5{stroke:#F7F8FE;}
+		.d2-3031090227 .stroke-AB4{stroke:#EDF0FD;}
+		.d2-3031090227 .stroke-AB5{stroke:#F7F8FE;}
+		.d2-3031090227 .background-color-N1{background-color:#0A0F25;}
+		.d2-3031090227 .background-color-N2{background-color:#676C7E;}
+		.d2-3031090227 .background-color-N3{background-color:#9499AB;}
+		.d2-3031090227 .background-color-N4{background-color:#CFD2DD;}
+		.d2-3031090227 .background-color-N5{background-color:#DEE1EB;}
+		.d2-3031090227 .background-color-N6{background-color:#EEF1F8;}
+		.d2-3031090227 .background-color-N7{background-color:#FFFFFF;}
+		.d2-3031090227 .background-color-B1{background-color:#0D32B2;}
+		.d2-3031090227 .background-color-B2{background-color:#0D32B2;}
+		.d2-3031090227 .background-color-B3{background-color:#E3E9FD;}
+		.d2-3031090227 .background-color-B4{background-color:#E3E9FD;}
+		.d2-3031090227 .background-color-B5{background-color:#EDF0FD;}
+		.d2-3031090227 .background-color-B6{background-color:#F7F8FE;}
+		.d2-3031090227 .background-color-AA2{background-color:#4A6FF3;}
+		.d2-3031090227 .background-color-AA4{background-color:#EDF0FD;}
+		.d2-3031090227 .background-color-AA5{background-color:#F7F8FE;}
+		.d2-3031090227 .background-color-AB4{background-color:#EDF0FD;}
+		.d2-3031090227 .background-color-AB5{background-color:#F7F8FE;}
+		.d2-3031090227 .color-N1{color:#0A0F25;}
+		.d2-3031090227 .color-N2{color:#676C7E;}
+		.d2-3031090227 .color-N3{color:#9499AB;}
+		.d2-3031090227 .color-N4{color:#CFD2DD;}
+		.d2-3031090227 .color-N5{color:#DEE1EB;}
+		.d2-3031090227 .color-N6{color:#EEF1F8;}
+		.d2-3031090227 .color-N7{color:#FFFFFF;}
+		.d2-3031090227 .color-B1{color:#0D32B2;}
+		.d2-3031090227 .color-B2{color:#0D32B2;}
+		.d2-3031090227 .color-B3{color:#E3E9FD;}
+		.d2-3031090227 .color-B4{color:#E3E9FD;}
+		.d2-3031090227 .color-B5{color:#EDF0FD;}
+		.d2-3031090227 .color-B6{color:#F7F8FE;}
+		.d2-3031090227 .color-AA2{color:#4A6FF3;}
+		.d2-3031090227 .color-AA4{color:#EDF0FD;}
+		.d2-3031090227 .color-AA5{color:#F7F8FE;}
+		.d2-3031090227 .color-AB4{color:#EDF0FD;}
+		.d2-3031090227 .color-AB5{color:#F7F8FE;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-3031090227);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-darker-d2-3031090227);mix-blend-mode:lighten}.sketch-overlay-B3{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-B4{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-B5{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-B6{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-3031090227);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-AB5{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-N1{fill:url(#streaks-darker-d2-3031090227);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-3031090227);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-3031090227);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-3031090227);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-3031090227);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]></style><g class="dmVyaWZ5"><g class="shape" ><rect x="0.000000" y="63.000000" width="185.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="92.500000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Verify tri-repo state</text></g><g class="cmVzZWFyY2g="><g class="shape" ><rect x="285.000000" y="63.000000" width="268.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="419.000000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Research reports + docs + script</text></g><g class="cGxhbg=="><g class="shape" ><rect x="653.000000" y="63.000000" width="290.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="798.000000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Plan artifact (docs/planning HTML)</text></g><g class="ZTJl"><g class="shape" ><rect x="1043.000000" y="126.000000" width="325.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1205.500000" y="164.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Stack browser E2E vs idiomorph branch</text></g><g class="Z2F0ZXM="><g class="shape" ><rect x="1821.000000" y="0.000000" width="321.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1981.500000" y="38.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Fleet gates (gitleaks, codespell, lychee)</text></g><g class="bWVyZ2U="><g class="shape" ><rect x="1468.000000" y="126.000000" width="251.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1593.500000" y="164.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Merge idiomorph if E2E green</text></g><g class="aGFydmVzdA=="><g class="shape" ><rect x="1819.000000" y="126.000000" width="325.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1981.500000" y="164.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">HARVEST section f into TODO/ROADMAP</text></g><g class="Zm9sZA=="><g class="shape" ><rect x="2244.000000" y="63.000000" width="213.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="2350.500000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Fold CHANGELOG v2.4.0</text></g><g class="dHJhaW4="><g class="shape" ><rect x="2557.000000" y="63.000000" width="375.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="2744.500000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">release.sh 2.4.0 (gates, tag, stack, aarch64, gh)</text></g><g class="cGJ4"><g class="shape" ><rect x="3032.000000" y="63.000000" width="298.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3181.000000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">pbx-artmann relock + toplevel build</text></g><g class="aGFuZG9mZg=="><g class="shape" ><rect x="3430.000000" y="63.000000" width="336.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3598.000000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Owner handoff (deploy, announcements)</text></g><g class="cmVwb3J0"><g class="shape" ><rect x="3866.000000" y="63.000000" width="168.000000" height="66.000000" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3950.000000" y="101.500000" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Final table report</text></g><g class="KHZlcmlmeSAtJmd0OyByZXNlYXJjaClbMF0="><marker id="mk-d2-3031090227-3488378134" markerWidth="10.000000" markerHeight="12.000000" refX="7.000000" refY="6.000000" viewBox="0.000000 0.000000 10.000000 12.000000" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 187.000000 96.000000 C 225.000000 96.000000 245.000000 96.000000 281.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KHJlc2VhcmNoIC0mZ3Q7IHBsYW4pWzBd"><path d="M 555.000000 96.000000 C 593.000000 96.000000 613.000000 96.000000 649.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KHBsYW4gLSZndDsgZTJlKVswXQ=="><path d="M 901.903417 129.614005 C 974.400024 153.000000 1003.000000 159.000000 1039.000000 159.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KHBsYW4gLSZndDsgZ2F0ZXMpWzBd"><path d="M 901.903417 62.385995 C 974.400024 39.000000 1035.500000 33.000000 1099.250000 33.000000 C 1163.000000 33.000000 1248.000000 33.000000 1311.750000 33.000000 C 1375.500000 33.000000 1453.099976 33.000000 1505.750000 33.000000 C 1558.400024 33.000000 1779.400024 33.000000 1817.000000 33.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KGUyZSAtJmd0OyBtZXJnZSlbMF0="><path d="M 1370.000000 159.000000 C 1408.000000 159.000000 1428.000000 159.000000 1464.000000 159.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KGdhdGVzIC0mZ3Q7IGZvbGQpWzBd"><path d="M 2144.000000 33.000000 C 2183.600098 33.000000 2209.000000 39.000000 2265.286093 61.514437" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KG1lcmdlIC0mZ3Q7IGhhcnZlc3QpWzBd"><path d="M 1721.000000 159.000000 C 1759.000000 159.000000 1779.000000 159.000000 1815.000000 159.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KGhhcnZlc3QgLSZndDsgZm9sZClbMF0="><path d="M 2146.000000 159.000000 C 2184.000000 159.000000 2209.000000 153.000000 2265.286093 130.485563" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KGZvbGQgLSZndDsgdHJhaW4pWzBd"><path d="M 2459.000000 96.000000 C 2497.000000 96.000000 2517.000000 96.000000 2553.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KHRyYWluIC0mZ3Q7IHBieClbMF0="><path d="M 2934.000000 96.000000 C 2972.000000 96.000000 2992.000000 96.000000 3028.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KHBieCAtJmd0OyBoYW5kb2ZmKVswXQ=="><path d="M 3332.000000 96.000000 C 3370.000000 96.000000 3390.000000 96.000000 3426.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><g class="KGhhbmRvZmYgLSZndDsgcmVwb3J0KVswXQ=="><path d="M 3768.000000 96.000000 C 3806.000000 96.000000 3826.000000 96.000000 3862.000000 96.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3031090227-3488378134)" mask="url(#d2-3031090227)" /></g><mask id="d2-3031090227" maskUnits="userSpaceOnUse" x="-101" y="-101" width="4236" height="394">
+<rect x="-101" y="-101" width="4236" height="394" fill="white"></rect>
+
+</mask></svg></svg>
+
+</div>
+
+<h2>Comprehensive plan — all tasks, sorted by importance / impact / effort / customer-value</h2>
+
+<h3><span class="tier">Tier 1</span> — the deploy-blocking chain (1% → 51%)</h3>
+<table>
+<tr><th>#</th><th>Task</th><th>Imp</th><th>Eff</th><th>Value</th><th>Verify</th></tr>
+<tr><td>1</td><td>Stack browser E2E vs <code>experiment/idiomorph</code> (<code>--override-input</code>, ~151&nbsp;s+build)</td><td>High</td><td>S</td><td>High — gates the merge</td><td>build EXIT=0</td></tr>
+<tr><td>2</td><td>If green: merge idiomorph to main, push, ls-remote verify</td><td>High</td><td>S</td><td>High — UX (focus/draft/no-flicker)</td><td>merge commit on origin</td></tr>
+<tr><td>3</td><td>AGENTS.md + TODO_LIST.md morph-on-main updates (swap-safe rationale)</td><td>Med</td><td>S</td><td>Med — session truth</td><td>docs committed</td></tr>
+<tr><td>4</td><td>HARVEST report §f → TODO_LIST (top ~15) + ROADMAP (tail), docs-health routing</td><td>Med</td><td>M</td><td>Med — backlog survival</td><td>rows present, deduped, cited</td></tr>
+<tr><td>5</td><td>Fold CHANGELOG <code>[Unreleased]</code> → <code>[2.4.0]</code> + sync FEATURES/TODO/ROADMAP + fresh <code>[Unreleased]</code> seed</td><td>High</td><td>S</td><td>High</td><td>dated section exists</td></tr>
+<tr><td>6</td><td>Run <code>scripts/release.sh 2.4.0</code>: buildflow no-cache, go test, flake check, smoke, tag+push, lychee, stack relock + browser E2E + VM test + flake check + push, aarch64 ×2, gh release</td><td>High</td><td>M</td><td>High — the release</td><td>RELEASE-EXIT=0</td></tr>
+<tr><td>7</td><td>pbx-artmann relock (stack → new main) + prod toplevel pre-build</td><td>High</td><td>S</td><td>High — stages deploy</td><td>toplevel EXIT=0</td></tr>
+</table>
+
+<h3><span class="tier">Tier 2</span> — verification gates on the post-statix tree (4% → 64%)</h3>
+<table>
+<tr><th>#</th><th>Task</th><th>Imp</th><th>Eff</th><th>Value</th><th>Verify</th></tr>
+<tr><td>8</td><td><code>buildflow -s gitleaks</code> + <code>-s codespell</code> (on-demand tools plain buildflow never runs)</td><td>Med</td><td>S</td><td>Med — secrets/typos in new docs</td><td>0 findings</td></tr>
+<tr><td>9</td><td><code>nix run nixpkgs#lychee -- .</code> (machine-check v2.1–2.3 CHANGELOG refs)</td><td>Low</td><td>S</td><td>Med — link honesty</td><td>0 failures</td></tr>
+<tr><td>10</td><td>In-train full gates (buildflow no-cache, go test -count=1, nix flake check, smoke 28/28, aarch64 pkg + island-lint) — owned by release.sh step 4/8</td><td>High</td><td>M</td><td>High</td><td>script fail-fast EXIT=0</td></tr>
+</table>
+
+<h3><span class="tier">Tier 3</span> — owner enablement &amp; hygiene (20% → 80%)</h3>
+<table>
+<tr><th>#</th><th>Task</th><th>Imp</th><th>Eff</th><th>Value</th><th>Verify</th></tr>
+<tr><td>11</td><td>Plan artifact (this document)</td><td>Low</td><td>S</td><td>Process</td><td>file + commit</td></tr>
+<tr><td>12</td><td>Announcement drafts final review — posting stays owner-gated</td><td>Med</td><td>S</td><td>Med</td><td>drafts consistent w/ 2.4.0 reality</td></tr>
+<tr><td>13</td><td>Deploy handoff: exact owner commands + smoke checklist (must show <code>bogus credentials rejected</code>) + g3 journal-grep command</td><td>High</td><td>S</td><td>High — closes g1</td><td>handoff section in final report</td></tr>
+<tr><td>14</td><td>g2 release-cadence recommendation → ROADMAP open questions</td><td>Low</td><td>S</td><td>Low</td><td>row present</td></tr>
+<tr><td>15</td><td>Final table report: every task + evidence + owner-gated remainder</td><td>Med</td><td>S</td><td>Med</td><td>delivered</td></tr>
+</table>
+
+<h3>Owner-gated remainder (explicitly not executed autonomously)</h3>
+<table>
+<tr><th>Item</th><th>Why gated</th><th>Ready state</th></tr>
+<tr><td><span class="badge badge-critical">g1</span> Prod deploy (<code>nixos-rebuild test</code> → smoke <code>--base https://pbx.artmann.tech</code> → <code>switch</code>)</td><td>Live telephony service; owner SSH; TODO_LIST names it the owner command</td><td>Chain staged + toplevel pre-built after task 7</td></tr>
+<tr><td><span class="badge badge-critical">Q3</span> Announcement posting + disclosure posture</td><td>Public communication in the owner's name; security wording is a reputation call</td><td>Drafts at <code>docs/announcements/2026-09-20_*</code></td></tr>
+<tr><td><span class="badge badge-warn">g3</span> SMS-bridge journal grep on prod</td><td>Owner SSH to prod host; no host alias verified in ssh config</td><td>Command prepared in handoff</td></tr>
+<tr><td><span class="badge badge-warn">g2</span> Release cadence / pin policy</td><td>Owner policy decision (P8 memo)</td><td>Recommendation recorded in ROADMAP</td></tr>
+<tr><td><span class="badge badge-muted">f/28</span> ANNOTATE pass over docs/status archive</td><td>docs-health skill: ask before touching historical docs when file range unspecified</td><td>Routed to TODO_LIST instead</td></tr>
+</table>
+
+<h2>Risks &amp; mitigations</h2>
+<div class="card card-problem">
+  <ul>
+    <li><strong>E2E red</strong> ⇒ no merge; v2.4.0 ships without morph; branch + verdict doc stay for a fix round. No cascade beyond docs.</li>
+    <li><strong>Auto-commit daemon races</strong> ⇒ explicit <code>git add &amp;&amp; git commit</code> in the tool call immediately after every edit unit; end states verified with <code>git ls-remote</code>.</li>
+    <li><strong>Release train mutation freeze</strong> ⇒ nothing touches webphone between fold-commit and script completion (script is resumable, fail-fast).</li>
+    <li><strong>Stack/pbx path-input narHash</strong> ⇒ webphone main is pushed and verified before the stack relock; stack tree clean before pbx relock.</li>
+  </ul>
+</div>
+
+<footer>webphone · pareto-planning skill · Bauhaus Dark (html-report-kit tokens) · snapshot artifact — living state lives in TODO_LIST.md / ROADMAP.md</footer>
+</div>
+</body>
+</html>
