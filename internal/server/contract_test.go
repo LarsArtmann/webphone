@@ -14,9 +14,14 @@ import (
 // a 401 rejection — may exist only in the helper (actions.go), and the
 // wording has one home, session.SignInFirst. The shell's anonymous-friendly
 // session.From enrichment (pages.go) is not a gate and stays allowed.
+// Two more 401 sites exist by design, both rejecting BEFORE any session
+// exists (different semantic from a missing-session gate): webhooks.go
+// (bad provider secret) and session_api.go (login credentials rejected by
+// the PBX directory).
 func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	const helperFile = "actions.go"
-	const hookFile = "webhooks.go" // the secret gate: provider hooks 401 on a bad secret, not on a missing session
+	const hookFile = "webhooks.go"   // the secret gate: provider hooks 401 on a bad secret, not on a missing session
+	const loginFile = "session_api.go" // the login gate: bad credentials, not a missing session
 	sawHelper := false
 	entries, err := filepath.Glob("*.go")
 	if err != nil {
@@ -34,7 +39,7 @@ func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 		if strings.Contains(code, `"sign in first"`) {
 			t.Errorf("%s hardcodes the 401 body — use session.SignInFirst (one home per wording)", name)
 		}
-		if n := strings.Count(code, "http.StatusUnauthorized"); n > 0 && name != helperFile && name != hookFile {
+		if n := strings.Count(code, "http.StatusUnauthorized"); n > 0 && name != helperFile && name != hookFile && name != loginFile {
 			t.Errorf("%s writes %d× 401 inline — session gates go through h.requireSession only", name, n)
 		}
 		if strings.Contains(code, "session.From(") && name == helperFile {

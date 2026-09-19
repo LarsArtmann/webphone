@@ -9,6 +9,14 @@ import (
 
 func TestHistorySearchFiltersEntries(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The login credential probe (voicemail summary) is answered
+		// unconditionally: this stub exists to test history search, not
+		// directory auth.
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") && strings.HasSuffix(r.URL.RequestURI(), "/summary") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
 		if !strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
 			http.NotFound(w, r)
 			return
