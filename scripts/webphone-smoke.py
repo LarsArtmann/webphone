@@ -294,7 +294,9 @@ def run_checks(
             "thread fragment is bubbles only",
             "live mark-read 204",
         ):
-            c.skip(name, "needs a self-booted server: real credentials + webhook secret")
+            c.skip(
+                name, "needs a self-booted server: real credentials + webhook secret"
+            )
     else:
         c.ok("session login accepted", s.login(), "POST /api/session != 201")
         c.ok(

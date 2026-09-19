@@ -25,7 +25,7 @@ Verified facts, not assumptions:
   Adoption posture: "middleware + assets only; the setup bundle, CQRS dispatch layer and
   usermgmt stay rejected".
 
-So the literal answer is *N/A by design* — but the **intent** of the question (is DI sound
+So the literal answer is _N/A by design_ — but the **intent** of the question (is DI sound
 and are health checks superb?) is fully answerable, and section 3–6 does exactly that.
 Short version: **the health-check pattern samber/do prescribes (interface-based
 `Healthchecker` + `Shutdowner` lifecycle) is fulfilled here by an equivalent — and for
@@ -59,14 +59,14 @@ errors (`open store: …`, `phone api client: …`).
 
 ### DO-1 → DO-6 audit (the samber/do anti-pattern rules, applied to the equivalent constructs)
 
-| Rule  | samber/do smell                          | webphone equivalent audited                                                                                                   | Finding |
-| ----- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------- |
-| DO-1  | `MustInvoke` in runtime paths            | No container ⇒ no runtime resolution anywhere. Handlers receive resolved deps via `handlers.deps`.                            | ✅ none |
-| DO-2  | `do.New()` without `Shutdown()`          | `db.Close()` deferred in `run()`; `blob.Store` is stateless (no held fds); `http.Server.Shutdown` bounded 10 s; pbx client needs no close. **Shutdown ordering is correct: HTTP drains first, then SQLite closes.** | ✅ none |
-| DO-3  | `Override*` outside tests                | No overrides exist; implementation selection happens once, at construction, by config (`GatewayWebhook` vs loopback).         | ✅ none |
-| DO-4  | Global package-level injector            | None. Only package-level state is `buildVersion` (ldflags-injected build metadata — idiomatic, not a service).                | ✅ none |
-| DO-5  | `Invoke` inside loops                    | N/A — no resolution calls exist.                                                                                              | ✅ none |
-| DO-6  | `Shutdown()` reaching into other services | Each cleanup is self-contained (`db.Close`, `httpServer.Shutdown`); no cross-service teardown.                                | ✅ none |
+| Rule | samber/do smell                           | webphone equivalent audited                                                                                                                                                                                         | Finding |
+| ---- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| DO-1 | `MustInvoke` in runtime paths             | No container ⇒ no runtime resolution anywhere. Handlers receive resolved deps via `handlers.deps`.                                                                                                                  | ✅ none |
+| DO-2 | `do.New()` without `Shutdown()`           | `db.Close()` deferred in `run()`; `blob.Store` is stateless (no held fds); `http.Server.Shutdown` bounded 10 s; pbx client needs no close. **Shutdown ordering is correct: HTTP drains first, then SQLite closes.** | ✅ none |
+| DO-3 | `Override*` outside tests                 | No overrides exist; implementation selection happens once, at construction, by config (`GatewayWebhook` vs loopback).                                                                                               | ✅ none |
+| DO-4 | Global package-level injector             | None. Only package-level state is `buildVersion` (ldflags-injected build metadata — idiomatic, not a service).                                                                                                      | ✅ none |
+| DO-5 | `Invoke` inside loops                     | N/A — no resolution calls exist.                                                                                                                                                                                    | ✅ none |
+| DO-6 | `Shutdown()` reaching into other services | Each cleanup is self-contained (`db.Close`, `httpServer.Shutdown`); no cross-service teardown.                                                                                                                      | ✅ none |
 
 Structural smells: no injector passed deep into business logic; no service holds a
 container. **A runtime DI container would add the DO-1 risk class and zero benefit for a
@@ -84,9 +84,9 @@ prescribes for greenfield design ("composition root that returns a cleanup funct
 `GET /healthz` = `cqrshtmx.ReadinessHandler` with two **named** checks
 (`internal/server/server.go`, route `open.Handle("GET /healthz", readiness)`):
 
-| Check      | Probe                                                        | Catches                                        |
-| ---------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| `sqlite`   | `deps.DB.Ping`                                               | closed/corrupt handle, lost database           |
+| Check      | Probe                                                                                | Catches                                                                                             |
+| ---------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `sqlite`   | `deps.DB.Ping`                                                                       | closed/corrupt handle, lost database                                                                |
 | `blob-dir` | `probeBlobDir`: `MkdirAll` → `CreateTemp` → `Close` → `Remove` under `deps.BlobRoot` | full disk, lost/`ro` mount, permission drift — the failure mode that would silently eat attachments |
 
 Verified at the **consumed tag** (cqrs-htmx v4.9.0, module cache — per the
@@ -114,14 +114,14 @@ see Finding F2.
 
 ### Health-check scorecard vs. the samber/do best-practice shape
 
-| Best practice (samber/do shape)              | webphone realization                                                                        | Status |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------- | ------ |
-| `Healthchecker` interface on resource holders | Named check **functions** wired at the single wiring site — simpler, no interface ceremony on `*sql.DB` (which we don't own) | ✅ equivalent, better fit |
-| `Shutdowner` lifecycle, self-contained       | `defer db.Close()` + bounded `httpServer.Shutdown`; correct drain-then-close ordering        | ✅ |
-| Fail-closed readiness naming the failing part | Library `ReadinessHandler`, verified at tag: parallel, named, 503 + error strings            | ✅ |
-| Health surfaced without auth friction        | GET-open by decision, body leaks check names only                                            | ✅ |
-| Per-check timeout / context                  | `ReadinessCheck func() error` has neither — a hung check would hang the probe (server deliberately has no `WriteTimeout` for SSE) | ⚠️ F1 |
-| Liveness distinct from readiness             | Readiness only; hung-process detection is absent end-to-end                                  | ⚠️ F2 |
+| Best practice (samber/do shape)               | webphone realization                                                                                                              | Status                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `Healthchecker` interface on resource holders | Named check **functions** wired at the single wiring site — simpler, no interface ceremony on `*sql.DB` (which we don't own)      | ✅ equivalent, better fit |
+| `Shutdowner` lifecycle, self-contained        | `defer db.Close()` + bounded `httpServer.Shutdown`; correct drain-then-close ordering                                             | ✅                        |
+| Fail-closed readiness naming the failing part | Library `ReadinessHandler`, verified at tag: parallel, named, 503 + error strings                                                 | ✅                        |
+| Health surfaced without auth friction         | GET-open by decision, body leaks check names only                                                                                 | ✅                        |
+| Per-check timeout / context                   | `ReadinessCheck func() error` has neither — a hung check would hang the probe (server deliberately has no `WriteTimeout` for SSE) | ⚠️ F1                      |
+| Liveness distinct from readiness              | Readiness only; hung-process detection is absent end-to-end                                                                       | ⚠️ F2                      |
 
 Residual risk for F1 is small — both probes are local (in-process SQLite ping; local-disk
 temp-file write under `dataDir`, which the NixOS module asserts lives under `/var/lib/`).
@@ -140,7 +140,7 @@ check set is the natural place future checks (e.g. PBX with timeout) would land.
   is consumed by the stack's `telnyx-webhooks.py` bridge and by every test.
 - **Observer seam:** `messaging.ChangeFunc` / notifier callbacks — services notify
   changes without importing the SSE/server layer; direction preserved by construction
-  *and* by test (below).
+  _and_ by test (below).
 - **Identity seam:** `pbx.Client` is the single point that proves extension credentials
   against the PBX directory (the 2026-09-19 forged-session fix); sessions carry
   `PBXCredentials()` derived from that proof.
@@ -178,7 +178,7 @@ CSRF JSON shape), so upstream drift fails the build instead of runtime.
   (`remoteHostKey` — port-qualified keys would silently disable limiting behind the
   proxy): login 30/min burst 5, hooks 60/min burst 60, `/events` and `/api/csrf` share
   the hook budget.
-- **Fail-closed boundaries:** webhook secret gate (503 without secret, limiter *wraps*
+- **Fail-closed boundaries:** webhook secret gate (503 without secret, limiter _wraps_
   the gate), session credential verification (401 rejected / 502 unreachable), CSRF
   proxy-trust config logged at boot, webhook 5xx redaction via `SafeDetail`.
 - **Chaos-proofing the SSE plane:** hub reaper deletes only idle hubs, never hubs with
@@ -197,17 +197,17 @@ CSRF JSON shape), so upstream drift fails the build instead of runtime.
 
 ## 7. Scores (1–5 rubric)
 
-| Dimension              | Score | Rationale |
-| ---------------------- | ----- | --------- |
-| Coupling               | 4.5   | One explicit Deps wiring site; seams at carrier + events; no global state; concrete store types are a deliberate coupling, not an accident |
-| Cohesion               | 5     | One concept per package (session, gateway, blob, pbx, messaging, fax); package docs state the responsibility |
-| Modularity             | 4.5   | Clean layering with executable import-direction gates; `server` is large but is the composition of the HTTP surface, not a god module |
-| Composability          | 4     | Real seams where variability exists; test composition via real impls + Deps mutators; no container overhead |
-| Scalability            | 4     | Single-node SQLite by design (correct for the product); SSE fan-out per-extension hubs; horizontal scale would require the storage seam to materialize — YAGNI today |
-| Service orientation    | 4.5   | Services usable without HTTP (arch-tested); observer seam; identity seam; config-picked implementations |
-| Dependency direction   | 5     | domain → nothing internal; services ↛ server/web — enforced by tests that ran green in this review |
-| Self-health            | 4     | Honest named parallel readiness with tests; **gap:** no liveness/watchdog story (F2), no per-check timeout (F1) |
-| DI posture             | 4.5   | Static composition root is the *superior* tool at this size; container adoption would be over-engineering (and the rejected `setup` bundle proved the failure mode) |
+| Dimension            | Score | Rationale                                                                                                                                                            |
+| -------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coupling             | 4.5   | One explicit Deps wiring site; seams at carrier + events; no global state; concrete store types are a deliberate coupling, not an accident                           |
+| Cohesion             | 5     | One concept per package (session, gateway, blob, pbx, messaging, fax); package docs state the responsibility                                                         |
+| Modularity           | 4.5   | Clean layering with executable import-direction gates; `server` is large but is the composition of the HTTP surface, not a god module                                |
+| Composability        | 4     | Real seams where variability exists; test composition via real impls + Deps mutators; no container overhead                                                          |
+| Scalability          | 4     | Single-node SQLite by design (correct for the product); SSE fan-out per-extension hubs; horizontal scale would require the storage seam to materialize — YAGNI today |
+| Service orientation  | 4.5   | Services usable without HTTP (arch-tested); observer seam; identity seam; config-picked implementations                                                              |
+| Dependency direction | 5     | domain → nothing internal; services ↛ server/web — enforced by tests that ran green in this review                                                                   |
+| Self-health          | 4     | Honest named parallel readiness with tests; **gap:** no liveness/watchdog story (F2), no per-check timeout (F1)                                                      |
+| DI posture           | 4.5   | Static composition root is the _superior_ tool at this size; container adoption would be over-engineering (and the rejected `setup` bundle proved the failure mode)  |
 
 **Overall: 4.3 / 5 — "proper" yes; "superb" once F1/F2 land.**
 
@@ -215,12 +215,12 @@ CSRF JSON shape), so upstream drift fails the build instead of runtime.
 
 ## 8. Findings register
 
-| ID  | Severity | Finding                                                                                                                                                          | Recommendation |
-| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| F1  | Low-Med  | `cqrshtmx.ReadinessCheck` is `func() error` — no timeout, no context. A hung check would hang `GET /healthz` indefinitely (no `WriteTimeout` by SSE design). Today both checks are local, so no realistic hang source — but the check set is where future (networked) checks would land. | Wrap each check in a bounded-timeout helper at the wiring site (goroutine + `time.After` returning a named timeout error), or upstream a `ReadinessHandlerTimeout` to cqrs-htmx. ~20 lines + one test. |
-| F2  | Medium   | **No liveness story for a hung process.** `/healthz` is readiness-only; systemd restarts on *crash* (`Restart = "on-failure"`) but nothing detects a wedged event loop or stuck disk. A hung webphone serves the nginx vhost forever. | Decide and document: minimum = document `/healthz` as readiness-only in README/module docs; better = systemd watchdog (`WatchdogSec` + sd_notify heartbeat from a goroutine) or stack-side monitoring that acts on `/healthz` failures. Needs an owner call (behavior change at deploy level). |
-| F3  | Low      | `sharedContacts(cfg)` in `cmd/webphone/main.go` is a pointless indirection (returns `cfg.Contacts` unchanged).                                                    | Inline `Shared: cfg.Contacts`. Trivial cleanup, zero risk. |
-| F4  | Info     | `Deps` mixes high-level services with readiness-only primitives (`DB`, `BlobRoot`) — guarded by a comment ("Nothing else may use them") but nothing enforces it. | Acceptable as-is; if it ever grows, split a `Readiness` sub-struct. No action now. |
+| ID | Severity | Finding                                                                                                                                                                                                                                                                                  | Recommendation                                                                                                                                                                                                                                                                                 |
+| -- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1 | Low-Med  | `cqrshtmx.ReadinessCheck` is `func() error` — no timeout, no context. A hung check would hang `GET /healthz` indefinitely (no `WriteTimeout` by SSE design). Today both checks are local, so no realistic hang source — but the check set is where future (networked) checks would land. | Wrap each check in a bounded-timeout helper at the wiring site (goroutine + `time.After` returning a named timeout error), or upstream a `ReadinessHandlerTimeout` to cqrs-htmx. ~20 lines + one test.                                                                                         |
+| F2 | Medium   | **No liveness story for a hung process.** `/healthz` is readiness-only; systemd restarts on _crash_ (`Restart = "on-failure"`) but nothing detects a wedged event loop or stuck disk. A hung webphone serves the nginx vhost forever.                                                    | Decide and document: minimum = document `/healthz` as readiness-only in README/module docs; better = systemd watchdog (`WatchdogSec` + sd_notify heartbeat from a goroutine) or stack-side monitoring that acts on `/healthz` failures. Needs an owner call (behavior change at deploy level). |
+| F3 | Low      | `sharedContacts(cfg)` in `cmd/webphone/main.go` is a pointless indirection (returns `cfg.Contacts` unchanged).                                                                                                                                                                           | Inline `Shared: cfg.Contacts`. Trivial cleanup, zero risk.                                                                                                                                                                                                                                     |
+| F4 | Info     | `Deps` mixes high-level services with readiness-only primitives (`DB`, `BlobRoot`) — guarded by a comment ("Nothing else may use them") but nothing enforces it.                                                                                                                         | Acceptable as-is; if it ever grows, split a `Readiness` sub-struct. No action now.                                                                                                                                                                                                             |
 
 No high-severity findings. No DO-1..DO-6 equivalents, no service-locator smell, no split
 brains, no global state, no cleanup-order hazards.
@@ -230,8 +230,8 @@ brains, no global state, no cleanup-order hazards.
 ## 9. Action roadmap
 
 - **P1 · F2 decision:** owner call on liveness/watchdog (document-only vs `WatchdogSec`
-  + sd_notify vs stack-side gating). If document-only: README + NixOS module comment,
-  effort S.
+  - sd_notify vs stack-side gating). If document-only: README + NixOS module comment,
+    effort S.
 - **P2 · F1:** bounded-timeout wrapper for readiness checks at the wiring site, with a
   test that a hanging check yields `503` naming `"<check>: timed out"`. Effort S.
   Also consider proposing the timeout upstream to cqrs-htmx (both webphone and the stack
@@ -255,11 +255,11 @@ plus the inline cleanup folded into this review's follow-ups).
    ./internal/server ./internal/arch` → **ok, ok** (healthz 200 + both 503 paths, all
    three arch invariants).
 5. Manual reads: `cmd/webphone/main.go`, `internal/server/server.go` (wiring + readiness
-   + probes), `internal/arch/arch_test.go`, `internal/gateway/gateway.go`,
-   `internal/messaging/service.go`, `internal/fax/service.go` (constructor),
-   `internal/blob/store.go`, `internal/session/service.go`, `internal/pbx/client.go`,
-   `package/nixos-module.nix` (Restart/MemoryMax), healthz/hub-reaper tests.
+   - probes), `internal/arch/arch_test.go`, `internal/gateway/gateway.go`,
+     `internal/messaging/service.go`, `internal/fax/service.go` (constructor),
+     `internal/blob/store.go`, `internal/session/service.go`, `internal/pbx/client.go`,
+     `package/nixos-module.nix` (Restart/MemoryMax), healthz/hub-reaper tests.
 
-*N/A-by-design note kept explicit: any future adoption of samber/do (e.g. if the
+_N/A-by-design note kept explicit: any future adoption of samber/do (e.g. if the
 rejected `setup` bundle's tradeoffs are ever revisited) must re-run this review's
-DO-1..DO-6 audit against the container surface.*
+DO-1..DO-6 audit against the container surface._

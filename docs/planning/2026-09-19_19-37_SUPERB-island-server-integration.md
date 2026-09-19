@@ -10,7 +10,7 @@
 
 The seam architecture is correct and stays (calls must survive server deploys
 and tab switches; media terminates in the browser). What is missing is seam
-*traffic*: every server-rendered screen should be able to reach the phone, the
+_traffic_: every server-rendered screen should be able to reach the phone, the
 shell should reflect live call state, and the one real data split brain
 (personal contacts: island `localStorage` vs server SQLite) gets consolidated
 on the server. The SIP stack stays **sip.js 0.21.2, vendored** — the full SDK
@@ -21,14 +21,14 @@ research below confirms there is no better option, with **JsSIP 3.13.8
 
 What already exists (the "not integrated at all" feeling is overstated):
 
-| Surface | Mechanism | Stable names |
-| --- | --- | --- |
-| Identity | island POSTs `/api/session`; server verifies against PBX directory | `requireSession`, session TTL store |
-| Config | server renders `/config.js` → `window.PBX_CONFIG` | `sipDomain`, `websocketPath`, `iceServers`, `phoneApi`, `contacts` |
-| Click-to-call (contacts) | `data-dial` buttons → shell.js pushes into island dial form | `#dest`, `#dial-form`, shell.js delegated listener |
-| CSRF live adoption | `GET /api/csrf` after login/logout rotation | `adoptFreshCsrfToken` |
-| PBX proxy | `/phone-api/*` session-gated, rides `PhoneAPI.HTTPClient()` | `phone-api/history`, `phone-api/voicemail` |
-| Events | SSE on `.wp-root`; island ↔ shell via CustomEvents | `wp:lang-changed`, `wp:calls-changed`, `sse-connect` |
+| Surface                  | Mechanism                                                          | Stable names                                                       |
+| ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Identity                 | island POSTs `/api/session`; server verifies against PBX directory | `requireSession`, session TTL store                                |
+| Config                   | server renders `/config.js` → `window.PBX_CONFIG`                  | `sipDomain`, `websocketPath`, `iceServers`, `phoneApi`, `contacts` |
+| Click-to-call (contacts) | `data-dial` buttons → shell.js pushes into island dial form        | `#dest`, `#dial-form`, shell.js delegated listener                 |
+| CSRF live adoption       | `GET /api/csrf` after login/logout rotation                        | `adoptFreshCsrfToken`                                              |
+| PBX proxy                | `/phone-api/*` session-gated, rides `PhoneAPI.HTTPClient()`        | `phone-api/history`, `phone-api/voicemail`                         |
+| Events                   | SSE on `.wp-root`; island ↔ shell via CustomEvents                 | `wp:lang-changed`, `wp:calls-changed`, `sse-connect`               |
 
 What is genuinely missing (verified in code today):
 
@@ -51,15 +51,15 @@ What is genuinely missing (verified in code today):
 
 ## Part 2 — SDK / library research (all claims primary-source verified 2026-09-19)
 
-| Candidate | Role | Verified state | Verdict |
-| --- | --- | --- | --- |
-| **sip.js** `onsip/SIP.js` | browser SIP stack (current) | npm `latest` = **0.21.2** (published 2022-10-27); repo not archived, pushed 2026-06-15, 2097 stars, MIT. No release in ~4 years. | **KEEP.** Proven island, raw `UserAgent` API, watchdog covers the 0.x reconnect hang. |
-| **JsSIP** `versatica/JsSIP` | browser SIP stack (alternative) | npm `latest` = **3.13.8** (published ~2026-05-06, npm metadata; registry tarball `jssip-3.13.8.tgz`); repo pushed 2026-05-06, 2603 stars; npm license MIT (GitHub license field is `NOASSERTION` — MIT-with-exception historically). | **Documented fallback.** This is NEW information vs the 2026-09-18 sip.js-0.22 evaluation (which only checked sip.js): JsSIP is the actively maintained stack. Swap trigger: sip.js breaks in modern Chromium (WebRTC API removals), a security advisory lands, or a needed capability (e.g. video) forces it. Swapping = rewrite of the island call path + full stack E2E re-run; never done speculatively. |
-| sipML5 `DoubangoTelecom/sipml5` | browser SIP stack (legacy) | GitHub API: `archived: true`, last push 2020-12-18. | Dead. Excluded. |
-| Other browser SIP stacks | — | Web sweep (AI search, labeled lead): everything else viable is an *app* built on sip.js/JsSIP (SaraPhone/niliphone, CloudSIP, Browser-Phone v0.3). No third maintained stack exists. | Confirms the two-stack ecosystem. |
-| **emiago/sipgo** | Go SIP signaling | GitHub API: BSD-2-Clause, 1068 stars, pushed 2026-09-17 — very active. | Rejected for this product: a Go-side UA still terminates media in the browser (Go has no microphone), so it only adds a stateful signaling proxy in the hottest path. |
-| **pion/webrtc** | Go WebRTC (media) | GitHub API: MIT, 16786 stars, pushed 2026-09-18. | Rejected: would turn webphone into a B2BUA/SBC — codec work, bandwidth, latency, and a rebuild of the proven island. |
-| FreeSWITCH ESL (Go) | server-side call orchestration | GitHub search "freeswitch esl": top clients are Java (`esl-client/esl-client`, pushed 2022), Python (`switchio`), Node (`node-esl`). No prominent maintained Go client in top results. | Not adopted. If server-initiated calls (originate/click-to-call from other systems) ever become a product need, prefer the stack/PBX layer (it already records + bridges webhooks), not ESL inside webphone. ROADMAP idea. |
+| Candidate                       | Role                            | Verified state                                                                                                                                                                                                                       | Verdict                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **sip.js** `onsip/SIP.js`       | browser SIP stack (current)     | npm `latest` = **0.21.2** (published 2022-10-27); repo not archived, pushed 2026-06-15, 2097 stars, MIT. No release in ~4 years.                                                                                                     | **KEEP.** Proven island, raw `UserAgent` API, watchdog covers the 0.x reconnect hang.                                                                                                                                                                                                                                                                                                                        |
+| **JsSIP** `versatica/JsSIP`     | browser SIP stack (alternative) | npm `latest` = **3.13.8** (published ~2026-05-06, npm metadata; registry tarball `jssip-3.13.8.tgz`); repo pushed 2026-05-06, 2603 stars; npm license MIT (GitHub license field is `NOASSERTION` — MIT-with-exception historically). | **Documented fallback.** This is NEW information vs the 2026-09-18 sip.js-0.22 evaluation (which only checked sip.js): JsSIP is the actively maintained stack. Swap trigger: sip.js breaks in modern Chromium (WebRTC API removals), a security advisory lands, or a needed capability (e.g. video) forces it. Swapping = rewrite of the island call path + full stack E2E re-run; never done speculatively. |
+| sipML5 `DoubangoTelecom/sipml5` | browser SIP stack (legacy)      | GitHub API: `archived: true`, last push 2020-12-18.                                                                                                                                                                                  | Dead. Excluded.                                                                                                                                                                                                                                                                                                                                                                                              |
+| Other browser SIP stacks        | —                               | Web sweep (AI search, labeled lead): everything else viable is an _app_ built on sip.js/JsSIP (SaraPhone/niliphone, CloudSIP, Browser-Phone v0.3). No third maintained stack exists.                                                 | Confirms the two-stack ecosystem.                                                                                                                                                                                                                                                                                                                                                                            |
+| **emiago/sipgo**                | Go SIP signaling                | GitHub API: BSD-2-Clause, 1068 stars, pushed 2026-09-17 — very active.                                                                                                                                                               | Rejected for this product: a Go-side UA still terminates media in the browser (Go has no microphone), so it only adds a stateful signaling proxy in the hottest path.                                                                                                                                                                                                                                        |
+| **pion/webrtc**                 | Go WebRTC (media)               | GitHub API: MIT, 16786 stars, pushed 2026-09-18.                                                                                                                                                                                     | Rejected: would turn webphone into a B2BUA/SBC — codec work, bandwidth, latency, and a rebuild of the proven island.                                                                                                                                                                                                                                                                                         |
+| FreeSWITCH ESL (Go)             | server-side call orchestration  | GitHub search "freeswitch esl": top clients are Java (`esl-client/esl-client`, pushed 2022), Python (`switchio`), Node (`node-esl`). No prominent maintained Go client in top results.                                               | Not adopted. If server-initiated calls (originate/click-to-call from other systems) ever become a product need, prefer the stack/PBX layer (it already records + bridges webhooks), not ESL inside webphone. ROADMAP idea.                                                                                                                                                                                   |
 
 **Decision record:** stay on vendored sip.js 0.21.2; JsSIP 3.13.8 is the named
 fallback with explicit triggers; all Go-side telephony remains rejected —
@@ -80,7 +80,7 @@ strongest killer of the "two apps" feeling.
 
 1. **Live-call presence in the shell** — shell.js listens to the existing
    `wp:calls-changed` CustomEvent and badges the header ("on call", count).
-   Zero server changes; the shell finally *reacts* to the phone.
+   Zero server changes; the shell finally _reacts_ to the phone.
 2. **Personal contacts single-home** — new session-gated JSON endpoints
    (`/api/contacts`) over the existing per-extension store; island panel reads
    and writes them; one-time idempotent migration imports
@@ -105,48 +105,48 @@ E2E-greppable strings, PBX_CONFIG `contacts` stays as offline fallback.
 
 Sorted by importance → impact → effort → customer value.
 
-| ID | Task | Why (customer value) | Impact | Effort | Est |
-| --- | --- | --- | --- | --- | --- |
-| P1 | Dial affordances: `data-dial` on History `CDRRow`, Voicemail `VoicemailRow` (guard `CIDNumber != ""`), Messages thread header | every screen can call; redial/callback in one click | Very High | S | 60m |
-| P2 | Logged-out dial feedback: shell.js detects hidden `#phone-view` on `data-dial`, shows toast in `#toasts`, focuses `#ext` | kills the silent dead-end | High | S | 45m |
-| P3 | Live-call presence: shell.js listens `wp:calls-changed`, header badge with call count + CSS | shell reacts to the phone live | High | S | 50m |
-| P4 | Contacts single-home: `GET/POST/DELETE /api/contacts` (JSON, session-gated, extension-scoped), island `panels.js` switches to it, one-time localStorage migration (dedupe name+number, clear only after confirmed import) | one home per fact; contacts survive browser loss | Very High | M | 100m |
-| P5 | Tests: render assertions (data-dial per tab), `/api/contacts` auth/scoping/shape, i18n key sync auto-covers new keys | the contract tripwire grows with the product | High | S | 60m |
-| P6 | Local gates: `buildflow` (no cache), `go test -count=1 ./...`, `nix flake check`, smoke script | nothing ships unverified | Gate | S | 40m |
-| P7 | Stack browser E2E re-run (`nix build -L .#telephony-browser` in the stack checkout) | THE island regression gate for any markup/behavior change | High | S | 45m |
-| P8 | Docs sync: CHANGELOG (Unreleased), FEATURES integration section, TODO_LIST harvest, AGENTS decision record (JsSIP fallback + contacts single-home), ROADMAP server-telephony rejection note | future sessions start informed | Required | S | 40m |
+| ID | Task                                                                                                                                                                                                                      | Why (customer value)                                      | Impact    | Effort | Est  |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --------- | ------ | ---- |
+| P1 | Dial affordances: `data-dial` on History `CDRRow`, Voicemail `VoicemailRow` (guard `CIDNumber != ""`), Messages thread header                                                                                             | every screen can call; redial/callback in one click       | Very High | S      | 60m  |
+| P2 | Logged-out dial feedback: shell.js detects hidden `#phone-view` on `data-dial`, shows toast in `#toasts`, focuses `#ext`                                                                                                  | kills the silent dead-end                                 | High      | S      | 45m  |
+| P3 | Live-call presence: shell.js listens `wp:calls-changed`, header badge with call count + CSS                                                                                                                               | shell reacts to the phone live                            | High      | S      | 50m  |
+| P4 | Contacts single-home: `GET/POST/DELETE /api/contacts` (JSON, session-gated, extension-scoped), island `panels.js` switches to it, one-time localStorage migration (dedupe name+number, clear only after confirmed import) | one home per fact; contacts survive browser loss          | Very High | M      | 100m |
+| P5 | Tests: render assertions (data-dial per tab), `/api/contacts` auth/scoping/shape, i18n key sync auto-covers new keys                                                                                                      | the contract tripwire grows with the product              | High      | S      | 60m  |
+| P6 | Local gates: `buildflow` (no cache), `go test -count=1 ./...`, `nix flake check`, smoke script                                                                                                                            | nothing ships unverified                                  | Gate      | S      | 40m  |
+| P7 | Stack browser E2E re-run (`nix build -L .#telephony-browser` in the stack checkout)                                                                                                                                       | THE island regression gate for any markup/behavior change | High      | S      | 45m  |
+| P8 | Docs sync: CHANGELOG (Unreleased), FEATURES integration section, TODO_LIST harvest, AGENTS decision record (JsSIP fallback + contacts single-home), ROADMAP server-telephony rejection note                               | future sessions start informed                            | Required  | S      | 40m  |
 
 ## Part 5 — Fine breakdown (each ≤ 12 min)
 
 Sorted by importance → impact → effort → customer value.
 
-| # | Task (≤12 min) | Maps to |
-| --- | --- | --- |
-| f1 | `history.templ` `CDRRow`: add `data-dial` button (reuse `contacts.call` key) | P1 |
-| f2 | `voicemail.templ` `VoicemailRow`: `data-dial` guarded on `msg.CIDNumber` | P1 |
-| f3 | `messages.templ` thread view header: dial button with `Remote.String()` | P1 |
-| f4 | i18n keys in BOTH maps (en/de) if new; `templ generate ./internal/web/views/`; views tests | P1 |
-| f5 | shell.js: `data-dial` guard — `#phone-view` hidden → toast into `#toasts` + focus `#ext` | P2 |
-| f6 | shell.js: `wp:calls-changed` listener → header badge (count of live calls) | P3 |
-| f7 | `app.css`: badge/dot + toast styles (shell territory; no island style.css edits) | P2/P3 |
-| f8 | island/shell format + no-undef gate: prettier scope check, `nix flake check` island-lint | P2/P3 |
-| f9 | server: `GET /api/contacts` JSON `{personal, shared}` via `requireSession`, extension-scoped store reads | P4 |
-| f10 | server: `POST /api/contacts`, `DELETE /api/contacts?id=` (JSON mirror of store ops; CSRF via island `authedFetch`) | P4 |
-| f11 | island `panels.js`: `loadContacts()` from `/api/contacts` post-login; config `sharedContacts` stays as failure fallback | P4 |
-| f12 | island `panels.js`: ☆ save + delete buttons call the API (optimistic update + re-fetch on next render) | P4 |
-| f13 | island: one-time migration `pbx-contacts` → server (dedupe name+number; `removeItem` only after confirmed import; one `#log` line) | P4 |
-| f14 | Go tests: `/api/contacts` 401 anonymous, cross-extension isolation, JSON shape | P5 |
-| f15 | Go tests: history/voicemail/thread partials render `data-dial` (count per row) | P5 |
-| f16 | `GOEXPERIMENT=jsonv2 go test -count=1 ./...` green | P6 |
-| f17 | `nix develop` → `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` green | P6 |
-| f18 | `nix flake check` + `python3 scripts/webphone-smoke.py` green | P6 |
-| f19 | stack checkout: `nix build -L .#telephony-browser` green; record wall-time vs 151s baseline | P7 |
-| f20 | CHANGELOG `Unreleased`: dial everywhere, presence, contacts single-home | P8 |
-| f21 | FEATURES.md: integration rows upgraded (PARTIALLY → FULLY where true) | P8 |
-| f22 | TODO_LIST: harvest + mark done items | P8 |
-| f23 | AGENTS.md: JsSIP 3.13.8 fallback decision + contacts single-home invariant | P8 |
-| f24 | ROADMAP.md: server-side telephony (originate/ESL) rejected-for-now note with research pointers | P8 |
-| f25 | explicit commits per task group; push; verify `git ls-remote` | all |
+| #   | Task (≤12 min)                                                                                                                     | Maps to |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| f1  | `history.templ` `CDRRow`: add `data-dial` button (reuse `contacts.call` key)                                                       | P1      |
+| f2  | `voicemail.templ` `VoicemailRow`: `data-dial` guarded on `msg.CIDNumber`                                                           | P1      |
+| f3  | `messages.templ` thread view header: dial button with `Remote.String()`                                                            | P1      |
+| f4  | i18n keys in BOTH maps (en/de) if new; `templ generate ./internal/web/views/`; views tests                                         | P1      |
+| f5  | shell.js: `data-dial` guard — `#phone-view` hidden → toast into `#toasts` + focus `#ext`                                           | P2      |
+| f6  | shell.js: `wp:calls-changed` listener → header badge (count of live calls)                                                         | P3      |
+| f7  | `app.css`: badge/dot + toast styles (shell territory; no island style.css edits)                                                   | P2/P3   |
+| f8  | island/shell format + no-undef gate: prettier scope check, `nix flake check` island-lint                                           | P2/P3   |
+| f9  | server: `GET /api/contacts` JSON `{personal, shared}` via `requireSession`, extension-scoped store reads                           | P4      |
+| f10 | server: `POST /api/contacts`, `DELETE /api/contacts?id=` (JSON mirror of store ops; CSRF via island `authedFetch`)                 | P4      |
+| f11 | island `panels.js`: `loadContacts()` from `/api/contacts` post-login; config `sharedContacts` stays as failure fallback            | P4      |
+| f12 | island `panels.js`: ☆ save + delete buttons call the API (optimistic update + re-fetch on next render)                             | P4      |
+| f13 | island: one-time migration `pbx-contacts` → server (dedupe name+number; `removeItem` only after confirmed import; one `#log` line) | P4      |
+| f14 | Go tests: `/api/contacts` 401 anonymous, cross-extension isolation, JSON shape                                                     | P5      |
+| f15 | Go tests: history/voicemail/thread partials render `data-dial` (count per row)                                                     | P5      |
+| f16 | `GOEXPERIMENT=jsonv2 go test -count=1 ./...` green                                                                                 | P6      |
+| f17 | `nix develop` → `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` green                                                                      | P6      |
+| f18 | `nix flake check` + `python3 scripts/webphone-smoke.py` green                                                                      | P6      |
+| f19 | stack checkout: `nix build -L .#telephony-browser` green; record wall-time vs 151s baseline                                        | P7      |
+| f20 | CHANGELOG `Unreleased`: dial everywhere, presence, contacts single-home                                                            | P8      |
+| f21 | FEATURES.md: integration rows upgraded (PARTIALLY → FULLY where true)                                                              | P8      |
+| f22 | TODO_LIST: harvest + mark done items                                                                                               | P8      |
+| f23 | AGENTS.md: JsSIP 3.13.8 fallback decision + contacts single-home invariant                                                         | P8      |
+| f24 | ROADMAP.md: server-side telephony (originate/ESL) rejected-for-now note with research pointers                                     | P8      |
+| f25 | explicit commits per task group; push; verify `git ls-remote`                                                                      | all     |
 
 ## Part 6 — Execution graph
 

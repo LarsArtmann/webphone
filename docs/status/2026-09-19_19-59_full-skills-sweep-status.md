@@ -7,6 +7,7 @@ Not a whole-repo inventory: sections are scoped to what this session touched,
 noticed, or left behind.
 
 **Companion artifacts produced this session** (all committed):
+
 - `docs/reviews/2026-09-19_19-18_code-quality-scan.html`
 - `docs/reviews/2026-09-19_19-18_full-code-review.html`
 - `docs/reviews/2026-09-19_19-18_data-model-review.html`
@@ -106,14 +107,14 @@ ginkgo/gomega dependency addition.
 1. **The repo shipped main with a red `nix flake check`** (HSTS-era commits) and
    nobody ran the gate before claiming green — the exact failure mode this repo's
    own AGENTS.md warns about. Not my session's breakage, but my session's scan
-   found it only mid-way; a baseline `nix flake check` *before* my first change
+   found it only mid-way; a baseline `nix flake check` _before_ my first change
    would have isolated it in minute one. Lesson: baseline gates first, always.
 2. **My flake fix took four nix-evaluation cycles** because I patched one layer
    of the nesting bug per run (double-wrap → option path → shallow merge →
    extra-relative path) instead of reading `moduleSet` end-to-end first. Wasted
    ~3 cycles on a bug I'd fully mapped by cycle two.
 3. **Two of my BDD specs failed on wrong expectations** — and one of them
-   (`"not an extension!"` sanitizing to a *valid letters-only* extension) was the
+   (`"not an extension!"` sanitizing to a _valid letters-only_ extension) was the
    exact divergence I had catalogued minutes earlier. I catalogued the split
    brain and then walked straight into it in my own test.
 4. **Stale `.git/index.lock` removal raced the concurrent session's `git mv`**
@@ -127,7 +128,7 @@ ginkgo/gomega dependency addition.
 
 ## e) WHAT WE SHOULD IMPROVE (process, not code)
 
-1. **Baseline first:** run `go test`, `nix flake check`, buildflow *before* the
+1. **Baseline first:** run `go test`, `nix flake check`, buildflow _before_ the
    first change of any session that will touch gates.
 2. **Gates after every flake check addition:** adding a `checks.*` entry without
    running `nix flake check` to completion is how the HSTS breakage shipped.
@@ -147,6 +148,7 @@ ginkgo/gomega dependency addition.
 ## f) UP TO 50 THINGS TO DO NEXT (prioritized; P0 first)
 
 **Release & deployment (owner-adjacent)**
+
 1. Answer Q3 below, then let the parallel session's v2.1.1 flow tag/push; verify `git ls-remote` afterwards.
 2. Redeploy production (pbx-artmann) onto the release that carries the CSRF fix — still the URGENT TODO_LIST row.
 3. `gh release create` for the release (CHANGELOG excerpt + link refs).
