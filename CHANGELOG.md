@@ -66,9 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend CSRF wiring is JSON-valid by construction: the shell's
   `hx-headers` attribute is built with `templ.JSONString` instead of
   string concatenation (a regression test parses the rendered attribute).
-  CSRF token rotation on login remains deliberately absent — the island
-  logs in without a page reload, so rotation would 403 every later
-  action; it is gated behind an island-side token refresh.
+- CSRF token rotation on login and logout (`InvalidateCSRFCookie`, the
+  nosurf fixation defense): the island adopts the fresh masked token
+  without a reload via the new `GET /api/csrf` endpoint (`session.js`
+  updates the meta tag and the body `hx-headers`; every token consumer
+  reads live). Adoption failure falls back to a reload, which the
+  post-login server session survives.
 - The `Server-Timing` debug header is produced by the httputil
   servertiming middleware instead of a hand-rolled response writer
   (~40 lines deleted), keeping the same `WEBPHONE_DEBUG_TIMING` opt-in

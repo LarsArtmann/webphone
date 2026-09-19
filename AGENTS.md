@@ -197,8 +197,7 @@ every build; it is the local tripwire, not a replacement for the E2E.
   (executed 2026-09-19: request-ID enrichment, `templ.JSONString` CSRF
   wiring, calibrated Permissions-Policy, servertiming middleware, webhook
   5xx redaction via `webhookFail`/`SafeDetail` — all landed with tests).
-  Still open: the idiomorph experiment (gated on the stack's browser E2E)
-  and CSRF token rotation (see next bullet).
+  Still open: the idiomorph experiment (gated on the stack's browser E2E).
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's
@@ -217,11 +216,18 @@ every build; it is the local tripwire, not a replacement for the E2E.
   In templ, build the value with `templ.JSONString` (pages.go renderShell)
   and let templ escape it once. `TestShellRendersValidJSONCSRFHxHeaders`
   pins this.
-  (2) `httputil.InvalidateCSRFCookie` on LOGIN breaks the island: login
-  happens WITHOUT a page reload, so the loaded page keeps the old token
-  while the cookie is gone — every post-login HTMX action 403s. Rotation
-  requires the island to adopt a fresh token post-login; that is an
-  island+stack-E2E change, not a server one-liner.
+  (2) CSRF token rotation on login (SHIPPED 2026-09-19): login/logout
+  call `httputil.InvalidateCSRFCookie` (fixation defense) and the island
+  adopts the fresh token WITHOUT a reload via `GET /api/csrf`
+  (`session.js adoptFreshCsrfToken`, `csrf_api.go refreshCSRF`): the GET
+  rides the CSRF middleware, where nosurf regenerates the deleted cookie
+  and exposes the new masked token; every token consumer reads live
+  (meta tag in session.js/auth.js, htmx re-reads body `hx-headers` per
+  request), so updating those two spots re-arms all POSTs. Adoption
+  failure falls back to a reload (server session cookie survives).
+  Tests that POST after logging in must go through the client `login`
+  helper (it adopts) — raw login POSTs leave a dead token; the rate-limit
+  and request-log loops re-arm between attempts like a scripted flooder.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only
