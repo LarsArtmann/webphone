@@ -18,8 +18,9 @@ is the intended consumer: it fronts the binary with TLS and the WSS
 the stack may import it or keep reverse-proxying — the module is
 additive. Stack-side switchover DONE 2026-09-18/19: the stack imports
 `nixosModules.default`, its nginx vhost proxies the service, its browser
-E2E is green, and its `webphone` input rides webphone `main` — bumped to
-the v2.1.0 tag commit `d815004` (stack commit `2289e89`).
+E2E is green, and its `webphone` input rides webphone `main` — as of
+2026-09-20 pinned to `f4ef9a5` (stack commit `6ad8e51`; pbx-artmann
+relocked on top and its prod toplevel pre-builds green).
 
 The cqrs-htmx `setup` bundle was rejected deliberately: it wires
 event-sourced usermgmt users, but this product's identity is the PBX
@@ -250,7 +251,10 @@ every build; it is the local tripwire, not a replacement for the E2E.
   (executed 2026-09-19: request-ID enrichment, `templ.JSONString` CSRF
   wiring, calibrated Permissions-Policy, servertiming middleware, webhook
   5xx redaction via `webhookFail`/`SafeDetail` — all landed with tests).
-  Still open: the idiomorph experiment (gated on the stack's browser E2E).
+  Still open: the idiomorph experiment — branch `experiment/idiomorph`
+  shipped 2026-09-20 with all local gates green and a verdict doc
+  (`docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`);
+  merge is gated on one stack browser-E2E run against the branch.
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's
