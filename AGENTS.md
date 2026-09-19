@@ -344,12 +344,15 @@ every build; it is the local tripwire, not a replacement for the E2E.
   toolchains, binutils, gcc: dozens of findings that never deploy), and
   per my 2026-09-19 verification even passing `$(nix-store -qR <out>)`
   paths does NOT scope it; `nix run .#vulnix` wraps the correct call.
-  vulnix also range-matches distro-patched versions: it prints glibc
-  CVE-2026-5450 against glibc-2.42-84, but the fix shipped in nixpkgs
-  2.42-67 (PR #517918 — the locked tree's glibc `2.42-master.patch`
-  carries it); NVD ranges cannot see patch suffixes. Runtime closure
-  (8 derivations) carries zero real advisories (re-verified 2026-09-19
-  with `--closure`).
+  vulnix also range-matches distro-patched versions: against
+  glibc-2.42-84 it prints 8 CVEs (2026-5450, 2025-15281, 2026-4046,
+  2026-4437, 2026-5928, 2026-5435, 2026-6238, 2026-4438), and ALL EIGHT
+  appear verbatim in the locked tree's glibc `2.42-master.patch`
+  (verified 2026-09-19 by grepping the patch — NVD ranges cannot see
+  patch suffixes; future rescans: grep the flagged CVE ids in
+  `nix eval nixpkgs#glibc.patches` before believing a finding). Runtime
+  closure (8 derivations) carries zero real advisories (re-verified
+  2026-09-19 with `--closure`).
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony
