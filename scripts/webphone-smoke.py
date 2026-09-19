@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import http.client
+import http.cookiejar
 import json
 import os
 import re
@@ -261,6 +262,9 @@ def main() -> int:
     env.update({
         "WEBPHONE_ADDR": f"127.0.0.1:{port}",
         "WEBPHONE_DATA_DIR": f"{workdir}/data",
+        # Without a configured secret the hooks fail CLOSED (503) — the
+        # suite exercises the open path, so it configures one.
+        "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
     })
     server = subprocess.Popen([binary], env=env,
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
