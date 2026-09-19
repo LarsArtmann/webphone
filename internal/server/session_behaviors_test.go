@@ -210,10 +210,6 @@ func (wp *webphone) postRaw(path string, body []byte) (*http.Response, []byte) {
 	return resp, readAllBody(resp)
 }
 
-func (wp *webphone) post(path string, body []byte) (*http.Response, []byte) {
-	return wp.postRaw(path, body)
-}
-
 func (wp *webphone) get(path string) (*http.Response, []byte) {
 	return wp.do(http.MethodGet, path, nil)
 }
