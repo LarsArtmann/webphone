@@ -82,6 +82,14 @@ nested lists (`ice_servers`, `contacts`) belong in the JSON file.
 | `gateway.mode`           | `loopback`          | `loopback` or `webhook`                                                                                    |
 | `gateway.webhook_url`    | _empty_             | Provider base URL in webhook mode (required there)                                                         |
 | `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)** |
+| `csrf.trusted_proxies`   | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (loopback nginx) — IP or CIDR entries              |
+| `csrf.trusted_origins`   | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)              |
+
+`csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
+then arrives with `Origin: https://host` while the listener sees plain
+HTTP, and unconfigured the CSRF middleware rejects it as a forged
+same-origin attestation (403 on every POST, logins included). The
+NixOS module sets both keys when `nginx.enable` is on.
 
 Example file:
 
@@ -99,6 +107,10 @@ Example file:
     "mode": "webhook",
     "webhook_url": "http://127.0.0.1:8090",
     "webhook_secret": "long-random-string"
+  },
+  "csrf": {
+    "trusted_proxies": ["127.0.0.1"],
+    "trusted_origins": ["https://pbx.example.com"]
   }
 }
 ```

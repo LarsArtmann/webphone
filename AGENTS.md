@@ -228,6 +228,17 @@ every build; it is the local tripwire, not a replacement for the E2E.
   Tests that POST after logging in must go through the client `login`
   helper (it adopts) — raw login POSTs leave a dead token; the rate-limit
   and request-log loops re-arm between attempts like a scripted flooder.
+- CSRF behind a TLS-terminating proxy needs `csrf.trusted_*` (found
+  2026-09-19 via the stack E2E 403s): the browser sends
+  `Origin: https://host` + `Sec-Fetch-Site: same-origin`, the listener
+  sees plain HTTP, and httputil's attestation check reads the mismatch
+  (scheme-only: `r.Host` matches) as a FORGED attestation → 403 on
+  every POST. v2.0.0 shipped this; tab logins silently never worked in
+  fronted deployments (island calls kept working, so the E2E stayed
+  green). Fix: `csrf.trusted_proxies` (loopback nginx) +
+  `csrf.trusted_origins` (the https vhost) — `requestScheme` honors
+  X-Forwarded-Proto only from trusted proxies. Module and stack set
+  both; `TestCSRFTrustsTheFrontingProxy` pins the request shape.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only

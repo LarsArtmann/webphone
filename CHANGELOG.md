@@ -82,6 +82,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- CSRF rejected every browser login behind the TLS-terminating proxy:
+  a truthful browser POST arrives with `Origin: https://host` +
+  `Sec-Fetch-Site: same-origin`, which the plain-HTTP listener read as
+  a forged same-origin attestation and answered 403 — tabs never
+  unlocked in any fronted deployment (v2.0.0 shipped this). The new
+  `csrf.trusted_proxies` / `csrf.trusted_origins` config teaches the
+  middleware the fronting shape; the NixOS module sets both when its
+  vhost is enabled, and a subtest pins the exact fronted request.
 - `hookFaxStatus` error mapping: empty `provider_ref` is now 400 (was
   404), unknown ref 404, other store failures 500 — parity with the
   message status hook.

@@ -196,6 +196,18 @@
                       throw "webphone-module check: systemd.services.webphone missing"
                   );
                 }
+                {
+                  name = "csrf-fronted-origin";
+                  path = pkgs.writeText "csrf-fronted-origin" (
+                    if
+                      cfg.settings.csrf.trusted_origins == [ "https://phone.example.org" ]
+                      && cfg.settings.csrf.trusted_proxies == [ "127.0.0.1" ]
+                    then
+                      "csrf fronting defaults present"
+                    else
+                      throw "webphone-module check: csrf fronting defaults missing from the rendered settings"
+                  );
+                }
               ];
 
             statix =
