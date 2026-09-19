@@ -32,7 +32,7 @@ templ FaxPanel(props FaxPanelProps) {
 			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
 			<button type="submit" class="wp-primary">{ T(props.Lang, "fax.send") }</button>
 		</form>
-		<div class="wp-fax-list" sse-swap="fax">
+		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
 			@FaxList(props.Jobs, props.Lang)
 		</div>
 	</section>

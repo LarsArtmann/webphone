@@ -25,7 +25,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 		hx-get="/partials/voicemail"
 		hx-trigger="sse:voicemail"
 		hx-target="#tab-content"
-		hx-swap="innerHTML show:window:top"
+		hx-swap="morph:innerHTML show:window:top"
 	>
 		<header class="wp-panel-head">
 			<h2>{ T(props.Lang, "tab.voicemail") }</h2>

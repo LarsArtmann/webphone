@@ -27,7 +27,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
 		@NewMessageForm("", props.Lang)
-		<div class="wp-thread-list" sse-swap="threads">
+		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
 			@ThreadsList(props.Threads, props.Lang)
 		</div>
 	</section>
@@ -130,6 +130,7 @@ templ ThreadView(props ThreadViewProps) {
 			class="wp-transcript"
 			id="thread-transcript"
 			sse-swap="thread"
+			hx-swap="morph:innerHTML"
 			data-page={ fmtInt(props.Page) }
 			data-thread={ props.Thread.ID.String() }
 		>
