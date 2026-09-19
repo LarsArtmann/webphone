@@ -126,6 +126,7 @@ func New(deps Deps) http.Handler {
 		loginLimiter:  newKeyedRateLimiter(loginLimit, loginBurst),
 		hookLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		eventsLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
+		csrfLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		unread:        newUnreadCache(5 * time.Second),
 		hooksIdem:     newIdemStore(hookIdempotencyTTL),
 	}
@@ -171,7 +172,11 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
-	protected.HandleFunc("GET /api/csrf", h.refreshCSRF)
+	// GET /api/csrf shares the flood budget: the endpoint hands out masked
+	// tokens anonymously, so a client must not churn it unbounded. One
+	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
+	// real traffic (one fetch per login rotation).
+	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
 
 	open := http.NewServeMux()
@@ -345,6 +350,12 @@ const openapiSpec = `{
                   }
                 }
               }
+            }
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; retry after the Retry-After seconds",
+            "headers": {
+              "Retry-After": {"schema": {"type": "integer"}, "description": "Seconds until the bucket refills"}
             }
           }
         }

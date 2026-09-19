@@ -15,10 +15,12 @@ import (
 type handlers struct {
 	deps Deps
 	// Per-client flood protection for the unauthenticated-by-session
-	// surfaces: login attempts, inbound webhooks, and SSE connects.
+	// surfaces: login attempts, inbound webhooks, SSE connects, and the
+	// anonymous CSRF token endpoint.
 	loginLimiter  *httputil.KeyedRateLimiter
 	hookLimiter   *httputil.KeyedRateLimiter
 	eventsLimiter *httputil.KeyedRateLimiter
+	csrfLimiter   *httputil.KeyedRateLimiter
 	// Dedupe memory for replayed provider status callbacks (provider_ref).
 	hooksIdem *idemStore
 	// Memoized nav-badge totals, invalidated on every unread mutation.
