@@ -218,3 +218,40 @@ Work performed:
 *Report is a point-in-time snapshot. No repos were modified this session; the
 auto-commit daemon will pick up this file. HARVEST into TODO_LIST deferred pending
 owner instruction.*
+
+---
+
+## Appendix (2026-09-19, SUPERB execution): outcome of this report's §f list
+
+Executed same day under `docs/planning/2026-09-19_11-51_SUPERB-tri-repo-functional-completion.md`
+(owner: "MAKE IT PERFECT AND FUNCTIONAL! ALL OF IT!"). Outcome against §f:
+
+- **f.1–f.8, f.30 (webphone flake/module)**: DONE — memoryMax, `/events`
+  vhost location, websocket `recommendedProxySettings`, dataDir
+  assertion, devShell env attrs, `lib.*` style, `nixosModules.webphone`
+  alias, fileset src, module-check vhost+unit assertions. All gates
+  green (buildflow, go tests, flake check, aarch64, smoke 21/21);
+  pushed as `4c6bba1`.
+- **f.9, f.10**: DONE (AGENTS integration section; TODO_LIST harvest).
+- **f.11**: open by design — v2.1.0 release ceremony is the owner's.
+- **f.12–f.14 (stack)**: DONE — contactsJson double-escape and the
+  phoneApi flag fixed; the VM test now pins the full config.js key set
+  + a quoted-name contact; browser E2E green against the new pin
+  (`28d4688`).
+- **f.19–f.20, f.22–f.25 (pbx-artmann)**: DONE and DEPLOYED to
+  pbx.artmann.tech (toplevel `h8y8i78…`), then re-deployed with the
+  `$CREDENTIALS_DIR` fix (`xv3infy…`). phoneApi live
+  (`/config.js` → `"phoneApi": true`), contacts live, operator unit
+  running, bridge green.
+- **f.21, f.26 (owner/portal)**: still blocked on owner — unchanged.
+- **f.27–f.28 (policy)**: still owner decisions — now also as TODO rows.
+- **f.29 (cross-repo config.js contract)**: DONE via the stack's VM-test
+  key-set assertion (the split brain now fails a check, not a user).
+- **g.2 answered by events**: the bridge was built; inbound verified
+  end to end with a marked message (`[bridge-verify 2026-09-19]`, 202).
+  Outbound waits only on the Telnyx portal steps (messaging profile +
+  real API key at `/var/lib/telephony-secrets/telnyx_api_key`, then
+  `systemctl restart telnyx-webhooks`).
+- **g.3 answered by events**: shipped the one-liner (`phoneApi.enable`)
+  per the owner's blanket go; the operator-API hardening items remain
+  in the stack's TODO.
