@@ -103,6 +103,26 @@ func (h *handlers) partialSettings(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, views.TabSettings)
 }
 
+// partialNav re-renders the nav links: labels in the negotiated language,
+// badges fresh from the caches. The island's language switch re-fetches
+// this partial (shell.js, on wp:lang-changed) so the nav switches language
+// together with the tabs — no full reload, the island never unloads.
+// Anonymous visitors get labels without badges (the nav is visible pre-login).
+func (h *handlers) partialNav(w http.ResponseWriter, r *http.Request) {
+	props := views.ShellProps{
+		ActiveTab: tabFromPath("/" + r.URL.Query().Get("active")),
+		Lang:      h.lang(r),
+	}
+	if sess, ok := session.From(r.Context()); ok {
+		props.Unread = h.countUnread(r, sess)
+		props.NewVoicemail = h.countVoicemail(r, sess)
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := views.NavLinks(props).Render(r.Context(), w); err != nil {
+		http.Error(w, "render error", http.StatusInternalServerError)
+	}
+}
+
 func tabFromPath(path string) views.Tab {
 	switch path {
 	case "/fax", "/fax/":

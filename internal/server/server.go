@@ -135,6 +135,8 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/history", h.partialHistory)
 	protected.HandleFunc("GET /partials/contacts", h.partialContacts)
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
+	protected.HandleFunc("GET /partials/nav", h.partialNav)
+	protected.HandleFunc("POST /messages/{id}/read", h.markThreadRead)
 	protected.HandleFunc("POST /messages/send", h.sendMessage)
 	protected.HandleFunc("POST /fax/send", h.sendFax)
 	protected.HandleFunc("GET /fax/{id}/document", h.faxDocument)

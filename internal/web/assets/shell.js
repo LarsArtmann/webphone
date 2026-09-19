@@ -44,6 +44,46 @@
   document.addEventListener("htmx:afterSwap", scrollTranscript);
   scrollTranscript();
 
+  // 3b. Live-transcript polish for SSE "thread" pushes (the sse
+  //     extension swaps #thread-transcript's bubbles directly):
+  //     - while older pages are open (data-page != "0") the push is
+  //       cancelled, so paging state survives the live event;
+  //     - on the newest page the push marks the thread read — a live
+  //       swap never re-GETs the partial, so only the client can clear
+  //       the unread badge for the conversation on screen.
+  var csrfToken = function () {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute("content") : "";
+  };
+  var refreshNav = function () {
+    if (!window.htmx) return;
+    var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
+    var source = active
+      ? "/partials/nav?active=" + active.dataset.tab
+      : "/partials/nav";
+    window.htmx.ajax("GET", source, { target: "#wp-nav", swap: "innerHTML" });
+  };
+  document.addEventListener("htmx:sseBeforeMessage", function (event) {
+    var transcript = event.target;
+    if (!transcript || transcript.id !== "thread-transcript") return;
+    if (transcript.dataset.page !== "0") event.preventDefault();
+  });
+  document.addEventListener("htmx:sseMessage", function (event) {
+    var transcript = event.target;
+    if (!transcript || transcript.id !== "thread-transcript") return;
+    if (transcript.dataset.page !== "0" || !transcript.dataset.thread) return;
+    fetch("/messages/" + transcript.dataset.thread + "/read", {
+      method: "POST",
+      headers: { "X-CSRF-Token": csrfToken() },
+      credentials: "same-origin",
+    })
+      .then(refreshNav)
+      .catch(function () {});
+  });
+  // The island's language switch re-labels itself and re-fetches the open
+  // tab; the nav is shell territory, so it asks via this event.
+  document.addEventListener("wp:lang-changed", refreshNav);
+
   // 4. Manual theme override: cycles auto (prefers-color-scheme) →
   //    light → dark, persisted in localStorage. data-theme on <html>
   //    beats both stylesheets' media queries via attribute specificity.

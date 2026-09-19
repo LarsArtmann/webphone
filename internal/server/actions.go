@@ -283,6 +283,24 @@ func (h *handlers) renderPanelError(
 	_, _ = fmt.Fprintf(w, `<p class="wp-error" role="alert">%s</p>`, templ.EscapeString(message)) //nolint:erraudit // best-effort write; the response is already committed
 }
 
+// markThreadRead records the read marker for one thread — the live-swap
+// path: an SSE `thread` push replaces an open conversation's transcript
+// without a GET, so the client marks read explicitly (the badge must not
+// stay lit for the conversation on screen). Idempotent by store contract.
+func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	id := domain.MustThreadID(r.PathValue("id"))
+	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, id); err != nil {
+		http.Error(w, "could not mark read", http.StatusInternalServerError)
+		return
+	}
+	h.unread.drop(sess.Extension)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // requireSession gates a handler behind the signed-in extension; on
 // failure it has already written the error response. Handlers keep their
 // own gate (rather than relying on route middleware) so they are safe by

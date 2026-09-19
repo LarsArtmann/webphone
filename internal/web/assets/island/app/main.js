@@ -46,7 +46,9 @@ if (els.lang) {
     applyI18n();
     renderCalls();
     // Re-fetch the open tab partial so the server-rendered tabs switch
-    // language too (htmx.ajax keeps the island alive — no reload).
+    // language too (htmx.ajax keeps the island alive — no reload). The
+    // nav lives outside the swap target; shell.js re-labels it on this
+    // event.
     const active = document.querySelector(".wp-nav .wp-nav-link.wp-active");
     if (active && window.htmx) {
       window.htmx.ajax("GET", active.getAttribute("hx-get"), {
@@ -54,6 +56,7 @@ if (els.lang) {
         swap: "innerHTML",
       });
     }
+    document.dispatchEvent(new CustomEvent("wp:lang-changed"));
     log(`language switched to ${els.lang.value}`);
   });
 }

@@ -125,7 +125,13 @@ templ ThreadView(props ThreadViewProps) {
 				<button type="submit">{ T(props.Lang, "thread.loadOlder") }</button>
 			</form>
 		}
-		<div class="wp-transcript" id="thread-transcript" sse-swap="thread">
+		<div
+			class="wp-transcript"
+			id="thread-transcript"
+			sse-swap="thread"
+			data-page={ fmtInt(props.Page) }
+			data-thread={ props.Thread.ID.String() }
+		>
 			@Transcript(props.Messages, props.Lang)
 		</div>
 		<form
@@ -153,7 +159,10 @@ templ ThreadView(props ThreadViewProps) {
 // Transcript renders the message bubbles, oldest first. It is the payload
 // of the SSE "thread" event: the swap replaces #thread-transcript's
 // innerHTML with exactly these bubbles, so an open conversation updates
-// live while the reply composer below stays untouched.
+// live while the reply composer below stays untouched. The host div also
+// carries data-page/data-thread (shell.js contract): pushes are cancelled
+// while older pages are open, and a newest-page push marks the thread
+// read client-side.
 templ Transcript(messages []domain.Message, lang Lang) {
 	for _, msg := range messages {
 		@Bubble(msg, lang)

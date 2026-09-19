@@ -191,7 +191,7 @@ func ShellBody(props ShellProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</aside><div class=\"wp-main-col\"><nav class=\"wp-nav\" aria-label=\"Sections\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</aside><div class=\"wp-main-col\"><nav class=\"wp-nav\" id=\"wp-nav\" aria-label=\"Sections\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
