@@ -131,4 +131,11 @@ is committed work — refine into TODO_LIST only on demand.
   demand), CSP nonce mode, `/favicon.ico` route for non-browser
   clients, reusable "HTMX tabs + island + session" pattern doc
   (third LarsArtmann app with this shape), i18n dynamic-template
-  key-sync, island/app.css shared-token extraction.
+  key-sync, island/app.css shared-token extraction, webhook-idempotency
+  durability decision (memory TTL means a post-restart provider replay
+  re-applies — acceptable?), OpenAPI boundary decision (extend beyond
+  `/api/session` or record as deliberate), limiter-key widening runbook
+  line (NAT offices), signed tags (`git tag -s`), nixpkgs lock + vulnix
+  rescan cadence, daemon-config exclusion of `docs/status/` from
+  heuristic commits (upstream infra decision), wrapper-flake bisect
+  trick write-up (module-from-HEAD + package-from-rev).

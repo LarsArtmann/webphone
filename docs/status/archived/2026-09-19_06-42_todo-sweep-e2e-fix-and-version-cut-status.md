@@ -108,53 +108,32 @@ parallel session; browser E2E never run against v2.
 
 ## b) PARTIALLY DONE
 
-1. **v2.1.0 version cut — made, then overwritten.** I renamed
-   `[Unreleased]` → `[2.1.0] - 2026-09-18` and updated the compare
-   links; minutes later concurrent session edits (or the daemon)
-   overwrote the file back to a single `[Unreleased]` against
-   `v2.0.0...HEAD`. Current state: CHANGELOG carries all 2.1.0 content
-   under Unreleased; **no `2.1.0` heading, no tags exist** (only
-   v0.1.0). The cut must be redone atomically (edit → commit → tag →
-   push in one motion) when no other session is mid-edit.
-2. **Stack lock bump** — the telephony stack's `webphone` input was
-   last seen pinned to `276c596` (pre-fix). The fix is now pushed, so
-   the bump is `nix flake update webphone` + commit; not yet done, and
-   the pinned rev should be re-checked (the parallel session kept
-   committing).
-3. **TODO_LIST row drift** — my "push the fix + bump the lock" row is
+1. ~~**v2.1.0 version cut — made, then overwritten.**~~ resolved differently: the Unreleased content was folded into `## [2.0.0] - 2026-09-19` and tagged (no separate 2.1.0) — `186c878`, tag `d9d6d03` (07:43 report §a.5/§a.9)
+2. ~~**Stack lock bump** — the telephony stack's `webphone` input was
+   last seen pinned to `276c596` (pre-fix).~~ done (bumped to the v2.0.0 tag commit `44db9225`; stack commit `fc6bc81`, 07:43 §a.10)
+3. ~~**TODO_LIST row drift** — my "push the fix + bump the lock" row is
    half-obsolete (push done by the daemon); needs re-scoping to just
-   the lock bump. TODO_LIST also grew to 8 rows: 5 new cqrs-htmx
-   Pareto-plan rows arrived from the parallel session.
-4. **Stack E2E diagnostics instrumentation** — added a clearly-marked
-   TEMP-DIAG answer-phase dump (island `#log`, call-card states,
-   `window.__wpDiag`) to `tests/browser-e2e.py`; committed there as
-   b96d4c2. Genuinely useful for future stalls, but it is an
-   unannounced change to Lars's repo — keep or revert is an owner
-   call. After the island breadcrumbs were removed, the `diag:` field
-   is inert.
-5. **glibc CVE-2026-5450** — everything doable locally is done
+   the lock bump.~~ done at `ee72831` (TODO_LIST refreshed 8 → 1 rows)
+4. **Stack E2E diagnostics instrumentation** (TEMP-DIAG block, commit `b96d4c2` there). — owner call → ROADMAP open questions
+5. ~~**glibc CVE-2026-5450** — everything doable locally is done
    (channel bump, rebuild, honest scoping); the actual fix is
-   upstream-blocked. Stays as a tracking row.
-6. **This status report itself** — Markdown, not the skill's canonical
+   upstream-blocked. Stays as a tracking row.~~ resolved beyond that: the "still unfixed" premise was an NVD range-match false positive — nixpkgs patched it 2026-05; AGENTS.md corrected at `7ba25cc` (07:43 §a.3)
+6. ~~**This status report itself** — Markdown, not the skill's canonical
    HTML dashboard, on your explicit instruction (override flagged per
-   the status-report skill).
+   the status-report skill).~~ noted; no action
 
 ## c) NOT STARTED
 
-1. Tags `v2.0.0` and `v2.1.0` (only `v0.1.0` exists) — and therefore
-   the lychee 404s on the CHANGELOG release/compare links persist.
-2. Post-cut verification: lychee green, compare links resolving.
-3. **Browser E2E re-run after tonight's post-green island changes** —
-   the parallel session's `718cbe7` ("prettier reflow of island
-   429/throttle additions") and adjacent commits touched island assets
-   AFTER my green run; the same wiring-bug class (silent
-   ReferenceError) is exactly what only the E2E catches.
-4. The 5 new cqrs-htmx Pareto-plan TODO rows (parallel session's
+1. ~~Tags `v2.0.0` and `v2.1.0` (only `v0.1.0` exists) — and therefore
+   the lychee 404s on the CHANGELOG release/compare links persist.~~ done at `d9d6d03` (v2.0.0; 2.1.0 never existed — folded into 2.0.0); lychee 6/6 OK post-push (07:43 §a.9)
+2. ~~Post-cut verification: lychee green, compare links resolving.~~ done (07:43 §a.9)
+3. **Browser E2E re-run after tonight's post-green island changes** — still open → TODO_LIST (top row)
+4. ~~The 5 new cqrs-htmx Pareto-plan TODO rows (parallel session's
    scope: SSE Broadcaster collapse, webhook hardening, hub limiter/
-   reaper follow-ups).
-5. sip.js bump — deliberately parked by the evaluation (re-trigger
-   conditions documented).
-6. `-coverpkg` union coverage — parked upstream (BuildFlow feature).
+   reaper follow-ups).~~ done (executed by the 00:05 session, P0–P7)
+5. ~~sip.js bump — deliberately parked by the evaluation (re-trigger
+   conditions documented).~~ closed: evaluation says stay on 0.21.2 (no 0.22 exists)
+6. ~~`-coverpkg` union coverage — parked upstream (BuildFlow feature).~~ **Won't implement —** upstream-blocked → ROADMAP
 
 ## d) TOTALLY FUCKED UP
 
@@ -216,108 +195,103 @@ honestly:
 
 ## f) NEXT — up to 50 things (brainstorm; most are ROADMAP fuel, top ~10 are TODO_LIST material)
 
-1. Redo the v2.1.0 cut atomically (CHANGELOG rename + links, commit,
-   tag v2.1.0 at HEAD, push).
-2. Create tag `v2.0.0` at `b390c7a` (the v2-rebuild + sweep state) so
-   both lychee 404s resolve.
-3. `nix flake update webphone` in the telephony stack onto the
-   post-fix rev; commit; verify the stack's pins.
-4. Re-run `.#telephony-browser` against the bumped pin (airtight chain:
-   published tag → stack lock → E2E green).
-5. Re-run `.#telephony-browser` again after tonight's island
-   429/throttle commits (`718cbe7`) — island JS changed post-green.
+1. ~~Redo the v2.1.0 cut atomically (CHANGELOG rename + links, commit,
+   tag v2.1.0 at HEAD, push).~~ done differently — folded into v2.0.0 (`186c878`, tag `d9d6d03`)
+2. ~~Create tag `v2.0.0` at `b390c7a` (the v2-rebuild + sweep state) so
+   both lychee 404s resolve.~~ done at `d9d6d03` (tagged the release commit instead)
+3. ~~`nix flake update webphone` in the telephony stack onto the
+   post-fix rev; commit; verify the stack's pins.~~ done (`fc6bc81`, pinned to `44db9225`)
+4. ~~Re-run `.#telephony-browser` against the bumped pin (airtight chain:
+   published tag → stack lock → E2E green).~~ → TODO_LIST (E2E re-run row — folds in the post-bump re-run)
+5. ~~Re-run `.#telephony-browser` again after tonight's island
+   429/throttle commits (`718cbe7`) — island JS changed post-green.~~ → TODO_LIST (E2E re-run row)
 6. CI: wire the browser E2E (or at least an island import-lint smoke)
-   into webphone's pre-push/publish path.
-7. Island identifier lint: no-undef cross-check over
-   `internal/web/assets/island/app/*.js` (would have caught the bug).
-8. Go test that greps the island for referenced-but-unimported
-   bindings? (cheap stopgap for 7 if no JS toolchain lands).
-9. Confirm the telephony stack lock rev post-bump and note it in the
-   stack's TODO/report (avoid another silent drift).
-10. Prune TODO_LIST: my push row → "lock bump" only; keep tag row
-    until tags exist.
-11. lychee re-run after tags — expect 0 404s.
-12. HARVEST this report into TODO_LIST/ROADMAP per docs-health (the
-    (f) list below the top ~10 is ROADMAP fuel).
-13. Annotate yesterday's status reports that this run superseded
-    (`2026-09-18_18-50_todo-list-sweep-status.md` §f items now done).
-14. Stack: decide keep-vs-revert of the TEMP-DIAG E2E block (owner).
-15. Stack: `tests/webphone.nix` (server VM test) after the lock bump.
-16. BuildFlow upstream feature request: per-step test args
-    (`-coverpkg`), fleet-wide value (ROADMAP documents it).
-17. vulnix gate scoped to the runtime closure (script or BuildFlow
-    step) so advisories that matter are visible.
-18. Track glibc CVE-2026-5450 until nixpkgs fixes it (existing row).
-19. glibc fix lands → bump + rebuild + re-scan + close the row.
-20. sip.js: only on reconnect-hang fix/security/need (evaluation
-    report's re-trigger conditions).
-21. Session persistence decision (FEATURES WORTH_CONSIDERING) — owner
-    product call, security tradeoff documented.
-22. Retention/cleanup job for blobs (FEATURES WORTH_CONSIDERING).
-23. Richer /healthz (store, gateway mode) for LBs.
-24. Video calls (sip.js supports; UI surface needed).
-25. PWA/offline shell under strict CSP.
-26. cqrs-htmx Pareto plan: SSE Broadcaster collapse row (parallel
-    session's, appears in progress — `aacae89` did part).
-27. cqrs-htmx plan: webhook hardening row.
-28. cqrs-htmx plan: hub limiter/reaper follow-ups (429/throttle landed
-    tonight; E2E re-run missing — see 5).
-29. Docs: record the browser-E2E invocation recipe
+   into webphone's pre-push/publish path. → ROADMAP (browser-level gates; no .github/workflows exist)
+7. ~~Island identifier lint: no-undef cross-check over
+   `internal/web/assets/island/app/*.js` (would have caught the bug).~~ → TODO_LIST (island lint row)
+8. ~~Go test that greps the island for referenced-but-unimported
+   bindings? (cheap stopgap for 7 if no JS toolchain lands).~~ folded into the TODO_LIST island-lint row
+9. ~~Confirm the telephony stack lock rev post-bump and note it in the
+   stack's TODO/report (avoid another silent drift).~~ done (07:43 §a.10: `44db9225` verified)
+10. ~~Prune TODO_LIST: my push row → "lock bump" only; keep tag row
+    until tags exist.~~ done at `ee72831`
+11. ~~lychee re-run after tags — expect 0 404s.~~ done (6/6 OK, 07:43 §a.9)
+12. ~~HARVEST this report into TODO_LIST/ROADMAP per docs-health (the
+    (f) list below the top ~10 is ROADMAP fuel).~~ done (2026-09-19 sweep)
+13. ~~Annotate yesterday's status reports that this run superseded
+    (`2026-09-18_18-50_todo-list-sweep-status.md` §f items now done).~~ done (2026-09-19 sweep — this file's siblings annotated inline)
+14. Stack: decide keep-vs-revert of the TEMP-DIAG E2E block (owner). → ROADMAP open questions
+15. ~~Stack: `tests/webphone.nix` (server VM test) after the lock bump.~~ folded into the TODO_LIST stack-verification row
+16. ~~BuildFlow upstream feature request: per-step test args
+    (`-coverpkg`), fleet-wide value (ROADMAP documents it).~~ routed (ROADMAP union-coverage idea)
+17. ~~vulnix gate scoped to the runtime closure (script or BuildFlow
+    step) so advisories that matter are visible.~~ invocation documented in AGENTS.md (2026-09-19); script wrapper → TODO_LIST
+18. ~~Track glibc CVE-2026-5450 until nixpkgs fixes it (existing row).~~ done — closed as NVD false positive (`7ba25cc`; nixpkgs patched 2026-05)
+19. ~~glibc fix lands → bump + rebuild + re-scan + close the row.~~ done at `7ba25cc` (moot — already patched in the locked tree)
+20. ~~sip.js: only on reconnect-hang fix/security/need (evaluation
+    report's re-trigger conditions).~~ closed (evaluation report — stay on 0.21.2)
+21. ~~Session persistence decision (FEATURES WORTH_CONSIDERING) — owner
+    product call, security tradeoff documented.~~ decided: in-memory by design (FEATURES WORTH_CONSIDERING)
+22. Retention/cleanup job for blobs (FEATURES WORTH_CONSIDERING). — FEATURES
+23. Richer /healthz (store, gateway mode) for LBs. — store side done (`cqrshtmx.ReadinessHandler`); gateway-mode exposure → ROADMAP
+24. Video calls (sip.js supports; UI surface needed). — FEATURES WORTH_CONSIDERING
+25. PWA/offline shell under strict CSP. — FEATURES WORTH_CONSIDERING
+26. ~~cqrs-htmx Pareto plan: SSE Broadcaster collapse row (parallel
+    session's, appears in progress — `aacae89` did part).~~ done at `aacae89`
+27. ~~cqrs-htmx plan: webhook hardening row.~~ done at `232795e`, `f35dbf3` (idempotency + fuzz)
+28. ~~cqrs-htmx plan: hub limiter/reaper follow-ups (429/throttle landed
+    tonight; E2E re-run missing — see 5).~~ done (limiter `d60c166`/`238af70`; E2E re-run → TODO_LIST)
+29. ~~Docs: record the browser-E2E invocation recipe
     (`nix build -L .#telephony-browser`, override-input pattern for
-    pre-publish testing) in webphone AGENTS.md.
-30. Docs: record the bisect wrapper-flake trick (module-from-HEAD +
-    package-from-rev) — it unblocked rev-level isolation.
-31. AGENTS.md: note that history is occasionally rewritten by the
+    pre-publish testing) in webphone AGENTS.md.~~ → TODO_LIST (release runbook row)
+30. ~~Docs: record the bisect wrapper-flake trick (module-from-HEAD +
+    package-from-rev) — it unblocked rev-level isolation.~~ → ROADMAP (raw ideas)
+31. ~~AGENTS.md: note that history is occasionally rewritten by the
     daemon (remote 404s on local revs; local refs may differ from
-    pushed hashes) — affects anyone pinning revs.
-32. Consider tagging discipline: annotated tags + release notes per
-    version (the CHANGELOG entries already carry the material).
-33. Metrics: island keyboard-vs-button answer usage is unobservable —
+    pushed hashes) — affects anyone pinning revs.~~ done differently (AGENTS.md 2026-09-19: daemon commits AND pushes; verify via `git ls-remote`)
+32. ~~Consider tagging discipline: annotated tags + release notes per
+    version (the CHANGELOG entries already carry the material).~~ done (v2.0.0 was an annotated tag; release notes → ROADMAP open questions)
+33. ~~Metrics: island keyboard-vs-button answer usage is unobservable —
     optional telemetry is out of scope under strict CSP; skip unless
-    product demands (noted to prevent re-proposal).
-34. Fax: surface page count in the fax tab rows (parsing exists; UI
-    may already show it — verify, then close or file).
+    product demands (noted to prevent re-proposal).~~ closed as documented skip
+34. ~~Fax: surface page count in the fax tab rows (parsing exists; UI
+    may already show it — verify, then close or file).~~ open as written (trivial verify-then-file; left for the next fax-tab touch)
 35. History: date-range filter beyond `?q=`/`?dir=` (UI capacity
-    exists server-side).
-36. Messages: unread badge TTL cache metrics (hit/miss) for tuning.
+    exists server-side). → ROADMAP (raw ideas)
+36. Messages: unread badge TTL cache metrics (hit/miss) for tuning. → ROADMAP
 37. Contacts: vCard export of shared directory (currently personal
-    only) — product decision.
-38. NixOS module: add tests option / backup hooks (owner ops call).
-39. NixOS module: document lmtp/webhook secret rotation runbook.
-40. README: deployment matrix (module vs reverse-proxy) already exists
-    — add a concrete `imports` snippet for the stack's actual wiring.
+    only) — product decision. → ROADMAP (open questions/ideas)
+38. NixOS module: add tests option / backup hooks (owner ops call). → ROADMAP
+39. NixOS module: document lmtp/webhook secret rotation runbook. → TODO_LIST (release runbook row covers the webhook secret note)
+40. ~~README: deployment matrix (module vs reverse-proxy) already exists
+    — add a concrete `imports` snippet for the stack's actual wiring.~~ done (README NixOS module section carries the `imports` + `services.webphone` snippet)
 41. Accessibility pass on the island (focus order in incoming-call
-    panel; shortcuts cheat-sheet visible in UI, not just log).
-42. i18n: island dictionary and views dictionary key-sync test
-    exists — extend to cover dynamic templates (missedCall etc.).
-43. SSE: reconnect backoff tuning after tonight's Broadcaster
-    collapse (verify heartbeat behavior under load).
-44. Rate limiting: expose 429 Retry-After to the island UI (server
-    sends 429s now; island shows generic failure).
-45. Load test: two-browser E2E under CPU-constrained VM (TCG) to know
-    the NO_ANSWER margin (60s ring timeout was never at risk with KVM;
-    TCG may differ).
-46. Backup/restore drill: SQLite + blob store round trip.
+    panel; shortcuts cheat-sheet visible in UI, not just log). → ROADMAP (UX polish)
+42. ~~i18n: island dictionary and views dictionary key-sync test
+    exists — extend to cover dynamic templates (missedCall etc.).~~ → ROADMAP (raw ideas)
+43. ~~SSE: reconnect backoff tuning after tonight's Broadcaster
+    collapse (verify heartbeat behavior under load).~~ → ROADMAP (testing long tail)
+44. ~~Rate limiting: expose 429 Retry-After to the island UI (server
+    sends 429s now; island shows generic failure).~~ done (`d60c166`: island surfaces Retry-After)
+45. Load test: two-browser E2E under CPU-constrained VM (TCG). → ROADMAP (browser-level gates)
+46. Backup/restore drill: SQLite + blob store round trip. → ROADMAP
 47. Dependency sweep: templ-components / cqrs-htmx minor bumps through
-    the buildflow update flow.
-48. Docs-health sweep of `docs/planning/2026-09-18_21-45_*` (parallel
-    session's plan) against tonight's actual outcomes.
-49. Archive/annotate superseded 2026-09-18 status reports (docs-health
-    ANNOTATE mode, inline markers).
-50. Retrospective item: agree a hand-off convention between concurrent
+    the buildflow update flow. — standing ritual (buildflow owns it)
+48. ~~Docs-health sweep of `docs/planning/2026-09-18_21-45_*` (parallel
+    session's plan) against tonight's actual outcomes.~~ done at `44db922` (plan annotated inline, 60/62 rows)
+49. ~~Archive/annotate superseded 2026-09-18 status reports (docs-health
+    ANNOTATE mode, inline markers).~~ done (2026-09-19 sweep — inline annotations + `docs/status/archived/`)
+50. ~~Retrospective item: agree a hand-off convention between concurrent
     sessions (one-line "I'm editing X" note in a shared scratch file)
-    to prevent the next CHANGELOG collision.
+    to prevent the next CHANGELOG collision.~~ → ROADMAP (process; the re-stat-before-edit rule is in global memory)
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
-1. **Tag naming**: should `v2.0.0` point at `b390c7a` (the v2 rebuild
-   - sweep state that the stack pinned) with `v2.1.0` at current HEAD
-     — or do you want a single `v2.0.0` at HEAD and no 2.1.0? (Decides
-     how I redo the CHANGELOG cut; both resolve the lychee 404s.)
-2. **The stack's E2E diagnostics block** (commit b96d4c2 in
+1. ~~**Tag naming**: should `v2.0.0` point at `b390c7a` ... or do you want a single `v2.0.0` at HEAD and no 2.1.0?~~ Resolved: single `v2.0.0` at the release commit `d9d6d03`; no 2.1.0.
+2. ~~**The stack's E2E diagnostics block** (commit b96d4c2 in
    nix-international-telephony, TEMP-DIAG marked): keep it as a
-   permanent stall-diagnostic, or revert it now that the bug is fixed?
-3. **Post-green island changes** (`718cbe7` 429/throttle prettier
+   permanent stall-diagnostic, or revert it now that the bug is fixed?~~ → ROADMAP open questions (owner call)
+3. ~~**Post-green island changes** (`718cbe7` 429/throttle prettier
    reflow + adjacent commits): did the parallel session already
    re-run `.#telephony-browser` after those, or should that E2E re-run
-   be the next action before the stack lock bump?
+   be the next action before the stack lock bump?~~ Answered 2026-09-19: NO re-run happened after those island changes (verified against the reports); the re-run is now the top TODO_LIST row. The stack lock bump itself completed (`fc6bc81`).

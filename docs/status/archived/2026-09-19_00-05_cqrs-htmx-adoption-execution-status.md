@@ -64,9 +64,9 @@ Pareto plan with Full Execution Mode ("NOW GET SHIT DONE") · **Input:**
 3. **JS-side tests** — the island has no JS test runner; island behaviors
    (toasts listener, live pill, 429 surfacing) are pinned by Go asset tripwires +
    code review only. Recorded as a standing gap.
-4. **Push to origin** — not performed; branch is ahead by ~30 commits. The TODO_LIST
+4. ~~**Push to origin** — not performed; branch is ahead by ~30 commits. The TODO_LIST
    row for pushing the accept/reject fix (`00f13fe`) plus these commits is the
-   operator's move.
+   operator's move.~~ done: the daemon pushed, and the 07:43 session verified `44db922` at origin (push range analysis §b.1 there); the daemon push behavior is now documented in AGENTS.md (2026-09-19).
 
 ## c) NOT STARTED
 
@@ -103,17 +103,17 @@ verdict, not undone work.
 
 ## f) TOP THINGS TO DO NEXT
 
-1. Push `main` (~30 commits) and bump the telephony stack's `webphone` input lock
-   (TODO_LIST row 1 — includes the earlier accept/reject fix).
-2. Tag v2.0.0 (TODO_LIST row 2) — the CHANGELOG's Unreleased section now has real
-   content; release it.
-3. On the next cqrs-htmx root tag: follow the bump checklist (ROADMAP, MD1 finding).
-4. OOB badge push: un-park only with the stack E2E loop available.
+1. ~~Push `main` (~30 commits) and bump the telephony stack's `webphone` input lock
+   (TODO_LIST row 1 — includes the earlier accept/reject fix).~~ done (daemon push + stack bump `fc6bc81`, 07:43 report §a.10)
+2. ~~Tag v2.0.0 (TODO_LIST row 2) — the CHANGELOG's Unreleased section now has real
+   content; release it.~~ done at `d9d6d03` (07:43 report §a.9)
+3. ~~On the next cqrs-htmx root tag: follow the bump checklist (ROADMAP, MD1 finding).~~ routed (ROADMAP MD1 bump trigger)
+4. ~~OOB badge push: un-park only with the stack E2E loop available.~~ **Won't implement for now —** parked with written adoption criteria (`docs/reviews/2026-09-18_oob-badge-spike-verdict.md`)
 
 ## g) OPEN QUESTIONS
 
-1. XFF sanitization upstream (flips `remoteHostKey` → `KeyExtractorFromClientIP`)
-   — still unanswered; safe default shipped, flip rule documented.
+1. ~~XFF sanitization upstream (flips `remoteHostKey` → `KeyExtractorFromClientIP`)
+   — still unanswered; safe default shipped, flip rule documented.~~ Still open — now tracked in ROADMAP "Open questions" (rate-limit keys).
 2. None of the original three remain: Q2 (healthz semantics) resolved by
    implementation, Q3 (SSE stream freeze) resolved by verdict (see the annotated
    status report of 21:38).

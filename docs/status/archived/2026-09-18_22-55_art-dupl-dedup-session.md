@@ -93,44 +93,44 @@ Ranked by impact. Category: Bug / Feature / Quality / Cleanup / Docs / Process /
 
 | #  | Task                                                                                                                                                                                          | Impact   | Effort | Category |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |
-| 1  | Root-cause the `TestRequestLogNeverCarriesSecrets` hang: reproduce under artificial load (`stress-ng` + full suite), capture goroutine dump to a durable file, classify as bug vs environment | Critical | M      | Bug      |
-| 2  | Add `TestNoInlineSessionGates`: fail if `"sign in first"` or `session.From` + 401 pattern appears outside `requireSession`/`requireSessionMultipart` in the server package                    | High     | S      | Quality  |
-| 3  | Add a golden multipart-form test asserting exact field set + order for fax (`kind,fax`, owner, to, document) and message (…, body, attachments) provider payloads                             | High     | S      | Quality  |
-| 4  | Decide gating policy (see g/Q3) and implement the answer: either drop the two `Sessions.Require` route wirings or keep dual-layer deliberately                                                | High     | S      | Cleanup  |
-| 5  | Update AGENTS.md "Sessions" bullet: `requireSession` is the one gate home; dual-layer rationale                                                                                               | High     | S      | Docs     |
-| 6  | HARVEST this report's (f) into `TODO_LIST.md`/`ROADMAP.md` (docs-health HARVEST, with TODO_LIST cross-check)                                                                                  | High     | S      | Process  |
-| 7  | Re-run full `buildflow` (dev or full mode) on a quiet machine for one clean end-to-end green incl. all nix checks                                                                             | High     | M      | Infra    |
-| 8  | Run `buildflow doctor` to explain the 9 unavailable tools seen in the dev-mode run                                                                                                            | High     | S      | Infra    |
-| 9  | Add a CHANGELOG entry for the dedup refactor (behavior-preserving except provider error-text prefixes)                                                                                        | Medium   | S      | Docs     |
-| 10 | Extract `pbx.CredentialsFor(sess session.Session) pbx.Credentials`; replace 4 inline constructions (deleteVoicemail, countVoicemail, voicemailPanel, historyPanel)                            | Medium   | S      | Cleanup  |
-| 11 | Extract a render-or-error helper for the duplicated `threadPanel` render blocks (actions.go:63-75, panels.go:61-69)                                                                           | Medium   | S      | Cleanup  |
-| 12 | Collapse `"sign in first"` into one exported constant in the session package, used by both `requireSession` and `Store.Require`                                                               | Medium   | S      | Cleanup  |
-| 13 | Pin provider error-text contract in a test if runbooks grep the old texts (answer needed: g/Q2)                                                                                               | Medium   | S      | Quality  |
-| 14 | Record the accepted art-dupl groups (7) as a one-line-each register in AGENTS.md so future sessions don't re-triage                                                                           | Medium   | S      | Docs     |
-| 15 | Write the `-count=1` + raw-summary rule into the global memory pipeline-masking lesson (live repeat observed this session)                                                                    | Medium   | S      | Process  |
-| 16 | Run `go test -race ./internal/server/...` over the SSE/hub paths adjacent to the refactor                                                                                                     | Medium   | M      | Quality  |
-| 17 | Smoke-test the built binary with the AGENTS.md loopback recipe (`WEBPHONE_ADDR=… /tmp/webphone-bin`) — cheap runtime insurance beyond handler tests                                           | Medium   | S      | Quality  |
-| 18 | Inspect the daemon-commit that swept up the session-start `server.go` change (`git log -S` / `git show fa3bafd bbd74a1`) and confirm its content was intentional                              | Medium   | S      | Process  |
-| 19 | Extract a `streamFile(w, filename, mime, r io.Reader)` helper for the shared tail of `faxDocument`/`attachment`                                                                               | Low      | S      | Cleanup  |
-| 20 | After the parallel session lands its `calls.js`/`requestlog_test.go` work, run prettier/treefmt over the island to confirm formatting (BuildFlow excludes the island by design)               | Low      | S      | Quality  |
-| 21 | Decide the fate of `messageForm` (single caller `SendMessage`): keep as named domain function or inline; 10-minute decision, write down either way                                            | Low      | S      | Cleanup  |
-| 22 | Annotate the old inline-gate snippet in `docs/research/2026-09-18_cqrs-htmx-deep-dive.html` as historical (pattern superseded by `requireSession`)                                            | Low      | S      | Docs     |
-| 23 | Add a debug log to `countUnread`/`countVoicemail` error paths (currently return 0 silently; ops-visible only as a zero badge)                                                                 | Low      | S      | Quality  |
-| 24 | Consider a small typed direction for `historyPanel`'s `"in"/"out"` magic strings (data-model-review spirit)                                                                                   | Low      | S      | Cleanup  |
-| 25 | Revisit the `wp-empty` empty-state extraction only if a ~10th simple usage appears (currently accepted at 9 heterogeneous sites)                                                              | Low      | S      | Cleanup  |
-| 26 | Add art-dupl (`-t 3` default threshold) to the periodic quality ritual so clone debt resurfaces on a schedule, not by accident                                                                | Low      | S      | Process  |
-| 27 | Stagger heavy parallel sessions vs `nix build`/BuildFlow runs, or raise `--default-step-timeout`, to avoid repeat OOM kills of nix-build                                                      | Low      | S      | Infra    |
-| 28 | Grep the codebase for other contract-style doc comments that drifted like the webhook `secret` field did (comment-vs-code contract sweep)                                                     | Low      | M      | Quality  |
-| 29 | Once (f) items 1–5 land, re-run the consuming stack's browser E2E as the standing post-change gate (even though this session did not change markup)                                           | Low      | M      | Quality  |
-| 30 | Verify the parallel session's in-flight edits (`calls.js`) get their `templ generate`/island formatting treatment per AGENTS.md when they complete                                            | Low      | S      | Process  |
-| 31 | Add `-count=1` to the AGENTS.md test command examples if not already implied (test-cache trap is now twice-proven)                                                                            | Low      | S      | Docs     |
-| 32 | Re-run `art-dupl -t 1` after items 10–12 land; expect the two accepted helper-call-site groups to shrink further                                                                              | Low      | S      | Quality  |
+| 1  | ~~Root-cause the `TestRequestLogNeverCarriesSecrets` hang~~ **Won't implement —** unreproducible; closed as load flake | Critical | M      | Bug      |
+| 2  | ~~Add `TestNoInlineSessionGates`~~ → TODO_LIST (contract-pinning tests row) | High     | S      | Quality  |
+| 3  | ~~Add a golden multipart-form test asserting exact field set + order~~ → TODO_LIST (contract-pinning tests row) | High     | S      | Quality  |
+| 4  | ~~Decide gating policy (see g/Q3) and implement the answer~~ documented 2026-09-19: dual layer deliberate (AGENTS.md); drop-middleware option → ROADMAP | High     | S      | Cleanup  |
+| 5  | ~~Update AGENTS.md "Sessions" bullet: `requireSession` is the one gate home; dual-layer rationale~~ done 2026-09-19 | High     | S      | Docs     |
+| 6  | ~~HARVEST this report's (f) into `TODO_LIST.md`/`ROADMAP.md` (docs-health HARVEST, with TODO_LIST cross-check)~~ done (2026-09-19 sweep) | High     | S      | Process  |
+| 7  | ~~Re-run full `buildflow` (dev or full mode) on a quiet machine for one clean end-to-end green incl. all nix checks~~ done (07:43 §a.8: 44 success / 0 failed, exit 0) | High     | M      | Infra    |
+| 8  | ~~Run `buildflow doctor` to explain the 9 unavailable tools seen in the dev-mode run~~ → TODO_LIST (doctor row) | High     | S      | Infra    |
+| 9  | ~~Add a CHANGELOG entry for the dedup refactor~~ **Won't implement —** v2.0.0 already tagged; behavior-preserving internal cleanup | Medium   | S      | Docs     |
+| 10 | ~~Extract `pbx.CredentialsFor(sess session.Session) pbx.Credentials`; replace 4 inline constructions~~ → TODO_LIST (server cleanup row; 4 sites verified 2026-09-19) | Medium   | S      | Cleanup  |
+| 11 | ~~Extract a render-or-error helper for the duplicated `threadPanel` render blocks~~ → ROADMAP (cleanup) | Medium   | S      | Cleanup  |
+| 12 | ~~Collapse `"sign in first"` into one exported constant in the session package~~ → TODO_LIST (server cleanup row) | Medium   | S      | Cleanup  |
+| 13 | ~~Pin provider error-text contract in a test if runbooks grep the old texts (answer needed: g/Q2)~~ → ROADMAP (testing long tail; no consumer flagged the renamed texts) | Medium   | S      | Quality  |
+| 14 | ~~Record the accepted art-dupl groups (7) as a one-line-each register in AGENTS.md~~ **NOT-DO —** a re-run regenerates the triage; a register would rot | Medium   | S      | Docs     |
+| 15 | ~~Write the `-count=1` + raw-summary rule into the global memory pipeline-masking lesson~~ done (global memory rule; AGENTS.md command updated 2026-09-19) | Medium   | S      | Process  |
+| 16 | ~~Run `go test -race ./internal/server/...` over the SSE/hub paths adjacent to the refactor~~ done (17:46 session: full suite green under `-race`) | Medium   | M      | Quality  |
+| 17 | ~~Smoke-test the built binary with the AGENTS.md loopback recipe~~ done (18:50 sweep #11 live loopback smoke) | Medium   | S      | Quality  |
+| 18 | ~~Inspect the daemon-commit that swept up the session-start `server.go` change~~ done (post-hoc `git show` in-session — d.4: nothing lost) | Medium   | S      | Process  |
+| 19 | ~~Extract a `streamFile(w, filename, mime, r io.Reader)` helper for the shared tail of `faxDocument`/`attachment`~~ → ROADMAP (cleanup) | Low      | S      | Cleanup  |
+| 20 | ~~After the parallel session lands its `calls.js`/`requestlog_test.go` work, run prettier/treefmt over the island~~ done (`718cbe7` prettier reflow) | Low      | S      | Quality  |
+| 21 | ~~Decide the fate of `messageForm` (single caller `SendMessage`)~~ trivial; left to the next gateway touch | Low      | S      | Cleanup  |
+| 22 | ~~Annotate the old inline-gate snippet in `docs/research/2026-09-18_cqrs-htmx-deep-dive.html` as historical~~ **NOT-DO —** dated research snapshot; supersession recorded in living docs | Low      | S      | Docs     |
+| 23 | ~~Add a debug log to `countUnread`/`countVoicemail` error paths~~ → ROADMAP (testing/ops polish) | Low      | S      | Quality  |
+| 24 | ~~Consider a small typed direction for `historyPanel`'s `"in"/"out"` magic strings~~ → ROADMAP (cleanup) | Low      | S      | Cleanup  |
+| 25 | ~~Revisit the `wp-empty` empty-state extraction only if a ~10th simple usage appears~~ conditional; unchanged (9 sites accepted) | Low      | S      | Cleanup  |
+| 26 | ~~Add art-dupl (`-t 3` default threshold) to the periodic quality ritual~~ → ROADMAP (testing long tail) | Low      | S      | Process  |
+| 27 | ~~Stagger heavy parallel sessions vs `nix build`/BuildFlow runs, or raise `--default-step-timeout`~~ → ROADMAP (process) | Low      | S      | Infra    |
+| 28 | ~~Grep the codebase for other contract-style doc comments that drifted~~ → ROADMAP (testing long tail: comment-vs-code sweep) | Low      | M      | Quality  |
+| 29 | ~~Once (f) items 1–5 land, re-run the consuming stack's browser E2E~~ done at `00f13fe` (green 06:42; further island changes → TODO_LIST re-run row) | Low      | M      | Quality  |
+| 30 | ~~Verify the parallel session's in-flight edits (`calls.js`) get their `templ generate`/island formatting treatment~~ done (`718cbe7`; E2E green) | Low      | S      | Process  |
+| 31 | ~~Add `-count=1` to the AGENTS.md test command examples if not already implied~~ done 2026-09-19 | Low      | S      | Docs     |
+| 32 | ~~Re-run `art-dupl -t 1` after items 10–12 land; expect the two accepted helper-call-site groups to shrink further~~ open, rides on the TODO_LIST cleanup row | Low      | S      | Quality  |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
-1. **The hang:** Between 22:25 and 22:33 the server suite hung 3-4× on `TestRequestLogNeverCarriesSecrets`, then never again. Were you (or another session) running heavy builds/tests in parallel in that window — and have you ever seen this test time out before? I tried: isolated reruns ×7, `-count=1`, cache bypass, full-dump capture (then overwrote it). I cannot observe what else the machine was doing.
-2. **Provider error-text contract:** This refactor changed fax/message failure texts slightly (now prefixed `build fax form:` / `close provider form:` instead of `close fax form:` / `close message form:`). Do your runbooks, monitors, or the stack-side tooling grep the **old exact strings** in fax job errors? I cannot see anything outside this repo.
-3. **Gating policy:** Keep handler-level self-gating as the _only_ mechanism (drop the two `Sessions.Require` route wirings on `/events` and `/phone-api/`), or keep both layers deliberately? Both are correct today; the answer is an ownership/philosophy call, and it decides items (f)#4/#5/#12.
+1. ~~**The hang:** Between 22:25 and 22:33 the server suite hung 3-4× on `TestRequestLogNeverCarriesSecrets`, then never again.~~ Closed 2026-09-19: never recurred across full-suite greens (incl. `-race`); treated as machine-load flake, `-count=1` discipline adopted.
+2. ~~**Provider error-text contract:** This refactor changed fax/message failure texts slightly. Do your runbooks, monitors, or the stack-side tooling grep the **old exact strings**?~~ Answered by silence — no consumer flagged the renamed texts; current tests pin behavior; future pinning → ROADMAP.
+3. ~~**Gating policy:** Keep handler-level self-gating as the _only_ mechanism..., or keep both layers deliberately?~~ Documented 2026-09-19: dual layer is deliberate (AGENTS.md Sessions bullet); the drop-the-middleware option is a ROADMAP open question.
 
 ---
 
