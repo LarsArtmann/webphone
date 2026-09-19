@@ -191,6 +191,26 @@ every build; it is the local tripwire, not a replacement for the E2E.
   retryable, and replays answer `202 Accepted` inertly.
 - **Owner scoping everywhere**: every store query is extension-scoped;
   attachments/faxes stream through session-gated handlers only.
+- **Personal contacts have ONE home** (2026-09-19): the per-extension
+  SQLite store. The island reads/writes it via `/api/contacts` (JSON,
+  session-gated, extension-scoped, CSRF via `authedFetch`); mutations
+  answer 204 and the LIST is the only id source — the store upserts by
+  (owner, phone) and keeps the old id on rename, so a returned minted
+  id could drift. The legacy `localStorage["pbx-contacts"]` list
+  imports once post-login and is REMOVED only after the server
+  accepted every row (failed imports retry next login; upsert makes
+  re-import idempotent). Load trigger: session.js dispatches
+  `wp:session-opened` AFTER cookie mint + CSRF adoption — loading
+  earlier would POST on a dead token. History stays hybrid BY DESIGN
+  (local session log + same CDR API) — not a split brain, don't "fix"
+  it.
+- **Tab→island affordances live in shell.js** (2026-09-19): the
+  delegated `data-dial` handler (guarded: hidden `#phone-view` → toast
+  in `#toasts` + focus `#ext`, never a silent submit) and the
+  live-call badge (`wp:calls-changed` → `#call-badge` in the header,
+  counting `.call-card` in `#calls`). New shell-side listeners go in
+  shell.js, never island modules — the shell must keep working when
+  island scripts fail.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
   webfonts, no inline handlers. One inline script is allowed by exact
   hash (templ-components' theme preload — no opt-out knob upstream as

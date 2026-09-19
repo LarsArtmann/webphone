@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Every server-rendered tab can now reach the phone in one click:
+  History rows dial the caller (inbound legs) or the dialled
+  destination (outbound legs), Voicemail rows call back the sender,
+  and an open Messages thread offers a call to the remote number.
+  Rows without a dialable number render no button.
+- `data-dial` buttons no longer dead-end silently when the phone is
+  signed out: the shell focuses the login field and explains via a
+  toast (same toast markup and CSS as the island's).
+- The shell header shows a live-call presence badge ("on call · N",
+  pulsing) driven by the island's existing `wp:calls-changed` event,
+  so every tab reflects that the phone is busy.
+- Personal contacts have one home: new session-gated JSON endpoints
+  (`GET`/`POST`/`DELETE /api/contacts`, extension-scoped) expose the
+  same store the Contacts tab renders from. The island's contact
+  panel reads and writes the server store and migrates its legacy
+  `localStorage` list once after login — cleared only after the
+  server accepted every row; failed imports retry on the next login
+  (the store upserts by number, so re-import cannot duplicate).
+
+### Fixed
+
+- Test harness: two HTTP clients in one server test no longer share
+  a cookie jar — `httptest.Server.Client()` returns one cached
+  `*http.Client`, and setting a Jar on it hijacked every client the
+  test had built earlier (surfaced as CSRF 403s).
+
 ## [2.1.1] - 2026-09-19
 
 ### Security

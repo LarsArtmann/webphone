@@ -51,6 +51,7 @@ Code wins when doc and code disagree.
 | Honest disabled states     | 🟢 FULLY_FUNCTIONAL  | Tabs say what is missing instead of pretending when no API is configured |
 | Live voicemail refresh     | 🟢 FULLY_FUNCTIONAL  | Payload-less SSE nudge on deletes and island polls                       |
 | Phone-api reverse proxy    | 🟢 FULLY_FUNCTIONAL  | Same paths/JSON as the static era, Basic auth injected server-side       |
+| Callback/redial from tabs  | 🟢 FULLY_FUNCTIONAL  | `data-dial` on CDR rows (CID in / destination out), voicemail rows (CID number), thread views; guarded when no number exists |
 | Voicemail transcripts      | ⚪ WORTH_CONSIDERING | Surfacing only if the PBX API ever provides them                         |
 
 ## Contacts & sessions
@@ -58,7 +59,8 @@ Code wins when doc and code disagree.
 | Feature                        | Status              | Notes                                                                                                                                |
 | ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                                                                      |
-| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | Upsert-by-number, delete, click-to-dial into the island                                                                              |
+| Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | ONE home for tab AND island: upsert-by-number, delete, click-to-dial; the island reads/writes via `/api/contacts`                     |
+| Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears            |
 | vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                          |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | REGISTER-proven credentials open the tab session; logout closes it                                                                   |
 | Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                      |
@@ -80,6 +82,8 @@ Code wins when doc and code disagree.
 | Feature                     | Status              | Notes                                                                                    |
 | --------------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
 | Incoming-call notifications | 🟢 FULLY_FUNCTIONAL | System notification (permission asked from the login gesture)                            |
+| Live-call presence badge   | 🟢 FULLY_FUNCTIONAL | `wp:calls-changed` → shell.js header badge ("on call · N", pulsing) — visible from every tab |
+| Logged-out dial feedback   | 🟢 FULLY_FUNCTIONAL | `data-dial` while signed out: toast + login-field focus instead of a silent dead-end      |
 | Ring tone + ringback        | 🟢 FULLY_FUNCTIONAL | Locally synthesized (distinct incoming ring vs outgoing ringback)                        |
 | Tab-title flash             | 🟢 FULLY_FUNCTIONAL | While an incoming call rings                                                             |
 | Keyboard shortcuts          | 🟢 FULLY_FUNCTIONAL | A answer · H hangup · M mute · P hold · Esc + headset media keys (island `shortcuts.js`) |
@@ -100,7 +104,7 @@ Code wins when doc and code disagree.
 | Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL     | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                 |
 | i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL     | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing) |
 | Dark + light themes          | 🟢 FULLY_FUNCTIONAL     | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                          |
-| Browser E2E (upstream stack) | 🟡 PARTIALLY_FUNCTIONAL | Green 2026-09-19 after the accept/reject fix; island changed since (429 surfacing, toasts, live pill) — re-run pending                                                                  |
+| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL     | Green 2026-09-19 against webphone `a0ce1e6` (dial affordances, presence badge, contacts single-home): E2E-OK, DTMF, reconnect-recovery |
 
 ## PLANNED / WORTH_CONSIDERING
 
@@ -112,6 +116,7 @@ Code wins when doc and code disagree.
 | Recording UI surface                | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas |
 | PWA (offline shell)                 | ⚪ WORTH_CONSIDERING | Service worker must respect strict CSP                                                                           |
 | sip.js 0.22 bump                    | ⚪ WORTH_CONSIDERING | No 0.22 exists — upstream dormant at 0.21.2 (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md)                  |
+| JsSIP fallback swap                 | ⚪ WORTH_CONSIDERING | Only on breakage/security/capability triggers (SDK research 2026-09-19: JsSIP 3.13.8 actively maintained); full island rewrite + E2E re-run — plan doc SUPERB-island-server-integration |
 
 ## Ops & API surface (cqrs-htmx adoption, 2026-09)
 
