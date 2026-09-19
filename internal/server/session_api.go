@@ -1,19 +1,31 @@
 package server
 
 import (
+	"context"
 	"encoding/json/v2"
+	"errors"
 	"net/http"
+	"time"
 
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 )
 
-// createSession is called by the island AFTER the PBX accepted its SIP
-// REGISTER — the credentials are proven good. The server trusts that call
-// only to open the tab/proxy session; every phone-api access revalidates
-// against the PBX anyway (it would 401 on wrong credentials).
+// verifyTimeout bounds the PBX round-trip at login: the island awaits
+// this POST before showing the signed-in state, and a hung PBX must not
+// hang logins for the full client timeout.
+const verifyTimeout = 5 * time.Second
+
+// createSession opens the tab/proxy session. The submitted credentials
+// are verified against the PBX directory first (VerifyCredentials: the
+// same directory the SIP REGISTER checks): a forged POST must not mint
+// a session scoped to another extension — the tab partials, fax and
+// attachment streams, and SSE fragments all scope by the session alone.
+// Deployments without a phone API (loopback dev) skip verification,
+// matching the mode where no PBX-backed panels exist.
 func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Extension string `json:"extension"`
@@ -31,6 +43,23 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	if body.Password == "" {
 		http.Error(w, "missing password", http.StatusBadRequest)
 		return
+	}
+	if h.deps.PhoneAPI.Enabled() {
+		ctx, cancel := context.WithTimeout(r.Context(), verifyTimeout)
+		err := h.deps.PhoneAPI.VerifyCredentials(ctx, pbx.Credentials{
+			Extension: body.Extension,
+			Password:  body.Password,
+		})
+		cancel()
+		switch {
+		case err == nil:
+		case errors.Is(err, pbx.ErrUnauthorized):
+			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			return
+		default:
+			http.Error(w, "credential verification failed", http.StatusBadGateway)
+			return
+		}
 	}
 
 	token, err := h.deps.Sessions.Create(extension, body.Password)

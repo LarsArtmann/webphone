@@ -45,6 +45,15 @@ func run() error {
 	// TLS-terminating proxy (hosts only, never secret material).
 	slog.Info("csrf fronting",
 		"trustedProxies", len(cfg.CSRF.TrustedProxies), "trustedOrigins", cfg.CSRF.TrustedOrigins)
+	// Login honesty: with a phone API configured, POST /api/session
+	// verifies the submitted credentials against the PBX directory and
+	// fails closed (401/502). Without one (loopback dev), logins are
+	// unverified by construction — operators must see that state.
+	if cfg.PhoneAPIURL == "" {
+		slog.Warn("pbx credential verification disabled (no phone_api_url configured; logins are not verified)")
+	} else {
+		slog.Info("pbx credential verification", "mode", "enforced")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

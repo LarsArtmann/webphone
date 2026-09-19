@@ -42,6 +42,11 @@ func NewClient(baseURL string) (*Client, error) {
 // ErrDisabled is returned when no phone API is configured.
 var ErrDisabled = fmt.Errorf("phone api not configured")
 
+// ErrUnauthorized is returned when the phone API rejected the presented
+// credentials (HTTP 401/403): the server-side proof that the
+// extension/password pair is not valid in the PBX directory.
+var ErrUnauthorized = fmt.Errorf("phone api rejected the credentials")
+
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
@@ -134,6 +139,23 @@ func (c *Client) VoicemailSummary(ctx context.Context, creds Credentials) (Voice
 	return summary, err
 }
 
+// VerifyCredentials proves the extension/password pair against the PBX
+// directory with the cheapest authenticated phone-api call (the voicemail
+// summary: same Basic-auth directory credentials the SIP REGISTER
+// checks). Session creation rides this instead of trusting the island's
+// claim that a REGISTER succeeded — a forged POST /api/session must not
+// open a tab session scoped to someone else's extension. Returns nil on
+// success, ErrUnauthorized on bad credentials, and a wrapped error for
+// anything else (PBX unreachable, 5xx). ErrDisabled means no phone API
+// is configured and the caller decides the policy for that mode.
+func (c *Client) VerifyCredentials(ctx context.Context, creds Credentials) error {
+	if !c.Enabled() {
+		return ErrDisabled
+	}
+	var summary VoicemailSummary
+	return c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/summary", &summary)
+}
+
 // VoicemailMessages lists the extension's voicemail.
 func (c *Client) VoicemailMessages(ctx context.Context, creds Credentials) (VoicemailPage, error) {
 	var page VoicemailPage
@@ -191,8 +213,8 @@ func (c *Client) do(
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("phone api rejected the credentials")
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		return ErrUnauthorized
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("phone api: HTTP %d", resp.StatusCode)

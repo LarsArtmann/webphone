@@ -311,7 +311,7 @@ const openapiSpec = `{
   "info": {
     "title": "webphone session API",
     "version": "1.0.0",
-    "description": "Server session for the tabs and the phone-api proxy. Credentials are proven against the PBX by the SIP REGISTER before the island calls this."
+    "description": "Server session for the tabs and the phone-api proxy. Credentials are verified against the PBX directory before the session is minted."
   },
   "paths": {
     "/api/session": {
@@ -336,6 +336,8 @@ const openapiSpec = `{
         "responses": {
           "201": {"description": "Session created"},
           "400": {"description": "Invalid extension or body"},
+          "401": {"description": "Credentials rejected by the PBX directory"},
+          "502": {"description": "PBX credential verification unavailable"},
           "500": {"description": "Session store failure"}
         }
       },
