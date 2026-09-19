@@ -111,35 +111,35 @@ JS/CSS, 17 commits this session.
 
 ## b) PARTIALLY DONE ⚠️
 
-- **Docs overhaul (T16):** CONTRIBUTING.md done; **README.md, FEATURES.md,
+- ~~**Docs overhaul (T16):** CONTRIBUTING.md done; **README.md, FEATURES.md,
   TODO_LIST.md, CHANGELOG.md, AGENTS.md still describe the v1 static
   site** and are now wrong about the product shape, commands, config and
-  the webhook/phone-api contracts. This was the in-flight step when this
-  report was requested.
-- **SSE liveness:** the per-extension hub works and pushes the rendered
+  the webhook/phone-api contracts.~~ This was the in-flight step when this
+  report was requested. — done: the 16:21 session's docs overhaul rewrote all five (docs-health BUILD+HARVEST+VERIFY; see the 16:21 report).
+- ~~**SSE liveness:** the per-extension hub works and pushes the rendered
   thread list (`threads` event, verified live), but an **open thread view
   never receives `thread` events** — the notifier only publishes `threads`;
   `sseEventThread` is defined but never sent. Replies appearing live only
   when the list is visible. Also `VoicemailChanged` is defined but nothing
-  calls it yet.
-- **Upstream integration docs:** the webhook contract is implemented and
+  calls it yet.~~ — done: `thread` events published, voicemail nudge wired, ghost `VoicemailChanged` deleted (16:21 report, §a SSE liveness).
+- ~~**Upstream integration docs:** the webhook contract is implemented and
   tested, but there is no example FreeSWITCH bridge config (mod_sms
-  chatplan → /hooks/message) or provider wiring walkthrough yet.
+  chatplan → /hooks/message) or provider wiring walkthrough yet.~~ — done: the README's "Bridging FreeSWITCH" example (16:21 docs overhaul).
 
 ## c) NOT STARTED ❌
 
-- German translations for the new tabs (island stays en/de; tabs en-only).
-- Session persistence across restarts (in-memory by design for v1).
-- Rate limiting on /api/session and hooks beyond the shared secret.
-- pbx proxy hardening: it rides `http.DefaultClient` (no timeout) — should
-  use a configured client.
-- Proxy/SSE handler tests (proxy path has no dedicated test).
-- aarch64 verification (`nix flake check --all-systems`).
-- NixOS module / systemd unit + nginx reverse-proxy example for the
+- ~~German translations for the new tabs (island stays en/de; tabs en-only).~~ done (18:50 sweep #14: ~90-key en/de dictionary, SSE fragments follow it).
+- ~~Session persistence across restarts (in-memory by design for v1).~~ decided: stays in-memory by design (password-at-rest posture); FEATURES WORTH_CONSIDERING.
+- ~~Rate limiting on /api/session and hooks beyond the shared secret.~~ done (18:50 sweep #4; now `httputil.KeyedRateLimiter`).
+- ~~pbx proxy hardening: it rides `http.DefaultClient` (no timeout) — should
+  use a configured client.~~ done (16:21 report: proxy rides `pbx.Client.HTTPClient()`, 15s timeout).
+- ~~Proxy/SSE handler tests (proxy path has no dedicated test).~~ done (16:21 report, §a tests).
+- ~~aarch64 verification (`nix flake check --all-systems`).~~ done (16:21 report, §a verification).
+- ~~NixOS module / systemd unit + nginx reverse-proxy example for the
   consuming stack, and the actual switchover work in
   nix-international-telephony (switch input from static package to this
-  service, WSS proxy config, TLS, config.js → server config migration).
-- docs-health HARVEST of section (f) into TODO_LIST.md.
+  service, WSS proxy config, TLS, config.js → server config migration).~~ done (module shipped 18:50 sweep #5; switchover DONE 2026-09-18/19 — ROADMAP).
+- ~~docs-health HARVEST of section (f) into TODO_LIST.md.~~ done (16:21 report routed it; the 18:50 sweep + this 2026-09-19 sweep kept it current).
 
 ## d) TOTALLY FUCKED UP! 💥
 
@@ -171,63 +171,66 @@ all green). The honest list of session mishaps:
 
 ## e) WHAT WE SHOULD IMPROVE! 🛠️
 
-1. Publish `thread` SSE events on message changes so open transcripts
-   update live (and wire `VoicemailChanged` on webhook arrival).
-2. Return the open thread view after a new-conversation send (better UX
-   than dropping to the list).
-3. Dedicated `http.Client` (timeout, keep-alive) for the pbx proxy +
-   client.
-4. Proxy + SSE handler tests.
-5. Login rate limiting (per-IP token bucket via stdlib x/time/rate).
+1. ~~Publish `thread` SSE events on message changes so open transcripts
+   update live (and wire `VoicemailChanged` on webhook arrival).~~ done (16:21 report, §a SSE liveness)
+2. ~~Return the open thread view after a new-conversation send (better UX
+   than dropping to the list).~~ → ROADMAP (open question: new-conversation UX)
+3. ~~Dedicated `http.Client` (timeout, keep-alive) for the pbx proxy +
+   client.~~ done (16:21 report)
+4. ~~Proxy + SSE handler tests.~~ done (16:21 report)
+5. ~~Login rate limiting (per-IP token bucket via stdlib x/time/rate).~~ done (18:50 sweep #4)
 6. Replace the 29 `//nolint:erraudit` sites with a tiny `besteffort`
    helper if the annotations ever feel noisy.
-7. `countUnread` scans all threads per page render — fine now, cache later.
-8. Document the `__` env convention + full config reference in README.
-9. aarch64 check in CI (`--all-systems`).
-10. Consider extracting the "HTMX tabs + island + session" shell into a
-    reusable pattern doc — it's the third LarsArtmann app with this shape.
+7. ~~`countUnread` scans all threads per page render — fine now, cache later.~~ done (18:50 sweep #6: 5s TTL + invalidation)
+8. ~~Document the `__` env convention + full config reference in README.~~ done (16:21 docs overhaul)
+9. ~~aarch64 check in CI (`--all-systems`).~~ done as a local verification (16:21 report); a CI gate does not exist (no .github/workflows) — see ROADMAP browser-gate/CI ideas
+10. ~~Consider extracting the "HTMX tabs + island + session" shell into a
+    reusable pattern doc — it's the third LarsArtmann app with this shape.~~ → ROADMAP (raw ideas)
 
 ## f) Top things to get done next (impact-sorted)
 
-1. **Docs overhaul** — README/FEATURES/TODO_LIST/CHANGELOG/AGENTS to v2
+1. ~~**Docs overhaul** — README/FEATURES/TODO_LIST/CHANGELOG/AGENTS to v2
    (config reference incl. `__` env keys, webhook + phone-api contracts,
-   deployment section). Blocks anyone else touching this repo.
-2. **`thread` SSE event** so open conversations update live.
-3. **NixOS module + nginx/systemd example** and the deployment story for
-   the consuming stack.
-4. **Upstream switchover plan** in nix-international-telephony (input
+   deployment section). Blocks anyone else touching this repo.~~ done (16:21 docs overhaul)
+2. ~~**`thread` SSE event** so open conversations update live.~~ done (16:21 report)
+3. ~~**NixOS module + nginx/systemd example** and the deployment story for
+   the consuming stack.~~ done (18:50 sweep #5: `nixosModules.default`)
+4. ~~**Upstream switchover plan** in nix-international-telephony (input
    change, WSS proxy, TLS, config migration, E2E re-run against the new
-   surface).
+   surface).~~ done (switchover executed; E2E green after `00f13fe` — ROADMAP/06:42 report)
 5. FreeSWITCH bridge example (mod_sms chatplan → /hooks/message; fax
-   spool → /hooks/fax).
-6. Proxy/SSE tests + pbx client timeout.
-7. German i18n for tabs.
-8. Session persistence (SQLite sessions) + login rate limiting.
-9. aarch64 verification.
-10. docs-health HARVEST of this list into TODO_LIST.md.
-11. Message list virtualization/pagination beyond page size 200.
-12. Fax page-count parsing from provider status payloads.
-13. Delivery-receipt webhook for SMS (status=delivered/failed by
-    provider_ref — store field already exists).
-14. Island keyboard shortcuts (carried over from v1 TODO).
-15. Manual theme toggle (carried over from v1 TODO).
-16. Contact import (vCard) + export.
-17. Voicemail transcript/summary surfacing if the PBX API ever provides it.
-18. Search/filter in history tab.
-19. Per-extension data retention/cleanup job for blobs + old messages.
-20. Health endpoint richness (store ping, gateway mode) for load balancers.
+   spool → /hooks/fax). — done (README, 16:21 docs overhaul)
+6. ~~Proxy/SSE tests + pbx client timeout.~~ done (16:21 report)
+7. ~~German i18n for tabs.~~ done (18:50 sweep #14)
+8. Session persistence (SQLite sessions) + login rate limiting. — persistence: decided in-memory (FEATURES WORTH_CONSIDERING); ~~rate limiting~~ done (18:50 sweep #4)
+9. ~~aarch64 verification.~~ done (16:21 report; re-verify for the v2.0.0 tag is TODO_LIST)
+10. ~~docs-health HARVEST of this list into TODO_LIST.md.~~ done (16:21 report; maintained by later sweeps)
+11. ~~Message list virtualization/pagination beyond page size 200.~~ done (18:50 sweep #13: `?older=` paging)
+12. ~~Fax page-count parsing from provider status payloads.~~ done (18:50 sweep #7: `flexPages`)
+13. ~~Delivery-receipt webhook for SMS (status=delivered/failed by
+    provider_ref — store field already exists).~~ done (16:34 session: `/hooks/message/status`)
+14. ~~Island keyboard shortcuts (carried over from v1 TODO).~~ done (18:50 sweep #11)
+15. ~~Manual theme toggle (carried over from v1 TODO).~~ done (18:50 sweep #9)
+16. ~~Contact import (vCard) + export.~~ done (18:50 sweep #12)
+17. Voicemail transcript/summary surfacing if the PBX API ever provides it. — FEATURES WORTH_CONSIDERING
+18. ~~Search/filter in history tab.~~ done (18:50 sweep #10)
+19. Per-extension data retention/cleanup job for blobs + old messages. — FEATURES WORTH_CONSIDERING
+20. ~~Health endpoint richness (store ping, gateway mode) for load balancers.~~ done (store side: `cqrshtmx.ReadinessHandler` with sqlite + blob-dir checks; gateway-mode exposure not built — ROADMAP raw ideas)
 
 ## g) Top question I cannot figure out myself
 
-**Deployment ownership:** should the webphone ship its own NixOS module
+~~**Deployment ownership:** should the webphone ship its own NixOS module
 (systemd service + nginx vhost with WSS proxy) from THIS repo, or does the
 consuming nix-international-telephony stack keep owning all of that and
 merely reverse-proxies to this binary (my current assumption, matching the
 v1 split where that stack owned TLS/config/proxy)? This decides the shape
-of task 3 and 4 above — and it changes what "done" means for the switchover.
+of task 3 and 4 above — and it changes what "done" means for the switchover.~~
+Resolved 2026-09-18: this repo ships `nixosModules.default` (18:50 sweep
+#5); the stack imports it and its browser E2E is green (06:42 report).
 
 _Secondary (smaller): for a NEW conversation, should sending open the
-thread view instead of returning to the list?_
+thread view instead of returning to the list?_ → ROADMAP open questions
+(new-conversation UX).
 
 ---
 

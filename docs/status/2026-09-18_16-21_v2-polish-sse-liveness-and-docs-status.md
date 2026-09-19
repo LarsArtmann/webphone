@@ -123,17 +123,17 @@ badges, transcript mark-read, and i18n for tabs remain open. Details in
 
 ## b) PARTIALLY DONE ⚠️
 
-- **README deployment section** is written under the current
+- ~~**README deployment section** is written under the current
   ASSUMPTION (the telephony stack owns TLS/WSS/nginx and reverse-proxies
   to the binary). It becomes wrong the day the user decides this repo
-  ships the NixOS module — the decision is still open (see g).
-- **SSE verification depth:** hub-level Go tests + one live HTTP smoke
+  ships the NixOS module — the decision is still open (see g).~~ — resolved: module shipped (18:50 #5); README documents both shapes; switchover DONE (ROADMAP).
+- ~~**SSE verification depth:** hub-level Go tests + one live HTTP smoke
   pass. No browser executed the actual innerHTML swaps this session
   (reasoned against the vendored sse.js source: default swap spec is
   innerHTML, `hx-trigger="sse:…"` is supported by the extension's own
-  listener path).
-- **Island JS behaviors** (`connectLiveUpdates` → `htmx.process`,
-  logout reload): CSP-safe and simple, but reasoning-verified only.
+  listener path).~~ — done: the stack browser E2E ran green 2026-09-19 (06:42 report §a.14) after the accept/reject fix.
+- ~~**Island JS behaviors** (`connectLiveUpdates` → `htmx.process`,
+  logout reload): CSP-safe and simple, but reasoning-verified only.~~ — done: exercised by the green stack E2E (registration/reconnect flows).
 
 ## c) NOT STARTED ❌
 
@@ -175,104 +175,88 @@ mishap list:
 
 ## e) WHAT WE SHOULD IMPROVE! 🛠️
 
-1. **Nav badges don't live-update** (unread messages, new voicemail):
+1. ~~Nav badges don't live-update (unread messages, new voicemail):
    they render with the shell only. SSE events never touch them. New
    finding this session — now documented, needs a decision (badge swap
-   target vs badge-refresh endpoint).
-2. **Live transcripts don't mark threads read:** the server correctly
-   cannot know whether any tab actually swapped the fragment (one hub
-   per extension, many tabs), so an inbound message read live still
-   badges the thread as unread until re-opened. Honest default; a
-   client-side `htmx:sseMessage` → POST mark-read would be
-   visibility-accurate.
-3. **`connectLiveUpdates` assumes `window.htmx` exists** at REGISTER
-   time (near-certain — user gesture long after deferred loads — but
-   unguarded against exotic orders).
-4. **`/events` endpoint lacks a Go test** (anonymous 401, heartbeat on
-   the wire, per-extension isolation). Hub layer is tested; the HTTP
-   handler is smoke-covered only.
-5. **The smoke suite is ephemeral** (`/tmp/webphone-smoke.py`): 14
-   checks that prove the product works should live in the repo.
-6. **No browser-level test of tab SSE behavior anywhere** (upstream E2E
-   covers the island only).
-7. **Voicemail nudge fires on every successful island poll** — each
-   nudge costs an open voicemail tab 2 upstream calls. Fine now; a
-   content-hash guard would make it free.
-8. **README `nix run github:LarsArtmann/webphone`** is shape-verified
-   (mainProgram set) but was never executed (no network fetch).
-9. **vulnix noise:** every full buildflow run warns about nixpkgs
-   CVEs (binutils/glibc/bison) — upstream churn, not actionable here,
-   but the noise desensitizes.
-10. **Trusting summaries over repos** (the "34" incident) — standing
-    risk every session; VERIFY-style counting is the antidote.
+   target vs badge-refresh endpoint).~~ → PARKED by verdict (docs/reviews/2026-09-18_oob-badge-spike-verdict.md)
+2. ~~Live transcripts don't mark threads read:~~ → TODO_LIST (live-polish row)
+3. ~~`connectLiveUpdates` assumes `window.htmx` exists~~ → ROADMAP (raw ideas)
+4. `/events` endpoint lacks a Go test — partially closed (stream-shape + rate-limit tests exist: `sse_test.go`, `ratelimit_test.go`); dedicated anonymous-401/heartbeat tests → ROADMAP
+5. ~~The smoke suite is ephemeral (`/tmp/webphone-smoke.py`)~~ → TODO_LIST (recreate in-repo; the /tmp copy is gone)
+6. No browser-level test of tab SSE behavior anywhere → ROADMAP (browser-level gates)
+7. ~~Voicemail nudge fires on every successful island poll~~ → ROADMAP (raw ideas: content-hash guard)
+8. ~~README `nix run github:LarsArtmann/webphone` is shape-verified
+   (mainProgram set) but was never executed (no network fetch).~~ **Won't implement —** local `nix build .#webphone` + `nix flake check` cover the derivation; a registry fetch adds nothing.
+9. vulnix noise (upstream churn) — observation; runtime-closure method now in AGENTS.md.
+10. Trusting summaries over repos — standing risk; VERIFY-style counting applied in every later sweep.
 
 ## f) Up to 50 things to get done next (impact-sorted)
 
-1. Deployment decision + NixOS module (or stack-side guide) — blocked on g1.
-2. Upstream switchover in nix-international-telephony (input swap, WSS proxy, config migration, browser E2E re-run).
-3. Client-side mark-read on live transcript swap (`htmx:sseMessage`).
-4. Nav badge live updates (unread + new voicemail).
-5. German translations for the server-rendered tabs.
-6. Login rate limiting on `/api/session` (and hooks beyond the secret).
-7. SMS delivery-receipt webhook (`provider_ref` column already exists).
-8. `/events` Go tests: anonymous 401, heartbeat, cross-extension isolation.
-9. Promote the 14-check smoke suite into the repo (script or Go integration test).
-10. Session persistence decision (SQLite sessions vs documented in-memory + security note).
-11. Browser E2E for tab SSE behavior (chromium in CI).
-12. Harden `connectLiveUpdates` (retry until `htmx` is present).
-13. Voicemail nudge content-hash guard (skip no-op re-fetches).
-14. Message pagination/virtualization beyond the 200 window.
-15. vCard contact import/export.
-16. History search/filter.
-17. Manual theme toggle (override `prefers-color-scheme`).
-18. Keyboard shortcuts (answer/hangup/mute/hold) + media keys.
-19. Cache `countUnread` (scans all threads per shell render).
-20. sip.js 0.22 evaluation (bundle-contract strings must survive).
-21. Fax page-count parsing from provider payloads.
-22. Retention/cleanup job (blobs + old messages/faxes).
-23. Richer `/healthz` (store ping, gateway mode) for load balancers.
-24. Voicemail transcript surfacing (if the PBX API ever provides it).
-25. Tag the v2.0.0 release (CHANGELOG entry exists; see g3).
-26. Short-lived TURN REST credentials rendered into `/config.js` (now trivial server-side; v1 design anticipated it).
-27. Idempotency keys on `/hooks/message` (dedupe provider retries).
-28. Attachment MIME sniffing server-side (don't trust declared type).
-29. Structured request logging (slog middleware) for operators.
-30. Metrics endpoint (or JSON mode on /healthz).
-31. Shared i18n dictionary guard between island and tabs (prevent two drifting dictionaries).
-32. Accessibility pass on tabs (focus order after HTMX swap, aria-live on SSE regions).
-33. Draft persistence for composers (localStorage) — complements swap-safety.
-34. Image attachment thumbnails inline in bubbles (link-only today).
-35. Fax cover-page templating.
-36. SQLite backup/restore runbook (`.backup` procedure documented or exposed).
-37. Per-extension data export (messages + faxes dump).
-38. Multiple-tab glare warning (two tabs registering one extension).
-39. SSE connection-loss banner (the ext already retries with backoff).
-40. Webhook payload versioning header (`X-Webphone-Event-Version`).
-41. Timezone-aware timestamp rendering (server-local today).
-42. Server-side PDF page counting when the provider omits pages.
-43. Bridge the SSE voicemail nudge to the island's own badge refresh (one event, two consumers).
-44. CSP nonce mode option for stricter deployments.
-45. Rate-limit response headers on hooks (transparency for providers).
-46. Dependabot/buildflow update cadence as new deps land over time.
-47. `docs/status` pruning policy (archive cadence for old reports).
-48. CONTRIBUTING: document the dev smoke loop once (9) lands.
-49. Consider the `besteffort` helper if the 29 `//nolint:erraudit` sites ever feel noisy (deliberately untouched).
-50. Reusable pattern doc: "HTMX tabs + island + session shell" (third LarsArtmann app with this shape).
+1. ~~Deployment decision + NixOS module (or stack-side guide) — blocked on g1.~~ done (18:50 #5)
+2. ~~Upstream switchover in nix-international-telephony (input swap, WSS proxy, config migration, browser E2E re-run).~~ done (E2E green after `00f13fe`; stack consumes the v2.0.0 tag — ROADMAP)
+3. Client-side mark-read on live transcript swap (`htmx:sseMessage`). → TODO_LIST
+4. Nav badge live updates (unread + new voicemail). → PARKED (OOB verdict)
+5. ~~German translations for the server-rendered tabs.~~ done (18:50 #14)
+6. ~~Login rate limiting on `/api/session` (and hooks beyond the secret).~~ done (18:50 #4; now `httputil.KeyedRateLimiter`)
+7. ~~SMS delivery-receipt webhook (`provider_ref` column already exists).~~ done (16:34 session)
+8. `/events` Go tests: anonymous 401, heartbeat, cross-extension isolation. → ROADMAP (stream-shape + rate-limit tests exist)
+9. ~~Promote the 14-check smoke suite into the repo (script or Go integration test).~~ → TODO_LIST (the /tmp copy is gone)
+10. ~~Session persistence decision (SQLite sessions vs documented in-memory + security note).~~ decided: in-memory by design (FEATURES WORTH_CONSIDERING)
+11. Browser E2E for tab SSE behavior (chromium in CI). → ROADMAP (browser-level gates)
+12. Harden `connectLiveUpdates` (retry until `htmx` is present). → ROADMAP
+13. Voicemail nudge content-hash guard (skip no-op re-fetches). → ROADMAP
+14. ~~Message pagination/virtualization beyond the 200 window.~~ done (18:50 #13)
+15. ~~vCard contact import/export.~~ done (18:50 #12)
+16. ~~History search/filter.~~ done (18:50 #10)
+17. ~~Manual theme toggle (override `prefers-color-scheme`).~~ done (18:50 #9)
+18. ~~Keyboard shortcuts (answer/hangup/mute/hold) + media keys.~~ done (18:50 #11)
+19. ~~Cache `countUnread` (scans all threads per shell render).~~ done (18:50 #6)
+20. ~~sip.js 0.22 evaluation (bundle-contract strings must survive).~~ done (docs/reviews/2026-09-18_sip-js-0.22-evaluation.md — stay on 0.21.2)
+21. ~~Fax page-count parsing from provider payloads.~~ done (18:50 #7)
+22. Retention/cleanup job (blobs + old messages/faxes). — FEATURES WORTH_CONSIDERING
+23. ~~Richer `/healthz` (store ping, gateway mode) for load balancers.~~ done (store side: `cqrshtmx.ReadinessHandler`; gateway-mode exposure → ROADMAP)
+24. Voicemail transcript surfacing (if the PBX API ever provides it). — FEATURES WORTH_CONSIDERING
+25. ~~Tag the v2.0.0 release (CHANGELOG entry exists; see g3).~~ done at `d9d6d03`
+26. Short-lived TURN REST credentials rendered into `/config.js` (now trivial server-side; v1 design anticipated it). → ROADMAP
+27. ~~Idempotency keys on `/hooks/message` (dedupe provider retries).~~ done at `232795e` (`hooksIdem`, replay → 202)
+28. Attachment MIME sniffing server-side (don't trust declared type). → ROADMAP
+29. ~~Structured request logging (slog middleware) for operators.~~ done at `fa3bafd` (`cqrshtmx.RequestLoggingSlog`)
+30. Metrics endpoint (or JSON mode on /healthz). → ROADMAP
+31. ~~Shared i18n dictionary guard between island and tabs (prevent two drifting dictionaries).~~ done (18:50 #14: dictionary-sync test)
+32. Accessibility pass on tabs (focus order after HTMX swap, aria-live on SSE regions). → ROADMAP
+33. Draft persistence for composers (localStorage) — complements swap-safety. → ROADMAP
+34. Image attachment thumbnails inline in bubbles (link-only today). → ROADMAP
+35. Fax cover-page templating. → ROADMAP
+36. SQLite backup/restore runbook (`.backup` procedure documented or exposed). → ROADMAP
+37. Per-extension data export (messages + faxes dump). → ROADMAP
+38. Multiple-tab glare warning (two tabs registering one extension). → ROADMAP
+39. ~~SSE connection-loss banner (the ext already retries with backoff).~~ done at `91d018c` (`#wp-sse-live` liveness pill)
+40. Webhook payload versioning header (`X-Webphone-Event-Version`). → ROADMAP
+41. Timezone-aware timestamp rendering (server-local today). → ROADMAP
+42. Server-side PDF page counting when the provider omits pages. → ROADMAP
+43. ~~Bridge the SSE voicemail nudge to the island's own badge refresh (one event, two consumers).~~ done (16:21 report: nudge wired into deletes + island polls)
+44. CSP nonce mode option for stricter deployments. → ROADMAP
+45. ~~Rate-limit response headers on hooks (transparency for providers).~~ done (computed `Retry-After`, `httputil.KeyedRateLimiter`)
+46. ~~Dependabot/buildflow update cadence as new deps land over time.~~ done (dependabot config generated during the rebuild; buildflow owns updates)
+47. ~~`docs/status` pruning policy (archive cadence for old reports).~~ done (2026-09-19 docs-health sweep: fully-resolved reports annotated inline and moved to `docs/status/archived/`)
+48. CONTRIBUTING: document the dev smoke loop once (9) lands. — pending the smoke-suite row in TODO_LIST
+49. Consider the `besteffort` helper if the 29 `//nolint:erraudit` sites ever feel noisy (deliberately untouched). — deliberate skip, unchanged
+50. Reusable pattern doc: "HTMX tabs + island + session shell" (third LarsArtmann app with this shape). → ROADMAP
 
 ## g) Questions I cannot figure out myself
 
-1. **Deployment ownership:** should THIS repo ship the NixOS module
+1. ~~**Deployment ownership:** should THIS repo ship the NixOS module
    (systemd + nginx vhost + WSS `/sip` proxy), or does
    nix-international-telephony keep owning TLS/proxying and merely
    reverse-proxies to the binary (my documented assumption in README +
-   AGENTS)? This decides the shape of (f) 1–2.
+   AGENTS)? This decides the shape of (f) 1–2.~~ Resolved: module shipped (18:50 #5); switchover DONE (ROADMAP).
 2. **New-conversation UX:** after sending the FIRST message to a
    number (from the list composer), should the app open that thread
    view instead of returning to the list? (Carried from the 15:25
-   report; replies already keep the thread open.)
-3. **Release timing:** cut and tag **v2.0.0** now (CHANGELOG is ready),
+   report; replies already keep the thread open.) → ROADMAP open questions.
+3. ~~**Release timing:** cut and tag **v2.0.0** now (CHANGELOG is ready),
    or only after the upstream switchover + browser E2E is green in
-   nix-international-telephony?
+   nix-international-telephony?~~ Resolved: v2.0.0 tagged at `d9d6d03` AFTER the switchover E2E went green (07:43 report).
 
 ---
 

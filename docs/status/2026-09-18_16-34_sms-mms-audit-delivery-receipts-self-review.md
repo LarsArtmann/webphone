@@ -41,16 +41,16 @@ No fresh research beyond what was read and verified in-session.
 
 ## b) PARTIALLY DONE
 
-- FEATURES wording on delivery receipts: I marked it FULLY_FUNCTIONAL,
+- ~~FEATURES wording on delivery receipts: I marked it FULLY_FUNCTIONAL,
   but loopback-mode messages can never reach `delivered` (loopback marks
   `sent` and stops). True only for webhook providers that implement the
-  callback. The row needs a caveat, or loopback needs a decision (see g2).
-- README "Bridging FreeSWITCH" example still says "or a message-status
+  callback. The row needs a caveat, or loopback needs a decision (see g2).~~ — caveat added to FEATURES 2026-09-19; loopback semantics → ROADMAP open questions (g2).
+- ~~README "Bridging FreeSWITCH" example still says "or a message-status
   hook with that id" — I updated the hooks block but left this sentence
-  vague instead of naming `/hooks/message/status`.
+  vague instead of naming `/hooks/message/status`.~~ — fixed 2026-09-19: the example now names `/hooks/fax/status` / `/hooks/message/status`.
 - Test coverage of the receipt path: the SSE `thread` event fires via
   `notify()`, but the new test asserts the badge only via HTTP re-fetch
-  of the partial, not via the SSE event itself.
+  of the partial, not via the SSE event itself. → ROADMAP (testing long tail)
 
 ## c) NOT STARTED (observed this session, untouched by it)
 
@@ -81,63 +81,53 @@ close. Two honest dents, neither fatal:
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **`provider_ref` is load-bearing but unindexed-unique.** Two features
-   now look rows up by it (messages, faxes); neither schema has a UNIQUE
-   constraint, and loopback refs (`loopback-msg-<UnixNano>`) are
-   collision-prone in theory. Add a partial UNIQUE index per direction.
-2. **Sibling-hook asymmetry (small split brains):** empty `provider_ref`
+1. ~~**`provider_ref` is load-bearing but unindexed-unique.**~~ — half done: `fax_jobs` got its UNIQUE partial index (`internal/store/db.go:85`); the `messages` side is TODO_LIST.
+2. ~~**Sibling-hook asymmetry (small split brains):** empty `provider_ref`
    → messages 400, faxes 404. Failure detail → faxes persist error text,
    messages only log it. Deliberate hardening on one side, drift on the
-   other; pick one contract per pair and align.
-3. **Delivered vs. sent look identical** (`wp-status-sent` class serves
-   both). A distinct delivered style (e.g. check mark) makes receipts
-   actually visible.
-4. **Prove receipts with the real binary.** AGENTS documents a zero-PBX
-   loopback smoke run; a curl against `/hooks/message/status` on it
-   would demonstrate the whole feature outside httptest.
-5. **Test rigor:** run `-race` locally for the webhook paths (provider
-   callbacks race user sends by design), and assert the SSE event, not
-   just the re-rendered partial.
-6. **FEATURES caveat** for delivery receipts under loopback mode (see g2).
-7. **Commit narrative:** when committing is authorized, commit per task
-   with real messages; the daemon's heuristic chore history is unreadable
-   archaeology for the next session.
+   other; pick one contract per pair and align.~~ → TODO_LIST (`hookFaxStatus` row covers both the mapping split and empty-ref alignment); message failure-detail persistence → ROADMAP.
+3. ~~**Delivered vs. sent look identical** (`wp-status-sent` class serves
+   both).~~ → TODO_LIST (distinct delivered style).
+4. **Prove receipts with the real binary.** — still open as written (cheap loopback curl; superseded in value by the in-repo smoke-suite TODO row).
+5. ~~**Test rigor:** run `-race` locally for the webhook paths~~ done (17:46 session: full suite green under `-race`); ~~assert the SSE event, not just the re-rendered partial~~ → ROADMAP.
+6. ~~**FEATURES caveat** for delivery receipts under loopback mode (see g2).~~ done 2026-09-19.
+7. **Commit narrative:** — daemon-owned history accepted; per-task commits when explicitly authorized (standing rule).
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
 Sorted by impact; [N] = new from this session, [T] = already in
 TODO_LIST, [F] = already in FEATURES planned table.
 
-1. [T] Deployment ownership decision + NixOS module (High, blocks ops story)
-2. [T] Upstream switchover in nix-international-telephony + browser E2E re-run (High)
-3. [N] Fix README bridge-example sentence to name `/hooks/message/status` (S)
-4. [N] FEATURES caveat: delivery receipts require a callback-capable provider (S)
-5. [N] UNIQUE partial index on `messages.provider_ref` / `fax_jobs.provider_ref` (S–M)
-6. [N] SSE `thread`-event assertion for the delivery receipt (S)
-7. [N] Idempotency test: repeated delivery callbacks stay 202/no-op (S)
-8. [N] Run messaging/server tests with `-race` once, fix fallout (S)
-9. [N] Distinct CSS for delivered vs. sent badge (S)
-10. [N] Decision + implementation: loopback simulating `delivered` (see g2) (S)
-11. [N] Align empty-`provider_ref` handling between message and fax hooks (S)
-12. [T] Login rate limiting on `/api/session` and hooks (Medium, S)
-13. [T] German translations for server-rendered tabs (Medium, M)
-14. [T] `countUnread` cache (Low, S)
-15. [N] Persist + display failure reason for failed messages (parity with fax; schema change) (M)
-16. [N] Loopback provider-ref format: use random IDs, not UnixNano (S)
-17. [T] Session persistence across restarts (Low, M — security tradeoff, needs g3-style decision)
-18. [T] Message pagination/virtualization beyond 200 (Low, M)
-19. [T] Fax page-count parsing from status payloads (Low, S)
-20. [T] vCard contact import/export (Low, M)
-21. [T] History search/filter (Low, M)
-22. [T] Keyboard shortcuts + media keys (Low, M)
-23. [T] Manual theme toggle (Low, S)
-24. [T] sip.js 0.22 evaluation via `./update.sh` (Low, M)
-25. [F] Retention/cleanup job for blobs and old rows (data grows unbounded) (M)
-26. [F] Richer `/healthz` (store ping, gateway mode) (S)
-27. [N] Document the provider-callback retry expectation in README hooks section (S)
-28. [N] Consider wiring the receipt hook into the README demo bridge sketch (S)
-29. [T] Video calls (WORTH_CONSIDERING; sip.js supports it)
-30. [F] PWA offline shell (WORTH_CONSIDERING; must respect strict CSP)
+1. [T] ~~Deployment ownership decision + NixOS module (High, blocks ops story)~~ done (18:50 #5)
+2. [T] ~~Upstream switchover in nix-international-telephony + browser E2E re-run (High)~~ done (E2E green after `00f13fe`)
+3. [N] ~~Fix README bridge-example sentence to name `/hooks/message/status` (S)~~ done 2026-09-19
+4. [N] ~~FEATURES caveat: delivery receipts require a callback-capable provider (S)~~ done 2026-09-19
+5. [N] ~~UNIQUE partial index on `messages.provider_ref` / `fax_jobs.provider_ref` (S–M)~~ fax side done (`db.go:85`); messages side → TODO_LIST
+6. [N] SSE `thread`-event assertion for the delivery receipt (S) → ROADMAP
+7. [N] ~~Idempotency test: repeated delivery callbacks stay 202/no-op (S)~~ done at `232795e` (`hooksIdem` replay dedupe + tests)
+8. [N] ~~Run messaging/server tests with `-race` once, fix fallout (S)~~ done (17:46 session, full suite)
+9. [N] Distinct CSS for delivered vs. sent badge (S) → TODO_LIST
+10. [N] Decision + implementation: loopback simulating `delivered` (see g2) (S) → ROADMAP open questions
+11. [N] Align empty-`provider_ref` handling between message and fax hooks (S) → TODO_LIST (hookFaxStatus row)
+12. [T] ~~Login rate limiting on `/api/session` and hooks (Medium, S)~~ done (18:50 #4)
+13. [T] ~~German translations for server-rendered tabs (Medium, M)~~ done (18:50 #14)
+14. [T] ~~`countUnread` cache (Low, S)~~ done (18:50 #6)
+15. [N] Persist + display failure reason for failed messages (parity with fax; schema change) (M) → ROADMAP
+16. [N] Loopback provider-ref format: use random IDs, not UnixNano (S) → ROADMAP
+17. [T] ~~Session persistence across restarts (Low, M — security tradeoff, needs g3-style decision)~~ decided: in-memory by design (FEATURES WORTH_CONSIDERING)
+18. [T] ~~Message pagination/virtualization beyond 200 (Low, M)~~ done (18:50 #13)
+19. [T] ~~Fax page-count parsing from status payloads (Low, S)~~ done (18:50 #7)
+20. [T] ~~vCard contact import/export (Low, M)~~ done (18:50 #12)
+21. [T] ~~History search/filter (Low, M)~~ done (18:50 #10)
+22. [T] ~~Keyboard shortcuts + media keys (Low, M)~~ done (18:50 #11)
+23. [T] ~~Manual theme toggle (Low, S)~~ done (18:50 #9)
+24. [T] ~~sip.js 0.22 evaluation via `./update.sh` (Low, M)~~ done (evaluation report — stay on 0.21.2)
+25. [F] Retention/cleanup job for blobs and old rows (data grows unbounded) (M) — FEATURES WORTH_CONSIDERING
+26. [F] ~~Richer `/healthz` (store ping, gateway mode) (S)~~ done (store side: `cqrshtmx.ReadinessHandler`)
+27. [N] ~~Document the provider-callback retry expectation in README hooks section (S)~~ done 2026-09-19 (idempotent-replay note added)
+28. [N] ~~Consider wiring the receipt hook into the README demo bridge sketch (S)~~ done 2026-09-19 (bridge example names `/hooks/message/status`)
+29. [T] Video calls (WORTH_CONSIDERING; sip.js supports it) — FEATURES
+30. [F] PWA offline shell (WORTH_CONSIDERING; must respect strict CSP) — FEATURES
 
 Items 31–50 deliberately left empty: this session surfaced no further
 specific, evidence-backed tasks, and padding a list with invented work
@@ -146,14 +136,10 @@ is exactly the kind of dishonesty this report refuses.
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
 1. **Failure detail for failed messages:** faxes persist the provider's
-   error text and show it; messages only log it. Should I add an error
-   column (schema migration + UI) for message failures, or is log-only
-   acceptable? This decides item 15 and the hook asymmetry fix.
+   error text and show it; messages only log it. → ROADMAP (persist + display failure reasons).
 2. **Loopback semantics:** should the loopback gateway simulate
    `delivered` (like fax loopback resolves `transmitted`) so demos and
    E2E exercise the receipt path, or is `sent` the honest terminal state
-   for dev mode? This decides items 4 and 10.
+   for dev mode? → ROADMAP open questions.
 3. **Commit narrative:** the daemon scattered this feature across four
-   heuristic "chore" commits. May I commit per task with real messages
-   when explicitly authorized per session, or is daemon history the
-   accepted tradeoff here?
+   heuristic "chore" commits. → accepted tradeoff, documented in AGENTS.md (daemon commits AND pushes).
