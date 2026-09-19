@@ -138,6 +138,11 @@
                         systemd.services = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         users.users = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         users.groups = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
+                        # NixOS's modules.nix normally provides this.
+                        assertions = lib.mkOption {
+                          type = lib.types.listOf lib.types.anything;
+                          default = [ ];
+                        };
                       };
                     }
                     (import ./package/nixos-module.nix)
@@ -185,7 +190,10 @@
                 {
                   name = "systemd-unit";
                   path = pkgs.writeText "systemd-unit" (
-                    if unitPresent then "systemd.services.webphone present" else throw "webphone-module check: systemd.services.webphone missing"
+                    if unitPresent then
+                      "systemd.services.webphone present"
+                    else
+                      throw "webphone-module check: systemd.services.webphone missing"
                   );
                 }
               ];
