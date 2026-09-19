@@ -54,6 +54,10 @@ Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan
   the next root tag changes the `/events` byte stream. On bump: update
   the AGENTS.md retry note, re-run `BenchmarkHubFanOut`, and re-run the
   upstream browser E2E (payload-shape rule).
+- Island JS test runner (standing gap, 2026-09-19): the island has
+  none — toasts listener, live pill and 429 surfacing are pinned by Go
+  asset tripwires + code review only (§b.3 of the 2026-09-19 status).
+  When a runner lands, port the tripwires into real DOM tests.
 - Decision records / doc notes (P7): StructuredError for `/api/session`
   (adopt only if the island branches on codes); sync/ multi-tab module
   N.A. (per-tab SIP UA by design); DecodePagination N.A. (cursor

@@ -7,28 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- cqrs-htmx middleware adoption (the 2026-09-18 Pareto plan's 1%/4%/20%
-  tiers, `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`):
-  the hand-rolled panic `recovery()` is now `cqrshtmx.RecoveryMiddleware`
-  (full stack trace + method/path in the log, `http.ErrAbortHandler`
-  re-raised per net/http convention); `cqrshtmx.RequestLoggingSlog` sits
-  outermost so every request leaves one structured log line (200/404/401/
-  429/SSE disconnects) with no bodies or credentials; the 83-line
-  `keyedLimiter` is deleted in favor of `httputil.KeyedRateLimiter`
-  (TTL-evicted per-key buckets, `MaxKeys`-cappable, computed
-  `Retry-After`; keys stay port-stripped peer hosts until the stack
-  proves XFF sanitization); `/healthz` no longer answers a constant "ok" —
-  it serves `cqrshtmx.ReadinessHandler` with named `sqlite` (ping) and
-  `blob-dir` (write probe) checks, 503 bodies name the failing check;
-  and the SSE `events` handler's 36-line hand loop collapsed onto
-  `Broadcaster.ServeSSE` (adds the library's `connected` handshake frame;
-  `threads`/`thread`/`fax`/`voicemail` payloads untouched; no `retry:`
-  hint at v4.9.0 — tag-verified).
+## [2.0.0] - 2026-09-19
 
 ### Added
 
+- **Go unified-communications service** replacing the static site: the
+  proven SIP call island plus server-rendered tabs for Messages
+  (SMS/MMS), Fax, Voicemail, History, Contacts and Settings on one page
+  (templ + HTMX partial swaps — the island never unloads, calls survive
+  tab switches).
+- Messaging: threads with unread badges, attachments in and out
+  (content-addressed blob store), validation limits, live updates over a
+  per-extension SSE feed (`threads`, `thread`, `fax`, `voicemail`).
+- Fax: send PDFs (signature-checked, ≤20 MiB), receive documents via
+  webhook, provider status callbacks, owner-scoped downloads.
+- Voicemail and CDR history through the per-extension phone API, both
+  directly and via a transparent `/phone-api/*` reverse proxy that
+  injects the session's Basic credentials server-side.
+- Gateway seam for outbound traffic: `loopback` (zero dependencies —
+  everything works with no PBX) and `webhook` (multipart to a provider
+  URL, `{"provider_ref"}` receipts). Inbound webhooks `/hooks/message`,
+  `/hooks/fax`, `/hooks/fax/status` are guarded by a Bearer secret and
+  fail closed when none is configured.
+- Session model: the island's SIP REGISTER proves the extension
+  credentials; the tabs share that login via a cookie session, and the
+  SSE feed connects without a page reload after sign-in.
+- Single-binary Nix package (`buildGoModule`, tests run inside the
+  sandbox); aarch64-linux cross-build verified.
+- Go test suite: DOM contract (34 island element ids), store lifecycle
+  (caught a real unread-upsert bug), SSE fragment pushes, phone-api
+  proxy, webhook gates, fax status callbacks.
+- Integration contracts (gateway, hooks, phone API, `window.PBX_CONFIG`,
+  FreeSWITCH bridge example, reverse-proxy deployment) documented in the
+  README.
 - Message delivery receipts: providers call `/hooks/message/status`
   (Bearer secret, fail-closed like every hook) with the `provider_ref`
   from the send receipt; the transcript's status badge flips to
@@ -66,12 +77,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The static-site derivation is gone: consumers run the service binary
+  and put TLS + the WSS `/sip` proxy in front (see README deployment).
+- `window.PBX_CONFIG` is rendered by the server at `/config.js` from its
+  own configuration instead of being supplied by the serving PBX.
+- cqrs-htmx middleware adoption (the 2026-09-18 Pareto plan's 1%/4%/20%
+  tiers, `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`):
+  the hand-rolled panic `recovery()` is now `cqrshtmx.RecoveryMiddleware`
+  (full stack trace + method/path in the log, `http.ErrAbortHandler`
+  re-raised per net/http convention); `cqrshtmx.RequestLoggingSlog` sits
+  outermost so every request leaves one structured log line (200/404/401/
+  429/SSE disconnects) with no bodies or credentials; the 83-line
+  `keyedLimiter` is deleted in favor of `httputil.KeyedRateLimiter`
+  (TTL-evicted per-key buckets, `MaxKeys`-cappable, computed
+  `Retry-After`; keys stay port-stripped peer hosts until the stack
+  proves XFF sanitization); `/healthz` no longer answers a constant "ok" —
+  it serves `cqrshtmx.ReadinessHandler` with named `sqlite` (ping) and
+  `blob-dir` (write probe) checks, 503 bodies name the failing check;
+  and the SSE `events` handler's 36-line hand loop collapsed onto
+  `Broadcaster.ServeSSE` (adds the library's `connected` handshake frame;
+  `threads`/`thread`/`fax`/`voicemail` payloads untouched; no `retry:`
+  hint at v4.9.0 — tag-verified).
 - The unread badge count is cached per extension (5s TTL, invalidated
   on inbound/status/deletes) instead of rescanning every thread on each
   shell render.
 
 ### Fixed
 
+- SSE payloads are swap-safe fragments: live pushes can no longer nest
+  panels or wipe a half-typed composer draft, and open transcripts now
+  update live (`thread` events were defined but never published before).
+- The voicemail tab refreshes live on deletes and island voicemail polls
+  (payload-less SSE nudge; the event was previously never sent).
+- The `/phone-api` proxy rides a timeout-bounded HTTP client instead of
+  the timeout-less `http.DefaultClient`.
+- The phone-API client built request bodies it then never sent.
+- A missing data directory is created at startup instead of failing with
+  SQLite's cryptic "unable to open database file (14)".
 - The on-screen Accept and Reject buttons did nothing: the island's
   module split left them calling `answerIncoming`/`rejectIncoming`
   without importing those functions, so every click died with a silent
@@ -91,60 +133,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`history%3Flimit=30`), so history/voicemail requests 404'd upstream;
   path and query are now joined correctly (caught by the new client
   tests).
-
-## [2.0.0] - 2026-09-18
-
-### Added
-
-- **Go unified-communications service** replacing the static site: the
-  proven SIP call island plus server-rendered tabs for Messages
-  (SMS/MMS), Fax, Voicemail, History, Contacts and Settings on one page
-  (templ + HTMX partial swaps — the island never unloads, calls survive
-  tab switches).
-- Messaging: threads with unread badges, attachments in and out
-  (content-addressed blob store), validation limits, live updates over a
-  per-extension SSE feed (`threads`, `thread`, `fax`, `voicemail`).
-- Fax: send PDFs (signature-checked, ≤20 MiB), receive documents via
-  webhook, provider status callbacks, owner-scoped downloads.
-- Voicemail and CDR history through the per-extension phone API, both
-  directly and via a transparent `/phone-api/*` reverse proxy that
-  injects the session's Basic credentials server-side.
-- Gateway seam for outbound traffic: `loopback` (zero dependencies —
-  everything works with no PBX) and `webhook` (multipart to a provider
-  URL, `{"provider_ref"}` receipts). Inbound webhooks `/hooks/message`,
-  `/hooks/fax`, `/hooks/fax/status` are guarded by a Bearer secret and
-  fail closed when none is configured.
-- Session model: the island's SIP REGISTER proves the extension
-  credentials; the tabs share that login via a cookie session, and the
-  SSE feed connects without a page reload after sign-in.
-- Single-binary Nix package (`buildGoModule`, tests run inside the
-  sandbox); aarch64-linux cross-build verified.
-- Go test suite: DOM contract (34 island element ids), store lifecycle
-  (caught a real unread-upsert bug), SSE fragment pushes, phone-api
-  proxy, webhook gates, fax status callbacks.
-- Integration contracts (gateway, hooks, phone API, `window.PBX_CONFIG`,
-  FreeSWITCH bridge example, reverse-proxy deployment) documented in the
-  README.
-
-### Changed
-
-- The static-site derivation is gone: consumers run the service binary
-  and put TLS + the WSS `/sip` proxy in front (see README deployment).
-- `window.PBX_CONFIG` is rendered by the server at `/config.js` from its
-  own configuration instead of being supplied by the serving PBX.
-
-### Fixed
-
-- SSE payloads are swap-safe fragments: live pushes can no longer nest
-  panels or wipe a half-typed composer draft, and open transcripts now
-  update live (`thread` events were defined but never published before).
-- The voicemail tab refreshes live on deletes and island voicemail polls
-  (payload-less SSE nudge; the event was previously never sent).
-- The `/phone-api` proxy rides a timeout-bounded HTTP client instead of
-  the timeout-less `http.DefaultClient`.
-- The phone-API client built request bodies it then never sent.
-- A missing data directory is created at startup instead of failing with
-  SQLite's cryptic "unable to open database file (14)".
 
 ## [0.1.0] - 2026-09-17
 
