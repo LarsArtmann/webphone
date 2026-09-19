@@ -54,9 +54,15 @@ git fetch origin --tags --quiet
 	echo "main diverged from origin/main" >&2
 	exit 1
 }
+RESUME_TAG=0
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-	echo "tag $TAG already exists" >&2
-	exit 1
+	if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then
+		echo "tag $TAG already on origin: resuming after step 5 (stack, aarch64, gh release)"
+		RESUME_TAG=1
+	else
+		echo "tag $TAG exists locally but not on origin; delete it first (git tag -d $TAG)" >&2
+		exit 1
+	fi
 fi
 echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
 
@@ -87,14 +93,18 @@ run nix flake check
 run python3 scripts/webphone-smoke.py
 
 step "5/9 tag + push + verify"
-run git tag -a "$TAG" -m "webphone $TAG"
-run git push origin main "$TAG"
-if [ "$DRY_RUN" != "1" ]; then
-	git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q . || {
-		echo "tag $TAG not resolvable on remote (peeled object missing)" >&2
-		exit 1
-	}
-	echo "remote has $TAG"
+if [ "$RESUME_TAG" = "1" ]; then
+	echo "skipped: $TAG already pushed"
+else
+	run git tag -a "$TAG" -m "webphone $TAG"
+	run git push origin main "$TAG"
+	if [ "$DRY_RUN" != "1" ]; then
+		git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q . || {
+			echo "tag $TAG not resolvable on remote (peeled object missing)" >&2
+			exit 1
+		}
+		echo "remote has $TAG"
+	fi
 fi
 
 step "6/9 link check (after push so the new tag link resolves)"
@@ -112,12 +122,12 @@ step "7/9 stack: relock, gates, push ($STACK)"
 run bash -c "cd '$STACK' && nix flake lock --update-input webphone"
 if [ "$DRY_RUN" != "1" ]; then
 	git -C "$STACK" add flake.lock
-	git -C "$STACK" commit -m "chore: bump webphone input to $TAG"
+	git -C "$STACK" diff --cached --quiet || git -C "$STACK" commit -m "chore: bump webphone input to $TAG"
 fi
-run nix build -L .#telephony-browser
-run nix build -L .#checks.x86_64-linux.telephony-webphone
-run nix flake check
-run git -C "$STACK" push
+run bash -c "cd '$STACK' && nix build -L .#telephony-browser"
+run bash -c "cd '$STACK' && nix build -L .#checks.x86_64-linux.telephony-webphone"
+run bash -c "cd '$STACK' && nix flake check"
+run bash -c "cd '$STACK' && git push"
 
 step "8/9 aarch64 cross-builds"
 run nix build .#webphone --system aarch64-linux
