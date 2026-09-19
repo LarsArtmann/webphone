@@ -268,3 +268,20 @@ gates nothing except the *shape* of W3.
 3. **Health-hub ambition** — is fleet-level federation (health-hub aggregating webphone
    + the stack + future services) a real near-term goal, or a ROADMAP long-shot? It
    decides whether T14's memo stays a memo or becomes a workstream with an owner.
+
+---
+
+## DECIDED — T1 resolution (2026-09-19, execution turn)
+
+**F2 liveness posture: (b) go-health JSON probe endpoints beside `/healthz`.**
+
+The owner approved full-plan execution ("execute the WHOLE TODO LIST") without
+amendments; the plan's recommended posture stands. Rationale: CSP-clean
+(JSON only — the Datastar HTML face stays rejected), ecosystem-native
+(reuses go-health instead of hand-rolling), reusable by the fleet
+(health-hub can scrape it), and the owner's explicit directive to improve
+and adopt the ecosystem libs. Endpoint naming follows the no-duplicate-truth
+guardrail: readiness STAYS the existing honest `/healthz`
+(cqrshtmx.ReadinessHandler); go-health serves the NEW liveness + startup
+surfaces beside it. Execution lane: T11/T12 after the go-health release
+lane lands.
