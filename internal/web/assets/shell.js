@@ -17,17 +17,75 @@
     });
   });
 
-  // 2. data-dial buttons (contacts): push the number into the island's
-  //    dial form and submit it — the same gesture as the island's redial.
+  // 2. data-dial buttons (contacts, history, voicemail, threads): push
+  //    the number into the island's dial form and submit it — the same
+  //    gesture as the island's redial. When the island is signed out
+  //    (#phone-view hidden) a submit would dead-end inside the hidden
+  //    form, so we say so and point at the login field instead. The
+  //    toast mirrors the island's announce() markup (shared CSS, no
+  //    island import — shell and island never load each other's code).
+  var shellToast = function (message, kind) {
+    var host = document.getElementById("toasts");
+    if (!host) return;
+    var toast = document.createElement("div");
+    toast.className = "toast toast-" + kind;
+    toast.textContent = message;
+    toast.addEventListener("click", function () {
+      toast.remove();
+    });
+    host.append(toast);
+    while (host.children.length > 4) host.firstChild.remove();
+    setTimeout(function () {
+      toast.remove();
+    }, 6000);
+  };
   document.addEventListener("click", function (event) {
     var button = event.target.closest("[data-dial]");
     if (!button) return;
     var dest = document.getElementById("dest");
     var form = document.getElementById("dial-form");
+    var phoneView = document.getElementById("phone-view");
     if (!dest || !form) return;
+    if (phoneView && phoneView.hidden) {
+      var ext = document.getElementById("ext");
+      if (ext) ext.focus();
+      shellToast(
+        "Phone is signed out — sign in on the phone panel to call.",
+        "warn",
+      );
+      return;
+    }
     dest.value = button.getAttribute("data-dial");
     form.requestSubmit();
   });
+
+  // 2c. Live-call presence: the island dispatches wp:calls-changed after
+  //     every call render; the shell mirrors the live call count into
+  //     the header so every tab shows the phone is busy. Cards are
+  //     removed on teardown (calls.js), so counting them counts live
+  //     calls (ringing included). English by the shell.js precedent
+  //     (theme toggle) — presence is operator glanceable state.
+  var callBadge = null;
+  var updateCallBadge = function () {
+    var calls = document.getElementById("calls");
+    var actions = document.querySelector(".wp-header-actions");
+    if (!calls || !actions) return;
+    var count = calls.querySelectorAll(".call-card").length;
+    if (count > 0) {
+      if (!callBadge) {
+        callBadge = document.createElement("span");
+        callBadge.id = "call-badge";
+        callBadge.className = "wp-call-badge";
+        actions.prepend(callBadge);
+      }
+      callBadge.textContent = count === 1 ? "on call" : "on call · " + count;
+    } else if (callBadge) {
+      callBadge.remove();
+      callBadge = null;
+    }
+  };
+  document.addEventListener("wp:calls-changed", updateCallBadge);
+  updateCallBadge();
 
   // 2b. data-reload buttons (error panel): full reload, same as the old
   //      inline onclick but CSP-safe via this delegated listener.

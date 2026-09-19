@@ -220,6 +220,41 @@ body {
   font-weight: 600;
 }
 
+/* Live-call presence (shell.js mirrors the island's call count into the
+ * header on every wp:calls-changed event; removed when no call runs). */
+.wp-call-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 600;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  white-space: nowrap;
+}
+
+.wp-call-badge::before {
+  content: "";
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  animation: wp-call-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes wp-call-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 /* --- panels --------------------------------------------------------------- */
 
 .wp-panel {
