@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Backup story, drill-verified: the NixOS module gains
+  `services.webphone.backup.{enable,destDir,calendar}` — a daily
+  online-backup timer (sqlite `.backup` + blob-tree rsync, no phone
+  downtime) — and `scripts/webphone-backup-drill.py` proves the cold
+  restore path end to end: a real binary, an inbound webhook message
+  with a binary attachment, tar the data dir, restore to scratch,
+  reboot and pull the attachment back byte-identical. The README
+  documents inventory, the online snapshot commands and the restore
+  steps.
+
 ## [2.3.0] - 2026-09-19
 
 ### Added

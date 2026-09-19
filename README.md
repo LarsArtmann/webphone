@@ -231,6 +231,33 @@ location /events {                    # SSE: no buffering
 client_max_body_size 64m;             # attachments (≤5×10 MiB) + PDFs (≤20 MiB)
 ```
 
+### Backups and restore
+
+The state directory (`data_dir`, default `/var/lib/webphone`) holds
+everything: `webphone.db` (SQLite) and `files/` (the content-addressed
+blob tree for attachments and fax documents). Back up both together.
+
+Online, per snapshot (no downtime — what `services.webphone.backup.*`
+in the NixOS module wires as a daily timer):
+
+```console
+sqlite3 /var/lib/webphone/webphone.db ".backup '/var/lib/webphone-backup/webphone.db'"
+rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
+```
+
+Restore (drill-verified cold path — `scripts/webphone-backup-drill.py`
+boots a real binary, loads a webhook message with a binary attachment,
+tars the data dir, restores it to scratch and pulls the attachment back
+byte-identical):
+
+1. stop the service,
+2. copy `webphone.db` and `files/` back into the data directory,
+3. start the service — sessions are in-memory by design, so nothing
+   else to replay; sign in and the tabs render from the restored store.
+
+Keep a copy off the machine: the snapshot directory is plain files, so
+any rsync/restic pipeline can pick it up.
+
 ### Troubleshooting: 403 logins behind a TLS proxy
 
 **Symptom:** every browser login (and every form POST) returns 403 once the
