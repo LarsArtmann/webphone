@@ -11,6 +11,7 @@ require (
 	github.com/knadh/koanf/v2 v2.3.6
 	github.com/larsartmann/cqrs-htmx/v4 v4.9.0
 	github.com/larsartmann/go-branded-id v0.6.0
+	github.com/larsartmann/go-health v0.3.0
 	github.com/larsartmann/go-sse v0.6.0
 	github.com/larsartmann/httputil v1.2.0
 	github.com/larsartmann/httputil/server_timing v1.0.1
@@ -55,6 +56,8 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/samber/do/v2 v2.1.0 // indirect
+	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/sixafter/aes-ctr-drbg v1.19.2 // indirect
 	github.com/sixafter/prng-chacha v1.16.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

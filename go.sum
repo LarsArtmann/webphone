@@ -96,6 +96,8 @@ github.com/larsartmann/go-error-family v0.10.1 h1:lf1RNjpdK7k+tCzphkg5qRolAY76U8
 github.com/larsartmann/go-error-family v0.10.1/go.mod h1:SYSVwVMTkw2GcqXI4khjMYOg7ey39o8sh7rXC9LfNcY=
 github.com/larsartmann/go-etag v0.3.1 h1:jLzNpsw3WzLNblrKJPaf/JYCZOTuQPoCq2GKoROopA8=
 github.com/larsartmann/go-etag v0.3.1/go.mod h1:Ky5ngONjO+ufeS1rasedzwD5xkZo3WZ7FbOXDKi3KP0=
+github.com/larsartmann/go-health v0.3.0 h1:XQRX2yxzruR6WmaeEXIjPE2kxrQw+616Y5BZkNj/9Hc=
+github.com/larsartmann/go-health v0.3.0/go.mod h1:Mud5voytlhllNYPsKeXUFA833dqlyy9liW3jApR/X18=
 github.com/larsartmann/go-idempotency v0.2.0 h1:SpkK2C9bW/lLxTJb4Au1jTNAM0w/vQhjwTsvpr/wNc4=
 github.com/larsartmann/go-idempotency v0.2.0/go.mod h1:VjTQypq0FQLA9AmageDkuFoUFfN2hd3eErSFZo9ip+I=
 github.com/larsartmann/go-sse v0.6.0 h1:ITsMQi4Cfg+cXE5YYChk3p6wYsn33AxKJPVwd5hsiBY=
@@ -137,6 +139,10 @@ github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/rogpeppe/go-internal v1.16.0 h1:O9DK+vNMDVGLr2BeZqmpLeMjiMNkuXfcqntWbZV6S5g=
 github.com/rogpeppe/go-internal v1.16.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
+github.com/samber/do/v2 v2.1.0 h1:lqCHn05XvY3VqwxvZDQPSkH+jIGWSVHUrSVLEbPOopo=
+github.com/samber/do/v2 v2.1.0/go.mod h1:wJBoiaZcUZyGuraOhfz15b517ZMogGs+U03DvnqvT6Q=
+github.com/samber/go-type-to-string v1.8.0 h1:5z6tDTjtXxkIAoAuHAZYMYR8mkBZjVgeSH7jcSLqc8w=
+github.com/samber/go-type-to-string v1.8.0/go.mod h1:jpU77vIDoIxkahknKDoEx9C8bQ1ADnh2sotZ8I4QqBU=
 github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
 github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/sixafter/aes-ctr-drbg v1.19.2 h1:+Bd1tS9/y/GapqgyyRjmrce6a5wUAQPusJXlAOh44yM=

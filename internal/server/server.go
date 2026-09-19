@@ -6,6 +6,7 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
@@ -222,6 +224,24 @@ func New(deps Deps) http.Handler {
 			func() error { return probeBlobDir(deps.BlobRoot) })),
 	)
 	open.Handle("GET /healthz", readiness)
+
+	// Liveness + startup complete the standard probe triple WITHOUT a second
+	// readiness truth: /healthz above stays the continuous readiness gate,
+	// while go-health serves /livez (fetch-free process liveness) and
+	// /startupz (503 until the backing resources first pass, then latched).
+	// The probe's checks share the same functions /healthz evaluates — same
+	// truth, different probe lifecycles. JSON only: no scripts, CSP-neutral.
+	// GET-open like /healthz: probers need no session and the bodies carry
+	// check names/statuses only, never secrets. No background refresh loop
+	// (live mode): two local checks per probe hit are cheap.
+	selfHealth := health.NewChecks(map[string]health.CheckFunc{
+		"sqlite": func(ctx context.Context) error { return deps.DB.PingContext(ctx) },
+		"blob-dir": func(_ context.Context) error {
+			return probeBlobDir(deps.BlobRoot)
+		},
+	}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
+	open.Handle("GET /livez", selfHealth.LivenessHandler())
+	open.Handle("GET /startupz", selfHealth.StartupHandler())
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
@@ -234,6 +254,8 @@ func New(deps Deps) http.Handler {
 	root.Handle("/config.js", open)
 	root.Handle("/events", open)
 	root.Handle("/healthz", open)
+	root.Handle("/livez", open)
+	root.Handle("/startupz", open)
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)

@@ -55,7 +55,10 @@
               let
                 webphoneVersion = "2.2.0";
               in
-              pkgs.buildGoModule {
+              pkgs.buildGoModule.override {
+                # Go >= 1.27.1: the fleet floor (see go.mod + devShell).
+                go = pkgs.go_1_27;
+              } {
                 pname = "webphone";
                 version = webphoneVersion;
 
@@ -280,7 +283,11 @@
           devShells.default = pkgs.mkShellNoCC {
             packages = [
               config.treefmt.build.wrapper
-              pkgs.go
+              # go.mod carries the 1.27.1 fleet floor (go-health v0.3.0 and
+              # the cqrs-htmx v4.11.x train both require it);
+              # GOTOOLCHAIN=local forbids toolchain downloads, so the shell
+              # must provide 1.27 itself.
+              pkgs.go_1_27
               pkgs.templ
               pkgs.golangci-lint
               pkgs.esbuild
@@ -291,9 +298,10 @@
               pkgs.go-licenses
             ];
             env = {
-              # templ-components needs encoding/json/v2 until Go 1.27 ships
-              # it stable; local keeps the shell's go instead of downloading
-              # a toolchain behind the user's back.
+              # json/v2 shipped stable in Go 1.27; the env stays harmless
+              # (and matches the fleet's other flakes). local keeps the
+              # shell's go_1_27 instead of downloading a toolchain behind
+              # the user's back.
               GOEXPERIMENT = "jsonv2";
               GOTOOLCHAIN = "local";
             };
