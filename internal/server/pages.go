@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/session"
@@ -39,6 +40,11 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	var props views.ShellProps
 	props.ActiveTab = tab
 	props.CSRFToken = csrfToken(r)
+	// Raw JSON for the hx-headers attribute: templ HTML-escapes attribute
+	// values exactly once on render, so the pre-escaped httputil helper
+	// would double-escape here and drop CSRF protection. json.Marshal of a
+	// string map cannot fail.
+	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
 	props.Lang = lang
 
 	if sess, ok := session.From(r.Context()); ok {

@@ -29,6 +29,10 @@ type ShellProps struct {
 	SignedIn string
 	// CSRFToken rides in hx-headers so every HTMX POST is protected.
 	CSRFToken string
+	// CSRFHxHeaders is the rendered value of the hx-headers attribute —
+	// raw JSON (templ escapes attribute values itself), built from
+	// CSRFToken at render time.
+	CSRFHxHeaders string
 	// TabContent renders the active tab's region.
 	TabContent templ.Component
 	// Unread counts badge the Messages nav item.
@@ -141,10 +145,13 @@ templ headExtras(csrfToken string) {
 	<script src="/assets/shell.js" defer></script>
 }
 
-// bodyAttrs wires CSRF into every HTMX request.
+// bodyAttrs wires CSRF into every HTMX request. The value is raw JSON:
+// templ HTML-escapes the attribute exactly once on render, so using the
+// pre-escaped httputil helper here would double-escape and break hx-headers
+// parsing (dropping CSRF protection from every HTMX request).
 func bodyAttrs(props ShellProps) templ.Attributes {
 	return templ.Attributes{
-		"hx-headers": `{"X-CSRF-Token":"` + props.CSRFToken + `"}`,
+		"hx-headers": props.CSRFHxHeaders,
 	}
 }
 

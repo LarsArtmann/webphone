@@ -193,19 +193,16 @@ func New(deps Deps) http.Handler {
 		ContentSecurityPolicy: contentSecurityPolicy,
 	})
 
-	// requestLog outermost: it sees every status written anywhere below
-	// (429s, panics, SSE disconnects) — the server's blind twin of the
-	// browser event log, runbook-greppable at 3 a.m. Chain composes
-	// first-argument-outermost, so this reads in execution order. The
-	// enrichment middleware just inside it stamps a RequestID (and echoes
-	// X-Request-ID on the response), so every log line and every response
-	// carry the same correlation id. The user extractor stays nil on
-	// purpose: the library's user identity is a ULID from the rejected
-	// usermgmt module, and extensions are not ULIDs — forcing them in
-	// would misuse the concept.
+	// Enrichment outermost: it only wraps the request context (RequestID,
+	// echoed back as X-Request-ID) and writes nothing, so the request log
+	// inside it still sees every status written anywhere below — while
+	// gaining request_id/correlation_id fields from the enriched context.
+	// The user extractor stays nil on purpose: the library's user identity
+	// is a ULID from the rejected usermgmt module, and extensions are not
+	// ULIDs — forcing them in would misuse the concept.
 	return cqrshtmx.Chain(
-		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		cqrshtmx.ContextEnrichmentMiddleware(nil),
+		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		timingMiddleware,
 		security,
 		cqrshtmx.RecoveryMiddleware,
