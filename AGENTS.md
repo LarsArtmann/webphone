@@ -129,7 +129,13 @@ every build; it is the local tripwire, not a replacement for the E2E.
   sanitization); `/healthz` is honest readiness (`sqlite` ping +
   `blob-dir` write probe, 503 names the failing check, library JSON
   shape; GET-open by decision — probers need no session and the body
-  leaks only check names/errors, never secrets); `/events` rides `Broadcaster.ServeSSE` (its `connected`
+  leaks only check names/errors, never secrets). It is
+  readiness-ONLY — no liveness endpoint exists and
+  `cqrshtmx.ReadinessCheck` carries no per-check timeout (both current
+  checks are local, so no realistic hang source); the DI/health review
+  of 2026-09-19 (`docs/architecture-understanding/`) scored the posture
+  and left F1 (timeout guard) / F2 (liveness decision) in TODO_LIST;
+  `/events` rides `Broadcaster.ServeSSE` (its `connected`
   handshake frame is additive; htmx sse-swap listeners ignore it;
   payloads stay swap-safe fragments).
 - **The island never unloads.** Tab navigation swaps partials into

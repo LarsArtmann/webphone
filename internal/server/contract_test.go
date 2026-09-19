@@ -20,7 +20,7 @@ import (
 // the PBX directory).
 func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	const helperFile = "actions.go"
-	const hookFile = "webhooks.go"   // the secret gate: provider hooks 401 on a bad secret, not on a missing session
+	const hookFile = "webhooks.go"     // the secret gate: provider hooks 401 on a bad secret, not on a missing session
 	const loginFile = "session_api.go" // the login gate: bad credentials, not a missing session
 	sawHelper := false
 	entries, err := filepath.Glob("*.go")
