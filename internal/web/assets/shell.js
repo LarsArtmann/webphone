@@ -119,7 +119,7 @@
     var source = active
       ? "/partials/nav?active=" + active.dataset.tab
       : "/partials/nav";
-    window.htmx.ajax("GET", source, { target: "#wp-nav", swap: "innerHTML" });
+    window.htmx.ajax("GET", source, { target: "#wp-nav", swap: "morph:innerHTML" });
   };
   document.addEventListener("htmx:sseBeforeMessage", function (event) {
     var transcript = event.target;
