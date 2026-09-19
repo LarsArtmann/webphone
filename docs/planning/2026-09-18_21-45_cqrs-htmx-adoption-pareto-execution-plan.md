@@ -91,105 +91,105 @@ Sorted by importance/impact/effort/customer-value (phase order = priority order)
 
 ### Phase 0 — Gates (protects against Verschlimmbessern)
 
-| ID  | Task                                                                                                             | Min | Src | Impact | Value |
-| --- | ---------------------------------------------------------------------------------------------------------------- | --- | --- | ------ | ----- |
-| ~~M01~~ | ~~Baseline: `git status` clean, `GOEXPERIMENT=jsonv2 go test ./...` green before any change~~ done (see status 2026-09-19 §a.1) | ~~12~~ | ~~—~~ | ~~High~~ | ~~H~~ |
+| ID      | Task                                                                                                                                   | Min    | Src    | Impact   | Value |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- | ----- |
+| ~~M01~~ | ~~Baseline: `git status` clean, `GOEXPERIMENT=jsonv2 go test ./...` green before any change~~ done (see status 2026-09-19 §a.1)        | ~~12~~ | ~~—~~  | ~~High~~ | ~~H~~ |
 | ~~M02~~ | ~~Verify recovery/ServeSSE/rate-limiter behavior against the **v4.9.0 tag** (`git show v4.9.0:<file>`), not master~~ done at `2f6ffee` | ~~15~~ | ~~11~~ | ~~High~~ | ~~H~~ |
 
 ### Phase 1 — The 1% (51% of the result)
 
-| ID  | Task                                                                                          | Min | Src | Impact | Value |
-| --- | --------------------------------------------------------------------------------------------- | --- | --- | ------ | ----- |
-| ~~M03~~ | ~~Wrap root handler with `cqrshtmx.RecoveryMiddleware`; delete `recovery()` (server.go:131-141)~~ done at `bbd74a1` | ~~15~~ | ~~1~~ | ~~High~~ | ~~H~~ |
-| ~~M04~~ | ~~Panic-path test: inject panic → 500 + stack trace + method/path in captured log~~ done at `bbd74a1` | ~~20~~ | ~~1,7~~ | ~~High~~ | ~~H~~ |
-| ~~M05~~ | ~~Wrap outermost with `cqrshtmx.RequestLoggingSlog(slog.Default())`~~ done at `fa3bafd` | ~~10~~ | ~~2~~ | ~~High~~ | ~~H~~ |
-| ~~M06~~ | ~~Log-line test: 200/401/429 requests produce records; assert NO bodies/credentials logged~~ done at `fa3bafd` | ~~15~~ | ~~2,7~~ | ~~High~~ | ~~H~~ |
+| ID      | Task                                                                                                                | Min    | Src     | Impact   | Value |
+| ------- | ------------------------------------------------------------------------------------------------------------------- | ------ | ------- | -------- | ----- |
+| ~~M03~~ | ~~Wrap root handler with `cqrshtmx.RecoveryMiddleware`; delete `recovery()` (server.go:131-141)~~ done at `bbd74a1` | ~~15~~ | ~~1~~   | ~~High~~ | ~~H~~ |
+| ~~M04~~ | ~~Panic-path test: inject panic → 500 + stack trace + method/path in captured log~~ done at `bbd74a1`               | ~~20~~ | ~~1,7~~ | ~~High~~ | ~~H~~ |
+| ~~M05~~ | ~~Wrap outermost with `cqrshtmx.RequestLoggingSlog(slog.Default())`~~ done at `fa3bafd`                             | ~~10~~ | ~~2~~   | ~~High~~ | ~~H~~ |
+| ~~M06~~ | ~~Log-line test: 200/401/429 requests produce records; assert NO bodies/credentials logged~~ done at `fa3bafd`      | ~~15~~ | ~~2,7~~ | ~~High~~ | ~~H~~ |
 
 ### Phase 2 — The 4% (64% of the result)
 
-| ID  | Task                                                                                                                                             | Min | Src | Impact | Value |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --- | --- | ------ | ----- |
-| ~~M07~~ | ~~`httputil.KeyedRateLimiterConfig` for login (30/min, burst 5) + swap `loginLimiter`; port login-limiter tests~~ done at `5bbe42d` | ~~30~~ | ~~3~~ | ~~High~~ | ~~H~~ |
-| ~~M08~~ | ~~Swap `hookLimiter` (60/min, burst 60); DELETE ratelimit.go; full limiter test port green; Retry-After assertion~~ done at `753267a` | ~~30~~ | ~~3~~ | ~~High~~ | ~~H~~ |
-| ~~M09~~ | ~~`/healthz` → `cqrshtmx.ReadinessHandler`: `NamedCheck` SQLite `db.Ping` + blob-dir write probe; update healthz tests (ok + 503 paths)~~ done at `753267a` | ~~30~~ | ~~4~~ | ~~High~~ | ~~H~~ |
-| ~~M10~~ | ~~Key-extractor decision record: `FromRemoteAddr` (default, safe) vs `FromClientIP` (needs stack XFF answer — open question 1); document flip rule~~ done at `2f6ffee` | ~~10~~ | ~~6~~ | ~~Med~~ | ~~M~~ |
+| ID      | Task                                                                                                                                                                   | Min    | Src   | Impact   | Value |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- | -------- | ----- |
+| ~~M07~~ | ~~`httputil.KeyedRateLimiterConfig` for login (30/min, burst 5) + swap `loginLimiter`; port login-limiter tests~~ done at `5bbe42d`                                    | ~~30~~ | ~~3~~ | ~~High~~ | ~~H~~ |
+| ~~M08~~ | ~~Swap `hookLimiter` (60/min, burst 60); DELETE ratelimit.go; full limiter test port green; Retry-After assertion~~ done at `753267a`                                  | ~~30~~ | ~~3~~ | ~~High~~ | ~~H~~ |
+| ~~M09~~ | ~~`/healthz` → `cqrshtmx.ReadinessHandler`: `NamedCheck` SQLite `db.Ping` + blob-dir write probe; update healthz tests (ok + 503 paths)~~ done at `753267a`            | ~~30~~ | ~~4~~ | ~~High~~ | ~~H~~ |
+| ~~M10~~ | ~~Key-extractor decision record: `FromRemoteAddr` (default, safe) vs `FromClientIP` (needs stack XFF answer — open question 1); document flip rule~~ done at `2f6ffee` | ~~10~~ | ~~6~~ | ~~Med~~  | ~~M~~ |
 
 ### Phase 3 — Rest of the 20% (80% of the result) + verification gates
 
-| ID  | Task                                                                                                                                             | Min | Src  | Impact | Value |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --- | ---- | ------ | ----- |
-| ~~M11~~ | ~~Collapse `events` loop onto `Broadcaster.ServeSSE` (keep session gate + `SetLang` in front); delete hand loop (sse.go:88-123)~~ done at `aacae89` | ~~25~~ | ~~5~~ | ~~Med~~ | ~~M~~ |
-| ~~M12~~ | ~~Stream-shape safety: assert `retry:` hint + `connected` event; island `sse-swap` listeners unaffected; E2E-sensitivity verdict (open question 3)~~ done at `8cf333c` | ~~15~~ | ~~5,10~~ | ~~Med~~ | ~~M~~ |
-| ~~M13~~ | ~~Full gate: `GOEXPERIMENT=jsonv2 go test ./...` incl. `TestServedPageHoldsTheDomContract` + `go vet`/gofmt on touched files~~ done (see status 2026-09-19 §a.4) | ~~20~~ | ~~7,30~~ | ~~High~~ | ~~H~~ |
-| ~~M14~~ | ~~BuildFlow full gate: `buildflow` (with `BUILDFLOW_NO_RESULT_CACHE=1` for the final run)~~ done (see status 2026-09-19 §a.4) | ~~30~~ | ~~8~~ | ~~High~~ | ~~H~~ |
-| ~~M15~~ | ~~`nix flake check` gate (package build + tests in sandbox + treefmt)~~ done (see status 2026-09-19 §a.4) | ~~30~~ | ~~8~~ | ~~High~~ | ~~H~~ |
-| ~~M16~~ | ~~AGENTS.md: cqrs-htmx adoption posture, audit/plan links, mic/PermissionsPolicy refusal fact, SSE stream policy~~ done at `2f6ffee` | ~~20~~ | ~~34~~ | ~~Med~~ | ~~H~~ |
-| ~~M17~~ | ~~CHANGELOG.md entry: middleware adoption, deletions, honest healthz~~ done at `024d7ed` | ~~10~~ | ~~9~~ | ~~Low~~ | ~~M~~ |
-| ~~M18~~ | ~~Stack E2E decision: confirm zero markup change → document skip; run upstream `tests/browser-e2e.py` if ANY doubt~~ done (see status 2026-09-19 §a.4) | ~~15~~ | ~~10~~ | ~~Med~~ | ~~H~~ |
-| ~~M19~~ | ~~HARVEST via docs-health: route the 50 items into TODO_LIST.md (P0–P3) / ROADMAP.md (rest); cross-link plan + status reports~~ done at `6015051` | ~~30~~ | ~~15~~ | ~~High~~ | ~~H~~ |
+| ID      | Task                                                                                                                                                                   | Min    | Src      | Impact   | Value |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | -------- | ----- |
+| ~~M11~~ | ~~Collapse `events` loop onto `Broadcaster.ServeSSE` (keep session gate + `SetLang` in front); delete hand loop (sse.go:88-123)~~ done at `aacae89`                    | ~~25~~ | ~~5~~    | ~~Med~~  | ~~M~~ |
+| ~~M12~~ | ~~Stream-shape safety: assert `retry:` hint + `connected` event; island `sse-swap` listeners unaffected; E2E-sensitivity verdict (open question 3)~~ done at `8cf333c` | ~~15~~ | ~~5,10~~ | ~~Med~~  | ~~M~~ |
+| ~~M13~~ | ~~Full gate: `GOEXPERIMENT=jsonv2 go test ./...` incl. `TestServedPageHoldsTheDomContract` + `go vet`/gofmt on touched files~~ done (see status 2026-09-19 §a.4)       | ~~20~~ | ~~7,30~~ | ~~High~~ | ~~H~~ |
+| ~~M14~~ | ~~BuildFlow full gate: `buildflow` (with `BUILDFLOW_NO_RESULT_CACHE=1` for the final run)~~ done (see status 2026-09-19 §a.4)                                          | ~~30~~ | ~~8~~    | ~~High~~ | ~~H~~ |
+| ~~M15~~ | ~~`nix flake check` gate (package build + tests in sandbox + treefmt)~~ done (see status 2026-09-19 §a.4)                                                              | ~~30~~ | ~~8~~    | ~~High~~ | ~~H~~ |
+| ~~M16~~ | ~~AGENTS.md: cqrs-htmx adoption posture, audit/plan links, mic/PermissionsPolicy refusal fact, SSE stream policy~~ done at `2f6ffee`                                   | ~~20~~ | ~~34~~   | ~~Med~~  | ~~H~~ |
+| ~~M17~~ | ~~CHANGELOG.md entry: middleware adoption, deletions, honest healthz~~ done at `024d7ed`                                                                               | ~~10~~ | ~~9~~    | ~~Low~~  | ~~M~~ |
+| ~~M18~~ | ~~Stack E2E decision: confirm zero markup change → document skip; run upstream `tests/browser-e2e.py` if ANY doubt~~ done (see status 2026-09-19 §a.4)                 | ~~15~~ | ~~10~~   | ~~Med~~  | ~~H~~ |
+| ~~M19~~ | ~~HARVEST via docs-health: route the 50 items into TODO_LIST.md (P0–P3) / ROADMAP.md (rest); cross-link plan + status reports~~ done at `6015051`                      | ~~30~~ | ~~15~~   | ~~High~~ | ~~H~~ |
 
 ### Phase 4 — Audit-integrity closure (makes the score reproducible & complete)
 
-| ID  | Task                                                                                                                           | Min | Src | Impact | Value |
-| --- | ------------------------------------------------------------------------------------------------------------------------------ | --- | --- | ------ | ----- |
-| ~~M20~~ | ~~Duplication sweep pt 1: read `webhooks.go` handler bodies + `actions.go` tail (contacts import/export)~~ done at `062445c` | ~~20~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
-| ~~M21~~ | ~~Duplication sweep pt 2: read `panels.go`, `proxy.go`, `configjs.go`, `assets.go`, `unread.go` tail~~ done at `062445c` | ~~20~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
-| ~~M22~~ | ~~Amend deep-dive report if the sweep surfaced further duplications (report must not understate)~~ done at `062445c` | ~~15~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
-| ~~M23~~ | ~~Deep-read remaining go doc sections pt 1: ack, notify, decoder, partial~~ done at `062445c` | ~~12~~ | ~~13~~ | ~~Low~~ | ~~L~~ |
-| ~~M24~~ | ~~Deep-read remaining go doc sections pt 2: redirect, security, openapi collector, event catalog~~ done at `062445c` | ~~12~~ | ~~13~~ | ~~Low~~ | ~~L~~ |
-| ~~M25~~ | ~~Rubric appendix in deep-dive report: capability × weight × earned table (makes 62→90 reproducible)~~ done at `062445c` | ~~12~~ | ~~14~~ | ~~Low~~ | ~~M~~ |
-| ~~M26~~ | ~~Effort-minutes column into the report's action table~~ done at `062445c` | ~~10~~ | ~~37~~ | ~~Low~~ | ~~L~~ |
-| ~~M27~~ | ~~Codify "verify dependency internals at the consumed tag" into a checklist (library-deep-dive follow-ups)~~ done at `2f6ffee` | ~~12~~ | ~~36~~ | ~~Med~~ | ~~M~~ |
+| ID      | Task                                                                                                                                                            | Min    | Src    | Impact  | Value |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------- | ----- |
+| ~~M20~~ | ~~Duplication sweep pt 1: read `webhooks.go` handler bodies + `actions.go` tail (contacts import/export)~~ done at `062445c`                                    | ~~20~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
+| ~~M21~~ | ~~Duplication sweep pt 2: read `panels.go`, `proxy.go`, `configjs.go`, `assets.go`, `unread.go` tail~~ done at `062445c`                                        | ~~20~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
+| ~~M22~~ | ~~Amend deep-dive report if the sweep surfaced further duplications (report must not understate)~~ done at `062445c`                                            | ~~15~~ | ~~12~~ | ~~Med~~ | ~~M~~ |
+| ~~M23~~ | ~~Deep-read remaining go doc sections pt 1: ack, notify, decoder, partial~~ done at `062445c`                                                                   | ~~12~~ | ~~13~~ | ~~Low~~ | ~~L~~ |
+| ~~M24~~ | ~~Deep-read remaining go doc sections pt 2: redirect, security, openapi collector, event catalog~~ done at `062445c`                                            | ~~12~~ | ~~13~~ | ~~Low~~ | ~~L~~ |
+| ~~M25~~ | ~~Rubric appendix in deep-dive report: capability × weight × earned table (makes 62→90 reproducible)~~ done at `062445c`                                        | ~~12~~ | ~~14~~ | ~~Low~~ | ~~M~~ |
+| ~~M26~~ | ~~Effort-minutes column into the report's action table~~ done at `062445c`                                                                                      | ~~10~~ | ~~37~~ | ~~Low~~ | ~~L~~ |
+| ~~M27~~ | ~~Codify "verify dependency internals at the consumed tag" into a checklist (library-deep-dive follow-ups)~~ done at `2f6ffee`                                  | ~~12~~ | ~~36~~ | ~~Med~~ | ~~M~~ |
 | ~~M28~~ | ~~Re-score adoption post-Phase-2 (target ~90) + ANNOTATE the 2026-09-18 report (docs-health ANNOTATE mode) + fresh status report~~ done at `062445c`, `ac56060` | ~~25~~ | ~~35~~ | ~~Med~~ | ~~M~~ |
 
 ### Phase 5 — Product-grade enhancements (the road to 100%, part 1)
 
-| ID  | Task                                                                                                                    | Min | Src | Impact | Value |
-| --- | ----------------------------------------------------------------------------------------------------------------------- | --- | --- | ------ | ----- |
+| ID      | Task                                                                                                                                                                                                                        | Min    | Src    | Impact  | Value |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------- | ----- |
 | ~~M29~~ | ~~OOBHTML spike pt 1: env-flag-gated payload prototype — unread-badge fragment as `hx-swap-oob` inside `threads` SSE data~~ done at `82efa2c` (spike verdict: PARKED, criteria in the reviews/oob-badge-spike-verdict note) | ~~25~~ | ~~16~~ | ~~Med~~ | ~~H~~ |
-| ~~M30~~ | ~~OOBHTML spike pt 2: E2E validation of oob processing under the SSE ext; adopt-or-park verdict written down~~ done at `82efa2c` (spike verdict: PARKED, criteria in the reviews/oob-badge-spike-verdict note) | ~~25~~ | ~~16~~ | ~~Med~~ | ~~H~~ |
-| ~~M31~~ | ~~Island: listen for `connected` SSE event → "live" indicator (same-origin island asset edit)~~ done at `91d018c`, `df8b32d` | ~~20~~ | ~~17~~ | ~~Med~~ | ~~M~~ |
-| ~~M32~~ | ~~Test: connected-event indicator; assert zero DOM-contract ids touched~~ done at `df8b32d` (asset tripwires, server_test) | ~~12~~ | ~~17~~ | ~~Low~~ | ~~M~~ |
-| ~~M33~~ | ~~Toasts pt 1: island JS listener for HTMX `HX-Trigger` toasts (`cqrshtmx.ToastDetail` wire shape)~~ done at `91d018c` | ~~25~~ | ~~18~~ | ~~Med~~ | ~~M~~ |
-| ~~M34~~ | ~~Toasts pt 2: server sets Notify headers on send/save/delete success+error paths; i18n copy in en+de; style + test~~ done at `91d018c` | ~~30~~ | ~~18~~ | ~~Med~~ | ~~M~~ |
-| ~~M35~~ | ~~Rate-limit `GET /events` (reuse KeyedRateLimiter; SSE reconnect churn is unthrottled today) + test~~ done at `181590a` | ~~20~~ | ~~19~~ | ~~Med~~ | ~~H~~ |
-| ~~M36~~ | ~~Hub idle teardown design: TTL reaper for `ExtensionHubs` (hubs currently never torn down)~~ done at `238af70` | ~~15~~ | ~~20~~ | ~~Low~~ | ~~L~~ |
-| ~~M37~~ | ~~Implement hub reaper + unsubscribe-safety test (no broadcast-after-close panic)~~ done at `238af70` | ~~25~~ | ~~20~~ | ~~Low~~ | ~~M~~ |
-| ~~M38~~ | ~~Webhook idempotency: store choice (memory vs SQL) + wire into `/hooks/*/status` handlers~~ done at `232795e` | ~~25~~ | ~~21~~ | ~~Med~~ | ~~M~~ |
-| ~~M39~~ | ~~Idempotency tests: duplicate `provider_ref` replay → same result, no double store write; document in AGENTS.md~~ done at `232795e`, `7ba25cc` | ~~20~~ | ~~21~~ | ~~Med~~ | ~~M~~ |
-| ~~M40~~ | ~~`/version` endpoint (library `DebugHandler` pattern: version/goVersion/title) + test~~ done at `1e09884` | ~~15~~ | ~~22~~ | ~~Low~~ | ~~M~~ |
-| ~~M41~~ | ~~Server-Timing middleware behind `WEBPHONE_DEBUG_TIMING`-style flag + test~~ done at `1e09884` | ~~20~~ | ~~23~~ | ~~Low~~ | ~~L~~ |
-| ~~M42~~ | ~~OpenAPI 3.1 spec for `/api/session` (+`/openapi.json` route) + spec test~~ done at `d60c166` | ~~25~~ | ~~24~~ | ~~Low~~ | ~~L~~ |
-| ~~M43~~ | ~~Compose root middleware stack with `cqrshtmx.Chain` + ordering parity test~~ done at `1e09884` | ~~12~~ | ~~25~~ | ~~Low~~ | ~~L~~ |
+| ~~M30~~ | ~~OOBHTML spike pt 2: E2E validation of oob processing under the SSE ext; adopt-or-park verdict written down~~ done at `82efa2c` (spike verdict: PARKED, criteria in the reviews/oob-badge-spike-verdict note)              | ~~25~~ | ~~16~~ | ~~Med~~ | ~~H~~ |
+| ~~M31~~ | ~~Island: listen for `connected` SSE event → "live" indicator (same-origin island asset edit)~~ done at `91d018c`, `df8b32d`                                                                                                | ~~20~~ | ~~17~~ | ~~Med~~ | ~~M~~ |
+| ~~M32~~ | ~~Test: connected-event indicator; assert zero DOM-contract ids touched~~ done at `df8b32d` (asset tripwires, server_test)                                                                                                  | ~~12~~ | ~~17~~ | ~~Low~~ | ~~M~~ |
+| ~~M33~~ | ~~Toasts pt 1: island JS listener for HTMX `HX-Trigger` toasts (`cqrshtmx.ToastDetail` wire shape)~~ done at `91d018c`                                                                                                      | ~~25~~ | ~~18~~ | ~~Med~~ | ~~M~~ |
+| ~~M34~~ | ~~Toasts pt 2: server sets Notify headers on send/save/delete success+error paths; i18n copy in en+de; style + test~~ done at `91d018c`                                                                                     | ~~30~~ | ~~18~~ | ~~Med~~ | ~~M~~ |
+| ~~M35~~ | ~~Rate-limit `GET /events` (reuse KeyedRateLimiter; SSE reconnect churn is unthrottled today) + test~~ done at `181590a`                                                                                                    | ~~20~~ | ~~19~~ | ~~Med~~ | ~~H~~ |
+| ~~M36~~ | ~~Hub idle teardown design: TTL reaper for `ExtensionHubs` (hubs currently never torn down)~~ done at `238af70`                                                                                                             | ~~15~~ | ~~20~~ | ~~Low~~ | ~~L~~ |
+| ~~M37~~ | ~~Implement hub reaper + unsubscribe-safety test (no broadcast-after-close panic)~~ done at `238af70`                                                                                                                       | ~~25~~ | ~~20~~ | ~~Low~~ | ~~M~~ |
+| ~~M38~~ | ~~Webhook idempotency: store choice (memory vs SQL) + wire into `/hooks/*/status` handlers~~ done at `232795e`                                                                                                              | ~~25~~ | ~~21~~ | ~~Med~~ | ~~M~~ |
+| ~~M39~~ | ~~Idempotency tests: duplicate `provider_ref` replay → same result, no double store write; document in AGENTS.md~~ done at `232795e`, `7ba25cc`                                                                             | ~~20~~ | ~~21~~ | ~~Med~~ | ~~M~~ |
+| ~~M40~~ | ~~`/version` endpoint (library `DebugHandler` pattern: version/goVersion/title) + test~~ done at `1e09884`                                                                                                                  | ~~15~~ | ~~22~~ | ~~Low~~ | ~~M~~ |
+| ~~M41~~ | ~~Server-Timing middleware behind `WEBPHONE_DEBUG_TIMING`-style flag + test~~ done at `1e09884`                                                                                                                             | ~~20~~ | ~~23~~ | ~~Low~~ | ~~L~~ |
+| ~~M42~~ | ~~OpenAPI 3.1 spec for `/api/session` (+`/openapi.json` route) + spec test~~ done at `d60c166`                                                                                                                              | ~~25~~ | ~~24~~ | ~~Low~~ | ~~L~~ |
+| ~~M43~~ | ~~Compose root middleware stack with `cqrshtmx.Chain` + ordering parity test~~ done at `1e09884`                                                                                                                            | ~~12~~ | ~~25~~ | ~~Low~~ | ~~L~~ |
 
 ### Phase 6 — Hardening (the road to 100%, part 2)
 
-| ID  | Task                                                                                     | Min | Src   | Impact | Value |
-| --- | ---------------------------------------------------------------------------------------- | --- | ----- | ------ | ----- |
-| ~~M44~~ | ~~Fuzz `/hooks/*` JSON parsing (json/v2) with malformed/hostile payloads; fix findings~~ done at `f35dbf3` (844k execs, zero findings) | ~~25~~ | ~~26~~ | ~~Med~~ | ~~M~~ |
-| ~~M45~~ | ~~Invariant test: hook limiter WRAPS secret gate (order pinned)~~ done at `181590a` | ~~15~~ | ~~27~~ | ~~Med~~ | ~~M~~ |
-| ~~M46~~ | ~~Island 429/`Retry-After` handling test for `phone-api/*` fetch wrappers~~ done at `d60c166`, `718cbe7` | ~~15~~ | ~~28~~ | ~~Low~~ | ~~M~~ |
-| ~~M47~~ | ~~Session TTL sweeper vs `SessionTTL` config interaction test~~ done at `f35dbf3` | ~~15~~ | ~~29~~ | ~~Low~~ | ~~L~~ |
-| ~~M48~~ | ~~Indirect-dep drift check (cqrs-htmx transitives) + note the root-`v4.10.0` bump trigger~~ done at `82efa2c` (bump trigger in ROADMAP) | ~~15~~ | ~~31,32~~ | ~~Low~~ | ~~L~~ |
-| ~~M49~~ | ~~vulnix runtime-closure rescan (`nix-store -qR result` method per AGENTS.md) + dated note~~ done (see status 2026-09-19 §a.7; re-verified 2026-09-19 — glibc CVE fixed in-tree, see AGENTS.md) | ~~25~~ | ~~33~~ | ~~Low~~ | ~~M~~ |
+| ID      | Task                                                                                                                                                                                            | Min    | Src       | Impact  | Value |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------- | ------- | ----- |
+| ~~M44~~ | ~~Fuzz `/hooks/*` JSON parsing (json/v2) with malformed/hostile payloads; fix findings~~ done at `f35dbf3` (844k execs, zero findings)                                                          | ~~25~~ | ~~26~~    | ~~Med~~ | ~~M~~ |
+| ~~M45~~ | ~~Invariant test: hook limiter WRAPS secret gate (order pinned)~~ done at `181590a`                                                                                                             | ~~15~~ | ~~27~~    | ~~Med~~ | ~~M~~ |
+| ~~M46~~ | ~~Island 429/`Retry-After` handling test for `phone-api/*` fetch wrappers~~ done at `d60c166`, `718cbe7`                                                                                        | ~~15~~ | ~~28~~    | ~~Low~~ | ~~M~~ |
+| ~~M47~~ | ~~Session TTL sweeper vs `SessionTTL` config interaction test~~ done at `f35dbf3`                                                                                                               | ~~15~~ | ~~29~~    | ~~Low~~ | ~~L~~ |
+| ~~M48~~ | ~~Indirect-dep drift check (cqrs-htmx transitives) + note the root-`v4.10.0` bump trigger~~ done at `82efa2c` (bump trigger in ROADMAP)                                                         | ~~15~~ | ~~31,32~~ | ~~Low~~ | ~~L~~ |
+| ~~M49~~ | ~~vulnix runtime-closure rescan (`nix-store -qR result` method per AGENTS.md) + dated note~~ done (see status 2026-09-19 §a.7; re-verified 2026-09-19 — glibc CVE fixed in-tree, see AGENTS.md) | ~~25~~ | ~~33~~    | ~~Low~~ | ~~M~~ |
 
 ### Phase 7 — Long tail (decision records & doc notes; ROADMAP fuel)
 
-| ID  | Task                                                                                           | Min | Src | Impact | Value |
-| --- | ---------------------------------------------------------------------------------------------- | --- | --- | ------ | ----- |
-| ~~M50~~ | ~~Decision record: `StructuredError` for `/api/session` — adopt only if island branches on codes~~ done at `062445c`, `6015051` | ~~12~~ | ~~38~~ | ~~Low~~ | ~~L~~ |
-| ~~M51~~ | ~~Document `sync/` multi-tab module N.A. verdict (per-tab SIP UA is by design)~~ done at `062445c` | ~~10~~ | ~~39~~ | ~~Low~~ | ~~L~~ |
-| ~~M52~~ | ~~Document `DecodePagination` N.A. verdict (cursor `older=` semantics differ)~~ done at `062445c` | ~~10~~ | ~~40~~ | ~~Low~~ | ~~L~~ |
-| ~~M53~~ | ~~Hub fan-out benchmark (N extensions × M subscribers) + baseline numbers recorded~~ done at `82efa2c` | ~~30~~ | ~~41~~ | ~~Low~~ | ~~L~~ |
-| M54 | Badge push from `unreadCache` invalidation points (gated on M30 verdict)                       | 15  | 42  | Med    | M     |
-| ~~M55~~ | ~~Document hx-boost non-adoption (island tab-swap is deliberate)~~ done at `062445c` | ~~10~~ | ~~43~~ | ~~Low~~ | ~~L~~ |
-| ~~M56~~ | ~~Log-formatter decision: `DefaultLogFormatter` vs `JSONLogFormatter` for the stack's sink~~ done at `062445c` | ~~12~~ | ~~44~~ | ~~Low~~ | ~~L~~ |
-| ~~M57~~ | ~~Readiness-body contract note for the stack's probes (gated on open question 2)~~ done at `062445c`, `6015051` | ~~10~~ | ~~45~~ | ~~Low~~ | ~~M~~ |
-| ~~M58~~ | ~~Close-out review notes: `notify.go`/`ack.go` applicability (symbol map 100%)~~ done at `062445c` | ~~12~~ | ~~46~~ | ~~Low~~ | ~~L~~ |
-| M59 | Cross-link deep-dive ↔ structural-health HTML report (sibling audit hygiene)                   | 10  | 47  | Low    | L     |
+| ID      | Task                                                                                                                                                                        | Min    | Src    | Impact  | Value |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------- | ----- |
+| ~~M50~~ | ~~Decision record: `StructuredError` for `/api/session` — adopt only if island branches on codes~~ done at `062445c`, `6015051`                                             | ~~12~~ | ~~38~~ | ~~Low~~ | ~~L~~ |
+| ~~M51~~ | ~~Document `sync/` multi-tab module N.A. verdict (per-tab SIP UA is by design)~~ done at `062445c`                                                                          | ~~10~~ | ~~39~~ | ~~Low~~ | ~~L~~ |
+| ~~M52~~ | ~~Document `DecodePagination` N.A. verdict (cursor `older=` semantics differ)~~ done at `062445c`                                                                           | ~~10~~ | ~~40~~ | ~~Low~~ | ~~L~~ |
+| ~~M53~~ | ~~Hub fan-out benchmark (N extensions × M subscribers) + baseline numbers recorded~~ done at `82efa2c`                                                                      | ~~30~~ | ~~41~~ | ~~Low~~ | ~~L~~ |
+| M54     | Badge push from `unreadCache` invalidation points (gated on M30 verdict)                                                                                                    | 15     | 42     | Med     | M     |
+| ~~M55~~ | ~~Document hx-boost non-adoption (island tab-swap is deliberate)~~ done at `062445c`                                                                                        | ~~10~~ | ~~43~~ | ~~Low~~ | ~~L~~ |
+| ~~M56~~ | ~~Log-formatter decision: `DefaultLogFormatter` vs `JSONLogFormatter` for the stack's sink~~ done at `062445c`                                                              | ~~12~~ | ~~44~~ | ~~Low~~ | ~~L~~ |
+| ~~M57~~ | ~~Readiness-body contract note for the stack's probes (gated on open question 2)~~ done at `062445c`, `6015051`                                                             | ~~10~~ | ~~45~~ | ~~Low~~ | ~~M~~ |
+| ~~M58~~ | ~~Close-out review notes: `notify.go`/`ack.go` applicability (symbol map 100%)~~ done at `062445c`                                                                          | ~~12~~ | ~~46~~ | ~~Low~~ | ~~L~~ |
+| M59     | Cross-link deep-dive ↔ structural-health HTML report (sibling audit hygiene)                                                                                                | 10     | 47     | Low     | L     |
 | ~~M60~~ | ~~If XFF trusted (open question 1 = yes): ClientIP-trust note upstream in httputil docs~~ done at `6015051` (recorded in ROADMAP; executes only if XFF is proven sanitized) | ~~12~~ | ~~48~~ | ~~Low~~ | ~~L~~ |
-| ~~M61~~ | ~~Post-adoption: re-diff cqrs-htmx master for new middleware worth adopting~~ done at `82efa2c` (MD1: retry hint arrives with the next root tag) | ~~12~~ | ~~49~~ | ~~Low~~ | ~~L~~ |
-| ~~M62~~ | ~~Decision record: `/healthz` exposure (GET-open vs session-gated; detail leakage review)~~ done at `bbd74a1`, `2f6ffee` | ~~10~~ | ~~50~~ | ~~Low~~ | ~~M~~ |
+| ~~M61~~ | ~~Post-adoption: re-diff cqrs-htmx master for new middleware worth adopting~~ done at `82efa2c` (MD1: retry hint arrives with the next root tag)                            | ~~12~~ | ~~49~~ | ~~Low~~ | ~~L~~ |
+| ~~M62~~ | ~~Decision record: `/healthz` exposure (GET-open vs session-gated; detail leakage review)~~ done at `bbd74a1`, `2f6ffee`                                                    | ~~10~~ | ~~50~~ | ~~Low~~ | ~~M~~ |
 
 **Totals:** 62 medium tasks ≈ **18.5 h** (sum of estimate midpoints; B1/B2 are 30-min
 monolithic gate runs). Coverage check: every Src #(1–50) appears at least

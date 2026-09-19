@@ -311,9 +311,9 @@ honestly:
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
 1. **Tag naming**: should `v2.0.0` point at `b390c7a` (the v2 rebuild
-   + sweep state that the stack pinned) with `v2.1.0` at current HEAD
-   — or do you want a single `v2.0.0` at HEAD and no 2.1.0? (Decides
-   how I redo the CHANGELOG cut; both resolve the lychee 404s.)
+   - sweep state that the stack pinned) with `v2.1.0` at current HEAD
+     — or do you want a single `v2.0.0` at HEAD and no 2.1.0? (Decides
+     how I redo the CHANGELOG cut; both resolve the lychee 404s.)
 2. **The stack's E2E diagnostics block** (commit b96d4c2 in
    nix-international-telephony, TEMP-DIAG marked): keep it as a
    permanent stall-diagnostic, or revert it now that the bug is fixed?
