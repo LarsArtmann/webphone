@@ -206,3 +206,30 @@ flowchart TD
 - **After every parent task:** the guard-rail gates + `git status` + detailed commit (daemon races — re-check status immediately before `git add`).
 - **P1/M1.2 and P8/M8.2 block on owner answers** (status-report section g, questions 1–3); everything else proceeds without them.
 - After approval of the plan's execution: docs-health **HARVEST** runs as M4.x so nothing dies in this timestamped file.
+
+---
+
+## Owner decision memos (P8, drafted 2026-09-19 evening — awaiting answers)
+
+**Memo 1 — stack pin policy (Q: ride webphone `main` or release tags?).**
+Recommendation: **keep riding `main`, bump the lock per release** (the runbook's
+stack-bump step is already mandatory, so every release re-pins anyway), plus the
+new rule: never deploy from pbx-artmann without a fresh `nix flake lock
+--update-input telephony`. Rationale: today's incident showed the REAL hazard is
+not main-riding — it is a STALE pin (pbx-artmann's lock predated the v2.1.0
+chain and would have re-shipped the broken build; webphone-side code moves are
+always E2E-gated before they reach a lock). Tags-only would slow every fix by a
+release ceremony without removing the stale-pin class. Alternative rejected:
+pinning `?ref=vX.Y.Z` refs — the lock already pins an exact rev; a ref adds a
+second moving part. DECIDED line goes into AGENTS.md on your go.
+
+**Memo 2 — pbx-artmann input type (`path:` vs github).**
+Recommendation: **keep `path:` with lock discipline** (current shape). Rationale:
+the repo is private and never published; a github input would need credential
+plumbing for zero isolation gain, and the 2026-09-18 "burn" was lock staleness,
+which today's pre-flight check (narHash comparison before any deploy) addresses
+directly. The one real cost of `path:` — deploys depend on the local checkout
+being clean and re-locked — is exactly what the runbook step now enforces.
+Alternative rejected: github pin — private-repo auth in a second trust domain,
+slower iteration, same staleness failure mode. DECIDED line goes into AGENTS.md
+on your go.

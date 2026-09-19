@@ -40,6 +40,11 @@ func run() error {
 	}
 	slog.Info("webphone starting",
 		"addr", cfg.Addr, "dataDir", cfg.DataDir, "gateway", string(cfg.Gateway.Mode))
+	// Operators must SEE the fronting shape at boot: an empty list pair is
+	// the exact configuration that 403s every browser login behind a
+	// TLS-terminating proxy (hosts only — never secret material).
+	slog.Info("csrf fronting",
+		"trustedProxies", len(cfg.CSRF.TrustedProxies), "trustedOrigins", cfg.CSRF.TrustedOrigins)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
