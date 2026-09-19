@@ -1,0 +1,22 @@
+{
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "off",
+    "pedantic": "off",
+    "perf": "off",
+    "style": "off",
+    "restriction": "off",
+    "suspicious": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    "no-undef": "error"
+  },
+  "globals": {
+    "SIP": "readonly"
+  }
+}

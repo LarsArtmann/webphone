@@ -159,6 +159,22 @@
                   cd ${self}
                   deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
                 '';
+
+            # no-undef over the SIP island modules: a call to an undefined
+            # identifier used to surface only as a silent browser
+            # ReferenceError (the accept/reject bug class) — this gate is
+            # the local tripwire. The island is excluded from BuildFlow,
+            # so the gate lives here with its config beside the sources.
+            island-lint =
+              pkgs.runCommand "island-lint-check"
+                {
+                  nativeBuildInputs = [ pkgs.oxlint ];
+                  meta.description = "oxlint no-undef over the SIP island modules";
+                }
+                ''
+                  cd ${self}
+                  oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/
+                '';
           };
 
           devShells.default = pkgs.mkShellNoCC {
@@ -170,6 +186,7 @@
               esbuild
               jq
               nil
+              oxlint
             ];
           };
 
