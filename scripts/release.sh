@@ -97,7 +97,7 @@ run nix run nixpkgs#lychee -- .
 step "7/9 stack: relock, gates, push ($STACK)"
 [ -d "$STACK" ] || { echo "stack dir missing: $STACK" >&2; exit 1; }
 [ -z "$(git -C "$STACK" status --porcelain)" ] || { echo "stack tree not clean" >&2; exit 1; }
-run git -C "$STACK" nix flake lock --update-input webphone
+run bash -c "cd '$STACK' && nix flake lock --update-input webphone"
 if [ "$DRY_RUN" != "1" ]; then
   git -C "$STACK" add flake.lock
   git -C "$STACK" commit -m "chore: bump webphone input to $TAG"
