@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-19
+
 ### Security
 
 - Login (`POST /api/session`) now verifies the submitted
@@ -119,6 +121,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cqrshtmx.ToastDetail`, so an upstream shape change fails this build
   instead of silently breaking the island's toast listener.
 
+- `scripts/release.sh`: the release runbook (preconditions, fold
+  check, version bump, gates, tag/push/verify, link check, stack
+  relock + gates, aarch64 cross-builds, GitHub release) as one
+  fail-fast command with `--dry-run`.
+- `scripts/webphone-smoke.py --base` now probes foreign servers
+  honestly: secret/injection-dependent checks are skipped with a
+  stated reason, and bogus login credentials must be REJECTED (a 201
+  flags a pre-v2.1.1 build that still mints sessions without
+  verification).
+
 ### Fixed
 
 - CSRF rejected every browser login behind the TLS-terminating proxy:
@@ -139,6 +151,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Session→PBX credential construction is centralized
   (`Session.PBXCredentials()` + `SignInFirst`), removing four inline
   copies in the server handlers.
+- Unreachable send gateways (message/fax) now answer 502 with a
+  localized "saved as failed" note instead of 422 with the gateway's
+  internal error text; validation mistakes keep their 422 reasons.
 
 ## [2.0.0] - 2026-09-19
 
