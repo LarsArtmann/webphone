@@ -143,16 +143,26 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `internal/arch/arch_test.go`, which also asserts `domain` imports
   nothing internal and services never import `server`/`web`); the
   server mirrors the same rule.
-- **Sessions**: the island POSTs `/api/session` AFTER its REGISTER
-  succeeds (credentials proven against the PBX); the server keeps them
-  in an in-memory TTL store + HttpOnly cookie. `session.js` attaches
-  `sse-connect` to `.wp-root` post-login (no reload — the password is
-  memory-only) and reloads the page on logout. Login and hooks are
-  per-IP rate limited (the hook limiter wraps, not sits inside, the
-  secret gate). Server handlers self-gate through the shared
-  `requireSession` helper; `Sessions.Require` middleware additionally
-  wires `/events` and `/phone-api/` — dual-layer by design (pages must
-  render anonymously; routes stay gated regardless of wiring).
+- **Sessions**: the island POSTs `/api/session` and the server VERIFIES
+  the submitted extension/password against the PBX directory before
+  minting (2026-09-19, live-probe finding: the old trust-the-island
+  design let a forged POST open a session scoped to any extension —
+  tab partials, fax/attachment streams and SSE fragments scope by the
+  session alone, so stored threads/fax/contacts of any extension were
+  readable without its password). Fail-closed: 401 rejected
+  credentials, 502 PBX unreachable; deployments without a phone API
+  (loopback dev) skip verification and WARN at boot. The server keeps
+  sessions in an in-memory TTL store + HttpOnly cookie. `session.js`
+  attaches `sse-connect` to `.wp-root` post-login (no reload — the
+  password is memory-only) and reloads the page on logout. Login and
+  hooks are per-IP rate limited (the hook limiter wraps, not sits
+  inside, the secret gate). Server handlers self-gate through the
+  shared `requireSession` helper; `Sessions.Require` middleware
+  additionally wires `/events` and `/phone-api/` — dual-layer by
+  design (pages must render anonymously; routes stay gated regardless
+  of wiring). The contract test allowlists exactly three 401 writers:
+  actions.go (session gate), webhooks.go (secret gate),
+  session_api.go (login credential gate).
 - **Language**: UI language is per extension — `wp-lang` cookie
   (written by the island's `setLang`, samesite=strict) →
   `Accept-Language: de*` → English default. `ExtensionHubs` remember

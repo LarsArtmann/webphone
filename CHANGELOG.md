@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Login (`POST /api/session`) now verifies the submitted
+  extension/password against the PBX directory before a session is
+  minted, failing closed (401 rejected credentials, 502 PBX
+  unreachable). Previously the endpoint trusted the island's claim
+  that a SIP REGISTER had succeeded; a forged request could open a
+  session scoped to any extension and read that extension's stored
+  message threads, fax documents and contacts (the tab partials,
+  attachment streams and SSE fragments scope by the session alone).
+  Found by live-probing the production deployment; deployments without
+  a phone API (loopback dev) skip verification and log a warning at
+  boot.
+
 ## [2.1.0] - 2026-09-19
 
 ### Added
