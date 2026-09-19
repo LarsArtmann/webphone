@@ -134,6 +134,15 @@ func TestCSRFTrustsTheFrontingProxy(t *testing.T) {
 			if match == nil {
 				t.Fatal("no csrf token in page")
 			}
+			// A https trusted origin marks the CSRF cookie Secure; a
+			// plain-HTTP test harness must carry it by hand (a real
+			// browser received it over the TLS hop with the vhost).
+			cookieHeader := ""
+			for _, cookie := range resp.Cookies() {
+				if cookie.Name == "csrf_token" && cookie.Secure {
+					cookieHeader = "csrf_token=" + cookie.Value
+				}
+			}
 
 			payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
 			req, err = http.NewRequest(http.MethodPost, c.base+"/api/session", bytes.NewReader(payload))
@@ -147,12 +156,58 @@ func TestCSRFTrustsTheFrontingProxy(t *testing.T) {
 			req.Header.Set("Sec-Fetch-Mode", "cors")
 			req.Header.Set("X-Forwarded-Proto", "https")
 			req.Header.Set("X-CSRF-Token", string(match[1]))
+			if cookieHeader != "" {
+				req.Header.Set("Cookie", cookieHeader)
+			}
 			resp, err = c.http.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if resp.StatusCode != tc.want {
 				t.Fatalf("fronted login: %d (want %d)", resp.StatusCode, tc.want)
+			}
+		})
+	}
+}
+
+// TestCSRFSecureFollowsTrustedOrigins pins the cookie-hygiene rule: an
+// https trusted origin means TLS fronting, so the CSRF cookie must carry
+// the Secure flag; plain-http origins (loopback dev) must not set it.
+func TestCSRFSecureFollowsTrustedOrigins(t *testing.T) {
+	for name, tc := range map[string]struct {
+		origins   []string
+		wantStray bool
+	}{
+		"https origin sets Secure": {origins: []string{"https://pbx.test"}, wantStray: true},
+		"http origin stays plain":  {origins: []string{"http://localhost"}, wantStray: false},
+		"unconfigured stays plain": {wantStray: false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+				d.Config.CSRF = config.CSRF{TrustedProxies: []string{"127.0.0.1"}, TrustedOrigins: tc.origins}
+			})
+			req, err := http.NewRequest(http.MethodGet, server.URL+"/", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			resp, err := server.Client().Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+			cookies := resp.Cookies()
+			var csrfCookie *http.Cookie
+			for _, cookie := range cookies {
+				if cookie.Name == "csrf_token" {
+					csrfCookie = cookie
+					break
+				}
+			}
+			if csrfCookie == nil {
+				t.Fatalf("no csrf_token cookie in response (cookies: %v)", cookies)
+			}
+			if got := csrfCookie.Secure; got != tc.wantStray {
+				t.Errorf("csrf_token Secure = %v, want %v", got, tc.wantStray)
 			}
 		})
 	}
