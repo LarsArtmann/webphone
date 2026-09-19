@@ -30,7 +30,11 @@ func TestRequestLogCoversEverySurface(t *testing.T) {
 		t.Fatal(err)
 	}
 	for range loginBurst + 3 {
-		doAndDrain(c, http.MethodPost, "/api/session", payload, "application/json")
+		// Successful logins rotate the CSRF token; re-arm like a real
+		// client so these POSTs exercise the limiter, not the CSRF gate.
+		if resp := doAndDrain(c, http.MethodPost, "/api/session", payload, "application/json"); resp.StatusCode == http.StatusCreated {
+			c.adoptCsrfToken()
+		}
 	}
 
 	entry := log.String()

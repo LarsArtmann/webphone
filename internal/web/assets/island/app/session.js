@@ -29,12 +29,10 @@ export async function createSession(extension, password) {
       await adoptFreshCsrfToken();
     } catch (err) {
       console.warn(
-        "webphone: CSRF token rotation failed (" +
-          err.message +
-          ") — reloading",
+        "webphone: CSRF token rotation failed (" + err.message + "), reloading",
       );
       // The fresh server session survives a reload (cookie); the served
-      // page then carries a matching token again. No call is lost — no
+      // page then carries a matching token again. No call is lost: no
       // call can exist before the REGISTER that just succeeded.
       window.location.reload();
       return;
@@ -112,8 +110,8 @@ function csrfToken() {
 // Login rotates the CSRF token (fixation defense): the login response
 // deletes the cookie, so this fetches the fresh masked token from the
 // CSRF middleware (the GET regenerates the deleted cookie) and updates
-// every token consumer. They all read live — the meta tag here and in
-// auth.js, and htmx re-reads the body's hx-headers per request — so
+// every token consumer. They all read live: the meta tag here and in
+// auth.js, and htmx re-reads the body's hx-headers per request, so
 // updating those two spots re-arms every later POST.
 async function adoptFreshCsrfToken() {
   const res = await fetch("/api/csrf");

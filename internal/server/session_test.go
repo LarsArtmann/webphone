@@ -29,7 +29,7 @@ func TestSessionGatesAndFlows(t *testing.T) {
 	}
 
 	// Signed-in partial renders.
-	resp, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	resp, body := c.do(http.MethodGet, "/partials/messages", nil, "")
 	if resp.StatusCode != http.StatusOK || !strings.Contains(string(body), "No conversations yet") {
 		t.Fatalf("messages partial: %d", resp.StatusCode)
 	}
@@ -58,7 +58,7 @@ func TestLoginRotatesCsrfToken(t *testing.T) {
 		t.Fatalf("login did not invalidate the CSRF cookie: %v", resp.Header.Values("Set-Cookie"))
 	}
 
-	// The page's pre-login token is dead now — POSTs would 403.
+	// The page's pre-login token is dead now; POSTs would 403.
 	resp, _ = c.do(http.MethodPost, "/messages/send", nil, "")
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("stale CSRF token after login: %d (want 403)", resp.StatusCode)
@@ -71,7 +71,7 @@ func TestLoginRotatesCsrfToken(t *testing.T) {
 	}
 	resp, _ = c.do(http.MethodPost, "/messages/send", nil, "")
 	if resp.StatusCode == http.StatusForbidden {
-		t.Fatal("adopted CSRF token rejected — island would be bricked")
+		t.Fatal("adopted CSRF token rejected, island would be bricked")
 	}
 
 	// Logout rotates once more so the token never outlives its session.

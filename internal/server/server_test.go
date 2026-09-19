@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json/v2"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -182,7 +183,7 @@ func (c *client) do(method, path string, body []byte, contentType string) (*http
 // login creates the server session the way the island does and then adopts
 // the CSRF token the login rotated: createSession invalidates the old CSRF
 // cookie (fixation defense), so a fresh masked token must come from
-// GET /api/csrf before any further POST — the same dance session.js
+// GET /api/csrf before any further POST. The same dance session.js
 // performs in the browser.
 func (c *client) login(extension, password string) {
 	c.t.Helper()

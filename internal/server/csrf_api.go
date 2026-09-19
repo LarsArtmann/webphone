@@ -12,7 +12,7 @@ import (
 // GET makes nosurf regenerate the cookie (missing cookie ⇒ new token) and
 // exposes its masked token; the island swaps it into the meta tag and the
 // body's hx-headers (session.js) so every later POST validates again.
-// The answer is a random token only — no session required, and cross-origin
+// The answer is a random token only: no session required, and cross-origin
 // JavaScript cannot read it (same-origin policy), so GET-open is safe.
 func (h *handlers) refreshCSRF(w http.ResponseWriter, r *http.Request) {
 	token := httputil.CSRFTokenFromRequest(r)

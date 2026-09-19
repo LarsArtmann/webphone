@@ -23,6 +23,13 @@ func TestLoginRateLimitPerClient(t *testing.T) {
 			retryAfter(t, resp)
 			break
 		}
+		// A successful login rotates the CSRF token; a scripted flooder
+		// re-arms via GET /api/csrf between attempts, so mimic that:
+		// otherwise the next POST dies at the CSRF layer and never
+		// reaches the limiter this test exercises.
+		if resp.StatusCode == http.StatusCreated {
+			c.adoptCsrfToken()
+		}
 	}
 	if !limited {
 		t.Errorf("login never hit the rate limit after %d attempts", loginBurst+3)

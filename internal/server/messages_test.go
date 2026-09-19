@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"encoding/json/v2"
 	"net/http"
 	"net/url"
 	"regexp"
