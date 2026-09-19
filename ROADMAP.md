@@ -20,11 +20,10 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 - Stack-side switchover of nix-international-telephony onto this
   service: DONE 2026-09-18 (stack imports `nixosModules.default`,
   nginx vhost proxies the service, browser E2E green after the
-  accept/reject wiring fix). Residual resolved 2026-09-19: the stack
-  input is bumped to the v2.0.0 tag commit (stack commit `fc6bc81`,
-  package builds green). Still open: the stack's FULL `nix flake check`
-  with the new lock (FreeSWITCH/operator derivations unexercised) —
-  TODO_LIST.
+  accept/reject wiring fix). Fully resolved 2026-09-19 with the v2.1.0
+  release: the stack input rides the v2.1.0 tag commit `d815004`
+  (stack commit `2289e89`), and the stack's FULL `nix flake check` is
+  green with that lock (browser E2E, webphone VM test included).
 
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
