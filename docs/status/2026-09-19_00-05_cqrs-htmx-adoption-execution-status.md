@@ -7,7 +7,7 @@ Pareto plan with Full Execution Mode ("NOW GET SHIT DONE") · **Input:**
 ## a) FULLY DONE
 
 1. **P0 — baseline + tag verification.** Tree clean, full suite green before any change.
-   G1/G2 re-verified every library claim against the *consumed* v4.9.0 bytes (module
+   G1/G2 re-verified every library claim against the _consumed_ v4.9.0 bytes (module
    cache), not master. One audit claim died here: `ServeSSE` at v4.9.0 sends **no**
    `retry:` hint; `transport.DefaultRetryHintMillis` does not exist at this tag.
 2. **P1 — the 1% (51% of the result).** `recovery()` deleted, `cqrshtmx.RecoveryMiddleware`
@@ -77,13 +77,13 @@ verdict, not undone work.
 
 1. **The audit's retry-hint claim was master-cited** — caught and corrected, but it
    means the original report shipped one wrong capability claim. Fix: rubric appendix
-   + F4 strike-through + the tag-verification lesson in AGENTS.md.
+   - F4 strike-through + the tag-verification lesson in AGENTS.md.
 2. **`rg -rn` earlier read as recursive** — it is `-r n` (replace); briefly produced
    misleading grep output before being caught and re-run correctly.
 3. **Two commits lost their intended messages to the auto-commit daemon** (P2's swap
    and parts of P1/P3 landed as `chore: auto-commit ...` heuristic commits; my
    detailed messages then describe only the remainder). Content is correct and
-   verified; the *history* is noisier than the per-task invariant demands. The daemon
+   verified; the _history_ is noisier than the per-task invariant demands. The daemon
    race is documented in AGENTS.md, but in hindsight I should have committed each
    task the moment its tests went green instead of batching verification.
 4. **One bash append landed mangled** (healthz readiness block with a stray comment +
@@ -91,7 +91,7 @@ verdict, not undone work.
 
 ## e) WHAT WE SHOULD IMPROVE (process notes for the next session)
 
-1. `hookFaxStatus` maps *every* store error to 404 (message counterpart
+1. `hookFaxStatus` maps _every_ store error to 404 (message counterpart
    distinguishes 404/500). Pre-existing wart, noted here; fix separately with the
    provider-retry contract in mind.
 2. The `client`/`testServer` helpers grew organically (variadic mutators); a small

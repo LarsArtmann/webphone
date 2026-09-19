@@ -84,7 +84,7 @@ func TestWebhookStatusIdempotent(t *testing.T) {
 	}
 
 	// Failed attempts are not recorded: an unknown ref 404s twice.
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		if got, _ := postHook(t, server, "/hooks/fax/status",
 			`{"provider_ref":"unknown-ref","status":"failed"}`); got != http.StatusNotFound {
 			t.Fatalf("unknown ref attempt %d: %d, want 404 (retryable)", i+1, got)

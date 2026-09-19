@@ -17,7 +17,7 @@ whole deployment).
 | 100 × 2             | 61.8  |
 | 100 × 10            | 186.7 |
 
-**Reading:** broadcast cost scales with the *target hub's* subscriber
+**Reading:** broadcast cost scales with the _target hub's_ subscriber
 count, not the total hub count — exactly the property the per-extension
 hub registry was chosen for. At 10 live tabs of one extension the
 notifier adds ~0.19 µs per event; even a pathological 100-tab single

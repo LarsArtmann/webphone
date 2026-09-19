@@ -16,7 +16,7 @@ func TestLoginRateLimitPerClient(t *testing.T) {
 	}
 
 	limited := false
-	for i := 0; i < loginBurst+3; i++ {
+	for range loginBurst + 3 {
 		resp, _ := c.do(http.MethodPost, "/api/session", payload, "application/json")
 		if resp.StatusCode == http.StatusTooManyRequests {
 			limited = true
@@ -33,7 +33,7 @@ func TestHookRateLimitPerClient(t *testing.T) {
 	server := newTestServer(t)
 
 	limited := false
-	for i := 0; i < hookBurst+5; i++ {
+	for range hookBurst + 5 {
 		req, err := http.NewRequest(http.MethodPost, server.URL+"/hooks/message", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -77,7 +77,7 @@ func TestEventsRateLimitBounded(t *testing.T) {
 	server := newTestServer(t)
 
 	limited := false
-	for i := 0; i < hookBurst+5; i++ {
+	for range hookBurst + 5 {
 		req, err := http.NewRequest(http.MethodGet, server.URL+"/events", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -108,7 +108,7 @@ func TestHookLimiterWrapsSecretGate(t *testing.T) {
 		server := newTestServer(t)
 
 		seen429 := false
-		for i := 0; i < hookBurst+5; i++ {
+		for range hookBurst + 5 {
 			req, err := http.NewRequest(http.MethodPost, server.URL+"/hooks/fax/status", nil)
 			if err != nil {
 				t.Fatal(err)

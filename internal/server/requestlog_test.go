@@ -29,7 +29,7 @@ func TestRequestLogCoversEverySurface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < loginBurst+3; i++ {
+	for range loginBurst + 3 {
 		doAndDrain(c, http.MethodPost, "/api/session", payload, "application/json")
 	}
 
