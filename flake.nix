@@ -55,59 +55,61 @@
               let
                 webphoneVersion = "2.2.0";
               in
-              pkgs.buildGoModule.override {
-                # Go >= 1.27.1: the fleet floor (see go.mod + devShell).
-                go = pkgs.go_1_27;
-              } {
-                pname = "webphone";
-                version = webphoneVersion;
+              pkgs.buildGoModule.override
+                {
+                  # Go >= 1.27.1: the fleet floor (see go.mod + devShell).
+                  go = pkgs.go_1_27;
+                }
+                {
+                  pname = "webphone";
+                  version = webphoneVersion;
 
-                src = lib.fileset.toSource {
-                  root = ./.;
-                  # Exactly the build inputs: sources under cmd/ and
-                  # internal/ (island assets + committed *_templ.go live
-                  # there) plus the module definition files. Everything
-                  # else (docs, scripts, package/) never reaches Go.
-                  fileset = lib.fileset.unions [
-                    ./cmd
-                    ./go.mod
-                    ./go.sum
-                    ./internal
+                  src = lib.fileset.toSource {
+                    root = ./.;
+                    # Exactly the build inputs: sources under cmd/ and
+                    # internal/ (island assets + committed *_templ.go live
+                    # there) plus the module definition files. Everything
+                    # else (docs, scripts, package/) never reaches Go.
+                    fileset = lib.fileset.unions [
+                      ./cmd
+                      ./go.mod
+                      ./go.sum
+                      ./internal
+                    ];
+                  };
+
+                  vendorHash = "sha256-ZyRy6zOGV6ZzSqcdGRaPuxWnk6D3XWn7uwTsK90ZDxw=";
+
+                  proxyVendor = true;
+
+                  env.GOEXPERIMENT = "jsonv2";
+
+                  subPackages = [ "cmd/webphone" ];
+
+                  ldflags = [
+                    "-s"
+                    "-w"
+                    # /version reports the released version (v-prefixed, like
+                    # the git tag) instead of Go's "(devel)".
+                    "-X github.com/larsartmann/webphone/internal/server.buildVersion=v${webphoneVersion}"
                   ];
+
+                  doCheck = true;
+
+                  meta = {
+                    description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
+                    homepage = "https://github.com/LarsArtmann/webphone";
+                    license = lib.licenses.mit;
+                    mainProgram = "webphone";
+                    platforms = lib.platforms.linux;
+                    maintainers = [
+                      {
+                        name = "Lars Artmann";
+                        github = "LarsArtmann";
+                      }
+                    ];
+                  };
                 };
-
-                vendorHash = "sha256-ZyRy6zOGV6ZzSqcdGRaPuxWnk6D3XWn7uwTsK90ZDxw=";
-
-                proxyVendor = true;
-
-                env.GOEXPERIMENT = "jsonv2";
-
-                subPackages = [ "cmd/webphone" ];
-
-                ldflags = [
-                  "-s"
-                  "-w"
-                  # /version reports the released version (v-prefixed, like
-                  # the git tag) instead of Go's "(devel)".
-                  "-X github.com/larsartmann/webphone/internal/server.buildVersion=v${webphoneVersion}"
-                ];
-
-                doCheck = true;
-
-                meta = {
-                  description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
-                  homepage = "https://github.com/LarsArtmann/webphone";
-                  license = lib.licenses.mit;
-                  mainProgram = "webphone";
-                  platforms = lib.platforms.linux;
-                  maintainers = [
-                    {
-                      name = "Lars Artmann";
-                      github = "LarsArtmann";
-                    }
-                  ];
-                };
-              };
           };
 
           checks = {
