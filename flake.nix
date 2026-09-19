@@ -116,7 +116,9 @@
             # breakage without a full NixOS evaluation.
             webphone-module =
               let
-                evaluated = lib.evalModules {
+                # The NixOS nginx/systemd/users stand-ins shared by the
+                # base evaluation and the HSTS opt-in variant below.
+                moduleSet = extra: {
                   modules = [
                     { _module.args.pkgs = pkgs; }
                     # Minimal stand-ins for the NixOS nginx/systemd/users
@@ -145,18 +147,18 @@
                         };
                       };
                     }
+                  ] ++ [
                     (import ./package/nixos-module.nix)
-                    {
-                      services.webphone = {
-                        enable = true;
-                        package = self'.packages.webphone;
-                        nginx.enable = true;
-                        nginx.hostName = "phone.example.org";
-                        settings.sip_domain = "pbx.example.org";
-                      };
-                    }
+                    ({ services.webphone = {
+                         enable = true;
+                         package = self'.packages.webphone;
+                         nginx.enable = true;
+                         nginx.hostName = "phone.example.org";
+                         settings.sip_domain = "pbx.example.org";
+                       }; } // extra)
                   ];
                 };
+                evaluated = lib.evalModules (moduleSet { });
                 cfg = evaluated.config.services.webphone;
                 vhost = evaluated.config.services.nginx.virtualHosts."phone.example.org";
                 locationNames = lib.attrNames vhost.locations;
@@ -208,7 +210,24 @@
                       throw "webphone-module check: csrf fronting defaults missing from the rendered settings"
                   );
                 }
-              ];
+                {
+                  name = "hsts-opt-in";
+                    path = pkgs.writeText "hsts-opt-in" (
+                      let
+                        hstsEvaluated = lib.evalModules {
+                          modules = moduleSet {
+                            nginx.hsts.enable = true;
+                          };
+                        };
+                        hstsVhost = hstsEvaluated.config.services.nginx.virtualHosts."phone.example.org";
+                      in
+                      if lib.hasInfix "Strict-Transport-Security" hstsVhost.extraConfig then
+                        "hsts header present when enabled"
+                      else
+                        throw "webphone-module check: nginx.hsts.enable did not produce an HSTS vhost header"
+                    );
+                  }
+                ];
 
             statix =
               pkgs.runCommand "statix-check"

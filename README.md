@@ -251,6 +251,10 @@ The NixOS module ships exactly these defaults when `nginx.enable` is set
 (derived from `nginx.hostName`); a startup log line `csrf fronting
 trustedProxies=… trustedOrigins=…` shows the effective shape at boot.
 
+`nginx.hsts.enable` (default **off**) adds Strict-Transport-Security to
+the generated vhost; keep it off until the deployment is genuinely
+https-only — HSTS pins browsers to https for `maxAge` (default 2 years).
+
 ### NixOS module
 
 The flake ships `nixosModules.default` so the binary and its deployment

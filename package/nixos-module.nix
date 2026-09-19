@@ -95,6 +95,19 @@ in
         example = "phone.example.org";
         description = "Virtual host name for the generated nginx vhost.";
       };
+      hsts = {
+        enable = lib.mkEnableOption ''
+          Strict-Transport-Security on the generated vhost. Default off:
+          HSTS pins browsers to https for maxAge seconds, so flipping it
+          on before the deployment is genuinely https-only (ACME working,
+          no http-only tooling left) can brick the domain for that window.'';
+        maxAge = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 63072000;
+          example = 31536000;
+          description = "HSTS max-age in seconds (default 2 years, the common baseline).";
+        };
+      };
     };
   };
 
@@ -187,6 +200,9 @@ in
       enable = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
       virtualHosts.${cfg.nginx.hostName} = {
+        extraConfig = lib.mkIf cfg.nginx.hsts.enable ''
+          add_header Strict-Transport-Security "max-age=${toString cfg.nginx.hsts.maxAge}" always;
+        '';
         locations = {
           "/" = {
             recommendedProxySettings = true;
