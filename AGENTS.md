@@ -130,11 +130,16 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `blob-dir` write probe, 503 names the failing check, library JSON
   shape; GET-open by decision — probers need no session and the body
   leaks only check names/errors, never secrets). It is
-  readiness-ONLY — no liveness endpoint exists and
-  `cqrshtmx.ReadinessCheck` carries no per-check timeout (both current
-  checks are local, so no realistic hang source); the DI/health review
-  of 2026-09-19 (`docs/architecture-understanding/`) scored the posture
-  and left F1 (timeout guard) / F2 (liveness decision) in TODO_LIST;
+  readiness-ONLY — no liveness endpoint exists. Each named check runs
+  under a 2s webphone-side bound (`boundedCheck`: a timeout degrades
+  the probe to 503 naming the check, the underlying call keeps
+  running) — F1 of the DI/health review closed locally; the additive
+  upstream fix in `cqrshtmx.ReadinessHandler` stays tracked in the
+  self-health plan
+  (`docs/planning/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`,
+  whose F2 liveness decision and upstream-release questions remain
+  OWNER CALLS). The review
+  of 2026-09-19 (`docs/architecture-understanding/`) scored the posture;
   `/events` rides `Broadcaster.ServeSSE` (its `connected`
   handshake frame is additive; htmx sse-swap listeners ignore it;
   payloads stay swap-safe fragments).
