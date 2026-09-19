@@ -42,6 +42,7 @@ class Check:
     def __init__(self) -> None:
         self.failures: list[str] = []
         self.passed = 0
+        self.skipped = 0
 
     def ok(self, name: str, condition: bool, detail: str = "") -> bool:
         if condition:
@@ -51,6 +52,10 @@ class Check:
             self.failures.append(f"{name}: {detail}")
             print(f"  [FAIL] {name}: {detail}")
         return condition
+
+    def skip(self, name: str, reason: str) -> None:
+        self.skipped += 1
+        print(f"  [skip] {name} ({reason})")
 
 
 class Smoke:
@@ -192,6 +197,7 @@ def secure_csrf_cookie(headers: dict[str, str]) -> str:
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
+    foreign: bool = False,
 ) -> int:
     c = s.check
     print(f"smoke against {s.base}")
