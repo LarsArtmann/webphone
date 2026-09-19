@@ -261,3 +261,24 @@ Consequence for this plan: the "v2.1.1 hotfix pre-draft" (M27.2) becomes a REAL
 v2.1.1 security release carrying this fix; prod needs one more owner redeploy
 after v2.1.1. P23's rotation work must respect the new constraint that the
 CSRF token outlives rotation only through the documented adoption path.
+
+---
+
+## P23 verdict (2026-09-19, executed as a spec decision instead of code)
+
+M23.1 asked for rotation "when the session store refreshes TTL". Research:
+the store has NO refresh point — sessions are fixed-TTL from `Create`
+(`service.go`: expiry set once, `Get`/`Require` only validate). CSRF tokens
+already rotate at the only real lifecycle events (login and logout) and the
+island adopts via the proven `GET /api/csrf` path.
+
+Forcing a rotation point would mean introducing sliding-session TTL refresh
+(a user-visible behavioral change) plus a per-response re-key protocol
+across server and island, whose regression risk (the documented
+rotation/adoption 403 trap) buys little: an attacker able to read the page's
+CSRF token can equally read fresh responses; the token is worthless without
+the HttpOnly session cookie it pairs with.
+
+Decision: do NOT implement. If sliding sessions ever land (ROADMAP), CSRF
+rotation hooks the TTL-refresh point there and rides the existing adoption
+path. AGENTS.md carries the constraint.

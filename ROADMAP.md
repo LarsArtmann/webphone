@@ -174,3 +174,9 @@ is committed work — refine into TODO_LIST only on demand.
   rescan cadence, daemon-config exclusion of `docs/status/` from
   heuristic commits (upstream infra decision), wrapper-flake bisect
   trick write-up (module-from-HEAD + package-from-rev).
+
+## Session persistence (raw idea, owner call)
+
+Sliding-session TTL refresh (extend expiry on activity) with CSRF token
+rotation at each refresh point, riding the island's existing adoption path
+(`GET /api/csrf`; see the SUPERB plan P23 verdict for why this is deferred).
