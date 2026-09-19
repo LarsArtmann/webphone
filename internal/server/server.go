@@ -7,6 +7,7 @@ package server
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -212,10 +213,13 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /events",
 		h.eventsLimiter.Middleware()(h.deps.Sessions.Require(http.HandlerFunc(h.events))))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
-	// tells the truth about the two backing resources the app needs.
+	// tells the truth about the two backing resources the app needs. Each
+	// check is bounded (see boundedCheck) so a hung resource degrades the
+	// probe to 503 within the budget instead of hanging the prober.
 	readiness := cqrshtmx.ReadinessHandler(
-		cqrshtmx.NewNamedCheck("sqlite", deps.DB.Ping),
-		cqrshtmx.NewNamedCheck("blob-dir", func() error { return probeBlobDir(deps.BlobRoot) }),
+		cqrshtmx.NewNamedCheck("sqlite", boundedCheck("sqlite", checkTimeout, deps.DB.Ping)),
+		cqrshtmx.NewNamedCheck("blob-dir", boundedCheck("blob-dir", checkTimeout,
+			func() error { return probeBlobDir(deps.BlobRoot) })),
 	)
 	open.Handle("GET /healthz", readiness)
 	open.Handle("GET /version", versionHandler())
@@ -257,6 +261,27 @@ func New(deps Deps) http.Handler {
 		security,
 		cqrshtmx.RecoveryMiddleware,
 	)(root)
+}
+
+// checkTimeout bounds every /healthz named check: a hung backing
+// resource must degrade the probe to 503 within this budget instead of
+// hanging the prober (the library ReadinessHandler waits unconditionally).
+const checkTimeout = 2 * time.Second
+
+// boundedCheck runs check under a deadline. On timeout the probe reports
+// "<name>: timed out after <n>" while the underlying call keeps running —
+// the guard stops the prober from hanging, it does not cancel the check.
+func boundedCheck(name string, timeout time.Duration, check func() error) func() error {
+	return func() error {
+		errC := make(chan error, 1)
+		go func() { errC <- check() }()
+		select {
+		case err := <-errC:
+			return err
+		case <-time.After(timeout):
+			return fmt.Errorf("%s: timed out after %s", name, timeout)
+		}
+	}
 }
 
 // probeBlobDir proves the blob store accepts writes: temp file in the
