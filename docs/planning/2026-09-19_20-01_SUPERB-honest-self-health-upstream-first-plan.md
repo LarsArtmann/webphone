@@ -285,3 +285,47 @@ guardrail: readiness STAYS the existing honest `/healthz`
 (cqrshtmx.ReadinessHandler); go-health serves the NEW liveness + startup
 surfaces beside it. Execution lane: T11/T12 after the go-health release
 lane lands.
+
+---
+
+## EXECUTED — outcome record (2026-09-19, execution turn)
+
+All lanes landed. Deviations from the letter of the plan, all deliberate:
+
+1. **go-health v0.2.0 already shipped injector-free constructors**
+   (`NewWithHealthCheck`/`NewWithDetailedCheck`, accessors.go) — the T5/T6
+   gap narrowed to the ergonomic named-checks layer. Shipped as go-health
+   **v0.3.0** `NewChecks(map[string]CheckFunc)` (checks.go,
+   docs/named-checks-design.md): concurrent execution, per-check
+   `duration_ns`, panic recovery, nil fail-closed, batch-deadline
+   abandonment (a wedged check can no longer hang the probe). Tag pushed,
+   proxy-resolved, GitHub Release cut. The repo's fleet Go 1.27.1 floor
+   required a flake toolchain fix (go_1_27) + treefmt gofmt-for-goimports
+   swap to keep the sandboxed format gate green.
+2. **F2 shipped as `/livez` + `/startupz`** (not the plan's `/readyz`
+   spelling): readiness keeps ONE home at `/healthz` — mounting a
+   go-health readiness endpoint beside it would be a second readiness
+   truth, violating guardrail 2. The go-health probe shares /healthz's
+   check functions (same truth, two lifecycles). Fetch-free `/livez`
+   gives a prober the wedged-process-vs-degraded-dependencies split.
+3. **cqrs-htmx v4.11.0**: the concurrent release train cut the family tag
+   WITH the per-check `NamedCheck.Timeout` feature inside (the daemon
+   absorbed this session's readiness work pre-tag); this session completed
+   the release notes (the timeout feature was missing from the CHANGELOG)
+   and pushed master. Webphone bumped to v4.11.0 and deleted its local
+   `boundedCheck` wrapper — the upstream `NamedCheck.Timeout` (2s) now
+   owns F1. The SSE stream test deliberately accepts the leading
+   `retry:` hint v4.11.0's ServeSSE now emits (valid SSE, consumed by the
+   htmx sse extension — watch the stack browser E2E on its next run).
+4. **Webphone took the Go 1.27.1 fleet floor** (go.mod + flake
+   builder/devShell on go_1_27) — required by go-health v0.3.0 and the
+   cqrs-htmx v4.11.x train; GOEXPERIMENT=jsonv2 env stays (harmless,
+   json/v2 stable in 1.27).
+5. F3 (`sharedContacts` indirection) was closed by a concurrent session;
+   verified and folded into this outcome record.
+
+Gates at close: webphone `go test ./...` green, `nix flake check` green,
+smoke 26/26, server lint 0 issues (one pre-existing errcheck in another
+session's new cmd/webphone/drift_test.go left alone); go-health gates all
+green; cqrs-htmx root suite + lint green. No webphone release cut — the
+changes ride the next train (CHANGELOG Unreleased).
