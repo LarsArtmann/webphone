@@ -1,0 +1,147 @@
+# Status: TODO-Sweep Closeout — Stack Gates, Contract Drift, and Honest Debris
+
+- **Timestamp:** 2026-09-19 10:55 CEST (session ran ~09:45–10:55)
+- **Scope:** execution of the remaining TODO_LIST rows (stack E2E, stack flake check,
+  TODO-row cleanup, `--all-systems` trial, final gates) in this repo, plus the
+  consuming stack (`~/projects/nix-international-telephony`).
+- **Context:** a parallel session landed the "superb-100" cqrs-htmx adoption
+  (request-ID enrichment, `templ.JSONString` CSRF wiring, calibrated
+  Permissions-Policy, servertiming middleware, webhook 5xx redaction) in commits
+  `1bc2eaf`–`bfa24eb` mid-session. Its own report:
+  `docs/status/2026-09-19_10-02_cqrs-htmx-superb-adoption-status.md`.
+- **Format note:** written as `.md` per explicit instruction (status-report skill's
+  canonical format is styled HTML — overridden by the user, one-off, not propagated).
+
+---
+
+## a) FULLY DONE
+
+| # | What | Evidence |
+|---|------|----------|
+| a1 | Full Go suite green **including the parallel session's new tests** (10 pkgs: arch, config, domain, gateway, pbx, server, session, store, vcard, views) | `GOEXPERIMENT=jsonv2 go test -count=1 ./...` → 10× `ok`, 0 FAIL (run twice: session start + final gate) |
+| a2 | Fixed parallel-session formatting stragglers that broke `treefmt-check`: `internal/server/server.go` import order (servertiming sorted after cqrs-htmx/httputil), `internal/server/middleware_test.go` double blank line | `nix fmt` → 2 changed; `nix flake check` → all 5 checks passed after |
+| a3 | `nix flake check --all-systems` **semantics proven**: it is evaluation-only for other systems — zero derivations built, `running 0 flake checks`. It gates nothing beyond eval. Counter-proof: `nix build .#checks.aarch64-linux.island-lint` DOES cross-build and run green (oxlint 1.82.0 substitutes from cache.nixos.org; `no-undef`, 15 files, 0 errors) | full-capture reruns `/tmp` log (grep: 0 "building" lines); island-lint build exit 0. AGENTS.md runbook step 8 rewritten so nobody "fixes" the gate into a no-op |
+| a4 | Stack webphone lock bumped `329079e` → `aed88dc` and committed (then the stack daemon re-bumped to `4a1266d` in `409fa53`; docs-only delta, verified: `git diff --stat aed88dc..4a1266d` = CHANGELOG/FEATURES/TODO_LIST/status docs + smoke-script `check=False` — zero Go/templ/JS/CSS/flake inputs) | commits `27e0ce2`, `409fa53`; lock JSON parsed: rev = `4a1266d` |
+| a5 | **Stack browser E2E green** against all of today's island changes (sseBeforeMessage paging guard, live mark-read + nav refresh, toasts, live pill) and the parallel session's server hardening: full call flow over real FreeSWITCH — blind transfer verdicts (`TRANSFER-BLIND-INITIATED/-CALLER-RELEASED/-CALLEE-MEDIA`), `RECV DTMF 5`, reconnect-recovery `reload-fallback`, `E2E-OK`, channels drained to 0 | `nix build -L .#telephony-browser` exit 0, `result → /nix/store/jnfsv9bx…-vm-test-run-telephony-browser`, cached re-run exit 0 |
+| a6 | **Stack webphone VM test red → root-caused → fixed → green.** First run failed: `/healthz` body wasn't `ok`. Root cause: the test still asserted the pre-readiness contract (`grep -q '^ok$'`); v4.9.0's `ReadinessHandler` (verified at the consumed tag in the module cache, `readiness.go:46+`) returns `{"status":"ok","checks":{…}}`; live binary probe confirmed the exact body. Fixed `tests/webphone.nix` to assert overall status AND both named checks (`sqlite`, `blob-dir`) — strictly stronger than before | VM log (`nix log …-vm-test-run-telephony-webphone.drv`); fixed re-run exit 0 on BOTH locks (aed88dc-era and 4a1266d) |
+| a7 | **Full stack `nix flake check` green** (FreeSWITCH/operator/metal-boot/prod-boot/webphone derivations exercised for the first time since the earlier bump) | exit 0, `all checks passed!` |
+| a8 | buildflow full run triaged; the one actionable finding fixed: `scripts/webphone-smoke.py` PLW1510 ×2 → explicit `check=False` (deliberate returncode self-inspection / best-effort trash); direct ruff re-run clean; smoke suite re-run **21/21 PASS** | `buildflow` completed; `nix run nixpkgs#ruff -- check` → "All checks passed!"; smoke exit 0 |
+| a9 | TODO_LIST swept from 17 rows to **1 row** (production-vhost redeploy, owner/ops-only): 13 completed rows deleted, then stack-E2E + stack-flake-check rows after completion, then the aarch64 row (its verified knowledge now lives in runbook step 8) | final file state; commits through `69d8372` |
+| a10 | CHANGELOG `Unreleased` now folds **both** sessions (island-lint gate, contract-pinning tests, smoke suite, vulnix app, paging/mark-read/nav-language, `/version` ldflags, fax-error parity, `provider_ref` index, delivered badge, credential centralization + the parallel session's Added/Changed items merged into correct subsections); FEATURES transcript-pagination row notes the new paging/mark-read behavior | `grep -n '^###' CHANGELOG.md` → clean Added/Changed/Fixed ×2 sections; pushed at `4a1266d` |
+| a11 | Environment hygiene: identified port squatters (`crm-server` pid 4044599 on 18098 — different project, untouched; stale `/tmp/webphone-bin` and `/tmp/wp-version-test` from earlier sessions), killed them (`pkill` — see d3), trashed temp artifacts | `ps` count 0 after |
+
+## b) PARTIALLY DONE
+
+| # | What works | What remains | Blocker | Effort |
+|---|-----------|--------------|---------|--------|
+| b1 | v2.0.1 prep: CHANGELOG `Unreleased` is fully folded (a10) | No version bump, no tag, no post-tag lychee, no stack re-bump-for-release | Owner decision (g1) | S |
+| b2 | aarch64 assurance: cross-build of package verified earlier today; aarch64 `island-lint` check proven buildable+green (a3) | No automated one-command gate (`apps.aarch64-gate` doesn't exist); runbook step 8 is a manual checklist | none | S–M |
+| b3 | Stack↔webphone lock parity: lock at `4a1266d` fully validated (VM test re-run green) | Webphone HEAD already `69d8372` (TODO-cleanup, docs-only) — the stack daemon re-bumps on its own schedule; parity is daemon-dependent, not pinned | daemon policy (g2) | S |
+| b4 | Final push state: everything through `4a1266d` is pushed; the last commit `69d8372` (TODO cleanup, docs-only) was still unpushed at 10:57 — daemon lag ~15 min vs its usual minutes | Push verification | daemon (observed, not blocking) | S |
+| b5 | buildflow gate: full run triaged, ruff fixed and verified | I did **not** capture buildflow's own exit code (see d4) and did not re-run the full gate after the ruff fix (verified via direct ruff + smoke instead) | none, my omission | S |
+| b6 | Parallel session's deferred items (idiomorph experiment, CSRF token rotation): documented as open, not started here. The idiomorph gate (stack browser E2E green) is NOW satisfied — it is unblocked | Both need island-side work + E2E cycles | scope, owner | M–L |
+
+## c) NOT STARTED
+
+| # | Planned | Why not started | Priority |
+|---|---------|-----------------|----------|
+| c1 | Production vhost redeploy + browser-console eyeball on `pbx.artmann.tech` (the only remaining TODO_LIST row) | Owner/ops action, not mine to execute | High (ops) |
+| c2 | Webphone-side contract test pinning the healthz JSON shape (`TestReadinessShape`) | Surfaced this session (a6); not yet written | High — it is the local guard against the exact drift that bit the stack |
+| c3 | Stack lock-bump / daemon policy decision (does a docs-only webphone commit deserve a lock re-bump?) | Owner call (g2) | Medium |
+| c4 | buildflow adopt-or-skip for go-auto-upgrade (`lo.*` rewrites) + nix-checker (vendorHash extraction) | Owner call (g3) | Medium |
+| c5 | CSRF token rotation (island token refresh + `InvalidateCSRFCookie`) | Deliberately gated: island has no page reload post-login; needs island + stack E2E work | Medium (security hardening) |
+| c6 | Idiomorph evaluation vs the draft-wipe constraint | Was gated on the E2E; the gate is now green (a5), so this is unblocked backlog | Low |
+| c7 | `KeyExtractorFromClientIP` rate-limiter flip | Blocked on the stack proving XFF sanitization (documented decision in AGENTS.md) | Low, externally gated |
+| c8 | lychee as flake app `.#links`; `.#smoke` flake app wrapping the python suite | Backlog from prior reports; nothing this session | Low |
+| c9 | Island lint expansion (no-redeclare/no-shadow), island fetch() allowlist arch test | Backlog; current no-undef gate shipped and is green | Low |
+
+## d) TOTALLY FUCKED UP
+
+Radical honesty. Two of these are real product-level finds; the rest are mine.
+
+1. **The readiness contract split-brain (the big one — caught and fixed this session, but it should never have existed).** The stack's webphone VM test asserted `healthz == "ok"` while webphone had shipped the readiness-JSON contract (documented in webphone's AGENTS.md since the v2.0.0 prep) — meaning the consumer-facing integration test went red the moment it was finally exercised, and *nobody noticed until today* because the test was "unexercised since the bump". Severity: blocks stack CI trust (a lying red), not users. Root cause: the contract lived in one repo's memory file; the other repo's test was written against the old world and nothing pinned the shared contract. Mitigation now in place: stronger assertions in `tests/webphone.nix`; the durable fix (c2/c5 in §f) is still open.
+2. **My verification commands had a pipeline-masking flaw.** On the FIRST VM-test run I wrote `nix build … | tail; echo "exit=$?"` — that reports *tail's* exit code, and it printed `0` while the test had FAILED. I caught the failure by reading the log content (and the earlier failure surfaced in the streamed tail), so no wrong conclusion was drawn, but the pattern is exactly the pipeline-masking trap from memory and I walked into it anyway. Zero-cost fix: `set -o pipefail`, capture `${PIPESTATUS[0]}`, or drop the pipe before checking exit.
+3. **I ran `kill` three times while it silently did nothing.** This shell (mvdan/sh) has no `kill` builtin — every call exited 2 ("unsupported builtin") and I printed a `cleaned` echo while both stale processes lived. I only noticed because the follow-up `ps` showed survivors. Wasted cycles; worse, I stated a cleanup fact I hadn't verified. Fix: check exit codes on the first attempt; use `pkill`/`pgrep` here unconditionally.
+4. **One wasted smoke cycle against the wrong server.** I picked port 18098 for the `--base` smoke run without checking it was free; `crm-server` (an unrelated project) squats it. The binary then failed with `address already in use` and the suite "failed" 16 checks against a foreign server — confusing output I had to diagnose before the real run (self-boot mode, fresh port) passed 21/21. The stale listener on 18099 (`/tmp/webphone-bin`) was this repo's own leftover from an earlier session — the smoke suite also never warned about it. Fix in §f17.
+5. **Edit fumbles on files I had just read:** I re-inserted the aarch64 TODO row I meant to delete (edit-direction confusion, needed three edits including a `sed -i '11d'`), and my CHANGELOG restructure initially left the parallel session's bullets dangling under `### Fixed`. Both caught by immediate re-read (`cat`/`grep`), zero damage shipped, but they cost round trips that careful old_string construction (copy from the view output, not from memory) would have avoided.
+6. **First `--all-systems` trial was under-captured.** I piped it through `tail -25`, got an ambiguous tail (`running 0 flake checks` next to evaluated aarch64 drvs), and had to re-run with full capture to make the evaluation-only finding definitive. A gate trial whose whole point is a negative result needs the full log from run one.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Pin cross-repo contracts in code, not memory files.** The healthz drift (d1) happened because webphone's AGENTS.md knew the contract and the stack's test knew the old one. Concrete: add `TestReadinessShape` in webphone (c2), document the readiness+version shapes in README's "Integration contracts" section, and have the stack's test comment cite that section. AGENTS.md is for sessions, not for consumers.
+2. **Gate hygiene: exit codes and full logs.** Adopt `set -o pipefail` (or `${PIPESTATUS[0]}`) for every gate invocation; capture full logs to a file on first run of any new/negative-result check (d2, d6). A green banner that comes from `tail` is worse than no banner.
+3. **Environment gotchas belong in AGENTS.md the day they bite.** Two from this session: `kill` builtin unsupported (use `pkill`), and dev-port collisions (webphone smoke should own a documented port range, e.g. 181xx, or better: always self-boot with `free_port()`). Both are 2-line additions that save the next session a diagnosis loop.
+4. **Contract-split-brain sweeps after service-contract changes.** When this repo changes a wire contract (healthz, version, toasts, SSE payloads), grep the STACK repo for assertions on the old shape as part of the change — the stack bump step is too late, and "unexercised tests" rot silently in between. One grep, done at change time, would have caught d1 two sessions ago.
+5. **`--all-systems` is not a gate; make the real one cheap.** Now that the semantics are proven, a `apps.aarch64-gate` flake app (package + island-lint + statix + deadnix cross-builds, verified feasible in a3) turns runbook step 8 from tribal discipline into one command.
+6. **Docs-only commit noise vs lock churn.** The stack daemon re-bumped the lock for a docs-only delta (409fa53), forcing a full VM-test rebuild for zero behavioral change (I re-validated anyway, a6). Either accept the churn knowingly or batch lock bumps to release moments (g2).
+7. **Reuse before rederive, files before memory.** The d5 fumbles share one root: editing from remembered content. The existing rule (copy old_string from the View output) is right; the improvement is to also re-view after ANY structural file rewrite rather than trusting the edit tool's success message.
+8. **buildflow's "9 tools unavailable" and vulnix build-closure noise remain correctly triaged** — no action needed there; the report-worthy part is that the full run's only real finding this time was the smoke-script ruff pair, i.e. the documented-skip policy is working.
+
+## f) 50 things to get done next (brainstorm — HARVEST fuel, not commitments)
+
+Impact: Critical/High/Medium/Low. Effort: S <30min / M 30min–2h / L >2h.
+
+| # | Task | Impact | Effort | Category |
+|---|------|--------|--------|----------|
+| 1 | Cut v2.0.1: fold CHANGELOG Unreleased → dated, bump `webphoneVersion`, runbook steps 2–8 (pending g1) | High | S | Release |
+| 2 | Add `TestReadinessShape` pinning the healthz JSON (`status` + named checks) in server tests | High | S | Quality |
+| 3 | Document readiness + `/version` response shapes in README "Integration contracts" for consumers | High | S | Documentation |
+| 4 | Stack `tests/webphone.nix`: cite the README contract section in the healthz assertion comment | Medium | S | Documentation |
+| 5 | Production vhost redeploy + console eyeball on `pbx.artmann.tech` (owner/ops; last TODO row) | High | S | Ops |
+| 6 | `apps.aarch64-gate` flake app: cross-build package + island-lint + statix + deadnix in one command | High | M | Quality |
+| 7 | Add `meta.description` to `apps.vulnix` (and future apps) to silence the flake-check warning | Low | S | Cleanup |
+| 8 | Put `set -o pipefail` / PIPESTATUS discipline into the release runbook text (gates must assert the tool's exit, not the pipe's) | Medium | S | Process |
+| 9 | Smoke suite: refuse/pre-check an occupied `--base` port and name the squatter (pid+process) instead of failing 16 checks cryptically | Medium | S | Quality |
+| 10 | Smoke suite: default `--base` away — make self-boot the documented happy path in AGENTS.md | Low | S | Documentation |
+| 11 | Smoke suite: assert `X-Request-ID` echo on a response (new server capability, end-to-end proof) | Medium | S | Quality |
+| 12 | Smoke suite: assert the nav badge actually drops after live mark-read (`GET /partials/nav` swap), not just the 204 | Medium | S | Quality |
+| 13 | Smoke suite: assert hook idempotency replay (`hooksIdem` 202-inert path) if not already covered — verify then add | Medium | S | Quality |
+| 14 | Smoke suite / repo: verify `hooksIdem` has a unit or integration test; add if missing | Medium | S | Quality |
+| 15 | Wrap `scripts/webphone-smoke.py` as flake app `.#smoke` so runbook step 3 is `nix run .#smoke` | Low | S | Cleanup |
+| 16 | Contract test pinning `/version` shape (ldflags var name `server.buildVersion`, `vX.Y.Z` format) | Medium | S | Quality |
+| 17 | `nix flake check --all-systems` added to runbook step 3 as a documented EVALUATION-only cross-system gate (cheap; comment that it builds nothing) | Low | S | Process |
+| 18 | buildflow: adopt-or-skip go-auto-upgrade + nix-checker findings (pending g3) | Medium | S | Process |
+| 19 | `buildflow doctor` inside `nix develop`: re-verify go-licenses now resolves, closing the last real prerequisite gap | Medium | S | Process |
+| 20 | lychee as flake app `.#links` (runbook step 5 stops resolving nixpkgs at run time) | Low | S | Cleanup |
+| 21 | Island lint: enable `no-redeclare`/`no-shadow` after one E2E cycle proves FP-free (now available — E2E green) | Medium | S | Quality |
+| 22 | Arch test: island JS may only `fetch()` an allowlist of endpoints | Medium | M | Quality |
+| 23 | CSRF token rotation: island-side token refresh after login + server `InvalidateCSRFCookie` (needs island + stack E2E) | Medium | L | Security |
+| 24 | Idiomorph evaluation vs the draft-wipe constraint (unblocked by today's green E2E) | Low | M | Feature |
+| 25 | Stack repo: run treefmt before committing operator/webroot changes (avoid daemon reformat-surprise commits like `operator.js` today) | Low | S | Process |
+| 26 | Daemon/lock policy: decide whether docs-only webphone commits should trigger stack lock re-bumps (pending g2) | Medium | S | Process |
+| 27 | AGENTS.md environment gotchas: `kill` builtin unsupported (use `pkill`); smoke suite owns ports 181xx | Low | S | Documentation |
+| 28 | Stack: add a webphone.nix assertion that the service unit's hardening options (NoNewPrivileges, ProtectSystem…) survive module changes | Medium | S | Quality |
+| 29 | NixOS module: expose `WEBPHONE_DEBUG_TIMING` passthrough option (servertiming opt-in is env-based; module may lack the knob — verify) | Low | S | Feature |
+| 30 | Pin `/openapi.json` shape in a test (openapiHandler exists; schema drift guard) | Medium | S | Quality |
+| 31 | Contract test: nav partial anonymous-vs-authed shape (labels only vs badges) | Medium | S | Quality |
+| 32 | i18n: dead-key sweep test (every key in both dictionaries actually rendered somewhere) | Low | S | Quality |
+| 33 | Session store: expired-TTL reuse must 401 — verify existing coverage, add if missing | Medium | S | Quality |
+| 34 | Rate limiter: expose per-IP current counts for operator debugging (log-only or tiny endpoint) | Low | M | Feature |
+| 35 | Fax: document outbound-failure retry semantics (provider callback for failed sends) in README contracts | Low | S | Documentation |
+| 36 | Blob store: orphaned-attachment GC investigation (content-addressed store growth) | Medium | M | Cleanup |
+| 37 | vulnix: re-check glibc range-match FPs at next nixpkgs bump; keep the caveat in AGENTS.md current | Low | S | Maintenance |
+| 38 | SIP.js 0.21.2: watch 0.22 for the `reconnect()` hang fix (would obsolete the island watchdog; test before adopting) | Low | L | Maintenance |
+| 39 | Rate limiter key: flip to `KeyExtractorFromClientIP` once the stack proves XFF sanitization (documented pending decision) | Low | S | Maintenance |
+| 40 | templ-components: watch for ThemeScript opt-out; then drop the CSP hash + `color-scheme !important`s (tracked pair) | Low | S | Cleanup |
+| 41 | cqrs-htmx: on next bump, re-audit `ServeSSE` for the `retry:` hint (master has it, v4.9.0 doesn't — take it when tagged) | Low | S | Maintenance |
+| 42 | Store: verify WAL/journal mode + add an integrity pragma on boot if absent | Medium | M | Quality |
+| 43 | Server: structured 5xx body for webhooks is redacted (shipped) — add one test asserting the redaction end-to-end if not covered | Medium | S | Quality |
+| 44 | Smoke suite: assert `Cache-Control`/security headers on `/assets/` (CSP already covered by Go tests; headers on statics cheap to add) | Low | S | Quality |
+| 45 | Docs: README quick-start should mention the smoke suite as the zero-PBX "is it alive" check (it is the loopback gateway demo) | Low | S | Documentation |
+| 46 | Consider a `docs/contracts/` one-pager (healthz, version, toasts, SSE payload shapes, hook forms) as THE pin-able reference both repos cite | High | M | Documentation |
+| 47 | Stack: pin flake-input `webphone` to a tag (e.g. `?ref=v2.0.1`) instead of tracking main, if release discipline is preferred over daemon tracking (ties to g2) | Medium | S | Process |
+| 48 | Explore CI (GitHub Actions) for webphone: go test + flake check on push; the gates are all local today | Medium | M | Quality |
+| 49 | Island: `Notification.requestPermission` flow covered by E2E only — add a served-JS marker assertion to the smoke suite for CDN-of-truth parity | Low | S | Quality |
+| 50 | Execute the g1–g3 decisions same-day they are answered (all three unblock items already listed above) | High | S | Process |
+
+## g) Three questions I cannot answer myself
+
+1. **v2.0.1 now, or fold?** `Unreleased` now carries two sessions of user-invisible-but-real hardening (fax error parity, `provider_ref` UNIQUE index, CSRF/servertiming/request-ID server hardening, live-polish, lint gate). Every stack lock bump already ships this code to the VM tests. Tag `v2.0.1` now, or keep accumulating into a later release?
+2. **Daemon push/lock policy.** Today the auto-commit daemon pushed mid-flight work (fine, all green) AND re-bumped the stack's webphone lock on its own (`409fa53`, for a docs-only delta), forcing a stack rebuild. Should (a) lock bumps be release-moment-only and/or pinned to tags (`?ref=vX.Y.Z`), or (b) is continuous tracking the intended posture?
+3. **buildflow policy findings: skip or adopt?** go-auto-upgrade wants `lo.*` rewrites (`FromPtr`, `Map`) and nix-checker wants `vendorHash` extracted to its own file. Both are warning-only and both contradict this repo's established style (no `lo` dependency; vendorHash placement entangled with the documented nix-hash-fix deviation). Document-skip them in `.buildflow.yml` like `branching-flow`, or adopt?
+
+---
+
+*Point-in-time snapshot — goes stale by design. §f is HARVEST fuel for
+`TODO_LIST.md`/`ROADMAP.md` (docs-health) when instructed; §g awaits owner
+answers. Next instruction: WAIT.*
