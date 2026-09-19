@@ -234,3 +234,30 @@ being clean and re-locked — is exactly what the runbook step now enforces.
 Alternative rejected: github pin — private-repo auth in a second trust domain,
 slower iteration, same staleness failure mode. DECIDED line goes into AGENTS.md
 on your go.
+
+---
+
+## Execution addendum — 2026-09-19 ~18:00 CEST: forged-session vulnerability found and fixed (supersedes the v2.1.1 pre-draft premise)
+
+Post-deploy CSRF probes against prod (v2.1.0 confirmed live) surfaced a
+vulnerability OUTSIDE this plan's task list: `POST /api/session` minted a
+session for ANY extension/password pair (the handler trusted the island's
+claim that a SIP REGISTER had proven the credentials). Because the tab
+partials, fax and attachment streams, and SSE fragments scope by the session
+alone, a forged session could read any extension's stored message threads,
+fax documents and contacts without its password. Live-probed: a wrong-password
+login answered `201 Created`.
+
+Fix (webphone commit 39eca0a + daemon commits ee84b2f/a16ae42): login now
+verifies the submitted credentials against the PBX directory via the cheapest
+authenticated phone-api call (`pbx.Client.VerifyCredentials`, voicemail
+summary = same directory creds as REGISTER) and fails closed: 401 on rejected
+credentials, 502 when the PBX is unreachable; PBX-less loopback dev skips
+verification and WARNs at boot. Pinned by `TestSessionCreationVerifiesCredentials`,
+`TestSessionCreationFailsClosedWhenPbxDown`, `TestVerifyCredentials`, and the
+contract test's third allowlisted 401 writer (login credential gate).
+
+Consequence for this plan: the "v2.1.1 hotfix pre-draft" (M27.2) becomes a REAL
+v2.1.1 security release carrying this fix; prod needs one more owner redeploy
+after v2.1.1. P23's rotation work must respect the new constraint that the
+CSRF token outlives rotation only through the documented adoption path.

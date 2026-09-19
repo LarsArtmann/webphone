@@ -28,7 +28,7 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Call history  | Server-side CDR records through the same API                                                                                 |
 | Contacts      | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                               |
 | Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                       |
-| Sign-in       | The island's SIP REGISTER proves the credentials; the tabs share that login                                                  |
+| Sign-in       | Credentials verified against the PBX directory server-side (401 on rejection, 502 if the PBX is down); the SIP island and the tabs share that login |
 | Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)                                                      |
 | i18n / themes | Everything in English + German; dark + light themes with a manual toggle                                                     |
 | Deployment    | Single static binary, SQLite + content-addressed blob store, `/healthz`, NixOS module                                        |
