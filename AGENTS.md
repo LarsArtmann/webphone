@@ -193,13 +193,23 @@ every build; it is the local tripwire, not a replacement for the E2E.
   the negotiated lang so SSE fragments render in it (the notifier has
   no request). Service validation reasons stay English: operator-facing,
   runbook-greppable — same policy as `#log`.
-- **SSE payloads are swap-safe fragments** (`ThreadsList`, `Transcript`,
-  `FaxList` — no wrappers, no composers): `sse-swap` replaces
-  innerHTML, so a wrapped payload would nest panels and wipe drafts.
-  The `voicemail` event is a payload-less NUDGE: the voicemail panel
-  re-fetches its partial on receipt (it needs per-session PBX
-  credentials the notifier does not have). Event names: `threads`,
-  `thread`, `fax`, `voicemail`.
+- **Live-update surfaces morph-swap** (since 2026-09-20): the five
+  SSE/nav surfaces — thread list, `#thread-transcript`, fax list,
+  voicemail panel re-fetch, shell.js `refreshNav` — carry
+  `hx-swap="morph:innerHTML"` and are reconciled by idiomorph
+  (cqrs-htmx v4.11.0's bundled self-contained ext, served at
+  `/htmx-ext/idiomorph.js`; the sse ext resolves swaps via htmx
+  `getSwapSpecification`, so the attribute IS honored on `sse-swap`
+  elements). Morph preserves matched nodes in place: focus, draft
+  text, container attrs (`data-page`/`data-thread`) and shell.js
+  listeners survive live pushes. Payloads still render as bare
+  fragments (`ThreadsList`, `Transcript`, `FaxList` — no wrappers,
+  no composers) — the shape is convention even though morph no
+  longer wipes drafts on it. The `voicemail` event stays a
+  payload-less NUDGE: the voicemail panel re-fetches its partial on
+  receipt (it needs per-session PBX credentials the notifier does
+  not have). Event names: `threads`, `thread`, `fax`, `voicemail`.
+  New live surfaces should follow the morph pattern.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
@@ -251,10 +261,13 @@ every build; it is the local tripwire, not a replacement for the E2E.
   (executed 2026-09-19: request-ID enrichment, `templ.JSONString` CSRF
   wiring, calibrated Permissions-Policy, servertiming middleware, webhook
   5xx redaction via `webhookFail`/`SafeDetail` — all landed with tests).
-  Still open: the idiomorph experiment — branch `experiment/idiomorph`
-  shipped 2026-09-20 with all local gates green and a verdict doc
-  (`docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`);
-  merge is gated on one stack browser-E2E run against the branch.
+  The idiomorph experiment MERGED 2026-09-20: the stack browser E2E
+  passed against the branch via `--override-input` (148 s, full
+  call/transfer/DTMF/reconnect flow) — verdict doc
+  `docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`,
+  merge `6bb792e`. Still open: CSRF token rotation (see next bullet)
+  and optionally bundling both htmx extensions via
+  `cqrshtmx.HTMXExtensionsHandler` (one request instead of two).
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's

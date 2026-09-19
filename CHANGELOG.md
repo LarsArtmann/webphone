@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live-update surfaces now morph-swap instead of innerHTML-replacing:
+  thread list, message transcript, fax list, voicemail panel and the
+  nav badge refresh carry `hx-swap="morph:innerHTML"` and are
+  reconciled by idiomorph (the self-contained extension bundled with
+  cqrs-htmx v4.11.0, served same-origin at `/htmx-ext/idiomorph.js`
+  — no new dependency). Matched DOM nodes are preserved in place, so
+  focus, draft text, paging state (`data-page`/`data-thread`) and
+  shell.js listeners survive live SSE pushes. The stack browser E2E
+  passed against the branch before merging (148 s, full
+  call/transfer/DTMF/reconnect flow).
 - Backup story, drill-verified: the NixOS module gains
   `services.webphone.backup.{enable,destDir,calendar}` — a daily
   online-backup timer (sqlite `.backup` + blob-tree rsync, no phone
