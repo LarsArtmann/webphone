@@ -145,12 +145,25 @@ every build; it is the local tripwire, not a replacement for the E2E.
 
 - cqrs-htmx audit trail: deep-dive
   `docs/research/2026-09-18_cqrs-htmx-deep-dive.html`, execution plan
-  `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`.
+  `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`,
+  and utilization audit
+  `docs/research/2026-09-19_cqrs-htmx-deep-dive.html` (2026-09-19:
+  78/100 — core adoption exemplary; open recommendations:
+  ContextEnrichmentMiddleware for request IDs, httputil
+  CSRFTokenHXHeaders + InvalidateCSRFCookie, servertiming
+  ServerTimingMiddlewareWhen replacing the hand-rolled timingWriter,
+  calibrated Permissions-Policy with microphone=(self), SafeDetail on
+  webhook 5xx, evaluate the embedded idiomorph ext against the
+  draft-wipe constraint).
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's
   `RecommendedPermissionsPolicy` denies `microphone`, which would kill
-  the WebRTC phone.
+  the WebRTC phone. `toastDetail` is a type alias of
+  `cqrshtmx.ToastDetail` (root-package type; NOT dispatch-layer — the
+  old "kept local" comment was wrong), so a wire-shape change upstream
+  fails this build. Trap: the dispatch-layer `Notify*` options emit
+  `{level,message}`, NOT the island's `{message,kind}` shape.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only
