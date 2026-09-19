@@ -18,7 +18,7 @@ require (
 	github.com/larsartmann/templ-components v1.18.0
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
-	github.com/sixafter/nanoid v1.64.5
+	github.com/sixafter/nanoid v1.65.1
 	modernc.org/sqlite v1.59.0
 )
 
@@ -58,8 +58,8 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/samber/do/v2 v2.1.0 // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
-	github.com/sixafter/aes-ctr-drbg v1.19.2 // indirect
-	github.com/sixafter/prng-chacha v1.16.5 // indirect
+	github.com/sixafter/aes-ctr-drbg v1.20.0 // indirect
+	github.com/sixafter/prng-chacha v1.17.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
