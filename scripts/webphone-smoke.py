@@ -58,7 +58,9 @@ class Smoke:
         self.host = urlparse(base).hostname or "127.0.0.1"
         self.port = urlparse(base).port or 80
         self.jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.jar)
+        )
         self.csrf = ""
         self.check = Check()
 
@@ -94,8 +96,13 @@ class Smoke:
 
     def hook(self, path: str, payload: dict) -> tuple[int, bytes]:
         body = json.dumps(payload).encode()
-        return self.request("POST", path, body, "application/json",
-                            {"Authorization": "Bearer test-secret"})
+        return self.request(
+            "POST",
+            path,
+            body,
+            "application/json",
+            {"Authorization": "Bearer test-secret"},
+        )
 
     def sse_events(self, stop: threading.Event, sink: list[str]) -> None:
         conn = http.client.HTTPConnection(self.host, self.port, timeout=TIMEOUT)
@@ -142,8 +149,11 @@ def run_checks(s: Smoke) -> int:
     status, body, _ = s.request("GET", "/")
     page = body.decode("utf-8", "replace")
     c.ok("shell 200", status == 200, f"got {status}")
-    c.ok("shell holds island login", 'id="login-view"' in page and 'id="reg-status"' in page,
-         "island ids missing")
+    c.ok(
+        "shell holds island login",
+        'id="login-view"' in page and 'id="reg-status"' in page,
+        "island ids missing",
+    )
     match = re.search(r'name="csrf-token" content="([^"]+)"', page)
     c.ok("CSRF meta present", match is not None, "no csrf-token meta")
     if match:
@@ -151,29 +161,46 @@ def run_checks(s: Smoke) -> int:
 
     # 2. healthz is honest readiness JSON.
     status, body, _ = s.request("GET", "/healthz")
-    c.ok("healthz ready", status == 200 and b'"ok"' in body.lower(), f"{status} {body[:80]!r}")
+    c.ok(
+        "healthz ready",
+        status == 200 and b'"ok"' in body.lower(),
+        f"{status} {body[:80]!r}",
+    )
 
     # 3. version reports build metadata.
     status, body, _ = s.request("GET", "/version")
-    c.ok("version reachable", status == 200 and b'"version"' in body, f"{status} {body[:80]!r}")
+    c.ok(
+        "version reachable",
+        status == 200 and b'"version"' in body,
+        f"{status} {body[:80]!r}",
+    )
 
     # 4. config.js carries the PBX contract for the island.
     status, body, _ = s.request("GET", "/config.js")
-    c.ok("config.js contract", status == 200 and b"window.PBX_CONFIG" in body and b"sipDomain" in body,
-         f"{status}")
+    c.ok(
+        "config.js contract",
+        status == 200 and b"window.PBX_CONFIG" in body and b"sipDomain" in body,
+        f"{status}",
+    )
 
     # 5. Session POST is CSRF-gated: without the token it must not pass.
     plain = Smoke(s.base)
     plain.request("GET", "/")
     status, _, _ = plain.request(
-        "POST", "/api/session",
-        json.dumps({"extension": "1001", "password": "pw"}).encode(), "application/json")
+        "POST",
+        "/api/session",
+        json.dumps({"extension": "1001", "password": "pw"}).encode(),
+        "application/json",
+    )
     c.ok("session CSRF-gated", status in (403, 401), f"got {status}")
 
     # 6. Session with CSRF token issues the session cookie.
     c.ok("session login accepted", s.login(), "POST /api/session != 201")
-    c.ok("session cookie issued", any(cookie.name == "webphone_session" for cookie in s.jar),
-         "no webphone_session cookie")
+    c.ok(
+        "session cookie issued",
+        any(cookie.name == "webphone_session" for cookie in s.jar),
+        "no webphone_session cookie",
+    )
 
     # 7. Signed-in SSE connects; anonymous SSE is rejected.
     stop = threading.Event()
@@ -190,16 +217,20 @@ def run_checks(s: Smoke) -> int:
     c.ok("unknown hook 404", status == 404, f"got {status}")
 
     # 9. Inbound message webhook accepts.
-    status, _, _ = s.hook("/hooks/message",
-                          {"owner": "1001", "from": "+441632960961", "body": "smoke inbound"})
+    status, _, _ = s.hook(
+        "/hooks/message",
+        {"owner": "1001", "from": "+441632960961", "body": "smoke inbound"},
+    )
     c.ok("inbound webhook 202", status == 202, f"got {status}")
 
     # 10. The push lands live as a swap-safe threads fragment.
     data = s.wait_for(sink, "threads", time.monotonic() + TIMEOUT)
     c.ok("live threads event", data is not None, "no threads event in time")
-    c.ok("threads fragment swap-safe",
-         data is not None and "wp-thread-row" in data and "<section" not in data,
-         f"payload {str(data)[:80]!r}")
+    c.ok(
+        "threads fragment swap-safe",
+        data is not None and "wp-thread-row" in data and "<section" not in data,
+        f"payload {str(data)[:80]!r}",
+    )
 
     # 11. Thread row exists; opening it shows the transcript bubble region.
     _, body, _ = s.request("GET", "/partials/messages")
@@ -208,16 +239,28 @@ def run_checks(s: Smoke) -> int:
     if rows:
         _, body, _ = s.request("GET", f"/partials/messages/{rows[0]}")
         transcript = body.decode()
-        c.ok("transcript bubble", 'id="thread-transcript"' in transcript and 'sse-swap="thread"' in transcript,
-             "swap region missing")
+        c.ok(
+            "transcript bubble",
+            'id="thread-transcript"' in transcript
+            and 'sse-swap="thread"' in transcript,
+            "swap region missing",
+        )
 
     # 12. Live thread push carries bubble fragments (not the whole panel).
-    s.hook("/hooks/message", {"owner": "1001", "from": "+441632960961", "body": "smoke live"})
+    s.hook(
+        "/hooks/message",
+        {"owner": "1001", "from": "+441632960961", "body": "smoke live"},
+    )
     data = s.wait_for(sink, "thread", time.monotonic() + TIMEOUT)
     c.ok("live thread event", data is not None, "no thread event in time")
-    c.ok("thread fragment is bubbles only",
-         data is not None and "wp-bubble" in data and "wp-compose" not in data and "<section" not in data,
-         f"payload {str(data)[:80]!r}")
+    c.ok(
+        "thread fragment is bubbles only",
+        data is not None
+        and "wp-bubble" in data
+        and "wp-compose" not in data
+        and "<section" not in data,
+        f"payload {str(data)[:80]!r}",
+    )
 
     # 13. Explicit read endpoint (the live-swap mark-read path).
     if rows:
@@ -239,7 +282,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--base", help="smoke an already-running server")
     parser.add_argument("--bin", help="webphone binary to boot (default: go build)")
-    parser.add_argument("--go", default="go", help="go toolchain command for --bin build")
+    parser.add_argument(
+        "--go", default="go", help="go toolchain command for --bin build"
+    )
     args = parser.parse_args()
 
     if args.base:
@@ -253,21 +298,28 @@ def main() -> int:
         print(f"building {binary} …", flush=True)
         env = dict(os.environ)
         env["GOEXPERIMENT"] = "jsonv2"
-        build = subprocess.run([args.go, "build", "-o", binary, "./cmd/webphone"],
-                               env=env, capture_output=True, text=True)
+        build = subprocess.run(
+            [args.go, "build", "-o", binary, "./cmd/webphone"],
+            env=env,
+            capture_output=True,
+            text=True,
+        )
         if build.returncode != 0:
             print(f"build failed: {build.stderr[:400]}", file=sys.stderr)
             return 2
     env = dict(os.environ)
-    env.update({
-        "WEBPHONE_ADDR": f"127.0.0.1:{port}",
-        "WEBPHONE_DATA_DIR": f"{workdir}/data",
-        # Without a configured secret the hooks fail CLOSED (503) — the
-        # suite exercises the open path, so it configures one.
-        "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
-    })
-    server = subprocess.Popen([binary], env=env,
-                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    env.update(
+        {
+            "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+            "WEBPHONE_DATA_DIR": f"{workdir}/data",
+            # Without a configured secret the hooks fail CLOSED (503) — the
+            # suite exercises the open path, so it configures one.
+            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
+        }
+    )
+    server = subprocess.Popen(
+        [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
     try:
         base = f"http://127.0.0.1:{port}"
         deadline = time.monotonic() + TIMEOUT

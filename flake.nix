@@ -182,7 +182,7 @@
                 }
                 ''
                   cd ${self}
-                  if oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/; then
+                  if oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/ internal/web/assets/shell.js; then
                     echo "no-undef clean over:" >$out
                     ls internal/web/assets/island/app/ >>$out
                   else

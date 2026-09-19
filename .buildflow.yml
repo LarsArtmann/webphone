@@ -9,14 +9,16 @@ env:
 # the sandbox + treefmt + statix + deadnix) remains the heavyweight gate.
 build_mode: fast
 #
-# exclude: the SIP island sources in internal/web/assets/island/ are owned
-# by the flake's treefmt gate (prettier): BuildFlow's oxfmt would reformat
-# them into a style prettier rejects, re-breaking checks.format on every
-# fix run — the same two-formatters-one-file-set war the static site fought
-# (see git history). The vendored sip.min.js is a third-party bundle;
+# exclude: the SIP island sources in internal/web/assets/island/ AND the
+# shell glue (internal/web/assets/shell.js) are owned by the flake's
+# treefmt gate (prettier): BuildFlow's oxfmt would reformat them into a
+# style prettier rejects, re-breaking checks.format on every fix run —
+# the same two-formatters-one-file-set war the static site fought (see
+# git history). The vendored sip.min.js is a third-party bundle;
 # *_templ.go files are generated code.
 exclude:
   - "internal/web/assets/island/**"
+  - "internal/web/assets/shell.js"
   - "internal/web/assets/vendor/**"
   - "**/*_templ.go"
 
