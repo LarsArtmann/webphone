@@ -110,6 +110,7 @@ templ ThreadView(props ThreadViewProps) {
 				hx-push-url="/messages"
 			>← All messages</a>
 			<h2>{ props.Thread.Remote.String() }</h2>
+			<button class="wp-primary" data-dial={ props.Thread.Remote.String() }>{ T(props.Lang, "contacts.call") }</button>
 		</header>
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>

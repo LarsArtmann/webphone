@@ -60,6 +60,9 @@ templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 		<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
 		<span class="wp-thread-when">{ vmWhen(msg.Created) }</span>
 		<span class="wp-muted">{ fmtInt(msg.Seconds) }s</span>
+		if msg.CIDNumber != "" {
+			<button class="wp-primary" data-dial={ msg.CIDNumber }>{ T(lang, "contacts.call") }</button>
+		}
 		if msg.AudioURL != "" {
 			<audio class="wp-audio" controls preload="none" src={ msg.AudioURL }></audio>
 		}
