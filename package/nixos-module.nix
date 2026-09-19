@@ -73,6 +73,16 @@ in
       example = "/run/secrets/webphone-env";
     };
 
+    memoryMax = lib.mkOption {
+      type = with lib.types; nullOr str;
+      default = null;
+      example = "512M";
+      description = ''
+        Memory cap for the service (systemd MemoryMax, e.g. "512M").
+        null leaves the service uncapped.
+      '';
+    };
+
     nginx = {
       enable = lib.mkEnableOption "an nginx vhost that terminates TLS and proxies HTTP and the SIP WebSocket";
       hostName = lib.mkOption {
@@ -84,6 +94,18 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = lib.hasPrefix "/var/lib/" cfg.dataDir && cfg.dataDir != "/var/lib/";
+        message = ''
+          services.webphone.dataDir must name a directory under /var/lib/
+          (got `${cfg.dataDir}`): systemd's StateDirectory manages exactly that
+          tree, and anything else would yield an invalid relative
+          StateDirectory value for the webphone unit.
+        '';
+      }
+    ];
+
     services.webphone.settings.data_dir = lib.mkDefault cfg.dataDir;
 
     users.users.webphone = {
@@ -142,6 +164,7 @@ in
         ];
         Restart = "on-failure";
         RestartSec = 5;
+        MemoryMax = lib.mkIf (cfg.memoryMax != null) cfg.memoryMax;
       };
     };
 
@@ -158,9 +181,21 @@ in
         # long-lived; the island's reconnect watchdog handles drops).
         locations.${cfg.settings.websocket_path} = {
           proxyPass = "http://127.0.0.1:${listenPort}";
+          recommendedProxySettings = true;
           proxyWebsockets = true;
           extraConfig = ''
             proxy_read_timeout 3600s;
+          '';
+        };
+        # Server-sent events: unbuffered, HTTP/1.1, long read timeout so
+        # the event stream stays open for the whole session.
+        locations."/events" = {
+          proxyPass = "http://127.0.0.1:${listenPort}";
+          recommendedProxySettings = true;
+          extraConfig = ''
+            proxy_buffering off;
+            proxy_read_timeout 3600s;
+            proxy_http_version 1.1;
           '';
         };
       };
