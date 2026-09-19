@@ -28,11 +28,16 @@
       # The NixOS module ships from this repo so the binary and its
       # deployment shape stay in sync; the consuming telephony stack may
       # import it or keep its own reverse proxy (see package/nixos-module.nix).
-      flake.nixosModules.default = import ./package/nixos-module.nix;
+      flake.nixosModules = {
+        default = import ./package/nixos-module.nix;
+        # Alias for consumers that prefer an explicit name.
+        webphone = import ./package/nixos-module.nix;
+      };
 
       perSystem =
         {
           config,
+          lib,
           pkgs,
           self',
           ...
@@ -54,7 +59,19 @@
                 pname = "webphone";
                 version = webphoneVersion;
 
-                src = pkgs.lib.cleanSource self;
+                src = lib.fileset.toSource {
+                  root = ./.;
+                  # Exactly the build inputs: sources under cmd/ and
+                  # internal/ (island assets + committed *_templ.go live
+                  # there) plus the module definition files. Everything
+                  # else (docs, scripts, package/) never reaches Go.
+                  fileset = lib.fileset.unions [
+                    ./cmd
+                    ./go.mod
+                    ./go.sum
+                    ./internal
+                  ];
+                };
 
                 vendorHash = "sha256-WlFJ83w9VX+alrCHZRC7nVPFU/l9yoUB1JGNrTGU8R0=";
 
@@ -77,9 +94,9 @@
                 meta = {
                   description = "Self-hosted unified-communications web app: calls, SMS/MMS threads, fax, voicemail";
                   homepage = "https://github.com/LarsArtmann/webphone";
-                  license = pkgs.lib.licenses.mit;
+                  license = lib.licenses.mit;
                   mainProgram = "webphone";
-                  platforms = pkgs.lib.platforms.linux;
+                  platforms = lib.platforms.linux;
                   maintainers = [
                     {
                       name = "Lars Artmann";
@@ -99,7 +116,7 @@
             # breakage without a full NixOS evaluation.
             webphone-module =
               let
-                evaluated = pkgs.lib.evalModules {
+                evaluated = lib.evalModules {
                   modules = [
                     { _module.args.pkgs = pkgs; }
                     # Minimal stand-ins for the NixOS nginx/systemd/users
@@ -108,19 +125,19 @@
                     {
                       options = {
                         services.nginx = {
-                          enable = pkgs.lib.mkOption {
-                            type = pkgs.lib.types.bool;
+                          enable = lib.mkOption {
+                            type = lib.types.bool;
                             default = false;
                           };
-                          recommendedProxySettings = pkgs.lib.mkOption {
-                            type = pkgs.lib.types.bool;
+                          recommendedProxySettings = lib.mkOption {
+                            type = lib.types.bool;
                             default = false;
                           };
-                          virtualHosts = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
+                          virtualHosts = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         };
-                        systemd.services = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
-                        users.users = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
-                        users.groups = pkgs.lib.mkOption { type = pkgs.lib.types.attrsOf pkgs.lib.types.anything; };
+                        systemd.services = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
+                        users.users = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
+                        users.groups = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                       };
                     }
                     (import ./package/nixos-module.nix)
@@ -136,6 +153,16 @@
                   ];
                 };
                 cfg = evaluated.config.services.webphone;
+                vhost = evaluated.config.services.nginx.virtualHosts."phone.example.org";
+                locationNames = lib.attrNames vhost.locations;
+                # Every location the DOM/SSE contract rides on must be
+                # proxied by the module's own vhost.
+                missingLocations = lib.filter (loc: !lib.elem loc locationNames) [
+                  "/"
+                  cfg.settings.websocket_path
+                  "/events"
+                ];
+                unitPresent = evaluated.config.systemd.services ? "webphone";
               in
               pkgs.linkFarm "webphone-module-check" [
                 {
@@ -144,7 +171,22 @@
                 }
                 {
                   name = "listen-port";
-                  path = pkgs.writeText "listen-port" (pkgs.lib.last (pkgs.lib.splitString ":" cfg.settings.addr));
+                  path = pkgs.writeText "listen-port" (lib.last (lib.splitString ":" cfg.settings.addr));
+                }
+                {
+                  name = "vhost-locations";
+                  path = pkgs.writeText "vhost-locations" (
+                    if missingLocations == [ ] then
+                      lib.concatStringsSep "\n" locationNames
+                    else
+                      throw "webphone-module check: vhost locations missing: ${toString missingLocations}"
+                  );
+                }
+                {
+                  name = "systemd-unit";
+                  path = pkgs.writeText "systemd-unit" (
+                    if unitPresent then "systemd.services.webphone present" else throw "webphone-module check: systemd.services.webphone missing"
+                  );
                 }
               ];
 
@@ -193,18 +235,25 @@
           };
 
           devShells.default = pkgs.mkShellNoCC {
-            packages = with pkgs; [
+            packages = [
               config.treefmt.build.wrapper
-              go
-              templ
-              golangci-lint
-              esbuild
-              jq
-              nil
-              oxlint
-              vulnix
-              go-licenses
+              pkgs.go
+              pkgs.templ
+              pkgs.golangci-lint
+              pkgs.esbuild
+              pkgs.jq
+              pkgs.nil
+              pkgs.oxlint
+              pkgs.vulnix
+              pkgs.go-licenses
             ];
+            env = {
+              # templ-components needs encoding/json/v2 until Go 1.27 ships
+              # it stable; local keeps the shell's go instead of downloading
+              # a toolchain behind the user's back.
+              GOEXPERIMENT = "jsonv2";
+              GOTOOLCHAIN = "local";
+            };
           };
 
           # Runtime-closure vulnerability scan: `nix run .#vulnix` (repo
@@ -242,7 +291,7 @@
             in
             {
               type = "app";
-              program = pkgs.lib.getExe script;
+              program = lib.getExe script;
             };
 
           treefmt = {
