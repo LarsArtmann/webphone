@@ -224,6 +224,22 @@ def run_checks(
         f"{status} {body[:80]!r}",
     )
 
+    # 2b. the go-health probe pair: liveness is fetch-free and answers
+    # pass; startup latches to pass once the backing checks first ran
+    # (both are session-free JSON — the NixOS vhost proxies them).
+    status, body, _ = s.request("GET", "/livez")
+    c.ok(
+        "livez pass",
+        status == 200 and b'"status":"pass"' in body,
+        f"{status} {body[:80]!r}",
+    )
+    status, body, _ = s.request("GET", "/startupz")
+    c.ok(
+        "startupz latched pass",
+        status == 200 and b'"status":"pass"' in body,
+        f"{status} {body[:80]!r}",
+    )
+
     # 3. version reports build metadata.
     status, body, _ = s.request("GET", "/version")
     c.ok(

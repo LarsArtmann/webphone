@@ -55,7 +55,7 @@ func versionAheadOf(vPrefixedTag, version string) bool {
 		s = strings.TrimPrefix(s, "v")
 		var out [3]int
 		for i, part := range strings.SplitN(s, ".", 3) {
-			fmt.Sscanf(part, "%d", &out[i])
+			_, _ = fmt.Sscanf(part, "%d", &out[i])
 		}
 		return out
 	}
