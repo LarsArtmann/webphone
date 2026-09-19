@@ -4,6 +4,8 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -39,6 +41,7 @@ type Config struct {
 	ICEServers    []ICEServer            `json:"ice_servers" koanf:"ice_servers"`
 	Contacts      []domain.SharedContact `json:"contacts" koanf:"contacts"`
 	Gateway       Gateway                `json:"gateway" koanf:"gateway"`
+	CSRF          CSRF                   `json:"csrf" koanf:"csrf"`
 }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
@@ -54,6 +57,20 @@ type Gateway struct {
 	Mode          GatewayMode `json:"mode" koanf:"mode"`
 	WebhookURL    string      `json:"webhook_url,omitempty" koanf:"webhook_url"`
 	WebhookSecret string      `json:"webhook_secret,omitempty" koanf:"webhook_secret"`
+}
+
+// CSRF teaches the double-submit CSRF middleware about the fronting
+// deployment shape. The webphone listener speaks plain HTTP while nginx
+// terminates TLS, so a truthful browser request carries
+// Origin: https://host — which the middleware, judging from its own
+// plain-HTTP view, would call a forged same-origin attestation and reject
+// (403 on every POST, logins included). TrustedProxies names the local
+// proxies whose X-Forwarded-Proto may be believed (loopback nginx);
+// TrustedOrigins lists the browser-facing origins that count as
+// same-origin. Both empty is correct for direct (unfronted) exposure.
+type CSRF struct {
+	TrustedProxies []string `json:"trusted_proxies,omitempty" koanf:"trusted_proxies"`
+	TrustedOrigins []string `json:"trusted_origins,omitempty" koanf:"trusted_origins"`
 }
 
 // defaults keeps the zero-config path working: loopback gateway, local
@@ -145,6 +162,19 @@ func validate(cfg Config) error {
 	}
 	if cfg.SessionTTL <= 0 {
 		return fmt.Errorf("session_ttl must be positive")
+	}
+	for _, origin := range cfg.CSRF.TrustedOrigins {
+		u, err := url.Parse(origin)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			return fmt.Errorf("csrf.trusted_origins: %q is not an absolute origin (want scheme://host, e.g. https://pbx.example.org)", origin)
+		}
+	}
+	for _, proxy := range cfg.CSRF.TrustedProxies {
+		if net.ParseIP(proxy) == nil {
+			if _, _, err := net.ParseCIDR(proxy); err != nil {
+				return fmt.Errorf("csrf.trusted_proxies: %q is not an IP address or CIDR network", proxy)
+			}
+		}
 	}
 	return nil
 }

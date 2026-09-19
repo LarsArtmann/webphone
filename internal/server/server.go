@@ -132,8 +132,15 @@ func New(deps Deps) http.Handler {
 
 	// The CSRF-protected surface: pages, partials, tab actions, the
 	// session API and the phone-api proxy. Assets, SSE, webhooks and
-	// health live outside it (GET-only or secret-authed).
-	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{})
+	// health live outside it (GET-only or secret-authed). The CSRF
+	// config carries the fronting deployment shape: without it, a
+	// browser behind the TLS-terminating proxy sends Origin https://host,
+	// which the plain-HTTP listener reads as a forged same-origin
+	// attestation and rejects — every POST (logins included) would 403.
+	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{
+		TrustedProxies: deps.Config.CSRF.TrustedProxies,
+		TrustedOrigins: deps.Config.CSRF.TrustedOrigins,
+	})
 
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /{$}", h.page)
