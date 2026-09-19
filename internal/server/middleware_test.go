@@ -155,9 +155,11 @@ func TestVersionEndpoint(t *testing.T) {
 }
 
 // TestServerTimingOptIn pins the ST1 contract: the Server-Timing header
-// appears only when WEBPHONE_DEBUG_TIMING is set, and SSE flushing still
-// works under the timing writer (its Flush forwarding is what keeps the
-// library's heartbeat from stalling).
+// appears only when WEBPHONE_DEBUG_TIMING is set, and the enabled header
+// carries the total request duration. The library middleware (which replaced
+// the hand-rolled writer) emits W3C attribute order —
+// total;desc="Total request";dur=… — so the assertion checks the metrics
+// name and the dur attribute, not their order.
 func TestServerTimingOptIn(t *testing.T) {
 	t.Run("off by default", func(t *testing.T) {
 		t.Setenv("WEBPHONE_DEBUG_TIMING", "")
@@ -185,8 +187,8 @@ func TestServerTimingOptIn(t *testing.T) {
 		}
 		_ = resp.Body.Close()
 		header := resp.Header.Get("Server-Timing")
-		if header == "" || !strings.Contains(header, "total;dur=") {
-			t.Errorf("Server-Timing %q, want total;dur=... with the flag on", header)
+		if !strings.HasPrefix(header, "total;") || !strings.Contains(header, "dur=") {
+			t.Errorf("Server-Timing %q, want total;…dur=… with the flag on", header)
 		}
 	})
 }

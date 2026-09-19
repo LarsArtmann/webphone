@@ -7,7 +7,6 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/httputil"
 
@@ -211,10 +211,16 @@ func New(deps Deps) http.Handler {
 	// The user extractor stays nil on purpose: the library's user identity
 	// is a ULID from the rejected usermgmt module, and extensions are not
 	// ULIDs — forcing them in would misuse the concept.
+	// Server-Timing stays an operator opt-in (WEBPHONE_DEBUG_TIMING), the
+	// same gate the removed hand-rolled writer had. The library middleware
+	// auto-prepends total;dur, sanitizes values against CRLF injection,
+	// and its writer forwards Flush/Hijack (SSE keeps flushing). Read the
+	// env once at construction like the old middleware did.
+	timingEnabled := os.Getenv("WEBPHONE_DEBUG_TIMING") != ""
 	return cqrshtmx.Chain(
 		cqrshtmx.ContextEnrichmentMiddleware(nil),
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
-		timingMiddleware,
+		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,
 		cqrshtmx.RecoveryMiddleware,
 	)(root)
@@ -265,50 +271,6 @@ func versionHandler() http.HandlerFunc {
 		"version":   version,
 		"goVersion": goVersion,
 		"title":     title,
-	})
-}
-
-// timingMiddleware optionally emits a Server-Timing header (total request
-// duration) when WEBPHONE_DEBUG_TIMING is set in the environment — an
-// operator opt-in for latency debugging, off by default so the header
-// never ships in normal operation. It sits just inside the request log,
-// so the measured span is the whole route stack. The writer forwards
-// Flush (SSE streams below must keep flushing) and Unwrap.
-type timingWriter struct {
-	http.ResponseWriter
-	start time.Time
-	wrote bool
-}
-
-func (w *timingWriter) WriteHeader(code int) {
-	if !w.wrote {
-		w.wrote = true
-		w.Header().Set("Server-Timing", fmt.Sprintf("total;dur=%.2f", float64(time.Since(w.start).Microseconds())/1000.0))
-	}
-	w.ResponseWriter.WriteHeader(code)
-}
-
-func (w *timingWriter) Write(p []byte) (int, error) {
-	if !w.wrote {
-		w.WriteHeader(http.StatusOK) // implicit-200 path: net/http skips WriteHeader
-	}
-	return w.ResponseWriter.Write(p)
-}
-
-func (w *timingWriter) Flush() {
-	if f, ok := w.ResponseWriter.(interface{ Flush() }); ok {
-		f.Flush()
-	}
-}
-
-func (w *timingWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
-
-func timingMiddleware(next http.Handler) http.Handler {
-	if os.Getenv("WEBPHONE_DEBUG_TIMING") == "" {
-		return next
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(&timingWriter{ResponseWriter: w, start: time.Now()}, r)
 	})
 }
 
