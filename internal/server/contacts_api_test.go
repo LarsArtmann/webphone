@@ -106,9 +106,11 @@ func TestContactsAPIRoundTrip(t *testing.T) {
 		t.Errorf("id drifted on rename: %q -> %q", saved.ID, got.Personal[0].ID)
 	}
 
-	// Validation mirrors the tab route: bad numbers 422, garbage 400.
-	if resp := postJSON(t, c, "/api/contacts", map[string]string{"name": "Bad", "number": "not-a-phone"}); resp.StatusCode != http.StatusUnprocessableEntity {
-		t.Errorf("invalid number: %d (want 422)", resp.StatusCode)
+	// Validation mirrors the tab route: a number with no dialable
+	// characters is 422, garbage bodies are 400. (Letters ARE dialable —
+	// both homes sanitize, not reject, "not-a-phone".)
+	if resp := postJSON(t, c, "/api/contacts", map[string]string{"name": "Bad", "number": "???"}); resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("undialable number: %d (want 422)", resp.StatusCode)
 	}
 	resp, body := c.do(http.MethodPost, "/api/contacts", []byte("{"), "application/json")
 	if resp.StatusCode != http.StatusBadRequest {

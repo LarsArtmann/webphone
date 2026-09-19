@@ -132,12 +132,17 @@ func newClient(t *testing.T) *client {
 
 func clientFor(t *testing.T, server *testServer) *client {
 	t.Helper()
-	httpClient := server.Client()
+	// server.Client() returns the SAME cached *http.Client on every
+	// call — setting Jar on it directly would hijack the cookies of
+	// every client built earlier in the test (the first two-client test
+	// tripped this as mysterious CSRF 403s). Build a private client
+	// sharing only the TLS-configured transport.
+	base := server.Client()
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	httpClient.Jar = jar
+	httpClient := &http.Client{Transport: base.Transport, Jar: jar}
 	c := &client{t: t, base: server.URL, server: server, http: httpClient}
 	c.token = c.csrfToken()
 	return c
