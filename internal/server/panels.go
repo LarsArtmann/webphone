@@ -80,7 +80,7 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.VoicemailPanel(views.VoicemailPanelProps{Lang: h.lang(r)}), nil
 	}
-	creds := pbx.Credentials{Extension: sess.Extension.String(), Password: sess.Password}
+	creds := sess.PBXCredentials()
 	summary, messages, err := h.fetchVoicemail(r, creds)
 	if err != nil {
 		return views.VoicemailPanel(views.VoicemailPanelProps{
@@ -120,9 +120,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if query != "" || dir != "" {
 		limit = historyFilterFetchSize
 	}
-	page, err := h.deps.PhoneAPI.History(r.Context(), pbx.Credentials{
-		Extension: sess.Extension.String(), Password: sess.Password,
-	}, limit)
+	page, err := h.deps.PhoneAPI.History(r.Context(), sess.PBXCredentials(), limit)
 	if err != nil {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Error: h.T(r, "history.unreachable"), Lang: lang,

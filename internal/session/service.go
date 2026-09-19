@@ -18,10 +18,16 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/pbx"
 )
 
 // CookieName is the session cookie.
 const CookieName = "webphone_session"
+
+// SignInFirst is the 401 body every unauthenticated request gets — shared
+// by the session middleware and the handlers' own gates so the wording
+// stays identical everywhere.
+const SignInFirst = "sign in first"
 
 // tokenBytes is the entropy of one session token (256 bit).
 const tokenBytes = 32
@@ -32,6 +38,12 @@ type Session struct {
 	Password  string
 	CreatedAt time.Time
 	ExpiresAt time.Time
+}
+
+// PBXCredentials derives the phone-api credentials this session carries —
+// the same extension + directory password the SIP REGISTER proved.
+func (s Session) PBXCredentials() pbx.Credentials {
+	return pbx.Credentials{Extension: s.Extension.String(), Password: s.Password}
 }
 
 // Store keeps sessions in memory with TTL-based expiry. Sessions are
@@ -137,7 +149,7 @@ func (store *Store) Require(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := store.Get(TokenFromRequest(r))
 		if !ok {
-			http.Error(w, "sign in first", http.StatusUnauthorized)
+			http.Error(w, SignInFirst, http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(With(r.Context(), sess)))

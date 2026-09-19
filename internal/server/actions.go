@@ -13,7 +13,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/vcard"
 	"github.com/larsartmann/webphone/internal/web/views"
@@ -179,9 +178,7 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing message id", http.StatusBadRequest)
 		return
 	}
-	if err := h.deps.PhoneAPI.DeleteVoicemail(r.Context(), pbx.Credentials{
-		Extension: sess.Extension.String(), Password: sess.Password,
-	}, uuid); err != nil {
+	if err := h.deps.PhoneAPI.DeleteVoicemail(r.Context(), sess.PBXCredentials(), uuid); err != nil {
 		h.renderPanelError(w, r, sess, views.TabVoicemail, http.StatusBadGateway, h.T(r, "vm.deleteFailed"))
 		return
 	}
@@ -259,9 +256,7 @@ func (h *handlers) countVoicemail(r *http.Request, sess session.Session) int {
 	if !h.deps.PhoneAPI.Enabled() {
 		return 0
 	}
-	summary, err := h.deps.PhoneAPI.VoicemailSummary(r.Context(), pbx.Credentials{
-		Extension: sess.Extension.String(), Password: sess.Password,
-	})
+	summary, err := h.deps.PhoneAPI.VoicemailSummary(r.Context(), sess.PBXCredentials())
 	if err != nil {
 		return 0
 	}
@@ -295,7 +290,7 @@ func (h *handlers) renderPanelError(
 func (h *handlers) requireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
 	sess, ok := session.From(r.Context())
 	if !ok {
-		http.Error(w, "sign in first", http.StatusUnauthorized)
+		http.Error(w, session.SignInFirst, http.StatusUnauthorized)
 		return session.Session{}, false
 	}
 	return sess, true

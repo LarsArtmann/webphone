@@ -186,7 +186,7 @@ templ OutboundStatusBadge(status domain.OutboundStatus, lang Lang) {
 	case domain.StatusSent:
 		<span class="wp-status wp-status-sent">{ T(lang, "status.sent") }</span>
 	case domain.StatusDelivered:
-		<span class="wp-status wp-status-sent">{ T(lang, "status.delivered") }</span>
+		<span class="wp-status wp-status-delivered">{ T(lang, "status.delivered") }</span>
 	case domain.StatusFailed:
 		<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
 	default:

@@ -475,6 +475,15 @@ a:focus-visible {
   color: var(--ok);
 }
 
+/* Delivered is the final confirmation one step past sent: accent-strong
+   (deeper than --ok) so the two states are distinguishable at a glance. */
+.wp-status-delivered {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
 .wp-status-failed {
   color: var(--danger);
 }
