@@ -33,6 +33,7 @@ import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlparse
+from typing import Callable
 
 TIMEOUT = 10.0
 
@@ -154,7 +155,28 @@ def free_port() -> int:
         return sock.getsockname()[1]
 
 
-def run_checks(s: Smoke) -> int:
+def fronted_login(s: Smoke) -> tuple[int, bytes, dict[str, str]]:
+    """POST /api/session the way a browser behind the TLS vhost does:
+    Origin/Sec-Fetch-Site https + Host pbx.test while the listener sees
+    plain http and an X-Forwarded-Proto header."""
+    return s.request(
+        "POST",
+        "/api/session",
+        json.dumps({"extension": "1001", "password": "pw"}).encode(),
+        "application/json",
+        headers={
+            "Host": "pbx.test",
+            "Origin": "https://pbx.test",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Forwarded-Proto": "https",
+        },
+    )
+
+
+def run_checks(
+    s: Smoke,
+    boot_configured: "Callable[[], tuple[str, Callable[[], None]]] | None" = None,
+) -> int:
     c = s.check
     print(f"smoke against {s.base}")
 
@@ -308,6 +330,32 @@ def run_checks(s: Smoke) -> int:
     status, _, _ = s.request("GET", "/phone-api/history?limit=5")
     c.ok("phone-api proxy fails closed", status in (503, 401, 404), f"got {status}")
 
+    # 15. The TLS-fronted login shape. Without csrf.trusted_* the scheme
+    # mismatch (https Origin vs plain-http listener) 403s EVERY login —
+    # the 2026-09-19 prod outage; with the fronting configured it passes.
+    fronted_plain = Smoke(s.base)
+    fronted_plain.request("GET", "/")
+    status, _, _ = fronted_login(fronted_plain)
+    c.ok("fronted login 403s when unconfigured", status == 403, f"got {status}")
+
+    if boot_configured is None:
+        print("smoke: fronted-configured probe skipped (--base mode)")
+    else:
+        base2, stop_configured = boot_configured()
+        try:
+            fronted_trusted = Smoke(base2)
+            _, body2, _ = fronted_trusted.request("GET", "/")
+            m2 = re.search(
+                r'name="csrf-token" content="([^"]+)"',
+                body2.decode("utf-8", "replace"),
+            )
+            if m2:
+                fronted_trusted.csrf = m2.group(1)
+            status, _, _ = fronted_login(fronted_trusted)
+            c.ok("fronted login 201 when configured", status == 201, f"got {status}")
+        finally:
+            stop_configured()
+
     stop.set()
     print(f"smoke: {c.passed} passed, {len(c.failures)} failed")
     for failure in c.failures:
@@ -345,6 +393,49 @@ def main() -> int:
         if build.returncode != 0:
             print(f"build failed: {build.stderr[:400]}", file=sys.stderr)
             return 2
+
+    def boot_configured() -> tuple[str, Callable[[], None]]:
+        """Boot a second server with the TLS-fronting csrf shape configured
+        (the NixOS module ships these defaults when nginx.enable)."""
+        port2 = free_port()
+        cfg = {
+            "addr": f"127.0.0.1:{port2}",
+            "data_dir": f"{workdir}/data-fronted",
+            "gateway": {"webhook_secret": "test-secret"},
+            "csrf": {
+                "trusted_proxies": ["127.0.0.1"],
+                "trusted_origins": ["https://pbx.test"],
+            },
+        }
+        cfg_path = f"{workdir}/config-fronted.json"
+        with open(cfg_path, "w", encoding="utf-8") as fh:
+            json.dump(cfg, fh)
+        env2 = dict(os.environ)
+        env2["WEBPHONE_CONFIG"] = cfg_path
+        srv2 = subprocess.Popen(
+            [binary], env=env2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base2 = f"http://127.0.0.1:{port2}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base2 + "/healthz", timeout=1).read()
+                break
+            except OSError:
+                time.sleep(0.1)
+        else:
+            srv2.kill()
+            raise RuntimeError("configured server did not become ready")
+
+        def stop() -> None:
+            srv2.terminate()
+            try:
+                srv2.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                srv2.kill()
+
+        return base2, stop
+
     env = dict(os.environ)
     env.update(
         {
@@ -370,7 +461,7 @@ def main() -> int:
         else:
             print("server did not become ready", file=sys.stderr)
             return 2
-        return run_checks(Smoke(base))
+        return run_checks(Smoke(base), boot_configured)
     finally:
         server.terminate()
         try:
