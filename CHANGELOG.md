@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Liveness + startup probes complete the health triple: `GET /livez`
+  (go-health v0.3.0 `NewChecks`, container-free — fetch-free process
+  liveness, 200 while the process serves, no checks run) and
+  `GET /startupz` (503 until the `sqlite` + `blob-dir` checks first
+  pass, then latched 200). Both are JSON, session-free GETs that share
+  `/healthz`'s check functions — readiness keeps a single home at
+  `/healthz` (no second readiness truth). Also ships the Go 1.27.1
+  fleet floor (go.mod + flake builder/devShell on `go_1_27`) required
+  by go-health v0.3.0; samber/do appears only as go-health's
+  transitive dep — the container stays rejected. New probe tests pin
+  the split: broken deps degrade `/startupz` to 503 while `/livez`
+  stays 200. Webphone-side bounded checks (`boundedCheck`, 2s) cover
+  F1 of the 2026-09-19 DI/health review; the upstream per-check
+  timeout shipped in the cqrs-htmx v4.11.0 train (swap tracked in
+  TODO_LIST). F2 liveness decision + fleet/CSP options:
+  `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`.
+
 ## [2.2.0] - 2026-09-19
 
 ### Security

@@ -123,6 +123,7 @@ Code wins when doc and code disagree.
 | Feature                        | Status              | Notes                                                                                            |
 | ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------ |
 | Honest `/healthz` readiness    | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.ReadinessHandler`: named `sqlite` ping + `blob-dir` write probe; 503 names the failure |
+| `/livez` + `/startupz` probes  | 🟢 FULLY_FUNCTIONAL | go-health v0.3.0 `NewChecks` (container-free): fetch-free liveness; startup 503 until the backing checks first pass, then latched; JSON, session-free, shares `/healthz`'s check functions |
 | Request logging                | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RequestLoggingSlog` outermost: one structured line per request, no bodies/secrets      |
 | Panic recovery                 | 🟢 FULLY_FUNCTIONAL | `cqrshtmx.RecoveryMiddleware` (stack + method/path; `http.ErrAbortHandler` re-raised)            |
 | Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate              |

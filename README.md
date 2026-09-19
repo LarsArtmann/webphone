@@ -45,8 +45,15 @@ gateway mode: messages and faxes are accepted instantly and marked
 sent/transmitted, so the whole product is explorable without a PBX.
 
 ```console
-curl -fsS http://127.0.0.1:8080/healthz   # -> ok
+curl -fsS http://127.0.0.1:8080/healthz   # readiness -> {"status":"ok",...} (sqlite ping + blob-dir write probe)
+curl -fsS http://127.0.0.1:8080/livez     # liveness  -> 200 while the process serves (no checks run)
+curl -fsS http://127.0.0.1:8080/startupz  # startup   -> 503 until the backing resources first pass, then latched 200
 ```
+
+All three are session-free GETs whose bodies name checks and statuses
+only. Readiness stays `/healthz` alone; `/livez` deliberately runs no
+checks so a prober can tell "wedged process" from "degraded
+dependencies".
 
 Open the page, sign in on the phone panel (any extension format your PBX
 accepts; against nothing it will just fail to register), and the tabs
