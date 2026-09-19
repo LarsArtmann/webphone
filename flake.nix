@@ -143,6 +143,9 @@
                           virtualHosts = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         };
                         systemd.services = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
+                        # The backup timer writes systemd.timers; the
+                        # stand-in must accept it like services.
+                        systemd.timers = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         users.users = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         users.groups = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         # NixOS's modules.nix normally provides this.
