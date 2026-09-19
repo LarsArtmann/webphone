@@ -57,7 +57,7 @@ func (h *handlers) apiListContacts(w http.ResponseWriter, r *http.Request) {
 		body.Shared = append(body.Shared, apiSharedContact{Name: shared.Name, Number: shared.Number})
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.MarshalWrite(w, body) //nolint:errcheck // marshaling plain strings cannot fail
+	_ = json.MarshalWrite(w, body) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // apiSaveContact upserts one personal contact (same store semantics as
