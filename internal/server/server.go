@@ -187,6 +187,11 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
+	// JSON surface for the island's contact panel (same store as the
+	// Contacts tab; the island migrated off localStorage onto this).
+	protected.HandleFunc("GET /api/contacts", h.apiListContacts)
+	protected.HandleFunc("POST /api/contacts", h.apiSaveContact)
+	protected.HandleFunc("DELETE /api/contacts", h.apiDeleteContact)
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above

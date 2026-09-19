@@ -7,7 +7,7 @@ package server_test
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"

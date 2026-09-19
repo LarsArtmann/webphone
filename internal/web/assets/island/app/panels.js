@@ -1,7 +1,8 @@
 // The panels below the call area: call history (local + server CDR),
-// contacts (shared config + personal localStorage) and voicemail (phone
-// API). All server access rides the extension's own SIP credentials via
-// authedFetch — there is no second login.
+// contacts (shared config + personal contacts on the SERVER store, one
+// home with the Contacts tab) and voicemail (phone API). All server
+// access rides the extension's session via authedFetch — there is no
+// second login.
 
 import { phoneApiEnabled, sharedContacts } from "./config.js";
 import {
@@ -77,8 +78,8 @@ function makeHistoryRow({ dir, target, whenText, durText, number }) {
   save.textContent = "☆";
   save.title = t("contactSave");
   save.addEventListener("click", () => {
+    // saveContact re-renders when the server answers (async now).
     saveContact(number, number);
-    renderContacts();
   });
   li.append(redial, save);
   return li;
@@ -120,7 +121,16 @@ export function renderHistory() {
   els.history.replaceChildren(...localRows, ...serverRows);
 }
 
-// --- contacts ---------------------------------------------------------------
+// --- contacts (server home: /api/contacts) ----------------------------------
+//
+// Personal contacts live in the server's per-extension store — the same
+// home the Contacts tab renders from — so they survive browser loss and
+// never fork. Shared contacts still come from config (they render
+// pre-login). The legacy localStorage list ("pbx-contacts") is imported
+// once after login and cleared only after the server accepted every
+// row; a failed import keeps the local rows rendering and retries on
+// the next login (the store upserts by number, so re-import cannot
+// duplicate).
 
 function readPersonalContacts() {
   try {
@@ -131,25 +141,123 @@ function readPersonalContacts() {
   }
 }
 
-export function saveContact(number, name) {
-  const clean = String(number).replace(/[^\d+*#]/g, "");
-  if (!clean) return;
-  const list = [
-    { name, number: clean },
-    ...readPersonalContacts().filter((c) => c.number !== clean),
-  ].slice(0, CONTACTS_MAX);
-  localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
+let personalContacts = [];
+// Seeded once at load; emptied only by a confirmed import.
+let legacyContacts = readPersonalContacts();
+
+export function clearContacts() {
+  personalContacts = [];
+  legacyContacts = [];
 }
 
-function removeContact(number) {
-  const rest = readPersonalContacts().filter((c) => c.number !== number);
-  localStorage.setItem(CONTACTS_KEY, JSON.stringify(rest));
+// loadContacts runs when the server session exists (the island's login
+// fires wp:session-opened after the cookie is minted and the fresh CSRF
+// token adopted — POSTing earlier would ride a dead token).
+export async function loadContacts() {
+  try {
+    const res = await authedFetch("/api/contacts");
+    if (!res.ok) return;
+    const data = await res.json();
+    personalContacts = Array.isArray(data.personal) ? data.personal : [];
+    renderContacts();
+    await migrateLegacyContacts();
+  } catch (err) {
+    log(`server contacts unavailable: ${err.message}`, "error");
+  }
+}
+document.addEventListener("wp:session-opened", () => {
+  loadContacts();
+});
+
+async function migrateLegacyContacts() {
+  if (legacyContacts.length === 0) return;
+  // Numbers already on the server keep their server-side names.
+  const known = new Set(personalContacts.map((c) => c.number));
+  const missing = legacyContacts.filter(
+    (c) => c.number && !known.has(c.number),
+  );
+  try {
+    for (const contact of missing) {
+      const res = await authedFetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: contact.name || contact.number,
+          number: contact.number,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+    localStorage.removeItem(CONTACTS_KEY);
+    legacyContacts = [];
+    log(`imported ${missing.length} local contact(s) into the server store`);
+    if (missing.length > 0) await loadContacts();
+  } catch (err) {
+    log(
+      `local contact import failed (${err.message}); retrying next login`,
+      "error",
+    );
+  }
+}
+
+function saveLegacyContact(number, name) {
+  legacyContacts = [
+    { name: name || number, number },
+    ...legacyContacts.filter((c) => c.number !== number),
+  ].slice(0, CONTACTS_MAX);
+  localStorage.setItem(CONTACTS_KEY, JSON.stringify(legacyContacts));
+}
+
+export async function saveContact(number, name) {
+  const clean = String(number).replace(/[^\d+*#]/g, "");
+  if (!clean) return;
+  try {
+    const res = await authedFetch("/api/contacts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name || clean, number: clean }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadContacts();
+  } catch (err) {
+    // Server unreachable: keep the pre-migration behavior — the row
+    // lands in the local list and migrates on a later login.
+    log(`contact save failed (${err.message}); kept locally`, "error");
+    saveLegacyContact(clean, name);
+    renderContacts();
+  }
+}
+
+function removeLegacyContact(number) {
+  legacyContacts = legacyContacts.filter((c) => c.number !== number);
+  localStorage.setItem(CONTACTS_KEY, JSON.stringify(legacyContacts));
+  renderContacts();
+}
+
+async function removeServerContact(contact) {
+  try {
+    const res = await authedFetch(
+      `/api/contacts?id=${encodeURIComponent(contact.id)}`,
+      { method: "DELETE" },
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    personalContacts = personalContacts.filter((c) => c.id !== contact.id);
+    renderContacts();
+  } catch (err) {
+    log(`contact removal failed: ${err.message}`, "error");
+  }
 }
 
 export function renderContacts() {
   if (!phoneApiEnabled && sharedContacts.length === 0) return;
   els.contactsWrap.hidden = false;
-  const personal = readPersonalContacts();
+  // Server rows first; legacy rows render only for numbers the server
+  // does not know yet (pending or failed migration).
+  const serverNumbers = new Set(personalContacts.map((c) => c.number));
+  const personal = [
+    ...personalContacts,
+    ...legacyContacts.filter((c) => !serverNumbers.has(c.number)),
+  ];
   const mk = (contact, shared) => {
     const li = document.createElement("li");
     const name = document.createElement("span");
@@ -174,8 +282,8 @@ export function renderContacts() {
       remove.textContent = "✕";
       remove.title = t("contactRemove");
       remove.addEventListener("click", () => {
-        removeContact(contact.number);
-        renderContacts();
+        if (contact.id) removeServerContact(contact);
+        else removeLegacyContact(contact.number);
       });
       li.append(call, remove);
     }
