@@ -446,6 +446,13 @@ continuously — work in small, explicitly-committed units.
    `nix build .#checks.aarch64-linux.island-lint` ran green cross-arch
    (oxlint substitutes from cache.nixos.org), so the aarch64 gate is
    explicit cross-builds of the package + the checks you care about.
+9. **Closing sweep** (added 2026-09-20 after the §e lessons): any
+   command that boots a server for verification ends by PROVING the
+   process dead (`pgrep -f <pattern> || echo dead`); CHANGELOG link
+   edits outside a train get a `nix run nixpkgs#lychee -- .` run (the
+   script covers post-push, not manual edits); and the post-train tree
+   sees `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` once (gitleaks and
+   codespell are on-demand: `buildflow -s gitleaks`, `-s codespell`).
 
 ## Buildflow health warning, itemized (2026-09-19)
 
