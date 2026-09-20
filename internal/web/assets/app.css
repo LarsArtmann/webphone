@@ -486,9 +486,15 @@ h3 {
 }
 
 .wp-compose input[type="file"] {
-  flex-basis: 100%;
+  flex: 1 1 220px;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.9em;
+}
+
+.wp-compose form.wp-compose {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .wp-compose button,

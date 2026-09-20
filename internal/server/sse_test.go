@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -105,10 +106,10 @@ func TestSSEPushesSwapSafeFragments(t *testing.T) {
 }
 
 // TestSSEStreamCarriesConnectedThenEvents pins the wire shape the library
-// ServeSSE produces: the stream opens with the library's `connected` frame,
-// and broadcasts still arrive as `event: <name>` + swap-safe data. A v4.9.0
-// fact (tag-verified, correcting the audit): ServeSSE sends NO `retry:`
-// hint at this tag — reconnect timing stays the browser EventSource default.
+// ServeSSE produces (tag-verified at v4.11.0): exactly one `retry:` reconnect
+// hint frame, then the `connected` handshake (`event:` + `data:` lines), then
+// broadcasts as `event: <name>` + swap-safe data. The htmx sse extension
+// consumes the retry hint; sse-swap listeners ignore the connected frame.
 func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 	server := newTestServer(t)
 	c := signIn(t, server)
@@ -131,27 +132,40 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 
 	reader := bufio.NewReader(resp.Body)
 
-	// cqrs-htmx v4.11.0 leads the stream with a reconnect hint (`retry:`,
-	// valid SSE, consumed by the htmx sse extension); skip leading field
-	// lines until the connected handshake frame.
-	var head []byte
-	for {
-		head, err = reader.ReadBytes('\n')
-		if err != nil {
-			t.Fatalf("no connected frame: %v", err)
-		}
-		if strings.HasPrefix(string(head), "event:") {
-			break
-		}
+	// v4.11.0 leads with exactly one reconnect hint (sse.WriteRetry:
+	// `retry: <millis>` + blank frame terminator), then the connected
+	// handshake frame — assert the shape instead of skipping past it, so a
+	// future bump that changes the stream head fails here, loudly.
+	retryLine, err := reader.ReadString('\n')
+	if err != nil {
+		t.Fatalf("no retry hint line: %v", err)
 	}
-	if string(head) != "event: connected\n" {
-		t.Errorf("first stream line %q, want %q", head, "event: connected\n")
+	if !strings.HasPrefix(retryLine, "retry: ") {
+		t.Fatalf("first stream line %q, want a `retry:` reconnect hint", retryLine)
 	}
-	data, err := reader.ReadBytes('\n')
+	if millis, convErr := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(retryLine, "retry: "))); convErr != nil || millis <= 0 {
+		t.Fatalf("retry hint %q is not a positive millisecond value", retryLine)
+	}
+	blank, err := reader.ReadString('\n')
+	if err != nil {
+		t.Fatalf("no blank line after retry hint: %v", err)
+	}
+	if blank != "\n" {
+		t.Fatalf("line after retry hint %q, want the blank frame terminator", blank)
+	}
+
+	head, err := reader.ReadString('\n')
+	if err != nil {
+		t.Fatalf("no connected frame: %v", err)
+	}
+	if head != "event: connected\n" {
+		t.Errorf("first event line %q, want %q", head, "event: connected\n")
+	}
+	data, err := reader.ReadString('\n')
 	if err != nil {
 		t.Fatalf("no connected data line: %v", err)
 	}
-	if string(data) != "data: connected\n" {
+	if data != "data: connected\n" {
 		t.Errorf("connected data line %q, want %q", data, "data: connected\n")
 	}
 
