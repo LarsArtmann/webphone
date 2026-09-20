@@ -47,8 +47,14 @@ test("toastKindFor tolerates the dispatch-layer vocabulary and junk", () => {
   assert.equal(ui.toastKindFor(undefined), "info");
 });
 
+const resetToasts = () => {
+  const host = document.getElementById("toasts");
+  while (host.firstChild) host.firstChild.remove();
+  return host;
+};
+
 test("toasts are keyboard-dismissable and never steal focus on creation", () => {
-  const toasts = document.getElementById("toasts");
+  const toasts = resetToasts();
   ui.announce("kbd me", "warn");
   const toast = toasts.children[0];
   assert.equal(toast.tabIndex, 0, "toast must be focusable for dismissal");
@@ -72,7 +78,7 @@ test("announce leaves the live-region host attributes untouched", () => {
   // announce() appends children only — a regression that overwrote the
   // host attributes (e.g. setting aria-hidden) would blind screen
   // readers to every toast.
-  const toasts = document.getElementById("toasts");
+  const toasts = resetToasts();
   toasts.setAttribute("role", "status");
   toasts.setAttribute("aria-live", "polite");
   ui.announce("host check", "ok");

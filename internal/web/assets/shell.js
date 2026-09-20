@@ -38,7 +38,11 @@
     };
     toast.addEventListener("click", dismiss);
     toast.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+      if (
+        event.key === "Enter" ||
+        event.key === " " ||
+        event.key === "Escape"
+      ) {
         event.preventDefault();
         dismiss();
       }
