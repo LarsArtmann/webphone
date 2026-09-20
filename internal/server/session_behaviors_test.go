@@ -60,7 +60,7 @@ func start(t GinkgoTInterface, phoneAPIURL string) *webphone {
 	faxes := store.NewFaxes(db)
 	handler := server.New(server.Deps{
 		Config:    cfg,
-		Sessions:  session.NewStore(time.Hour),
+		Sessions:  session.NewMemStore(time.Hour),
 		Messages:  messages,
 		Faxes:     faxes,
 		Contacts:  store.NewContacts(db),

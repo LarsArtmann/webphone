@@ -85,7 +85,10 @@ func run() error {
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
 	contacts := store.NewContacts(db)
-	sessions := session.NewStore(cfg.SessionTTL)
+	sessions, err := session.NewSQLiteStore(db, cfg.SessionTTL)
+	if err != nil {
+		return fmt.Errorf("open session store: %w", err)
+	}
 
 	hubs := server.NewHubs()
 	notifier := server.NewNotifier(hubs, messages, faxes)

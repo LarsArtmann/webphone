@@ -119,7 +119,7 @@ func remoteHostKey(r *http.Request) string {
 // Deps are the wired services the handlers ride on.
 type Deps struct {
 	Config    config.Config
-	Sessions  *session.Store
+	Sessions  session.Store
 	Messages  *store.Messages
 	Faxes     *store.Faxes
 	Contacts  *store.Contacts
@@ -199,7 +199,7 @@ func New(deps Deps) http.Handler {
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
-	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
+	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI)))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
 	// response shape matches every other full page.
@@ -219,7 +219,7 @@ func New(deps Deps) http.Handler {
 	// unlimited streams. One bucket per peer host reuses the hook budget
 	// (60/min burst 60) — generous for real tabs, bounded for churn.
 	open.Handle("GET /events",
-		h.eventsLimiter.Middleware()(h.deps.Sessions.Require(http.HandlerFunc(h.events))))
+		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events))))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
 	// tells the truth about the two backing resources the app needs. Each
 	// check is bounded (see boundedCheck) so a hung resource degrades the
@@ -257,7 +257,7 @@ func New(deps Deps) http.Handler {
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
-	root.Handle("/", h.deps.Sessions.Attach(csrf(protected)))
+	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected)))
 	root.Handle("/htmx.min.js", open)
 	root.Handle("/htmx-ext.js", open)
 	root.Handle("/assets/", open)

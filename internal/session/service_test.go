@@ -17,7 +17,7 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store := NewStore(50 * time.Millisecond)
+	store := NewMemStore(50 * time.Millisecond)
 
 	token, err := store.Create(ext, "pw")
 	if err != nil {

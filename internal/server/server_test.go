@@ -96,7 +96,7 @@ func newTestServerWithConfig(
 	faxes := store.NewFaxes(db)
 	deps := Deps{
 		Config:    cfg,
-		Sessions:  session.NewStore(time.Hour),
+		Sessions:  session.NewMemStore(time.Hour),
 		Messages:  messages,
 		Faxes:     faxes,
 		Contacts:  store.NewContacts(db),

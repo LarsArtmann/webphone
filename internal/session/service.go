@@ -1,10 +1,12 @@
-// Package session owns the webphone login session: an in-memory store of
-// extension credentials keyed by an opaque cookie token. Identity comes
-// from the PBX directory — the island's successful SIP REGISTER is the
-// proof of credentials; the server session only carries them to the tabs
-// and the phone-api proxy. Sessions vanish on restart by design (the
-// island re-logs); nothing about the user is persisted server-side except
-// her own messages, faxes and contacts.
+// Package session owns the webphone login session: an opaque cookie
+// token mapped to one signed-in extension. Identity comes from the PBX
+// directory — the island's successful SIP REGISTER is the proof of
+// credentials; the server session only carries them to the tabs and the
+// phone-api proxy. The Store interface is the persistence seam: tests
+// and loopback dev use the in-memory store (sessions vanish on restart,
+// the island re-logs), deployments back it with SQLite so a service
+// restart no longer signs everyone out (see
+// docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md).
 package session
 
 import (
@@ -46,27 +48,43 @@ func (s Session) PBXCredentials() pbx.Credentials {
 	return pbx.Credentials{Extension: s.Extension.String(), Password: s.Password}
 }
 
-// Store keeps sessions in memory with TTL-based expiry. Sessions are
+// Store is the session persistence seam: mint, look up, drop.
+// Attach/Require are package-level functions over any Store.
+type Store interface {
+	Create(extension domain.Extension, password string) (string, error)
+	Get(token string) (Session, bool)
+	Delete(token string)
+}
+
+// MemStore keeps sessions in a map with TTL-based expiry. Sessions are
 // stored by value: small, immutable after creation, and immune to
 // nil-dereference by construction.
-type Store struct {
+type MemStore struct {
 	mu       sync.RWMutex
 	sessions map[string]Session
 	ttl      time.Duration
 }
 
-// NewStore builds the session store.
-func NewStore(ttl time.Duration) *Store {
-	return &Store{sessions: make(map[string]Session), ttl: ttl}
+// NewMemStore builds the in-memory session store (tests, loopback dev).
+func NewMemStore(ttl time.Duration) *MemStore {
+	return &MemStore{sessions: make(map[string]Session), ttl: ttl}
 }
 
-// Create mints a session for the extension and returns its token.
-func (s *Store) Create(extension domain.Extension, password string) (string, error) {
+// mintToken returns a fresh 256-bit URL-safe token.
+func mintToken() (string, error) {
 	buf := make([]byte, tokenBytes)
 	if _, err := rand.Read(buf); err != nil {
 		return "", fmt.Errorf("generate session token: %w", err)
 	}
-	token := base64.RawURLEncoding.EncodeToString(buf)
+	return base64.RawURLEncoding.EncodeToString(buf), nil
+}
+
+// Create mints a session for the extension and returns its token.
+func (s *MemStore) Create(extension domain.Extension, password string) (string, error) {
+	token, err := mintToken()
+	if err != nil {
+		return "", err
+	}
 
 	now := time.Now()
 	s.mu.Lock()
@@ -83,7 +101,7 @@ func (s *Store) Create(extension domain.Extension, password string) (string, err
 }
 
 // Get returns a live session by token.
-func (s *Store) Get(token string) (Session, bool) {
+func (s *MemStore) Get(token string) (Session, bool) {
 	s.mu.RLock()
 	sess, ok := s.sessions[token]
 	s.mu.RUnlock()
@@ -94,14 +112,14 @@ func (s *Store) Get(token string) (Session, bool) {
 }
 
 // Delete drops a session (logout).
-func (s *Store) Delete(token string) {
+func (s *MemStore) Delete(token string) {
 	s.mu.Lock()
 	delete(s.sessions, token)
 	s.mu.Unlock()
 }
 
 // gcLocked removes expired sessions; caller holds the write lock.
-func (s *Store) gcLocked(now time.Time) {
+func (s *MemStore) gcLocked(now time.Time) {
 	for token, sess := range s.sessions {
 		if now.After(sess.ExpiresAt) {
 			delete(s.sessions, token)
@@ -134,7 +152,7 @@ func TokenFromRequest(r *http.Request) string {
 // Attach stashes a live session (when the request carries one) into the
 // context and always continues — pages render for anonymous visitors too.
 // Handlers that need a session call From and reject themselves.
-func (store *Store) Attach(next http.Handler) http.Handler {
+func Attach(store Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if sess, ok := store.Get(TokenFromRequest(r)); ok {
 			r = r.WithContext(With(r.Context(), sess))
@@ -145,7 +163,7 @@ func (store *Store) Attach(next http.Handler) http.Handler {
 
 // Require gates a handler behind a live session: anonymous requests get a
 // 401.
-func (store *Store) Require(next http.Handler) http.Handler {
+func Require(store Store, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess, ok := store.Get(TokenFromRequest(r))
 		if !ok {
