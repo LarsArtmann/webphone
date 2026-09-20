@@ -200,6 +200,10 @@ func New(deps Deps) http.Handler {
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
 	protected.Handle("/phone-api/", h.deps.Sessions.Require(http.HandlerFunc(h.proxyPhoneAPI)))
+	// Unknown paths render the styled 404 (shell + error panel), not Go's
+	// bare-text default — the catch-all sits inside the CSRF layer so the
+	// response shape matches every other full page.
+	protected.HandleFunc("/", h.notFoundPage)
 
 	open := http.NewServeMux()
 	open.Handle("/htmx.min.js", cqrshtmx.HTMXScriptHandler())

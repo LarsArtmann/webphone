@@ -248,15 +248,23 @@ rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
 Restore (drill-verified cold path — `scripts/webphone-backup-drill.py`
 boots a real binary, loads a webhook message with a binary attachment,
 tars the data dir, restores it to scratch and pulls the attachment back
-byte-identical):
+byte-identical). Re-run the drill any time the store layout changes or
+after an upgrade:
+
+```console
+python3 scripts/webphone-backup-drill.py   # end-to-end restore drill (boots a throwaway binary + dirs)
+```
 
 1. stop the service,
 2. copy `webphone.db` and `files/` back into the data directory,
 3. start the service — sessions are in-memory by design, so nothing
    else to replay; sign in and the tabs render from the restored store.
 
-Keep a copy off the machine: the snapshot directory is plain files, so
-any rsync/restic pipeline can pick it up.
+Keep a copy OFF the machine: the snapshot directory (`destDir`) lives on
+the same host as the service, so it is not a backup yet — a disk loss
+takes both. Point an off-machine restic/borg repository (or any remote
+rsync job) at `destDir`; the files are plain sqlite + blobs, so any
+file-level backup tool handles them.
 
 ### Troubleshooting: 403 logins behind a TLS proxy
 
@@ -320,7 +328,32 @@ services.webphone = {
 `WEBPHONE_CONFIG` file); secrets belong in `environmentFile`, not the
 world-readable config. The generated vhost terminates TLS, proxies `/`
 and upgrades the SIP WebSocket path with a long read timeout. A flake
-check evaluates the module, so `nix flake check` catches breakage.
+check evaluates the module, so `nix flake check` catches breakage, and a
+kvm-gated VM test (`checks.x86_64-linux.webphone-backup`) proves the
+backup story end to end.
+
+Module options beyond `enable`/`package`/`settings`:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `dataDir` | `/var/lib/webphone` | State directory (must stay under `/var/lib/` — asserted) |
+| `environmentFile` | _none_ | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`) |
+| `memoryMax` | _uncapped_ | systemd MemoryMax for the service |
+| `csrf.trustedProxies` | `[]` | Typed front for `settings.csrf.trusted_proxies`; beats the nginx-derived default when set |
+| `csrf.trustedOrigins` | `[]` | Typed front for `settings.csrf.trusted_origins`; beats the nginx-derived default when set |
+| `serverTiming.enable` | `false` | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`) |
+| `backup.enable` | `false` | Daily online snapshot timer (sqlite `.backup` + blob rsync) |
+| `backup.destDir` | `/var/lib/webphone-backup` | Snapshot destination |
+| `backup.calendar` | `*-*-* 04:30:00` | Timer schedule |
+| `nginx.enable` / `nginx.hostName` | _off_ | Generated TLS vhost proxying the app (derives the csrf fronting defaults) |
+| `nginx.hsts.enable` / `maxAge` | _off_ / 2y | Strict-Transport-Security on the generated vhost |
+
+**Health probes behind the vhost:** the module ships dedicated nginx
+locations for `/healthz` (readiness), `/livez` (process liveness) and
+`/startupz` (startup completion) instead of riding `/` — a fleet health
+hub can scrape or be fenced (`allow`/`deny` via `extraConfig`) per
+location without touching the app's location. All three are session-free
+GETs whose bodies name checks and statuses only, never secrets.
 
 ## Development
 

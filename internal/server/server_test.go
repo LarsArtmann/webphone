@@ -293,6 +293,26 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 }
 
+// TestNotFoundRendersTheShell pins error-page parity (re-verified
+// 2026-09-20 after the templ-components adoption): unknown paths answer
+// 404 with the app shell and the styled error panel, not Go's bare
+// "404 page not found" text — a stray deep link keeps the chrome and the
+// reload affordance.
+func TestNotFoundRendersTheShell(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/nope", nil, "")
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", resp.StatusCode)
+	}
+	page := string(body)
+	if !strings.Contains(page, `class="wp-panel"`) || !strings.Contains(page, "data-reload") {
+		t.Errorf("404 body lacks the styled error panel: %.200s", page)
+	}
+	if !strings.Contains(page, `id="login-view"`) {
+		t.Errorf("404 body lacks the island shell: %.200s", page)
+	}
+}
+
 // TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: every
 // inline script the page serves must be covered by an exact hash in the
 // script-src directive, and vice versa, so a stale hash cannot linger.

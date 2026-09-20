@@ -111,6 +111,30 @@ func (h *handlers) partialSettings(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, views.TabSettings)
 }
 
+// notFoundPage renders unknown paths as the shell around an error panel —
+// error-page parity with the pre-templ-components era: a stray deep link
+// gets the app chrome and the reload affordance instead of Go's bare
+// "404 page not found" text. The status stays 404 so probers, crawlers
+// and the smoke suite's stale-token probe all keep reading the truth.
+// (Handler-level 500s mid-render keep http.Error by necessity — bytes may
+// already be on the wire; store failures render this same panel inside
+// the shell via tabComponent's error path.)
+func (h *handlers) notFoundPage(w http.ResponseWriter, r *http.Request) {
+	lang := h.lang(r)
+	props := views.ShellProps{
+		ActiveTab:  views.TabMessages,
+		Lang:       lang,
+		CSRFToken:  csrfToken(r),
+		TabContent: views.ErrorPanel("There is nothing at this address.", lang),
+	}
+	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	if err := views.Shell(props).Render(r.Context(), w); err != nil {
+		http.Error(w, "render error", http.StatusInternalServerError)
+	}
+}
+
 // partialNav re-renders the nav links: labels in the negotiated language,
 // badges fresh from the caches. The island's language switch re-fetches
 // this partial (shell.js, on wp:lang-changed) so the nav switches language
