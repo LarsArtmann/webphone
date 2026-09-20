@@ -48,7 +48,7 @@ type testServer struct {
 	phoneAPI *pbx.Client
 }
 
-func newTestServer(t *testing.T) *testServer {
+func newTestServer(t testing.TB) *testServer {
 	t.Helper()
 	return newTestServerWithPhoneAPI(t, "")
 }
@@ -56,14 +56,14 @@ func newTestServer(t *testing.T) *testServer {
 // newTestServerWithPhoneAPI builds the full server; the variadic mutators
 // let a test swap individual Deps (e.g. a closed DB for healthz 503 tests)
 // after the standard wiring but before the handler is built.
-func newTestServerWithPhoneAPI(t *testing.T, phoneAPIURL string, mutate ...func(*Deps)) *testServer {
+func newTestServerWithPhoneAPI(t testing.TB, phoneAPIURL string, mutate ...func(*Deps)) *testServer {
 	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
 }
 
 // newTestServerWithConfig additionally tweaks the config BEFORE the deps
 // are wired (so services like Messaging pick up the tweaked gateway).
 func newTestServerWithConfig(
-	t *testing.T, phoneAPIURL string, tweakCfg func(*config.Config), mutate ...func(*Deps),
+	t testing.TB, phoneAPIURL string, tweakCfg func(*config.Config), mutate ...func(*Deps),
 ) *testServer {
 	t.Helper()
 
@@ -119,7 +119,7 @@ func newTestServerWithConfig(
 }
 
 type client struct {
-	t      *testing.T
+	t      testing.TB
 	base   string
 	server *testServer
 	token  string
@@ -162,7 +162,7 @@ func (c *client) csrfToken() string {
 	return string(match[1])
 }
 
-func readAll(t *testing.T, resp *http.Response) []byte {
+func readAll(t testing.TB, resp *http.Response) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(resp.Body); err != nil {

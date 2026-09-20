@@ -93,11 +93,11 @@ func TestBrandedIDParsersRejectJunk(t *testing.T) {
 		{"garbage body", "Thread:\x00\x01"},
 	}
 	parse := map[string]func(string) error{
-		"ThreadID":    func(s string) error { _, err := ParseThreadID(s); return err },
-		"MessageID":   func(s string) error { _, err := ParseMessageID(s); return err },
+		"ThreadID":     func(s string) error { _, err := ParseThreadID(s); return err },
+		"MessageID":    func(s string) error { _, err := ParseMessageID(s); return err },
 		"AttachmentID": func(s string) error { _, err := ParseAttachmentID(s); return err },
-		"FaxID":       func(s string) error { _, err := ParseFaxID(s); return err },
-		"ContactID":   func(s string) error { _, err := ParseContactID(s); return err },
+		"FaxID":        func(s string) error { _, err := ParseFaxID(s); return err },
+		"ContactID":    func(s string) error { _, err := ParseContactID(s); return err },
 	}
 	for kind, parseFn := range parse {
 		for _, tc := range cases {
@@ -116,7 +116,7 @@ func TestBrandedIDRoundTripAcceptsBothForms(t *testing.T) {
 	// parse back to the same id — the go-branded-id String() renders
 	// "Brand:value".
 	for _, form := range []string{
-		thread.String(),                      // branded "Thread:xxx"
+		thread.String(), // branded "Thread:xxx"
 		strings.SplitN(thread.String(), ":", 2)[1], // raw nanoid form (database rows)
 	} {
 		got, err := ParseThreadID(form)
