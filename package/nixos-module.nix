@@ -73,6 +73,45 @@ in
       example = "/run/secrets/webphone-env";
     };
 
+    # Typed front for settings.csrf.trusted_*: same values the freeform
+    # settings accept, but discoverable and checkable as module options.
+    # Empty lists leave settings.csrf untouched (the nginx.enable defaults
+    # below still apply); non-empty lists override them.
+    csrf = {
+      trustedProxies = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "127.0.0.1" ];
+        description = ''
+          Proxies whose X-Forwarded-Proto header the CSRF middleware may
+          believe (IP or CIDR entries). Renders into
+          `settings.csrf.trusted_proxies`; beats the `nginx.enable` default
+          when non-empty.
+        '';
+      };
+      trustedOrigins = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "https://phone.example.org" ];
+        description = ''
+          Browser-facing origins counted as same-origin by the CSRF
+          middleware (the TLS vhost). Renders into
+          `settings.csrf.trusted_origins`; beats the `nginx.enable` default
+          when non-empty.
+        '';
+      };
+    };
+
+    serverTiming = {
+      enable = lib.mkEnableOption ''
+        the Server-Timing response header (W3C `total;dur=…` on every
+        response) for the live host: sets WEBPHONE_DEBUG_TIMING=1 in the
+        unit environment, the same gate the middleware reads. Diagnostic
+        only — header values are sanitized against CRLF injection and the
+        timings ride the existing request log.
+      '';
+    };
+
     memoryMax = lib.mkOption {
       type = with lib.types; nullOr str;
       default = null;
@@ -153,10 +192,20 @@ in
       # Origin is https://<hostName> while the listener sees plain HTTP from
       # the local nginx. Without these the CSRF middleware reads the truthful
       # Origin as a forged same-origin attestation and 403s every POST.
-      csrf = lib.mkIf cfg.nginx.enable {
-        trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
-        trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
-      };
+      # The typed csrf.* options render here too and, when non-empty, carry
+      # higher priority than these nginx-derived defaults.
+      csrf = lib.mkMerge [
+        (lib.mkIf cfg.nginx.enable {
+          trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
+          trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
+        })
+        (lib.mkIf (cfg.csrf.trustedProxies != [ ]) {
+          trusted_proxies = cfg.csrf.trustedProxies;
+        })
+        (lib.mkIf (cfg.csrf.trustedOrigins != [ ]) {
+          trusted_origins = cfg.csrf.trustedOrigins;
+        })
+      ];
     };
 
     users.users.webphone = {
@@ -176,6 +225,8 @@ in
 
           environment = {
             WEBPHONE_CONFIG = configFile;
+          } // lib.optionalAttrs cfg.serverTiming.enable {
+            WEBPHONE_DEBUG_TIMING = "1";
           };
 
           serviceConfig = {
@@ -268,14 +319,32 @@ in
           add_header Strict-Transport-Security "max-age=${toString cfg.nginx.hsts.maxAge}" always;
         '';
         locations = {
-          # "/" carries the whole app INCLUDING the JSON probe endpoints:
-          # GET /healthz (readiness: sqlite + blob-dir, bounded checks),
-          # GET /livez (process liveness, fetch-free) and GET /startupz
-          # (503 until the backing resources first pass, then latched).
-          # All three are session-free GETs whose bodies name checks and
-          # statuses only, never secrets — safe to expose or scrape by a
-          # fleet health hub.
+          # "/" carries the whole app. The JSON probe endpoints have their
+          # OWN locations below so a fleet health hub can be allowlisted or
+          # restricted per location without touching the app's.
           "/" = {
+            recommendedProxySettings = true;
+            proxyWebsockets = false;
+            proxyPass = "http://127.0.0.1:${listenPort}";
+          };
+          # The probe triple, as dedicated locations: GET /healthz
+          # (readiness: sqlite + blob-dir, bounded checks), GET /livez
+          # (process liveness, fetch-free) and GET /startupz (503 until the
+          # backing resources first pass, then latched). All three are
+          # session-free GETs whose bodies name checks and statuses only,
+          # never secrets — safe to expose or scrape by a fleet health hub;
+          # override one with extraConfig (allow/deny) to fence scrapers.
+          "/healthz" = {
+            recommendedProxySettings = true;
+            proxyWebsockets = false;
+            proxyPass = "http://127.0.0.1:${listenPort}";
+          };
+          "/livez" = {
+            recommendedProxySettings = true;
+            proxyWebsockets = false;
+            proxyPass = "http://127.0.0.1:${listenPort}";
+          };
+          "/startupz" = {
             recommendedProxySettings = true;
             proxyWebsockets = false;
             proxyPass = "http://127.0.0.1:${listenPort}";

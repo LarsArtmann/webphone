@@ -177,11 +177,17 @@
                 vhost = evaluated.config.services.nginx.virtualHosts."phone.example.org";
                 locationNames = lib.attrNames vhost.locations;
                 # Every location the DOM/SSE contract rides on must be
-                # proxied by the module's own vhost.
+                # proxied by the module's own vhost — including the probe
+                # triple, which ships as dedicated locations so fleet
+                # scrapers can be fenced per location without touching the
+                # app's "/".
                 missingLocations = lib.filter (loc: !lib.elem loc locationNames) [
                   "/"
                   cfg.settings.websocket_path
                   "/events"
+                  "/healthz"
+                  "/livez"
+                  "/startupz"
                 ];
                 unitPresent = evaluated.config.systemd.services ? "webphone";
               in
