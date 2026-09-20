@@ -299,6 +299,24 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	if !strings.Contains(page, `id="toasts" role="status" aria-live="polite"`) {
 		t.Error("toast host lost its live-region attributes (screen readers go blind)")
 	}
+	// The durable inline error slot + the responseHandling override are
+	// one contract: 4xx/5xx panel errors swap the server's .wp-error
+	// banner into #wp-tab-error (outside #tab-content so tab swaps can
+	// never remove the retarget anchor), while 401 stays swap-free (its
+	// plain body must never land in a tab). Dropping either half silently
+	// reverts failed actions to toast-only feedback.
+	if !strings.Contains(page, `id="wp-tab-error"`) {
+		t.Error("error slot #wp-tab-error missing from the shell")
+	}
+	configMeta := regexp.MustCompile(`name="htmx-config" content='([^']+)'`).FindStringSubmatch(page)
+	if configMeta == nil {
+		t.Fatal("htmx-config meta missing")
+	}
+	for _, marker := range []string{`"responseHandling"`, `"401","swap":false`, `"select":".wp-error"`, `"target":"#wp-tab-error"`} {
+		if !strings.Contains(configMeta[1], marker) {
+			t.Errorf("htmx-config responseHandling contract broken: %q missing", marker)
+		}
+	}
 }
 
 // TestNotFoundRendersTheShell pins error-page parity (re-verified

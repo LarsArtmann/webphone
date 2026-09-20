@@ -397,7 +397,7 @@ h3 {
 }
 
 #wp-tab-error {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 12px;
 }
 
 .wp-muted {

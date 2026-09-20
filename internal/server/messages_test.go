@@ -176,6 +176,16 @@ func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
 	if !strings.Contains(string(body), "unreachable") {
 		t.Fatalf("502 body must tell the user the message was saved: %.200s", body)
 	}
+	// The 502 pairs an HX-Trigger toast with the rendered .wp-error
+	// banner: the toast announces the failure at once, the responseHandling
+	// config swaps the banner into #wp-tab-error so it survives the toast
+	// fade. Dropping the header breaks the toast half of that pairing.
+	if resp.Header.Get("HX-Trigger") == "" {
+		t.Error("502 response lost its HX-Trigger toast header")
+	}
+	if !strings.Contains(string(body), `class="wp-error"`) {
+		t.Error("502 body lost the .wp-error banner the error swap selects")
+	}
 
 	form, contentType = multipartBody(t, map[string]string{"to": "+441632960961", "body": ""}, nil)
 	resp, _ = c.do(http.MethodPost, "/messages/send", form, contentType)
