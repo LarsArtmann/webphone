@@ -299,7 +299,22 @@ every build; it is the local tripwire, not a replacement for the E2E.
   live-call badge (`wp:calls-changed` → `#call-badge` in the header,
   counting `.call-card` in `#calls`). New shell-side listeners go in
   shell.js, never island modules — the shell must keep working when
-  island scripts fail.
+  island scripts fail. The htmx error-surfacing listener (shell.js §3c,
+  2026-09-20) is the client half of the error-feedback story: htmx
+  swaps NOTHING on 4xx/5xx (verified in the v4.11.0 htmx.min.js
+  `responseHandling` defaults), so a dead tab session (the in-memory
+  store is cleared by every server restart) used to make every tab
+  click and form submit fail silently. shell.js now toasts on
+  `htmx:responseError` (401 wording: session ended, calls keep working,
+  reload when convenient — never an AUTO reload, the island must
+  survive) and `htmx:sendError`, skips responses carrying HX-Trigger
+  (those already toast server-authored feedback via `renderPanelError`),
+  and throttles to one error toast per 8s (an expired session 401s
+  every later request). Pinned behaviorally island-side
+  (island-tests/shell.test.mjs drives the real document listeners with
+  a fake clock; helpers.mjs now returns the stub document and
+  dispatches through it) and by `TestShellJSSurfacesHtmxErrors` on the
+  SERVED asset.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
   webfonts, no inline handlers. One inline script is allowed by exact
   hash (templ-components' theme preload — no opt-out knob upstream as
@@ -335,7 +350,12 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `cqrshtmx.ToastDetail` (root-package type; NOT dispatch-layer — the
   old "kept local" comment was wrong), so a wire-shape change upstream
   fails this build. Trap: the dispatch-layer `Notify*` options emit
-  `{level,message}`, NOT the island's `{message,kind}` shape.
+  `{level,message}`, NOT the island's `{message,kind}` shape. Their
+  KIND vocabulary is dispatch-layer too: the server's `notifyToast`
+  emits island kinds (ok/error/warn/info), which main.js's old
+  `TOAST_KINDS` (copied from the dispatch vocabulary success/warning)
+  silently recolored every success toast to info — the mapping now
+  lives in ui.js `toastKindFor`, pinned by ui.test.mjs.
 - Two CSRF constraints discovered 2026-09-19 while hardening the wiring
   (both test-caught before they shipped):
   (1) `httputil.CSRFTokenHXHeaders`/`CSRFTokenHTMLMeta` are for RAW-HTML
