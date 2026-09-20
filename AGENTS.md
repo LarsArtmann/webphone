@@ -514,6 +514,17 @@ every build; it is the local tripwire, not a replacement for the E2E.
   line via `flex: 1 1 220px` on its file input (not `flex-basis:
   100%`), and the island dial placeholder is the short
   "Number or extension" / "Nummer oder Durchwahl".
+- Stack browser E2E flake mode (seen 2026-09-20): a SLOW run can die at
+  the transfer step — FreeSWITCH hangs the call with
+  RECOVERY_ON_TIMER_EXPIRE almost exactly 90s after DTLS-ready (ICE/media
+  inactivity ceiling; no explicit timer is set in the stack's config),
+  the island removes the dead call card, and the E2E's fresh
+  `.transfer-btn` click goes StaleElementReference. Cold chromium
+  caches plus boot-time transport reconnects on both browsers made the
+  first run miss the window; the immediate re-run with warm caches
+  passed the FULL flow in both call directions. Verdict rule:
+  registration + DTMF + ICE stats all green before a ~90s death = flake,
+  not an island regression — re-run once before digging.
 
 ## Release runbook (v2.x)
 
