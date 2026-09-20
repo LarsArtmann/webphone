@@ -1,6 +1,9 @@
 package views
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 // fmtInt renders counts for templ (templ children cannot call strconv
 // directly with a plain int conversion).
@@ -11,7 +14,8 @@ func fmtInt(n int) string { return strconv.Itoa(n) }
 // first letters of a name's words ("AK"), or "?" for blanks.
 // Deterministic, so the same peer renders the same mark everywhere.
 func avatarFor(nameOrNumber string) string {
-	runes := []rune(nameOrNumber)
+	trimmed := strings.TrimSpace(nameOrNumber)
+	runes := []rune(trimmed)
 	if len(runes) == 0 {
 		return "?"
 	}
