@@ -10,11 +10,12 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -141,8 +142,8 @@ func TestFaxWebhookSharesThePostBranches(t *testing.T) {
 	}))
 	defer srv.Close()
 	gw := faxWebhookGateway(srv.URL, "s", srv.Client())
-	pdf := t.TempDir() + "/fax.pdf"
-	if err := osWriteBytes(pdf, []byte("%PDF-1.4")); err != nil {
+	pdf := filepath.Join(t.TempDir(), "fax.pdf")
+	if err := os.WriteFile(pdf, []byte("%PDF-1.4"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	_, err := gw.SendFax(context.Background(), OutboundFax{

@@ -130,7 +130,7 @@ func newClient(t *testing.T) *client {
 	return clientFor(t, newTestServer(t))
 }
 
-func clientFor(t *testing.T, server *testServer) *client {
+func clientFor(t testing.TB, server *testServer) *client {
 	t.Helper()
 	// server.Client() returns the SAME cached *http.Client on every
 	// call — setting Jar on it directly would hijack the cookies of
