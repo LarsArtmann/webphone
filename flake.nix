@@ -52,63 +52,61 @@
             # Exit 0 = every flagged CVE is distro-patched in the locked
             # nixpkgs; exit 1 = unparseable output, a non-glibc derivation
             # flagged, or a real (unpatched) finding.
-            webphone-vulnix-triage =
-              pkgs.writeShellApplication
-                {
-                  name = "webphone-vulnix-triage";
-                  runtimeInputs = [ pkgs.gnugrep ];
-                  text = ''
-                    scan_file="$1"
-                    patches_file="$2"
-                    rev="$3"
+            webphone-vulnix-triage = pkgs.writeShellApplication {
+              name = "webphone-vulnix-triage";
+              runtimeInputs = [ pkgs.gnugrep ];
+              text = ''
+                scan_file="$1"
+                patches_file="$2"
+                rev="$3"
 
-                    flagged_drvs=$(grep -oE '/nix/store/[^ ]+\.drv' "$scan_file" | sort -u || true)
-                    non_glibc=$(printf '%s\n' "$flagged_drvs" | grep -v -- '-glibc-' || true)
-                    cves=$(grep -oE 'CVE-[0-9]{4}-[0-9]+' "$scan_file" | sort -u || true)
+                flagged_drvs=$(grep -oE '/nix/store/[^ ]+\.drv' "$scan_file" | sort -u || true)
+                non_glibc=$(printf '%s\n' "$flagged_drvs" | grep -v -- '-glibc-' || true)
+                cves=$(grep -oE 'CVE-[0-9]{4}-[0-9]+' "$scan_file" | sort -u || true)
 
-                    if [ -z "$flagged_drvs" ] || [ -z "$cves" ]; then
-                      echo "webphone-vulnix: vulnix failed without parseable findings — inspect the output above" >&2
-                      exit 1
+                if [ -z "$flagged_drvs" ] || [ -z "$cves" ]; then
+                  echo "webphone-vulnix: vulnix failed without parseable findings — inspect the output above" >&2
+                  exit 1
+                fi
+
+                if [ -n "$non_glibc" ]; then
+                  echo "webphone-vulnix: non-glibc derivations flagged (no automated triage):" >&2
+                  echo "$non_glibc" >&2
+                  exit 1
+                fi
+
+                # Hit-check reads patch files directly (no grep-in-pipeline
+                # subshell: the 2026-09-20 regression class — set -e plus
+                # a non-matching grep in a pipeline aborted the loop and
+                # inverted every verdict).
+                untriaged=0
+                while read -r cve; do
+                  [ -n "$cve" ] || continue
+                  hit=""
+                  while read -r p; do
+                    [ -n "$p" ] || continue
+                    if grep -q "$cve" "$p" 2>/dev/null; then
+                      hit=1
+                      break
                     fi
+                  done < "$patches_file"
+                  if [ -n "$hit" ]; then
+                    echo "webphone-vulnix: $cve — distro-patched in locked nixpkgs $rev (range-match noise)"
+                  else
+                    echo "webphone-vulnix: $cve — NOT found in the locked glibc patches: REAL finding, act on it" >&2
+                    untriaged=1
+                  fi
+                done <<EOF
+                $cves
+                EOF
 
-                    if [ -n "$non_glibc" ]; then
-                      echo "webphone-vulnix: non-glibc derivations flagged (no automated triage):" >&2
-                      echo "$non_glibc" >&2
-                      exit 1
-                    fi
-
-                    # Hit-check reads patch files directly (no grep-in-pipeline
-                    # subshell: the 2026-09-20 regression class — set -e plus
-                    # a non-matching grep in a pipeline aborted the loop and
-                    # inverted every verdict).
-                    untriaged=0
-                    while read -r cve; do
-                      [ -n "$cve" ] || continue
-                      hit=""
-                      while read -r p; do
-                        [ -n "$p" ] || continue
-                        if grep -q "$cve" "$p" 2>/dev/null; then
-                          hit=1
-                          break
-                        fi
-                      done < "$patches_file"
-                      if [ -n "$hit" ]; then
-                        echo "webphone-vulnix: $cve — distro-patched in locked nixpkgs $rev (range-match noise)"
-                      else
-                        echo "webphone-vulnix: $cve — NOT found in the locked glibc patches: REAL finding, act on it" >&2
-                        untriaged=1
-                      fi
-                    done <<EOF
-                    $cves
-                    EOF
-
-                    if [ "$untriaged" -eq 0 ]; then
-                      echo "webphone-vulnix: all findings triaged as distro-patched — zero real advisories"
-                      exit 0
-                    fi
-                    exit 1
-                  '';
-                };
+                if [ "$untriaged" -eq 0 ]; then
+                  echo "webphone-vulnix: all findings triaged as distro-patched — zero real advisories"
+                  exit 0
+                fi
+                exit 1
+              '';
+            };
 
             # One Go binary: templ shell + embedded island assets + SQLite.
             # GOEXPERIMENT=jsonv2 is required by templ-components (encoding/
