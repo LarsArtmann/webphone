@@ -8,7 +8,9 @@ import 	"github.com/larsartmann/webphone/internal/domain"
 type FaxPanelProps struct {
 	Jobs  []domain.FaxJob
 	Error string
-	Lang  Lang
+	// Identity is the extension's presented number (DID); empty = unknown.
+	Identity string
+	Lang     Lang
 }
 
 templ FaxPanel(props FaxPanelProps) {
@@ -19,6 +21,9 @@ templ FaxPanel(props FaxPanelProps) {
 		</header>
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
+		}
+		if props.Identity != "" {
+			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
 		}
 		<form
 			class="wp-compose wp-compose-fax"

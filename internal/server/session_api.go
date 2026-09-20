@@ -76,7 +76,14 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	_ = json.MarshalWrite(w, map[string]string{"extension": extension.String()}) //nolint:erraudit // best-effort write; the response is already committed
+	// did is the extension's presented PSTN number (config identities);
+	// the island appends it to the whoami line so users see their real
+	// number, not just extension@sip_domain.
+	response := map[string]string{"extension": extension.String()}
+	if did := h.identityFor(extension); did != "" {
+		response["did"] = did
+	}
+	_ = json.MarshalWrite(w, response) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // destroySession signs the tab session out (island logout).

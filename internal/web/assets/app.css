@@ -199,6 +199,10 @@ h3 {
   background: var(--surface-2);
 }
 
+.wp-signed-in-did {
+  color: var(--text);
+}
+
 .wp-header-actions {
   margin-left: auto;
   display: inline-flex;
@@ -352,6 +356,18 @@ h3 {
   margin: 3px 0 0;
   color: var(--muted);
   font-size: 0.9em;
+}
+
+.wp-identity {
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-identity strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .wp-empty {

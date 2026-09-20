@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/larsartmann/httputil"
 
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -51,6 +52,7 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
+		props.SignedInDID = h.identityFor(sess.Extension)
 		// Keep the hub's language fresh so SSE fragments match the tabs.
 		h.deps.Hubs.SetLang(sess.Extension, lang)
 		props.Unread = h.countUnread(r, sess)
@@ -66,6 +68,14 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	if err := views.Shell(props).Render(r.Context(), w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
 	}
+}
+
+// identityFor returns the extension's presented PSTN number (config
+// identities) for display, or "" when none is configured. Validation at
+// config load guarantees keys are normalized extensions, so the lookup
+// by the signed-in extension cannot silently miss.
+func (h *handlers) identityFor(ext domain.Extension) string {
+	return h.deps.Config.Identities[ext.String()]
 }
 
 // partial renders just the tab region for an HTMX swap.

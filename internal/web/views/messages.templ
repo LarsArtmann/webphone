@@ -14,7 +14,9 @@ import (
 type ThreadsPanelProps struct {
 	Threads []store.ThreadSummary
 	Error   string
-	Lang    Lang
+	// Identity is the extension's presented number (DID); empty = unknown.
+	Identity string
+	Lang     Lang
 }
 
 templ ThreadsPanel(props ThreadsPanelProps) {
@@ -29,6 +31,9 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
 			@ThreadsList(props.Threads, props.Lang)
 		</div>
+		if props.Identity != "" {
+			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
+		}
 		@NewMessageForm("", props.Lang)
 	</section>
 }
@@ -100,7 +105,9 @@ type ThreadViewProps struct {
 	// reports older pages beyond the window.
 	Page    int
 	HasMore bool
-	Lang    Lang
+	// Identity is the extension's presented number (DID); empty = unknown.
+	Identity string
+	Lang     Lang
 }
 
 templ ThreadView(props ThreadViewProps) {
@@ -141,6 +148,9 @@ templ ThreadView(props ThreadViewProps) {
 		>
 			@Transcript(props.Messages, props.Lang)
 		</div>
+		if props.Identity != "" {
+			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
+		}
 		<form
 			class="wp-compose"
 			hx-post={ "/messages/send?thread=" + props.Thread.ID.String() }

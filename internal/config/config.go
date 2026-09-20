@@ -40,7 +40,14 @@ type Config struct {
 	SessionTTL    time.Duration          `json:"session_ttl" koanf:"session_ttl"`
 	ICEServers    []ICEServer            `json:"ice_servers" koanf:"ice_servers"`
 	Contacts      []domain.SharedContact `json:"contacts" koanf:"contacts"`
-	Gateway       Gateway                `json:"gateway" koanf:"gateway"`
+	// Identities maps an extension to the PSTN number (DID) its calls and
+	// messages present to the outside world — the own-number feed (DECIDED
+	// 2026-09-20: static map now, stack identity endpoint as the upgrade
+	// path). Display-only: the value renders verbatim, so owner-formatted
+	// numbers ("+49 30 12345678") survive; keys must be normalized
+	// extensions or lookups by the signed-in extension silently miss.
+	Identities map[string]string `json:"identities" koanf:"identities"`
+	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
 	CSRF          CSRF                   `json:"csrf" koanf:"csrf"`
 }
 
@@ -174,6 +181,15 @@ func validate(cfg Config) error {
 			if _, _, err := net.ParseCIDR(proxy); err != nil {
 				return fmt.Errorf("csrf.trusted_proxies: %q is not an IP address or CIDR network", proxy)
 			}
+		}
+	}
+	for ext, did := range cfg.Identities {
+		parsed, err := domain.ParseExtension(ext)
+		if err != nil || parsed.String() != ext {
+			return fmt.Errorf("identities: key %q is not a normalized extension (sanitize it exactly as it appears after login)", ext)
+		}
+		if _, err := domain.ParsePhone(did); err != nil {
+			return fmt.Errorf("identities: DID for extension %q has no dialable characters", ext)
 		}
 	}
 	return nil

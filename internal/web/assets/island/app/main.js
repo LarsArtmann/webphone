@@ -93,6 +93,17 @@ els.loginForm.addEventListener("submit", async (event) => {
   }
 });
 
+// The server completes the whoami line with the extension's presented
+// number when it knows one (config identities). The session POST runs
+// async on purpose, so the DID arrives after the synchronous
+// ext@sipDomain write above — append it once, on the event.
+document.addEventListener("wp:session-opened", (event) => {
+  const did = event.detail && event.detail.did;
+  if (did && !els.whoami.textContent.includes(did)) {
+    els.whoami.textContent += ` · ${did}`;
+  }
+});
+
 els.logout.addEventListener("click", async () => {
   try {
     [...sessions.values()].forEach(({ session }) => {

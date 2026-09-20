@@ -27,6 +27,14 @@ export async function createSession(extension, password) {
       );
       return;
     }
+    // did is the extension's presented number (server config); it rides
+    // the event detail so the whoami line can show the real number too.
+    let did = "";
+    try {
+      did = (await res.json()).did || "";
+    } catch {
+      // A bodyless or non-JSON success is not fatal: identity is cosmetic.
+    }
     // The login response invalidated the old CSRF token (fixation
     // defense); adopt the fresh one before anything else POSTs. A failed
     // adoption retries with backoff first (transient network/5xx), and
@@ -65,7 +73,9 @@ export async function createSession(extension, password) {
     // cookie is minted and the fresh CSRF token adopted, so their POSTs
     // ride a live token. Mirrors the wp:lang-changed seam: modules
     // coordinate through document events, never imports.
-    document.dispatchEvent(new CustomEvent("wp:session-opened"));
+    document.dispatchEvent(
+      new CustomEvent("wp:session-opened", { detail: { did } }),
+    );
   } catch (err) {
     log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");

@@ -24,7 +24,7 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Lang: h.lang(r)}), nil
+	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Identity: h.identityFor(sess.Extension), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
@@ -41,7 +41,8 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	}
 	h.unread.drop(sess.Extension)
 	return views.ThreadView(views.ThreadViewProps{
-		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Lang: h.lang(r),
+		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore,
+		Identity: h.identityFor(sess.Extension), Lang: h.lang(r),
 	}), nil
 }
 
@@ -77,7 +78,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 	if err != nil {
 		return nil, err
 	}
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Lang: h.lang(r)}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {

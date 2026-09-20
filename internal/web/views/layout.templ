@@ -27,6 +27,9 @@ type ShellProps struct {
 	// SignedIn shows the signed-in extension in the header (empty = the
 	// island still shows its login card).
 	SignedIn string
+	// SignedInDID is the extension's presented PSTN number (config
+	// identities); empty = unknown, header shows the extension alone.
+	SignedInDID string
 	// CSRFToken rides in hx-headers so every HTMX POST is protected.
 	CSRFToken string
 	// CSRFHxHeaders is the rendered value of the hx-headers attribute —
@@ -85,7 +88,11 @@ templ ShellBody(props ShellProps) {
 		</a>
 		<div class="wp-header-actions">
 			if props.SignedIn != "" {
-				<span class="wp-signed-in">{ props.SignedIn }</span>
+				<span class="wp-signed-in">{ props.SignedIn }
+					if props.SignedInDID != "" {
+						<span class="wp-signed-in-did"> · { props.SignedInDID }</span>
+					}
+				</span>
 			}
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
