@@ -90,11 +90,16 @@ func TestShellJSHandlesReloadButtons(t *testing.T) {
 
 // TestShellJSSurfacesHtmxErrors pins the client half of the error-feedback
 // story: htmx swaps NOTHING on error responses, so without the 3c handler
-// a dead tab session (the in-memory store dies with every server restart)
-// made every tab click and form submit fail silently. The behavioral
-// specs live island-side (island-tests/shell.test.mjs); this greps the
-// SERVED asset the way TestShellJSHandlesReloadButtons does, so an asset
-// regression fails the Go build too.
+// a dead tab session (the session store now survives restarts, but hard
+// crashes and manual cookie clears still 401) made every tab click and
+// form submit fail silently. The behavioral specs live island-side
+// (island-tests/shell.test.mjs); this greps the SERVED asset the way
+// TestShellJSHandlesReloadButtons does, so an asset regression fails the
+// Go build too.
+//
+// Mutation-proven 2026-09-20 (plan T05): blanking the "Tab session ended"
+// marker in shell.js turned this test RED, restoring it GREEN — the gate
+// can actually fail.
 func TestShellJSSurfacesHtmxErrors(t *testing.T) {
 	c := newClient(t)
 	resp, body := c.do(http.MethodGet, "/assets/shell.js", nil, "")
