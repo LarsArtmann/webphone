@@ -6,44 +6,49 @@
 
 :root {
   color-scheme: dark light;
-  --bg: #10161a;
-  --surface: #182125;
-  --surface-2: #1f2a30;
-  --border: #2c3a41;
-  --text: #e9eff2;
-  --muted: #93a5ae;
+  --bg: #0d1317;
+  --surface: #151d22;
+  --surface-2: #1b252b;
+  --surface-3: #223037;
+  --border: #263339;
+  --border-strong: #33434b;
+  --text: #e8eff2;
+  --muted: #8fa1aa;
   --accent: #2aa884;
-  --accent-strong: #3fbf9a;
+  --accent-strong: #43c79f;
   --accent-soft: rgb(42 168 132 / 14%);
   --danger: #e05252;
   --danger-strong: #ea6a6a;
   --warn: #d9a53f;
   --ok: #3fbf9a;
   --led: #4c555c;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 6px 24px rgb(2 8 10 / 45%);
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 2px rgb(3 10 12 / 40%), 0 8px 28px rgb(3 10 12 / 30%);
   --key: #232f36;
   --key-down: #2c3b44;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #edf1f2;
-    --surface: #fbfdfd;
-    --surface-2: #f1f5f6;
-    --border: #d3dcdf;
-    --text: #1a252a;
+    --bg: #eef2f1;
+    --surface: #fafcfb;
+    --surface-2: #eff4f2;
+    --surface-3: #e3ebe8;
+    --border: #d9e2df;
+    --border-strong: #c2cfca;
+    --text: #172226;
     --muted: #5d6f77;
-    --accent: #0f766e;
-    --accent-strong: #0d655e;
-    --accent-soft: rgb(15 118 110 / 10%);
+    --accent: #0e7566;
+    --accent-strong: #0a5c50;
+    --accent-soft: rgb(14 117 102 / 9%);
     --danger: #c43d3d;
     --danger-strong: #ad3232;
     --warn: #9a6b13;
-    --ok: #0f766e;
+    --ok: #0e7566;
     --led: #a9b6bc;
-    --shadow: 0 6px 20px rgb(26 37 42 / 12%);
+    --shadow: 0 1px 2px rgb(23 34 38 / 8%), 0 8px 24px rgb(23 34 38 / 7%);
     --key: #ffffff;
     --key-down: #e6ecee;
   }
@@ -61,20 +66,17 @@
     "Segoe UI",
     Roboto,
     sans-serif;
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
   min-height: 0;
-  line-height: 1.45;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+  line-height: 1.5;
+  font-size: 15px;
 }
 
 .app {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 24px 16px 40px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* --- top bar: brand, language, line light ------------------------------ */
@@ -84,7 +86,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
+  padding: 0 2px;
 }
 
 .brand {
@@ -164,14 +167,14 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 22px;
   box-shadow: var(--shadow);
 }
 
 h1 {
-  font-size: 1.12rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin: 0 0 18px;
 }
 
@@ -369,11 +372,17 @@ button.small {
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  background: var(--key);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--key) 92%, #ffffff 8%) 0%,
+    var(--key) 100%
+  );
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 7%), 0 1px 2px rgb(2 8 10 / 25%);
 }
 
 #keypad button:active {
   background: var(--key-down);
+  box-shadow: inset 0 1px 3px rgb(2 8 10 / 35%);
 }
 
 #keypad button span {

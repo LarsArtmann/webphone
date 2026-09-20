@@ -1,25 +1,62 @@
-/* WebPhone shell + tabs — speaks the same design tokens as the island
- * stylesheet (loaded after this file): the whole app shares one accent,
- * one surface family, one dark/light behavior via prefers-color-scheme.
- * The tokens below mirror the island's :root block; keep them in sync. */
+/* WebPhone shell + tabs — the operator desk around the phone island.
+ *
+ * Design system: one accent (teal), one surface family, two themes.
+ * The island stylesheet (loaded after this file) shares the token block
+ * below; the tokens are mirrored in island/style.css — keep them in sync.
+ *
+ * Hierarchy model: the page background is quiet, panels are elevated
+ * (surface + hairline + soft shadow), and everything inside a panel is
+ * a flat row or input — never a box-in-box. Rows earn a border only on
+ * hover/focus. */
 
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark light;
-  --bg: #10161a;
-  --surface: #182125;
-  --surface-2: #1f2a30;
-  --border: #2c3a41;
-  --text: #e9eff2;
-  --muted: #93a5ae;
+  --bg: #0d1317;
+  --surface: #151d22;
+  --surface-2: #1b252b;
+  --surface-3: #223037;
+  --border: #263339;
+  --border-strong: #33434b;
+  --text: #e8eff2;
+  --muted: #8fa1aa;
   --accent: #2aa884;
-  --accent-strong: #3fbf9a;
+  --accent-strong: #43c79f;
   --accent-soft: rgb(42 168 132 / 14%);
   --danger: #e05252;
+  --danger-soft: rgb(224 82 82 / 12%);
   --warn: #d9a53f;
   --ok: #3fbf9a;
-  --radius: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 2px rgb(3 10 12 / 40%), 0 8px 28px rgb(3 10 12 / 30%);
+  --hairline: 1px solid var(--border);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark !important;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #eef2f1;
+    --surface: #fafcfb;
+    --surface-2: #eff4f2;
+    --surface-3: #e3ebe8;
+    --border: #d9e2df;
+    --border-strong: #c2cfca;
+    --text: #172226;
+    --muted: #5d6f77;
+    --accent: #0e7566;
+    --accent-strong: #0a5c50;
+    --accent-soft: rgb(14 117 102 / 9%);
+    --danger: #c43d3d;
+    --danger-soft: rgb(196 61 61 / 10%);
+    --warn: #9a6b13;
+    --ok: #0e7566;
+    --shadow: 0 1px 2px rgb(23 34 38 / 8%), 0 8px 24px rgb(23 34 38 / 7%);
+  }
 }
 
 /* Manual theme override (shell.js toggles data-theme on <html>): an
@@ -28,41 +65,24 @@
  * !important additionally beats the inline colorScheme that the
  * framework theme script (CSP-hash-pinned in server.go) writes on
  * <html> before shell.js runs. */
-:root[data-theme="dark"] {
-  color-scheme: dark !important;
-}
-
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme]) {
-    --bg: #edf1f2;
-    --surface: #fbfdfd;
-    --surface-2: #f1f5f6;
-    --border: #d3dcdf;
-    --text: #1a252a;
-    --muted: #5d6f77;
-    --accent: #0f766e;
-    --accent-strong: #0d655e;
-    --accent-soft: rgb(15 118 110 / 10%);
-    --danger: #c43d3d;
-    --warn: #9a6b13;
-    --ok: #0f766e;
-  }
-}
-
 :root[data-theme="light"] {
   color-scheme: light !important;
-  --bg: #edf1f2;
-  --surface: #fbfdfd;
-  --surface-2: #f1f5f6;
-  --border: #d3dcdf;
-  --text: #1a252a;
+  --bg: #eef2f1;
+  --surface: #fafcfb;
+  --surface-2: #eff4f2;
+  --surface-3: #e3ebe8;
+  --border: #d9e2df;
+  --border-strong: #c2cfca;
+  --text: #172226;
   --muted: #5d6f77;
-  --accent: #0f766e;
-  --accent-strong: #0d655e;
-  --accent-soft: rgb(15 118 110 / 10%);
+  --accent: #0e7566;
+  --accent-strong: #0a5c50;
+  --accent-soft: rgb(14 117 102 / 9%);
   --danger: #c43d3d;
+  --danger-soft: rgb(196 61 61 / 10%);
   --warn: #9a6b13;
-  --ok: #0f766e;
+  --ok: #0e7566;
+  --shadow: 0 1px 2px rgb(23 34 38 / 8%), 0 8px 24px rgb(23 34 38 / 7%);
 }
 
 * {
@@ -80,7 +100,48 @@ body {
     sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height: 1.45;
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+/* The framework layout emits a Tailwind-styled skip link
+ * (`sr-only focus:not-sr-only`), but this app does not load Tailwind —
+ * so app.css owns those utilities or the link shows permanently. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+  line-height: 1.25;
 }
 
 /* --- shell layout -------------------------------------------------------- */
@@ -95,9 +156,10 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  padding: 12px 24px;
+  border-bottom: var(--hairline);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -107,15 +169,16 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-weight: 650;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
   color: var(--text);
   text-decoration: none;
 }
 
 .wp-brand-mark {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
 }
 
 .wp-mark-bg {
@@ -129,13 +192,18 @@ body {
 .wp-signed-in {
   color: var(--muted);
   font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+  border: var(--hairline);
+  border-radius: 999px;
+  padding: 3px 12px;
+  background: var(--surface-2);
 }
 
 .wp-header-actions {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .wp-theme-toggle {
@@ -144,9 +212,12 @@ body {
   color: var(--muted);
   font: inherit;
   font-size: 0.85em;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
   cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease;
 }
 
 .wp-theme-toggle:hover {
@@ -156,19 +227,19 @@ body {
 
 .wp-body {
   display: grid;
-  grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px;
   align-items: start;
   flex: 1;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1360px;
   margin: 0 auto;
 }
 
 .wp-island {
   position: sticky;
-  top: 76px;
+  top: 78px;
 }
 
 .wp-main-col {
@@ -182,20 +253,21 @@ body {
 
 .wp-nav {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--hairline);
 }
 
 .wp-nav-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  padding: 9px 14px;
   color: var(--muted);
+  font-weight: 500;
   text-decoration: none;
   border-bottom: 2px solid transparent;
-  border-radius: 6px 6px 0 0;
+  border-radius: 8px 8px 0 0;
   transition:
     color 120ms ease,
     background 120ms ease;
@@ -208,6 +280,7 @@ body {
 
 .wp-nav-link.wp-active {
   color: var(--accent-strong);
+  font-weight: 600;
   border-bottom-color: var(--accent);
 }
 
@@ -215,9 +288,10 @@ body {
   background: var(--accent);
   color: #fff;
   border-radius: 999px;
-  font-size: 0.75em;
+  font-size: 0.72em;
   padding: 1px 7px;
-  font-weight: 600;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Live-call presence (shell.js mirrors the island's call count into the
@@ -260,30 +334,33 @@ body {
 .wp-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: var(--hairline);
   border-radius: var(--radius-lg);
-  padding: 18px;
+  box-shadow: var(--shadow);
+  padding: 22px 24px 24px;
 }
 
 .wp-panel-head h2 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
+  font-weight: 700;
 }
 
 .wp-panel-sub {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   color: var(--muted);
   font-size: 0.9em;
 }
 
 .wp-empty {
   color: var(--muted);
-  padding: 18px;
+  padding: 22px 18px;
   text-align: center;
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
+  margin: 0;
 }
 
 .wp-error {
@@ -299,13 +376,74 @@ body {
   color: var(--accent-strong);
 }
 
+/* --- welcome (signed-out) -------------------------------------------------- */
+
+.wp-welcome {
+  gap: 16px;
+  padding: 30px 32px 28px;
+}
+
+.wp-welcome-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  max-width: 18em;
+}
+
+.wp-welcome-body {
+  margin: 0;
+  color: var(--muted);
+  max-width: 42em;
+}
+
+.wp-welcome-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wp-welcome-points li {
+  padding: 9px 0;
+  border-top: var(--hairline);
+  color: var(--text);
+  font-size: 0.95em;
+}
+
+.wp-welcome-points li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.wp-welcome-points li::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 10px;
+  vertical-align: 2px;
+}
+
+.wp-welcome-hint {
+  margin: 2px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 550;
+}
+
 /* --- forms ---------------------------------------------------------------- */
 
 .wp-filter {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .wp-filter input,
@@ -317,20 +455,13 @@ body {
   flex: 1 1 140px;
 }
 
-.wp-filter button {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
-  font: inherit;
-}
-
 .wp-compose {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+  padding-top: 14px;
+  border-top: var(--hairline);
 }
 
 .wp-compose input {
@@ -350,21 +481,27 @@ button.wp-danger {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
   cursor: pointer;
   font: inherit;
+  font-weight: 550;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 button.wp-primary {
   background: var(--accent);
-  border-color: var(--accent-strong);
+  border-color: var(--accent);
   color: #fff;
   font-weight: 600;
 }
 
 button.wp-primary:hover {
   background: var(--accent-strong);
+  border-color: var(--accent-strong);
 }
 
 button.wp-danger {
@@ -373,26 +510,88 @@ button.wp-danger {
 
 button.wp-danger:hover {
   background: var(--danger);
+  border-color: var(--danger);
   color: #fff;
+}
+
+/* Compact row action (Call / Remove / PDF): quiet until hover, so lists
+ * of rows do not read as walls of buttons. */
+.wp-mini {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85em;
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.wp-mini:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.wp-mini.wp-danger {
+  color: var(--danger);
+}
+
+.wp-mini.wp-danger:hover {
+  color: #fff;
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+/* Native file pickers styled at the seam: the chooser button matches the
+ * design system so the raw browser chrome disappears. */
+input[type="file"]::file-selector-button {
+  font: inherit;
+  font-size: 0.85em;
+  font-weight: 550;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  border-color: var(--accent);
 }
 
 input {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
   font: inherit;
+  transition: border-color 120ms ease;
+}
+
+input::placeholder {
+  color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 input:focus-visible,
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-/* --- threads & bubbles ---------------------------------------------------- */
+/* --- rows: threads, contacts, fax, voicemail, history ---------------------- */
 
 /* The SSE swap targets: only these regions get replaced by live pushes,
    so a composer draft or a selected file never disappears under one. */
@@ -400,42 +599,173 @@ a:focus-visible {
 .wp-fax-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .wp-thread-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: center;
   padding: 10px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--text);
   background: var(--surface-2);
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
 }
 
 .wp-thread-row:hover {
-  border-color: var(--accent);
+  border-color: var(--border-strong);
+  background: var(--surface-3);
+}
+
+.wp-thread-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .wp-thread-remote {
   font-weight: 600;
-}
-
-.wp-thread-preview {
-  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.wp-thread-when {
+.wp-thread-preview {
   color: var(--muted);
-  font-size: 0.85em;
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.wp-thread-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: start;
+}
+
+.wp-thread-when {
+  color: var(--muted);
+  font-size: 0.82em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Unread: the peer name carries the weight, an accent dot marks the row. */
+.wp-thread-row.wp-unread .wp-thread-remote {
+  font-weight: 750;
+}
+
+.wp-thread-row.wp-unread {
+  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface-2));
+}
+
+/* Peer avatar: deterministic hue per number/name, set inline via --av-h. */
+.wp-avatar {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: oklch(0.42 0.07 var(--av-h, 160));
+  color: oklch(0.95 0.02 var(--av-h, 160));
+  font-size: 0.78em;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+/* Shared rows (contacts, fax, voicemail, history): the same quiet grid. */
+.wp-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.wp-row:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-3);
+}
+
+.wp-row .wp-muted {
+  font-size: 0.88em;
+}
+
+.wp-row-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Direction chip: inbound/outbound at a glance without reading text. */
+.wp-dir-chip {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 0.95em;
+}
+
+.wp-dir-chip.wp-dir-in {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.wp-row.wp-unread {
+  border-left-color: var(--warn);
+}
+
+.wp-fax-in {
+  border-left-color: var(--accent);
+}
+
+.wp-fax-dir {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+.wp-shared-tag {
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.75em;
+  white-space: nowrap;
+}
+
+.wp-audio {
+  height: 36px;
+  width: min(240px, 100%);
+}
+
+/* --- thread view & bubbles ------------------------------------------------ */
 
 .wp-thread-head {
   flex-direction: row;
@@ -447,12 +777,15 @@ a:focus-visible {
   color: var(--accent-strong);
   text-decoration: none;
   white-space: nowrap;
+  font-size: 0.9em;
 }
 
 .wp-transcript {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: min(46rem, 100%);
+  margin: 0 auto;
   max-height: 55vh;
   overflow-y: auto;
   padding: 4px;
@@ -460,9 +793,10 @@ a:focus-visible {
 }
 
 .wp-bubble {
-  max-width: 78%;
-  padding: 8px 12px;
+  max-width: min(78%, 34rem);
+  padding: 9px 13px;
   border-radius: var(--radius);
+  border-bottom-left-radius: 4px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   align-self: flex-start;
@@ -471,7 +805,9 @@ a:focus-visible {
 .wp-bubble.wp-out {
   align-self: flex-end;
   background: var(--accent-soft);
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: 4px;
 }
 
 .wp-bubble-body {
@@ -481,13 +817,13 @@ a:focus-visible {
 }
 
 .wp-bubble-meta {
-  display: block;
   margin-top: 4px;
   font-size: 0.75em;
   color: var(--muted);
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
 }
 
 .wp-attachment {
@@ -523,50 +859,12 @@ a:focus-visible {
   color: var(--danger);
 }
 
-/* --- fax / voicemail / history rows --------------------------------------- */
-
-.wp-fax-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-}
-
-.wp-fax-in {
-  border-left: 3px solid var(--accent);
-}
-
-.wp-unread {
-  border-left: 3px solid var(--warn);
-}
-
-.wp-fax-dir {
-  color: var(--muted);
-  font-size: 0.9em;
-}
-
-.wp-shared-tag {
-  color: var(--muted);
-  border: 1px solid var(--border);
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 0.75em;
-}
-
-.wp-audio {
-  height: 36px;
-}
-
 /* --- settings -------------------------------------------------------------- */
 
 .wp-settings {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 8px 20px;
+  gap: 8px 24px;
   margin: 0;
 }
 
@@ -577,37 +875,12 @@ a:focus-visible {
 .wp-settings dd {
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-/* --- responsive ------------------------------------------------------------- */
-
-@media (max-width: 900px) {
-  .wp-body {
-    grid-template-columns: 1fr;
-    padding: 12px;
-  }
-
-  .wp-island {
-    position: static;
-    order: 2;
-  }
-
-  .wp-main-col {
-    order: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+  font-variant-numeric: tabular-nums;
 }
 
 .wp-export-link {
   align-self: center;
-  color: var(--accent);
+  color: var(--accent-strong);
   font-size: 0.9em;
   text-decoration: none;
 }
@@ -625,10 +898,46 @@ a:focus-visible {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 6px 14px;
   cursor: pointer;
   font: inherit;
+}
+
+/* --- responsive ------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .wp-body {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 16px;
+  }
+
+  /* Signed out, the login card is the only actionable thing on the
+   * page — it leads. Signed in, the tab content leads. */
+  .wp-island:has(#login-view:not([hidden])) {
+    order: -1;
+  }
+
+  .wp-island {
+    position: static;
+  }
+
+  .wp-panel {
+    padding: 18px 16px 20px;
+  }
+
+  .wp-row-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* htmx indicator parity: the library's own <style> injection is disabled
