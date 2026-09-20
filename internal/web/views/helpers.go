@@ -5,3 +5,55 @@ import "strconv"
 // fmtInt renders counts for templ (templ children cannot call strconv
 // directly with a plain int conversion).
 func fmtInt(n int) string { return strconv.Itoa(n) }
+
+// avatarFor derives the two-glyph avatar label for a contact name or
+// phone number: the leading digits of a number ("+4"), the first letters
+// of a name's words ("AK"), or "?" for blanks. Deterministic, so the
+// same peer renders the same mark everywhere.
+func avatarFor(nameOrNumber string) string {
+	runes := []rune(nameOrNumber)
+	if len(runes) == 0 {
+		return "?"
+	}
+	if runes[0] == '+' || (runes[0] >= '0' && runes[0] <= '9') {
+		digits := make([]rune, 0, 2)
+		for _, r := range runes {
+			if r >= '0' && r <= '9' {
+				digits = append(digits, r)
+				if len(digits) == 2 {
+					return string(digits)
+				}
+			}
+		}
+		if len(digits) > 0 {
+			return string(digits)
+		}
+		return "?"
+	}
+	letters := make([]rune, 0, 2)
+	wantLetter := true
+	for _, r := range runes {
+		if r == ' ' {
+			wantLetter = true
+			continue
+		}
+		if wantLetter {
+			letters = append(letters, r)
+			wantLetter = false
+			if len(letters) == 2 {
+				break
+			}
+		}
+	}
+	return string(letters)
+}
+
+// avatarHue maps a name or number onto a stable hue (0-359) so each peer
+// keeps a consistent avatar tint across every surface.
+func avatarHue(nameOrNumber string) int {
+	sum := 0
+	for _, r := range nameOrNumber {
+		sum = (sum*31 + int(r)) % 360
+	}
+	return sum
+}

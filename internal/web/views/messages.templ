@@ -26,10 +26,10 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
-		@NewMessageForm("", props.Lang)
 		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
 			@ThreadsList(props.Threads, props.Lang)
 		</div>
+		@NewMessageForm("", props.Lang)
 	</section>
 }
 
@@ -47,19 +47,24 @@ templ ThreadsList(threads []store.ThreadSummary, lang Lang) {
 
 templ ThreadRow(summary store.ThreadSummary, lang Lang) {
 	<a
-		class="wp-thread-row"
+		class={ "wp-thread-row", templ.KV("wp-unread", summary.Thread.Unread > 0) }
 		href={ "/messages/" + summary.Thread.ID.String() }
 		hx-get={ "/partials/messages/" + summary.Thread.ID.String() }
 		hx-target="#tab-content"
 		hx-swap="innerHTML show:window:top"
 		hx-push-url={ "/messages/" + summary.Thread.ID.String() }
 	>
-		<span class="wp-thread-remote">{ summary.Thread.Remote.String() }</span>
-		<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
-		<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt) }</span>
-		if summary.Thread.Unread > 0 {
-			<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
-		}
+		<span class="wp-avatar" aria-hidden="true" style={ "--av-h: " + fmtInt(avatarHue(summary.Thread.Remote.String())) }>{ avatarFor(summary.Thread.Remote.String()) }</span>
+		<span class="wp-thread-text">
+			<span class="wp-thread-remote">{ summary.Thread.Remote.String() }</span>
+			<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
+		</span>
+		<span class="wp-thread-side">
+			<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt) }</span>
+			if summary.Thread.Unread > 0 {
+				<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
+			}
+		</span>
 	</a>
 }
 

@@ -47,27 +47,37 @@ templ ContactsPanel(props ContactsPanelProps) {
 			@ContactRow(contact, props.Lang)
 		}
 		for _, contact := range props.Shared {
-			<article class="wp-fax-row">
-				<strong class="wp-thread-remote">{ contact.Name }</strong>
-				<span class="wp-muted">{ contact.Number }</span>
+			<article class="wp-row">
+				<span class="wp-avatar wp-avatar-shared" aria-hidden="true" style={ "--av-h: " + fmtInt(avatarHue(contact.Name + contact.Number)) }>{ avatarFor(contact.Name) }</span>
+				<span class="wp-thread-text">
+					<strong class="wp-thread-remote">{ contact.Name }</strong>
+					<span class="wp-muted">{ contact.Number }</span>
+				</span>
 				<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
-				<button class="wp-primary" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
+				<span class="wp-row-actions">
+					<button class="wp-mini" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
+				</span>
 			</article>
 		}
 	</section>
 }
 
 templ ContactRow(contact domain.Contact, lang Lang) {
-	<article class="wp-fax-row">
-		<strong class="wp-thread-remote">{ contact.Name }</strong>
-		<span class="wp-muted">{ contact.Phone.String() }</span>
-		<button class="wp-primary" data-dial={ contact.Phone.String() }>{ T(lang, "contacts.call") }</button>
-		<button
-			class="wp-danger"
-			hx-post={ "/contacts/delete?id=" + contact.ID.String() }
-			hx-target="#tab-content"
-			hx-swap="innerHTML"
-			hx-confirm={ T(lang, "contacts.removeConfirm") }
-		>{ T(lang, "contacts.remove") }</button>
+	<article class="wp-row">
+		<span class="wp-avatar" aria-hidden="true" style={ "--av-h: " + fmtInt(avatarHue(contact.Name + contact.Phone.String())) }>{ avatarFor(contact.Name) }</span>
+		<span class="wp-thread-text">
+			<strong class="wp-thread-remote">{ contact.Name }</strong>
+			<span class="wp-muted">{ contact.Phone.String() }</span>
+		</span>
+		<span class="wp-row-actions">
+			<button class="wp-mini" data-dial={ contact.Phone.String() }>{ T(lang, "contacts.call") }</button>
+			<button
+				class="wp-mini wp-danger"
+				hx-post={ "/contacts/delete?id=" + contact.ID.String() }
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-confirm={ T(lang, "contacts.removeConfirm") }
+			>{ T(lang, "contacts.remove") }</button>
+		</span>
 	</article>
 }
