@@ -3,6 +3,11 @@
 
 (function () {
   "use strict";
+  // Load-error boundary (plan T19): if ANY shell wiring throws at load,
+  // leave a breadcrumb in the island's event log (it may still exist
+  // even when the island itself failed) and rethrow to the console —
+  // never a silent half-wired shell.
+  try {
 
   // 1. Nav active state across HTMX partial swaps: the server marks the
   //    active link on full renders; after a partial swap only the clicked
@@ -179,10 +184,15 @@
   //     refreshes included), so the throttle collapses the storm into
   //     one toast instead of hiding its own message.
   var lastErrorToast = 0;
+  // Injectable clock (plan T19): node:test passes a fake via
+  // window.__wpClock.now; the browser default is Date.now.
+  var now = (typeof window.__wpClock === "object" && window.__wpClock && typeof window.__wpClock.now === "function")
+    ? window.__wpClock.now
+    : Date.now;
   var showThrottledError = function (message) {
-    var now = Date.now();
-    if (now - lastErrorToast < 8000) return;
-    lastErrorToast = now;
+    var nowMs = now();
+    if (nowMs - lastErrorToast < 8000) return;
+    lastErrorToast = nowMs;
     shellToast(message, "error");
   };
   document.addEventListener("htmx:responseError", function (event) {
@@ -245,5 +255,15 @@
       }
       applyTheme();
     });
+  }
+  } catch (err) {
+    var logList = document.getElementById("log");
+    if (logList) {
+      var entry = document.createElement("li");
+      entry.textContent = "shell load failed: " + (err && err.message);
+      entry.dataset.level = "error";
+      logList.prepend(entry);
+    }
+    if (window.console && console.error) console.error("webphone: shell load failed", err);
   }
 })();
