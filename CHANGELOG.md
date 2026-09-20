@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- SQLite-backed session store: tab sessions now survive service
+  restarts (the pre-2.0 "every deploy signs everyone out" failure class
+  is deleted at the root, not narrated). Same cookie, same TTL
+  semantics, fail-closed gates unchanged; the in-memory store remains
+  for tests and the design/threat review lives in
+  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`
+  (`TestSQLiteSessionStoreSurvivesRestart` + a kill -9 smoke scenario
+  pin it).
+- Durable inline errors for failed tab actions: the shell ships an htmx
+  `responseHandling` override that swaps the server's `.wp-error` panel
+  banner into a dedicated `#wp-tab-error` slot (rendered outside
+  `#tab-content` so tab swaps and compose drafts are never touched);
+  401 stays swap-free by exception. The toast-plus-inline pairing on
+  502 gateway outages is test-pinned.
+- Completed toast feedback map: server-session login failures toast
+  status-specific advice in the user's language (credentials, 429,
+  other HTTP, unreachable), the shell names 429 as
+  client-correctable instead of a generic failure, and a dead SSE feed
+  toasts once after three consecutive failures (recovery resets the
+  counter). New copy in both en/de dictionaries.
+- Accessible, keyboard-dismissable toasts: the `#toasts` live region
+  (`role="status" aria-live="polite"`) is now pinned on the served page,
+  and toasts take focus on Tab and dismiss with Enter/Space/Escape in
+  both the island and the shell.
+- Island tests for the server-session feedback map (login failure
+  classes, quiet-success, SSE failure counter) — session.js was the
+  last untested island module with user-visible error paths.
+- Smoke suite restart scenario: login → `kill -9` → reboot on the same
+  data dir → the old session cookie still opens session-gated surfaces
+  while anonymous requests stay rejected.
+
+### Changed
+
 - Island JS test runner (the standing gap is closed): `node:test` with
   minimal DOM stubs under Nix — tests live in `internal/web/assets/
 island-tests/` (a sibling of the served tree, never embedded) and run
@@ -100,6 +133,18 @@ island-tests/` (a sibling of the served tree, never embedded) and run
 
 ### Fixed
 
+- Silent dead-tab-session failures: after a server restart (or any 401 /
+  network error) htmx tab clicks and form submits failed invisibly —
+  htmx swaps nothing on error responses and nothing listened. The shell
+  now toasts throttled, honest feedback on `htmx:responseError` /
+  `htmx:sendError` (401 wording reassures that calls keep working;
+  never an auto-reload, the island must survive) and skips responses
+  that already carry `HX-Trigger` server feedback.
+- Server-authored toasts rendered in `info` styling: the island's kind
+  map spoke the dispatch-layer vocabulary (`success`/`warning`) while
+  the server emits island kinds (`ok`/`error`), so every error toast
+  looked neutral. `toastKindFor` accepts both vocabularies and is
+  pinned by island tests.
 - `scripts/release.sh` release-notes extraction: the section-matching
   awk treated `## [2.4.0]` as a regex bracket expression and never
   matched, shipping v2.3.0 and v2.4.0 with empty GitHub release bodies.

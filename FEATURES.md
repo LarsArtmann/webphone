@@ -63,7 +63,7 @@ Code wins when doc and code disagree.
 | Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears                             |
 | vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                                           |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | Login verifies the credentials against the PBX directory server-side (`VerifyCredentials`, fail-closed), then opens the tab session; logout closes it |
-| Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                                       |
+| Session store                  | 🟢 FULLY_FUNCTIONAL | SQLite-backed (survives restarts), TTL + sweeps, HttpOnly cookie; in-memory store remains for tests                                                   |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                                               |
 | CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config                  |
 | Own-number identity (DID)      | 🟢 FULLY_FUNCTIONAL | Config `identities` (ext → presented number): signed-in header, island whoami (session response), messages/fax "sending as"; display-only             |
@@ -77,6 +77,11 @@ Code wins when doc and code disagree.
 | Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload                                                       |
 | SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame                                                    |
 | Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy                                          |
+| Durable inline tab errors  | 🟢 FULLY_FUNCTIONAL | htmx `responseHandling` swaps the server's `.wp-error` banner into `#wp-tab-error` on 4xx/5xx (401 excluded); drafts untouched |
+| Error toasts for htmx failures | 🟢 FULLY_FUNCTIONAL | Throttled `htmx:responseError`/`htmx:sendError` toasts (401/429-specific wording; never auto-reload) |
+| Login-failure toasts       | 🟢 FULLY_FUNCTIONAL | Server-session POST failures toast status-specific en/de copy next to the `#log` line                                |
+| Dead-feed SSE notice       | 🟢 FULLY_FUNCTIONAL | Toast once after 3 consecutive `htmx:sseError`s; recovery resets                                                     |
+| Toast accessibility        | 🟢 FULLY_FUNCTIONAL | `#toasts` is a `role="status"` live region; toasts focusable and dismissable via Enter/Space/Escape                   |
 
 ## Awareness
 
