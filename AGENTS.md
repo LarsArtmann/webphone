@@ -335,6 +335,16 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `csrf.trusted_origins` (the https vhost) — `requestScheme` honors
   X-Forwarded-Proto only from trusted proxies. Module and stack set
   both; `TestCSRFTrustsTheFrontingProxy` pins the request shape.
+- Nix cross-build trust trap (2026-09-20): `nix build --system
+  aarch64-linux` prints "ignoring the client-specified setting 'system',
+  because it is a restricted setting and you are not a trusted user"
+  when the client is untrusted (`trusted-users = root` here) — and on
+  truly restricted paths it silently builds the DEFAULT system with
+  EXIT=0 (a false-green aarch64 gate). Verify cross-builds by the ELF
+  machine bytes (`od -An -tx1 -j18 -N2 <binary>`: `b7 00` =
+  EM_AARCH64, `3e 00` = EM_X86_64), never by exit code alone. On this
+  host the flake eval still honored aarch64 despite the warning — the
+  trap is the silent variant elsewhere.
 - Dynamic awk/grep patterns must ESCAPE `[`/`]`: release.sh's notes
   extractor matched `^## [2.4.0]` as a dynamic awk regex, where
   `[2.4.0]` is a bracket expression (one char of {2,.,4,0}) — it never
