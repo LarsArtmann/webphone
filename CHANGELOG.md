@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- NixOS module: dedicated nginx locations for the probe triple
+  (`/healthz`, `/livez`, `/startupz`) instead of riding `/` — a fleet
+  health hub can be scraped from or fenced (`allow`/`deny` via
+  `extraConfig`) per location without touching the app's location; the
+  `webphone-module` flake check asserts all six vhost locations.
+- NixOS module: typed `services.webphone.csrf.trustedProxies` /
+  `trustedOrigins` options rendering into `settings.csrf` (empty lists
+  preserve the `nginx.enable` defaults; non-empty lists override them)
+  and `services.webphone.serverTiming.enable` setting the
+  `WEBPHONE_DEBUG_TIMING` env gate — both pinned by new flake-check
+  assertions.
+- Backup-timer NixOS VM test (`checks.x86_64-linux.webphone-backup`,
+  kvm-gated): boots the real service with `backup.enable`, runs the
+  oneshot, and asserts the snapshot pair lands under `destDir`, the
+  copied database passes `pragma integrity_check`, the timer renders
+  `OnCalendar`/`Unit`, and the service never restarted (the online
+  claim). Fax-feed-test style from the consuming stack.
+- Styled 404 page: unknown paths render the app shell around the error
+  panel (reload affordance included) instead of Go's bare
+  `404 page not found` text — error-page parity with the pre-2.0 static
+  site, re-verified and restored after the templ-components adoption
+  (`TestNotFoundRendersTheShell` pins it; the status stays 404).
+- Smoke suite: `/partials/nav` anonymous-vs-signed-in shape checks —
+  labels render anonymously and badges never do; the signed-in re-fetch
+  shows the unread badge in its honest window before the thread opens.
+
+### Changed
+
+- The two htmx extensions now load as one bundle: `/htmx-ext.js` serves
+  sse + idiomorph concatenated via `cqrshtmx.HTMXExtensionsHandler`
+  (composite ETag, per-extension version comments) — one script tag and
+  one request instead of two.
+- Voicemail rows and their `<audio>` elements carry stable uuid-derived
+  ids (`vm-<uuid>`, `vm-audio-<uuid>`): idiomorph persists any element
+  whose id exists in both trees, so a voicemail re-fetch morph can
+  reorder rows without re-creating an audio element mid-playback (the
+  im-preserve audit's one stateful morph surface;
+  `TestVoicemailRowsCarryStableMorphIds` pins the ids).
+- `scripts/release.sh`: the gates now include `nix run .#vulnix`
+  (runtime-closure advisory scan every train — cadence institutionalized
+  instead of remembered).
+
+### Fixed
+
+- `scripts/release.sh` release-notes extraction: the section-matching
+  awk treated `## [2.4.0]` as a regex bracket expression and never
+  matched, shipping v2.3.0 and v2.4.0 with empty GitHub release bodies.
+  The brackets are now escaped and both release objects were backfilled
+  from their CHANGELOG sections (audit 2026-09-20: v2.1.0/v2.2.0 were
+  already byte-identical to the CHANGELOG).
+
+### Documentation
+
+- README: module-options table (including the new `csrf.*`,
+  `serverTiming`, backup options), the probe-triple +
+  fleet-scraping paragraph, the backup drill invocation line, and an
+  explicit off-machine restic/borg pointer (`destDir` shares the host
+  with the service — it is not a backup until copied off).
+
 ## [2.4.0] - 2026-09-20
 
 ### Fixed

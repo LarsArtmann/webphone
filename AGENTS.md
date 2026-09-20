@@ -40,16 +40,29 @@ a second user database would be a split brain.
   `dataDir` (MUST live under `/var/lib/` — assertion, because systemd
   StateDirectory is derived from it), `settings` (freeform),
   `environmentFile`, `memoryMax` (null = uncapped, wires systemd
-  MemoryMax), `nginx.{enable,hostName}`. Its vhost proxies `/`, the
-  websocket path (upgraded, 3600s), and `/events` (SSE: buffering off,
-  HTTP/1.1, 3600s). `nixosModules.webphone` is an alias of `.default`.
+  MemoryMax), `csrf.{trustedProxies,trustedOrigins}` (typed fronts for
+  `settings.csrf.*` — empty preserves the `nginx.enable` defaults,
+  non-empty overrides them), `serverTiming.enable` (sets the
+  `WEBPHONE_DEBUG_TIMING` env gate), `backup.{enable,destDir,calendar}`
+  (daily online snapshot timer), `nginx.{enable,hostName}`. Its vhost
+  proxies `/`, the websocket path (upgraded, 3600s), `/events` (SSE:
+  buffering off, HTTP/1.1, 3600s) and the probe triple
+  (`/healthz`/`/livez`/`/startupz` as DEDICATED locations so fleet
+  scrapers can be fenced per location without touching `/`).
+  `nixosModules.webphone` is an alias of `.default`.
 - The `webphone-module` flake check evaluates the module with stand-in
   options (nginx/systemd/users + `assertions` — NixOS's modules.nix
   normally provides `assertions`; new config keys the module writes
-  need a stand-in there) and asserts the three vhost locations plus the
-  `webphone` systemd unit. Statix pins single-assignment style: all
-  `locations` in ONE attrset (three `locations.X =` assignments fail
-  the gate).
+  need a stand-in there) and asserts all six vhost locations, the
+  `webphone` systemd unit, the csrf fronting defaults AND the typed
+  override, the backup timer/oneshot pair, and the serverTiming env
+  gate. Statix pins single-assignment style: all `locations` in ONE
+  attrset (repeated `locations.X =` assignments fail the gate).
+  `checks.x86_64-linux.webphone-backup` is a kvm-gated NixOS VM test
+  (fax-feed-test style): boots the real service with `backup.enable`,
+  runs the oneshot, asserts snapshot + `pragma integrity_check` + timer
+  wiring + `NRestarts=0`; without KVM, `nix flake check` skips it with
+  a warning instead of crawling under TCG.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge (secrets via LoadCredential/
   EnvironmentFile under `/var/lib/telephony-secrets`) — contracts in
@@ -62,9 +75,9 @@ nix develop                        # Go, templ, golangci-lint, esbuild, … — 
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations. Since the go 1.27.1 floor, OUTSIDE-the-shell go commands also need the 1.27 toolchain — prefer `nix develop -c` wrappers
 python3 scripts/webphone-smoke.py          # 28-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server; includes /livez + /startupz)
-buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full
+buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh now also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings)
-nix flake check                            # package build + tests in sandbox + treefmt + island-lint
+nix flake check                            # package build + tests in sandbox + treefmt + island-lint + the kvm-gated backup VM test (skipped with a warning without /dev/kvm)
 nix build .#webphone --system aarch64-linux   # cross-builds
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 ```
@@ -198,12 +211,20 @@ every build; it is the local tripwire, not a replacement for the E2E.
   SSE/nav surfaces — thread list, `#thread-transcript`, fax list,
   voicemail panel re-fetch, shell.js `refreshNav` — carry
   `hx-swap="morph:innerHTML"` and are reconciled by idiomorph
-  (cqrs-htmx v4.11.0's bundled self-contained ext, served at
-  `/htmx-ext/idiomorph.js`; the sse ext resolves swaps via htmx
-  `getSwapSpecification`, so the attribute IS honored on `sse-swap`
+  (cqrs-htmx v4.11.0's bundled self-contained exts, served as ONE
+  bundle at `/htmx-ext.js` via `cqrshtmx.HTMXExtensionsHandler` —
+  sse + idiomorph concatenated, composite ETag; the sse ext resolves
+  swaps via htmx `getSwapSpecification`, so the attribute IS honored on `sse-swap`
   elements). Morph preserves matched nodes in place: focus, draft
   text, container attrs (`data-page`/`data-thread`) and shell.js
-  listeners survive live pushes. Payloads still render as bare
+  listeners survive live pushes. im-preserve audit conclusion
+  (2026-09-20): idiomorph 0.7 persists any element whose id exists in
+  BOTH trees (morphed in place, pantry-pulled across reorders) and its
+  `restoreFocus` equally needs an id — so STATEFUL nodes in morph
+  surfaces must carry stable ids (voicemail rows + `<audio>` do:
+  `vm-<uuid>`/`vm-audio-<uuid>`, pinned by
+  `TestVoicemailRowsCarryStableMorphIds`; thread/fax rows and bubbles
+  are static content, re-creation there is harmless). Payloads still render as bare
   fragments (`ThreadsList`, `Transcript`, `FaxList` — no wrappers,
   no composers) — the shape is convention even though morph no
   longer wipes drafts on it. The `voicemail` event stays a
@@ -266,9 +287,7 @@ every build; it is the local tripwire, not a replacement for the E2E.
   passed against the branch via `--override-input` (148 s, full
   call/transfer/DTMF/reconnect flow) — verdict doc
   `docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`,
-  merge `6bb792e`. Still open: CSRF token rotation (see next bullet)
-  and optionally bundling both htmx extensions via
-  `cqrshtmx.HTMXExtensionsHandler` (one request instead of two).
+  merge `6bb792e`.
   Adoption posture: middleware + assets only; the `setup` bundle, CQRS
   dispatch layer and usermgmt stay rejected (split-brain identity, see
   above); security presets are NEVER adopted wholesale — the library's
@@ -310,6 +329,13 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `csrf.trusted_origins` (the https vhost) — `requestScheme` honors
   X-Forwarded-Proto only from trusted proxies. Module and stack set
   both; `TestCSRFTrustsTheFrontingProxy` pins the request shape.
+- Dynamic awk/grep patterns must ESCAPE `[`/`]`: release.sh's notes
+  extractor matched `^## [2.4.0]` as a dynamic awk regex, where
+  `[2.4.0]` is a bracket expression (one char of {2,.,4,0}) — it never
+  matched the literal heading and shipped v2.3.0/v2.4.0 with EMPTY
+  GitHub release bodies. The fold-check grep passed because ITS
+  pattern had shell-escaped `\[`. Found by the 2026-09-20 release
+  audit; both objects backfilled from CHANGELOG.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only
