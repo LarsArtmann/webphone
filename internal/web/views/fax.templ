@@ -50,7 +50,9 @@ templ FaxList(jobs []domain.FaxJob, lang Lang) {
 }
 
 templ FaxRow(job domain.FaxJob, lang Lang) {
-	<article class={ "wp-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
+	// wp-fax-row stays in the class list: it is the swap-safety contract
+	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
+	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">
 			if job.Direction == domain.FaxInbound {
 				{ T(lang, "fax.in") }
