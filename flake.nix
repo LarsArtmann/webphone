@@ -273,8 +273,7 @@
                   '';
                 };
               in
-              pkgs.runCommand "webphone-vulnix-triage-check" { }
-                "${lib.getExe script} | tee $out";
+              pkgs.runCommand "webphone-vulnix-triage-check" { } "${lib.getExe script} | tee $out";
 
             # Evaluate the NixOS module with a minimal config and build
             # the artifacts it would generate — catches option/syntax

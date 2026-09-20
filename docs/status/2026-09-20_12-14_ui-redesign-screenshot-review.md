@@ -180,6 +180,7 @@ Verified via real screenshots (light/dark × desktop/mobile):
 ## f) UP TO 50 THINGS TO GET DONE NEXT (ordered, actionable)
 
 **Ship this redesign**
+
 1. Review the 12:10 reshoot round (all 36) — confirm avatar "+1", history
    arrows, voicemail/history/settings, mobile dark.
 2. Fix contacts import row grouping (templ class + CSS).
@@ -205,14 +206,14 @@ Verified via real screenshots (light/dark × desktop/mobile):
 
 **Visual polish backlog (from screenshot critique)**
 16. Mobile: island card `order` flip for signed-in state review —
-    confirm keypad reachability thumbs-wise.
+confirm keypad reachability thumbs-wise.
 17. Bubble meta: show read-status icon (✓) instead of underlined text?
 18. Thread header: resolve contact NAME for the remote number (contacts
-    store lookup) instead of raw number — product gap visible in shots.
+store lookup) instead of raw number — product gap visible in shots.
 19. Thread list: apply contact-name resolution to rows too.
 20. Fax compose: collapse number+file+send into one bordered unit card.
 21. Voicemail rows: show duration as mm:ss and a waveform-ish progress
-    (audio only has native controls today).
+(audio only has native controls today).
 22. Empty states: add one-line "what will appear here" sub-copy per tab.
 23. Welcome panel: add version string + gateway mode (settings-lite).
 24. Theme toggle: cycle label "Auto → Light → Dark" with state icon.
@@ -220,45 +221,47 @@ Verified via real screenshots (light/dark × desktop/mobile):
 26. Nav: keyboard focus ring consistency check across browsers.
 27. Print stylesheet? (fax/history lists) — probably YAGNI, decide.
 28. Dark theme: border-strong maybe too subtle on rows in the latest
-    shots — verify at 100% zoom.
+shots — verify at 100% zoom.
 29. Light theme bg teal cast: confirm it does not band on cheap panels.
 30. `oklch()` fallback for older Safari (island ships raw; check
-    browserslist reality for Lars's fleet — Chromium only today).
+browserslist reality for Lars's fleet — Chromium only today).
 
 **Architecture/clean-up surfaced this session**
 31. Kill the `/tmp/wpshoot` throwaway: consider promoting the shoot
-    harness into the repo (scripts/ui-shoot/) or into vision-review-agent
-    as a reusable "app harness" (spec + seed + fake-SIP).
+harness into the repo (scripts/ui-shoot/) or into vision-review-agent
+as a reusable "app harness" (spec + seed + fake-SIP).
 32. Document the fake-SIP WebSocket trick in AGENTS.md testing section.
 33. Smoke suite: add a check that /assets/app.css contains the current
-    design-token marker (catches stale-embed deployments — the exact
-    failure mode that burned this session twice).
+design-token marker (catches stale-embed deployments — the exact
+failure mode that burned this session twice).
 34. Consider adding an E2E-greppable design marker to the login page
-    (like the island strings) so the stack E2E proves the new shell.
+(like the island strings) so the stack E2E proves the new shell.
 35. i18n: `vm.from` key now unused after row redesign — remove or reuse.
 36. `wp-fax-dir`, `wp-thread-side`… sweep for dead CSS classes left from
-    the old row layout and delete (dedupe pass).
+the old row layout and delete (dedupe pass).
 37. Check `.wp-filter` (history) still looks right with new input styles.
 38. Contacts: sort rows alphabetically (currently reverse-insertion —
-    looked arbitrary in shots).
+looked arbitrary in shots).
 39. Fax list: group outbox/inbox or add a status filter (product call).
 40. Messages compose: Enter-to-send in the reply field (JS island-side,
-    shell must not depend on it).
+shell must not depend on it).
 
 **Verification debt**
 41. Re-run the FULL `go test ./...` (not just ./internal/...) after the
-    parallel Identity session settles.
+parallel Identity session settles.
 42. gitleaks/codespell on-demand buildflow steps on the final tree.
 43. Vulnix `nix run .#vulnix` re-run at release time (post-rev bump).
 44. Re-verify `wp-` class inventory vs CSS (grep both directions) to
-    catch dead/misnamed classes before release.
+catch dead/misnamed classes before release.
 45. Add the reshoot step to the release runbook §9 closing sweep
-    (server process dead-proof + served-marker check).
+(server process dead-proof + served-marker check).
 
 **Bigger swings (needs a decision, not urgent)**
 46. Two-column → three-region responsive plan for wide screens (transcript
-    + thread list side-by-side) — screenshots show the thread view wastes
-    the right half; a desktop-class messaging layout would exploit it.
+
+- thread list side-by-side) — screenshots show the thread view wastes
+  the right half; a desktop-class messaging layout would exploit it.
+
 47. Move the island's topbar (EN/OFFLINE) INTO the login/phone card —
     the floating strip above the card still reads slightly disjoint.
 48. Consider icons in nav (inline SVG, CSP-safe) — skipped this session
@@ -285,6 +288,6 @@ Verified via real screenshots (light/dark × desktop/mobile):
 
 ---
 
-*Report per instruction; waiting for instructions. Background reshoot
+_Report per instruction; waiting for instructions. Background reshoot
 (shell 03B) may have finished by the time you read this — shots land in
-/tmp/wpshoot/local/.*
+/tmp/wpshoot/local/._

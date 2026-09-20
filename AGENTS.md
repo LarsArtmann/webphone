@@ -551,11 +551,12 @@ continuously — work in small, explicitly-committed units.
 
 More than one Crush session can work this repo at once. Tell-tale:
 uncommitted files you did not author (e.g. `internal/web/views/helpers.go`
-+ an untracked `helpers_test.go`) and mid-edit compile failures that heal
-on re-run. Rules: never revert/"fix" their in-flight files; re-read any
-shared file (i18n.go, pages.go, flake.nix) immediately before editing;
-a full-suite gate run may catch THEIR transient breakage — attribute
-failures before acting; and leave their booted dev servers running.
+
+- an untracked `helpers_test.go`) and mid-edit compile failures that heal
+  on re-run. Rules: never revert/"fix" their in-flight files; re-read any
+  shared file (i18n.go, pages.go, flake.nix) immediately before editing;
+  a full-suite gate run may catch THEIR transient breakage — attribute
+  failures before acting; and leave their booted dev servers running.
 
 ## Buildflow health warning, itemized (2026-09-19)
 

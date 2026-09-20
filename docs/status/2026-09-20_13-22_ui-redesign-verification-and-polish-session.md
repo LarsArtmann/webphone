@@ -207,7 +207,7 @@ Brainstorm, roughly impact-ordered; most items beyond ~15 are ROADMAP fuel
     shoot) so the 6-step ritual is one command.
 47. Verify light/dark avatar hue contrast (oklch tints on both themes).
 48. Check the morph surfaces still look right after CSS changes (draft text
-    + focus preservation on live pushes).
+    - focus preservation on live pushes).
 49. Post-gates: deliver before/after screenshot set to the user for sign-off.
 50. Update memory/AGENTS.md with the confirmed harness recipe (chromium path,
     CDP 9333, PUT /json/new retry) once promoted.
