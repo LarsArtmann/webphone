@@ -480,9 +480,9 @@
                     exit 0
                   }
                   echo "$scan"
-                  flagged_drvs=$(echo "$scan" | grep -oE '/nix/store/[^ ]+\.drv' | sort -u)
+                  flagged_drvs=$(echo "$scan" | grep -oE '/nix/store/[^ ]+\.drv' | sort -u || true)
                   non_glibc=$(echo "$flagged_drvs" | grep -v -- '-glibc-' || true)
-                  cves=$(echo "$scan" | grep -oE 'CVE-[0-9]{4}-[0-9]+' | sort -u)
+                  cves=$(echo "$scan" | grep -oE 'CVE-[0-9]{4}-[0-9]+' | sort -u || true)
                   if [ -z "$flagged_drvs" ] || [ -z "$cves" ]; then
                     echo "webphone-vulnix: vulnix failed without parseable findings — inspect the output above" >&2
                     exit 1
@@ -496,7 +496,14 @@
                   patches=$(nix eval "github:NixOS/nixpkgs/$rev#glibc.patches" --json | jq -r '.[]')
                   untriaged=0
                   for cve in $cves; do
-                    if echo "$patches" | while read -r p; do grep -l "$cve" "$p" 2>/dev/null; done | grep -q .; then
+                    # NB: the loop runs under writeShellApplication's set -e;
+                    # a non-matching grep would abort the subshell mid-loop,
+                    # so every grep is || true and hits are collected instead
+                    # of piped into grep -q (pipefail + SIGPIPE trap).
+                    hit=$(echo "$patches" | while read -r p; do
+                      grep -l "$cve" "$p" 2>/dev/null || true
+                    done | head -1)
+                    if [ -n "$hit" ]; then
                       echo "webphone-vulnix: $cve — distro-patched in locked nixpkgs $rev (range-match noise)"
                     else
                       echo "webphone-vulnix: $cve — NOT found in the locked glibc patches: REAL finding, act on it" >&2
