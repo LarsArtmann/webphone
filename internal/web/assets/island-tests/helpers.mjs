@@ -4,6 +4,7 @@
 // small as the tests demand — they are not a DOM implementation.
 export function installBrowserGlobals() {
   const registry = new Map();
+  const docListeners = new Map();
   const makeEl = (id) => ({
     id,
     textContent: "",
@@ -42,6 +43,9 @@ export function installBrowserGlobals() {
     },
     style: {},
     dataset: {},
+    setAttribute() {},
+    removeAttribute() {},
+    getAttribute: () => null,
   });
   globalThis.document = {
     getElementById: (id) => {
@@ -50,6 +54,19 @@ export function installBrowserGlobals() {
     },
     createElement: () => makeEl(""),
     querySelectorAll: () => [],
+    querySelector: () => null,
+    documentElement: makeEl("html"),
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+    // dispatch hands a plain event object to every listener registered
+    // for the type; tests pass target/detail through props.
+    dispatch(type, props = {}) {
+      const event = { target: null, detail: {}, preventDefault() {}, ...props };
+      for (const fn of docListeners.get(type) ?? []) fn(event);
+      return event;
+    },
     cookieSet: "",
     set cookie(v) {
       this.cookieSet = v;
@@ -58,8 +75,15 @@ export function installBrowserGlobals() {
       return this.cookieSet;
     },
   };
+  return globalThis.document;
   globalThis.window = {};
-  globalThis.location = { hostname: "pbx.example.org", host: "pbx.example.org" };
+  globalThis.location = {
+    hostname: "pbx.example.org",
+    host: "pbx.example.org",
+    reload() {
+      throw new Error("location.reload is banned in tests; assert the toast instead");
+    },
+  };
   // node >= 21 ships a getter-only global navigator — defineProperty, not
   // assignment.
   Object.defineProperty(globalThis, "navigator", {

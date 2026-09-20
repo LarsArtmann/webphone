@@ -145,6 +145,41 @@
   // tab; the nav is shell territory, so it asks via this event.
   document.addEventListener("wp:lang-changed", refreshNav);
 
+  // 3c. Error surfacing for htmx requests: htmx swaps NOTHING on error
+  //     responses (responseHandling defaults: 4xx/5xx → error, no swap),
+  //     so a dead tab session (the session store is in-memory and dies
+  //     with every server restart) used to make every tab click and
+  //     form submit fail silently. Toast instead. Never reload: the SIP
+  //     registration is independent of the server session, so calls
+  //     survive and the user reloads when convenient. Responses that
+  //     carry HX-Trigger (validation, panel errors) already toast through
+  //     the island's showMessage listener, so skip those to avoid double
+  //     feedback. An expired session 401s every later request (SSE nav
+  //     refreshes included), so the throttle collapses the storm into
+  //     one toast instead of hiding its own message.
+  var lastErrorToast = 0;
+  var showThrottledError = function (message) {
+    var now = Date.now();
+    if (now - lastErrorToast < 8000) return;
+    lastErrorToast = now;
+    shellToast(message, "error");
+  };
+  document.addEventListener("htmx:responseError", function (event) {
+    var xhr = event.detail && event.detail.xhr;
+    if (!xhr) return;
+    if (xhr.getResponseHeader("HX-Trigger")) return;
+    if (xhr.status === 401) {
+      showThrottledError(
+        "Tab session ended; calls keep working. Reload to sign back in.",
+      );
+      return;
+    }
+    showThrottledError("The request failed (HTTP " + xhr.status + ").");
+  });
+  document.addEventListener("htmx:sendError", function () {
+    showThrottledError("Network request failed; check your connection.");
+  });
+
   // 4. Manual theme override: cycles auto (prefers-color-scheme) →
   //    light → dark, persisted in localStorage. data-theme on <html>
   //    beats both stylesheets' media queries via attribute specificity.
