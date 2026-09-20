@@ -23,6 +23,7 @@ import http.client
 import http.cookiejar
 import json
 import os
+import pathlib
 import re
 import socket
 import subprocess
@@ -36,6 +37,78 @@ from collections.abc import Callable
 from urllib.parse import urlparse
 
 TIMEOUT = 10.0
+
+
+def _version_tuple(text: str) -> tuple[int, ...]:
+    parts = []
+    for chunk in text.split("."):
+        digits = ""
+        for ch in chunk:
+            if ch.isdigit():
+                digits += ch
+            else:
+                break
+        parts.append(int(digits or 0))
+    return tuple(parts)
+
+
+def _fmt(v: tuple[int, ...]) -> str:
+    return ".".join(str(p) for p in v)
+
+
+def ensure_go_toolchain(args: argparse.Namespace) -> None:
+    """Re-exec under `nix develop -c` when the ambient go is below the
+    go.mod floor.
+
+    The trap this removes (bitten twice, 2026-09-20): the host exports
+    GOTOOLCHAIN=local with an older go, so a bare
+    `python3 scripts/webphone-smoke.py` dies mid-build with "go.mod
+    requires go >= X (running go Y; GOTOOLCHAIN=local)". With flake.nix
+    present the fix is one re-exec inside the devShell — the same
+    suite, a working toolchain. --base/--bin modes and re-entrant calls
+    skip the probe.
+    """
+    if args.base or args.bin or os.environ.get("WEBPHONE_SMOKE_REEXEC"):
+        return
+    root = pathlib.Path(__file__).resolve().parent.parent
+    go_mod, flake = root / "go.mod", root / "flake.nix"
+    if not go_mod.exists() or not flake.exists():
+        return
+    floor = None
+    for line in go_mod.read_text().splitlines():
+        m = re.match(r"^go (\d[0-9.]*)$", line.strip())
+        if m:
+            floor = _version_tuple(m.group(1))
+            break
+    if floor is None:
+        return
+    probe = subprocess.run(
+        [args.go, "version"], capture_output=True, text=True, check=False
+    )
+    m = re.search(r"go version go(\d[0-9.]*)", probe.stdout)
+    if m and _version_tuple(m.group(1)) >= floor:
+        return
+    print(
+        "ambient go " + (m.group(1) if m else "unknown")
+        + " < floor " + _fmt(floor)
+        + "; re-executing via `nix develop -c` ...",
+        flush=True,
+    )
+    env = dict(os.environ)
+    env["WEBPHONE_SMOKE_REEXEC"] = "1"
+    result = subprocess.run(
+        [
+            "nix",
+            "develop",
+            "-c",
+            "python3",
+            str(pathlib.Path(__file__).resolve()),
+            *sys.argv[1:],
+        ],
+        env=env,
+        check=False,
+    )
+    raise SystemExit(result.returncode)
 
 
 class Check:
@@ -578,6 +651,8 @@ def main() -> int:
         "--go", default="go", help="go toolchain command for --bin build"
     )
     args = parser.parse_args()
+
+    ensure_go_toolchain(args)
 
     if args.base:
         return run_checks(Smoke(args.base), foreign=True)
