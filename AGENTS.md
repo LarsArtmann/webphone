@@ -202,7 +202,11 @@ every build; it is the local tripwire, not a replacement for the E2E.
   of 2026-09-19 (`docs/architecture-understanding/`) scored the posture;
   `/events` rides `Broadcaster.ServeSSE` (its `connected`
   handshake frame is additive; htmx sse-swap listeners ignore it;
-  payloads stay swap-safe fragments).
+  payloads stay swap-safe fragments; v4.11.0 leads the stream with a
+  `retry:` reconnect hint — the one wire change of the
+  v4.9.0→v4.11.0 bump, pinned by
+  `TestSSEStreamCarriesConnectedThenEvents`; MD1 executed 2026-09-20:
+  benchmark re-run clean, stack browser E2E green on the bumped tree).
 - **The island never unloads.** Tab navigation swaps partials into
   `#tab-content` via HTMX; the SIP island lives outside that region so
   calls survive tab switches. Deep links (`/messages`, `/fax`, …)
@@ -382,7 +386,9 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only
-  exists on master — tag-checking before the port caught it.
+  exists on master — tag-checking before the port caught it. (True at
+  the time; v4.11.0 DOES ship the hint — MD1's bump trigger fired and
+  was executed 2026-09-20.)
 - `GOEXPERIMENT=jsonv2` is required for every `go` command —
   templ-components/errorpage needs `encoding/json/v2`.
 - `.templ` files must NOT import `github.com/a-h/templ` (the generator

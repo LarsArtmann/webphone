@@ -28,3 +28,21 @@ numbers for live connections.
 Re-run the benchmark after any change to `ExtensionHubs` or after a
 cqrs-htmx / go-sse version bump and update this file (append a new
 dated table — do not overwrite history).
+
+## 2026-09-20 re-run — cqrs-htmx v4.11.0 (MD1 bump-trigger follow-through)
+
+`nix develop -c go test -run '^$' -bench BenchmarkHubFanOut -benchtime 2000x`
+· same machine.
+
+| Shape (hubs × subs) | ns/op | v4.9.0 baseline |
+| ------------------- | ----- | --------------- |
+| 1 × 1               | 40.0  | 37.3            |
+| 10 × 2              | 42.6  | 45.2            |
+| 100 × 2             | 45.3  | 61.8            |
+| 100 × 10            | 119.0 | 186.7           |
+
+**Reading:** no regression — same order of magnitude everywhere, and
+the wider fan-outs measure FASTER (2000x iterations are coarse; treat
+the deltas as noise in v4.11.0's favor). The bump's only wire change
+remains the SSE `retry:` stream prefix, which does not touch the
+broadcast path.

@@ -90,9 +90,6 @@ re-check:
   closed on undeclared identifiers by design).
 - E2E wall-time budget: the stack browser E2E baseline is ~150s; a run
   drifting far above it is a perf regression signal, not noise.
-- cqrs-htmx root tag: the next release after v4.9.0 changes the
-  `/events` byte stream (master already adds the SSE `retry:` hint) —
-  on bump, re-run the browser E2E and update the AGENTS retry note.
 - CSP re-audit trigger: assets are same-origin by policy (CDN banned);
   if that stance ever changes, re-audit CSP against every moved
   script (idiomorph included) before shipping — 01:04 report §f/46.
@@ -100,49 +97,32 @@ re-check:
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
 Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`
-§Phases 5-7 (items below are the road to ~100% adoption; P0-P3 landed
-2026-09-18, P4 + small P5 tasks graduated to TODO_LIST).
+§Phases 5-7. Status 2026-09-20: P5-P6 shipped in full — OOB spike
+(verdict: PARKED), toasts, `/version`, Server-Timing, `/openapi.json`,
+`cqrshtmx.Chain` parity, the fuzz/OR1/RA1/TT1/DR1/VL1 hardening set
+(the plan table carries every commit hash) — and the MD1 root-tag bump
+trigger fired and was executed: cqrs-htmx v4.11.0's one wire change
+(the SSE `retry:` hint) is stream-test-pinned, `BenchmarkHubFanOut`
+re-ran clean (`docs/reviews/2026-09-18_hub-fanout-baseline.md`), and
+the stack browser E2E passed on the bumped tree. What remains:
 
-- OOB badge push spike (OO1-OO3): `hx-swap-oob` unread-badge fragment
-  inside the `threads` SSE payload, env-flag-gated, validated against the
-  stack browser E2E before any default-on. UB1 (badge push from
-  unreadCache invalidation) only if the spike adopts.
-- Toasts (TO1-TO3): island `HX-Trigger` listener rendering the library's
-  ToastDetail shape; server sets Notify headers on send/save/delete;
-  i18n copy in BOTH en/de maps.
-- `/version` endpoint via the library `DebugHandler` pattern (VE1);
-  Server-Timing middleware behind an env flag (ST1); OpenAPI 3.1 for
-  `/api/session` at `/openapi.json` (OA1/OA2); compose the root stack
-  with `cqrshtmx.Chain` + ordering parity test (CH1).
-- Hardening: fuzz `/hooks/*` JSON decoding (FZ1/FZ2); ordering-invariant
-  test pinning limiter-wraps-secret-gate (OR1); island 429/Retry-After
-  handling in phone-api fetch wrappers (RA1); session TTL sweeper
-  interaction test (TT1); cqrs-htmx transitive drift check + root
-  v4.10.0 bump trigger note (DR1); periodic vulnix runtime-closure rescan
-  (last: buildflow 2026-09-18, clean).
-  STATUS 2026-09-18: fuzz target shipped (844k execs clean), OR1/RA1/TT1
-  shipped; DR1 checked — no newer releases of cqrs-htmx/httputil/go-sse;
-  VL1 re-verified — runtime closure still 8 derivations, unchanged glibc.
-- Root-tag bump trigger (MD1 finding, 2026-09-18): master already adds
-  the SSE `retry:` hint to `Broadcaster.ServeSSE` that v4.9.0 lacks —
-  the next root tag changes the `/events` byte stream. On bump: update
-  the AGENTS.md retry note, re-run `BenchmarkHubFanOut`, and re-run the
-  upstream browser E2E (payload-shape rule).
-- Island JS test runner (standing gap, 2026-09-19): the island has
-  none — toasts listener, live pill and 429 surfacing are pinned by Go
-  asset tripwires + code review only (§b.3 of the 2026-09-19 status).
-  When a runner lands, port the tripwires into real DOM tests.
-- Decision records / doc notes (P7): StructuredError for `/api/session`
-  (adopt only if the island branches on codes); sync/ multi-tab module
-  N.A. (per-tab SIP UA by design); DecodePagination N.A. (cursor
-  `older=` semantics); hub fan-out benchmark baseline; hx-boost
-  non-adoption; Default vs JSONLogFormatter for the stack's sink;
-  readiness-body contract for the stack's probes; notify/ack
-  applicability close-out; cross-link the deep-dive and structural-health
-  reports (both live in-tree under `docs/` — a cross-link adds nothing;
-  closed as NOT-DO 2026-09-19); ClientIP-trust note upstream in httputil
-  if XFF turns out sanitized; re-diff cqrs-htmx master vs v4.9.0 for new
-  middleware (checked 2026-09-18 — only the SSE `retry:` hint, see MD1).
+- OOB badge push (OO1-OO3 → M54/UB1): PARKED by verdict
+  `docs/reviews/2026-09-18_oob-badge-spike-verdict.md` — weak demand
+  (the badge already refreshes via TTL cache + drop-on-mutation
+  invalidation), payload-contract risk, and the E2E-gate cost.
+  Adoption only via that note's criteria: flag-gated prototype
+  (`WEBPHONE_SSE_OOB=1`) behind a green stack browser E2E, with the
+  `cqrshtmx.OOBHTML` signature re-checked against the then-current tag.
+- Island JS test runner (standing gap): the toasts listener, live
+  pill and 429 surfacing are pinned by Go asset tripwires + code
+  review only. When a runner lands, port the tripwires into real DOM
+  tests.
+- Conditional P7 decision records: `StructuredError` for
+  `/api/session` (adopt only if the island branches on codes);
+  ClientIP-trust note upstream in httputil (only if the stack proves
+  XFF sanitized). The periodic vulnix rescan left the watchlist —
+  `nix run .#vulnix` rides the release.sh gates every train since
+  2026-09-20.
 
 ## Open questions (owner calls)
 
