@@ -46,3 +46,37 @@ test("toastKindFor tolerates the dispatch-layer vocabulary and junk", () => {
   assert.equal(ui.toastKindFor("unexpected"), "info");
   assert.equal(ui.toastKindFor(undefined), "info");
 });
+
+test("toasts are keyboard-dismissable and never steal focus on creation", () => {
+  const toasts = document.getElementById("toasts");
+  ui.announce("kbd me", "warn");
+  const toast = toasts.children[0];
+  assert.equal(toast.tabIndex, 0, "toast must be focusable for dismissal");
+  assert.notEqual(toast, document.activeElement);
+  toast.listeners.keydown[0]({ key: "Escape", preventDefault() {} });
+  assert.equal(toasts.children.length, 0, "Escape must remove the toast");
+
+  ui.announce("enter me", "info");
+  const second = toasts.children[0];
+  second.listeners.keydown[0]({ key: "Enter", preventDefault() {} });
+  assert.equal(toasts.children.length, 0, "Enter must remove the toast");
+
+  ui.announce("ignore me", "info");
+  toasts.children[0].listeners.keydown[0]({ key: "Tab", preventDefault() {} });
+  assert.equal(toasts.children.length, 1, "other keys must not dismiss");
+});
+
+test("announce leaves the live-region host attributes untouched", () => {
+  // The server renders #toasts with role="status" aria-live="polite"
+  // (phone.templ; pinned on the served page by the Go contract test).
+  // announce() appends children only — a regression that overwrote the
+  // host attributes (e.g. setting aria-hidden) would blind screen
+  // readers to every toast.
+  const toasts = document.getElementById("toasts");
+  toasts.setAttribute("role", "status");
+  toasts.setAttribute("aria-live", "polite");
+  ui.announce("host check", "ok");
+  assert.equal(toasts.getAttribute("role"), "status");
+  assert.equal(toasts.getAttribute("aria-live"), "polite");
+  assert.equal(toasts.getAttribute("aria-hidden"), null);
+});

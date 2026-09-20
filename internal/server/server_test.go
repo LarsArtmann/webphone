@@ -291,6 +291,14 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	if !strings.Contains(page, "WebPhone") {
 		t.Error("brand missing")
 	}
+	// The toast host is the WHOLE feedback channel's live region: without
+	// role="status" + aria-live, every toast (action feedback, errors,
+	// the dead-session 401 notice) is invisible to screen readers. The
+	// island and shell only append children to this host — they never
+	// set the attributes (pinned client-side by ui.test).
+	if !strings.Contains(page, `id="toasts" role="status" aria-live="polite"`) {
+		t.Error("toast host lost its live-region attributes (screen readers go blind)")
+	}
 }
 
 // TestNotFoundRendersTheShell pins error-page parity (re-verified

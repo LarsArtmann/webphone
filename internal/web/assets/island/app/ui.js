@@ -80,10 +80,21 @@ export function announce(message, kind = "info") {
   const toast = document.createElement("div");
   toast.className = `toast toast-${kind}`;
   toast.textContent = message;
-  toast.addEventListener("click", () => toast.remove());
+  // Focusable so keyboard users can dismiss (Enter/Space/Escape); the
+  // container's role="status" aria-live="polite" already announced it to
+  // screen readers — focus is never stolen on creation.
+  toast.tabIndex = 0;
+  const dismiss = () => toast.remove();
+  toast.addEventListener("click", dismiss);
+  toast.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+      event.preventDefault();
+      dismiss();
+    }
+  });
   els.toasts.append(toast);
   while (els.toasts.children.length > TOAST_MAX) els.toasts.firstChild.remove();
-  setTimeout(() => toast.remove(), TOAST_MS[kind] || TOAST_MS.info);
+  setTimeout(dismiss, TOAST_MS[kind] || TOAST_MS.info);
 }
 
 // Inline dial-form error: the failure lands where the user is looking.

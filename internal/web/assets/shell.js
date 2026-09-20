@@ -30,14 +30,22 @@
     var toast = document.createElement("div");
     toast.className = "toast toast-" + kind;
     toast.textContent = message;
-    toast.addEventListener("click", function () {
+    // Keyboard parity with the island's announce(): focusable, dismiss
+    // with Enter/Space/Escape. Never steals focus on creation.
+    toast.tabIndex = 0;
+    var dismiss = function () {
       toast.remove();
+    };
+    toast.addEventListener("click", dismiss);
+    toast.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+        event.preventDefault();
+        dismiss();
+      }
     });
     host.append(toast);
     while (host.children.length > 4) host.firstChild.remove();
-    setTimeout(function () {
-      toast.remove();
-    }, 6000);
+    setTimeout(dismiss, 6000);
   };
   document.addEventListener("click", function (event) {
     var button = event.target.closest("[data-dial]");

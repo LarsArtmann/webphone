@@ -43,9 +43,16 @@ export function installBrowserGlobals() {
     },
     style: {},
     dataset: {},
-    setAttribute() {},
-    removeAttribute() {},
-    getAttribute: () => null,
+    attrs: {},
+    setAttribute(k, v) {
+      this.attrs[k] = String(v);
+    },
+    removeAttribute(k) {
+      delete this.attrs[k];
+    },
+    getAttribute(k) {
+      return k in this.attrs ? this.attrs[k] : null;
+    },
   });
   globalThis.document = {
     getElementById: (id) => {
