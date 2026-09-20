@@ -8,7 +8,8 @@
 // keeps calling. Every outcome lands in #log (English, operator-facing)
 // so a tab-only breakage is visible in the island's own history.
 
-import { log } from "./ui.js";
+import { t } from "./i18n.js";
+import { announce, log } from "./ui.js";
 
 export async function createSession(extension, password) {
   try {
@@ -21,6 +22,16 @@ export async function createSession(extension, password) {
       body: JSON.stringify({ extension, password }),
     });
     if (!res.ok) {
+      // The tab session is deliberately non-fatal (calls keep working),
+      // but "non-fatal" must not mean "invisible": every rejection class
+      // gets a toast in the user's language, alongside the #log line.
+      if (res.status === 401) {
+        announce(t("sessionFailed401"), "warn");
+      } else if (res.status === 429) {
+        announce(t("sessionThrottled"), "warn");
+      } else {
+        announce(t("sessionFailed")(res.status), "warn");
+      }
       log(`server session failed (HTTP ${res.status})`, "error");
       console.warn(
         "webphone: server session not created (HTTP " + res.status + ")",
@@ -77,6 +88,7 @@ export async function createSession(extension, password) {
       new CustomEvent("wp:session-opened", { detail: { did } }),
     );
   } catch (err) {
+    announce(t("sessionNetFailed"), "warn");
     log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");
   }
@@ -127,14 +139,26 @@ export function initSseLiveIndicator() {
   pill.id = "wp-sse-live";
   pill.title = "live tab updates";
   pill.setAttribute("aria-hidden", "true");
+  // Consecutive SSE failures before the user is told once: the feed
+  // reconnects on its own, so one flap must not toast — but a genuinely
+  // dead feed (server down, network gone) deserves visibility without
+  // opening the log. sseOpen resets the count, so a recovered feed
+  // silences the counter again.
+  let sseFailures = 0;
+  const SSE_FAILURES_BEFORE_TOAST = 3;
   document.addEventListener("htmx:sseOpen", () => {
     pill.dataset.live = "1";
+    sseFailures = 0;
   });
   document.addEventListener("htmx:sseClose", () => {
     delete pill.dataset.live;
   });
   document.addEventListener("htmx:sseError", () => {
     delete pill.dataset.live;
+    sseFailures += 1;
+    if (sseFailures === SSE_FAILURES_BEFORE_TOAST) {
+      announce(t("sseDropped"), "warn");
+    }
   });
   document.body.append(pill);
 }

@@ -90,6 +90,15 @@ export const I18N = {
     dtmfFailed: (detail) => `could not send tone: ${detail}`,
     vmDeleteFailed: (detail) => `could not delete message: ${detail}`,
     vmPlayFailed: (detail) => `could not play message: ${detail}`,
+    sessionFailed401:
+      "The server rejected the tab sign-in — check extension and password.",
+    sessionThrottled: "Too many attempts — wait a moment, then try again.",
+    sessionFailed: (status) =>
+      `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
+    sessionNetFailed:
+      "Could not reach the server for tab sign-in — calls keep working.",
+    sseDropped:
+      "Live tab updates lost — check the connection; calls keep working.",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -177,6 +186,16 @@ export const I18N = {
       `Nachricht konnte nicht gelöscht werden: ${detail}`,
     vmPlayFailed: (detail) =>
       `Nachricht konnte nicht abgespielt werden: ${detail}`,
+    sessionFailed401:
+      "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
+    sessionThrottled:
+      "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
+    sessionFailed: (status) =>
+      `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
+    sessionNetFailed:
+      "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
+    sseDropped:
+      "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
   },
 };
 

@@ -63,6 +63,7 @@ export function installBrowserGlobals() {
     querySelectorAll: () => [],
     querySelector: () => null,
     documentElement: makeEl("html"),
+    body: makeEl("body"),
     addEventListener(type, fn) {
       if (!docListeners.has(type)) docListeners.set(type, []);
       docListeners.get(type).push(fn);
