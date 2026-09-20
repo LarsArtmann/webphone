@@ -82,9 +82,12 @@ class Client:
 
 def boot(data_dir):
     # Kill only THIS drill's binary (never a real webphone service that
-    # may share the host): match the exact temp binary path.
-    subprocess.run(["pkill", "-f", BIN], capture_output=True)
-    time.sleep(0.5)
+    # may share the host): match the exact temp binary path. pkill is
+    # probed (absent in the nix sandbox, where no prior drill process
+    # can exist) so the drill also runs as a flake check.
+    if shutil.which("pkill"):
+        subprocess.run(["pkill", "-f", BIN], capture_output=True)
+        time.sleep(0.5)
     env = dict(
         os.environ,
         WEBPHONE_ADDR=f"127.0.0.1:{PORT}",

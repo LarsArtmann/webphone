@@ -568,8 +568,7 @@
               pkgs.runCommand "webphone-backup-drill-check"
                 {
                   nativeBuildInputs = [ pkgs.python3 ];
-                  meta.description =
-                    "end-to-end backup/restore drill over a live webphone instance";
+                  meta.description = "end-to-end backup/restore drill over a live webphone instance";
                   meta.timeout = 300;
                 }
                 ''
