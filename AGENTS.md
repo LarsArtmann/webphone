@@ -101,10 +101,11 @@ with rationale so they stop blocking work:
 nix develop                        # Go, templ, golangci-lint, esbuild, … — the shell exports GOEXPERIMENT=jsonv2 + GOTOOLCHAIN=local, so bare `go` commands work inside it
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations. Since the go 1.27.1 floor, OUTSIDE-the-shell go commands also need the 1.27 toolchain — prefer `nix develop -c` wrappers
-python3 scripts/webphone-smoke.py          # 28-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server; includes /livez + /startupz)
+python3 scripts/webphone-smoke.py          # 32-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server; includes /livez + /startupz, /version, /openapi.json, the styled 404)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh now also gates on `nix run .#vulnix`)
-nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings)
-nix flake check                            # package build + tests in sandbox + treefmt + island-lint + the kvm-gated backup VM test (skipped with a warning without /dev/kvm)
+nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings; the verdict logic is the `webphone-vulnix-triage` CLI, fixture-checked by `checks.vulnix-triage`)
+nix flake check                            # package build + tests in sandbox + treefmt + island-lint + island-js (node:test) + the kvm-gated backup VM test (skipped with a warning without /dev/kvm)
+nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs   # the island JS tests alone (toast rendering, i18n en/de parity); stubs in island-tests/helpers.mjs
 nix build .#webphone --system aarch64-linux   # cross-builds
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 ```
@@ -205,8 +206,9 @@ every build; it is the local tripwire, not a replacement for the E2E.
   payloads stay swap-safe fragments; v4.11.0 leads the stream with a
   `retry:` reconnect hint — the one wire change of the
   v4.9.0→v4.11.0 bump, pinned by
-  `TestSSEStreamCarriesConnectedThenEvents`; MD1 executed 2026-09-20:
-  benchmark re-run clean, stack browser E2E green on the bumped tree).
+  `TestSSEStreamCarriesConnectedThenEvents`; the bump-trigger
+  follow-through history lives in CHANGELOG and the fan-out baseline
+  doc, not here).
 - **The island never unloads.** Tab navigation swaps partials into
   `#tab-content` via HTMX; the SIP island lives outside that region so
   calls survive tab switches. Deep links (`/messages`, `/fax`, …)
@@ -502,7 +504,12 @@ continuously — work in small, explicitly-committed units.
    new tag).
 3. **Gates**: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
    `GOEXPERIMENT=jsonv2 go test -count=1 ./...`, `nix flake check`,
-   `python3 scripts/webphone-smoke.py`.
+   `python3 scripts/webphone-smoke.py`. If the train bumped
+   cqrs-htmx or go-sse: also re-run `BenchmarkHubFanOut` and append a
+   dated table to
+   `docs/reviews/2026-09-18_hub-fanout-baseline.md` (MD1 rule; next
+   re-run should use `-benchtime=1s -count=5` instead of `-benchtime
+   2000x` for tighter numbers).
 4. **Tag + push**: annotated `git tag -a vX.Y.Z -m ...`, push main +
    tag (verify with `git ls-remote` — the daemon may have pushed
    already).
@@ -518,6 +525,9 @@ continuously — work in small, explicitly-committed units.
    announcing.
 8. **aarch64**: `nix build .#webphone --system aarch64-linux` — plain
    `nix flake check` silently omits aarch64 (it says so in a warning).
+   The script then asserts the built ELF's machine bytes (`b700` =
+   EM_AARCH64) because `--system` is a restricted setting an untrusted
+   client's nix may silently ignore while exiting 0.
    Do NOT reach for `nix flake check --all-systems` as the fix: it is
    evaluation-only for other systems (verified 2026-09-19 — zero
    derivations built, "running 0 flake checks") and gates nothing.
@@ -527,11 +537,25 @@ continuously — work in small, explicitly-committed units.
    explicit cross-builds of the package + the checks you care about.
 9. **Closing sweep** (added 2026-09-20 after the §e lessons): any
    command that boots a server for verification ends by PROVING the
-   process dead (`pgrep -f <pattern> || echo dead`); CHANGELOG link
+   process dead (`pgrep -f <pattern> || echo dead`) — and counts only
+   processes YOU booted; a concurrent session's server (e.g.
+   `/tmp/wpshoot/*`) is not yours to kill; CHANGELOG link
    edits outside a train get a `nix run nixpkgs#lychee -- .` run (the
-   script covers post-push, not manual edits); and the post-train tree
+   script covers post-push, not manual edits); the post-train tree
    sees `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` once (gitleaks and
-   codespell are on-demand: `buildflow -s gitleaks`, `-s codespell`).
+   codespell are on-demand: `buildflow -s gitleaks`, `-s codespell`);
+   and the daemon's last commits are verified pushed
+   (`git ls-remote origin main` vs local HEAD).
+
+## Concurrent sessions (observed 2026-09-20)
+
+More than one Crush session can work this repo at once. Tell-tale:
+uncommitted files you did not author (e.g. `internal/web/views/helpers.go`
++ an untracked `helpers_test.go`) and mid-edit compile failures that heal
+on re-run. Rules: never revert/"fix" their in-flight files; re-read any
+shared file (i18n.go, pages.go, flake.nix) immediately before editing;
+a full-suite gate run may catch THEIR transient breakage — attribute
+failures before acting; and leave their booted dev servers running.
 
 ## Buildflow health warning, itemized (2026-09-19)
 

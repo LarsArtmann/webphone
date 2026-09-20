@@ -1,0 +1,11 @@
+# Project Crush config.
+#
+# The Go LSPs must run INSIDE the nix devShell: the host toolchain
+# (1.26.7) is older than go.mod's 1.27.1 floor and GOTOOLCHAIN=local
+# forbids toolchain downloads, so bare gopls / golangci-lint-langserver
+# fail every go list ("go.mod requires go >= 1.27.1 (running go
+# 1.26.7)") and project diagnostics die — both servers now come from the
+# devShell (flake.nix devShells.default.packages), which also exports
+# the GOEXPERIMENT=jsonv2 the tree needs.
+lsp add gopls --command nix --args develop --args -c --args gopls --args serve
+lsp add golangci_lint_ls --command nix --args develop --args -c --args golangci-lint-langserver

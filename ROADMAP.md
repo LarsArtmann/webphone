@@ -113,16 +113,23 @@ the stack browser E2E passed on the bumped tree. What remains:
   Adoption only via that note's criteria: flag-gated prototype
   (`WEBPHONE_SSE_OOB=1`) behind a green stack browser E2E, with the
   `cqrshtmx.OOBHTML` signature re-checked against the then-current tag.
-- Island JS test runner (standing gap): the toasts listener, live
-  pill and 429 surfacing are pinned by Go asset tripwires + code
-  review only. When a runner lands, port the tripwires into real DOM
-  tests.
+- Island JS test runner: LANDED 2026-09-20 (node:test + minimal DOM
+  stubs under Nix — `internal/web/assets/island-tests/`, flake check
+  `island-js`). First ports: toast rendering (announce kind/cap) and
+  i18n en/de key parity. Still grep-only until touched: live pill,
+  429 surfacing in the phone-api wrappers, dtmf-relay shape — port
+  each into a DOM test when the code next changes.
 - Conditional P7 decision records: `StructuredError` for
   `/api/session` (adopt only if the island branches on codes);
   ClientIP-trust note upstream in httputil (only if the stack proves
   XFF sanitized). The periodic vulnix rescan left the watchlist —
   `nix run .#vulnix` rides the release.sh gates every train since
-  2026-09-20.
+  2026-09-20. DR1 (transitive-drift check as a buildflow step) is
+  NOT-DO 2026-09-20: a drift check needs the network and is
+  informational-only — informational checks do not belong in hard
+  gates, the vulnix train gate covers the supply-side security angle,
+  and version-drift only matters AT bump time when MD-style triggers
+  fire. Revisit only if an unattended drift surprises a train.
 
 ## Open questions (owner calls)
 

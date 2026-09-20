@@ -46,3 +46,10 @@ flag gates every byte of the behavior.
   a green run.
 - Re-check `cqrshtmx.OOBHTML` signature against the then-current tag —
   this verdict was written against v4.9.0.
+
+**Revisit trigger (added 2026-09-20):** quarterly-watches cadence, next
+due 2026-12-20, OR immediately if the nav badge's TTL+invalidation
+refresh ever proves insufficient (a user-visible staleness report).
+If revived: if the spike ever lands, the `WEBPHONE_SSE_OOB` env key
+needs a README config-reference row and nixos-module `settings`
+passthrough documentation in the same change.

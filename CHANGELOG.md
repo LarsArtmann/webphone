@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Island JS test runner (the standing gap is closed): `node:test` with
+  minimal DOM stubs under Nix — tests live in `internal/web/assets/
+island-tests/` (a sibling of the served tree, never embedded) and run
+  as the `island-js` flake check. First ports replace grep-only
+  tripwires with real behavior tests: toast rendering (kind, stack cap)
+  and island i18n en/de key parity (mirroring the Go-side sync test).
+- `checks.vulnix-triage`: the vulnix triage verdict logic is now the
+  `webphone-vulnix-triage` CLI (shared by `nix run .#vulnix` and the
+  fixture check), so the grep-in-pipeline verdict-inversion bug class
+  from 2026-09-20 fails at check time instead of at the next train.
+- `scripts/release.sh` step 8 asserts the aarch64 cross-build's ELF
+  machine bytes (`b700` = EM_AARCH64): `--system` is a restricted nix
+  setting an untrusted client's daemon may silently ignore while
+  exiting 0 — the false-green cross-build gate now fails loudly.
 - Own-number identity (config `identities`): map an extension to its
   presented PSTN number (DID) and the UI finally answers "what is my
   number" — the signed-in header shows `extension · DID`, the island's
@@ -45,6 +59,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The styled 404 message is translated: `error.notfound` joins the
+  en/de dictionaries ("There is nothing at this address." /
+  "Unter dieser Adresse gibt es nichts."), ending the one hardcoded
+  string on an otherwise i18n'd error panel (both languages
+  test-pinned; smoke covers the English side).
+- NixOS module csrf precedence under conflict is now deterministic and
+  pinned: typed `csrf.trustedProxies/trustedOrigins` WIN over raw
+  `settings.csrf.trusted_*` values (previously both set = Nix's generic
+  duplicate-definition eval error); raw still beats the nginx-derived
+  defaults, so the escape hatch stands when typed options are empty.
+  Pinned by a new `csrf-conflict-precedence` case in the
+  `webphone-module` check.
 - cqrs-htmx v4.11.0 (from v4.9.0, with the idiomorph adoption): the one
   wire change is the SSE stream — `/events` now opens with the
   library's `retry:` reconnect hint before the `connected` frame

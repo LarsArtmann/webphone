@@ -620,6 +620,7 @@
               # the host toolchain is older than go.mod's 1.27.1 floor,
               # so bare gopls/golangci-lint fail every go list.
               pkgs.gopls
+              pkgs.golangci-lint-langserver
               pkgs.esbuild
               pkgs.jq
               pkgs.nil

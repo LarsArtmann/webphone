@@ -46,3 +46,7 @@ the wider fan-outs measure FASTER (2000x iterations are coarse; treat
 the deltas as noise in v4.11.0's favor). The bump's only wire change
 remains the SSE `retry:` stream prefix, which does not touch the
 broadcast path.
+
+Methodology note for the NEXT re-run: prefer
+`-benchtime=1s -count=5` over `-benchtime 2000x` — longer, repeated
+runs average out the coarse-iteration noise both tables above carry.
