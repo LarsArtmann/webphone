@@ -357,12 +357,14 @@
                     "sqlite3 /var/lib/webphone-backup/webphone.db 'pragma integrity_check' | grep -q '^ok$'"
                 )
 
-                # The timer is wired to the oneshot on the default calendar.
+                # The timer is wired to the oneshot on the default calendar
+                # (systemctl show has no OnCalendar unit property — the
+                # rendered unit file is the truth here).
                 machine.succeed(
-                    "systemctl show webphone-backup.timer -p OnCalendar | grep -q '04:30:00'"
+                    "systemctl cat webphone-backup.timer | grep -q '^OnCalendar=\\*-*-\\* 04:30:00'"
                 )
                 machine.succeed(
-                    "systemctl show webphone-backup.timer -p Unit | grep -q 'webphone-backup.service'"
+                    "systemctl cat webphone-backup.timer | grep -q '^Unit=webphone-backup.service$'"
                 )
 
                 # Online claim: the phone service never restarted for the

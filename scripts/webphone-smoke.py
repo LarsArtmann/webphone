@@ -256,6 +256,19 @@ def run_checks(
         f"{status}",
     )
 
+    # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels
+    # render anonymously — badges NEVER do; the signed-in re-fetch below
+    # is the only badge source. A fresh Smoke keeps it session-free even
+    # mid-suite.
+    anon_nav = Smoke(s.base)
+    status, body, _ = anon_nav.request("GET", "/partials/nav")
+    nav_anon = body.decode("utf-8", "replace")
+    c.ok(
+        "nav partial anonymous shape",
+        status == 200 and "wp-nav-link" in nav_anon and "wp-nav-badge" not in nav_anon,
+        f"{status} labels/badges wrong: {nav_anon[:80]!r}",
+    )
+
     # 5. Session POST is CSRF-gated: without the token it must not pass.
     plain = Smoke(s.base)
     plain.request("GET", "/")
@@ -304,6 +317,7 @@ def run_checks(
             "inbound webhook 202",
             "live threads event",
             "threads fragment swap-safe",
+            "nav partial signed-in badge",
             "thread list renders row",
             "transcript bubble",
             "live thread event",
@@ -372,6 +386,17 @@ def run_checks(
             "threads fragment swap-safe",
             data is not None and "wp-thread-row" in data and "<section" not in data,
             f"payload {str(data)[:80]!r}",
+        )
+
+        # 10b. Signed-in nav re-renders with the unread badge (before the
+        # thread opens below and marks it read — the badge's only honest
+        # window in this suite).
+        status, body, _ = s.request("GET", "/partials/nav?active=messages")
+        nav_authed = body.decode("utf-8", "replace")
+        c.ok(
+            "nav partial signed-in badge",
+            status == 200 and "wp-nav-link" in nav_authed and "wp-nav-badge" in nav_authed,
+            f"{status} badge missing: {nav_authed[:80]!r}",
         )
 
         # 11. Thread row exists; opening it shows the transcript bubble region.
