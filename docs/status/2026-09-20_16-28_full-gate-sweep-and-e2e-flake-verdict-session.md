@@ -202,6 +202,7 @@ ROADMAP). Impact/Effort/Category per item. Effort: S <30min, M 30min–2h,
 L >2h.
 
 **Release & integration**
+
 1. Answer the three open questions (g1–g3) — unblocks 2–9 and the harvest. — Critical/S/Decision
 2. Cut v2.5.0: fold CHANGELOG `Unreleased` → dated section (redesign + morph + polish + helpers). — Critical/S/Release
 3. Sync FEATURES.md / TODO_LIST.md / ROADMAP.md for the redesign + idiomorph merge. — High/M/Documentation
@@ -287,6 +288,6 @@ commits and for the section-f HARVEST into TODO_LIST/ROADMAP.
 
 ---
 
-*Point-in-time snapshot. HARVEST candidate: section f. Written per the
+_Point-in-time snapshot. HARVEST candidate: section f. Written per the
 status-report skill; Markdown instead of the skill's HTML dashboard because
-the user explicitly specified the `.md` path.*
+the user explicitly specified the `.md` path._

@@ -65,10 +65,7 @@ test("statuses without server feedback get an honest generic toast", () => {
   try {
     Date.now = () => base + 30_000;
     doc.dispatch("htmx:responseError", { detail: { xhr: fakeXhr(429) } });
-    assert.match(
-      toasts().children.at(-1).textContent,
-      /HTTP 429/,
-    );
+    assert.match(toasts().children.at(-1).textContent, /HTTP 429/);
   } finally {
     Date.now = realNow;
   }
