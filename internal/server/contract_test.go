@@ -87,3 +87,29 @@ func TestShellJSHandlesReloadButtons(t *testing.T) {
 		t.Error("shell.js lost the data-reload delegated handler — the error panel's reload button would stop working")
 	}
 }
+
+// TestShellJSSurfacesHtmxErrors pins the client half of the error-feedback
+// story: htmx swaps NOTHING on error responses, so without the 3c handler
+// a dead tab session (the in-memory store dies with every server restart)
+// made every tab click and form submit fail silently. The behavioral
+// specs live island-side (island-tests/shell.test.mjs); this greps the
+// SERVED asset the way TestShellJSHandlesReloadButtons does, so an asset
+// regression fails the Go build too.
+func TestShellJSSurfacesHtmxErrors(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/assets/shell.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("shell.js status %d", resp.StatusCode)
+	}
+	page := string(body)
+	for _, want := range []string{
+		"htmx:responseError",
+		"htmx:sendError",
+		"HX-Trigger", // never double-toast server-authored feedback
+		"Tab session ended",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("shell.js lost the htmx error surfacing: %q missing", want)
+		}
+	}
+}

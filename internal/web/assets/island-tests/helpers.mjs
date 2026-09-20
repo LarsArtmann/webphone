@@ -75,7 +75,6 @@ export function installBrowserGlobals() {
       return this.cookieSet;
     },
   };
-  return globalThis.document;
   globalThis.window = {};
   globalThis.location = {
     hostname: "pbx.example.org",
@@ -102,4 +101,5 @@ export function installBrowserGlobals() {
       this.store.delete(k);
     },
   };
+  return globalThis.document;
 }
