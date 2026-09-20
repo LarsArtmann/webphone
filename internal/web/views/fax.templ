@@ -60,12 +60,18 @@ templ FaxRow(job domain.FaxJob, lang Lang) {
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">
 			if job.Direction == domain.FaxInbound {
-				{ T(lang, "fax.in") }
+				{ "↓" }
 			} else {
-				{ T(lang, "fax.out") }
+				{ "↑" }
 			}
 		</span>
-		<span class="wp-thread-text">
+		<span class="wp-thread-text" role="img" aria-label={
+			if job.Direction == domain.FaxInbound {
+				T(lang, "fax.in")
+			} else {
+				T(lang, "fax.out")
+			}
+		}>
 			<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
 			<span class="wp-muted">
 				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
