@@ -30,7 +30,7 @@ import {
 } from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
-import { announce, els, log, setRegStatus } from "./ui.js";
+import { announce, els, log, setRegStatus, toastKindFor } from "./ui.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -145,17 +145,12 @@ initSseLiveIndicator();
 
 // Server-driven toasts: tab-action responses carry an HX-Trigger header
 // ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});
-// htmx dispatches it as a DOM event that bubbles to the body. The
-// library's kind vocabulary maps onto the island's toast styles.
-const TOAST_KINDS = {
-  success: "ok",
-  error: "error",
-  warning: "warn",
-  info: "info",
-};
+// htmx dispatches it as a DOM event that bubbles to the body. The kind
+// mapping lives in ui.js (toastKindFor) so the server's vocabulary stays
+// pinned by the island tests.
 document.body.addEventListener("showMessage", (event) => {
   const detail = event.detail || {};
-  announce(detail.message || "", TOAST_KINDS[detail.kind] || "info");
+  announce(detail.message || "", toastKindFor(detail.kind));
 });
 
 els.keypad.querySelectorAll("button[data-tone]").forEach((button) => {

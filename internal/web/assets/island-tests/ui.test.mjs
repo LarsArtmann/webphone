@@ -30,3 +30,19 @@ test("unknown kinds fall back to the info lifetime without crashing", () => {
   const last = toasts.children.at(-1);
   assert.equal(last.className, "toast toast-nope");
 });
+
+test("toastKindFor keeps the server's island vocabulary exact", () => {
+  // notifyToast (toast.go) emits exactly these kinds; a drift on either
+  // side must fail here instead of recoloring toasts to info.
+  assert.equal(ui.toastKindFor("ok"), "ok");
+  assert.equal(ui.toastKindFor("error"), "error");
+  assert.equal(ui.toastKindFor("warn"), "warn");
+  assert.equal(ui.toastKindFor("info"), "info");
+});
+
+test("toastKindFor tolerates the dispatch-layer vocabulary and junk", () => {
+  assert.equal(ui.toastKindFor("success"), "ok");
+  assert.equal(ui.toastKindFor("warning"), "warn");
+  assert.equal(ui.toastKindFor("unexpected"), "info");
+  assert.equal(ui.toastKindFor(undefined), "info");
+});

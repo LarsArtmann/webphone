@@ -58,6 +58,24 @@ export function log(message, level = "info") {
 const TOAST_MAX = 4;
 const TOAST_MS = { info: 4000, ok: 4000, warn: 6000, error: 8000 };
 
+// The server's HX-Trigger toasts carry the ISLAND's kind vocabulary
+// ("ok"/"error"/"warn"/"info" — notifyToast in toast.go owns it; the
+// library only owns the wire shape). The dispatch-layer vocabulary
+// (success/warning) is accepted too so a future library-emitted toast
+// degrades to the right color instead of plain info.
+const TOAST_KINDS = {
+  ok: "ok",
+  error: "error",
+  warn: "warn",
+  info: "info",
+  success: "ok",
+  warning: "warn",
+};
+
+export function toastKindFor(kind) {
+  return TOAST_KINDS[kind] || "info";
+}
+
 export function announce(message, kind = "info") {
   const toast = document.createElement("div");
   toast.className = `toast toast-${kind}`;
