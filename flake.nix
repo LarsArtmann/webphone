@@ -180,6 +180,23 @@
             webphone = self'.packages.webphone;
             format = config.treefmt.build.check self;
 
+            # Island JS tests under node:test — the runner the island never
+            # had (toast rendering and i18n parity were Go asset-grep
+            # tripwires only). Tests live in island-tests/, a SIBLING of
+            # island/, so the `all:island` embed never ships them to
+            # browsers; --test-force-exit keeps the toast lifetime timers
+            # from holding the event loop open.
+            island-js =
+              pkgs.runCommand "island-js-check"
+                {
+                  nativeBuildInputs = [ pkgs.nodejs ];
+                }
+                ''
+                  cd ${./.}
+                  node --test --test-force-exit \
+                    internal/web/assets/island-tests/*.test.mjs | tee $out
+                '';
+
             # Fixture smoke of the vulnix triage CLI — the 2026-09-20
             # regression class (grep-in-pipeline under set -e inverted every
             # verdict) would only have surfaced at the next train. Runs the
@@ -599,6 +616,10 @@
               pkgs.go_1_27
               pkgs.templ
               pkgs.golangci-lint
+              # The Go LSPs run inside the shell via the project crushrc:
+              # the host toolchain is older than go.mod's 1.27.1 floor,
+              # so bare gopls/golangci-lint fail every go list.
+              pkgs.gopls
               pkgs.esbuild
               pkgs.jq
               pkgs.nil
