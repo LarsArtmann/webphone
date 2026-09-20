@@ -114,6 +114,12 @@ every build; it is the local tripwire, not a replacement for the E2E.
   RTCPeerConnections — media proof).
 - The event log (`#log`) stays **English** in both UI languages: it is
   operator-facing diagnostics and the runbook greps it.
+- Unknown paths render the STYLED 404 (`notFoundPage` in pages.go: the
+  full shell + ErrorPanel, status stays 404) — error-page parity with
+  the pre-2.0 static site, restored 2026-09-20 (the templ-components
+  adoption had silently reverted it to Go's bare-text 404). Partial
+  swaps never see it (they target existing regions); the smoke's
+  stale-CSRF probe still reads a plain 404 status.
 
 ## Architecture invariants
 
