@@ -10,6 +10,7 @@ Proves the documented pattern end to end on scratch:
   4. sign in against the restored store and pull the attachment back out
      byte-identical — proof the backup is restorable, not just copyable
 """
+
 import base64
 import http.cookiejar
 import json
@@ -91,7 +92,7 @@ def boot(data_dir):
         WEBPHONE_GATEWAY__WEBHOOK_SECRET=SECRET,
     )
     proc = subprocess.Popen(
-        [BIN], env=env, stdout=open(data_dir + '.log', 'wb'), stderr=subprocess.STDOUT
+        [BIN], env=env, stdout=open(data_dir + ".log", "wb"), stderr=subprocess.STDOUT
     )
     wait_port(PORT)
     return proc
@@ -138,7 +139,9 @@ def main():
         att = attachment_row(src)
         assert att, "no attachment row landed in the source store"
         att_id, att_path = att
-        assert os.path.exists(os.path.join(src, "files", att_path)), "blob missing on disk"
+        assert os.path.exists(os.path.join(src, "files", att_path)), (
+            "blob missing on disk"
+        )
         print(f"[1] source loaded: attachment {att_id} at {att_path}")
     finally:
         proc.terminate()

@@ -13,13 +13,13 @@ idiomorph morphing (v0.7.4, bundled inside cqrs-htmx's
 `extensions/idiomorph-ext.min.js` — no new dependency, one new script
 tag):
 
-| Surface | Mechanism | Change |
-| --- | --- | --- |
-| Thread list (`sse-swap="threads"`) | SSE push | `hx-swap="morph:innerHTML"` |
-| Transcript (`#thread-transcript`, `sse-swap="thread"`) | SSE push | `hx-swap="morph:innerHTML"` |
-| Fax list (`sse-swap="fax"`) | SSE push | `hx-swap="morph:innerHTML"` |
+| Surface                                                   | Mechanism               | Change                               |
+| --------------------------------------------------------- | ----------------------- | ------------------------------------ |
+| Thread list (`sse-swap="threads"`)                        | SSE push                | `hx-swap="morph:innerHTML"`          |
+| Transcript (`#thread-transcript`, `sse-swap="thread"`)    | SSE push                | `hx-swap="morph:innerHTML"`          |
+| Fax list (`sse-swap="fax"`)                               | SSE push                | `hx-swap="morph:innerHTML"`          |
 | Voicemail panel re-fetch (`hx-get="/partials/voicemail"`) | `sse:voicemail` trigger | swap `innerHTML` → `morph:innerHTML` |
-| Nav badge refresh (`refreshNav` in shell.js) | `htmx.ajax` | `swap: "morph:innerHTML"` |
+| Nav badge refresh (`refreshNav` in shell.js)              | `htmx.ajax`             | `swap: "morph:innerHTML"`            |
 
 Server side: two route registrations
 (`cqrshtmx.HTMXExtensionHandler(cqrshtmx.HTMXExtIdiomorph)` on the open

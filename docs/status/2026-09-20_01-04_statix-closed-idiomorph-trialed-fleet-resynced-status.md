@@ -60,7 +60,7 @@ master:** `aaba732` · **branch:** `experiment/idiomorph` @ `8aaf1c7`.
    - **All local gates green on the branch**: `GOEXPERIMENT=jsonv2 go test
      -count=1 ./...` EXIT=0; smoke 28/28 on a real binary; `nix flake check`
      EXIT=0 (after one prettier line-wrap); live-server probe confirmed 200
-     + `Idiomorph` payload + script tag + all four generated markup attrs.
+     - `Idiomorph` payload + script tag + all four generated markup attrs.
    - Verdict doc on main:
      `docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`
      (verdict: PROMISING, merge gated on one stack browser-E2E run against
@@ -99,7 +99,7 @@ master:** `aaba732` · **branch:** `experiment/idiomorph` @ `8aaf1c7`.
 3. **g3 — SMS-bridge journal grep on prod** (owner command; webphone-side
    502 classification already shipped).
 4. **P20** — typed module options for `csrf.trusted_origins`/`trusted_proxies`
-   + stack-side assertion.
+   - stack-side assertion.
 5. **1001-registration anomaly** — sofia dump instrumentation + ×2 green.
 6. **Island sanitization alignment** — owner decision (regex sides).
 7. **Own-number visibility** — owner decision (DID feed choice).
@@ -228,7 +228,7 @@ items are brainstorm, not commitment).
     151 s baseline; investigate drift.
 24. **sip.js 0.22 watch**: when released, check whether the 0.x
     `userAgent.reconnect()` hang is fixed upstream; if yes, plan the repin
-    + drop-or-keep the island watchdog (currently load-bearing).
+    - drop-or-keep the island watchdog (currently load-bearing).
 25. **templ-components ThemeScript watch**: if an opt-out knob ships, take
     it, drop the CSP hash + the `!important` color-scheme overrides.
 26. **oxlint globals watch**: keep new browser globals in
@@ -323,6 +323,6 @@ origin (`aaba732`); branch `experiment/idiomorph` = origin (`8aaf1c7`);
 all four trees clean; last full `nix flake check` EXIT=0 (branch, and main
 pre-docs); smoke 28/28; vulnix clean after triage.
 
-*Note: the status-report skill's canonical format is a styled HTML
+_Note: the status-report skill's canonical format is a styled HTML
 dashboard; the owner explicitly requested `.md` for this report, so the
-flat-Markdown override is honored per the skill's own override clause.*
+flat-Markdown override is honored per the skill's own override clause._
