@@ -340,3 +340,22 @@ outcomes:
 - Coverage deltas recorded in
   `docs/reviews/2026-09-20_coverage-baseline.md`: session 63.1→67.0,
   store 59.4→75.3, gateway 76.5→77.6, domain 54.1→72.1.
+- **Stack E2E (T07–T10) EXECUTED AND GREEN**: the consuming stack was
+  re-pinned to this train's main, and its browser E2E gained three
+  scenarios — webphone-restart mid-session (`RESTART-SESSION-KEPT`:
+  the SQLite store proves itself through the real browser path), the
+  unallocated-transfer verdict drill (T10, converted — see below), and
+  a FreeSWITCH-stop mid-call + recovery (T09). Validated green on run
+  15 and the stack's full `nix flake check` passed the same day.
+- **T10 conversion** (honest premise rejection): REFER to an
+  unassigned extension does NOT produce a failure sipfrag in this
+  stack — the dialplan's catch_all completes the transfer and hangs
+  the transferred leg up (`UNALLOCATED_NUMBER`). The scenario pins the
+  verdict-surfacing path ("transfer completed by the network" in
+  `#log`) plus both legs' clean termination; the failure-sipfrag branch
+  stays covered at unit level. Test-learnings landed with the
+  scenario: read `#log` via textContent (Selenium `.text` is empty for
+  the closed details drawer), budget the verdict for minutes of VM-load
+  lag, and hang the transferee's stale dialog up before re-dialing.
+- **T27 consciously ROADMAP'd** (see ROADMAP; trigger conditions
+  recorded).
