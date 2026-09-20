@@ -248,6 +248,14 @@ def run_checks(
         f"{status} {body[:80]!r}",
     )
 
+    # 3b. openapi.json publishes the session API contract (3.1.0).
+    status, body, _ = s.request("GET", "/openapi.json")
+    c.ok(
+        "openapi published",
+        status == 200 and b'"openapi": "3.1.0"' in body,
+        f"{status} {body[:80]!r}",
+    )
+
     # 4. config.js carries the PBX contract for the island.
     status, body, _ = s.request("GET", "/config.js")
     c.ok(
@@ -267,6 +275,20 @@ def run_checks(
         "nav partial anonymous shape",
         status == 200 and "wp-nav-link" in nav_anon and "wp-nav-badge" not in nav_anon,
         f"{status} labels/badges wrong: {nav_anon[:80]!r}",
+    )
+
+    # 4c. Unknown paths render the STYLED 404: shell chrome around the
+    # error panel, status stays 404 (error-page parity; works in --base
+    # foreign mode, so the post-deploy probe validates prod too).
+    status, body, _ = anon_nav.request("GET", "/definitely/not/a/path")
+    nf = body.decode("utf-8", "replace")
+    c.ok(
+        "styled 404",
+        status == 404
+        and 'class="wp-panel"' in nf
+        and "data-reload" in nf
+        and 'id="login-view"' in nf,
+        f"{status} bare-or-unstyled: {nf[:80]!r}",
     )
 
     # 5. Session POST is CSRF-gated: without the token it must not pass.
