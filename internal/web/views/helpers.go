@@ -7,28 +7,24 @@ import "strconv"
 func fmtInt(n int) string { return strconv.Itoa(n) }
 
 // avatarFor derives the two-glyph avatar label for a contact name or
-// phone number: the leading digits of a number ("+4"), the first letters
-// of a name's words ("AK"), or "?" for blanks. Deterministic, so the
-// same peer renders the same mark everywhere.
+// phone number: the country signum of a number ("+1", "+4", "0"), the
+// first letters of a name's words ("AK"), or "?" for blanks.
+// Deterministic, so the same peer renders the same mark everywhere.
 func avatarFor(nameOrNumber string) string {
 	runes := []rune(nameOrNumber)
 	if len(runes) == 0 {
 		return "?"
 	}
 	if runes[0] == '+' || (runes[0] >= '0' && runes[0] <= '9') {
-		digits := make([]rune, 0, 2)
-		for _, r := range runes {
-			if r >= '0' && r <= '9' {
-				digits = append(digits, r)
-				if len(digits) == 2 {
-					return string(digits)
+		if runes[0] == '+' {
+			for _, r := range runes[1:] {
+				if r >= '0' && r <= '9' {
+					return "+" + string(r)
 				}
 			}
+			return "+"
 		}
-		if len(digits) > 0 {
-			return string(digits)
-		}
-		return "?"
+		return string(runes[0])
 	}
 	letters := make([]rune, 0, 2)
 	wantLetter := true

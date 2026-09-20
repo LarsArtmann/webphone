@@ -63,14 +63,8 @@ templ HistoryPanel(props HistoryPanelProps) {
 
 templ CDRRow(cdr pbx.CDR, lang Lang) {
 	<article class="wp-row">
-		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public") } aria-hidden="true">
-			if cdr.Context == "public" {
-				{ T(lang, "history.dirIn") }
-			} else {
-				{ T(lang, "history.dirOut") }
-			}
-		</span>
-		<span class="wp-thread-text">
+		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public") } aria-hidden="true">{ cdrDirGlyph(cdr) }</span>
+		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
 			<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
 		</span>
@@ -80,6 +74,20 @@ templ CDRRow(cdr pbx.CDR, lang Lang) {
 			</span>
 		}
 	</article>
+}
+
+func cdrDirGlyph(cdr pbx.CDR) string {
+	if cdr.Context == "public" {
+		return "↓"
+	}
+	return "↑"
+}
+
+func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
+	if cdr.Context == "public" {
+		return T(lang, "history.dirIn")
+	}
+	return T(lang, "history.dirOut")
 }
 
 func cdrTarget(cdr pbx.CDR) string {
