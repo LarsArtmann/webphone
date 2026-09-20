@@ -39,6 +39,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smoke suite restart scenario: login → `kill -9` → reboot on the same
   data dir → the old session cookie still opens session-gated surfaces
   while anonymous requests stay rejected.
+- `checks.webphone-backup-drill`: the backup/restore drill (tar →
+  restore → byte-identical attachment retrieval) now runs as a
+  sandbox-safe flake check, proving the RESTORE path, not just the
+  online snapshot the kvm-gated VM test covers.
+- `scripts/release-hygiene.sh`: the post-train sweeps (fanout
+  benchmark when the SSE libraries moved, vulnix, lychee, origin/main
+  vs HEAD) as one command with a failing exit status.
+- Depth suites: store owner-scoping table (every owner-taking query
+  pinned against a foreign extension), webhook error-branch table
+  (transport/timeout/5xx-with-truncated-detail/JSON-ish/oversized
+  receipts), dialable + branded-id parser edge table (pasted RTL
+  numbers, charset, boundary lengths), and a fuzz target over the
+  contacts JSON API (malformed bodies are always 400/422/204).
+- Shell load-error boundary: a throw during shell wiring leaves a
+  breadcrumb in `#log` + console instead of a silently half-wired
+  page; the error-toast throttle reads an injectable clock
+  (`window.__wpClock`) so tests stop monkey-patching `Date.now`.
+- Fax compose shows an upload indicator on the submit button while the
+  PDF posts; `prefers-reduced-motion` now kills all island animation/
+  transitions (parity with app.css).
+- Toolchain self-heal: `scripts/webphone-smoke.py` and
+  `scripts/buildflow.sh` detect the host go-below-floor trap
+  (`GOTOOLCHAIN=local` with an old go) and re-exec inside
+  `nix develop -c`; the buildflow wrapper also promotes the gitleaks
+  and codespell scans into the default run (`.codespellrc` silences
+  the deliberate German copy, taking codespell to zero real findings;
+  `.bandit` documents the drill-script exclusion).
 
 ### Changed
 
