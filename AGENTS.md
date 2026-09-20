@@ -228,8 +228,17 @@ every build; it is the local tripwire, not a replacement for the E2E.
   session alone, so stored threads/fax/contacts of any extension were
   readable without its password). Fail-closed: 401 rejected
   credentials, 502 PBX unreachable; deployments without a phone API
-  (loopback dev) skip verification and WARN at boot. The server keeps
-  sessions in an in-memory TTL store + HttpOnly cookie. `session.js`
+  (loopback dev) skip verification and WARN at boot. Since 2026-09-20
+  (plan T11/T12, verdict
+  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`)
+  the store is a SEAM: prod runs `NewSQLiteStore` over `webphone.db`
+  (sessions survive restarts; the row carries the extension + directory
+  password the `/phone-api` proxy needs — credentials at rest accepted,
+  bounded by the same 24h TTL, swept on read/Create), tests and loopback
+  keep `NewMemStore` (in-memory TTL + GC, sessions die with the
+  process). Cookie unchanged (HttpOnly, Max-Age = SessionTTL). The
+  "Tab session ended" toast is now the rare path (hard crash mid-TTL,
+  manual cookie clear). `session.js`
   attaches `sse-connect` to `.wp-root` post-login (no reload — the
   password is memory-only) and reloads the page on logout. Login and
   hooks are per-IP rate limited (the hook limiter wraps, not sits
@@ -275,9 +284,13 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
   (503) when none is configured. Status hooks are idempotent:
-  `hooksIdem` (in-memory TTL idem store) dedupes replayed
-  `provider_ref` — only successes are recorded, so failures stay
-  retryable, and replays answer `202 Accepted` inertly.
+  `hooksIdem` (in-memory TTL idem store, `hookIdempotencyTTL` = 1h)
+  dedupes replayed `provider_ref` — only successes are recorded, so
+  failures stay retryable, and replays answer `202 Accepted` inertly.
+  TTL rationale (2026-09-20): the idem window only has to cover the
+  provider's BURST retries (Telnyx re-delivers within minutes); a
+  re-delivery after the hour re-applies a status SET, and status
+  transitions converge, so no persistence is needed here.
 - **Owner scoping everywhere**: every store query is extension-scoped;
   attachments/faxes stream through session-gated handlers only.
 - **Personal contacts have ONE home** (2026-09-19): the per-extension
@@ -324,6 +337,40 @@ every build; it is the local tripwire, not a replacement for the E2E.
   build until the hash is refreshed deliberately.
 - `window.PBX_CONFIG` (`/config.js`, rendered by this server): keys
   `sipDomain`, `websocketPath`, `iceServers`, `phoneApi`, `contacts`.
+
+## Failure → feedback map (2026-09-20 train, plan T13)
+
+The single table that answers "what does the user SEE when X fails".
+Every error path lands in at least one VISIBLE surface (toast, inline
+banner, or panel); `#log` is always the operator trail, never the only
+user feedback.
+
+| Failure | User sees | Owner (wording) | Test home |
+|---|---|---|---|
+| Tab session dead (401 on tab actions) | Throttled error toast: "Tab session ended; calls keep working…" — never auto-reload | shell.js §3c (English, D3) | shell.test.mjs + `TestShellJSSurfacesHtmxErrors` |
+| Validation mistake (422) | `.wp-error` banner swapped into `#wp-tab-error` + error toast | server (en/de via `h.T`) | `TestSendClassifiesGatewayOutageAs502` + renderPanelError tests |
+| Rate limited (429) | Toast: "Too many requests — wait a moment…" | shell.js (htmx) / island i18n (login) | shell.test.mjs + session.test.mjs |
+| Gateway outage (502) | Banner + toast; message/fax saved as failed | server | 502 test (HX-Trigger + banner pinned) |
+| Other 4xx/5xx on htmx actions | Banner (`.wp-error` selected) + generic toast "HTTP N" | shell.js generic copy | contract test (config markers) |
+| Network down (htmx) | Toast: "Network request failed…" | shell.js | shell.test.mjs |
+| Network down (island session POST) | Toast: "Could not reach the server…" + `#log` line | island i18n `sessionNetFailed` | session.test.mjs |
+| PBX rejects login (401 island REGISTER) | `loginError` inline + `reg-status` pill "registration rejected" | island i18n `loginError`/`regRejected` | i18n parity tests |
+| SSE feed dead (3 consecutive errors) | One warn toast + pill label flips to "not connected" | island i18n `sseDropped`/`ssePillDown` | session.test.mjs |
+| Unknown path (404) | Styled 404 (shell + error panel), status stays 404 | server `error.notfound` en/de | `TestNotFoundRendersTheShell` |
+| Handler panic | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface | cqrshtmx.RecoveryMiddleware | library + server middleware tests |
+
+Shell copy (toasts, dedup, throttle wording) stays ENGLISH by decision
+D3 (2026-09-20): matches the `#log` operator-channel precedent; the
+island's user-facing copy is fully en/de. Localizing shell copy only if
+a tabs-style per-extension UX demand shows up.
+
+**BDD posture** (plan T13): Ginkgo where it earns its keep — the
+session behavior suites (`session_behaviors_test.go`) describe
+observable auth behavior; table-driven Go tests everywhere else where
+they are the clearer idiom; the island uses `node:test` black-box specs
+driving real document listeners. No Ginkgo port of already-pinned error
+paths (YAGNI, audit 2026-09-20). New BEHAVIOR surfaces should consider
+Ginkgo DescribeTable when the subject is a state machine.
 
 ## Hard-won knowledge
 
@@ -411,6 +458,14 @@ every build; it is the local tripwire, not a replacement for the E2E.
   exists on master — tag-checking before the port caught it. (True at
   the time; v4.11.0 DOES ship the hint — MD1's bump trigger fired and
   was executed 2026-09-20.)
+- htmx/cqrs-htmx BUMP CHECKLIST (plan T25, 2026-09-20): re-verify at the
+  new version (1) the `responseHandling` contract — entry keys `code`,
+  `swap`, `error`, `target`, `select` in the SERVED htmx.min.js plus the
+  htmx-config markers pinned in `TestServedPageHoldsTheDomContract`;
+  (2) the `/events` `retry:` hint (`TestSSEStreamCarriesConnectedThenEvents`);
+  (3) `HX-Trigger` still fires BEFORE the swap decision (the skip-guard
+  in shell.js §3c depends on it); (4) the sse extension still fires
+  cancelable `htmx:sseBeforeMessage`.
 - `GOEXPERIMENT=jsonv2` is required for every `go` command —
   templ-components/errorpage needs `encoding/json/v2`.
 - `.templ` files must NOT import `github.com/a-h/templ` (the generator
