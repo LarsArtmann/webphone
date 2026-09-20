@@ -629,6 +629,12 @@ button.small {
 /* --- reduced motion ------------------------------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .incoming {
     animation: none;
   }

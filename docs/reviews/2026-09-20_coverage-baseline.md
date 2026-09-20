@@ -47,3 +47,16 @@
 | Date       | Package  | Before → After | Cause                          |
 | ---------- | -------- | -------------- | ------------------------------ |
 | 2026-09-20 | session  | 63.1% → 67.0%  | SQLite store suite (plan T12)  |
+| 2026-09-20 | store    | 59.4% → 75.3%  | Owner-scoping suite (plan T15) |
+| 2026-09-20 | gateway  | 76.5% → 77.6%  | Webhook error branches (T17)   |
+| 2026-09-20 | domain   | 54.1% → 72.1%  | Parser edge table (T18)        |
+
+## Decision: views coverage stays transitive (plan T26)
+
+`internal/views` renders templ components; DIRECT render tests would
+duplicate what every server test already exercises through the real
+router (page shells, partials, error panels, CSP/DOM contracts all
+asserted over HTTP responses). Decision (2026-09-20): accept transitive
+coverage; revisit only if a view grows real logic (loops with
+computation, conditionals that encode business rules) — and then
+extract that logic into helpers WITH tests, not render snapshots.
