@@ -144,7 +144,11 @@ if [ "$DRY_RUN" = "1" ]; then
 	echo "  [dry-run] gh release create $TAG --verify-tag --title $TAG --notes <CHANGELOG $VERSION section>"
 else
 	notes="$(mktemp)"
-	awk -v want="## [$VERSION]" '
+	# Escape the [brackets]: want feeds a DYNAMIC awk regex, where a bare
+	# [2.4.0] is a bracket expression (one char of {2,.,4,0}) that never
+	# matches the literal heading — the bug that shipped v2.3.0/v2.4.0
+	# with empty release notes (audit 2026-09-20).
+	awk -v want="## \\[$VERSION\\]" '
     $0 ~ "^" want {on=1; next}
     /^## / && on {exit}
     on {print}

@@ -225,7 +225,8 @@ in
 
           environment = {
             WEBPHONE_CONFIG = configFile;
-          } // lib.optionalAttrs cfg.serverTiming.enable {
+          }
+          // lib.optionalAttrs cfg.serverTiming.enable {
             WEBPHONE_DEBUG_TIMING = "1";
           };
 
