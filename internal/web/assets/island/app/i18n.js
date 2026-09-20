@@ -7,7 +7,9 @@
 
 const LANG_KEY = "pbx-lang";
 
-const I18N = {
+// Exported for the node:test suite (island-tests/): the en/de parity test
+// enumerates keys exactly like the Go-side i18n sync test does.
+export const I18N = {
   en: {
     regState: "Registration state",
     signin: "Sign in to your extension",

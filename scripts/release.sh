@@ -138,6 +138,21 @@ run bash -c "cd '$STACK' && git push"
 step "8/9 aarch64 cross-builds"
 run nix build .#webphone --system aarch64-linux
 run nix build .#checks.aarch64-linux.island-lint
+if [ "$DRY_RUN" != "1" ]; then
+	# Untrusted-client trap: --system is a RESTRICTED nix setting. An
+	# untrusted client gets "ignoring the client-specified setting
+	# 'system'" and may silently build the DEFAULT system with EXIT=0 —
+	# a false-green aarch64 gate. Verify the produced ELF by its machine
+	# bytes (e_machine at file offset 0x12): b700 = EM_AARCH64,
+	# 3e00 = EM_X86_64. Never trust the exit code alone.
+	aarch64_bin="$(nix build --no-link --print-out-paths .#webphone --system aarch64-linux)/bin/webphone"
+	machine="$(od -An -tx1 -j18 -N2 "$aarch64_bin" | tr -d ' \n')"
+	if [ "$machine" != "b700" ]; then
+		echo "aarch64 guard: ELF machine bytes are '$machine', want 'b700' (EM_AARCH64) — the cross-build silently produced a different architecture (untrusted-client --system trap)" >&2
+		exit 1
+	fi
+	echo "aarch64 guard: ELF machine bytes are b700 (EM_AARCH64)"
+fi
 
 step "9/9 GitHub release"
 if [ "$DRY_RUN" = "1" ]; then
