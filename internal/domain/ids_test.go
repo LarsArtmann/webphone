@@ -36,8 +36,10 @@ func TestParseExtension(t *testing.T) {
 }
 
 func TestParsePhoneSanitizesLikeTheIsland(t *testing.T) {
-	// The island dials with raw.replace(/[^\d+*#]/g, ""); threads must key
-	// on the identical normalization or history rows and threads diverge.
+	// The island dials with raw.replace(/[^\d+*#a-zA-Z]/g, ""); threads
+	// must key on the identical normalization or history rows and threads
+	// diverge. The served-asset table in internal/server pins the literal
+	// regex string, so a one-sided drift fails the build.
 	got, err := ParsePhone(" +44 (1632) 960-961 ")
 	if err != nil {
 		t.Fatal(err)

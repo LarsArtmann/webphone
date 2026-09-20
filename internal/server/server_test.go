@@ -380,7 +380,13 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/island/app/main.js":      "loginForm",
 		"/assets/island/app/shortcuts.js": "MediaPlayPause",
 		"/assets/island/app/session.js":   "initSseLiveIndicator",
-		"/assets/island/style.css":        "#wp-sse-live",
+		// The dial alphabet is a cross-side contract: the island regex must
+		// keep letters exactly like domain.sanitizeDialable (see
+		// TestParsePhoneSanitizesLikeTheIsland). Grepping the literal pins
+		// a one-sided regex drift at build time.
+		"/assets/island/app/calls.js":  "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
+		"/assets/island/app/panels.js": "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
+		"/assets/island/style.css":     "#wp-sse-live",
 		"/assets/vendor/sip.min.js":       "UserAgent",
 		"/config.js":                      "window.PBX_CONFIG",
 		"/favicon.svg":                    "<svg",

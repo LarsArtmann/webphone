@@ -82,11 +82,11 @@ func (p Phone) IsZero() bool { return p.value == "" }
 
 // sanitizeDialable strips invisible Unicode direction marks and formatting
 // that pasted numbers carry, keeping only dialable characters. The
-// dialable alphabet (digits, +, *, #, letters) matches the island's
-// `raw.replace(/[^\d+*#]/g, "")` for digits and symbols — but the island
-// regex strips letters while this Go side keeps them (some PBXs use
-// alphanumeric SIP user parts). See TODO_LIST "island sanitization
-// alignment" before changing either side.
+// dialable alphabet (digits, letters, +, *, #) is exactly the island's
+// `raw.replace(/[^\d+*#a-zA-Z]/g, "")` (DECIDED 2026-09-20: the island
+// keeps letters, like this side — some PBXs use alphanumeric SIP user
+// parts). Both sides are pinned: this test file for Go, the served-asset
+// table in internal/server for the island literal.
 func sanitizeDialable(raw string) string {
 	clean := make([]rune, 0, len(raw))
 	for _, r := range raw {

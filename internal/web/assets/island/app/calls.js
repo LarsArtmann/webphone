@@ -241,7 +241,7 @@ function referOnNotify(notification) {
 async function blindTransfer(id, destination) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
-  const target = destination.replace(/[^\d+*#]/g, "");
+  const target = destination.replace(/[^\d+*#a-zA-Z]/g, "");
   const uri = SIP.UserAgent.makeURI(`sip:${target}@${sipDomain}`);
   if (!uri) {
     log(t("transferFailed")("bad destination"), "error");
@@ -417,9 +417,9 @@ export async function placeCall(raw) {
   // (macOS/phone apps add them around telephone numbers) and formatting
   // (spaces, dashes, parentheses). makeURI rejects all of that, so strip
   // everything that is not dialable before building the SIP URI.
-  const target = raw.replace(/[^\d+*#]/g, "");
+  const target = raw.replace(/[^\d+*#a-zA-Z]/g, "");
   if (!target) {
-    log(`nothing dialable in "${raw}" — enter digits, or + * #`, "warn");
+    log(`nothing dialable in "${raw}" — enter digits or letters, or + * #`, "warn");
     showDialError(t("nothingDialable"));
     return;
   }

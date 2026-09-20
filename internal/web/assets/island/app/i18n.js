@@ -80,7 +80,7 @@ const I18N = {
       "browser blocked audio playback — click the page to enable sound",
     rejectedSecond: "second incoming call rejected (one call at a time)",
     dialEmpty: "enter a number to call",
-    nothingDialable: "no dialable characters — use digits, +, * or #",
+    nothingDialable: "no dialable characters — use digits, letters, +, * or #",
     invalidDest: "invalid destination number",
     holdFailed: (detail) => `hold failed: ${detail}`,
     acceptFailed: (detail) => `could not accept the call: ${detail}`,
@@ -164,7 +164,8 @@ const I18N = {
     rejectedSecond:
       "zweiter eingehender Anruf abgelehnt (ein Gespräch gleichzeitig)",
     dialEmpty: "bitte eine Nummer eingeben",
-    nothingDialable: "keine wählbaren Zeichen — Ziffern, +, * oder # verwenden",
+    nothingDialable:
+      "keine wählbaren Zeichen — Ziffern, Buchstaben, +, * oder # verwenden",
     invalidDest: "ungültige Zielnummer",
     holdFailed: (detail) => `Halten fehlgeschlagen: ${detail}`,
     acceptFailed: (detail) => `Anruf konnte nicht angenommen werden: ${detail}`,

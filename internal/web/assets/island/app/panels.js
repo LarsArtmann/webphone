@@ -209,7 +209,7 @@ function saveLegacyContact(number, name) {
 }
 
 export async function saveContact(number, name) {
-  const clean = String(number).replace(/[^\d+*#]/g, "");
+  const clean = String(number).replace(/[^\d+*#a-zA-Z]/g, "");
   if (!clean) return;
   try {
     const res = await authedFetch("/api/contacts", {
