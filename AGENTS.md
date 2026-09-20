@@ -490,6 +490,30 @@ every build; it is the local tripwire, not a replacement for the E2E.
   `/partials/nav` — nav labels switch language without a full reload.
   `/partials/nav` renders labels anonymously (no badges) and
   signed-in with fresh badge caches.
+- UI redesign invariants (2026-09-20): app.css is a token system — the
+  `:root`/dark token blocks are MIRRORED between app.css and
+  island/style.css; change both or the island drifts. `.sr-only` is
+  OWNED by app.css (templ-components' Base emits Tailwind utility
+  classes, but no Tailwind CSS loads, so `sr-only focus:not-sr-only`
+  only works because app.css defines both). Avatars are
+  `avatarFor`/`avatarHue` (views/helpers.go): country signum for
+  numbers ("+1", "+4", "0"), word initials for names ("AK"), "?" for
+  blanks — TrimSpace first, the tests caught the whitespace-only
+  escape; hue is deterministic 0-359. Helpers ship WITH tests in the
+  same commit: the untested first cut of `avatarFor` shipped a real
+  bug. Direction chips: history `cdrDirGlyph`/`cdrDirLabel` and fax
+  `faxDirGlyph`/`faxDirLabel` render "↓"/"↑" as aria-hidden chips with
+  a sibling `role="img"` aria-label; loopback has no phone API so
+  history rows never render locally — chips are pinned by tests, not
+  screenshots. SSE payloads must keep the greppable row classes
+  (`wp-thread-row`, `wp-bubble`, `wp-fax-row` —
+  `TestSSEPushesSwapSafeFragments` greps them and forbids wrappers).
+  The green dot in every screenshot is `#wp-sse-live` (session.js,
+  JS-created so the served DOM contract stays untouched) — intentional
+  live-feed indicator, not a bug. The contacts import row stays on one
+  line via `flex: 1 1 220px` on its file input (not `flex-basis:
+  100%`), and the island dial placeholder is the short
+  "Number or extension" / "Nummer oder Durchwahl".
 
 ## Release runbook (v2.x)
 
