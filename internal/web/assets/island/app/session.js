@@ -134,7 +134,10 @@ function connectLiveUpdates() {
 // created here (JS-only) so the served markup — and with it the DOM
 // contract and the upstream E2E — is untouched.
 export function initSseLiveIndicator() {
-  if (document.getElementById("wp-sse-live")) return;
+  // querySelector (not getElementById): identical semantics in the
+  // browser, and it stays honest under the test stubs, whose
+  // getElementById materializes any id on first touch.
+  if (document.querySelector("#wp-sse-live")) return;
   const pill = document.createElement("div");
   pill.id = "wp-sse-live";
   pill.title = "live tab updates";

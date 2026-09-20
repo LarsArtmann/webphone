@@ -24,6 +24,10 @@ export function installBrowserGlobals() {
       child.parent = this;
       this.children.push(child);
     },
+    prepend(child) {
+      child.parent = this;
+      this.children.unshift(child);
+    },
     remove() {
       if (this.parent) {
         this.parent.children = this.parent.children.filter((c) => c !== this);
@@ -53,6 +57,9 @@ export function installBrowserGlobals() {
     getAttribute(k) {
       return k in this.attrs ? this.attrs[k] : null;
     },
+    hasAttribute(k) {
+      return k in this.attrs;
+    },
   });
   globalThis.document = {
     getElementById: (id) => {
@@ -75,6 +82,12 @@ export function installBrowserGlobals() {
       for (const fn of docListeners.get(type) ?? []) fn(event);
       return event;
     },
+    // dispatchEvent is the REAL DOM API the island code calls (session.js
+    // dispatches CustomEvents); it forwards the event object itself.
+    dispatchEvent(event) {
+      for (const fn of docListeners.get(event.type) ?? []) fn(event);
+      return event;
+    },
     cookieSet: "",
     set cookie(v) {
       this.cookieSet = v;
@@ -84,6 +97,15 @@ export function installBrowserGlobals() {
     },
   };
   globalThis.window = {};
+  // Older node lacks CustomEvent; the island dispatches wp:* events with it.
+  globalThis.CustomEvent =
+    globalThis.CustomEvent ||
+    class CustomEvent {
+      constructor(type, opts) {
+        this.type = type;
+        this.detail = opts?.detail;
+      }
+    };
   globalThis.location = {
     hostname: "pbx.example.org",
     host: "pbx.example.org",

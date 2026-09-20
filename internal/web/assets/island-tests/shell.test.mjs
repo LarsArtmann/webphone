@@ -59,13 +59,27 @@ test("after the throttle window the next failure toasts again", () => {
   }
 });
 
-test("statuses without server feedback get an honest generic toast", () => {
+test("429 toasts the client-correctable feedback (slow down)", () => {
   const realNow = Date.now;
   const base = realNow();
   try {
     Date.now = () => base + 30_000;
     doc.dispatch("htmx:responseError", { detail: { xhr: fakeXhr(429) } });
-    assert.match(toasts().children.at(-1).textContent, /HTTP 429/);
+    const toast = toasts().children.at(-1);
+    assert.match(toast.textContent, /too many requests/i);
+    assert.match(toast.textContent, /wait a moment/i);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test("statuses without server feedback get an honest generic toast", () => {
+  const realNow = Date.now;
+  const base = realNow();
+  try {
+    Date.now = () => base + 60_000;
+    doc.dispatch("htmx:responseError", { detail: { xhr: fakeXhr(500) } });
+    assert.match(toasts().children.at(-1).textContent, /HTTP 500/);
   } finally {
     Date.now = realNow;
   }

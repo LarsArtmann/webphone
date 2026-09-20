@@ -190,9 +190,7 @@
       // Rate limiting is client-correctable, so the toast says what to
       // DO. The server's limiter is generic middleware with no toast
       // header, so client text owns this feedback (plan T03 decision).
-      showThrottledError(
-        "Too many requests — wait a moment, then try again.",
-      );
+      showThrottledError("Too many requests — wait a moment, then try again.");
       return;
     }
     showThrottledError("The request failed (HTTP " + xhr.status + ").");
