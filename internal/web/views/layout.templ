@@ -112,6 +112,7 @@ templ ShellBody(props ShellProps) {
 					@SignInHint(props.Lang)
 				}
 			</main>
+			<div id="wp-tab-error"></div>
 		</div>
 	</div>
 }
@@ -146,7 +147,10 @@ templ NavLinks(props ShellProps) {
 // tiny shell script that tracks the active nav item across partial swaps.
 templ headExtras(csrfToken string) {
 	<meta name="csrf-token" content={ csrfToken }></meta>
-	<meta name="htmx-config" content='{"includeIndicatorStyles":false}'></meta>
+	<meta
+		name="htmx-config"
+		content='{"includeIndicatorStyles":false,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"401","swap":false,"error":true},{"code":"[45]..","swap":true,"error":true,"target":"#wp-tab-error","select":".wp-error"}]}'
+	></meta>
 	<script src="/htmx.min.js" defer></script>
 	<script src="/htmx-ext.js" defer></script>
 	<link rel="stylesheet" href="/assets/island/style.css"></link>

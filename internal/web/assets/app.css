@@ -384,6 +384,22 @@ h3 {
   margin: 0;
 }
 
+/* Durable inline error slot (layout.templ): the htmx responseHandling
+ * config retargets 4xx/5xx panel errors here, selecting the server's
+ * .wp-error banner, so a failed action keeps showing the error in the
+ * tab after the toast fades, without touching the compose form or the
+ * tab body. The shell renders the slot OUTSIDE #tab-content so tab
+ * swaps can never remove the retarget anchor; :empty keeps it invisible
+ * until a banner swaps in, and a fresh innerHTML swap replaces the old
+ * banner instead of stacking. */
+#wp-tab-error:empty {
+  display: none;
+}
+
+#wp-tab-error {
+  margin: 0 0 var(--space-2);
+}
+
 .wp-muted {
   color: var(--muted);
 }
