@@ -18,6 +18,7 @@ this tree ✅ · aarch64 package + island-lint (ELF machine verified)
 ## Self-review (brutal, per the skill)
 
 **1. What did you forget?**
+
 - **Commit discipline.** The repo's own runbook says "work in small,
   explicitly-committed units"; I made ZERO explicit commits. The daemon
   shredded ~14 logical changes into `chore: auto-commit N changed
@@ -34,6 +35,7 @@ this tree ✅ · aarch64 package + island-lint (ELF machine verified)
   title/subtitle are i18n'd — noticed only during this review. Row added.
 
 **2. What is something stupid that we do anyway?**
+
 - The auto-commit daemon + zero explicit commits = guaranteed noise
   history for every large session. The fix is free (commit per task).
 - TODO rows harvested mid-train go stale within hours (the
@@ -42,6 +44,7 @@ this tree ✅ · aarch64 package + island-lint (ELF machine verified)
   re-verify rows against the tree at harvest time.
 
 **3. What could you have done better?**
+
 - Verified MY OWN verifications properly. Two flip-flops:
   (a) declared aarch64 green from exit codes, then doubted it, then
   "corrected" it with a WRONG ELF machine mapping (my python dict said
@@ -88,13 +91,14 @@ TODO rows (14) whose work either shipped this session, shipped earlier
 (CSRF rotation 2026-09-19), or was never real (release.sh gaps).
 
 **10. Split brains?**
+
 - csrf fronting truth now lives in three layers (nginx-derived defaults,
   typed options, raw `settings.csrf`) — deliberate layering, but the
   typed+raw CONFLICT case is unpinned and undocumented. Row added.
 - 404 message outside the i18n dictionaries (above).
 - AGENTS ↔ README overlap on module options is by-design (session
   knowledge vs operator doc), accepted.
-No other split brains found or created.
+  No other split brains found or created.
 
 **11. Tests?** Added: 2 Go tests (`TestNotFoundRendersTheShell`,
 `TestVoicemailRowsCarryStableMorphIds`), 2 smoke checks (nav anonymous
@@ -109,31 +113,31 @@ runner (standing gap, ROADMAP).
 
 ## a) FULLY DONE (this session; all gates green at close)
 
-| # | Work | Evidence |
-|---|------|----------|
-| 1 | Dedicated nginx probe locations `/healthz` `/livez` `/startupz` in the NixOS module | flake check `vhost-locations` lists all six; statix/deadnix green |
-| 2 | Typed `csrf.trustedProxies/trustedOrigins` module options (empty = nginx defaults preserved, non-empty overrides) | `csrf-fronted-origin` + `csrf-typed-override` checks green |
-| 3 | `serverTiming.enable` module option wiring `WEBPHONE_DEBUG_TIMING=1` | `server-timing` check green |
-| 4 | Backup-timer flake-check assertions (OnCalendar, Unit, wantedBy, oneshot Type) | `backup-timer` check green |
-| 5 | Backup NixOS VM test `checks.x86_64-linux.webphone-backup` (kvm-gated): boot, run oneshot, snapshot files, `pragma integrity_check` ok, timer wiring, `NRestarts=0` | VM run green twice; ran inside full `nix flake check` |
-| 6 | im-preserve audit: idiomorph 0.7 semantics verified at the consumed ext (stable id = persisted node; restoreFocus needs ids); voicemail rows + `<audio>` got `vm-<uuid>`/`vm-audio-<uuid>` ids | `TestVoicemailRowsCarryStableMorphIds` green; AGENTS rule recorded |
-| 7 | htmx extensions bundled: one `/htmx-ext.js` via `cqrshtmx.HTMXExtensionsHandler` (sse+idiomorph, composite ETag); layout one script tag | `TestStaticAssetsServe` green; stack browser E2E 128.7s green |
-| 8 | Error-page parity: found broken (bare-text 404 since templ-components adoption), restored styled 404 (`notFoundPage`, shell + ErrorPanel, status stays 404) | `TestNotFoundRendersTheShell` green; live-probed before/after |
-| 9 | Smoke suite: `/partials/nav` anonymous (labels, never badges) + signed-in badge checks | smoke 30/30 twice |
-| 10 | release.sh: vulnix gate added to step 4; notes-extraction awk bracket bug FIXED (it shipped v2.3.0/v2.4.0 with EMPTY release bodies) | audit diff: v2.1.0/v2.2.0 byte-identical to CHANGELOG; v2.3.0/v2.4.0 backfilled via `gh release edit` |
-| 11 | `apps.vulnix` automated distro-patch triage (all-glibc + all-CVEs-in-locked-rev-patches → clean; else fail) | run green: 8/8 triaged at locked rev `20b1ddd` |
-| 12 | Vulnix cadence run 2026-09-20: zero real advisories; AGENTS re-verify date + procedure updated | manual + automated triage agree |
-| 13 | README: module options table, probe-triple + fleet-scraping paragraph, backup drill invocation, off-machine restic/borg pointer | lychee 0 errors |
-| 14 | Docs sync: CHANGELOG [Unreleased], TODO_LIST (14 rows deleted), AGENTS (7 sections updated), FEATURES (module/backup/serverTiming rows) | tree committed by daemon; TODO_LIST/AGENTS re-read after harvest |
-| 15 | 1001-anomaly row enriched: island read done — NO reload fallback exists; `rebuildConnection` only fires on a TIMED-OUT reconnect, so a transport-reconnect with rejected REGISTER reuses a possibly-Terminated Registerer forever (matches the `sofia_contact` signature) | connection.js read; finding recorded in the TODO row |
+| #  | Work                                                                                                                                                                                                                                                                      | Evidence                                                                                              |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 1  | Dedicated nginx probe locations `/healthz` `/livez` `/startupz` in the NixOS module                                                                                                                                                                                       | flake check `vhost-locations` lists all six; statix/deadnix green                                     |
+| 2  | Typed `csrf.trustedProxies/trustedOrigins` module options (empty = nginx defaults preserved, non-empty overrides)                                                                                                                                                         | `csrf-fronted-origin` + `csrf-typed-override` checks green                                            |
+| 3  | `serverTiming.enable` module option wiring `WEBPHONE_DEBUG_TIMING=1`                                                                                                                                                                                                      | `server-timing` check green                                                                           |
+| 4  | Backup-timer flake-check assertions (OnCalendar, Unit, wantedBy, oneshot Type)                                                                                                                                                                                            | `backup-timer` check green                                                                            |
+| 5  | Backup NixOS VM test `checks.x86_64-linux.webphone-backup` (kvm-gated): boot, run oneshot, snapshot files, `pragma integrity_check` ok, timer wiring, `NRestarts=0`                                                                                                       | VM run green twice; ran inside full `nix flake check`                                                 |
+| 6  | im-preserve audit: idiomorph 0.7 semantics verified at the consumed ext (stable id = persisted node; restoreFocus needs ids); voicemail rows + `<audio>` got `vm-<uuid>`/`vm-audio-<uuid>` ids                                                                            | `TestVoicemailRowsCarryStableMorphIds` green; AGENTS rule recorded                                    |
+| 7  | htmx extensions bundled: one `/htmx-ext.js` via `cqrshtmx.HTMXExtensionsHandler` (sse+idiomorph, composite ETag); layout one script tag                                                                                                                                   | `TestStaticAssetsServe` green; stack browser E2E 128.7s green                                         |
+| 8  | Error-page parity: found broken (bare-text 404 since templ-components adoption), restored styled 404 (`notFoundPage`, shell + ErrorPanel, status stays 404)                                                                                                               | `TestNotFoundRendersTheShell` green; live-probed before/after                                         |
+| 9  | Smoke suite: `/partials/nav` anonymous (labels, never badges) + signed-in badge checks                                                                                                                                                                                    | smoke 30/30 twice                                                                                     |
+| 10 | release.sh: vulnix gate added to step 4; notes-extraction awk bracket bug FIXED (it shipped v2.3.0/v2.4.0 with EMPTY release bodies)                                                                                                                                      | audit diff: v2.1.0/v2.2.0 byte-identical to CHANGELOG; v2.3.0/v2.4.0 backfilled via `gh release edit` |
+| 11 | `apps.vulnix` automated distro-patch triage (all-glibc + all-CVEs-in-locked-rev-patches → clean; else fail)                                                                                                                                                               | run green: 8/8 triaged at locked rev `20b1ddd`                                                        |
+| 12 | Vulnix cadence run 2026-09-20: zero real advisories; AGENTS re-verify date + procedure updated                                                                                                                                                                            | manual + automated triage agree                                                                       |
+| 13 | README: module options table, probe-triple + fleet-scraping paragraph, backup drill invocation, off-machine restic/borg pointer                                                                                                                                           | lychee 0 errors                                                                                       |
+| 14 | Docs sync: CHANGELOG [Unreleased], TODO_LIST (14 rows deleted), AGENTS (7 sections updated), FEATURES (module/backup/serverTiming rows)                                                                                                                                   | tree committed by daemon; TODO_LIST/AGENTS re-read after harvest                                      |
+| 15 | 1001-anomaly row enriched: island read done — NO reload fallback exists; `rebuildConnection` only fires on a TIMED-OUT reconnect, so a transport-reconnect with rejected REGISTER reuses a possibly-Terminated Registerer forever (matches the `sofia_contact` signature) | connection.js read; finding recorded in the TODO row                                                  |
 
 ## b) PARTIALLY DONE
 
-| Work | Done | Missing | Blocker | Effort |
-|------|------|---------|---------|--------|
-| csrf typed options row | webphone side fully (options + 2 checks + README) | stack-side assertion of its own rendered `settings.csrf` | lives in the stack repo | S |
-| 1001-registration anomaly | island-side read + root-cause hypothesis | sofia registration dump in the stack E2E reconnect phase; fix; verify ×2 green runs | stack repo work | M |
-| Status-report harvest | TODO_LIST updated mid-session + 5 new rows post-review | nothing — done | — | — |
+| Work                      | Done                                                   | Missing                                                                             | Blocker                 | Effort |
+| ------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------- | ----------------------- | ------ |
+| csrf typed options row    | webphone side fully (options + 2 checks + README)      | stack-side assertion of its own rendered `settings.csrf`                            | lives in the stack repo | S      |
+| 1001-registration anomaly | island-side read + root-cause hypothesis               | sofia registration dump in the stack E2E reconnect phase; fix; verify ×2 green runs | stack repo work         | M      |
+| Status-report harvest     | TODO_LIST updated mid-session + 5 new rows post-review | nothing — done                                                                      | —                       | —      |
 
 ## c) NOT STARTED (deliberately — owner-action rows, untouched)
 
@@ -148,13 +152,13 @@ runner (standing gap, ROADMAP).
 
 ## d) TOTALLY FUCKED UP (this session; ALL FIXED — listed for honesty)
 
-| # | What | Severity | Root cause | Status |
-|---|------|----------|-----------|--------|
-| 1 | First `apps.vulnix` triage version inverted every verdict ("REAL finding" ×8 against known-patched CVEs) | would have failed the next train loudly | `set -e` (writeShellApplication) kills a grep-in-pipeline-subshell at the first non-match | fixed same session; caught ONLY because I cross-checked against my manual triage |
-| 2 | aarch64 verification flip-flop: green → suspected false-green → "confirmed false-green" (wrong ELF map) → actually green | nearly wrote a wrong trap-warning into AGENTS/release.sh | my python dict mapped 183→x86_64 (183 is EM_AARCH64) | final state verified by byte-level re-derivation; trap now documented in AGENTS + TODO row for a release.sh ELF guard |
-| 3 | VM test burned 2 extra runs on assertion bugs (nonexistent `systemctl show -p OnCalendar`; under-escaped grep BRE) | wasted ~4 min, no product impact | asserted without local dry-check | fixed; both runs then green |
-| 4 | Session history shredded into heuristic auto-commits | permanent: git history of this session is noise | I made zero explicit commits against the runbook's instruction | unfixable retroactively; process fix in (e) |
-| 5 | Attempted `curl` (banned in this harness) once | 1 wasted round trip | habit | redone with python urllib |
+| # | What                                                                                                                     | Severity                                                 | Root cause                                                                                | Status                                                                                                                |
+| - | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1 | First `apps.vulnix` triage version inverted every verdict ("REAL finding" ×8 against known-patched CVEs)                 | would have failed the next train loudly                  | `set -e` (writeShellApplication) kills a grep-in-pipeline-subshell at the first non-match | fixed same session; caught ONLY because I cross-checked against my manual triage                                      |
+| 2 | aarch64 verification flip-flop: green → suspected false-green → "confirmed false-green" (wrong ELF map) → actually green | nearly wrote a wrong trap-warning into AGENTS/release.sh | my python dict mapped 183→x86_64 (183 is EM_AARCH64)                                      | final state verified by byte-level re-derivation; trap now documented in AGENTS + TODO row for a release.sh ELF guard |
+| 3 | VM test burned 2 extra runs on assertion bugs (nonexistent `systemctl show -p OnCalendar`; under-escaped grep BRE)       | wasted ~4 min, no product impact                         | asserted without local dry-check                                                          | fixed; both runs then green                                                                                           |
+| 4 | Session history shredded into heuristic auto-commits                                                                     | permanent: git history of this session is noise          | I made zero explicit commits against the runbook's instruction                            | unfixable retroactively; process fix in (e)                                                                           |
+| 5 | Attempted `curl` (banned in this harness) once                                                                           | 1 wasted round trip                                      | habit                                                                                     | redone with python urllib                                                                                             |
 
 ## e) WHAT WE SHOULD IMPROVE (process/design, from this session)
 
@@ -182,42 +186,42 @@ runner (standing gap, ROADMAP).
 
 ## f) Next tasks (ranked; up to 50 requested — 34 honest items; tag = current home)
 
-| # | Task | Impact | Effort | Category | Home |
-|---|------|--------|--------|----------|------|
-| 1 | Redeploy prod with v2.4.0 + bogus-creds smoke probe + switch (owner ssh) | Critical | S | Ops | TODO row |
-| 2 | Prod SMS lane: grep telnyx-webhooks journal, restore (owner) | Critical | S | Ops | TODO row |
-| 3 | Reconcile the stack's uncommitted flake.lock + operator.js changes (not authored this session) | High | S | Ops | NEW |
-| 4 | 1001 anomaly: sofia reg dump in stack E2E reconnect phase | High | M | Bug | TODO row |
-| 5 | Island fix: rebuild UA+Registerer on Unregistered-after-reconnect (hypothesis recorded) | High | M | Bug | TODO row |
-| 6 | Verify ×2 green browser-E2E runs for the current tree (anomaly-row norm) | Medium | S | Quality | NEW |
-| 7 | Decide: cut v2.5.0 train from [Unreleased] now or let it accumulate (cadence g2) | Medium | S | Process | owner |
-| 8 | Stack-side assertion of rendered settings.csrf in the stack's webphone VM test | Low | S | Quality | TODO row |
-| 9 | Guard release.sh step 8 with an ELF-machine assertion (untrusted `--system` trap) | Low | S | Quality | TODO row |
-| 10 | Test the apps.vulnix triage bash (fixture or extraction) | Low | S | Quality | TODO row |
-| 11 | Smoke styled-404 check (works in --base foreign mode → post-deploy probe) | Low | S | Quality | TODO row |
-| 12 | i18n decision + implementation for the 404 message | Low | S | Quality | TODO row |
-| 13 | Pin module csrf typed+raw conflict semantics | Low | S | Quality | TODO row |
-| 14 | docs-health ANNOTATE over docs/status (owner confirms range) | Low | S | Docs | TODO row |
-| 15 | Post v2.1–v2.3.0 announcements (owner) | Low | S | Docs | TODO row |
-| 16 | Island sanitization letters decision + align + pinning test (owner) | Low | S | Bug | TODO row |
-| 17 | Own-number DID feed decision + UI surface (owner + stack) | Low | M | Feature | TODO row |
-| 18 | Owner decisions: stack pin policy, pbx-artmann input type | Medium | S | Process | TODO row |
-| 19 | Standing watches: sip.js 0.22 / ThemeScript opt-out / oxlint globals / E2E wall-time | Low | M | Quality | TODO row |
-| 20 | Analyze the next E2E flake via transfer_dbg dumps | Medium | S | Quality | TODO row |
-| 21 | Extend vulnix automated triage beyond glibc (any flagged pkg → its locked patches) | Low | M | Quality | NEW |
-| 22 | E2E coverage: hit /htmx-ext.js and a 404 path so markup regressions surface upstream | Low | S | Quality | NEW |
-| 23 | German-404 render test (wp-lang cookie) | Low | S | Quality | NEW |
-| 24 | Document buildflow-vulnix build-closure posture (66 warnings = expected noise) in the AGENTS buildflow-health section | Low | S | Docs | NEW |
-| 25 | Generated island DOM-contract file emitted from the test | Low | M | Quality | ROADMAP |
-| 26 | nginx gzip module option for text assets | Low | S | Feature | ROADMAP |
-| 27 | backup.retentionDays pruning option | Low | S | Feature | ROADMAP |
-| 28 | /startupz → systemd Type=notify wiring | Low | M | Feature | ROADMAP |
-| 29 | Retention/cleanup job (CDRs, read blobs, expired sessions) | Low | M | Feature | ROADMAP |
-| 30 | Session persistence behind SQLite (weigh vs ephemeral-by-design) | Low | M | Feature | ROADMAP |
-| 31 | Browser console-cleanliness gate on `/` | Low | M | Quality | ROADMAP |
-| 32 | Island JS test runner; port the asset tripwires | Low | L | Quality | ROADMAP |
-| 33 | HSTS decision for pbx.artmann.tech (owner) | Low | S | Ops | ROADMAP |
-| 34 | XFF-sanitization check → flip rate-limit keys to KeyExtractorFromClientIP | Low | S | Quality | ROADMAP |
+| #  | Task                                                                                                                  | Impact   | Effort | Category | Home     |
+| -- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- | -------- |
+| 1  | Redeploy prod with v2.4.0 + bogus-creds smoke probe + switch (owner ssh)                                              | Critical | S      | Ops      | TODO row |
+| 2  | Prod SMS lane: grep telnyx-webhooks journal, restore (owner)                                                          | Critical | S      | Ops      | TODO row |
+| 3  | Reconcile the stack's uncommitted flake.lock + operator.js changes (not authored this session)                        | High     | S      | Ops      | NEW      |
+| 4  | 1001 anomaly: sofia reg dump in stack E2E reconnect phase                                                             | High     | M      | Bug      | TODO row |
+| 5  | Island fix: rebuild UA+Registerer on Unregistered-after-reconnect (hypothesis recorded)                               | High     | M      | Bug      | TODO row |
+| 6  | Verify ×2 green browser-E2E runs for the current tree (anomaly-row norm)                                              | Medium   | S      | Quality  | NEW      |
+| 7  | Decide: cut v2.5.0 train from [Unreleased] now or let it accumulate (cadence g2)                                      | Medium   | S      | Process  | owner    |
+| 8  | Stack-side assertion of rendered settings.csrf in the stack's webphone VM test                                        | Low      | S      | Quality  | TODO row |
+| 9  | Guard release.sh step 8 with an ELF-machine assertion (untrusted `--system` trap)                                     | Low      | S      | Quality  | TODO row |
+| 10 | Test the apps.vulnix triage bash (fixture or extraction)                                                              | Low      | S      | Quality  | TODO row |
+| 11 | Smoke styled-404 check (works in --base foreign mode → post-deploy probe)                                             | Low      | S      | Quality  | TODO row |
+| 12 | i18n decision + implementation for the 404 message                                                                    | Low      | S      | Quality  | TODO row |
+| 13 | Pin module csrf typed+raw conflict semantics                                                                          | Low      | S      | Quality  | TODO row |
+| 14 | docs-health ANNOTATE over docs/status (owner confirms range)                                                          | Low      | S      | Docs     | TODO row |
+| 15 | Post v2.1–v2.3.0 announcements (owner)                                                                                | Low      | S      | Docs     | TODO row |
+| 16 | Island sanitization letters decision + align + pinning test (owner)                                                   | Low      | S      | Bug      | TODO row |
+| 17 | Own-number DID feed decision + UI surface (owner + stack)                                                             | Low      | M      | Feature  | TODO row |
+| 18 | Owner decisions: stack pin policy, pbx-artmann input type                                                             | Medium   | S      | Process  | TODO row |
+| 19 | Standing watches: sip.js 0.22 / ThemeScript opt-out / oxlint globals / E2E wall-time                                  | Low      | M      | Quality  | TODO row |
+| 20 | Analyze the next E2E flake via transfer_dbg dumps                                                                     | Medium   | S      | Quality  | TODO row |
+| 21 | Extend vulnix automated triage beyond glibc (any flagged pkg → its locked patches)                                    | Low      | M      | Quality  | NEW      |
+| 22 | E2E coverage: hit /htmx-ext.js and a 404 path so markup regressions surface upstream                                  | Low      | S      | Quality  | NEW      |
+| 23 | German-404 render test (wp-lang cookie)                                                                               | Low      | S      | Quality  | NEW      |
+| 24 | Document buildflow-vulnix build-closure posture (66 warnings = expected noise) in the AGENTS buildflow-health section | Low      | S      | Docs     | NEW      |
+| 25 | Generated island DOM-contract file emitted from the test                                                              | Low      | M      | Quality  | ROADMAP  |
+| 26 | nginx gzip module option for text assets                                                                              | Low      | S      | Feature  | ROADMAP  |
+| 27 | backup.retentionDays pruning option                                                                                   | Low      | S      | Feature  | ROADMAP  |
+| 28 | /startupz → systemd Type=notify wiring                                                                                | Low      | M      | Feature  | ROADMAP  |
+| 29 | Retention/cleanup job (CDRs, read blobs, expired sessions)                                                            | Low      | M      | Feature  | ROADMAP  |
+| 30 | Session persistence behind SQLite (weigh vs ephemeral-by-design)                                                      | Low      | M      | Feature  | ROADMAP  |
+| 31 | Browser console-cleanliness gate on `/`                                                                               | Low      | M      | Quality  | ROADMAP  |
+| 32 | Island JS test runner; port the asset tripwires                                                                       | Low      | L      | Quality  | ROADMAP  |
+| 33 | HSTS decision for pbx.artmann.tech (owner)                                                                            | Low      | S      | Ops      | ROADMAP  |
+| 34 | XFF-sanitization check → flip rate-limit keys to KeyExtractorFromClientIP                                             | Low      | S      | Quality  | ROADMAP  |
 
 HARVEST: items 3, 6, 21–24 are NEW from this session; 9–13 were already
 harvested into TODO_LIST at report time. The rest already live in
@@ -247,6 +251,6 @@ TODO_LIST/ROADMAP.
 
 ---
 
-*Report format note: user explicitly requested `.md` (skill default is
+_Report format note: user explicitly requested `.md` (skill default is
 HTML dashboard) — honored. Daemon will commit this file; no manual
-commit (harness rule). NOW WAITING FOR INSTRUCTIONS.*
+commit (harness rule). NOW WAITING FOR INSTRUCTIONS._

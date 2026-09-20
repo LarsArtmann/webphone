@@ -213,6 +213,7 @@ Brainstorm per the skill's rule — most items beyond the first block are
 TODO_LIST/ROADMAP fuel, not commitments.
 
 **Immediate (plan-gated, highest impact):**
+
 1. T1: deploy v2.4.0 to prod (owner ssh) — the unverified-session security
    exposure is still live; bogus-creds probe must be green before `switch`.
 2. T2: restore the prod SMS lane (journalctl triage → fix → send/receive test).
@@ -226,19 +227,19 @@ TODO_LIST/ROADMAP fuel, not commitments.
 
 **Own-number identity follow-through:**
 8. Stack `/phone-api` identity endpoint (the DECIDED upgrade path; kills
-   config duplication and covers extensions without manual map upkeep).
+config duplication and covers extensions without manual map upkeep).
 9. Typed NixOS module option for `identities` (+ flake-check assertion)
-   instead of relying on freeform `settings` pass-through.
+instead of relying on freeform `settings` pass-through.
 10. Client-side header DID update on `wp:session-opened` (no-reload parity).
 11. Smoke: an identities-configured scenario exercising header, whoami and
-    composer lines over real HTTP.
+composer lines over real HTTP.
 12. Stack browser E2E: configure one identity and assert the whoami/header
-    DID in-browser.
+DID in-browser.
 13. Annotate the superseded P8/15:09 recommendations with DECIDED pointers
-    (fold into T17 scope).
+(fold into T17 scope).
 14. README NixOS-module section: one sentence on `identities` pass-through.
 15. ROADMAP fuel: contact-name resolution next to the DID in composers;
-    header tooltip i18n ("your number" / "Ihre Nummer").
+header tooltip i18n ("your number" / "Ihre Nummer").
 
 **Remaining plan tasks:**
 16. T4: sofia registration dump instrumentation in the E2E reconnect phase.
@@ -253,11 +254,11 @@ TODO_LIST/ROADMAP fuel, not commitments.
 25. T17: docs-health ANNOTATE over docs/status (owner confirms range).
 26. T18: post the v2.1–v2.3.0 announcements (channels + disclosure posture).
 27. T19: write the flake-analysis ritual ("read transfer_dbg dumps first")
-    into AGENTS.
+into AGENTS.
 
 **Roadmap owner calls:**
 28. XFF sanitization answer → flip `remoteHostKey` to
-    `KeyExtractorFromClientIP`.
+`KeyExtractorFromClientIP`.
 29. HSTS on `pbx.artmann.tech` decision.
 30. GitHub Release objects vs tags-only policy (backfill v2.0.0 object?).
 31. Go `/v2` module-path policy record.
@@ -267,11 +268,11 @@ TODO_LIST/ROADMAP fuel, not commitments.
 
 **Sanitization/identity polish:**
 35. Shared island sanitize helper (one regex home in JS); costs an E2E gate
-    run — batch with another island change.
+run — batch with another island change.
 36. Property/fuzz test over a shared fixture table for the Go↔island
-    alphabet (full-skills-sweep item 21).
+alphabet (full-skills-sweep item 21).
 37. `inputmode` UX decision: login ext input is `inputmode="numeric"` while
-    letters are now legal dialables.
+letters are now legal dialables.
 38. whoami DID tooltip/title with en/de i18n keys.
 39. CHANGELOG wording pass on the two new entries before the next train.
 
@@ -282,18 +283,18 @@ TODO_LIST/ROADMAP fuel, not commitments.
 43. Delivery-receipt SSE-event assertion.
 44. Headless console-cleanliness gate (the class that let CSP violations ship).
 45. ROADMAP tail refinement on demand: gzip, retentionDays, startupz wiring,
-    session persistence, PWA.
+session persistence, PWA.
 
 **Process/hygiene:**
 46. HARVEST this report's (f) list into TODO_LIST/ROADMAP (docs-health).
 47. Explicit commit-per-task when authorized (readable history beats daemon
-    heuristics).
+heuristics).
 48. Institutionalize the process-death proof inside `webphone-smoke.py`
-    teardown (assert the booted binary is gone, not just the check count).
+teardown (assert the booted binary is gone, not just the check count).
 49. Clean stale artifact dirs on this host (`/tmp/wpshoot`,
-    `/tmp/webphone-smoke-*`) — owner machine hygiene.
+`/tmp/webphone-smoke-*`) — owner machine hygiene.
 50. When pbx-artmann next relocks, verify the `path:` tree-cleanliness
-    precondition is still documented at the relock site, not only in AGENTS.
+precondition is still documented at the relock site, not only in AGENTS.
 
 ## g) Questions I cannot figure out myself
 

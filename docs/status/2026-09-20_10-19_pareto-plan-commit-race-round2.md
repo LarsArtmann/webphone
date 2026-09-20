@@ -10,6 +10,7 @@ commit + push). This report covers that run and nothing else.
 ## Self-review (brutal)
 
 **1. What did you forget?**
+
 - **The turn ended before the user's checklist was complete.** Points
   3, 4 and 8 of their instruction demanded: (3+4) REPORT BACK WITH
   TABLE VIEWS (twice!), (8) commit + PUSH. I produced the plan file and
@@ -22,6 +23,7 @@ commit + push). This report covers that run and nothing else.
   TODO_LIST dirty. Fixed immediately (see a).
 
 **2. What is something stupid that we do anyway?**
+
 - **The daemon race, round 2.** The 10:09 report's #1 improvement was
   "explicit commit per task". Minutes later I lost the race AGAIN: I
   wrote the status report (10:09) AND edited TODO_LIST AND wrote the
@@ -35,6 +37,7 @@ commit + push). This report covers that run and nothing else.
   ~3 minutes).
 
 **3. What could you have done better?**
+
 - Sequencing: `commit report → write plan → commit plan → TODO_LIST →
   commit → push` would have produced three detailed commits and zero
   races. I did it write-write-write-commit.
@@ -76,18 +79,18 @@ tasks each carry their own gate in the micro-task list.
 
 ## a) FULLY DONE (10:14–10:19 turn + immediate remediation)
 
-| # | Work | Evidence |
-|---|------|----------|
+| # | Work                                                                                                                                                                                                                                                                                                                                           | Evidence                                               |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | 1 | Pareto plan written: `docs/planning/2026-09-20_10-14_SUPERB-pareto-todo-execution-plan.md` — 1%/4%/20%/other-20% tiers, 20 medium tasks (30–100min), 70 micro-tasks (each ≤12min, user's cap honored over the skill's 15min), all 17 TODO rows + 2 new items mapped, mermaid execution graph, concurrency map, verschlimmbesserung guard rails | committed in `f74e8ee` (daemon); file verified in-repo |
-| 2 | 2 plan-surfaced tasks added to TODO_LIST (train-cut decision T3, stack-tree reconciliation T13) | explicit commit `d7249bf` with detailed message |
-| 3 | Push (remediated at 10:19): local commits + TODO_LIST commit pushed to origin/main, verified via `ls-remote` | see this report's footer note after the push below |
+| 2 | 2 plan-surfaced tasks added to TODO_LIST (train-cut decision T3, stack-tree reconciliation T13)                                                                                                                                                                                                                                                | explicit commit `d7249bf` with detailed message        |
+| 3 | Push (remediated at 10:19): local commits + TODO_LIST commit pushed to origin/main, verified via `ls-remote`                                                                                                                                                                                                                                   | see this report's footer note after the push below     |
 
 ## b) PARTIALLY DONE
 
-| Work | Done | Missing | Blocker | Effort |
-|------|------|---------|---------|--------|
-| User instruction "REPORT BACK WITH TABLE VIEWS" | tables exist in the plan file; compact versions in this report's (f) | the ORIGINAL turn never showed them in chat | turn already ended — this report is the remedy | done |
-| Plan execution | plan complete + gated tasks marked ⛔ | all 20 tasks / 70 micro-tasks unexecuted | waiting for owner go (Full Execution Mode) + ⛔ gates | 20–100% of plan |
+| Work                                            | Done                                                                 | Missing                                     | Blocker                                               | Effort          |
+| ----------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------- | --------------- |
+| User instruction "REPORT BACK WITH TABLE VIEWS" | tables exist in the plan file; compact versions in this report's (f) | the ORIGINAL turn never showed them in chat | turn already ended — this report is the remedy        | done            |
+| Plan execution                                  | plan complete + gated tasks marked ⛔                                | all 20 tasks / 70 micro-tasks unexecuted    | waiting for owner go (Full Execution Mode) + ⛔ gates | 20–100% of plan |
 
 ## c) NOT STARTED
 
@@ -99,12 +102,12 @@ tasks each carry their own gate in the micro-task list.
 
 ## d) TOTALLY FUCKED UP
 
-| # | What | Severity | Root cause | Status |
-|---|------|----------|-----------|--------|
+| # | What                                                                                                                                    | Severity                                                 | Root cause                          | Status                                                                                                                                       |
+| - | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Lost the explicit detailed commit for the 10:09 report + the plan to the daemon race — AGAIN, ~10 minutes after writing the lesson down | medium (history noise; user-visible instruction failure) | write-write-write-commit sequencing | unfixable retroactively (daemon commit already local; amending = rewriting pushed-adjacent history, not done); process rule hardened (see e) |
-| 2 | Push never executed in the original turn despite explicit instruction | medium | turn ended mid-flow | FIXED at 10:19 (push + ls-remote verify) |
-| 3 | No chat table views in the original turn (caps-demanded, twice) | medium (instruction failure) | turn ended mid-flow | remediated in this report (f) |
-| 4 | No closing message at all in the original turn | low | same | this report closes it |
+| 2 | Push never executed in the original turn despite explicit instruction                                                                   | medium                                                   | turn ended mid-flow                 | FIXED at 10:19 (push + ls-remote verify)                                                                                                     |
+| 3 | No chat table views in the original turn (caps-demanded, twice)                                                                         | medium (instruction failure)                             | turn ended mid-flow                 | remediated in this report (f)                                                                                                                |
+| 4 | No closing message at all in the original turn                                                                                          | low                                                      | same                                | this report closes it                                                                                                                        |
 
 ## e) WHAT WE SHOULD IMPROVE (new this turn; carries the repeat lesson)
 
@@ -122,28 +125,28 @@ tasks each carry their own gate in the micro-task list.
 
 Medium granularity (30–100min), sorted by importance/impact/effort/customer-value:
 
-| # | Task | Gate | Effort | Impact |
-|---|------|------|--------|--------|
-| T1 | Deploy v2.4.0 to prod + bogus-creds probe + switch | ⛔ owner ssh | 30m | Critical |
-| T2 | Restore prod SMS lane (journalctl triage → fix → test SMS) | ⛔ owner ssh | 30m | Critical |
-| T3 | Train-cut decision (v2.5.0 rides same deploy?) → DECIDED line | ⛔ owner | 30m | High |
-| T4 | 1001 anomaly: sofia reg dump in stack E2E reconnect phase | E | 60m | High |
-| T5 | 1001 anomaly: island rebuild-on-Unregistered fix + tripwire | E | 90m | High |
-| T6 | E2E verify ×2 green + wall-time record | E | 60m | High |
-| T7 | release.sh step-8 ELF-machine guard (`b7 00` assertion) | E | 30m | Medium |
-| T8 | vulnix triage extraction + fixture test | E | 60m | Medium |
-| T9 | Smoke styled-404 check (foreign-mode safe) | E | 30m | Medium |
-| T10 | Module csrf typed+raw conflict pin + README precedence | E | 30m | Medium |
-| T11 | i18n-404 decision + impl | ⛔ tiny, then E | 30m | Low |
-| T12 | Stack-side csrf assertion in stack VM test | E (stack repo) | 45m | Low |
-| T13 | Stack-tree reconciliation (keep/discard uncommitted changes) | ⛔ owner | 30m | High |
-| T14 | Owner decision batch (pin policy · input type · sanitization · DID feed) | ⛔ owner | 45m | Medium |
-| T15 | Sanitization alignment impl | ⛔ T14 | 60m | Low |
-| T16 | Own-number DID surface | ⛔ T14 | 90m | Medium |
-| T17 | docs-health ANNOTATE over docs/status | ⛔ owner range | 60m | Low |
-| T18 | Post v2.1–v2.3.0 announcements | ⛔ owner | 45m | Low |
-| T19 | Flake-analysis ritual (transfer_dbg-first) into AGENTS | E | 30m | Low |
-| T20 | Watches cadence: dated quarterly re-check row | E | 30m | Low |
+| #   | Task                                                                     | Gate            | Effort | Impact   |
+| --- | ------------------------------------------------------------------------ | --------------- | ------ | -------- |
+| T1  | Deploy v2.4.0 to prod + bogus-creds probe + switch                       | ⛔ owner ssh    | 30m    | Critical |
+| T2  | Restore prod SMS lane (journalctl triage → fix → test SMS)               | ⛔ owner ssh    | 30m    | Critical |
+| T3  | Train-cut decision (v2.5.0 rides same deploy?) → DECIDED line            | ⛔ owner        | 30m    | High     |
+| T4  | 1001 anomaly: sofia reg dump in stack E2E reconnect phase                | E               | 60m    | High     |
+| T5  | 1001 anomaly: island rebuild-on-Unregistered fix + tripwire              | E               | 90m    | High     |
+| T6  | E2E verify ×2 green + wall-time record                                   | E               | 60m    | High     |
+| T7  | release.sh step-8 ELF-machine guard (`b7 00` assertion)                  | E               | 30m    | Medium   |
+| T8  | vulnix triage extraction + fixture test                                  | E               | 60m    | Medium   |
+| T9  | Smoke styled-404 check (foreign-mode safe)                               | E               | 30m    | Medium   |
+| T10 | Module csrf typed+raw conflict pin + README precedence                   | E               | 30m    | Medium   |
+| T11 | i18n-404 decision + impl                                                 | ⛔ tiny, then E | 30m    | Low      |
+| T12 | Stack-side csrf assertion in stack VM test                               | E (stack repo)  | 45m    | Low      |
+| T13 | Stack-tree reconciliation (keep/discard uncommitted changes)             | ⛔ owner        | 30m    | High     |
+| T14 | Owner decision batch (pin policy · input type · sanitization · DID feed) | ⛔ owner        | 45m    | Medium   |
+| T15 | Sanitization alignment impl                                              | ⛔ T14          | 60m    | Low      |
+| T16 | Own-number DID surface                                                   | ⛔ T14          | 90m    | Medium   |
+| T17 | docs-health ANNOTATE over docs/status                                    | ⛔ owner range  | 60m    | Low      |
+| T18 | Post v2.1–v2.3.0 announcements                                           | ⛔ owner        | 45m    | Low      |
+| T19 | Flake-analysis ritual (transfer_dbg-first) into AGENTS                   | E               | 30m    | Low      |
+| T20 | Watches cadence: dated quarterly re-check row                            | E               | 30m    | Low      |
 
 Fine granularity: 70 micro-tasks (each ≤12min; 40 executable, 30 gated)
 — full table in the plan file §Step 3. No new tasks surfaced by THIS
@@ -163,7 +166,7 @@ turn beyond what is already rowed; HARVEST state: complete.
 
 ---
 
-*Report format: `.md` per user's standing instruction (skill default is
+_Report format: `.md` per user's standing instruction (skill default is
 HTML dashboard). This report itself is committed explicitly and pushed
 with the remediation push (user authorized push in the 10:14
-instruction). NOW WAITING FOR INSTRUCTIONS.*
+instruction). NOW WAITING FOR INSTRUCTIONS._

@@ -395,7 +395,9 @@ def run_checks(
         nav_authed = body.decode("utf-8", "replace")
         c.ok(
             "nav partial signed-in badge",
-            status == 200 and "wp-nav-link" in nav_authed and "wp-nav-badge" in nav_authed,
+            status == 200
+            and "wp-nav-link" in nav_authed
+            and "wp-nav-badge" in nav_authed,
             f"{status} badge missing: {nav_authed[:80]!r}",
         )
 
