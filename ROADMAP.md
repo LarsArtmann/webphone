@@ -209,6 +209,31 @@ is committed work — refine into TODO_LIST only on demand.
   heuristic commits (upstream infra decision), wrapper-flake bisect
   trick write-up (module-from-HEAD + package-from-rev).
 
+## Local Playwright island E2E (consciously deferred, plan T27 2026-09-20)
+
+A local (no-PBX) Playwright harness — login → tab click → force 401 →
+toast assertion, plus golden screenshots of the four toast kinds — was
+scoped in the 2026-09-20 testing plan and CONSCIOUSLY ROADMAP'd instead
+of shipped: a chromium-in-devShell costs a 1-2 GB closure for what the
+stack browser E2E already proves with a real PBX, and golden-image tests
+flake on font/antialiasing drift. Trigger to revisit: the stack E2E
+becomes too slow for inner-loop island work, or toast styling regressions
+actually escape (they did not in the 2026-09-20 train — the island
+node:test suite plus the E2E caught everything).
+
+## Test-infra follow-ups (from the 2026-09-20 testing train)
+
+- Long-tail coverage: `internal/blob`, `internal/fax`,
+  `internal/messaging` still have no direct tests (exercised only
+  through the server suite); `views` stays transitive BY DECISION (see
+  `docs/reviews/2026-09-20_coverage-baseline.md`).
+- The fuzz target (`FuzzContactsAPISave`) runs its seed corpus in CI;
+  a scheduled longer `-fuzztime` run (and more targets: message send
+  bodies, vcard parser) is unstarted.
+- Shell copy stays English (decision D3); if a per-extension UX demand
+  emerges, the shell toast strings move to a wp-lang lookup with en/de
+  tables.
+
 ## Session persistence (raw idea, owner call)
 
 Sliding-session TTL refresh (extend expiry on activity) with CSRF token
