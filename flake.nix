@@ -252,6 +252,33 @@
                   );
                 }
                 {
+                  # Precedence under conflict, pinned per key: typed csrf.*
+                  # (mkForce) > raw settings.csrf.* (plain) > the nginx
+                  # defaults (mkDefault). One case exercises all three
+                  # lanes: typed proxies beat the raw proxy, and the raw
+                  # origin (typed origins empty) beats the nginx default.
+                  name = "csrf-conflict-precedence";
+                  path = pkgs.writeText "csrf-conflict-precedence" (
+                    let
+                      conflictEvaluated = lib.evalModules (moduleSet {
+                        csrf.trustedProxies = [ "10.9.8.7" ];
+                        settings.csrf = {
+                          trusted_proxies = [ "192.0.2.1" ];
+                          trusted_origins = [ "https://raw.example.org" ];
+                        };
+                      });
+                      conflictCfg = conflictEvaluated.config.services.webphone;
+                    in
+                    if
+                      conflictCfg.settings.csrf.trusted_proxies == [ "10.9.8.7" ]
+                      && conflictCfg.settings.csrf.trusted_origins == [ "https://raw.example.org" ]
+                    then
+                      "csrf conflict precedence: typed > raw > nginx default"
+                    else
+                      throw "webphone-module check: csrf conflict precedence broken (expected typed proxies and raw origins to win their lanes)"
+                  );
+                }
+                {
                   # backup.enable must render the timer (OnCalendar + Unit)
                   # and the oneshot service.
                   name = "backup-timer";

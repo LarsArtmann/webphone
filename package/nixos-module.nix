@@ -75,8 +75,9 @@ in
 
     # Typed front for settings.csrf.trusted_*: same values the freeform
     # settings accept, but discoverable and checkable as module options.
-    # Empty lists leave settings.csrf untouched (the nginx.enable defaults
-    # below still apply); non-empty lists override them.
+    # Precedence per key: typed csrf.* (mkForce) beats a raw
+    # settings.csrf.* value, which beats the nginx.enable defaults
+    # (mkDefault). Empty typed lists never clobber raw values.
     csrf = {
       trustedProxies = lib.mkOption {
         type = lib.types.listOf lib.types.str;
@@ -85,8 +86,9 @@ in
         description = ''
           Proxies whose X-Forwarded-Proto header the CSRF middleware may
           believe (IP or CIDR entries). Renders into
-          `settings.csrf.trusted_proxies`; beats the `nginx.enable` default
-          when non-empty.
+          `settings.csrf.trusted_proxies`; wins over BOTH a raw
+          `settings.csrf.trusted_proxies` value and the `nginx.enable`
+          default when non-empty.
         '';
       };
       trustedOrigins = lib.mkOption {
@@ -96,8 +98,9 @@ in
         description = ''
           Browser-facing origins counted as same-origin by the CSRF
           middleware (the TLS vhost). Renders into
-          `settings.csrf.trusted_origins`; beats the `nginx.enable` default
-          when non-empty.
+          `settings.csrf.trusted_origins`; wins over BOTH a raw
+          `settings.csrf.trusted_origins` value and the `nginx.enable`
+          default when non-empty.
         '';
       };
     };
@@ -192,18 +195,19 @@ in
       # Origin is https://<hostName> while the listener sees plain HTTP from
       # the local nginx. Without these the CSRF middleware reads the truthful
       # Origin as a forged same-origin attestation and 403s every POST.
-      # The typed csrf.* options render here too and, when non-empty, carry
-      # higher priority than these nginx-derived defaults.
+      # Precedence per key (pinned by the flake check's csrf-conflict case):
+      # typed csrf.* (mkForce) > raw settings.csrf.* (plain) > the
+      # nginx-derived defaults (mkDefault).
       csrf = lib.mkMerge [
         (lib.mkIf cfg.nginx.enable {
           trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
           trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
         })
         (lib.mkIf (cfg.csrf.trustedProxies != [ ]) {
-          trusted_proxies = cfg.csrf.trustedProxies;
+          trusted_proxies = lib.mkForce cfg.csrf.trustedProxies;
         })
         (lib.mkIf (cfg.csrf.trustedOrigins != [ ]) {
-          trusted_origins = cfg.csrf.trustedOrigins;
+          trusted_origins = lib.mkForce cfg.csrf.trustedOrigins;
         })
       ];
     };
