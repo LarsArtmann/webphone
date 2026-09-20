@@ -311,6 +311,9 @@ func TestNotFoundRendersTheShell(t *testing.T) {
 	if !strings.Contains(page, `id="login-view"`) {
 		t.Errorf("404 body lacks the island shell: %.200s", page)
 	}
+	if !strings.Contains(page, "There is nothing at this address.") {
+		t.Errorf("404 body lacks the English not-found message: %.200s", page)
+	}
 }
 
 // TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: every

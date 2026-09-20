@@ -135,7 +135,7 @@ func (h *handlers) notFoundPage(w http.ResponseWriter, r *http.Request) {
 		ActiveTab:  views.TabMessages,
 		Lang:       lang,
 		CSRFToken:  csrfToken(r),
-		TabContent: views.ErrorPanel("There is nothing at this address.", lang),
+		TabContent: views.ErrorPanel(views.T(lang, "error.notfound"), lang),
 	}
 	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

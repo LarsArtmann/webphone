@@ -46,6 +46,12 @@ func TestGermanLanguageViaCookieAndHeader(t *testing.T) {
 		}
 	}
 
+	// The styled 404 follows the cookie as well (error.notfound key).
+	_, body = c.do(http.MethodGet, "/nope", nil, "")
+	if !strings.Contains(string(body), "Unter dieser Adresse gibt es nichts.") {
+		t.Errorf("German 404 message missing: %.300s", body)
+	}
+
 	// English stays the default (no cookie, plain client).
 	plain := signIn(t, server)
 	_, body = plain.do(http.MethodGet, "/partials/contacts", nil, "")
