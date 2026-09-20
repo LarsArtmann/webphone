@@ -1,0 +1,8 @@
+# BuildFlow bandit config. The backup/restore DRILL is excluded wholesale
+# (triaged 2026-09-20, plan T22): it boots a throwaway loopback server it
+# owns, signs in with DUMMY credentials ("drill-secret"/"pw" are not
+# secrets), and its asserts ARE the verification mechanism (a drill is
+# never run under python -O). Everything else in the repo stays fully
+# scanned.
+[bandit]
+exclude = scripts/webphone-backup-drill.py
