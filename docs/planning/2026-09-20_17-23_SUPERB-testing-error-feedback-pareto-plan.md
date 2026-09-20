@@ -306,3 +306,37 @@ serial (one stack lock at a time).
 
 _Point-in-time plan; feed drift back via docs-health (ANNOTATE for this file,
 HARVEST for TODO_LIST/ROADMAP)._
+
+---
+
+## 7. Execution record (ANNOTATED 2026-09-20, same-day train)
+
+Executed the full table in one train, priority order. Deviations and
+outcomes:
+
+- **D1** default (yes) applied — served JS changed, stack E2E re-ran.
+- **D2 = PERSIST, implemented** (explicitly approved with the plan's
+  "GET SHIT DONE" instruction): spike verdict at
+  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`,
+  implementation `NewSQLiteStore` seam + kill -9 smoke scenario + the
+  stack E2E restart scenario (`RESTART-SESSION-KEPT` green on the first
+  run that included it).
+- **D3** default applied — shell copy English, recorded in AGENTS.
+- **T10 restructure** (run 2 evidence): a fresh dial AFTER an echo
+  teardown is the wedged-transport class this suite keeps hitting — the
+  failed transfer now runs on the first call, and the FreeSWITCH outage
+  (T09) rides the same surviving call.
+- **T27 consciously ROADMAP'd** with trigger conditions (see ROADMAP).
+- **T20 twist**: buildflow's preflight states the caller's shell wins
+  over project-side env, so the GOTOOLCHAIN env pin is impossible — the
+  self-heal lives in `scripts/webphone-smoke.py` +
+  `scripts/buildflow.sh` re-exec wrappers instead.
+- **Concurrent session collision**: the same two test files
+  (`internal/store/owner_scoping_test.go`,
+  `internal/gateway/webhook_errors_test.go`) were independently written
+  by another session and pushed mid-train; integrated (their store file
+  was byte-identical; their gateway file had a compile error my version
+  fixes).
+- Coverage deltas recorded in
+  `docs/reviews/2026-09-20_coverage-baseline.md`: session 63.1→67.0,
+  store 59.4→75.3, gateway 76.5→77.6, domain 54.1→72.1.
