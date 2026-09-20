@@ -295,3 +295,61 @@ func TestShellRendersValidJSONCSRFHxHeaders(t *testing.T) {
 		t.Error("X-CSRF-Token missing or empty in hx-headers")
 	}
 }
+
+// TestIdentitySurfacesOwnNumber pins the own-number feed (config
+// identities, DECIDED 2026-09-20): the session response carries the DID
+// for the island's whoami line, the signed-in shell header shows
+// extension · DID, and the messages/fax composers show the sending
+// identity. An extension without a configured DID gets none of it —
+// absence stays silent, never a placeholder.
+func TestIdentitySurfacesOwnNumber(t *testing.T) {
+	srv := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Identities = map[string]string{"1001": "+49 30 12345678"}
+	})
+	c := clientFor(t, srv)
+
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("session create: %d %s", resp.StatusCode, body)
+	}
+	c.adoptCsrfToken()
+	if !strings.Contains(string(body), `"did":"+49 30 12345678"`) {
+		t.Fatalf("session response lacks the DID: %s", body)
+	}
+
+	_, page := c.do(http.MethodGet, "/", nil, "")
+	if !strings.Contains(string(page), `<span class="wp-signed-in-did">· +49 30 12345678</span>`) {
+		t.Fatalf("signed-in header lacks the DID:\n%s", page)
+	}
+
+	_, panel := c.do(http.MethodGet, "/partials/messages", nil, "")
+	if !strings.Contains(string(panel), `class="wp-identity"`) || !strings.Contains(string(panel), "sending as") {
+		t.Fatalf("messages composer lacks the sending identity:\n%s", panel)
+	}
+
+	_, fax := c.do(http.MethodGet, "/partials/fax", nil, "")
+	if !strings.Contains(string(fax), `class="wp-identity"`) || !strings.Contains(string(fax), "sending as") {
+		t.Fatalf("fax composer lacks the sending identity:\n%s", fax)
+	}
+
+	// A second extension without a configured DID sees none of it.
+	plain := clientFor(t, srv)
+	payload2, _ := json.Marshal(map[string]string{"extension": "2002", "password": "pw"})
+	resp2, body2 := plain.do(http.MethodPost, "/api/session", payload2, "application/json")
+	if resp2.StatusCode != http.StatusCreated {
+		t.Fatalf("second session create: %d %s", resp2.StatusCode, body2)
+	}
+	plain.adoptCsrfToken()
+	if strings.Contains(string(body2), "did") {
+		t.Fatalf("unmapped extension must not get a DID: %s", body2)
+	}
+	_, page2 := plain.do(http.MethodGet, "/", nil, "")
+	if strings.Contains(string(page2), "wp-signed-in-did") {
+		t.Fatalf("unmapped extension header must stay extension-only:\n%s", page2)
+	}
+	_, panel2 := plain.do(http.MethodGet, "/partials/messages", nil, "")
+	if strings.Contains(string(panel2), "wp-identity") {
+		t.Fatalf("unmapped extension composer must stay identity-free:\n%s", panel2)
+	}
+}

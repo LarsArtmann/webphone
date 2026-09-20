@@ -264,3 +264,29 @@ func TestEnvKeyToPath(t *testing.T) {
 		}
 	}
 }
+
+// TestLoadValidatesIdentities pins the own-number feed's config contract:
+// owner-formatted DIDs are allowed (the value renders verbatim), but a
+// non-normalized extension key would make the signed-in extension's
+// lookup silently miss, and a DID without dialable characters is a typo.
+func TestLoadValidatesIdentities(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"identities":{"1001":"+49 30 12345678"}}`))
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Identities["1001"] != "+49 30 12345678" {
+		t.Fatalf("identities: got %v", cfg.Identities)
+	}
+
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"identities":{"10 01":"+493012345678"}}`))
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "normalized extension") {
+		t.Fatalf("non-normalized key: err %v, want normalized-extension rejection", err)
+	}
+
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"identities":{"1001":"!!!"}}`))
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "dialable") {
+		t.Fatalf("dialable-less DID: err %v, want dialable rejection", err)
+	}
+}
