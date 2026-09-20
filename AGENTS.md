@@ -51,18 +51,15 @@ a second user database would be a split brain.
   scrapers can be fenced per location without touching `/`).
   `nixosModules.webphone` is an alias of `.default`.
 - The `webphone-module` flake check evaluates the module with stand-in
-  options (nginx/systemd/users + `assertions` — NixOS's modules.nix
-  normally provides `assertions`; new config keys the module writes
-  need a stand-in there) and asserts all six vhost locations, the
-  `webphone` systemd unit, the csrf fronting defaults AND the typed
+  options (nginx/systemd/users + `assertions`; new config keys the
+  module writes need a stand-in there) and asserts all six vhost
+  locations, the `webphone` unit, csrf fronting defaults AND the typed
   override, the backup timer/oneshot pair, and the serverTiming env
-  gate. Statix pins single-assignment style: all `locations` in ONE
-  attrset (repeated `locations.X =` assignments fail the gate).
-  `checks.x86_64-linux.webphone-backup` is a kvm-gated NixOS VM test
-  (fax-feed-test style): boots the real service with `backup.enable`,
-  runs the oneshot, asserts snapshot + `pragma integrity_check` + timer
-  wiring + `NRestarts=0`; without KVM, `nix flake check` skips it with
-  a warning instead of crawling under TCG.
+  gate. Statix pins single-assignment style (all `locations` in ONE
+  attrset; repeated `locations.X =` fails the gate).
+  `checks.x86_64-linux.webphone-backup` (kvm-gated; skipped with a
+  warning without KVM) and `checks.x86_64-linux.webphone-backup-drill`
+  (restore path, sandbox-safe) cover backup snapshot AND restore.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge (secrets via LoadCredential/
   EnvironmentFile under `/var/lib/telephony-secrets`) — contracts in
@@ -70,30 +67,20 @@ a second user database would be a split brain.
 
 ## Owner decisions (2026-09-20)
 
-The four one-liners gating the 10:14 SUPERB pareto plan (T14), decided
-with rationale so they stop blocking work:
-
 - Stack `webphone` input policy: DECIDED — ride webphone `main` with a
-  per-train lock bump (runbook step 6), matching the g2 cadence
-  recommendation. Tag pins buy reproducibility at the cost of a manual
-  bump on every fix; revisit if a hotfix must ever ship inside an hour.
+  per-train lock bump (runbook step 6); revisit only for sub-hour
+  hotfix shipping.
 - pbx-artmann input type: DECIDED — keep `path:` while all three repos
-  live on this host. The 2026-09-19 "burn" was an uncommitted stack
-  tree (now a documented relock precondition), not the input type.
-  Revisit when pbx-artmann leaves the host or gains a second consumer
-  (this supersedes the earlier github-input recommendation in the
-  15:37 SUPERB plan P8).
+  live on this host; revisit when pbx-artmann leaves the host or gains
+  a second consumer. (The 2026-09-19 "burn" was an uncommitted stack
+  tree, not the input type.)
 - Sanitization side: DECIDED — the island keeps letters
-  (`[^\d+*#a-zA-Z]`), matching `sanitizeDialable`; shipped with the
-  served-asset pin in internal/server (the ids.go parity comment is
-  true again).
+  (`[^\d+*#a-zA-Z]`), matching `sanitizeDialable`; pinned on the served
+  asset in internal/server.
 - Own-number feed: DECIDED — static config map (`identities`) now; a
-  stack `/phone-api` identity endpoint remains the upgrade path
-  (blocked on the stack tree reconciliation). CDR-derive REJECTED on
-  evidence: the stack's phone-api reshapes FreeSWITCH `Master.csv`,
-  where outbound `caller_id_number` is dialplan-dependent (webphone's
-  fixtures show the extension `1001`, not the DID) and absent before
-  the first call.
+  stack `/phone-api` identity endpoint is the upgrade path. CDR-derive
+  REJECTED on evidence: outbound `caller_id_number` in FreeSWITCH
+  `Master.csv` is dialplan-dependent and absent before the first call.
 
 ## Commands
 
@@ -151,64 +138,30 @@ every build; it is the local tripwire, not a replacement for the E2E.
 
 ## Architecture invariants
 
-- **Middleware chain** (server `New`): `ContextEnrichmentMiddleware(nil)`
-  outermost → `RequestLoggingSlog` → `ServerTimingMiddlewareWhen`
-  (env-gated) → `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` →
-  routes (2026-09-19 superb-adoption plan). Enrichment must stay OUTSIDE
-  the request log: the logger reads the request context AFTER the
-  handler returns, so a logger outside enrichment can never see the
-  RequestID — the whole point is `request_id=` in every log line plus
-  the `X-Request-ID` response header. The user extractor stays nil:
-  library user ids are ULIDs from the rejected usermgmt module, and
-  extensions are not ULIDs. Server-Timing uses the library middleware
-  (W3C `total;desc="Total request";dur=…`, CRLF-sanitized, SSE-safe
-  writer) — the hand-rolled `timingWriter` is gone; `securityHeadersConfig()`
-  is the single source for header config (test parity is structural).
-  `Permissions-Policy` ships calibrated: `microphone=(self)`, camera/
-  display-capture/geolocation/payment/usb denied — the library's
-  `RecommendedPermissionsPolicy` stays rejected (denies microphone).
-  Adopted
-  2026-09-18 per the Pareto plan (links below): panics log full stacks
-  and re-raise `http.ErrAbortHandler`; every request logs exactly one
-  line (method/path/status/duration — never bodies/credentials); the
-  login/hook limiters are `httputil.KeyedRateLimiter` with port-stripped
-  peer-host keys (`remoteHostKey` — port-qualified keys would silently
-  disable limiting behind the stack's proxy; flip to
+- **Middleware chain** (server `New`, in this ORDER):
+  `ContextEnrichmentMiddleware(nil)` → `RequestLoggingSlog` →
+  `ServerTimingMiddlewareWhen` (env-gated) → `SecurityHeaders` →
+  `cqrshtmx.RecoveryMiddleware` → routes. Enrichment stays OUTSIDE the
+  request log (the logger reads the context AFTER the handler returns —
+  the whole point is `request_id=` in every line + `X-Request-ID`).
+  User extractor stays nil (library ULIDs ≠ extensions). Server-Timing
+  uses the library middleware; `securityHeadersConfig()` is the single
+  source for header config. `Permissions-Policy` ships calibrated:
+  `microphone=(self)`, camera/display-capture/geolocation/payment/usb
+  denied. Panics log full stacks and re-raise `http.ErrAbortHandler`;
+  every request logs exactly one line (never bodies/credentials).
+  Login/hook limiters are `httputil.KeyedRateLimiter` with
+  port-stripped peer-host keys (`remoteHostKey`; flip to
   `KeyExtractorFromClientIP` only once the stack proves XFF
-  sanitization); `/healthz` is honest readiness (`sqlite` ping +
-  `blob-dir` write probe, 503 names the failing check, library JSON
-  shape; GET-open by decision — probers need no session and the body
-  leaks only check names/errors, never secrets). Each named check runs
-  under a 2s webphone-side bound (`boundedCheck`: a timeout degrades
-  the probe to 503 naming the check, the underlying call keeps
-  running) — F1 of the DI/health review closed, now via the UPSTREAM
-  mechanism: cqrs-htmx v4.11.0's `NamedCheck.Timeout` (the local
-  `boundedCheck` wrapper was deleted when webphone bumped). The probe
-  triple is completed by go-health v0.3.0's container-free
-  `NewChecks` (2026-09-19, F2 DECIDED + shipped: go-health JSON
-  probes, the plan's recommended posture): `/livez` is fetch-free
-  process liveness (200 while serving — the split from dependency
-  health is the point), `/startupz` is 503 until the same two backing
-  checks first pass, then latched. Readiness stays `/healthz` alone —
-  no second readiness truth; the go-health probe SHARES the check
-  functions (same truth, two lifecycles). JSON only (CSP-neutral);
-  the Datastar HTML dashboard face stays rejected (`unsafe-eval`) —
-  options memo:
-  `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`.
-  samber/do appears only as a TRANSITIVE dep of go-health's recorder
-  interfaces — the container itself stays rejected. The
-  self-health plan
-  (`docs/planning/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`)
-  is EXECUTED. The review
-  of 2026-09-19 (`docs/architecture-understanding/`) scored the posture;
-  `/events` rides `Broadcaster.ServeSSE` (its `connected`
-  handshake frame is additive; htmx sse-swap listeners ignore it;
-  payloads stay swap-safe fragments; v4.11.0 leads the stream with a
-  `retry:` reconnect hint — the one wire change of the
-  v4.9.0→v4.11.0 bump, pinned by
-  `TestSSEStreamCarriesConnectedThenEvents`; the bump-trigger
-  follow-through history lives in CHANGELOG and the fan-out baseline
-  doc, not here).
+  sanitization). `/healthz` = honest readiness (`sqlite` ping +
+  `blob-dir` write probe, 2s bounds via cqrs-htmx `NamedCheck.Timeout`,
+  503 names the failing check, GET-open). `/livez` = fetch-free
+  liveness, `/startupz` = latched 503-until-first-pass (go-health
+  `NewChecks`, sharing the SAME check functions — no second readiness
+  truth, JSON only, samber/do only transitive). `/events` rides
+  `Broadcaster.ServeSSE` (swap-safe fragments; v4.11.0 leads with a
+  `retry:` hint, pinned by `TestSSEStreamCarriesConnectedThenEvents`).
+
 - **The island never unloads.** Tab navigation swaps partials into
   `#tab-content` via HTMX; the SIP island lives outside that region so
   calls survive tab switches. Deep links (`/messages`, `/fax`, …)
@@ -255,31 +208,20 @@ every build; it is the local tripwire, not a replacement for the E2E.
   the negotiated lang so SSE fragments render in it (the notifier has
   no request). Service validation reasons stay English: operator-facing,
   runbook-greppable — same policy as `#log`.
-- **Live-update surfaces morph-swap** (since 2026-09-20): the five
-  SSE/nav surfaces — thread list, `#thread-transcript`, fax list,
-  voicemail panel re-fetch, shell.js `refreshNav` — carry
-  `hx-swap="morph:innerHTML"` and are reconciled by idiomorph
-  (cqrs-htmx v4.11.0's bundled self-contained exts, served as ONE
-  bundle at `/htmx-ext.js` via `cqrshtmx.HTMXExtensionsHandler` —
-  sse + idiomorph concatenated, composite ETag; the sse ext resolves
-  swaps via htmx `getSwapSpecification`, so the attribute IS honored on `sse-swap`
-  elements). Morph preserves matched nodes in place: focus, draft
-  text, container attrs (`data-page`/`data-thread`) and shell.js
-  listeners survive live pushes. im-preserve audit conclusion
-  (2026-09-20): idiomorph 0.7 persists any element whose id exists in
-  BOTH trees (morphed in place, pantry-pulled across reorders) and its
-  `restoreFocus` equally needs an id — so STATEFUL nodes in morph
-  surfaces must carry stable ids (voicemail rows + `<audio>` do:
-  `vm-<uuid>`/`vm-audio-<uuid>`, pinned by
-  `TestVoicemailRowsCarryStableMorphIds`; thread/fax rows and bubbles
-  are static content, re-creation there is harmless). Payloads still render as bare
-  fragments (`ThreadsList`, `Transcript`, `FaxList` — no wrappers,
-  no composers) — the shape is convention even though morph no
-  longer wipes drafts on it. The `voicemail` event stays a
-  payload-less NUDGE: the voicemail panel re-fetches its partial on
-  receipt (it needs per-session PBX credentials the notifier does
-  not have). Event names: `threads`, `thread`, `fax`, `voicemail`.
-  New live surfaces should follow the morph pattern.
+- **Live-update surfaces morph-swap**: the five SSE/nav surfaces —
+  thread list, `#thread-transcript`, fax list, voicemail panel
+  re-fetch, shell.js `refreshNav` — carry `hx-swap="morph:innerHTML"`
+  (idiomorph via `/htmx-ext.js`, ONE bundle: sse + idiomorph, composite
+  ETag). Morph preserves matched nodes in place (focus, drafts,
+  container attrs, listeners survive live pushes). STATEFUL nodes in
+  morph surfaces must carry stable ids (idiomorph persists by id;
+  voicemail rows/audio do, pinned by
+  `TestVoicemailRowsCarryStableMorphIds`). Payloads stay bare
+  fragments (no wrappers/composers). The `voicemail` event is a
+  payload-less NUDGE (the panel re-fetches with per-session
+  credentials). Event names: `threads`, `thread`, `fax`, `voicemail`.
+  New live surfaces follow the morph pattern.
+
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
@@ -374,56 +316,32 @@ Ginkgo DescribeTable when the subject is a state machine.
 
 ## Hard-won knowledge
 
-- cqrs-htmx audit trail: deep-dive
-  `docs/research/2026-09-18_cqrs-htmx-deep-dive.html`, execution plan
-  `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`,
-  utilization audit
-  `docs/research/2026-09-19_cqrs-htmx-deep-dive.html` (78/100 baseline),
-  and superb-adoption plan
-  `docs/planning/2026-09-19_09-30_cqrs-htmx-superb-100-adoption-plan.md`
-  (executed 2026-09-19: request-ID enrichment, `templ.JSONString` CSRF
-  wiring, calibrated Permissions-Policy, servertiming middleware, webhook
-  5xx redaction via `webhookFail`/`SafeDetail` — all landed with tests).
-  The idiomorph experiment MERGED 2026-09-20: the stack browser E2E
-  passed against the branch via `--override-input` (148 s, full
-  call/transfer/DTMF/reconnect flow) — verdict doc
-  `docs/research/2026-09-20_p25-idiomorph-morph-swap-verdict.md`,
-  merge `6bb792e`.
-  Adoption posture: middleware + assets only; the `setup` bundle, CQRS
-  dispatch layer and usermgmt stay rejected (split-brain identity, see
-  above); security presets are NEVER adopted wholesale — the library's
-  `RecommendedPermissionsPolicy` denies `microphone`, which would kill
-  the WebRTC phone. `toastDetail` is a type alias of
-  `cqrshtmx.ToastDetail` (root-package type; NOT dispatch-layer — the
-  old "kept local" comment was wrong), so a wire-shape change upstream
-  fails this build. Trap: the dispatch-layer `Notify*` options emit
-  `{level,message}`, NOT the island's `{message,kind}` shape. Their
+- cqrs-htmx adoption posture: middleware + assets ONLY; the `setup`
+  bundle, CQRS dispatch layer and usermgmt stay rejected (split-brain
+  identity, see above); security presets are NEVER adopted wholesale —
+  the library's `RecommendedPermissionsPolicy` denies `microphone`,
+  which would kill the WebRTC phone. `toastDetail` is a type alias of
+  `cqrshtmx.ToastDetail` (root-package type, NOT dispatch-layer), so a
+  wire-shape change upstream fails this build. Trap: the dispatch-layer
+  `Notify*` options emit `{level,message}`, NOT the island's
+  `{message,kind}` shape. Audit trail (deep-dives, plans, idiomorph
+  verdict): `docs/research/` + `docs/planning/` 2026-09-18..20. Their
   KIND vocabulary is dispatch-layer too: the server's `notifyToast`
   emits island kinds (ok/error/warn/info), which main.js's old
   `TOAST_KINDS` (copied from the dispatch vocabulary success/warning)
   silently recolored every success toast to info — the mapping now
   lives in ui.js `toastKindFor`, pinned by ui.test.mjs.
-- Two CSRF constraints discovered 2026-09-19 while hardening the wiring
-  (both test-caught before they shipped):
-  (1) `httputil.CSRFTokenHXHeaders`/`CSRFTokenHTMLMeta` are for RAW-HTML
-  contexts — they HTML-escape their output. templ escapes attribute
-  values itself, so the helpers would double-escape: hx-headers would
-  fail JSON.parse and every HTMX request silently loses CSRF protection.
-  In templ, build the value with `templ.JSONString` (pages.go renderShell)
-  and let templ escape it once. `TestShellRendersValidJSONCSRFHxHeaders`
-  pins this.
-  (2) CSRF token rotation on login (SHIPPED 2026-09-19): login/logout
-  call `httputil.InvalidateCSRFCookie` (fixation defense) and the island
-  adopts the fresh token WITHOUT a reload via `GET /api/csrf`
-  (`session.js adoptFreshCsrfToken`, `csrf_api.go refreshCSRF`): the GET
-  rides the CSRF middleware, where nosurf regenerates the deleted cookie
-  and exposes the new masked token; every token consumer reads live
-  (meta tag in session.js/auth.js, htmx re-reads body `hx-headers` per
-  request), so updating those two spots re-arms all POSTs. Adoption
-  failure falls back to a reload (server session cookie survives).
-  Tests that POST after logging in must go through the client `login`
-  helper (it adopts) — raw login POSTs leave a dead token; the rate-limit
-  and request-log loops re-arm between attempts like a scripted flooder.
+- CSRF constraints (test-pinned):
+  (1) `httputil.CSRFTokenHXHeaders`/`CSRFTokenHTMLMeta` HTML-escape —
+  in templ build the value with `templ.JSONString` and let templ escape
+  once; the raw-HTML helpers would double-escape and silently strip
+  CSRF from every HTMX request (`TestShellRendersValidJSONCSRFHxHeaders`).
+  (2) Login/logout rotate the CSRF token (fixation defense); the island
+  adopts the fresh one WITHOUT a reload via `GET /api/csrf`
+  (`session.js adoptFreshCsrfToken`); every consumer reads live (meta
+  tag, htmx per-request `hx-headers`). Adoption failure falls back to a
+  reload. Tests that POST after logging in must use the client `login`
+  helper (it adopts) — raw login POSTs leave a dead token.
 - CSRF behind a TLS-terminating proxy needs `csrf.trusted_*` (found
   2026-09-19 via the stack E2E 403s): the browser sends
   `Origin: https://host` + `Sec-Fetch-Site: same-origin`, the listener
@@ -481,18 +399,13 @@ Ginkgo DescribeTable when the subject is a state machine.
   series hangs in `userAgent.reconnect()` after transport loss; the
   bounded watchdog in the island's `connection.js` (5s per attempt,
   full rebuild on timeout) is load-bearing. Do not "simplify" it away.
-- SDK decision 2026-09-19 (SUPERB integration plan, all claims
-  primary-source verified): KEEP sip.js 0.21.2; **JsSIP 3.13.8 is the
-  named fallback** (npm-published 2026-05, actively maintained — the
-  only maintained alternative stack; license nuance: npm says MIT,
-  GitHub license field NOASSERTION). Swap ONLY on: Chromium WebRTC
-  API breakage, a sip.js security advisory, or a needed capability —
-  never speculatively; a swap is a full island call-path rewrite plus
-  a stack browser-E2E re-run. All Go-side telephony REJECTED (sipgo
-  signaling proxy, pion B2BUA/SBC, FreeSWITCH ESL — no maintained Go
-  ESL client anyway): the browser terminates media regardless, so
-  server-side signaling only adds state to the hottest path. Research
-  table: docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md.
+- SDK decision: KEEP sip.js 0.21.2; **JsSIP 3.13.8 is the named
+  fallback** (the only maintained alternative). Swap ONLY on Chromium
+  WebRTC breakage, a sip.js security advisory, or a needed capability —
+  never speculatively; a swap is a full island call-path rewrite plus a
+  stack browser-E2E re-run. All Go-side telephony REJECTED (sipgo /
+  pion / ESL): the browser terminates media anyway, server-side
+  signaling only adds state to the hottest path.
 - Env config nests with `__`: `WEBPHONE_GATEWAY__MODE` →
   `gateway.mode`; single underscores stay literal (`WEBPHONE_DATA_DIR`
   → `data_dir`). Scalars via env; lists (`ice_servers`, `contacts`)
@@ -522,22 +435,14 @@ Ginkgo DescribeTable when the subject is a state machine.
   themselves in the page (deliberate) and a test keeps en/de in sync —
   add new keys to BOTH maps.
 - vulnix: `vulnix --closure <out-path>` is the ONLY scoped mode — plain
-  vulnix expands whatever it is given into the BUILD closure (bootstrap
-  toolchains, binutils, gcc: dozens of findings that never deploy), and
-  per my 2026-09-19 verification even passing `$(nix-store -qR <out>)`
-  paths does NOT scope it; `nix run .#vulnix` wraps the correct call.
-  vulnix also range-matches distro-patched versions: against
-  glibc-2.42-84 it prints 8 CVEs (2026-5450, 2025-15281, 2026-4046,
-  2026-4437, 2026-5928, 2026-5435, 2026-6238, 2026-4438), and ALL EIGHT
-  appear verbatim in the locked tree's glibc `2.42-master.patch`
-  (verified 2026-09-19 by grepping the patch — NVD ranges cannot see
-  patch suffixes; future rescans: grep the flagged CVE ids against the
-  LOCKED rev's `nix eval github:NixOS/nixpkgs/<rev>#glibc.patches`
-  before believing a finding; re-run clean 2026-09-20 — all 8 patched
-  at rev `20b1ddd`). Runtime
-  closure (8 derivations) carries zero real advisories (re-verified
-  2026-09-20 with `--closure`; the exit-nonzero-on-findings shape is
-  expected noise for this class).
+  vulnix expands its input into the BUILD closure (bootstrap toolchains:
+  dozens of findings that never deploy); `nix run .#vulnix` wraps the
+  correct call. vulnix range-matches distro-patched versions: grep the
+  flagged CVE ids against the LOCKED rev's glibc patches
+  (`nix eval github:NixOS/nixpkgs/<rev>#glibc.patches`) before believing
+  a finding (all 8 glibc findings of 2026-09-19/20 were patch-covered).
+  The exit-nonzero-on-findings shape is expected noise; the runtime
+  closure itself carried zero real advisories at last scan.
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony
@@ -565,41 +470,35 @@ Ginkgo DescribeTable when the subject is a state machine.
   `/partials/nav` — nav labels switch language without a full reload.
   `/partials/nav` renders labels anonymously (no badges) and
   signed-in with fresh badge caches.
-- UI redesign invariants (2026-09-20): app.css is a token system — the
+- UI redesign invariants: app.css is a token system — the
   `:root`/dark token blocks are MIRRORED between app.css and
   island/style.css; change both or the island drifts. `.sr-only` is
-  OWNED by app.css (templ-components' Base emits Tailwind utility
-  classes, but no Tailwind CSS loads, so `sr-only focus:not-sr-only`
-  only works because app.css defines both). Avatars are
-  `avatarFor`/`avatarHue` (views/helpers.go): country signum for
-  numbers ("+1", "+4", "0"), word initials for names ("AK"), "?" for
-  blanks — TrimSpace first, the tests caught the whitespace-only
-  escape; hue is deterministic 0-359. Helpers ship WITH tests in the
-  same commit: the untested first cut of `avatarFor` shipped a real
-  bug. Direction chips: history `cdrDirGlyph`/`cdrDirLabel` and fax
-  `faxDirGlyph`/`faxDirLabel` render "↓"/"↑" as aria-hidden chips with
-  a sibling `role="img"` aria-label; loopback has no phone API so
-  history rows never render locally — chips are pinned by tests, not
-  screenshots. SSE payloads must keep the greppable row classes
-  (`wp-thread-row`, `wp-bubble`, `wp-fax-row` —
+  OWNED by app.css (Tailwind utilities are emitted by templ-components
+  but no Tailwind CSS loads). Avatars are `avatarFor`/`avatarHue`
+  (views/helpers.go): country signum for numbers, word initials for
+  names, "?" for blanks — TrimSpace first; hue deterministic 0-359.
+  Helpers ship WITH tests in the same commit (the untested first cut
+  of `avatarFor` shipped a real bug). Direction chips: history
+  `cdrDirGlyph`/`cdrDirLabel` and fax `faxDirGlyph`/`faxDirLabel`
+  render aria-hidden glyphs + `role="img"` labels; loopback has no
+  phone API so history rows never render locally — chips are pinned by
+  tests, not screenshots. SSE payloads must keep the greppable row
+  classes (`wp-thread-row`, `wp-bubble`, `wp-fax-row` —
   `TestSSEPushesSwapSafeFragments` greps them and forbids wrappers).
-  The green dot in every screenshot is `#wp-sse-live` (session.js,
-  JS-created so the served DOM contract stays untouched) — intentional
-  live-feed indicator, not a bug. The contacts import row stays on one
-  line via `flex: 1 1 220px` on its file input (not `flex-basis:
-  100%`), and the island dial placeholder is the short
-  "Number or extension" / "Nummer oder Durchwahl".
-- Stack browser E2E flake mode (seen 2026-09-20): a SLOW run can die at
-  the transfer step — FreeSWITCH hangs the call with
-  RECOVERY_ON_TIMER_EXPIRE almost exactly 90s after DTLS-ready (ICE/media
-  inactivity ceiling; no explicit timer is set in the stack's config),
-  the island removes the dead call card, and the E2E's fresh
-  `.transfer-btn` click goes StaleElementReference. Cold chromium
-  caches plus boot-time transport reconnects on both browsers made the
-  first run miss the window; the immediate re-run with warm caches
-  passed the FULL flow in both call directions. Verdict rule:
-  registration + DTMF + ICE stats all green before a ~90s death = flake,
-  not an island regression — re-run once before digging.
+  The green dot in screenshots is `#wp-sse-live` (session.js,
+  JS-created so the served DOM contract stays untouched). Contacts
+  import row stays one line via `flex: 1 1 220px` on its file input;
+  the island dial placeholder is the short "Number or extension" /
+  "Nummer oder Durchwahl".
+
+- Stack browser E2E flake mode: a SLOW run can die at the transfer
+  step — FreeSWITCH hangs the call with RECOVERY_ON_TIMER_EXPIRE ~90s
+  after DTLS-ready (ICE/media inactivity ceiling), the island removes
+  the dead call card, the E2E's fresh `.transfer-btn` click goes
+  StaleElementReference. Verdict rule: registration + DTMF + ICE stats
+  green before a ~90s death = flake, not an island regression — re-run
+  once before digging.
+
 
 ## Release runbook (v2.x)
 
@@ -645,17 +544,15 @@ continuously — work in small, explicitly-committed units.
    `nix build .#checks.aarch64-linux.island-lint` ran green cross-arch
    (oxlint substitutes from cache.nixos.org), so the aarch64 gate is
    explicit cross-builds of the package + the checks you care about.
-9. **Closing sweep** (added 2026-09-20 after the §e lessons): any
-   command that boots a server for verification ends by PROVING the
-   process dead (`pgrep -f <pattern> || echo dead`) — and counts only
-   processes YOU booted; a concurrent session's server (e.g.
-   `/tmp/wpshoot/*`) is not yours to kill; CHANGELOG link
-   edits outside a train get a `nix run nixpkgs#lychee -- .` run (the
-   script covers post-push, not manual edits); the post-train tree
-   sees `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` once (gitleaks and
-   codespell are on-demand: `buildflow -s gitleaks`, `-s codespell`);
-   and the daemon's last commits are verified pushed
-   (`git ls-remote origin main` vs local HEAD).
+9. **Closing sweep**: any command that boots a server for verification
+   ends by PROVING the process dead (`pgrep -f <pattern> || echo
+   dead`) — only processes YOU booted; CHANGELOG link edits outside a
+   train get a `nix run nixpkgs#lychee -- .`; the post-train tree sees
+   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` once (gitleaks/codespell on
+   demand — or via `scripts/buildflow.sh`, which promotes them); the
+   daemon's last commits verified pushed (`git ls-remote origin main`
+   vs local HEAD).
+
 
 ## Concurrent sessions (observed 2026-09-20)
 
@@ -668,17 +565,15 @@ uncommitted files you did not author (e.g. `internal/web/views/helpers.go`
   a full-suite gate run may catch THEIR transient breakage — attribute
   failures before acting; and leave their booted dev servers running.
 
-## Buildflow health warning, itemized (2026-09-19)
+## Buildflow health warning (as of 2026-09-19)
 
-`buildflow` ends with "9 tools unavailable (health check failed)". All
-nine are noise for THIS repo: every one additionally reports "missing
-prerequisite files" and lands in "not applicable" — their steps never
-run (no package.json, no Python package layout): jest, knip, madge,
-publint, svelte-check, vitest, vue-tsc (JS/TS), c8/js-coverage,
-interrogate (Python). The one real prerequisite gap was go-licenses
-(license-scan preflight) — now in the devShell, so run buildflow inside
-`nix develop` or the preflight warns "go-licenses binary not found".
-markdown-lint/gitleaks/codespell only run in build mode `full`.
+"9 tools unavailable (health check failed)" is NOISE here: all nine are
+JS/TS or Python steps that land "not applicable" (no package.json, no
+Python package layout). The one real gap was go-licenses — now in the
+devShell, so run buildflow inside `nix develop` (or `scripts/
+buildflow.sh`). gitleaks/codespell/markdown-lint run in build mode
+`full` — `scripts/buildflow.sh` appends the first two by default.
+
 
 ## Conventions
 
