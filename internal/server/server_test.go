@@ -387,9 +387,9 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/island/app/calls.js":  "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
 		"/assets/island/app/panels.js": "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
 		"/assets/island/style.css":     "#wp-sse-live",
-		"/assets/vendor/sip.min.js":       "UserAgent",
-		"/config.js":                      "window.PBX_CONFIG",
-		"/favicon.svg":                    "<svg",
+		"/assets/vendor/sip.min.js":    "UserAgent",
+		"/config.js":                   "window.PBX_CONFIG",
+		"/favicon.svg":                 "<svg",
 	} {
 		resp, body := c.do(http.MethodGet, path, nil, "")
 		if resp.StatusCode != http.StatusOK {

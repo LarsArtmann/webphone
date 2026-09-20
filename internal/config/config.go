@@ -48,7 +48,7 @@ type Config struct {
 	// extensions or lookups by the signed-in extension silently miss.
 	Identities map[string]string `json:"identities" koanf:"identities"`
 	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
-	CSRF          CSRF                   `json:"csrf" koanf:"csrf"`
+	CSRF       CSRF              `json:"csrf" koanf:"csrf"`
 }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.

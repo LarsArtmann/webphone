@@ -66,6 +66,7 @@ Code wins when doc and code disagree.
 | Session store                  | 🟢 FULLY_FUNCTIONAL | In-memory, TTL + GC, HttpOnly cookie; lost on restart by design                                                                                       |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                                               |
 | CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config                  |
+| Own-number identity (DID)      | 🟢 FULLY_FUNCTIONAL | Config `identities` (ext → presented number): signed-in header, island whoami (session response), messages/fax "sending as"; display-only             |
 
 ## Live updates (SSE)
 

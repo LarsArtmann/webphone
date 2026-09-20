@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Own-number identity (config `identities`): map an extension to its
+  presented PSTN number (DID) and the UI finally answers "what is my
+  number" — the signed-in header shows `extension · DID`, the island's
+  whoami line gains the DID from the session response, and the messages
+  and fax composers show the sending identity. Display-only and
+  session-scoped (never rendered into the unauthenticated `/config.js`);
+  unmapped extensions keep today's extension-only display
+  (`TestIdentitySurfacesOwnNumber` pins all surfaces).
 - NixOS module: dedicated nginx locations for the probe triple
   (`/healthz`, `/livez`, `/startupz`) instead of riding `/` — a fleet
   health hub can be scraped from or fenced (`allow`/`deny` via
@@ -37,6 +45,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The dial alphabet now keeps letters end to end: the island's
+  dial/transfer/contact sanitize regex matches the server's
+  `sanitizeDialable` exactly (`[^\d+*#a-zA-Z]`), so alphanumeric SIP
+  user parts survive pasting and saving instead of being silently
+  stripped client-side (DECIDED 2026-09-20; both sides pinned —
+  served-asset grep + `TestParsePhoneSanitizesLikeTheIsland`).
 - The two htmx extensions now load as one bundle: `/htmx-ext.js` serves
   sse + idiomorph concatenated via `cqrshtmx.HTMXExtensionsHandler`
   (composite ETag, per-extension version comments) — one script tag and

@@ -74,7 +74,8 @@ default `/etc/webphone/config.json`), overridden by `WEBPHONE_*`
 environment variables. Env keys use `__` to nest:
 `WEBPHONE_GATEWAY__MODE=webhook` → `gateway.mode`; single underscores stay
 literal: `WEBPHONE_DATA_DIR` → `data_dir`. Scalars are env-friendly;
-nested lists (`ice_servers`, `contacts`) belong in the JSON file.
+nested lists (`ice_servers`, `contacts`) and maps (`identities`) belong
+in the JSON file.
 
 | Key                      | Default             | Meaning                                                                                                    |
 | ------------------------ | ------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -86,6 +87,7 @@ nested lists (`ice_servers`, `contacts`) belong in the JSON file.
 | `session_ttl`            | `24h`               | Tab-session lifetime (cookie + server store)                                                               |
 | `ice_servers`            | _empty_             | STUN/TURN entries handed to the island (`urls`, `username`, `credential`)                                  |
 | `contacts`               | _empty_             | Shared directory entries (`name`, `number`)                                                                |
+| `identities`             | _empty_             | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only |
 | `gateway.mode`           | `loopback`          | `loopback` or `webhook`                                                                                    |
 | `gateway.webhook_url`    | _empty_             | Provider base URL in webhook mode (required there)                                                         |
 | `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)** |
@@ -110,6 +112,7 @@ Example file:
   "session_ttl": "24h",
   "ice_servers": [{ "urls": ["stun:pbx.example.com:3478"] }],
   "contacts": [{ "name": "Support", "number": "2000" }],
+  "identities": { "1001": "+49 30 12345678" },
   "gateway": {
     "mode": "webhook",
     "webhook_url": "http://127.0.0.1:8090",

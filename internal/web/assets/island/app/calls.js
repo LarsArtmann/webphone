@@ -419,7 +419,10 @@ export async function placeCall(raw) {
   // everything that is not dialable before building the SIP URI.
   const target = raw.replace(/[^\d+*#a-zA-Z]/g, "");
   if (!target) {
-    log(`nothing dialable in "${raw}" — enter digits or letters, or + * #`, "warn");
+    log(
+      `nothing dialable in "${raw}" — enter digits or letters, or + * #`,
+      "warn",
+    );
     showDialError(t("nothingDialable"));
     return;
   }
