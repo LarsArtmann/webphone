@@ -19,8 +19,9 @@ the stack may import it or keep reverse-proxying — the module is
 additive. Stack-side switchover DONE 2026-09-18/19: the stack imports
 `nixosModules.default`, its nginx vhost proxies the service, its browser
 E2E is green, and its `webphone` input rides webphone `main` — as of
-2026-09-20 pinned to `f4ef9a5` (stack commit `6ad8e51`; pbx-artmann
-relocked on top and its prod toplevel pre-builds green).
+2026-09-20 pinned to the v2.4.0 release commit `a59f0d1` (stack commit
+`a273d3f`; pbx-artmann relocked on top at `5858430` and its prod
+toplevel pre-builds green).
 
 The cqrs-htmx `setup` bundle was rejected deliberately: it wires
 event-sourced usermgmt users, but this product's identity is the PBX
