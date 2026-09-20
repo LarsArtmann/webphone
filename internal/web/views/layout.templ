@@ -156,9 +156,18 @@ func bodyAttrs(props ShellProps) templ.Attributes {
 	}
 }
 
-// SignInHint fills the tab region while nobody is signed in.
+// SignInHint fills the tab region while nobody is signed in: a short
+// product story plus the one action that unlocks everything (signing in
+// on the phone panel to the left).
 templ SignInHint(lang Lang) {
-	<section class="wp-panel">
-		<p class="wp-empty">{ T(lang, "signin.hint") }</p>
+	<section class="wp-panel wp-welcome">
+		<h2 class="wp-welcome-title">{ T(lang, "welcome.title") }</h2>
+		<p class="wp-welcome-body">{ T(lang, "welcome.body") }</p>
+		<ul class="wp-welcome-points">
+			<li>{ T(lang, "welcome.point1") }</li>
+			<li>{ T(lang, "welcome.point2") }</li>
+			<li>{ T(lang, "welcome.point3") }</li>
+		</ul>
+		<p class="wp-welcome-hint">{ T(lang, "signin.hint") }</p>
 	</section>
 }

@@ -50,26 +50,32 @@ templ FaxList(jobs []domain.FaxJob, lang Lang) {
 }
 
 templ FaxRow(job domain.FaxJob, lang Lang) {
-	<article class={ "wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-		<span class="wp-fax-dir">
+	<article class={ "wp-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
+		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">
 			if job.Direction == domain.FaxInbound {
 				{ T(lang, "fax.in") }
 			} else {
 				{ T(lang, "fax.out") }
 			}
 		</span>
-		<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
-		<span class="wp-thread-when">{ job.CreatedAt.Local().Format("Jan 2, 15:04") }</span>
-		@FaxStatusBadge(job, lang)
-		if job.Pages > 0 {
-			<span class="wp-muted">{ fmtInt(job.Pages) + T(lang, "fax.pages") }</span>
-		}
-		if job.Error != "" {
-			<span class="wp-error" role="alert">{ job.Error }</span>
-		}
-		if job.DocumentPath != "" {
-			<a class="wp-link" href={ "/fax/" + job.ID.String() + "/document" } download>PDF</a>
-		}
+		<span class="wp-thread-text">
+			<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
+			<span class="wp-muted">
+				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
+				@FaxStatusBadge(job, lang)
+				if job.Pages > 0 {
+					{ " · " + fmtInt(job.Pages) + T(lang, "fax.pages") }
+				}
+				if job.Error != "" {
+					<span class="wp-error" role="alert">{ job.Error }</span>
+				}
+			</span>
+		</span>
+		<span class="wp-row-actions">
+			if job.DocumentPath != "" {
+				<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(lang, "fax.pdf") }</a>
+			}
+		</span>
 	</article>
 }
 

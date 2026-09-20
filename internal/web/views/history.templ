@@ -62,19 +62,22 @@ templ HistoryPanel(props HistoryPanelProps) {
 }
 
 templ CDRRow(cdr pbx.CDR, lang Lang) {
-	<article class="wp-fax-row">
-		<span class="wp-fax-dir">
+	<article class="wp-row">
+		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public") } aria-hidden="true">
 			if cdr.Context == "public" {
 				{ T(lang, "history.dirIn") }
 			} else {
 				{ T(lang, "history.dirOut") }
 			}
 		</span>
-		<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>
-		<span class="wp-thread-when">{ cdr.Start }</span>
-		<span class="wp-muted">{ durationLabel(cdr.Billsec) }</span>
+		<span class="wp-thread-text">
+			<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>
+			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
+		</span>
 		if dial := cdrDialTarget(cdr); dial != "" {
-			<button class="wp-primary" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
+			<span class="wp-row-actions">
+				<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
+			</span>
 		}
 	</article>
 }

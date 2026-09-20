@@ -64,24 +64,26 @@ templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 	// (thread/fax rows and transcript bubbles are static content — a
 	// re-created row there costs nothing; focus is covered by idiomorph's
 	// restoreFocus, which equally needs an id to restore to).
-	<article class={ "wp-fax-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
-		<span class="wp-fax-dir">{ T(lang, "vm.from") }</span>
-		<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
-		<span class="wp-thread-when">{ vmWhen(msg.Created) }</span>
-		<span class="wp-muted">{ fmtInt(msg.Seconds) }s</span>
-		if msg.CIDNumber != "" {
-			<button class="wp-primary" data-dial={ msg.CIDNumber }>{ T(lang, "contacts.call") }</button>
-		}
-		if msg.AudioURL != "" {
-			<audio class="wp-audio" controls preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
-		}
-		<button
-			class="wp-danger"
-			hx-post={ "/voicemail/delete?uuid=" + msg.UUID }
-			hx-target="#tab-content"
-			hx-swap="innerHTML"
-			hx-confirm={ T(lang, "vm.deleteConfirm") }
-		>{ T(lang, "vm.delete") }</button>
+	<article class={ "wp-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
+		<span class="wp-thread-text">
+			<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
+			<span class="wp-muted">{ vmWhen(msg.Created) } · { fmtInt(msg.Seconds) }s</span>
+		</span>
+		<span class="wp-row-actions">
+			if msg.CIDNumber != "" {
+				<button class="wp-mini" data-dial={ msg.CIDNumber }>{ T(lang, "contacts.call") }</button>
+			}
+			if msg.AudioURL != "" {
+				<audio class="wp-audio" controls preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
+			}
+			<button
+				class="wp-mini wp-danger"
+				hx-post={ "/voicemail/delete?uuid=" + msg.UUID }
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-confirm={ T(lang, "vm.deleteConfirm") }
+			>{ T(lang, "vm.delete") }</button>
+		</span>
 	</article>
 }
 
