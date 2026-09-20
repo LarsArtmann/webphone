@@ -194,6 +194,76 @@ def secure_csrf_cookie(headers: dict[str, str]) -> str:
     return ""
 
 
+def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
+    """Sessions survive a full process kill over the same data dir.
+
+    The SQLite-backed session store (T12) must make a service restart
+    invisible to a signed-in tab: login → SIGKILL the server → reboot on
+    the same data dir → the old session cookie still opens session-gated
+    surfaces. Before T12 this was the silent-401 failure class the
+    "Tab session ended" toast could only narrate.
+    """
+    c = Check()
+    base = f"http://127.0.0.1:{port}"
+    s = Smoke(base)
+    _, body, _ = s.request("GET", "/")
+    m = re.search(r'name="csrf-token" content="([^"]+)"', body.decode("utf-8", "replace"))
+    if m:
+        s.csrf = m.group(1)
+    c.ok("restart: login accepted", s.login(), "POST /api/session != 201")
+    cookie = "; ".join(f"{x.name}={x.value}" for x in s.jar)
+    c.ok("restart: session cookie captured", bool(cookie), "jar empty")
+
+    def boot() -> subprocess.Popen:
+        srv = subprocess.Popen(
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()
+                return srv
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("restart scenario: server did not become ready")
+
+    srv = boot()
+    try:
+        # Kill -9: no graceful shutdown, no cleanup — exactly the crash case.
+        srv.kill()
+        srv.wait(timeout=5)
+    finally:
+        pass
+    srv = boot()  # same port, same data dir, fresh process
+    try:
+        status, _, _ = s.request("GET", "/partials/messages")
+        c.ok(
+            "restart: session survives kill -9",
+            status == 200,
+            f"session-gated surface answered {status} (401 = persistence broken)",
+        )
+        # The fresh process must still fail an anonymous probe the same way.
+        status, _, _ = Smoke(base).request("GET", "/partials/messages")
+        c.ok(
+            "restart: anonymous still rejected",
+            status == 401,
+            f"got {status} (fail-closed posture regressed)",
+        )
+    finally:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+    print(
+        f"restart scenario: {c.passed} passed, {len(c.failures)} failed"
+    )
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -598,7 +668,9 @@ def main() -> int:
         else:
             print("server did not become ready", file=sys.stderr)
             return 2
-        return run_checks(Smoke(base), boot_configured)
+        rc = run_checks(Smoke(base), boot_configured)
+        rc = max(rc, restart_scenario(binary, workdir, port, env))
+        return rc
     finally:
         server.terminate()
         try:
