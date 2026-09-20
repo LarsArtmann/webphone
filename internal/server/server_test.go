@@ -354,8 +354,7 @@ func TestStaticAssetsServe(t *testing.T) {
 	c := newClient(t)
 	for path, wantContains := range map[string]string{
 		"/htmx.min.js":                    "htmx",
-		"/htmx-ext/sse.js":                "sse",
-		"/htmx-ext/idiomorph.js":          "Idiomorph",
+		"/htmx-ext.js":                    "Idiomorph",
 		"/assets/app.css":                 "--accent",
 		"/assets/shell.js":                "data-dial",
 		"/assets/island/app/main.js":      "loginForm",

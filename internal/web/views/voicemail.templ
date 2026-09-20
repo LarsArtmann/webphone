@@ -55,7 +55,16 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 }
 
 templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
-	<article class={ "wp-fax-row", templ.KV("wp-unread", !msg.Read) }>
+	// Stable ids are the idiomorph persistence contract: the panel re-fetch
+	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
+	// any element whose id exists in BOTH trees morphing it in place — so a
+	// row that moves (new voicemail lands on top) and an <audio> element
+	// mid-playback survive the swap instead of being re-created. This is
+	// the im-preserve audit's one stateful node across all morph surfaces
+	// (thread/fax rows and transcript bubbles are static content — a
+	// re-created row there costs nothing; focus is covered by idiomorph's
+	// restoreFocus, which equally needs an id to restore to).
+	<article class={ "wp-fax-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
 		<span class="wp-fax-dir">{ T(lang, "vm.from") }</span>
 		<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
 		<span class="wp-thread-when">{ vmWhen(msg.Created) }</span>
@@ -64,7 +73,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 			<button class="wp-primary" data-dial={ msg.CIDNumber }>{ T(lang, "contacts.call") }</button>
 		}
 		if msg.AudioURL != "" {
-			<audio class="wp-audio" controls preload="none" src={ msg.AudioURL }></audio>
+			<audio class="wp-audio" controls preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
 		}
 		<button
 			class="wp-danger"

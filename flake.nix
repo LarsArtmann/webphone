@@ -231,6 +231,67 @@
                   );
                 }
                 {
+                  # The typed csrf.* options must render into settings.csrf
+                  # and BEAT the nginx-derived defaults when set.
+                  name = "csrf-typed-override";
+                  path = pkgs.writeText "csrf-typed-override" (
+                    let
+                      typedEvaluated = lib.evalModules (moduleSet {
+                        csrf.trustedProxies = [ "10.9.8.7" ];
+                        csrf.trustedOrigins = [ "https://alt.example.org" ];
+                      });
+                      typedCfg = typedEvaluated.config.services.webphone;
+                    in
+                    if
+                      typedCfg.settings.csrf.trusted_proxies == [ "10.9.8.7" ]
+                      && typedCfg.settings.csrf.trusted_origins == [ "https://alt.example.org" ]
+                    then
+                      "typed csrf options render and override"
+                    else
+                      throw "webphone-module check: typed csrf options did not render into settings.csrf over the nginx defaults"
+                  );
+                }
+                {
+                  # backup.enable must render the timer (OnCalendar + Unit)
+                  # and the oneshot service.
+                  name = "backup-timer";
+                  path = pkgs.writeText "backup-timer" (
+                    let
+                      backupEvaluated = lib.evalModules (moduleSet {
+                        backup.enable = true;
+                      });
+                      timer = backupEvaluated.config.systemd.timers.webphone-backup;
+                      service = backupEvaluated.config.systemd.services.webphone-backup;
+                    in
+                    if
+                      timer.timerConfig.OnCalendar == "*-*-* 04:30:00"
+                      && timer.timerConfig.Unit == "webphone-backup.service"
+                      && timer.wantedBy == [ "timers.target" ]
+                      && service.serviceConfig.Type == "oneshot"
+                    then
+                      "backup timer + oneshot rendered"
+                    else
+                      throw "webphone-module check: backup.enable did not render the timer/oneshot pair"
+                  );
+                }
+                {
+                  # serverTiming.enable must set the env gate the middleware
+                  # reads; without it the environment key stays absent.
+                  name = "server-timing";
+                  path = pkgs.writeText "server-timing" (
+                    let
+                      timingEvaluated = lib.evalModules (moduleSet {
+                        serverTiming.enable = true;
+                      });
+                      timingUnit = timingEvaluated.config.systemd.services.webphone.environment;
+                    in
+                    if timingUnit ? WEBPHONE_DEBUG_TIMING && timingUnit.WEBPHONE_DEBUG_TIMING == "1" then
+                      "server-timing env gate rendered"
+                    else
+                      throw "webphone-module check: serverTiming.enable did not set WEBPHONE_DEBUG_TIMING"
+                  );
+                }
+                {
                   name = "hsts-opt-in";
                   path = pkgs.writeText "hsts-opt-in" (
                     let
@@ -246,6 +307,71 @@
                   );
                 }
               ];
+
+            # Backup-timer VM test (fax-feed-test style, named after the
+            # consuming stack's tests/fax-feed.nix): boot the REAL service
+            # with backup.enable, run the oneshot, and assert the online
+            # snapshot lands under destDir while the service keeps serving —
+            # the production behaviors are the sqlite .backup consistency
+            # and the no-restart claim, not just file existence.
+            # kvm-gated like the stack's VM tests: `nix flake check` skips
+            # it (with a warning) on machines without KVM instead of
+            # degrading to multi-minute TCG boots.
+            webphone-backup = pkgs.testers.runNixOSTest {
+              name = "webphone-backup";
+
+              requiredFeatures.kvm = true;
+
+              nodes.machine =
+                { pkgs, ... }:
+                {
+                  imports = [ ./package/nixos-module.nix ];
+                  services.webphone = {
+                    enable = true;
+                    package = self'.packages.webphone;
+                    backup.enable = true;
+                  };
+                  environment.systemPackages = [ pkgs.sqlite ];
+                  system.stateVersion = "26.05";
+                };
+
+              testScript = ''
+                machine.wait_for_unit("webphone.service")
+                machine.wait_for_open_port(8080)
+
+                # Deterministic run: start the oneshot directly (the timer
+                # exists too, but the test asserts outcomes, not scheduler
+                # timing — same posture as the stack's fax-feed test).
+                machine.succeed("systemctl start webphone-backup.service")
+
+                # The snapshot pair lands under destDir.
+                machine.wait_until_succeeds(
+                    "test -f /var/lib/webphone-backup/webphone.db",
+                    timeout=30,
+                )
+                machine.succeed("test -d /var/lib/webphone-backup/files")
+
+                # It is a consistent database, not a torn copy: sqlite's
+                # .backup API ran to completion.
+                machine.succeed(
+                    "sqlite3 /var/lib/webphone-backup/webphone.db 'pragma integrity_check' | grep -q '^ok$'"
+                )
+
+                # The timer is wired to the oneshot on the default calendar.
+                machine.succeed(
+                    "systemctl show webphone-backup.timer -p OnCalendar | grep -q '04:30:00'"
+                )
+                machine.succeed(
+                    "systemctl show webphone-backup.timer -p Unit | grep -q 'webphone-backup.service'"
+                )
+
+                # Online claim: the phone service never restarted for the
+                # backup (uptime predates the oneshot run).
+                machine.succeed(
+                    "systemctl show webphone.service -p NRestarts | grep -q 'NRestarts=0'"
+                )
+              '';
+            };
 
             statix =
               pkgs.runCommand "statix-check"

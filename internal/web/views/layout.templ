@@ -133,15 +133,15 @@ templ NavLinks(props ShellProps) {
 
 // headExtras loads htmx deferred — AFTER the htmx-config meta, so htmx
 // sees it at startup and skips its CSP-hostile inline indicator styles —
-// then the SSE extension, the island stylesheet (after the Tailwind build
-// so its element rules win), and the tiny shell script that tracks the
-// active nav item across partial swaps.
+// then the SSE + idiomorph extension bundle in ONE request
+// (cqrshtmx.HTMXExtensionsHandler behind /htmx-ext.js), the island
+// stylesheet (after the Tailwind build so its element rules win), and the
+// tiny shell script that tracks the active nav item across partial swaps.
 templ headExtras(csrfToken string) {
 	<meta name="csrf-token" content={ csrfToken }></meta>
 	<meta name="htmx-config" content='{"includeIndicatorStyles":false}'></meta>
 	<script src="/htmx.min.js" defer></script>
-	<script src="/htmx-ext/sse.js" defer></script>
-	<script src="/htmx-ext/idiomorph.js" defer></script>
+	<script src="/htmx-ext.js" defer></script>
 	<link rel="stylesheet" href="/assets/island/style.css"></link>
 	<script src="/assets/shell.js" defer></script>
 }

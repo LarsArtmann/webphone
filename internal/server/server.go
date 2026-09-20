@@ -203,8 +203,10 @@ func New(deps Deps) http.Handler {
 
 	open := http.NewServeMux()
 	open.Handle("/htmx.min.js", cqrshtmx.HTMXScriptHandler())
-	open.Handle("/htmx-ext/sse.js", cqrshtmx.HTMXExtensionHandler("sse"))
-	open.Handle("/htmx-ext/idiomorph.js", cqrshtmx.HTMXExtensionHandler(cqrshtmx.HTMXExtIdiomorph))
+	// One request serves both extensions (cqrshtmx.HTMXExtensionsHandler
+	// concatenates sse + idiomorph with per-extension version comments and a
+	// composite ETag) — the page loads exactly one script tag instead of two.
+	open.Handle("/htmx-ext.js", cqrshtmx.HTMXExtensionsHandler(cqrshtmx.HTMXExtSSE, cqrshtmx.HTMXExtIdiomorph))
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
@@ -253,8 +255,7 @@ func New(deps Deps) http.Handler {
 	root := http.NewServeMux()
 	root.Handle("/", h.deps.Sessions.Attach(csrf(protected)))
 	root.Handle("/htmx.min.js", open)
-	root.Handle("/htmx-ext/sse.js", open)
-	root.Handle("/htmx-ext/idiomorph.js", open)
+	root.Handle("/htmx-ext.js", open)
 	root.Handle("/assets/", open)
 	root.Handle("/config.js", open)
 	root.Handle("/events", open)
