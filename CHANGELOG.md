@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- cqrs-htmx v4.11.0 (from v4.9.0, with the idiomorph adoption): the one
+  wire change is the SSE stream — `/events` now opens with the
+  library's `retry:` reconnect hint before the `connected` frame
+  (`TestSSEStreamCarriesConnectedThenEvents` pins it; the htmx sse
+  extension consumes it). MD1's bump-trigger obligations closed
+  2026-09-20: the hub fan-out benchmark re-ran clean (baseline doc
+  updated) and the stack browser E2E passed on the bumped tree.
 - The dial alphabet now keeps letters end to end: the island's
   dial/transfer/contact sanitize regex matches the server's
   `sanitizeDialable` exactly (`[^\d+*#a-zA-Z]`), so alphanumeric SIP

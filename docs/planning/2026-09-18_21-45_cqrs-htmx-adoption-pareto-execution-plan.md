@@ -181,12 +181,12 @@ Sorted by importance/impact/effort/customer-value (phase order = priority order)
 | ~~M51~~ | ~~Document `sync/` multi-tab module N.A. verdict (per-tab SIP UA is by design)~~ done at `062445c`                                                                          | ~~10~~ | ~~39~~ | ~~Low~~ | ~~L~~ |
 | ~~M52~~ | ~~Document `DecodePagination` N.A. verdict (cursor `older=` semantics differ)~~ done at `062445c`                                                                           | ~~10~~ | ~~40~~ | ~~Low~~ | ~~L~~ |
 | ~~M53~~ | ~~Hub fan-out benchmark (N extensions × M subscribers) + baseline numbers recorded~~ done at `82efa2c`                                                                      | ~~30~~ | ~~41~~ | ~~Low~~ | ~~L~~ |
-| M54     | Badge push from `unreadCache` invalidation points (gated on M30 verdict)                                                                                                    | 15     | 42     | Med     | M     |
+| ~~M54~~ | ~~Badge push from `unreadCache` invalidation points (gated on M30 verdict)~~ PARKED with the spike (`docs/reviews/2026-09-18_oob-badge-spike-verdict.md` — adoption criteria live there; confirmed 2026-09-20)                                                                                                    | ~~15~~     | ~~42~~     | ~~Med~~     | ~~M~~     |
 | ~~M55~~ | ~~Document hx-boost non-adoption (island tab-swap is deliberate)~~ done at `062445c`                                                                                        | ~~10~~ | ~~43~~ | ~~Low~~ | ~~L~~ |
 | ~~M56~~ | ~~Log-formatter decision: `DefaultLogFormatter` vs `JSONLogFormatter` for the stack's sink~~ done at `062445c`                                                              | ~~12~~ | ~~44~~ | ~~Low~~ | ~~L~~ |
 | ~~M57~~ | ~~Readiness-body contract note for the stack's probes (gated on open question 2)~~ done at `062445c`, `6015051`                                                             | ~~10~~ | ~~45~~ | ~~Low~~ | ~~M~~ |
 | ~~M58~~ | ~~Close-out review notes: `notify.go`/`ack.go` applicability (symbol map 100%)~~ done at `062445c`                                                                          | ~~12~~ | ~~46~~ | ~~Low~~ | ~~L~~ |
-| M59     | Cross-link deep-dive ↔ structural-health HTML report (sibling audit hygiene)                                                                                                | 10     | 47     | Low     | L     |
+| ~~M59~~ | ~~Cross-link deep-dive ↔ structural-health HTML report (sibling audit hygiene)~~ closed NOT-DO 2026-09-19 (both reports live in-tree under `docs/`; a cross-link adds nothing)                                                                                                | ~~10~~     | ~~47~~     | ~~Low~~     | ~~L~~     |
 | ~~M60~~ | ~~If XFF trusted (open question 1 = yes): ClientIP-trust note upstream in httputil docs~~ done at `6015051` (recorded in ROADMAP; executes only if XFF is proven sanitized) | ~~12~~ | ~~48~~ | ~~Low~~ | ~~L~~ |
 | ~~M61~~ | ~~Post-adoption: re-diff cqrs-htmx master for new middleware worth adopting~~ done at `82efa2c` (MD1: retry hint arrives with the next root tag)                            | ~~12~~ | ~~49~~ | ~~Low~~ | ~~L~~ |
 | ~~M62~~ | ~~Decision record: `/healthz` exposure (GET-open vs session-gated; detail leakage review)~~ done at `bbd74a1`, `2f6ffee`                                                    | ~~10~~ | ~~50~~ | ~~Low~~ | ~~M~~ |
@@ -284,12 +284,12 @@ Sorted by the same priority order (phases P0→P7). "From" = medium task.
 | DP1 | Document DecodePagination N.A. verdict (cursor semantics)                                                              | 10   | M52  | P7    |
 | HB1 | Hub fan-out benchmark run (N hubs × M subscribers)                                                                     | 12   | M53  | P7    |
 | HB2 | Record baseline numbers next to the audit / in docs                                                                    | 10   | M53  | P7    |
-| UB1 | unreadCache invalidation → badge push (ONLY if OO3 = adopt)                                                            | 12   | M54  | P7    |
+| ~~UB1~~ | ~~unreadCache invalidation → badge push (ONLY if OO3 = adopt)~~ PARKED with the spike (see M54)                                                            | 12   | M54  | P7    |
 | XB1 | hx-boost non-adoption note in AGENTS.md conventions                                                                    | 10   | M55  | P7    |
 | LF1 | Formatter decision: Default vs JSONLogFormatter (stack sink format)                                                    | 10   | M56  | P7    |
 | RC1 | Readiness-body contract note (pending open question 2)                                                                 | 10   | M57  | P7    |
 | NA1 | Close-out notes: notify/ack applicability (symbol map → 100%)                                                          | 12   | M58  | P7    |
-| XL1 | Cross-link deep-dive ↔ structural-health report                                                                        | 10   | M59  | P7    |
+| ~~XL1~~ | ~~Cross-link deep-dive ↔ structural-health report~~ NOT-DO 2026-09-19 (see M59)                                                                        | 10   | M59  | P7    |
 | CT1 | Upstream ClientIP-trust doc note (ONLY if open question 1 = sanitized)                                                 | 12   | M60  | P7    |
 | MD1 | Re-diff cqrs-htmx master vs v4.9.0 for newly shipped middleware                                                        | 12   | M61  | P7    |
 | HZ1 | Decision record: /healthz exposure + detail leakage review                                                             | 10   | M62  | P7    |

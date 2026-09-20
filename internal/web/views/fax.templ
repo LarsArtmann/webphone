@@ -63,6 +63,7 @@ templ FaxRow(job domain.FaxJob, lang Lang) {
 			<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
 			<span class="wp-muted">
 				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
+				{ " " }
 				@FaxStatusBadge(job, lang)
 				if job.Pages > 0 {
 					{ " · " + fmtInt(job.Pages) + T(lang, "fax.pages") }
