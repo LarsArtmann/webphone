@@ -84,9 +84,23 @@ test("a successful login still toasts nothing (feedback stays quiet)", async () 
   assert.equal(lastToast(), null);
 });
 
+test("the SSE pill is a labeled, localized state indicator (not aria-hidden)", () => {
+  session.initSseLiveIndicator();
+  const pill = doc.body.children.find((el) => el.id === "wp-sse-live");
+  assert.ok(pill, "pill must exist");
+  assert.equal(pill.getAttribute("aria-hidden"), null, "must not be hidden from AT");
+  assert.equal(pill.getAttribute("role"), "img");
+  assert.equal(pill.getAttribute("aria-label"), t("ssePillDown"));
+  doc.dispatch("htmx:sseOpen", {});
+  assert.equal(pill.getAttribute("aria-label"), t("ssePillLive"));
+  doc.dispatch("htmx:sseError", {});
+  assert.equal(pill.getAttribute("aria-label"), t("ssePillDown"));
+});
+
 test("the SSE feed toasts once after three consecutive failures", () => {
   resetToasts();
   session.initSseLiveIndicator();
+  doc.dispatch("htmx:sseOpen", {}); // deterministic counter start
 
   doc.dispatch("htmx:sseError", {});
   doc.dispatch("htmx:sseError", {});

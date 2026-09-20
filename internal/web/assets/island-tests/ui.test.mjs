@@ -86,3 +86,18 @@ test("announce leaves the live-region host attributes untouched", () => {
   assert.equal(toasts.getAttribute("aria-live"), "polite");
   assert.equal(toasts.getAttribute("aria-hidden"), null);
 });
+
+test("identical consecutive toasts are deduped, different ones are not", () => {
+  const toasts = resetToasts();
+  ui.announce("same", "error");
+  ui.announce("same", "error");
+  assert.equal(toasts.children.length, 1, "identical repeat must not stack");
+  ui.announce("different", "ok");
+  assert.equal(toasts.children.length, 2, "a different message passes");
+  ui.announce("same", "error");
+  assert.equal(
+    toasts.children.length,
+    3,
+    "dedup only compares against the LAST toast",
+  );
+});

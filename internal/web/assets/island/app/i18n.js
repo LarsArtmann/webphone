@@ -99,6 +99,8 @@ export const I18N = {
       "Could not reach the server for tab sign-in — calls keep working.",
     sseDropped:
       "Live tab updates lost — check the connection; calls keep working.",
+    ssePillLive: "Live tab updates: connected",
+    ssePillDown: "Live tab updates: not connected",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -196,6 +198,8 @@ export const I18N = {
       "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
     sseDropped:
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
+    ssePillLive: "Live-Aktualisierungen: verbunden",
+    ssePillDown: "Live-Aktualisierungen: nicht verbunden",
   },
 };
 

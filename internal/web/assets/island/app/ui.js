@@ -77,6 +77,12 @@ export function toastKindFor(kind) {
 }
 
 export function announce(message, kind = "info") {
+  // Identical-consecutive dedup: a retry loop (or a repeated identical
+  // failure) must not stack look-alike toasts; a different message or an
+  // expired first toast passes freely.
+  const host = els.toasts;
+  const last = host.children[host.children.length - 1];
+  if (last && last.textContent === message) return;
   const toast = document.createElement("div");
   toast.className = `toast toast-${kind}`;
   toast.textContent = message;
@@ -96,7 +102,6 @@ export function announce(message, kind = "info") {
   while (els.toasts.children.length > TOAST_MAX) els.toasts.firstChild.remove();
   setTimeout(dismiss, TOAST_MS[kind] || TOAST_MS.info);
 }
-
 // Inline dial-form error: the failure lands where the user is looking.
 export function showDialError(message) {
   els.dialError.textContent = message;

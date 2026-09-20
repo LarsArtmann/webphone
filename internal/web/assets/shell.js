@@ -27,6 +27,15 @@
   var shellToast = function (message, kind) {
     var host = document.getElementById("toasts");
     if (!host) return;
+    // Identical-consecutive dedup (island announce() parity): a repeated
+    // identical failure must not stack look-alike toasts. The 8s error
+    // throttle above collapses storms; this covers non-throttled paths.
+    if (
+      host.children.length > 0 &&
+      host.children[host.children.length - 1].textContent === message
+    ) {
+      return;
+    }
     var toast = document.createElement("div");
     toast.className = "toast toast-" + kind;
     toast.textContent = message;

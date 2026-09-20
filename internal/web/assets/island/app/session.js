@@ -140,8 +140,14 @@ export function initSseLiveIndicator() {
   if (document.querySelector("#wp-sse-live")) return;
   const pill = document.createElement("div");
   pill.id = "wp-sse-live";
-  pill.title = "live tab updates";
-  pill.setAttribute("aria-hidden", "true");
+  // The pill is real state, not decoration: screen readers get a labeled
+  // indicator (role="img" + localized label) that flips with the feed,
+  // and the label — not the toast — is the quiet always-present surface.
+  pill.setAttribute("role", "img");
+  const setPillLabel = (live) =>
+    pill.setAttribute("aria-label", t(live ? "ssePillLive" : "ssePillDown"));
+  setPillLabel(false);
+  pill.title = t("ssePillDown");
   // Consecutive SSE failures before the user is told once: the feed
   // reconnects on its own, so one flap must not toast — but a genuinely
   // dead feed (server down, network gone) deserves visibility without
@@ -151,13 +157,19 @@ export function initSseLiveIndicator() {
   const SSE_FAILURES_BEFORE_TOAST = 3;
   document.addEventListener("htmx:sseOpen", () => {
     pill.dataset.live = "1";
+    setPillLabel(true);
+    pill.title = t("ssePillLive");
     sseFailures = 0;
   });
   document.addEventListener("htmx:sseClose", () => {
     delete pill.dataset.live;
+    setPillLabel(false);
+    pill.title = t("ssePillDown");
   });
   document.addEventListener("htmx:sseError", () => {
     delete pill.dataset.live;
+    setPillLabel(false);
+    pill.title = t("ssePillDown");
     sseFailures += 1;
     if (sseFailures === SSE_FAILURES_BEFORE_TOAST) {
       announce(t("sseDropped"), "warn");
