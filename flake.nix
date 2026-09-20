@@ -180,6 +180,85 @@
             webphone = self'.packages.webphone;
             format = config.treefmt.build.check self;
 
+            # Fixture smoke of the vulnix triage CLI — the 2026-09-20
+            # regression class (grep-in-pipeline under set -e inverted every
+            # verdict) would only have surfaced at the next train. Runs the
+            # SAME derivation the `.#vulnix` app calls, against fixtures.
+            vulnix-triage =
+              let
+                script = pkgs.writeShellApplication {
+                  name = "webphone-vulnix-triage-check";
+                  runtimeInputs = [
+                    pkgs.coreutils
+                    pkgs.gnugrep
+                    self'.packages.webphone-vulnix-triage
+                  ];
+                  text = ''
+                    tmp=$(mktemp -d)
+                    trap 'rm -rf "$tmp"' EXIT
+                    printf '%s\n' "upstream fix mentioning CVE-2026-5450" > "$tmp/patched.patch"
+                    printf '%s\n' "$tmp/patched.patch" > "$tmp/patches.lst"
+
+                    # 1. glibc finding, patch present → triaged, exit 0.
+                    printf '%s\n' "/nix/store/x-glibc-2.42.drv" "CVE-2026-5450" > "$tmp/scan1"
+                    if out=$(webphone-vulnix-triage "$tmp/scan1" "$tmp/patches.lst" testrev); then
+                      grep -q "distro-patched" <<< "$out" || {
+                        echo "case1 verdict wrong: $out" >&2
+                        exit 1
+                      }
+                    else
+                      echo "case1: patched finding must exit 0" >&2
+                      exit 1
+                    fi
+
+                    # 2. glibc finding, NO patch → REAL finding, exit 1.
+                    printf '%s\n' "/nix/store/x-glibc-2.42.drv" "CVE-2099-0001" > "$tmp/scan2"
+                    if out=$(webphone-vulnix-triage "$tmp/scan2" "$tmp/patches.lst" testrev 2>&1); then
+                      echo "case2: real finding must exit 1: $out" >&2
+                      exit 1
+                    elif ! grep -q "REAL finding" <<< "$out"; then
+                      echo "case2 verdict wrong: $out" >&2
+                      exit 1
+                    fi
+
+                    # 3. unparseable output → parse-failure verdict, exit 1.
+                    printf '%s\n' "vulnix exploded" > "$tmp/scan3"
+                    if out=$(webphone-vulnix-triage "$tmp/scan3" "$tmp/patches.lst" testrev 2>&1); then
+                      echo "case3: garbage must exit 1: $out" >&2
+                      exit 1
+                    elif ! grep -q "parseable findings" <<< "$out"; then
+                      echo "case3 verdict wrong: $out" >&2
+                      exit 1
+                    fi
+
+                    # 4. non-glibc derivation flagged → no automated triage, exit 1.
+                    printf '%s\n' "/nix/store/x-openssl-3.5.1.drv" "CVE-2026-1111" > "$tmp/scan4"
+                    if out=$(webphone-vulnix-triage "$tmp/scan4" "$tmp/patches.lst" testrev 2>&1); then
+                      echo "case4: non-glibc must exit 1: $out" >&2
+                      exit 1
+                    elif ! grep -q "non-glibc derivations flagged" <<< "$out"; then
+                      echo "case4 verdict wrong: $out" >&2
+                      exit 1
+                    fi
+
+                    # 5. mixed patched + real: the loop must reach BOTH
+                    # verdicts and exit 1 (the original bug aborted mid-loop).
+                    printf '%s\n' "/nix/store/x-glibc-2.42.drv" "CVE-2026-5450" "CVE-2099-0002" > "$tmp/scan5"
+                    if out=$(webphone-vulnix-triage "$tmp/scan5" "$tmp/patches.lst" testrev 2>&1); then
+                      echo "case5: mixed findings must exit 1: $out" >&2
+                      exit 1
+                    elif ! grep -q "distro-patched" <<< "$out" || ! grep -q "REAL finding" <<< "$out"; then
+                      echo "case5: loop did not reach both verdicts: $out" >&2
+                      exit 1
+                    fi
+
+                    echo "vulnix-triage: all 5 fixture cases green"
+                  '';
+                };
+              in
+              pkgs.runCommand "webphone-vulnix-triage-check" { }
+                "${lib.getExe script} | tee $out";
+
             # Evaluate the NixOS module with a minimal config and build
             # the artifacts it would generate — catches option/syntax
             # breakage without a full NixOS evaluation.
@@ -557,7 +636,8 @@
                   pkgs.nix
                   pkgs.vulnix
                   pkgs.jq
-                  pkgs.gnugrep
+                  pkgs.coreutils
+                  self'.packages.webphone-vulnix-triage
                 ];
                 text = ''
                   out=$(nix build --no-link --print-out-paths .#webphone)
@@ -571,41 +651,16 @@
                     exit 0
                   }
                   echo "$scan"
-                  flagged_drvs=$(echo "$scan" | grep -oE '/nix/store/[^ ]+\.drv' | sort -u || true)
-                  non_glibc=$(echo "$flagged_drvs" | grep -v -- '-glibc-' || true)
-                  cves=$(echo "$scan" | grep -oE 'CVE-[0-9]{4}-[0-9]+' | sort -u || true)
-                  if [ -z "$flagged_drvs" ] || [ -z "$cves" ]; then
-                    echo "webphone-vulnix: vulnix failed without parseable findings — inspect the output above" >&2
-                    exit 1
-                  fi
-                  if [ -n "$non_glibc" ]; then
-                    echo "webphone-vulnix: non-glibc derivations flagged (no automated triage):" >&2
-                    echo "$non_glibc" >&2
-                    exit 1
-                  fi
                   rev=$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)
                   patches=$(nix eval "github:NixOS/nixpkgs/$rev#glibc.patches" --json | jq -r '.[]')
-                  untriaged=0
-                  for cve in $cves; do
-                    # NB: the loop runs under writeShellApplication's set -e;
-                    # a non-matching grep would abort the subshell mid-loop,
-                    # so every grep is || true and hits are collected instead
-                    # of piped into grep -q (pipefail + SIGPIPE trap).
-                    hit=$(echo "$patches" | while read -r p; do
-                      grep -l "$cve" "$p" 2>/dev/null || true
-                    done | head -1)
-                    if [ -n "$hit" ]; then
-                      echo "webphone-vulnix: $cve — distro-patched in locked nixpkgs $rev (range-match noise)"
-                    else
-                      echo "webphone-vulnix: $cve — NOT found in the locked glibc patches: REAL finding, act on it" >&2
-                      untriaged=1
-                    fi
-                  done
-                  if [ "$untriaged" = 0 ]; then
-                    echo "webphone-vulnix: all findings triaged as distro-patched — zero real advisories"
-                    exit 0
-                  fi
-                  exit 1
+                  scan_file=$(mktemp)
+                  patches_file=$(mktemp)
+                  trap 'rm -f "$scan_file" "$patches_file"' EXIT
+                  printf '%s\n' "$scan" > "$scan_file"
+                  printf '%s\n' "$patches" > "$patches_file"
+                  # Verdict logic lives in the shared CLI so the fixture
+                  # check (checks.vulnix-triage) exercises the same code.
+                  webphone-vulnix-triage "$scan_file" "$patches_file" "$rev"
                 '';
               };
             in
