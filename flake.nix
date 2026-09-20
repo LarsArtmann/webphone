@@ -361,7 +361,7 @@
                 # (systemctl show has no OnCalendar unit property — the
                 # rendered unit file is the truth here).
                 machine.succeed(
-                    "systemctl cat webphone-backup.timer | grep -q '^OnCalendar=\\*-*-\\* 04:30:00'"
+                    "systemctl cat webphone-backup.timer | grep -q '^OnCalendar=\\*-\\*-\\* 04:30:00'"
                 )
                 machine.succeed(
                     "systemctl cat webphone-backup.timer | grep -q '^Unit=webphone-backup.service$'"

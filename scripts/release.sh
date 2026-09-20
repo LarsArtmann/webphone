@@ -12,7 +12,8 @@
 # What this script does (runbook steps 2-8, fail-fast):
 #   clean tree + main + synced with origin, tag free, CHANGELOG section exists
 #   -> bump flake.nix webphoneVersion (package version AND /version ldflags)
-#   -> gates: buildflow (no result cache), go test, nix flake check, smoke
+#   -> gates: buildflow (no result cache), go test, nix flake check, smoke,
+#      vulnix (runtime-closure advisory scan, network)
 #   -> annotated tag, push main + tag, ls-remote verify
 #   -> lychee link check (after push so tag links resolve)
 #   -> stack: relock webphone input, commit, browser E2E + webphone VM test
@@ -91,6 +92,11 @@ run env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
 run env GOEXPERIMENT=jsonv2 go test -count=1 ./...
 run nix flake check
 run python3 scripts/webphone-smoke.py
+# Vulnix cadence (TODO row closed 2026-09-20): every train scans the
+# RUNTIME closure. Range-matched findings against patched nixpkgs versions
+# (the glibc class) trip this — triage against the locked tree's patch level
+# before shipping, as documented in AGENTS.md.
+run nix run .#vulnix
 
 step "5/9 tag + push + verify"
 if [ "$RESUME_TAG" = "1" ]; then
