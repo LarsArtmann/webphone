@@ -150,9 +150,9 @@ Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan
   Gates the flip from port-stripped peer-host keys
   (`remoteHostKey`) to `KeyExtractorFromClientIP`; standing since the
   2026-09-18 adoption (safe default shipped, flip rule documented).
-- Stack `webphone` input policy: pin tag refs (`?ref=v2.x`) with
-  explicit bumps vs track main (today: tracks main — the next
-  `nix flake update` silently moves the deployment input).
+- Stack `webphone` input policy: DECIDED 2026-09-20 — ride webphone
+  `main` with a per-train lock bump (rationale + revisit trigger in
+  AGENTS "Owner decisions"); no longer an owner call.
 - GitHub Release objects per tag (notes/visibility) vs tags +
   CHANGELOG only (v2.0.0 has a tag, no Release object).
 - Go module-path policy for v2+ tags: `/v2` suffix vs NOT-DO record

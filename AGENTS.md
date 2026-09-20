@@ -68,6 +68,33 @@ a second user database would be a split brain.
   EnvironmentFile under `/var/lib/telephony-secrets`) — contracts in
   the plan doc `docs/planning/2026-09-19_11-51_SUPERB-*`.
 
+## Owner decisions (2026-09-20)
+
+The four one-liners gating the 10:14 SUPERB pareto plan (T14), decided
+with rationale so they stop blocking work:
+
+- Stack `webphone` input policy: DECIDED — ride webphone `main` with a
+  per-train lock bump (runbook step 6), matching the g2 cadence
+  recommendation. Tag pins buy reproducibility at the cost of a manual
+  bump on every fix; revisit if a hotfix must ever ship inside an hour.
+- pbx-artmann input type: DECIDED — keep `path:` while all three repos
+  live on this host. The 2026-09-19 "burn" was an uncommitted stack
+  tree (now a documented relock precondition), not the input type.
+  Revisit when pbx-artmann leaves the host or gains a second consumer
+  (this supersedes the earlier github-input recommendation in the
+  15:37 SUPERB plan P8).
+- Sanitization side: DECIDED — the island keeps letters
+  (`[^\d+*#a-zA-Z]`), matching `sanitizeDialable`; shipped with the
+  served-asset pin in internal/server (the ids.go parity comment is
+  true again).
+- Own-number feed: DECIDED — static config map (`identities`) now; a
+  stack `/phone-api` identity endpoint remains the upgrade path
+  (blocked on the stack tree reconciliation). CDR-derive REJECTED on
+  evidence: the stack's phone-api reshapes FreeSWITCH `Master.csv`,
+  where outbound `caller_id_number` is dialplan-dependent (webphone's
+  fixtures show the extension `1001`, not the DID) and absent before
+  the first call.
+
 ## Commands
 
 ```console
@@ -386,7 +413,7 @@ every build; it is the local tripwire, not a replacement for the E2E.
 - Env config nests with `__`: `WEBPHONE_GATEWAY__MODE` →
   `gateway.mode`; single underscores stay literal (`WEBPHONE_DATA_DIR`
   → `data_dir`). Scalars via env; lists (`ice_servers`, `contacts`)
-  via the JSON file.
+  and the `identities` ext→DID map via the JSON file.
 - `buildflow -s nix-hash-fix --fix` computes the right vendorHash but
   never writes it here (buildflow itself warns). Documented deviation:
   placeholder hash → `nix build` → read `got:` → apply. Only when
