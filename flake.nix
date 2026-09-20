@@ -451,6 +451,13 @@
           # runtime closure — the build closure (bootstrap toolchains,
           # gcc, zlib) never deploys and drowns the signal. Networked by
           # nature, so it is an app, not a flake check.
+          #
+          # Triage built in (the documented manual procedure, automated):
+          # NVD range-matches distro-patched versions (every glibc CVE
+          # against 2.42-84), so a finding only counts when the CVE id is
+          # NOT present in the LOCKED nixpkgs rev's patch set for the
+          # flagged package. All-glibc + all-patched → exit 0 with a
+          # TRIAGED banner; anything else fails the train.
           apps.vulnix =
             let
               script = pkgs.writeShellApplication {
@@ -458,24 +465,49 @@
                 runtimeInputs = [
                   pkgs.nix
                   pkgs.vulnix
+                  pkgs.jq
+                  pkgs.gnugrep
                 ];
                 text = ''
                   out=$(nix build --no-link --print-out-paths .#webphone)
                   echo "webphone-vulnix: scanning the runtime closure of $out ($(nix-store -qR "$out" | wc -l) derivations)"
                   # --closure: runtime dependencies ONLY. Without it vulnix
                   # closes over BUILD inputs (bootstrap toolchains, gcc,
-                  # binutils) and drowns the signal. Caveat: NVD cannot see
-                  # distro patch suffixes, so range-matched advisories that
-                  # nixpkgs has already fixed may appear (e.g. glibc
-                  # CVE-2026-5450 printed against 2.42-84; the fix shipped
-                  # in 2.42-67). Verify each finding against the nixpkgs
-                  # patch level before acting on it.
-                  if vulnix --closure "$out"; then
+                  # binutils) and drowns the signal.
+                  scan=$(vulnix --closure "$out" 2>&1) && {
+                    echo "$scan"
                     echo "webphone-vulnix: no known advisories in the runtime closure"
-                  else
-                    echo "webphone-vulnix: findings above — triage each against the nixpkgs patched version" >&2
+                    exit 0
+                  }
+                  echo "$scan"
+                  flagged_drvs=$(echo "$scan" | grep -oE '/nix/store/[^ ]+\.drv' | sort -u)
+                  non_glibc=$(echo "$flagged_drvs" | grep -v -- '-glibc-' || true)
+                  cves=$(echo "$scan" | grep -oE 'CVE-[0-9]{4}-[0-9]+' | sort -u)
+                  if [ -z "$flagged_drvs" ] || [ -z "$cves" ]; then
+                    echo "webphone-vulnix: vulnix failed without parseable findings — inspect the output above" >&2
                     exit 1
                   fi
+                  if [ -n "$non_glibc" ]; then
+                    echo "webphone-vulnix: non-glibc derivations flagged (no automated triage):" >&2
+                    echo "$non_glibc" >&2
+                    exit 1
+                  fi
+                  rev=$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)
+                  patches=$(nix eval "github:NixOS/nixpkgs/$rev#glibc.patches" --json | jq -r '.[]')
+                  untriaged=0
+                  for cve in $cves; do
+                    if echo "$patches" | while read -r p; do grep -l "$cve" "$p" 2>/dev/null; done | grep -q .; then
+                      echo "webphone-vulnix: $cve — distro-patched in locked nixpkgs $rev (range-match noise)"
+                    else
+                      echo "webphone-vulnix: $cve — NOT found in the locked glibc patches: REAL finding, act on it" >&2
+                      untriaged=1
+                    fi
+                  done
+                  if [ "$untriaged" = 0 ]; then
+                    echo "webphone-vulnix: all findings triaged as distro-patched — zero real advisories"
+                    exit 0
+                  fi
+                  exit 1
                 '';
               };
             in

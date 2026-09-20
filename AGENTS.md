@@ -405,10 +405,13 @@ every build; it is the local tripwire, not a replacement for the E2E.
   2026-4437, 2026-5928, 2026-5435, 2026-6238, 2026-4438), and ALL EIGHT
   appear verbatim in the locked tree's glibc `2.42-master.patch`
   (verified 2026-09-19 by grepping the patch — NVD ranges cannot see
-  patch suffixes; future rescans: grep the flagged CVE ids in
-  `nix eval nixpkgs#glibc.patches` before believing a finding). Runtime
+  patch suffixes; future rescans: grep the flagged CVE ids against the
+  LOCKED rev's `nix eval github:NixOS/nixpkgs/<rev>#glibc.patches`
+  before believing a finding; re-run clean 2026-09-20 — all 8 patched
+  at rev `20b1ddd`). Runtime
   closure (8 derivations) carries zero real advisories (re-verified
-  2026-09-19 with `--closure`).
+  2026-09-20 with `--closure`; the exit-nonzero-on-findings shape is
+  expected noise for this class).
 - Formatting: treefmt (prettier) owns everything under
   `internal/web/assets/island/`; `.buildflow.yml` excludes the island
   so BuildFlow's oxfmt cannot fight prettier (same war the telephony
