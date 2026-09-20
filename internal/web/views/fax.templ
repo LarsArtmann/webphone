@@ -58,20 +58,8 @@ templ FaxRow(job domain.FaxJob, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract
 	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">
-			if job.Direction == domain.FaxInbound {
-				{ "↓" }
-			} else {
-				{ "↑" }
-			}
-		</span>
-		<span class="wp-thread-text" role="img" aria-label={
-			if job.Direction == domain.FaxInbound {
-				T(lang, "fax.in")
-			} else {
-				T(lang, "fax.out")
-			}
-		}>
+		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
+		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
 			<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
 			<span class="wp-muted">
 				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
@@ -90,6 +78,20 @@ templ FaxRow(job domain.FaxJob, lang Lang) {
 			}
 		</span>
 	</article>
+}
+
+func faxDirGlyph(job domain.FaxJob) string {
+	if job.Direction == domain.FaxInbound {
+		return "↓"
+	}
+	return "↑"
+}
+
+func faxDirLabel(job domain.FaxJob, lang Lang) string {
+	if job.Direction == domain.FaxInbound {
+		return T(lang, "fax.in")
+	}
+	return T(lang, "fax.out")
 }
 
 templ FaxStatusBadge(job domain.FaxJob, lang Lang) {
