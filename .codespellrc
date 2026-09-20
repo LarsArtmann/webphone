@@ -1,0 +1,7 @@
+# codespell (via buildflow): this repo deliberately ships German UI copy
+# (island i18n en/de) and German-language docs; the German words below
+# are correct, not misspellings. The technical terms are non-standard
+# but intended (SSE cancelability, nix "statics", "unparseable").
+[codespell]
+ignore-words-list = adresse,unter,oder,als,ot,alle,ist,sie,cancelability,statics,unparseable,refering,re-declares,re-declared
+skip = internal/web/assets/vendor/*,*.min.js,package-lock.json

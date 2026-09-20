@@ -2,13 +2,14 @@
 #
 # env: templ-components (errorpage) requires encoding/json/v2 until Go 1.27
 # ships it stable; without the experiment every Go step fails to build.
-# GOTOOLCHAIN: auto lets a BARE host run (ambient go 1.26.7 +
-# GOTOOLCHAIN=local from the global env) satisfy the go.mod 1.27.1 floor
-# by fetching the toolchain; inside the devShell the pinned go is
-# already >= the floor, so auto resolves locally and downloads nothing.
+# GOTOOLCHAIN is NOT set here on purpose: buildflow's preflight says the
+# caller's shell WINS over project-side env, and this host exports
+# GOTOOLCHAIN=local globally — a project-side `auto` would be a silent
+# no-op. Bare `buildflow` on such a host fails every Go step; use
+# `scripts/buildflow.sh` (self-healing wrapper) or `nix develop -c
+# buildflow`.
 env:
   GOEXPERIMENT: jsonv2
-  GOTOOLCHAIN: auto
 #
 # build_mode: local default is fast; `nix flake check` (go build + tests in
 # the sandbox + treefmt + statix + deadnix) remains the heavyweight gate.

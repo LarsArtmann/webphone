@@ -559,6 +559,25 @@
               '';
             };
 
+            # Backup/restore DRILL (plan T23, 2026-09-20): the VM test above
+            # proves the online snapshot; this proves the RESTORE — tar the
+            # data dir, reboot in a fresh location, pull a byte-identical
+            # attachment back out of the restored store. Loopback-only, so
+            # it runs in the sandbox (no KVM gate).
+            webphone-backup-drill =
+              pkgs.runCommand "webphone-backup-drill-check"
+                {
+                  nativeBuildInputs = [ pkgs.python3 ];
+                  meta.description =
+                    "end-to-end backup/restore drill over a live webphone instance";
+                  meta.timeout = 300;
+                }
+                ''
+                  export WP_BIN=${self'.packages.webphone}/bin/webphone
+                  python3 ${self}/scripts/webphone-backup-drill.py
+                  echo "drill passed" > $out
+                '';
+
             statix =
               pkgs.runCommand "statix-check"
                 {
