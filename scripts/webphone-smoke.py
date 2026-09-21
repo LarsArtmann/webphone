@@ -89,8 +89,10 @@ def ensure_go_toolchain(args: argparse.Namespace) -> None:
     if m and _version_tuple(m.group(1)) >= floor:
         return
     print(
-        "ambient go " + (m.group(1) if m else "unknown")
-        + " < floor " + _fmt(floor)
+        "ambient go "
+        + (m.group(1) if m else "unknown")
+        + " < floor "
+        + _fmt(floor)
         + "; re-executing via `nix develop -c` ...",
         flush=True,
     )
@@ -280,7 +282,9 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
     base = f"http://127.0.0.1:{port}"
     s = Smoke(base)
     _, body, _ = s.request("GET", "/")
-    m = re.search(r'name="csrf-token" content="([^"]+)"', body.decode("utf-8", "replace"))
+    m = re.search(
+        r'name="csrf-token" content="([^"]+)"', body.decode("utf-8", "replace")
+    )
     if m:
         s.csrf = m.group(1)
     c.ok("restart: login accepted", s.login(), "POST /api/session != 201")
@@ -329,9 +333,7 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
             srv.wait(timeout=5)
         except subprocess.TimeoutExpired:
             srv.kill()
-    print(
-        f"restart scenario: {c.passed} passed, {len(c.failures)} failed"
-    )
+    print(f"restart scenario: {c.passed} passed, {len(c.failures)} failed")
     for failure in c.failures:
         print(f"  FAILED: {failure}")
     return 1 if c.failures else 0

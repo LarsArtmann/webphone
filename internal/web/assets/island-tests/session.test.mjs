@@ -122,9 +122,5 @@ test("the SSE feed toasts once after three consecutive failures", () => {
   doc.dispatch("htmx:sseOpen", {});
   doc.dispatch("htmx:sseError", {});
   doc.dispatch("htmx:sseError", {});
-  assert.equal(
-    toastsHost().children.length,
-    count,
-    "a recovered feed resets the counter",
-  );
+  assert.equal(toastsHost().children.length, count, "a recovered feed resets the counter");
 });

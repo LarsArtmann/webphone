@@ -70,18 +70,18 @@ Code wins when doc and code disagree.
 
 ## Live updates (SSE)
 
-| Feature                    | Status              | Notes                                                                                                                 |
-| -------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Per-extension event feed   | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                                                                     |
-| Swap-safe fragments        | 🟢 FULLY_FUNCTIONAL | Bare-fragment payloads; live surfaces morph-swap (idiomorph via cqrs-htmx, 2.4.0) so drafts, focus and paging survive |
-| Connect after island login | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload                                                       |
-| SSE liveness pill          | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame                                                    |
-| Toasts on tab actions      | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy                                          |
-| Durable inline tab errors  | 🟢 FULLY_FUNCTIONAL | htmx `responseHandling` swaps the server's `.wp-error` banner into `#wp-tab-error` on 4xx/5xx (401 excluded); drafts untouched |
-| Error toasts for htmx failures | 🟢 FULLY_FUNCTIONAL | Throttled `htmx:responseError`/`htmx:sendError` toasts (401/429-specific wording; never auto-reload) |
-| Login-failure toasts       | 🟢 FULLY_FUNCTIONAL | Server-session POST failures toast status-specific en/de copy next to the `#log` line                                |
-| Dead-feed SSE notice       | 🟢 FULLY_FUNCTIONAL | Toast once after 3 consecutive `htmx:sseError`s; recovery resets                                                     |
-| Toast accessibility        | 🟢 FULLY_FUNCTIONAL | `#toasts` is a `role="status"` live region; toasts focusable and dismissable via Enter/Space/Escape                   |
+| Feature                        | Status              | Notes                                                                                                                          |
+| ------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Per-extension event feed       | 🟢 FULLY_FUNCTIONAL | `/events`, heartbeats, no cross-extension leakage                                                                              |
+| Swap-safe fragments            | 🟢 FULLY_FUNCTIONAL | Bare-fragment payloads; live surfaces morph-swap (idiomorph via cqrs-htmx, 2.4.0) so drafts, focus and paging survive          |
+| Connect after island login     | 🟢 FULLY_FUNCTIONAL | `session.js` attaches `sse-connect` post-login without a reload                                                                |
+| SSE liveness pill              | 🟢 FULLY_FUNCTIONAL | JS-created `#wp-sse-live`, driven by the library `connected` frame                                                             |
+| Toasts on tab actions          | 🟢 FULLY_FUNCTIONAL | `HX-Trigger` → island listener over the `ToastDetail` wire shape; en+de copy                                                   |
+| Durable inline tab errors      | 🟢 FULLY_FUNCTIONAL | htmx `responseHandling` swaps the server's `.wp-error` banner into `#wp-tab-error` on 4xx/5xx (401 excluded); drafts untouched |
+| Error toasts for htmx failures | 🟢 FULLY_FUNCTIONAL | Throttled `htmx:responseError`/`htmx:sendError` toasts (401/429-specific wording; never auto-reload)                           |
+| Login-failure toasts           | 🟢 FULLY_FUNCTIONAL | Server-session POST failures toast status-specific en/de copy next to the `#log` line                                          |
+| Dead-feed SSE notice           | 🟢 FULLY_FUNCTIONAL | Toast once after 3 consecutive `htmx:sseError`s; recovery resets                                                               |
+| Toast accessibility            | 🟢 FULLY_FUNCTIONAL | `#toasts` is a `role="status"` live region; toasts focusable and dismissable via Enter/Space/Escape                            |
 
 ## Awareness
 

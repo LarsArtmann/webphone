@@ -95,9 +95,5 @@ test("identical consecutive toasts are deduped, different ones are not", () => {
   ui.announce("different", "ok");
   assert.equal(toasts.children.length, 2, "a different message passes");
   ui.announce("same", "error");
-  assert.equal(
-    toasts.children.length,
-    3,
-    "dedup only compares against the LAST toast",
-  );
+  assert.equal(toasts.children.length, 3, "dedup only compares against the LAST toast");
 });

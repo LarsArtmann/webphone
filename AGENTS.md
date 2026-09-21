@@ -287,19 +287,19 @@ Every error path lands in at least one VISIBLE surface (toast, inline
 banner, or panel); `#log` is always the operator trail, never the only
 user feedback.
 
-| Failure | User sees | Owner (wording) | Test home |
-|---|---|---|---|
-| Tab session dead (401 on tab actions) | Throttled error toast: "Tab session ended; calls keep working…" — never auto-reload | shell.js §3c (English, D3) | shell.test.mjs + `TestShellJSSurfacesHtmxErrors` |
-| Validation mistake (422) | `.wp-error` banner swapped into `#wp-tab-error` + error toast | server (en/de via `h.T`) | `TestSendClassifiesGatewayOutageAs502` + renderPanelError tests |
-| Rate limited (429) | Toast: "Too many requests — wait a moment…" | shell.js (htmx) / island i18n (login) | shell.test.mjs + session.test.mjs |
-| Gateway outage (502) | Banner + toast; message/fax saved as failed | server | 502 test (HX-Trigger + banner pinned) |
-| Other 4xx/5xx on htmx actions | Banner (`.wp-error` selected) + generic toast "HTTP N" | shell.js generic copy | contract test (config markers) |
-| Network down (htmx) | Toast: "Network request failed…" | shell.js | shell.test.mjs |
-| Network down (island session POST) | Toast: "Could not reach the server…" + `#log` line | island i18n `sessionNetFailed` | session.test.mjs |
-| PBX rejects login (401 island REGISTER) | `loginError` inline + `reg-status` pill "registration rejected" | island i18n `loginError`/`regRejected` | i18n parity tests |
-| SSE feed dead (3 consecutive errors) | One warn toast + pill label flips to "not connected" | island i18n `sseDropped`/`ssePillDown` | session.test.mjs |
-| Unknown path (404) | Styled 404 (shell + error panel), status stays 404 | server `error.notfound` en/de | `TestNotFoundRendersTheShell` |
-| Handler panic | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface | cqrshtmx.RecoveryMiddleware | library + server middleware tests |
+| Failure                                 | User sees                                                                           | Owner (wording)                        | Test home                                                       |
+| --------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------- |
+| Tab session dead (401 on tab actions)   | Throttled error toast: "Tab session ended; calls keep working…" — never auto-reload | shell.js §3c (English, D3)             | shell.test.mjs + `TestShellJSSurfacesHtmxErrors`                |
+| Validation mistake (422)                | `.wp-error` banner swapped into `#wp-tab-error` + error toast                       | server (en/de via `h.T`)               | `TestSendClassifiesGatewayOutageAs502` + renderPanelError tests |
+| Rate limited (429)                      | Toast: "Too many requests — wait a moment…"                                         | shell.js (htmx) / island i18n (login)  | shell.test.mjs + session.test.mjs                               |
+| Gateway outage (502)                    | Banner + toast; message/fax saved as failed                                         | server                                 | 502 test (HX-Trigger + banner pinned)                           |
+| Other 4xx/5xx on htmx actions           | Banner (`.wp-error` selected) + generic toast "HTTP N"                              | shell.js generic copy                  | contract test (config markers)                                  |
+| Network down (htmx)                     | Toast: "Network request failed…"                                                    | shell.js                               | shell.test.mjs                                                  |
+| Network down (island session POST)      | Toast: "Could not reach the server…" + `#log` line                                  | island i18n `sessionNetFailed`         | session.test.mjs                                                |
+| PBX rejects login (401 island REGISTER) | `loginError` inline + `reg-status` pill "registration rejected"                     | island i18n `loginError`/`regRejected` | i18n parity tests                                               |
+| SSE feed dead (3 consecutive errors)    | One warn toast + pill label flips to "not connected"                                | island i18n `sseDropped`/`ssePillDown` | session.test.mjs                                                |
+| Unknown path (404)                      | Styled 404 (shell + error panel), status stays 404                                  | server `error.notfound` en/de          | `TestNotFoundRendersTheShell`                                   |
+| Handler panic                           | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface  | cqrshtmx.RecoveryMiddleware            | library + server middleware tests                               |
 
 Shell copy (toasts, dedup, throttle wording) stays ENGLISH by decision
 D3 (2026-09-20): matches the `#log` operator-channel precedent; the
@@ -499,7 +499,6 @@ Ginkgo DescribeTable when the subject is a state machine.
   green before a ~90s death = flake, not an island regression — re-run
   once before digging.
 
-
 ## Release runbook (v2.x)
 
 The dance that cut v2.0.0, written down so the next release is a
@@ -553,7 +552,6 @@ continuously — work in small, explicitly-committed units.
    daemon's last commits verified pushed (`git ls-remote origin main`
    vs local HEAD).
 
-
 ## Concurrent sessions (observed 2026-09-20)
 
 More than one Crush session can work this repo at once. Tell-tale:
@@ -573,7 +571,6 @@ Python package layout). The one real gap was go-licenses — now in the
 devShell, so run buildflow inside `nix develop` (or `scripts/
 buildflow.sh`). gitleaks/codespell/markdown-lint run in build mode
 `full` — `scripts/buildflow.sh` appends the first two by default.
-
 
 ## Conventions
 

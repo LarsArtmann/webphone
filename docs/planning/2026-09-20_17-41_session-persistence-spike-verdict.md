@@ -31,15 +31,15 @@ same config value the store was built with).
 
 ## 2. Consumer inventory (every reader of session state)
 
-| Consumer | What it reads | Restart impact if persisted |
-|---|---|---|
-| `session.Store.Attach` / `Require` | token → Session | none — same seam |
-| `requireSession` helper (actions.go) | Session extension | none |
-| `/phone-api` proxy handlers | `PBXCredentials()` (ext + password) | none — password rides the row |
-| ExtensionHubs (SSE) | extension + negotiated lang | hub map rebuilt empty on boot; first push re-negotiates lang from the `wp-lang` cookie — no stale state |
-| Login/hook rate limiters | peer IP | not session state — unchanged |
-| `/healthz`, `/startupz` | sqlite ping + blob-dir write probe | sqlite check ALREADY covers the DB sessions would live in — no new probe needed |
-| CSRF (nosurf) | its own cookie | independent of sessions — unchanged |
+| Consumer                             | What it reads                       | Restart impact if persisted                                                                             |
+| ------------------------------------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `session.Store.Attach` / `Require`   | token → Session                     | none — same seam                                                                                        |
+| `requireSession` helper (actions.go) | Session extension                   | none                                                                                                    |
+| `/phone-api` proxy handlers          | `PBXCredentials()` (ext + password) | none — password rides the row                                                                           |
+| ExtensionHubs (SSE)                  | extension + negotiated lang         | hub map rebuilt empty on boot; first push re-negotiates lang from the `wp-lang` cookie — no stale state |
+| Login/hook rate limiters             | peer IP                             | not session state — unchanged                                                                           |
+| `/healthz`, `/startupz`              | sqlite ping + blob-dir write probe  | sqlite check ALREADY covers the DB sessions would live in — no new probe needed                         |
+| CSRF (nosurf)                        | its own cookie                      | independent of sessions — unchanged                                                                     |
 
 ## 3. Design (T12 implements this)
 
@@ -77,10 +77,10 @@ The one REAL cost of persistence, stated plainly:
   passwords in the SQLite file. Today NOTHING in webphone.db is a
   credential (messages/faxes/contacts are private but not credentials).
   Persistence introduces the first one. Threat model:
-  - *DB theft alone* (backup leak, file copy): with the password in the
+  - _DB theft alone_ (backup leak, file copy): with the password in the
     row, token-hashing adds nothing (the row already grants full
     access), so the token is stored raw — no security theater.
-  - *Mitigations that hold:* the dataDir is 0700 under systemd
+  - _Mitigations that hold:_ the dataDir is 0700 under systemd
     hardening; exposure is bounded by the SAME 24h TTL that bounds the
     in-memory copy's lifetime (sweep deletes expired rows, so long-lived
     backups only ever carry already-expired rows unless taken within the

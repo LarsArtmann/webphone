@@ -14,44 +14,44 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 floor() {
-  awk '/^go [0-9]/ { print $2; exit }' go.mod
+	awk '/^go [0-9]/ { print $2; exit }' go.mod
 }
 ambient() {
-  go version 2>/dev/null | sed -n 's/^go version go\([0-9.]*\).*/\1/p'
+	go version 2>/dev/null | sed -n 's/^go version go\([0-9.]*\).*/\1/p'
 }
 below() {
-  # lexical comparison is wrong in general; compare dotted numerics
-  local a b IFS=.
-  read -r -a a <<<"$1"
-  read -r -a b <<<"$2"
-  local i
-  for i in 0 1 2; do
-    local x=${a[i]:-0} y=${b[i]:-0}
-    if ((10#$x < 10#$y)); then return 0; fi
-    if ((10#$x > 10#$y)); then return 1; fi
-  done
-  return 1
+	# lexical comparison is wrong in general; compare dotted numerics
+	local a b IFS=.
+	read -r -a a <<<"$1"
+	read -r -a b <<<"$2"
+	local i
+	for i in 0 1 2; do
+		local x=${a[i]:-0} y=${b[i]:-0}
+		if ((10#$x < 10#$y)); then return 0; fi
+		if ((10#$x > 10#$y)); then return 1; fi
+	done
+	return 1
 }
 
 RUN=(buildflow)
 if [[ ! -f flake.nix || ! -f go.mod ]]; then
-  exec "${RUN[@]}" "$@"
+	exec "${RUN[@]}" "$@"
 fi
 if [[ -z "${WEBPHONE_BUILDFLOW_REEXEC:-}" ]] && command -v nix >/dev/null &&
-  below "$(ambient)" "$(floor)"; then
-  echo "ambient go $(ambient) < floor $(floor); re-executing via nix develop -c ..." >&2
-  RUN=(nix develop -c buildflow)
-  export WEBPHONE_BUILDFLOW_REEXEC=1
+	below "$(ambient)" "$(floor)"; then
+	echo "ambient go $(ambient) < floor $(floor); re-executing via nix develop -c ..." >&2
+	RUN=(nix develop -c buildflow)
+	export WEBPHONE_BUILDFLOW_REEXEC=1
 fi
 
 EXPLICIT_STEP=false
 for arg in "$@"; do
-  case "$arg" in
-    -s | --step) EXPLICIT_STEP=true ;;
-  esac
+	case "$arg" in
+	-s | --step) EXPLICIT_STEP=true ;;
+	esac
 done
 if [[ "$EXPLICIT_STEP" == true ]]; then
-  exec "${RUN[@]}" "$@"
+	exec "${RUN[@]}" "$@"
 fi
 
 "${RUN[@]}" "$@"
@@ -59,5 +59,5 @@ EXTRA=()
 buildflow list steps 2>/dev/null | grep -q gitleaks && EXTRA+=(-s gitleaks)
 buildflow list steps 2>/dev/null | grep -q codespell && EXTRA+=(-s codespell)
 if ((${#EXTRA[@]} > 0)); then
-  "${RUN[@]}" "${EXTRA[@]}"
+	"${RUN[@]}" "${EXTRA[@]}"
 fi
