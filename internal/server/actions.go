@@ -64,17 +64,18 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 		if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
 			// The provider ANSWERED with an actionable refusal (invalid
 			// destination, provider policy) — the gateway itself is fine.
-			// Surface the reason; the generic "unreachable" banner would
+			// Surface the reason; the generic transport banner would
 			// misdiagnose a working system (2026-09-21 self-send burn).
 			slog.WarnContext(r.Context(), "message send rejected by provider", "status", rejected.Status)
-			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway, rejected.Detail)
+			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway,
+				fmt.Sprintf(h.T(r, "err.messageRejected"), rejected.Detail))
 			return
 		}
-		// Transport failure: say 502, keep the detail in the log (the
-		// gateway error can carry internal URLs), and tell the user the
-		// message was saved as failed.
+		// Transport failure: the message is safe in the thread as failed;
+		// the detail stays in the log (gateway errors can carry internal
+		// URLs) while the user gets reassurance + a retry path.
 		slog.ErrorContext(r.Context(), "message send gateway failure", "error", err)
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway, h.T(r, "err.gatewayUnavailable"))
+		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway, h.T(r, "err.messageTransport"))
 		return
 	}
 
@@ -134,13 +135,14 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 			// Provider refusal with its own reason (e.g. "fax not wired"):
 			// show it instead of implying the gateway is down.
 			slog.WarnContext(r.Context(), "fax send rejected by provider", "status", rejected.Status)
-			h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway, rejected.Detail)
+			h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway,
+				fmt.Sprintf(h.T(r, "err.faxRejected"), rejected.Detail))
 			return
 		}
 		// Upstream failure, not a user mistake: 502 + log detail, same
 		// policy as the message send path.
 		slog.ErrorContext(r.Context(), "fax send gateway failure", "error", err)
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway, h.T(r, "err.faxGatewayUnavailable"))
+		h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway, h.T(r, "err.faxTransport"))
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.faxSent"))
