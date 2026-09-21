@@ -173,7 +173,7 @@ func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatalf("gateway outage: %d %s (want 502)", resp.StatusCode, body)
 	}
-	if !strings.Contains(string(body), "unreachable") {
+	if !strings.Contains(string(body), "saved as failed") {
 		t.Fatalf("502 body must tell the user the message was saved: %.200s", body)
 	}
 	// The 502 pairs an HX-Trigger toast with the rendered .wp-error

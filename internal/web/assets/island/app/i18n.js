@@ -101,6 +101,9 @@ export const I18N = {
       "Live tab updates lost — check the connection; calls keep working.",
     ssePillLive: "Live tab updates: connected",
     ssePillDown: "Live tab updates: not connected",
+    resuming: "resuming session…",
+    resumeRejected: (message) =>
+      `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
   },
   de: {
     regState: "Registrierungsstatus",
@@ -200,6 +203,9 @@ export const I18N = {
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
     ssePillLive: "Live-Aktualisierungen: verbunden",
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
+    resuming: "Sitzung wird fortgesetzt…",
+    resumeRejected: (message) =>
+      `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
   },
 };
 

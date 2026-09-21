@@ -24,9 +24,12 @@ import {
 } from "./panels.js";
 import { requestNotifications, titleFlashStop } from "./notify.js";
 import {
+  connectLiveUpdates,
   createSession,
   destroySession,
+  fetchLiveSession,
   initSseLiveIndicator,
+  signOutQuiet,
 } from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
@@ -62,6 +65,55 @@ if (els.lang) {
   });
 }
 applyI18n();
+
+// --- boot: resume a live cookie session before showing the login form ------
+//
+// A returning browser holds a live server session (sliding idle window);
+// the resume probe hands its SIP credentials back and the island
+// re-registers silently. The form stays hidden during the probe so a
+// resumed load never flashes it; EVERY failure path restores it, so a
+// broken probe can never leave a dead page.
+function showLogin() {
+  els.loginView.hidden = false;
+}
+
+async function resumeSession() {
+  const session = await fetchLiveSession();
+  if (!session) {
+    showLogin();
+    return;
+  }
+  setRegStatus("status-offline", t("resuming"));
+  try {
+    await connect(session.extension, session.password);
+  } catch (err) {
+    // The row's credentials no longer register (the PBX password
+    // changed since sign-in): the server session is stale — drop it
+    // quietly and put the reason where the user is looking.
+    await signOutQuiet();
+    els.loginError.textContent = t("resumeRejected")(err.message);
+    els.loginError.hidden = false;
+    showLogin();
+    log(`resumed credentials rejected; server session dropped (${err.message})`, "error");
+    return;
+  }
+  els.whoami.textContent = `${session.extension}@${sipDomain}`;
+  els.loginView.hidden = true;
+  els.phoneView.hidden = false;
+  connectLiveUpdates();
+  log("session resumed; registered");
+  // The wp:session-opened listener appends the did and refreshes the
+  // session-gated panels — the exact post-login wiring, reused.
+  document.dispatchEvent(
+    new CustomEvent("wp:session-opened", { detail: { did: session.did || "" } }),
+  );
+}
+
+els.loginView.hidden = true;
+resumeSession().catch((err) => {
+  log(`session resume failed: ${err.message}`, "error");
+  showLogin();
+});
 
 els.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();

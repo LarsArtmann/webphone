@@ -112,12 +112,48 @@ export async function destroySession() {
   window.location.reload();
 }
 
-// The server only renders sse-connect for already-signed-in pages; this
-// session was created client-side after the island's REGISTER succeeded.
-// Attach the SSE feed dynamically so live tab updates work from this
-// login on — without a reload, which would drop the in-memory password
-// and any call in progress.
-function connectLiveUpdates() {
+// --- session resume ---------------------------------------------------------
+
+// Ask the server whether this browser still holds a live session. The
+// answer carries the session's SIP credentials so the island can
+// re-register without the login form (the credential is the session's
+// own payload — the same one the /phone-api proxy rides). Returns null
+// when there is nothing to resume: no cookie, an expired one, or a
+// server that did not answer — in every one of those cases the login
+// form is the right next screen.
+export async function fetchLiveSession() {
+  try {
+    const res = await fetch("/api/session");
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.extension || !data.password) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+// DELETE the server session WITHOUT the reload destroySession() does:
+// the boot-resume path drops a row whose credentials no longer register
+// (the PBX password changed) while the page is still effectively
+// anonymous — no live call state to lose, so no reload.
+export async function signOutQuiet() {
+  try {
+    await fetch("/api/session", {
+      method: "DELETE",
+      headers: { "X-CSRF-Token": csrfToken() },
+    });
+  } catch {
+    // best-effort: an expired row is dead on the server's next read
+  }
+}
+
+// The server only renders sse-connect for already-signed-in pages; a
+// session created client-side (or resumed from the cookie) attaches the
+// SSE feed dynamically so live tab updates work from this login on —
+// without a reload, which would drop the in-memory password and any
+// call in progress.
+export function connectLiveUpdates() {
   const root = document.querySelector(".wp-root");
   if (!root || root.hasAttribute("sse-connect")) return;
   root.setAttribute("hx-ext", "sse");
