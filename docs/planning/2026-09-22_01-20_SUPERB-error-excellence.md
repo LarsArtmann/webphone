@@ -264,3 +264,43 @@ graph TD
   `/mms-media/`).
 - Open owner questions carried over: oops ratification (D2), inbound-MMS
   isolation test (D3), +14084757593 ownership.
+
+## Appendix: T02 decision record (executed 2026-09-22, train 2)
+
+D1 waiver: the owner ordered train-2 execution before the train-1 switch
+landed ("get the whole TODO list done") — the undeployed delta grows
+deliberately; T11 still gates deployment.
+
+Failure→family table as IMPLEMENTED (codes pin that classification is
+ours — the library default would tag any untagged error Transient):
+
+| Site (file)                                          | Code                    | Family        | Mechanism                              |
+| ---------------------------------------------------- | ----------------------- | ------------- | -------------------------------------- |
+| gateway `post` transport (`client.Do`)               | `gateway.transport`     | Transient     | `WrapTransientf`                       |
+| gateway `post` request build (bad URL from config)   | `gateway.request`       | Infrastructure| `WrapInfrastructuref`                  |
+| gateway `post` receipt read + decode                 | `gateway.receipt`       | Transient     | `WrapTransientf` (truncated 2xx plausible; retry cheap) |
+| gateway `SendMessage`/`SendFax` form build, PDF open | `gateway.form`          | Infrastructure| `WrapInfrastructuref` (our blob/paths) |
+| gateway non-2xx → `*ErrProviderRejected`             | — (type untyped)        | Rejection (4xx/3xx) / Transient (5xx) | implements `Classified` (`ErrorFamily()`); NOT wrapped — its `Error()`/`Detail` strings are pinned + user-rendered |
+| messaging `ErrInvalidSend`                           | —                       | Rejection     | implements `Classified`; Reason stays the rendered copy |
+| fax `ErrInvalidFax`                                  | —                       | Rejection     | implements `Classified`; Reason stays the rendered copy |
+| messaging.Send store failures (thread/attachment/persist) | `store.thread_resolve` / `store.attachment_save` / `store.message_append` | Infrastructure | `WrapInfrastructuref` |
+| fax.Send store failures (spool/create)               | `store.fax_spool` / `store.fax_create` | Infrastructure | `WrapInfrastructuref` |
+
+Decisions that fell out of execution:
+
+1. **`classifyForUser` is total, not pure-family.** A 4xx provider answer
+   classifies Rejection but its PINNED surface is 502-with-detail (the
+   2026-09-21 self-send burn); the helper therefore answers 502 for
+   `*ErrProviderRejected` BEFORE consulting the family. First test run
+   caught the drift (422 for a provider refusal) — kept as a pin.
+2. Families survive `fmt.Errorf("gateway: %w", …)` service wraps by
+   chain-walking (`errors.AsType[Classified]`) — pinned in
+   `internal/gateway/family_test.go`.
+3. Log strings preserved verbatim per lane (`message|fax send rejected
+   by provider`, `… send gateway failure`) via the `lane` parameter; the
+   family rides the log line as a field (`family=rejection`).
+4. Test homes: `internal/gateway/family_test.go` (post lanes + wrap
+   survival + type visibility), `internal/messaging/family_test.go`,
+   `internal/fax/family_test.go` (validation → Rejection through wraps),
+   `internal/server/classify_test.go` (family→status table + unknown →
+   502 generic).

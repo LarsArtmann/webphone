@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
@@ -57,25 +58,10 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Messaging.Send(r.Context(), sess.Extension, to, r.FormValue("body"), uploads); err != nil {
-		if invalid, ok := errors.AsType[*messaging.ErrInvalidSend](err); ok {
-			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, invalid.Reason)
-			return
-		}
-		if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
-			// The provider ANSWERED with an actionable refusal (invalid
-			// destination, provider policy) — the gateway itself is fine.
-			// Surface the reason; the generic transport banner would
-			// misdiagnose a working system (2026-09-21 self-send burn).
-			slog.WarnContext(r.Context(), "message send rejected by provider", "status", rejected.Status)
-			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway,
-				fmt.Sprintf(h.T(r, "err.messageRejected"), rejected.Detail))
-			return
-		}
-		// Transport failure: the message is safe in the thread as failed;
-		// the detail stays in the log (gateway errors can carry internal
-		// URLs) while the user gets reassurance + a retry path.
-		slog.ErrorContext(r.Context(), "message send gateway failure", "error", err)
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusBadGateway, h.T(r, "err.messageTransport"))
+		h.sendFailure(w, r, sess, views.TabMessages, err, "message", sendFailureKeys{
+			rejected:  "err.messageRejected",
+			transport: "err.messageTransport",
+		})
 		return
 	}
 
@@ -127,22 +113,10 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.deps.Fax.Send(r.Context(), sess.Extension, to, header.Filename, pdf); err != nil {
-		if invalid, ok := errors.AsType[*fax.ErrInvalidFax](err); ok {
-			h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, invalid.Reason)
-			return
-		}
-		if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
-			// Provider refusal with its own reason (e.g. "fax not wired"):
-			// show it instead of implying the gateway is down.
-			slog.WarnContext(r.Context(), "fax send rejected by provider", "status", rejected.Status)
-			h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway,
-				fmt.Sprintf(h.T(r, "err.faxRejected"), rejected.Detail))
-			return
-		}
-		// Upstream failure, not a user mistake: 502 + log detail, same
-		// policy as the message send path.
-		slog.ErrorContext(r.Context(), "fax send gateway failure", "error", err)
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusBadGateway, h.T(r, "err.faxTransport"))
+		h.sendFailure(w, r, sess, views.TabFax, err, "fax", sendFailureKeys{
+			rejected:  "err.faxRejected",
+			transport: "err.faxTransport",
+		})
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.faxSent"))
@@ -302,6 +276,68 @@ func (h *handlers) countVoicemail(r *http.Request, sess session.Session) int {
 		return 0
 	}
 	return summary.New
+}
+
+// sendFailureKeys bundles the per-lane i18n keys of the send failure
+// surfaces; message and fax share one classification ladder.
+type sendFailureKeys struct {
+	rejected  string // formats with the provider's refusal detail
+	transport string // the system-side copy carrying the retry advice
+}
+
+// classifyForUser maps a send-path failure to its user-facing HTTP status.
+// Provider refusals keep their pinned 502-with-detail surface (the status
+// must never drift from the copy their fast path renders); for everything
+// else the family decides: Rejection is a 422 the caller can act on, every
+// system-side family is a 502 whose transport copy carries the retry
+// advice. ErrInvalidSend/ErrInvalidFax never reach the system-side arm —
+// their fast path renders the service's own reason at 422.
+func classifyForUser(err error) int {
+	if _, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
+		return http.StatusBadGateway
+	}
+	if errorfamily.Classify(err) == errorfamily.Rejection {
+		return http.StatusUnprocessableEntity
+	}
+
+	return http.StatusBadGateway
+}
+
+// sendFailure is the ONE failure→feedback ladder for outbound sends
+// (SUPERB error-excellence T04): typed fast paths keep the authored copy
+// (service validation reasons, provider refusal details — both pinned by
+// tests), the family switch decides status and copy for everything else.
+// Rendered strings are byte-identical to the per-handler ladders it
+// replaced; the family is logged so an unclassified error is visible.
+func (h *handlers) sendFailure(
+	w http.ResponseWriter, r *http.Request, sess session.Session, tab views.Tab, err error, lane string, k sendFailureKeys,
+) {
+	if invalid, ok := errors.AsType[*messaging.ErrInvalidSend](err); ok {
+		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, invalid.Reason)
+		return
+	}
+	if invalid, ok := errors.AsType[*fax.ErrInvalidFax](err); ok {
+		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, invalid.Reason)
+		return
+	}
+	if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
+		// The provider ANSWERED with an actionable refusal (invalid
+		// destination, provider policy) — the gateway itself is fine.
+		// Surface the reason; the generic transport banner would
+		// misdiagnose a working system (2026-09-21 self-send burn).
+		slog.WarnContext(r.Context(), lane+" send rejected by provider", "status", rejected.Status,
+			"family", errorfamily.Classify(err).String())
+		h.renderPanelError(w, r, sess, tab, http.StatusBadGateway, fmt.Sprintf(h.T(r, k.rejected), rejected.Detail))
+		return
+	}
+	// System-side failure: the send is safe in the thread as failed; the
+	// detail stays in the log (gateway errors can carry internal URLs)
+	// while the user gets reassurance + a retry path. The family rides the
+	// log line so an unclassified error (defaults to transient) is
+	// visible without changing what the user sees.
+	slog.ErrorContext(r.Context(), lane+" send gateway failure", "error", err,
+		"family", errorfamily.Classify(err).String())
+	h.renderPanelError(w, r, sess, tab, classifyForUser(err), h.T(r, k.transport))
 }
 
 // renderPanelError re-renders a tab with an error banner appended — the
