@@ -525,6 +525,41 @@ def run_checks(
             "no webphone_session cookie",
         )
 
+        # 6c. Boot resume: a live cookie gets the session's SIP credentials
+        # back (the island re-registers without the login form), the
+        # credential answer is never cacheable, and logout kills the
+        # resume like every other gated surface. The sliding renewal is
+        # unit-pinned (renewDue + Attach cookie parity); the smoke pins
+        # only the HTTP wiring.
+        status, body, headers = s.request("GET", "/api/session")
+        c.ok("resume 200 with live cookie", status == 200, f"got {status}")
+        c.ok(
+            "resume is no-store",
+            headers.get("Cache-Control") == "no-store",
+            headers.get("Cache-Control", "<missing>"),
+        )
+        resumed = {}
+        try:
+            resumed = json.loads(body)
+        except ValueError:
+            pass
+        c.ok(
+            "resume carries the SIP credentials",
+            resumed.get("extension") == "1001" and bool(resumed.get("password")),
+            f"keys={sorted(resumed)}",
+        )
+        status, _, _ = s.request("DELETE", "/api/session")
+        c.ok("logout 204", status == 204, f"got {status}")
+        status, _, _ = s.request("GET", "/api/session")
+        c.ok("resume after logout 401s", status == 401, f"got {status}")
+        # Logout rotated the CSRF cookie as well (the island reloads for a
+        # fresh page; the harness re-adopts via the GET).
+        c.ok(
+            "re-login after resume scenario",
+            s.adopt_csrf() and s.login(),
+            "POST /api/session != 201",
+        )
+
         # 7. Signed-in SSE connects.
         stop = threading.Event()
         reader = threading.Thread(target=s.sse_events, args=(stop, sink), daemon=True)
