@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
@@ -34,6 +35,11 @@ const (
 type ErrInvalidSend struct{ Reason string }
 
 func (e *ErrInvalidSend) Error() string { return e.Reason }
+
+// ErrorFamily marks every validation refusal as a Rejection: the user's
+// own input, not retryable. The Reason string stays the rendered copy
+// (English, runbook-greppable) — the family only drives behavior.
+func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
 // ChangeFunc is called after any thread mutation with the owning
 // extension; listeners re-render the affected thread (SSE fan-out in the
@@ -86,7 +92,7 @@ func (s *Service) Send(
 	now := s.clock()
 	threadID, err := s.messages.FindThread(ctx, owner, to, now)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("resolve thread: %w", err)
+		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}
 
 	msg := domain.Message{
@@ -105,7 +111,7 @@ func (s *Service) Send(
 	for _, upload := range uploads {
 		path, err := s.blobs.Save("attachments", extensionOf(upload), upload.Bytes)
 		if err != nil {
-			return domain.Message{}, fmt.Errorf("store attachment: %w", err)
+			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store attachment")
 		}
 		attachment := domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
@@ -122,7 +128,7 @@ func (s *Service) Send(
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
-		return domain.Message{}, fmt.Errorf("persist message: %w", err)
+		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist message")
 	}
 	s.notify(ctx, owner, threadID)
 

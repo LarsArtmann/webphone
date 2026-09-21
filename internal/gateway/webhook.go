@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/config"
 )
 
@@ -45,6 +46,20 @@ func (e *ErrProviderRejected) Error() string {
 	return fmt.Sprintf("provider rejected: HTTP %d: %s", e.Status, e.Detail)
 }
 
+// ErrorFamily classifies the refusal by the provider's own status: a 4xx
+// answer refused the request content (Rejection — the user can fix the
+// request), anything else (5xx, odd 3xx) is the provider's side failing
+// (Transient — retry later). The type is NOT wrapped in an errorfamily.Error:
+// its Error/Detail strings are pinned by tests and rendered to users, so it
+// implements the Classified interface instead.
+func (e *ErrProviderRejected) ErrorFamily() errorfamily.Family {
+	if e.Status >= http.StatusInternalServerError {
+		return errorfamily.Transient
+	}
+
+	return errorfamily.Rejection
+}
+
 // unwrapErrorJSON extracts the inner "error" string from a JSON error body
 // ({"error": "…"}) so users see the reason, not the envelope. Non-JSON
 // bodies pass through trimmed.
@@ -63,7 +78,7 @@ func unwrapErrorJSON(raw []byte) string {
 func (w *Webhook) SendMessage(ctx context.Context, msg OutboundMessage) (Receipt, error) {
 	body, contentType, err := messageForm("message", msg.Owner.String(), msg.To.String(), msg.Body, msg.Attachments)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("build message form: %w", err)
+		return Receipt{}, errorfamily.WrapInfrastructuref(err, "gateway.form", "build message form")
 	}
 	return w.post(ctx, w.cfg.WebhookURL+"/message", contentType, body)
 }
@@ -78,7 +93,7 @@ type FaxWebhook struct {
 func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, error) {
 	pdf, err := os.Open(fax.PDFPath)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("open fax pdf: %w", err)
+		return Receipt{}, errorfamily.WrapInfrastructuref(err, "gateway.form", "open fax pdf")
 	}
 	defer func() { _ = pdf.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
@@ -94,7 +109,7 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 			return nil
 		})
 	if err != nil {
-		return Receipt{}, fmt.Errorf("build fax form: %w", err)
+		return Receipt{}, errorfamily.WrapInfrastructuref(err, "gateway.form", "build fax form")
 	}
 
 	return w.post(ctx, w.cfg.WebhookURL+"/fax", contentType, body)
@@ -153,7 +168,7 @@ func (p provider) post(
 ) (Receipt, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("build provider request (content-type %s): %w", contentType, err)
+		return Receipt{}, errorfamily.WrapInfrastructuref(err, "gateway.request", "build provider request (content-type %s)", contentType)
 	}
 	req.Header.Set("Content-Type", contentType)
 	if p.cfg.WebhookSecret != "" {
@@ -162,7 +177,7 @@ func (p provider) post(
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		return Receipt{}, fmt.Errorf("provider call to %s: %w", url, err)
+		return Receipt{}, errorfamily.WrapTransientf(err, "gateway.transport", "provider call to %s", url)
 	}
 	defer func() { _ = resp.Body.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
@@ -176,7 +191,7 @@ func (p provider) post(
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	if err != nil {
-		return Receipt{}, fmt.Errorf("read provider receipt (content-type %s): %w", contentType, err)
+		return Receipt{}, errorfamily.WrapTransientf(err, "gateway.receipt", "read provider receipt (content-type %s)", contentType)
 	}
 	var receipt struct {
 		ProviderRef string `json:"provider_ref"`
@@ -188,7 +203,7 @@ func (p provider) post(
 		if ref := strings.TrimSpace(string(raw)); ref != "" && len(ref) <= 256 && !strings.ContainsRune(ref, '{') {
 			return Receipt{ProviderRef: ref}, nil
 		}
-		return Receipt{}, fmt.Errorf("decode provider receipt (content-type %s): %w", contentType, err)
+		return Receipt{}, errorfamily.WrapTransientf(err, "gateway.receipt", "decode provider receipt (content-type %s)", contentType)
 	}
 
 	return Receipt{ProviderRef: receipt.ProviderRef}, nil

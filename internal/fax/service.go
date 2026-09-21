@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
@@ -27,6 +28,11 @@ const (
 type ErrInvalidFax struct{ Reason string }
 
 func (e *ErrInvalidFax) Error() string { return e.Reason }
+
+// ErrorFamily marks every validation refusal as a Rejection: the user's
+// own input, not retryable. The Reason string stays the rendered copy
+// (English, runbook-greppable) — the family only drives behavior.
+func (e *ErrInvalidFax) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
 // ChangeFunc is called after any fax-job mutation with the owning
 // extension (SSE fan-out).
@@ -67,7 +73,7 @@ func (s *Service) Send(
 	now := s.clock()
 	path, err := s.blobs.Save("faxes", ".pdf", pdf)
 	if err != nil {
-		return domain.FaxJob{}, fmt.Errorf("spool pdf: %w", err)
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool pdf")
 	}
 
 	job := domain.FaxJob{
@@ -81,7 +87,7 @@ func (s *Service) Send(
 		UpdatedAt:    now,
 	}
 	if err := s.faxes.Create(ctx, job); err != nil {
-		return domain.FaxJob{}, fmt.Errorf("persist fax job: %w", err)
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax job")
 	}
 	s.notify(ctx, owner, job.ID)
 
