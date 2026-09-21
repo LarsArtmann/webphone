@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Avatars no longer emit inline `style` attributes: the deterministic
+  per-peer hue rides a `wp-av-h<deg>` class (10° buckets, 36 rules in
+  app.css) instead. The strict `style-src 'self'` CSP silently blocked
+  the old `style="--av-h: …"` attribute on every contacts/messages
+  render, so avatar tints never applied in production browsers (console:
+  "Applying inline style violates …"). Style attributes cannot be
+  hash-allowlisted per-value, so class bucketing is the only CSP-strict
+  shape.
+- No more 401 storm on cold login: the voicemail badge and server
+  history refreshes now run on `wp:session-opened` (after the session
+  cookie is minted and the fresh CSRF adopted) instead of racing the
+  un-awaited session POST at login-submit. A signed-out shell
+  (welcome-hint tab area) additionally auto-loads the default
+  messages tab + nav once the session opens, so tabs work without a
+  manual reload after the island login.
+
 ### Added
 
 - SQLite-backed session store: tab sessions now survive service

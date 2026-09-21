@@ -316,6 +316,15 @@ Ginkgo DescribeTable when the subject is a state machine.
 
 ## Hard-won knowledge
 
+- **Inline `style` attributes are CSP-dead; any per-element styling must
+  ride a class** (2026-09-21, seen live on pbx.artmann.tech): the server
+  sets `style-src 'self'` with no `unsafe-inline`, and style ATTRIBUTES
+  cannot be nonce'd or hash-allowlisted per value (Chrome's "Applying
+  inline style violates …" fires silently — the rule just never
+  applies). The avatar hue therefore buckets into `wp-av-h<deg>` classes
+  (`avatarHueClass` in views/helpers.go + 36 rules in app.css); keep the
+  helper and the CSS block in sync. Before adding ANY `style={ … }` to a
+  template: it will not work in production.
 - cqrs-htmx adoption posture: middleware + assets ONLY; the `setup`
   bundle, CQRS dispatch layer and usermgmt stay rejected (split-brain
   identity, see above); security presets are NEVER adopted wholesale —
