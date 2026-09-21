@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Provider rejections no longer masquerade as "The message gateway is
+  unreachable": a non-2xx gateway ANSWER is now a typed
+  `gateway.ErrProviderRejected` whose detail (unwrapped from the
+  `{"error": "…"}` envelope) is shown in the panel, for messages and fax
+  alike. Transport failures keep the generic banner + log detail (they can
+  carry internal URLs). 2026-09-21 production burn: sending an SMS to the
+  PBX's own DID is structurally refused by Telnyx (400 "Source and
+  destination cannot be the same number") and surfaced as "gateway
+  unreachable" — a working system telling the user it is broken.
 - Avatars no longer emit inline `style` attributes: the deterministic
   per-peer hue rides a `wp-av-h<deg>` class (10° buckets, 36 rules in
   app.css) instead. The strict `style-src 'self'` CSP silently blocked
