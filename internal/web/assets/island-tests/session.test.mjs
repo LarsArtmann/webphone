@@ -124,3 +124,46 @@ test("the SSE feed toasts once after three consecutive failures", () => {
   doc.dispatch("htmx:sseError", {});
   assert.equal(toastsHost().children.length, count, "a recovered feed resets the counter");
 });
+
+// --- session resume ---------------------------------------------------------
+
+test("fetchLiveSession hands the resumed credentials back on 200", async () => {
+  useFetch(() => ({
+    status: 200,
+    body: { extension: "1001", password: "pw", did: "+441632960961" },
+  }));
+  const data = await session.fetchLiveSession();
+  assert.deepEqual(data, {
+    extension: "1001",
+    password: "pw",
+    did: "+441632960961",
+  });
+});
+
+test("fetchLiveSession maps every no-resume case to null", async () => {
+  for (const status of [401, 429, 500]) {
+    useFetch(() => ({ status }));
+    assert.equal(await session.fetchLiveSession(), null, `HTTP ${status} must resume nothing`);
+  }
+  useFetch(() => ({ status: 200, body: {} }));
+  assert.equal(
+    await session.fetchLiveSession(),
+    null,
+    "a 200 without credentials must resume nothing",
+  );
+  useFetch(() => new Error("ECONNREFUSED"));
+  assert.equal(await session.fetchLiveSession(), null, "an unreachable server must resume nothing");
+});
+
+test("signOutQuiet drops the server session without a reload", async () => {
+  let seen = null;
+  globalThis.fetch = async (url, opts) => {
+    seen = { url, opts };
+    return { ok: true, status: 204, json: async () => ({}) };
+  };
+  await session.signOutQuiet();
+  assert.equal(seen.opts.method, "DELETE");
+  assert.equal(seen.url, "/api/session");
+  // The quiet path never reloads: the stub's location.reload THROWS, so
+  // merely completing this test proves no reload happened.
+});

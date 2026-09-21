@@ -117,8 +117,8 @@ func TestRenewDuePolicy(t *testing.T) {
 		{
 			name:    "cap binds: the extension is clamped to created+max",
 			created: base,
-			expires: base.Add(29*24*time.Hour + 45*time.Minute),
-			now:     base.Add(29*24*time.Hour + 30*time.Minute),
+			expires: base.Add(29*24*time.Hour + 23*time.Hour + 45*time.Minute),
+			now:     base.Add(29*24*time.Hour + 23*time.Hour + 30*time.Minute),
 			want:    base.Add(maxAge),
 			wantOK:  true,
 		},

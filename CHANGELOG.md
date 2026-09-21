@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Sign-in once per device, not once per visit: the island now RESUMES a
+  live cookie session at boot (`GET /api/session` hands the session's
+  SIP credentials back, the browser re-registers silently, the login
+  form only appears when there is genuinely no live session — first
+  visit, logout, expired, or credentials that no longer register, in
+  which case the stale row is dropped with an explanatory hint in
+  en/de). Sessions slide while in use: activity past the halfway point
+  of the idle window (`session_ttl`, now `7d` by default) renews the
+  session and re-issues the cookie with the server's remaining
+  lifetime, so a regularly used device never re-signs-in. The new
+  `session_max_ttl` (`30d`) is the absolute cap from sign-in that
+  expires even a continuously renewed (or stolen) session. This
+  deliberately widens the idle window the session-persistence spike
+  bounded at 24h (7d idle + 30d absolute vs the old flat 24h) — the
+  trade is documented on both config keys, and both stay operator-settable.
+
 ### Fixed
 
 - Provider rejections no longer masquerade as "The message gateway is

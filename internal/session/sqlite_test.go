@@ -230,7 +230,11 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 		t.Errorf("renewed expiry %s from now, want ~the full idle window", until)
 	}
 	persisted, ok := store.Get(token)
-	if !ok || !persisted.ExpiresAt.Equal(renewed.ExpiresAt) {
+	if !ok {
+		t.Fatal("session lost after renew")
+	}
+	// Stamps are unix millis: compare with that granularity.
+	if drift := persisted.ExpiresAt.Sub(renewed.ExpiresAt); drift.Abs() > 2*time.Millisecond {
 		t.Errorf("extension not persisted: got %s, want %s", persisted.ExpiresAt, renewed.ExpiresAt)
 	}
 
