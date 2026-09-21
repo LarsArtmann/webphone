@@ -25,7 +25,7 @@ func TestDialableParserEdgeTable(t *testing.T) {
 		{"dashes stripped", "100-1", "1001", false},
 		{"parens stripped", "(0) 1632", "01632", false},
 		{"unicode direction marks stripped (pasted RTL number)",
-			"+44​1632\u200f960961", "+441632960961", false},
+			"+44\u200b1632\u200f960961", "+441632960961", false},
 		{"emoji stripped", "1001📱", "1001", false},
 		{"punctuation stripped to empty", "…", "", true},
 		{"32 chars is the boundary", strings.Repeat("a", 32), strings.Repeat("a", 32), false},
