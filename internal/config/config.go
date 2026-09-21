@@ -32,11 +32,11 @@ const (
 
 // Config is the fully-resolved runtime configuration.
 type Config struct {
-	Addr          string                 `json:"addr" koanf:"addr"`
-	DataDir       string                 `json:"data_dir" koanf:"data_dir"`
-	SIPDomain     string                 `json:"sip_domain" koanf:"sip_domain"`
-	WebsocketPath string                 `json:"websocket_path" koanf:"websocket_path"`
-	PhoneAPIURL   string                 `json:"phone_api_url" koanf:"phone_api_url"`
+	Addr          string `json:"addr" koanf:"addr"`
+	DataDir       string `json:"data_dir" koanf:"data_dir"`
+	SIPDomain     string `json:"sip_domain" koanf:"sip_domain"`
+	WebsocketPath string `json:"websocket_path" koanf:"websocket_path"`
+	PhoneAPIURL   string `json:"phone_api_url" koanf:"phone_api_url"`
 	// SessionTTL is the SLIDING idle window: activity past its halfway
 	// point extends the session back to the full window, so a device in
 	// regular use never re-signs-in (the island resumes from the cookie).

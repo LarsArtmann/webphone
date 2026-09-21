@@ -170,7 +170,7 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "document missing", http.StatusGone)
 		return
 	}
-	defer func() { _ = document.Close() }()
+	defer func() { _ = document.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", "fax-"+job.ID.String()+".pdf"))
 	_, _ = io.Copy(w, document) //nolint:erraudit // best-effort write; the response is already committed
@@ -197,7 +197,7 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "attachment missing", http.StatusGone)
 		return
 	}
-	defer func() { _ = file.Close() }()
+	defer func() { _ = file.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 	w.Header().Set("Content-Type", attachment.MimeType)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", attachment.Name))
 	_, _ = io.Copy(w, file) //nolint:erraudit // best-effort write; the response is already committed

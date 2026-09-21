@@ -94,7 +94,10 @@ async function resumeSession() {
     els.loginError.textContent = t("resumeRejected")(err.message);
     els.loginError.hidden = false;
     showLogin();
-    log(`resumed credentials rejected; server session dropped (${err.message})`, "error");
+    log(
+      `resumed credentials rejected; server session dropped (${err.message})`,
+      "error",
+    );
     return;
   }
   els.whoami.textContent = `${session.extension}@${sipDomain}`;
@@ -105,7 +108,9 @@ async function resumeSession() {
   // The wp:session-opened listener appends the did and refreshes the
   // session-gated panels — the exact post-login wiring, reused.
   document.dispatchEvent(
-    new CustomEvent("wp:session-opened", { detail: { did: session.did || "" } }),
+    new CustomEvent("wp:session-opened", {
+      detail: { did: session.did || "" },
+    }),
   );
 }
 

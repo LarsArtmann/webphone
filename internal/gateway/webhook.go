@@ -80,7 +80,7 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 	if err != nil {
 		return Receipt{}, fmt.Errorf("open fax pdf: %w", err)
 	}
-	defer func() { _ = pdf.Close() }()
+	defer func() { _ = pdf.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
 	body, contentType, err := providerForm("fax", fax.Owner.String(), fax.To.String(),
 		func(writer *multipart.Writer) error {
@@ -164,7 +164,7 @@ func (p provider) post(
 	if err != nil {
 		return Receipt{}, fmt.Errorf("provider call to %s: %w", url, err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 512)) //nolint:erraudit // best-effort write; the response is already committed

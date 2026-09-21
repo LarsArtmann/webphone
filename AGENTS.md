@@ -187,13 +187,29 @@ every build; it is the local tripwire, not a replacement for the E2E.
   the store is a SEAM: prod runs `NewSQLiteStore` over `webphone.db`
   (sessions survive restarts; the row carries the extension + directory
   password the `/phone-api` proxy needs — credentials at rest accepted,
-  bounded by the same 24h TTL, swept on read/Create), tests and loopback
-  keep `NewMemStore` (in-memory TTL + GC, sessions die with the
-  process). Cookie unchanged (HttpOnly, Max-Age = SessionTTL). The
+  swept on read/Create), tests and loopback keep `NewMemStore`
+  (in-memory TTL + GC, sessions die with the process). Since
+  2026-09-21 (the "I HATE THE WAY WE SIGN IN" train) sessions SLIDE:
+  `GET /api/session` resumes a live cookie at island boot (the row's
+  SIP credentials go back to the browser, which must have them for the
+  WSS REGISTER — served no-store, gated by requireSession), activity
+  past the halfway point of the idle window renews the session in
+  `Attach`/`Require` (`session.Lifetime{Idle: session_ttl=7d default,
+  Max: session_max_ttl=30d default}`; the re-issued cookie mirrors the
+  server's remaining lifetime), and the login form only renders when
+  nothing is resumable. The Max default is the unconditional bound
+  (stolen cookies die at 30d even under constant use); `normalized()`
+  degrades a missing/mis-ordered cap to Max=Idle so Deps-built test
+  servers keep deterministic pre-sliding behavior. The spike verdict's
+  "bounded by the same 24h TTL" story is deliberately widened to
+  7d idle + 30d absolute — the trade is documented in both config keys
+  and the CHANGELOG. The
   "Tab session ended" toast is now the rare path (hard crash mid-TTL,
   manual cookie clear). `session.js`
   attaches `sse-connect` to `.wp-root` post-login (no reload — the
-  password is memory-only) and reloads the page on logout. Login and
+  password is memory-only) and reloads the page on logout; the resume
+  path (`fetchLiveSession` + `signOutQuiet`, orchestrated in main.js
+  the composition root) never reloads. Login and
   hooks are per-IP rate limited (the hook limiter wraps, not sits
   inside, the secret gate). Server handlers self-gate through the
   shared `requireSession` helper; `Sessions.Require` middleware

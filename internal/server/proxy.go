@@ -39,7 +39,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "phone api unreachable", http.StatusBadGateway)
 		return
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
 	for _, name := range []string{"Content-Type", "Cache-Control"} {
 		if value := resp.Header.Get(name); value != "" {

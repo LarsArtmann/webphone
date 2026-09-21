@@ -43,3 +43,37 @@ func TestDictionariesStayInSync(t *testing.T) {
 		}
 	}
 }
+
+// TestFormatVerbsMatchAcrossLanguages pins that every key carries the same
+// number of format verbs in both languages — e.g. err.messageRejected's
+// single %s. A mismatched translation would render %!s(MISSING) (or eat the
+// argument) in exactly one language, invisible to any single-locale test.
+func TestFormatVerbsMatchAcrossLanguages(t *testing.T) {
+	for key, enValue := range dictionaries[LangEN] {
+		deValue, ok := dictionaries[LangDE][key]
+		if !ok {
+			continue // key-set parity is TestDictionariesStayInSync's job
+		}
+		if got, want := countFormatVerbs(enValue), countFormatVerbs(deValue); got != want {
+			t.Errorf(
+				"%q: EN carries %d format verb(s), DE carries %d — one language renders %!s(MISSING)",
+				key, got, want,
+			)
+		}
+	}
+}
+
+func countFormatVerbs(s string) int {
+	count := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] != '%' {
+			continue
+		}
+		if i+1 < len(s) && s[i+1] == '%' { // %% is an escaped literal
+			i++
+			continue
+		}
+		count++
+	}
+	return count
+}
