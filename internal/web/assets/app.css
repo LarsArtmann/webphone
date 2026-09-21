@@ -706,7 +706,10 @@ select:focus-visible {
   background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface-2));
 }
 
-/* Peer avatar: deterministic hue per number/name, set inline via --av-h. */
+/* Peer avatar: deterministic hue per number/name. The hue rides a
+   wp-av-h<deg> class (10° buckets, emitted by avatarHueClass) instead of
+   an inline style attribute — style-src 'self' blocks style attributes,
+   so the inline form silently never applied. */
 .wp-avatar {
   width: 38px;
   height: 38px;
@@ -723,6 +726,45 @@ select:focus-visible {
   font-variant-numeric: tabular-nums;
   user-select: none;
 }
+
+/* Hue buckets for every 10° step (0-350). Generated once; keep in sync
+   with avatarHueClass in internal/web/views/helpers.go. */
+.wp-av-h0 { --av-h: 0; }
+.wp-av-h10 { --av-h: 10; }
+.wp-av-h20 { --av-h: 20; }
+.wp-av-h30 { --av-h: 30; }
+.wp-av-h40 { --av-h: 40; }
+.wp-av-h50 { --av-h: 50; }
+.wp-av-h60 { --av-h: 60; }
+.wp-av-h70 { --av-h: 70; }
+.wp-av-h80 { --av-h: 80; }
+.wp-av-h90 { --av-h: 90; }
+.wp-av-h100 { --av-h: 100; }
+.wp-av-h110 { --av-h: 110; }
+.wp-av-h120 { --av-h: 120; }
+.wp-av-h130 { --av-h: 130; }
+.wp-av-h140 { --av-h: 140; }
+.wp-av-h150 { --av-h: 150; }
+.wp-av-h160 { --av-h: 160; }
+.wp-av-h170 { --av-h: 170; }
+.wp-av-h180 { --av-h: 180; }
+.wp-av-h190 { --av-h: 190; }
+.wp-av-h200 { --av-h: 200; }
+.wp-av-h210 { --av-h: 210; }
+.wp-av-h220 { --av-h: 220; }
+.wp-av-h230 { --av-h: 230; }
+.wp-av-h240 { --av-h: 240; }
+.wp-av-h250 { --av-h: 250; }
+.wp-av-h260 { --av-h: 260; }
+.wp-av-h270 { --av-h: 270; }
+.wp-av-h280 { --av-h: 280; }
+.wp-av-h290 { --av-h: 290; }
+.wp-av-h300 { --av-h: 300; }
+.wp-av-h310 { --av-h: 310; }
+.wp-av-h320 { --av-h: 320; }
+.wp-av-h330 { --av-h: 330; }
+.wp-av-h340 { --av-h: 340; }
+.wp-av-h350 { --av-h: 350; }
 
 /* Shared rows (contacts, fax, voicemail, history): the same quiet grid. */
 .wp-row {

@@ -48,7 +48,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 		}
 		for _, contact := range props.Shared {
 			<article class="wp-row">
-				<span class="wp-avatar wp-avatar-shared" aria-hidden="true" style={ "--av-h: " + fmtInt(avatarHue(contact.Name+contact.Number)) }>{ avatarFor(contact.Name) }</span>
+				<span class={ "wp-avatar", "wp-avatar-shared", avatarHueClass(contact.Name+contact.Number) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
 				<span class="wp-thread-text">
 					<strong class="wp-thread-remote">{ contact.Name }</strong>
 					<span class="wp-muted">{ contact.Number }</span>
@@ -64,7 +64,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 
 templ ContactRow(contact domain.Contact, lang Lang) {
 	<article class="wp-row">
-		<span class="wp-avatar" aria-hidden="true" style={ "--av-h: " + fmtInt(avatarHue(contact.Name+contact.Phone.String())) }>{ avatarFor(contact.Name) }</span>
+		<span class={ "wp-avatar", avatarHueClass(contact.Name+contact.Phone.String()) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
 		<span class="wp-thread-text">
 			<strong class="wp-thread-remote">{ contact.Name }</strong>
 			<span class="wp-muted">{ contact.Phone.String() }</span>

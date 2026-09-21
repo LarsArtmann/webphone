@@ -57,3 +57,12 @@ func avatarHue(nameOrNumber string) int {
 	}
 	return sum
 }
+
+// avatarHueClass buckets the stable hue into a 10° CSS class. The page
+// CSP is style-src 'self' without unsafe-inline, so a per-avatar style
+// ATTRIBUTE is blocked by the browser (the hue never applies); the hue
+// rides a wp-av-h<deg> class instead. 10° buckets are visually
+// indistinguishable from the exact hue.
+func avatarHueClass(nameOrNumber string) string {
+	return "wp-av-h" + fmtInt(avatarHue(nameOrNumber)/10*10)
+}

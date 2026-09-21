@@ -82,10 +82,11 @@ els.loginForm.addEventListener("submit", async (event) => {
     els.loginView.hidden = true;
     els.phoneView.hidden = false;
     log(`connected via ${websocketUrl}`);
-    // Phone-API backed panels: voicemail badge, server history, contacts.
+    // Only the shared-contacts render runs here: it needs no server
+    // session. The session-gated panels (voicemail badge, server
+    // history) are refreshed by the wp:session-opened listener — firing
+    // them at submit raced the session POST and 401'd on every login.
     renderContacts();
-    refreshVoicemail();
-    refreshServerHistory();
   } catch (err) {
     els.loginError.textContent = t("loginError")(err.message);
     els.loginError.hidden = false;
@@ -102,7 +103,30 @@ document.addEventListener("wp:session-opened", (event) => {
   if (did && !els.whoami.textContent.includes(did)) {
     els.whoami.textContent += ` · ${did}`;
   }
+  // Session-gated panels wait for the cookie (session.js dispatches this
+  // only after the cookie is minted and the fresh CSRF adopted).
+  refreshVoicemail();
+  refreshServerHistory();
+  restoreTabsAfterSignIn();
 });
+
+// A signed-out shell renders the welcome hint in the tab area. Once the
+// session exists, load the default tab — what a signed-in page render
+// would show — so the tabs work without a manual reload after the
+// island login. Mirrors the lang-change seam: htmx.ajax, no reload.
+function restoreTabsAfterSignIn() {
+  const content = document.querySelector("#tab-content");
+  if (!content || !content.querySelector(".wp-welcome")) return;
+  if (!window.htmx) return;
+  window.htmx.ajax("GET", "/partials/messages", {
+    target: "#tab-content",
+    swap: "innerHTML",
+  });
+  window.htmx.ajax("GET", "/partials/nav?active=messages", {
+    target: "#wp-nav",
+    swap: "morph:innerHTML",
+  });
+}
 
 els.logout.addEventListener("click", async () => {
   try {
