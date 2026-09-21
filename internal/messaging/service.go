@@ -6,7 +6,6 @@ package messaging
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -302,6 +301,3 @@ func sanitizeFilename(name string) string {
 	}
 	return name
 }
-
-// ErrThreadNotFound marks a missing thread for handlers mapping to 404.
-var ErrThreadNotFound = errors.New("thread not found")

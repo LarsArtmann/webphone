@@ -322,6 +322,13 @@ D3 (2026-09-20): matches the `#log` operator-channel precedent; the
 island's user-facing copy is fully en/de. Localizing shell copy only if
 a tabs-style per-extension UX demand shows up.
 
+The operator-facing semantics of these surfaces — status meanings, the
+gateway/bridge string contract (rendered verbatim in webhook mode), and
+the `family=` log vocabulary — are cross-documented in the stack
+runbook: `nix-international-telephony/docs/ops-runbook.md`
+§ "Webphone error contract" (2026-09-22). Keep both sides in sync when
+error copy or families change.
+
 **BDD posture** (plan T13): Ginkgo where it earns its keep — the
 session behavior suites (`session_behaviors_test.go`) describe
 observable auth behavior; table-driven Go tests everywhere else where
