@@ -461,8 +461,10 @@ const openapiSpec = `{
   }
 }`
 
-func openapiHandler(w http.ResponseWriter, _ *http.Request) {
+func openapiHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/schema+json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	_, _ = w.Write([]byte(openapiSpec)) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := w.Write([]byte(openapiSpec)); err != nil {
+		slog.WarnContext(r.Context(), "openapi spec write failed mid-response", "error", err)
+	}
 }

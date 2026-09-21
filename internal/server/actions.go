@@ -147,7 +147,9 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = document.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", "fax-"+job.ID.String()+".pdf"))
-	_, _ = io.Copy(w, document) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := io.Copy(w, document); err != nil {
+		slog.WarnContext(r.Context(), "fax document stream broke mid-response", "error", err)
+	}
 }
 
 // attachment streams one MMS attachment (session-gated, owner-scoped).
@@ -174,7 +176,9 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = file.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 	w.Header().Set("Content-Type", attachment.MimeType)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", attachment.Name))
-	_, _ = io.Copy(w, file) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := io.Copy(w, file); err != nil {
+		slog.WarnContext(r.Context(), "attachment stream broke mid-response", "error", err)
+	}
 }
 
 // deleteVoicemail removes a message through the phone API.
@@ -293,7 +297,7 @@ type sendFailureKeys struct {
 // advice. ErrInvalidSend/ErrInvalidFax never reach the system-side arm —
 // their fast path renders the service's own reason at 422.
 func classifyForUser(err error) int {
-	if _, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
+	if _, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok { //nolint:erraudit // presence check only: the typed value is intentionally unused, ok is checked
 		return http.StatusBadGateway
 	}
 	if errorfamily.Classify(err) == errorfamily.Rejection {
@@ -357,7 +361,9 @@ func (h *handlers) renderPanelError(
 	if err := component.Render(r.Context(), w); err != nil {
 		return
 	}
-	_, _ = fmt.Fprintf(w, `<p class="wp-error" role="alert">%s</p>`, templ.EscapeString(message)) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := fmt.Fprintf(w, `<p class="wp-error" role="alert">%s</p>`, templ.EscapeString(message)); err != nil {
+		slog.WarnContext(r.Context(), "error banner write failed after committed response", "error", err)
+	}
 }
 
 // markThreadRead records the read marker for one thread — the live-swap
@@ -430,14 +436,23 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	imported := 0
+	skipped, firstSkip := 0, ""
 	for _, card := range vcard.Decode(data) {
 		phone, err := domain.ParsePhone(card.Number)
-		if err != nil { //nolint:erraudit // batch import: invalid cards are skipped, not surfaced
+		if err != nil { //nolint:erraudit // batch import: counted + first reason feeds the one-line import log (T05)
+			skipped++
+			if firstSkip == "" {
+				firstSkip = "invalid number: " + card.Number
+			}
 			continue
 		}
 		// The dialable alphabet also carries letters (SIP user parts);
 		// a vCard number without a single digit can never be dialed.
 		if !strings.ContainsAny(phone.String(), "0123456789") {
+			skipped++
+			if firstSkip == "" {
+				firstSkip = "no digits: " + card.Number
+			}
 			continue
 		}
 		contact := domain.Contact{
@@ -447,10 +462,21 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 			Phone:     phone,
 			CreatedAt: time.Now(),
 		}
-		if err := h.deps.Contacts.Save(r.Context(), contact); err != nil { //nolint:erraudit // batch import: per-card store failures skip the card, not the batch
+		if err := h.deps.Contacts.Save(r.Context(), contact); err != nil { //nolint:erraudit // batch import: counted + first reason (incl. the store error) feeds the one-line import log (T05)
+			skipped++
+			if firstSkip == "" {
+				firstSkip = "store rejected " + phone.String() + ": " + err.Error()
+			}
 			continue
 		}
 		imported++
+	}
+	if skipped > 0 {
+		// One line, not one per card: the count sizes the problem, the
+		// first reason names it (SUPERB error-excellence T05 — skips are
+		// invisible to the operator by design, but never to the log).
+		slog.WarnContext(r.Context(), "contacts import skipped cards",
+			"skipped", skipped, "imported", imported, "first_reason", firstSkip)
 	}
 	if imported == 0 {
 		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity,
@@ -478,5 +504,7 @@ func (h *handlers) exportContacts(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/vcard; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="webphone-contacts.vcf"`)
-	_, _ = w.Write(vcard.Encode(cards)) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := w.Write(vcard.Encode(cards)); err != nil {
+		slog.WarnContext(r.Context(), "contacts export stream broke mid-response", "error", err)
+	}
 }

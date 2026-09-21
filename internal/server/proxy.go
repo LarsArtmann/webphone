@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -47,7 +48,10 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-	_, _ = io.Copy(w, resp.Body) //nolint:erraudit // best-effort write; the response is already committed
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		slog.WarnContext(r.Context(), "phone api proxy stream broke mid-response",
+			"error", err, "upstream_status", resp.StatusCode)
+	}
 
 	// The island polls its voicemail after registration and after each
 	// ended call — exactly when a deposit may have landed. Forwarding

@@ -443,20 +443,34 @@ Ginkgo DescribeTable when the subject is a state machine.
   NO nolint — its remaining policy-opinion findings are triaged as a
   documented skip in `.buildflow.yml` (same for go-structure-linter,
   cqrs-lint, nix-hash-fix).
-- erraudit full-flag triage (2026-09-21, `--type-aware
-  --enforce-go-error-family --no-suppress --enforce-samber-oops
-  --enforce-generic-return`): 202 findings, ZERO real. All 46
-  ignored-error sites + 2 silent-swallows carry reasoned nolints
-  (audit-mode `--no-suppress` resurfaces documented suppressions by
-  design); the 6 then-bare read-side `defer Close` sites are now
-  documented too; `erraudit tree` is clean (4 top-level sentinels,
-  depth 0). The ~114 `--enforce-samber-oops` + `--enforce-generic-return`
-  findings are a policy this repo never adopted — samber/oops is NOT a
-  dependency and the error taxonomy rides typed errors
-  (`ErrInvalidSend`, `ErrProviderRejected`, store sentinels) + `%w`
-  wrapping; converting 111 `fmt.Errorf` sites would be churn without a
-  behavioral win. Deliberate non-fix — do NOT drive those flags to zero
-  in an agent session.
+- **The erraudit bar (defined 2026-09-22, SUPERB error-excellence T08)**
+  — three tiers, so a green run MEANS something:
+  1. ENFORCED (gates; must exit 0): buildflow's own `erraudit` step,
+     CLI equivalent `GOTOOLCHAIN=auto GOEXPERIMENT=jsonv2 erraudit
+     ./... --type-aware --disable-extensions`. Green as of 2026-09-22
+     (0 findings; reasoned `//nolint:erraudit` honored).
+  2. FAMILY-ADOPTION TRACKING (audit-only): add `--enforce-go-error-family`
+     → 102 `stdlib_constructor` findings, ALL outside the two outbound
+     seams (store/session/config/pbx/domain/main still use `fmt.Errorf`).
+     The seams (gateway post/SendMessage/SendFax, messaging.Send,
+     fax.Send) + the actions.go `classifyForUser` ladder are converted
+     (decision record in
+     `docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`).
+     The count must SHRINK over time and NEVER grow: new error
+     constructors in already-converted layers use `errorfamily`.
+     Whole-repo conversion is deliberate per-layer future work — not
+     agent-session churn.
+  3. OWNER FULL AUDIT (never gate on it): the full flag list +
+     `--no-suppress --enforce-samber-oops --enforce-generic-return`
+     resurfaces documented suppressions and never-adopted policies by
+     design (2026-09-21 triage: 202 findings, ZERO real; oops is not a
+     dependency; generic-return stays audit-only per guardrail).
+  Historical: the 46 ignored-error sites + 2 swallows + 6 read-side
+  closes keep their reasoned nolints; `erraudit tree` is clean (4
+  top-level sentinels, depth 0).
+- Monthly erraudit cadence (T17): re-run tiers 1+2 monthly (or after any
+  error-path train) and update the tier-2 count here — the bar rots the
+  moment nobody re-measures it.
 - htmx loads deferred from `headExtras`, after the `htmx-config` meta
   that disables its inline indicator-style injection (`app.css` ships
   the same rules so hx-indicator keeps working). The meta must precede
