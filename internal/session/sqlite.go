@@ -110,3 +110,26 @@ func (s *SQLiteStore) Get(token string) (Session, bool) {
 func (s *SQLiteStore) Delete(token string) {
 	_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token) //nolint:erraudit // logout stays best-effort, parity with MemStore
 }
+
+// Renew applies the sliding-renewal policy: Get enforces expiry (lazy
+// delete of a row that died unseen), renewDue decides, the UPDATE
+// persists. A lost update race at worst keeps the older expiry — the
+// next past-half-life request renews again.
+func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, bool) {
+	sess, ok := s.Get(token)
+	if !ok {
+		return Session{}, false
+	}
+	extended, due := renewDue(sess, idle, maxAge, time.Now())
+	if !due {
+		return Session{}, false
+	}
+	if _, err := s.db.Exec(
+		`UPDATE sessions SET expires_at = ? WHERE token = ?`,
+		extended.UnixMilli(), token,
+	); err != nil {
+		return Session{}, false
+	}
+	sess.ExpiresAt = extended
+	return sess, true
+}

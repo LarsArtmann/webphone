@@ -86,6 +86,32 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	_ = json.MarshalWrite(w, response) //nolint:erraudit // best-effort write; the response is already committed
 }
 
+// getSession resumes a live session for an island page load: the
+// browser probes BEFORE rendering the login form, and a live cookie
+// gets the session's SIP credentials back so the browser-side SIP
+// REGISTER re-runs without the user typing anything. The password is
+// the session's own payload (the row already carries it for the
+// phone-api proxy; the browser REGISTER needs it by design) and it is
+// served only to the cookie that proved itself at login. no-store keeps
+// the credential out of every cache.
+func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	response := map[string]string{
+		"extension": sess.Extension.String(),
+		"password":  sess.Password,
+	}
+	if did := h.identityFor(sess.Extension); did != "" {
+		response["did"] = did
+	}
+	_ = json.MarshalWrite(w, response) //nolint:erraudit // best-effort write; the response is already committed
+}
+
 // destroySession signs the tab session out (island logout).
 func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 	h.deps.Sessions.Delete(session.TokenFromRequest(r))

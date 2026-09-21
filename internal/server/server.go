@@ -137,6 +137,12 @@ type Deps struct {
 
 // New builds the full http.Handler.
 func New(deps Deps) http.Handler {
+	// Session lifetime policy: the sliding idle window plus the absolute
+	// cap. The config validates Max >= Idle; the normalized() guard is
+	// the belt-and-suspenders for Deps-built instances (tests) whose
+	// config skipped validation — they degrade to the pre-sliding
+	// behavior instead of renewing against a zero cap.
+	lifetime := session.Lifetime{Idle: deps.Config.SessionTTL, Max: deps.Config.SessionMaxTTL}
 	h := &handlers{
 		deps:          deps,
 		loginLimiter:  newKeyedRateLimiter(loginLimit, loginBurst),
@@ -188,6 +194,10 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/import", h.importContacts)
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
+	// GET is the island's boot resume: a live cookie gets its SIP
+	// credentials back and the page opens signed-in, no form. Read-only
+	// (no CSRF surface), self-gated through requireSession.
+	protected.HandleFunc("GET /api/session", h.getSession)
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
@@ -199,7 +209,7 @@ func New(deps Deps) http.Handler {
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
-	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI)))
+	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
 	// response shape matches every other full page.
@@ -219,7 +229,7 @@ func New(deps Deps) http.Handler {
 	// unlimited streams. One bucket per peer host reuses the hook budget
 	// (60/min burst 60) — generous for real tabs, bounded for churn.
 	open.Handle("GET /events",
-		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events))))
+		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events), lifetime)))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
 	// tells the truth about the two backing resources the app needs. Each
 	// check is bounded (see boundedCheck) so a hung resource degrades the
@@ -257,7 +267,7 @@ func New(deps Deps) http.Handler {
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
-	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected)))
+	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime))
 	root.Handle("/htmx.min.js", open)
 	root.Handle("/htmx-ext.js", open)
 	root.Handle("/assets/", open)
@@ -386,6 +396,29 @@ const openapiSpec = `{
           "401": {"description": "Credentials rejected by the PBX directory"},
           "502": {"description": "PBX credential verification unavailable"},
           "500": {"description": "Session store failure"}
+        }
+      },
+      "get": {
+        "operationId": "resumeSession",
+        "summary": "Resume a live session (island boot: returns the SIP credentials for the silent re-register)",
+        "responses": {
+          "200": {
+            "description": "The cookie's live session; the browser re-registers without the login form",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["extension", "password"],
+                  "properties": {
+                    "extension": {"type": "string", "examples": ["1001"]},
+                    "password": {"type": "string", "format": "password"},
+                    "did": {"type": "string", "description": "Presented PSTN number (config identities), when known"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "No live session — the island shows the login form"}
         }
       },
       "delete": {

@@ -48,12 +48,65 @@ func (s Session) PBXCredentials() pbx.Credentials {
 	return pbx.Credentials{Extension: s.Extension.String(), Password: s.Password}
 }
 
-// Store is the session persistence seam: mint, look up, drop.
+// Store is the session persistence seam: mint, look up, renew, drop.
 // Attach/Require are package-level functions over any Store.
 type Store interface {
 	Create(extension domain.Extension, password string) (string, error)
 	Get(token string) (Session, bool)
+	// Renew applies one sliding-renewal decision (see renewDue) and
+	// returns the refreshed session; ok=false when the token is absent,
+	// expired, or its expiry is already where the policy wants it.
+	Renew(token string, idle, maxAge time.Duration) (Session, bool)
 	Delete(token string)
+}
+
+// Lifetime is the session-expiry policy. Idle is the sliding idle
+// window: activity past its halfway point extends the session back to
+// the full window, so a device in regular use never re-signs-in. Max is
+// the ABSOLUTE lifetime measured from sign-in — the unconditional bound
+// that expires even a continuously renewed (or stolen) session.
+type Lifetime struct {
+	Idle time.Duration
+	Max  time.Duration
+}
+
+// normalized guards the invariants the renewal math relies on. A
+// missing or mis-ordered Max degrades to Max = Idle (the pre-sliding
+// behavior: absolute lifetime equals one idle window) instead of
+// capping every session at sign-in time; a non-positive Idle disables
+// renewal entirely.
+func (l Lifetime) normalized() Lifetime {
+	if l.Idle <= 0 {
+		return Lifetime{}
+	}
+	if l.Max < l.Idle {
+		l.Max = l.Idle
+	}
+	return l
+}
+
+// renewDue computes one sliding-renewal decision: extend the idle
+// window back to full, never past the absolute cap, and only once per
+// half-life — a request while more than half the window remains writes
+// nothing (the throttle that keeps a busy tab from touching the store
+// on every request). ok=false means keep the current expiry. A
+// cap-bound session simply stops extending: the cap is what re-signs
+// even a continuously active device in.
+func renewDue(sess Session, idle, maxAge time.Duration, now time.Time) (time.Time, bool) {
+	if !now.Before(sess.ExpiresAt) {
+		return time.Time{}, false
+	}
+	extended := now.Add(idle)
+	if hardCap := sess.CreatedAt.Add(maxAge); extended.After(hardCap) {
+		extended = hardCap
+	}
+	if !extended.After(sess.ExpiresAt) {
+		return time.Time{}, false // already at (or past) the cap
+	}
+	if sess.ExpiresAt.Sub(now) > idle/2 {
+		return time.Time{}, false // still young: throttle the write
+	}
+	return extended, true
 }
 
 // MemStore keeps sessions in a map with TTL-based expiry. Sessions are
@@ -118,6 +171,28 @@ func (s *MemStore) Delete(token string) {
 	s.mu.Unlock()
 }
 
+// Renew applies the sliding-renewal policy to one live session.
+func (s *MemStore) Renew(token string, idle, maxAge time.Duration) (Session, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sess, ok := s.sessions[token]
+	if !ok {
+		return Session{}, false
+	}
+	now := time.Now()
+	if !now.Before(sess.ExpiresAt) {
+		delete(s.sessions, token)
+		return Session{}, false
+	}
+	extended, due := renewDue(sess, idle, maxAge, now)
+	if !due {
+		return Session{}, false
+	}
+	sess.ExpiresAt = extended
+	s.sessions[token] = sess
+	return sess, true
+}
+
 // gcLocked removes expired sessions; caller holds the write lock.
 func (s *MemStore) gcLocked(now time.Time) {
 	for token, sess := range s.sessions {
@@ -149,12 +224,33 @@ func TokenFromRequest(r *http.Request) string {
 	return cookie.Value
 }
 
+// lookup resolves (and maybe renews) the session for one request: the
+// shared body of Attach and Require. A true renewal re-issues the
+// cookie with the server's remaining lifetime, keeping the Max-Age
+// parity the login SetCookie established — without it the browser
+// cookie would die mid-session while the row lives on.
+func lookup(store Store, w http.ResponseWriter, r *http.Request, lifetime Lifetime) (Session, bool) {
+	token := TokenFromRequest(r)
+	sess, ok := store.Get(token)
+	if !ok || lifetime.Idle <= 0 {
+		return sess, ok
+	}
+	if renewed, did := store.Renew(token, lifetime.Idle, lifetime.Max); did {
+		SetCookie(w, r, token, time.Until(renewed.ExpiresAt))
+		return renewed, true
+	}
+	return sess, ok
+}
+
 // Attach stashes a live session (when the request carries one) into the
 // context and always continues — pages render for anonymous visitors too.
-// Handlers that need a session call From and reject themselves.
-func Attach(store Store, next http.Handler) http.Handler {
+// Handlers that need a session call From and reject themselves. A positive
+// Lifetime.Idle slides the session forward on activity past the window's
+// halfway point.
+func Attach(store Store, next http.Handler, lifetime Lifetime) http.Handler {
+	lifetime = lifetime.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if sess, ok := store.Get(TokenFromRequest(r)); ok {
+		if sess, ok := lookup(store, w, r, lifetime); ok {
 			r = r.WithContext(With(r.Context(), sess))
 		}
 		next.ServeHTTP(w, r)
@@ -162,10 +258,12 @@ func Attach(store Store, next http.Handler) http.Handler {
 }
 
 // Require gates a handler behind a live session: anonymous requests get a
-// 401.
-func Require(store Store, next http.Handler) http.Handler {
+// 401. Slides the session forward like Attach (an active SSE feed or
+// phone-api call is activity too).
+func Require(store Store, next http.Handler, lifetime Lifetime) http.Handler {
+	lifetime = lifetime.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess, ok := store.Get(TokenFromRequest(r))
+		sess, ok := lookup(store, w, r, lifetime)
 		if !ok {
 			http.Error(w, SignInFirst, http.StatusUnauthorized)
 			return

@@ -37,7 +37,14 @@ type Config struct {
 	SIPDomain     string                 `json:"sip_domain" koanf:"sip_domain"`
 	WebsocketPath string                 `json:"websocket_path" koanf:"websocket_path"`
 	PhoneAPIURL   string                 `json:"phone_api_url" koanf:"phone_api_url"`
-	SessionTTL    time.Duration          `json:"session_ttl" koanf:"session_ttl"`
+	// SessionTTL is the SLIDING idle window: activity past its halfway
+	// point extends the session back to the full window, so a device in
+	// regular use never re-signs-in (the island resumes from the cookie).
+	SessionTTL time.Duration `json:"session_ttl" koanf:"session_ttl"`
+	// SessionMaxTTL caps a session's ABSOLUTE lifetime from sign-in. The
+	// idle window renews; this bound never does — it is what expires even
+	// a continuously used (or stolen) session and re-signs the device in.
+	SessionMaxTTL time.Duration          `json:"session_max_ttl" koanf:"session_max_ttl"`
 	ICEServers    []ICEServer            `json:"ice_servers" koanf:"ice_servers"`
 	Contacts      []domain.SharedContact `json:"contacts" koanf:"contacts"`
 	// Identities maps an extension to the PSTN number (DID) its calls and
@@ -87,7 +94,8 @@ func defaults() Config {
 		Addr:          ":8080",
 		DataDir:       "/var/lib/webphone",
 		WebsocketPath: "/sip",
-		SessionTTL:    24 * time.Hour,
+		SessionTTL:    7 * 24 * time.Hour,
+		SessionMaxTTL: 30 * 24 * time.Hour,
 		Gateway:       Gateway{Mode: GatewayLoopback},
 	}
 }
@@ -169,6 +177,9 @@ func validate(cfg Config) error {
 	}
 	if cfg.SessionTTL <= 0 {
 		return fmt.Errorf("session_ttl must be positive")
+	}
+	if cfg.SessionMaxTTL < cfg.SessionTTL {
+		return fmt.Errorf("session_max_ttl (%s) must be >= session_ttl (%s): the absolute cap cannot be shorter than the idle window it bounds", cfg.SessionMaxTTL, cfg.SessionTTL)
 	}
 	for _, origin := range cfg.CSRF.TrustedOrigins {
 		u, err := url.Parse(origin)
