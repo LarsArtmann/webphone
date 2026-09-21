@@ -8,6 +8,8 @@ package gateway
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -58,10 +60,63 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected provider rejection error")
 		}
+		rejected, ok := err.(*ErrProviderRejected)
+		if !ok {
+			t.Fatalf("expected *ErrProviderRejected for a non-2xx answer, got %T: %v", err, err)
+		}
 		for _, want := range []string{"HTTP 502", "upstream number blocked"} {
 			if !strings.Contains(err.Error(), want) {
 				t.Errorf("error %q missing %q", err.Error(), want)
 			}
+		}
+		if rejected.Detail != "upstream number blocked" {
+			t.Errorf("detail %q lost the provider's own text", rejected.Detail)
+		}
+	})
+
+	t.Run("a JSON error envelope unwraps to the provider's reason", func(t *testing.T) {
+		// The bridge answers rejections as {"error": "…"} (2026-09-21
+		// self-send burn: Telnyx 400 "Source and destination cannot be
+		// the same number"). The user must see the reason, not the
+		// envelope, and NOT the generic "gateway unreachable" banner.
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadGateway)
+			_, _ = w.Write([]byte(`{"error": "telnyx api answered 400: Source and destination cannot be the same number: +17287289311"}`))
+		}))
+		defer srv.Close()
+		gw := webhookGateway(srv.URL, "s", srv.Client())
+		_, err := gw.SendMessage(context.Background(), OutboundMessage{
+			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+		})
+		rejected, ok := err.(*ErrProviderRejected)
+		if !ok {
+			t.Fatalf("expected *ErrProviderRejected, got %T: %v", err, err)
+		}
+		if strings.Contains(rejected.Detail, `{"error"`) {
+			t.Errorf("detail %q kept the JSON envelope", rejected.Detail)
+		}
+		if !strings.Contains(rejected.Detail, "cannot be the same number") {
+			t.Errorf("detail %q lost the provider's reason", rejected.Detail)
+		}
+	})
+
+	t.Run("provider rejection survives error wrapping for errors.AsType", func(t *testing.T) {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "policy refusal", http.StatusForbidden)
+		}))
+		defer srv.Close()
+		gw := webhookGateway(srv.URL, "s", srv.Client())
+		_, err := gw.SendMessage(context.Background(), OutboundMessage{
+			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+		})
+		if err == nil {
+			t.Fatal("expected an error")
+		}
+		// messaging.Send wraps with fmt.Errorf("gateway: %w", err) — the
+		// actions layer must still be able to classify it.
+		wrapped := fmt.Errorf("gateway: %w", err)
+		if _, ok := errors.AsType[*ErrProviderRejected](wrapped); !ok {
+			t.Errorf("wrapped rejection no longer matches errors.AsType: %v", wrapped)
 		}
 	})
 

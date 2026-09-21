@@ -32,6 +32,33 @@ type Webhook struct {
 	provider
 }
 
+// ErrProviderRejected is a provider ANSWER refusing the send (non-2xx with
+// a detail body) — e.g. "Source and destination cannot be the same number".
+// Unlike transport failures these are user-actionable and safe to surface:
+// the detail comes from the provider's own rejection, not our internals.
+type ErrProviderRejected struct {
+	Status int
+	Detail string
+}
+
+func (e *ErrProviderRejected) Error() string {
+	return fmt.Sprintf("provider rejected: HTTP %d: %s", e.Status, e.Detail)
+}
+
+// unwrapErrorJSON extracts the inner "error" string from a JSON error body
+// ({"error": "…"}) so users see the reason, not the envelope. Non-JSON
+// bodies pass through trimmed.
+func unwrapErrorJSON(raw []byte) string {
+	trimmed := strings.TrimSpace(string(raw))
+	var envelope struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(trimmed), &envelope); err == nil && strings.TrimSpace(envelope.Error) != "" {
+		return strings.TrimSpace(envelope.Error)
+	}
+	return trimmed
+}
+
 // SendMessage posts the message to the provider.
 func (w *Webhook) SendMessage(ctx context.Context, msg OutboundMessage) (Receipt, error) {
 	body, contentType, err := messageForm("message", msg.Owner.String(), msg.To.String(), msg.Body, msg.Attachments)
@@ -141,7 +168,10 @@ func (p provider) post(
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 512)) //nolint:erraudit // best-effort write; the response is already committed
-		return Receipt{}, fmt.Errorf("provider rejected: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(detail)))
+		return Receipt{}, &ErrProviderRejected{
+			Status: resp.StatusCode,
+			Detail: unwrapErrorJSON(detail),
+		}
 	}
 
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4096))
