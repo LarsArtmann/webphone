@@ -443,6 +443,20 @@ Ginkgo DescribeTable when the subject is a state machine.
   NO nolint — its remaining policy-opinion findings are triaged as a
   documented skip in `.buildflow.yml` (same for go-structure-linter,
   cqrs-lint, nix-hash-fix).
+- erraudit full-flag triage (2026-09-21, `--type-aware
+  --enforce-go-error-family --no-suppress --enforce-samber-oops
+  --enforce-generic-return`): 202 findings, ZERO real. All 46
+  ignored-error sites + 2 silent-swallows carry reasoned nolints
+  (audit-mode `--no-suppress` resurfaces documented suppressions by
+  design); the 6 then-bare read-side `defer Close` sites are now
+  documented too; `erraudit tree` is clean (4 top-level sentinels,
+  depth 0). The ~114 `--enforce-samber-oops` + `--enforce-generic-return`
+  findings are a policy this repo never adopted — samber/oops is NOT a
+  dependency and the error taxonomy rides typed errors
+  (`ErrInvalidSend`, `ErrProviderRejected`, store sentinels) + `%w`
+  wrapping; converting 111 `fmt.Errorf` sites would be churn without a
+  behavioral win. Deliberate non-fix — do NOT drive those flags to zero
+  in an agent session.
 - htmx loads deferred from `headExtras`, after the `htmx-config` meta
   that disables its inline indicator-style injection (`app.css` ships
   the same rules so hx-indicator keeps working). The meta must precede

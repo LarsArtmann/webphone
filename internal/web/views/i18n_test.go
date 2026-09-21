@@ -56,7 +56,7 @@ func TestFormatVerbsMatchAcrossLanguages(t *testing.T) {
 		}
 		if got, want := countFormatVerbs(enValue), countFormatVerbs(deValue); got != want {
 			t.Errorf(
-				"%q: EN carries %d format verb(s), DE carries %d — one language renders %!s(MISSING)",
+				"%q: EN carries %d format verb(s), DE carries %d — one language renders %%!s(MISSING)",
 				key, got, want,
 			)
 		}
