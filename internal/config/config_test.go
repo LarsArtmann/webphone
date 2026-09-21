@@ -56,8 +56,11 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.WebsocketPath != "/sip" {
 		t.Errorf("websocket_path: got %q", cfg.WebsocketPath)
 	}
-	if cfg.SessionTTL != 24*time.Hour {
-		t.Errorf("session_ttl: got %s", cfg.SessionTTL)
+	if cfg.SessionTTL != 7*24*time.Hour {
+		t.Errorf("session_ttl: got %s, want the 7d sliding idle window", cfg.SessionTTL)
+	}
+	if cfg.SessionMaxTTL != 30*24*time.Hour {
+		t.Errorf("session_max_ttl: got %s, want the 30d absolute cap", cfg.SessionMaxTTL)
 	}
 	if cfg.Gateway.Mode != GatewayLoopback {
 		t.Errorf("gateway.mode: got %q", cfg.Gateway.Mode)
@@ -78,6 +81,8 @@ func TestLoadEnvOverrides(t *testing.T) {
 	t.Setenv("WEBPHONE_GATEWAY__MODE", "webhook")       // double underscore nests
 	t.Setenv("WEBPHONE_GATEWAY__WEBHOOK_URL", "http://provider.example:9000")
 	t.Setenv("WEBPHONE_GATEWAY__WEBHOOK_SECRET", "provider-secret")
+	t.Setenv("WEBPHONE_SESSION_TTL", "24h")
+	t.Setenv("WEBPHONE_SESSION_MAX_TTL", "2160h")
 
 	cfg, err := Load()
 	if err != nil {
@@ -97,6 +102,12 @@ func TestLoadEnvOverrides(t *testing.T) {
 	}
 	if cfg.Gateway.WebhookSecret != "provider-secret" {
 		t.Errorf("gateway.webhook_secret: got %q", cfg.Gateway.WebhookSecret)
+	}
+	if cfg.SessionTTL != 24*time.Hour {
+		t.Errorf("session_ttl: got %s", cfg.SessionTTL)
+	}
+	if cfg.SessionMaxTTL != 90*24*time.Hour {
+		t.Errorf("session_max_ttl: got %s", cfg.SessionMaxTTL)
 	}
 }
 
@@ -176,6 +187,14 @@ func TestLoadRejectsInvalidConfigs(t *testing.T) {
 			name:    "webhook mode without url",
 			env:     map[string]string{"WEBPHONE_GATEWAY__MODE": "webhook"},
 			wantErr: "webhook_url is required",
+		},
+		{
+			name: "absolute cap below the idle window",
+			env: map[string]string{
+				"WEBPHONE_SESSION_TTL":     "48h",
+				"WEBPHONE_SESSION_MAX_TTL": "24h",
+			},
+			wantErr: "session_max_ttl (24h0m0s) must be >= session_ttl (48h0m0s)",
 		},
 		{
 			name:    "malformed json file",

@@ -194,3 +194,78 @@ func TestSQLiteStoreSatisfiesStoreSeam(t *testing.T) {
 	}
 	var _ Store = store
 }
+
+// TestSQLiteSessionRenewExtendsAndCaps pins the persisted sliding
+// renewal: a past-half-life row's new expiry lands in the DB (not just
+// in the return value), the throttle suppresses young renewals, a
+// session older than its absolute cap can never renew again, and
+// expired/unknown tokens read dead.
+func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
+	ext := testExtension(t)
+	store, err := NewSQLiteStore(openTestDB(t), time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const idle = time.Hour
+	const maxAge = 30 * 24 * time.Hour
+
+	token, err := store.Create(ext, "pw")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Backdate to 20m remaining: past the half-life, so the first renew
+	// extends to (approximately) the full idle window — and persists it.
+	if _, err := store.db.Exec(
+		`UPDATE sessions SET expires_at = ? WHERE token = ?`,
+		time.Now().Add(20*time.Minute).UnixMilli(), token,
+	); err != nil {
+		t.Fatal(err)
+	}
+	renewed, ok := store.Renew(token, idle, maxAge)
+	if !ok {
+		t.Fatal("past-half-life session did not renew")
+	}
+	if until := time.Until(renewed.ExpiresAt); until < 55*time.Minute || until > idle {
+		t.Errorf("renewed expiry %s from now, want ~the full idle window", until)
+	}
+	persisted, ok := store.Get(token)
+	if !ok || !persisted.ExpiresAt.Equal(renewed.ExpiresAt) {
+		t.Errorf("extension not persisted: got %s, want %s", persisted.ExpiresAt, renewed.ExpiresAt)
+	}
+
+	// Young again: the throttle keeps the immediate second renew off.
+	if _, ok := store.Renew(token, idle, maxAge); ok {
+		t.Error("young session renewed again — the write throttle is broken")
+	}
+
+	// A session whose absolute cap is already in the past (older than
+	// created+max) can never renew: the cap is the unconditional bound.
+	if _, err := store.db.Exec(
+		`UPDATE sessions SET created_at = ?, expires_at = ? WHERE token = ?`,
+		time.Now().Add(-40*24*time.Hour).UnixMilli(), time.Now().Add(20*time.Minute).UnixMilli(), token,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := store.Renew(token, idle, maxAge); ok {
+		t.Error("session older than its absolute cap renewed")
+	}
+
+	// Expired rows read dead on Renew (and are deleted, like on Get).
+	if _, err := store.db.Exec(
+		`UPDATE sessions SET created_at = ?, expires_at = ? WHERE token = ?`,
+		time.Now().Add(-time.Hour).UnixMilli(), time.Now().Add(-time.Minute).UnixMilli(), token,
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := store.Renew(token, idle, maxAge); ok {
+		t.Error("expired session renewed")
+	}
+	if _, ok := store.Get(token); ok {
+		t.Error("expired row survived the Renew read")
+	}
+
+	if _, ok := store.Renew("never-existed", idle, maxAge); ok {
+		t.Error("unknown token renewed")
+	}
+}

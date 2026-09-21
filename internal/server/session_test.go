@@ -94,6 +94,49 @@ func TestSessionCreationFailsClosedWhenPbxDown(t *testing.T) {
 	}
 }
 
+// TestSessionResumeReturnsCredentials pins the boot-resume contract: a
+// live cookie gets the session's SIP credentials back (the browser-side
+// REGISTER needs them to re-register without the login form), the
+// credential answer is never cacheable, and a dead cookie gets the same
+// 401 as every other gated surface.
+func TestSessionResumeReturnsCredentials(t *testing.T) {
+	c := newClient(t)
+
+	if resp, _ := c.do(http.MethodGet, "/api/session", nil, ""); resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("anonymous resume: %d (want 401)", resp.StatusCode)
+	}
+
+	c.login("1001", "pw")
+	resp, body := c.do(http.MethodGet, "/api/session", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("resume with live cookie: %d %s (want 200)", resp.StatusCode, body)
+	}
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("Cache-Control %q, want no-store — a credential answer must never be cached", cc)
+	}
+	var resumed map[string]string
+	if err := json.Unmarshal(body, &resumed); err != nil {
+		t.Fatalf("resume body: %v (%s)", err, body)
+	}
+	if resumed["extension"] != "1001" {
+		t.Errorf("resumed extension %q, want 1001", resumed["extension"])
+	}
+	if resumed["password"] != "pw" {
+		t.Error("resumed password missing — the island could not re-register")
+	}
+	if did, ok := resumed["did"]; ok {
+		t.Errorf("unexpected did %q — no identities are configured in this harness", did)
+	}
+
+	// Logout kills the resume like it kills everything else.
+	if resp, _ := c.do(http.MethodDelete, "/api/session", nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("logout: %d (want 204)", resp.StatusCode)
+	}
+	if resp, _ := c.do(http.MethodGet, "/api/session", nil, ""); resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("resume after logout: %d (want 401)", resp.StatusCode)
+	}
+}
+
 // TestLoginRotatesCsrfToken pins the full rotation lifecycle: login deletes
 // the CSRF cookie (fixation defense) which kills the page's old token, the
 // island adopts the fresh one via GET /api/csrf, and the adopted token
