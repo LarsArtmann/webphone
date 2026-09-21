@@ -85,7 +85,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 
 	t.Run("a JSON-ish non-JSON receipt is rejected, not tokenized", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`{"broken`)) // contains '{', fails JSON decode, not a bare token
+			_, _ = w.Write([]byte(`{"broken`)) // contains '{', fails JSON decode, not a bare token
 		}))
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
@@ -102,7 +102,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 
 	t.Run("an oversized bare token is rejected", func(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(strings.Repeat("t", 4096)))
+			_, _ = w.Write([]byte(strings.Repeat("t", 4096)))
 		}))
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
@@ -120,7 +120,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		// fire-and-forget). If this ever flips to an error, flip the
 		// server-side messaging contract with it.
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`{}`))
+			_, _ = w.Write([]byte(`{}`))
 		}))
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
