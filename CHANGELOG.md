@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2026-09-22 error-excellence train — undeployed, rides the next owner switch)
+
+- Typed error families at the two outbound seams (plan:
+  `docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`):
+  gateway transport/receipt failures classify as Transient, form-build
+  and store failures as Infrastructure, validation and provider 4xx
+  answers as Rejection (`github.com/larsartmann/go-error-family` —
+  already an indirect dependency, promoted to direct at the same
+  version; zero new dependencies). The message and fax handlers now
+  share ONE failure ladder (`sendFailure` + `classifyForUser`) instead
+  of two duplicated type-ladders; every rendered string and status is
+  byte-identical to before (pinned by tests) and the family rides the
+  log line (`family=rejection|transient|infrastructure`).
+- Boundary observability (logs only, zero behavior change): mid-stream
+  response-write failures (fax/attachment/vCard streams, phone-api
+  proxy, error banner, openapi) and contact-import skips (count +
+  first reason in one line) are now visible in the journal instead of
+  silently discarded.
+- The erraudit bar is defined (AGENTS): the enforced set
+  (`--type-aware`) gates green; `--enforce-go-error-family` becomes
+  family-adoption tracking (102 stdlib-constructor sites remain
+  outside the seams — must shrink, never grow); oops/generic-return
+  stay owner-audit-only.
+
+### Changed (same train)
+
+- Removed the dead `messaging.ErrThreadNotFound` sentinel (zero
+  producers, zero consumers — thread absence already flows through
+  `store.ErrNotFound`).
+
 ### Added
 
 - Sign-in once per device, not once per visit: the island now RESUMES a

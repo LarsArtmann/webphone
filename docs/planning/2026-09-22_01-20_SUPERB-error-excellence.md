@@ -304,3 +304,30 @@ Decisions that fell out of execution:
    `internal/fax/family_test.go` (validation → Rejection through wraps),
    `internal/server/classify_test.go` (family→status table + unknown →
    502 generic).
+
+## Execution status (2026-09-22, this train)
+
+Executed in one session by owner instruction ("get the whole TODO list
+done"), waiving D1's wait-for-switch ordering:
+
+- DONE: T02, T03, T04 (families at the seams + one ladder), T05
+  (boundary logs webphone AND bridge), T06 (oversize 422 pre-check),
+  T07 (HEIC fix-the-phone copy), T08 (erraudit bar, enforced set
+  green), T09 (sentinel review — one DEAD sentinel removed:
+  `messaging.ErrThreadNotFound`; `store.ErrNotFound`/`sql.ErrNoRows`
+  earn their keep; the `errors.Join` site survives `errors.Is` by
+  construction), T13 (fax parity: structural now — one shared ladder;
+  asymmetry note: fax persists `job.Error`, messages do not),
+  T14 (island error copy: en/de parity test-enforced, 9/9 island tests
+  green, no drift found), T16 (ops-runbook § "Webphone error contract"
+  + AGENTS cross-link), T17 (monthly cadence line in AGENTS).
+- T10 gates: webphone buildflow 52 success / 0 failed (no-cache);
+  13 packages `go test` green; key flake checks re-built
+  (webphone sandbox tests, island-lint, format); smoke 38+4 green.
+  pbx-artmann: 31 bridge + 8 reconcile + 3 backup tests green;
+  ruff/nix fmt clean; both-arch toplevel eval green + x86 build green
+  with byte-truth (new bridge store path `x6w180k…` carries
+  bridge_log/HEIC/declared_length).
+- OWNER-OPEN: T01 (train-1 switch), T11 (train-2 deploy chain — now
+  carries BOTH trains), T12 (carrier-phone MMS isolation test), T15
+  (oops ratification), T18 (post-train-2 verification).
