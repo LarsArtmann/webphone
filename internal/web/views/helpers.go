@@ -3,6 +3,7 @@ package views
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -97,4 +98,25 @@ func isSelfThread(identity string, remote domain.Phone) bool {
 		return false
 	}
 	return own == remote
+}
+
+// formatClock renders a wall-clock time for bubble meta: German gets
+// the 24h convention ("16:09"), English keeps the meridiem form
+// ("4:09PM") it has always shown — English output must stay
+// byte-stable so existing pins and the stack E2E never churn.
+func formatClock(lang Lang, t time.Time) string {
+	if lang == LangDE {
+		return t.Local().Format("15:04")
+	}
+	return t.Local().Format(time.Kitchen)
+}
+
+// formatStamp renders a beyond-24h timestamp for row meta: German gets
+// the numeric date convention ("22.09. 16:09"), English keeps its
+// existing "Sep 22, 16:09".
+func formatStamp(lang Lang, t time.Time) string {
+	if lang == LangDE {
+		return t.Local().Format("02.01. 15:04")
+	}
+	return t.Local().Format("Jan 2, 15:04")
 }

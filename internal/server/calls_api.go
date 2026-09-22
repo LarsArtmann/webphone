@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json/v2"
-	"errors"
 	"log/slog"
 	"net/http"
 

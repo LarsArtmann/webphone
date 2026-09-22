@@ -16,6 +16,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
@@ -53,6 +54,11 @@ func run() error {
 	} else {
 		slog.Info("pbx credential verification", "mode", "enforced")
 	}
+	// CRM integration visibility: off is the default and fine; on means
+	// caller names in tabs and post-call journal entries in the CRM.
+	if cfg.CRM.URL != "" {
+		slog.Info("crm integration", "mode", "enabled", "url", cfg.CRM.URL)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -81,6 +87,12 @@ func run() error {
 		return fmt.Errorf("phone api client: %w", err)
 	}
 
+	crmClient, err := crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
+	if err != nil {
+		return fmt.Errorf("crm client: %w", err)
+	}
+	crmResolver := crm.NewResolver(crmClient, slog.Default())
+
 	// --- services ----------------------------------------------------------
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
@@ -91,7 +103,7 @@ func run() error {
 	}
 
 	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, messages, faxes)
+	notifier := server.NewNotifier(hubs, messages, faxes, crmResolver)
 
 	messageGateway := gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient())
 	faxGateway := gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient())
@@ -110,6 +122,7 @@ func run() error {
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
 		Shared:    cfg.Contacts,
+		CRM:       crmResolver,
 		DB:        db,
 		BlobRoot:  blobs.Root(),
 	})

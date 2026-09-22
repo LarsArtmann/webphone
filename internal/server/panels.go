@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -170,7 +171,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	}
 	numbers := make([]string, 0, len(entries))
 	for _, cdr := range entries {
-		if dial := cdrDialTarget(cdr); dial != "" {
+		if dial := views.CDRDialTarget(cdr); dial != "" {
 			numbers = append(numbers, dial)
 		}
 	}

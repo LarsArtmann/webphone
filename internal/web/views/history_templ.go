@@ -415,7 +415,7 @@ func CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if dial := cdrDialTarget(cdr); dial != "" {
+		if dial := CDRDialTarget(cdr); dial != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<span class=\"wp-row-actions\"><button class=\"wp-mini\" data-dial=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -476,11 +476,12 @@ func cdrTarget(cdr pbx.CDR) string {
 	return firstNonEmpty(cdr.DestinationNumber, "unknown")
 }
 
-// cdrDialTarget returns the dialable number for a call record (the CID
+// CDRDialTarget returns the dialable number for a call record (the CID
 // number of the caller for inbound legs, the dialled destination for
 // outbound legs) or "" when the record carries none — the dial button
-// renders only when a real number exists.
-func cdrDialTarget(cdr pbx.CDR) string {
+// renders only when a real number exists. Exported: the history panel
+// collects the same numbers for CRM name resolution.
+func CDRDialTarget(cdr pbx.CDR) string {
 	if cdr.Context == "public" {
 		return cdr.CallerIDNumber
 	}

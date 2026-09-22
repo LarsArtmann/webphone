@@ -20,12 +20,14 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		WebsocketPath string                 `json:"websocketPath"`
 		ICEServers    []config.ICEServer     `json:"iceServers,omitempty"`
 		PhoneAPI      bool                   `json:"phoneApi"`
+		CRM           bool                   `json:"crm"`
 		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
 		SIPDomain:     h.deps.Config.SIPDomain,
 		WebsocketPath: h.deps.Config.WebsocketPath,
 		ICEServers:    h.deps.Config.ICEServers,
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
+		CRM:           h.deps.CRM.Enabled(),
 		Contacts:      h.deps.Shared,
 	}
 

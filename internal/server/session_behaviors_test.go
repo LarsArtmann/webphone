@@ -50,7 +50,7 @@ func start(t GinkgoTInterface, phoneAPIURL string) *webphone {
 	Expect(err).NotTo(HaveOccurred())
 
 	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db))
+	notifier := server.NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
