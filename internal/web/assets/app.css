@@ -1084,6 +1084,16 @@ select:focus-visible {
   text-decoration-thickness: 1px;
 }
 
+.wp-failed-detail {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--danger);
+}
+
+.wp-retry {
+  margin-top: 6px;
+}
+
 .wp-status-failed {
   color: var(--danger);
 }

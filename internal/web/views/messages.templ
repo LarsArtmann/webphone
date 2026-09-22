@@ -227,6 +227,25 @@ templ Bubble(msg domain.Message, lang Lang) {
 				@OutboundStatusBadge(msg.Status, lang)
 			}
 		</span>
+		if msg.Direction == domain.DirectionOutbound && msg.Status == domain.StatusFailed {
+			if msg.FailureDetail != "" {
+				<p class="wp-failed-detail">{ msg.FailureDetail }</p>
+			}
+			if msg.FailureKind == "transient" {
+				<form
+					class="wp-retry"
+					hx-post="/messages/send"
+					hx-target="#tab-content"
+					hx-swap="innerHTML show:window:bottom"
+					hx-encoding="multipart/form-data"
+					hx-disabled-elt="find button[type=submit]"
+				>
+					<input type="hidden" name="to" value={ msg.Remote.String() }></input>
+					<input type="hidden" name="body" value={ msg.Body }></input>
+					<button type="submit" class="wp-mini">{ T(lang, "retry") }</button>
+				</form>
+			}
+		}
 	</div>
 }
 
@@ -237,7 +256,7 @@ templ OutboundStatusBadge(status domain.OutboundStatus, lang Lang) {
 	case domain.StatusSent:
 		<span class="wp-status wp-status-sent">{ T(lang, "status.sent") }</span>
 	case domain.StatusDelivered:
-		<span class="wp-status wp-status-delivered">{ T(lang, "status.delivered") }</span>
+		<span class="wp-status wp-status-delivered"><span aria-hidden="true">✓ </span>{ T(lang, "status.delivered") }</span>
 	case domain.StatusFailed:
 		<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
 	default:

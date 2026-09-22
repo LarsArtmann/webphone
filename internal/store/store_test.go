@@ -71,7 +71,7 @@ func TestMessageLifecycle(t *testing.T) {
 		t.Fatalf("transcript order wrong: %v", msgs)
 	}
 
-	if err := messages.UpdateOutboundStatus(ctx, outbound.ID, domain.StatusSent, "ref-1"); err != nil {
+	if err := messages.UpdateOutboundStatus(ctx, outbound.ID, domain.StatusSent, "ref-1", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	msgs, _ = messages.ListMessages(ctx, owner, threadID, 10)
@@ -93,12 +93,22 @@ func TestMessageLifecycle(t *testing.T) {
 	if _, err := messages.MessageByProviderRef(ctx, "missing"); err == nil {
 		t.Fatal("unknown provider ref must not resolve")
 	}
-	if err := messages.UpdateOutboundStatus(ctx, byRef.ID, domain.StatusDelivered, byRef.ProviderRef); err != nil {
+	// Failure story (send-failure plan D): a failed verdict persists
+	// kind + detail; a later delivered verdict clears them.
+	if err := messages.UpdateOutboundStatus(ctx, byRef.ID, domain.StatusFailed, byRef.ProviderRef,
+		"provider", "217022: not a valid SMS destination"); err != nil {
 		t.Fatal(err)
 	}
 	msgs, _ = messages.ListMessages(ctx, owner, threadID, 10)
-	if msgs[0].Status != domain.StatusDelivered {
-		t.Fatalf("delivered verdict lost: %+v", msgs[0])
+	if msgs[0].FailureKind != "provider" || msgs[0].FailureDetail != "217022: not a valid SMS destination" {
+		t.Fatalf("failure story lost: %+v", msgs[0])
+	}
+	if err := messages.UpdateOutboundStatus(ctx, byRef.ID, domain.StatusDelivered, byRef.ProviderRef, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	msgs, _ = messages.ListMessages(ctx, owner, threadID, 10)
+	if msgs[0].Status != domain.StatusDelivered || msgs[0].FailureKind != "" || msgs[0].FailureDetail != "" {
+		t.Fatalf("delivered verdict lost or failure not cleared: %+v", msgs[0])
 	}
 
 	if err := messages.MarkThreadRead(ctx, owner, threadID); err != nil {
