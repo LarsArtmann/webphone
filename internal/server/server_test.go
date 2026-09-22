@@ -485,3 +485,39 @@ func TestConfigJSContract(t *testing.T) {
 		}
 	}
 }
+
+func TestMetricsServesAggregatesOnly(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "metric probe"}, nil)
+	if resp, _ := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d", resp.StatusCode)
+	}
+
+	resp, body := c.do(http.MethodGet, "/metrics", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("metrics: %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/plain") {
+		t.Fatalf("metrics content-type: %q", ct)
+	}
+	page := string(body)
+	for _, want := range []string{
+		"webphone_build_info",
+		"webphone_uptime_seconds",
+		"webphone_threads_total 1",
+		"webphone_messages_total 1",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("metrics missing %s:\n%s", want, page)
+		}
+	}
+	// AGGREGATES ONLY: a scraped metrics body must never carry
+	// per-extension or per-number data.
+	for _, leak := range []string{"1001", "+441632960961", "metric probe"} {
+		if strings.Contains(page, leak) {
+			t.Errorf("metrics leaks %q — aggregates only:\n%s", leak, page)
+		}
+	}
+}

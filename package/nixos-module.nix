@@ -403,6 +403,14 @@ in
             proxyWebsockets = false;
             proxyPass = "http://127.0.0.1:${listenPort}";
           };
+          # /metrics: the aggregate-only Prometheus scrape surface —
+          # same fencing story as the probe triple (allow/deny via
+          # extraConfig keeps the scraper list explicit).
+          "/metrics" = {
+            recommendedProxySettings = true;
+            proxyWebsockets = false;
+            proxyPass = "http://127.0.0.1:${listenPort}";
+          };
           # The SIP WebSocket path: upgrade + no read timeout (calls are
           # long-lived; the island's reconnect watchdog handles drops).
           ${cfg.settings.websocket_path} = {

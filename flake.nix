@@ -343,6 +343,7 @@
                   "/healthz"
                   "/livez"
                   "/startupz"
+                  "/metrics"
                 ];
                 unitPresent = evaluated.config.systemd.services ? "webphone";
               in

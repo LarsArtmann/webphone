@@ -475,7 +475,7 @@ func TestFailedBubbleCarriesReasonAndRetry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer hookResp.Body.Close() //nolint:erraudit // test cleanup
+	defer func() { _ = hookResp.Body.Close() }()
 	if hookResp.StatusCode != http.StatusAccepted {
 		t.Fatalf("delivery hook: %d (want 202)", hookResp.StatusCode)
 	}
