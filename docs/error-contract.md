@@ -16,6 +16,7 @@ only user feedback.
 | Network down (island session POST)      | Toast: "Could not reach the server…" + `#log` line                                  | island i18n `sessionNetFailed`         | session.test.mjs                                                |
 | PBX rejects login (401 island REGISTER) | `loginError` inline + `reg-status` pill "registration rejected"                     | island i18n `loginError`/`regRejected` | i18n parity tests                                               |
 | SSE feed dead (3 consecutive errors)    | One warn toast + pill label flips to "not connected"                                | island i18n `sseDropped`/`ssePillDown` | session.test.mjs                                                |
+| CRM call journal failed (502 / network) | Warn toast: "Call not recorded in the CRM (…) — you can log it manually." en/de     | island i18n `crmLogFailed`             | crm_test.go 502 contract + i18n parity tests                    |
 | Unknown path (404)                      | Styled 404 (shell + error panel), status stays 404                                  | server `error.notfound` en/de          | `TestNotFoundRendersTheShell`                                   |
 | Handler panic                           | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface  | cqrshtmx.RecoveryMiddleware            | library + server middleware tests                               |
 
