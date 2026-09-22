@@ -139,4 +139,21 @@ flowchart TD
 
 ## Verdict
 
-(to fill at train end)
+EXECUTED 2026-09-22 (A + B shipped; C/D/E/F planned in TODO_LIST).
+
+- A: all three send forms carry `hx-disabled-elt` (pinned by
+  `TestSendFormsDisableWhileInFlight`).
+- B: `wp-notice` renders on self-threads (both sides parsed; pinned by
+  `TestIsSelfThread` + `TestThreadViewWarnsOnSelfSend`); en/de.
+- Gates: templ generate; `nix fmt` clean; `go test -count=1 ./...`
+  13/13 green; smoke 38/0 (self-booted); erraudit scoped to the
+  touched package: 0 violations.
+- ATTRIBUTED EXTERNAL RED: full buildflow fails on 7 erraudit
+  findings, ALL in the concurrent session's contacts/crm files
+  (contactID context loss in internal/crm/*, contacts_api.go, the
+  contacts paths of actions.go) — not this train's files; the train is
+  not gated on their in-flight work. Re-run buildflow after their
+  train folds.
+- The auto-commit daemon swept most edits into chore commits
+  mid-train; the explicit narrative commit lands at this phase
+  boundary.
