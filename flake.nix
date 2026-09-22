@@ -295,6 +295,10 @@
                             type = lib.types.bool;
                             default = false;
                           };
+                          recommendedGzipSettings = lib.mkOption {
+                            type = lib.types.bool;
+                            default = false;
+                          };
                           virtualHosts = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
                         };
                         systemd.services = lib.mkOption { type = lib.types.attrsOf lib.types.anything; };
@@ -489,7 +493,7 @@
                 {
                   # nginx.gzip.enable must flip nginx's recommended
                   # gzip settings (T27a).
-                  name = "nginx-gzip",
+                  name = "nginx-gzip";
                   path = pkgs.writeText "nginx-gzip" (
                     let
                       gzipEvaluated = lib.evalModules (moduleSet {
@@ -501,7 +505,7 @@
                       "gzip settings wired"
                     else
                       throw "webphone-module check: nginx.gzip.enable did not set recommendedGzipSettings"
-                  ),
+                  );
                 }
                 {
                   # serverTiming.enable must set the env gate the middleware
