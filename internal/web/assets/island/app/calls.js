@@ -433,15 +433,18 @@ export function sendDtmf(tone) {
     });
 }
 
+// placeCall returns whether an INVITE actually went out, so the dial
+// form can clear itself ONLY then (a validation error keeps the typed
+// text for editing).
 export async function placeCall(raw) {
   const userAgent = state.userAgent;
   if (!userAgent) {
     announce(t("notConnected"), "error");
-    return;
+    return false;
   }
   if (!raw) {
     showDialError(t("dialEmpty"));
-    return;
+    return false;
   }
 
   // Pasted numbers routinely carry invisible Unicode direction marks
@@ -455,14 +458,14 @@ export async function placeCall(raw) {
       "warn",
     );
     showDialError(t("nothingDialable"));
-    return;
+    return false;
   }
 
   const uri = SIP.UserAgent.makeURI(`sip:${target}@${sipDomain}`);
   if (!uri) {
     log(`invalid destination "${target}"`, "warn");
     showDialError(t("invalidDest"));
-    return;
+    return false;
   }
 
   const inviter = new SIP.Inviter(userAgent, uri, {
@@ -473,10 +476,12 @@ export async function placeCall(raw) {
   bindSession(inviter, target);
   try {
     await inviter.invite();
+    return true;
   } catch (err) {
     log(`invite failed: ${err.message}`, "error");
     showDialError(t("callFailed")(err.message));
     teardownSession(inviter.id);
+    return false;
   }
 }
 

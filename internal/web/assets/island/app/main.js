@@ -208,7 +208,12 @@ els.logout.addEventListener("click", async () => {
 els.dialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   els.dialError.hidden = true;
-  await placeCall(els.dest.value.trim());
+  const dialed = await placeCall(els.dest.value.trim());
+  // Clear only on a real INVITE: a validation error keeps the typed
+  // text for editing, and a stale value must never append onto the
+  // next dial (the E2E concatenated two extensions exactly once too
+  // often).
+  if (dialed) els.dest.value = "";
 });
 
 els.accept.addEventListener("click", () => {

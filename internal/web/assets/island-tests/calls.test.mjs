@@ -73,3 +73,32 @@ test("the announcement copy exists in both languages", () => {
   assert.match(t("callEstablished")("+49"), /connected/i);
   assert.match(t("callEnded")("+49"), /ended/i);
 });
+
+test("placeCall reports whether the INVITE went out (dest-clear contract)", async () => {
+  const invited = [];
+  globalThis.SIP.Inviter = class {
+    constructor(_ua, uri) {
+      this.uri = uri;
+      this.id = "inv-" + invited.length;
+      this.state = globalThis.SIP.SessionState.Establishing;
+      this.stateChange = { addListener() {} };
+    }
+    async invite() {
+      invited.push(this.uri.toString());
+    }
+  };
+  globalThis.SIP.UserAgent = { makeURI: (raw) => ({ toString: () => raw }) };
+  const { placeCall } = await import("../island/app/calls.js");
+  const { state } = await import("../island/app/state.js");
+
+  state.userAgent = {};
+  assert.equal(await placeCall(""), false, "empty input must not dial");
+  assert.equal(await placeCall("+49 30 x"), false, "nothing dialable must not dial");
+  assert.equal(await placeCall("+4930-123456"), true, "real dial reports true");
+  assert.equal(invited.length, 1, "exactly one INVITE");
+  assert.match(invited[0], /sip:\+4930123456@/, "sanitized target in the URI");
+
+  state.userAgent = null;
+  assert.equal(await placeCall("1001"), false, "no agent must not dial");
+  state.userAgent = {};
+});
