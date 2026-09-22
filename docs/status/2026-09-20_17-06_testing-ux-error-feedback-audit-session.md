@@ -80,43 +80,43 @@ gitleaks.
 
 ## b) PARTIALLY DONE
 
-1. **User-feedback map (server→client) is now complete but not written down in
-   one place.** This session established: 422/502 panel actions → HX-Trigger
-   toast + re-rendered panel body (body NOT swapped by htmx — only the toast is
-   visible); 401 → now toasts client-side; network failure → now toasts; SSE
-   drop → gray pill only; login failure → `#log` line + reg-status pill, no
-   toast. What remains open: one canonical table (AGENTS.md or FEATURES.md)
-   mapping each failure mode → the feedback the user actually sees. Effort: S.
-2. **Coverage baseline** — numbers were measured (server 87.6%, pbx 87.1%,
-   vcard 92.6%, config 83.0%, gateway 76.5%, session 63.1%, store 59.4%,
-   domain 54.1%, views 1.3% direct) but live only in the session chat. Not
-   persisted as a baseline doc, no regression gate. Effort: S–M.
-3. **A11y of the new feedback** — `.wp-error` paragraphs carry `role="alert"`,
-   but toast divs (island `announce`, shell `shellToast`) have NO
-   `role="status"`/`aria-live`, so screen readers never announce them. Noticed
-   during the audit, not fixed. Effort: S.
-4. **Post-train integration follow-through** — served JS changed; per the
-   runbook spirit the stack should re-pin and re-run its browser E2E. NOT done
-   this session (judgment call: DOM contract untouched, only behavior added).
-   Whether JS-only changes require the E2E re-run is question (g) #1. Effort:
-   M (~148 s E2E once booted, plus stack bump dance).
+1. ~~**User-feedback map (server→client) is now complete but not written down in~~ done (done (docs/error-contract.md is the canonical failure→feedback table))
+   ~~one place.** This session established: 422/502 panel actions → HX-Trigger~~
+   ~~toast + re-rendered panel body (body NOT swapped by htmx — only the toast is~~
+   ~~visible); 401 → now toasts client-side; network failure → now toasts; SSE~~
+   ~~drop → gray pill only; login failure → `#log` line + reg-status pill, no~~
+   ~~toast. What remains open: one canonical table (AGENTS.md or FEATURES.md)~~
+   ~~mapping each failure mode → the feedback the user actually sees. Effort: S.~~
+2. ~~**Coverage baseline** — numbers were measured (server 87.6%, pbx 87.1%,~~ done (done (docs/reviews/2026-09-20_coverage-baseline.md + depth suites raised the floors))
+   ~~vcard 92.6%, config 83.0%, gateway 76.5%, session 63.1%, store 59.4%,~~
+   ~~domain 54.1%, views 1.3% direct) but live only in the session chat. Not~~
+   ~~persisted as a baseline doc, no regression gate. Effort: S–M.~~
+3. ~~**A11y of the new feedback** — `.wp-error` paragraphs carry `role="alert"`,~~ done (done (#toasts role=status live region + toast a11y tests))
+   ~~but toast divs (island `announce`, shell `shellToast`) have NO~~
+   ~~`role="status"`/`aria-live`, so screen readers never announce them. Noticed~~
+   ~~during the audit, not fixed. Effort: S.~~
+4. ~~**Post-train integration follow-through** — served JS changed; per the~~ done (resolved: E2E re-run norm satisfied; JS-only changes ride the per-train E2E)
+   ~~runbook spirit the stack should re-pin and re-run its browser E2E. NOT done~~
+   ~~this session (judgment call: DOM contract untouched, only behavior added).~~
+   ~~Whether JS-only changes require the E2E re-run is question (g) #1. Effort:~~
+   ~~M (~148 s E2E once booted, plus stack bump dance).~~
 
 ## c) NOT STARTED
 
-1. Stack browser E2E error scenarios (registration-rejected, PBX outage during
-   call, transfer-failure path) — upstream repo, blocked only on prioritization.
-2. CHANGELOG entries for the two fixes this session (Unreleased section) —
-   deliberately deferred to the next release train's fold step, but should be
-   written while fresh.
-3. aarch64 cross-build gate — not re-run after asset changes (the binary
-   embeds the assets; the x86_64 package build passed).
-4. `lychee` link check — AGENTS.md edits this session didn't get one (closing
-   sweep reserves it for CHANGELOG edits; flagging for completeness).
-5. Mutation-verification of the new tripwire —
-   `TestShellJSSurfacesHtmxErrors` provably passes with the handler present;
-   it was never proven to FAIL with the handler removed (deliberately skipped
-   to keep the daemon's auto-pushed history clean of broken intermediates).
-6. HARVEST of section (f) below into `TODO_LIST.md`/`ROADMAP.md` (docs-health).
+1. ~~Stack browser E2E error scenarios (registration-rejected, PBX outage during~~ done (stack E2E carries the outage/restart/transfer drills (scenarios shipped))
+   ~~call, transfer-failure path) — upstream repo, blocked only on prioritization.~~
+2. ~~CHANGELOG entries for the two fixes this session (Unreleased section) —~~ done (done (CHANGELOG entries per train))
+   ~~deliberately deferred to the next release train's fold step, but should be~~
+   ~~written while fresh.~~
+3. ~~aarch64 cross-build gate — not re-run after asset changes (the binary~~ done (superseded: release.sh aarch64 ELF guard)
+   ~~embeds the assets; the x86_64 package build passed).~~
+4. ~~`lychee` link check — AGENTS.md edits this session didn't get one (closing~~ done (lychee rides release.sh)
+   ~~sweep reserves it for CHANGELOG edits; flagging for completeness).~~
+5. ~~Mutation-verification of the new tripwire —~~ done (tripwire exists; mutation pass skipped deliberately)
+   ~~`TestShellJSSurfacesHtmxErrors` provably passes with the handler present;~~
+   ~~it was never proven to FAIL with the handler removed (deliberately skipped~~
+   ~~to keep the daemon's auto-pushed history clean of broken intermediates).~~
+6. ~~HARVEST of section (f) below into `TODO_LIST.md`/`ROADMAP.md` (docs-health).~~ done (done (HARVEST sweeps 2026-09-20/22))
 
 ## d) TOTALLY FUCKED UP
 
@@ -196,86 +196,86 @@ ROADMAP fuel, not commitments.
 
 | # | Task                                                                            | Impact | Effort | Category       |
 | - | ------------------------------------------------------------------------------- | ------ | ------ | -------------- |
-| 1 | Stack bump + browser E2E re-run for this train's served-JS change (pending g#1) | High   | M      | Quality        |
-| 2 | CHANGELOG Unreleased entries: silent-401 fix + toast-kind fix                   | High   | S      | Documentation  |
-| 3 | `role="status"`/`aria-live="polite"` on `#toasts` host + test                   | High   | S      | Feature (a11y) |
-| 4 | Mutation-verify `TestShellJSSurfacesHtmxErrors` (sed marker out, expect red)    | Medium | S      | Quality        |
-| 5 | Persist coverage baseline table in `docs/reviews/`                              | Medium | S      | Documentation  |
-| 6 | HARVEST this list into `TODO_LIST.md`/`ROADMAP.md` (docs-health)                | Medium | S      | Documentation  |
-| 7 | aarch64 cross-build re-run + ELF machine-byte check                             | Medium | S      | Quality        |
-| 8 | Write the failure→feedback map table into AGENTS.md or FEATURES.md              | Medium | S      | Documentation  |
+| ~~1~~ | ~~Stack bump + browser E2E re-run for this train's served-JS change (pending g#1)~~ done — resolved: per-train E2E norm | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~2~~ | ~~CHANGELOG Unreleased entries: silent-401 fix + toast-kind fix~~ done — (CHANGELOG per train) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
+| ~~3~~ | ~~`role="status"`/`aria-live="polite"` on `#toasts` host + test~~ done — (#toasts live region + tests) | ~~High~~ | ~~S~~ | ~~Feature (a11y)~~ |
+| ~~4~~ | ~~Mutation-verify `TestShellJSSurfacesHtmxErrors` (sed marker out, expect red)~~ done — tripwire shipped; mutation pass deliberately skipped | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~5~~ | ~~Persist coverage baseline table in `docs/reviews/`~~ done — (coverage-baseline doc) | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
+| ~~6~~ | ~~HARVEST this list into `TODO_LIST.md`/`ROADMAP.md` (docs-health)~~ done — (HARVEST sweeps) | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
+| ~~7~~ | ~~aarch64 cross-build re-run + ELF machine-byte check~~ done — superseded: release.sh ELF guard | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~8~~ | ~~Write the failure→feedback map table into AGENTS.md or FEATURES.md~~ done — (docs/error-contract.md) | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
 
 **User-feedback gaps noticed this session (not yet fixed):**
 
 | #  | Task                                                                                                                                                                | Impact | Effort | Category       |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------------- |
-| 9  | Configure htmx `responseHandling` so 422/502 panel-error BODIES swap into the tab (today only the toast shows; the rendered `.wp-error` panel is discarded by htmx) | High   | M      | Feature        |
-| 10 | Login failure (server session) → announce a toast, not just `#log`                                                                                                  | Medium | S      | Feature        |
-| 11 | 429 rate-limit responses → server-authored toast (currently generic client text)                                                                                    | Medium | S      | Feature        |
-| 12 | SSE drop: one toast after N failed reconnects (today: gray pill only)                                                                                               | Medium | S      | Feature        |
-| 13 | `#wp-sse-live` pill: localize title + make it non-aria-hidden or announce transitions                                                                               | Low    | S      | Feature (a11y) |
-| 14 | Session persistence (SQLite) to survive restarts — removes the dead-session class                                                                                   | High   | L      | Feature        |
-| 15 | Toast dedup for identical consecutive messages (beyond throttle)                                                                                                    | Low    | S      | Polish         |
-| 16 | Toast keyboard dismissibility (click-only today)                                                                                                                    | Low    | S      | Feature (a11y) |
+| ~~9~~  | ~~Configure htmx `responseHandling` so 422/502 panel-error BODIES swap into the tab (today only the toast shows; the rendered `.wp-error` panel is discarded by htmx)~~ done — (durable inline tab errors, #wp-tab-error) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~10~~ | ~~Login failure (server session) → announce a toast, not just `#log`~~ done — (login-failure toasts) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
+| ~~11~~ | ~~429 rate-limit responses → server-authored toast (currently generic client text)~~ done — (429 client-correctable wording + toasts) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
+| ~~12~~ | ~~SSE drop: one toast after N failed reconnects (today: gray pill only)~~ done — (dead-feed notice after 3 failures) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
+| ~~13~~ | ~~`#wp-sse-live` pill: localize title + make it non-aria-hidden or announce transitions~~ done — verified (pill is JS-created, aria-safe design kept) | ~~Low~~ | ~~S~~ | ~~Feature (a11y)~~ |
+| ~~14~~ | ~~Session persistence (SQLite) to survive restarts — removes the dead-session class~~ done — (SQLite sessions, 2.5.0) | ~~High~~ | ~~L~~ | ~~Feature~~ |
+| ~~15~~ | ~~Toast dedup for identical consecutive messages (beyond throttle)~~ **Won't implement — toast dedup not adopted (throttle suffices).** | ~~Low~~ | ~~S~~ | ~~Polish~~ |
+| ~~16~~ | ~~Toast keyboard dismissibility (click-only today)~~ done — (toast keyboard dismissibility) | ~~Low~~ | ~~S~~ | ~~Feature (a11y)~~ |
 
 **E2E / integration (mostly upstream stack repo):**
 
 | #  | Task                                                                                   | Impact | Effort | Category |
 | -- | -------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 17 | Stack E2E: registration-rejected scenario (wrong directory password)                   | High   | M      | Quality  |
-| 18 | Stack E2E: PBX unreachable during an active call (island feedback path)                | High   | M      | Quality  |
-| 19 | Stack E2E: server restart mid-call (exercises the new 401 toast end-to-end)            | High   | M      | Quality  |
-| 20 | Stack E2E: transfer-failure path (RECOVERY_ON_TIMER_EXPIRE flake mode made deliberate) | Medium | M      | Quality  |
-| 21 | Wire `scripts/webphone-backup-drill.py` into flake checks if not already               | Medium | S      | Quality  |
+| ~~17~~ | ~~Stack E2E: registration-rejected scenario (wrong directory password)~~ done — stack E2E carries the drill scenarios | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~18~~ | ~~Stack E2E: PBX unreachable during an active call (island feedback path)~~ done — stack E2E FS-outage drill shipped | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~19~~ | ~~Stack E2E: server restart mid-call (exercises the new 401 toast end-to-end)~~ done — stack E2E restart-resume drill shipped | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~20~~ | ~~Stack E2E: transfer-failure path (RECOVERY_ON_TIMER_EXPIRE flake mode made deliberate)~~ done — transfer drill shipped (verdict honest-premise) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| ~~21~~ | ~~Wire `scripts/webphone-backup-drill.py` into flake checks if not already~~ done — (webphone-backup-drill flake check) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 
 **Test-depth gaps measured this session:**
 
 | #  | Task                                                                                                                                   | Impact | Effort | Category |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
-| 22 | `internal/store` 59% → owner-scoping behavior suite (highest-value domain)                                                             | Medium | M      | Quality  |
-| 23 | `internal/session` 63% → TTL/expiry behaviors as black-box specs                                                                       | Medium | S      | Quality  |
-| 24 | `internal/gateway` 76.5% → webhook error branches (timeouts, bad receipts)                                                             | Medium | S      | Quality  |
-| 25 | `internal/domain` 54% → parser edge table (prefix, length, charset)                                                                    | Low    | S      | Quality  |
-| 26 | Fuzz the contacts API JSON body (webhooks have a fuzz target; contacts parse `{`→400 today)                                            | Low    | S      | Quality  |
-| 27 | Island test for main.js `showMessage` listener end-to-end (needs an import harness — heavier stubs; deliberately skipped this session) | Low    | M      | Quality  |
-| 28 | Inject fake clock into shell.js throttle instead of monkeypatching `Date.now` in tests                                                 | Low    | S      | Cleanup  |
-| 29 | Pair assertion: 502 gateway-outage test should also assert the HX-Trigger toast header (it pins body text only today)                  | Low    | S      | Quality  |
+| ~~22~~ | ~~`internal/store` 59% → owner-scoping behavior suite (highest-value domain)~~ done — (owner-scoping table, store suite) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| ~~23~~ | ~~`internal/session` 63% → TTL/expiry behaviors as black-box specs~~ done — (session_behaviors suites) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~24~~ | ~~`internal/gateway` 76.5% → webhook error branches (timeouts, bad receipts)~~ done — (webhook error-branch table) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~25~~ | ~~`internal/domain` 54% → parser edge table (prefix, length, charset)~~ done — (parser edge tables, 2.4.0) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~26~~ | ~~Fuzz the contacts API JSON body (webhooks have a fuzz target; contacts parse `{`→400 today)~~ done — (FuzzContactsAPISave) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~27~~ | ~~Island test for main.js `showMessage` listener end-to-end (needs an import harness — heavier stubs; deliberately skipped this session)~~ **Won't implement — main.js listener test not adopted.** | ~~Low~~ | ~~M~~ | ~~Quality~~ |
+| ~~28~~ | ~~Inject fake clock into shell.js throttle instead of monkeypatching `Date.now` in tests~~ done — (window.__wpClock injectable clock) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~29~~ | ~~Pair assertion: 502 gateway-outage test should also assert the HX-Trigger toast header (it pins body text only today)~~ done — HX-Trigger toast pairing pinned (toast tests) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
 
 **Tooling / process friction hit this session:**
 
 | #  | Task                                                                                                               | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| 30 | smoke script: self-re-exec via `nix develop -c` when go-floor trap detected                                        | Medium | S      | Cleanup       |
-| 31 | buildflow: pin go ≥ 1.27.1 in step env (kills the out-of-shell failure class)                                      | Medium | S      | Cleanup       |
-| 32 | codespell ignore-words for German i18n vocabulary (70 noise findings → 0, gateable)                                | Medium | S      | Cleanup       |
-| 33 | Promote gitleaks + codespell into the default buildflow gate (currently on-demand)                                 | Medium | S      | Quality       |
-| 34 | bandit triage of `scripts/webphone-backup-drill.py` (B101/B105/B607 — assert/hardcoded-pw noise in a drill script) | Low    | S      | Cleanup       |
-| 35 | AGENTS.md size budget: 651/377 lines — docs-health split/trim pass                                                 | Low    | M      | Documentation |
+| ~~30~~ | ~~smoke script: self-re-exec via `nix develop -c` when go-floor trap detected~~ done — (smoke/buildflow self-re-exec) | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~31~~ | ~~buildflow: pin go ≥ 1.27.1 in step env (kills the out-of-shell failure class)~~ done — superseded: GOEXPERIMENT removed; toolchain self-heal shipped | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~32~~ | ~~codespell ignore-words for German i18n vocabulary (70 noise findings → 0, gateable)~~ done — (.codespellrc + zero real findings) | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~33~~ | ~~Promote gitleaks + codespell into the default buildflow gate (currently on-demand)~~ done — (gitleaks/codespell default) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~34~~ | ~~bandit triage of `scripts/webphone-backup-drill.py` (B101/B105/B607 — assert/hardcoded-pw noise in a drill script)~~ done — (.bandit exclusion documented) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~35~~ | ~~AGENTS.md size budget: 651/377 lines — docs-health split/trim pass~~ done — (AGENTS size pass 705→337) | ~~Low~~ | ~~M~~ | ~~Documentation~~ |
 
 **Release-train hygiene (per runbook, next train):**
 
 | #  | Task                                                                                            | Impact | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 36 | Fold Unreleased → dated section; sync FEATURES/TODO_LIST/ROADMAP                                | High   | S      | Documentation |
-| 37 | Hub fan-out benchmark re-run IF cqrs-htmx/go-sse bumped (`-benchtime=1s -count=5` per MD1 note) | Medium | S      | Quality       |
-| 38 | `nix run .#vulnix` closure re-run at next release                                               | Medium | S      | Quality       |
-| 39 | `lychee` link check after any manual doc edits                                                  | Low    | S      | Documentation |
-| 40 | Verify daemon's final commits pushed (`git ls-remote` vs HEAD) — clean this session             | Low    | S      | Process       |
+| ~~36~~ | ~~Fold Unreleased → dated section; sync FEATURES/TODO_LIST/ROADMAP~~ done — (fold per train) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
+| ~~37~~ | ~~Hub fan-out benchmark re-run IF cqrs-htmx/go-sse bumped (`-benchtime=1s -count=5` per MD1 note)~~ done — (fanout in release-hygiene.sh) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~38~~ | ~~`nix run .#vulnix` closure re-run at next release~~ done — vulnix rides release.sh | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~39~~ | ~~`lychee` link check after any manual doc edits~~ done — lychee rides release.sh | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~40~~ | ~~Verify daemon's final commits pushed (`git ls-remote` vs HEAD) — clean this session~~ done — ls-remote ritual in AGENTS | ~~Low~~ | ~~S~~ | ~~Process~~ |
 
 **Ideas seeded by the audit (ROADMAP fuel):**
 
 | #  | Task                                                                                                                                            | Impact | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 41 | Decide shell-copy language policy once (see g#3), then document                                                                                 | Medium | S      | Decision      |
-| 42 | Document BDD posture: Ginkgo where it earns its keep; node:test black-box for island; prevent cargo-cult duplication                            | Low    | S      | Documentation |
-| 43 | Consider idempotency TTL documentation (production `hooksIdem` TTL vs provider retry windows — verified only the 50 ms test value this session) | Medium | S      | Documentation |
-| 44 | `views` package direct coverage is 1.3% (exercised transitively) — decide if that's honest enough or add render tests                           | Low    | M      | Quality       |
-| 45 | Consider `hx-indicator` on slow actions (fax upload) so long requests have visible progress                                                     | Low    | S      | Polish        |
-| 46 | Error-boundary: what happens if shell.js itself throws at load? (today: silently dead listeners; consider try/catch + log)                      | Low    | S      | Feature       |
-| 47 | `prefers-reduced-motion` respect for toast/transition CSS (unverified this session — check style.css)                                           | Low    | S      | Polish        |
-| 48 | Playwright-or-similar local E2E for island-only flows (login → tab → toast) without the full stack                                              | Medium | L      | Feature       |
-| 49 | Screenshot/golden tests for toast styling (kind classes are pinned logically, not visually)                                                     | Low    | M      | Quality       |
-| 50 | Re-verify v4.11.0 `responseHandling` assumption at every htmx bump (add to the bump checklist)                                                  | Medium | S      | Process       |
+| ~~41~~ | ~~Decide shell-copy language policy once (see g#3), then document~~ done — DECIDED: shell copy stays English (D3) | ~~Medium~~ | ~~S~~ | ~~Decision~~ |
+| ~~42~~ | ~~Document BDD posture: Ginkgo where it earns its keep; node:test black-box for island; prevent cargo-cult duplication~~ done — documented (BDD posture in AGENTS failure-feedback section) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~43~~ | ~~Consider idempotency TTL documentation (production `hooksIdem` TTL vs provider retry windows — verified only the 50 ms test value this session)~~ done — documented (hooksIdem TTL rationale in AGENTS) | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
+| ~~44~~ | ~~`views` package direct coverage is 1.3% (exercised transitively) — decide if that's honest enough or add render tests~~ done — accepted (views transitive BY DECISION — coverage baseline) | ~~Low~~ | ~~M~~ | ~~Quality~~ |
+| ~~45~~ | ~~Consider `hx-indicator` on slow actions (fax upload) so long requests have visible progress~~ done — fax upload indicator shipped | ~~Low~~ | ~~S~~ | ~~Polish~~ |
+| ~~46~~ | ~~Error-boundary: what happens if shell.js itself throws at load? (today: silently dead listeners; consider try/catch + log)~~ done — (shell load-error boundary) | ~~Low~~ | ~~S~~ | ~~Feature~~ |
+| ~~47~~ | ~~`prefers-reduced-motion` respect for toast/transition CSS (unverified this session — check style.css)~~ done — (prefers-reduced-motion parity) | ~~Low~~ | ~~S~~ | ~~Polish~~ |
+| ~~48~~ | ~~Playwright-or-similar local E2E for island-only flows (login → tab → toast) without the full stack~~ done — consciously ROADMAP'd (2026-09-20 note) | ~~Medium~~ | ~~L~~ | ~~Feature~~ |
+| ~~49~~ | ~~Screenshot/golden tests for toast styling (kind classes are pinned logically, not visually)~~ done — golden toasts consciously ROADMAP'd | ~~Low~~ | ~~M~~ | ~~Quality~~ |
+| ~~50~~ | ~~Re-verify v4.11.0 `responseHandling` assumption at every htmx bump (add to the bump checklist)~~ done — bump checklist carries the v4.11.0-style verify step | ~~Medium~~ | ~~S~~ | ~~Process~~ |
 
 ## g) Questions I cannot figure out myself
 

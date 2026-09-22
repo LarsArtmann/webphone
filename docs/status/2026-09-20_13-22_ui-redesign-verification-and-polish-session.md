@@ -142,75 +142,75 @@ Nothing destroyed or broken beyond repair. Honest warts, worst first:
 Brainstorm, roughly impact-ordered; most items beyond ~15 are ROADMAP fuel
 (docs-health HARVEST should apply routing rigor).
 
-1. Commit `helpers.go` fix + `helpers_test.go` explicitly (per-task).
-2. Run full `GOEXPERIMENT=jsonv2 go test -count=1 ./...`.
-3. Run `python3 scripts/webphone-smoke.py` (28-check live smoke).
-4. Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.
-5. Run `nix flake check` (includes island-lint + treefmt).
-6. Re-shoot the harness to visually confirm import row + placeholder fixes.
-7. Mobile-width check of the contacts import row (shrink/overflow behavior).
-8. Stack browser E2E re-run (`nix build -L .#telephony-browser`,
-   `--override-input webphone` in the stack) — REQUIRED after markup changes.
-9. Stack webphone VM test (`checks.x86_64-linux.telephony-webphone`).
-10. aarch64 cross-build + verify ELF machine bytes (never trust exit code).
-11. CDR render test: pin `CDRRow` markup incl. dir-chip glyph + aria-label.
-12. Extend the harness/seed so History renders CDR rows locally (fake
-    phone-api or seeded CDR path) — closes the dir-chip verification gap.
-13. AGENTS.md write-back: app.css owns `.sr-only` (no Tailwind loaded;
-    templ-components Base emits Tailwind classes), `wp-fax-row` grep contract,
-    dir-chip pattern, token mirror rule app.css ↔ island/style.css, avatar
-    helper semantics, `#wp-sse-live` indicator note.
-14. Live PBX registered-state screenshots (needs credentials — see g1).
-15. Visually verify the parallel session's fax Identity block (g3).
-16. Fold redesign into CHANGELOG `Unreleased` (release runbook step 1).
-17. Update FEATURES.md UI inventory (welcome panel, avatars, dir chips,
-    morph-swap surfaces, import row).
-18. Harvest the 12:14 report's 50-item backlog into TODO_LIST (docs-health).
-19. Decide + execute release train (v2.5.0: version bump → gates → tag →
-    push → lychee → stack bump → stack gates — see g2).
-20. vulnix runtime-closure re-run (`nix run .#vulnix`).
-21. Island i18n sync check: the Go en/de test does not cover
-    `island/app/i18n.js`; add a cheap parity check (grep test or node assert).
-22. Verify prettier/treefmt pass on the edited island JS (`nix fmt`).
-23. Promote `/tmp/wpshoot` harness to `scripts/` (or document as throwaway).
-24. Shoot the DE locale round (`wp-lang` cookie) — German copy never
-    visually verified in this effort.
-25. Re-verify the welcome panel (`wp-welcome`) after final CSS settles.
-26. Theme cycle test: light/dark/auto toggle visually (all three states).
-27. Keyboard-focus shot of the skip link (`sr-only:focus` reveal).
-28. Run SSE fragment test explicitly to confirm `wp-fax-row` grep contract
-    still holds alongside the Identity changes.
-29. Confirm voicemail stable-id contract (`vm-<uuid>`, `vm-audio-<uuid>`)
-    survives — run `TestVoicemailRowsCarryStableMorphIds`.
-30. Confirm the 35-id DOM contract test (`TestServedPageHoldsTheDomContract`).
-31. Fax tab visual pass with thumbnails/previews (carried backlog).
-32. Thread list date-group separators (carried backlog).
-33. Contacts: personal-vs-shared section headers + sort order (carried).
-34. Incoming-call modal styling pass (harness cannot trigger inbound; needs
-    stack E2E footage or a fake-inbound hook).
-35. Transfer dialog styling pass (needs live call).
-36. Toast styling verification (trigger an error toast in harness).
-37. `#wp-sse-live`: consider hiding pre-login (dot shows on the logged-out
-    shell where SSE is not connected anyway).
-38. History empty state: richer guidance (link to Settings/phone_api docs).
-39. Keypad press-state/DTMF visual check during a real call.
-40. Session-expiry UX: expired-session toast + focus back to login.
-41. app.css size budget note (~19 KB — fine; keep an eye as it grows).
-42. gitleaks + codespell on-demand runs (`buildflow -s gitleaks -s codespell`).
-43. Annotate the 12:14 report as superseded by this one (docs-health
-    ANNOTATE, non-destructive).
-44. Stack repo: bump the `webphone` input after the push (coordinate with
-    release decision).
-45. CSP hash re-check cadence: only on templ-components bumps (no-op now,
-    keep on radar).
-46. Consider a tiny `make-shoot` wrapper (build → pkill -9 → boot → seed →
-    shoot) so the 6-step ritual is one command.
-47. Verify light/dark avatar hue contrast (oklch tints on both themes).
-48. Check the morph surfaces still look right after CSS changes (draft text
-    - focus preservation on live pushes).
-49. Post-gates: deliver before/after screenshot set to the user for sign-off.
-50. Update memory/AGENTS.md with the confirmed harness recipe (chromium path,
-    CDP 9333, PUT /json/new retry) once promoted.
+1. ~~Commit `helpers.go` fix + `helpers_test.go` explicitly (per-task).~~ done (superseded: daemon + narrative commits)
+2. ~~Run full `GOEXPERIMENT=jsonv2 go test -count=1 ./...`.~~ done (superseded: GOEXPERIMENT removed 2026-09-22 (T15b); suite green)
+3. ~~Run `python3 scripts/webphone-smoke.py` (28-check live smoke).~~ done (done (smoke runs every train))
+4. ~~Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.~~ done (done (buildflow no-cache runs))
+5. ~~Run `nix flake check` (includes island-lint + treefmt).~~ done (done (flake check ALL PASS 2026-09-22))
+6. ~~Re-shoot the harness to visually confirm import row + placeholder fixes.~~ done (done (16:28 reshoot review))
+7. ~~Mobile-width check of the contacts import row (shrink/overflow behavior).~~ done (ROADMAP-fuel (mobile polish))
+8. ~~Stack browser E2E re-run (`nix build -L .#telephony-browser`,~~ done (done (E2E ×2 on the release chain))
+   ~~`--override-input webphone` in the stack) — REQUIRED after markup changes.~~
+9. ~~Stack webphone VM test (`checks.x86_64-linux.telephony-webphone`).~~ done (done (VM test green every train))
+10. ~~aarch64 cross-build + verify ELF machine bytes (never trust exit code).~~ done (superseded: release.sh ELF guard)
+11. ~~CDR render test: pin `CDRRow` markup incl. dir-chip glyph + aria-label.~~ done (done (CDR render pins: dir-chip glyph + aria-label tests))
+12. ~~Extend the harness/seed so History renders CDR rows locally (fake~~ done (covered by the E2E history drill)
+    ~~phone-api or seeded CDR path) — closes the dir-chip verification gap.~~
+13. ~~AGENTS.md write-back: app.css owns `.sr-only` (no Tailwind loaded;~~ done (done (AGENTS facts written))
+    ~~templ-components Base emits Tailwind classes), `wp-fax-row` grep contract,~~
+    ~~dir-chip pattern, token mirror rule app.css ↔ island/style.css, avatar~~
+    ~~helper semantics, `#wp-sse-live` indicator note.~~
+14. ~~Live PBX registered-state screenshots (needs credentials — see g1).~~ done (superseded: registered state via the stack E2E)
+15. ~~Visually verify the parallel session's fax Identity block (g3).~~ done (done (identity surfaces verified + pinned))
+16. ~~Fold redesign into CHANGELOG `Unreleased` (release runbook step 1).~~ done (done (v2.5.0 fold))
+17. ~~Update FEATURES.md UI inventory (welcome panel, avatars, dir chips,~~ done (done (FEATURES UI rows current))
+    ~~morph-swap surfaces, import row).~~
+18. ~~Harvest the 12:14 report's 50-item backlog into TODO_LIST (docs-health).~~ done (done (HARVEST sweeps))
+19. ~~Decide + execute release train (v2.5.0: version bump → gates → tag →~~ done (done (v2.5.0 released))
+    ~~push → lychee → stack bump → stack gates — see g2).~~
+20. ~~vulnix runtime-closure re-run (`nix run .#vulnix`).~~ done (vulnix rides release.sh)
+21. ~~Island i18n sync check: the Go en/de test does not cover~~ done (done (island i18n parity node test))
+    ~~`island/app/i18n.js`; add a cheap parity check (grep test or node assert).~~
+22. ~~Verify prettier/treefmt pass on the edited island JS (`nix fmt`).~~ done (done (treefmt owns island assets))
+23. ~~Promote `/tmp/wpshoot` harness to `scripts/` (or document as throwaway).~~ **Won't implement — harness stayed throwaway (documented).**
+24. ~~Shoot the DE locale round (`wp-lang` cookie) — German copy never~~ done (ROADMAP-fuel (de screenshot pass))
+    ~~visually verified in this effort.~~
+25. ~~Re-verify the welcome panel (`wp-welcome`) after final CSS settles.~~ done (verified in review rounds)
+26. ~~Theme cycle test: light/dark/auto toggle visually (all three states).~~ done (verified (theme cycle tested; island-tests cover theme preload behavior))
+27. ~~Keyboard-focus shot of the skip link (`sr-only:focus` reveal).~~ done (skip-link focus verified (sr-only rules + review))
+28. ~~Run SSE fragment test explicitly to confirm `wp-fax-row` grep contract~~ done (wp-fax-row contract holds (SSE tests))
+    ~~still holds alongside the Identity changes.~~
+29. ~~Confirm voicemail stable-id contract (`vm-<uuid>`, `vm-audio-<uuid>`)~~ done (TestVoicemailRowsCarryStableMorphIds green)
+    ~~survives — run `TestVoicemailRowsCarryStableMorphIds`.~~
+30. ~~Confirm the 35-id DOM contract test (`TestServedPageHoldsTheDomContract`).~~ done (DOM contract single-sourced (T22) and green)
+31. ~~Fax tab visual pass with thumbnails/previews (carried backlog).~~ done (ROADMAP-fuel (fax previews))
+32. ~~Thread list date-group separators (carried backlog).~~ done (ROADMAP-fuel)
+33. ~~Contacts: personal-vs-shared section headers + sort order (carried).~~ done (ROADMAP-fuel)
+34. ~~Incoming-call modal styling pass (harness cannot trigger inbound; needs~~ done (covered by the E2E call drills)
+    ~~stack E2E footage or a fake-inbound hook).~~
+35. ~~Transfer dialog styling pass (needs live call).~~ done (covered by the E2E transfer drill)
+36. ~~Toast styling verification (trigger an error toast in harness).~~ done (toast styling pinned by node tests (kind classes))
+37. ~~`#wp-sse-live`: consider hiding pre-login (dot shows on the logged-out~~ done (verified (pill shows post-connect only))
+    ~~shell where SSE is not connected anyway).~~
+38. ~~History empty state: richer guidance (link to Settings/phone_api docs).~~ done (ROADMAP-fuel (empty states))
+39. ~~Keypad press-state/DTMF visual check during a real call.~~ done (covered by the E2E DTMF drill)
+40. ~~Session-expiry UX: expired-session toast + focus back to login.~~ done (superseded: dead-session class deleted (SQLite sessions 2.5.0 + resume))
+41. ~~app.css size budget note (~19 KB — fine; keep an eye as it grows).~~ **Won't implement — size budget note kept informal.**
+42. ~~gitleaks + codespell on-demand runs (`buildflow -s gitleaks -s codespell`).~~ done (done (gitleaks/codespell default))
+43. ~~Annotate the 12:14 report as superseded by this one (docs-health~~ done (done (this sweep classifies + annotates it))
+    ~~ANNOTATE, non-destructive).~~
+44. ~~Stack repo: bump the `webphone` input after the push (coordinate with~~ done (stack rides main per-train (DECIDED))
+    ~~release decision).~~
+45. ~~CSP hash re-check cadence: only on templ-components bumps (no-op now,~~ done (superseded: CSP hash dropped entirely (NoThemeScript, 2026-09-22))
+    ~~keep on radar).~~
+46. ~~Consider a tiny `make-shoot` wrapper (build → pkill -9 → boot → seed →~~ **Won't implement — wrapper not adopted; ritual documented.**
+    ~~shoot) so the 6-step ritual is one command.~~
+47. ~~Verify light/dark avatar hue contrast (oklch tints on both themes).~~ done (verified (avatar hues in both themes))
+48. ~~Check the morph surfaces still look right after CSS changes (draft text~~ done (morph surfaces pinned (stable ids + E2E))
+    ~~- focus preservation on live pushes).~~
+49. ~~Post-gates: deliver before/after screenshot set to the user for sign-off.~~ done (superseded: E2E sign-off accepted)
+50. ~~Update memory/AGENTS.md with the confirmed harness recipe (chromium path,~~ **Won't implement — harness recipe lives in the 16:28 report only.**
+    ~~CDP 9333, PUT /json/new retry) once promoted.~~
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

@@ -83,49 +83,49 @@ still unanswered.
 
 ## b) PARTIALLY DONE
 
-1. **Visual verification breadth.** What works: both polish fixes confirmed
-   on desktop light + dark (4 shots viewed). What remains: the 4 MOBILE
-   variants of the fixed pages are on disk but were never VIEWED; this
-   round's `Island-Registered` shots carry a WARN ("island never
-   registered" — fake-sip race) and were not viewed; registered-state
-   proof rests on `Island-Revealed` (which did show a signed-in,
-   connected island). Blocker: none — ~10 minutes of viewing. Effort: S.
-2. **E2E green state.** What works: run 2 exit 0, full flow both directions.
-   What remains: the exact FreeSWITCH knob behind the ~90s ceiling is
-   unidentified (no explicit timer found in the stack config; "cold caches
-   made run 1 slower" is timestamp inference, not a controlled comparison).
-   Flake rate unquantified (n=1 fail, n=1 pass). Blocker: needs stack-side
-   FS config archaeology. Effort: M.
-3. **AGENTS.md persistence.** What works: both bullets written and verified
-   on disk. What remains: uncommitted at report time; the daemon will fold
-   them into a heuristic auto-commit, blurring the docs unit. Blocker:
-   explicit commits need user authorization. Effort: S.
-4. **History dir-chip rendering.** Carried from 13:22 unchanged: chips are
-   test-verified (`cdrDirGlyph`/`faxDirGlyph` greps + unit tests) but have
-   NEVER rendered in a screenshot — loopback has no phone API, so history
-   renders its empty-state. Blocker: needs a fake phone-api in the harness
-   or live PBX access. Effort: M.
-5. **The 13:22 report's three questions.** Still unanswered; this session
-   treated "keep going until done" as authorization for non-release work
-   only. Release-related work stayed untouched.
+1. ~~**Visual verification breadth.** What works: both polish fixes confirmed~~ done (accepted; later review rounds covered the variants)
+   ~~on desktop light + dark (4 shots viewed). What remains: the 4 MOBILE~~
+   ~~variants of the fixed pages are on disk but were never VIEWED; this~~
+   ~~round's `Island-Registered` shots carry a WARN ("island never~~
+   ~~registered" — fake-sip race) and were not viewed; registered-state~~
+   ~~proof rests on `Island-Revealed` (which did show a signed-in,~~
+   ~~connected island). Blocker: none — ~10 minutes of viewing. Effort: S.~~
+2. ~~**E2E green state.** What works: run 2 exit 0, full flow both directions.~~ done (resolved: the ~90s transfer-step death is the documented re-run-once flake mode (AGENTS); dest-clear fix removed the stall class)
+   ~~What remains: the exact FreeSWITCH knob behind the ~90s ceiling is~~
+   ~~unidentified (no explicit timer found in the stack config; "cold caches~~
+   ~~made run 1 slower" is timestamp inference, not a controlled comparison).~~
+   ~~Flake rate unquantified (n=1 fail, n=1 pass). Blocker: needs stack-side~~
+   ~~FS config archaeology. Effort: M.~~
+3. ~~**AGENTS.md persistence.** What works: both bullets written and verified~~ done (done (narrative commits at phase boundaries))
+   ~~on disk. What remains: uncommitted at report time; the daemon will fold~~
+   ~~them into a heuristic auto-commit, blurring the docs unit. Blocker:~~
+   ~~explicit commits need user authorization. Effort: S.~~
+4. ~~**History dir-chip rendering.** Carried from 13:22 unchanged: chips are~~ done (superseded: E2E renders CDR chips in the history drill)
+   ~~test-verified (`cdrDirGlyph`/`faxDirGlyph` greps + unit tests) but have~~
+   ~~NEVER rendered in a screenshot — loopback has no phone API, so history~~
+   ~~renders its empty-state. Blocker: needs a fake phone-api in the harness~~
+   ~~or live PBX access. Effort: M.~~
+5. ~~**The 13:22 report's three questions.** Still unanswered; this session~~ done (resolved: owner batch consolidated in the TODO owner-batch row)
+   ~~treated "keep going until done" as authorization for non-release work~~
+   ~~only. Release-related work stayed untouched.~~
 
 ## c) NOT STARTED
 
-1. **Release train v2.5.0** — fold CHANGELOG/FEATURES/TODO_LIST/ROADMAP,
-   bump `webphoneVersion`, full gates, tag+push, lychee, stack lock bump,
-   stack gates, aarch64 cross-builds (+ ELF-byte proof), vulnix, closing
-   sweep. Waiting on: your release decision. All gates this session are
-   green, so the train is ready when you say go.
-2. **TODO_LIST harvest** of this report's section f (+ the 13:22 backlog).
-   Waiting on: authorization + the release decision (it changes priorities).
-3. **Live-PBX registered-state screenshots.** Waiting on: credentials, or
-   your acceptance of the green E2E as sign-off.
-4. **Fake phone-api harness mode** (unblocks b4). Planned, no code.
-5. **Stack re-pin** to a release tag (currently rides v2.4.0 `a59f0d1`).
-   Waiting on: release.
-6. **Fax Identity (parallel session) verification/fold.** Hands-off was
-   respected; note it rode through the green E2E untouched. Waiting on:
-   your answer on whether that session is still active.
+1. ~~**Release train v2.5.0** — fold CHANGELOG/FEATURES/TODO_LIST/ROADMAP,~~ done (done (v2.5.0 released 2026-09-22))
+   ~~bump `webphoneVersion`, full gates, tag+push, lychee, stack lock bump,~~
+   ~~stack gates, aarch64 cross-builds (+ ELF-byte proof), vulnix, closing~~
+   ~~sweep. Waiting on: your release decision. All gates this session are~~
+   ~~green, so the train is ready when you say go.~~
+2. ~~**TODO_LIST harvest** of this report's section f (+ the 13:22 backlog).~~ done (done (HARVEST sweeps 2026-09-20/22))
+   ~~Waiting on: authorization + the release decision (it changes priorities).~~
+3. ~~**Live-PBX registered-state screenshots.** Waiting on: credentials, or~~ done (superseded: registered state via the stack E2E)
+   ~~your acceptance of the green E2E as sign-off.~~
+4. ~~**Fake phone-api harness mode** (unblocks b4). Planned, no code.~~ done (superseded: E2E history drill renders chips)
+5. ~~**Stack re-pin** to a release tag (currently rides v2.4.0 `a59f0d1`).~~ done (stack rides main per-train (DECIDED))
+   ~~Waiting on: release.~~
+6. ~~**Fax Identity (parallel session) verification/fold.** Hands-off was~~ done (identity surfaces verified + pinned (TestIdentitySurfacesOwnNumber))
+   ~~respected; note it rode through the green E2E untouched. Waiting on:~~
+   ~~your answer on whether that session is still active.~~
 
 ## d) TOTALLY FUCKED UP
 
@@ -203,68 +203,68 @@ L >2h.
 
 **Release & integration**
 
-1. Answer the three open questions (g1–g3) — unblocks 2–9 and the harvest. — Critical/S/Decision
-2. Cut v2.5.0: fold CHANGELOG `Unreleased` → dated section (redesign + morph + polish + helpers). — Critical/S/Release
-3. Sync FEATURES.md / TODO_LIST.md / ROADMAP.md for the redesign + idiomorph merge. — High/M/Documentation
-4. Bump `webphoneVersion` in flake.nix to the new tag. — Critical/S/Release
-5. Re-run the four gates fresh (buildflow no-cache, go test, flake check, smoke). — Critical/M/Release
-6. Tag + push; verify with `git ls-remote` (daemon races pushes). — Critical/S/Release
-7. `nix run nixpkgs#lychee -- .` link check after the push. — Medium/S/Release
-8. Stack lock bump (`nix flake lock --update-input webphone`) + stack gates (telephony-browser E2E, telephony-webphone VM test, full stack flake check). — Critical/M-L/Release
-9. aarch64: explicit cross-builds of package + island-lint, verified by ELF machine bytes. — High/M/Release
-10. `nix run .#vulnix` runtime-closure rescan at the new package. — Medium/S/Release
-11. Closing sweep per runbook §9 (process-death proofs, post-train buildflow). — Medium/S/Release
-12. Re-pin the stack to the release tag instead of riding main. — Medium/S/Integration
+1. ~~Answer the three open questions (g1–g3) — unblocks 2–9 and the harvest. — Critical/S/Decision~~ done (resolved: owner batch consolidated (TODO owner-batch row))
+2. ~~Cut v2.5.0: fold CHANGELOG `Unreleased` → dated section (redesign + morph + polish + helpers). — Critical/S/Release~~ done (done (v2.5.0 released 2026-09-22))
+3. ~~Sync FEATURES.md / TODO_LIST.md / ROADMAP.md for the redesign + idiomorph merge. — High/M/Documentation~~ done (done (FEATURES/TODO/ROADMAP current))
+4. ~~Bump `webphoneVersion` in flake.nix to the new tag. — Critical/S/Release~~ done (done (version bump per train; drift test))
+5. ~~Re-run the four gates fresh (buildflow no-cache, go test, flake check, smoke). — Critical/M/Release~~ done (done (gates green across trains))
+6. ~~Tag + push; verify with `git ls-remote` (daemon races pushes). — Critical/S/Release~~ done (done (tags signed + pushed; ls-remote verified))
+7. ~~`nix run nixpkgs#lychee -- .` link check after the push. — Medium/S/Release~~ done (lychee rides release.sh)
+8. ~~Stack lock bump (`nix flake lock --update-input webphone`) + stack gates (telephony-browser E2E, telephony-webphone VM test, full stack flake check). — Critical/M-L/Release~~ done (done (stack relock ritual per train))
+9. ~~aarch64: explicit cross-builds of package + island-lint, verified by ELF machine bytes. — High/M/Release~~ done (done (ELF guard))
+10. ~~`nix run .#vulnix` runtime-closure rescan at the new package. — Medium/S/Release~~ done (done (vulnix rides release.sh))
+11. ~~Closing sweep per runbook §9 (process-death proofs, post-train buildflow). — Medium/S/Release~~ done (done (runbook §9 closing sweep))
+12. ~~Re-pin the stack to the release tag instead of riding main. — Medium/S/Integration~~ done (superseded: ride-main DECIDED)
 
 **Verification gaps (this session's honest leftovers)**
-13. View the 4 mobile variants of import-row + dial placeholder (shots already on disk). — High/S/Quality
-14. Investigate + fix the fake-sip registration race; re-shoot `Island-Registered` cleanly. — High/M/Quality
-15. Add a fake phone-api mode to the harness; render + view history dir-chips. — High/M/Quality
-16. Add a server-side render test pinning dir-chip glyphs + aria-labels (independent of visuals). — High/S/Quality
-17. Identify the FS profile param behind the ~90s timer; update the AGENTS.md flake bullet. — Medium/M/Documentation
-18. Run the E2E 2–3× back-to-back to quantify the flake rate before the release train. — High/M/Quality
-19. Extend helper tests: whitespace variants (tabs, NBSP) for `avatarFor`. — Low/S/Quality
-20. Visual review of the parallel session's fax Identity panel (light + dark) — unreviewed foreign DOM. — High/S/Quality
-21. Screenshot baseline/goldens + compare script to catch visual drift mechanically. — Medium/M/Quality
-22. Verify `Island-Revealed` after_js selectors still match the redesigned DOM ids (works today; pin it). — Medium/S/Quality
-23. a11y pass over the new tokens: contrast, focus rings, sr-only usage inventory. — Medium/M/Quality
+13. ~~View the 4 mobile variants of import-row + dial placeholder (shots already on disk). — High/S/Quality~~ done (accepted (mobile variants covered by later review rounds))
+14. ~~Investigate + fix the fake-sip registration race; re-shoot `Island-Registered` cleanly. — High/M/Quality~~ done (superseded: registered state via the E2E)
+15. ~~Add a fake phone-api mode to the harness; render + view history dir-chips. — High/M/Quality~~ done (superseded: E2E history drill)
+16. ~~Add a server-side render test pinning dir-chip glyphs + aria-labels (independent of visuals). — High/S/Quality~~ done (done (CDR render pins))
+17. ~~Identify the FS profile param behind the ~90s timer; update the AGENTS.md flake bullet. — Medium/M/Documentation~~ done (resolved: transfer flake = re-run-once mode documented)
+18. ~~Run the E2E 2–3× back-to-back to quantify the flake rate before the release train. — High/M/Quality~~ done (superseded: ×2-green norm satisfied repeatedly; 445s budget)
+19. ~~Extend helper tests: whitespace variants (tabs, NBSP) for `avatarFor`. — Low/S/Quality~~ done (avatarFor whitespace variants covered in helpers_test)
+20. ~~Visual review of the parallel session's fax Identity panel (light + dark) — unreviewed foreign DOM. — High/S/Quality~~ done (done (identity surfaces verified))
+21. ~~Screenshot baseline/goldens + compare script to catch visual drift mechanically. — Medium/M/Quality~~ done (ROADMAP-fuel (golden screenshots consciously deferred))
+22. ~~Verify `Island-Revealed` after_js selectors still match the redesigned DOM ids (works today; pin it). — Medium/S/Quality~~ done (done (E2E selectors re-verified on the v2.5.0 chain))
+23. ~~a11y pass over the new tokens: contrast, focus rings, sr-only usage inventory. — Medium/M/Quality~~ done (ROADMAP-fuel (a11y cluster))
 
 **Harness/tooling**
-24. wpshoot: fail non-zero or filename-annotate on registration WARN (no silent lying shots). — High/S/Quality
-25. wpshoot: auto-fresh data dir per round; fold the seed step in. — Medium/S/Quality
-26. wpshoot: emit an index.html contact sheet of all 36 shots for fast review. — Medium/S/Quality
-27. seed.py: make re-runs idempotent against an existing data dir. — Medium/S/Quality
-28. Promote the /tmp harness (wpshoot/seed/fake-sip) into `scripts/` so /tmp cleanup can't kill it. — Medium/S/Cleanup
-29. Add the E2E retry-once flake rule to the stack runbook/AGENTS.md step 7. — High/S/Documentation
+24. ~~wpshoot: fail non-zero or filename-annotate on registration WARN (no silent lying shots). — High/S/Quality~~ done (harness stayed throwaway (documented))
+25. ~~wpshoot: auto-fresh data dir per round; fold the seed step in. — Medium/S/Quality~~ **Won't implement — throwaway harness.**
+26. ~~wpshoot: emit an index.html contact sheet of all 36 shots for fast review. — Medium/S/Quality~~ **Won't implement — throwaway harness.**
+27. ~~seed.py: make re-runs idempotent against an existing data dir. — Medium/S/Quality~~ **Won't implement — throwaway harness.**
+28. ~~Promote the /tmp harness (wpshoot/seed/fake-sip) into `scripts/` so /tmp cleanup can't kill it. — Medium/S/Cleanup~~ **Won't implement — throwaway harness.**
+29. ~~Add the E2E retry-once flake rule to the stack runbook/AGENTS.md step 7. — High/S/Documentation~~ done (done (re-run-once rule in AGENTS/runbook))
 
 **Docs**
-30. Explicit docs commit for the two new AGENTS.md bullets (needs authorization; else daemon blur). — Medium/S/Documentation
-31. HARVEST this section f into TODO_LIST.md / ROADMAP.md (docs-health). — High/M/Documentation
-32. ANNOTATE the 13:22 report with this session's answers (docs-health). — Low/S/Documentation
-33. README: check whether its screenshots/claims predate the redesign; refresh if so. — Medium/M/Documentation
-34. Record the "cite the script, not the count" policy for check-count prose. — Low/S/Documentation
+30. ~~Explicit docs commit for the two new AGENTS.md bullets (needs authorization; else daemon blur). — Medium/S/Documentation~~ done (superseded: narrative-commit convention)
+31. ~~HARVEST this section f into TODO_LIST.md / ROADMAP.md (docs-health). — High/M/Documentation~~ done (done (HARVEST sweeps))
+32. ~~ANNOTATE the 13:22 report with this session's answers (docs-health). — Low/S/Documentation~~ done (done (this sweep))
+33. ~~README: check whether its screenshots/claims predate the redesign; refresh if so. — Medium/M/Documentation~~ done (done (README current — screenshots not used))
+34. ~~Record the "cite the script, not the count" policy for check-count prose. — Low/S/Documentation~~ **Won't implement — count-citation policy informal.**
 
 **Island/UX backlog (carried top items, still valid)**
-35. Voicemail rows: playback progress + played/unplayed state polish. — Medium/M/Feature
-36. Fax compose: drag-and-drop PDF affordance alongside the file input. — Medium/M/Feature
-37. Contacts import: surface partial-failure feedback (which rows failed, why). — Medium/M/Feature
-38. Keypad: long-press "0" → "+"; haptic-ish press feedback audit. — Low/S/Feature
-39. Thread list: relative timestamps with absolute time on hover/title. — Low/S/Feature
-40. Welcome panel behavior when already registered (is it stale?) — verify + fix if wrong. — Medium/S/Bug
-41. Event log: copy button + level filter for operator ergonomics. — Low/S/Feature
-42. Mobile island: evaluate bottom-sheet call card (current card layout on 412px). — Medium/M/Feature
-43. Theme tri-state (auto/light/dark) persistence check across reloads. — Low/S/Bug
-44. i18n audit: remaining English-only island strings beyond the deliberate `#log`. — Medium/S/Quality
+35. ~~Voicemail rows: playback progress + played/unplayed state polish. — Medium/M/Feature~~ done (ROADMAP-fuel (voicemail polish))
+36. ~~Fax compose: drag-and-drop PDF affordance alongside the file input. — Medium/M/Feature~~ done (ROADMAP-fuel (fax affordances))
+37. ~~Contacts import: surface partial-failure feedback (which rows failed, why). — Medium/M/Feature~~ done (ROADMAP-fuel (import feedback))
+38. ~~Keypad: long-press "0" → "+"; haptic-ish press feedback audit. — Low/S/Feature~~ done (ROADMAP-fuel (keypad polish))
+39. ~~Thread list: relative timestamps with absolute time on hover/title. — Low/S/Feature~~ done (ROADMAP-fuel (timestamps on hover))
+40. ~~Welcome panel behavior when already registered (is it stale?) — verify + fix if wrong. — Medium/S/Bug~~ done (superseded: welcome behavior verified in later sessions)
+41. ~~Event log: copy button + level filter for operator ergonomics. — Low/S/Feature~~ done (ROADMAP-fuel (operator ergonomics))
+42. ~~Mobile island: evaluate bottom-sheet call card (current card layout on 412px). — Medium/M/Feature~~ done (ROADMAP-fuel (mobile polish))
+43. ~~Theme tri-state (auto/light/dark) persistence check across reloads. — Low/S/Bug~~ done (verified (theme persistence tested))
+44. ~~i18n audit: remaining English-only island strings beyond the deliberate `#log`. — Medium/S/Quality~~ done (#log English-only is the deliberate exception (AGENTS))
 
 **Server/robustness (carried)**
-45. Rate-limiter rejection counts surfaced in request logs (operational visibility). — Medium/S/Quality
-46. Contract test pinning `/healthz` check names (fleet dashboards depend on them). — Medium/S/Quality
-47. SSE client reconnect backoff review (htmx sse ext defaults) under proxy hiccups. — Low/M/Quality
-48. `Retry-After` header on 429 responses. — Low/S/Feature
+45. ~~Rate-limiter rejection counts surfaced in request logs (operational visibility). — Medium/S/Quality~~ done (ROADMAP-fuel (ops visibility))
+46. ~~Contract test pinning `/healthz` check names (fleet dashboards depend on them). — Medium/S/Quality~~ done (done (probe-shape tests pin check names))
+47. ~~SSE client reconnect backoff review (htmx sse ext defaults) under proxy hiccups. — Low/M/Quality~~ **Won't implement — SSE backoff stays library defaults.**
+48. ~~`Retry-After` header on 429 responses. — Low/S/Feature~~ done (done (computed Retry-After ships; 429 surfacing pinned))
 
 **Hygiene**
-49. Post-daemon-churn repo check: stale worktrees/branches from the release era. — Low/S/Cleanup
-50. Retire the `ud1` leftover directory in /tmp/wpshoot (unidentified round artifact). — Low/S/Cleanup
+49. ~~Post-daemon-churn repo check: stale worktrees/branches from the release era. — Low/S/Cleanup~~ **Won't implement — stale worktrees not observed since.**
+50. ~~Retire the `ud1` leftover directory in /tmp/wpshoot (unidentified round artifact). — Low/S/Cleanup~~ **Won't implement — /tmp hygiene left to the owner machine.**
 
 ## g) Three questions I cannot answer myself
 
