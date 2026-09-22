@@ -212,7 +212,7 @@ Sorted by the same priority order (phases P0→P7). "From" = medium task.
 
 > **Executed 2026-09-18/19** — every micro task below ran with its parent
 > M-row; per-row verdicts live in the §3 phase tables, outcomes in the
-> [2026-09-19 status report](../status/archived/2026-09-19_00-05_cqrs-htmx-adoption-execution-status.md).
+> [2026-09-19 status report](../../status/archived/2026-09-19_00-05_cqrs-htmx-adoption-execution-status.md).
 
 | ID      | Micro task                                                                                                             | ≤min   | From    | Phase  |
 | ------- | ---------------------------------------------------------------------------------------------------------------------- | ------ | ------- | ------ |
