@@ -135,7 +135,10 @@ func (s *Service) Send(
 	switch {
 	case err != nil:
 		msg.Status = domain.StatusFailed
-		sendErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "")
+		msg.FailureKind = failureKindOf(err)
+		msg.FailureDetail = err.Error()
+		sendErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "",
+			msg.FailureKind, msg.FailureDetail)
 		s.notify(ctx, owner, threadID)
 		if sendErr != nil {
 			slog.Warn("messaging: mark failed", "error", sendErr)
@@ -144,7 +147,7 @@ func (s *Service) Send(
 	default:
 		msg.Status = domain.StatusSent
 		msg.ProviderRef = receipt.ProviderRef
-		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusSent, receipt.ProviderRef); err != nil {
+		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusSent, receipt.ProviderRef, "", ""); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
 		s.notify(ctx, owner, threadID)
@@ -250,16 +253,33 @@ func (s *Service) DeliveryReceipt(
 	if err != nil {
 		return domain.Message{}, err
 	}
-	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, status, msg.ProviderRef); err != nil {
+	failureKind, failureDetail := "", ""
+	if status == domain.StatusFailed {
+		failureKind, failureDetail = "provider", errMsg
+		if errMsg != "" {
+			slog.Warn("messaging: delivery failed", "message", msg.ID.String(),
+				"owner", msg.Owner.String(), "remote", msg.Remote.String(), "error", errMsg)
+		}
+	}
+	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, status, msg.ProviderRef,
+		failureKind, failureDetail); err != nil {
 		return domain.Message{}, fmt.Errorf("record delivery status: %w", err)
 	}
-	if status == domain.StatusFailed && errMsg != "" {
-		slog.Warn("messaging: delivery failed", "message", msg.ID.String(),
-			"owner", msg.Owner.String(), "remote", msg.Remote.String(), "error", errMsg)
-	}
 	msg.Status = status
+	msg.FailureKind, msg.FailureDetail = failureKind, failureDetail
 	s.notify(ctx, msg.Owner, msg.ThreadID)
 	return msg, nil
+}
+
+// failureKindOf maps a send error to the retry vocabulary: a domain
+// REJECTION (invalid number, provider policy) will fail identically on
+// retry, so the bubble offers none; transport and infrastructure
+// failures are worth another attempt later.
+func failureKindOf(err error) string {
+	if errorfamily.Classify(err) == errorfamily.Rejection {
+		return "rejected"
+	}
+	return "transient"
 }
 
 // AttachmentByID returns one attachment scoped to the owner's messages.

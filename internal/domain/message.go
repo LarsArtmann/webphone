@@ -70,10 +70,12 @@ type Message struct {
 	Direction   Direction
 	Channel     Channel
 	Body        string
-	Status      OutboundStatus // zero for inbound (see OutboundStatus)
-	ProviderRef string         // gateway correlation id, "" when none
-	Attachments []Attachment
-	CreatedAt   time.Time
+	Status       OutboundStatus // zero for inbound (see OutboundStatus)
+	ProviderRef  string         // gateway correlation id, "" when none
+	FailureKind  string         // "", "transient", "rejected" or "provider"; only transient is retryable
+	FailureDetail string        // raw failure reason, rendered verbatim (operator English)
+	Attachments  []Attachment
+	CreatedAt    time.Time
 }
 
 // ChannelOf derives the channel from a message's shape: any attachment

@@ -45,11 +45,12 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	}
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, msg.ID.String(), threadID, msg.Owner.String(), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
-		string(msg.Status), msg.ProviderRef, msg.CreatedAt.Unix()); err != nil {
+		string(msg.Status), msg.ProviderRef, msg.FailureKind, msg.FailureDetail,
+		msg.CreatedAt.Unix()); err != nil {
 		return fmt.Errorf("insert message %s (thread %s): %w", msg.ID, threadID, err)
 	}
 
@@ -76,14 +77,20 @@ func incrementIf(want, got domain.Direction) int {
 	return 0
 }
 
-// UpdateOutboundStatus advances an outbound message's delivery status and
-// provider reference.
+// UpdateOutboundStatus advances an outbound message's delivery status,
+// provider reference and failure story. A delivered verdict CLEARS any
+// earlier failure (kind and detail revert to empty); a failed verdict
+// records kind + detail for the bubble's disclosure and retry decision.
 func (s *Messages) UpdateOutboundStatus(
 	ctx context.Context, id domain.MessageID, status domain.OutboundStatus, providerRef string,
+	failureKind, failureDetail string,
 ) error {
 	res, err := s.db.ExecContext(ctx, `
-		UPDATE messages SET status = ?, provider_ref = ? WHERE id = ? AND direction = ?
-	`, string(status), providerRef, id.String(), string(domain.DirectionOutbound))
+		UPDATE messages
+		SET status = ?, provider_ref = ?, failure_kind = ?, failure_detail = ?
+		WHERE id = ? AND direction = ?
+	`, string(status), providerRef, failureKind, failureDetail,
+		id.String(), string(domain.DirectionOutbound))
 	if err != nil {
 		return fmt.Errorf("update status of message %s: %w", id, err)
 	}
@@ -100,7 +107,7 @@ func (s *Messages) MessageByProviderRef(ctx context.Context, ref string) (domain
 		return domain.Message{}, ErrNotFound
 	}
 	row := s.db.QueryRowContext(ctx, `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
+		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages WHERE provider_ref = ? AND direction = ?
 	`, ref, string(domain.DirectionOutbound))
 	msg, err := scanMessage(row)
@@ -170,7 +177,7 @@ func (s *Messages) ListMessages(
 	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, limit int,
 ) ([]domain.Message, error) {
 	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
+		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC
@@ -195,23 +202,26 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 	var (
 		id, threadID, owner, remote, direction, channel string
 		body, status, providerRef                       string
+		failureKind, failureDetail                      string
 		createdAt                                       int64
 	)
 	if err := row.Scan(&id, &threadID, &owner, &remote, &direction, &channel,
-		&body, &status, &providerRef, &createdAt); err != nil {
+		&body, &status, &providerRef, &failureKind, &failureDetail, &createdAt); err != nil {
 		return domain.Message{}, fmt.Errorf("scan message %s of thread %s: %w", id, threadID, err)
 	}
 	return domain.Message{
-		ID:          domain.MustMessageID(id),
-		ThreadID:    domain.MustThreadID(threadID),
-		Owner:       domain.MustParseExtension(owner),
-		Remote:      domain.MustParsePhone(remote),
-		Direction:   domain.Direction(direction),
-		Channel:     domain.Channel(channel),
-		Body:        body,
-		Status:      domain.OutboundStatus(status),
-		ProviderRef: providerRef,
-		CreatedAt:   time.Unix(createdAt, 0),
+		ID:            domain.MustMessageID(id),
+		ThreadID:      domain.MustThreadID(threadID),
+		Owner:         domain.MustParseExtension(owner),
+		Remote:        domain.MustParsePhone(remote),
+		Direction:     domain.Direction(direction),
+		Channel:       domain.Channel(channel),
+		Body:          body,
+		Status:        domain.OutboundStatus(status),
+		ProviderRef:   providerRef,
+		FailureKind:   failureKind,
+		FailureDetail: failureDetail,
+		CreatedAt:     time.Unix(createdAt, 0),
 	}, nil
 }
 
@@ -369,7 +379,7 @@ func (s *Messages) ListMessagesPage(
 		page = 0
 	}
 	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
+		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite" // registers the "sqlite" driver
@@ -57,6 +58,8 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			body         TEXT NOT NULL DEFAULT '',
 			status       TEXT NOT NULL DEFAULT '',
 			provider_ref TEXT NOT NULL DEFAULT '',
+			failure_kind   TEXT NOT NULL DEFAULT '',
+			failure_detail TEXT NOT NULL DEFAULT '',
 			created_at   INTEGER NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, created_at)`,
@@ -99,6 +102,21 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	for _, stmt := range statements {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
 			return fmt.Errorf("apply %q: %w", firstLine(stmt), err)
+		}
+	}
+	// Additive column migrations: CREATE IF NOT EXISTS never extends an
+	// EXISTING table, so each late-added column needs an ALTER — which
+	// SQLite has no IF NOT EXISTS form for. "duplicate column name" is
+	// the already-applied signal; anything else is a real failure.
+	alters := []string{
+		`ALTER TABLE messages ADD COLUMN failure_kind TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE messages ADD COLUMN failure_detail TEXT NOT NULL DEFAULT ''`,
+	}
+	for _, stmt := range alters {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			if !strings.Contains(err.Error(), "duplicate column name") {
+				return fmt.Errorf("apply %q: %w", firstLine(stmt), err)
+			}
 		}
 	}
 	return nil
