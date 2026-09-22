@@ -102,7 +102,16 @@ step "5/9 tag + push + verify"
 if [ "$RESUME_TAG" = "1" ]; then
 	echo "skipped: $TAG already pushed"
 else
-	run git tag -a "$TAG" -m "webphone $TAG"
+	# Signed tags (plan T27c): the release is an artifact others may
+	# clone — a GPG signature makes provenance checkable offline
+	# (the daemon's sweep commits already sign, so the key exists).
+	run git tag -s "$TAG" -m "webphone $TAG"
+	if [ "$DRY_RUN" != "1" ]; then
+		git tag -v "$TAG" >/dev/null 2>&1 || {
+			echo "tag $TAG did not verify against a trusted key" >&2
+			exit 1
+		}
+	fi
 	run git push origin main "$TAG"
 	if [ "$DRY_RUN" != "1" ]; then
 		git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q . || {
