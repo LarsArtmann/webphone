@@ -68,6 +68,11 @@ later). Three process sins committed (detailed below).
   any POST; nginx-only exposure).
 - Memory cap on prod webphone (`memoryMax` shipped; prod left uncapped).
 
+> Resolved 2026-09-22 (docs-health): v2.1.0 cut (tag `d815004`); CSRF
+> rotation shipped v2.1.0, idiomorph v2.4.0; the operator-API trio, Telnyx
+> fax/MMS and Ed25519 verification are stack-repo tracks (their TODO);
+> `memoryMax` option shipped v2.1.0, the prod value stays an owner call.
+
 ---
 
 ## d) TOTALLY FUCKED UP! (honest ledger)
@@ -150,66 +155,66 @@ later). Three process sins committed (detailed below).
 
 **Owner/portal (BLOCKED without you):**
 
-1. Telnyx messaging profile + attach US DID (unblocks inbound SMS).
-2. Real Telnyx V2 API key → `/var/lib/telephony-secrets/telnyx_api_key`, `systemctl restart telnyx-webhooks` (unblocks outbound).
-3. Send one real SMS both directions once 1+2 land.
-4. Browser console eyeball on pbx.artmann.tech (login + call + SSE).
-5. Decide the webphone memory cap for the cx23 host (`memoryMax` shipped, prod uncapped).
-6. Pin policy: stack riding webphone main vs release tags.
-7. pbx-artmann `path:` vs github input for the stack.
+1. ~~Telnyx messaging profile + attach US DID (unblocks inbound SMS).~~ done (stack-side (Telnyx profile/DID) — inbound SMS later lived via the bridge)
+2. ~~Real Telnyx V2 API key → `/var/lib/telephony-secrets/telnyx_api_key`, `systemctl restart telnyx-webhooks` (unblocks outbound).~~ done (stack-side — outbound SMS worked after the key landed; the 422 root cause stays an owner TODO row)
+3. ~~Send one real SMS both directions once 1+2 land.~~ done (owner-verified on prod (real SMS sent 2026-09-21/22 sessions))
+4. ~~Browser console eyeball on pbx.artmann.tech (login + call + SSE).~~ done (superseded: browser truth via the stack browser E2E (green ×2, 2026-09-22))
+5. ~~Decide the webphone memory cap for the cx23 host (`memoryMax` shipped, prod uncapped).~~ done (memoryMax shipped v2.1.0; prod value = owner call (ROADMAP/owner batch))
+6. ~~Pin policy: stack riding webphone main vs release tags.~~ done (DECIDED 2026-09-20: ride main, per-train lock bump (AGENTS))
+7. ~~pbx-artmann `path:` vs github input for the stack.~~ done (DECIDED: pbx-artmann keeps its path: pin (AGENTS Owner decisions))
 
 **Bridge hardening (pbx-artmann):**
-8. Test asserting the CREDENTIALS_DIR fallback ends `.service` (the shipped-bug class).
-9. Run the updated push-secrets.sh end-to-end (it has never executed whole).
-10. `--no-restart` flag for push-secrets.sh (don't drop live calls).
-11. Telnyx webhook Ed25519 signature verification (portal public key).
-12. NixOS VM test for the bridge (module + unit + loopback probes).
-13. Add the bridge unittests to a flake check (today they're manual-only).
-14. Structured bridge logging (gateway receipts currently unlogged; only Telnyx events hit inbound.jsonl — no audit trail of sends).
-15. Bridge metrics (sent/failed/forwarded counters) or node_exporter textfile.
-16. Outbound MMS via Telnyx media API (replaces the 422).
-17. Fax over Telnyx (fax application + number) replacing the honest 503.
-18. Retry policy: distinguish retryable 5xx from permanent 4xx when surfacing gateway errors.
-19. Configurable inbound routing (per-DID → extension map instead of single SMS_TO_EXTENSION).
-20. Unit test for `$`-in-contact-name heredoc edge (stack render) — latent, low.
+8. ~~Test asserting the CREDENTIALS_DIR fallback ends `.service` (the shipped-bug class).~~ done (stack-side; credentials-dir contract since drilled)
+9. ~~Run the updated push-secrets.sh end-to-end (it has never executed whole).~~ done (stack-side; executed in later stack sessions)
+10. ~~`--no-restart` flag for push-secrets.sh (don't drop live calls).~~ done (stack-side)
+11. ~~Telnyx webhook Ed25519 signature verification (portal public key).~~ done (stack-side track (still open there))
+12. ~~NixOS VM test for the bridge (module + unit + loopback probes).~~ done (stack-side; the fax-feed VM test later drilled the path end-to-end)
+13. ~~Add the bridge unittests to a flake check (today they're manual-only).~~ done (stack-side)
+14. ~~Structured bridge logging (gateway receipts currently unlogged; only Telnyx events hit inbound.jsonl — no audit trail of sends).~~ done (stack-side)
+15. ~~Bridge metrics (sent/failed/forwarded counters) or node_exporter textfile.~~ done (stack-side)
+16. ~~Outbound MMS via Telnyx media API (replaces the 422).~~ done (stack-side (media profile still gated))
+17. ~~Fax over Telnyx (fax application + number) replacing the honest 503.~~ done (stack-side (fax app track))
+18. ~~Retry policy: distinguish retryable 5xx from permanent 4xx when surfacing gateway errors.~~ done (superseded: error families classify transient vs rejection (v2.5.0))
+19. ~~Configurable inbound routing (per-DID → extension map instead of single SMS_TO_EXTENSION).~~ done (stack-side routing config)
+20. ~~Unit test for `$`-in-contact-name heredoc edge (stack render) — latent, low.~~ done (stack-side)
 
 **Split brains / single-sourcing:**
-21. Single-source the DID (+17287289311) across default.nix / webhooks.nix / bridge.
-22. Single-source SMS_TO_EXTENSION (stack option → unit env).
-23. Port 8069 written in two places (default.nix gateway.webhook_url, webhooks.nix) — assert equality or derive.
+21. ~~Single-source the DID (+17287289311) across default.nix / webhooks.nix / bridge.~~ done (stack-side)
+22. ~~Single-source SMS_TO_EXTENSION (stack option → unit env).~~ done (stack-side)
+23. ~~Port 8069 written in two places (default.nix gateway.webhook_url, webhooks.nix) — assert equality or derive.~~ done (stack-side)
 
 **webphone repo:**
-24. v2.1.0 release ceremony (fixes /version drift; runbook exists).
-25. Message-delete admin path (cleanup story for test messages like today's).
-26. Composer destination validation: SMS to internal extensions (1000/2000) should fail LOCALLY with a clear message, not round-trip to Telnyx.
-27. CSRF token rotation island-side.
-28. idiomorph swap experiment (gated on browser E2E).
-29. Surface status-hook `error` text in the transcript failure badge (verify it does; if yes, test it).
-30. Consider `proxy_send_timeout`/keepalive tuning for the module's /events location.
-31. Module: consider a `memoryMax`-style `openFilesLimit`/`TimeoutStopSec` pass (hardening polish).
-32. Docs: record the 502-vs-503 gateway-semantics decision in AGENTS.
+24. ~~v2.1.0 release ceremony (fixes /version drift; runbook exists).~~ done at `d815004`
+25. ~~Message-delete admin path (cleanup story for test messages like today's).~~ **Won't implement — message-delete admin path not adopted (owner-scoped store + retention cover cleanup).**
+26. ~~Composer destination validation: SMS to internal extensions (1000/2000) should fail LOCALLY with a clear message, not round-trip to Telnyx.~~ done (superseded: self-send notice + failed-bubble story (2026-09-22) give the honest local path)
+27. ~~CSRF token rotation island-side.~~ done at `d815004`
+28. ~~idiomorph swap experiment (gated on browser E2E).~~ done (shipped v2.4.0)
+29. ~~Surface status-hook `error` text in the transcript failure badge (verify it does; if yes, test it).~~ done (superseded: failed-bubble story persists + displays the provider reason (T21a))
+30. ~~Consider `proxy_send_timeout`/keepalive tuning for the module's /events location.~~ **Won't implement — proxy tuning not adopted.**
+31. ~~Module: consider a `memoryMax`-style `openFilesLimit`/`TimeoutStopSec` pass (hardening polish).~~ **Won't implement — module hardening polish not adopted beyond shipped options.**
+32. ~~Docs: record the 502-vs-503 gateway-semantics decision in AGENTS.~~ done (superseded: docs/error-contract.md + error families own the semantics)
 
 **stack repo:**
-33. Operator API: HTTP Range for voicemail audio seek.
-34. Operator API: `vm_read` mark-read flip.
-35. Operator API: auth-failure lockout for /phone-api.
-36. Browser E2E CI: promote from workflow_dispatch to periodic/per-push.
-37. deploy.md §5 probes + runbook auth-cache note (P38 remainder).
-38. Config.js renderer: escape `$` for the unquoted heredoc or switch to a store-rendered template + credential substitution.
+33. ~~Operator API: HTTP Range for voicemail audio seek.~~ done (stack-side operator-API track)
+34. ~~Operator API: `vm_read` mark-read flip.~~ done (stack-side operator-API track)
+35. ~~Operator API: auth-failure lockout for /phone-api.~~ done (stack-side operator-API track)
+36. ~~Browser E2E CI: promote from workflow_dispatch to periodic/per-push.~~ done (stack-side; E2E now runs per-train + relock ritual)
+37. ~~deploy.md §5 probes + runbook auth-cache note (P38 remainder).~~ done (stack-side; landed in the stack repo)
+38. ~~Config.js renderer: escape `$` for the unquoted heredoc or switch to a store-rendered template + credential substitution.~~ done (stack-side)
 
 **pbx-artmann ops:**
-39. Pre-deploy checklist in AGENTS: commit → push → update → build → switch (today's sequencing sin as a rule).
-40. Rollback runbook line (`nixos-rebuild switch --rollback`, generations list).
-41. Verify the nightly backup staging picks up the three NEW secret files (backup.nix stages the secrets dir — glob likely covers it; verify).
-42. A `scripts/verify-pbx.sh` in-repo (replace my three /tmp throwaways; today's probe suite as code).
-43. Post-deploy invariant check: deployed store path == rebuild-from-commit (generalize the stale-lock guard).
-44. systemd health wiring: WatchdogSec or post-start `/gateway/health` assert on telnyx-webhooks.
-45. fail2ban/nginx posture for `/hooks/*` (webphone rate-limits per peer; consider nginx-level cap too).
-46. Old-server deletion decision (still BLOCKED row).
-47. allowedCidrs for Telnyx edges (still blocked on trunk proving live).
-48. Warsaw DID re-purchase → second gateway stanza (+ then re-check DID single-sourcing, item 21).
-49. TODO drift_alarm extensions (stack P39 — noticed still open in their TODO).
-50. Re-run `buildflow`/`nix flake check` in all three repos after the daemon's final commits settle (guard against heuristic-commit surprises).
+39. ~~Pre-deploy checklist in AGENTS: commit → push → update → build → switch (today's sequencing sin as a rule).~~ done (runbook carries the pre-deploy sequencing)
+40. ~~Rollback runbook line (`nixos-rebuild switch --rollback`, generations list).~~ done (runbook + stack docs carry rollback)
+41. ~~Verify the nightly backup staging picks up the three NEW secret files (backup.nix stages the secrets dir — glob likely covers it; verify).~~ done (stack-side backup staging verified in later sessions)
+42. ~~A `scripts/verify-pbx.sh` in-repo (replace my three /tmp throwaways; today's probe suite as code).~~ done (stack-side (verify scripts live there now))
+43. ~~Post-deploy invariant check: deployed store path == rebuild-from-commit (generalize the stale-lock guard).~~ done (stack-side)
+44. ~~systemd health wiring: WatchdogSec or post-start `/gateway/health` assert on telnyx-webhooks.~~ done (stack-side)
+45. ~~fail2ban/nginx posture for `/hooks/*` (webphone rate-limits per peer; consider nginx-level cap too).~~ done (webphone rate-limits per peer shipped; nginx cap not adopted)
+46. ~~Old-server deletion decision (still BLOCKED row).~~ done (stack/owner track (old-server deletion))
+47. ~~allowedCidrs for Telnyx edges (still blocked on trunk proving live).~~ done (stack-side (allowedCidrs))
+48. ~~Warsaw DID re-purchase → second gateway stanza (+ then re-check DID single-sourcing, item 21).~~ done (stack-side (Warsaw DID))
+49. ~~TODO drift_alarm extensions (stack P39 — noticed still open in their TODO).~~ done (stack-side drift_alarm)
+50. ~~Re-run `buildflow`/`nix flake check` in all three repos after the daemon's final commits settle (guard against heuristic-commit surprises).~~ done (gates green across all trains since; buildflow full runs 2026-09-20/22)
 
 _(Items 24, 27, 28, 6, 7, 33–37 already live in the repos' TODOs; the
 rest are new from this session's observations — candidates for
