@@ -10,7 +10,7 @@
 #   4. origin/main vs local HEAD (the daemon may have stalled).
 # Exit 0 iff every executed step passes.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 NO_NET=false
 FORCE_FANOUT=false

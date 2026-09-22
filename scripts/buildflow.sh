@@ -11,7 +11,7 @@
 # wrapper appends the secret and spelling scans that fast-mode skips, so
 # ONE command runs the full quality story.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 floor() {
 	awk '/^go [0-9]/ { print $2; exit }' go.mod

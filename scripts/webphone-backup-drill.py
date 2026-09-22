@@ -86,7 +86,7 @@ def boot(data_dir):
     # probed (absent in the nix sandbox, where no prior drill process
     # can exist) so the drill also runs as a flake check.
     if shutil.which("pkill"):
-        subprocess.run(["pkill", "-f", BIN], capture_output=True)
+        subprocess.run(["pkill", "-f", BIN], capture_output=True, check=False)
         time.sleep(0.5)
     env = dict(
         os.environ,
@@ -94,9 +94,8 @@ def boot(data_dir):
         WEBPHONE_DATA_DIR=data_dir,
         WEBPHONE_GATEWAY__WEBHOOK_SECRET=SECRET,
     )
-    proc = subprocess.Popen(
-        [BIN], env=env, stdout=open(data_dir + ".log", "wb"), stderr=subprocess.STDOUT
-    )
+    with open(data_dir + ".log", "wb") as log:
+        proc = subprocess.Popen([BIN], env=env, stdout=log, stderr=subprocess.STDOUT)
     wait_port(PORT)
     return proc
 
