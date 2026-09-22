@@ -585,7 +585,14 @@ Ginkgo DescribeTable when the subject is a state machine.
 
 The dance that cut v2.0.0, written down so the next release is a
 checklist, not archaeology. The auto-commit daemon commits AND pushes
-continuously — work in small, explicitly-committed units.
+continuously — work in small, explicitly-committed units, and leave an
+EXPLICIT narrative commit at every phase boundary (the daemon's
+"chore: auto-commit" sweeps are never the record; before switching
+phases, verify `git log -1` carries your message). The daemon has also
+re-introduced formatting drift by sweeping foreign files mid-train
+(2026-09-22 operator.js in the stack) — before any gate run on a repo
+the daemon touched, `git diff` the last daemon commit and re-run the
+formatter if it moved styled files.
 
 1. **Fold**: CHANGELOG `Unreleased` → dated section; sync
    FEATURES/TODO_LIST/ROADMAP; explicit commit per doc group.
