@@ -56,6 +56,18 @@ type Config struct {
 	Identities map[string]string `json:"identities" koanf:"identities"`
 	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
 	CSRF       CSRF              `json:"csrf" koanf:"csrf"`
+	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
+	// enrichment + call-activity logging). Zero value = disabled.
+	CRM CRM `json:"crm" koanf:"crm"`
+}
+
+// CRM configures the optional Ledger CRM integration. Both fields must be
+// set together (a URL without a token cannot authenticate; a token without
+// a URL has nowhere to go) — config validation fails closed on half a
+// configuration so a typo can never silently disable or enable the client.
+type CRM struct {
+	URL   string `json:"url" koanf:"url"`
+	Token string `json:"token" koanf:"token"`
 }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
@@ -202,6 +214,18 @@ func validate(cfg Config) error {
 		if _, err := domain.ParsePhone(did); err != nil {
 			return fmt.Errorf("identities: DID for extension %q has no dialable characters", ext)
 		}
+	}
+	switch {
+	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
+		return nil
+	case cfg.CRM.URL == "":
+		return fmt.Errorf("crm.token is set without crm.url: the integration needs both (or neither)")
+	case cfg.CRM.Token == "":
+		return fmt.Errorf("crm.url is set without crm.token: the CRM machine API answers 401 without a bearer token")
+	}
+	u, err := url.Parse(cfg.CRM.URL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
 	}
 	return nil
 }
