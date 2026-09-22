@@ -513,4 +513,9 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 			t.Errorf("metrics leaks %q — aggregates only:\n%s", leak, page)
 		}
 	}
+	// The CRM integration is off in this deployment: its metric family
+	// must be absent entirely, not published as zeros.
+	if strings.Contains(page, "webphone_crm_lookups_total") {
+		t.Errorf("metrics publishes CRM lookups with the integration off:\n%s", page)
+	}
 }

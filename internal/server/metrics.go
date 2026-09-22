@@ -36,6 +36,18 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", counts.Faxes)
 	writeMetric("webphone_contacts_total", "Stored personal contacts across all extensions.", "gauge", counts.Contacts)
 	writeMetric("webphone_sessions_stored", "Session rows in the store (expired rows are swept lazily).", "gauge", counts.Sessions)
+	// CRM integration observability: the resolver's upstream-outcome
+	// counters (aggregates by construction — no numbers, no contact
+	// names). The family is absent entirely when the integration is off,
+	// so a disabled deploy never publishes zero-lines that read as
+	// "CRM broken".
+	if h.deps.CRM.Enabled() {
+		hit, miss, failure := h.deps.CRM.LookupCounters()
+		fmt.Fprintf(&b, "# HELP webphone_crm_lookups_total CRM number-resolution lookups by outcome (since process start).\n# TYPE webphone_crm_lookups_total counter\n")
+		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"hit\"} %d\n", hit)
+		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"miss\"} %d\n", miss)
+		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"failure\"} %d\n", failure)
+	}
 
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	_, _ = w.Write([]byte(b.String())) //nolint:erraudit // best-effort body write; nothing left to do on failure

@@ -265,6 +265,67 @@ func TestAPICallLoggingContract(t *testing.T) {
 	})
 }
 
+// TestMetricsRendersCRMLookupCounters pins the metrics family: with the
+// integration on, /metrics carries the resolver's upstream-outcome
+// counters (one lookup each classified hit / miss / failure); aggregates
+// only, never a number or a contact name.
+func TestMetricsRendersCRMLookupCounters(t *testing.T) {
+	stub := &crmStub{}
+	stub.lookupJSON = `{"results":[{"id":"01M","first_name":"Ada","last_name":"Lovelace","email":"ada@example.com"}]}`
+	stub.logStatus = http.StatusNoContent
+	upstream := httptest.NewServer(http.HandlerFunc(stub.handler))
+	client, err := crm.NewClient(upstream.URL, "crm-token")
+	if err != nil {
+		t.Fatalf("crm client: %v", err)
+	}
+	resolver := crm.NewResolver(client, nil)
+
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+	c := signIn(t, server)
+	report := func(t *testing.T, number, key string) int {
+		t.Helper()
+		resp, _ := postJSONRaw(t, c, "/api/calls", map[string]any{"number": number, "direction": "in", "key": key})
+		return resp.StatusCode
+	}
+
+	if status := report(t, "+493012345678", "61111111-1111-4111-8111-111111111111"); status != http.StatusNoContent {
+		t.Fatalf("known-number report: %d", status)
+	}
+
+	stub.mu.Lock()
+	stub.lookupJSON = `{"results":[]}`
+	stub.mu.Unlock()
+	if status := report(t, "+449900000001", "62222222-2222-4222-8222-222222222222"); status != http.StatusNoContent {
+		t.Fatalf("unknown-number report: %d", status)
+	}
+
+	upstream.Close()
+	if status := report(t, "+493012345679", "63333333-3333-4333-8333-333333333333"); status != http.StatusNoContent {
+		t.Fatalf("unreachable-CRM report: %d", status)
+	}
+
+	resp, body := c.do(http.MethodGet, "/metrics", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("metrics: %d", resp.StatusCode)
+	}
+	page := string(body)
+	for _, want := range []string{
+		"# TYPE webphone_crm_lookups_total counter",
+		`webphone_crm_lookups_total{outcome="hit"} 1`,
+		`webphone_crm_lookups_total{outcome="miss"} 1`,
+		`webphone_crm_lookups_total{outcome="failure"} 1`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("metrics missing %q:\n%s", want, page)
+		}
+	}
+	for _, leak := range []string{"+493012345678", "Ada"} {
+		if strings.Contains(page, leak) {
+			t.Errorf("metrics leaks %q — aggregates only:\n%s", leak, page)
+		}
+	}
+}
+
 // postJSONRaw posts a JSON payload without the >=500 guard of postJSON —
 // the 502 path of the CRM contract is exactly what this test asserts.
 func postJSONRaw(t *testing.T, c *client, path string, payload any) (*http.Response, string) {
