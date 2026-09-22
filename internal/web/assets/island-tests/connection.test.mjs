@@ -66,11 +66,17 @@ class StubUserAgent {
     this.options = options;
     this.delegate = options.delegate;
     this.stopped = false;
+    this.connected = true;
+    this.hangReconnect = false;
     agents.push(this);
   }
 
   static makeURI(uri) {
     return { toString: () => uri };
+  }
+
+  isConnected() {
+    return this.connected;
   }
 
   async start() {}
@@ -79,7 +85,9 @@ class StubUserAgent {
     this.stopped = true;
   }
 
-  async reconnect() {}
+  async reconnect() {
+    if (this.hangReconnect) return new Promise(() => {});
+  }
 }
 
 globalThis.SIP = {
@@ -158,6 +166,39 @@ test("rejected FIRST registration shows the pill without rebuilding", async () =
   await flushes();
   assert.equal(agents.length, 1, "no rebuild for a bogus login");
   assert.equal(pill(), t("regRejected"));
+});
+
+// The 2026-09-22 E2E failure class: a registration lost while the
+// transport is UP gets the rebuild; lost while the transport is DOWN
+// must NOT rebuild (the reconnect backoff owns an outage).
+test("registration lost during a transport outage stays on the backoff", async () => {
+  resetStubs();
+  const connection = await loadConnection("outage");
+  await connection.connect("1001", "pw");
+  agents.at(-1).connected = false;
+  registerers.at(-1).fire("Unregistered");
+  await flushes();
+  assert.equal(agents.length, 1, "no rebuild while the transport is down");
+});
+
+// The frozen-cycle class: the attempt chain wedges without settling
+// (withTimeout included); the independent cycle-deadline timer must
+// still fire and force the rebuild.
+test("a wedged reconnect cycle hits the deadline watchdog and rebuilds", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("cycle-deadline");
+  await connection.connect("1001", "pw");
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+  agents.at(-1).hangReconnect = true;
+  agents.at(-1).delegate.onDisconnect(new Error("ws closed"));
+  await tc.mock.timers.tick(2000); // try 1 starts and hangs
+  await flushes();
+  assert.equal(agents.length, 1, "the wedged attempt builds nothing");
+  await tc.mock.timers.tick(15000); // cycle deadline fires
+  await flushes();
+  assert.ok(agents[0].stopped, "the wedged agent is torn down");
+  assert.equal(agents.length, 2, "the deadline watchdog rebuilds");
+  assert.equal(pill(), t("registered"), "the rebuild re-registers");
 });
 
 test("reconnect attempt on a Terminated registerer rebuilds the agent", async (tc) => {

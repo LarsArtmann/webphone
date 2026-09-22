@@ -21,12 +21,20 @@ import { announce, els, log, setRegStatus } from "./ui.js";
 let registerer = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
+let reconnectCycleTimer = null;
 let stopping = false;
 // True while a wedged user agent is being torn down and rebuilt;
 // suppresses the teardown's own disconnect/unregistered events.
 let resetting = false;
 
 const RECONNECT_ATTEMPT_TIMEOUT_MS = 5000;
+// Hard ceiling for one whole reconnect cycle, watched by an
+// INDEPENDENT timer: the 2026-09-22 E2E run observed the attempt's
+// own withTimeout chain going silent while the page stayed alive
+// (pill frozen mid-cycle, sofia 200-OK'd the re-REGISTER, no further
+// SIP or pill updates) — the cycle deadline force-rebuilds regardless
+// of the wedged chain.
+const RECONNECT_CYCLE_DEADLINE_MS = 15000;
 
 export async function connect(extension, password) {
   stopping = false;
@@ -66,17 +74,46 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 
+// The independent cycle watchdog: armed when a reconnect attempt
+// starts, cleared the moment registration succeeds or a rebuild takes
+// over. If the attempt chain wedges without settling, THIS timer still
+// fires and rebuilds the agent.
+function armReconnectCycleDeadline() {
+  clearReconnectCycleDeadline();
+  reconnectCycleTimer = setTimeout(() => {
+    reconnectCycleTimer = null;
+    if (stopping || resetting) return;
+    log("reconnect cycle exceeded its deadline — forcing rebuild");
+    rebuildConnection("reconnect cycle deadline exceeded").catch((err) => {
+      log(`rebuild failed: ${err.message}`);
+      scheduleReconnect();
+    });
+  }, RECONNECT_CYCLE_DEADLINE_MS);
+}
+
+function clearReconnectCycleDeadline() {
+  if (reconnectCycleTimer) {
+    clearTimeout(reconnectCycleTimer);
+    reconnectCycleTimer = null;
+  }
+}
+
 // Tear the wedged agent down and build a fresh one (the page-reload
 // recovery path without losing the UI state).
 async function rebuildConnection(reason) {
+  if (resetting) {
+    log(`reconnect watchdog: ${reason} — rebuild already in progress`);
+    return;
+  }
   log(`reconnect watchdog: ${reason} — rebuilding connection`);
   resetting = true;
-  // A registration-loss rebuild can race a pending reconnect timer;
-  // recovery belongs to the fresh agent from here.
+  // A rebuild supersedes every pending recovery rhythm: the reconnect
+  // timer AND the cycle deadline belong to the fresh agent from here.
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
   }
+  clearReconnectCycleDeadline();
   const old = state.userAgent;
   state.userAgent = null;
   registerer = null;
@@ -101,6 +138,7 @@ async function rebuildConnection(reason) {
 }
 
 async function attemptReconnect() {
+  armReconnectCycleDeadline();
   try {
     await withTimeout(
       (async () => {
@@ -111,6 +149,7 @@ async function attemptReconnect() {
       "reconnect timed out",
     );
     reconnectAttempts = 0;
+    clearReconnectCycleDeadline();
     log("transport reconnected; re-registered");
   } catch (err) {
     log(`reconnect failed: ${err.message}`);
@@ -220,8 +259,16 @@ async function buildConnection() {
   // re-REGISTER after a transport reconnect, dropped the contact, or the
   // Registerer terminated). Retrying on the same Registerer can wedge
   // forever, so rebuild the whole agent like the watchdog does; if even
-  // the rebuild fails, fall back to the backoff loop.
+  // the rebuild fails, fall back to the backoff loop. While the
+  // transport is DOWN the reconnect backoff owns recovery instead (a
+  // rebuild would build into a dead network and reset the backoff
+  // rhythm) — the rebuild is for a registration lost while the
+  // transport is UP.
   const registrationLost = () => {
+    if (state.userAgent && !state.userAgent.isConnected()) {
+      log("registration lost during transport outage; backoff owns it");
+      return;
+    }
     rebuildConnection("registration lost after it was established").catch(
       (err) => {
         log(`rebuild failed: ${err.message}`);
@@ -233,6 +280,7 @@ async function buildConnection() {
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
       wasRegistered = true;
+      clearReconnectCycleDeadline();
       const wasReconnecting = reconnectAttempts > 0;
       reconnectAttempts = 0;
       setRegStatus("status-registered", t("registered"));
@@ -269,6 +317,7 @@ export async function disconnect() {
   clearCredentials();
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = null;
+  clearReconnectCycleDeadline();
   ringbackStop();
   // Null the handles like the original single-file app did on logout:
   // a later placeCall must see "not connected", not a stopped agent.
