@@ -33,6 +33,7 @@ import {
 } from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
+import { initDialTypeahead, relabelTypeahead } from "./typeahead.js";
 import { announce, els, log, setRegStatus, toastKindFor } from "./ui.js";
 
 const REMEMBER_KEY = "pbx-extension";
@@ -61,6 +62,7 @@ if (els.lang) {
       });
     }
     document.dispatchEvent(new CustomEvent("wp:lang-changed"));
+    relabelTypeahead(t("typeaheadLabel"));
     log(`language switched to ${els.lang.value}`);
   });
 }

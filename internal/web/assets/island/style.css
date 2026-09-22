@@ -293,6 +293,7 @@ button.small {
 /* --- dialing ------------------------------------------------------------- */
 
 #dial-form {
+  position: relative;
   display: flex;
   gap: 8px;
 }
@@ -305,6 +306,59 @@ button.small {
 #dial-form .primary {
   width: auto;
   white-space: nowrap;
+}
+
+/* Dial typeahead (typeahead.js): the suggestions listbox is created by
+ * JS inside #dial-form and anchored under the destination field. The
+ * [hidden] guard matters: the UA's hidden rule must always win. */
+.wp-typeahead {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+.wp-typeahead[hidden] {
+  display: none;
+}
+
+.wp-typeahead li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.wp-typeahead li.active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.wp-typeahead .typeahead-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-typeahead .typeahead-number {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wp-typeahead li.active .typeahead-number {
+  color: var(--accent-strong);
 }
 
 .dial-error {

@@ -79,6 +79,9 @@ export function installBrowserGlobals() {
     addEventListener(type, fn) {
       (this.listeners[type] ??= []).push(fn);
     },
+    focus() {
+      this.focused = true;
+    },
     classList: {
       add() {},
       remove() {},

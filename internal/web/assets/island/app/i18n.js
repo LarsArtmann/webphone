@@ -113,6 +113,7 @@ export const I18N = {
       `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
     crmLogFailed: (detail) =>
       `Call not recorded in the CRM (${detail}) — you can log it manually.`,
+    typeaheadLabel: "Contact suggestions",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -224,6 +225,7 @@ export const I18N = {
       `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
     crmLogFailed: (detail) =>
       `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
+    typeaheadLabel: "Kontaktvorschläge",
   },
 };
 
