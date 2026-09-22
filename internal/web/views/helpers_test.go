@@ -1,6 +1,10 @@
 package views
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/larsartmann/webphone/internal/domain"
+)
 
 func TestAvatarForCountrySignum(t *testing.T) {
 	cases := map[string]string{
@@ -56,5 +60,26 @@ func TestAvatarHueStableAndBounded(t *testing.T) {
 	}
 	if avatarHue("Anna") == avatarHue("Bolt") {
 		t.Log("collision on distinct inputs is allowed, but suspicious")
+	}
+}
+
+func TestIsSelfThread(t *testing.T) {
+	remote := domain.MustParsePhone("+17287289311")
+	cases := []struct {
+		name     string
+		identity string
+		remote   domain.Phone
+		want     bool
+	}{
+		{"match", "+17287289311", remote, true},
+		{"match ignores config spacing", "+1 728 728 9311", remote, true},
+		{"different number", "+441632960961", remote, false},
+		{"no identity configured", "", remote, false},
+		{"unparseable identity never warns", "!!!", remote, false},
+	}
+	for _, tc := range cases {
+		if got := isSelfThread(tc.identity, tc.remote); got != tc.want {
+			t.Errorf("%s: isSelfThread(%q) = %v, want %v", tc.name, tc.identity, got, tc.want)
+		}
 	}
 }

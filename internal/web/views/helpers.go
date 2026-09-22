@@ -3,6 +3,8 @@ package views
 import (
 	"strconv"
 	"strings"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // fmtInt renders counts for templ (templ children cannot call strconv
@@ -77,4 +79,22 @@ func displayName(number string, names map[string]string) string {
 		return name
 	}
 	return number
+}
+
+// isSelfThread reports whether the thread's remote number is the
+// extension's own presented DID (config identities): providers refuse
+// self-addressed sends (Telnyx 40310), so the thread view warns at
+// intent time instead of letting the user discover it by failing. Both
+// sides run through ParsePhone because config DIDs may carry spacing
+// the sanitized thread remote never has; an unparseable or absent
+// identity simply never warns.
+func isSelfThread(identity string, remote domain.Phone) bool {
+	if identity == "" {
+		return false
+	}
+	own, err := domain.ParsePhone(identity)
+	if err != nil {
+		return false
+	}
+	return own == remote
 }

@@ -384,6 +384,16 @@ h3 {
   margin: 0;
 }
 
+/* Self-send caution (ThreadView): the thread's remote number is the
+ * extension's own DID — providers refuse self-addressed sends, so the
+ * view warns at intent time. Quiet single warn-colored line, the
+ * informational sibling of .wp-error. */
+.wp-notice {
+  margin: 10px 0 0;
+  color: var(--warn);
+  font-size: 0.9em;
+}
+
 /* Durable inline error slot (layout.templ): the htmx responseHandling
  * config retargets 4xx/5xx panel errors here, selecting the server's
  * .wp-error banner, so a failed action keeps showing the error in the

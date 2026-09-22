@@ -82,6 +82,7 @@ templ NewMessageForm(prefillTo string, lang Lang) {
 		hx-swap="innerHTML"
 		hx-encoding="multipart/form-data"
 		enctype="multipart/form-data"
+		hx-disabled-elt="find button[type=submit]"
 	>
 		<input
 			name="to"
@@ -127,6 +128,9 @@ templ ThreadView(props ThreadViewProps) {
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
+		if isSelfThread(props.Identity, props.Thread.Remote) {
+			<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
+		}
 		if props.HasMore {
 			<form
 				class="wp-older"
@@ -158,6 +162,7 @@ templ ThreadView(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:bottom"
 			hx-encoding="multipart/form-data"
 			enctype="multipart/form-data"
+			hx-disabled-elt="find button[type=submit]"
 		>
 			<input type="hidden" name="to" value={ props.Thread.Remote.String() }></input>
 			<input name="body" placeholder={ T(props.Lang, "compose.reply.ph") } aria-label={ T(props.Lang, "compose.body.label") }></input>
