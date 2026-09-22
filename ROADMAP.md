@@ -249,4 +249,9 @@ node:test suite plus the E2E caught everything).
 
 Sliding-session TTL refresh (extend expiry on activity) with CSRF token
 rotation at each refresh point, riding the island's existing adoption path
-(`GET /api/csrf`; see the SUPERB plan P23 verdict for why this is deferred).
+(`GET /api/csrf`). RESOLVED 2026-09-22: sliding sessions SHIPPED (2.5.0,
+7d idle + 30d absolute); CSRF-rotation-on-slide is a recorded NOT-DO —
+verdict with the threat model at
+`docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`
+(double-submit makes token-only leaks inert; both-halves theft is bounded
+by the absolute cap, not by rotation).
