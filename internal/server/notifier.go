@@ -64,7 +64,11 @@ func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ dom
 		slog.Debug("sse: render fax list failed", "error", err)
 		return
 	}
-	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.hubs.Lang(owner)))
+	numbers := make([]string, 0, len(jobs))
+	for _, job := range jobs {
+		numbers = append(numbers, job.Remote.String())
+	}
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.crm.Names(ctx, numbers), n.hubs.Lang(owner)))
 }
 
 func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event string, component templ.Component) {

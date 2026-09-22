@@ -23,6 +23,7 @@ import (
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
@@ -132,6 +133,10 @@ type Deps struct {
 	PhoneAPI  *pbx.Client
 	Hubs      *ExtensionHubs
 	Shared    []domain.SharedContact
+	// CRM is the OPTIONAL Ledger CRM integration (name enrichment + call
+	// logging). Nil or disabled: every surface renders raw numbers and the
+	// island's call-log POST is a no-op.
+	CRM *crm.Resolver
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -209,6 +214,12 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /api/contacts", h.apiListContacts)
 	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiSaveContact)))
 	protected.HandleFunc("DELETE /api/contacts", h.apiDeleteContact)
+	// The island's post-call report to the CRM integration: session-gated,
+	// CSRF via authedFetch, sharing the contacts write budget (same class:
+	// one island JSON POST per user action). A disabled CRM answers 204 —
+	// the island normally gates on PBX_CONFIG.crm, but a config change
+	// under a long-lived session must not error.
+	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiLogCall)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
