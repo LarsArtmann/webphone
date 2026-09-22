@@ -114,6 +114,12 @@ export function installBrowserGlobals() {
       if (!docListeners.has(type)) docListeners.set(type, []);
       docListeners.get(type).push(fn);
     },
+    removeEventListener(type, fn) {
+      const list = docListeners.get(type);
+      if (!list) return;
+      const i = list.indexOf(fn);
+      if (i >= 0) list.splice(i, 1);
+    },
     // dispatch hands a plain event object to every listener registered
     // for the type; tests pass target/detail through props.
     dispatch(type, props = {}) {

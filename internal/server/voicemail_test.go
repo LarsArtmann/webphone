@@ -36,6 +36,9 @@ func TestVoicemailRowsOfferCallBack(t *testing.T) {
 	if !strings.Contains(page, `data-dial="+441632960961"`) {
 		t.Errorf("voicemail row missing the callback button: %.400s", page)
 	}
+	if !strings.Contains(page, `data-sms="+441632960961"`) || !strings.Contains(page, `data-save-contact="+441632960961"`) {
+		t.Errorf("voicemail row missing the sms/save-contact affordances: %.400s", page)
+	}
 	if got := strings.Count(page, "data-dial="); got != 1 {
 		t.Errorf("messages without a CID number must render no dial button: %d data-dial attributes", got)
 	}

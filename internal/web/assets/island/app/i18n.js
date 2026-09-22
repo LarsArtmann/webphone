@@ -56,7 +56,8 @@ export const I18N = {
     contactSave: "save",
     contactRemove: "remove",
     contactSaved: (n) => `contact ${n} saved`,
-    contactSaveFailed: (detail) => `contact save failed (${detail}); kept locally`,
+    contactSaveFailed: (detail) =>
+      `contact save failed (${detail}); kept locally`,
     contactsMigrated: (n) => `imported ${n} local contact(s) to the server`,
     voicemail: "Voicemail",
     vmRefresh: "Refresh",
@@ -158,7 +159,8 @@ export const I18N = {
     contactSave: "merken",
     contactRemove: "entfernen",
     contactSaved: (n) => `Kontakt ${n} gespeichert`,
-    contactSaveFailed: (detail) => `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
+    contactSaveFailed: (detail) =>
+      `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
     contactsMigrated: (n) => `${n} lokale Kontakte auf den Server übernommen`,
     voicemail: "Mailbox",
     vmRefresh: "Aktualisieren",

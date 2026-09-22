@@ -115,4 +115,20 @@ func TestHistoryRowsOfferCallBack(t *testing.T) {
 	if got := strings.Count(page, "data-dial="); got != 2 {
 		t.Errorf("rows without a CID number must render no dial button: %d data-dial attributes", got)
 	}
+	// T20d/T20e: dialable rows also offer a prefilled SMS compose and
+	// the save-as-contact star (with the resolved display name riding
+	// along for the island's save).
+	for _, want := range []string{
+		`data-sms="+441632960961"`,
+		`data-sms="+493012345678"`,
+		`data-save-contact="+441632960961"`,
+		`data-save-contact="+493012345678"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("history row missing %s: %.400s", want, page)
+		}
+	}
+	if !strings.Contains(page, `data-name="Alice"`) {
+		t.Errorf("the CRM-resolved name should ride the save-as-contact gesture: %.400s", page)
+	}
 }
