@@ -152,6 +152,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   1.27.1 ships a stable `encoding/json/v2`, the flag had become a
   footgun (it contributed to a failed release run outside the
   devShell), and the full suite is green 13/13 without it.
+- Zero inline scripts: templ-components v1.19.2 ships the
+  `PageProps.NoThemeScript` knob this repo's roadmap asked for, so the
+  CSP-hash-pinned library theme preload is replaced by the same-origin
+  `/assets/theme-preload.js` (render-blocking, sets `data-theme`
+  pre-paint like shell.js §4). script-src drops the hash — a
+  dependency bump can never change served script bytes — and the
+  app.css forced-theme `color-scheme` rules lose their `!important`
+  (nothing inline fights them anymore). `TestServedPageSatisfiesStrictCSP`
+  now fails on ANY inline script instead of pinning one.
+- templ-components bumped v1.18.0 → v1.19.2 (upstream: popover/dropdown
+  positioning fixes, `DropdownProps.Trigger`, `ListNote` count variant,
+  `NoMainWrapper`, `NoThemeScript`).
 
 ## [2.5.0] - 2026-09-22
 

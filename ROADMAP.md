@@ -82,8 +82,10 @@ re-check:
 
 - sip.js: revisit on a 0.22 release, a reconnect-hang fix, or a
   security advisory (evaluation: `docs/reviews/2026-09-18_sip-js-0.22-evaluation.md`).
-- templ-components: ship a ThemeScript opt-out knob and this repo drops
-  the CSP hash pin plus the app.css `!important` color-scheme rules.
+- templ-components ThemeScript knob: DONE 2026-09-22 — shipped upstream
+  as `PageProps.NoThemeScript` (v1.19.2); this repo consumes it and
+  dropped the CSP hash pin plus the app.css `!important` color-scheme
+  rules.
 - oxlint globals watchlist: any new browser global in the island needs
   an entry in `internal/web/assets/island/oxlint.json` (the gate fails
   closed on undeclared identifiers by design).

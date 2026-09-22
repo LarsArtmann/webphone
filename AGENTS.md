@@ -200,10 +200,23 @@ the island remotely — re-run it after any markup change.
   on `wp:lang-changed`.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
   webfonts, no inline handlers, NO inline `style` attributes (they
-  are silently dead — docs/lessons.md). One inline script is allowed
-  by exact hash (templ-components theme preload; `TestServedPageSatisfiesStrictCSP`
-  checks the hash two ways — a dependency bump that changes the
-  script fails the build until the hash is refreshed deliberately).
+  are silently dead — docs/lessons.md) and NO inline scripts at all
+  (`TestServedPageSatisfiesStrictCSP` fails on any; the theme preload
+  is the same-origin `/assets/theme-preload.js`, and templ-components
+  Base is told `NoThemeScript` — a dependency bump can never change
+  served script bytes).
+- **templ-components adoption** (grep-able table per the library's
+  consumer tip): `layout.Base` adopted (layout.templ, with
+  `NoThemeScript` + `CSSPath`/`HTMXVersion` suppressed via props);
+  everything else is a DELIBERATE custom hand-roll — avatars
+  (`avatarFor`/`avatarHue`, hue-class CSP workaround), nav badges
+  (`wp-nav-badge`), empty states (`wp-empty`), error panel
+  (error.templ), timestamps (`formatClock`/`formatStamp`, byte-stable
+  pins), brand SVG. The blocker for further component adoption is
+  Tailwind: the library emits Tailwind v4 classes and webphone ships a
+  hand-rolled token CSS (app.css, no Tailwind build) — coexistence is
+  possible (Tailwind output is layered; unlayered app.css wins
+  collisions) but unproven here.
 - `window.PBX_CONFIG` (`/config.js`): keys `sipDomain`,
   `websocketPath`, `iceServers`, `phoneApi`, `contacts`.
 
