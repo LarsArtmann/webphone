@@ -59,6 +59,12 @@ type Config struct {
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
 	CRM CRM `json:"crm" koanf:"crm"`
+	// RetentionDays bounds how long stored content lives: 0 (default)
+	// keeps everything forever; a positive value makes the daily sweep
+	// delete messages (with attachments), fax jobs (with documents) and
+	// empty threads older than that many days. Sessions always expire
+	// on their own TTL — the sweep only clears their dead rows earlier.
+	RetentionDays int `json:"retention_days" koanf:"retention_days"`
 }
 
 // CRM configures the optional Ledger CRM integration. Both fields must be

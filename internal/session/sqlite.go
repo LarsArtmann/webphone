@@ -5,6 +5,7 @@
 package session
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -132,4 +133,17 @@ func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, 
 	}
 	sess.ExpiresAt = extended
 	return sess, true
+}
+
+// SweepExpired deletes session rows whose expiry has passed and
+// reports how many went. Expiry itself is lazy (checks on read); this
+// exists so a retention pass can also clear the dead rows on machines
+// where sessions expired unattended.
+func (s *SQLiteStore) SweepExpired(ctx context.Context) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM sessions WHERE expires_at < ?`, time.Now().UnixMilli())
+	if err != nil {
+		return 0, fmt.Errorf("sweep expired sessions: %w", err)
+	}
+	n, _ := res.RowsAffected() //nolint:erraudit // count is informational
+	return n, nil
 }

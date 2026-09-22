@@ -4,8 +4,10 @@
 package blob
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,3 +73,13 @@ func (s *Store) Abs(rel string) string {
 
 // Root returns the store root directory.
 func (s *Store) Root() string { return s.root }
+
+// Remove unlinks one stored blob. A missing file is NOT an error (the
+// retention sweep may race a crashed earlier pass that already
+// unlinked it); any other failure is.
+func (s *Store) Remove(rel string) error {
+	if err := os.Remove(s.Abs(rel)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("remove blob %s: %w", rel, err)
+	}
+	return nil
+}
