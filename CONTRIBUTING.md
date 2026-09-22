@@ -18,8 +18,8 @@ buildflow                  # the quality gate (lint, audit, checks)
 nix flake check            # build + tests in the sandbox + treefmt
 ```
 
-`GOEXPERIMENT=jsonv2` is required while templ-components depends on
-`encoding/json/v2` (Go < 1.27); `nix develop` and `.buildflow.yml` set it.
+`encoding/json/v2` went stable in Go 1.27 — no `GOEXPERIMENT` is needed
+anywhere since 2026-09-22 (previously required for templ-components).
 
 ## Ground rules
 

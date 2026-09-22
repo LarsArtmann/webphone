@@ -89,7 +89,7 @@ fi
 
 step "4/9 gates (fail-fast)"
 run env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
-run env GOEXPERIMENT=jsonv2 go test -count=1 ./...
+run go test -count=1 ./...
 run nix flake check
 run python3 scripts/webphone-smoke.py
 # Vulnix cadence (TODO row closed 2026-09-20): every train scans the

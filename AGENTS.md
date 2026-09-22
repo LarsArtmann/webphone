@@ -85,9 +85,9 @@ a second user database would be a split brain.
 ## Commands
 
 ```console
-nix develop                        # Go, templ, golangci-lint, esbuild, … — the shell exports GOEXPERIMENT=jsonv2 + GOTOOLCHAIN=local, so bare `go` commands work inside it
+nix develop                        # Go, templ, golangci-lint, esbuild, … — the shell exports GOTOOLCHAIN=local so bare `go` commands work inside it (json/v2 went stable in Go 1.27: no GOEXPERIMENT anywhere since 2026-09-22)
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
-GOEXPERIMENT=jsonv2 go test -count=1 ./...  # jsonv2 REQUIRED for every go command OUTSIDE the devShell (templ-components); -count=1: the result cache has lied during investigations. Since the go 1.27.1 floor, OUTSIDE-the-shell go commands also need the 1.27 toolchain — prefer `nix develop -c` wrappers
+nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations. The host's ambient go (1.26.7, GOTOOLCHAIN=local) is below the 1.27.1 floor — OUTSIDE-the-shell go commands need `nix develop -c`
 python3 scripts/webphone-smoke.py          # 32-check live smoke over real HTTP (boots a fresh binary + temp data dir; --base URL reuses a running server; includes /livez + /startupz, /version, /openapi.json, the styled 404)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh now also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings; the verdict logic is the `webphone-vulnix-triage` CLI, fixture-checked by `checks.vulnix-triage`)
@@ -100,7 +100,7 @@ nix build .#webphone --system aarch64-linux   # cross-builds
 Smoke a binary quickly (loopback gateway = whole product, zero PBX):
 
 ```console
-GOEXPERIMENT=jsonv2 go build -o /tmp/webphone-bin ./cmd/webphone
+nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone
 WEBPHONE_ADDR=127.0.0.1:18099 WEBPHONE_DATA_DIR=/tmp/wp-data \
   WEBPHONE_GATEWAY__WEBHOOK_SECRET=devsecret /tmp/webphone-bin
 ```
@@ -416,8 +416,12 @@ Ginkgo DescribeTable when the subject is a state machine.
   (3) `HX-Trigger` still fires BEFORE the swap decision (the skip-guard
   in shell.js §3c depends on it); (4) the sse extension still fires
   cancelable `htmx:sseBeforeMessage`.
-- `GOEXPERIMENT=jsonv2` is required for every `go` command —
-  templ-components/errorpage needs `encoding/json/v2`.
+- json/v2 went STABLE in Go 1.27 (2026-09-22 sweep): no
+  `GOEXPERIMENT` anywhere — flake devShell, scripts, buildflow env and
+  docs all dropped it after the full suite proved green without it
+  (13/13 packages). The old trap (commands failing outside the shell
+  for a missing flag) is gone; the remaining toolchain trap is the
+  host's below-floor go — use `nix develop -c`.
 - `.templ` files must NOT import `github.com/a-h/templ` (the generator
   injects the symbol); conditionals are bare `if x {` statements, not
   `@if`.
@@ -475,7 +479,7 @@ Ginkgo DescribeTable when the subject is a state machine.
 - **The erraudit bar (defined 2026-09-22, SUPERB error-excellence T08)**
   — three tiers, so a green run MEANS something:
   1. ENFORCED (gates; must exit 0): buildflow's own `erraudit` step,
-     CLI equivalent `GOTOOLCHAIN=auto GOEXPERIMENT=jsonv2 erraudit
+     CLI equivalent `GOTOOLCHAIN=auto erraudit
      ./... --type-aware --disable-extensions`. Green as of 2026-09-22
      (0 findings; reasoned `//nolint:erraudit` honored).
   2. FAMILY-ADOPTION TRACKING (audit-only): add `--enforce-go-error-family`
@@ -600,7 +604,7 @@ formatter if it moved styled files.
    `/version` ldflags injection — one let-binding; keep it equal to the
    new tag).
 3. **Gates**: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
-   `GOEXPERIMENT=jsonv2 go test -count=1 ./...`, `nix flake check`,
+   `nix develop -c go test -count=1 ./...`, `nix flake check`,
    `python3 scripts/webphone-smoke.py`. If the train bumped
    cqrs-htmx or go-sse: also re-run `BenchmarkHubFanOut` and append a
    dated table to

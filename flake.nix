@@ -109,8 +109,8 @@
             };
 
             # One Go binary: templ shell + embedded island assets + SQLite.
-            # GOEXPERIMENT=jsonv2 is required by templ-components (encoding/
-            # json/v2) until Go 1.27 ships it stable. webphoneVersion is the
+            # (json/v2 went stable in Go 1.27 — no GOEXPERIMENT anywhere
+            # since 2026-09-22.) webphoneVersion is the
             # single source: the package version AND the /version ldflags
             # injection — keep it in lockstep with the git tag at release.
             webphone =
@@ -143,8 +143,6 @@
                   vendorHash = "sha256-n8scPBKrJXjxinLixyJ7Amen600nRVSSRVr6KBdQy9A=";
 
                   proxyVendor = true;
-
-                  env.GOEXPERIMENT = "jsonv2";
 
                   subPackages = [ "cmd/webphone" ];
 
@@ -644,11 +642,11 @@
               pkgs.go-licenses
             ];
             env = {
-              # json/v2 shipped stable in Go 1.27; the env stays harmless
-              # (and matches the fleet's other flakes). local keeps the
-              # shell's go_1_27 instead of downloading a toolchain behind
-              # the user's back.
-              GOEXPERIMENT = "jsonv2";
+              # json/v2 shipped stable in Go 1.27: no GOEXPERIMENT since
+              # 2026-09-22 (it had become a footgun — callers outside the
+              # shell copied it into docs and scripts that then failed
+              # in-train). local keeps the shell's go_1_27 instead of
+              # downloading a toolchain behind the user's back.
               GOTOOLCHAIN = "local";
             };
           };

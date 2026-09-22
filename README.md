@@ -365,7 +365,7 @@ GETs whose bodies name checks and statuses only, never secrets.
 ```console
 nix develop                     # Go, templ, golangci-lint, esbuild, …
 templ generate ./internal/web/views/   # after editing .templ files
-GOEXPERIMENT=jsonv2 go test ./...      # required: templ-components uses encoding/json/v2
+go test ./...                          # json/v2 stable since Go 1.27
 buildflow                       # the quality gate (format, lint, audit, checks)
 nix flake check                 # package build + tests in the sandbox + treefmt
 nix build .#webphone --system aarch64-linux   # cross-builds (pure Go)

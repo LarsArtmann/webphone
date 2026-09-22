@@ -701,7 +701,6 @@ def main() -> int:
         binary = f"{workdir}/webphone-bin"
         print(f"building {binary} …", flush=True)
         env = dict(os.environ)
-        env["GOEXPERIMENT"] = "jsonv2"
         build = subprocess.run(
             [args.go, "build", "-o", binary, "./cmd/webphone"],
             env=env,

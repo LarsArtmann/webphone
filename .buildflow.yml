@@ -8,8 +8,6 @@
 # no-op. Bare `buildflow` on such a host fails every Go step; use
 # `scripts/buildflow.sh` (self-healing wrapper) or `nix develop -c
 # buildflow`.
-env:
-  GOEXPERIMENT: jsonv2
 #
 # build_mode: local default is fast; `nix flake check` (go build + tests in
 # the sandbox + treefmt + statix + deadnix) remains the heavyweight gate.
