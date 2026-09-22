@@ -124,10 +124,7 @@ func (s *Service) Send(
 
 // Receive ingests an inbound fax document from a webhook.
 func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domain.FaxJob, error) {
-	now := inbound.Received
-	if now.IsZero() {
-		now = s.clock()
-	}
+	now := domain.OrClock(inbound.Received, s.clock)
 	if len(inbound.PDFBytes) == 0 {
 		return domain.FaxJob{}, &ErrInvalidFax{Reason: "inbound fax carries no document"}
 	}

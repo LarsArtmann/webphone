@@ -158,10 +158,7 @@ func (s *Service) Send(
 // Receive ingests an inbound message from a gateway/webhook and returns
 // its persisted form.
 func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (domain.Message, error) {
-	now := inbound.ReceivedAt
-	if now.IsZero() {
-		now = s.clock()
-	}
+	now := domain.OrClock(inbound.ReceivedAt, s.clock)
 	threadID, err := s.messages.FindThread(ctx, inbound.Owner, inbound.From, now)
 	if err != nil {
 		return domain.Message{}, fmt.Errorf("resolve thread: %w", err)

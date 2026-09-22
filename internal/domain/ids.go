@@ -33,11 +33,7 @@ func ParseExtension(raw string) (Extension, error) {
 
 // MustParseExtension is ParseExtension for literals in tests and seeds.
 func MustParseExtension(raw string) Extension {
-	ext, err := ParseExtension(raw)
-	if err != nil {
-		panic(err)
-	}
-	return ext
+	return must(ParseExtension(raw))
 }
 
 // String returns the raw extension.
@@ -67,11 +63,7 @@ func ParsePhone(raw string) (Phone, error) {
 
 // MustParsePhone is ParsePhone for literals in tests and seeds.
 func MustParsePhone(raw string) Phone {
-	phone, err := ParsePhone(raw)
-	if err != nil {
-		panic(err)
-	}
-	return phone
+	return must(ParsePhone(raw))
 }
 
 // String returns the sanitized number.
@@ -118,7 +110,7 @@ func ParseThreadID(s string) (ThreadID, error) { return parseID[ThreadBrand](s, 
 
 // MustThreadID is ParseThreadID for ids read back from the database, where
 // a malformed id means corruption and panicking is the honest response.
-func MustThreadID(s string) ThreadID { return mustParsed(ParseThreadID(s)) }
+func MustThreadID(s string) ThreadID { return must(ParseThreadID(s)) }
 
 // MessageBrand brands message identifiers.
 type MessageBrand struct{}
@@ -136,7 +128,7 @@ func GenerateMessageID() MessageID { return id.NewID[MessageBrand](nanoid.Must()
 func ParseMessageID(s string) (MessageID, error) { return parseID[MessageBrand](s, "message") }
 
 // MustMessageID is ParseMessageID for database rows; see MustThreadID.
-func MustMessageID(s string) MessageID { return mustParsed(ParseMessageID(s)) }
+func MustMessageID(s string) MessageID { return must(ParseMessageID(s)) }
 
 // AttachmentBrand brands attachment identifiers.
 type AttachmentBrand struct{}
@@ -156,7 +148,7 @@ func ParseAttachmentID(s string) (AttachmentID, error) {
 }
 
 // MustAttachmentID is ParseAttachmentID for database rows; see MustThreadID.
-func MustAttachmentID(s string) AttachmentID { return mustParsed(ParseAttachmentID(s)) }
+func MustAttachmentID(s string) AttachmentID { return must(ParseAttachmentID(s)) }
 
 // FaxBrand brands fax job identifiers.
 type FaxBrand struct{}
@@ -174,7 +166,7 @@ func GenerateFaxID() FaxID { return id.NewID[FaxBrand](nanoid.Must()) }
 func ParseFaxID(s string) (FaxID, error) { return parseID[FaxBrand](s, "fax") }
 
 // MustFaxID is ParseFaxID for database rows; see MustThreadID.
-func MustFaxID(s string) FaxID { return mustParsed(ParseFaxID(s)) }
+func MustFaxID(s string) FaxID { return must(ParseFaxID(s)) }
 
 // ContactBrand brands contact identifiers.
 type ContactBrand struct{}
@@ -192,7 +184,7 @@ func GenerateContactID() ContactID { return id.NewID[ContactBrand](nanoid.Must()
 func ParseContactID(s string) (ContactID, error) { return parseID[ContactBrand](s, "contact") }
 
 // MustContactID is ParseContactID for database rows; see MustThreadID.
-func MustContactID(s string) ContactID { return mustParsed(ParseContactID(s)) }
+func MustContactID(s string) ContactID { return must(ParseContactID(s)) }
 
 // parseID re-brands a stored nanoid-backed identifier. Both the branded
 // ("Thread:xxx") and raw ("xxx") forms parse; anything else is an error.
@@ -207,10 +199,10 @@ func parseID[B any](s string, kind string) (id.ID[B, nanoid.ID], error) {
 	return id.NewID[B](nanoid.ID(raw)), nil
 }
 
-// mustParsed unwraps a Parse result, panicking on corruption — with the
-// Must forms only fed from database rows, a malformed id means a broken
-// database, not bad user input.
-func mustParsed[B any](parsed id.ID[B, nanoid.ID], err error) id.ID[B, nanoid.ID] {
+// must unwraps a Parse result, panicking on error. The Must forms are fed
+// literals (tests, seeds) or database rows: a failure means a broken
+// literal or a corrupt database, never bad user input.
+func must[T any](parsed T, err error) T {
 	if err != nil {
 		panic(err)
 	}

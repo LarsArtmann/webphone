@@ -153,6 +153,18 @@ func listRows[T any](
 	return out, nil
 }
 
+// updatedOrNotFound is the write-side twin of listRows' error shape: a
+// status-advance UPDATE that matched no row (already gone, or an
+// owner/ref mismatch) is the caller-visible ErrNotFound miss, not a
+// storage failure. RowsAffected's own error carries nothing actionable
+// for a completed modernc sqlite Exec.
+func updatedOrNotFound(res sql.Result) error {
+	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // only the count matters on a completed Exec
+		return ErrNotFound
+	}
+	return nil
+}
+
 func firstLine(s string) string {
 	for i := range s {
 		if s[i] == '\n' {

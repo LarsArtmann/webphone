@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 )
@@ -67,6 +68,19 @@ func TestClientDisabledByDefault(t *testing.T) {
 	}
 	if err := resolver.LogCall(context.Background(), "x", "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
 		t.Fatalf("LogCall on disabled client: %v", err)
+	}
+
+	// A nil *Client (a Deps field nobody wired) must behave exactly like
+	// a zero client: disabled, never a panic on the base-URL deref.
+	var nilClient *Client
+	if nilClient.Enabled() {
+		t.Fatal("nil client must report disabled")
+	}
+	if _, err := nilClient.LookupByPhone(context.Background(), "+493012345678"); !errors.Is(err, ErrDisabled) {
+		t.Fatalf("LookupByPhone on nil client: %v", err)
+	}
+	if err := nilClient.LogCall(context.Background(), "x", "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
+		t.Fatalf("LogCall on nil client: %v", err)
 	}
 }
 
@@ -185,5 +199,99 @@ func TestResolverDegradesQuietly(t *testing.T) {
 	resolver := NewResolver(client, nil)
 	if name := resolver.Name(context.Background(), "+493012345678"); name != "" {
 		t.Fatalf("CRM failure must degrade to empty name, got %q", name)
+	}
+}
+
+// A burst of concurrent Resolves for one number (history and tab renders
+// racing) must cost the CRM ONE upstream lookup: the first caller leads
+// the round-trip, the rest join its flight. Also pins the upstream
+// outcome counters (2026-09-22 single-flight train).
+func TestResolveSingleFlightsConcurrentLookups(t *testing.T) {
+	stub := &stubCRM{
+		lookupStatus: http.StatusOK,
+		lookupJSON:   `{"results":[{"id":"01M/contact","first_name":"Ada"}]}`,
+	}
+	srv := newStubServer(t, stub)
+
+	client, err := NewClient(srv.URL, "sekrit")
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	resolver := NewResolver(client, nil)
+
+	const racers = 10
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for range racers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			if _, ok := resolver.Resolve(context.Background(), "+493012345678"); !ok {
+				t.Error("a joined Resolve must inherit the leader's match")
+			}
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	if got := stub.lookupBodies.Load(); got != 1 {
+		t.Fatalf("concurrent Resolve for one number hit the CRM %d times (want 1)", got)
+	}
+	hit, miss, failure := resolver.LookupCounters()
+	if hit != 1 || miss != 0 || failure != 0 {
+		t.Fatalf("counters after one upstream hit: hit=%d miss=%d failure=%d", hit, miss, failure)
+	}
+}
+
+func TestResolverLookupCounters(t *testing.T) {
+	stub := &stubCRM{
+		lookupStatus: http.StatusOK,
+		lookupJSON:   `{"results":[{"id":"01M/contact","first_name":"Ada"}]}`,
+	}
+	srv := newStubServer(t, stub)
+
+	client, err := NewClient(srv.URL, "sekrit")
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+
+	resolver := NewResolver(client, nil)
+	ctx := context.Background()
+
+	if _, ok := resolver.Resolve(ctx, "+493011111111"); !ok {
+		t.Fatal("known number must match")
+	}
+	stub.lookupJSON = `{"results":[]}`
+	if _, ok := resolver.Resolve(ctx, "+493022222222"); ok {
+		t.Fatal("unknown number must miss")
+	}
+
+	deadClient, err := NewClient(srv.URL, "sekrit")
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	srv.Close() // lookups via deadClient now fail at the transport
+	deadResolver := NewResolver(deadClient, nil)
+	if _, ok := deadResolver.Resolve(ctx, "+493033333333"); ok {
+		t.Fatal("dead CRM must not match")
+	}
+
+	hit, miss, failure := resolver.LookupCounters()
+	if hit != 1 || miss != 1 || failure != 1 {
+		t.Fatalf("counters after hit+miss+failure: hit=%d miss=%d failure=%d", hit, miss, failure)
+	}
+
+	// A cache hit is not CRM traffic: the counters must not move.
+	if _, ok := resolver.Resolve(ctx, "+493011111111"); !ok {
+		t.Fatal("cached number must still match")
+	}
+	if hit, _, _ := resolver.LookupCounters(); hit != 1 {
+		t.Fatalf("cache hit counted as an upstream lookup (%d)", hit)
+	}
+
+	if _, miss, failure := deadResolver.LookupCounters(); miss != 0 || failure != 0 {
+		t.Fatalf("counters must be per-resolver, got miss=%d failure=%d", miss, failure)
 	}
 }

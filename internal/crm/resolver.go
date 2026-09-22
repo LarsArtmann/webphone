@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -25,6 +26,25 @@ type cacheEntry struct {
 	fetched time.Time
 }
 
+// lookupCounters counts UPSTREAM lookups by outcome (one increment per
+// actual CRM round-trip — cache hits are not CRM traffic). Rendered as
+// aggregate /metrics; never per-extension data.
+type lookupCounters struct {
+	hit     atomic.Int64
+	miss    atomic.Int64
+	failure atomic.Int64
+}
+
+// lookupFlight is one in-flight upstream lookup. Concurrent Resolves for
+// the same number join the leader's round-trip instead of fanning out one
+// request per caller (a history page rendering while another tab renders
+// must cost the CRM one lookup, not two).
+type lookupFlight struct {
+	done  chan struct{}
+	match Match
+	ok    bool
+}
+
 // Resolver answers "who is this number?" with a process-local TTL cache in
 // front of the CRM client. Every failure — CRM down, slow, unauthorized —
 // degrades to "no match": enrichment is decoration, never a prerequisite,
@@ -34,8 +54,11 @@ type Resolver struct {
 	client *Client
 	log    *slog.Logger
 
-	mu    sync.Mutex
-	cache map[string]cacheEntry
+	mu       sync.Mutex
+	cache    map[string]cacheEntry
+	inflight map[string]*lookupFlight
+
+	lookups lookupCounters
 }
 
 // NewResolver wraps a client with the lookup cache. A disabled client
@@ -45,11 +68,25 @@ func NewResolver(client *Client, log *slog.Logger) *Resolver {
 		log = slog.Default()
 	}
 
-	return &Resolver{client: client, log: log, cache: make(map[string]cacheEntry)}
+	return &Resolver{
+		client:   client,
+		log:      log,
+		cache:    make(map[string]cacheEntry),
+		inflight: make(map[string]*lookupFlight),
+	}
 }
 
 // Enabled reports whether the underlying CRM client is wired up.
 func (r *Resolver) Enabled() bool { return r != nil && r.client.Enabled() }
+
+// LookupCounters snapshots the upstream-lookup outcome counters. Nil-safe.
+func (r *Resolver) LookupCounters() (hit, miss, failure int64) {
+	if r == nil {
+		return 0, 0, 0
+	}
+
+	return r.lookups.hit.Load(), r.lookups.miss.Load(), r.lookups.failure.Load()
+}
 
 // Resolve returns the contact a number belongs to, consulting the TTL cache
 // first. ok=false when the CRM is disabled, holds no contact, or fails —
@@ -66,21 +103,38 @@ func (r *Resolver) Resolve(ctx context.Context, number string) (Match, bool) {
 		return entry.match, !entry.miss
 	}
 
+	if flight := r.join(number); flight != nil {
+		select {
+		case <-flight.done:
+			return flight.match, flight.ok
+		case <-ctx.Done():
+			// The waiting caller gave up; the leader's answer still
+			// lands in the cache for everyone after.
+			return Match{}, false
+		}
+	}
+
 	match, err := r.client.LookupByPhone(ctx, number)
 
 	switch {
 	case err == nil:
 		r.remember(number, cacheEntry{match: match, fetched: time.Now()})
+		r.settle(number, match, true)
+		r.lookups.hit.Add(1)
 
 		return match, true
 	case errIsMiss(err):
 		r.remember(number, cacheEntry{miss: true, fetched: time.Now()})
+		r.settle(number, Match{}, false)
+		r.lookups.miss.Add(1)
 
 		return Match{}, false
 	default:
 		// Do not cache transport failures: the next render retries, and
 		// one debug line per attempt keeps the operator trail honest.
 		r.log.Debug("crm: lookup failed; rendering raw number", "error", err)
+		r.settle(number, Match{}, false)
+		r.lookups.failure.Add(1)
 
 		return Match{}, false
 	}
@@ -118,6 +172,36 @@ func (r *Resolver) LogCall(ctx context.Context, contactID, direction, number str
 }
 
 func errIsMiss(err error) bool { return err == ErrNotFound || err == ErrDisabled }
+
+// join registers the caller as the lookup's leader (nil return) or hands
+// back the existing flight to wait on.
+func (r *Resolver) join(number string) *lookupFlight {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if flight, ok := r.inflight[number]; ok {
+		return flight
+	}
+
+	r.inflight[number] = &lookupFlight{done: make(chan struct{})}
+
+	return nil
+}
+
+// settle publishes the leader's result to joiners and retires the
+// in-flight entry.
+func (r *Resolver) settle(number string, match Match, ok bool) {
+	r.mu.Lock()
+	flight := r.inflight[number]
+	delete(r.inflight, number)
+	r.mu.Unlock()
+
+	if flight != nil {
+		flight.match = match
+		flight.ok = ok
+		close(flight.done)
+	}
+}
 
 func (r *Resolver) cached(number string) (cacheEntry, bool) {
 	r.mu.Lock()
