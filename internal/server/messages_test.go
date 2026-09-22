@@ -274,3 +274,97 @@ func TestSendFormsDisableWhileInFlight(t *testing.T) {
 		t.Error("fax form missing the disable directive")
 	}
 }
+
+// TestComposerCarriesSegmentCounterAndTextarea pins the composer UX
+// contract server-side: the body fields are auto-growing textareas
+// (Enter-to-send lives in shell.js §4), each message composer carries
+// the segment-counter span, and the reply + fax forms carry the
+// attachment-chip container. Without these the shell behaviors have
+// nothing to attach to after a swap.
+func TestComposerCarriesSegmentCounterAndTextarea(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	_, body := c.do(http.MethodGet, "/partials/messages", nil, "")
+	list := string(body)
+	if !strings.Contains(list, `<textarea name="body" class="wp-compose-body"`) {
+		t.Errorf("new-message composer body is not a textarea: %.300s", list)
+	}
+	if got := strings.Count(list, `class="wp-segcount"`); got != 1 {
+		t.Errorf("new-message composer: %d segment counters, want 1", got)
+	}
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "clock"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	view := string(body)
+	if !strings.Contains(view, `<textarea name="body" class="wp-compose-body"`) {
+		t.Errorf("reply composer body is not a textarea")
+	}
+	if got := strings.Count(view, `class="wp-segcount"`); got != 1 {
+		t.Errorf("reply composer: %d segment counters, want 1", got)
+	}
+	if got := strings.Count(view, `class="wp-attach"`); got != 1 {
+		t.Errorf("reply composer: %d attachment containers, want 1", got)
+	}
+
+	_, body = c.do(http.MethodGet, "/partials/fax", nil, "")
+	if !strings.Contains(string(body), `class="wp-attach"`) {
+		t.Error("fax form missing the attachment container")
+	}
+}
+
+// TestBubbleClockFollowsLanguage pins the German 24h convention: with
+// wp-lang=de the bubble meta carries a zero-padded 24h clock and never
+// a meridiem; the default English rendering keeps its meridiem form.
+func TestBubbleClockFollowsLanguage(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "clock"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	if !regexp.MustCompile(`\d{1,2}:\d{2}[AP]M`).MatchString(string(body)) {
+		t.Errorf("english bubble clock lost its meridiem form")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, c.base+"/partials"+string(match[1]), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var jar []string
+	base, _ := url.Parse(c.base)
+	for _, cookie := range c.http.Jar.Cookies(base) {
+		jar = append(jar, cookie.Name+"="+cookie.Value)
+	}
+	req.Header.Set("Cookie", strings.Join(append(jar, "wp-lang=de"), "; "))
+	resp, err = c.http.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deBody := string(readAll(t, resp))
+	_ = resp.Body.Close()
+	if !regexp.MustCompile(`\b\d{2}:\d{2}\b`).MatchString(deBody) {
+		t.Errorf("german bubble clock missing a 24h timestamp")
+	}
+	if regexp.MustCompile(`\d{1,2}:\d{2}[AP]M`).MatchString(deBody) {
+		t.Errorf("german bubble clock still renders a meridiem")
+	}
+}

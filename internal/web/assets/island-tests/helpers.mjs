@@ -5,6 +5,14 @@
 export function installBrowserGlobals() {
   const registry = new Map();
   const docListeners = new Map();
+  // matchesSelector is the stub's selector interpreter: an exact
+  // .selector convention hit, or a className match against a class
+  // selector (".wp-chip" matches className "wp-chip", including one
+  // class of a space-separated list).
+  const matchesSelector = (node, selector) =>
+    node.selector === selector ||
+    node.className === selector ||
+    (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1)));
   const makeEl = (id) => ({
     id,
     textContent: "",
@@ -26,7 +34,7 @@ export function installBrowserGlobals() {
     closest(selector) {
       let node = this;
       while (node) {
-        if (node.selector === selector || node.className === selector) return node;
+        if (matchesSelector(node, selector)) return node;
         node = node.parent;
       }
       return null;
@@ -34,7 +42,7 @@ export function installBrowserGlobals() {
     querySelector(selector) {
       const walk = (node) => {
         for (const kid of node.children) {
-          if (kid.selector === selector || kid.className === selector) return kid;
+          if (matchesSelector(kid, selector)) return kid;
           const found = walk(kid);
           if (found) return found;
         }
@@ -45,9 +53,11 @@ export function installBrowserGlobals() {
     get firstChild() {
       return this.children[0] ?? null;
     },
-    append(child) {
-      child.parent = this;
-      this.children.push(child);
+    append(...kids) {
+      for (const kid of kids) {
+        kid.parent = this;
+        this.children.push(kid);
+      }
     },
     prepend(child) {
       child.parent = this;

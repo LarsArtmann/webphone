@@ -86,8 +86,9 @@ func TestIsSelfThread(t *testing.T) {
 }
 
 func TestFormatClockAndStampFollowLanguage(t *testing.T) {
-	// A fixed instant with a nonzero minute so both conventions differ.
-	at := time.Date(2026, 9, 22, 16, 9, 0, 0, time.UTC)
+	// A fixed local-time instant (the helpers render t.Local(), so the
+	// fixture rides time.Local to stay deterministic on any host TZ).
+	at := time.Date(2026, 9, 22, 16, 9, 0, 0, time.Local)
 	cases := []struct {
 		name  string
 		lang  Lang

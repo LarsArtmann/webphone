@@ -240,6 +240,27 @@ ports of already-pinned paths.
   `gateway.mode`; single underscores stay literal. Scalars via env;
   lists (`ice_servers`, `contacts`) + the `identities` map via the
   JSON file.
+- **CRM integration seam (2026-09-22, Ledger `~/projects/crm`)**:
+  optional, OFF by default — `crm.url`+`crm.token` (both or neither,
+  validated) build `internal/crm.Resolver` (Client + TTL cache:
+  positive 6h, negative 5min, cap 1024, transport failures NOT
+  cached) injected as `Deps.CRM`; nil-safe everywhere. Enrichment is
+  read-only display: panels collect page numbers → `crmNames` →
+  `Names map[string]string` in view props → `displayName` falls back
+  to the raw number, so a dead CRM never breaks a page (debug log
+  only — deliberately NOT in the failure-feedback table). Number
+  matching lives in the CRM (single home): digits-only normalize +
+  suffix ≥8 with prefix-delta ≤4 + trunk-0 variants; webphone sends
+  numbers verbatim. Call logging: island `recordCrmCall` (panels.js,
+  gated on `PBX_CONFIG.crm`, fire-and-forget beside `recordHistory`
+  in the Terminated branch — never a call-path dependency) → `POST
+  /api/calls` (requireSession + CSRF + contacts budget) → resolve →
+  `LogCall` → 204; unknown numbers 204 (never mint contacts), CRM
+  outage 502 (island toasts, i18n `crmLogFailed`). The CRM side
+  mounts `/api/*` only with `-api-token` (bearer, constant-time, no
+  CSRF — machine surface) and gained `phones` on contacts
+  (comma/semicolon-split ONLY — whitespace is formatting inside a
+  number; verbatim at rest). Both sides' tests pin the wire shapes.
 - erraudit honors `//nolint:erraudit // reason`; branching-flow
   honors NO nolint (documented skip in `.buildflow.yml`; same for
   go-structure-linter, cqrs-lint, nix-hash-fix). **The erraudit

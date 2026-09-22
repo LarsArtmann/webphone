@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional Ledger CRM integration (both repos, off by default):
+  `crm.url` + `crm.token` (config / `WEBPHONE_CRM__*`) point at a
+  Ledger CRM running with `-api-token`. Phone numbers in History,
+  Messages, Fax and Voicemail resolve against the CRM's contacts
+  (digit matching, trunk/country-code tolerant, TTL-cached 6 h,
+  misses 5 min; any failure degrades to the raw number), and every
+  finished call is reported by the island to `POST /api/calls`
+  (session + CSRF gated) which journals it on the matching CRM
+  contact — unknown numbers are never logged and the integration
+  never mints contacts. CRM side: contacts gained a `phones` list
+  (form, search, CSV import) plus the machine API
+  (`GET /api/contacts/by-phone`, `POST /api/contacts/{id}/calls`)
+  behind `-api-token`. Pinned by `internal/crm` unit tests, the
+  `/api/calls` contract test, the history-enrichment render test,
+  and the CRM's api_test + phone-matching tables.
 - Dated backup history (plan T18a):
   `services.webphone.backup.retentionDays` (default `null` = today's
   single-snapshot behavior). When set — e.g. `30` — each daily run

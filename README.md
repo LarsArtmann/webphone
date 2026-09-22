@@ -94,6 +94,8 @@ in the JSON file.
 | `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)**          |
 | `csrf.trusted_proxies`   | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (loopback nginx) — IP or CIDR entries                       |
 | `csrf.trusted_origins`   | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                       |
+| `crm.url`                | _empty_ = disabled  | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                     |
+| `crm.token`              | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                           |
 
 `csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
 then arrives with `Origin: https://host` while the listener sees plain
@@ -128,6 +130,28 @@ Example file:
 ```
 
 ## Integration contracts
+
+### Ledger CRM (optional)
+
+With `crm.url` + `crm.token` configured, the webphone talks to a
+[Ledger](https://github.com/LarsArtmann/crm) instance's machine API (the
+CRM must run with `-api-token <same-token>`):
+
+- **Caller names**: numbers rendered in History, Messages, Fax and
+  Voicemail are resolved against the CRM's contacts (matched by digits,
+  tolerant of trunk-prefix and country-code variants); matches render the
+  contact name, everything else stays the raw number. Lookups are cached
+  in-process (6 h, misses 5 min) and every failure degrades to the raw
+  number — the phone never depends on the CRM.
+- **Call journal**: after every call the island reports the outcome to
+  `POST /api/calls` (session-gated); the server journals it on the
+  matching CRM contact (`call_logged`: "Incoming call from +49… (2m 03s
+  — answered)"). Unknown numbers are deliberately NOT logged — the
+  integration never mints contacts.
+
+Enable it on both sides: webphone gets `crm.url` + `crm.token`, the CRM
+gets `-api-token <same value>` (its machine API is unmounted without
+that flag).
 
 ### The page (`window.PBX_CONFIG`)
 

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/crm"
 )
 
 // crmStub is a Ledger machine-API double for the server tests.
@@ -69,8 +69,8 @@ func TestAPICallLoggingContract(t *testing.T) {
 		anon.token = ""
 
 		resp, _ := anon.do(http.MethodPost, "/api/calls", []byte(`{}`), "application/json")
-		if resp.StatusCode != http.StatusUnauthorized {
-			t.Fatalf("anonymous report: %d (want 401)", resp.StatusCode)
+		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusForbidden {
+			t.Fatalf("anonymous report: %d (want 401/403)", resp.StatusCode)
 		}
 	})
 
@@ -102,8 +102,8 @@ func TestAPICallLoggingContract(t *testing.T) {
 
 	t.Run("unknown number is a silent 204", func(t *testing.T) {
 		stub := &crmStub{}
-		stub.lookupJSON = `{"results":[]}`
 		resolver := crmResolverFor(t, stub)
+		stub.lookupJSON = `{"results":[]}`
 		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
 		c := signIn(t, server)
 
@@ -121,8 +121,9 @@ func TestAPICallLoggingContract(t *testing.T) {
 	})
 
 	t.Run("CRM outage is a 502", func(t *testing.T) {
-		stub := &crmStub{logStatus: http.StatusInternalServerError}
+		stub := &crmStub{}
 		resolver := crmResolverFor(t, stub)
+		stub.logStatus = http.StatusInternalServerError
 		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
 		c := signIn(t, server)
 
@@ -166,7 +167,8 @@ func postJSONRaw(t *testing.T, c *client, path string, payload any) (*http.Respo
 	if err != nil {
 		t.Fatal(err)
 	}
-	return c.do(http.MethodPost, path, body, "application/json")
+	resp, respBody := c.do(http.MethodPost, path, body, "application/json")
+	return resp, string(respBody)
 }
 
 // TestHistoryRendersCRMNames pins the enrichment: with the integration

@@ -52,6 +52,7 @@ Code wins when doc and code disagree.
 | Live voicemail refresh     | 🟢 FULLY_FUNCTIONAL  | Payload-less SSE nudge on deletes and island polls                                                                           |
 | Phone-api reverse proxy    | 🟢 FULLY_FUNCTIONAL  | Same paths/JSON as the static era, Basic auth injected server-side                                                           |
 | Callback/redial from tabs  | 🟢 FULLY_FUNCTIONAL  | `data-dial` on CDR rows (CID in / destination out), voicemail rows (CID number), thread views; guarded when no number exists |
+| CRM caller names + call journal | 🟢 FULLY_FUNCTIONAL | OPTIONAL Ledger integration (`crm.url`+`crm.token` ↔ CRM `-api-token`): History/Messages/Fax/Voicemail numbers resolve to CRM contact names (digit matching, trunk/country-code tolerant, TTL cache, fail-open to raw number); the island reports finished calls to `POST /api/calls` (session+CSRF) which journals them on the matching contact — never creates contacts, 204 on unknown numbers |
 | Voicemail transcripts      | ⚪ WORTH_CONSIDERING | Surfacing only if the PBX API ever provides them                                                                             |
 
 ## Contacts & sessions

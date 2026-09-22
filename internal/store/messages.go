@@ -374,7 +374,7 @@ func (s *Messages) ListMessagesPage(
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC
 		LIMIT ? OFFSET ?
-	`, []any{owner.String(), threadID.String(), limit+1, page*limit}, scanMessage)
+	`, []any{owner.String(), threadID.String(), limit + 1, page * limit}, scanMessage)
 	if err != nil {
 		return nil, false, err
 	}
