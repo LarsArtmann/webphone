@@ -124,6 +124,8 @@ const resetStubs = () => {
 };
 
 const pill = () => doc.getElementById("reg-status").textContent;
+const logTexts = () =>
+  doc.getElementById("log").children.map((li) => li.textContent);
 
 test("connect builds one agent and reaches the registered pill", async () => {
   resetStubs();
@@ -248,4 +250,28 @@ test("logout does not rebuild", async () => {
   registerers.at(-1).fire("Terminated");
   await flushes();
   assert.equal(agents.length, 1, "teardown events during logout are inert");
+});
+
+// The re-entrancy guard (SUPERB T17a): two rebuild triggers landing in
+// the same tick (a registration-lost event racing the cycle deadline,
+// or Unregistered immediately followed by Terminated) must collapse
+// into ONE teardown+rebuild — the second caller sees resetting=true,
+// logs "already in progress", and returns without touching the fresh
+// agent.
+test("concurrent rebuild triggers collapse into a single rebuild", async () => {
+  resetStubs();
+  const connection = await loadConnection("reentrancy");
+  await connection.connect("1001", "pw");
+  const dead = registerers.at(-1);
+  dead.fire("Unregistered");
+  dead.fire("Terminated");
+  await flushes();
+  assert.equal(agents.length, 2, "exactly one fresh agent, not one per trigger");
+  assert.equal(registerers.length, 2, "exactly one fresh registerer");
+  assert.ok(agents[0].stopped, "the old agent was torn down once");
+  assert.ok(
+    logTexts().some((line) => line.includes("rebuild already in progress")),
+    "the collapsed trigger must say so in #log",
+  );
+  assert.equal(pill(), t("registered"), "the single rebuild re-registers");
 });

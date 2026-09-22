@@ -343,6 +343,7 @@ def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
     foreign: bool = False,
+    expect_version: str | None = None,
 ) -> int:
     c = s.check
     print(f"smoke against {s.base}")
@@ -385,13 +386,23 @@ def run_checks(
         f"{status} {body[:80]!r}",
     )
 
-    # 3. version reports build metadata.
+    # 3. version reports build metadata. With --expect-version the probe
+    # FAILS unless the served build is exactly that version (accepts the
+    # form with or without the leading v) — the post-deploy check that
+    # the switch actually switched.
     status, body, _ = s.request("GET", "/version")
     c.ok(
         "version reachable",
         status == 200 and b'"version"' in body,
         f"{status} {body[:80]!r}",
     )
+    if expect_version is not None:
+        want = expect_version.lstrip("v")
+        c.ok(
+            f"version is exactly {expect_version}",
+            f'"version":"v{want}"'.encode() in body,
+            f"{body[:120]!r}",
+        )
 
     # 3b. openapi.json publishes the session API contract (3.1.0).
     status, body, _ = s.request("GET", "/openapi.json")
@@ -687,12 +698,17 @@ def main() -> int:
     parser.add_argument(
         "--go", default="go", help="go toolchain command for --bin build"
     )
+    parser.add_argument(
+        "--expect-version",
+        help="fail unless /version reports exactly this build version "
+        "(leading v optional) — the post-deploy did-it-switch probe",
+    )
     args = parser.parse_args()
 
     ensure_go_toolchain(args)
 
     if args.base:
-        return run_checks(Smoke(args.base), foreign=True)
+        return run_checks(Smoke(args.base), foreign=True, expect_version=args.expect_version)
 
     port = free_port()
     workdir = tempfile.mkdtemp(prefix="webphone-smoke-")
@@ -779,7 +795,7 @@ def main() -> int:
         else:
             print("server did not become ready", file=sys.stderr)
             return 2
-        rc = run_checks(Smoke(base), boot_configured)
+        rc = run_checks(Smoke(base), boot_configured, expect_version=args.expect_version)
         rc = max(rc, restart_scenario(binary, workdir, port, env))
         return rc
     finally:
