@@ -58,8 +58,8 @@ users about it — persistence DELETES the problem instead of narrating it.
 
 | Task                                                                | Why it is the 1%                                                                                                                                                  |
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~T11~~ ~~Session-persistence design spike (decision gate D2)             | Turns the whole "dead session" failure class — silent 401s, toast throttles, restart UX — into a non-issue. Every other feedback task is a bandage on this wound. |~~ done (executed per the §7 record; docs-health 2026-09-22)
-| ~~T12~~ ~~Session-persistence implementation (gated on D2 approval + T11) | Ships the fix: sessions survive restarts, cookie unchanged, owner scoping unchanged, fail-closed posture unchanged.                                               |~~ done (executed per the §7 record; docs-health 2026-09-22)
+|~~T11Session-persistence design spike (decision gate D2)~~             | ~~Turns the whole "dead session" failure class — silent 401s, toast throttles, restart UX — into a non-issue. Every other feedback task is a bandage on this wound.~~ |~~ done (executed per the §7 record; docs-health 2026-09-22) done (§7 execution record; docs-health 2026-09-22)
+|~~T12Session-persistence implementation (gated on D2 approval + T11)~~ | ~~Ships the fix: sessions survive restarts, cookie unchanged, owner scoping unchanged, fail-closed posture unchanged.~~                                               |~~ done (executed per the §7 record; docs-health 2026-09-22) done (§7 execution record; docs-health 2026-09-22)
 
 ### 4% → 64% (adds ~13%)
 
@@ -68,9 +68,9 @@ incremental wins, no product decisions required, each individually shippable.
 
 | Task                                                                          | Why it is the 4%                                                                                                                                             |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ~~T01~~ ~~Toast accessibility (aria-live, role, keyboard dismissal)                 | The entire feedback channel is currently INVISIBLE to screen-reader users. One attribute closes it.                                                          |~~ done (executed per the §7 record; docs-health 2026-09-22)
-| ~~T02~~ ~~Error-body swap via htmx responseHandling (+ 502 toast pairing assertion) | The server already renders correct panel errors — htmx discards the bodies today. Wiring responseHandling turns transient toasts into durable inline errors. |~~ done (executed per the §7 record; docs-health 2026-09-22)
-| ~~T03~~ ~~Toast feedback-map completion (login-fail, 429, SSE-drop toasts)          | Three error paths still end in `#log`-only or pill-only feedback.                                                                                            |~~ done (executed per the §7 record; docs-health 2026-09-22)
+|~~T01Toast accessibility (aria-live, role, keyboard dismissal)~~                 | ~~The entire feedback channel is currently INVISIBLE to screen-reader users. One attribute closes it.~~                                                          |~~ done (executed per the §7 record; docs-health 2026-09-22) done (§7 execution record; docs-health 2026-09-22)
+|~~T02Error-body swap via htmx responseHandling (+ 502 toast pairing assertion)~~ | ~~The server already renders correct panel errors — htmx discards the bodies today. Wiring responseHandling turns transient toasts into durable inline errors.~~ |~~ done (executed per the §7 record; docs-health 2026-09-22) done (§7 execution record; docs-health 2026-09-22)
+|~~T03Toast feedback-map completion (login-fail, 429, SSE-drop toasts)~~          | ~~Three error paths still end in `#log`-only or pill-only feedback.~~                                                                                            |~~ done (executed per the §7 record; docs-health 2026-09-22) done (§7 execution record; docs-health 2026-09-22)
 
 ### 20% → 80% (adds ~16%)
 
