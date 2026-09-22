@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Per-thread composer drafts (plan T21d): message text survives tab
+  and thread switches — the paths that re-render the composer empty.
+  Drafts save debounced (4k cap), restore only into an EMPTY composer,
+  and clear after a successful send; a failed send keeps the draft for
+  the retry. Pinned by a shell spec driving the real listeners.
+- Single-source DOM contract (plan T22): the 35 island element ids now
+  live in `docs/dom-contract.md`; `TestServedPageHoldsTheDomContract`
+  parses that file as the golden source, so the test, AGENTS, and the
+  stack-side docs can never drift from one hand-maintained list.
 - Optional Ledger CRM integration (both repos, off by default):
   `crm.url` + `crm.token` (config / `WEBPHONE_CRM__*`) point at a
   Ledger CRM running with `-api-token`. Phone numbers in History,
@@ -91,6 +100,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- AGENTS.md size pass (plan T16a): 705 → 337 lines. Every rule stays;
+  war stories moved to `docs/lessons.md`, the failure→feedback table
+  to `docs/error-contract.md` (now carrying the rate-limit-keying ops
+  note), the release dance + pbx-artmann relock ritual to
+  `docs/release-runbook.md`.
 - `GOEXPERIMENT=jsonv2` is gone everywhere (devShell, buildGoModule,
   buildflow env, release.sh, smoke, README/CONTRIBUTING/AGENTS): Go
   1.27.1 ships a stable `encoding/json/v2`, the flag had become a
