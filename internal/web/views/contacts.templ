@@ -12,7 +12,14 @@ type ContactsPanelProps struct {
 }
 
 templ ContactsPanel(props ContactsPanelProps) {
-	<section class="wp-panel" id="contacts-panel">
+	<section
+		class="wp-panel"
+		id="contacts-panel"
+		hx-get="/partials/contacts"
+		hx-trigger="sse:contacts"
+		hx-target="#tab-content"
+		hx-swap="morph:innerHTML show:window:top"
+	>
 		<header class="wp-panel-head">
 			<h2>{ T(props.Lang, "tab.contacts") }</h2>
 			<p class="wp-panel-sub">{ T(props.Lang, "contacts.subtitle") }</p>

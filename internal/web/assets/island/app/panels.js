@@ -169,6 +169,20 @@ document.addEventListener("wp:session-opened", () => {
   loadContacts();
 });
 
+// Cross-surface live updates: every contacts mutation (island API call,
+// the Contacts tab forms, a vCard import — this browser or another one)
+// publishes the payload-less "contacts" SSE nudge. The server's contacts
+// panel re-fetches its own partial via hx-trigger="sse:contacts"; that
+// subscription also fires a bubbling htmx:sseMessage whose detail is the
+// raw MessageEvent (detail.type === "contacts"), which is what this
+// listener keys on — the island's dropdown then re-fetches through its
+// own session credentials, mirroring the voicemail nudge pattern.
+document.addEventListener("htmx:sseMessage", (event) => {
+  if (event.detail && event.detail.type === "contacts") {
+    loadContacts();
+  }
+});
+
 async function migrateLegacyContacts() {
   if (legacyContacts.length === 0) return;
   // Numbers already on the server keep their server-side names.

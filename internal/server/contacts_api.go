@@ -10,6 +10,15 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 )
 
+// notifyContactsChanged nudges the extension's other surfaces (open
+// Contacts tab, the island's contacts dropdown) with the payload-less
+// "contacts" SSE event — the voicemail-nudge pattern: both consumers
+// re-fetch with their own session credentials instead of trusting a
+// push payload.
+func (h *handlers) notifyContactsChanged(extension domain.Extension) {
+	h.deps.Hubs.Publish(extension, sseEventContacts, "")
+}
+
 // JSON contacts API for the SIP island's contact panel. The island used
 // to keep its personal contacts in localStorage while the Contacts tab
 // read the server store — two homes for the same fact. These endpoints
@@ -100,6 +109,7 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not save the contact", http.StatusInternalServerError)
 		return
 	}
+	h.notifyContactsChanged(sess.Extension)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -119,5 +129,6 @@ func (h *handlers) apiDeleteContact(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	h.notifyContactsChanged(sess.Extension)
 	w.WriteHeader(http.StatusNoContent)
 }

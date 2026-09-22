@@ -227,6 +227,7 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not save the contact", http.StatusInternalServerError)
 		return
 	}
+	h.notifyContactsChanged(sess.Extension)
 	notifyToast(w, "ok", h.T(r, "toast.contactSaved"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
@@ -246,6 +247,7 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	h.notifyContactsChanged(sess.Extension)
 	notifyToast(w, "ok", h.T(r, "toast.contactDeleted"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
@@ -484,6 +486,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+strconv.Itoa(imported)+h.T(r, "toast.imported.post"))
+	h.notifyContactsChanged(sess.Extension)
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
