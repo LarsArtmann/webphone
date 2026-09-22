@@ -27,7 +27,7 @@ func readZipEntry(t *testing.T, archive *zip.Reader, name string) []byte {
 		if err != nil {
 			t.Fatalf("open %s: %v", name, err)
 		}
-		defer rc.Close() //nolint:staticcheck // test helper: one entry, process exits anyway
+		defer rc.Close() //nolint:staticcheck,errcheck // test helper: one entry, process exits anyway
 		content, err := io.ReadAll(rc)
 		if err != nil {
 			t.Fatalf("read %s: %v", name, err)
