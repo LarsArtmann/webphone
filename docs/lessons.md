@@ -167,11 +167,16 @@ and the evidence. Newest last is NOT enforced — group by topic.
   the same rules so hx-indicator keeps working). The meta must precede
   the script or htmx never reads it; Shell leaves `HTMXSrc` unset so
   `layout.Base` does not also emit a synchronous htmx tag.
-- The app.css `[data-theme]` `color-scheme` rules carry `!important`
-  so the CSP-hash-pinned framework theme script's inline
-  `colorScheme` cannot undo a forced theme. If templ-components ships
-  a ThemeScript opt-out knob, take it and drop the hash plus these
-  `!important`s.
+- The app.css `[data-theme]` `color-scheme` rules used to carry
+  `!important` because the CSP-hash-pinned framework theme script wrote
+  an inline `colorScheme` that could undo a forced theme. RESOLVED
+  2026-09-22: templ-components v1.19.2 shipped the `NoThemeScript`
+  knob; webphone consumes it, serves its own same-origin
+  `/assets/theme-preload.js` (which sets `data-theme` pre-paint — the
+  library script never did), and dropped the hash plus the
+  `!important`s. Lesson: when a dependency forces a CSP exception, the
+  fix belongs upstream — and the exception class (hash pinning
+  dependency bytes) was the real recurring cost, not the one-time pin.
 
 ## E2E
 
