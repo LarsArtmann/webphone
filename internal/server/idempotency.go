@@ -26,6 +26,12 @@ type idemStore struct {
 // bounded by one hour of callback traffic.
 const hookIdempotencyTTL = time.Hour
 
+// callsIdempotencyTTL: the island's post-call report is fire-and-forget;
+// a replay is a browser-level retry or a double-fire, which lands within
+// seconds of the first attempt. The own constant keeps the journal-dedupe
+// window free to diverge from the webhook one.
+const callsIdempotencyTTL = time.Hour
+
 func newIdemStore(ttl time.Duration) *idemStore {
 	return &idemStore{ttl: ttl, entries: make(map[string]time.Time)}
 }

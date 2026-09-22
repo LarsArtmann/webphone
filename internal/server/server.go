@@ -159,6 +159,7 @@ func New(deps Deps) http.Handler {
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
 		unread:          newUnreadCache(5 * time.Second),
 		hooksIdem:       newIdemStore(hookIdempotencyTTL),
+		callsIdem:       newIdemStore(callsIdempotencyTTL),
 	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the
@@ -607,7 +608,8 @@ const openapiSpec = `{
                   "number": {"type": "string", "examples": ["+4917012345678"]},
                   "direction": {"type": "string", "enum": ["in", "out"]},
                   "seconds": {"type": "integer", "description": "Duration in seconds; negative values are clamped to 0"},
-                  "outcome": {"type": "string", "enum": ["answered", "missed"]}
+                  "outcome": {"type": "string", "enum": ["answered", "missed"]},
+                  "key": {"type": "string", "maxLength": 128, "description": "Island-generated idempotency key (UUID). A retry with the same key answers 204 without journaling again; a failed (502) attempt stays retryable. Absent or empty means no dedupe."}
                 }
               }
             }
