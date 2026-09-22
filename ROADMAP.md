@@ -165,6 +165,13 @@ the stack browser E2E passed on the bumped tree. What remains:
   emerges — switching to tag pins buys reproducibility at the cost of
   a manual bump step on every fix. Revisit when a security fix ever
   needs to ship inside an hour.
+- Infra ask (upstream of this repo): teach the auto-commit daemon to
+  EXCLUDE `docs/status/` and `docs/planning/` (or only sweep on
+  quiescence) — its heuristic commits have twice swept half-written
+  reports (2026-09-22 12:57: 11-file sweep) and reintroduced
+  formatting drift in the stack (operator.js, fixed in `1a95a73`
+  there). Until then: the runbook's narrative-commit-at-phase-boundary
+  line is the mitigation.
 
 ## Harvested raw ideas (2026-09-19 docs-health sweep)
 
