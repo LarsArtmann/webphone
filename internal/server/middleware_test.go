@@ -301,8 +301,8 @@ func TestOpenAPICallLogMatchesHandler(t *testing.T) {
 	if err := json.Unmarshal([]byte(openapiSpec), &doc); err != nil {
 		t.Fatalf("openapiSpec is not JSON: %v", err)
 	}
-	post := doc.Paths["/api/calls"]["post"]
-	if post == nil {
+	post, ok := doc.Paths["/api/calls"]["post"]
+	if !ok {
 		t.Fatal("/api/calls must document POST")
 	}
 	for _, code := range []string{"204", "400", "401", "403", "422", "429", "502"} {
