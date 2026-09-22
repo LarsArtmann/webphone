@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added (2026-09-22 error-excellence train — undeployed, rides the next owner switch)
+## [2.5.0] - 2026-09-22
+
+### Added (2026-09-22 error-excellence train)
 
 - Typed error families at the two outbound seams (plan:
   `docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`):
