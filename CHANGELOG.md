@@ -130,6 +130,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TestComposerCarriesSegmentCounterAndTextarea`,
   `TestBubbleClockFollowsLanguage`, and five composer specs in
   `island-tests/composer.test.mjs` (49/49 node tests).
+- `/metrics` endpoint (plan T26a): Prometheus text format, AGGREGATES
+  only by design — build info, uptime, table counts — never
+  per-extension data; a test fails on any extension-like string, and
+  the NixOS module gained a dedicated fenced `/metrics` vhost location
+  (asserted by the module flake check).
+- `services.webphone.nginx.gzip.enable` (plan T27a): flips nginx's
+  recommended gzip settings on the generated vhost (SSE is never
+  gzipped by nginx itself); module-eval stand-in pinned.
+- Signed release tags (plan T27c): `scripts/release.sh` now cuts
+  `git tag -s` and verifies the signature locally before pushing.
 
 ### Changed
 

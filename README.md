@@ -288,8 +288,9 @@ python3 scripts/webphone-backup-drill.py   # end-to-end restore drill (boots a t
 
 1. stop the service,
 2. copy `webphone.db` and `files/` back into the data directory,
-3. start the service — sessions are in-memory by design, so nothing
-   else to replay; sign in and the tabs render from the restored store.
+3. start the service — tab sessions live in the SQLite database, so the
+   restored session rows keep working (signed-in browsers stay signed
+   in); everything else renders straight from the restored store.
 
 Dated history (point-in-time restore): set
 `services.webphone.backup.retentionDays` (default `null` = single
@@ -387,15 +388,18 @@ Module options beyond `enable`/`package`/`settings`:
 | `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                      |
 | `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                            |
 | `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days   |
-| `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
-| `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
+| `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                                 |
+| `nginx.gzip.enable`               | _off_                      | nginx recommended gzip settings on the vhost (SSE is never gzipped)                                       |
+| `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                          |
 
 **Health probes behind the vhost:** the module ships dedicated nginx
 locations for `/healthz` (readiness), `/livez` (process liveness) and
 `/startupz` (startup completion) instead of riding `/` — a fleet health
 hub can scrape or be fenced (`allow`/`deny` via `extraConfig`) per
 location without touching the app's location. All three are session-free
-GETs whose bodies name checks and statuses only, never secrets.
+GETs whose bodies name checks and statuses only, never secrets. A fourth
+dedicated location serves `/metrics` (Prometheus text, aggregate counts
+only — never per-extension data) and can be fenced the same way.
 
 **Readiness vs systemd:** the service unit stays `Type=simple` by
 DELIBERATE decision — the module does NOT wire `Type=notify`.

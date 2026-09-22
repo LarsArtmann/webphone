@@ -48,13 +48,13 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 
 ## WORTH_CONSIDERING cluster (one-line specs, SUPERB plan P26 2026-09-19)
 
-- Session persistence: move the in-memory TTL session store behind a
-  restart-survivable backing (SQLite table + TTL sweep) — the island
-  login flow is unchanged; weigh against "sessions are ephemeral by
-  design" before building.
-- Retention/cleanup job: bounded deletion for old CDR rows, read
-  faxes/voicemail blobs, and expired sessions (a `retention_days`
-  setting + a systemd timer in the module).
+- Session persistence: RESOLVED — SQLite-backed store shipped (2.5.0:
+  sessions survive restarts) plus sliding TTL (7d idle / 30d absolute);
+  the spike verdict lives at
+  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`.
+- Retention/cleanup job: SHIPPED — `retention_days` (T25) deletes
+  messages+attachments, faxes+documents and emptied threads on a daily
+  sweep; sessions were already covered by the store's own expiry sweep.
 - PWA: RESOLVED 2026-09-22 — the service worker is a NOT-DO (stale
   cached island = a bug class invisible to every gate; offline is
   impossible for a phone: `docs/planning/2026-09-22_17-05_pwa-spike-verdict.md`).
@@ -65,15 +65,14 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   on demand.
 - Recording UI (see raw ideas below): product-intent decision first
   (consent/jurisdiction), then the panel.
-- Backup snapshot retention: optional `backup.retentionDays` pruning
-  old snapshots (the module skeleton deliberately leaves retention to
-  operator tooling; self-contained only if wanted) — 01:04 report
-  §f/33, distinct from the blob/CDR retention idea above.
-- Startup probe wiring: gate the systemd unit's `Type=notify`/health
-  on `/startupz` semantics (document the contract first; the unit
-  currently starts and stays up regardless) — §f/35.
-- nginx gzip for text assets (app.css/shell.js/htmx bundles): micro
-  win, one module option — §f/36.
+- Backup snapshot retention: SHIPPED — `backup.retentionDays` (T18a)
+  writes dated `snapshots/<date>/` history (hardlink basis) and prunes
+  older than N days; VM-test-proven.
+- Startup probe wiring: RESOLVED as a documented NOT-DO (T18c) — the
+  unit deliberately stays `Type=simple`; `/startupz` is the readiness
+  truth (README "Readiness vs systemd").
+- nginx gzip for text assets: SHIPPED — `nginx.gzip.enable` module
+  option (T27a).
 
 ## Standing watches (SUPERB plan P27 2026-09-19)
 
