@@ -682,9 +682,11 @@
                 }
                 ''
                   cd ${self}
-                  if oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/ internal/web/assets/shell.js; then
+                  if oxlint -c internal/web/assets/island/oxlint.json internal/web/assets/island/app/ internal/web/assets/shell.js internal/web/assets/theme-preload.js; then
                     echo "no-undef clean over:" >$out
                     ls internal/web/assets/island/app/ >>$out
+                    echo internal/web/assets/shell.js >>$out
+                    echo internal/web/assets/theme-preload.js >>$out
                   else
                     echo "island no-undef gate FAILED" >&2
                     exit 1

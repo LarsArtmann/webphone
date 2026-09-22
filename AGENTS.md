@@ -285,9 +285,14 @@ ports of already-pinned paths.
   go-structure-linter, cqrs-lint, nix-hash-fix). **The erraudit
   bar** (2026-09-22): tier 1 enforced (`--type-aware
   --disable-extensions`, must exit 0); tier 2 family-adoption
-  tracking (`--enforce-go-error-family`; tier-2 count = 102
-  stdlib_constructor findings outside the converted seams,
-  2026-09-22 — must SHRINK, never grow);
+  tracking (`--enforce-go-error-family`; re-measured 2026-09-22
+  evening EARLY per TODO: 127 stdlib_constructor findings total, 113
+  outside the crm seam — GREW from 102 via the CRM train (store/
+  messaging paths) + the turn_rest validation idioms; top unconverted
+  seams: config.go 22, store/messages.go 20, pbx/client.go 8 — the
+  family-adoption project must shrink it from 113, and new error
+  paths keep following the file-local idiom until their seam
+  converts wholesale);
   tier 3 owner-only full audit (never gates). Re-measure tiers 1+2
   monthly (next: 2026-10-22) and update the tier-2 count above.
 - `pbx.Client` owns the timeout-bounded HTTP client; the
