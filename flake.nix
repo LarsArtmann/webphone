@@ -457,6 +457,35 @@
                   );
                 }
                 {
+                  # backup.retentionDays: null (default) must render the
+                  # plain single-snapshot script; a number must add the
+                  # dated-history branch (snapshots dir, link-dest basis,
+                  # bounded prune).
+                  name = "backup-retention";
+                  path = pkgs.writeText "backup-retention" (
+                    let
+                      plainScript =
+                        (lib.evalModules (moduleSet { backup.enable = true; }))
+                        .config.systemd.services.webphone-backup.script;
+                      retentionScript =
+                        (lib.evalModules (moduleSet {
+                          backup.enable = true;
+                          backup.retentionDays = 7;
+                        }))
+                        .config.systemd.services.webphone-backup.script;
+                    in
+                    if
+                      !lib.hasInfix "snapshots" plainScript
+                      && lib.hasInfix "snapshots" retentionScript
+                      && lib.hasInfix "--link-dest" retentionScript
+                      && lib.hasInfix "-mtime +7" retentionScript
+                    then
+                      "backup retention branch renders per option"
+                    else
+                      throw "webphone-module check: backup.retentionDays did not gate the history/prune script correctly"
+                  );
+                }
+                {
                   # serverTiming.enable must set the env gate the middleware
                   # reads; without it the environment key stays absent.
                   name = "server-timing";
