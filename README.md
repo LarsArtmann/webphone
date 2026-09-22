@@ -140,7 +140,7 @@ Example file:
 ### Ledger CRM (optional)
 
 With `crm.url` + `crm.token` configured, the webphone talks to a
-[Ledger](https://github.com/LarsArtmann/crm) instance's machine API (the
+Ledger CRM instance's machine API (the
 CRM must run with `-api-token <same-token>`):
 
 - **Caller names**: numbers rendered in History, Messages, Fax and
