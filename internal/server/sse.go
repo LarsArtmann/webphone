@@ -18,6 +18,7 @@ const (
 	sseEventThread    = "thread"
 	sseEventFax       = "fax"
 	sseEventVoicemail = "voicemail"
+	sseEventContacts  = "contacts"
 )
 
 // ExtensionHubs gives every signed-in extension its own broadcast hub, so
