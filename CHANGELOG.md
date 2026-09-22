@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Bounded retention (plan T25): `retention_days` (default 0 = keep
+  everything forever). When set, a daily sweep (boot + 24h ticker in
+  the binary — no extra endpoint to protect) deletes messages with
+  their attachments, fax jobs with their documents, and the threads
+  those deletions empty; blob files are collected before their rows go
+  and unlinked after. Session rows stay out of scope: the session
+  store already sweeps its own expiry. Pinned by a store sweep test
+  (old-only deletion, live content kept, idempotent second pass,
+  empty-thread age rule).
 - Per-thread composer drafts (plan T21d): message text survives tab
   and thread switches — the paths that re-render the composer empty.
   Drafts save debounced (4k cap), restore only into an EMPTY composer,

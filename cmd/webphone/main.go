@@ -21,6 +21,7 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
@@ -101,6 +102,10 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("open session store: %w", err)
 	}
+
+	// Bounded retention (plan T25): retention_days > 0 starts the daily
+	// sweep; the default keeps everything forever and starts nothing.
+	retention.Start(ctx, db, blobs, time.Duration(cfg.RetentionDays)*24*time.Hour)
 
 	hubs := server.NewHubs()
 	notifier := server.NewNotifier(hubs, messages, faxes, crmResolver)
