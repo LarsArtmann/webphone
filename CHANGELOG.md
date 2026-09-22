@@ -788,7 +788,7 @@ island-tests/` (a sibling of the served tree, never embedded) and run
 - `window.PBX_CONFIG` is rendered by the server at `/config.js` from its
   own configuration instead of being supplied by the serving PBX.
 - cqrs-htmx middleware adoption (the 2026-09-18 Pareto plan's 1%/4%/20%
-  tiers, `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`):
+  tiers, `docs/planning/archived/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`):
   the hand-rolled panic `recovery()` is now `cqrshtmx.RecoveryMiddleware`
   (full stack trace + method/path in the log, `http.ErrAbortHandler`
   re-raised per net/http convention); `cqrshtmx.RequestLoggingSlog` sits

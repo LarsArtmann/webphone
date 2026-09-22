@@ -94,11 +94,13 @@ tasks each carry their own gate in the micro-task list.
 
 ## c) NOT STARTED
 
-- Every executable task in the plan: T4–T12, T19, T20 (Track B/C work —
-  none started; the previous turn's sweep was a different task set).
-- All ⛔ owner-gated tasks: T1 deploy, T2 SMS lane, T3 train-cut,
-  T13 stack reconciliation, T14 decision batch, T17 annotate range,
-  T18 announcements.
+  ~~Every executable task in the plan: T4–T12, T19, T20 (Track B/C work —~~
+  ~~none started; the previous turn's sweep was a different task set).~~
+  done (T4-T12/T19/T20 shipped in the 09-20/09-22 trains — file-top closure note)
+  ~~All ⛔ owner-gated tasks: T1 deploy, T2 SMS lane, T3 train-cut,~~
+  ~~T13 stack reconciliation, T14 decision batch, T17 annotate range,~~
+  ~~T18 announcements.~~
+  resolved-or-routed (prod premise corrected; SMS/decisions/announcements = live owner rows; annotate sweeps 2026-09-20/22)
 
 
 > Resolved 2026-09-22 (docs-health): every executable task below shipped

@@ -93,12 +93,12 @@ Sorted by importance/impact/effort/customer-value. Ranks are execution order.
 | 7    | T7  | **go-health**: tests + runnable example for the container-free path; race + lint green                                                                                                          | 4%   | ★★☆    | M      | ★★☆                 | T6             |
 | 8    | T8  | **go-health**: CHANGELOG + tag + release                                                                                                                                                        | 4%   | ★★☆    | S      | ★★☆                 | T7             |
 | 9    | T9  | **go-health-dashboard**: verify it composes with a static (container-free) Probe — run its suite against the new constructor; record result                                                     | 4%   | ★★☆    | S      | ★☆☆                 | T8             |
-| 10   | T10 | **webphone**: F3 — inline `sharedContacts`, run gates (trivial but proves the consume-and-verify loop)                                                                                          | 20%  | ★☆☆    | S      | ★☆☆                 | —              |
-| 11   | T11 | **webphone**: implement F2 per T1 decision — (a) docs-only, or (b) adopt go-health JSON probe endpoints on top of (not replacing) honest `/healthz`, or (c) `WatchdogSec` + sd_notify heartbeat | 20%  | ★★★    | M–L    | ★★★                 | T1, (T8 for b) |
-| 12   | T12 | **webphone**: NixOS module wiring for the chosen mechanism (options + `assertions` stand-in + module-check eval)                                                                                | 20%  | ★★☆    | M      | ★★☆                 | T11            |
-| 13   | T13 | **webphone**: docs sync — README health section, FEATURES, CHANGELOG, AGENTS.md readiness-only note refreshed                                                                                   | 20%  | ★★☆    | S      | ★☆☆                 | T11            |
-| 14   | T14 | **memos**: fleet option (health-hub scraping webphone JSON) + dashboard-HTML/CSP tradeoff memo (recorded, NOT executed) + ROADMAP long-shots                                                    | 100% | ★☆☆    | S      | ★☆☆                 | T9             |
-| 15   | T15 | **harvest + final sweep**: re-route plan outcomes into TODO_LIST (docs-health ANNOTATE/HARVEST rules), run `go test`, `nix flake check`, smoke; buildflow/vulnix only if a release is cut       | 100% | ★★☆    | M      | ★★☆                 | all            |
+| T10 | ~~ **webphone**: F3 — inline `sharedContacts`, run gates (trivial but proves the consume-and-verify loop)                                                                                          | 20%  | ★☆☆    | S      | ★☆☆                 | —              |~~ done (closed by the concurrent session) (docs-health 2026-09-22)
+| T11 | ~~ **webphone**: implement F2 per T1 decision — (a) docs-only, or (b) adopt go-health JSON probe endpoints on top of (not replacing) honest `/healthz`, or (c) `WatchdogSec` + sd_notify heartbeat | 20%  | ★★★    | M–L    | ★★★                 | T1, (T8 for b) |~~ done — /livez + /startupz (2.3.0) (docs-health 2026-09-22)
+| T12 | ~~ **webphone**: NixOS module wiring for the chosen mechanism (options + `assertions` stand-in + module-check eval)                                                                                | 20%  | ★★☆    | M      | ★★☆                 | T11            |~~ done (NixOS probe locations) (docs-health 2026-09-22)
+| T13 | ~~ **webphone**: docs sync — README health section, FEATURES, CHANGELOG, AGENTS.md readiness-only note refreshed                                                                                   | 20%  | ★★☆    | S      | ★☆☆                 | T11            |~~ done (docs sync) (docs-health 2026-09-22)
+| T14 | ~~ **memos**: fleet option (health-hub scraping webphone JSON) + dashboard-HTML/CSP tradeoff memo (recorded, NOT executed) + ROADMAP long-shots                                                    | 100% | ★☆☆    | S      | ★☆☆                 | T9             |~~ done (fleet/CSP memos) (docs-health 2026-09-22)
+| T15 | ~~ **harvest + final sweep**: re-route plan outcomes into TODO_LIST (docs-health ANNOTATE/HARVEST rules), run `go test`, `nix flake check`, smoke; buildflow/vulnix only if a release is cut       | 100% | ★★☆    | M      | ★★☆                 | all            |~~ done (HARVEST sweeps) (docs-health 2026-09-22)
 
 Parallel lanes: T2–T4 (cqrs-htmx lane) is fully independent of T5–T9 (go-health lane);
 T1 gates only T11/T12. Nothing here touches the island, the DOM contract, or routes.
@@ -126,7 +126,7 @@ ALL todos, sorted by tier then priority. [P] = parallelizable with its neighbors
 ### Tier 1 — the 4%
 
 | #  | Micro-task (≤12 min)                                                                                                                        | From |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | 10 | go-health: read `probe.go` `assemble`/`resolveHealthCheck`/`HealthRecorder` fully; write the coupling-surface note [P]                      | T5   |
 | 11 | go-health: scan `aggregate/` + `federation/` for further injector touchpoints the new constructor must serve                                | T5   |
 | 12 | go-health: draft `NewChecks` signature + static recorder design (naming, opts, error semantics) — one-page design doc in the go-health repo | T5   |
@@ -147,7 +147,7 @@ ALL todos, sorted by tier then priority. [P] = parallelizable with its neighbors
 ### Tier 2 — the 20%
 
 | #  | Micro-task (≤12 min)                                                                                                                                          | From |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | 26 | webphone: F2 implementation step 1 — branch per T1 outcome (docs-only / probe endpoints / watchdog)                                                           | T11  |
 | 27 | (if docs-only) README + module comment: "readiness-only by decision; hung process = operator restart"                                                         | T11a |
 | 28 | (if probe endpoints) mount go-health JSON `/readyz` `/startupz` beside existing `/healthz`; keep current handler as the readiness source (no duplicate truth) | T11b |
@@ -164,7 +164,7 @@ ALL todos, sorted by tier then priority. [P] = parallelizable with its neighbors
 ### Tier 3 — to 100%
 
 | #  | Micro-task (≤12 min)                                                                                             | From |
-| -- | ---------------------------------------------------------------------------------------------------------------- | ---- |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ----- |
 | 38 | Memo: fleet option — health-hub federation scraping webphone's honest JSON (stack-level, no webphone change)     | T14  |
 | 39 | Memo: dashboard-HTML-in-webphone CSP tradeoff (Datastar `unsafe-eval` vs pinned hash; what would have to change) | T14  |
 | 40 | ROADMAP: long-shots (webphone UI health panel if CSP stance changes; federation in the stack)                    | T14  |

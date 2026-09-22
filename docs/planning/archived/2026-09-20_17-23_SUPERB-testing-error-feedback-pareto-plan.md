@@ -58,8 +58,8 @@ users about it — persistence DELETES the problem instead of narrating it.
 
 | Task                                                                | Why it is the 1%                                                                                                                                                  |
 | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| T11 Session-persistence design spike (decision gate D2)             | Turns the whole "dead session" failure class — silent 401s, toast throttles, restart UX — into a non-issue. Every other feedback task is a bandage on this wound. |
-| T12 Session-persistence implementation (gated on D2 approval + T11) | Ships the fix: sessions survive restarts, cookie unchanged, owner scoping unchanged, fail-closed posture unchanged.                                               |
+| ~~T11~~ ~~Session-persistence design spike (decision gate D2)             | Turns the whole "dead session" failure class — silent 401s, toast throttles, restart UX — into a non-issue. Every other feedback task is a bandage on this wound. |~~ done (executed per the §7 record; docs-health 2026-09-22)
+| ~~T12~~ ~~Session-persistence implementation (gated on D2 approval + T11) | Ships the fix: sessions survive restarts, cookie unchanged, owner scoping unchanged, fail-closed posture unchanged.                                               |~~ done (executed per the §7 record; docs-health 2026-09-22)
 
 ### 4% → 64% (adds ~13%)
 
@@ -68,9 +68,9 @@ incremental wins, no product decisions required, each individually shippable.
 
 | Task                                                                          | Why it is the 4%                                                                                                                                             |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| T01 Toast accessibility (aria-live, role, keyboard dismissal)                 | The entire feedback channel is currently INVISIBLE to screen-reader users. One attribute closes it.                                                          |
-| T02 Error-body swap via htmx responseHandling (+ 502 toast pairing assertion) | The server already renders correct panel errors — htmx discards the bodies today. Wiring responseHandling turns transient toasts into durable inline errors. |
-| T03 Toast feedback-map completion (login-fail, 429, SSE-drop toasts)          | Three error paths still end in `#log`-only or pill-only feedback.                                                                                            |
+| ~~T01~~ ~~Toast accessibility (aria-live, role, keyboard dismissal)                 | The entire feedback channel is currently INVISIBLE to screen-reader users. One attribute closes it.                                                          |~~ done (executed per the §7 record; docs-health 2026-09-22)
+| ~~T02~~ ~~Error-body swap via htmx responseHandling (+ 502 toast pairing assertion) | The server already renders correct panel errors — htmx discards the bodies today. Wiring responseHandling turns transient toasts into durable inline errors. |~~ done (executed per the §7 record; docs-health 2026-09-22)
+| ~~T03~~ ~~Toast feedback-map completion (login-fail, 429, SSE-drop toasts)          | Three error paths still end in `#log`-only or pill-only feedback.                                                                                            |~~ done (executed per the §7 record; docs-health 2026-09-22)
 
 ### 20% → 80% (adds ~16%)
 
@@ -95,7 +95,7 @@ local Playwright, golden toasts). Long tail by design — harvest to ROADMAP.
 ## 2. Table A — Comprehensive plan (27 tasks × 30–100 min, sorted by priority)
 
 | #  | ID  | Task (what + why)                                                                                                                                                              | TODOs covered   | Impact | Effort | Cust. value | Gate              |
-| -- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------ | ------ | ----------- | ----------------- |
+| --- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------- | ------- | ------------ | ------------------ |
 | 1  | T11 | Session-persistence design spike: SQLite-backed session store vs in-memory — schema, TTL semantics, restart behavior, security review (fail-closed preserved), written verdict | #14             | High   | 100m   | High        | D2 prep           |
 | 2  | T01 | Toast accessibility: `aria-live` host, `role="status"`, keyboard dismissal; update ui.test + shell.test                                                                        | #3,#16          | High   | 60m    | High        | —                 |
 | 3  | T02 | htmx `responseHandling` config: swap 4xx/5xx panel-error bodies into tabs; pair 502-outage test with HX-Trigger assertion (#29)                                                | #9,#29          | High   | 90m    | High        | —                 |
@@ -132,7 +132,7 @@ tasks (mapping column "TODOs covered").
 ## 3. Table B — Micro-breakdown (≤12 min each, ALL tasks decomposed)
 
 | #  | Task | Micro-step (≤12 min)                                                                                             | Done-when              |
-| -- | ---- | ---------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| --- | ----- | ----------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | 1  | T11  | Read session store/service + cookie lifecycle; list every consumer of `session.From`                             | inventory in notes     |
 | 2  | T11  | Draft SQLite schema (store: id, extension, csrf-independent, expires_at)                                         | schema sketch          |
 | 3  | T11  | Map restart-behavior change surface: probes, rate limits, ExtensionHubs lang cache                               | surface list           |

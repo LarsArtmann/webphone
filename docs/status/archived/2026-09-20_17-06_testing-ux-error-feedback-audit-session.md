@@ -208,7 +208,7 @@ ROADMAP fuel, not commitments.
 **User-feedback gaps noticed this session (not yet fixed):**
 
 | #  | Task                                                                                                                                                                | Impact | Effort | Category       |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------------- |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | --------------- |
 | ~~9~~  | ~~Configure htmx `responseHandling` so 422/502 panel-error BODIES swap into the tab (today only the toast shows; the rendered `.wp-error` panel is discarded by htmx)~~ done — (durable inline tab errors, #wp-tab-error) | ~~High~~ | ~~M~~ | ~~Feature~~ |
 | ~~10~~ | ~~Login failure (server session) → announce a toast, not just `#log`~~ done — (login-failure toasts) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
 | ~~11~~ | ~~429 rate-limit responses → server-authored toast (currently generic client text)~~ done — (429 client-correctable wording + toasts) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
@@ -221,7 +221,7 @@ ROADMAP fuel, not commitments.
 **E2E / integration (mostly upstream stack repo):**
 
 | #  | Task                                                                                   | Impact | Effort | Category |
-| -- | -------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| --- | --------------------------------------------------------------------------------------- | ------- | ------- | --------- |
 | ~~17~~ | ~~Stack E2E: registration-rejected scenario (wrong directory password)~~ done — stack E2E carries the drill scenarios | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~18~~ | ~~Stack E2E: PBX unreachable during an active call (island feedback path)~~ done — stack E2E FS-outage drill shipped | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~19~~ | ~~Stack E2E: server restart mid-call (exercises the new 401 toast end-to-end)~~ done — stack E2E restart-resume drill shipped | ~~High~~ | ~~M~~ | ~~Quality~~ |
@@ -231,7 +231,7 @@ ROADMAP fuel, not commitments.
 **Test-depth gaps measured this session:**
 
 | #  | Task                                                                                                                                   | Impact | Effort | Category |
-| -- | -------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | --------- |
 | ~~22~~ | ~~`internal/store` 59% → owner-scoping behavior suite (highest-value domain)~~ done — (owner-scoping table, store suite) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
 | ~~23~~ | ~~`internal/session` 63% → TTL/expiry behaviors as black-box specs~~ done — (session_behaviors suites) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 | ~~24~~ | ~~`internal/gateway` 76.5% → webhook error branches (timeouts, bad receipts)~~ done — (webhook error-branch table) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
@@ -244,7 +244,7 @@ ROADMAP fuel, not commitments.
 **Tooling / process friction hit this session:**
 
 | #  | Task                                                                                                               | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
+| --- | ------------------------------------------------------------------------------------------------------------------- | ------- | ------- | -------------- |
 | ~~30~~ | ~~smoke script: self-re-exec via `nix develop -c` when go-floor trap detected~~ done — (smoke/buildflow self-re-exec) | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
 | ~~31~~ | ~~buildflow: pin go ≥ 1.27.1 in step env (kills the out-of-shell failure class)~~ done — superseded: GOEXPERIMENT removed; toolchain self-heal shipped | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
 | ~~32~~ | ~~codespell ignore-words for German i18n vocabulary (70 noise findings → 0, gateable)~~ done — (.codespellrc + zero real findings) | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
@@ -255,7 +255,7 @@ ROADMAP fuel, not commitments.
 **Release-train hygiene (per runbook, next train):**
 
 | #  | Task                                                                                            | Impact | Effort | Category      |
-| -- | ----------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| --- | ------------------------------------------------------------------------------------------------ | ------- | ------- | -------------- |
 | ~~36~~ | ~~Fold Unreleased → dated section; sync FEATURES/TODO_LIST/ROADMAP~~ done — (fold per train) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | ~~37~~ | ~~Hub fan-out benchmark re-run IF cqrs-htmx/go-sse bumped (`-benchtime=1s -count=5` per MD1 note)~~ done — (fanout in release-hygiene.sh) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 | ~~38~~ | ~~`nix run .#vulnix` closure re-run at next release~~ done — vulnix rides release.sh | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
@@ -265,7 +265,7 @@ ROADMAP fuel, not commitments.
 **Ideas seeded by the audit (ROADMAP fuel):**
 
 | #  | Task                                                                                                                                            | Impact | Effort | Category      |
-| -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ------- | -------------- |
 | ~~41~~ | ~~Decide shell-copy language policy once (see g#3), then document~~ done — DECIDED: shell copy stays English (D3) | ~~Medium~~ | ~~S~~ | ~~Decision~~ |
 | ~~42~~ | ~~Document BDD posture: Ginkgo where it earns its keep; node:test black-box for island; prevent cargo-cult duplication~~ done — documented (BDD posture in AGENTS failure-feedback section) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
 | ~~43~~ | ~~Consider idempotency TTL documentation (production `hooksIdem` TTL vs provider retry windows — verified only the 50 ms test value this session)~~ done — documented (hooksIdem TTL rationale in AGENTS) | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |

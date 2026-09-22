@@ -46,7 +46,7 @@ database would be a split brain.
   `webphone-backup-drill` cover backup snapshot AND restore.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge — contracts in the plan
-  docs under `docs/planning/2026-09-19_11-51_SUPERB-*`.
+  docs under `docs/planning/archived/2026-09-19_11-51_SUPERB-*`.
 
 ## Owner decisions (2026-09-20)
 

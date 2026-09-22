@@ -20,7 +20,7 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   2026-09-19 (SUPERB integration plan): **JsSIP 3.13.8 is the named
   fallback** — actively maintained (npm 2026-05), swap triggers and
   the full research table live in
-  `docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md`;
+  `docs/planning/archived/2026-09-19_19-37_SUPERB-island-server-integration.md`;
   never swapped speculatively.
 - Health-surface long shots (recorded 2026-09-19, options memo:
   `docs/architecture-understanding/2026-09-19_20-59_health-probes-fleet-options.md`):
@@ -37,7 +37,7 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   Java/Python/Node). If server-initiated calls (click-to-call from
   other systems) ever become a product need, build at the stack/PBX
   layer — it already records calls and bridges webhooks. Research
-  table: `docs/planning/2026-09-19_19-37_SUPERB-island-server-integration.md`.
+  table: `docs/planning/archived/2026-09-19_19-37_SUPERB-island-server-integration.md`.
 - Stack-side switchover of nix-international-telephony onto this
   service: DONE 2026-09-18 (stack imports `nixosModules.default`,
   nginx vhost proxies the service, browser E2E green after the
@@ -100,7 +100,7 @@ re-check:
 
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
-Source: `docs/planning/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`
+Source: `docs/planning/archived/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`
 §Phases 5-7. Status 2026-09-20: P5-P6 shipped in full — OOB spike
 (verdict: PARKED), toasts, `/version`, Server-Timing, `/openapi.json`,
 `cqrshtmx.Chain` parity, the fuzz/OR1/RA1/TT1/DR1/VL1 hardening set

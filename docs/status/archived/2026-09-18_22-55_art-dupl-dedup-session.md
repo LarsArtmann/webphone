@@ -92,7 +92,7 @@ Nothing in the product is broken: build, tests, lint, and nix build are all gree
 Ranked by impact. Category: Bug / Feature / Quality / Cleanup / Docs / Process / Infra. (Honest count: 32 genuine items harvested from this session — not padded to 50. **These need HARVEST into TODO_LIST/ROADMAP or they die here.**)
 
 | #  | Task                                                                                                                                                                                     | Impact   | Effort | Category |
-| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------- | --------- |
 | 1  | ~~Root-cause the `TestRequestLogNeverCarriesSecrets` hang~~ **Won't implement —** unreproducible; closed as load flake                                                                   | Critical | M      | Bug      |
 | 2  | ~~Add `TestNoInlineSessionGates`~~ → TODO_LIST (contract-pinning tests row)                                                                                                              | High     | S      | Quality  |
 | 3  | ~~Add a golden multipart-form test asserting exact field set + order~~ → TODO_LIST (contract-pinning tests row)                                                                          | High     | S      | Quality  |

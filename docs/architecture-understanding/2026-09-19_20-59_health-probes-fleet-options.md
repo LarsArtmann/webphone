@@ -55,5 +55,5 @@ adopted surface, by decision.
 
 - Review: `2026-09-19_18-49_samber-do-di-health-service-orientation.md`
   (F1/F2/F3 findings)
-- Plan: `docs/planning/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`
+- Plan: `docs/planning/archived/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`
 - ROADMAP long-shots reference this memo.

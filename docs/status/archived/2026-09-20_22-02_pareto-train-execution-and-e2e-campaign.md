@@ -156,7 +156,7 @@
 ## f) TOP 50 THINGS TO GET DONE NEXT (ranked by impact; HARVEST: Critical/High → TODO_LIST, Medium → TODO_LIST, Low/long-shot → ROADMAP)
 
 | #  | Task                                                                                                                                                     | Impact   | Effort | Category       |
-| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------------- |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------- | --------------- |
 | ~~1~~  | ~~Re-deploy prod with current main (sessions persist + verification fix + error-feedback); verify with `--base` smoke incl. "bogus credentials rejected"~~ done — superseded: prod verified v2.4.0 2026-09-22 | ~~Critical~~ | ~~S~~ | ~~Bug (security)~~ |
 | ~~2~~  | ~~Root-cause the first-dial INCOMING flake (3/13 runs): instrument the callee's WS/registration state at dial time; fix island or E2E per findings~~ done — resolved: dest-clear fix (5425e6f) removed the stall class; transfer flake = documented re-run-once | ~~High~~ | ~~M~~ | ~~Bug~~ |
 | ~~3~~  | ~~Two consecutive green E2E runs for the new scenario set (runbook rule for new scenarios)~~ done — (E2E ×2 green 2026-09-22) | ~~High~~ | ~~M~~ | ~~Quality~~ |
