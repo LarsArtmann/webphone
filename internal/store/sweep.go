@@ -90,11 +90,11 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 // Counts are the AGGREGATE table sizes the metrics surface reports
 // (plan T26a): totals across ALL extensions, never per-owner values.
 type Counts struct {
-	Threads   int64
-	Messages  int64
-	Faxes     int64
-	Contacts  int64
-	Sessions  int64
+	Threads  int64
+	Messages int64
+	Faxes    int64
+	Contacts int64
+	Sessions int64
 }
 
 // ReadCounts reads the aggregate sizes in one call.
