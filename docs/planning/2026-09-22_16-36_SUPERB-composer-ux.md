@@ -145,4 +145,34 @@ flowchart TD
 
 ## Verdict
 
-(to fill at train end)
+EXECUTED 2026-09-22, complete (T1-T4 shipped; typeahead /
+jump-to-latest / drafts remain planned next trains).
+
+- T1: both message composers are textareas; Enter sends via
+  form.requestSubmit() (Shift+Enter + IME guarded). 5 composer specs
+  drive the real listeners; `TestComposerCarriesSegmentCounterAndTextarea`
+  pins the server-side markup contract.
+- T2: GSM-7/UCS-2 segmentation pinned at every billing boundary
+  (160/153, ext chars ×2, 70/67, CRLF=1); counter renders "N SMS" only
+  past one segment.
+- T3: `formatClock`/`formatStamp` — de 24h + numeric date, en
+  byte-stable; bubble/relativeTime/fax/voicemail all ride the helpers;
+  `TestBubbleClockFollowsLanguage` pins en meridiem vs de 24h.
+- T4: chips with remove (DataTransfer rebuild, feature-detected) on
+  reply + fax forms; two genuine stub gaps in helpers.mjs (variadic
+  append, class-selector matching) fixed toward real-DOM semantics.
+- Gates: island-lint EXIT=0 (the freeze report's DataTransfer worry
+  was disproven by running the real gate — `env.browser` already
+  covers it); 49/49 node tests; `go test -count=1 ./...` 14/14 green;
+  `nix fmt` clean; smoke 38/0. Full buildflow RED on 9 erraudit
+  findings — ALL in the concurrent CRM train's files (crm/server/store
+  paths; their own `4320c7d` "erraudit 0" fix predates newer code;
+  views scoped: 0). Attributed external, not gated here.
+- Still open (honest): browser-truth verification of requestSubmit↔htmx
+  and field-sizing posture — one stack E2E run covers both trains'
+  markup changes (owner question pending since the 16:29 report).
+- Process notes: one mid-train multiedit conflict with the concurrent
+  CRM train (re-read + reapplied); their transient store-generics
+  breakage was waited out, never touched. The auto-commit daemon swept
+  the implementation into chore commits; the narrative commit lands at
+  this boundary.
