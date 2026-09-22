@@ -178,11 +178,17 @@ func TestAPICallLoggingContract(t *testing.T) {
 		if status, body := report(t, c, payload); status != http.StatusNoContent {
 			t.Fatalf("retry after 502: %d %s (want 204)", status, body)
 		}
+		// The stub journals before answering, so the 502 attempt already
+		// left one entry (received-but-failed). The retry must ADD the
+		// second; a further replay must then be deduped by the key.
+		if status, _ := report(t, c, payload); status != http.StatusNoContent {
+			t.Fatalf("replay after success: %d (want inert 204)", status)
+		}
 
 		stub.mu.Lock()
 		defer stub.mu.Unlock()
-		if len(stub.logBodies) != 1 {
-			t.Fatalf("retry journaled %d times (want exactly 1)", len(stub.logBodies))
+		if len(stub.logBodies) != 2 {
+			t.Fatalf("retry+replay journaled %d times (want 2: failed attempt, retry; replay deduped)", len(stub.logBodies))
 		}
 	})
 
