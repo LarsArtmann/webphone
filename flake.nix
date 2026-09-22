@@ -487,6 +487,23 @@
                   );
                 }
                 {
+                  # nginx.gzip.enable must flip nginx's recommended
+                  # gzip settings (T27a).
+                  name = "nginx-gzip",
+                  path = pkgs.writeText "nginx-gzip" (
+                    let
+                      gzipEvaluated = lib.evalModules (moduleSet {
+                        nginx.enable = true;
+                        nginx.gzip.enable = true;
+                      });
+                    in
+                    if gzipEvaluated.config.services.nginx.recommendedGzipSettings == true then
+                      "gzip settings wired"
+                    else
+                      throw "webphone-module check: nginx.gzip.enable did not set recommendedGzipSettings"
+                  ),
+                }
+                {
                   # serverTiming.enable must set the env gate the middleware
                   # reads; without it the environment key stays absent.
                   name = "server-timing";

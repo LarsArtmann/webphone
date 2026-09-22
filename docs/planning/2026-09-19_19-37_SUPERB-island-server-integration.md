@@ -198,16 +198,16 @@ first of them lands; P6→P7→P8 are strictly sequential.
 
 ## Part 8 — Verification gates (definition of done)
 
-- [ ] `GOEXPERIMENT=jsonv2 go test -count=1 ./...` green
-- [ ] `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` green (inside `nix develop`)
-- [ ] `nix flake check` green (includes island-lint + treefmt)
-- [ ] `python3 scripts/webphone-smoke.py` green (21 checks)
-- [ ] Stack `nix build -L .#telephony-browser` green (DOM contract + media
+- [x] `GOEXPERIMENT=jsonv2 go test -count=1 ./...` green
+- [x] `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` green (inside `nix develop`)
+- [x] `nix flake check` green (includes island-lint + treefmt)
+- [x] `python3 scripts/webphone-smoke.py` green (21 checks)
+- [x] Stack `nix build -L .#telephony-browser` green (DOM contract + media
       proof `window.__pcs`)
-- [ ] Manual loopback smoke: dial from History tab while island logged out →
+- [x] Manual loopback smoke: dial from History tab while island logged out →
       toast + focus; logged in → keypad dials; ☆ save lands in the Contacts
       tab; header badge appears during a call
-- [ ] Docs synced (CHANGELOG/FEATURES/TODO_LIST/AGENTS/ROADMAP), committed
+- [x] Docs synced (CHANGELOG/FEATURES/TODO_LIST/AGENTS/ROADMAP), committed
       per task group, pushed, `git ls-remote` verified
 
 ## Non-goals (do not creep)
@@ -216,3 +216,11 @@ sip.js swap or bump · server-side media/SBC (pion) · Go SIP UA (sipgo) ·
 FreeSWITCH ESL in webphone · merging the two i18n dictionaries · unifying
 island voicemail/history panels with their tabs (both already share data
 sources; ids are E2E-pinned) · theming the island with templ-components.
+
+> Closing note (2026-09-22, T16d hygiene): the seven open boxes above
+> were this train's closing gates; every one has been satisfied by
+> later trains (the suite ran green through v2.2–v2.5 releases; the
+> GOEXPERIMENT flag itself is gone since 2026-09-22 — json/v2 is
+> stable in Go 1.27). The logged-out-dial smoke (the box above) is now
+> a permanent E2E scenario: LOGGED-OUT-DIAL-GUARDED in the stack's
+> browser suite.

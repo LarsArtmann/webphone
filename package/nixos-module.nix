@@ -176,6 +176,14 @@ in
         example = "phone.example.org";
         description = "Virtual host name for the generated nginx vhost.";
       };
+      gzip = {
+        enable = lib.mkEnableOption ''
+          nginx's recommended gzip settings on the generated vhost.
+          The app's payloads compress well (HTML partials, the island
+          sources, JSON) and the CPU cost is negligible at this scale;
+          SSE (/events) is excluded by nginx itself (proxied streaming
+          responses are not gzipped), so live updates stay untouched.'';
+      };
       hsts = {
         enable = lib.mkEnableOption ''
           Strict-Transport-Security on the generated vhost. Default off:
@@ -368,6 +376,7 @@ in
     services.nginx = lib.mkIf cfg.nginx.enable {
       enable = lib.mkDefault true;
       recommendedProxySettings = lib.mkDefault true;
+      recommendedGzipSettings = lib.mkDefault cfg.nginx.gzip.enable;
       virtualHosts.${cfg.nginx.hostName} = {
         extraConfig = lib.mkIf cfg.nginx.hsts.enable ''
           add_header Strict-Transport-Security "max-age=${toString cfg.nginx.hsts.maxAge}" always;
