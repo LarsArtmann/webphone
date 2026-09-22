@@ -83,3 +83,28 @@ func TestContactsVCardImportExport(t *testing.T) {
 		t.Errorf("anonymous export: %d (want 401)", resp.StatusCode)
 	}
 }
+
+// TestContactsPanelCarriesLiveNudgeWiring pins the SSE nudge contract on
+// the rendered panel (the voicemail-nudge mirror): the panel re-fetches
+// itself on the payload-less "contacts" event, and its STATEFUL inputs
+// (draft name/number, the chosen vCard file) carry stable ids so the
+// idiomorph re-fetch preserves them in place.
+func TestContactsPanelCarriesLiveNudgeWiring(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+
+	_, body := c.do(http.MethodGet, "/partials/contacts", nil, "")
+	panel := string(body)
+	for _, want := range []string{
+		`hx-get="/partials/contacts"`,
+		`hx-trigger="sse:contacts"`,
+		`hx-swap="morph:innerHTML`,
+		`id="contact-name-input"`,
+		`id="contact-number-input"`,
+		`id="contact-import-file"`,
+	} {
+		if !strings.Contains(panel, want) {
+			t.Errorf("contacts panel missing %q: %.400s", want, panel)
+		}
+	}
+}

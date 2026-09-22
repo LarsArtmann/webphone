@@ -88,8 +88,12 @@ re-check:
 - oxlint globals watchlist: any new browser global in the island needs
   an entry in `internal/web/assets/island/oxlint.json` (the gate fails
   closed on undeclared identifiers by design).
-- E2E wall-time budget: the stack browser E2E baseline is ~150s; a run
-  drifting far above it is a perf regression signal, not noise.
+- E2E wall-time budget: RE-BASELINED 2026-09-22 on the v2.5.0 release
+  chain — two forced-rebuild runs measured 384s/373s (the suite carries
+  the restart-resume, transfer and FS-outage drills; the old ~150s
+  baseline predates them). Budget: 445s (max + ~15%); a run above it is
+  a perf regression signal, not noise — watch TWO consecutive
+  over-budget runs before investigating.
 - CSP re-audit trigger: assets are same-origin by policy (CDN banned);
   if that stance ever changes, re-audit CSP against every moved
   script (idiomorph included) before shipping — 01:04 report §f/46.

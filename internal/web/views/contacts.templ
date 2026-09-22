@@ -30,8 +30,8 @@ templ ContactsPanel(props ContactsPanelProps) {
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
 		>
-			<input name="name" required placeholder={ T(props.Lang, "contacts.name.ph") } aria-label={ T(props.Lang, "contacts.name.label") }/>
-			<input name="number" inputmode="tel" required placeholder={ T(props.Lang, "contacts.number.ph") } aria-label={ T(props.Lang, "contacts.number.label") }/>
+			<input id="contact-name-input" name="name" required placeholder={ T(props.Lang, "contacts.name.ph") } aria-label={ T(props.Lang, "contacts.name.label") }/>
+			<input id="contact-number-input" name="number" inputmode="tel" required placeholder={ T(props.Lang, "contacts.number.ph") } aria-label={ T(props.Lang, "contacts.number.label") }/>
 			<button type="submit" class="wp-primary">{ T(props.Lang, "contacts.save") }</button>
 		</form>
 		<div class="wp-compose">
@@ -42,7 +42,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 				hx-swap="innerHTML"
 				hx-encoding="multipart/form-data"
 			>
-				<input type="file" name="vcard" accept=".vcf,text/vcard" required aria-label={ T(props.Lang, "contacts.importFile.label") }/>
+				<input id="contact-import-file" type="file" name="vcard" accept=".vcf,text/vcard" required aria-label={ T(props.Lang, "contacts.importFile.label") }/>
 				<button type="submit">{ T(props.Lang, "contacts.import") }</button>
 			</form>
 			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
