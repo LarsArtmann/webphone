@@ -450,3 +450,41 @@ graph.
 - Session debts CLOSED: plan mermaid render-verified (mmdc → 48 KB
   SVG), fine table re-split to literal ≤12-minute units, "enourmous"
   typo + coverage recount (10 TODO rows).
+- 2026-09-22 ~15:40 **T12 CLOSED**: contacts API hardening landed
+  (`contactsLimiter` 60/min burst 60 on POST /api/contacts, atomic
+  500-per-extension cap — renames never consume slots, ErrListFull →
+  422 — and OpenAPI 3.1 for GET/POST/DELETE /api/contacts with a
+  spec-vs-handler test). Green at `8cd327c`.
+- 2026-09-22 ~15:50 **T13 CLOSED**: the payload-less `contacts` SSE
+  nudge fires from all five mutation paths (tab save/delete/import +
+  island API); contacts.templ re-fetches on `sse:contacts` (morph,
+  stable ids); island panels.js listens for the bubbling
+  `htmx:sseMessage` (decoded against the served sse.min.js: the ext
+  fires the trigger AND a bubbling event with the raw MessageEvent as
+  detail). Green at `4408342`.
+- 2026-09-22 ~15:55 **T14 CLOSED**: two island tests pin the CSRF
+  adoption retry ladder (recover on retry 2 / reload only after 3
+  failures); rotation-on-slide recorded as NOT-DO
+  (`docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`,
+  ROADMAP RESOLVED). `43f544e`.
+- 2026-09-22 ~16:00 **T17 CLOSED**: island scenarios 10+11
+  (re-entrancy collapse; transient `regRebuilding` pill en/de), smoke
+  `--expect-version` (verified pos+neg against prod), stack
+  `wait_marker` NOTIF-prefix hack → explicit alternation. Daemon swept
+  the files into `3e5f220`/`d094d9e`.
+- 2026-09-22 ~16:05 **T15 CLOSED**: (a) NOT-DO — treefmt-in-flake-check
+  IS the formatting drift gate, no extra check warranted; (b) the
+  GOEXPERIMENT=jsonv2 sweep executed (13/13 pkgs green without the
+  flag; flake/buildflow/release.sh/smoke/docs updated); (c)
+  release-script self-heal verified ALREADY SHIPPED as release.sh
+  step 6 (the "outside devShell" failure mode is detected and
+  reported by the script itself; the deeper `nix develop -c` re-exec
+  improvement stays in TODO as release.sh hardening).
+- 2026-09-22 ~16:10 **GATE INCIDENT + FIX**: post-train gates were RED
+  (`BUILDFLOW-RC=69`, `FLAKECHECK-RC=1`) — root causes: (1) gofmt
+  alignment drift in the server.go New() constructor (the
+  contactsLimiter field lengthening; fixed surgically with
+  `gofmt -w internal/server/server.go`), (2) a govulncheck Go-version
+  mismatch (triage below), (3) confounders: T17 edits + daemon sweeps
+  landed while the gates ran. Clean re-run verdict: see the next log
+  entry.

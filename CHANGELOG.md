@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Contacts API hardening (plan T12): `POST /api/contacts` is rate
+  limited (60/min, burst 60 — sized for legacy imports, which POST one
+  row at a time), the per-extension store enforces an atomic cap of
+  500 contacts (renames never consume slots; a full list answers 422),
+  and the OpenAPI 3.1 spec now documents `GET`/`POST`/`DELETE
+  /api/contacts` (a spec-vs-handler test pins the three paths).
+- Live contacts nudge (plan T13): every contacts mutation — tab
+  save/delete/import AND island API writes — publishes a payload-less
+  `contacts` SSE event; the open contacts tab re-fetches its own panel
+  (morph swap, stable input ids), so island edits appear without a
+  reload. The last stale live surface goes live.
+- Transient rebuild pill (plan T17): while the connection watchdog
+  rebuilds a lost registration the pill shows an explicit
+  "rebuilding registration…" state (en/de) instead of a stale
+  "connected"; island tests pin the re-entrancy collapse guard and the
+  transient state, and the CSRF adoption retry ladder (recover on
+  retry 2, reload only after 3 failures) is pinned by island tests
+  (T14; rotation-on-slide itself stays a documented NOT-DO — verdict
+  in `docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`).
+- `scripts/webphone-smoke.py --expect-version X.Y.Z`: asserts the
+  running server's `/version` (verified positive and negative) — the
+  deploy-verification companion.
+
+### Changed
+
+- `GOEXPERIMENT=jsonv2` is gone everywhere (devShell, buildGoModule,
+  buildflow env, release.sh, smoke, README/CONTRIBUTING/AGENTS): Go
+  1.27.1 ships a stable `encoding/json/v2`, the flag had become a
+  footgun (it contributed to a failed release run outside the
+  devShell), and the full suite is green 13/13 without it.
+
 ## [2.5.0] - 2026-09-22
 
 ### Added (2026-09-22 error-excellence train)

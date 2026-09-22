@@ -16,7 +16,7 @@ Code wins when doc and code disagree.
 | Attended transfer (REFER w/ Replaces) | 🟢 FULLY_FUNCTIONAL | Bridges the two established calls at the network                                          |
 | DTMF keypad                           | 🟢 FULLY_FUNCTIONAL | `application/dtmf-relay` INFO, equals-form `Signal=` (FreeSWITCH-compatible)              |
 | Hangup / cancel                       | 🟢 FULLY_FUNCTIONAL | Correct verb per session state (cancel before answer, bye after, reject for incoming)     |
-| Reconnect watchdog + registration-loss rebuild | 🟢 FULLY_FUNCTIONAL | Bounded (5s/attempt) rebuild when `userAgent.reconnect()` hangs; rebuilds the whole agent when an established registration is lost (no rebuild loop on bogus creds, outage-gated), a 15s cycle deadline force-rebuilds wedged cycles, and the pill is set explicitly on recovery (sip.js fires NO stateChange on Registered→Registered) — 2.5.0, nine stub scenarios in island-tests |
+| Reconnect watchdog + registration-loss rebuild | 🟢 FULLY_FUNCTIONAL | Bounded (5s/attempt) rebuild when `userAgent.reconnect()` hangs; rebuilds the whole agent when an established registration is lost (no rebuild loop on bogus creds, outage-gated), a 15s cycle deadline force-rebuilds wedged cycles, a re-entrancy guard collapses concurrent rebuilds, the pill shows a transient "rebuilding registration…" state (en/de) during rebuild, and the pill is set explicitly on recovery (sip.js fires NO stateChange on Registered→Registered) — 2.5.0, eleven stub scenarios in island-tests |
 | Honest failure states                 | 🟢 FULLY_FUNCTIONAL | Status pill reports WHY (TLS/cert vs network vs rejected credentials), not just "offline" |
 
 ## Messaging (SMS/MMS)
@@ -60,7 +60,7 @@ Code wins when doc and code disagree.
 | ------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Shared directory (config)      | 🟢 FULLY_FUNCTIONAL | Rendered into every contacts tab + island panel                                                                                                       |
 | Personal contacts (server DB)  | 🟢 FULLY_FUNCTIONAL | ONE home for tab AND island: upsert-by-number, delete, click-to-dial; the island reads/writes via `/api/contacts`                                     |
-| Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears                             |
+| Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears; POST rate-limited (60/min) with an atomic 500-per-extension cap |
 | vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                                           |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | Login verifies the credentials against the PBX directory server-side (`VerifyCredentials`, fail-closed), then opens the tab session; logout closes it |
 | Session store + resume + sliding TTL | 🟢 FULLY_FUNCTIONAL | SQLite-backed (survives restarts), HttpOnly cookie; sessions RESUME at island boot (`GET /api/session`), slide on activity (`session_ttl` 7d idle) under an absolute cap (`session_max_ttl` 30d) — 2.5.0; in-memory store remains for tests |
@@ -80,6 +80,7 @@ Code wins when doc and code disagree.
 | Durable inline tab errors      | 🟢 FULLY_FUNCTIONAL | htmx `responseHandling` swaps the server's `.wp-error` banner into `#wp-tab-error` on 4xx/5xx (401 excluded); drafts untouched |
 | Error toasts for htmx failures | 🟢 FULLY_FUNCTIONAL | Throttled `htmx:responseError`/`htmx:sendError` toasts (401/429-specific wording; never auto-reload)                           |
 | Login-failure toasts           | 🟢 FULLY_FUNCTIONAL | Server-session POST failures toast status-specific en/de copy next to the `#log` line                                          |
+| Live contacts refresh          | 🟢 FULLY_FUNCTIONAL | Payload-less `contacts` nudge on every mutation (tab AND island); the open tab re-fetches its panel (morph, stable ids)                                    |
 | Dead-feed SSE notice           | 🟢 FULLY_FUNCTIONAL | Toast once after 3 consecutive `htmx:sseError`s; recovery resets                                                               |
 | Toast accessibility            | 🟢 FULLY_FUNCTIONAL | `#toasts` is a `role="status"` live region; toasts focusable and dismissable via Enter/Space/Escape                            |
 
@@ -135,7 +136,7 @@ Code wins when doc and code disagree.
 | Login/hook/events rate limits  | 🟢 FULLY_FUNCTIONAL | `httputil.KeyedRateLimiter` (computed `Retry-After`); limiter wraps the secret gate                                                                                                        |
 | Webhook status idempotency     | 🟢 FULLY_FUNCTIONAL | Replayed `provider_ref` callbacks answer `202` inertly; failures stay retryable                                                                                                            |
 | `/version` endpoint            | 🟢 FULLY_FUNCTIONAL | Library `DebugHandler` pattern                                                                                                                                                             |
-| OpenAPI 3.1 for `/api/session` | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`                                                                                                                                                                  |
+| OpenAPI 3.1                    | 🟢 FULLY_FUNCTIONAL | Served at `/openapi.json`; `/api/session` + `/api/contacts` (spec-vs-handler test)                                                                         |
 | Server-Timing (opt-in)         | 🟢 FULLY_FUNCTIONAL | `WEBPHONE_DEBUG_TIMING=1` enables the middleware; `serverTiming.enable` module option wires it for deployments                                                                             |
 | Idle SSE hub reaper            | 🟢 FULLY_FUNCTIONAL | 10-minute idle TTL, double-guarded; fan-out baseline in docs/reviews (hub-fanout-baseline)                                                                                                 |
 | Island 429 surfacing           | 🟢 FULLY_FUNCTIONAL | phone-api fetch wrappers surface `Retry-After` throttles                                                                                                                                   |
