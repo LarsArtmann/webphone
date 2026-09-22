@@ -268,13 +268,8 @@ func TestResolverLookupCounters(t *testing.T) {
 		t.Fatal("unknown number must miss")
 	}
 
-	deadClient, err := NewClient(srv.URL, "sekrit")
-	if err != nil {
-		t.Fatalf("NewClient: %v", err)
-	}
-	srv.Close() // lookups via deadClient now fail at the transport
-	deadResolver := NewResolver(deadClient, nil)
-	if _, ok := deadResolver.Resolve(ctx, "+493033333333"); ok {
+	srv.Close() // the next lookup now fails at the transport
+	if _, ok := resolver.Resolve(ctx, "+493033333333"); ok {
 		t.Fatal("dead CRM must not match")
 	}
 
@@ -291,7 +286,13 @@ func TestResolverLookupCounters(t *testing.T) {
 		t.Fatalf("cache hit counted as an upstream lookup (%d)", hit)
 	}
 
-	if _, miss, failure := deadResolver.LookupCounters(); miss != 0 || failure != 0 {
-		t.Fatalf("counters must be per-resolver, got miss=%d failure=%d", miss, failure)
+	// Counters are per-resolver: a fresh resolver starts at zero even
+	// over the same client.
+	fresh := NewResolver(client, nil)
+	if _, ok := fresh.Resolve(context.Background(), "+493044444444"); ok {
+		t.Fatal("fresh resolver over a dead CRM must not match")
+	}
+	if _, miss, failure := fresh.LookupCounters(); miss != 0 || failure != 1 {
+		t.Fatalf("fresh resolver must own its counters, got miss=%d failure=%d", miss, failure)
 	}
 }
