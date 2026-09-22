@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -239,5 +241,83 @@ func TestContactUpsertByNumber(t *testing.T) {
 	}
 	if len(list) != 1 || list[0].Name != "Robert" {
 		t.Fatalf("upsert by number broken: %+v", list)
+	}
+}
+
+// TestContactCountCap bounds one owner's list: a NEW number past
+// ContactsMaxPerExtension returns ErrListFull, renames of EXISTING
+// numbers stay open (no slot consumed), and a delete frees the slot
+// again. A second owner is unaffected — the cap is per extension.
+func TestContactCountCap(t *testing.T) {
+	_, _, contacts := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	other := domain.MustParseExtension("1002")
+	var firstID domain.ContactID
+
+	for i := range ContactsMaxPerExtension {
+		contact := domain.Contact{
+			ID:        domain.GenerateContactID(),
+			Owner:     owner,
+			Name:      fmt.Sprintf("cap %d", i),
+			Phone:     domain.MustParsePhone(fmt.Sprintf("+49170%07d", i)),
+			CreatedAt: time.Now(),
+		}
+		if i == 0 {
+			firstID = contact.ID
+		}
+		if err := contacts.Save(ctx, contact); err != nil {
+			t.Fatalf("save %d under the cap: %v", i, err)
+		}
+	}
+
+	over := domain.Contact{
+		ID:        domain.GenerateContactID(),
+		Owner:     owner,
+		Name:      "one too many",
+		Phone:     domain.MustParsePhone("+491799999999"),
+		CreatedAt: time.Now(),
+	}
+	if err := contacts.Save(ctx, over); !errors.Is(err, ErrListFull) {
+		t.Fatalf("save past the cap: want ErrListFull, got %v", err)
+	}
+
+	rename := domain.Contact{
+		ID:        domain.GenerateContactID(),
+		Owner:     owner,
+		Name:      "renamed",
+		Phone:     domain.MustParsePhone("+4917000000000"),
+		CreatedAt: time.Now(),
+	}
+	if err := contacts.Save(ctx, rename); err != nil {
+		t.Fatalf("rename at the cap must stay open: %v", err)
+	}
+
+	// The upsert kept the ORIGINAL row id (rename semantics), so the
+	// delete frees the slot via the id the list would hand out.
+	if err := contacts.Delete(ctx, owner, firstID); err != nil {
+		t.Fatal(err)
+	}
+	if err := contacts.Save(ctx, over); err != nil {
+		t.Fatalf("save after freeing a slot: %v", err)
+	}
+
+	spared := domain.Contact{
+		ID:        domain.GenerateContactID(),
+		Owner:     other,
+		Name:      "other owner",
+		Phone:     domain.MustParsePhone("+491601234567"),
+		CreatedAt: time.Now(),
+	}
+	if err := contacts.Save(ctx, spared); err != nil {
+		t.Fatalf("second owner must be unaffected by the first owner's cap: %v", err)
+	}
+
+	list, err := contacts.List(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != ContactsMaxPerExtension {
+		t.Fatalf("owner list = %d, want exactly the cap", len(list))
 	}
 }

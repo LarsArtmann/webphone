@@ -2,10 +2,12 @@ package server
 
 import (
 	"encoding/json/v2"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/store"
 )
 
 // JSON contacts API for the SIP island's contact panel. The island used
@@ -91,6 +93,10 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
+		if errors.Is(err, store.ErrListFull) {
+			http.Error(w, "contact list is full — delete one first", http.StatusUnprocessableEntity)
+			return
+		}
 		http.Error(w, "could not save the contact", http.StatusInternalServerError)
 		return
 	}

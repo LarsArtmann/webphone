@@ -530,7 +530,7 @@ const openapiSpec = `{
           "204": {"description": "Saved (upsert by number within the session's extension)"},
           "400": {"description": "Invalid body (or body over 4 KiB)"},
           "401": {"description": "No live session"},
-          "422": {"description": "Number failed dialable validation"},
+          "422": {"description": "Number failed dialable validation, or the per-extension list is full (500; renames never count)"},
           "429": {
             "description": "Per-client write flood budget exhausted (generous: the legacy import bursts one POST per row); retry after the Retry-After seconds",
             "headers": {
