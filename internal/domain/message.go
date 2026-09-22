@@ -63,19 +63,19 @@ type Attachment struct {
 
 // Message is a single SMS/MMS inside a thread.
 type Message struct {
-	ID          MessageID
-	ThreadID    ThreadID
-	Owner       Extension
-	Remote      Phone
-	Direction   Direction
-	Channel     Channel
-	Body        string
-	Status       OutboundStatus // zero for inbound (see OutboundStatus)
-	ProviderRef  string         // gateway correlation id, "" when none
-	FailureKind  string         // "", "transient", "rejected" or "provider"; only transient is retryable
-	FailureDetail string        // raw failure reason, rendered verbatim (operator English)
-	Attachments  []Attachment
-	CreatedAt    time.Time
+	ID            MessageID
+	ThreadID      ThreadID
+	Owner         Extension
+	Remote        Phone
+	Direction     Direction
+	Channel       Channel
+	Body          string
+	Status        OutboundStatus // zero for inbound (see OutboundStatus)
+	ProviderRef   string         // gateway correlation id, "" when none
+	FailureKind   string         // "", "transient", "rejected" or "provider"; only transient is retryable
+	FailureDetail string         // raw failure reason, rendered verbatim (operator English)
+	Attachments   []Attachment
+	CreatedAt     time.Time
 }
 
 // ChannelOf derives the channel from a message's shape: any attachment

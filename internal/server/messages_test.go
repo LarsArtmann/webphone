@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"strings"
@@ -367,4 +368,122 @@ func TestBubbleClockFollowsLanguage(t *testing.T) {
 	if regexp.MustCompile(`\d{1,2}:\d{2}[AP]M`).MatchString(deBody) {
 		t.Errorf("german bubble clock still renders a meridiem")
 	}
+}
+
+// TestFailedBubbleCarriesReasonAndRetry (send-failure plan D + T21):
+// a transient (outage) failure renders the persisted reason under the
+// bubble AND a retry affordance with the same body; a provider
+// rejection renders the reason but NEVER a retry; a delivered verdict
+// shows the distinct ✓ badge.
+func TestFailedBubbleCarriesReasonAndRetry(t *testing.T) {
+	outage := func(cfg *config.Config) {
+		cfg.Gateway = config.Gateway{
+			Mode:          config.GatewayWebhook,
+			WebhookURL:    "http://127.0.0.1:1", // nothing listens there
+			WebhookSecret: "test-secret",
+		}
+	}
+	server := newTestServerWithConfig(t, "", outage)
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "try me"}, nil)
+	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("transient send: %d %s (want 502)", resp.StatusCode, body)
+	}
+	threadView := threadViewFor(t, c, "+441632960961")
+	if !strings.Contains(threadView, "wp-status-failed") || !strings.Contains(threadView, "wp-failed-detail") {
+		t.Fatalf("failed badge or reason disclosure missing: %.400s", threadView)
+	}
+	if !strings.Contains(threadView, "wp-retry") || !strings.Contains(threadView, `name="body" value="try me"`) {
+		t.Fatalf("transient failure must offer retry with the same body: %.400s", threadView)
+	}
+
+	// A provider rejection: same shape, but no retry affordance.
+	rejecting := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "217022: not a valid SMS destination", http.StatusUnprocessableEntity)
+	}))
+	t.Cleanup(rejecting.Close)
+	server2 := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Gateway = config.Gateway{
+			Mode:          config.GatewayWebhook,
+			WebhookURL:    rejecting.URL,
+			WebhookSecret: "test-secret",
+		}
+	})
+	c2 := clientFor(t, server2)
+	c2.login("1001", "pw")
+	form, contentType = multipartBody(t, map[string]string{"to": "+441632960977", "body": "no retry"}, nil)
+	// Provider refusals still answer 502 (the typed ErrProviderRejected
+	// arm of sendFailure — the 422 move is plan E, owner-gated); the pin
+	// here is the BUBBLE story: reason shown, no retry affordance.
+	if resp, body := c2.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusBadGateway {
+		t.Fatalf("rejected send: %d %s (want 502, the typed refusal arm)", resp.StatusCode, body)
+	}
+	view := threadViewFor(t, c2, "+441632960977")
+	if !strings.Contains(view, "wp-failed-detail") {
+		t.Fatalf("rejection reason disclosure missing: %.400s", view)
+	}
+	if strings.Contains(view, "wp-retry") {
+		t.Fatal("a rejection must not offer retry (it would fail identically)")
+	}
+
+	// A delivered verdict: the ✓-marked distinct badge.
+	accepting := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"provider_ref":"ref-deliver-1"}`))
+	}))
+	t.Cleanup(accepting.Close)
+	server3 := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Gateway = config.Gateway{
+			Mode:          config.GatewayWebhook,
+			WebhookURL:    accepting.URL,
+			WebhookSecret: "test-secret",
+		}
+	})
+	c3 := clientFor(t, server3)
+	c3.login("1001", "pw")
+	form, contentType = multipartBody(t, map[string]string{"to": "+441632960988", "body": "deliver me"}, nil)
+	if resp, body := c3.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("accepted send: %d %s", resp.StatusCode, body)
+	}
+	view = threadViewFor(t, c3, "+441632960988")
+	if !strings.Contains(view, "wp-status-sent") {
+		t.Fatalf("sent badge missing before delivery: %.400s", view)
+	}
+	hookReq, err := http.NewRequest(http.MethodPost, server3.URL+"/hooks/message/status",
+		strings.NewReader(`{"provider_ref":"ref-deliver-1","status":"delivered"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hookReq.Header.Set("Content-Type", "application/json")
+	hookReq.Header.Set("Authorization", "Bearer test-secret")
+	hookResp, err := server3.Client().Do(hookReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer hookResp.Body.Close() //nolint:erraudit // test cleanup
+	if hookResp.StatusCode != http.StatusAccepted {
+		t.Fatalf("delivery hook: %d (want 202)", hookResp.StatusCode)
+	}
+	view = threadViewFor(t, c3, "+441632960988")
+	if !strings.Contains(view, "wp-status-delivered") || !strings.Contains(view, `aria-hidden="true">✓`) {
+		t.Fatalf("delivered badge must carry the distinct check glyph: %.400s", view)
+	}
+}
+
+// threadViewFor opens the thread partial for the given remote number.
+func threadViewFor(t testing.TB, c *client, remote string) string {
+	t.Helper()
+	_, body := c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	view := string(body)
+	if !strings.Contains(view, remote) {
+		t.Fatalf("thread view for %s not found", remote)
+	}
+	return view
 }
