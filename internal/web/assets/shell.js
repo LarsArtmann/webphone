@@ -266,11 +266,15 @@
         jumpChip.textContent = "";
       }
     };
-    document.addEventListener("scroll", function (event) {
-      var transcript = document.getElementById("thread-transcript");
-      if (!transcript || event.target !== transcript) return;
-      if (nearBottom(transcript)) resetJumpChip();
-    }, true);
+    document.addEventListener(
+      "scroll",
+      function (event) {
+        var transcript = document.getElementById("thread-transcript");
+        if (!transcript || event.target !== transcript) return;
+        if (nearBottom(transcript)) resetJumpChip();
+      },
+      true,
+    );
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
       var transcript = event.target;
       if (!transcript || transcript.id !== "thread-transcript") return;
@@ -323,7 +327,12 @@
     //     next keystroke's debounced fetch re-renders the list anyway.
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
       var list = event.target;
-      if (!list || !list.classList || !list.classList.contains("wp-thread-list")) return;
+      if (
+        !list ||
+        !list.classList ||
+        !list.classList.contains("wp-thread-list")
+      )
+        return;
       var input = document.getElementById("wp-thread-search-input");
       if (input && input.value.trim() !== "") event.preventDefault();
     });

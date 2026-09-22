@@ -290,6 +290,28 @@ button.small {
   font-variant-numeric: tabular-nums;
 }
 
+/* Audio output picker: hidden by default, unhidden by audioout.js only
+   when setSinkId exists and more than one physical output was found. */
+.audio-out {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.audio-out select {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* --- dialing ------------------------------------------------------------- */
 
 #dial-form {

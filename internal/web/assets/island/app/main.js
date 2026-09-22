@@ -35,6 +35,7 @@ import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
 import { initDialTypeahead, relabelTypeahead } from "./typeahead.js";
 import { announce, els, log, setRegStatus, toastKindFor } from "./ui.js";
+import { initAudioOutput } from "./audioout.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -232,6 +233,7 @@ initShortcuts();
 initSseLiveIndicator();
 initDialTypeahead();
 relabelTypeahead(t("typeaheadLabel"));
+initAudioOutput();
 
 // Server-driven toasts: tab-action responses carry an HX-Trigger header
 // ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});
