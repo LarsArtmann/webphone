@@ -237,6 +237,9 @@ in
 
     systemd = {
       services = {
+        # Deliberately Type=simple (the default): readiness is the
+        # /startupz latch, not sd_notify — see README "Readiness vs
+        # systemd". Do not add Type=notify or watchdog restarts.
         webphone = {
           description = "webphone unified communications (calls, messages, fax, voicemail)";
           wantedBy = [ "multi-user.target" ];

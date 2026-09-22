@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Dated backup history (plan T18a):
+  `services.webphone.backup.retentionDays` (default `null` = today's
+  single-snapshot behavior). When set — e.g. `30` — each daily run
+  also writes `destDir/snapshots/<date>/` (blob tree hardlinked
+  against the previous snapshot, so unchanged blobs cost no space) and
+  prunes snapshot directories older than the given days; point-in-time
+  restore copies db + blobs back from the chosen directory. Pinned by
+  the module eval check (option gates the history/prune script) and
+  the KVM backup VM test (stale dir pruned, today's snapshot intact,
+  same-day rerun never links against itself). Also documents the
+  readiness contract (T18c): the unit deliberately stays
+  `Type=simple` — `/startupz` is the readiness truth, not sd_notify.
 - Contacts API hardening (plan T12): `POST /api/contacts` is rate
   limited (60/min, burst 60 — sized for legacy imports, which POST one
   row at a time), the per-extension store enforces an atomic cap of

@@ -360,6 +360,7 @@ Module options beyond `enable`/`package`/`settings`:
 | `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                               |
 | `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                      |
 | `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                            |
+| `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days   |
 | `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
 | `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
 
@@ -369,6 +370,16 @@ locations for `/healthz` (readiness), `/livez` (process liveness) and
 hub can scrape or be fenced (`allow`/`deny` via `extraConfig`) per
 location without touching the app's location. All three are session-free
 GETs whose bodies name checks and statuses only, never secrets.
+
+**Readiness vs systemd:** the service unit stays `Type=simple` by
+DELIBERATE decision — the module does NOT wire `Type=notify`.
+sd_notify would fire when the listener binds, which is a WEAKER
+readiness signal than `/startupz` (503 until sqlite ping + blob-dir
+write both first-pass, then latched 200), and a systemd watchdog
+restart would kill live calls on a transient stall. Consumers that
+need ordered startup should poll `/startupz` (or front it with a
+one-shot `ExecStart=curl --retry` wait unit and `After=` ordering);
+ongoing health belongs to `/healthz`, liveness to `/livez`.
 
 ## Development
 
