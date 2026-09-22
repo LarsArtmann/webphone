@@ -112,7 +112,6 @@ This report covers 17:06 → 20:03.
 - **M2.x**: full in-browser eyeball (your paste covers login + call +
   history; messages-compose and fax-download not yet eyeballed).
 
-
 > Resolved 2026-09-22 (docs-health): P5 CLOSED (anomaly fixed in 2.5.0,
 > E2E green x2); P15 release objects live through v2.5.0 (v2.1.1
 > superseded by v2.2.0); P16 rides release.sh per train; P17 shipped

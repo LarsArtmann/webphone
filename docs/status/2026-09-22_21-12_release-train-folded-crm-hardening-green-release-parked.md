@@ -226,7 +226,7 @@ guard round-trips. All fixed; every package I touched is green under
     coherent edit once 12 is answered).
 14. Update AGENTS.md CRM-seam paragraph: the disabled-policy split
     brain is closed (crm shares the pbx `do()` shape) + single-flight
-    + counters + idempotency contract one-liners.
+    - counters + idempotency contract one-liners.
 15. Update FEATURES.md CRM row (single-flight, counters, idempotency).
 16. Run `nix flake check` (module eval, island-lint, treefmt gates).
 17. Cross-build aarch64 sanity EARLY if the stack gates will rebuild
@@ -277,7 +277,7 @@ guard round-trips. All fixed; every package I touched is green under
 40. OWNER-calls batch session (~15 decisions; briefing doc exists at
     docs/planning/2026-09-22_13-50_owner-calls-briefing.md).
 41. Post the release announcements (drafts exist; owner picks channels
-    + disclosure posture).
+    - disclosure posture).
 42. OWNER ratify the oops non-fix (T15).
 43. T26b TURN REST stack half (coturn static-auth-secret wiring).
 44. Quarterly standing watches re-check (2026-12-20; sip.js 0.22,

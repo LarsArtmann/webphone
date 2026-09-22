@@ -55,21 +55,21 @@ the train.
 
 ## c) Gate scoreboard (all on the final tree, in order)
 
-| Gate | Verdict |
-|---|---|
-| `go test -count=1 ./...` | all packages ok (run twice) |
-| erraudit tier-1 (`--type-aware --disable-extensions`) | 0 violations |
-| erraudit tier-2 (`--enforce-go-error-family`) | 127 total / 113 outside crm seam — re-measured + recorded (see a) |
-| buildflow full (`BUILDFLOW_NO_RESULT_CACHE=1` via wrapper) | RC 0 (warnings only; the earlier "69" was a host-go invocation artifact — the pipeline-exit-code lesson AGAIN) |
-| `nix run .#vulnix` (release gate + triage) | zero real advisories (all distro-patched in locked nixpkgs); the 18:15 NVD-404 was transient |
-| `nix flake check` | all 18 checks — twice (before + after the island-lint scope edit; includes KVM backup VM + island-js with the new spec) |
-| smoke | 40 passed + restart scenario 4/4 |
-| island node tests | 56/56 (54 + 2 new) |
-| templ regen + oxfmt/prettier/shfmt verify | clean |
-| lychee | 0 errors (87 links) |
-| aarch64 cross-build | ELF bytes verified: `7f 45 4c 46` + `02 00 b7 00` (EM_AARCH64) |
-| stack browser E2E | **GREEN ×2**: 198.11s + forced rerun 236.93s (budget 445s; distinct runs proven by differing marker timings + cleanup timestamps) |
-| codespell / shellcheck / ruff | all clean after the fixes |
+| Gate                                                       | Verdict                                                                                                                           |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `go test -count=1 ./...`                                   | all packages ok (run twice)                                                                                                       |
+| erraudit tier-1 (`--type-aware --disable-extensions`)      | 0 violations                                                                                                                      |
+| erraudit tier-2 (`--enforce-go-error-family`)              | 127 total / 113 outside crm seam — re-measured + recorded (see a)                                                                 |
+| buildflow full (`BUILDFLOW_NO_RESULT_CACHE=1` via wrapper) | RC 0 (warnings only; the earlier "69" was a host-go invocation artifact — the pipeline-exit-code lesson AGAIN)                    |
+| `nix run .#vulnix` (release gate + triage)                 | zero real advisories (all distro-patched in locked nixpkgs); the 18:15 NVD-404 was transient                                      |
+| `nix flake check`                                          | all 18 checks — twice (before + after the island-lint scope edit; includes KVM backup VM + island-js with the new spec)           |
+| smoke                                                      | 40 passed + restart scenario 4/4                                                                                                  |
+| island node tests                                          | 56/56 (54 + 2 new)                                                                                                                |
+| templ regen + oxfmt/prettier/shfmt verify                  | clean                                                                                                                             |
+| lychee                                                     | 0 errors (87 links)                                                                                                               |
+| aarch64 cross-build                                        | ELF bytes verified: `7f 45 4c 46` + `02 00 b7 00` (EM_AARCH64)                                                                    |
+| stack browser E2E                                          | **GREEN ×2**: 198.11s + forced rerun 236.93s (budget 445s; distinct runs proven by differing marker timings + cleanup timestamps) |
+| codespell / shellcheck / ruff                              | all clean after the fixes                                                                                                         |
 
 ## d) Mistakes this session (kept as lessons)
 

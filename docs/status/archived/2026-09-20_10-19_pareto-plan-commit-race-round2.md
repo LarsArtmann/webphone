@@ -80,7 +80,7 @@ tasks each carry their own gate in the micro-task list.
 ## a) FULLY DONE (10:14–10:19 turn + immediate remediation)
 
 | # | Work                                                                                                                                                                                                                                                                                                                                           | Evidence                                               |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | 1 | Pareto plan written: `docs/planning/2026-09-20_10-14_SUPERB-pareto-todo-execution-plan.md` — 1%/4%/20%/other-20% tiers, 20 medium tasks (30–100min), 70 micro-tasks (each ≤12min, user's cap honored over the skill's 15min), all 17 TODO rows + 2 new items mapped, mermaid execution graph, concurrency map, verschlimmbesserung guard rails | committed in `f74e8ee` (daemon); file verified in-repo |
 | 2 | 2 plan-surfaced tasks added to TODO_LIST (train-cut decision T3, stack-tree reconciliation T13)                                                                                                                                                                                                                                                | explicit commit `d7249bf` with detailed message        |
 | 3 | Push (remediated at 10:19): local commits + TODO_LIST commit pushed to origin/main, verified via `ls-remote`                                                                                                                                                                                                                                   | see this report's footer note after the push below     |
@@ -94,14 +94,13 @@ tasks each carry their own gate in the micro-task list.
 
 ## c) NOT STARTED
 
-  ~~Every executable task in the plan: T4–T12, T19, T20 (Track B/C work —~~
-  ~~none started; the previous turn's sweep was a different task set).~~
-  done (T4-T12/T19/T20 shipped in the 09-20/09-22 trains — file-top closure note)
-  ~~All ⛔ owner-gated tasks: T1 deploy, T2 SMS lane, T3 train-cut,~~
-  ~~T13 stack reconciliation, T14 decision batch, T17 annotate range,~~
-  ~~T18 announcements.~~
-  resolved-or-routed (prod premise corrected; SMS/decisions/announcements = live owner rows; annotate sweeps 2026-09-20/22)
-
+~~Every executable task in the plan: T4–T12, T19, T20 (Track B/C work —~~
+~~none started; the previous turn's sweep was a different task set).~~
+done (T4-T12/T19/T20 shipped in the 09-20/09-22 trains — file-top closure note)
+~~All ⛔ owner-gated tasks: T1 deploy, T2 SMS lane, T3 train-cut,~~
+~~T13 stack reconciliation, T14 decision batch, T17 annotate range,~~
+~~T18 announcements.~~
+resolved-or-routed (prod premise corrected; SMS/decisions/announcements = live owner rows; annotate sweeps 2026-09-20/22)
 
 > Resolved 2026-09-22 (docs-health): every executable task below shipped
 > in the 09-20/09-22 trains — T4/T5/T6 via the 1001-anomaly fix
@@ -118,7 +117,7 @@ tasks each carry their own gate in the micro-task list.
 ## d) TOTALLY FUCKED UP
 
 | # | What                                                                                                                                    | Severity                                                 | Root cause                          | Status                                                                                                                                       |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| - | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Lost the explicit detailed commit for the 10:09 report + the plan to the daemon race — AGAIN, ~10 minutes after writing the lesson down | medium (history noise; user-visible instruction failure) | write-write-write-commit sequencing | unfixable retroactively (daemon commit already local; amending = rewriting pushed-adjacent history, not done); process rule hardened (see e) |
 | 2 | Push never executed in the original turn despite explicit instruction                                                                   | medium                                                   | turn ended mid-flow                 | FIXED at 10:19 (push + ls-remote verify)                                                                                                     |
 | 3 | No chat table views in the original turn (caps-demanded, twice)                                                                         | medium (instruction failure)                             | turn ended mid-flow                 | remediated in this report (f)                                                                                                                |

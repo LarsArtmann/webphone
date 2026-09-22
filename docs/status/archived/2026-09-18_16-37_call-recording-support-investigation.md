@@ -147,7 +147,7 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 **Recording integration (this session's core discovery):**
 
 | #  | Task                                                                                                                                               | Impact | Effort | Category      |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | -------------- |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 1  | ~~Add a Recordings panel to the webphone UI (list WAVs, mirror the voicemail pattern)~~ → ROADMAP (recording cluster)                              | High   | M      | Feature       |
 | 2  | ~~In-island playback (same-origin audio element; strict CSP already allows it)~~ → ROADMAP                                                         | High   | M      | Feature       |
 | 3  | ~~Live "REC" indicator on the call card while the PBX records that leg~~ → ROADMAP                                                                 | High   | M      | Feature       |
@@ -162,7 +162,7 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 **In-flight v2 state observed at session start (uncommitted changes):**
 
 | #  | Task                                                                                                                                                    | Impact | Effort | Category      |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | -------------- |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 11 | ~~Review/verify the uncommitted v2 changes~~ done (v2.0.0 shipped; gates green through 07:43)                                                           | High   | M      | Quality       |
 | 12 | ~~Re-run the upstream browser E2E after the v2 switchover~~ done at `00f13fe` (green 06:42)                                                             | High   | L      | Quality       |
 | 13 | ~~German translations for the server-rendered tabs~~ done (18:50 #14)                                                                                   | Medium | M      | Feature       |
@@ -177,7 +177,7 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 **From webphone FEATURES.md PLANNED / WORTH_CONSIDERING (already inventoried):**
 
 | #  | Task                                                                                              | Impact | Effort | Category |
-| --- | -------------------------------------------------------------------------------------------------- | ------- | ------- | --------- |
+| -- | ------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
 | 21 | ~~Login rate limiting for `/api/session`~~ done (18:50 #4)                                        | High   | M      | Security |
 | 22 | ~~Message delivery-receipt webhook~~ done (16:34 session)                                         | Medium | M      | Feature  |
 | 23 | ~~Session persistence across restarts~~ decided: in-memory by design (FEATURES WORTH_CONSIDERING) | Medium | L      | Feature  |
@@ -197,7 +197,7 @@ PLANNED/WORTH_CONSIDERING inventory (read this session).
 **Follow-on ideas grounded in this session's observations:**
 
 | #  | Task                                                                                                                        | Impact | Effort | Category      |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------- | ------- | -------------- |
+| -- | --------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 36 | ~~Serve recordings through the existing phone-api reverse proxy (auth injected server-side)~~ → ROADMAP (recording cluster) | Medium | M      | Feature       |
 | 37 | ~~Document the recording filename convention (`uuid_destination.wav`) in webphone docs~~ → ROADMAP                          | Low    | S      | Documentation |
 | 38 | ~~Open `tests/pbx.nix` and confirm the recording assertions first-hand (close b.2)~~ done 2026-09-19 (assertions verified)  | Low    | S      | Quality       |

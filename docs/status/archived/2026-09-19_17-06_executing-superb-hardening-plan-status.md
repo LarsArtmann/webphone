@@ -224,7 +224,6 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
 - **M1.3-M1.5, M2.1-M2.4**: prod redeploy + probes + smoke + eyeball
   (blocked on owner ssh).
 
-
 > Resolved 2026-09-22 (docs-health): P14 release.sh shipped; P15 release
 > objects live through v2.5.0; P16 rides release.sh per train; P17
 > shipped (backup module + drill + retentionDays); P23 recorded NOT-DO

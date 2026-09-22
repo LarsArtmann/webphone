@@ -19,13 +19,13 @@ input; two are owner-gated by design and get refined TODO rows instead.
 
 ## Pareto breakdown
 
-| Layer     | Items                                                       | Rationale                                        |
-| --------- | ----------------------------------------------------------- | ------------------------------------------------ |
-| 1% → 51%  | A hover timestamps (XS) + B jump-to-latest (S)              | Instant polish on the two hottest surfaces       |
-| 4% → 64%  | + C missed-call badge (S)                                   | The only missed-call signal today is a transient |
-| 20% → 80% | + D dial typeahead (M, the recommended train)               | Highest daily value, zero round-trips            |
-| the rest  | E thread search (M), F audio output picker (S-M)            | Complete the list                                |
-| deferred  | Peer hub (M-L view), Tailwind spike (owner call)            | TODO_LIST rows, not code                         |
+| Layer     | Items                                            | Rationale                                        |
+| --------- | ------------------------------------------------ | ------------------------------------------------ |
+| 1% → 51%  | A hover timestamps (XS) + B jump-to-latest (S)   | Instant polish on the two hottest surfaces       |
+| 4% → 64%  | + C missed-call badge (S)                        | The only missed-call signal today is a transient |
+| 20% → 80% | + D dial typeahead (M, the recommended train)    | Highest daily value, zero round-trips            |
+| the rest  | E thread search (M), F audio output picker (S-M) | Complete the list                                |
+| deferred  | Peer hub (M-L view), Tailwind spike (owner call) | TODO_LIST rows, not code                         |
 
 ## Decisions this train
 
@@ -66,23 +66,23 @@ input; two are owner-gated by design and get refined TODO rows instead.
 
 ## Fine plan (≤ 12 min each)
 
-| #   | Task                                                                     | Verifies via                        |
-| --- | ------------------------------------------------------------------------ | ----------------------------------- |
-| A.1 | helpers.go fullStamp + tests                                             | `go test ./internal/web/views`      |
-| A.2 | messages.templ titles (thread-when, bubble clock) + templ generate       | server render test                  |
-| B.1 | messages.templ transcript-wrap + chip; app.css                           | server render test                  |
-| B.2 | shell.js §3b chip logic                                                  | shell.test.mjs                      |
-| C.1 | calls.js + connection.js wp:call-missed; dead callEnded key removed      | island node tests                   |
-| C.2 | shell.js missed badge + History-tab clear; app.css                       | shell.test.mjs                      |
-| D.1 | island typeahead.js + main.js wiring + i18n-free list markup             | typeahead.test.mjs                  |
-| D.2 | app.css typeahead dropdown                                               | served asset                        |
-| E.1 | store.SearchThreads + test                                               | `go test ./internal/store`          |
-| E.2 | messaging.ThreadSearch + panels.go ?q= + templ search form + i18n keys   | `go test ./...`                     |
-| E.3 | shell.js SSE search guard                                                | shell.test.mjs                      |
-| F.1 | audioout.js + main.js + phone.templ wrap + island i18n keys + templ gen  | audioout.test.mjs                   |
-| G.1 | TODO_LIST rows: peer hub + Tailwind spike                                | review                              |
-| G.2 | CHANGELOG, FEATURES, plan verdict                                        | review                              |
-| G.3 | Gates: go test full, node tests, nix fmt, island-lint, buildflow         | green                               |
+| #   | Task                                                                    | Verifies via                   |
+| --- | ----------------------------------------------------------------------- | ------------------------------ |
+| A.1 | helpers.go fullStamp + tests                                            | `go test ./internal/web/views` |
+| A.2 | messages.templ titles (thread-when, bubble clock) + templ generate      | server render test             |
+| B.1 | messages.templ transcript-wrap + chip; app.css                          | server render test             |
+| B.2 | shell.js §3b chip logic                                                 | shell.test.mjs                 |
+| C.1 | calls.js + connection.js wp:call-missed; dead callEnded key removed     | island node tests              |
+| C.2 | shell.js missed badge + History-tab clear; app.css                      | shell.test.mjs                 |
+| D.1 | island typeahead.js + main.js wiring + i18n-free list markup            | typeahead.test.mjs             |
+| D.2 | app.css typeahead dropdown                                              | served asset                   |
+| E.1 | store.SearchThreads + test                                              | `go test ./internal/store`     |
+| E.2 | messaging.ThreadSearch + panels.go ?q= + templ search form + i18n keys  | `go test ./...`                |
+| E.3 | shell.js SSE search guard                                               | shell.test.mjs                 |
+| F.1 | audioout.js + main.js + phone.templ wrap + island i18n keys + templ gen | audioout.test.mjs              |
+| G.1 | TODO_LIST rows: peer hub + Tailwind spike                               | review                         |
+| G.2 | CHANGELOG, FEATURES, plan verdict                                       | review                         |
+| G.3 | Gates: go test full, node tests, nix fmt, island-lint, buildflow        | green                          |
 
 ## Constraints (do not break)
 

@@ -16,6 +16,7 @@ Everything so far was committed by the auto-daemon as heuristic
 ## Honest self-review first (what you asked)
 
 **What I forgot:**
+
 - To verify my own implementation detail (guard reads `getElementById`)
   before writing the test for it — the spec stubbed `querySelector` and
   failed red.
@@ -31,6 +32,7 @@ Everything so far was committed by the auto-daemon as heuristic
   `buildflow -s oxfmt --fix`, which is what finally cleared it.
 
 **What I could have done better:**
+
 - Land small explicit narrative commits as I go instead of letting the
   daemon sweep broken intermediate states (a red `TestSearchThreads` case
   sat in a public `chore:` commit for ~2 minutes).
@@ -40,6 +42,7 @@ Everything so far was committed by the auto-daemon as heuristic
 - Run fmt + scoped lint BEFORE handing work to the big gate.
 
 **What I could still improve (product):**
+
 - All session JS is stub-verified only — the browser E2E is still owed.
 - SQLite `LIKE` is ASCII-case-insensitive only: a search for "MÜNCHEN" will
   not match "münchen". Unicode-insensitive search needs `lower()` +
@@ -119,6 +122,7 @@ Everything so far was committed by the auto-daemon as heuristic
 ## d) TOTALLY FUCKED UP
 
 Nothing catastrophic. Damage report, honestly:
+
 1. A **red test state was pushed** briefly (`TestSearchThreads` empty-query
    case asserting behavior opposite to LIKE semantics) — daemon committed
    it mid-fix; fixed within minutes. Lesson: my drafting, the daemon's
@@ -167,6 +171,7 @@ Nothing catastrophic. Damage report, honestly:
 ## f) NEXT 50 (prioritized, roughly in order)
 
 **Close this train (1–8)**
+
 1. Run smoke: `python3 scripts/webphone-smoke.py` (add probes if the new
    surfaces warrant them — search `q=`, `#audio-out-wrap` presence).
 2. Fill the plan-doc verdict honestly (shipped list + stub caveat).
@@ -181,34 +186,34 @@ Nothing catastrophic. Damage report, honestly:
 **Correctness / hardening (9–16)**
 9. Unicode case-insensitive search design (FTS5 vs `lower()` ADR).
 10. Search over CRM display names, not just raw numbers (needs a name-aware
-    store path or in-memory filter after `crmNames` enrichment).
+store path or in-memory filter after `crmNames` enrichment).
 11. Clear-button affordance in the search form (JS-free `type=reset` doesn't
-    re-render the list — needs a small shell handler or an `hx-get` link).
+re-render the list — needs a small shell handler or an `hx-get` link).
 12. Decide + implement search URL semantics per owner answer (pushState ?q=
-    vs ephemeral).
+vs ephemeral).
 13. setSinkId browser-truth check on Safari/Firefox (feature-detect hides
-    the picker — confirm no console noise; document support matrix).
+the picker — confirm no console noise; document support matrix).
 14. Missed-call semantics per owner answer (REJECT counting; badge clears on
-    island Recent panel too?).
-15. `htmx:sseBeforeMessage` search guard: also skip the *unread nav refresh*
-    storm while filtering? (Currently only the list push is cancelled; the
-    nav badge may flap while a filtered view hides the unread row.)
+island Recent panel too?).
+15. `htmx:sseBeforeMessage` search guard: also skip the _unread nav refresh_
+storm while filtering? (Currently only the list push is cancelled; the
+nav badge may flap while a filtered view hides the unread row.)
 16. Add a contract test that the search input id stays OUTSIDE the
-    sse-swap region (markup regression guard for the morph-focus design).
+sse-swap region (markup regression guard for the morph-focus design).
 
 **Pre-existing findings worth their own micro-train (17–24)**
 17. Fix `scripts/webphone-smoke.py` ruff-format + mypy findings (another
-    session's file — coordinate first).
+session's file — coordinate first).
 18. Remove or wire `internal/store/db.go` `updatedOrNotFound` (golangci:
-    unused).
+unused).
 19. Check `rc.Close` in `internal/server/export_test.go`.
 20. Fix CHANGELOG v2.6.0 links (lychee 404) — tag was likely meant to be
-    v2.5.0-era; verify release history.
+v2.5.0-era; verify release history.
 21. Investigate vendorHash staleness warning (flake built fine this run —
-    either fix the hash or the heuristic).
+either fix the hash or the heuristic).
 22. `go.mod`: consider `go 1.27` (drop patch floor) per go-version finding.
 23. AGENTS.md trim to ≤377 lines (move the CRM seam + erraudit tier details
-    into docs/).
+into docs/).
 24. Rebuild the BuildFlow binary (predates HEAD by 59 h — preflight warn).
 
 **Feature follow-ons from the same ideas list (25–34)**
@@ -219,42 +224,42 @@ Nothing catastrophic. Damage report, honestly:
 29. Typeahead: also search thread remotes (currently contacts only).
 30. Typeahead: recent-calls recency boost in `rankContacts`.
 31. Audio picker: remember per-device label changes; handle revocation
-    (permission) path explicitly.
+(permission) path explicitly.
 32. Jump-chip: coalesce rapid pushes into one count update (currently
-    increments per push — fine, but text thrashes).
+increments per push — fine, but text thrashes).
 33. Hover stamps: also title the nav-badge and voicemail rows.
 34. Search: debounce indicator (subtle spinner) for slow phones.
 
 **Platform / hygiene (35–42)**
 35. Re-measure erraudit tier-2 family adoption (due 2026-10-22; current
-    baseline 127 stdlib_constructor / 113 outside crm).
+baseline 127 stdlib_constructor / 113 outside crm).
 36. aarch64 cross-build verify (`nix build .#webphone --system
     aarch64-linux`, ELF-bytes check) before the next stack re-pin.
 37. Consider `--all-systems` for `nix flake check` in CI (warning noted).
 38. Stack re-lock ritual (fold → stack bump → pbx-artmann relock) per
-    release runbook once the narrative commit lands.
+release runbook once the narrative commit lands.
 39. Record the "island-tests module-init guard → one-init-per-process +
-    separate unsupported-env file" pattern in AGENTS.md test section (it's
-    now used twice).
+separate unsupported-env file" pattern in AGENTS.md test section (it's
+now used twice).
 40. Record "nix fmt vs buildflow oxfmt scope" gotcha in docs/lessons.md.
 41. Consider smoke probes for the six new surfaces (grep assertions on the
-    served HTML).
+served HTML).
 42. Prune BuildFlow cache DBs (1.34 GB cache, 0.16 GB state — preflight).
 
 **Nice-to-have polish (43–50)**
 43. Localize the jump-chip ("↓ N new") + missed badge if the owner ever
-    overturns the language-neutral-shell decision (D3).
+overturns the language-neutral-shell decision (D3).
 44. Search input `enterkeyhint="search"` + `type=search` clear-native on
-    mobile Safari.
+mobile Safari.
 45. Audio picker: add `title` tooltips with the full device label (CSS
-    truncation).
+truncation).
 46. Empty-state illustration/tone pass (the quoted no-match line is plain).
 47. Consider `aria-live` announcement for search result counts (a11y).
 48. Typeahead listbox: `aria-activedescendant` wiring check.
 49. Consider persisting the audio pick per-output-device availability
-    windows (currently global; churn falls back sanely already).
+windows (currently global; churn falls back sanely already).
 50. Doc: one paragraph in README's tab docs about the Messages search +
-    picker (user-facing surface).
+picker (user-facing surface).
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -266,7 +271,7 @@ Nothing catastrophic. Damage report, honestly:
 2. **Missed-call semantics** (carried over): does a deliberately REJECTED
    incoming call count as missed (current: no — a reject hides the banner
    first and never dispatches), and should the badge also clear when you
-   open the island's *Recent calls* panel (current: History tab click only)?
+   open the island's _Recent calls_ panel (current: History tab click only)?
 3. **Browser E2E now or at fold?** (carried over): running the stack browser
    E2E now verifies this train's five JS surfaces in a real browser
    (~445 s budget, plus stack boot; the transfer-step flake may cost one
@@ -277,14 +282,14 @@ Nothing catastrophic. Damage report, honestly:
 
 ### Verification ledger (what "green" means right now)
 
-| Gate | Result |
-| --- | --- |
-| `nix develop -c go test -count=1 ./...` | 14 pkgs ok, 0 fail |
-| Island suite (`node --test`) | 76/76 pass |
-| `nix flake check` (buildflow-driven) | all checks passed (75 s) |
-| BuildFlow (`scripts/buildflow.sh`) | 52 success / 0 failed, 12 detect-only warning tools |
-| gitleaks | no leaks (543 commits) |
-| oxfmt on this train's files | fixed + re-verified |
-| Smoke (38-check) | **not yet run this session** |
-| Stack browser E2E | **owed (owner decision pending)** |
-| Narrative commit | **owed** (daemon heuristic commits only) |
+| Gate                                    | Result                                              |
+| --------------------------------------- | --------------------------------------------------- |
+| `nix develop -c go test -count=1 ./...` | 14 pkgs ok, 0 fail                                  |
+| Island suite (`node --test`)            | 76/76 pass                                          |
+| `nix flake check` (buildflow-driven)    | all checks passed (75 s)                            |
+| BuildFlow (`scripts/buildflow.sh`)      | 52 success / 0 failed, 12 detect-only warning tools |
+| gitleaks                                | no leaks (543 commits)                              |
+| oxfmt on this train's files             | fixed + re-verified                                 |
+| Smoke (38-check)                        | **not yet run this session**                        |
+| Stack browser E2E                       | **owed (owner decision pending)**                   |
+| Narrative commit                        | **owed** (daemon heuristic commits only)            |

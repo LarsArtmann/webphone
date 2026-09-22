@@ -424,9 +424,7 @@ def run_checks(
     # content type, and the shell page carries ZERO inline <script> tags
     # (strict CSP — a forced theme must not depend on inline bytes).
     status, body, headers = s.request("GET", "/assets/theme-preload.js")
-    ctype = next(
-        (v for k, v in headers.items() if k.lower() == "content-type"), ""
-    )
+    ctype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
     c.ok(
         "theme preload serves",
         status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
