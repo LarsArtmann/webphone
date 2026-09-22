@@ -82,21 +82,21 @@ This report covers 17:06 → 20:03.
 
 ## b) Partially done
 
-1. **P24 fax feed** — module written, committed; NOT verified:
-   the stack `nix flake check` is running in the background right now;
-   the loopback VM test (M24.4: seeded TIFF → feed → webphone 202) is
-   NOT written; the fixture generation hit a snag (ImageMagick produced
-   a 16-bit TIFF that `tiff2pdf` rejects — needs `-depth 8`).
-2. **Owed gates (stale)** — `nix fmt` (prettier pass over the island
-   JS hand-edited earlier), `nix flake check` (webphone),
-   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` not run this session
-   (Go suite + smoke ARE green on current HEAD).
-3. **pbx-artmann** — ahead 2 (unpushed), lock stale again vs the
-   stack's new commits; re-lock + toplevel pre-build pending.
-4. **P8 decisions** — memos wait for your DECIDED (pin policy, input
-   type).
-5. **M1.5 post-v2.1.1** — the prod probe red is CORRECT today; rerun
-   after the v2.1.1 deploy must show `bogus credentials rejected` green.
+1. ~~**P24 fax feed** — module written, committed; NOT verified:~~ done (stack-side; fax feed later drilled end-to-end (fixture + VM test))
+   ~~the stack `nix flake check` is running in the background right now;~~
+   ~~the loopback VM test (M24.4: seeded TIFF → feed → webphone 202) is~~
+   ~~NOT written; the fixture generation hit a snag (ImageMagick produced~~
+   ~~a 16-bit TIFF that `tiff2pdf` rejects — needs `-depth 8`).~~
+2. ~~**Owed gates (stale)** — `nix fmt` (prettier pass over the island~~ done (gates green across the 09-20/09-22 trains (buildflow no-cache runs recorded))
+   ~~JS hand-edited earlier), `nix flake check` (webphone),~~
+   ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` not run this session~~
+   ~~(Go suite + smoke ARE green on current HEAD).~~
+3. ~~**pbx-artmann** — ahead 2 (unpushed), lock stale again vs the~~ done (relock ritual executed (#1-#3 through 2026-09-22))
+   ~~stack's new commits; re-lock + toplevel pre-build pending.~~
+4. ~~**P8 decisions** — memos wait for your DECIDED (pin policy, input~~ done (DECIDED 2026-09-20 (AGENTS Owner decisions))
+   ~~type).~~
+5. ~~**M1.5 post-v2.1.1** — the prod probe red is CORRECT today; rerun~~ done (superseded: prod verified on v2.4.0 2026-09-22 (bogus rejected, 16/0))
+   ~~after the v2.1.1 deploy must show `bogus credentials rejected` green.~~
 
 ## c) Not started (plan remainder)
 

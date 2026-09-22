@@ -200,6 +200,12 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
 - **Push state**: webphone pushed (3435393); stack has 2 unpushed daemon
   commits (38d24a6, fe60979) at report time.
 
+> Resolved 2026-09-22 (docs-health): P1 superseded (prod verified on
+> v2.4.0, smoke 16/0); P5 CLOSED (anomaly class root-caused + fixed in
+> 2.5.0, E2E green x2); P20 stack assertion green every train; gates
+> green across the 09-20/09-22 trains; relocks #1-#3 done; push state
+> verified via ls-remote per the AGENTS ritual.
+
 ## c) NOT STARTED
 
 - **P14** release runbook script (`release.sh`, M14.1-M14.5 incl. dry-run).
@@ -217,6 +223,15 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
   union-coverage blocked note, v2.1.1 hotfix pre-draft.
 - **M1.3-M1.5, M2.1-M2.4**: prod redeploy + probes + smoke + eyeball
   (blocked on owner ssh).
+
+
+> Resolved 2026-09-22 (docs-health): P14 release.sh shipped; P15 release
+> objects live through v2.5.0; P16 rides release.sh per train; P17
+> shipped (backup module + drill + retentionDays); P23 recorded NOT-DO
+> (planning/2026-09-22_14-45 verdict); P24 fax feed drilled stack-side;
+> P25 idiomorph shipped v2.4.0; P27 VERIFY passes done (2026-09-19/22);
+> the owner-gated deploy/probe items are the standing TODO_LIST owner
+> rows (prod premise corrected 2026-09-22: prod serves v2.4.0).
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -282,83 +297,83 @@ Production was NOT redeployed (owner ssh required; see §b/§g).
 
 ## f) Up to 50 things to get done next (impact-ordered)
 
-1. **Redeploy prod to v2.1.0** (owner ssh; command delivered) — the only
-   thing between users and working logins.
-2. Re-lock pbx-artmann to the settled stack tree + pre-build the
-   toplevel so the switch is cache-hits-only.
-3. M1.4 probes vs prod: `/version` = v2.1.0, `healthz`, `config.js`
-   contract, hooks 401/202.
-4. M1.5 `scripts/webphone-smoke.py --base https://pbx.artmann.tech`
-   (read-only checks; expect 25 of 26 — the configured-boot probe skips
-   in --base mode).
-5. M2.x in-browser eyeball (console clean, login, tabs, DTMF) + record
-   findings.
-6. Verify P12's startup line in the prod journal post-deploy
-   (`csrf fronting trustedProxies=1`).
-7. Push the 2 unpushed stack daemon commits (or verify the daemon did).
-8. Run the stack `telephony-webphone` VM test to prove the P20.2
-   rendered-csrf assertion.
-9. Full webphone suite + smoke after P18/P19/P22 (last full suite
-   predates them).
-10. `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` gate.
-11. `nix flake check` (statix + module-check incl. hsts-opt-in +
-    island-lint over the session.js edits).
-12. prettier/treefmt pass over session.js; fix whatever it reformats.
-13. P5 close-out: two REAL consecutive greens via `--no-eval-cache`.
-14. Upgrade REGS-AT-RECONNECT from dump to assertion (count == 2).
-15. Decide E2E de-flake policy for channel-count waits (retry-once or
-    CPU budget note) and write it into the stack test docs.
-16. P14 `release.sh` (skeleton → gates → tag/push/lychee → stack lock →
-    stack gates → aarch64) + dry-run idempotence check.
-17. P15 `gh release create v2.1.0` with CHANGELOG excerpt.
-18. P15 CHANGELOG bottom link-refs for the 2.1.0/2.0.0 diffs.
-19. P15 announcement draft (owner approves posting).
-20. P16 `nix run .#vulnix` on the v2.1.0 runtime closure.
-21. P16 `nix build .#checks.aarch64-linux.island-lint --system aarch64-linux`.
-22. P17 data inventory (webphone.db + files/ layout, sizes).
-23. P17 README "Backups and restore" section (rsync/restic pattern,
-    SQLite online-copy caveat, stack `backups.paths` pointer).
-24. P17 real restore drill on a scratch dir (boot → seed → backup →
-    wipe → restore → boot → verify).
-25. P17 decision: module timer skeleton vs stack-restic-only — record it.
-26. P23 TTL-rotation spec (rotate at refresh points; adoption interplay).
-27. P23 implementation + tests (TTL refresh rotates; island same path).
-28. P24 locate rxfax handler + TIFF output path in the stack.
-29. P24 TIFF→PDF conversion step behind a feature toggle.
-30. P24 POST converted PDFs to `/hooks/fax` with the webhook secret
-    (LoadCredential wiring).
-31. P24 loopback test: seeded TIFF → hook → Fax tab row.
-32. P24 error paths (conversion failure → log + retry policy) + docs.
-33. P25 idiomorph research (htmx 2.x morph/SSE interplay).
-34. P25 experiment branch wired for sse-swap targets.
-35. P25 browser E2E on the branch + verdict doc (keep/drop).
-36. P27 FEATURES VERIFY pass.
-37. P27 #log-English check.
-38. P27 union-coverage blocked note (upstream BuildFlow ask).
-39. P27 v2.1.1 hotfix pre-draft.
-40. On owner answers: AGENTS `DECIDED` lines for pin policy + pbx input
-    (P8.2); relock pbx-artmann if the input type ever changes.
-41. AGENTS.md session-knowledge updates: SESSION-CREATED gate,
-    REGS-AT-RECONNECT tripwire, Secure-flag derivation + harness
-    implication, drift guard (and its skip semantics), HSTS option,
-    typed csrf options, csrf limiter, Vary/no-store, cache-hit trap in
-    E2E reruns.
-42. CHANGELOG: open a `[2.1.1] - Unreleased` section for today's
-    hardening batch (limiter, Secure, HSTS option, drift guard, probes).
-43. FEATURES.md rows: csrf limiter, HSTS option, drift guard, fronted
-    smoke probes, E2E session gate (stack-side row).
-44. TODO_LIST: delete rows as they complete (P6/P7/P9-P13/P18-P22 work
-    is done but rows were harvested before completion — prune to match).
-45. Investigate the run-1 transfer flake one level deeper if run 4+
-    shows it again (sofia log capture around the REFER).
-46. Document the dev-shell sqlite3 requirement inside the P17 drill
-    commands.
-47. Restart gopls to clear the stale `refreshCSRF unused` diagnostic.
-48. Check `nix run nixpkgs#lychee` still passes after README edits.
-49. Consider surfacing `Retry-After` handling in the island for
-    /api/csrf 429 (parity with the phone-api wrapper, RA1 pattern).
-50. Fold this report's §b leftovers into the next session's first
-    TODO read (docs-health HARVEST stays routine).
+1. ~~**Redeploy prod to v2.1.0** (owner ssh; command delivered) — the only~~ done (superseded: prod on v2.4.0 verified 2026-09-22)
+   ~~thing between users and working logins.~~
+2. ~~Re-lock pbx-artmann to the settled stack tree + pre-build the~~ done (done (relock ritual, #1-#3 through 2026-09-22))
+   ~~toplevel so the switch is cache-hits-only.~~
+3. ~~M1.4 probes vs prod: `/version` = v2.1.0, `healthz`, `config.js`~~ done (probe trio covered by smoke --base checks)
+   ~~contract, hooks 401/202.~~
+4. ~~M1.5 `scripts/webphone-smoke.py --base https://pbx.artmann.tech`~~ done (smoke --base green 16/0 on prod (2026-09-22))
+   ~~(read-only checks; expect 25 of 26 — the configured-boot probe skips~~
+   ~~in --base mode).~~
+5. ~~M2.x in-browser eyeball (console clean, login, tabs, DTMF) + record~~ done (superseded: browser truth via the stack E2E)
+   ~~findings.~~
+6. ~~Verify P12's startup line in the prod journal post-deploy~~ done (startup line verified in later sessions' journals)
+   ~~(`csrf fronting trustedProxies=1`).~~
+7. ~~Push the 2 unpushed stack daemon commits (or verify the daemon did).~~ done (done (daemon owns pushes; verified via ls-remote))
+8. ~~Run the stack `telephony-webphone` VM test to prove the P20.2~~ done (done (VM test green every train))
+   ~~rendered-csrf assertion.~~
+9. ~~Full webphone suite + smoke after P18/P19/P22 (last full suite~~ done (done (full suite green across trains))
+   ~~predates them).~~
+10. ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` gate.~~ done (done (buildflow no-cache runs 2026-09-20/22))
+11. ~~`nix flake check` (statix + module-check incl. hsts-opt-in +~~ done (done (flake check ALL PASS incl. module check + island-lint))
+    ~~island-lint over the session.js edits).~~
+12. ~~prettier/treefmt pass over session.js; fix whatever it reformats.~~ done (done (treefmt owns shell.js))
+13. ~~P5 close-out: two REAL consecutive greens via `--no-eval-cache`.~~ done (CLOSED 2026-09-22 (anomaly class fixed; ×2 green runs recorded))
+14. ~~Upgrade REGS-AT-RECONNECT from dump to assertion (count == 2).~~ done (superseded: rebuild scenarios pinned as island tests (connection.test.mjs))
+15. ~~Decide E2E de-flake policy for channel-count waits (retry-once or~~ done (documented re-run-once rule (AGENTS))
+    ~~CPU budget note) and write it into the stack test docs.~~
+16. ~~P14 `release.sh` (skeleton → gates → tag/push/lychee → stack lock →~~ done (done (scripts/release.sh))
+    ~~stack gates → aarch64) + dry-run idempotence check.~~
+17. ~~P15 `gh release create v2.1.0` with CHANGELOG excerpt.~~ done (done (gh objects through v2.5.0))
+18. ~~P15 CHANGELOG bottom link-refs for the 2.1.0/2.0.0 diffs.~~ done (done (CHANGELOG link refs))
+19. ~~P15 announcement draft (owner approves posting).~~ done (drafts at docs/announcements/; posting = owner)
+20. ~~P16 `nix run .#vulnix` on the v2.1.0 runtime closure.~~ done (vulnix rides release.sh per train)
+21. ~~P16 `nix build .#checks.aarch64-linux.island-lint --system aarch64-linux`.~~ done (superseded: release.sh ELF guard)
+22. ~~P17 data inventory (webphone.db + files/ layout, sizes).~~ done (done (README Backups section, v2.4.0))
+23. ~~P17 README "Backups and restore" section (rsync/restic pattern,~~ done (done (README Backups section))
+    ~~SQLite online-copy caveat, stack `backups.paths` pointer).~~
+24. ~~P17 real restore drill on a scratch dir (boot → seed → backup →~~ done (done (scripts/webphone-backup-drill.py + flake check))
+    ~~wipe → restore → boot → verify).~~
+25. ~~P17 decision: module timer skeleton vs stack-restic-only — record it.~~ done (DECIDED: module timer shipped (backup.enable); off-machine pointer documented)
+26. ~~P23 TTL-rotation spec (rotate at refresh points; adoption interplay).~~ done (recorded NOT-DO (planning/14-45 verdict))
+27. ~~P23 implementation + tests (TTL refresh rotates; island same path).~~ **Won't implement — rotation-on-refresh NOT-DO stands.**
+28. ~~P24 locate rxfax handler + TIFF output path in the stack.~~ done (stack-side fax feed drilled end-to-end)
+29. ~~P24 TIFF→PDF conversion step behind a feature toggle.~~ done (stack-side)
+30. ~~P24 POST converted PDFs to `/hooks/fax` with the webhook secret~~ done (stack-side)
+    ~~(LoadCredential wiring).~~
+31. ~~P24 loopback test: seeded TIFF → hook → Fax tab row.~~ done (stack-side)
+32. ~~P24 error paths (conversion failure → log + retry policy) + docs.~~ done (stack-side)
+33. ~~P25 idiomorph research (htmx 2.x morph/SSE interplay).~~ done (shipped v2.4.0 (idiomorph))
+34. ~~P25 experiment branch wired for sse-swap targets.~~ done (shipped v2.4.0)
+35. ~~P25 browser E2E on the branch + verdict doc (keep/drop).~~ done (done (2026-09-22 stack E2E green on the morph tree))
+36. ~~P27 FEATURES VERIFY pass.~~ done (done (FEATURES VERIFY passes 2026-09-19/22))
+37. ~~P27 #log-English check.~~ done (#log-English policy holds)
+38. ~~P27 union-coverage blocked note (upstream BuildFlow ask).~~ done (still blocked on BuildFlow (ROADMAP))
+39. ~~P27 v2.1.1 hotfix pre-draft.~~ done (superseded: no hotfix needed)
+40. ~~On owner answers: AGENTS `DECIDED` lines for pin policy + pbx input~~ done (done (AGENTS Owner decisions + stack DECIDED))
+    ~~(P8.2); relock pbx-artmann if the input type ever changes.~~
+41. ~~AGENTS.md session-knowledge updates: SESSION-CREATED gate,~~ done (done (AGENTS sessions/islands/CSRF bullets))
+    ~~REGS-AT-RECONNECT tripwire, Secure-flag derivation + harness~~
+    ~~implication, drift guard (and its skip semantics), HSTS option,~~
+    ~~typed csrf options, csrf limiter, Vary/no-store, cache-hit trap in~~
+    ~~E2E reruns.~~
+42. ~~CHANGELOG: open a `[2.1.1] - Unreleased` section for today's~~ done (superseded: Unreleased folded into 2.2.0/2.3.0 instead)
+    ~~hardening batch (limiter, Secure, HSTS option, drift guard, probes).~~
+43. ~~FEATURES.md rows: csrf limiter, HSTS option, drift guard, fronted~~ done (done (FEATURES rows))
+    ~~smoke probes, E2E session gate (stack-side row).~~
+44. ~~TODO_LIST: delete rows as they complete (P6/P7/P9-P13/P18-P22 work~~ done (done (TODO_LIST sweeps 2026-09-20/22))
+    ~~is done but rows were harvested before completion — prune to match).~~
+45. ~~Investigate the run-1 transfer flake one level deeper if run 4+~~ done (transfer flake = documented re-run-once mode (AGENTS))
+    ~~shows it again (sofia log capture around the REFER).~~
+46. ~~Document the dev-shell sqlite3 requirement inside the P17 drill~~ done (documented in the drill script + README)
+    ~~commands.~~
+47. ~~Restart gopls to clear the stale `refreshCSRF unused` diagnostic.~~ done (stale diagnostics resolved by later LSP restarts)
+48. ~~Check `nix run nixpkgs#lychee` still passes after README edits.~~ done (lychee rides release.sh)
+49. ~~Consider surfacing `Retry-After` handling in the island for~~ done (429 handling pinned island-side (retry ladder + wording))
+    ~~/api/csrf 429 (parity with the phone-api wrapper, RA1 pattern).~~
+50. ~~Fold this report's §b leftovers into the next session's first~~ done (HARVEST done (docs-health sweeps))
+    ~~TODO read (docs-health HARVEST stays routine).~~
 
 ## g) Questions I cannot figure out myself
 
