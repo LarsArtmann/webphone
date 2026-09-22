@@ -47,7 +47,10 @@ class StubRegisterer {
       this.fire("Unregistered");
       throw this.rejectWith;
     }
-    this.fire("Registered");
+    // Real sip.js: re-registering a Registerer that never left
+    // Registered re-sends the REGISTER and resolves WITHOUT a
+    // stateChange (Registered -> Registered is no transition).
+    if (this.state !== "Registered") this.fire("Registered");
   }
 
   async unregister() {
@@ -218,6 +221,27 @@ test("reconnect attempt on a Terminated registerer rebuilds the agent", async (t
   assert.equal(agents.length, 2, "the retry path rebuilds instead of looping");
   assert.ok(registerers[1].registerCalls >= 1);
   assert.equal(pill(), t("registered"));
+});
+
+// The 2026-09-22 E2E root cause: a reconnect cycle that succeeds while
+// the Registerer never left Registered fires NO stateChange, so the
+// pill must be refreshed by the success path itself — otherwise it
+// shows the last backoff state while the phone is re-registered.
+test("reconnect success refreshes the pill despite no state transition", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("stale-pill");
+  await connection.connect("1001", "pw");
+  const dead = registerers.at(-1);
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+  agents.at(-1).delegate.onDisconnect(new Error("ws closed"));
+  await tc.mock.timers.tick(2000); // try 1: reconnect succeeds, no state event
+  await flushes();
+  assert.equal(agents.length, 1, "no rebuild: the cycle succeeded");
+  assert.equal(
+    pill(),
+    t("registered"),
+    "the pill must not stay on the stale backoff text",
+  );
 });
 
 test("logout does not rebuild", async () => {

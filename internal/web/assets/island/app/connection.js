@@ -150,6 +150,16 @@ async function attemptReconnect() {
     );
     reconnectAttempts = 0;
     clearReconnectCycleDeadline();
+    // sip.js fires NO stateChange when the Registerer never left
+    // Registered (a transport loss does not demote it), so the
+    // listener cannot refresh the pill here — without this explicit
+    // set it shows the last backoff state forever while the phone is
+    // fully re-registered (the 2026-09-22 E2E runs read that stale
+    // pill as "stuck" and fell back to reloads).
+    setRegStatus("status-registered", t("registered"));
+    if (sessions.size > 0) {
+      log(t("reconnectPreserved")(sessions.size));
+    }
     log("transport reconnected; re-registered");
   } catch (err) {
     log(`reconnect failed: ${err.message}`);
