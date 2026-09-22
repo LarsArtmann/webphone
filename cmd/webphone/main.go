@@ -103,6 +103,17 @@ func run() error {
 		return fmt.Errorf("open session store: %w", err)
 	}
 
+	// Wall-clock zone (plan T26d): the configured IANA zone owns every
+	// rendered time and log line (validation already rejected typos).
+	if cfg.Timezone != "" {
+		loc, err := time.LoadLocation(cfg.Timezone)
+		if err != nil {
+			return fmt.Errorf("load timezone: %w", err)
+		}
+		time.Local = loc
+		slog.Info("timezone applied", "zone", cfg.Timezone)
+	}
+
 	// Bounded retention (plan T25): retention_days > 0 starts the daily
 	// sweep; the default keeps everything forever and starts nothing.
 	retention.Start(ctx, db, blobs, time.Duration(cfg.RetentionDays)*24*time.Hour)

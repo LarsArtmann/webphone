@@ -1,6 +1,11 @@
 package views
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"regexp"
+	"testing"
+)
 
 func TestTFallsBackToEnglishThenKey(t *testing.T) {
 	if got := T(LangDE, "tab.messages"); got != "Nachrichten" {
@@ -76,4 +81,33 @@ func countFormatVerbs(s string) int {
 		count++
 	}
 	return count
+}
+
+// TestEveryReferencedKeyExists pins the dynamic-template key-sync
+// guard (plan T27d): every T(lang, "…") literal in the view sources
+// must exist in the ENGLISH dictionary. T() surfaces unknown keys as
+// the raw key in the page (deliberate at runtime), so a typo'd or
+// renamed key renders garbage for users — this fails the build instead.
+func TestEveryReferencedKeyExists(t *testing.T) {
+	sources, err := filepath.Glob("*.templ")
+	if err != nil || len(sources) == 0 {
+		t.Fatalf("glob view sources: %v (%d)", err, len(sources))
+	}
+	re := regexp.MustCompile(`T\((?:props\.Lang|lang)\w*,\s*"([^"]+)"\)`)
+	missing := map[string]bool{}
+	for _, name := range sources {
+		raw, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatalf("read %s: %v", name, err)
+		}
+		for _, m := range re.FindAllStringSubmatch(string(raw), -1) {
+			key := m[1]
+			if _, ok := dictionaries[LangEN][key]; !ok {
+				missing[name+": "+key] = true
+			}
+		}
+	}
+	for key := range missing {
+		t.Errorf("referenced key missing from the dictionary: %s", key)
+	}
 }

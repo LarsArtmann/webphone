@@ -87,6 +87,7 @@ in the JSON file.
 | `session_ttl`            | `7d`                | Sliding idle window: activity past its halfway point renews the session (a regularly used device never re-signs-in) |
 | `session_max_ttl`        | `30d`               | Absolute session lifetime from sign-in — the cap that re-signs even a continuously renewed (or stolen) session      |
 | `retention_days`         | `0`                 | 0 keeps everything forever; a positive value makes a daily sweep delete messages (with attachments), fax jobs (with documents) and empty threads older than that many days |
+| `timezone`               | _system local_      | IANA zone name owning every wall-clock rendering and log line; a typo fails validation instead of silently rendering UTC |
 | `ice_servers`            | _empty_             | STUN/TURN entries handed to the island (`urls`, `username`, `credential`)                                           |
 | `contacts`               | _empty_             | Shared directory entries (`name`, `number`)                                                                         |
 | `identities`             | _empty_             | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only         |

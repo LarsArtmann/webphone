@@ -65,6 +65,11 @@ type Config struct {
 	// empty threads older than that many days. Sessions always expire
 	// on their own TTL — the sweep only clears their dead rows earlier.
 	RetentionDays int `json:"retention_days" koanf:"retention_days"`
+	// Timezone is an IANA zone name (e.g. "Europe/Berlin") that owns
+	// every wall-clock rendering and log line. Empty keeps the process
+	// local zone. A typo fails validation — times silently rendering in
+	// UTC would be worse than a failed boot.
+	Timezone string `json:"timezone" koanf:"timezone"`
 }
 
 // CRM configures the optional Ledger CRM integration. Both fields must be
@@ -195,6 +200,11 @@ func validate(cfg Config) error {
 	}
 	if cfg.SessionTTL <= 0 {
 		return fmt.Errorf("session_ttl must be positive")
+	}
+	if cfg.Timezone != "" {
+		if _, err := time.LoadLocation(cfg.Timezone); err != nil {
+			return fmt.Errorf("timezone %q is not an IANA zone name: %w", cfg.Timezone, err)
+		}
 	}
 	if cfg.SessionMaxTTL < cfg.SessionTTL {
 		return fmt.Errorf("session_max_ttl (%s) must be >= session_ttl (%s): the absolute cap cannot be shorter than the idle window it bounds", cfg.SessionMaxTTL, cfg.SessionTTL)

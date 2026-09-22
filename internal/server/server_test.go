@@ -348,6 +348,23 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 // 404 with the app shell and the styled error panel, not Go's bare
 // "404 page not found" text — a stray deep link keeps the chrome and the
 // reload affordance.
+func TestFaviconAnswersBothNames(t *testing.T) {
+	c := newClient(t)
+	for _, path := range []string{"/favicon.svg", "/favicon.ico"} {
+		resp, body := c.do(http.MethodGet, path, nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: status %d", path, resp.StatusCode)
+			continue
+		}
+		if ct := resp.Header.Get("Content-Type"); ct != "image/svg+xml" {
+			t.Errorf("%s: content-type %q", path, ct)
+		}
+		if len(body) == 0 {
+			t.Errorf("%s: empty body", path)
+		}
+	}
+}
+
 func TestNotFoundRendersTheShell(t *testing.T) {
 	c := newClient(t)
 	resp, body := c.do(http.MethodGet, "/nope", nil, "")

@@ -369,3 +369,15 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRejectsUnknownTimezone(t *testing.T) {
+	cfg := defaults()
+	cfg.Timezone = "Europe/Berlin"
+	if err := validate(cfg); err != nil {
+		t.Errorf("valid IANA zone must pass: %v", err)
+	}
+	cfg.Timezone = "Mars/Olympus_Mons"
+	if err := validate(cfg); err == nil {
+		t.Error("a typo'd zone name must fail validation, not silently render UTC")
+	}
+}

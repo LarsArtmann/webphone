@@ -240,6 +240,10 @@ func New(deps Deps) http.Handler {
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
+	// Browsers and hard-coded scrapers ask for /favicon.ico when no icon
+	// link is parsed; the modern SVG answers both names (content-type
+	// carries the format, and every current browser sniffs it fine).
+	open.HandleFunc("GET /favicon.ico", h.favicon)
 	// GET /events is rate-limited like the other unauthenticated-by-secret
 	// surfaces: a reconnecting tab (or a broken client) must not churn
 	// unlimited streams. One bucket per peer host reuses the hook budget
@@ -296,6 +300,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
 	root.Handle("/favicon.svg", open)
+	root.Handle("/favicon.ico", open)
 
 	security := httputil.SecurityHeaders(securityHeadersConfig())
 
