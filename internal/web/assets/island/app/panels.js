@@ -234,6 +234,9 @@ async function migrateLegacyContacts() {
     localStorage.removeItem(CONTACTS_KEY);
     legacyContacts = [];
     log(`imported ${missing.length} local contact(s) into the server store`);
+    // The migration is otherwise invisible: the toast says it HAPPENED
+    // (and how many rows moved) so the one-time import is not a mystery.
+    announce(t("contactsMigrated")(missing.length), "ok");
     if (missing.length > 0) await loadContacts();
   } catch (err) {
     log(

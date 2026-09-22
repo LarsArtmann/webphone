@@ -217,9 +217,24 @@ templ Bubble(msg domain.Message, lang Lang) {
 			<p class="wp-bubble-body">{ msg.Body }</p>
 		}
 		for _, att := range msg.Attachments {
-			<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
-				📎 { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
-			</a>
+			// Image attachments render inline (CSS-scaled, lazy — the
+			// browser fetches the full blob; server-side thumbnails are
+			// deliberately deferred until payload sizes say otherwise).
+			if strings.HasPrefix(att.MimeType, "image/") {
+				<a class="wp-attachment wp-attachment-image" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
+					<img
+						class="wp-thumb"
+						src={ "/attachments/" + att.ID.String() }
+						alt={ att.Name }
+						loading="lazy"
+					/>
+					<span class="wp-muted">📎 { att.Name } ({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
+				</a>
+			} else {
+				<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
+					📎 { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
+				</a>
+			}
 		}
 		<span class="wp-bubble-meta">
 			{ formatClock(lang, msg.CreatedAt) }
