@@ -404,3 +404,49 @@ their correct state, not an omission.)
 — Planned 2026-09-22 12:02. Execution order: T1 the moment the pusher
 issue is resolved (or via owner push); everything else follows the
 graph.
+
+## 7) Execution log (live)
+
+- 2026-09-22 ~13:30 **T1 CLOSED**: webphone + stack pushed; stack
+  flake check GREEN ×2 (run #2 on the pre-bump tree, run #3 EXIT=0 on
+  the pinned `1a95a736` INCLUDING the daemon's nixpkgs bump — which
+  had reintroduced operator.js drift, re-fixed in `1a95a73` before the
+  check).
+- 2026-09-22 ~14:10 **T2 CLOSED**: pbx-artmann relocked to `1a95a736`
+  (probe all-OK, both-arch toplevels green, webphone store path moved),
+  narrative commit `f42ef79` pushed.
+- 2026-09-22 13:52 **PROD PREmise CORRECTED**: smoke `--base` 16/0 —
+  bogus creds REJECTED, `/version` v2.4.0: the owner already deployed
+  the v2.4.0 chain; the "v2.1.0 hole live" premise was stale. T3/T5
+  become owner-terminal handovers (pbx-artmann AGENTS: no assistant
+  ssh).
+- 2026-09-22 ~14:05 **T10 CLOSED**: committer = long-lived agent
+  session loop (GPG-signed heuristic sweeps; caught twice mid-session).
+  Pushes verified restored (test pushes moved origins). Runbook gains
+  the phase-boundary + daemon-drift lines; ROADMAP gains the
+  docs/status+planning exclusion ask.
+- 2026-09-22 ~14:15 **T4b GREEN**: enforced erraudit 0 findings on the
+  chain-to-deploy. (4a banner check needs a real extension session —
+  prepared as an owner step.)
+- 2026-09-22 ~14:20 **T11 PREP**: 14-decision briefing written
+  (`docs/planning/2026-09-22_13-50_owner-calls-briefing.md`).
+- 2026-09-22 ~15:10 **T6+T7 CLOSED**: v2.5.0 folded, gated, tagged
+  (`25740c6`), gh object live; stack relocked in-train (`91ac2c82`,
+  browser E2E green, VM test green, stack flake check green, pushed);
+  aarch64 `b700` guard green. Release EXIT=0. (First run failed on the
+  documented host-go trap — release.sh outside the devShell; rerun
+  inside `nix develop -c`.)
+- 2026-09-22 ~15:20 **T2' (relock to the tag)**: pbx-artmann pinned to
+  `91ac2c82` (probe OK, webphone pin = tag commit), both-arch
+  toplevels building.
+- 2026-09-22 ~14:50 **T19 CLOSED**: (a) go-health `NewChecks`
+  container-free quick-start pushed (`60a0aa9`); (b) family
+  release-object audit — 12 latest module tags had NO gh objects (the
+  2026-07 v4.3.0 era was the last with objects); all 12 cut (root with
+  full CHANGELOG notes, modules with the established sync-link note);
+  intermediate historical versions stay tag-only by decision. (c)
+  NamedCheck.Timeout retro-note: already shipped in the v4.x
+  CHANGELOG — verified.
+- Session debts CLOSED: plan mermaid render-verified (mmdc → 48 KB
+  SVG), fine table re-split to literal ≤12-minute units, "enourmous"
+  typo + coverage recount (10 TODO rows).
