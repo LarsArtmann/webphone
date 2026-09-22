@@ -26,6 +26,15 @@ import (
 // The session's extension scopes nothing here — the CRM is single-user —
 // but the endpoint stays behind requireSession like every /api surface so
 // the auth posture never depends on integration wiring.
+// recordCallIdem marks a call-log attempt processed. Only successes reach
+// it (failures stay retryable); an empty key means the client sent no
+// Idempotency-Key, so there is nothing to dedupe on.
+func (h *handlers) recordCallIdem(key string) {
+	if key != "" {
+		h.callsIdem.record(key)
+	}
+}
+
 func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(w, r)
 	if !ok {
@@ -82,9 +91,7 @@ func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
 		// integration never mints contacts; the number still lives in the
 		// island's recent calls and the PBX CDR.
 		slog.Debug("crm: call not logged; no contact for number", "extension", sess.Extension.String())
-		if idemKey != "" {
-			h.callsIdem.record(idemKey)
-		}
+		h.recordCallIdem(idemKey)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -98,9 +105,7 @@ func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "the CRM could not record the call", http.StatusBadGateway)
 		return
 	}
-	if idemKey != "" {
-		h.callsIdem.record(idemKey)
-	}
+	h.recordCallIdem(idemKey)
 
 	slog.Debug("crm: call logged", "extension", sess.Extension.String(), "direction", body.Direction)
 	w.WriteHeader(http.StatusNoContent)

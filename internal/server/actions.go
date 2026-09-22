@@ -228,7 +228,7 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
-		http.Error(w, "could not save the contact", http.StatusInternalServerError)
+		contactSaveFailed(w)
 		return
 	}
 	h.notifyContactsChanged(sess.Extension)
@@ -461,22 +461,22 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 
 	imported := 0
 	skipped, firstSkip := 0, ""
+	skip := func(reason string) {
+		skipped++
+		if firstSkip == "" {
+			firstSkip = reason
+		}
+	}
 	for _, card := range vcard.Decode(data) {
 		phone, err := domain.ParsePhone(card.Number)
 		if err != nil { //nolint:erraudit // batch import: counted + first reason feeds the one-line import log (T05)
-			skipped++
-			if firstSkip == "" {
-				firstSkip = "invalid number: " + card.Number
-			}
+			skip("invalid number: " + card.Number)
 			continue
 		}
 		// The dialable alphabet also carries letters (SIP user parts);
 		// a vCard number without a single digit can never be dialed.
 		if !strings.ContainsAny(phone.String(), "0123456789") {
-			skipped++
-			if firstSkip == "" {
-				firstSkip = "no digits: " + card.Number
-			}
+			skip("no digits: " + card.Number)
 			continue
 		}
 		contact := domain.Contact{

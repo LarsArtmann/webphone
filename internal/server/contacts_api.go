@@ -75,6 +75,13 @@ func (h *handlers) apiListContacts(w http.ResponseWriter, r *http.Request) {
 	_ = json.MarshalWrite(w, body) //nolint:erraudit // best-effort write; the response is already committed
 }
 
+// contactSaveFailed answers both contact-write surfaces (the tab form
+// and the JSON API) with the same 500 and the same words: one fact, one
+// home.
+func contactSaveFailed(w http.ResponseWriter) {
+	http.Error(w, "could not save the contact", http.StatusInternalServerError)
+}
+
 // apiSaveContact upserts one personal contact (same store semantics as
 // the tab: a repeated number renames the entry). Mutations answer 204
 // and the island re-fetches the list — the store mints IDs on insert
@@ -110,7 +117,7 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "contact list is full — delete one first", http.StatusUnprocessableEntity)
 			return
 		}
-		http.Error(w, "could not save the contact", http.StatusInternalServerError)
+		contactSaveFailed(w)
 		return
 	}
 	h.notifyContactsChanged(sess.Extension)
