@@ -97,8 +97,8 @@ type Counts struct {
 	Sessions  int64
 }
 
-// Counts reads the aggregate sizes in one call.
-func Counts(ctx context.Context, db *sql.DB) (Counts, error) {
+// ReadCounts reads the aggregate sizes in one call.
+func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 	var c Counts
 	err := db.QueryRowContext(ctx, `
 		SELECT

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,7 +18,7 @@ var processStart = time.Now()
 // data — a scraped metrics endpoint must not become a data leak, so
 // the pinning test fails on any extension-like string in the body.
 func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
-	counts, err := store.Counts(r.Context(), h.deps.DB)
+	counts, err := store.ReadCounts(r.Context(), h.deps.DB)
 	if err != nil {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
