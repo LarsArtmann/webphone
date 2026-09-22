@@ -73,7 +73,7 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 				<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
 			</span>
 			<span class="wp-thread-side">
-				<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
+				<span class="wp-thread-when" title={ fullStamp(lang, summary.Thread.LastActivityAt) }>{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
 				if summary.Thread.Unread > 0 {
 					<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
 				}
@@ -249,7 +249,7 @@ templ Bubble(msg domain.Message, lang Lang) {
 			}
 		}
 		<span class="wp-bubble-meta">
-			{ formatClock(lang, msg.CreatedAt) }
+			<span title={ fullStamp(lang, msg.CreatedAt) }>{ formatClock(lang, msg.CreatedAt) }</span>
 			if msg.Direction == domain.DirectionOutbound {
 				@OutboundStatusBadge(msg.Status, lang)
 			}

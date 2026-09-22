@@ -107,3 +107,13 @@ func TestFormatClockAndStampFollowLanguage(t *testing.T) {
 		}
 	}
 }
+
+func TestFullStampCarriesDateYearAndTime(t *testing.T) {
+	at := time.Date(2026, 9, 22, 16, 9, 0, 0, time.Local)
+	if got := fullStamp(LangEN, at); got != "Sep 22, 2026, 4:09PM" {
+		t.Errorf("fullStamp(en) = %q, want %q", got, "Sep 22, 2026, 4:09PM")
+	}
+	if got := fullStamp(LangDE, at); got != "22.09.2026 16:09" {
+		t.Errorf("fullStamp(de) = %q, want %q", got, "22.09.2026 16:09")
+	}
+}

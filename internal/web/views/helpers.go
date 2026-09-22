@@ -120,3 +120,14 @@ func formatStamp(lang Lang, t time.Time) string {
 	}
 	return t.Local().Format("Jan 2, 15:04")
 }
+
+// fullStamp renders the unambiguous absolute moment (date, year, time)
+// for hover titles: relative labels ("3h") and clock-only meta ("4:09PM")
+// gain the exact instant on hover instead of hiding it. German uses the
+// ISO-shaped numeric convention, English its meridiem form.
+func fullStamp(lang Lang, t time.Time) string {
+	if lang == LangDE {
+		return t.Local().Format("02.01.2006 15:04")
+	}
+	return t.Local().Format("Jan 2, 2006, 3:04PM")
+}
