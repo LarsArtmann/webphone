@@ -71,10 +71,6 @@ func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.deps.CRM.LogCall(r.Context(), match.ID, body.Direction, phone.String(), body.Seconds, body.Outcome); err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
 		slog.Warn("crm: call logging failed", "error", err, "extension", sess.Extension.String())
 		http.Error(w, "the CRM could not record the call", http.StatusBadGateway)
 		return
