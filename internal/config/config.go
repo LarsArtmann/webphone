@@ -55,6 +55,7 @@ type Config struct {
 	// extensions or lookups by the signed-in extension silently miss.
 	Identities map[string]string `json:"identities" koanf:"identities"`
 	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
+	TURN       TURNREST          `json:"turn_rest" koanf:"turn_rest"`
 	CSRF       CSRF              `json:"csrf" koanf:"csrf"`
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
@@ -94,6 +95,19 @@ type Gateway struct {
 	Mode          GatewayMode `json:"mode" koanf:"mode"`
 	WebhookURL    string      `json:"webhook_url,omitempty" koanf:"webhook_url"`
 	WebhookSecret string      `json:"webhook_secret,omitempty" koanf:"webhook_secret"`
+}
+
+// TURNREST switches TURN authentication from static config passwords to
+// coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
+// empty, ice_servers entries ship verbatim; once set, /config.js derives a
+// short-lived username/credential pair (username = unix expiry,
+// credential = base64(HMAC-SHA1(secret, username))) for every ice_servers
+// entry that carries a turn:/turns: URL, so a long-lived TURN password
+// never sits in config, the browser, or a cached response. The SAME
+// secret must ride coturn (use-auth-secret / static-auth-secret).
+type TURNREST struct {
+	Secret string        `json:"secret" koanf:"secret"`
+	TTL    time.Duration `json:"ttl" koanf:"ttl"`
 }
 
 // CSRF teaches the double-submit CSRF middleware about the fronting
@@ -138,6 +152,7 @@ func Load() (Config, error) {
 		"websocket_path": cfg.WebsocketPath,
 		"session_ttl":    cfg.SessionTTL.String(),
 		"gateway.mode":   string(cfg.Gateway.Mode),
+		"turn_rest.ttl":  (48 * time.Hour).String(),
 	}, "."), nil); err != nil {
 		return Config{}, fmt.Errorf("config defaults: %w", err)
 	}
@@ -204,6 +219,23 @@ func validate(cfg Config) error {
 	if cfg.Timezone != "" {
 		if _, err := time.LoadLocation(cfg.Timezone); err != nil {
 			return fmt.Errorf("timezone %q is not an IANA zone name: %w", cfg.Timezone, err)
+		}
+	}
+	if cfg.TURN.Secret != "" {
+		if cfg.TURN.TTL <= 0 {
+			return fmt.Errorf("turn_rest.ttl must be positive when turn_rest.secret is set")
+		}
+		hasTurnURL := false
+		for _, server := range cfg.ICEServers {
+			for _, raw := range server.URLs {
+				u, err := url.Parse(raw)
+				if err == nil && (u.Scheme == "turn" || u.Scheme == "turns") {
+					hasTurnURL = true
+				}
+			}
+		}
+		if !hasTurnURL {
+			return fmt.Errorf("turn_rest.secret is set but no ice_servers entry carries a turn:/turns: URL: the secret would be dead config (coturn never sees a derived credential)")
 		}
 	}
 	if cfg.SessionMaxTTL < cfg.SessionTTL {
