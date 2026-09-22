@@ -105,6 +105,8 @@ export const I18N = {
     resuming: "resuming session…",
     resumeRejected: (message) =>
       `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
+    crmLogFailed: (detail) =>
+      `Call not recorded in the CRM (${detail}) — you can log it manually.`,
   },
   de: {
     regState: "Registrierungsstatus",
@@ -208,6 +210,8 @@ export const I18N = {
     resuming: "Sitzung wird fortgesetzt…",
     resumeRejected: (message) =>
       `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
+    crmLogFailed: (detail) =>
+      `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
   },
 };
 

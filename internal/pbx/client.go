@@ -116,15 +116,11 @@ type VoicemailPage struct {
 
 // History fetches the extension's recent calls.
 func (c *Client) History(ctx context.Context, creds Credentials, limit int) (HistoryPage, error) {
-	var page HistoryPage
-	if !c.Enabled() {
-		return page, ErrDisabled
-	}
 	var body struct {
 		Entries []CDR `json:"entries"`
 	}
 	if err := c.getJSON(ctx, creds, fmt.Sprintf("/history?limit=%d", limit), &body); err != nil {
-		return page, err
+		return HistoryPage{}, err
 	}
 	return HistoryPage{Entries: body.Entries}, nil
 }
@@ -132,9 +128,6 @@ func (c *Client) History(ctx context.Context, creds Credentials, limit int) (His
 // VoicemailSummary fetches the new/old message counts.
 func (c *Client) VoicemailSummary(ctx context.Context, creds Credentials) (VoicemailSummary, error) {
 	var summary VoicemailSummary
-	if !c.Enabled() {
-		return summary, ErrDisabled
-	}
 	err := c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/summary", &summary)
 	return summary, err
 }
@@ -149,28 +142,19 @@ func (c *Client) VoicemailSummary(ctx context.Context, creds Credentials) (Voice
 // anything else (PBX unreachable, 5xx). ErrDisabled means no phone API
 // is configured and the caller decides the policy for that mode.
 func (c *Client) VerifyCredentials(ctx context.Context, creds Credentials) error {
-	if !c.Enabled() {
-		return ErrDisabled
-	}
-	var summary VoicemailSummary
-	return c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/summary", &summary)
+	_, err := c.VoicemailSummary(ctx, creds)
+	return err
 }
 
 // VoicemailMessages lists the extension's voicemail.
 func (c *Client) VoicemailMessages(ctx context.Context, creds Credentials) (VoicemailPage, error) {
 	var page VoicemailPage
-	if !c.Enabled() {
-		return page, ErrDisabled
-	}
 	err := c.getJSON(ctx, creds, "/voicemail/"+creds.Extension+"/messages", &page)
 	return page, err
 }
 
 // DeleteVoicemail removes one message.
 func (c *Client) DeleteVoicemail(ctx context.Context, creds Credentials, uuid string) error {
-	if !c.Enabled() {
-		return ErrDisabled
-	}
 	return c.do(ctx, creds, http.MethodDelete, "/voicemail/"+creds.Extension+"/messages/"+uuid, nil, nil)
 }
 
@@ -181,6 +165,13 @@ func (c *Client) getJSON(ctx context.Context, creds Credentials, path string, ou
 func (c *Client) do(
 	ctx context.Context, creds Credentials, method, path string, in, out any,
 ) error {
+	// The single disabled-policy home: every pbx call funnels through
+	// here, so an unconfigured phone API fails every method with
+	// ErrDisabled before any request is built.
+	if !c.Enabled() {
+		return ErrDisabled
+	}
+
 	var bodyReader io.Reader
 	if in != nil {
 		encoded, err := json.Marshal(in)

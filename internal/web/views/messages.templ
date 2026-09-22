@@ -68,7 +68,7 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 			<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
 		</span>
 		<span class="wp-thread-side">
-			<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt) }</span>
+			<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
 			if summary.Thread.Unread > 0 {
 				<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
 			}
@@ -95,7 +95,14 @@ templ NewMessageForm(prefillTo string, lang Lang) {
 			aria-label={ T(lang, "compose.to.label") }
 			value={ prefillTo }
 		></input>
-		<input name="body" placeholder={ T(lang, "compose.body.ph") } aria-label={ T(lang, "compose.body.label") }></input>
+		<textarea
+			name="body"
+			class="wp-compose-body"
+			rows="1"
+			placeholder={ T(lang, "compose.body.ph") }
+			aria-label={ T(lang, "compose.body.label") }
+		></textarea>
+		<span class="wp-segcount" hidden aria-live="polite"></span>
 		<button type="submit" class="wp-primary">{ T(lang, "compose.send") }</button>
 	</form>
 }
@@ -170,7 +177,13 @@ templ ThreadView(props ThreadViewProps) {
 			hx-disabled-elt="find button[type=submit]"
 		>
 			<input type="hidden" name="to" value={ props.Thread.Remote.String() }></input>
-			<input name="body" placeholder={ T(props.Lang, "compose.reply.ph") } aria-label={ T(props.Lang, "compose.body.label") }></input>
+			<textarea
+				name="body"
+				class="wp-compose-body"
+				rows="1"
+				placeholder={ T(props.Lang, "compose.reply.ph") }
+				aria-label={ T(props.Lang, "compose.body.label") }
+			></textarea>
 			<input
 				type="file"
 				name="attachment"
@@ -178,7 +191,9 @@ templ ThreadView(props ThreadViewProps) {
 				accept="image/*,application/pdf,.vcf"
 				aria-label="Attachments"
 			></input>
+			<span class="wp-segcount" hidden aria-live="polite"></span>
 			<button type="submit" class="wp-primary">{ T(props.Lang, "compose.send") }</button>
+			<div class="wp-attach" hidden></div>
 		</form>
 	</section>
 }
@@ -207,7 +222,7 @@ templ Bubble(msg domain.Message, lang Lang) {
 			</a>
 		}
 		<span class="wp-bubble-meta">
-			{ msg.CreatedAt.Local().Format(time.Kitchen) }
+			{ formatClock(lang, msg.CreatedAt) }
 			if msg.Direction == domain.DirectionOutbound {
 				@OutboundStatusBadge(msg.Status, lang)
 			}
@@ -240,7 +255,7 @@ func preview(body string, channel domain.Channel, lang Lang) string {
 	return body
 }
 
-func relativeTime(t time.Time) string {
+func relativeTime(t time.Time, lang Lang) string {
 	delta := time.Since(t)
 	switch {
 	case delta < time.Minute:
@@ -250,6 +265,6 @@ func relativeTime(t time.Time) string {
 	case delta < 24*time.Hour:
 		return fmtInt(int(delta.Hours())) + "h"
 	default:
-		return t.Local().Format("Jan 2, 15:04")
+		return formatStamp(lang, t)
 	}
 }

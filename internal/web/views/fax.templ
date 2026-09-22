@@ -42,6 +42,7 @@ templ FaxPanel(props FaxPanelProps) {
 				<span class="htmx-indicator" aria-hidden="true">…</span>
 				{ T(props.Lang, "fax.send") }
 			</button>
+			<div class="wp-attach" hidden></div>
 		</form>
 		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
 			@FaxList(props.Jobs, props.Names, props.Lang)
@@ -68,7 +69,7 @@ templ FaxRow(job domain.FaxJob, names map[string]string, lang Lang) {
 		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
 			<strong class="wp-thread-remote">{ displayName(job.Remote.String(), names) }</strong>
 			<span class="wp-muted">
-				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
+				{ formatStamp(lang, job.CreatedAt) }
 				{ " " }
 				@FaxStatusBadge(job, lang)
 				if job.Pages > 0 {

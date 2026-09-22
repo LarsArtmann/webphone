@@ -108,6 +108,33 @@ func migrate(ctx context.Context, db *sql.DB) error {
 // scan helpers read through.
 type rowScanner interface{ Scan(dest ...any) error }
 
+// listRows runs a list query and scans every row. It is the one home
+// for the result-set lifecycle (close on all paths) and the shared
+// error shape: query and iteration failures both wrap op.
+func listRows[T any](
+	ctx context.Context, db *sql.DB, op, query string, args []any,
+	scan func(rowScanner) (T, error),
+) ([]T, error) {
+	rows, err := db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make([]T, 0)
+	for rows.Next() {
+		v, err := scan(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("%s rows: %w", op, err)
+	}
+	return out, nil
+}
+
 func firstLine(s string) string {
 	for i := range s {
 		if s[i] == '\n' {

@@ -2,6 +2,7 @@ package views
 
 import (
 	"testing"
+	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -80,6 +81,28 @@ func TestIsSelfThread(t *testing.T) {
 	for _, tc := range cases {
 		if got := isSelfThread(tc.identity, tc.remote); got != tc.want {
 			t.Errorf("%s: isSelfThread(%q) = %v, want %v", tc.name, tc.identity, got, tc.want)
+		}
+	}
+}
+
+func TestFormatClockAndStampFollowLanguage(t *testing.T) {
+	// A fixed instant with a nonzero minute so both conventions differ.
+	at := time.Date(2026, 9, 22, 16, 9, 0, 0, time.UTC)
+	cases := []struct {
+		name  string
+		lang  Lang
+		clock string
+		stamp string
+	}{
+		{"english keeps the meridiem clock", LangEN, "4:09PM", "Sep 22, 16:09"},
+		{"german goes 24h + numeric date", LangDE, "16:09", "22.09. 16:09"},
+	}
+	for _, tc := range cases {
+		if got := formatClock(tc.lang, at); got != tc.clock {
+			t.Errorf("%s: formatClock = %q, want %q", tc.name, got, tc.clock)
+		}
+		if got := formatStamp(tc.lang, at); got != tc.stamp {
+			t.Errorf("%s: formatStamp = %q, want %q", tc.name, got, tc.stamp)
 		}
 	}
 }

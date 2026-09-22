@@ -11,6 +11,7 @@ import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
 import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import {
+  recordCrmCall,
   recordHistory,
   refreshServerHistory,
   scheduleVoicemailRefresh,
@@ -343,6 +344,14 @@ export function bindSession(newSession, target) {
         target,
         at: Date.now(),
         dur: dur > 0 ? dur : 0,
+      });
+      // Fire-and-forget CRM report: enrichment for the journal, never a
+      // call-path dependency — a dead CRM must not delay teardown.
+      recordCrmCall({
+        dir: newSession instanceof SIP.Inviter ? "out" : "in",
+        target,
+        dur: dur > 0 ? dur : 0,
+        established: live.established,
       });
       teardownSession(id);
       // A just-ended call may have left a voicemail deposit.

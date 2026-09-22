@@ -16,6 +16,12 @@ export const iceServers = Array.isArray(config.iceServers)
 
 export const phoneApiEnabled = config.phoneApi === true;
 
+// Optional Ledger CRM integration: when the server has one configured it
+// also accepts post-call reports on /api/calls (session-scoped). Off by
+// default; the server still answers 204 for a stale island that reports
+// anyway.
+export const crmEnabled = config.crm === true;
+
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
   : [];

@@ -4,7 +4,7 @@
 // access rides the extension's session via authedFetch — there is no
 // second login.
 
-import { phoneApiEnabled, sharedContacts } from "./config.js";
+import { phoneApiEnabled, crmEnabled, sharedContacts } from "./config.js";
 import {
   authedFetch,
   authHeaderValue,
@@ -38,6 +38,35 @@ export function recordHistory(entry) {
   const list = [entry, ...readHistory()].slice(0, HISTORY_MAX);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
   renderHistory();
+}
+
+// recordCrmCall reports one finished call to the CRM integration. The
+// server resolves the number against the CRM and journals the call on the
+// matching contact; unknown numbers are dropped server-side by design (the
+// integration never mints contacts). A failure surfaces as a warn toast —
+// the user expects the call in their CRM and must not lose it silently.
+export async function recordCrmCall({ dir, target, dur, established }) {
+  if (!crmEnabled) return;
+  try {
+    const res = await authedFetch("/api/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        number: target,
+        direction: dir,
+        seconds: dur > 0 ? dur : 0,
+        outcome: established ? "answered" : "missed",
+      }),
+    });
+    if (!res.ok) {
+      const detail = `HTTP ${res.status}`;
+      log(`crm call log failed: ${detail}`, "warn");
+      announce(t("crmLogFailed")(detail), "warn");
+    }
+  } catch (err) {
+    log(`crm call log failed: ${err.message}`, "warn");
+    announce(t("crmLogFailed")(err.message), "warn");
+  }
 }
 
 export async function refreshServerHistory() {
