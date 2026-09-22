@@ -33,8 +33,7 @@ globalThis.fetch = async (input) => {
 
 await import("../island/app/panels.js?test=contacts-nudge");
 
-const contactsFetches = () =>
-  fetchCalls.filter((url) => url.includes("/api/contacts")).length;
+const contactsFetches = () => fetchCalls.filter((url) => url.includes("/api/contacts")).length;
 
 test("the contacts nudge re-fetches the island dropdown", async () => {
   fetchCalls = [];
@@ -61,11 +60,6 @@ test("a nudged list renders the fetched rows", async () => {
   const wrap = doc.getElementById("contacts-wrap");
   assert.equal(wrap.hidden, false, "contacts wrap must be visible with rows");
   const list = doc.getElementById("contacts-list");
-  const texts = list.children.flatMap((li) =>
-    li.children.map((span) => span.textContent),
-  );
-  assert.ok(
-    texts.includes("Nudged"),
-    `fetched row must render, got: ${texts.join(", ")}`,
-  );
+  const texts = list.children.flatMap((li) => li.children.map((span) => span.textContent));
+  assert.ok(texts.includes("Nudged"), `fetched row must render, got: ${texts.join(", ")}`);
 });

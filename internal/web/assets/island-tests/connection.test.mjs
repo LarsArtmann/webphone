@@ -124,8 +124,7 @@ const resetStubs = () => {
 };
 
 const pill = () => doc.getElementById("reg-status").textContent;
-const logTexts = () =>
-  doc.getElementById("log").children.map((li) => li.textContent);
+const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
 
 test("connect builds one agent and reaches the registered pill", async () => {
   resetStubs();
