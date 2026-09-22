@@ -42,10 +42,7 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
-		numbers := make([]string, 0, len(threads))
-		for _, summary := range threads {
-			numbers = append(numbers, summary.Thread.Remote.String())
-		}
+		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
 		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, n.crm.Names(ctx, numbers), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
@@ -64,10 +61,7 @@ func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ dom
 		slog.Debug("sse: render fax list failed", "error", err)
 		return
 	}
-	numbers := make([]string, 0, len(jobs))
-	for _, job := range jobs {
-		numbers = append(numbers, job.Remote.String())
-	}
+	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
 	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.crm.Names(ctx, numbers), n.hubs.Lang(owner)))
 }
 
