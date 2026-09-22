@@ -790,6 +790,7 @@
                 includes = [
                   "*.css"
                   "internal/web/assets/shell.js"
+                  "internal/web/assets/theme-preload.js"
                   "internal/web/assets/island/**/*.js"
                 ];
               };
