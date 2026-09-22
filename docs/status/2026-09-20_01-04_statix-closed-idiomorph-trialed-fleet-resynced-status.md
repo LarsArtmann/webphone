@@ -78,18 +78,18 @@ master:** `aaba732` · **branch:** `experiment/idiomorph` @ `8aaf1c7`.
 
 ## b) PARTIALLY DONE
 
-1. **P25 merge** — trial + verdict done; the stack browser E2E against the
-   branch (the island's real regression gate) has NOT run, so the branch
-   stays unmerged. Every locally-checkable property is verified.
+1. ~~**P25 merge** — trial + verdict done; the stack browser E2E against the~~ done (branch E2E ran (148s data point); idiomorph merged to main)
+   ~~branch (the island's real regression gate) has NOT run, so the branch~~
+   ~~stays unmerged. Every locally-checkable property is verified.~~
 2. **Release announcements** — drafts done; posting is owner-gated
    (channel + wording + security-disclosure posture).
-3. **Release ops for the 2.1–2.3 train** — everything except posting is
-   closed (link refs, objects, drafts).
-4. **The v2.4.0 train** — `[Unreleased]` is accumulating the backup story +
-   statix fix + announcement docs; no fold/tag yet (normal, no task was
-   open — listed here so the accumulation is visible).
-5. **buildflow on the post-statix tree** — not run this session (see §e/4
-   for why that is a gap, not a decision I can fully defend).
+3. ~~**Release ops for the 2.1–2.3 train** — everything except posting is~~ done (closed except the owner-gated posting (TODO_LIST row))
+   ~~closed (link refs, objects, drafts).~~
+4. ~~**The v2.4.0 train** — `[Unreleased]` is accumulating the backup story +~~ done (v2.4.0 cut 2026-09-20 (CHANGELOG))
+   ~~statix fix + announcement docs; no fold/tag yet (normal, no task was~~
+   ~~open — listed here so the accumulation is visible).~~
+5. ~~**buildflow on the post-statix tree** — not run this session (see §e/4~~ done (later full runs - 2026-09-20 16:28 sweep, 2026-09-22 train 52/0)
+   ~~for why that is a gap, not a decision I can fully defend).~~
 
 ## c) NOT STARTED (standing, unchanged by this session)
 
@@ -98,14 +98,14 @@ master:** `aaba732` · **branch:** `experiment/idiomorph` @ `8aaf1c7`.
 2. **g2 — release cadence / pin policy decision** (P8 memo).
 3. **g3 — SMS-bridge journal grep on prod** (owner command; webphone-side
    502 classification already shipped).
-4. **P20** — typed module options for `csrf.trusted_origins`/`trusted_proxies`
-   - stack-side assertion.
+4. ~~**P20** — typed module options for `csrf.trusted_origins`/`trusted_proxies`~~ done (typed options + the stack-side rendered-config assertion shipped (webphone.nix))
+   ~~- stack-side assertion.~~
 5. **1001-registration anomaly** — sofia dump instrumentation + ×2 green.
-6. **Island sanitization alignment** — owner decision (regex sides).
-7. **Own-number visibility** — owner decision (DID feed choice).
-8. **Standing watches** — sip.js 0.22, templ-components ThemeScript opt-out,
-   oxlint globals, E2E wall-time budget (151 s baseline). nanoid watch is
-   CLOSED.
+6. ~~**Island sanitization alignment** — owner decision (regex sides).~~ done (sanitization aligned + pinned (DECIDED 2026-09-20))
+7. ~~**Own-number visibility** — owner decision (DID feed choice).~~ done (identities config map shipped (DECIDED 2026-09-20))
+8. ~~**Standing watches** — sip.js 0.22, templ-components ThemeScript opt-out,~~ done (superseded by the T20 dated quarterly watch row; nanoid closed)
+   ~~oxlint globals, E2E wall-time budget (151 s baseline). nanoid watch is~~
+   ~~CLOSED.~~
 
 ## d) TOTALLY FUCKED UP
 
@@ -176,79 +176,79 @@ items are brainstorm, not commitment).
    pbx-artmann `master` `aaba732` + `scripts/webphone-smoke.py --base
    https://pbx.artmann.tech` (must show `bogus credentials rejected`) +
    `switch`.
-2. **Run the stack browser E2E against `experiment/idiomorph`** via
-   `--override-input`, then merge to main or revert (one commit).
-3. **If idiomorph merges**: stack relock → pbx relock → include in the next
-   prod deploy; update AGENTS SSE-payload section (morph changes the
-   swap-safe-fragments rationale) and TODO_LIST row.
-4. **Cut v2.4.0**: fold `[Unreleased]` (backup timer, statix fix,
-   announcements docs) via the resumable `scripts/release.sh`; single train,
-   then the g1 deploy can ride it instead (owner sequencing call, see Q1).
-5. **`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` on current main** (gitleaks,
-   codespell, go-licenses preflight never saw the post-statix tree).
-6. **`nix run nixpkgs#lychee -- .`** to machine-check the new CHANGELOG
-   link refs.
-7. **aarch64 re-verify**: `nix build .#webphone --system aarch64-linux` on
-   current main (module change shouldn't affect the package; the runbook
-   gate is explicit and cheap).
+2. ~~**Run the stack browser E2E against `experiment/idiomorph`** via~~ done (ran on the branch (148s data point); merged to main)
+   ~~`--override-input`, then merge to main or revert (one commit).~~
+3. ~~**If idiomorph merges**: stack relock → pbx relock → include in the next~~ done (merged; the AGENTS SSE section documents the morph contract)
+   ~~prod deploy; update AGENTS SSE-payload section (morph changes the~~
+   ~~swap-safe-fragments rationale) and TODO_LIST row.~~
+4. ~~**Cut v2.4.0**: fold `[Unreleased]` (backup timer, statix fix,~~ done (v2.4.0 cut 2026-09-20 (CHANGELOG))
+   ~~announcements docs) via the resumable `scripts/release.sh`; single train,~~
+   ~~then the g1 deploy can ride it instead (owner sequencing call, see Q1).~~
+5. ~~**`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` on current main** (gitleaks,~~ done (later full buildflow runs (2026-09-20 sweep, 2026-09-22 train))
+   ~~codespell, go-licenses preflight never saw the post-statix tree).~~
+6. ~~**`nix run nixpkgs#lychee -- .`** to machine-check the new CHANGELOG~~ done (lychee ran in-train + the closing-sweep rule covers link edits)
+   ~~link refs.~~
+7. ~~**aarch64 re-verify**: `nix build .#webphone --system aarch64-linux` on~~ done (aarch64 per train (release.sh step 8))
+   ~~current main (module change shouldn't affect the package; the runbook~~
+   ~~gate is explicit and cheap).~~
 8. **Announcements**: owner picks channel(s) + approves wording
    (`docs/announcements/2026-09-20_*`); post; add discussion links to the
    release objects.
 9. **g3 SMS bridge**: owner greps `journalctl -u telnyx-webhooks --since
    today | grep -iE "sms|422|error"`; restore the outbound SMS lane.
-10. **P20**: typed `csrf.trusted_origins`/`trusted_proxies` module options
-    (defaults preserved) + stack-side assertion of rendered `settings.csrf`.
+10. ~~**P20**: typed `csrf.trusted_origins`/`trusted_proxies` module options~~ done (P20 shipped both sides - webphone flake check + stack webphone.nix rendered-config assertion)
+    ~~(defaults preserved) + stack-side assertion of rendered `settings.csrf`.~~
 11. **1001 anomaly**: sofia registration dump on E2E reconnect; read the
     island reload-fallback path; fix island or E2E; ×2 green runs.
-12. **Island sanitization alignment** (owner decision): keep letters
-    (extend island regex) or drop server-side; align + pinning test.
-13. **Own-number visibility** (owner decision): `/phone-api` identity
-    endpoint vs static config map vs CDR `caller_id_number`; surface DID in
-    header + compose.
-14. **CSRF token rotation** (known constraint from 2026-09-19): island must
-    adopt a fresh token post-login; design + island change + stack E2E.
-15. **Bundle the two htmx extensions** via `cqrshtmx.HTMXExtensionsHandler`
-    (single request for sse.js + idiomorph.js) if idiomorph merges.
-16. **Backup-timer NixOS VM test** (fax-feed-test style): boot the module
-    with `backup.enable`, run the oneshot, assert snapshot files appear.
-17. **Module check assertions for backup**: when `backup.enable`, assert the
-    rendered timer `OnCalendar`/`Unit` in the `webphone-module` check.
-18. **Probe locations in the module**: dedicated nginx locations for
-    `/healthz` `/livez` `/startupz` (optional allowlist for fleet scrapers)
-    instead of riding `/` — with the flake check asserting them.
-19. **Server-Timing in prod**: module option to enable the env-gated
-    middleware for the live host.
+12. ~~**Island sanitization alignment** (owner decision): keep letters~~ done (sanitization aligned + pinned (CHANGELOG))
+    ~~(extend island regex) or drop server-side; align + pinning test.~~
+13. ~~**Own-number visibility** (owner decision): `/phone-api` identity~~ done (identities config map shipped (CHANGELOG))
+    ~~endpoint vs static config map vs CDR `caller_id_number`; surface DID in~~
+    ~~header + compose.~~
+14. ~~**CSRF token rotation** (known constraint from 2026-09-19): island must~~ done (post-login adoption shipped (session.js adoptFreshCsrfToken; AGENTS CSRF section))
+    ~~adopt a fresh token post-login; design + island change + stack E2E.~~
+15. ~~**Bundle the two htmx extensions** via `cqrshtmx.HTMXExtensionsHandler`~~ done (ONE bundle via /htmx-ext.js (sse + idiomorph, composite ETag))
+    ~~(single request for sse.js + idiomorph.js) if idiomorph merges.~~
+16. ~~**Backup-timer NixOS VM test** (fax-feed-test style): boot the module~~ done (checks.webphone-backup VM test shipped)
+    ~~with `backup.enable`, run the oneshot, assert snapshot files appear.~~
+17. ~~**Module check assertions for backup**: when `backup.enable`, assert the~~ done (module check asserts the timer/oneshot pair)
+    ~~rendered timer `OnCalendar`/`Unit` in the `webphone-module` check.~~
+18. ~~**Probe locations in the module**: dedicated nginx locations for~~ done (dedicated probe triple locations shipped + asserted (six vhost locations))
+    ~~`/healthz` `/livez` `/startupz` (optional allowlist for fleet scrapers)~~
+    ~~instead of riding `/` — with the flake check asserting them.~~
+19. ~~**Server-Timing in prod**: module option to enable the env-gated~~ done (serverTiming.enable option shipped (flake-checked env gate))
+    ~~middleware for the live host.~~
 20. **Rate-limiter XFF flip**: revisit `KeyExtractorFromClientIP` once the
     stack proves XFF sanitization (documented flip condition in AGENTS).
 21. **HSTS on prod** (owner call): the option ships opt-in; decide for
     `pbx.artmann.tech` once https-only is proven.
 22. **Analyze the next E2E flake** with the shipped `transfer_dbg()`
     timestamped dumps (standing instrumentation from P24/P5).
-23. **E2E wall-time budget watch**: compare next stack E2E against the
-    151 s baseline; investigate drift.
-24. **sip.js 0.22 watch**: when released, check whether the 0.x
-    `userAgent.reconnect()` hang is fixed upstream; if yes, plan the repin
-    - drop-or-keep the island watchdog (currently load-bearing).
-25. **templ-components ThemeScript watch**: if an opt-out knob ships, take
-    it, drop the CSP hash + the `!important` color-scheme overrides.
-26. **oxlint globals watch**: keep new browser globals in
-    `island/oxlint.json`; consider an occasional audit that the globals
-    list is still minimal.
-27. **gh release object audit**: diff each release body against its
-    CHANGELOG section (v2.1.0/v2.2.0/v2.3.0 were manual objects; drift is
-    possible).
-28. **Status report hygiene**: docs-health ANNOTATE/harvest pass over the
-    four reports now in `docs/status/` (22:26, 22:29, 23:43, 00:14) — fold
-    anything still-open into TODO_LIST, archive stale ones.
-29. **HARVEST this report's section (f)** into TODO_LIST/ROADMAP with the
-    docs-health routing rigor (first ~15 → TODO_LIST, tail → ROADMAP).
-30. **Smoke check for the idiomorph asset on main** if merged (the branch's
-    `TestStaticAssetsServe` row rides the merge).
-31. **`/version` + probe triple in the module docs**: README's module table
-    should name all five probe/readiness endpoints and their contracts.
-32. **Contacts import/export UI**: `internal/vcard` exists server-side;
-    surface an import button + export endpoint (check ROADMAP before
-    committing to scope).
+23. ~~**E2E wall-time budget watch**: compare next stack E2E against the~~ done (superseded by the T20 dated watch; one 172.8s over-budget point recorded 2026-09-20)
+    ~~151 s baseline; investigate drift.~~
+24. ~~**sip.js 0.22 watch**: when released, check whether the 0.x~~ done (checked 2026-09-22 - npm latest is still 0.21.2, no trigger)
+    ~~`userAgent.reconnect()` hang is fixed upstream; if yes, plan the repin~~
+    ~~- drop-or-keep the island watchdog (currently load-bearing).~~
+25. ~~**templ-components ThemeScript watch**: if an opt-out knob ships, take~~ done (checked 2026-09-22 - no opt-out knob through v1.19.0)
+    ~~it, drop the CSP hash + the `!important` color-scheme overrides.~~
+26. ~~**oxlint globals watch**: keep new browser globals in~~ done (gate green; no new browser globals in the 2026-09-22 island change)
+    ~~`island/oxlint.json`; consider an occasional audit that the globals~~
+    ~~list is still minimal.~~
+27. ~~**gh release object audit**: diff each release body against its~~ done (audit done 2026-09-20; empty release bodies backfilled from CHANGELOG)
+    ~~CHANGELOG section (v2.1.0/v2.2.0/v2.3.0 were manual objects; drift is~~
+    ~~possible).~~
+28. ~~**Status report hygiene**: docs-health ANNOTATE/harvest pass over the~~ done (this 2026-09-22 docs-health pass (five-report ANNOTATE))
+    ~~four reports now in `docs/status/` (22:26, 22:29, 23:43, 00:14) — fold~~
+    ~~anything still-open into TODO_LIST, archive stale ones.~~
+29. ~~**HARVEST this report's section (f)** into TODO_LIST/ROADMAP with the~~ done (harvested by the 2026-09-20 TODO sweeps)
+    ~~docs-health routing rigor (first ~15 → TODO_LIST, tail → ROADMAP).~~
+30. ~~**Smoke check for the idiomorph asset on main** if merged (the branch's~~ done (asset pinned on main (TestStaticAssetsServe))
+    ~~`TestStaticAssetsServe` row rides the merge).~~
+31. ~~**`/version` + probe triple in the module docs**: README's module table~~ done (README module docs name the probe endpoints)
+    ~~should name all five probe/readiness endpoints and their contracts.~~
+32. ~~**Contacts import/export UI**: `internal/vcard` exists server-side;~~ done (contacts import/export UI shipped (contacts.templ import row + /contacts/export))
+    ~~surface an import button + export endpoint (check ROADMAP before~~
+    ~~committing to scope).~~
 33. **Backup retention**: the module skeleton explicitly leaves retention
     to operator tooling; consider an optional `backup.retentionDays`
     (prune old snapshots) if the owner wants self-contained backups.
@@ -261,40 +261,40 @@ items are brainstorm, not commitment).
     win, one module option.
 37. **Island DOM contract doc**: AGENTS lists the 35 ids; a generated
     contract file (test output) would stop manual enumeration drift.
-38. **Consider `im-preserve` audit**: if idiomorph merges, sweep partials
-    for nodes that should opt out of morphing (audio elements, inputs with
-    focus).
+38. ~~**Consider `im-preserve` audit**: if idiomorph merges, sweep partials~~ done (im-preserve ids shipped (TestVoicemailRowsCarryStableMorphIds))
+    ~~for nodes that should opt out of morphing (audio elements, inputs with~~
+    ~~focus).~~
 39. **Fleet health hub doc**: one paragraph in README showing how to scrape
     the probe triple (they were built for this; nobody documented it).
-40. **Error-page parity**: error.templ vs templ-components errorpage —
-    confirm the 404/500 paths render the shell style (was true pre-2.0;
-    re-verify post-templ-components adoption).
-41. **Smoke suite**: add a `/partials/nav` anonymous-vs-authed shape check
-    (labels render anonymously, badges only signed-in) — contract is
-    AGENTS-documented but un-smoked.
-42. **CHANGELOG**: start the `[Unreleased]` "Added" entry for whatever lands
-    next (keep the drift guard happy; versionAheadOf + dated-section rule).
+40. ~~**Error-page parity**: error.templ vs templ-components errorpage —~~ done (styled 404 restored 2026-09-20 (TestNotFoundRendersTheShell; error.notfound i18n'd))
+    ~~confirm the 404/500 paths render the shell style (was true pre-2.0;~~
+    ~~re-verify post-templ-components adoption).~~
+41. ~~**Smoke suite**: add a `/partials/nav` anonymous-vs-authed shape check~~ done (nav smoke shipped (CHANGELOG))
+    ~~(labels render anonymously, badges only signed-in) — contract is~~
+    ~~AGENTS-documented but un-smoked.~~
+42. ~~**CHANGELOG**: start the `[Unreleased]` "Added" entry for whatever lands~~ done ([Unreleased] maintained; drift guard held through v2.4.0)
+    ~~next (keep the drift guard happy; versionAheadOf + dated-section rule).~~
 43. **Release script**: add a post-train step that runs lychee automatically
     (step 5 exists manually; scripting removes the forget-class gap).
-44. **Release script**: add the aarch64 cross-build + island-lint
-    cross-check from the runbook step 8 into the script (currently manual).
-45. **Docs**: README "Backups and restore" — add the drill script invocation
-    line so operators can re-run the drill themselves (script exists,
-    README describes manual steps only).
-46. **Security headers**: re-audit CSP against the idiomorph script
-    (same-origin, fine today — re-check if anything ever moves to a CDN,
-    which is currently banned by policy).
-47. **Vulnix cadence**: add a standing TODO to re-run `nix run .#vulnix`
-    after every train (twice-running pattern now: make it a row, not memory).
-48. **Test the drift guard's micro-test coverage** remains green when the
-    next tag cuts (versionAheadOf + changelogHasDatedSection helpers) —
-    cheap regression check at v2.4.0 fold time.
-49. **Stack-side**: telephony fax-feed check exists; consider a
-    `telephony-webphone` VM test bump against the post-statix pin at the
-    next stack `nix flake check`.
-50. **Discipline item (meta)**: add "verify process death + lychee +
-    buildflow full" as the closing-sweep checklist tail in AGENTS' release
-    runbook so the §e items become runbook steps instead of memory.
+44. ~~**Release script**: add the aarch64 cross-build + island-lint~~ done (release.sh step 8 does both cross-checks + the ELF machine guard)
+    ~~cross-check from the runbook step 8 into the script (currently manual).~~
+45. ~~**Docs**: README "Backups and restore" — add the drill script invocation~~ done (README shows the drill invocation line)
+    ~~line so operators can re-run the drill themselves (script exists,~~
+    ~~README describes manual steps only).~~
+46. ~~**Security headers**: re-audit CSP against the idiomorph script~~ done (policy holds - same-origin only, no CDN; re-checked with the morph swap)
+    ~~(same-origin, fine today — re-check if anything ever moves to a CDN,~~
+    ~~which is currently banned by policy).~~
+47. ~~**Vulnix cadence**: add a standing TODO to re-run `nix run .#vulnix`~~ done (release.sh now gates on nix run .#vulnix)
+    ~~after every train (twice-running pattern now: make it a row, not memory).~~
+48. ~~**Test the drift guard's micro-test coverage** remains green when the~~ done (v2.4.0 cut green; the micro-tests held)
+    ~~next tag cuts (versionAheadOf + changelogHasDatedSection helpers) —~~
+    ~~cheap regression check at v2.4.0 fold time.~~
+49. ~~**Stack-side**: telephony fax-feed check exists; consider a~~ done (stack webphone VM test re-runs per train (2026-09-22 again))
+    ~~`telephony-webphone` VM test bump against the post-statix pin at the~~
+    ~~next stack `nix flake check`.~~
+50. ~~**Discipline item (meta)**: add "verify process death + lychee +~~ done (closing-sweep checklist is AGENTS runbook step 9 (process-death proof + lychee + buildflow full))
+    ~~buildflow full" as the closing-sweep checklist tail in AGENTS' release~~
+    ~~runbook so the §e items become runbook steps instead of memory.~~
 
 ## g) Questions I can NOT figure out myself
 

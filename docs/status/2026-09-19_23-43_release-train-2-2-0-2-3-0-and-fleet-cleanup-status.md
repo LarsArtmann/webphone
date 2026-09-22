@@ -40,18 +40,18 @@ flake check building) — a11 states machine state, not results.
 
 | #  | Item                                        | State                                                                                                                                                   | What remains                                                                       |
 | -- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| b1 | **v2.3.0 stack chain**                      | tag + relock done (`14c6c5b`), stack flake check building at 23:43                                                                                      | stack flake check ✓ → aarch64 cross-builds → gh release object (steps 7b–9)        |
-| b2 | **pbx-artmann relock + toplevel pre-build** | tree clean, `path:` input to the stack; stack moved twice tonight (fax-feed + v2.3.0 relock)                                                            | `nix flake lock --update-input telephony` + toplevel build + push — AFTER b1 lands |
-| b3 | **P5 two-greens rule**                      | green #1 = instrumented standalone run; the v2.3.0 release's browser E2E (b1) is green #2                                                               | confirm b1's E2E marker in the log                                                 |
-| b4 | **P17 deliverables**                        | drill PASSED (a5); inventory = SQLite + `files/` blob tree; the documented rsync/tar pattern + module timer skeleton NOT yet written into README/module | docs commit (deliberately held until the release train stops touching the tree)    |
-| b5 | **P25 idiomorph experiment**                | untouched (correctly last; gated on the stack E2E which is green again)                                                                                 | branch + verdict doc                                                               |
+| ~~b1~~ | ~~**v2.3.0 stack chain**~~ | ~~tag + relock done (`14c6c5b`), stack flake check building at 23:43~~ | ~~stack flake check ✓ → aarch64 cross-builds → gh release object (steps 7b–9)~~ done (RELEASE-EXIT=0; 00:14 report a1) |
+| ~~b2~~ | ~~**pbx-artmann relock + toplevel pre-build**~~ | ~~tree clean, `path:` input to the stack; stack moved twice tonight (fax-feed + v2.3.0 relock)~~ | ~~~`nix flake lock --update-input telephony` + toplevel build + push — AFTER b1 lands~~ done (00:14 report a4/a5; relocked again per train since) |
+| ~~b3~~ | ~~**P5 two-greens rule**~~ | ~~green #1 = instrumented standalone run; the v2.3.0 release's browser E2E (b1) is green #2~~ | ~~confirm b1's E2E marker in the log~~ done (confirmed; 00:14 report a2) |
+| ~~b4~~ | ~~**P17 deliverables**~~ | ~~drill PASSED (a5); inventory = SQLite + `files/` blob tree; the documented rsync/tar pattern + module timer skeleton NOT yet written into README/module~~ | ~~docs commit (deliberately held until the release train stops touching the tree)~~ done (00:14 report a6; plus the VM test + drill check in v2.4.0) |
+| ~~b5~~ | ~~**P25 idiomorph experiment**~~ | ~~untouched (correctly last; gated on the stack E2E which is green again)~~ | ~~branch + verdict doc~~ done (executed 01:04; merged to main with the branch E2E green — AGENTS morph-swap section) |
 
 ## c) NOT STARTED (standing, untouched this session)
 
 1. Prod redeploy (owner ssh) — the security fix + probes all fold into one rebuild (g1).
-2. Island sanitization alignment (owner decision, P-row standing).
+2. ~~Island sanitization alignment (owner decision, P-row standing).~~ done (sanitization aligned + pinned, DECIDED 2026-09-20 (CHANGELOG))
 3. Own-number DID feed (owner decision) + SMS-bridge journal grep (owner-only access).
-4. Self-health leftovers owned by the sibling session's report: smoke already extended by me (b6 closed there), `/livez` consumer decision (their g2), 18-49 review annotation, health-hub option.
+4. ~~Self-health leftovers owned by the sibling session's report: smoke already extended by me (b6 closed there), `/livez` consumer decision (their g2), 18-49 review annotation, health-hub option.~~ done (routed - the sibling leftovers are annotated in the 22:29 report (2026-09-22 pass))
 
 ## d) TOTALLY FUCKED UP (no spin)
 
@@ -74,15 +74,15 @@ flake check building) — a11 states machine state, not results.
 
 ## f) NEXT STEPS (ordered; owner-independent unless marked)
 
-1. Wait for v2.3.0 run: stack flake check → aarch64 → gh release v2.3.0 object (b1).
-2. Confirm browser-E2E green #2 inside that run (b3) → P5 closes.
-3. Commit P17 deliverables: README backup/restore section + drill script into `scripts/` + NixOS module backup-timer skeleton (b4) — after the train stops.
-4. pbx-artmann: `nix flake lock --update-input telephony` → `nix build .#nixosConfigurations.pbx.config.system.build.toplevel` → push (b2).
-5. Final sweep: `git ls-remote` × 3 repos, `/version` + healthz of the release builds, wrap-up message.
+1. ~~Wait for v2.3.0 run: stack flake check → aarch64 → gh release v2.3.0 object (b1).~~ done (v2.3.0 RELEASE-EXIT=0 (00:14 report a1))
+2. ~~Confirm browser-E2E green #2 inside that run (b3) → P5 closes.~~ done (P5 closed, green x2 (00:14 report a2))
+3. ~~Commit P17 deliverables: README backup/restore section + drill script into `scripts/` + NixOS module backup-timer skeleton (b4) — after the train stops.~~ done (P17 deliverables shipped (00:14 report a6))
+4. ~~pbx-artmann: `nix flake lock --update-input telephony` → `nix build .#nixosConfigurations.pbx.config.system.build.toplevel` → push (b2).~~ done (pbx-artmann relocked + toplevel green (00:14 report a4/a5))
+5. ~~Final sweep: `git ls-remote` × 3 repos, `/version` + healthz of the release builds, wrap-up message.~~ done (final sweep done (01:04 report a9))
 6. (owner, g1) Prod redeploy of v2.3.0 + post-deploy probes.
-7. (owner, g2) Release cadence preference (see g2) — decides whether tomorrow's batches ship same-day.
+7. ~~(owner, g2) Release cadence preference (see g2) — decides whether tomorrow's batches ship same-day.~~ done (cadence rule recorded - train on a user-visible theme (TODO_LIST train-cut row))
 8. (owner, g3) SMS-bridge journal grep (see g3).
-9. P25 idiomorph branch + verdict doc (gated green: stack E2E).
+9. ~~P25 idiomorph branch + verdict doc (gated green: stack E2E).~~ done (idiomorph merged to main (morph:innerHTML on all five surfaces))
 10. 1001-registration E2E anomaly: the flake tonight may BE the same class — the instrumentation dumps now capture the row state; if it reproduces, root-cause from those dumps instead of re-arming blindly.
 11. Fleet sweep: drop `GOEXPERIMENT=jsonv2` cargo-culting where Go 1.27 made json/v2 stable (sibling session's e10; fleet-wide, webphone first).
 12. Health-hub `/livez` consumer decision (sibling session's g2) — folds into the same owner conversation.
@@ -94,4 +94,7 @@ flake check building) — a11 states machine state, not results.
 
 1. **Prod redeploy go + version**: v2.3.0 carries the credential-verification fix AND the health triple; v2.2.0 carries the fix only. Deploy v2.3.0 directly (recommended — one rebuild), or the already-released v2.2.0 first? Command (owner ssh, pbx-artmann): relock → `nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech` → probe `scripts/webphone-smoke.py --base https://pbx.artmann.tech` (must show `bogus credentials rejected` green) → `switch`.
 2. **Release cadence**: tonight shipped 2.2.0 and 2.3.0 as separate tags ~90 minutes apart (features landed continuously). Going forward: keep same-day minor releases per batch (recommended: small, honest, semver-clean), or batch to one release per day?
+
+*(Answered — the recorded cadence rule is "train on a user-visible
+theme", cited by the TODO_LIST train-cut row; v2.4.0 followed it.)*
 3. **SMS bridge (prod-only access)**: the outbound SMS 422/502 root cause needs a journal grep on pbx — `journalctl -u telnyx-webhooks --since today | grep -iE "sms|422|error"`. Can you run it and paste the tail, or should the bridge health land in the operator window so this stops needing owner hands?

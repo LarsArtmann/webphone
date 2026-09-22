@@ -33,16 +33,16 @@ new backup-timer module block — known fix, not yet applied (d1).
 
 | #  | Item                                                                       | State                                                                                                                                                                                                                                       | What remains                                                                                                  |
 | -- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| b1 | **webphone full `nix flake check` is RED at the statix gate**              | `package/nixos-module.nix` now has THREE top-level `systemd` assignments (webphone, webphone-backup service, backup timer); statix demands one `systemd = { ... }` attrset — the exact pin AGENTS documents for the stack's nginx locations | Merge the three blocks into one attrset, re-run `nix flake check`, push. Fix is mechanical, ~10 min           |
-| b2 | **Release-ops remainders**                                                 | three gh release objects live                                                                                                                                                                                                               | CHANGELOG bottom link refs + announcement drafts (owner approves posting)                                     |
-| b3 | **P25 idiomorph**                                                          | untouched, gate is green (E2E ×2)                                                                                                                                                                                                           | branch + experiment + verdict doc                                                                             |
-| b4 | **Sibling session's self-health leftovers** (their 22:29 report owns them) | —                                                                                                                                                                                                                                           | `/livez` consumer decision, 18-49 review annotation, go-health doc.go, cqrs-htmx v4.11.0 release-object audit |
+| ~~b1~~ | ~~**webphone full `nix flake check` is RED at the statix gate**~~ | ~~~`package/nixos-module.nix` now has THREE top-level `systemd` assignments (webphone, webphone-backup service, backup timer); statix demands one `systemd = { ... }` attrset — the exact pin AGENTS documents for the stack's nginx locations~~ | ~~Merge the three blocks into one attrset, re-run `nix flake check`, push. Fix is mechanical, ~10 min~~ done at `8b39eab` (01:04 report a1) |
+| ~~b2~~ | ~~**Release-ops remainders**~~ | ~~three gh release objects live~~ | ~~CHANGELOG bottom link refs + announcement drafts (owner approves posting)~~ done (link refs + drafts shipped 01:04; posting remains the owner-gated TODO row) |
+| ~~b3~~ | ~~**P25 idiomorph**~~ | ~~untouched, gate is green (E2E ×2)~~ | ~~branch + experiment + verdict doc~~ done (executed 01:04, merged to main; morph swap is the live-update contract) |
+| ~~b4~~ | ~~**Sibling session's self-health leftovers** (their 22:29 report owns them)~~ | ~~~—~~ | ~~~`/livez` consumer decision, 18-49 review annotation, go-health doc.go, cqrs-htmx v4.11.0 release-object audit~~ done (routed — annotated in the 22:29 report, 2026-09-22 pass) |
 
 ## c) NOT STARTED (owner-only, unchanged)
 
 1. **Prod redeploy** — v2.3.0 folds everything; one rebuild (g1 below).
-2. Island sanitization alignment (owner decision).
-3. Own-number DID feed (owner decision).
+2. ~~Island sanitization alignment (owner decision).~~ done (sanitization aligned + pinned, DECIDED 2026-09-20 (CHANGELOG))
+3. ~~Own-number DID feed (owner decision).~~ done (identities config map shipped, DECIDED 2026-09-20 (CHANGELOG))
 4. SMS-bridge journal grep (owner-only access) (g3 below).
 
 ## d) TOTALLY FUCKED UP (this stretch, no spin)
@@ -62,19 +62,22 @@ new backup-timer module block — known fix, not yet applied (d1).
 
 ## f) NEXT STEPS (ordered; owner-independent unless marked)
 
-1. Fix the statix single-assignment violation in `package/nixos-module.nix` (merge the three `systemd` blocks) → full `nix flake check` green → push.
-2. Re-run `nix run .#vulnix` on the NEW runtime closure (go-health + samber/do transitive + cqrs-htmx v4.11.0 are new since the last scan; glibc triage note is the baseline).
-3. CHANGELOG bottom link refs for v2.1.0/v2.2.0/v2.3.0 + announcement drafts (owner approves posting).
-4. P25 idiomorph experiment branch + verdict doc (gates are green).
-5. Fold-back check: confirm the stack's lock still rides webphone main after (1) lands — if the fix commit lands after the relock, one more `nix flake lock --update-input webphone` in the stack + pbx-artmann relock dance.
+1. ~~Fix the statix single-assignment violation in `package/nixos-module.nix` (merge the three `systemd` blocks) → full `nix flake check` green → push.~~ done at `8b39eab`
+2. ~~Re-run `nix run .#vulnix` on the NEW runtime closure (go-health + samber/do transitive + cqrs-htmx v4.11.0 are new since the last scan; glibc triage note is the baseline).~~ done (re-scanned 01:04; release.sh now gates on vulnix)
+3. ~~CHANGELOG bottom link refs for v2.1.0/v2.2.0/v2.3.0 + announcement drafts (owner approves posting).~~ done (link refs + drafts done 01:04; posting stays owner-gated (TODO_LIST))
+4. ~~P25 idiomorph experiment branch + verdict doc (gates are green).~~ done (idiomorph merged to main)
+5. ~~Fold-back check: confirm the stack's lock still rides webphone main after (1) lands — if the fix commit lands after the relock, one more `nix flake lock --update-input webphone` in the stack + pbx-artmann relock dance.~~ done (stack re-pins verified per train; 2026-09-22 again (550aaea))
 6. (owner, g1) Prod redeploy of v2.3.0 + post-deploy probes (bogus-creds gate must go green).
 7. (owner, g2) Release cadence preference.
 8. (owner, g3) SMS-bridge journal grep.
-9. Sibling-session handoffs (b4 list).
+9. ~~Sibling-session handoffs (b4 list).~~ done (routed - annotated in the 22:29 report (2026-09-22 pass))
 10. Version-drift guard wiring INTO buildflow (currently a Go test + release-script fold-check; the buildflow step was the row's original ask).
 
 ## g) OWNER QUESTIONS (3)
 
 1. **Prod redeploy go + version**: v2.3.0 is fully released, pbx-artmann's toplevel pre-builds green — deploy v2.3.0 now (`nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech`, probe `scripts/webphone-smoke.py --base https://pbx.artmann.tech` must show `bogus credentials rejected` green, then `switch`)? Recommended: yes, now — it closes tonight's found-and-fixed forged-session hole on prod.
 2. **Release cadence**: same-day minor releases per batch (2.2.0 + 2.3.0 tonight, recommended: small, semver-honest, deployable) or one release per day maximum?
+
+   *(Answered — the recorded cadence rule is "train on a user-visible
+   theme", cited by the TODO_LIST train-cut row; v2.4.0 followed it.)*
 3. **SMS bridge**: the 422/502 root cause needs prod-only journal access — run `journalctl -u telnyx-webhooks --since today | grep -iE "sms|422|error"` on pbx and paste the tail, or should bridge health move into the operator window so the SMS lane stops depending on owner hands?
