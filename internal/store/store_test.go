@@ -286,7 +286,7 @@ func TestContactCountCap(t *testing.T) {
 		ID:        domain.GenerateContactID(),
 		Owner:     owner,
 		Name:      "renamed",
-		Phone:     domain.MustParsePhone("+4917000000000"),
+		Phone:     domain.MustParsePhone("+491700000000"),
 		CreatedAt: time.Now(),
 	}
 	if err := contacts.Save(ctx, rename); err != nil {
