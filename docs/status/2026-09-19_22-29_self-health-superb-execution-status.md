@@ -44,35 +44,35 @@ honestly in (d).
 
 | #  | Item                                                | State                                                                          | What remains                                                                                                                                                                                                                                                                                                                                                                                                        |
 | -- | --------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| b1 | **Stack-side consumption of today's webphone main** | webphone pushed; stack pins ride main                                          | stack `nix flake lock --update-input webphone` + `telephony-browser` (browser E2E — now also the first live check of the SSE `retry:` hint), `telephony-webphone` VM test, full stack `nix flake check` (runbook steps 6–7). **Unverified: the stack's evaluation of webphone's flake under the new Go 1.27.1 floor** (webphone's own nixpkgs pin must supply `go_1_27` in that context — near-certain, not proven) |
+| ~~b1~~ | ~~**Stack-side consumption of today's webphone main**~~ | ~~webphone pushed; stack pins ride main~~ | ~~stack `nix flake lock --update-input webphone` + `telephony-browser` (browser E2E — now also the first live check of the SSE `retry:` hint), `telephony-webphone` VM test, full stack `nix flake check` (runbook steps 6–7). **Unverified: the stack's evaluation of webphone's flake under the new Go 1.27.1 floor** (webphone's own nixpkgs pin must supply `go_1_27` in that context — near-certain, not proven)~~ done (re-pinned + gates run per train since; flake check green on the 1.27.1-floor pin, v2.3.0 train; 2026-09-22 pin 550aaea) |
 | b2 | **F2 value realization**                            | endpoints live and honest                                                      | nothing polls them yet — the module comment invites a fleet hub; the systemd-watchdog and health-hub options are recorded, undecided (question g2)                                                                                                                                                                                                                                                                  |
 | b3 | **18-49 DI/health review doc**                      | referenced by AGENTS/CHANGELOG                                                 | not yet ANNOTATED with F1/F2/F3 outcomes (docs-health ANNOTATE pass pending)                                                                                                                                                                                                                                                                                                                                        |
 | b4 | **Production redeploy**                             | pre-existing URGENT TODO row (prod runs the pre-credential-verification build) | my changes stack on top (v2.2.0 content + probes + Go floor) — the owner-ssh rebuild absorbs all of it in one rebuild; not started here (no ssh from this session)                                                                                                                                                                                                                                                  |
 | b5 | **go-health doc.go package quick-start**            | README + AGENTS updated                                                        | doc.go still shows only the injector path for `NewChecks`                                                                                                                                                                                                                                                                                                                                                           |
-| b6 | **Smoke coverage of the new probes**                | smoke 26/26 green (it exercises `/healthz`)                                    | `/livez` + `/startupz` assertions not yet added to `scripts/webphone-smoke.py`                                                                                                                                                                                                                                                                                                                                      |
+| ~~b6~~ | ~~**Smoke coverage of the new probes**~~ | ~~smoke 26/26 green (it exercises `/healthz`)~~ | ~~~`/livez` + `/startupz` assertions not yet added to `scripts/webphone-smoke.py`~~ done (smoke covers the triple; 38 checks by 2026-09-22) |
 | b7 | **cqrs-htmx v4.11.0 GitHub release object**         | tags + master pushed; proxy verified                                           | whether the train session cut `gh release` objects for the 13 family modules — unverified (their move; I only completed CHANGELOG + master)                                                                                                                                                                                                                                                                         |
-| b8 | **aarch64 for the new build**                       | package builds x86_64 green                                                    | `nix build .#webphone --system aarch64-linux` not run post-bump — release-runbook gate, deferred deliberately (no release cut)                                                                                                                                                                                                                                                                                      |
-| b9 | **Errcheck in `cmd/webphone/drift_test.go`**        | surfaced by my final full-repo lint                                            | parallel session's in-flight file — left untouched per the untouched-files rule                                                                                                                                                                                                                                                                                                                                     |
+| ~~b8~~ | ~~**aarch64 for the new build**~~ | ~~package builds x86_64 green~~ | ~~~`nix build .#webphone --system aarch64-linux` not run post-bump — release-runbook gate, deferred deliberately (no release cut)~~ done (ran in the v2.3.0 train; release.sh step 8 + ELF guard every train since) |
+| ~~b9~~ | ~~**Errcheck in `cmd/webphone/drift_test.go`**~~ | ~~surfaced by my final full-repo lint~~ | ~~parallel session's in-flight file — left untouched per the untouched-files rule~~ done (the enforced erraudit set is green on the 2026-09-22 tree) |
 
 ## c) NOT STARTED (observed standing work, untouched this session)
 
-1. Idiomorph swap experiment for SSE/HTMX partials (gated on stack browser E2E).
-2. Island sanitization alignment (owner decision: island regex vs `sanitizeDialable`).
+1. ~~Idiomorph swap experiment for SSE/HTMX partials (gated on stack browser E2E).~~ done (stack rides webphone main; re-pinned per train (2026-09-22 pin 550aaea))
+2. ~~Island sanitization alignment (owner decision: island regex vs `sanitizeDialable`).~~ done (sanitization aligned + pinned, DECIDED 2026-09-20 (CHANGELOG))
 3. CSRF token rotation on session TTL refresh (spec + implement + tests).
 4. Island adoption fallback: retry ×3 with backoff before the reload fallback.
-5. Typed Nix module options for `csrf.trusted_origins`/`trusted_proxies` + stack-side assertion.
-6. Inbound fax feed: stack rxfax TIFF→PDF → `/hooks/fax` behind a toggle.
-7. Backup/restore story for `/var/lib/webphone` (inventory, restic/rsync pattern, restore drill).
-8. 1001-registration anomaly in the stack browser E2E (root-cause instrumentation).
-9. Own-number visibility (DID feed decision: stack endpoint vs static map vs CDR derive).
+5. ~~Typed Nix module options for `csrf.trusted_origins`/`trusted_proxies` + stack-side assertion.~~ done (typed csrf options + flake checks AND the stack-side rendered-config assertion shipped)
+6. ~~Inbound fax feed: stack rxfax TIFF→PDF → `/hooks/fax` behind a toggle.~~ done (stack fax-feed shipped green 2026-09-19 (stack 70537b8))
+7. ~~Backup/restore story for `/var/lib/webphone` (inventory, restic/rsync pattern, restore drill).~~ done (backup story shipped - drill, README, module timer, VM test + drill check)
+8. ~~1001-registration anomaly in the stack browser E2E (root-cause instrumentation).~~ done (sofia tripwire landed in stack browser.nix; island fix 9a478e2 (2026-09-22))
+9. ~~Own-number visibility (DID feed decision: stack endpoint vs static map vs CDR derive).~~ done (identities config map shipped, DECIDED 2026-09-20 (CHANGELOG))
 10. Outbound SMS bridge root cause on prod (stack-side telnyx-webhooks journal — owner).
 11. Deepen island↔server integration plan (19-37 plan P1–P8 follow-through).
 12. Health-hub federation deployment (memo Option A — stack-side service).
 13. Dashboard-HTML in webphone (blocked on CSP stance change or upstream nonce mode).
 14. Version-drift guard completion (a `drift_test.go` appeared mid-session from a parallel session, with one errcheck — b9).
-15. `scripts/release.sh` maturation (untracked WIP from another session; dry-run idempotence per TODO row).
-16. Standing watches: sip.js 0.22 / templ-components ThemeScript opt-out / oxlint globals / nanoid ≥ v1.65.1 (Go ≥ 1.27 blocked — **note: webphone is now ON Go 1.27.1, so the nanoid bump may be unblocked; re-check its floor**).
-17. `gh release` ops habit for webphone (v2.1.0 row predates this session; v2.2.0 status unknown).
+15. ~~`scripts/release.sh` maturation (untracked WIP from another session; dry-run idempotence per TODO row).~~ done (release.sh matured and gated (resume mode, ELF guard, vulnix))
+16. ~~Standing watches: sip.js 0.22 / templ-components ThemeScript opt-out / oxlint globals / nanoid ≥ v1.65.1 (Go ≥ 1.27 blocked — **note: webphone is now ON Go 1.27.1, so the nanoid bump may be unblocked; re-check its floor**).~~ done (superseded by the T20 dated quarterly watch; nanoid closed)
+17. ~~`gh release` ops habit for webphone (v2.1.0 row predates this session; v2.2.0 status unknown).~~ done (gh objects live for v2.1.0-v2.4.0; release.sh cuts them (step 9))
 
 ## d) TOTALLY FUCKED UP (brutal honesty, no spin)
 
@@ -104,38 +104,38 @@ honestly in (d).
 
 **P0 — unblock/correctness (this week):**
 
-1. Stack re-pin + commit lock: `nix flake lock --update-input webphone` in nix-international-telephony.
-2. Stack gates with the new lock: `nix build -L .#telephony-browser` (browser E2E — first live validation of the SSE `retry:` hint), `.#checks.x86_64-linux.telephony-webphone`, full stack `nix flake check`.
-3. Verify the stack evaluates webphone's flake cleanly under the Go 1.27.1 floor (go_1_27 available in webphone's pinned nixpkgs — expected, must be proven once).
+1. ~~Stack re-pin + commit lock: `nix flake lock --update-input webphone` in nix-international-telephony.~~ done (stack re-pinned per train; 2026-09-22 pin 550aaea)
+2. ~~Stack gates with the new lock: `nix build -L .#telephony-browser` (browser E2E — first live validation of the SSE `retry:` hint), `.#checks.x86_64-linux.telephony-webphone`, full stack `nix flake check`.~~ done (stack gates run per train (v2.3.0 in-train; 2026-09-22 re-gate in flight))
+3. ~~Verify the stack evaluates webphone's flake cleanly under the Go 1.27.1 floor (go_1_27 available in webphone's pinned nixpkgs — expected, must be proven once).~~ done (stack flake check green on the 1.27.1-floor pin (v2.3.0 train))
 4. **Prod redeploy** (owner ssh): `nixos-rebuild test` → probe with `webphone-smoke.py --base https://pbx.artmann.tech` (must show bogus-creds rejected) → `switch`. Prod still runs the pre-verification build; today's delta folds into the same rebuild.
-5. Cut webphone v2.3.0 from `Unreleased` (health triple + upstream timeout + Go floor) via the release runbook: fold docs → bump `webphoneVersion` → gates → tag+push → lychee → stack lock → stack gates.
-6. `nix build .#webphone --system aarch64-linux` (release gate; first build over the new vendorHash + go_1_27 cross).
-7. `nix run .#vulnix` on the new runtime closure (new deps: go-health, samber/do/v2, go-type-to-string).
-8. Fix the errcheck in `cmd/webphone/drift_test.go` (coordinate with the parallel session that owns it).
-9. Add `/livez` + `/startupz` assertions to `scripts/webphone-smoke.py`.
-10. AGENTS gotcha: "LSP false `go.mod requires go >= 1.27.1` errors after a floor bump — LS env lags; run gates in `nix develop`" + fix the LS env (gopls/golangci with the 1.27 toolchain or GOTOOLCHAIN=auto).
+5. ~~Cut webphone v2.3.0 from `Unreleased` (health triple + upstream timeout + Go floor) via the release runbook: fold docs → bump `webphoneVersion` → gates → tag+push → lychee → stack lock → stack gates.~~ done (v2.3.0 + v2.4.0 released (2026-09-19/20))
+6. ~~`nix build .#webphone --system aarch64-linux` (release gate; first build over the new vendorHash + go_1_27 cross).~~ done (aarch64 ran in-train + release.sh guard)
+7. ~~`nix run .#vulnix` on the new runtime closure (new deps: go-health, samber/do/v2, go-type-to-string).~~ done (vulnix re-scanned 2026-09-20 01:04; release.sh now gates on it)
+8. ~~Fix the errcheck in `cmd/webphone/drift_test.go` (coordinate with the parallel session that owns it).~~ done (later erraudit enforced set green (2026-09-22))
+9. ~~Add `/livez` + `/startupz` assertions to `scripts/webphone-smoke.py`.~~ done (smoke covers livez/startupz (AGENTS; 38 checks by 2026-09-22))
+10. ~~AGENTS gotcha: "LSP false `go.mod requires go >= 1.27.1` errors after a floor bump — LS env lags; run gates in `nix develop`" + fix the LS env (gopls/golangci with the 1.27 toolchain or GOTOOLCHAIN=auto).~~ done (AGENTS carries the floor + LSP-false-error gotchas)
 
 **P1 — webphone product/docs:**
 11. Annotate the 18-49 DI/health review doc with F1/F2/F3 outcomes (docs-health ANNOTATE).
 12. go-health: fold `NewChecks` into `doc.go`'s package quick-start (b5).
 13. Decide + wire the `/livez` consumer (question g2): systemd timer, nginx-based, or health-hub.
 14. Finish the version-drift guard (drift_test.go to 0 issues; wire into buildflow/gates).
-15. Track + mature `scripts/release.sh` (clean-tree, fold-check, gates, tag, push, lychee, stack lock, aarch64; dry-run idempotence).
-16. Update README deployment table row (`/healthz` only today) to name the triple.
+15. ~~Track + mature `scripts/release.sh` (clean-tree, fold-check, gates, tag, push, lychee, stack lock, aarch64; dry-run idempotence).~~ done (release.sh shipped with resume mode + guards)
+16. ~~Update README deployment table row (`/healthz` only today) to name the triple.~~ done (README names the triple)
 17. Decide whether probe endpoints belong in `/openapi.json` (likely no — record the decision either way).
 18. Island↔server integration plan (19-37) P1–P8 follow-through.
 19. Island adoption fallback: retry ×3 + backoff before the reload fallback.
 20. CSRF rotation on session TTL refresh (spec → implement → tests).
-21. Island sanitization alignment (owner decision) + the pinning test.
-22. Typed Nix options for `csrf.trusted_origins`/`trusted_proxies` + stack-side assertion of rendered settings.
-23. Inbound fax feed: rxfax TIFF→PDF → `/hooks/fax` behind a toggle + secret wiring + loopback test.
-24. Backup/restore story: inventory, restic/rsync pattern, restore drill on scratch, module timer skeleton.
-25. 1001-registration E2E anomaly: sofia registration dump + island reload-fallback read + fix.
-26. Idiomorph swap experiment on a branch + verdict doc (gated on the stack browser E2E).
-27. Own-number visibility (owner decision on the DID feed).
+21. ~~Island sanitization alignment (owner decision) + the pinning test.~~ done (sanitization aligned + pinned (CHANGELOG))
+22. ~~Typed Nix options for `csrf.trusted_origins`/`trusted_proxies` + stack-side assertion of rendered settings.~~ done (typed options + both-side assertions shipped)
+23. ~~Inbound fax feed: rxfax TIFF→PDF → `/hooks/fax` behind a toggle + secret wiring + loopback test.~~ done (fax-feed shipped (stack 70537b8))
+24. ~~Backup/restore story: inventory, restic/rsync pattern, restore drill on scratch, module timer skeleton.~~ done (backup story shipped incl. VM test + drill check)
+25. ~~1001-registration E2E anomaly: sofia registration dump + island reload-fallback read + fix.~~ done (tripwire + island rebuild fix 9a478e2; E2E x2 validation 2026-09-22)
+26. ~~Idiomorph swap experiment on a branch + verdict doc (gated on the stack browser E2E).~~ done (idiomorph merged to main (morph:innerHTML on all five surfaces))
+27. ~~Own-number visibility (owner decision on the DID feed).~~ done (identities map shipped (CHANGELOG))
 28. Outbound SMS bridge root cause (owner greps the stack bridge journal).
-29. `gh release create` ops: v2.2.0 (if not cut) and the habit per release.
-30. Re-check the nanoid ≥ v1.65.1 watch now that webphone is on Go 1.27.1 (was blocked on Go ≥ 1.27).
+29. ~~`gh release create` ops: v2.2.0 (if not cut) and the habit per release.~~ done (release objects live; step 9 cuts them; 2026-09-20 audit backfilled bodies)
+30. ~~Re-check the nanoid ≥ v1.65.1 watch now that webphone is on Go 1.27.1 (was blocked on Go ≥ 1.27).~~ done (nanoid v1.65.1 shipped in v2.3.0)
 
 **P1/P2 — upstream ecosystem:**
 31. cqrs-htmx: verify `gh release` objects exist for the v4.11.0 family (13 modules); cut any missing (train session's habit).
@@ -145,25 +145,29 @@ honestly in (d).
 35. go-health-dashboard: nonce/CSP-safe Datastar mode upstream — the real unlock for webphone's dashboard face without `unsafe-eval`.
 36. go-health: CI aarch64 sanity (its flake check also omits aarch64 — same lesson as webphone's).
 37. go-health: release-automation workflow (auto `gh release` per tag).
-38. go-health: per-check timeout option (`WithCheckTimeout`) ONLY if a real consumer need appears (batch deadline covers today; YAGNI guard).
+38. ~~go-health: per-check timeout option (`WithCheckTimeout`) ONLY if a real consumer need appears (batch deadline covers today; YAGNI guard).~~ **Won't implement — no consumer need appeared; batch deadline covers it (YAGNI guard held).**
 39. Fleet sweep: drop `GOEXPERIMENT=jsonv2` where Go 1.27 made it redundant (webphone first, then siblings) — deliberate, tested removal, not drive-by.
 40. go-health: fuzz `runNamedChecks`/`runBoundedCheck` (new concurrency surface; existing fuzz targets don't know it).
 
 **P2 — fleet/ops/quality:**
 41. Health-hub federation deployment decision (memo Option A): stack-side service scraping webphone's `/livez`//`/startupz`.
-42. Dashboard-HTML stance: revisit ONLY if #35 ships upstream (otherwise the rejection stands, documented).
+42. ~~Dashboard-HTML stance: revisit ONLY if #35 ships upstream (otherwise the rejection stands, documented).~~ **Won't implement — conditional never met; the rejection stands (documented).**
 43. Consider whether `/healthz`'s JSON shape and the new probes deserve a consumer contract test in the STACK (nginx asserts 200s during the VM test).
-44. webphone FEATURES VERIFY pass (docs-health) over the rows added today + neighbors.
+44. ~~webphone FEATURES VERIFY pass (docs-health) over the rows added today + neighbors.~~ done (FEATURES VERIFY executed 2026-09-19 23:43 (stale SSO row fixed))
 45. ROADMAP: add open questions for "probe retention/alerting" (who gets paged when `/startupz` 503s).
 46. webphone devShell: add `gopls` (go-health's shell has it; webphone ships `nil` only) so the LS can be fixed properly (#10).
 47. Tests: table-driven probe-status matrix (livez/startupz/healthz × healthy/degraded/closed) to lock the triple's semantics in one place.
-48. CHANGELOG/lychee link-check at the next release (runbook step 5 — first release with the new doc links).
-49. Document the "train races" protocol in webphone AGENTS: when a sibling train is mid-flight, freeze CHANGELOG/tag-adjacent edits and coordinate pushes (today's tug-of-war, codified).
+48. ~~CHANGELOG/lychee link-check at the next release (runbook step 5 — first release with the new doc links).~~ done (lychee ran in the v2.3.0/v2.4.0 trains)
+49. ~~Document the "train races" protocol in webphone AGENTS: when a sibling train is mid-flight, freeze CHANGELOG/tag-adjacent edits and coordinate pushes (today's tug-of-war, codified).~~ done (train-race + concurrent-session rules codified in AGENTS (2026-09-20))
 50. Post-incident nicety: teach `webphone-smoke.py` a `--expect-version` flag so redeploys (item 4) verify the binary version, not just behavior.
 
 ## g) THREE QUESTIONS I CANNOT FIGURE OUT MYSELF
 
 **g1. Production redeploy + stack re-pin: now or after v2.3.0?** Prod is still the pre-credential-verification build (the URGENT row), and today's main adds the health triple + the Go 1.27.1 floor. Do you want me to prep the stack re-pin + gates NOW so your single ssh runs `nixos-rebuild test` → smoke → `switch` against current main — or do you want the v2.3.0 tag cut first so prod tracks a tag, not a moving main? (This is the stack pin-policy owner call from TODO_LIST, now with a concrete deadline pressure: every day on the old build, bogus credentials mint sessions.)
+
+*(Answered 2026-09-20, DECIDED: the stack rides webphone `main` with a
+per-train lock bump — AGENTS "Owner decisions". The prod deploy itself
+remains the owner-ssh TODO row.)*
 
 **g2. Who consumes `/livez`?** The F2 surface exists, but nothing polls it yet, so a wedged process is still only caught by a human. Which ambition is real: (a) systemd-level (timer or `WatchdogSec`-style probing — needs sd_notify or a curl-based service), (b) the stack's nginx/monitoring, (c) a go-health federation hub scraping all services (memo Option A), or (d) nothing yet — the endpoints are speculative until the fleet story lands? This decides whether I wire module options (probe toggles, watchdog wiring) or leave the module comment as the final word.
 

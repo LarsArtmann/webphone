@@ -33,21 +33,21 @@ HTML-partial routes untouched (`/api/contacts` is additive).
    and the presence badge are verified only by code reading + the stack
    E2E not regressing. The stack E2E drives neither behavior. The Go
    tests pin the rendered affordances but not the shell.js behaviors.
-2. **Final-tree `nix flake check` pedantry:** flake check ran before the
-   last Go-comment-only change (erraudit nolint fix); buildflow + full
-   go tests re-ran green on the final tree, and a comment cannot affect
-   the nix checks, but the literal "flake check on the exact final
-   commit" was not re-run.
-3. **E2E wall-time accounting:** recorded 160.31s vs the 151s baseline
-   but did not investigate the +6% (likely noise + first-build after
-   re-pin; the 151s figure came from a different context).
+2. ~~**Final-tree `nix flake check` pedantry:** flake check ran before the~~ done (later full-gate runs re-ran it green (2026-09-20 16:28 sweep; 2026-09-22 train))
+   ~~last Go-comment-only change (erraudit nolint fix); buildflow + full~~
+   ~~go tests re-ran green on the final tree, and a comment cannot affect~~
+   ~~the nix checks, but the literal "flake check on the exact final~~
+   ~~commit" was not re-run.~~
+3. ~~**E2E wall-time accounting:** recorded 160.31s vs the 151s baseline~~ done (superseded by the standing T20 wall-time watch (TODO_LIST))
+   ~~but did not investigate the +6% (likely noise + first-build after~~
+   ~~re-pin; the 151s figure came from a different context).~~
 
 ## c) NOT STARTED (this session's scope adjacent, deliberately or by miss)
 
-1. **aarch64 cross-build** — the release runbook names it; the plan's
-   P6 gate list did not include it, so it was missed rather than
-   declined. Nothing arch-specific changed (Go + JS), risk low but
-   unverified.
+1. ~~**aarch64 cross-build** — the release runbook names it; the plan's~~ done (release.sh cross-builds each train with the b700 ELF guard (v2.3.0/v2.4.0))
+   ~~P6 gate list did not include it, so it was missed rather than~~
+   ~~declined. Nothing arch-specific changed (Go + JS), risk low but~~
+   ~~unverified.~~
 2. **Stack E2E extension** for the new behaviors (badge, logged-out
    toast, contacts round-trip through the island).
 3. **OpenAPI for `/api/contacts`** — `/api/session` has an OpenAPI 3.1
@@ -64,14 +64,14 @@ HTML-partial routes untouched (`/api/contacts` is additive).
 
 ## d) TOTALLY FUCKED UP (nothing shipped broken; honest process misses)
 
-1. **erraudit nolint typo** — wrote `//nolint:errcheck` for an erraudit
-   finding; buildflow correctly failed the gate once. Fixed
-   (`a0ce1e6`). Root cause: typed the directive from memory instead of
-   copying the pattern two files away.
-2. **Wrong test expectation from assumed semantics** — asserted 422 for
-   `"not-a-phone"` before reading `ParsePhone` (letters are dialable;
-   sanitization, not rejection, is the contract). Fixed the test to pin
-   reality (`"???"` → 422). Should have read the validator first.
+1. ~~**erraudit nolint typo** — wrote `//nolint:errcheck` for an erraudit~~ done at `a0ce1e6`
+   ~~finding; buildflow correctly failed the gate once. Fixed~~
+   ~~(`a0ce1e6`). Root cause: typed the directive from memory instead of~~
+   ~~copying the pattern two files away.~~
+2. ~~**Wrong test expectation from assumed semantics** — asserted 422 for~~ done (expectation corrected in-run; the test pins ??? = 422 (contacts_api_test.go))
+   ~~`"not-a-phone"` before reading `ParsePhone` (letters are dialable;~~
+   ~~sanitization, not rejection, is the contract). Fixed the test to pin~~
+   ~~reality (`"???"` → 422). Should have read the validator first.~~
 3. **Commit-race losses (twice)** — the daemon committed staged-file
    groups mid-flight: P4 split (`7a09f57` swallowed `server.go` +
    `panels.js` AND entangled the foreign `session_behaviors_test.go`
@@ -117,11 +117,11 @@ Verification hardening:
 4. Cheap Go tripwire: assert shell.js contains the `wp:calls-changed`
    listener and the logged-out guard (string pins like the DOM
    contract).
-5. `nix build .#webphone --system aarch64-linux` + named cross-checks
-   on current main.
-6. Re-run `nix flake check` on the current HEAD (post-concurrent
-   merges) as a clean final-state gate.
-7. E2E wall-time watch: tripwire at ~170s (baseline 151s, last 160s).
+5. ~~`nix build .#webphone --system aarch64-linux` + named cross-checks~~ done (release.sh step 8 cross-builds each train with the b700 ELF guard (v2.3.0/v2.4.0))
+   ~~on current main.~~
+6. ~~Re-run `nix flake check` on the current HEAD (post-concurrent~~ done (flake check green on later HEADs (2026-09-20 sweeps, 2026-09-22 train))
+   ~~merges) as a clean final-state gate.~~
+7. ~~E2E wall-time watch: tripwire at ~170s (baseline 151s, last 160s).~~ done (superseded by the T20 dated wall-time watch (TODO_LIST))
 
 Seam polish:
 8. SSE `contacts` event → island panel re-fetch (kills re-login
@@ -142,14 +142,14 @@ API/infra:
 17. Rate limiter on `POST /api/contacts`.
 18. Contacts count cap / pagination decision on the server store
 (legacy cap was 50; server is unbounded).
-19. Decide JS test infra (none today; oxlint no-undef only) — vitest vs
-staying lint-only; migration logic is the first real candidate.
-20. Stack re-pin to current main (behind by concurrent commits) + full
-stack flake check — remember pbx-artmann path: re-locks need clean
-stack trees.
+19. ~~Decide JS test infra (none today; oxlint no-undef only) — vitest vs~~ done (island-tests node:test suite shipped as the island-js flake check (2026-09-20/21))
+~~staying lint-only; migration logic is the first real candidate.~~
+20. ~~Stack re-pin to current main (behind by concurrent commits) + full~~ done (stack re-pinned per train since (2026-09-22 pin 550aaea))
+~~stack flake check — remember pbx-artmann path: re-locks need clean~~
+~~stack trees.~~
 
 Process/docs:
-21. Commit-race protocol with the daemon (owner call — see questions).
+21. ~~Commit-race protocol with the daemon (owner call — see questions).~~ done (answered - AGENTS Concurrent-sessions rules codified 2026-09-20)
 22. Diff-review `63f8b3c`'s changes to the SUPERB plan doc.
 23. Confirm authorship/intent of the `encoding/json/v2` test change
 that rode along `7a09f57`.
@@ -158,29 +158,29 @@ move detail to docs/, keep invariants tight.
 25. Plan doc: tick the Part 8 verification checkboxes (they still read
 open).
 26. FEATURES VERIFY pass over the new rows (docs-health discipline).
-27. Release vehicle for the Unreleased block (see questions).
+27. ~~Release vehicle for the Unreleased block (see questions).~~ done (v2.2.0 minor cut 2026-09-19 (CHANGELOG))
 28. TODO_LIST still carries the 🔴 prod redeploy urgency items (v2.1.1
 credential verification) — owner ssh action, not mine.
-29. Watch: JsSIP fallback triggers (standing), sip.js 0.22 (standing).
-30. Consider `wp:session-opened` for the E2E greppable-contract list if
-the E2E starts driving contacts.
+29. ~~Watch: JsSIP fallback triggers (standing), sip.js 0.22 (standing).~~ done (superseded by the T20 dated quarterly watch (TODO_LIST))
+30. ~~Consider `wp:session-opened` for the E2E greppable-contract list if~~ **Won't implement — conditional unmet - the E2E does not drive contacts.**
+~~the E2E starts driving contacts.~~
 
 ## g) QUESTIONS (cannot be answered from the repo)
 
-1. **Concurrency protocol:** another session is actively committing to
-   webphone main (self-health work, cqrs-htmx bump) while the daemon
-   auto-commits both of ours. Do you want serialized sessions /
-   explicit-commit windows (daemon paused), or is concurrent-main the
-   accepted mode and I should only tighten my commit speed?
-2. **Release vehicle:** the Unreleased block (dial everywhere,
-   presence, contacts single-home) plus the concurrent session's
-   release-prep — fold as v2.1.2 (patch) or v2.2.0 (minor, my
-   recommendation: new user-facing surface = minor)? And who cuts it —
-   me next session, or the release-prep session?
-3. **Stack pin cadence:** the stack rides webphone main but is now
-   pinned behind it (`a0ce1e6` vs `1ec82d9`), and pbx-artmann's path:
-   re-lock needs a clean stack tree. Re-pin now (I can, plus gates), or
-   leave the pin until the release cut to avoid churning pbx-artmann's
-   narHash?
+1. ~~**Concurrency protocol:** another session is actively committing to~~ done (answered - concurrent-main accepted, rules in AGENTS (2026-09-20))
+   ~~webphone main (self-health work, cqrs-htmx bump) while the daemon~~
+   ~~auto-commits both of ours. Do you want serialized sessions /~~
+   ~~explicit-commit windows (daemon paused), or is concurrent-main the~~
+   ~~accepted mode and I should only tighten my commit speed?~~
+2. ~~**Release vehicle:** the Unreleased block (dial everywhere,~~ done (answered - v2.2.0 minor cut 2026-09-19)
+   ~~presence, contacts single-home) plus the concurrent session's~~
+   ~~release-prep — fold as v2.1.2 (patch) or v2.2.0 (minor, my~~
+   ~~recommendation: new user-facing surface = minor)? And who cuts it —~~
+   ~~me next session, or the release-prep session?~~
+3. ~~**Stack pin cadence:** the stack rides webphone main but is now~~ done (answered - DECIDED 2026-09-20 ride main with per-train lock bump (AGENTS Owner decisions))
+   ~~pinned behind it (`a0ce1e6` vs `1ec82d9`), and pbx-artmann's path:~~
+   ~~re-lock needs a clean stack tree. Re-pin now (I can, plus gates), or~~
+   ~~leave the pin until the release cut to avoid churning pbx-artmann's~~
+   ~~narHash?~~
 
 — Reported 2026-09-19 22:26; awaiting instructions.
