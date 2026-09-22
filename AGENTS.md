@@ -92,7 +92,7 @@ python3 scripts/webphone-smoke.py          # 32-check live smoke over real HTTP 
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh now also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix --closure over the RUNTIME closure (network; exits non-zero with triage guidance on findings; the verdict logic is the `webphone-vulnix-triage` CLI, fixture-checked by `checks.vulnix-triage`)
 nix flake check                            # package build + tests in sandbox + treefmt + island-lint + island-js (node:test) + the kvm-gated backup VM test (skipped with a warning without /dev/kvm)
-nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs   # the island JS tests alone (toast rendering, i18n en/de parity); stubs in island-tests/helpers.mjs
+nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs   # the island JS tests alone (toast rendering, i18n en/de parity, session feedback map, connection wedge detector); stubs in island-tests/helpers.mjs
 nix build .#webphone --system aarch64-linux   # cross-builds
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 ```
@@ -431,6 +431,16 @@ Ginkgo DescribeTable when the subject is a state machine.
   series hangs in `userAgent.reconnect()` after transport loss; the
   bounded watchdog in the island's `connection.js` (5s per attempt,
   full rebuild on timeout) is load-bearing. Do not "simplify" it away.
+  The watchdog ALSO rebuilds on registration loss (2026-09-22, the
+  1001-anomaly fix): a Registerer that had reached `Registered` and
+  later goes `Unregistered`/`Terminated` outside logout/rebuild is
+  dead weight (retrying `register()` on it never recovers), so
+  `registrationLost` tears the agent down and builds a fresh
+  Registerer; a never-registered rejection keeps the `regRejected`
+  pill (bogus-login UX + the E2E `registration rejected` contract).
+  Pinned by `island-tests/connection.test.mjs`. The stack E2E carries
+  the sofia tripwire for recurrences (`REGS-AT-RECONNECT`/
+  `REGS-AT-DIAL` dumps in its browser.nix).
 - SDK decision: KEEP sip.js 0.21.2; **JsSIP 3.13.8 is the named
   fallback** (the only maintained alternative). Swap ONLY on Chromium
   WebRTC breakage, a sip.js security advisory, or a needed capability —

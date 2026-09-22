@@ -57,6 +57,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A registration lost AFTER it was established no longer wedges the
+  phone silently: the island's connection watchdog now rebuilds the
+  whole agent (fresh Registerer) when a Registerer that had reached
+  `Registered` later goes `Unregistered`/`Terminated` outside logout or
+  a rebuild (a rejected re-REGISTER after a transport reconnect, a
+  server-side contact drop — the never-root-caused 1001 E2E anomaly
+  where sofia said `user_not_registered` while the island kept its dead
+  Registerer forever). The reconnect retry path also rebuilds on a
+  Terminated registerer instead of retrying `register()` on a dead
+  object; a bogus-credentials LOGIN still shows the `registration
+  rejected` pill with no rebuild loop (E2E contract preserved). Pinned
+  by `island-tests/connection.test.mjs` (six scenarios over a SIP.js
+  stub: happy path, lost/terminated-after-registered rebuilds,
+  bogus-login pill, Terminated-registerer retry rebuild, logout
+  inertness).
 - Provider rejections no longer masquerade as "The message gateway is
   unreachable": a non-2xx gateway ANSWER is now a typed
   `gateway.ErrProviderRejected` whose detail (unwrapped from the

@@ -39,7 +39,7 @@ flake check building) — a11 states machine state, not results.
 ## b) PARTIALLY DONE / IN FLIGHT
 
 | #  | Item                                        | State                                                                                                                                                   | What remains                                                                       |
-| -- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| --- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | ~~b1~~ | ~~**v2.3.0 stack chain**~~ | ~~tag + relock done (`14c6c5b`), stack flake check building at 23:43~~ | ~~stack flake check ✓ → aarch64 cross-builds → gh release object (steps 7b–9)~~ done (RELEASE-EXIT=0; 00:14 report a1) |
 | ~~b2~~ | ~~**pbx-artmann relock + toplevel pre-build**~~ | ~~tree clean, `path:` input to the stack; stack moved twice tonight (fax-feed + v2.3.0 relock)~~ | ~~~`nix flake lock --update-input telephony` + toplevel build + push — AFTER b1 lands~~ done (00:14 report a4/a5; relocked again per train since) |
 | ~~b3~~ | ~~**P5 two-greens rule**~~ | ~~green #1 = instrumented standalone run; the v2.3.0 release's browser E2E (b1) is green #2~~ | ~~confirm b1's E2E marker in the log~~ done (confirmed; 00:14 report a2) |
