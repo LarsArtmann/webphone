@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-09-22
+
 ### Added
 
 - Call cards carry a state chip + spoken transitions (plan T20a):
@@ -859,7 +861,9 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.6.0
+[2.5.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.5.0
 [2.4.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.4.0
 [2.3.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.3.0
 [2.2.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.2.0
