@@ -388,9 +388,9 @@ Module options beyond `enable`/`package`/`settings`:
 | `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                      |
 | `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                            |
 | `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days   |
-| `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                                 |
-| `nginx.gzip.enable`               | _off_                      | nginx recommended gzip settings on the vhost (SSE is never gzipped)                                       |
-| `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                          |
+| `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
+| `nginx.gzip.enable`               | _off_                      | nginx recommended gzip settings on the vhost (SSE is never gzipped)                       |
+| `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
 
 **Health probes behind the vhost:** the module ships dedicated nginx
 locations for `/healthz` (readiness), `/livez` (process liveness) and

@@ -194,6 +194,7 @@ saturator — load peaked at 142).
    triple.
 
 ## f) Next things (ordered, 50 — brainstorm, not a commitment list; the
+
 first ~15 are already harvested into TODO_LIST.md)
 
 1. Fix the vulnix NVD-404 release-gate blocker (direction = question 2

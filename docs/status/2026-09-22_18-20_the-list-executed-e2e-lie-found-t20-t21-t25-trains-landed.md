@@ -103,7 +103,7 @@ standing directive kept execution going after it). This report covers
 4. **Final gates**: buildflow's full run mid-session caught my own
    mid-edit tree (the multipart import race — see d6) — the closing
    gate run on the FINAL tree is still owed (buildflow + flake check
-   + full suite + smoke).
+   - full suite + smoke).
 
 ## c) Not started
 

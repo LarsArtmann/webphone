@@ -10,6 +10,7 @@ below. Two owner decisions remain open (asked three times now).
 ## Self-review (the three questions)
 
 **What did you forget?**
+
 1. **Browser-truth verification — the session's recurring blind
    spot.** Three JS/htmx behaviors shipped on stub+reasoning evidence
    only: `hx-disabled-elt` (train 1), `requestSubmit`↔htmx and
@@ -28,6 +29,7 @@ below. Two owner decisions remain open (asked three times now).
    open.
 
 **What could you have done better?**
+
 - Run gates before writing conclusions about them (the oxlint lesson,
   generalizes to everything I "knew" about htmx).
 - Train-1 stumbles, for the record: smoke mis-run in `--base` mode
@@ -53,33 +55,33 @@ and in the verdict.
 
 ## a) FULLY DONE (this session)
 
-| Item | Evidence |
-| --- | --- |
-| Train 1: double-submit guard (3 send forms) + self-send notice (en/de, ParsePhone-normalized) | `56caf37` pushed+verified; 3 pin tests |
+| Item                                                                                                                                               | Evidence                                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Train 1: double-submit guard (3 send forms) + self-send notice (en/de, ParsePhone-normalized)                                                      | `56caf37` pushed+verified; 3 pin tests                      |
 | Train 2: textarea composers + Enter/Shift+Enter, GSM-7/UCS-2 segment counter, attachment chips with remove, German 24h timestamps (en byte-stable) | `5cce98d` pushed+verified; 5 composer specs + 3 server pins |
-| Plan docs with pareto/coarse/fine tables + mermaid + filled verdicts | `docs/planning/2026-09-22_16-07_*` and `_16-36_*` |
-| helpers.mjs harness upgrades (variadic append, class-selector matching, DataTransfer stub) — kept 44 pre-existing node tests green | 49/49 |
-| Paper trail: CHANGELOG Unreleased ×2 trains, TODO_LIST follow-ups row (C/D/E/F), AGENTS.md send-failure-UX insight, 2 prior status reports | committed |
-| Gates per train: go test full, island node tests, island-lint, nix fmt, smoke 38/0 | in-verdict logs |
+| Plan docs with pareto/coarse/fine tables + mermaid + filled verdicts                                                                               | `docs/planning/2026-09-22_16-07_*` and `_16-36_*`           |
+| helpers.mjs harness upgrades (variadic append, class-selector matching, DataTransfer stub) — kept 44 pre-existing node tests green                 | 49/49                                                       |
+| Paper trail: CHANGELOG Unreleased ×2 trains, TODO_LIST follow-ups row (C/D/E/F), AGENTS.md send-failure-UX insight, 2 prior status reports         | committed                                                   |
+| Gates per train: go test full, island node tests, island-lint, nix fmt, smoke 38/0                                                                 | in-verdict logs                                             |
 
 ## b) PARTIALLY DONE
 
-| Item | What's missing |
-| --- | --- |
-| Buildflow green | RED on 9 erraudit findings — ALL in the concurrent CRM train's files (their own `4320c7d` "erraudit 0" commit predates newer code; my scoped runs: 0). Re-run after their train folds. |
-| Browser-truth verification | One stack E2E run covers both trains' markup; requestSubmit↔htmx + field-sizing + disabled-elt behaviors unverified in a real browser (owner question open) |
-| UX polish QA | de copy review, screenshots of all four new affordances |
+| Item                       | What's missing                                                                                                                                                                         |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Buildflow green            | RED on 9 erraudit findings — ALL in the concurrent CRM train's files (their own `4320c7d` "erraudit 0" commit predates newer code; my scoped runs: 0). Re-run after their train folds. |
+| Browser-truth verification | One stack E2E run covers both trains' markup; requestSubmit↔htmx + field-sizing + disabled-elt behaviors unverified in a real browser (owner question open)                            |
+| UX polish QA               | de copy review, screenshots of all four new affordances                                                                                                                                |
 
 ## c) NOT STARTED
 
-| Item | Note |
-| --- | --- |
-| Train C: pre-flight self-send 422 (blocked on owner call) | asked 16:29, 16:48, now |
-| Train D: bubble failure story (persist reason+kind, retry-where-retryable) | biggest remaining UX lever |
-| Train E: provider refusal → 422 + honest family vocabulary (contract + runbook sync) | bundle with D |
-| Train F: own-DID on session payload, live composer warning | only if self-sends recur |
-| Dial typeahead / jump-to-latest / per-thread drafts | planned next-train ideas |
-| Stack browser E2E re-run | the declared markup gate, twice skipped |
+| Item                                                                                 | Note                                    |
+| ------------------------------------------------------------------------------------ | --------------------------------------- |
+| Train C: pre-flight self-send 422 (blocked on owner call)                            | asked 16:29, 16:48, now                 |
+| Train D: bubble failure story (persist reason+kind, retry-where-retryable)           | biggest remaining UX lever              |
+| Train E: provider refusal → 422 + honest family vocabulary (contract + runbook sync) | bundle with D                           |
+| Train F: own-DID on session payload, live composer warning                           | only if self-sends recur                |
+| Dial typeahead / jump-to-latest / per-thread drafts                                  | planned next-train ideas                |
+| Stack browser E2E re-run                                                             | the declared markup gate, twice skipped |
 
 ## d) TOTALLY FUCKED UP
 
@@ -105,28 +107,28 @@ buildflow) — all handled without touching their files.
 
 ## f) Next tasks (impact/effort-sorted)
 
-| # | Task | Impact | Effort |
-| --- | --- | --- | --- |
-| 1 | Stack browser E2E (covers both trains' markup + the three JS behaviors) | High | S |
-| 2 | Owner call: train C semantics (422-no-row vs failed-row evidence) | High | decision |
-| 3 | Implement C for messages + fax (reuse `isSelfThread`) | High | S |
-| 4 | Re-green buildflow once the CRM train folds (9 attributed findings) | High | S |
-| 5 | Train D: bubble failure story (store field, wp-failed, disclosure, retry-when-retryable) | High | M-L |
-| 6 | Train E with D: 422 + family vocabulary + failure table + stack runbook sync | Med | S-M |
-| 7 | Dial typeahead (PBX_CONFIG contacts, ranked, zero round-trips) | High | M |
-| 8 | Jump-to-latest chip on live pushes while scrolled up | Med | S |
-| 9 | Per-thread draft persistence (localStorage) | Med | S |
-| 10 | Fax-lane self-send guard (rides #3) | Med | S |
-| 11 | de native review of `thread.selfNotice` + screenshot QA of the four affordances | Low | XS |
-| 12 | Contacts add/import in-flight guard decision (upsert idempotency argues skip — decide explicitly) | Low | XS |
-| 13 | Missed-call nav badge (header badge counts live calls only) | Med | S |
-| 14 | Absolute-time-on-hover (`title`) for relative timestamps | Low | XS |
-| 15 | Thread search (server LIKE over bodies/remotes) | Med | M |
-| 16 | a11y pass: prefers-reduced-motion, aria-live on toasts, focus-visible | Med | S |
-| 17 | Audio output picker (`setSinkId`) for multi-output desks | Med | S-M |
-| 18 | Voicemail transcription (ONLY if the phone API exposes it — verify first) | ? | M |
-| 19 | Peer hub: contact → thread + history + VM in one view | Med | M |
-| 20 | Train F own-DID live warning (demand-gated) | Low-Med | M |
+| #  | Task                                                                                              | Impact  | Effort   |
+| -- | ------------------------------------------------------------------------------------------------- | ------- | -------- |
+| 1  | Stack browser E2E (covers both trains' markup + the three JS behaviors)                           | High    | S        |
+| 2  | Owner call: train C semantics (422-no-row vs failed-row evidence)                                 | High    | decision |
+| 3  | Implement C for messages + fax (reuse `isSelfThread`)                                             | High    | S        |
+| 4  | Re-green buildflow once the CRM train folds (9 attributed findings)                               | High    | S        |
+| 5  | Train D: bubble failure story (store field, wp-failed, disclosure, retry-when-retryable)          | High    | M-L      |
+| 6  | Train E with D: 422 + family vocabulary + failure table + stack runbook sync                      | Med     | S-M      |
+| 7  | Dial typeahead (PBX_CONFIG contacts, ranked, zero round-trips)                                    | High    | M        |
+| 8  | Jump-to-latest chip on live pushes while scrolled up                                              | Med     | S        |
+| 9  | Per-thread draft persistence (localStorage)                                                       | Med     | S        |
+| 10 | Fax-lane self-send guard (rides #3)                                                               | Med     | S        |
+| 11 | de native review of `thread.selfNotice` + screenshot QA of the four affordances                   | Low     | XS       |
+| 12 | Contacts add/import in-flight guard decision (upsert idempotency argues skip — decide explicitly) | Low     | XS       |
+| 13 | Missed-call nav badge (header badge counts live calls only)                                       | Med     | S        |
+| 14 | Absolute-time-on-hover (`title`) for relative timestamps                                          | Low     | XS       |
+| 15 | Thread search (server LIKE over bodies/remotes)                                                   | Med     | M        |
+| 16 | a11y pass: prefers-reduced-motion, aria-live on toasts, focus-visible                             | Med     | S        |
+| 17 | Audio output picker (`setSinkId`) for multi-output desks                                          | Med     | S-M      |
+| 18 | Voicemail transcription (ONLY if the phone API exposes it — verify first)                         | ?       | M        |
+| 19 | Peer hub: contact → thread + history + VM in one view                                             | Med     | M        |
+| 20 | Train F own-DID live warning (demand-gated)                                                       | Low-Med | M        |
 
 ## g) Questions I cannot figure out myself
 
@@ -140,9 +142,10 @@ buildflow) — all handled without touching their files.
    priority from (f)?
 
 ---
-*`.md` per explicit owner instruction (skill default HTML; override
+
+_`.md` per explicit owner instruction (skill default HTML; override
 flagged). Not manually committed — daemon owns sweeps (note: local
 HEAD is 4 daemon commits ahead of origin/main at freeze; the daemon
 pushes within minutes — my two narrative commits are verified at
 origin). `internal/server/metrics.go` + `internal/store/sweep.go` in
-the tree are the concurrent session's in-flight work.*
+the tree are the concurrent session's in-flight work._
