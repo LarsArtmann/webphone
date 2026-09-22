@@ -197,3 +197,35 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 		t.Errorf("threads data line missing the fragment: %q", dataLine)
 	}
 }
+
+// TestSSEContactsNudgeIsPayloadLess pins the last stale live surface's
+// live-update contract: every contacts mutation — the island JSON API
+// here, the tab forms and the vCard import share the same helper —
+// publishes a payload-less "contacts" event. The open Contacts tab
+// re-fetches its partial via hx-trigger="sse:contacts"; the island's
+// dropdown re-fetches through its own listener. No payload by design:
+// both consumers hold their own session credentials.
+func TestSSEContactsNudgeIsPayloadLess(t *testing.T) {
+	server := newTestServer(t)
+	events := subscribeEvents(t, server)
+	c := signIn(t, server)
+
+	if resp, body := c.do(http.MethodPost, "/api/contacts",
+		[]byte(`{"name":"Nudge","number":"+441632960962"}`), "application/json"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save: %d %s", resp.StatusCode, body)
+	}
+	saved := expectEvent(t, events, "contacts")
+	if saved.Data != "" {
+		t.Errorf("contacts nudge must be payload-less, got %.80q", saved.Data)
+	}
+
+	_, listBody := c.do(http.MethodGet, "/api/contacts", nil, "")
+	id := jsonStringField(t, listBody, "id")
+	if resp, body := c.do(http.MethodDelete, "/api/contacts?id="+urlQueryEscape(id), nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("delete: %d %s", resp.StatusCode, body)
+	}
+	deleted := expectEvent(t, events, "contacts")
+	if deleted.Data != "" {
+		t.Errorf("delete nudge must be payload-less, got %.80q", deleted.Data)
+	}
+}
