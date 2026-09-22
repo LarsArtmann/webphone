@@ -16,7 +16,7 @@ Code wins when doc and code disagree.
 | Attended transfer (REFER w/ Replaces) | 🟢 FULLY_FUNCTIONAL | Bridges the two established calls at the network                                          |
 | DTMF keypad                           | 🟢 FULLY_FUNCTIONAL | `application/dtmf-relay` INFO, equals-form `Signal=` (FreeSWITCH-compatible)              |
 | Hangup / cancel                       | 🟢 FULLY_FUNCTIONAL | Correct verb per session state (cancel before answer, bye after, reject for incoming)     |
-| Reconnect watchdog                    | 🟢 FULLY_FUNCTIONAL | Bounded (5s/attempt) rebuild when `userAgent.reconnect()` hangs; calls survive            |
+| Reconnect watchdog + registration-loss rebuild | 🟢 FULLY_FUNCTIONAL | Bounded (5s/attempt) rebuild when `userAgent.reconnect()` hangs; rebuilds the whole agent when an established registration is lost (no rebuild loop on bogus creds, outage-gated), a 15s cycle deadline force-rebuilds wedged cycles, and the pill is set explicitly on recovery (sip.js fires NO stateChange on Registered→Registered) — 2.5.0, nine stub scenarios in island-tests |
 | Honest failure states                 | 🟢 FULLY_FUNCTIONAL | Status pill reports WHY (TLS/cert vs network vs rejected credentials), not just "offline" |
 
 ## Messaging (SMS/MMS)
@@ -63,7 +63,7 @@ Code wins when doc and code disagree.
 | Contacts JSON API              | 🟢 FULLY_FUNCTIONAL | `GET`/`POST`/`DELETE /api/contacts`: session-gated, extension-scoped; one-time localStorage migration imports then clears                             |
 | vCard import/export            | 🟢 FULLY_FUNCTIONAL | `internal/vcard`; `/contacts/import` + `/contacts/export`, upsert-by-number                                                                           |
 | Single sign-on with the island | 🟢 FULLY_FUNCTIONAL | Login verifies the credentials against the PBX directory server-side (`VerifyCredentials`, fail-closed), then opens the tab session; logout closes it |
-| Session store                  | 🟢 FULLY_FUNCTIONAL | SQLite-backed (survives restarts), TTL + sweeps, HttpOnly cookie; in-memory store remains for tests                                                   |
+| Session store + resume + sliding TTL | 🟢 FULLY_FUNCTIONAL | SQLite-backed (survives restarts), HttpOnly cookie; sessions RESUME at island boot (`GET /api/session`), slide on activity (`session_ttl` 7d idle) under an absolute cap (`session_max_ttl` 30d) — 2.5.0; in-memory store remains for tests |
 | Login rate limiting            | 🟢 FULLY_FUNCTIONAL | Per-IP token buckets on `/api/session` and `/hooks/*` (limiter outside the secret gate)                                                               |
 | CSRF protection                | 🟢 FULLY_FUNCTIONAL | Double-submit token, rotated on login/logout with island adoption via `GET /api/csrf`; fronted-TLS trust via `csrf.trusted_*` config                  |
 | Own-number identity (DID)      | 🟢 FULLY_FUNCTIONAL | Config `identities` (ext → presented number): signed-in header, island whoami (session response), messages/fax "sending as"; display-only             |
@@ -111,13 +111,12 @@ Code wins when doc and code disagree.
 | Import-direction arch tests  | 🟢 FULLY_FUNCTIONAL | `internal/arch`: domain imports nothing internal, services never import server/web, island modules pairwise independent                                                                                                                                                                                               |
 | i18n (en/de)                 | 🟢 FULLY_FUNCTIONAL | Island + server tabs (~90-key dictionary); `wp-lang` cookie / Accept-Language; SSE fragments follow the extension's language; service-validation reasons stay English (operator-facing)                                                                                                                               |
 | Dark + light themes          | 🟢 FULLY_FUNCTIONAL | Token-based, follows `prefers-color-scheme`; manual toggle cycles auto→light→dark (`wp-theme`)                                                                                                                                                                                                                        |
-| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL | Green 2026-09-20 against the idiomorph merge branch (`--override-input`, 148 s: dial affordances, presence badge, contacts single-home, transfers, DTMF, reconnect-recovery); re-gated in-train on the v2.4.0 stack relock                                                                                            |
+| Browser E2E (upstream stack) | 🟢 FULLY_FUNCTIONAL | Green ×2 on 2026-09-22 (293 s/322 s incl. the restart-resume, transfer and FS-outage drills; RECONNECT-RECOVERY auto both runs) after the registration-loss fix train; re-gated in-train on the v2.4.0/v2.5.0 stack relocks                                                                                            |
 
 ## PLANNED / WORTH_CONSIDERING
 
 | Idea                                | Status               | Notes                                                                                                                                                                                   |
 | ----------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Session persistence across restarts | ⚪ WORTH_CONSIDERING | Passwords in RAM only today; persistence has security cost                                                                                                                              |
 | Retention/cleanup job (blobs, old)  | ⚪ WORTH_CONSIDERING | Data grows unbounded today                                                                                                                                                              |
 | Video calls                         | ⚪ WORTH_CONSIDERING | sip.js supports it; UI needs a video surface                                                                                                                                            |
 | Recording UI surface                | ⚪ WORTH_CONSIDERING | PBX records every call (stack `/recordings/`, operator auth); the island has no recording UI — ROADMAP raw ideas                                                                        |
