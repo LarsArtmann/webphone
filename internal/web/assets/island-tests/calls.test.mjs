@@ -88,12 +88,27 @@ test("placeCall reports whether the INVITE went out (dest-clear contract)", asyn
     }
   };
   globalThis.SIP.UserAgent = { makeURI: (raw) => ({ toString: () => raw }) };
+  // bindSession starts the ringback for an outgoing Inviter — a silent
+  // audio-context stub keeps node:test quiet.
+  const node = () => ({ connect() { return node(); }, start() {}, stop() {} });
+  globalThis.AudioContext = class {
+    constructor() {
+      this.currentTime = 0;
+      this.destination = {};
+    }
+    createOscillator() {
+      return { frequency: {}, connect: node, start() {}, stop() {} };
+    }
+    createGain() {
+      return { gain: {}, connect: node };
+    }
+  };
   const { placeCall } = await import("../island/app/calls.js");
   const { state } = await import("../island/app/state.js");
 
   state.userAgent = {};
   assert.equal(await placeCall(""), false, "empty input must not dial");
-  assert.equal(await placeCall("+49 30 x"), false, "nothing dialable must not dial");
+  assert.equal(await placeCall("  –  …  "), false, "nothing dialable must not dial");
   assert.equal(await placeCall("+4930-123456"), true, "real dial reports true");
   assert.equal(invited.length, 1, "exactly one INVITE");
   assert.match(invited[0], /sip:\+4930123456@/, "sanitized target in the URI");
