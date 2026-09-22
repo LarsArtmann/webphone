@@ -486,5 +486,11 @@ graph.
   contactsLimiter field lengthening; fixed surgically with
   `gofmt -w internal/server/server.go`), (2) a govulncheck Go-version
   mismatch (triage below), (3) confounders: T17 edits + daemon sweeps
-  landed while the gates ran. Clean re-run verdict: see the next log
-  entry.
+  landed while the gates ran. RESOLVED 2026-09-22 ~17:00: gofmt fixed
+  surgically; govulncheck GREEN on a quiesced run (the mismatch was a
+  raced-run artifact — no env restore needed); the remaining erraudit
+  findings were the CONCURRENT CRM train's (7 in internal/crm/client.go,
+  then 2 more in store/messages.go) — fixed 2026-09-22 ~17:10 after
+  their session went quiet (context vars on the error paths + reasoned
+  nolints on the best-effort drain; their tests assert errors.Is
+  sentinels, not strings). Enforced tier back to 0 findings.

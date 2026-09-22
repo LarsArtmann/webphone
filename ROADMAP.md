@@ -55,12 +55,11 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 - Retention/cleanup job: bounded deletion for old CDR rows, read
   faxes/voicemail blobs, and expired sessions (a `retention_days`
   setting + a systemd timer in the module).
-- PWA: manifest + service worker so the webphone installs to a home
-  screen; the SIP island must survive SW caching rules (no cache for
-  `/events`, verbatim island modules pinned by hash).
-- Generated island DOM-contract file: emit the 35-id contract from the
-  test instead of hand-maintaining the AGENTS list (stops enumeration
-  drift; harvested 2026-09-20 from the 01:04 report §f/37).
+- PWA: RESOLVED 2026-09-22 — the service worker is a NOT-DO (stale
+  cached island = a bug class invisible to every gate; offline is
+  impossible for a phone: `docs/planning/2026-09-22_17-05_pwa-spike-verdict.md`).
+  Parked behind an owner demand signal: manifest-LITE only (manifest
+  + maskable PNG icons, NO fetch interception, zero staleness risk).
 - Video calls: SIP.js video negotiation + a `<video>` call card —
   FreeSWITCH side needs a video-capable profile; large surface, only
   on demand.
