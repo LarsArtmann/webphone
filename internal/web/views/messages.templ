@@ -166,15 +166,18 @@ templ ThreadView(props ThreadViewProps) {
 				<button type="submit">{ T(props.Lang, "thread.loadOlder") }</button>
 			</form>
 		}
-		<div
-			class="wp-transcript"
-			id="thread-transcript"
-			sse-swap="thread"
-			hx-swap="morph:innerHTML"
-			data-page={ fmtInt(props.Page) }
-			data-thread={ props.Thread.ID.String() }
-		>
-			@Transcript(props.Messages, props.Lang)
+		<div class="wp-transcript-wrap">
+			<div
+				class="wp-transcript"
+				id="thread-transcript"
+				sse-swap="thread"
+				hx-swap="morph:innerHTML"
+				data-page={ fmtInt(props.Page) }
+				data-thread={ props.Thread.ID.String() }
+			>
+				@Transcript(props.Messages, props.Lang)
+			</div>
+			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
 		</div>
 		if props.Identity != "" {
 			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>

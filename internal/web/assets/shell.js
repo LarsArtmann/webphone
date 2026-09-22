@@ -150,6 +150,46 @@
     document.addEventListener("wp:calls-changed", updateCallBadge);
     updateCallBadge();
 
+    // 2d. Missed-call presence: the island dispatches wp:call-missed when
+    //     an inbound call ended without being answered (the caller gave
+    //     up, or an accepted call died before media). A deliberate user
+    //     REJECT is a seen call and never counts. The badge survives
+    //     until the History tab — the surface where missed calls are
+    //     reviewed — is opened. English shell copy (D3); client-only
+    //     state: the PBX CDR carries no missed flag, and the badge is
+    //     a session-scoped glance signal by nature.
+    var missedBadge = null;
+    var missedCount = 0;
+    var renderMissedBadge = function () {
+      var actions = document.querySelector(".wp-header-actions");
+      if (!actions) return;
+      if (missedCount > 0) {
+        if (!missedBadge) {
+          missedBadge = document.createElement("span");
+          missedBadge.id = "missed-badge";
+          missedBadge.className = "wp-missed-badge";
+          actions.prepend(missedBadge);
+        }
+        missedBadge.textContent = "missed · " + missedCount;
+      } else if (missedBadge) {
+        missedBadge.remove();
+        missedBadge = null;
+      }
+    };
+    document.addEventListener("wp:call-missed", function () {
+      missedCount += 1;
+      renderMissedBadge();
+    });
+    document.addEventListener("click", function (event) {
+      var link =
+        event.target && event.target.closest
+          ? event.target.closest("[data-tab='history']")
+          : null;
+      if (!link) return;
+      missedCount = 0;
+      renderMissedBadge();
+    });
+
     // 2b. data-reload buttons (error panel): full reload, same as the old
     //      inline onclick but CSP-safe via this delegated listener.
     document.addEventListener("click", function (event) {
@@ -203,6 +243,77 @@
       })
         .then(refreshNav)
         .catch(function () {});
+    });
+
+    // 3b-2. Jump-to-latest chip: a live push that lands while the reader
+    //     has scrolled up must neither yank them to the bottom nor go
+    //     unseen. The near-bottom decision happens BEFORE the swap
+    //     (sseBeforeMessage); after it, a near-bottom reader keeps the
+    //     pinned-scroll behavior, a scrolled-away reader gets a counter
+    //     chip that scrolls back on click. Returning to the bottom by
+    //     hand hides and resets it. Text is language-neutral ("↓ N new"),
+    //     matching the segcounter precedent.
+    var NEAR_BOTTOM_PX = 80;
+    var pendingNew = 0;
+    var jumpChip = null;
+    var nearBottom = function (el) {
+      return el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM_PX;
+    };
+    var resetJumpChip = function () {
+      pendingNew = 0;
+      if (jumpChip) {
+        jumpChip.hidden = true;
+        jumpChip.textContent = "";
+      }
+    };
+    document.addEventListener("scroll", function (event) {
+      var transcript = document.getElementById("thread-transcript");
+      if (!transcript || event.target !== transcript) return;
+      if (nearBottom(transcript)) resetJumpChip();
+    }, true);
+    document.addEventListener("htmx:sseBeforeMessage", function (event) {
+      var transcript = event.target;
+      if (!transcript || transcript.id !== "thread-transcript") return;
+      transcript.dataset.wasNearBottom = nearBottom(transcript) ? "1" : "0";
+    });
+    document.addEventListener("htmx:sseMessage", function (event) {
+      var transcript = event.target;
+      if (!transcript || transcript.id !== "thread-transcript") return;
+      if (transcript.dataset.page !== "0" || !transcript.dataset.thread) return;
+      if (transcript.dataset.wasNearBottom === "0") {
+        pendingNew += 1;
+        var wrap = transcript.parentElement;
+        var chip = wrap && wrap.querySelector(".wp-jump-latest");
+        if (chip) {
+          jumpChip = chip;
+          chip.textContent = "↓ " + pendingNew + " new";
+          chip.hidden = false;
+        }
+        return;
+      }
+      // The swap lands right after this event: pin to the newest bubble
+      // on the next tick, once the new bubble is in the DOM.
+      setTimeout(function () {
+        var live = document.getElementById("thread-transcript");
+        if (live) live.scrollTop = live.scrollHeight;
+      }, 0);
+    });
+    document.addEventListener("click", function (event) {
+      var chip =
+        event.target && event.target.closest
+          ? event.target.closest(".wp-jump-latest")
+          : null;
+      if (!chip) return;
+      var transcript = document.getElementById("thread-transcript");
+      if (transcript) transcript.scrollTop = transcript.scrollHeight;
+      resetJumpChip();
+    });
+    // A full swap renders a fresh hidden chip — drop the stale counter.
+    document.addEventListener("htmx:afterSwap", function () {
+      if (document.getElementById("thread-transcript")) {
+        pendingNew = 0;
+        jumpChip = null;
+      }
     });
     // The island's language switch re-labels itself and re-fetches the open
     // tab; the nav is shell territory, so it asks via this event.
