@@ -15,6 +15,7 @@ host is UTC+2). Not introduced or touched by this train.
 ## a) FULLY done
 
 ### Design (settled before code)
+
 - Contract: number ↔ contact identity. Webphone resolves numbers to CRM
   names (read) and journals finished calls (append). Matching lives in
   ONE place — the CRM: digits-only normalize, suffix ≥8 digits,
@@ -28,6 +29,7 @@ host is UTC+2). Not introduced or touched by this train.
   a page error, never a call-path dependency.
 
 ### CRM repo (`~/projects/crm`)
+
 - Contact domain: `Phones []string` on State, Created/Updated payloads
   (`phones` json, omitempty — old events decode fine), Create/Update
   commands; decide signatures extended; fold sets on create and
@@ -59,6 +61,7 @@ host is UTC+2). Not introduced or touched by this train.
   (httpapi + domain + app) GREEN.
 
 ### Webphone repo (this repo)
+
 - `internal/config`: `CRM{URL,Token}` + fail-closed validation.
 - `internal/crm` (new package): `Client` (3 s timeout, bearer, lookup +
   log call; ErrDisabled/ErrUnauthorized/ErrNotFound) and `Resolver`
@@ -94,6 +97,7 @@ host is UTC+2). Not introduced or touched by this train.
   CHANGELOG Unreleased, FEATURES row, AGENTS.md integration-seam block.
 
 ## b) PARTIALLY done
+
 - CRM full-suite verdict: green except the PRE-EXISTING load-dependent
   flake `TestRegistrationRateLimitContract` (internal/identity —
   untouched by this train; passes 3/3 in isolation; failed twice under
@@ -107,6 +111,7 @@ host is UTC+2). Not introduced or touched by this train.
   i18n but was NOT added to the failure-map table in webphone AGENTS.md.
 
 ## c) NOT started
+
 - Webphone `buildflow` (THE quality gate).
 - CRM `buildflow` (only go build + race tests ran in the pinned sandbox).
 - `nix flake check` (webphone) — only `nix build .#webphone` ran.
@@ -124,6 +129,7 @@ host is UTC+2). Not introduced or touched by this train.
 - CSV import E2E for the phones column (unit-level only).
 
 ## d) Totally fucked up
+
 - First `parsePhones` split on WHITESPACE — shredded "+49 30 12345678"
   into four garbage "numbers". The sandbox gate caught it; worse, my
   first test assertion ("12345678 must not match") was ALSO wrong —
@@ -142,6 +148,7 @@ host is UTC+2). Not introduced or touched by this train.
   edit refusals after the concurrent session touched shared files.
 
 ## e) Improvements
+
 1. Sequence gate runs; never overlap two `-race` suites on this host.
 2. Read each repo's toolchain traps BEFORE the first build (hit the CRM
    sibling-drift trap on command one; used verify-pinned.sh after).
@@ -160,6 +167,7 @@ host is UTC+2). Not introduced or touched by this train.
     failure-map table and the stack runbook at implementation time.
 
 ## f) Next things (ordered, 24)
+
 1. Re-run the CRM full suite in the pinned sandbox, quiet machine.
 2. Webphone `buildflow` (inside `nix develop`).
 3. CRM `buildflow` (`scripts/buildflow.sh` modes for gitleaks/codespell).
@@ -191,6 +199,7 @@ host is UTC+2). Not introduced or touched by this train.
 24. Plan v1.1: CRM + webphone on different hosts (TLS, token rotation).
 
 ## g) Questions
+
 1. The CRM's `TestRegistrationRateLimitContract` is load-dependent (the
    per-connection limiter under parallel -race load). Fix the test in
    the CRM repo (control connection reuse), treat it as go-cqrs-lite

@@ -90,7 +90,13 @@ test("placeCall reports whether the INVITE went out (dest-clear contract)", asyn
   globalThis.SIP.UserAgent = { makeURI: (raw) => ({ toString: () => raw }) };
   // bindSession starts the ringback for an outgoing Inviter — a silent
   // audio-context stub keeps node:test quiet.
-  const node = () => ({ connect() { return node(); }, start() {}, stop() {} });
+  const node = () => ({
+    connect() {
+      return node();
+    },
+    start() {},
+    stop() {},
+  });
   globalThis.AudioContext = class {
     constructor() {
       this.currentTime = 0;

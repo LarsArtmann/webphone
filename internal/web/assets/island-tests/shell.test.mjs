@@ -163,7 +163,9 @@ test("data-sms prefills the new-message composer after the tab swap", () => {
         ? nav
         : realQuerySelector(selector);
 
-  doc.dispatch("click", { target: { closest: (sel) => (sel === "[data-sms]" ? { getAttribute: () => "+4930" } : null) } });
+  doc.dispatch("click", {
+    target: { closest: (sel) => (sel === "[data-sms]" ? { getAttribute: () => "+4930" } : null) },
+  });
   assert.ok(navClicked, "the messages nav was clicked");
 
   doc.dispatch("htmx:afterSwap", {});

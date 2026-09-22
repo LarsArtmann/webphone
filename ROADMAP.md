@@ -59,7 +59,7 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   cached island = a bug class invisible to every gate; offline is
   impossible for a phone: `docs/planning/2026-09-22_17-05_pwa-spike-verdict.md`).
   Parked behind an owner demand signal: manifest-LITE only (manifest
-  + maskable PNG icons, NO fetch interception, zero staleness risk).
+  - maskable PNG icons, NO fetch interception, zero staleness risk).
 - Video calls: SIP.js video negotiation + a `<video>` call card —
   FreeSWITCH side needs a video-capable profile; large surface, only
   on demand.

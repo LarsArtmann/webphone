@@ -31,12 +31,12 @@ evidence:
 
 ## Pareto breakdown
 
-| Layer       | Items                                                                                  | Rationale                                                        |
-| ----------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| 20% → 80%   | A. Double-submit guard · B. Self-send notice · C. Pre-flight self-send rejection        | All three kill doomed round-trips or duplicate sends at ~zero risk |
-| 4% → 64%    | A + B (THIS TRAIN)                                                                       | Pure view-layer work, no store/model change, no contract change   |
-| 1% → 51%    | A alone                                                                                  | One htmx attribute × 3 forms; eliminates an evidence-backed bug class |
-| other 20%   | D. Bubble failure story · E. Honest 422 semantics · F. Own-DID live composer warning     | The remaining durability/retry/operator-clarity work              |
+| Layer     | Items                                                                                | Rationale                                                             |
+| --------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 20% → 80% | A. Double-submit guard · B. Self-send notice · C. Pre-flight self-send rejection     | All three kill doomed round-trips or duplicate sends at ~zero risk    |
+| 4% → 64%  | A + B (THIS TRAIN)                                                                   | Pure view-layer work, no store/model change, no contract change       |
+| 1% → 51%  | A alone                                                                              | One htmx attribute × 3 forms; eliminates an evidence-backed bug class |
+| other 20% | D. Bubble failure story · E. Honest 422 semantics · F. Own-DID live composer warning | The remaining durability/retry/operator-clarity work                  |
 
 Deferred items and why:
 
@@ -56,40 +56,40 @@ Deferred items and why:
 
 ## Coarse plan (tasks 30–100 min), sorted by impact/effort
 
-| #  | Task                                                                 | Impact | Effort | Status |
-| -- | -------------------------------------------------------------------- | ------ | ------ | ------ |
-| 1  | Double-submit guard: `hx-disabled-elt` on the three send forms       | High   | XS     | this train |
-| 2  | Self-send notice in ThreadView (helper + i18n + CSS + tests)         | High   | S      | this train |
-| 3  | Plan doc, CHANGELOG, TODO_LIST, AGENTS.md durable knowledge          | Med    | S      | this train |
-| 4  | Gates: templ generate, go test -count=1 ./…, nix fmt, buildflow, smoke, commit+push | Med | S | this train |
-| 5  | C: pre-flight self-send 422 fast path (owner decision: keep failed-row evidence?) | Med-High | S | next |
-| 6  | E: provider refusal → 422 + family vocabulary; contract + runbook sync | Med    | S-M    | next |
-| 7  | D: persist failure detail+kind; wp-failed bubble, disclosure, retry-when-retryable | High | M-L | next |
-| 8  | F: own-DID on session payload + live composer warning                | Low-Med| M      | on demand |
+| # | Task                                                                                | Impact   | Effort | Status     |
+| - | ----------------------------------------------------------------------------------- | -------- | ------ | ---------- |
+| 1 | Double-submit guard: `hx-disabled-elt` on the three send forms                      | High     | XS     | this train |
+| 2 | Self-send notice in ThreadView (helper + i18n + CSS + tests)                        | High     | S      | this train |
+| 3 | Plan doc, CHANGELOG, TODO_LIST, AGENTS.md durable knowledge                         | Med      | S      | this train |
+| 4 | Gates: templ generate, go test -count=1 ./…, nix fmt, buildflow, smoke, commit+push | Med      | S      | this train |
+| 5 | C: pre-flight self-send 422 fast path (owner decision: keep failed-row evidence?)   | Med-High | S      | next       |
+| 6 | E: provider refusal → 422 + family vocabulary; contract + runbook sync              | Med      | S-M    | next       |
+| 7 | D: persist failure detail+kind; wp-failed bubble, disclosure, retry-when-retryable  | High     | M-L    | next       |
+| 8 | F: own-DID on session payload + live composer warning                               | Low-Med  | M      | on demand  |
 
 ## Fine plan (tasks ≤ 12 min each) — this train
 
-| #   | Task                                                                        | Verifies via                    |
-| --- | --------------------------------------------------------------------------- | ------------------------------- |
-| 1.1 | Add `thread.selfNotice` to en+de dictionaries (i18n.go)                     | i18n parity test                |
-| 2.1 | Add `isSelfThread(identity, remote)` to views/helpers.go (ParsePhone both sides; "" and undialable → false) | helpers unit test |
-| 2.2 | Unit-test isSelfThread: empty, mismatch, match-with-spaces, undialable      | `go test ./internal/web/views`  |
-| 2.3 | ThreadView: render `.wp-notice` (role="note") after the error banner when isSelfThread | server test |
-| 2.4 | app.css: `.wp-notice` quiet warn line (token vars only, class not style)    | served-asset test unchanged     |
-| 1.1 | `hx-disabled-elt="find button[type=submit]"` on NewMessageForm              | server test pin                 |
-| 1.2 | Same on the ThreadView reply composer                                       | server test pin                 |
-| 1.3 | Same on the fax compose form (fax.templ)                                    | server test pin                 |
-| 4.1 | `templ generate ./internal/web/views/` and inspect the diff                  | build                           |
-| 4.2 | Server test: notice shown when thread remote == identities[ext]; hidden otherwise (newTestServerWithConfig) | go test |
-| 4.3 | Server test: all three send forms carry the disable directive               | go test                         |
-| 4.4 | `nix fmt` (prettier owns app.css) and re-check diff                          | treefmt clean                   |
-| 3.1 | CHANGELOG Unreleased entries                                                | review                          |
-| 3.2 | TODO_LIST: add trains C/D/E/F with the deferral rationale                   | review                          |
-| 3.3 | AGENTS.md: durable insight (focal mismatch + double-submit evidence + notice contract) | review             |
-| 4.5 | `nix develop -c go test -count=1 ./...`                                      | green                           |
-| 4.6 | `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` (via scripts/buildflow.sh)           | green                           |
-| 4.7 | `python3 scripts/webphone-smoke.py`                                          | 32 checks                       |
-| 4.8 | Explicit detailed commit + push + `git ls-remote` verification               | ls-remote == HEAD               |
+| #   | Task                                                                                                        | Verifies via                   |
+| --- | ----------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1.1 | Add `thread.selfNotice` to en+de dictionaries (i18n.go)                                                     | i18n parity test               |
+| 2.1 | Add `isSelfThread(identity, remote)` to views/helpers.go (ParsePhone both sides; "" and undialable → false) | helpers unit test              |
+| 2.2 | Unit-test isSelfThread: empty, mismatch, match-with-spaces, undialable                                      | `go test ./internal/web/views` |
+| 2.3 | ThreadView: render `.wp-notice` (role="note") after the error banner when isSelfThread                      | server test                    |
+| 2.4 | app.css: `.wp-notice` quiet warn line (token vars only, class not style)                                    | served-asset test unchanged    |
+| 1.1 | `hx-disabled-elt="find button[type=submit]"` on NewMessageForm                                              | server test pin                |
+| 1.2 | Same on the ThreadView reply composer                                                                       | server test pin                |
+| 1.3 | Same on the fax compose form (fax.templ)                                                                    | server test pin                |
+| 4.1 | `templ generate ./internal/web/views/` and inspect the diff                                                 | build                          |
+| 4.2 | Server test: notice shown when thread remote == identities[ext]; hidden otherwise (newTestServerWithConfig) | go test                        |
+| 4.3 | Server test: all three send forms carry the disable directive                                               | go test                        |
+| 4.4 | `nix fmt` (prettier owns app.css) and re-check diff                                                         | treefmt clean                  |
+| 3.1 | CHANGELOG Unreleased entries                                                                                | review                         |
+| 3.2 | TODO_LIST: add trains C/D/E/F with the deferral rationale                                                   | review                         |
+| 3.3 | AGENTS.md: durable insight (focal mismatch + double-submit evidence + notice contract)                      | review                         |
+| 4.5 | `nix develop -c go test -count=1 ./...`                                                                     | green                          |
+| 4.6 | `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` (via scripts/buildflow.sh)                                          | green                          |
+| 4.7 | `python3 scripts/webphone-smoke.py`                                                                         | 32 checks                      |
+| 4.8 | Explicit detailed commit + push + `git ls-remote` verification                                              | ls-remote == HEAD              |
 
 ## Execution graph
 

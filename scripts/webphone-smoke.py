@@ -708,7 +708,9 @@ def main() -> int:
     ensure_go_toolchain(args)
 
     if args.base:
-        return run_checks(Smoke(args.base), foreign=True, expect_version=args.expect_version)
+        return run_checks(
+            Smoke(args.base), foreign=True, expect_version=args.expect_version
+        )
 
     port = free_port()
     workdir = tempfile.mkdtemp(prefix="webphone-smoke-")
@@ -795,7 +797,9 @@ def main() -> int:
         else:
             print("server did not become ready", file=sys.stderr)
             return 2
-        rc = run_checks(Smoke(base), boot_configured, expect_version=args.expect_version)
+        rc = run_checks(
+            Smoke(base), boot_configured, expect_version=args.expect_version
+        )
         rc = max(rc, restart_scenario(binary, workdir, port, env))
         return rc
     finally:

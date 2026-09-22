@@ -86,3 +86,30 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 
 // Contacts are deliberately out of scope: they are the user's
 // address book, not transient content — retention never touches them.
+
+// Counts are the AGGREGATE table sizes the metrics surface reports
+// (plan T26a): totals across ALL extensions, never per-owner values.
+type Counts struct {
+	Threads   int64
+	Messages  int64
+	Faxes     int64
+	Contacts  int64
+	Sessions  int64
+}
+
+// Counts reads the aggregate sizes in one call.
+func Counts(ctx context.Context, db *sql.DB) (Counts, error) {
+	var c Counts
+	err := db.QueryRowContext(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM threads),
+			(SELECT COUNT(*) FROM messages),
+			(SELECT COUNT(*) FROM fax_jobs),
+			(SELECT COUNT(*) FROM contacts),
+			(SELECT COUNT(*) FROM sessions)
+	`).Scan(&c.Threads, &c.Messages, &c.Faxes, &c.Contacts, &c.Sessions)
+	if err != nil {
+		return c, fmt.Errorf("count aggregates: %w", err)
+	}
+	return c, nil
+}

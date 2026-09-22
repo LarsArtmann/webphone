@@ -239,6 +239,7 @@ That red is the live fire right now.
 ## f) NEXT — up to 50, in order
 
 **Fire first:**
+
 1. Commit the pending T17 files (connection.js, i18n.js, connection.test.mjs).
 2. `nix fmt` the server.go constructor alignment; verify with gofmt.
 3. Triage the govulncheck failure (restore `.buildflow.yml` env for that
@@ -254,7 +255,7 @@ That red is the live fire right now.
 6. CHANGELOG `[Unreleased]` bullets for T12/T13/T14/T17 + FEATURES rows.
 7. Plan execution-log update (T12-T17, gate incident).
 8. T18a `backup.retentionDays` (null default = keep-forever; prune in
-   the oneshot; module check stand-ins).
+the oneshot; module check stand-ins).
 9. T18b README off-machine restic/borg pointer.
 10. T18c `/startupz`→systemd contract doc (+ optional wiring).
 11. T16b HARVEST routing of still-open report f-items.
@@ -271,7 +272,7 @@ That red is the live fire right now.
 22. T20d `data-sms` affordance (history/voicemail → compose prefilled).
 23. T20e history ☆ save-as-contact.
 24. T20f/g/h the three E2E scenarios (logged-out dial, contacts
-    round-trip, live badge) — each ×2 green.
+round-trip, live badge) — each ×2 green.
 25. T23a PWA spike verdict doc.
 26. T26a metrics endpoint (Prometheus text).
 27. T26b short-lived TURN REST creds via /config.js.
@@ -290,7 +291,7 @@ That red is the live fire right now.
 
 **Owner console (one sitting):**
 40. T3: run the deploy command (in the TODO row) + smoke
-    `--base … --expect-version 2.5.0`.
+`--base … --expect-version 2.5.0`.
 41. T4a: rejection-banner check (needs a real extension session).
 42. T5: `journalctl -u telnyx-webhooks` grep + SMS lane restore.
 43. T11: the 14-decision batch (briefing doc; recommendations ready).
@@ -301,10 +302,10 @@ That red is the live fire right now.
 46. Quarterly watches re-check (next: 2026-12-20).
 47. Per-train runbook incl. aarch64 named checks + closing sweep.
 48. E2E budget watch from the new 445s baseline (two consecutive
-    over-budget runs before digging).
+over-budget runs before digging).
 49. Decide/act on the daemon docs/status exclusion ask (ROADMAP line).
 50. Next train fold: the accumulating [Unreleased] (T12-T17 + whatever
-    lands) — g2 theme already forming ("live surfaces + honesty").
+lands) — g2 theme already forming ("live surfaces + honesty").
 
 ## g) Questions I cannot answer myself
 

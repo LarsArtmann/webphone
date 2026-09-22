@@ -20,21 +20,21 @@ and the evidence. Newest last is NOT enforced — group by topic.
 
 - The `setup` bundle, CQRS dispatch layer and usermgmt stay rejected
   (split-brain identity: this product's identity is the PBX extension
-  + directory password, proven by the island's SIP REGISTER — a second
-  user database would be a split brain). Security presets are NEVER
-  adopted wholesale — the library's `RecommendedPermissionsPolicy`
-  denies `microphone`, which would kill the WebRTC phone.
-  `toastDetail` is a type alias of `cqrshtmx.ToastDetail`
-  (root-package type, NOT dispatch-layer), so a wire-shape change
-  upstream fails this build. Trap: the dispatch-layer `Notify*`
-  options emit `{level,message}`, NOT the island's `{message,kind}`
-  shape; their KIND vocabulary is dispatch-layer too — the server's
-  `notifyToast` emits island kinds (ok/error/warn/info), which
-  main.js's old `TOAST_KINDS` (copied from the dispatch vocabulary
-  success/warning) silently recolored every success toast to info —
-  the mapping now lives in ui.js `toastKindFor`, pinned by ui.test.mjs.
-  Audit trail (deep-dives, plans, idiomorph verdict): `docs/research/`
-  + `docs/planning/` 2026-09-18..20.
+  - directory password, proven by the island's SIP REGISTER — a second
+    user database would be a split brain). Security presets are NEVER
+    adopted wholesale — the library's `RecommendedPermissionsPolicy`
+    denies `microphone`, which would kill the WebRTC phone.
+    `toastDetail` is a type alias of `cqrshtmx.ToastDetail`
+    (root-package type, NOT dispatch-layer), so a wire-shape change
+    upstream fails this build. Trap: the dispatch-layer `Notify*`
+    options emit `{level,message}`, NOT the island's `{message,kind}`
+    shape; their KIND vocabulary is dispatch-layer too — the server's
+    `notifyToast` emits island kinds (ok/error/warn/info), which
+    main.js's old `TOAST_KINDS` (copied from the dispatch vocabulary
+    success/warning) silently recolored every success toast to info —
+    the mapping now lives in ui.js `toastKindFor`, pinned by ui.test.mjs.
+    Audit trail (deep-dives, plans, idiomorph verdict): `docs/research/`
+  - `docs/planning/` 2026-09-18..20.
 
 ## CSRF
 

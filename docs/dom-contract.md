@@ -19,6 +19,7 @@ served island sources verbatim — see AGENTS.md "The DOM + bundle
 contract".
 
 <!-- dom-contract:begin -->
+
 reg-status
 login-view
 login-form
@@ -54,4 +55,5 @@ log
 toasts
 remote-audio
 lang
+
 <!-- dom-contract:end -->

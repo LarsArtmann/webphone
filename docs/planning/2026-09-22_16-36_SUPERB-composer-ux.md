@@ -24,12 +24,12 @@ transcript from the 40310 session:
 
 ## Pareto breakdown
 
-| Layer     | Items                                                          | Rationale                                                  |
-| --------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
-| 20% → 80% | T1 textarea composers · T2 segment counter · T3 de 24h times   | The three corrections users feel on every single visit      |
-| 4% → 64%  | T1 + T2                                                        | Composer = highest-frequency surface                        |
-| 1% → 51%  | T1 alone                                                       | Enter-to-send kills the biggest daily friction              |
-| other 20% | T4 attachment chips (+ deferred: dial typeahead, jump-to-latest, drafts) | Remaining polish                                  |
+| Layer     | Items                                                                    | Rationale                                              |
+| --------- | ------------------------------------------------------------------------ | ------------------------------------------------------ |
+| 20% → 80% | T1 textarea composers · T2 segment counter · T3 de 24h times             | The three corrections users feel on every single visit |
+| 4% → 64%  | T1 + T2                                                                  | Composer = highest-frequency surface                   |
+| 1% → 51%  | T1 alone                                                                 | Enter-to-send kills the biggest daily friction         |
+| other 20% | T4 attachment chips (+ deferred: dial typeahead, jump-to-latest, drafts) | Remaining polish                                       |
 
 ## Decisions this train
 
@@ -64,38 +64,38 @@ transcript from the 40310 session:
 
 ## Coarse plan (30–100 min), impact/effort-sorted
 
-| # | Task                                                | Impact | Effort | Status |
-| - | --------------------------------------------------- | ------ | ------ | ------ |
-| 1 | T1 textarea composers + Enter/Shift+Enter           | High   | S      | this train |
-| 2 | T2 segment counter (server span + shell.js math)    | High   | S      | this train |
-| 3 | T3 formatClock/formatStamp + 4 call sites + tests   | Med    | S      | this train |
-| 4 | T4 attachment chips (reply + fax) + tests           | Med    | S      | this train |
-| 5 | Plan doc, CHANGELOG, gates, commit+push             | Med    | S      | this train |
-| 6 | Dial typeahead (contacts from PBX_CONFIG)           | High   | M      | next train |
-| 7 | Jump-to-latest chip on live pushes while scrolled up | Med   | S-M    | next train |
-| 8 | Per-thread draft persistence (localStorage)        | Med    | S      | next train |
+| # | Task                                                 | Impact | Effort | Status     |
+| - | ---------------------------------------------------- | ------ | ------ | ---------- |
+| 1 | T1 textarea composers + Enter/Shift+Enter            | High   | S      | this train |
+| 2 | T2 segment counter (server span + shell.js math)     | High   | S      | this train |
+| 3 | T3 formatClock/formatStamp + 4 call sites + tests    | Med    | S      | this train |
+| 4 | T4 attachment chips (reply + fax) + tests            | Med    | S      | this train |
+| 5 | Plan doc, CHANGELOG, gates, commit+push              | Med    | S      | this train |
+| 6 | Dial typeahead (contacts from PBX_CONFIG)            | High   | M      | next train |
+| 7 | Jump-to-latest chip on live pushes while scrolled up | Med    | S-M    | next train |
+| 8 | Per-thread draft persistence (localStorage)          | Med    | S      | next train |
 
 ## Fine plan (≤ 12 min each)
 
-| #   | Task                                                                        | Verifies via                     |
-| --- | --------------------------------------------------------------------------- | -------------------------------- |
-| 1.1 | helpers.go: formatClock/formatStamp (+time import)                          | helpers unit tests               |
-| 1.2 | helpers_test.go: both langs, fixed instants, EN byte-stability              | `go test ./internal/web/views`   |
-| 2.1 | messages.templ: Bubble uses formatClock; relativeTime(t, lang); ThreadRow    | go test + render tests           |
-| 2.2 | fax.templ FaxRow + voicemail.templ vmWhen → formatStamp                     | go test                          |
-| 3.1 | messages.templ: both composers body→textarea.wp-compose-body; segcount span; reply form attach div | server test      |
-| 3.2 | fax.templ: attach div                                                        | server test                      |
-| 3.3 | templ generate                                                               | build                            |
-| 4.1 | app.css: textarea sizing, segcount, chips                                    | nix fmt + served asset           |
-| 4.2 | shell.js §4: smsSegments + keydown + input + change/click                    | island node tests                |
-| 4.3 | helpers.mjs: closest()/querySelector() element support + DataTransfer stub   | island node tests                |
-| 4.4 | island-tests/composer.test.mjs: segments math table, Enter routing, chips    | `node --test`                    |
-| 5.1 | Server test: de bubble clock (cookie wp-lang=de → no AM/PM, 2-digit hour)    | go test                          |
-| 5.2 | Full `go test -count=1 ./...`                                                | green                            |
-| 5.3 | island tests + `nix fmt`                                                     | green/clean                      |
-| 5.4 | buildflow + smoke                                                            | green (attribution check)        |
-| 5.5 | CHANGELOG Unreleased                                                         | review                           |
-| 5.6 | Explicit commit + push + ls-remote verify                                    | ls-remote == HEAD                |
+| #   | Task                                                                                               | Verifies via                   |
+| --- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1.1 | helpers.go: formatClock/formatStamp (+time import)                                                 | helpers unit tests             |
+| 1.2 | helpers_test.go: both langs, fixed instants, EN byte-stability                                     | `go test ./internal/web/views` |
+| 2.1 | messages.templ: Bubble uses formatClock; relativeTime(t, lang); ThreadRow                          | go test + render tests         |
+| 2.2 | fax.templ FaxRow + voicemail.templ vmWhen → formatStamp                                            | go test                        |
+| 3.1 | messages.templ: both composers body→textarea.wp-compose-body; segcount span; reply form attach div | server test                    |
+| 3.2 | fax.templ: attach div                                                                              | server test                    |
+| 3.3 | templ generate                                                                                     | build                          |
+| 4.1 | app.css: textarea sizing, segcount, chips                                                          | nix fmt + served asset         |
+| 4.2 | shell.js §4: smsSegments + keydown + input + change/click                                          | island node tests              |
+| 4.3 | helpers.mjs: closest()/querySelector() element support + DataTransfer stub                         | island node tests              |
+| 4.4 | island-tests/composer.test.mjs: segments math table, Enter routing, chips                          | `node --test`                  |
+| 5.1 | Server test: de bubble clock (cookie wp-lang=de → no AM/PM, 2-digit hour)                          | go test                        |
+| 5.2 | Full `go test -count=1 ./...`                                                                      | green                          |
+| 5.3 | island tests + `nix fmt`                                                                           | green/clean                    |
+| 5.4 | buildflow + smoke                                                                                  | green (attribution check)      |
+| 5.5 | CHANGELOG Unreleased                                                                               | review                         |
+| 5.6 | Explicit commit + push + ls-remote verify                                                          | ls-remote == HEAD              |
 
 ## Execution graph
 

@@ -276,10 +276,10 @@ ports of already-pinned paths.
   `http.DefaultClient`. Join path and query separately
   (`url.JoinPath` percent-encodes `?`).
 - Formatting: treefmt/prettier owns `internal/web/assets/island/**`
-  + `shell.js` + `*.css`; BuildFlow's oxfmt owns everything else Go
-  AND `internal/web/assets/island-tests/*.mjs` (prettier does NOT
-  claim island-tests — no two-formatter war). Markdown is NOT in
-  treefmt scope; `*_templ.go` and `vendor/` are excluded everywhere.
+  - `shell.js` + `*.css`; BuildFlow's oxfmt owns everything else Go
+    AND `internal/web/assets/island-tests/*.mjs` (prettier does NOT
+    claim island-tests — no two-formatter war). Markdown is NOT in
+    treefmt scope; `*_templ.go` and `vendor/` are excluded everywhere.
 - Island no-undef gate: `nix flake check` runs `island-lint` (oxlint,
   all categories off, `no-undef` on, `SIP` declared readonly). New
   browser globals go in the config's `globals` block; the check fails

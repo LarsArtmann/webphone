@@ -11,6 +11,7 @@ its state is referenced only where it collided with my gates.
 ## Self-review (the three questions)
 
 **What did you forget?**
+
 1. The stack browser E2E was NOT re-run. AGENTS is explicit: "re-run
    it after any markup change" — I changed tab markup (two composer
    forms, fax form, ThreadView). go tests pin the markup server-side,
@@ -27,6 +28,7 @@ its state is referenced only where it collided with my gates.
    messages-only and did not surface loudly.
 
 **What could you have done better?**
+
 - The first smoke run was a self-inflicted red: I hand-booted a server
   without a phone API and ran the smoke in `--base` foreign mode; the
   "bogus credentials rejected: got 201" failure was my harness misuse,
@@ -59,35 +61,35 @@ inside its planned A+B scope (no verschlimmbessern).
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Diagnosis of the 40310 failure flow (3 findings: focal mismatch, double-submit, self-send discoverable only by failing) | conversation + plan doc evidence section |
-| Plan doc: pareto (20/4/1 + other 20%), coarse + fine TODO tables, mermaid graph, constraints, verdict | `docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md` |
-| A: double-submit guard on all 3 send forms (`hx-disabled-elt`) | messages.templ ×2, fax.templ; pinned by `TestSendFormsDisableWhileInFlight` |
-| B: self-send notice (`wp-notice`, en/de, `isSelfThread` via ParsePhone both sides) | helpers.go, i18n.go, app.css; pinned by `TestIsSelfThread` (5 cases) + `TestThreadViewWarnsOnSelfSend` (shown + hidden) |
-| templ regenerated; treefmt clean; i18n parity (suite-enforced) | `templ generate` diff = 2 files; `nix fmt` 0 changed |
-| Gates: go test `-count=1 ./...` 13/13 green; smoke 38/0; erraudit scoped to touched packages: 0 violations | in-session runs |
-| Docs: CHANGELOG Unreleased ×2 bullets, TODO_LIST follow-ups row (C/D/E/F), AGENTS.md "Send-failure UX layering" insight | committed |
-| Explicit narrative commit + push + `git ls-remote` verification | `56caf37` == origin/main |
+| Item                                                                                                                    | Evidence                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Diagnosis of the 40310 failure flow (3 findings: focal mismatch, double-submit, self-send discoverable only by failing) | conversation + plan doc evidence section                                                                                |
+| Plan doc: pareto (20/4/1 + other 20%), coarse + fine TODO tables, mermaid graph, constraints, verdict                   | `docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md`                                                              |
+| A: double-submit guard on all 3 send forms (`hx-disabled-elt`)                                                          | messages.templ ×2, fax.templ; pinned by `TestSendFormsDisableWhileInFlight`                                             |
+| B: self-send notice (`wp-notice`, en/de, `isSelfThread` via ParsePhone both sides)                                      | helpers.go, i18n.go, app.css; pinned by `TestIsSelfThread` (5 cases) + `TestThreadViewWarnsOnSelfSend` (shown + hidden) |
+| templ regenerated; treefmt clean; i18n parity (suite-enforced)                                                          | `templ generate` diff = 2 files; `nix fmt` 0 changed                                                                    |
+| Gates: go test `-count=1 ./...` 13/13 green; smoke 38/0; erraudit scoped to touched packages: 0 violations              | in-session runs                                                                                                         |
+| Docs: CHANGELOG Unreleased ×2 bullets, TODO_LIST follow-ups row (C/D/E/F), AGENTS.md "Send-failure UX layering" insight | committed                                                                                                               |
+| Explicit narrative commit + push + `git ls-remote` verification                                                         | `56caf37` == origin/main                                                                                                |
 
 ## b) PARTIALLY DONE
 
-| Item | What's missing |
-| --- | --- |
-| Full buildflow gate | RED on 7 erraudit findings — all in the CONCURRENT session's contacts/crm files (contactID context loss + blank-identifier ignores), 0 in mine. Attributed, not fixed (their in-flight files are off-limits). Needs one re-run after their train folds. |
-| Self-send protection coverage | Messages thread view only. The typed-composer path (new message), the fax lane, and retry-after-failure remain unprotected until trains C/F. |
-| Double-submit verification | Attribute presence pinned server-side; the htmx runtime behavior (form-level `find` selector → disabled button during request) not verified in a browser or in the served htmx.min.js source. |
-| Notice visual QA | Shipped without a screenshot pass; contrast/placement reasoned from tokens, not seen. |
+| Item                          | What's missing                                                                                                                                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full buildflow gate           | RED on 7 erraudit findings — all in the CONCURRENT session's contacts/crm files (contactID context loss + blank-identifier ignores), 0 in mine. Attributed, not fixed (their in-flight files are off-limits). Needs one re-run after their train folds. |
+| Self-send protection coverage | Messages thread view only. The typed-composer path (new message), the fax lane, and retry-after-failure remain unprotected until trains C/F.                                                                                                            |
+| Double-submit verification    | Attribute presence pinned server-side; the htmx runtime behavior (form-level `find` selector → disabled button during request) not verified in a browser or in the served htmx.min.js source.                                                           |
+| Notice visual QA              | Shipped without a screenshot pass; contrast/placement reasoned from tokens, not seen.                                                                                                                                                                   |
 
 ## c) NOT STARTED
 
-| Item | Note |
-| --- | --- |
-| Train C: pre-flight self-send 422 fast path (blocked on owner call, see g) | instant refusal vs evidence-preserving failed row |
-| Train E: provider refusal → 422 + honest log family (contract test + failure table + stack runbook sync move together) | best bundled with D |
-| Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable) | store migration — the biggest remaining UX lever |
-| Train F: own-DID on the session payload + live composer warning | only if self-sends recur after B(+C) |
-| Stack browser E2E re-run over this markup change | the declared gate I skipped; ~6-7 min in the stack repo (445s budget) |
+| Item                                                                                                                              | Note                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Train C: pre-flight self-send 422 fast path (blocked on owner call, see g)                                                        | instant refusal vs evidence-preserving failed row                     |
+| Train E: provider refusal → 422 + honest log family (contract test + failure table + stack runbook sync move together)            | best bundled with D                                                   |
+| Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable) | store migration — the biggest remaining UX lever                      |
+| Train F: own-DID on the session payload + live composer warning                                                                   | only if self-sends recur after B(+C)                                  |
+| Stack browser E2E re-run over this markup change                                                                                  | the declared gate I skipped; ~6-7 min in the stack repo (445s budget) |
 
 ## d) TOTALLY FUCKED UP
 
@@ -125,21 +127,21 @@ Nothing product-breaking shipped. Process stumbles, honestly:
 
 ## f) Next tasks (session-scoped, impact/effort-sorted)
 
-| # | Task | Impact | Effort |
-| --- | --- | --- | --- |
-| 1 | Stack browser E2E re-run over the A+B markup change (declared gate, skipped) | High | S |
-| 2 | Verify + pin htmx disabled-elt `find` behavior (served htmx.min.js + a DOM-level island-style test if feasible) | Med | S |
-| 3 | Owner call on train C, then implement pre-flight 422 (messages + fax lanes together, reusing `isSelfThread`) | High | S |
-| 4 | Re-green buildflow after the concurrent contacts/crm train folds (7 erraudit findings are theirs) | High | S |
-| 5 | Fax-lane self-send caution (or fold into #3's pre-flight) | Med | S |
-| 6 | Train D: persist failure detail+kind on message rows; `wp-failed` bubble, disclosure, retry-when-retryable | High | M-L |
-| 7 | Train E with D: provider refusal → 422, honest `family=` vocabulary, contract test + failure table + stack runbook sync | Med | S-M |
-| 8 | Contacts add/import forms: consider the same in-flight guard (idempotent upsert makes it lower risk — decide deliberately) | Low | XS |
-| 9 | `role="note"`/a11y assertion for the notice in the existing pin test | Low | XS |
-| 10 | German copy native review of `thread.selfNotice` | Low | XS |
-| 11 | Screenshot QA of the notice in both themes (auto/light/dark) | Low | XS |
-| 12 | If self-sends recur after #3: train F (own-DID on session payload, live composer warning) | Low-Med | M |
-| 13 | TODO_LIST hygiene: fold items 1-4 above into rows if owner approves (HARVEST) | Low | XS |
+| #  | Task                                                                                                                       | Impact  | Effort |
+| -- | -------------------------------------------------------------------------------------------------------------------------- | ------- | ------ |
+| 1  | Stack browser E2E re-run over the A+B markup change (declared gate, skipped)                                               | High    | S      |
+| 2  | Verify + pin htmx disabled-elt `find` behavior (served htmx.min.js + a DOM-level island-style test if feasible)            | Med     | S      |
+| 3  | Owner call on train C, then implement pre-flight 422 (messages + fax lanes together, reusing `isSelfThread`)               | High    | S      |
+| 4  | Re-green buildflow after the concurrent contacts/crm train folds (7 erraudit findings are theirs)                          | High    | S      |
+| 5  | Fax-lane self-send caution (or fold into #3's pre-flight)                                                                  | Med     | S      |
+| 6  | Train D: persist failure detail+kind on message rows; `wp-failed` bubble, disclosure, retry-when-retryable                 | High    | M-L    |
+| 7  | Train E with D: provider refusal → 422, honest `family=` vocabulary, contract test + failure table + stack runbook sync    | Med     | S-M    |
+| 8  | Contacts add/import forms: consider the same in-flight guard (idempotent upsert makes it lower risk — decide deliberately) | Low     | XS     |
+| 9  | `role="note"`/a11y assertion for the notice in the existing pin test                                                       | Low     | XS     |
+| 10 | German copy native review of `thread.selfNotice`                                                                           | Low     | XS     |
+| 11 | Screenshot QA of the notice in both themes (auto/light/dark)                                                               | Low     | XS     |
+| 12 | If self-sends recur after #3: train F (own-DID on session payload, live composer warning)                                  | Low-Med | M      |
+| 13 | TODO_LIST hygiene: fold items 1-4 above into rows if owner approves (HARVEST)                                              | Low     | XS     |
 
 (13 items, honestly scoped to this session's blast radius; the
 project-wide backlog lives in TODO_LIST.md and is NOT restated here
@@ -160,8 +162,9 @@ per owner instruction.)
    caution until train D/C lands properly?
 
 ---
-*Format note: written as `.md` per explicit owner instruction — the
+
+_Format note: written as `.md` per explicit owner instruction — the
 status-report skill's canonical format is styled HTML; override
 flagged here per skill rules. Not manually committed: the auto-commit
 daemon owns the sweep (harness contract: no commits without explicit
-request).*
+request)._

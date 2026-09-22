@@ -244,6 +244,10 @@ func New(deps Deps) http.Handler {
 	// link is parsed; the modern SVG answers both names (content-type
 	// carries the format, and every current browser sniffs it fine).
 	open.HandleFunc("GET /favicon.ico", h.favicon)
+	// /metrics is the ops scrape surface: AGGREGATES only (counts +
+	// build facts, never per-extension data), fenced per-location by
+	// the module's vhost like the probe triple.
+	open.HandleFunc("GET /metrics", h.metrics)
 	// GET /events is rate-limited like the other unauthenticated-by-secret
 	// surfaces: a reconnecting tab (or a broken client) must not churn
 	// unlimited streams. One bucket per peer host reuses the hook budget
@@ -301,6 +305,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/hooks/", open)
 	root.Handle("/favicon.svg", open)
 	root.Handle("/favicon.ico", open)
+	root.Handle("/metrics", open)
 
 	security := httputil.SecurityHeaders(securityHeadersConfig())
 
@@ -356,18 +361,33 @@ func probeBlobDir(root string) error {
 // `go build`/`go test` runs — the handler then falls back to build info.
 var buildVersion string
 
+// DisplayVersion names the running build for operator surfaces
+// (/version, /metrics).
+func DisplayVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	return DisplayVersionWith(info, ok)
+}
+
+// DisplayVersionWith resolves the version against an existing build
+// info: the ldflags injection wins, a real module version follows,
+// source builds stay "devel".
+func DisplayVersionWith(info *debug.BuildInfo, ok bool) string {
+	switch {
+	case buildVersion != "":
+		return buildVersion
+	case ok && info.Main.Version != "" && info.Main.Version != "(devel)":
+		return info.Main.Version
+	default:
+		return "devel"
+	}
+}
+
 // versionHandler reports build metadata for the operator's curl one-liner
 // (library DebugHandler pattern): module version, Go version, module path.
 // Captured at construction time — it is build info, not live state.
 func versionHandler() http.HandlerFunc {
 	info, ok := debug.ReadBuildInfo()
-	version := "devel"
-	switch {
-	case buildVersion != "":
-		version = buildVersion
-	case ok && info.Main.Version != "" && info.Main.Version != "(devel)":
-		version = info.Main.Version
-	}
+	version := DisplayVersionWith(info, ok)
 	goVersion := runtime.Version()
 	title := "webphone"
 	if ok {
