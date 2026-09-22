@@ -49,6 +49,11 @@ running after the 18:20 report.
 3. **T26b (TURN) + T26c (export)**: parked; the server/config
    namespace belongs to the concurrent session's active train.
 
+> Resolved 2026-09-22 evening: b2/b3 unblocked — the ThemeScript train
+> landed end-to-end (18:55 session: v1.19.2 consumed, gates green) and
+> the final gates ran green; T26b/T26c stay TODO rows. d4's unverified
+> field was CONFIRMED real (PageProps.NoThemeScript in v1.19.2).
+
 ## c) Not started
 
 - T26b webphone half (TURN REST creds in /config.js), T26c

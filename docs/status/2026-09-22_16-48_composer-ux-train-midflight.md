@@ -71,6 +71,12 @@ green — all re-runnable. Everything else is honestly labeled unrun.
 | Narrative commit + push + ls-remote | Not yet (daemon chore-sweeps hold the code so far)                                                                            |
 | Browser-truth verification          | requestSubmit↔htmx interplay + field-sizing posture (E2E or served-artifact level)                                            |
 
+> Resolved 2026-09-22 (docs-health): island-lint ran green on resume
+> (env.browser already covered DataTransfer — no config change needed);
+> full gates + CHANGELOG + narrative commit landed (5cce98d); per-thread
+> drafts shipped (T21d). The browser-truth E2E stays with the release
+> TODO row; train C/E owner calls stay in the send-failure TODO row.
+
 ## c) NOT STARTED
 
 | Item                                                                                                                                   | Note                           |

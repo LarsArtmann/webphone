@@ -72,6 +72,11 @@ and in the verdict.
 | Browser-truth verification | One stack E2E run covers both trains' markup; requestSubmit↔htmx + field-sizing + disabled-elt behaviors unverified in a real browser (owner question open)                            |
 | UX polish QA               | de copy review, screenshots of all four new affordances                                                                                                                                |
 
+> Resolved 2026-09-22 evening (docs-health): buildflow re-greened after
+> the CRM train folded; train D shipped (1bec154); per-thread drafts
+> shipped (T21d). Still open (TODO rows): browser-truth E2E for the two
+> trains, train C/E owner calls, de native review + screenshot QA.
+
 ## c) NOT STARTED
 
 | Item                                                                                 | Note                                    |

@@ -49,6 +49,12 @@ to the concurrent CRM/metrics session and a TZ-sensitive test, not this train.
 | 3 | **Dedicated tests for the new extractions** (e.g. `listRows` wraps an iteration error with `op`; `requireMultipartTo` answers 422 with the per-tab key). Existing suites exercise all paths indirectly, but no test pins the NEW error-shape contract.  | Behavior-preserving refactor; existing tests were the safety net. New contract = new test, still owed.                                                                                                        | Medium                      |
 | 4 | **erraudit tier-1 re-run + tier-2 count refresh** after this train (AGENTS.md monthly cadence: "re-run tiers 1+2 after any error-path train"). The train touched error-bearing code in 3 packages.                                                      | Not run this session — the repo-wide gate needs a compiling tree.                                                                                                                                             | Medium                      |
 
+
+> Resolved 2026-09-22 evening (docs-health): c1 done (AGENTS
+> one-home-helpers bullet); c2-c4 routed to the TODO_LIST dedup/
+> gates rows. b2's owed smoke + flake check ran green post-convergence
+> (18:55 session: 38/38 smoke, flake check ALL PASS).
+
 ## d) TOTALLY FUCKED UP
 
 Radical honesty. Items 1–3 are NOT this train's breakage; items 4–6 ARE this session's own misses.

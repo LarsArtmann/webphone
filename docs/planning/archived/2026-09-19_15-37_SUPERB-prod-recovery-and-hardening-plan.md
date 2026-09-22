@@ -1,5 +1,11 @@
 # SUPERB Plan — Production Recovery, Gate Hardening, and the Road to 100%
 
+> EXECUTED 2026-09-19/20 + 2026-09-22 (docs-health): P14 release.sh,
+> P15 objects, P16 per-train scans, P17 backup story, P20/P21/P22 module
+> options all shipped; P23 = recorded NOT-DO (planning/14-45 verdict);
+> P24 fax feed drilled stack-side; P25 idiomorph shipped v2.4.0; P5
+> CLOSED (anomaly fixed in 2.5.0); owner-gated residue = TODO_LIST rows.
+
 **Created:** 2026-09-19 15:37 CEST
 **Inputs:** TODO_LIST.md (5 open rows), status report `docs/status/2026-09-19_15-09_v2-1-0-release-and-csrf-fronting-fix.md` (section f, 50 items), this session's findings.
 **State at planning time:** webphone v2.1.0 tagged (`d815004`) and pushed; stack pinned (`2289e89`); all gates green. **Production still runs the v2.0.0-era build with broken tab logins** (csrf attestation 403). Owner answers to the three questions (deploy authority, blast radius, pin policy) are still pending — the plan degrades gracefully around them.

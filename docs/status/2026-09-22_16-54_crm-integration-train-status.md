@@ -110,6 +110,11 @@ host is UTC+2). Not introduced or touched by this train.
 - Failure-feedback map: the `crmLogFailed` toast exists in code and
   i18n but was NOT added to the failure-map table in webphone AGENTS.md.
 
+> Resolved 2026-09-22 evening (docs-health): the crmLogFailed row IS in
+> docs/error-contract.md; /api/calls is in openapi.json with
+> TestOpenAPICallLogMatchesHandler; the §c remainder is routed to the
+> TODO_LIST CRM follow-ups + owner-policy rows.
+
 ## c) NOT started
 
 - Webphone `buildflow` (THE quality gate).

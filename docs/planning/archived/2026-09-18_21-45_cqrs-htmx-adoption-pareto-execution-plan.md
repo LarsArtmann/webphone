@@ -1,5 +1,9 @@
 # cqrs-htmx Adoption — Pareto Execution Plan
 
+> CLOSED 2026-09-22 (docs-health): all M-rows verdicted (below); the
+> open question 1 (XFF sanitization) stays live in ROADMAP Open
+> questions; the conditional K6/CT1 records ride their triggers.
+
 **Created:** 2026-09-18 21:45 CEST
 **Author:** Crush session (library-deep-dive audit → status report → this plan)
 **Evidence base:** `docs/research/2026-09-18_cqrs-htmx-deep-dive.html` (adoption 62/100, 6 findings) · `docs/status/2026-09-18_21-38_cqrs-htmx-deep-dive-session-status.md` (50-item universe, sections a–g)

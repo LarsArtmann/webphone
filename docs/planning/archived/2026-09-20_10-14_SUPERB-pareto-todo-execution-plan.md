@@ -1,5 +1,13 @@
 # SUPERB Pareto Execution Plan — 2026-09-20 10:14
 
+> EXECUTED across the 09-20/09-22 trains (docs-health 2026-09-22):
+> T4-T12 executable set shipped (anomaly fix 2.5.0, ELF guard, vulnix
+> triage, styled-404 smoke, csrf pin, i18n-404, stack assertion,
+> sanitization DECIDED, identities shipped, flake ritual, dated watches).
+> The owner-gated set is resolved or routed (prod verified v2.4.0;
+> train-cut DECIDED; v2.5.0 released; ANNOTATE sweeps done; SMS lane,
+> decision batch, announcements = live owner rows).
+
 Source of truth: `TODO_LIST.md` at commit-time 2026-09-20 (17 rows) plus
 2 plan-surfaced items (train decision, stack-repo reconciliation — both
 added to TODO_LIST with this plan). ROADMAP items are explicitly NOT

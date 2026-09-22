@@ -105,6 +105,12 @@ standing directive kept execution going after it). This report covers
    gate run on the FINAL tree is still owed (buildflow + flake check
    - full suite + smoke).
 
+> Resolved 2026-09-22 evening (docs-health): b1 metrics completed
+> (9f93537 — module /metrics location + leak-pin test); b3 go.mod tidy
+> committed; b4 final gates green (18:55 session: full suite 14/14,
+> smoke 38/38, flake check ALL PASS). b2 (new-scenario E2E x2) stays
+> with the E2E TODO row (run 3 green, run 4 pending at 18:46).
+
 ## c) Not started
 
 - T26b TURN REST creds via /config.js; T26c per-extension data

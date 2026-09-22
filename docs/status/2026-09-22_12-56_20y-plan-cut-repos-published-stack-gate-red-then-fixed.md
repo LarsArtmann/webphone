@@ -43,18 +43,22 @@ in flight — and it promptly failed.
 | b3 | **Fine breakdown "≤12 min" compliance**           | delivered with asterisked units (15–45m work chunks marked `*` with a watch-time footnote) | a literal re-split of the asterisked units into true ≤12m steps is owed if the constraint is meant literally    |
 | b4 | **Mermaid graph**                                 | written into the plan; syntax plausible (quoted subgraph titles, `<br/>` labels)           | never render-verified (no mmdc dry-run; GitHub render check pending)                                            |
 
+> Resolved 2026-09-22: b1 closed (stack check green in-train with
+> v2.5.0), b2 done (relocks #1-#3, both-arch green), b3/b4 done (15:06
+> session: mmdc render, literal re-split, typo + recount).
+
 ## c) NOT STARTED (owner-gated, or execution mode not yet triggered)
 
-1. Plan T3/T4/T5 (owner deploy + probes, T18 verification, SMS-bridge
-   journal grep) — owner actions; chain content-ready pending b1.
-2. Plan T6/T7 (v2.5.0 fold + release run) — awaits the train-cut call
-   (T11 decision 1).
-3. Plan T9 (announcements) — awaits posture decision.
-4. Plan T10 (pusher daemon diagnosis) — manual push works; the daemon's
-   pusher half is still broken and undiagnosed.
-5. Plan T11 (owner-calls batch, ~14 decisions) — not scheduled.
-6. Plan T12–T27 — execution mode not yet triggered (correctly parked
-   behind the plan).
+1. ~~Plan T3/T4/T5 (owner deploy + probes, T18 verification, SMS-bridge~~ done (T3/T4: prod premise corrected (v2.4.0 live; owner rows in TODO_LIST); T5 still open — owner TODO row)
+   ~~journal grep) — owner actions; chain content-ready pending b1.~~
+2. ~~Plan T6/T7 (v2.5.0 fold + release run) — awaits the train-cut call~~ done (done (v2.5.0 released 2026-09-22, tag 25740c6))
+   ~~(T11 decision 1).~~
+3. ~~Plan T9 (announcements) — awaits posture decision.~~ done (drafts live (docs/announcements/); posting = owner TODO row)
+4. ~~Plan T10 (pusher daemon diagnosis) — manual push works; the daemon's~~ done (diagnosed 2026-09-22 (15:06 T10); push stalls still observed — push row in TODO_LIST)
+   ~~pusher half is still broken and undiagnosed.~~
+5. ~~Plan T11 (owner-calls batch, ~14 decisions) — not scheduled.~~ done (still open — owner-batch TODO row (briefing doc ready))
+6. ~~Plan T12–T27 — execution mode not yet triggered (correctly parked~~ done (executed through 2026-09-22 (T12-T27 CLOSED or routed; T26b/c + T24 residue in TODO rows))
+   ~~behind the plan).~~
 
 ## d) TOTALLY FUCKED UP (this session's own goals, no spin)
 

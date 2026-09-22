@@ -1,5 +1,11 @@
 # Status — 1001 anomaly root-caused, E2E ×2 green, TODO sweep executed
 
+> CLOSED 2026-09-22 evening (docs-health): the open section-1 items are
+> resolved or routed — prod premise corrected (v2.4.0 verified),
+> train-cut DONE (v2.5.0 released), announcements drafted (owner row),
+> SMS lane + oops ratification = live owner TODO rows; item 6 (annotate
+> beyond the five reports) is THIS sweep.
+
 - **Date:** 2026-09-22 11:32 CEST
 - **Session scope:** the standing "whole TODO list" directive — TODO_LIST
   sweep (stale-item verification), the 1001-registration anomaly,

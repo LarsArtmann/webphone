@@ -93,6 +93,13 @@ The "GET SHIT DONE, the whole list" session (resumed ~16:05 after the
    on a QUIESCED tree — the FIRE item's final state is "red, blocked
    on the concurrent session's erraudit findings", not green.
 
+> Resolved 2026-09-22 evening (docs-health): relock #3 completed +
+> pushed (aarch64 green); T20f/g/h written + run (E2E TODO row holds
+> the x2 verdict); T16d closed (19-37 plan boxes ticked, 18:46); T22
+> verified green (18:20); T20a-e + T21a-c + T25 + T26a/d-e + T27a-d all
+> shipped the same day; the FIRE gate went green (4320c7d + 18:55
+> gates). ROADMAP carries the PWA park line; CHANGELOG bullets landed.
+
 ## c) Not started
 
 - T20a (badge states + aria-live; design ready, needs calls.js +

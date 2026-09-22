@@ -1,5 +1,9 @@
 # SUPERB Plan — Tri-repo functional completion (webphone ↔ stack ↔ pbx-artmann)
 
+> EXECUTED 2026-09-19 (T01-T14): the same-day 13:19 self-review report is
+> the execution record; the bridge/stack/deploy work landed and the
+> residue was routed to the stack repo + owner rows (docs-health, 2026-09-22).
+
 **Date:** 2026-09-19 11:51 (CEST)
 **Input:** `docs/status/2026-09-19_11-02_flake-review-and-tri-repo-integration-audit.md`
 **Mission:** make everything from the audit's next-things list perfect and functional, deploy to `pbx.artmann.tech`, and verify — without verschlimmbessern a live PBX.

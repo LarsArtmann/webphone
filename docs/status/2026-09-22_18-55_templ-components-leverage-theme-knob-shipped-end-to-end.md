@@ -43,6 +43,11 @@ next strategic unlock.
 | 4 | Quality gates breadth                                             | erraudit tier-1 ran on touched packages only; full `buildflow` gate (gitleaks, codespell, markdown-lint, branching-flow, tier-2 family tracking) NOT run this session. `nix run .#vulnix` NOT run (it gates releases; no release was cut).                 |
 | 5 | Report's open opportunity #5                                      | Scoped Tailwind v4 coexistence layer: designed (layered output + unlayered app.css wins collisions; `@theme` aliasing sketch in the report) but not attempted.                                                                                             |
 
+> Resolved/routed 2026-09-22 evening (docs-health): b1 (stack E2E),
+> b2 (push + re-pin), b3 (release train), b4 (full gates) and the f2/f3/f4
+> gaps are consolidated in the TODO_LIST rows (push-stall, release train,
+> theme-knob gaps, full gates). The adoption itself is verified end-to-end.
+
 ## c) NOT STARTED
 
 | # | Work                                                                                                                                                                                                        |

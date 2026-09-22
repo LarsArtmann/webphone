@@ -81,6 +81,11 @@ inside its planned A+B scope (no verschlimmbessern).
 | Double-submit verification    | Attribute presence pinned server-side; the htmx runtime behavior (form-level `find` selector → disabled button during request) not verified in a browser or in the served htmx.min.js source.                                                           |
 | Notice visual QA              | Shipped without a screenshot pass; contrast/placement reasoned from tokens, not seen.                                                                                                                                                                   |
 
+> Resolved 2026-09-22 (docs-health): buildflow re-greened after the CRM
+> train folded (4320c7d fixed their 7 findings; tier-1 = 0); train D
+> shipped 1bec154; C/E/F stay owner-gated TODO rows; the E2E re-run
+> norm was satisfied on the v2.5.0 chain (x2 green).
+
 ## c) NOT STARTED
 
 | Item                                                                                                                              | Note                                                                  |
