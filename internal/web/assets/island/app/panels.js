@@ -45,6 +45,8 @@ export function recordHistory(entry) {
 // matching contact; unknown numbers are dropped server-side by design (the
 // integration never mints contacts). A failure surfaces as a warn toast —
 // the user expects the call in their CRM and must not lose it silently.
+// Every report carries a fresh UUID key so a browser-level retry or
+// double-fire replays the SAME key and the server journals the call once.
 export async function recordCrmCall({ dir, target, dur, established }) {
   if (!crmEnabled) return;
   try {
@@ -56,6 +58,7 @@ export async function recordCrmCall({ dir, target, dur, established }) {
         direction: dir,
         seconds: dur > 0 ? dur : 0,
         outcome: established ? "answered" : "missed",
+        key: crypto.randomUUID(),
       }),
     });
     if (!res.ok) {

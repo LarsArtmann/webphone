@@ -31,7 +31,7 @@ globalThis.fetch = async (input) => {
   };
 };
 
-await import("../island/app/panels.js?test=contacts-nudge");
+const panelsMod = await import("../island/app/panels.js?test=contacts-nudge");
 
 const contactsFetches = () => fetchCalls.filter((url) => url.includes("/api/contacts")).length;
 
@@ -62,4 +62,15 @@ test("a nudged list renders the fetched rows", async () => {
   const list = doc.getElementById("contacts-list");
   const texts = list.children.flatMap((li) => li.children.map((span) => span.textContent));
   assert.ok(texts.includes("Nudged"), `fetched row must render, got: ${texts.join(", ")}`);
+});
+
+test("recordCrmCall stays silent when the CRM integration is off", async () => {
+  fetchCalls = [];
+  await panelsMod.recordCrmCall({ dir: "out", target: "+493012345678", dur: 10, established: true });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(
+    fetchCalls.filter((url) => url.includes("/api/calls")).length,
+    0,
+    "a crm-off instance must never POST /api/calls",
+  );
 });
