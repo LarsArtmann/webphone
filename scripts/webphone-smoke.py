@@ -420,6 +420,24 @@ def run_checks(
         f"{status}",
     )
 
+    # 4a. theme preload: the same-origin asset serves with a JavaScript
+    # content type, and the shell page carries ZERO inline <script> tags
+    # (strict CSP — a forced theme must not depend on inline bytes).
+    status, body, headers = s.request("GET", "/assets/theme-preload.js")
+    ctype = next(
+        (v for k, v in headers.items() if k.lower() == "content-type"), ""
+    )
+    c.ok(
+        "theme preload serves",
+        status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
+        f"{status} {ctype!r}",
+    )
+    c.ok(
+        "shell has zero inline scripts",
+        re.search(r"<script(?![^>]*\bsrc=)[^>]*>", page) is None,
+        "inline <script> without src found",
+    )
+
     # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels
     # render anonymously — badges NEVER do; the signed-in re-fetch below
     # is the only badge source. A fresh Smoke keeps it session-free even
