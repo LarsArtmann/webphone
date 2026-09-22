@@ -361,6 +361,16 @@ export function bindSession(newSession, target) {
       if (live.established) {
         announce(t("callEnded")(durationLabel(live.startedAt)));
       }
+      if (!(newSession instanceof SIP.Inviter) && !live.established) {
+        // Inbound call that never carried media: the caller gave up
+        // before the user answered, or the accepted call died in setup.
+        // shell.js mirrors this into the missed-call header badge; a
+        // user REJECT never reaches this path (rejected calls are seen
+        // calls).
+        document.dispatchEvent(
+          new CustomEvent("wp:call-missed", { detail: { target } }),
+        );
+      }
       recordHistory({
         dir: newSession instanceof SIP.Inviter ? "out" : "in",
         target,

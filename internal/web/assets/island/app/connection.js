@@ -249,6 +249,12 @@ async function buildConnection() {
             const missed = from.user || "unknown";
             log(`missed call from ${missed}`, "warn");
             announce(t("missedCall")(missed), "warn");
+            // shell.js mirrors this into the missed-call header badge;
+            // a deliberate REJECT sets els.incoming.hidden first and
+            // never lands here.
+            document.dispatchEvent(
+              new CustomEvent("wp:call-missed", { detail: { target: missed } }),
+            );
             recordHistory({
               dir: "in",
               target: missed,

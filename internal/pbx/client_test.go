@@ -47,6 +47,32 @@ func TestDisabledClientReturnsErrDisabled(t *testing.T) {
 	}
 }
 
+// The Enabled guard is nil-receiver-safe, so a nil *Client (a Deps field
+// nobody wired) short-circuits through do() to ErrDisabled instead of
+// panicking on the base-URL deref.
+func TestNilClientReturnsErrDisabled(t *testing.T) {
+	var client *Client
+	if client.Enabled() {
+		t.Fatal("nil client must report disabled")
+	}
+	ctx := context.Background()
+	if _, err := client.History(ctx, creds, 30); !errors.Is(err, ErrDisabled) {
+		t.Errorf("History: %v", err)
+	}
+	if _, err := client.VoicemailSummary(ctx, creds); !errors.Is(err, ErrDisabled) {
+		t.Errorf("VoicemailSummary: %v", err)
+	}
+	if _, err := client.VoicemailMessages(ctx, creds); !errors.Is(err, ErrDisabled) {
+		t.Errorf("VoicemailMessages: %v", err)
+	}
+	if err := client.DeleteVoicemail(ctx, creds, "uuid-1"); !errors.Is(err, ErrDisabled) {
+		t.Errorf("DeleteVoicemail: %v", err)
+	}
+	if err := client.VerifyCredentials(ctx, creds); !errors.Is(err, ErrDisabled) {
+		t.Errorf("VerifyCredentials: %v", err)
+	}
+}
+
 func TestNewClientRejectsInvalidBaseURL(t *testing.T) {
 	if _, err := NewClient("://no-scheme"); err == nil {
 		t.Fatal("invalid base URL must be an error")

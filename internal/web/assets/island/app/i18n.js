@@ -43,7 +43,6 @@ export const I18N = {
     ringing: "ringing…",
     callRinging: (target) => `ringing ${target}`,
     callEstablished: (target) => `connected with ${target}`,
-    callEnded: (target) => `call ended: ${target}`,
     ending: "ending…",
     transfer: "Transfer",
     transferPrompt: "transfer to",

@@ -500,3 +500,40 @@ func threadViewFor(t testing.TB, c *client, remote string) string {
 	}
 	return view
 }
+
+// TestTranscriptCarriesHoverStampsAndJumpChip pins the hover-stamp and
+// jump-to-latest markup contract: thread rows and bubble clocks carry a
+// full absolute-stamp title (hover = exact moment), and the transcript
+// is wrapped with the hidden jump chip shell.js fills on scrolled-away
+// live pushes. Without these the shell behaviors have nothing to
+// attach to after a swap.
+func TestTranscriptCarriesHoverStampsAndJumpChip(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "hover stamp"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	list := string(body)
+	if !strings.Contains(list, `class="wp-thread-when" title="`) {
+		t.Errorf("thread row when-span lost its absolute-stamp title: %.300s", list)
+	}
+	if strings.Contains(list, `class="wp-transcript-wrap"`) {
+		t.Error("thread list must not render the transcript wrap")
+	}
+
+	view := threadViewFor(t, c, "+441632960961")
+	if !strings.Contains(view, `class="wp-transcript-wrap"`) {
+		t.Error("thread view lost the transcript wrap (jump chip anchor)")
+	}
+	if !regexp.MustCompile(`class="wp-jump-latest" hidden aria-label="jump to the latest messages"`).MatchString(view) {
+		t.Errorf("thread view lost the hidden jump chip: %.400s", view)
+	}
+	if !strings.Contains(view, `class="wp-bubble-meta"><span title="`) {
+		t.Errorf("bubble meta clock lost its absolute-stamp title: %.400s", view)
+	}
+}
