@@ -26,6 +26,9 @@ export function installBrowserGlobals() {
     children: [],
     listeners: {},
     parent: null,
+    get parentElement() {
+      return this.parent;
+    },
     // selector is the stub's stand-in for a CSS selector match: closest
     // and querySelector compare it (or an exact className) instead of
     // interpreting selectors. Tests set .selector on the fakes they

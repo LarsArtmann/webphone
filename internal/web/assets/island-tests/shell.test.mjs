@@ -196,3 +196,106 @@ test("data-save-contact bridges to the island's wp:save-contact event", () => {
   });
   assert.equal(seen.number, "+441632960961");
 });
+
+// 3b-2. Jump-to-latest: a live push landing while the reader is scrolled
+// up must not yank them down NOR go unseen — it counts into the chip.
+// Near-bottom pushes keep the pinned-scroll behavior instead.
+test("scrolled-away live pushes count into the jump chip; near-bottom pushes pin", async () => {
+  const transcript = doc.getElementById("thread-transcript");
+  transcript.dataset.page = "0";
+  transcript.dataset.thread = "t-7";
+  transcript.scrollHeight = 1000;
+  transcript.clientHeight = 500;
+  transcript.scrollTop = 0; // scrolled 500px away from the bottom
+
+  const wrap = doc.createElement();
+  const chip = doc.createElement();
+  chip.className = "wp-jump-latest";
+  chip.hidden = true;
+  wrap.append(transcript, chip);
+
+  doc.dispatch("htmx:sseBeforeMessage", { target: transcript });
+  doc.dispatch("htmx:sseMessage", { target: transcript });
+  assert.equal(chip.hidden, false, "chip appears for a scrolled-away push");
+  assert.equal(chip.textContent, "↓ 1 new");
+
+  transcript.scrollTop = 0; // still away
+  doc.dispatch("htmx:sseBeforeMessage", { target: transcript });
+  doc.dispatch("htmx:sseMessage", { target: transcript });
+  assert.equal(chip.textContent, "↓ 2 new", "pushes accumulate");
+
+  // Scrolling back to the bottom by hand hides and resets the chip.
+  transcript.scrollTop = 480;
+  doc.dispatch("scroll", { target: transcript });
+  assert.equal(chip.hidden, true, "chip hides at the bottom");
+  assert.equal(chip.textContent, "");
+
+  // A near-bottom push pins to the newest bubble instead of counting.
+  doc.dispatch("htmx:sseBeforeMessage", { target: transcript });
+  doc.dispatch("htmx:sseMessage", { target: transcript });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(transcript.scrollTop, 1000, "near-bottom push pins the scroll");
+  assert.equal(chip.hidden, true, "no chip for a near-bottom push");
+
+  wrap.remove();
+  delete transcript.dataset.page;
+  delete transcript.dataset.thread;
+});
+
+test("clicking the jump chip returns to the newest bubble and resets", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  transcript.dataset.page = "0";
+  transcript.dataset.thread = "t-8";
+  transcript.scrollHeight = 1000;
+  transcript.clientHeight = 500;
+  transcript.scrollTop = 0;
+
+  const wrap = doc.createElement();
+  const chip = doc.createElement();
+  chip.className = "wp-jump-latest";
+  chip.hidden = true;
+  wrap.append(transcript, chip);
+
+  doc.dispatch("htmx:sseBeforeMessage", { target: transcript });
+  doc.dispatch("htmx:sseMessage", { target: transcript });
+  assert.equal(chip.hidden, false);
+
+  chip.closest = (selector) => (selector === ".wp-jump-latest" ? chip : null);
+  doc.dispatch("click", { target: chip });
+  assert.equal(transcript.scrollTop, 1000, "click jumps to the bottom");
+  assert.equal(chip.hidden, true, "click resets the chip");
+
+  wrap.remove();
+  delete transcript.dataset.page;
+  delete transcript.dataset.thread;
+});
+
+// 2d. Missed-call presence: island wp:call-missed events count into the
+// header badge; opening the History tab clears it (a REJECT never
+// dispatches — that lives in the island tests).
+test("missed calls badge in the header and clear when History opens", () => {
+  const actions = doc.createElement();
+  actions.className = "wp-header-actions";
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === ".wp-header-actions" ? actions : realQuerySelector(selector);
+
+  doc.dispatch("wp:call-missed", {});
+  const badge = actions.children.find((el) => el.id === "missed-badge");
+  assert.ok(badge, "badge appears on the first missed call");
+  assert.equal(badge.textContent, "missed · 1");
+  assert.equal(actions.children[0], badge, "badge leads the header actions");
+
+  doc.dispatch("wp:call-missed", {});
+  assert.equal(badge.textContent, "missed · 2", "counts accumulate on one node");
+
+  const historyNav = { closest: (sel) => (sel === "[data-tab='history']" ? historyNav : null) };
+  doc.dispatch("click", { target: historyNav });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    false,
+    "opening History clears the badge",
+  );
+
+  doc.querySelector = realQuerySelector;
+});
