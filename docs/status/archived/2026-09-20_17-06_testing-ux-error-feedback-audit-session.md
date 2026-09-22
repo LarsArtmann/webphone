@@ -195,7 +195,7 @@ ROADMAP fuel, not commitments.
 **Direct fallout from this session (do first):**
 
 | # | Task                                                                            | Impact | Effort | Category       |
-| - | ------------------------------------------------------------------------------- | ------ | ------ | -------------- |
+| --- | ------------------------------------------------------------------------------- | ------ | ------ | -------------- |
 | ~~1~~ | ~~Stack bump + browser E2E re-run for this train's served-JS change (pending g#1)~~ done — resolved: per-train E2E norm | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~2~~ | ~~CHANGELOG Unreleased entries: silent-401 fix + toast-kind fix~~ done — (CHANGELOG per train) | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | ~~3~~ | ~~`role="status"`/`aria-live="polite"` on `#toasts` host + test~~ done — (#toasts live region + tests) | ~~High~~ | ~~S~~ | ~~Feature (a11y)~~ |

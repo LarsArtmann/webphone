@@ -27,7 +27,7 @@ extension user on the phone page and (b) the operator reading logs at 3 a.m.
 **Two middleware one-liners, ≈ 45 min total, zero DOM risk:**
 
 | # | Task                                                              | Why it is 51%                                                                                                                                                                                                                                                                       |
-| - | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Swap `recovery()` → `cqrshtmx.RecoveryMiddleware` (server.go:131) | Panics currently log ONE line with no stack. After: full stack + method/path + request/correlation IDs, and `http.ErrAbortHandler` is re-raised per net/http convention (a real correctness bug today). This is the difference between "panic in handler" and a 5-minute diagnosis. |
 | 2 | Wrap outermost with `cqrshtmx.RequestLoggingSlog(slog.Default())` | A comms product with ZERO request logs. After: every request logged with method/path/status/duration. The runbook greps `#log` in the browser — the server log is its blind twin.                                                                                                   |
 
@@ -39,7 +39,7 @@ the plan comes close on (impact ÷ effort).
 **Add the two remaining cross-cutting middlewares (≈ +2.5 h):**
 
 | # | Task                                                                                   | Why it extends 51% → 64%                                                                                                                                                           |
-| - | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 3 | Replace `keyedLimiter` (83 lines) with `httputil.KeyedRateLimiterConfig` middleware ×2 | Memory safety under spoofed floods (`MaxKeys` cap — the hand-rolled sweep admits unbounded unique keys within its 1-min window), computed `Retry-After`, classified config errors. |
 | 4 | `/healthz` → `cqrshtmx.ReadinessHandler` + SQLite ping (+ blob-dir write probe)        | The health endpoint LIES today (constant `ok` with a broken DB). Honest readiness is the operator's #2 diagnostic after logs.                                                      |
 
@@ -288,7 +288,7 @@ Sorted by the same priority order (phases P0→P7). "From" = medium task.
 | DP1     | Document DecodePagination N.A. verdict (cursor semantics)                                                              | 10   | M52  | P7    |
 | HB1     | Hub fan-out benchmark run (N hubs × M subscribers)                                                                     | 12   | M53  | P7    |
 | HB2     | Record baseline numbers next to the audit / in docs                                                                    | 10   | M53  | P7    |
-| ~~UB1~~ | ~~unreadCache invalidation → badge push (ONLY if OO3 = adopt)~~ PARKED with the spike (see M54)                        | 12   | M54  | P7    |
+| ~~UB1~~ | ~~unreadCache invalidation → badge push (ONLY if OO3 = adopt) PARKED with the spike (see M54)~~ | ~~12~~ | ~~M54~~ | ~~P7~~ |
 | XB1     | hx-boost non-adoption note in AGENTS.md conventions                                                                    | 10   | M55  | P7    |
 | LF1     | Formatter decision: Default vs JSONLogFormatter (stack sink format)                                                    | 10   | M56  | P7    |
 | RC1     | Readiness-body contract note (pending open question 2)                                                                 | 10   | M57  | P7    |

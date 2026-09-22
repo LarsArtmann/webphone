@@ -9,7 +9,7 @@ only where this plan's items route into it).
 **Derived from (all verified this session, not assumed):**
 
 | # | Verified fact                                                                                                                                                                                                                                          | Source                                                         |
-| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
 | 1 | webphone has zero samber/do (direct + transitive) — deliberate, documented                                                                                                                                                                             | grep + `go list -m all`; AGENTS.md setup-bundle rejection      |
 | 2 | `/healthz` = `cqrshtmx.ReadinessHandler`, parallel **named** checks, 200/503 honest JSON                                                                                                                                                               | `readiness.go` read at consumed tag v4.9.0                     |
 | 3 | `ReadinessCheck` is `func() error` — **no timeout, no context**; a hung check hangs the probe (no `WriteTimeout` by SSE design) → finding **F1**                                                                                                       | same source                                                    |
@@ -112,7 +112,7 @@ ALL todos, sorted by tier then priority. [P] = parallelizable with its neighbors
 ### Tier 0 — the 1%
 
 | # | Micro-task (≤12 min)                                                                                                                                    | From |
-| - | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
 | 1 | Draft the 4-option F2 decision memo (tradeoffs: ops burden, hang detection, CSP, module surface)                                                        | T1   |
 | 2 | Ask the owner (the 3 questions at the end of this plan) + record the answer in AGENTS.md                                                                | T1   |
 | 3 | cqrs-htmx: read `readiness_test.go` current coverage — list the cases the timeout change must not break [P]                                             | T2   |
