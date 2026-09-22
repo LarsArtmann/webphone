@@ -494,9 +494,9 @@ Ginkgo DescribeTable when the subject is a state machine.
      resurfaces documented suppressions and never-adopted policies by
      design (2026-09-21 triage: 202 findings, ZERO real; oops is not a
      dependency; generic-return stays audit-only per guardrail).
-  Historical: the 46 ignored-error sites + 2 swallows + 6 read-side
-  closes keep their reasoned nolints; `erraudit tree` is clean (4
-  top-level sentinels, depth 0).
+     Historical: the 46 ignored-error sites + 2 swallows + 6 read-side
+     closes keep their reasoned nolints; `erraudit tree` is clean (4
+     top-level sentinels, depth 0).
 - Monthly erraudit cadence (T17): re-run tiers 1+2 monthly (or after any
   error-path train) and update the tier-2 count here — the bar rots the
   moment nobody re-measures it.

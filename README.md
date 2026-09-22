@@ -77,23 +77,23 @@ literal: `WEBPHONE_DATA_DIR` → `data_dir`. Scalars are env-friendly;
 nested lists (`ice_servers`, `contacts`) and maps (`identities`) belong
 in the JSON file.
 
-| Key                      | Default             | Meaning                                                                                                     |
-| ------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `addr`                   | `:8080`             | Listen address                                                                                              |
-| `data_dir`               | `/var/lib/webphone` | SQLite DB + content-addressed attachment/fax files (created if missing)                                     |
-| `sip_domain`             | _empty_             | SIP domain the island registers at (rendered into `/config.js`)                                             |
-| `websocket_path`         | `/sip`              | WSS path the island connects to (must be proxied to the PBX)                                                |
-| `phone_api_url`          | _empty_ = disabled  | Base URL of the per-extension API, e.g. `https://pbx.example.com`                                           |
+| Key                      | Default             | Meaning                                                                                                             |
+| ------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `addr`                   | `:8080`             | Listen address                                                                                                      |
+| `data_dir`               | `/var/lib/webphone` | SQLite DB + content-addressed attachment/fax files (created if missing)                                             |
+| `sip_domain`             | _empty_             | SIP domain the island registers at (rendered into `/config.js`)                                                     |
+| `websocket_path`         | `/sip`              | WSS path the island connects to (must be proxied to the PBX)                                                        |
+| `phone_api_url`          | _empty_ = disabled  | Base URL of the per-extension API, e.g. `https://pbx.example.com`                                                   |
 | `session_ttl`            | `7d`                | Sliding idle window: activity past its halfway point renews the session (a regularly used device never re-signs-in) |
-| `session_max_ttl`        | `30d`               | Absolute session lifetime from sign-in — the cap that re-signs even a continuously renewed (or stolen) session       |
-| `ice_servers`            | _empty_             | STUN/TURN entries handed to the island (`urls`, `username`, `credential`)                                   |
-| `contacts`               | _empty_             | Shared directory entries (`name`, `number`)                                                                 |
-| `identities`             | _empty_             | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only |
-| `gateway.mode`           | `loopback`          | `loopback` or `webhook`                                                                                     |
-| `gateway.webhook_url`    | _empty_             | Provider base URL in webhook mode (required there)                                                          |
-| `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)**  |
-| `csrf.trusted_proxies`   | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (loopback nginx) — IP or CIDR entries               |
-| `csrf.trusted_origins`   | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)               |
+| `session_max_ttl`        | `30d`               | Absolute session lifetime from sign-in — the cap that re-signs even a continuously renewed (or stolen) session      |
+| `ice_servers`            | _empty_             | STUN/TURN entries handed to the island (`urls`, `username`, `credential`)                                           |
+| `contacts`               | _empty_             | Shared directory entries (`name`, `number`)                                                                         |
+| `identities`             | _empty_             | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only         |
+| `gateway.mode`           | `loopback`          | `loopback` or `webhook`                                                                                             |
+| `gateway.webhook_url`    | _empty_             | Provider base URL in webhook mode (required there)                                                                  |
+| `gateway.webhook_secret` | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)**          |
+| `csrf.trusted_proxies`   | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (loopback nginx) — IP or CIDR entries                       |
+| `csrf.trusted_origins`   | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                       |
 
 `csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
 then arrives with `Origin: https://host` while the listener sees plain

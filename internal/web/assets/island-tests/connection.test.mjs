@@ -109,8 +109,7 @@ globalThis.SIP = {
 // Each case loads a FRESH module instance (module-level registerer and
 // flags must not leak between scenarios); the shared stub document keeps
 // pill assertions meaningful.
-const loadConnection = (tag) =>
-  import(`../island/app/connection.js?case=${tag}`);
+const loadConnection = (tag) => import(`../island/app/connection.js?case=${tag}`);
 
 const flushes = async (rounds = 12) => {
   while (rounds--) await new Promise((resolve) => setImmediate(resolve));
@@ -237,11 +236,7 @@ test("reconnect success refreshes the pill despite no state transition", async (
   await tc.mock.timers.tick(2000); // try 1: reconnect succeeds, no state event
   await flushes();
   assert.equal(agents.length, 1, "no rebuild: the cycle succeeded");
-  assert.equal(
-    pill(),
-    t("registered"),
-    "the pill must not stay on the stale backoff text",
-  );
+  assert.equal(pill(), t("registered"), "the pill must not stay on the stale backoff text");
 });
 
 test("logout does not rebuild", async () => {
