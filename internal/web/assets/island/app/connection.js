@@ -4,6 +4,10 @@
 // loss (observed by the browser E2E reconnect drill even with the server
 // reachable again). Every attempt is therefore bounded; a hung one gets
 // a full teardown-and-rebuild instead of an eternal "try N" pill.
+// A registration lost AFTER it was established gets the same rebuild:
+// retrying register() on the dead Registerer never recovers (the 1001
+// E2E anomaly: sofia said user_not_registered, the island kept its
+// dead Registerer forever).
 
 import { setCredentials, clearCredentials, getCredentials } from "./auth.js";
 import { iceServers, sipDomain, websocketUrl } from "./config.js";
@@ -67,6 +71,12 @@ function withTimeout(promise, ms, label) {
 async function rebuildConnection(reason) {
   log(`reconnect watchdog: ${reason} — rebuilding connection`);
   resetting = true;
+  // A registration-loss rebuild can race a pending reconnect timer;
+  // recovery belongs to the fresh agent from here.
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
   const old = state.userAgent;
   state.userAgent = null;
   registerer = null;
@@ -104,8 +114,13 @@ async function attemptReconnect() {
     log("transport reconnected; re-registered");
   } catch (err) {
     log(`reconnect failed: ${err.message}`);
-    if (err.message.includes("timed out")) {
-      // A hung attempt leaves the agent unusable — rebuild it.
+    // A hung attempt or a Terminated registerer leaves the agent
+    // unusable (retrying register() on a Terminated registerer throws
+    // forever); rebuild it.
+    const unusable =
+      err.message.includes("timed out") ||
+      registerer?.state === SIP.RegistererState.Terminated;
+    if (unusable) {
       try {
         await rebuildConnection(err.message);
         reconnectAttempts = 0;
@@ -197,9 +212,27 @@ async function buildConnection() {
   await state.userAgent.start();
 
   registerer = new SIP.Registerer(state.userAgent);
+  // Per-registerer "ever reached Registered" flag: the wedge detector
+  // below keys on it so a bogus-credentials LOGIN keeps its pill while
+  // a lost-after-established registration triggers a rebuild.
+  let wasRegistered = false;
+  // A registration that HAD succeeded is gone (the server rejected the
+  // re-REGISTER after a transport reconnect, dropped the contact, or the
+  // Registerer terminated). Retrying on the same Registerer can wedge
+  // forever, so rebuild the whole agent like the watchdog does; if even
+  // the rebuild fails, fall back to the backoff loop.
+  const registrationLost = () => {
+    rebuildConnection("registration lost after it was established").catch(
+      (err) => {
+        log(`rebuild failed: ${err.message}`);
+        scheduleReconnect();
+      },
+    );
+  };
   registerer.stateChange.addListener((regState) => {
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
+      wasRegistered = true;
       const wasReconnecting = reconnectAttempts > 0;
       reconnectAttempts = 0;
       setRegStatus("status-registered", t("registered"));
@@ -208,17 +241,25 @@ async function buildConnection() {
       if (wasReconnecting && sessions.size > 0) {
         log(t("reconnectPreserved")(sessions.size));
       }
-    } else if (regState === SIP.RegistererState.Unregistered) {
-      // Deliberate logout or a rebuild's teardown sets its own pill;
-      // anything else means the server rejected the REGISTER (wrong
-      // credentials after a reconnect, account disabled) — say so
-      // instead of "offline".
-      if (!stopping && !resetting) {
-        setRegStatus("status-offline", t("regRejected"));
-      }
-    } else {
-      setRegStatus("status-offline", regState.toLowerCase());
+      return;
     }
+    // Deliberate logout or a rebuild's teardown sets its own pill.
+    if (stopping || resetting) return;
+    if (regState === SIP.RegistererState.Unregistered) {
+      if (wasRegistered) {
+        registrationLost();
+        return;
+      }
+      // The REGISTER never succeeded (wrong credentials, account
+      // disabled): say so instead of "offline".
+      setRegStatus("status-offline", t("regRejected"));
+      return;
+    }
+    if (regState === SIP.RegistererState.Terminated && wasRegistered) {
+      registrationLost();
+      return;
+    }
+    setRegStatus("status-offline", regState.toLowerCase());
   });
   await registerer.register();
 }
