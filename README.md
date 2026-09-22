@@ -27,6 +27,8 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Voicemail     | List, play, delete — straight from the PBX's per-extension API                                                                                      |
 | Call history  | Server-side CDR records through the same API                                                                                                        |
 | Contacts      | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                      |
+| Data export   | One session-gated download (Settings tab) zips every thread, fax job and personal contact of the signed-in extension                                |
+| TURN auth     | Optional short-lived coturn REST credentials derived per response (`turn_rest.secret`) — long-lived TURN passwords never ship                        |
 | Live updates  | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                                              |
 | Sign-in       | Credentials verified against the PBX directory server-side (401 on rejection, 502 if the PBX is down); the SIP island and the tabs share that login |
 | Diagnostics   | Live ICE/media panel that names the suspected cause (e.g. blocked TURN)                                                                             |

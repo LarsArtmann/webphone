@@ -494,3 +494,31 @@ graph.
   their session went quiet (context vars on the error paths + reasoned
   nolints on the best-effort drain; their tests assert errors.Is
   sentinels, not strings). Enforced tier back to 0 findings.
+- 2026-09-22 ~19:35 **T26b + T26c CLOSED**: (b) `turn_rest.secret` +
+  `turn_rest.ttl` (48h default) — /config.js derives coturn REST pairs
+  per response (username = unix expiry, credential =
+  base64(HMAC-SHA1(secret, username))); static passthrough when unset;
+  boot validation rejects dead config (secret without a turn:/turns:
+  URL) and non-positive TTLs; config + handler tests green (the
+  handler test verifies the actual HMAC, not a grep). (c)
+  `GET /api/export` (session-gated, Settings-tab download link): zip
+  with messages.json (all threads + messages + attachment manifest),
+  faxes.json, contacts.vcf — owner-scoped store reads, blobs
+  deliberately excluded (manifest only); 401 pin for anonymous.
+  Gates on the converged tree: go suite green, erraudit tier-1 = 0,
+  buildflow full = RC 0 (the earlier 69 was a host-go invocation, not
+  a tree problem — AGAIN the pipeline-exit-code lesson), vulnix app =
+  zero real advisories (all distro-patched). ThemeScript knob shipped
+  end-to-end by the CRM session (v1.19.2; CSP now script-src 'self'
+  with ZERO inline scripts — the hash-pin machinery is gone).
+- 2026-09-22 ~19:35 **E2E: RUN 6 FULLY GREEN** (198s, half the 445s
+  budget) after TWO driver-authoring bugs surfaced in runs 4/5: (1)
+  the logged-out-dial-guard scenario was UNREACHABLE — a real logout
+  RELOADS to the login-card shell (session.js), which renders no
+  data-dial buttons; the scenario now seeds its own contact,
+  reproduces the in-place signed-out island DOM (#phone-view hidden +
+  #login-view shown) and pins BOTH the guard toast + #ext focus AND
+  the safe-by-construction reload (zero data-dial buttons after).
+  (2) ElementClickInterceptedException: transient toasts (transfer
+  verdicts) overlay the nav bar; click_tab now retries until the
+  click lands. Run 7 (the ×2-green) in flight.

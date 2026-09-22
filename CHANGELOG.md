@@ -38,6 +38,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   config or the browser; STUN-only entries and the static passthrough
   (secret unset) stay verbatim. Validation rejects a secret without a
   TURN URL (dead config) and non-positive TTLs.
+- Per-extension data export (plan T26c): `GET /api/export`
+  (session-gated, Settings-tab download link) zips everything the
+  signed-in extension owns — messages.json (every thread with its
+  messages and attachment manifest), faxes.json, contacts.vcf. Owner
+  scoping comes from the store queries; document blobs stay in the
+  blob store (names/sizes listed in the JSON), keeping the archive a
+  portable manifest.
 - Per-thread composer drafts (plan T21d): message text survives tab
   and thread switches — the paths that re-render the composer empty.
   Drafts save debounced (4k cap), restore only into an EMPTY composer,
