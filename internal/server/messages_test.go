@@ -193,3 +193,84 @@ func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
 		t.Fatalf("validation mistake: %d (want 422)", resp.StatusCode)
 	}
 }
+
+// TestThreadViewWarnsOnSelfSend pins the intent-time self-send caution:
+// when the thread's remote number is the extension's own DID (config
+// identities), the thread view warns BEFORE the user can discover the
+// provider's refusal (Telnyx 40310) by failing. A non-self thread must
+// never carry the notice.
+func TestThreadViewWarnsOnSelfSend(t *testing.T) {
+	server := newTestServerWithConfig(t, "", func(c *config.Config) {
+		c.Identities = map[string]string{"1001": "+17287289311"}
+	})
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+17287289311", "body": "self"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("self send (loopback accepts): %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	selfLink := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if selfLink == nil {
+		t.Fatal("no self thread in list")
+	}
+	_, body = c.do(http.MethodGet, "/partials"+string(selfLink[1]), nil, "")
+	view := string(body)
+	if !strings.Contains(view, `class="wp-notice"`) || !strings.Contains(view, "This is your own number") {
+		t.Errorf("self thread view missing the notice: %.300s", view)
+	}
+
+	form, contentType = multipartBody(t, map[string]string{"to": "+441632960961", "body": "other"}, nil)
+	resp, body = c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("other send: %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	for _, link := range regexp.MustCompile(`href="(/messages/[^"]+)"`).FindAllSubmatch(body, -1) {
+		if string(link[1]) == string(selfLink[1]) {
+			continue
+		}
+		_, other := c.do(http.MethodGet, "/partials"+string(link[1]), nil, "")
+		if strings.Contains(string(other), `class="wp-notice"`) {
+			t.Error("non-self thread carries the self-send notice")
+		}
+	}
+}
+
+// TestSendFormsDisableWhileInFlight pins the double-submit guard: every
+// outbound send form (new message, thread reply, fax) disables its
+// submit button for the duration of the request. Evidence: a live
+// self-send test produced TWO identical failed messages because the
+// multi-second gateway round-trip left the Send button live.
+func TestSendFormsDisableWhileInFlight(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	const directive = `hx-disabled-elt="find button[type=submit]"`
+	_, body := c.do(http.MethodGet, "/partials/messages", nil, "")
+	if got := strings.Count(string(body), directive); got != 1 {
+		t.Errorf("new-message form: %d disable directives, want 1", got)
+	}
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "contract test"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	if got := strings.Count(string(body), directive); got != 1 {
+		t.Errorf("reply form: %d disable directives, want 1", got)
+	}
+
+	_, body = c.do(http.MethodGet, "/partials/fax", nil, "")
+	if !strings.Contains(string(body), directive) {
+		t.Error("fax form missing the disable directive")
+	}
+}

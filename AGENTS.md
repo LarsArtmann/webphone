@@ -329,6 +329,21 @@ runbook: `nix-international-telephony/docs/ops-runbook.md`
 § "Webphone error contract" (2026-09-22). Keep both sides in sync when
 error copy or families change.
 
+**Send-failure UX layering** (2026-09-22 train, plan
+`docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md`): the
+durable 4xx/5xx banner lands in `#wp-tab-error` ABOVE the tab region
+while the reply composer swaps `show:window:bottom` — the reason is
+durable but OFF-VIEWPORT, and the failed bubble in view says only
+"failed". Shipped mitigations: every outbound send form (new message,
+reply, fax) carries `hx-disabled-elt="find button[type=submit]"`
+(double-submit guard — a live 40310 self-send session produced TWO
+identical failed rows), and a self-thread (remote == the config
+`identities` DID, both sides through `ParsePhone` so config spacing
+cannot hide the match) renders the `wp-notice` caution (en/de,
+`thread.selfNotice`). The durable in-bubble failure story (persisted
+reason + kind, retry only where retryable) is the planned follow-up
+in TODO_LIST.
+
 **BDD posture** (plan T13): Ginkgo where it earns its keep — the
 session behavior suites (`session_behaviors_test.go`) describe
 observable auth behavior; table-driven Go tests everywhere else where

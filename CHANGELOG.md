@@ -31,6 +31,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/webphone-smoke.py --expect-version X.Y.Z`: asserts the
   running server's `/version` (verified positive and negative) — the
   deploy-verification companion.
+- Double-submit guard on outbound sends: the new-message, thread
+  reply, and fax forms disable their submit button for the duration
+  of the request (`hx-disabled-elt`) — a live self-send test produced
+  TWO identical failed messages because the multi-second gateway
+  round-trip left Send live. Pinned by `TestSendFormsDisableWhileInFlight`.
+- Self-send notice (plan
+  `docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md`): opening
+  a thread whose remote number is the extension's own DID (config
+  `identities`) renders a warn notice (en/de) at intent time —
+  providers refuse self-addressed sends (Telnyx 40310), and the
+  notice lands before the user can discover that by failing. The
+  comparison runs both sides through `ParsePhone` (config DID spacing
+  cannot hide the match); pinned by `TestIsSelfThread` and
+  `TestThreadViewWarnsOnSelfSend`.
 
 ### Changed
 
