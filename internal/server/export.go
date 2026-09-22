@@ -2,7 +2,6 @@ package server
 
 import (
 	"archive/zip"
-	"bytes"
 	"encoding/json/v2"
 	"fmt"
 	"log/slog"
@@ -40,7 +39,7 @@ type exportMessage struct {
 
 type exportThread struct {
 	Remote   string          `json:"remote"`
-	Unread   bool            `json:"unread"`
+	Unread   int             `json:"unread"`
 	Messages []exportMessage `json:"messages"`
 }
 
@@ -93,10 +92,10 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 		thread := exportThread{Remote: summary.Thread.Remote.String(), Unread: summary.Thread.Unread, Messages: make([]exportMessage, 0, len(msgs))}
 		for _, msg := range msgs {
 			message := exportMessage{
-				Direction:     msg.Direction.String(),
-				Channel:       msg.Channel.String(),
+				Direction:     string(msg.Direction),
+				Channel:       string(msg.Channel),
 				Body:          msg.Body,
-				Status:        msg.Status.String(),
+				Status:        string(msg.Status),
 				FailureKind:   msg.FailureKind,
 				FailureDetail: msg.FailureDetail,
 				CreatedAt:     msg.CreatedAt,
@@ -113,8 +112,8 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 	for _, fax := range faxes {
 		outFaxes = append(outFaxes, exportFax{
 			Remote:    fax.Remote.String(),
-			Direction: fax.Direction.String(),
-			Status:    fax.Status.String(),
+			Direction: string(fax.Direction),
+			Status:    string(fax.Status),
 			Pages:     fax.Pages,
 			Error:     fax.Error,
 			CreatedAt: fax.CreatedAt,

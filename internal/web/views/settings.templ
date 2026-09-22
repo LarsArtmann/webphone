@@ -39,6 +39,8 @@ templ SettingsPanel(props SettingsPanelProps) {
 			</dd>
 			<dt>{ T(props.Lang, "settings.shared") }</dt>
 			<dd>{ fmtInt(props.SharedContacts) }</dd>
+			<dt>{ T(props.Lang, "settings.export") }</dt>
+			<dd><a class="wp-mini" href="/api/export" download>{ T(props.Lang, "settings.exportLink") }</a></dd>
 		</dl>
 		<p class="wp-empty">
 			{ T(props.Lang, "settings.themeNote") }
