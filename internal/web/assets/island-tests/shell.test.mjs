@@ -137,3 +137,66 @@ test("composer drafts persist per thread and restore after re-render", async () 
   doc.querySelector = realQuerySelector;
   delete transcript.dataset.thread;
 });
+
+// 2b2. data-sms opens the Messages tab and prefills the composer's
+// recipient once the partial swapped in; data-save-contact only
+// bridges the gesture to the island's wp:save-contact event.
+test("data-sms prefills the new-message composer after the tab swap", () => {
+  const nav = doc.getElementById("nav-messages");
+  nav.dataset.tab = "messages";
+  let navClicked = false;
+  nav.click = () => {
+    navClicked = true;
+  };
+  const composer = {
+    value: "",
+    focus() {
+      composer.focused = true;
+    },
+    focused: false,
+  };
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === "form.wp-compose-new input[name='to']"
+      ? composer
+      : selector === "[data-tab='messages']"
+        ? nav
+        : realQuerySelector(selector);
+  doc.querySelector = (selector) =>
+    selector === "form.wp-compose-new input[name='to']"
+      ? composer
+      : selector === "[data-tab='messages']"
+        ? nav
+        : realQuerySelector(selector);
+
+  doc.dispatch("click", { target: { closest: (sel) => (sel === "[data-sms]" ? { getAttribute: () => "+4930" } : null) } });
+  assert.ok(navClicked, "the messages nav was clicked");
+
+  doc.dispatch("htmx:afterSwap", {});
+  assert.equal(composer.value, "+4930");
+  assert.ok(composer.focused, "recipient field focused");
+
+  // The prefill listener is one-shot: later swaps do not re-focus.
+  composer.focused = false;
+  doc.dispatch("htmx:afterSwap", {});
+  assert.ok(!composer.focused, "prefill is one-shot");
+
+  doc.querySelector = realQuerySelector;
+  delete nav.dataset.tab;
+});
+
+test("data-save-contact bridges to the island's wp:save-contact event", () => {
+  let seen = null;
+  doc.addEventListener("wp:save-contact", (event) => {
+    seen = event.detail;
+  });
+  doc.dispatch("click", {
+    target: {
+      closest: (sel) =>
+        sel === "[data-save-contact]"
+          ? { getAttribute: (name) => (name === "data-save-contact" ? "+441632960961" : null) }
+          : null,
+    },
+  });
+  assert.equal(seen.number, "+441632960961");
+});

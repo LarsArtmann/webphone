@@ -84,6 +84,44 @@
       form.requestSubmit();
     });
 
+    // 2b2. data-sms (history/voicemail rows → the Messages composer
+    //      prefilled with the number) and data-save-contact (☆ → the
+    //      island's contact save via the wp:save-contact event; the
+    //      island owns /api/contacts writes). The prefill rides a
+    //      one-shot afterSwap: the composer only exists once the tab
+    //      partial has swapped in.
+    document.addEventListener("click", function (event) {
+      var sms = event.target.closest("[data-sms]");
+      if (sms) {
+        var number = sms.getAttribute("data-sms");
+        var nav = document.querySelector("[data-tab='messages']");
+        if (nav) nav.click();
+        var prefill = function () {
+          document.removeEventListener("htmx:afterSwap", prefill);
+          var to = document.querySelector(
+            "form.wp-compose-new input[name='to']",
+          );
+          if (to) {
+            to.value = number;
+            to.focus();
+          }
+        };
+        document.addEventListener("htmx:afterSwap", prefill);
+        return;
+      }
+      var save = event.target.closest("[data-save-contact]");
+      if (save) {
+        document.dispatchEvent(
+          new CustomEvent("wp:save-contact", {
+            detail: {
+              number: save.getAttribute("data-save-contact"),
+              name: save.getAttribute("data-name") || "",
+            },
+          }),
+        );
+      }
+    });
+
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
     //     every call render; the shell mirrors the live call count into
     //     the header so every tab shows the phone is busy. Cards are

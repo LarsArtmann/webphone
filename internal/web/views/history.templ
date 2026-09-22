@@ -74,6 +74,14 @@ templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 		if dial := CDRDialTarget(cdr); dial != "" {
 			<span class="wp-row-actions">
 				<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
+				<button class="wp-mini" data-sms={ dial }>{ T(lang, "contacts.sms") }</button>
+				<button
+					class="wp-mini"
+					data-save-contact={ dial }
+					data-name={ displayName(cdrTarget(cdr), names) }
+					aria-label={ T(lang, "contacts.saveAs") }
+					title={ T(lang, "contacts.saveAs") }
+				>☆</button>
 			</span>
 		}
 	</article>

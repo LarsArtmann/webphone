@@ -265,14 +265,24 @@ export async function saveContact(number, name) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await loadContacts();
+    announce(t("contactSaved")(clean), "ok");
   } catch (err) {
     // Server unreachable: keep the pre-migration behavior — the row
     // lands in the local list and migrates on a later login.
     log(`contact save failed (${err.message}); kept locally`, "error");
+    announce(t("contactSaveFailed")(err.message), "error");
     saveLegacyContact(clean, name);
     renderContacts();
   }
 }
+
+// The shell's data-save-contact affordance (history/voicemail rows)
+// bridges here: the island owns /api/contacts writes and their
+// feedback, the shell only forwards the gesture.
+document.addEventListener("wp:save-contact", (event) => {
+  const detail = event.detail || {};
+  if (detail.number) saveContact(detail.number, detail.name || "");
+});
 
 function removeLegacyContact(number) {
   legacyContacts = legacyContacts.filter((c) => c.number !== number);

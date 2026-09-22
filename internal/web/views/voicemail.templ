@@ -75,6 +75,13 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 		<span class="wp-row-actions">
 			if msg.CIDNumber != "" {
 				<button class="wp-mini" data-dial={ msg.CIDNumber }>{ T(lang, "contacts.call") }</button>
+				<button class="wp-mini" data-sms={ msg.CIDNumber }>{ T(lang, "contacts.sms") }</button>
+				<button
+					class="wp-mini"
+					data-save-contact={ msg.CIDNumber }
+					aria-label={ T(lang, "contacts.saveAs") }
+					title={ T(lang, "contacts.saveAs") }
+				>☆</button>
 			}
 			if msg.AudioURL != "" {
 				<audio class="wp-audio" controls preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
