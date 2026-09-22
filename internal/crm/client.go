@@ -127,13 +127,13 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 
 	encoded, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("crm: encode call log: %w", err)
+		return fmt.Errorf("crm: encode call log (contact %s): %w", contactID, err)
 	}
 
 	target := c.base.JoinPath("/api/contacts", contactID, "/calls").String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, bytes.NewReader(encoded))
 	if err != nil {
-		return fmt.Errorf("crm: build call log request: %w", err)
+		return fmt.Errorf("crm: build call log request (contact %s): %w", contactID, err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -141,7 +141,7 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("crm: call log request: %w", err)
+		return fmt.Errorf("crm: call log request (contact %s): %w", contactID, err)
 	}
 	defer drainClose(resp)
 
@@ -153,9 +153,9 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 	case resp.StatusCode >= 400 && resp.StatusCode < 500:
 		// 404 (contact gone) and 400/409 (domain rejections) are CRM-side
 		// answers, not our bugs — surface them wrapped, not as errors.
-		return fmt.Errorf("crm: call log rejected (%d)", resp.StatusCode)
+		return fmt.Errorf("crm: call log rejected (contact %s, status %d)", contactID, resp.StatusCode)
 	default:
-		return fmt.Errorf("crm: call log failed with status %d", resp.StatusCode)
+		return fmt.Errorf("crm: call log failed (contact %s, status %d)", contactID, resp.StatusCode)
 	}
 }
 
@@ -193,6 +193,6 @@ func (c *Client) get(ctx context.Context, target string) ([]byte, error) {
 // drainClose empties then closes the body so the connection re-enters the
 // pool; a read error here is harmless (best-effort reuse).
 func drainClose(resp *http.Response) {
-	_, _ = io.Copy(io.Discard, resp.Body)
-	_ = resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body) //nolint:erraudit // best-effort drain; reuse beats the read error
+	_ = resp.Body.Close()                 //nolint:erraudit // best-effort pool return
 }

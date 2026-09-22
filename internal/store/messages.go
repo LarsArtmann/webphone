@@ -376,7 +376,7 @@ func (s *Messages) ListMessagesPage(
 		LIMIT ? OFFSET ?
 	`, []any{owner.String(), threadID.String(), limit + 1, page * limit}, scanMessage)
 	if err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("list messages page %d of thread %s: %w", page, threadID, err)
 	}
 
 	hasMore := len(msgs) > limit
@@ -384,7 +384,7 @@ func (s *Messages) ListMessagesPage(
 		msgs = msgs[:limit]
 	}
 	if err := s.attachAttachments(ctx, msgs); err != nil {
-		return nil, false, err
+		return nil, false, fmt.Errorf("attach attachments to thread %s messages: %w", threadID, err)
 	}
 
 	// Query was newest-first for the LIMIT; the UI wants a chat transcript,
