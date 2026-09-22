@@ -21,7 +21,18 @@ import (
 // ready-to-render component so pages and SSE pushes share one renderer.
 
 func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.Component, error) {
-	threads, err := h.deps.Messaging.Threads(r.Context(), sess.Extension)
+	// The search box's q rides the same panel route; empty/whitespace
+	// means "no filter" and renders the plain list.
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	var (
+		threads []store.ThreadSummary
+		err     error
+	)
+	if query == "" {
+		threads, err = h.deps.Messaging.Threads(r.Context(), sess.Extension)
+	} else {
+		threads, err = h.deps.Messaging.ThreadSearch(r.Context(), sess.Extension, query)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +40,7 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	for _, summary := range threads {
 		numbers = append(numbers, summary.Thread.Remote.String())
 	}
-	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Query: query, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {

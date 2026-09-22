@@ -14,7 +14,10 @@ import (
 // draft half-typed into the composer.
 type ThreadsPanelProps struct {
 	Threads []store.ThreadSummary
-	Error   string
+	// Query is the active thread-search filter ("" = unfiltered list);
+	// the search input echoes it so a morph swap keeps the typed text.
+	Query string
+	Error string
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
 	// Names maps phone numbers to CRM contact names (optional integration);
@@ -32,8 +35,34 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
+		// The search form lives OUTSIDE the sse-swap region so live list
+		// pushes never re-render it; htmx morph keeps the input's focus
+		// across debounced re-fetches (stable id below).
+		<form
+			class="wp-thread-search"
+			role="search"
+			aria-label={ T(props.Lang, "threads.search") }
+			hx-get="/partials/messages"
+			hx-target="#tab-content"
+			hx-swap="morph:innerHTML"
+			hx-trigger="input changed delay:300ms, submit"
+			hx-sync="this:replace"
+		>
+			<input
+				type="search"
+				name="q"
+				id="wp-thread-search-input"
+				value={ props.Query }
+				placeholder={ T(props.Lang, "threads.search.ph") }
+				aria-label={ T(props.Lang, "threads.search.label") }
+			></input>
+		</form>
 		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
-			@ThreadsList(props.Threads, props.Names, props.Lang)
+			if props.Query != "" && len(props.Threads) == 0 {
+				<p class="wp-empty">{ T(props.Lang, "threads.noMatch.pre") }“{ props.Query }”{ T(props.Lang, "threads.noMatch.post") }</p>
+			} else {
+				@ThreadsList(props.Threads, props.Names, props.Lang)
+			}
 		</div>
 		if props.Identity != "" {
 			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>

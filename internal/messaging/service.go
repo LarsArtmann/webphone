@@ -202,6 +202,13 @@ func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.
 	return s.messages.ListThreads(ctx, owner)
 }
 
+// ThreadSearch filters the owner's threads by a text query over the
+// remote number and every message body. Callers route empty queries to
+// Threads instead — the store treats them as a wildcard.
+func (s *Service) ThreadSearch(ctx context.Context, owner domain.Extension, query string) ([]store.ThreadSummary, error) {
+	return s.messages.SearchThreads(ctx, owner, query)
+}
+
 // Thread returns one thread's transcript (oldest first), the newest
 // MessagePageSize messages.
 func (s *Service) Thread(

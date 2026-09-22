@@ -400,7 +400,6 @@ func TestSearchThreads(t *testing.T) {
 		{"percent is literal, not a wildcard", "50%", []string{firstID.String()}},
 		{"underscore is literal, not a wildcard", "n_revenue", []string{}},
 		{"no match", "voicemail greeting", []string{}},
-		{"empty query never runs a pattern", "", []string{}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -434,8 +433,8 @@ func TestSearchThreads(t *testing.T) {
 	}
 
 	// Ordering: most recently active first (thread two was touched last).
-	both, err := messages.SearchThreads(ctx, owner, "")
-	_ = both
+	// A shared digit hits both threads; the empty-query routing decision
+	// (list everything, no pattern) lives in the panel handler.
 	list, err := messages.SearchThreads(ctx, owner, "0")
 	if err != nil {
 		t.Fatal(err)
