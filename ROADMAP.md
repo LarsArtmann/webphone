@@ -119,10 +119,11 @@ the stack browser E2E passed on the bumped tree. What remains:
   `cqrshtmx.OOBHTML` signature re-checked against the then-current tag.
 - Island JS test runner: LANDED 2026-09-20 (node:test + minimal DOM
   stubs under Nix — `internal/web/assets/island-tests/`, flake check
-  `island-js`). First ports: toast rendering (announce kind/cap) and
-  i18n en/de key parity. Still grep-only until touched: live pill,
-  429 surfacing in the phone-api wrappers, dtmf-relay shape — port
-  each into a DOM test when the code next changes.
+  `island-js`). Ports since: toasts, i18n parity, session.js feedback
+  map, connection watchdog scenarios (incl. the live pill states),
+  composer behaviors, calls state chip, shell error surfacing. Still
+  grep-only until touched: dtmf-relay INFO shape — port into a DOM
+  test when the code next changes.
 - Conditional P7 decision records: `StructuredError` for
   `/api/session` (adopt only if the island branches on codes);
   ClientIP-trust note upstream in httputil (only if the stack proves
@@ -203,22 +204,46 @@ is committed work — refine into TODO_LIST only on demand.
   thread after first send), a11y pass (focus order post-swap, aria-live
   SSE regions), multiple-tab glare warning, SSE connection-loss banner
   beyond the live pill.
-- Platform: short-lived TURN REST credentials via `/config.js`,
-  metrics endpoint, SQLite backup/restore runbook + drill,
-  per-extension data export, webhook payload versioning header,
-  timezone-aware timestamps, server-side PDF page counting, MIME
-  sniffing on attachments, rate-limit tuning knobs (only on operator
-  demand), CSP nonce mode, `/favicon.ico` route for non-browser
-  clients, reusable "HTMX tabs + island + session" pattern doc
+- Platform: short-lived TURN REST credentials via `/config.js` (T26b,
+  TODO row), metrics endpoint (SHIPPED — `/metrics`, T26a), SQLite
+  backup/restore runbook + drill (SHIPPED),
+  per-extension data export (T26c zip: messages JSON, contacts vCard,
+  fax list), webhook payload versioning header,
+  timezone-aware timestamps (SHIPPED — `timezone` key, T26d),
+  server-side PDF page counting, MIME
+  sniffing on attachments (SHIPPED — T26e), rate-limit tuning knobs
+  (only on operator demand), CSP nonce mode (moot while zero inline
+  scripts holds), `/favicon.ico` route (SHIPPED — T27b), reusable
+  "HTMX tabs + island + session" pattern doc
   (third LarsArtmann app with this shape), i18n dynamic-template
-  key-sync, island/app.css shared-token extraction, webhook-idempotency
-  durability decision (memory TTL means a post-restart provider replay
-  re-applies — acceptable?), OpenAPI boundary decision (extend beyond
-  `/api/session` or record as deliberate), limiter-key widening runbook
-  line (NAT offices), signed tags (`git tag -s`), nixpkgs lock + vulnix
-  rescan cadence, daemon-config exclusion of `docs/status/` from
-  heuristic commits (upstream infra decision), wrapper-flake bisect
-  trick write-up (module-from-HEAD + package-from-rev).
+  key-sync (SHIPPED — referenced-keys guard, T27d), island/app.css
+  shared-token extraction, signed tags (SHIPPED — `git tag -s` in
+  release.sh, T27c), nixpkgs lock + vulnix rescan cadence (rides
+  release.sh every train), daemon-config exclusion of `docs/status/`
+  from heuristic commits (upstream infra decision), wrapper-flake
+  bisect trick write-up (module-from-HEAD + package-from-rev),
+  vendored-sip.js cache headers + build-time integrity pin (esbuild
+  output hash checked so `./update.sh` breakage surfaces at build),
+  CSP report-only companion or report-uri endpoint, `/assets/*`
+  unknown-path 404 parity with the styled 404, smoke `--expect-csp`
+  assertion.
+
+## Composer/UX raw ideas (2026-09-22 trains, unshipped)
+
+From the send-failure and composer train brainstorms; nothing here is
+committed work — refine into TODO_LIST only on demand.
+
+- Dial typeahead: ranked suggestions from PBX_CONFIG contacts in the
+  dial field, zero round-trips (17:53 f7 — recommended next train).
+- Jump-to-latest chip on live transcript pushes while scrolled up.
+- Missed-call nav badge (header badge counts live calls only today).
+- Thread search: server LIKE over bodies/remotes.
+- Absolute-time-on-hover (`title`) for relative timestamps.
+- Audio output picker (`setSinkId`) for multi-output desks.
+- Peer hub: contact → thread + history + voicemail in one view.
+- Tailwind v4 scoped-layer coexistence spike for templ-components
+  (designed in the 2026-09-22 deep-dive report; owner call pending —
+  one-component proof before any adoption).
 
 ## Local Playwright island E2E (consciously deferred, plan T27 2026-09-20)
 

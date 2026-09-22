@@ -67,7 +67,7 @@ database would be a split brain.
 nix develop                        # Go, templ, golangci-lint, esbuild, … — GOTOOLCHAIN=local; bare `go` works inside. Host go (1.26.7) is below the 1.27.1 floor: OUTSIDE-the-shell go commands need `nix develop -c`
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
-python3 scripts/webphone-smoke.py          # 32-check live smoke (boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)
+python3 scripts/webphone-smoke.py          # 38-check live smoke (+4-check restart scenario; boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
 nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test
@@ -174,6 +174,15 @@ the island remotely — re-run it after any markup change.
 - **Owner scoping everywhere**: every store query is
   extension-scoped; attachments/faxes stream through session-gated
   handlers only.
+- **One-home helpers from the 2026-09-22 dedup train**: `listRows[T]`
+  (store/db.go) owns the query→close→scan→`rows.Err()` lifecycle for
+  every list query and wraps both failure shapes with the `op`
+  string; `pbx.do()` is the single disabled-policy chokepoint (every
+  pbx method fails with `ErrDisabled` there; `VerifyCredentials`
+  delegates to `VoicemailSummary`); `session.makeSession` owns the
+  session birth invariant (`ExpiresAt = CreatedAt + ttl`);
+  `server.requireMultipartTo` is the send-form prologue (session +
+  multipart + ParsePhone + 422 with the per-tab key).
 - **Personal contacts have ONE home**: the per-extension SQLite
   store, read/written via `/api/contacts` (session-gated, 60/min
   POST limiter, 500-per-extension atomic cap). Mutations answer 204;
