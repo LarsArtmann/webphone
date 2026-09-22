@@ -717,6 +717,17 @@ select:focus-visible {
   gap: 6px;
 }
 
+.wp-thread-rowwrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wp-thread-rowwrap .wp-thread-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .wp-thread-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

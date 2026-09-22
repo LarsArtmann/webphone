@@ -55,26 +55,37 @@ templ ThreadsList(threads []store.ThreadSummary, names map[string]string, lang L
 }
 
 templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang) {
-	<a
-		class={ "wp-thread-row", templ.KV("wp-unread", summary.Thread.Unread > 0) }
-		href={ "/messages/" + summary.Thread.ID.String() }
-		hx-get={ "/partials/messages/" + summary.Thread.ID.String() }
-		hx-target="#tab-content"
-		hx-swap="innerHTML show:window:top"
-		hx-push-url={ "/messages/" + summary.Thread.ID.String() }
-	>
-		<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
-		<span class="wp-thread-text">
-			<span class="wp-thread-remote">{ displayName(summary.Thread.Remote.String(), names) }</span>
-			<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
-		</span>
-		<span class="wp-thread-side">
-			<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
-			if summary.Thread.Unread > 0 {
-				<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
-			}
-		</span>
-	</a>
+	// The dial button sits OUTSIDE the anchor (a button inside a link is
+	// invalid HTML and steals the row's navigation) — the wrapper keeps
+	// row + action on one visual line.
+	<div class="wp-thread-rowwrap">
+		<a
+			class={ "wp-thread-row", templ.KV("wp-unread", summary.Thread.Unread > 0) }
+			href={ "/messages/" + summary.Thread.ID.String() }
+			hx-get={ "/partials/messages/" + summary.Thread.ID.String() }
+			hx-target="#tab-content"
+			hx-swap="innerHTML show:window:top"
+			hx-push-url={ "/messages/" + summary.Thread.ID.String() }
+		>
+			<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
+			<span class="wp-thread-text">
+				<span class="wp-thread-remote">{ displayName(summary.Thread.Remote.String(), names) }</span>
+				<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
+			</span>
+			<span class="wp-thread-side">
+				<span class="wp-thread-when">{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
+				if summary.Thread.Unread > 0 {
+					<span class="wp-nav-badge">{ fmtInt(summary.Thread.Unread) }</span>
+				}
+			</span>
+		</a>
+		<button
+			class="wp-mini"
+			data-dial={ summary.Thread.Remote.String() }
+			aria-label={ T(lang, "contacts.call") }
+			title={ T(lang, "contacts.call") }
+		>📞</button>
+	</div>
 }
 
 // NewMessageForm starts a conversation with a typed number.

@@ -27,6 +27,14 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 	if !strings.Contains(page, "+441632960961") || !strings.Contains(page, "contract test") {
 		t.Fatalf("thread list missing the new thread: %s", page[:min(200, len(page))])
 	}
+	// T20c: the LIST row offers a dial button OUTSIDE the anchor (a
+	// button inside the link would steal the row's navigation).
+	if !strings.Contains(page, `data-dial="+441632960961"`) || strings.Contains(page, `<a class="wp-thread-row"[^>]*>[^<]*<button`) {
+		t.Errorf("thread list row missing its dial button (or it nests inside the anchor)")
+	}
+	if !regexp.MustCompile(`<div class="wp-thread-rowwrap"><a[^>]*class="wp-thread-row`).MatchString(page) {
+		t.Errorf("row wrapper structure wrong: %.300s", page)
+	}
 
 	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
 	if match == nil {
