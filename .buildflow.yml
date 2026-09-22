@@ -36,7 +36,10 @@ exclude:
 #   removed, Upload/InboundAttachment unified, Webhook/FaxWebhook mixin
 #   extracted, shared rowScanner, slices.Reverse, value-typed sessions).
 #   The remaining 67 findings are policy opinions that contradict this
-#   repo's design, not defects:
+#   repo's design, not defects (update 2026-09-22: branching-flow v0.6.2's
+#   SDK severity cap downgrades the error-severity ones to warnings, so the
+#   default error gate would hold — the skip stays as documented noise
+#   policy, not a gating necessity):
 #     * PHANTOM_TYPE x62 — wants phantom types for display fields
 #       (Body, MimeType, Pages, Unread, Credential…); maximalist churn
 #       with zero safety gain for non-identity data.
