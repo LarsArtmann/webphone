@@ -11,6 +11,7 @@ const MAX_SUGGESTIONS = 6;
 let list = null;
 let entries = [];
 let activeIndex = -1;
+let initialized = false;
 
 // rankContacts scores a contact against the query: a name that starts
 // with it beats a name that merely contains it, which beats a number
@@ -91,7 +92,9 @@ function render(matches) {
 }
 
 export function initDialTypeahead() {
+  if (initialized) return;
   if (!els.dest || !els.dialForm || sharedContacts.length === 0) return;
+  initialized = true;
 
   list = document.createElement("ul");
   list.id = "dial-suggest";

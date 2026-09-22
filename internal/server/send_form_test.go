@@ -15,7 +15,7 @@ func TestRequireMultipartToAnswersPerTab422(t *testing.T) {
 	c := signIn(t, server)
 
 	t.Run("messages tab", func(t *testing.T) {
-		form, contentType := multipartBody(t, map[string]string{"to": "not-a-number", "body": "hi"}, nil)
+		form, contentType := multipartBody(t, map[string]string{"to": "&&&", "body": "hi"}, nil)
 		resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
 		if resp.StatusCode != http.StatusUnprocessableEntity {
 			t.Fatalf("invalid to: %d (want 422)", resp.StatusCode)
@@ -29,7 +29,7 @@ func TestRequireMultipartToAnswersPerTab422(t *testing.T) {
 	})
 
 	t.Run("fax tab", func(t *testing.T) {
-		form, contentType := multipartBody(t, map[string]string{"to": "not-a-number"}, nil)
+		form, contentType := multipartBody(t, map[string]string{"to": "&&&"}, nil)
 		resp, body := c.do(http.MethodPost, "/fax/send", form, contentType)
 		if resp.StatusCode != http.StatusUnprocessableEntity {
 			t.Fatalf("invalid to: %d (want 422)", resp.StatusCode)

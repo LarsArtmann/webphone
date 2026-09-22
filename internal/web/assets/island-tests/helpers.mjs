@@ -13,99 +13,117 @@ export function installBrowserGlobals() {
     node.selector === selector ||
     node.className === selector ||
     (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1)));
-  const makeEl = (id) => ({
-    id,
-    textContent: "",
-    className: "",
-    hidden: true,
-    placeholder: "",
-    title: "",
-    lang: "",
-    value: "",
-    type: "",
-    children: [],
-    listeners: {},
-    parent: null,
-    get parentElement() {
-      return this.parent;
-    },
-    // selector is the stub's stand-in for a CSS selector match: closest
-    // and querySelector compare it (or an exact className) instead of
-    // interpreting selectors. Tests set .selector on the fakes they
-    // route through delegated listeners.
-    selector: null,
-    closest(selector) {
-      let node = this;
-      while (node) {
-        if (matchesSelector(node, selector)) return node;
-        node = node.parent;
-      }
-      return null;
-    },
-    querySelector(selector) {
-      const walk = (node) => {
-        for (const kid of node.children) {
-          if (matchesSelector(kid, selector)) return kid;
-          const found = walk(kid);
-          if (found) return found;
+  const makeEl = (id) => {
+    const el = {
+      id,
+      textContent: "",
+      className: "",
+      hidden: true,
+      placeholder: "",
+      title: "",
+      lang: "",
+      value: "",
+      type: "",
+      children: [],
+      listeners: {},
+      parent: null,
+      get parentElement() {
+        return this.parent;
+      },
+      // selector is the stub's stand-in for a CSS selector match: closest
+      // and querySelector compare it (or an exact className) instead of
+      // interpreting selectors. Tests set .selector on the fakes they
+      // route through delegated listeners.
+      selector: null,
+      closest(selector) {
+        let node = this;
+        while (node) {
+          if (matchesSelector(node, selector)) return node;
+          node = node.parent;
         }
         return null;
-      };
-      return walk(this);
-    },
-    get firstChild() {
-      return this.children[0] ?? null;
-    },
-    append(...kids) {
-      for (const kid of kids) {
-        kid.parent = this;
-        this.children.push(kid);
-      }
-    },
-    prepend(child) {
-      child.parent = this;
-      this.children.unshift(child);
-    },
-    replaceChildren(...kids) {
-      for (const kid of kids) kid.parent = this;
-      this.children = [...kids];
-    },
-    remove() {
-      if (this.parent) {
-        this.parent.children = this.parent.children.filter((c) => c !== this);
-        this.parent = null;
-      }
-    },
-    addEventListener(type, fn) {
-      (this.listeners[type] ??= []).push(fn);
-    },
-    focus() {
-      this.focused = true;
-    },
-    classList: {
-      add() {},
-      remove() {},
-      toggle() {},
-      contains() {
-        return false;
       },
-    },
-    style: {},
-    dataset: {},
-    attrs: {},
-    setAttribute(k, v) {
-      this.attrs[k] = String(v);
-    },
-    removeAttribute(k) {
-      delete this.attrs[k];
-    },
-    getAttribute(k) {
-      return k in this.attrs ? this.attrs[k] : null;
-    },
-    hasAttribute(k) {
-      return k in this.attrs;
-    },
-  });
+      querySelector(selector) {
+        const walk = (node) => {
+          for (const kid of node.children) {
+            if (matchesSelector(kid, selector)) return kid;
+            const found = walk(kid);
+            if (found) return found;
+          }
+          return null;
+        };
+        return walk(this);
+      },
+      get firstChild() {
+        return this.children[0] ?? null;
+      },
+      append(...kids) {
+        for (const kid of kids) {
+          kid.parent = this;
+          this.children.push(kid);
+        }
+      },
+      prepend(child) {
+        child.parent = this;
+        this.children.unshift(child);
+      },
+      replaceChildren(...kids) {
+        for (const kid of kids) kid.parent = this;
+        this.children = [...kids];
+      },
+      remove() {
+        if (this.parent) {
+          this.parent.children = this.parent.children.filter((c) => c !== this);
+          this.parent = null;
+        }
+      },
+      addEventListener(type, fn) {
+        (this.listeners[type] ??= []).push(fn);
+      },
+      focus() {
+        this.focused = true;
+      },
+      style: {},
+      dataset: {},
+      attrs: {},
+      setAttribute(k, v) {
+        this.attrs[k] = String(v);
+      },
+      removeAttribute(k) {
+        delete this.attrs[k];
+      },
+      getAttribute(k) {
+        return k in this.attrs ? this.attrs[k] : null;
+      },
+      hasAttribute(k) {
+        return k in this.attrs;
+      },
+    };
+    // classList with real-DOM semantics: add/remove/toggle mutate the
+    // element's className string (reads always derive from it), so code
+    // like `option.classList.toggle("active", …)` is observable via
+    // className assertions.
+    const setClasses = (mutate) => {
+      const classes = new Set(String(el.className).split(" ").filter(Boolean));
+      mutate(classes);
+      el.className = [...classes].join(" ");
+    };
+    el.classList = {
+      add: (...names) => setClasses((set) => names.forEach((n) => set.add(n))),
+      remove: (...names) => setClasses((set) => names.forEach((n) => set.delete(n))),
+      toggle: (name, force) => {
+        let want;
+        setClasses((set) => {
+          want = force === undefined ? !set.has(name) : Boolean(force);
+          if (want) set.add(name);
+          else set.delete(name);
+        });
+        return want;
+      },
+      contains: (name) => String(el.className).split(" ").includes(name),
+    };
+    return el;
+  };
   globalThis.document = {
     getElementById: (id) => {
       if (!registry.has(id)) registry.set(id, makeEl(id));

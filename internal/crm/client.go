@@ -68,6 +68,40 @@ type Match struct {
 	Name string
 }
 
+// do is the single disabled-policy and request home (the same chokepoint
+// shape as pbx.Client.do): every CRM call funnels through here, so an
+// unconfigured CRM fails every method with ErrDisabled before any URL or
+// request is built, and no caller can forget the bearer header.
+func (c *Client) do(
+	ctx context.Context, method, path string, query url.Values, body []byte,
+) (*http.Response, error) {
+	if !c.Enabled() {
+		return nil, ErrDisabled
+	}
+
+	target := c.base.JoinPath(path).String()
+	if len(query) > 0 {
+		target += "?" + query.Encode()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, target, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("crm: build request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	if len(body) > 0 {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("crm: request: %w", err)
+	}
+
+	return resp, nil
+}
+
 // lookupResponse is the CRM's GET /api/contacts/by-phone wire shape.
 type lookupResponse struct {
 	Results []struct {
@@ -84,18 +118,28 @@ type lookupResponse struct {
 // CRM owns the whole matching contract (digit normalization, trunk and
 // country-code suffix tolerance).
 func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error) {
-	if !c.Enabled() {
-		return Match{}, ErrDisabled
-	}
-
-	target := c.base.JoinPath("/api/contacts/by-phone").String() + "?number=" + url.QueryEscape(number)
-	body, err := c.get(ctx, target)
+	resp, err := c.do(ctx, http.MethodGet, "/api/contacts/by-phone",
+		url.Values{"number": {number}}, nil)
 	if err != nil {
 		return Match{}, err
 	}
+	defer drainClose(resp)
+
+	switch {
+	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+		return Match{}, ErrUnauthorized
+	case resp.StatusCode != http.StatusOK:
+		return Match{}, fmt.Errorf("crm: lookup failed with status %d", resp.StatusCode)
+	}
+
+	var buf bytes.Buffer
+
+	if _, err := buf.ReadFrom(resp.Body); err != nil {
+		return Match{}, fmt.Errorf("crm: read response: %w", err)
+	}
 
 	var parsed lookupResponse
-	if err := json.Unmarshal(body, &parsed); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
 		return Match{}, fmt.Errorf("crm: decode lookup response: %w", err)
 	}
 
@@ -114,10 +158,6 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 
 // LogCall appends one call activity to the CRM contact (204 expected).
 func (c *Client) LogCall(ctx context.Context, contactID string, direction, number string, seconds int, outcome string) error {
-	if !c.Enabled() {
-		return ErrDisabled
-	}
-
 	payload := struct {
 		Direction string `json:"direction"`
 		Number    string `json:"number"`
@@ -130,18 +170,9 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 		return fmt.Errorf("crm: encode call log (contact %s): %w", contactID, err)
 	}
 
-	target := c.base.JoinPath("/api/contacts", contactID, "/calls").String()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, bytes.NewReader(encoded))
+	resp, err := c.do(ctx, http.MethodPost, "/api/contacts/"+contactID+"/calls", nil, encoded)
 	if err != nil {
-		return fmt.Errorf("crm: build call log request (contact %s): %w", contactID, err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("crm: call log request (contact %s): %w", contactID, err)
+		return err
 	}
 	defer drainClose(resp)
 
@@ -157,37 +188,6 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 	default:
 		return fmt.Errorf("crm: call log failed (contact %s, status %d)", contactID, resp.StatusCode)
 	}
-}
-
-func (c *Client) get(ctx context.Context, target string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
-	if err != nil {
-		return nil, fmt.Errorf("crm: build request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+c.token)
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("crm: request: %w", err)
-	}
-	defer drainClose(resp)
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, ErrUnauthorized
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("crm: lookup failed with status %d", resp.StatusCode)
-	}
-
-	var buf bytes.Buffer
-
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
-		return nil, fmt.Errorf("crm: read response: %w", err)
-	}
-
-	return buf.Bytes(), nil
 }
 
 // drainClose empties then closes the body so the connection re-enters the

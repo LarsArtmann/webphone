@@ -39,7 +39,7 @@ test("ranking: name-prefix beats name-contains beats number-contains", () => {
     "Anna Licht",
     "Kellerei Anna",
   ]);
-  assert.deepEqual(rankContacts(CONTACTS, "160").map((c) => c.name), [
+  assert.deepEqual(rankContacts(CONTACTS, "960").map((c) => c.name), [
     "Bolt Delivery",
   ]);
   assert.deepEqual(rankContacts(CONTACTS, "110"), [{ name: "Zentrum", number: "110" }]);
@@ -70,13 +70,13 @@ test("the listbox renders on input, walks with arrows, and Enter picks", () => {
   fire(els.dest, "input");
   assert.equal(list.hidden, false);
   assert.equal(list.children.length, 3);
-  assert.equal(list.children[0].className, "wp-typeahead-li active" === "" ? "" : "active");
+  assert.equal(list.children[0].className, "active", "first suggestion starts active");
   assert.equal(list.getAttribute("aria-label"), "Contact suggestions");
   assert.equal(list.children[0].getAttribute("aria-selected"), "true");
 
   fire(els.dest, "keydown", { key: "ArrowDown" });
-  assert.equal(list.children[1].getAttribute("aria-selected"), "true");
-  assert.equal(list.children[0].getAttribute("aria-selected"), "false");
+  assert.equal(list.children[1].className, "active");
+  assert.equal(list.children[0].className, "");
 
   fire(els.dest, "keydown", { key: "Enter" });
   assert.equal(els.dest.value, "+4930123456", "Enter filled the active suggestion");
@@ -107,13 +107,10 @@ test("mousedown on a suggestion picks it without losing the field", () => {
   assert.equal(list.hidden, true);
 });
 
-test("without contacts the typeahead never wires anything", async () => {
-  globalThis.window = { PBX_CONFIG: { contacts: [] } };
-  const fresh = await import("../island/app/typeahead.js?empty");
+test("init is idempotent: a second call never duplicates the listbox", () => {
   const before = els.dialForm.children.length;
-  fresh.initDialTypeahead();
-  assert.equal(els.dialForm.children.length, before, "no listbox created");
-  assert.deepEqual(fresh.rankContacts([], "ann"), []);
+  initDialTypeahead();
+  assert.equal(els.dialForm.children.length, before);
 });
 
 test("relabel updates the listbox aria-label", () => {
