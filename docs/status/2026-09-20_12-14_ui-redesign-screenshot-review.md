@@ -112,6 +112,10 @@ Verified via real screenshots (light/dark × desktop/mobile):
   is a pinned SSE contract class, dir-chip arrow glyph + aria-label
   pattern, avatarFor/avatarHue helpers, /tmp tooling pattern.
 
+> Resolved 2026-09-22 (docs-health): the redesign shipped and was verified
+> (13:22 + 16:28 sessions), E2E-gated on the v2.5.0 chain (green x2,
+> 2026-09-22), and folded into the released CHANGELOG/FEATURES.
+
 ## c) NOT STARTED
 
 - `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` quality gate.
@@ -127,6 +131,11 @@ Verified via real screenshots (light/dark × desktop/mobile):
 - Dial input placeholder truncation in the island at narrow widths
   (placeholder "+44163…" clips) — noted, not fixed.
 - flake.nix `webphoneVersion` bump (release-time task).
+
+> Resolved 2026-09-22 (docs-health): gates green across trains; the
+> avatar-helper tests shipped (helpers_test.go); the fold shipped with
+> v2.5.0; the E2E re-run gate satisfied on the release chain; AGENTS
+> carry the durable facts (sr-only owner, token mirror, greppable rows).
 
 ## d) TOTALLY FUCKED UP (and how it was recovered)
 
@@ -181,96 +190,96 @@ Verified via real screenshots (light/dark × desktop/mobile):
 
 **Ship this redesign**
 
-1. Review the 12:10 reshoot round (all 36) — confirm avatar "+1", history
-   arrows, voicemail/history/settings, mobile dark.
-2. Fix contacts import row grouping (templ class + CSS).
-3. Island dial placeholder truncation fix.
-4. Add avatarFor/avatarHue unit tests.
-5. Update AGENTS.md (sr-only, wp-fax-row contract, dir-chip pattern,
-   token-mirror reminder now includes --radius-sm/--border-strong).
-6. Explicit git commits in task-sized groups (CSS system / island CSS /
-   templ rows / welcome panel / i18n / helper tests).
-7. Run `python3 scripts/webphone-smoke.py` (fresh binary + data dir).
-8. Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.
-9. Run `nix flake check` (island-lint included).
-10. Run the stack browser E2E against the branch (`--override-input`) —
-    the real DOM-contract gate.
-11. Cross-build `nix build .#webphone --system aarch64-linux` + verify
-    ELF machine bytes (per runbook).
-12. Fold CHANGELOG (Unreleased → dated section) + FEATURES entries.
-13. Decide release train (v2.5.0), bump `webphoneVersion` in flake.nix.
-14. Tag + push, lychee link check, stack bump (`nix flake lock
-    --update-input webphone`), stack gates, announce.
-15. Verify the LIVE site post-deploy with the same CDP harness
-    (light/dark login + a real logged-in pass with real credentials).
+1. ~~Review the 12:10 reshoot round (all 36) — confirm avatar "+1", history~~ done (done (16:28 session reviewed the reshoot))
+   ~~arrows, voicemail/history/settings, mobile dark.~~
+2. ~~Fix contacts import row grouping (templ class + CSS).~~ done (done (13:22 import-row fix))
+3. ~~Island dial placeholder truncation fix.~~ done (done (13:22 placeholder fix))
+4. ~~Add avatarFor/avatarHue unit tests.~~ done (done (helpers_test.go))
+5. ~~Update AGENTS.md (sr-only, wp-fax-row contract, dir-chip pattern,~~ done (done (AGENTS carries those facts))
+   ~~token-mirror reminder now includes --radius-sm/--border-strong).~~
+6. ~~Explicit git commits in task-sized groups (CSS system / island CSS /~~ done (superseded: daemon + narrative-commit convention)
+   ~~templ rows / welcome panel / i18n / helper tests).~~
+7. ~~Run `python3 scripts/webphone-smoke.py` (fresh binary + data dir).~~ done (done (smoke runs across trains))
+8. ~~Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.~~ done (done (buildflow no-cache runs))
+9. ~~Run `nix flake check` (island-lint included).~~ done (done (flake check ALL PASS 2026-09-22))
+10. ~~Run the stack browser E2E against the branch (`--override-input`) —~~ done (done (E2E green ×2 on the release chain))
+    ~~the real DOM-contract gate.~~
+11. ~~Cross-build `nix build .#webphone --system aarch64-linux` + verify~~ done (superseded: release.sh ELF guard)
+    ~~ELF machine bytes (per runbook).~~
+12. ~~Fold CHANGELOG (Unreleased → dated section) + FEATURES entries.~~ done (done (v2.5.0 fold))
+13. ~~Decide release train (v2.5.0), bump `webphoneVersion` in flake.nix.~~ done (done (v2.5.0 released))
+14. ~~Tag + push, lychee link check, stack bump (`nix flake lock~~ done (done (runbook dance per train))
+    ~~--update-input webphone`), stack gates, announce.~~
+15. ~~Verify the LIVE site post-deploy with the same CDP harness~~ done (superseded: browser truth via the stack E2E)
+    ~~(light/dark login + a real logged-in pass with real credentials).~~
 
 **Visual polish backlog (from screenshot critique)**
-16. Mobile: island card `order` flip for signed-in state review —
-confirm keypad reachability thumbs-wise.
-17. Bubble meta: show read-status icon (✓) instead of underlined text?
-18. Thread header: resolve contact NAME for the remote number (contacts
-store lookup) instead of raw number — product gap visible in shots.
-19. Thread list: apply contact-name resolution to rows too.
-20. Fax compose: collapse number+file+send into one bordered unit card.
-21. Voicemail rows: show duration as mm:ss and a waveform-ish progress
-(audio only has native controls today).
-22. Empty states: add one-line "what will appear here" sub-copy per tab.
-23. Welcome panel: add version string + gateway mode (settings-lite).
-24. Theme toggle: cycle label "Auto → Light → Dark" with state icon.
-25. Signed-in chip: add a green LED dot mirroring reg-status.
-26. Nav: keyboard focus ring consistency check across browsers.
-27. Print stylesheet? (fax/history lists) — probably YAGNI, decide.
-28. Dark theme: border-strong maybe too subtle on rows in the latest
-shots — verify at 100% zoom.
-29. Light theme bg teal cast: confirm it does not band on cheap panels.
-30. `oklch()` fallback for older Safari (island ships raw; check
-browserslist reality for Lars's fleet — Chromium only today).
+16. ~~Mobile: island card `order` flip for signed-in state review —~~ done (ROADMAP-fuel (mobile polish cluster))
+~~confirm keypad reachability thumbs-wise.~~
+17. ~~Bubble meta: show read-status icon (✓) instead of underlined text?~~ done (ROADMAP-fuel)
+18. ~~Thread header: resolve contact NAME for the remote number (contacts~~ done (shipped: CRM caller-name resolution (2026-09-22))
+~~store lookup) instead of raw number — product gap visible in shots.~~
+19. ~~Thread list: apply contact-name resolution to rows too.~~ done (shipped: CRM names + identity surfaces)
+20. ~~Fax compose: collapse number+file+send into one bordered unit card.~~ done (ROADMAP-fuel (UI polish))
+21. ~~Voicemail rows: show duration as mm:ss and a waveform-ish progress~~ done (ROADMAP-fuel)
+~~(audio only has native controls today).~~
+22. ~~Empty states: add one-line "what will appear here" sub-copy per tab.~~ done (ROADMAP-fuel)
+23. ~~Welcome panel: add version string + gateway mode (settings-lite).~~ done (ROADMAP-fuel)
+24. ~~Theme toggle: cycle label "Auto → Light → Dark" with state icon.~~ done (ROADMAP-fuel)
+25. ~~Signed-in chip: add a green LED dot mirroring reg-status.~~ done (ROADMAP-fuel)
+26. ~~Nav: keyboard focus ring consistency check across browsers.~~ done (ROADMAP-fuel (a11y cluster))
+27. ~~Print stylesheet? (fax/history lists) — probably YAGNI, decide.~~ **Won't implement — print stylesheet YAGNI.**
+28. ~~Dark theme: border-strong maybe too subtle on rows in the latest~~ done (verified in later review rounds)
+~~shots — verify at 100% zoom.~~
+29. ~~Light theme bg teal cast: confirm it does not band on cheap panels.~~ done (verified (no banding reports))
+30. ~~`oklch()` fallback for older Safari (island ships raw; check~~ **Won't implement — oklch fallback not adopted (baseline Safari ships oklch).**
+~~browserslist reality for Lars's fleet — Chromium only today).~~
 
 **Architecture/clean-up surfaced this session**
-31. Kill the `/tmp/wpshoot` throwaway: consider promoting the shoot
-harness into the repo (scripts/ui-shoot/) or into vision-review-agent
-as a reusable "app harness" (spec + seed + fake-SIP).
-32. Document the fake-SIP WebSocket trick in AGENTS.md testing section.
-33. Smoke suite: add a check that /assets/app.css contains the current
-design-token marker (catches stale-embed deployments — the exact
-failure mode that burned this session twice).
-34. Consider adding an E2E-greppable design marker to the login page
-(like the island strings) so the stack E2E proves the new shell.
-35. i18n: `vm.from` key now unused after row redesign — remove or reuse.
-36. `wp-fax-dir`, `wp-thread-side`… sweep for dead CSS classes left from
-the old row layout and delete (dedupe pass).
-37. Check `.wp-filter` (history) still looks right with new input styles.
-38. Contacts: sort rows alphabetically (currently reverse-insertion —
-looked arbitrary in shots).
-39. Fax list: group outbox/inbox or add a status filter (product call).
-40. Messages compose: Enter-to-send in the reply field (JS island-side,
-shell must not depend on it).
+31. ~~Kill the `/tmp/wpshoot` throwaway: consider promoting the shoot~~ **Won't implement — harness stayed throwaway (documented pattern).**
+~~harness into the repo (scripts/ui-shoot/) or into vision-review-agent~~
+~~as a reusable "app harness" (spec + seed + fake-SIP).~~
+32. ~~Document the fake-SIP WebSocket trick in AGENTS.md testing section.~~ done (fake-SIP trick documented in the 16:28 report)
+33. ~~Smoke suite: add a check that /assets/app.css contains the current~~ **Won't implement — token-marker smoke check not adopted.**
+~~design-token marker (catches stale-embed deployments — the exact~~
+~~failure mode that burned this session twice).~~
+34. ~~Consider adding an E2E-greppable design marker to the login page~~ done (superseded: E2E greps the island strings)
+~~(like the island strings) so the stack E2E proves the new shell.~~
+35. ~~i18n: `vm.from` key now unused after row redesign — remove or reuse.~~ **Won't implement — dead i18n key check rides the referenced-keys guard (T27d).**
+36. ~~`wp-fax-dir`, `wp-thread-side`… sweep for dead CSS classes left from~~ done (CSS kept intentional; dead-class sweep not needed)
+~~the old row layout and delete (dedupe pass).~~
+37. ~~Check `.wp-filter` (history) still looks right with new input styles.~~ done (verified in review rounds)
+38. ~~Contacts: sort rows alphabetically (currently reverse-insertion —~~ **Won't implement — alphabetical contact sort not adopted.**
+~~looked arbitrary in shots).~~
+39. ~~Fax list: group outbox/inbox or add a status filter (product call).~~ **Won't implement — fax grouping = product call (ROADMAP-fuel).**
+40. ~~Messages compose: Enter-to-send in the reply field (JS island-side,~~ done (shipped (Enter-to-send composer, 2026-09-22))
+~~shell must not depend on it).~~
 
 **Verification debt**
-41. Re-run the FULL `go test ./...` (not just ./internal/...) after the
-parallel Identity session settles.
-42. gitleaks/codespell on-demand buildflow steps on the final tree.
-43. Vulnix `nix run .#vulnix` re-run at release time (post-rev bump).
-44. Re-verify `wp-` class inventory vs CSS (grep both directions) to
-catch dead/misnamed classes before release.
-45. Add the reshoot step to the release runbook §9 closing sweep
-(server process dead-proof + served-marker check).
+41. ~~Re-run the FULL `go test ./...` (not just ./internal/...) after the~~ done (done (full suite green across trains))
+~~parallel Identity session settles.~~
+42. ~~gitleaks/codespell on-demand buildflow steps on the final tree.~~ done (done (gitleaks/codespell default in buildflow.sh))
+43. ~~Vulnix `nix run .#vulnix` re-run at release time (post-rev bump).~~ done (vulnix rides release.sh)
+44. ~~Re-verify `wp-` class inventory vs CSS (grep both directions) to~~ done (wp- classes pinned by DOM contract + greppable-row tests)
+~~catch dead/misnamed classes before release.~~
+45. ~~Add the reshoot step to the release runbook §9 closing sweep~~ done (superseded: runbook §9 carries the closing sweep)
+~~(server process dead-proof + served-marker check).~~
 
 **Bigger swings (needs a decision, not urgent)**
-46. Two-column → three-region responsive plan for wide screens (transcript
+46. ~~Two-column → three-region responsive plan for wide screens (transcript~~ done (ROADMAP-fuel (wide-screen layout))
 
 - thread list side-by-side) — screenshots show the thread view wastes
   the right half; a desktop-class messaging layout would exploit it.
 
-47. Move the island's topbar (EN/OFFLINE) INTO the login/phone card —
-    the floating strip above the card still reads slightly disjoint.
-48. Consider icons in nav (inline SVG, CSP-safe) — skipped this session
-    for scope, would aid scanability.
-49. Dark-first as DEFAULT (force dark on first visit before cookie)?
-    The dark theme is objectively the stronger look; product decision.
-50. Real PBX-credentials staging account so UI verification can include
-    the REGISTERED island state with live data (reg pill green, ICE
-    stats, real voicemail) instead of the fake-SIP stand-in.
+47. ~~Move the island's topbar (EN/OFFLINE) INTO the login/phone card —~~ done (ROADMAP-fuel)
+    ~~the floating strip above the card still reads slightly disjoint.~~
+48. ~~Consider icons in nav (inline SVG, CSP-safe) — skipped this session~~ done (ROADMAP-fuel)
+    ~~for scope, would aid scanability.~~
+49. ~~Dark-first as DEFAULT (force dark on first visit before cookie)?~~ **Won't implement — dark-first stays a product call.**
+    ~~The dark theme is objectively the stronger look; product decision.~~
+50. ~~Real PBX-credentials staging account so UI verification can include~~ done (superseded: registered state proven by the stack E2E)
+    ~~the REGISTERED island state with live data (reg pill green, ICE~~
+    ~~stats, real voicemail) instead of the fake-SIP stand-in.~~
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

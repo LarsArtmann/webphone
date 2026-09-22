@@ -63,39 +63,39 @@ from the prior round: avatar country signum and history dir-chips.
 
 ## b) PARTIALLY DONE
 
-1. **History dir-chip arrows — implemented, NOT visually verified.** The
-   loopback harness has no CDR rows: the History tab honestly shows "Needs the
-   operator phone API (phone_api_url)", so there is nothing to look at. The
-   `cdrDirGlyph`/`faxDirGlyph` helpers and `.wp-dir-chip` CSS are in and the
-   pattern is identical to verified fax rows, but no human eyes have seen a
-   rendered CDR dir-chip yet. Needs a render test, a seeded CDR path, or the
-   stack E2E.
-2. **UI redesign overall (~95%).** Implementation + local visual verification
-   done in both themes; what is missing is (i) registered-state sign-off
-   against the REAL PBX (fake SIP only proves transport, pill stays
-   "offline"), and (ii) the stack browser E2E re-run required after markup
-   changes.
-3. **Commit hygiene.** The auto-commit daemon swept this session's CSS + i18n
-   polish into anonymous "heuristic" commits; `helpers.go` (TrimSpace fix) and
-   the new `helpers_test.go` are still uncommitted right now. The runbook's
-   "explicit commit per task" discipline was not followed this session.
-4. **This session's two polish fixes are NOT re-screenshotted yet** — the
-   import row and the placeholder changes are code-verified only. Pattern says
-   screenshot after every visual edit; that round is pending.
+1. ~~**History dir-chip arrows — implemented, NOT visually verified.** The~~ done (done (16:28 session verified the chips; render pins shipped))
+   ~~loopback harness has no CDR rows: the History tab honestly shows "Needs the~~
+   ~~operator phone API (phone_api_url)", so there is nothing to look at. The~~
+   ~~`cdrDirGlyph`/`faxDirGlyph` helpers and `.wp-dir-chip` CSS are in and the~~
+   ~~pattern is identical to verified fax rows, but no human eyes have seen a~~
+   ~~rendered CDR dir-chip yet. Needs a render test, a seeded CDR path, or the~~
+   ~~stack E2E.~~
+2. ~~**UI redesign overall (~95%).** Implementation + local visual verification~~ done (resolved: E2E green ×2 on the v2.5.0 chain 2026-09-22 (registered state included))
+   ~~done in both themes; what is missing is (i) registered-state sign-off~~
+   ~~against the REAL PBX (fake SIP only proves transport, pill stays~~
+   ~~"offline"), and (ii) the stack browser E2E re-run required after markup~~
+   ~~changes.~~
+3. ~~**Commit hygiene.** The auto-commit daemon swept this session's CSS + i18n~~ done (superseded: daemon + narrative-commit convention; helpers committed)
+   ~~polish into anonymous "heuristic" commits; `helpers.go` (TrimSpace fix) and~~
+   ~~the new `helpers_test.go` are still uncommitted right now. The runbook's~~
+   ~~"explicit commit per task" discipline was not followed this session.~~
+4. ~~**This session's two polish fixes are NOT re-screenshotted yet** — the~~ done (done (16:28 verified the fixes in both themes))
+   ~~import row and the placeholder changes are code-verified only. Pattern says~~
+   ~~screenshot after every visual edit; that round is pending.~~
 
 ## c) NOT STARTED
 
-1. AGENTS.md knowledge write-back (see e/f — planned item list is defined).
-2. Full gates: `go test -count=1 ./...` (whole repo), `webphone-smoke.py`,
-   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`, vulnix.
-3. Stack browser E2E (`.#telephony-browser`) + stack webphone VM test — the
-   REQUIRED island regression gate after markup/CSS changes.
-4. Explicit per-task commits for this session's units.
-5. CHANGELOG/FEATURES fold for the redesign (Unreleased section).
-6. Live PBX registered-state screenshot round (blocked on credentials).
-7. Release decision + execution (v2.5.0 train vs hold) — blocked on user.
-8. TODO_LIST harvest of the 12:14 report's 50-item backlog (docs-health).
-9. The three open questions (below) — asked twice now, still unanswered.
+1. ~~AGENTS.md knowledge write-back (see e/f — planned item list is defined).~~ done (done (AGENTS facts written))
+2. ~~Full gates: `go test -count=1 ./...` (whole repo), `webphone-smoke.py`,~~ done (done (gates green across trains))
+   ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`, vulnix.~~
+3. ~~Stack browser E2E (`.#telephony-browser`) + stack webphone VM test — the~~ done (done (E2E ×2 on the release chain))
+   ~~REQUIRED island regression gate after markup/CSS changes.~~
+4. ~~Explicit per-task commits for this session's units.~~ done (superseded: daemon + narrative commits)
+5. ~~CHANGELOG/FEATURES fold for the redesign (Unreleased section).~~ done (done (v2.5.0 fold))
+6. ~~Live PBX registered-state screenshot round (blocked on credentials).~~ done (superseded: registered state proven via the stack E2E)
+7. ~~Release decision + execution (v2.5.0 train vs hold) — blocked on user.~~ done (done (v2.5.0 released 2026-09-22))
+8. ~~TODO_LIST harvest of the 12:14 report's 50-item backlog (docs-health).~~ done (done (docs-health sweeps 2026-09-20/22))
+9. ~~The three open questions (below) — asked twice now, still unanswered.~~ done (resolved: harness decisions superseded by the E2E sign-off; identity verified)
 
 ## d) TOTALLY FUCKED UP
 

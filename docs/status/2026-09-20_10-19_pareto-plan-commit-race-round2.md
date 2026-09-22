@@ -100,6 +100,19 @@ tasks each carry their own gate in the micro-task list.
   T13 stack reconciliation, T14 decision batch, T17 annotate range,
   T18 announcements.
 
+
+> Resolved 2026-09-22 (docs-health): every executable task below shipped
+> in the 09-20/09-22 trains — T4/T5/T6 via the 1001-anomaly fix
+> (2.5.0, E2E green x2), T7 ELF guard, T8 vulnix-triage fixtures, T9
+> styled-404 smoke, T10 csrf-conflict pin, T11 error.notfound en/de,
+> T12 stack assertion (2026-09-22), T15 sanitization DECIDED + pinned,
+> T16 identities shipped, T19 flake ritual in AGENTS, T20 dated
+> watches (TODO row). The owner-gated set (T1/T2/T3/T13/T14/T17/T18)
+> is resolved or routed: prod verified v2.4.0 (premise corrected),
+> train-cut DECIDED (v2.5.0 shipped 2026-09-22), sanitization + DID
+> decided, ANNOTATE sweeps executed; the SMS lane, the decision batch
+> and announcements stay live TODO/owner rows.
+
 ## d) TOTALLY FUCKED UP
 
 | # | What                                                                                                                                    | Severity                                                 | Root cause                          | Status                                                                                                                                       |
