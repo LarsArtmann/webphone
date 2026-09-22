@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
@@ -217,6 +218,34 @@ func (h *handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// applyStatusWebhook is the shared tail of both provider verdict hooks:
+// an empty ref is a 400, a replayed ref answers 202 inertly, the apply
+// runs once (404 names an unknown ref so the provider stops retrying it,
+// 500 means retryable), and the idempotency key is recorded only on
+// success so failures stay retryable. kind namespaces the key
+// ("<kind>/<ref>") and names the failure surfaces.
+func (h *handlers) applyStatusWebhook(w http.ResponseWriter, r *http.Request, kind, ref string, apply func(context.Context, string) error) {
+	if ref == "" {
+		http.Error(w, "provider_ref is required", http.StatusBadRequest)
+		return
+	}
+	key := kind + "/" + ref
+	if h.hooksIdem.seen(key) {
+		w.WriteHeader(http.StatusAccepted) // replay: the original verdict already applied
+		return
+	}
+	if err := apply(r.Context(), ref); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.Error(w, "could not update "+kind+": "+err.Error(), http.StatusNotFound)
+			return
+		}
+		webhookFail(w, kind+"-status", err)
+		return
+	}
+	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
+	w.WriteHeader(http.StatusAccepted)
+}
+
 func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		ProviderRef string `json:"provider_ref"`
@@ -234,29 +263,11 @@ func (h *handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "status must be transmitted or failed", http.StatusBadRequest)
 		return
 	}
-	if payload.ProviderRef == "" {
-		http.Error(w, "provider_ref is required", http.StatusBadRequest)
-		return
-	}
-
-	key := "fax/" + payload.ProviderRef
-	if h.hooksIdem.seen(key) {
-		w.WriteHeader(http.StatusAccepted) // replay: the original verdict already applied
-		return
-	}
-
-	// Mirror hookMessageStatus: a missing job is a 404, anything else
-	// (storage broken, ref claimed twice) is a 500 so providers retry.
-	if _, err := h.deps.Fax.UpdateProviderStatus(r.Context(), payload.ProviderRef, status, payload.count(), payload.Error); err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			http.Error(w, "could not update fax: "+err.Error(), http.StatusNotFound)
-			return
-		}
-		webhookFail(w, "fax-status", err)
-		return
-	}
-	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
-	w.WriteHeader(http.StatusAccepted)
+	h.applyStatusWebhook(w, r, "fax", payload.ProviderRef,
+		func(ctx context.Context, ref string) error {
+			_, err := h.deps.Fax.UpdateProviderStatus(ctx, ref, status, payload.count(), payload.Error)
+			return err
+		})
 }
 
 func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
@@ -268,10 +279,6 @@ func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
-	if payload.ProviderRef == "" {
-		http.Error(w, "provider_ref is required", http.StatusBadRequest)
-		return
-	}
 	status := domain.OutboundStatus(payload.Status)
 	switch status {
 	case domain.StatusDelivered, domain.StatusFailed:
@@ -279,23 +286,11 @@ func (h *handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "status must be delivered or failed", http.StatusBadRequest)
 		return
 	}
-
-	key := "msg/" + payload.ProviderRef
-	if h.hooksIdem.seen(key) {
-		w.WriteHeader(http.StatusAccepted) // replay: the original verdict already applied
-		return
-	}
-
-	if _, err := h.deps.Messaging.DeliveryReceipt(r.Context(), payload.ProviderRef, status, payload.Error); err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			http.Error(w, "could not update message: "+err.Error(), http.StatusNotFound)
-			return
-		}
-		webhookFail(w, "message-status", err)
-		return
-	}
-	h.hooksIdem.record(key) // only successes are deduped; failures stay retryable
-	w.WriteHeader(http.StatusAccepted)
+	h.applyStatusWebhook(w, r, "message", payload.ProviderRef,
+		func(ctx context.Context, ref string) error {
+			_, err := h.deps.Messaging.DeliveryReceipt(ctx, ref, status, payload.Error)
+			return err
+		})
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, out any) error {
