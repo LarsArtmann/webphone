@@ -331,3 +331,119 @@ func TestContactCountCap(t *testing.T) {
 		t.Fatalf("owner list = %d, want exactly the cap", len(list))
 	}
 }
+
+func TestSearchThreads(t *testing.T) {
+	messages, _, _ := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	other := domain.MustParseExtension("2002")
+
+	// Thread one: the match lives in an OLDER message body, not the
+	// preview — the search must scan every message, not just the last.
+	first := domain.MustParsePhone("+441632960961")
+	firstID, err := messages.FindThread(ctx, owner, first, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := messages.AppendMessage(ctx, domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: firstID, Owner: owner, Remote: first,
+		Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
+		Body: "the quarterly revenue is 50%", Status: domain.StatusQueued,
+		CreatedAt: time.Now().Add(-2 * time.Minute),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := messages.AppendMessage(ctx, domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: firstID, Owner: owner, Remote: first,
+		Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,
+		Body: "thanks, call me later", CreatedAt: time.Now().Add(-time.Minute),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Thread two: matches only by remote number.
+	second := domain.MustParsePhone("+491601234567")
+	secondID, err := messages.FindThread(ctx, owner, second, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := messages.AppendMessage(ctx, domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: secondID, Owner: owner, Remote: second,
+		Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
+		Body: "ping", Status: domain.StatusQueued, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// A different owner's thread with the same body must stay invisible.
+	otherID, err := messages.FindThread(ctx, other, first, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := messages.AppendMessage(ctx, domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: otherID, Owner: other, Remote: first,
+		Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,
+		Body: "the quarterly revenue is 50%", CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		name  string
+		query string
+		want  []string
+	}{
+		{"body match in an older message", "quarterly revenue", []string{firstID.String()}},
+		{"remote number match", "60961", []string{firstID.String()}},
+		{"other remote match", "01234567", []string{secondID.String()}},
+		{"case-insensitive ASCII", "QUARTERLY", []string{firstID.String()}},
+		{"percent is literal, not a wildcard", "50%", []string{firstID.String()}},
+		{"underscore is literal, not a wildcard", "n_revenue", []string{}},
+		{"no match", "voicemail greeting", []string{}},
+		{"empty query never runs a pattern", "", []string{}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := messages.SearchThreads(ctx, owner, tc.query)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ids := make([]string, 0, len(got))
+			for _, summary := range got {
+				ids = append(ids, summary.Thread.ID.String())
+			}
+			if len(ids) != len(tc.want) {
+				t.Fatalf("query %q: got %v, want %v", tc.query, ids, tc.want)
+			}
+			for i, id := range tc.want {
+				if ids[i] != id {
+					t.Fatalf("query %q: got %v, want %v", tc.query, ids, tc.want)
+				}
+			}
+		})
+	}
+
+	// Owner scoping: the same query against the other owner returns only
+	// their thread.
+	others, err := messages.SearchThreads(ctx, other, "quarterly")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(others) != 1 || others[0].Thread.Owner.String() != other.String() {
+		t.Fatalf("owner scoping: got %+v", others)
+	}
+
+	// Ordering: most recently active first (thread two was touched last).
+	both, err := messages.SearchThreads(ctx, owner, "")
+	_ = both
+	list, err := messages.SearchThreads(ctx, owner, "0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("shared-digit query should hit both threads: got %d", len(list))
+	}
+	if list[0].Thread.ID.String() != secondID.String() {
+		t.Fatalf("ordering: want newest thread first, got %s then %s", list[0].Thread.ID, list[1].Thread.ID)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -141,6 +142,35 @@ func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]T
 		WHERE t.owner = ?
 		ORDER BY t.last_activity_at DESC
 	`, []any{owner.String()}, scanThreadSummary)
+}
+
+// SearchThreads returns the owner's threads whose remote number or ANY
+// message body matches the query (SQLite LIKE: ASCII case-insensitive),
+// most recently active first. LIKE metacharacters in the query are
+// escaped, so a search for "50%" finds "50%", not "50" followed by
+// anything.
+func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, query string) ([]ThreadSummary, error) {
+	pattern := "%" + likeEscape(query) + "%"
+	return listRows(ctx, s.db, "search threads", `
+		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
+		       m.body, m.direction, m.channel
+		FROM threads t
+		LEFT JOIN messages m ON m.id = (
+			SELECT id FROM messages WHERE thread_id = t.id ORDER BY created_at DESC, rowid DESC LIMIT 1
+		)
+		WHERE t.owner = ?
+		  AND (t.remote LIKE ? ESCAPE '\' OR EXISTS (
+			SELECT 1 FROM messages sm
+			WHERE sm.thread_id = t.id AND sm.owner = t.owner AND sm.body LIKE ? ESCAPE '\'
+		  ))
+		ORDER BY t.last_activity_at DESC
+	`, []any{owner.String(), pattern, pattern}, scanThreadSummary)
+}
+
+// likeEscape escapes SQL LIKE metacharacters so the query matches them
+// literally (paired with ESCAPE '\' in the statement).
+func likeEscape(query string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(query)
 }
 
 func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
