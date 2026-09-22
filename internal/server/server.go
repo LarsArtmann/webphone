@@ -212,6 +212,11 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /api/contacts", h.apiListContacts)
 	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiSaveContact)))
 	protected.HandleFunc("DELETE /api/contacts", h.apiDeleteContact)
+	// The per-extension data export: one zip with every thread, fax job
+	// and personal contact the signed-in extension owns (settings-tab
+	// download link). GET-only and read-only, so the session cookie alone
+	// is the right gate — no CSRF surface.
+	protected.HandleFunc("GET /api/export", h.exportData)
 	// The island's post-call report to the CRM integration: session-gated,
 	// CSRF via authedFetch, sharing the contacts write budget (same class:
 	// one island JSON POST per user action). A disabled CRM answers 204 —
