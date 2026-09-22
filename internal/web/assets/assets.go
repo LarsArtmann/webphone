@@ -1,7 +1,8 @@
 // Package assets embeds every static file the webphone serves: the SIP call
-// island (ES modules + stylesheet), the vendored sip.js browser bundle, and
-// the compiled Tailwind stylesheet. Everything ships same-origin from the
-// binary — the strict CSP of the serving vhost allows nothing else.
+// island (ES modules + stylesheet), the vendored sip.js browser bundle, the
+// shell stylesheet, and the shell glue + theme-preload scripts. Everything
+// ships same-origin from the binary — the strict CSP of the serving vhost
+// allows nothing else.
 package assets
 
 import (
@@ -9,7 +10,7 @@ import (
 	"io/fs"
 )
 
-//go:embed all:island all:vendor app.css shell.js
+//go:embed all:island all:vendor app.css shell.js theme-preload.js
 var embedded embed.FS
 
 // FS returns the embedded assets rooted at the package directory, so paths

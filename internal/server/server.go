@@ -33,17 +33,15 @@ import (
 )
 
 // contentSecurityPolicy mirrors the strict posture of the static-site
-// era: everything same-origin, SIP over wss, no CDN, no webfonts. The
-// one script-src hash pins the inline theme-preload script that
-// templ-components layout.Base emits unconditionally (no opt-out knob
-// as of v1.18.0, and its logic is inert here: webphone themes via
-// data-theme, not the Tailwind dark class). The app.css forced-theme
-// color-scheme rules must keep !important so the script's inline
-// colorScheme can never win. TestServedPageSatisfiesStrictCSP fails
-// when the dependency's script bytes change, forcing a deliberate
-// hash refresh.
+// era: everything same-origin, SIP over wss, no CDN, no webfonts — and
+// NO inline scripts: the theme preload ships as a same-origin file
+// (/assets/theme-preload.js, rendered by layout.templ's headExtras) and
+// templ-components Base is told NoThemeScript, so script-src needs no
+// hash and a dependency bump can never silently change served script
+// bytes. TestServedPageSatisfiesStrictCSP fails if any inline script
+// appears.
 const contentSecurityPolicy = "default-src 'self'; " +
-	"script-src 'self' 'sha256-AO4OqWm6Ms8LvRxbwPXsO4Fy1QauZJl6sD4NNzrR7S0='; style-src 'self'; " +
+	"script-src 'self'; style-src 'self'; " +
 	"img-src 'self' data:; media-src 'self'; connect-src 'self' wss:; " +
 	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 

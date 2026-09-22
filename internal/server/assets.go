@@ -8,9 +8,9 @@ import (
 )
 
 // assets serves the embedded static tree: the island's ES modules and
-// stylesheet, the vendored sip.js bundle, the shell stylesheet and glue
-// script. Everything is same-origin; Content-Types come from the file
-// extensions via http.FileServer's FS-based serving.
+// stylesheet, the vendored sip.js bundle, the shell stylesheet, glue
+// script, and theme preload. Everything is same-origin; Content-Types
+// come from the file extensions via http.FileServer's FS-based serving.
 func (h *handlers) assets() http.Handler {
 	sub, err := fs.Sub(assets.FS(), "island")
 	if err != nil {
@@ -24,12 +24,15 @@ func (h *handlers) assets() http.Handler {
 	mux.Handle("/assets/island/", http.StripPrefix("/assets/island/", fileServer))
 	// /assets/vendor/... → vendored sip.min.js + license notice
 	mux.Handle("/assets/vendor/", http.StripPrefix("/assets/", vendorServer))
-	// /assets/app.css, /assets/shell.js → shell files
+	// /assets/app.css, /assets/shell.js, /assets/theme-preload.js → shell files
 	mux.HandleFunc("GET /assets/app.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "app.css", "text/css; charset=utf-8")
 	})
 	mux.HandleFunc("GET /assets/shell.js", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "shell.js", "application/javascript; charset=utf-8")
+	})
+	mux.HandleFunc("GET /assets/theme-preload.js", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "theme-preload.js", "application/javascript; charset=utf-8")
 	})
 	return noStore(mux)
 }

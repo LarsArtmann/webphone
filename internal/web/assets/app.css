@@ -35,7 +35,7 @@
 }
 
 :root[data-theme="dark"] {
-  color-scheme: dark !important;
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: light) {
@@ -61,12 +61,10 @@
 
 /* Manual theme override (shell.js toggles data-theme on <html>): an
  * explicit choice must win over the media query in BOTH stylesheets,
- * which the higher specificity of the attribute selectors guarantees.
- * !important additionally beats the inline colorScheme that the
- * framework theme script (CSP-hash-pinned in server.go) writes on
- * <html> before shell.js runs. */
+ * which the higher specificity of the attribute selectors guarantees —
+ * nothing inline ever fights it, so no !important is needed. */
 :root[data-theme="light"] {
-  color-scheme: light !important;
+  color-scheme: light;
   --bg: #eef2f1;
   --surface: #fafcfb;
   --surface-2: #eff4f2;

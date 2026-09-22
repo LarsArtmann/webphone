@@ -59,8 +59,12 @@ templ Shell(props ShellProps) {
 		Favicon:        "/favicon.svg",
 		Nonce:          "",
 		SEO:            layout.SEOMeta{NoIndex: true},
-		HeadContent:    headExtras(props.CSRFToken),
-		BodyDataAttrs:  bodyAttrs(props),
+		// NoThemeScript: the library's inline dark-mode preload violates the
+		// zero-inline-script CSP — the same job is done pre-paint by the
+		// same-origin /assets/theme-preload.js loaded in headExtras below.
+		NoThemeScript: true,
+		HeadContent:   headExtras(props.CSRFToken),
+		BodyDataAttrs: bodyAttrs(props),
 	}) {
 		if props.SignedIn != "" {
 			<div class="wp-root" hx-ext="sse" sse-connect="/events">
@@ -139,13 +143,16 @@ templ NavLinks(props ShellProps) {
 	}
 }
 
-// headExtras loads htmx deferred — AFTER the htmx-config meta, so htmx
-// sees it at startup and skips its CSP-hostile inline indicator styles —
-// then the SSE + idiomorph extension bundle in ONE request
-// (cqrshtmx.HTMXExtensionsHandler behind /htmx-ext.js), the island
-// stylesheet (after the Tailwind build so its element rules win), and the
-// tiny shell script that tracks the active nav item across partial swaps.
+// headExtras applies the theme BEFORE anything paints (render-blocking,
+// same-origin — the CSP allows no inline scripts), loads htmx deferred —
+// AFTER the htmx-config meta, so htmx sees it at startup and skips its
+// CSP-hostile inline indicator styles — then the SSE + idiomorph
+// extension bundle in ONE request (cqrshtmx.HTMXExtensionsHandler behind
+// /htmx-ext.js), the island stylesheet (after app.css so its element
+// rules win), and the tiny shell script that tracks the active nav item
+// across partial swaps.
 templ headExtras(csrfToken string) {
+	<script src="/assets/theme-preload.js"></script>
 	<meta name="csrf-token" content={ csrfToken }></meta>
 	<meta
 		name="htmx-config"
