@@ -24,7 +24,11 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Identity: h.identityFor(sess.Extension), Lang: h.lang(r)}), nil
+	numbers := make([]string, 0, len(threads))
+	for _, summary := range threads {
+		numbers = append(numbers, summary.Thread.Remote.String())
+	}
+	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
@@ -40,9 +44,10 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 		_ = err
 	}
 	h.unread.drop(sess.Extension)
+	names := h.crmNames(r.Context(), []string{thread.Remote.String()})
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore,
-		Identity: h.identityFor(sess.Extension), Lang: h.lang(r),
+		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
 	}), nil
 }
 
@@ -78,7 +83,11 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 	if err != nil {
 		return nil, err
 	}
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), Lang: h.lang(r)}), nil
+	numbers := make([]string, 0, len(jobs))
+	for _, job := range jobs {
+		numbers = append(numbers, job.Remote.String())
+	}
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {
@@ -93,8 +102,22 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 		}), nil
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
-		Enabled: true, Summary: summary, Messages: messages, Lang: h.lang(r),
+		Enabled: true, Summary: summary, Messages: messages,
+		Names: h.crmNames(r.Context(), voicemailNumbers(messages)), Lang: h.lang(r),
 	}), nil
+}
+
+// voicemailNumbers collects the resolvable caller numbers of a voicemail
+// page (skipping withheld/blank CID). Order is irrelevant; the resolver
+// dedupes via its cache.
+func voicemailNumbers(messages []pbx.VoicemailMessage) []string {
+	numbers := make([]string, 0, len(messages))
+	for _, msg := range messages {
+		if msg.CIDNumber != "" {
+			numbers = append(numbers, msg.CIDNumber)
+		}
+	}
+	return numbers
 }
 
 func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.VoicemailSummary, []pbx.VoicemailMessage, error) {
@@ -108,6 +131,16 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 		return summary, nil, err
 	}
 	return summary, page.Messages, nil
+}
+
+// crmNames resolves numbers against the optional CRM integration for view
+// props. A disabled (or nil) resolver returns an empty map: the views'
+// displayName fallback renders the raw numbers unchanged.
+func (h *handlers) crmNames(ctx context.Context, numbers []string) map[string]string {
+	if len(numbers) == 0 {
+		return nil
+	}
+	return h.deps.CRM.Names(ctx, numbers)
 }
 
 func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Component, error) {
@@ -135,8 +168,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if len(entries) > historyPageSize {
 		entries = entries[:historyPageSize]
 	}
+	numbers := make([]string, 0, len(entries))
+	for _, cdr := range entries {
+		if dial := cdrDialTarget(cdr); dial != "" {
+			numbers = append(numbers, dial)
+		}
+	}
 	return views.HistoryPanel(views.HistoryPanelProps{
-		Enabled: true, Entries: entries, Query: query, Dir: dir, Lang: lang,
+		Enabled: true, Entries: entries, Query: query, Dir: dir, Names: h.crmNames(r.Context(), numbers), Lang: lang,
 	}), nil
 }
 

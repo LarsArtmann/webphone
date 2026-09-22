@@ -17,17 +17,19 @@ const (
 	maxEntries  = 1024
 )
 
-// cacheEntry is one resolved (or definitively missing) number.
+// cacheEntry is one resolved number. A miss stores a zero Match with
+// miss=true so both states share the TTL mechanics.
 type cacheEntry struct {
-	name    string // empty = known miss
+	match   Match
+	miss    bool
 	fetched time.Time
 }
 
 // Resolver answers "who is this number?" with a process-local TTL cache in
 // front of the CRM client. Every failure — CRM down, slow, unauthorized —
-// degrades to an empty name: enrichment is decoration, never a
-// prerequisite, and the failure map keeps it out of the user's way (the
-// raw number renders; the operator sees one debug log per miss window).
+// degrades to "no match": enrichment is decoration, never a prerequisite,
+// and the failure map keeps it out of the user's way (the raw number
+// renders; the operator sees one debug log per failed attempt).
 type Resolver struct {
 	client *Client
 	log    *slog.Logger
@@ -37,7 +39,7 @@ type Resolver struct {
 }
 
 // NewResolver wraps a client with the lookup cache. A disabled client
-// yields a resolver whose Name always returns "" without touching the map.
+// yields a resolver that never matches without touching the map.
 func NewResolver(client *Client, log *slog.Logger) *Resolver {
 	if log == nil {
 		log = slog.Default()
@@ -49,42 +51,54 @@ func NewResolver(client *Client, log *slog.Logger) *Resolver {
 // Enabled reports whether the underlying CRM client is wired up.
 func (r *Resolver) Enabled() bool { return r != nil && r.client.Enabled() }
 
-// Name resolves the display name for a number, or "" when the CRM is
-// disabled, holds no contact, or fails. Numbers are the cache keys verbatim;
-// distinct spellings of one number cost at most distinct entries until the
-// CRM's canonical answer dominates the window.
-func (r *Resolver) Name(ctx context.Context, number string) string {
+// Resolve returns the contact a number belongs to, consulting the TTL cache
+// first. ok=false when the CRM is disabled, holds no contact, or fails —
+// callers treat all three identically: render the raw number / skip the
+// logging. Numbers are cache keys verbatim; distinct spellings of one
+// number cost at most distinct entries until the CRM's canonical answer
+// dominates the window.
+func (r *Resolver) Resolve(ctx context.Context, number string) (Match, bool) {
 	if number == "" || !r.Enabled() {
-		return ""
+		return Match{}, false
 	}
 
-	if name, ok := r.cached(number); ok {
-		return name
+	if entry, fresh := r.cached(number); fresh {
+		return entry.match, !entry.miss
 	}
 
 	match, err := r.client.LookupByPhone(ctx, number)
 
 	switch {
 	case err == nil:
-		r.remember(number, match.Name, positiveTTL)
+		r.remember(number, cacheEntry{match: match, fetched: time.Now()})
 
-		return match.Name
+		return match, true
 	case errIsMiss(err):
-		r.remember(number, "", negativeTTL)
+		r.remember(number, cacheEntry{miss: true, fetched: time.Now()})
 
-		return ""
+		return Match{}, false
 	default:
 		// Do not cache transport failures: the next render retries, and
 		// one debug line per attempt keeps the operator trail honest.
 		r.log.Debug("crm: lookup failed; rendering raw number", "error", err)
 
-		return ""
+		return Match{}, false
 	}
 }
 
-// Names resolves a batch of numbers in one call and returns the number→name
-// map for view props. Unresolved numbers are absent, not empty-stringed, so
-// templates distinguish "no CRM" from "no match" by lookup, not semantics.
+// Name resolves the display name for a number, or "" on any miss.
+func (r *Resolver) Name(ctx context.Context, number string) string {
+	match, ok := r.Resolve(ctx, number)
+	if !ok {
+		return ""
+	}
+
+	return match.Name
+}
+
+// Names resolves a batch of numbers and returns the number→name map for
+// view props. Unresolved numbers are absent, not empty-stringed, so the
+// displayName fallback needs no extra policy.
 func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]string {
 	names := make(map[string]string, len(numbers))
 
@@ -105,31 +119,31 @@ func (r *Resolver) LogCall(ctx context.Context, contactID, direction, number str
 
 func errIsMiss(err error) bool { return err == ErrNotFound || err == ErrDisabled }
 
-func (r *Resolver) cached(number string) (string, bool) {
+func (r *Resolver) cached(number string) (cacheEntry, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	entry, ok := r.cache[number]
 	if !ok {
-		return "", false
+		return cacheEntry{}, false
 	}
 
 	ttl := positiveTTL
 
-	if entry.name == "" {
+	if entry.miss {
 		ttl = negativeTTL
 	}
 
 	if time.Since(entry.fetched) > ttl {
 		delete(r.cache, number)
 
-		return "", false
+		return cacheEntry{}, false
 	}
 
-	return entry.name, true
+	return entry, true
 }
 
-func (r *Resolver) remember(number, name string, ttl time.Duration) {
+func (r *Resolver) remember(number string, entry cacheEntry) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -140,5 +154,5 @@ func (r *Resolver) remember(number, name string, ttl time.Duration) {
 		r.cache = make(map[string]cacheEntry, maxEntries)
 	}
 
-	r.cache[number] = cacheEntry{name: name, fetched: time.Now()}
+	r.cache[number] = entry
 }

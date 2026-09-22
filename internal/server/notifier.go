@@ -7,6 +7,7 @@ import (
 
 	"github.com/a-h/templ"
 
+	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/store"
@@ -25,11 +26,13 @@ type Notifier struct {
 	hubs     *ExtensionHubs
 	messages *store.Messages
 	faxes    *store.Faxes
+	crm      *crm.Resolver
 }
 
-// NewNotifier builds the change notifier.
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Faxes) *Notifier {
-	return &Notifier{hubs: hubs, messages: messages, faxes: faxes}
+// NewNotifier builds the change notifier. The resolver may be nil (CRM
+// integration off): fragments then render raw numbers, same as a miss.
+func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Faxes, crmResolver *crm.Resolver) *Notifier {
+	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver}
 }
 
 // MessagesChanged pushes a fresh thread list to the extension's tabs and,
@@ -39,7 +42,11 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
-		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, lang))
+		numbers := make([]string, 0, len(threads))
+		for _, summary := range threads {
+			numbers = append(numbers, summary.Thread.Remote.String())
+		}
+		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, n.crm.Names(ctx, numbers), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
 	}

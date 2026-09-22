@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -26,16 +28,38 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 )
 
-// contractIDs are the DOM elements the upstream browser E2E drives (see
-// AGENTS.md). The Go app must keep serving every one of them.
-var contractIDs = []string{
-	"reg-status", "login-view", "login-form", "login-error", "ext", "pass",
-	"remember", "phone-view", "whoami-ext", "logout", "dial-form", "dest",
-	"call-btn", "dial-error", "calls", "keypad", "incoming-call",
-	"incoming-from", "accept-btn", "reject-btn", "contacts-wrap",
-	"contacts-list", "history-wrap", "history-list", "vm-wrap", "vm-badge",
-	"vm-list", "vm-refresh", "vm-status", "ice-wrap", "ice-panel", "log",
-	"toasts", "remote-audio", "lang",
+// domContractIDs loads the island DOM-contract id list from
+// docs/dom-contract.md — the file is the single source of truth
+// (AGENTS and the stack runbook link it), so the asserted list can
+// never drift from the documented one. Marker comments fence the
+// block; the emptiness guard stops a truncated file from passing
+// vacuously.
+func domContractIDs(t testing.TB) []string {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("..", "..", "docs", "dom-contract.md"))
+	if err != nil {
+		t.Fatalf("read docs/dom-contract.md: %v", err)
+	}
+	const (
+		beginMark = "<!-- dom-contract:begin -->"
+		endMark   = "<!-- dom-contract:end -->"
+	)
+	body := string(raw)
+	i := strings.Index(body, beginMark)
+	j := strings.Index(body, endMark)
+	if i < 0 || j < 0 || j < i {
+		t.Fatal("docs/dom-contract.md lost its dom-contract marker comments")
+	}
+	var ids []string
+	for _, line := range strings.Split(body[i+len(beginMark):j], "\n") {
+		if id := strings.TrimSpace(line); id != "" {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) < 20 {
+		t.Fatalf("docs/dom-contract.md carries only %d ids — truncated?", len(ids))
+	}
+	return ids
 }
 
 // testServer bundles the httptest server with the internals the SSE and
@@ -278,7 +302,7 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 		t.Fatalf("page status %d", resp.StatusCode)
 	}
 	page := string(body)
-	for _, id := range contractIDs {
+	for _, id := range domContractIDs(t) {
 		if !strings.Contains(page, fmt.Sprintf("id=%q", id)) {
 			t.Errorf("DOM contract broken: id %q missing from served page", id)
 		}
