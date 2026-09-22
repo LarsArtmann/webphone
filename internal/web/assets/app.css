@@ -722,6 +722,17 @@ select:focus-visible {
   outline-offset: 1px;
 }
 
+/* Thread search (Messages tab): full-width box above the list. The form
+   lives OUTSIDE the SSE swap region and the input keeps focus across
+   debounced morph re-fetches (stable id wp-thread-search-input). */
+.wp-thread-search {
+  margin-bottom: 12px;
+}
+
+.wp-thread-search input[type="search"] {
+  width: 100%;
+}
+
 /* --- rows: threads, contacts, fax, voicemail, history ---------------------- */
 
 /* The SSE swap targets: only these regions get replaced by live pushes,

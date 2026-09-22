@@ -537,3 +537,62 @@ func TestTranscriptCarriesHoverStampsAndJumpChip(t *testing.T) {
 		t.Errorf("bubble meta clock lost its absolute-stamp title: %.400s", view)
 	}
 }
+
+// TestThreadSearchFiltersPanel pins the search contract: the panel route
+// (page AND partial) takes q, matches remote numbers and message bodies,
+// echoes the query into the search input, renders the quoted no-match
+// empty state, and leaves the unfiltered list untouched when q is empty.
+func TestThreadSearchFiltersPanel(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "the launch code is 50%"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	form, contentType = multipartBody(t, map[string]string{"to": "+491601234567", "body": "totally unrelated"}, nil)
+	resp, body = c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send 2: %d %s", resp.StatusCode, body)
+	}
+
+	// Body match in the partial.
+	_, list := c.do(http.MethodGet, "/partials/messages?q=launch+code", nil, "")
+	if !strings.Contains(string(list), "+441632960961") || strings.Contains(string(list), "+491601234567") {
+		t.Fatalf("body search must filter the partial list: %.400s", list)
+	}
+	// The input echoes the query for morph-safe focus retention.
+	if !strings.Contains(string(list), `id="wp-thread-search-input" value="launch code"`) {
+		t.Fatalf("search input lost the echoed query: %.400s", list)
+	}
+
+	// Remote-number match on the full page route. The composer
+	// placeholder carries the example number, so assert on thread rows.
+	_, page := c.do(http.MethodGet, "/messages?q=01234567", nil, "")
+	pageRows := strings.Count(string(page), `wp-thread-row" href="/messages/`)
+	if pageRows != 1 {
+		t.Fatalf("remote search must leave exactly one row on the page: %d rows", pageRows)
+	}
+	if !strings.Contains(string(page), "+491601234567") {
+		t.Fatalf("remaining row must be the +49 thread: %.400s", page)
+	}
+
+	// LIKE metacharacters stay literal: "50%" matches only the % body.
+	_, list = c.do(http.MethodGet, "/partials/messages?q=50%25", nil, "")
+	if !strings.Contains(string(list), "+441632960961") || strings.Contains(string(list), "+491601234567") {
+		t.Fatalf("literal %% search must not act as a wildcard: %.400s", list)
+	}
+
+	// No match renders the quoted empty state, not the all-threads row.
+	_, list = c.do(http.MethodGet, "/partials/messages?q=zzznope", nil, "")
+	if !strings.Contains(string(list), "zzznope") || strings.Contains(string(list), "wp-thread-row") {
+		t.Fatalf("no-match search must render the quoted empty state: %.400s", list)
+	}
+
+	// Empty q keeps the plain unfiltered list.
+	_, list = c.do(http.MethodGet, "/partials/messages", nil, "")
+	if strings.Count(string(list), "wp-thread-row") != 2 {
+		t.Fatalf("empty q must list every thread: %.400s", list)
+	}
+}
