@@ -306,11 +306,9 @@ test("missed calls badge in the header and clear when History opens", () => {
 test("live threads pushes are cancelled while a search query is active", () => {
   const list = doc.createElement();
   list.className = "wp-thread-list";
-
-  const realQuerySelector = doc.querySelector.bind(doc);
-  const input = { value: "launch code" };
-  doc.querySelector = (selector) =>
-    selector === "#wp-thread-search-input" ? input : realQuerySelector(selector);
+  // The registry auto-creates the search input the guard reads.
+  const input = doc.getElementById("wp-thread-search-input");
+  input.value = "launch code";
 
   let prevented = 0;
   doc.dispatch("htmx:sseBeforeMessage", {
@@ -333,14 +331,14 @@ test("live threads pushes are cancelled while a search query is active", () => {
   });
   assert.equal(prevented, 1, "empty box lets the push through");
 
-  // A transcript push (different target) is never touched by the guard.
-  const transcript = doc.createElement();
-  transcript.id = "thread-transcript";
+  // An unrelated target (no wp-thread-list class) is never touched by
+  // the guard — a transcript id here would trip the 3b paging guard
+  // instead, so this element carries a neutral id.
+  const other = doc.createElement();
+  other.id = "some-other-region";
   doc.dispatch("htmx:sseBeforeMessage", {
-    target: transcript,
+    target: other,
     preventDefault: () => (prevented += 1),
   });
   assert.equal(prevented, 1, "the guard only guards the thread list");
-
-  doc.querySelector = realQuerySelector;
 });

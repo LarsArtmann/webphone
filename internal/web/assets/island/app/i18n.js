@@ -114,6 +114,8 @@ export const I18N = {
     crmLogFailed: (detail) =>
       `Call not recorded in the CRM (${detail}) — you can log it manually.`,
     typeaheadLabel: "Contact suggestions",
+    audioOutput: "Speaker",
+    audioDefault: "System default",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -226,6 +228,8 @@ export const I18N = {
     crmLogFailed: (detail) =>
       `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
     typeaheadLabel: "Kontaktvorschläge",
+    audioOutput: "Ausgabe",
+    audioDefault: "Systemstandard",
   },
 };
 
