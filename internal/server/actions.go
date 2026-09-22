@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"strings"
@@ -23,6 +24,20 @@ import (
 
 // uploadLimit bounds multipart bodies (5 attachments + a PDF fit easily).
 const uploadLimit = 60 << 20
+
+// attachmentMimeType prefers the client-declared part type but falls
+// back to content sniffing when the declaration is missing or is the
+// generic octet-stream default (browsers send real types for file
+// inputs; curl and programmatic posts do not). The inline image
+// thumbnails key on image/*, so a mislabeled upload would silently
+// lose its preview.
+func attachmentMimeType(fh *multipart.FileHeader, content []byte) string {
+	declared := fh.Header.Get("Content-Type")
+	if declared != "" && declared != "application/octet-stream" {
+		return declared
+	}
+	return http.DetectContentType(content)
+}
 
 // sendMessage handles the composer forms (new conversation and reply).
 func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +61,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		uploads = append(uploads, domain.AttachmentContent{
 			Name:     fileHeader.Filename,
-			MimeType: fileHeader.Header.Get("Content-Type"),
+			MimeType: attachmentMimeType(fileHeader, content),
 			Bytes:    content,
 		})
 	}

@@ -66,6 +66,11 @@ func TestMMSAttachmentRoundTrip(t *testing.T) {
 	if attachment == nil {
 		t.Fatal("attachment link missing in thread view")
 	}
+	// Image attachments render inline (plan T21c): a lazy CSS-scaled
+	// thumbnail rides the download link.
+	if !strings.Contains(string(body), `class="wp-thumb"`) || !strings.Contains(string(body), `loading="lazy"`) {
+		t.Fatal("image attachment missing its inline thumbnail")
+	}
 	resp, body = c.do(http.MethodGet, string(attachment[1]), nil, "")
 	if resp.StatusCode != http.StatusOK || !bytes.Equal(body, png) {
 		t.Fatalf("attachment round trip broken: %d bytes=%d", resp.StatusCode, len(body))
