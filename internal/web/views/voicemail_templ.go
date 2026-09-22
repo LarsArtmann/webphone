@@ -285,9 +285,9 @@ func VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang) 
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(vmWhen(msg.Created))
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(vmWhen(msg.Created, lang))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/voicemail.templ`, Line: 73, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/voicemail.templ`, Line: 73, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -300,7 +300,7 @@ func VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang) 
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmtInt(msg.Seconds))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/voicemail.templ`, Line: 73, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/voicemail.templ`, Line: 73, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -436,8 +436,8 @@ func vmCaller(msg pbx.VoicemailMessage, names map[string]string, lang Lang) stri
 	return T(lang, "vm.unknown")
 }
 
-func vmWhen(createdUnix int64) string {
-	return time.Unix(createdUnix, 0).Local().Format("Jan 2, 15:04")
+func vmWhen(createdUnix int64, lang Lang) string {
+	return formatStamp(lang, time.Unix(createdUnix, 0))
 }
 
 var _ = templruntime.GeneratedTemplate

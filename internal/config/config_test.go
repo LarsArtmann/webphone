@@ -309,3 +309,63 @@ func TestLoadValidatesIdentities(t *testing.T) {
 		t.Fatalf("dialable-less DID: err %v, want dialable rejection", err)
 	}
 }
+
+// TestLoadValidatesCRMConfig pins the integration's fail-closed posture:
+// half a configuration (URL without token, token without URL) is a startup
+// error, not a silently broken enrichment, and the URL must be absolute
+// http(s) — the client would otherwise build requests against garbage.
+func TestLoadValidatesCRMConfig(t *testing.T) {
+	cases := []struct {
+		name    string
+		env     map[string]string
+		wantErr string
+	}{
+		{
+			name:    "url without token",
+			env:     map[string]string{"WEBPHONE_CRM__URL": "http://127.0.0.1:8080"},
+			wantErr: "crm.url is set without crm.token",
+		},
+		{
+			name:    "token without url",
+			env:     map[string]string{"WEBPHONE_CRM__TOKEN": "sekrit"},
+			wantErr: "crm.token is set without crm.url",
+		},
+		{
+			name: "relative url",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":   "crm.example.org",
+				"WEBPHONE_CRM__TOKEN": "sekrit",
+			},
+			wantErr: "not an absolute http(s) URL",
+		},
+		{
+			name: "valid crm section loads",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":   "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN": "sekrit",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			scrubEnv(t)
+			t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+			for key, value := range tc.env {
+				t.Setenv(key, value)
+			}
+			cfg, err := Load()
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Errorf("Load() = error %v, want nil", err)
+				}
+				if cfg.CRM.URL != tc.env["WEBPHONE_CRM__URL"] || cfg.CRM.Token != "sekrit" {
+					t.Errorf("crm block: %+v", cfg.CRM)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("error %v, want containing %q", err, tc.wantErr)
+			}
+		})
+	}
+}

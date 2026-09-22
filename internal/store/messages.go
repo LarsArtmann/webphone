@@ -124,7 +124,7 @@ type ThreadSummary struct {
 
 // ListThreads returns the owner's threads, most recently active first.
 func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]ThreadSummary, error) {
-	rows, err := s.db.QueryContext(ctx, `
+	return listRows(ctx, s.db, "list threads", `
 		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
 		       m.body, m.direction, m.channel
 		FROM threads t
@@ -133,32 +133,17 @@ func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]T
 		)
 		WHERE t.owner = ?
 		ORDER BY t.last_activity_at DESC
-	`, owner.String())
-	if err != nil {
-		return nil, fmt.Errorf("list threads: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	var out []ThreadSummary
-	for rows.Next() {
-		sum, err := scanThreadSummary(rows)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, sum)
-	}
-
-	return out, rows.Err()
+	`, []any{owner.String()}, scanThreadSummary)
 }
 
-func scanThreadSummary(rows *sql.Rows) (ThreadSummary, error) {
+func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 	var (
 		id, owner, remote         string
 		lastActivity              int64
 		unread                    int
 		lastBody, lastDir, lastCh sql.NullString
 	)
-	if err := rows.Scan(&id, &owner, &remote, &lastActivity, &unread, &lastBody, &lastDir, &lastCh); err != nil {
+	if err := row.Scan(&id, &owner, &remote, &lastActivity, &unread, &lastBody, &lastDir, &lastCh); err != nil {
 		return ThreadSummary{}, fmt.Errorf("scan thread row: %w", err)
 	}
 
@@ -184,28 +169,15 @@ func scanThreadSummary(rows *sql.Rows) (ThreadSummary, error) {
 func (s *Messages) ListMessages(
 	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, limit int,
 ) ([]domain.Message, error) {
-	rows, err := s.db.QueryContext(ctx, `
+	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
 		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC
 		LIMIT ?
-	`, owner.String(), threadID.String(), limit)
+	`, []any{owner.String(), threadID.String(), limit}, scanMessage)
 	if err != nil {
-		return nil, fmt.Errorf("list messages of thread %s: %w", threadID, err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	msgs := make([]domain.Message, 0, limit)
-	for rows.Next() {
-		msg, err := scanMessage(rows)
-		if err != nil {
-			return nil, err
-		}
-		msgs = append(msgs, msg)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("list messages rows: %w", err)
+		return nil, err
 	}
 
 	if err := s.attachAttachments(ctx, msgs); err != nil {
@@ -396,28 +368,15 @@ func (s *Messages) ListMessagesPage(
 	if page < 0 {
 		page = 0
 	}
-	rows, err := s.db.QueryContext(ctx, `
+	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
 		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC
 		LIMIT ? OFFSET ?
-	`, owner.String(), threadID.String(), limit+1, page*limit)
+	`, []any{owner.String(), threadID.String(), limit+1, page*limit}, scanMessage)
 	if err != nil {
-		return nil, false, fmt.Errorf("list messages of thread %s: %w", threadID, err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	msgs := make([]domain.Message, 0, limit+1)
-	for rows.Next() {
-		msg, err := scanMessage(rows)
-		if err != nil {
-			return nil, false, err
-		}
-		msgs = append(msgs, msg)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, false, fmt.Errorf("list messages rows: %w", err)
+		return nil, false, err
 	}
 
 	hasMore := len(msgs) > limit

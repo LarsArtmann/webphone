@@ -54,35 +54,28 @@ func (s *Contacts) Save(ctx context.Context, contact domain.Contact) error {
 
 // List returns the owner's contacts, newest first.
 func (s *Contacts) List(ctx context.Context, owner domain.Extension) ([]domain.Contact, error) {
-	rows, err := s.db.QueryContext(ctx, `
+	return listRows(ctx, s.db, "list contacts", `
 		SELECT id, owner, name, phone, created_at
 		FROM contacts WHERE owner = ?
 		ORDER BY created_at DESC, rowid DESC
-	`, owner.String())
-	if err != nil {
-		return nil, fmt.Errorf("list contacts: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
+	`, []any{owner.String()}, scanContact)
+}
 
-	contacts := make([]domain.Contact, 0)
-	for rows.Next() {
-		var (
-			id, owner, name, phone string
-			created                int64
-		)
-		if err := rows.Scan(&id, &owner, &name, &phone, &created); err != nil {
-			return nil, fmt.Errorf("scan contact: %w", err)
-		}
-		contacts = append(contacts, domain.Contact{
-			ID:        domain.MustContactID(id),
-			Owner:     domain.MustParseExtension(owner),
-			Name:      name,
-			Phone:     domain.MustParsePhone(phone),
-			CreatedAt: time.Unix(created, 0),
-		})
+func scanContact(row rowScanner) (domain.Contact, error) {
+	var (
+		id, owner, name, phone string
+		created                int64
+	)
+	if err := row.Scan(&id, &owner, &name, &phone, &created); err != nil {
+		return domain.Contact{}, fmt.Errorf("scan contact: %w", err)
 	}
-
-	return contacts, rows.Err()
+	return domain.Contact{
+		ID:        domain.MustContactID(id),
+		Owner:     domain.MustParseExtension(owner),
+		Name:      name,
+		Phone:     domain.MustParsePhone(phone),
+		CreatedAt: time.Unix(created, 0),
+	}, nil
 }
 
 // Delete removes one contact scoped to its owner.

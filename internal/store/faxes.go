@@ -54,26 +54,11 @@ func (s *Faxes) UpdateStatus(
 
 // List returns the owner's fax jobs, newest first.
 func (s *Faxes) List(ctx context.Context, owner domain.Extension, limit int) ([]domain.FaxJob, error) {
-	rows, err := s.db.QueryContext(ctx, `
+	return listRows(ctx, s.db, "list fax jobs", `
 		SELECT id, owner, remote, direction, status, pages, document_path, provider_ref, error, created_at, updated_at
 		FROM fax_jobs WHERE owner = ?
 		ORDER BY created_at DESC, rowid DESC LIMIT ?
-	`, owner.String(), limit)
-	if err != nil {
-		return nil, fmt.Errorf("list fax jobs: %w", err)
-	}
-	defer func() { _ = rows.Close() }()
-
-	jobs := make([]domain.FaxJob, 0, limit)
-	for rows.Next() {
-		job, err := scanFax(rows)
-		if err != nil {
-			return nil, err
-		}
-		jobs = append(jobs, job)
-	}
-
-	return jobs, rows.Err()
+	`, []any{owner.String(), limit}, scanFax)
 }
 
 // Get fetches one job scoped to its owner.

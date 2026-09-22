@@ -26,14 +26,8 @@ const uploadLimit = 60 << 20
 
 // sendMessage handles the composer forms (new conversation and reply).
 func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSessionMultipart(w, r)
+	sess, to, ok := h.requireMultipartTo(w, r, views.TabMessages, "err.invalidTo")
 	if !ok {
-		return
-	}
-
-	to, err := domain.ParsePhone(r.FormValue("to"))
-	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.invalidTo"))
 		return
 	}
 
@@ -91,13 +85,8 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 
 // sendFax handles the fax upload form.
 func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSessionMultipart(w, r)
+	sess, to, ok := h.requireMultipartTo(w, r, views.TabFax, "err.invalidFaxTo")
 	if !ok {
-		return
-	}
-	to, err := domain.ParsePhone(r.FormValue("to"))
-	if err != nil {
-		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.invalidFaxTo"))
 		return
 	}
 	file, header, err := r.FormFile("document")
@@ -415,6 +404,24 @@ func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Reques
 		return session.Session{}, false
 	}
 	return sess, true
+}
+
+// requireMultipartTo parses a multipart action form and its "to" number
+// for the signed-in extension; on failure it has already written the
+// error response.
+func (h *handlers) requireMultipartTo(
+	w http.ResponseWriter, r *http.Request, tab views.Tab, invalidToKey string,
+) (session.Session, domain.Phone, bool) {
+	sess, ok := h.requireSessionMultipart(w, r)
+	if !ok {
+		return session.Session{}, domain.Phone{}, false
+	}
+	to, err := domain.ParsePhone(r.FormValue("to"))
+	if err != nil {
+		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, h.T(r, invalidToKey))
+		return session.Session{}, domain.Phone{}, false
+	}
+	return sess, to, true
 }
 
 // importContacts ingests an uploaded vCard file: every card with a

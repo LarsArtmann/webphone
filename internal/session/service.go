@@ -132,22 +132,33 @@ func mintToken() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
+// makeSession mints a token and the Session around it; the birth
+// invariant (ExpiresAt = CreatedAt + ttl) has this single home, shared
+// by both store backends.
+func makeSession(extension domain.Extension, password string, ttl time.Duration) (string, Session, error) {
+	token, err := mintToken()
+	if err != nil {
+		return "", Session{}, err
+	}
+	now := time.Now()
+	return token, Session{
+		Extension: extension,
+		Password:  password,
+		CreatedAt: now,
+		ExpiresAt: now.Add(ttl),
+	}, nil
+}
+
 // Create mints a session for the extension and returns its token.
 func (s *MemStore) Create(extension domain.Extension, password string) (string, error) {
-	token, err := mintToken()
+	token, sess, err := makeSession(extension, password, s.ttl)
 	if err != nil {
 		return "", err
 	}
 
-	now := time.Now()
 	s.mu.Lock()
-	s.gcLocked(now)
-	s.sessions[token] = Session{
-		Extension: extension,
-		Password:  password,
-		CreatedAt: now,
-		ExpiresAt: now.Add(s.ttl),
-	}
+	s.gcLocked(sess.CreatedAt)
+	s.sessions[token] = sess
 	s.mu.Unlock()
 
 	return token, nil

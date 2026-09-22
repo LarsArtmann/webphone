@@ -261,6 +261,123 @@
         applyTheme();
       });
     }
+
+    // ----------------------------------------------------------------
+    // Composer UX: Enter sends / Shift+Enter breaks a line in the
+    // composer textareas, an SMS segment counter that only speaks past
+    // one segment, and attachment chips with remove. Everything is
+    // delegated at document level, so swapped-in composers pick the
+    // behaviors up without re-wiring, and each affordance degrades to
+    // the plain form when the pieces are missing.
+    // ----------------------------------------------------------------
+
+    // GSM 03.38: basic charset plus the extension table (its characters
+    // cost TWO units). Anything outside the sets forces UCS-2, which
+    // carries 70 chars per segment (67 once concatenated).
+    var GSM7_BASIC =
+      "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?" +
+      "¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+    var GSM7_EXT = "^{}\\[~]€|\f";
+    var GSM7_SET = new Set(GSM7_BASIC);
+    var GSM7_EXT_SET = new Set(GSM7_EXT);
+
+    function ucs2Segments(text) {
+      var chars = Array.from(text).length;
+      return chars <= 70 ? 1 : Math.ceil(chars / 67);
+    }
+
+    // smsSegments returns the billable segment count for a body. CRLF
+    // is normalized first: the composer textarea submits \r\n. Code
+    // points (not UTF-16 units) count, so emoji cost one UCS-2 char.
+    function smsSegments(body) {
+      var text = String(body == null ? "" : body).replace(/\r\n/g, "\n");
+      var units = 0;
+      for (var ch of text) {
+        if (GSM7_EXT_SET.has(ch)) units += 2;
+        else if (!GSM7_SET.has(ch)) return ucs2Segments(text);
+        else units += 1;
+      }
+      return units <= 160 ? 1 : Math.ceil(units / 153);
+    }
+
+    // updateSegcount shows "N SMS" only past one segment — silent
+    // otherwise, in every language (deliberately language-neutral).
+    function updateSegcount(form, body) {
+      var counter = form.querySelector(".wp-segcount");
+      if (!counter) return;
+      var segments = smsSegments(body);
+      if (segments > 1) {
+        counter.textContent = segments + " SMS";
+        counter.hidden = false;
+      } else {
+        counter.textContent = "";
+        counter.hidden = true;
+      }
+    }
+
+    document.addEventListener("keydown", function (event) {
+      var area = event.target;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+      var form = area.closest("form");
+      if (!form || !form.requestSubmit) return; // degrade: Enter inserts a newline
+      event.preventDefault();
+      form.requestSubmit();
+    });
+
+    document.addEventListener("input", function (event) {
+      var area = event.target;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
+      var form = area.closest("form");
+      if (form) updateSegcount(form, area.value);
+    });
+
+    // Attachment chips: names + remove for the composer file inputs.
+    // Remove rebuilds the FileList via DataTransfer (the only mutable
+    // route); without DataTransfer the native input stays the only UI.
+    function renderAttachChips(input, box) {
+      var files = input.files || [];
+      box.replaceChildren();
+      for (var i = 0; i < files.length; i++) {
+        var chip = document.createElement("span");
+        chip.className = "wp-chip";
+        chip.textContent = files[i].name;
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "wp-chip-x";
+        remove.setAttribute("aria-label", "remove");
+        remove.dataset.index = String(i);
+        chip.append(remove);
+        box.append(chip);
+      }
+      box.hidden = files.length === 0;
+    }
+
+    document.addEventListener("change", function (event) {
+      var input = event.target;
+      if (!input || !input.closest || !input.closest(".wp-compose")) return;
+      if (String(input.type || "") !== "file") return;
+      if (typeof DataTransfer === "undefined") return;
+      var form = input.closest("form");
+      var box = form && form.querySelector(".wp-attach");
+      if (box) renderAttachChips(input, box);
+    });
+
+    document.addEventListener("click", function (event) {
+      var remove = event.target && event.target.closest ? event.target.closest(".wp-chip-x") : null;
+      if (!remove) return;
+      var form = remove.closest("form");
+      var input = form && form.querySelector('input[type="file"]');
+      var box = form && form.querySelector(".wp-attach");
+      if (!input || !box || typeof DataTransfer === "undefined") return;
+      var index = Number(remove.dataset.index);
+      var transfer = new DataTransfer();
+      for (var i = 0; i < input.files.length; i++) {
+        if (i !== index) transfer.items.add(input.files[i]);
+      }
+      input.files = transfer.files;
+      renderAttachChips(input, box);
+    });
   } catch (err) {
     var logList = document.getElementById("log");
     if (logList) {

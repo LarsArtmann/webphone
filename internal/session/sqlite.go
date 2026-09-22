@@ -57,12 +57,12 @@ func NewSQLiteStore(db *sql.DB, ttl time.Duration) (*SQLiteStore, error) {
 // swept alongside, so restarts across long downtimes cannot accumulate
 // corpses.
 func (s *SQLiteStore) Create(extension domain.Extension, password string) (string, error) {
-	token, err := mintToken()
+	token, sess, err := makeSession(extension, password, s.ttl)
 	if err != nil {
 		return "", err
 	}
 
-	now := time.Now()
+	now := sess.CreatedAt
 	if _, err := s.db.Exec(
 		`DELETE FROM sessions WHERE expires_at < ?`, now.UnixMilli(),
 	); err != nil {
@@ -71,7 +71,7 @@ func (s *SQLiteStore) Create(extension domain.Extension, password string) (strin
 	if _, err := s.db.Exec(
 		`INSERT INTO sessions (token, extension, password, created_at, expires_at)
 		 VALUES (?, ?, ?, ?, ?)`,
-		token, extension.String(), password, now.UnixMilli(), now.Add(s.ttl).UnixMilli(),
+		token, extension.String(), password, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
 	); err != nil {
 		return "", fmt.Errorf("insert session: %w", err)
 	}

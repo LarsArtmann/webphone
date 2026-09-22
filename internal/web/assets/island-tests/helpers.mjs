@@ -14,9 +14,34 @@ export function installBrowserGlobals() {
     title: "",
     lang: "",
     value: "",
+    type: "",
     children: [],
     listeners: {},
     parent: null,
+    // selector is the stub's stand-in for a CSS selector match: closest
+    // and querySelector compare it (or an exact className) instead of
+    // interpreting selectors. Tests set .selector on the fakes they
+    // route through delegated listeners.
+    selector: null,
+    closest(selector) {
+      let node = this;
+      while (node) {
+        if (node.selector === selector || node.className === selector) return node;
+        node = node.parent;
+      }
+      return null;
+    },
+    querySelector(selector) {
+      const walk = (node) => {
+        for (const kid of node.children) {
+          if (kid.selector === selector || kid.className === selector) return kid;
+          const found = walk(kid);
+          if (found) return found;
+        }
+        return null;
+      };
+      return walk(this);
+    },
     get firstChild() {
       return this.children[0] ?? null;
     },
@@ -135,5 +160,15 @@ export function installBrowserGlobals() {
       this.store.delete(k);
     },
   };
+  // Attachment-chip removal rebuilds FileLists through DataTransfer;
+  // node ships none, so here is the minimum surface shell.js touches.
+  globalThis.DataTransfer =
+    globalThis.DataTransfer ||
+    class DataTransfer {
+      constructor() {
+        this.files = [];
+        this.items = { add: (file) => this.files.push(file) };
+      }
+    };
   return globalThis.document;
 }

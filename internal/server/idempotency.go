@@ -30,6 +30,9 @@ func newIdemStore(ttl time.Duration) *idemStore {
 	return &idemStore{ttl: ttl, entries: make(map[string]time.Time)}
 }
 
+// seen and record repeat the clock+lock prologue deliberately: the
+// fail-retryable contract needs check-then-record as separate steps,
+// and a lock helper would sever Lock from its deferred Unlock.
 // seen reports whether key was already recorded as processed.
 func (s *idemStore) seen(key string) bool {
 	now := time.Now()

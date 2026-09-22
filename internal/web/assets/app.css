@@ -511,6 +511,73 @@ h3 {
   min-width: 0;
 }
 
+/* Composer textarea: grows with content via field-sizing (no JS height
+ * math, CSP-clean); capped, then scrolls. Browsers without
+ * field-sizing degrade to a normal scrollable textarea. */
+.wp-compose textarea {
+  flex: 1 1 140px;
+  min-width: 0;
+  field-sizing: content;
+  max-height: 9rem;
+  overflow-y: auto;
+  resize: none;
+}
+
+/* SMS segment counter (shell.js §4): "N SMS", only past one segment —
+ * language-neutral by design, so both UI locales read it the same. */
+.wp-segcount {
+  color: var(--muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Attachment chips (shell.js §4): full-width row under the composer
+ * line. The [hidden] guard matters: author display beats the UA's
+ * hidden rule, and the container must stay invisible until shell.js
+ * renders chips into it. */
+.wp-attach {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wp-attach[hidden] {
+  display: none;
+}
+
+.wp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.wp-chip-x {
+  border: 0;
+  background: var(--surface-3);
+  color: var(--muted);
+  border-radius: 999px;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9em;
+}
+
+.wp-chip-x:hover {
+  color: var(--danger);
+}
+
 .wp-compose input[type="file"] {
   flex: 1 1 220px;
   min-width: 0;
