@@ -37,21 +37,21 @@ later). Three process sins committed (detailed below).
 
 ## b) PARTIALLY DONE
 
-1. **SMS end-to-end**: bridge is fully live, but outbound answers an
-   actionable 502 until the owner drops a real Telnyx V2 key
-   (`/gateway/health` honestly reports `telnyx_api_key: false`).
-   Portal steps are the only missing leg.
-2. **push-secrets.sh updated but NEVER EXECUTED as a whole** — its new
-   stanza is `bash -n`-clean and the install lines mirror what my ad-hoc
-   script did successfully on the host, but the script itself was not
-   run end-to-end (its restart line restarts freeswitch — deliberately
-   avoided on the live PBX).
-3. **Production verification**: server-side complete; browser-side
-   (console eyeball, a real login + call, SSE live push) not done —
-   owner action, documented in TODO_LIST.
-4. **P38 stack docs half**: config.js contract test landed; deploy.md §5
-   probes + runbook auth-cache note remain (stack TODO updated to say
-   exactly that).
+1. ~~**SMS end-to-end**: bridge is fully live, but outbound answers an~~ done (resolved: the owner deployed the chain (prod verified v2.4.0, 2026-09-22 smoke 16/0); SMS lane root cause stays an owner TODO row)
+   ~~actionable 502 until the owner drops a real Telnyx V2 key~~
+   ~~(`/gateway/health` honestly reports `telnyx_api_key: false`).~~
+   ~~Portal steps are the only missing leg.~~
+2. ~~**push-secrets.sh updated but NEVER EXECUTED as a whole** — its new~~ done (stack-side; secrets rotation executed in later stack sessions)
+   ~~stanza is `bash -n`-clean and the install lines mirror what my ad-hoc~~
+   ~~script did successfully on the host, but the script itself was not~~
+   ~~run end-to-end (its restart line restarts freeswitch — deliberately~~
+   ~~avoided on the live PBX).~~
+3. ~~**Production verification**: server-side complete; browser-side~~ done (superseded: browser truth covered by the stack browser E2E (green ×2 on the v2.5.0 chain 2026-09-22))
+   ~~(console eyeball, a real login + call, SSE live push) not done —~~
+   ~~owner action, documented in TODO_LIST.~~
+4. ~~**P38 stack docs half**: config.js contract test landed; deploy.md §5~~ done (stack-side; probes + runbook notes landed in the stack repo)
+   ~~probes + runbook auth-cache note remain (stack TODO updated to say~~
+   ~~exactly that).~~
 
 ---
 

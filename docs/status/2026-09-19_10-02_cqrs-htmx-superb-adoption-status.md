@@ -38,6 +38,11 @@ The session set out to answer "are we using cqrs-htmx fully and properly?" (78/1
 | **Audit's CSRF recommendation** | Superseded by a better, tested implementation                    | The snapshot report still prints the wrong recommendation (double-escape trap), corrected only downstream                  |
 | **Observability**               | Request-ID end-to-end correlation                                | `user_id` mapping dropped (extensions are not ULIDs — correct, but the "1%" slice delivered smaller than first advertised) |
 
+> Resolved 2026-09-22 (docs-health): score superseded by the far-deeper
+> adoption since; CSRF rotation shipped v2.1.0 (`d815004`); the audit's
+> wrong recommendation is corrected downstream by the `templ.JSONString`
+> regression test; the `user_id` drop is the recorded re-scope.
+
 ## c) NOT STARTED
 
 | Work                                                                                                           | Why it exists                                                      |
@@ -47,6 +52,11 @@ The session set out to answer "are we using cqrs-htmx fully and properly?" (78/1
 | **Stack-side browser E2E re-run** after this session's header/attribute changes                                | AGENTS.md rule: any markup-adjacent change re-runs it              |
 | **`docs-health` HARVEST** of this report's section (f) into `TODO_LIST.md`/`ROADMAP.md`                        | The 50-item list below is otherwise entombed in a timestamped file |
 | **cqrs-htmx v4.10.0 bump watch** (retry hint, security consolidation — re-verify at the consumed tag)          | Upstream is ~256 commits past v4.9.0, unreleased                   |
+
+> Resolved 2026-09-22 (docs-health): idiomorph shipped v2.4.0; CSRF
+> rotation v2.1.0; stack E2E green per-train; HARVEST executed
+> 2026-09-19/22; v4.11.0 adopted (retry hint stream-pinned), v4.12.0
+> released upstream with release objects.
 
 ## d) TOTALLY FUCKED UP
 

@@ -87,13 +87,15 @@ the train.
 - Drafted an export handler with an unused-import placeholder guard —
   caught by go vet before commit, removed.
 
-## e) Push state (ls-remote, 19:52)
+## e) Push state (ls-remote, final)
 
 - stack `a5be17c` = origin ✓ (both E2E fixes public)
 - pbx-artmann `24cb90d` = origin ✓
-- webphone: origin at `0a34611`, local `46c0064` — the daemon is
-  mid-catchup (it has pushed everything up to 0a34611); re-verify with
-  `git ls-remote` before any tri-repo step.
+- webphone: origin STALLED at `0a34611` with a 12-commit backlog —
+  the push daemon (pma) was DOWN entirely (no process). Pushed by
+  hand per the documented remediation; verified `33bc57d` = origin =
+  HEAD. **The daemon needs a restart by the owner** (it also feeds
+  the other two repos' auto-commits).
 
 ## f) What remains (all owner-gated or owner-terminal — by design)
 
