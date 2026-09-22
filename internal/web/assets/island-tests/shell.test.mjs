@@ -84,3 +84,56 @@ test("statuses without server feedback get an honest generic toast", () => {
     Date.now = realNow;
   }
 });
+
+// 3d. Per-thread draft persistence (plan T21d): composer text survives
+// the re-renders that empty it (tab/thread switches), restores only
+// into an empty composer, and clears after a successful send.
+test("composer drafts persist per thread and restore after re-render", async () => {
+  const transcript = doc.getElementById("thread-transcript");
+  transcript.dataset.thread = "t-42";
+  const composer = {
+    value: "",
+    closest(selector) {
+      return selector === "textarea.wp-compose-body" ? this : null;
+    },
+    querySelector(selector) {
+      return selector === "textarea.wp-compose-body" ? this : null;
+    },
+  };
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === "textarea.wp-compose-body" ? composer : realQuerySelector(selector);
+
+  composer.value = "hallo draft";
+  doc.dispatch("input", { target: composer });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  assert.equal(localStorage.getItem("wp-draft:t-42"), "hallo draft");
+
+  // A swap re-renders the composer empty: the draft comes back.
+  composer.value = "";
+  doc.dispatch("htmx:afterSwap", {});
+  assert.equal(composer.value, "hallo draft");
+
+  // A successful send clears the draft — and an empty swap stays empty.
+  const sendForm = {
+    matches: (selector) => selector === "form",
+    hasAttribute: () => false,
+    querySelector: (selector) => (selector === "textarea.wp-compose-body" ? composer : null),
+  };
+  composer.value = "hallo draft";
+  doc.dispatch("htmx:afterRequest", { target: sendForm, detail: { successful: true } });
+  assert.equal(localStorage.getItem("wp-draft:t-42"), null);
+  composer.value = "";
+  doc.dispatch("htmx:afterSwap", {});
+  assert.equal(composer.value, "");
+
+  // A FAILED send keeps the draft for the retry.
+  composer.value = "still typing";
+  doc.dispatch("input", { target: composer });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  doc.dispatch("htmx:afterRequest", { target: sendForm, detail: { successful: false } });
+  assert.equal(localStorage.getItem("wp-draft:t-42"), "still typing");
+
+  doc.querySelector = realQuerySelector;
+  delete transcript.dataset.thread;
+});

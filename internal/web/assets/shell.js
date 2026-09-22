@@ -223,6 +223,62 @@
       showThrottledError("Network request failed; check your connection.");
     });
 
+    // 3d. Per-thread draft persistence (plan T21d): composer text
+    //     survives tab and thread switches — the two paths that
+    //     re-render the composer empty. Live SSE pushes morph-preserve
+    //     the node, so drafts already survive those. Saved debounced on
+    //     input, restored ONLY into an empty composer (never clobbers
+    //     fresh typing), cleared after a successful send. Best-effort:
+    //     storage failures (private mode, quota) are silently ignored.
+    var DRAFT_MAX = 4000;
+    var draftKey = function (threadId) {
+      return "wp-draft:" + threadId;
+    };
+    var currentDraftId = function () {
+      var transcript = document.getElementById("thread-transcript");
+      return transcript && transcript.dataset.thread
+        ? transcript.dataset.thread
+        : "new";
+    };
+    var saveDraft = function (draftId, text) {
+      try {
+        if (text && text.length <= DRAFT_MAX) {
+          localStorage.setItem(draftKey(draftId), text);
+        } else {
+          localStorage.removeItem(draftKey(draftId));
+        }
+      } catch (err) {
+        /* storage unavailable — drafts are best-effort */
+      }
+    };
+    var draftTimer = null;
+    document.addEventListener("input", function (event) {
+      var area = event.target;
+      if (!area.closest || !area.closest("textarea.wp-compose-body")) return;
+      if (draftTimer) clearTimeout(draftTimer);
+      draftTimer = setTimeout(function () {
+        saveDraft(currentDraftId(), area.value);
+      }, 300);
+    });
+    document.addEventListener("htmx:afterSwap", function () {
+      var area = document.querySelector("textarea.wp-compose-body");
+      if (!area || area.value !== "") return;
+      var draft = null;
+      try {
+        draft = localStorage.getItem(draftKey(currentDraftId()));
+      } catch (err) {
+        return;
+      }
+      if (draft) area.value = draft;
+    });
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var form = event.target;
+      if (!form || !form.matches || !form.matches("form")) return;
+      if (!event.detail || !event.detail.successful) return;
+      if (!form.querySelector("textarea.wp-compose-body")) return;
+      saveDraft(currentDraftId(), "");
+    });
+
     // 4. Manual theme override: cycles auto (prefers-color-scheme) →
     //    light → dark, persisted in localStorage. data-theme on <html>
     //    beats both stylesheets' media queries via attribute specificity.
@@ -317,7 +373,8 @@
 
     document.addEventListener("keydown", function (event) {
       var area = event.target;
-      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
+        return;
       if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
       var form = area.closest("form");
       if (!form || !form.requestSubmit) return; // degrade: Enter inserts a newline
@@ -327,7 +384,8 @@
 
     document.addEventListener("input", function (event) {
       var area = event.target;
-      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
+        return;
       var form = area.closest("form");
       if (form) updateSegcount(form, area.value);
     });
@@ -364,7 +422,10 @@
     });
 
     document.addEventListener("click", function (event) {
-      var remove = event.target && event.target.closest ? event.target.closest(".wp-chip-x") : null;
+      var remove =
+        event.target && event.target.closest
+          ? event.target.closest(".wp-chip-x")
+          : null;
       if (!remove) return;
       var form = remove.closest("form");
       var input = form && form.querySelector('input[type="file"]');
