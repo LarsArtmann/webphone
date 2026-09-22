@@ -167,3 +167,69 @@ test("signOutQuiet drops the server session without a reload", async () => {
   // The quiet path never reloads: the stub's location.reload THROWS, so
   // merely completing this test proves no reload happened.
 });
+
+// --- CSRF adoption retry ladder (SUPERB T14a) -------------------------------
+// Login rotates the CSRF token, so the island must adopt the fresh one
+// before any POST. A transient failure of GET /api/csrf retries with
+// backoff (x3) and only the THIRD consecutive failure falls back to a
+// page reload (the cookie session survives; the served page then
+// carries a matching token again).
+
+test("csrf adoption recovers on the second try without a reload", async () => {
+  resetToasts();
+  let csrfCalls = 0;
+  useFetch((url) => {
+    if (String(url).includes("/api/session")) {
+      return { status: 201, body: { extension: "1001", password: "pw" } };
+    }
+    csrfCalls += 1;
+    if (csrfCalls < 2) return { status: 503 };
+    return { status: 200, body: { token: "fresh-token" } };
+  });
+  let reloads = 0;
+  globalThis.window.location = {
+    reload() {
+      reloads += 1;
+    },
+  };
+  try {
+    await session.createSession("1001", "pw");
+    assert.equal(csrfCalls, 2, "exactly one failed adoption then success");
+    assert.equal(reloads, 0, "recovery on retry must never reload");
+    assert.ok(
+      logTexts().some((line) => line.includes("csrf token adopted")),
+      "the adoption success must reach #log",
+    );
+  } finally {
+    delete globalThis.window.location;
+  }
+});
+
+test("csrf adoption falls back to reload only after three failures", async () => {
+  resetToasts();
+  let csrfCalls = 0;
+  useFetch((url) => {
+    if (String(url).includes("/api/session")) {
+      return { status: 201, body: { extension: "1001", password: "pw" } };
+    }
+    csrfCalls += 1;
+    return { status: 503 };
+  });
+  let reloads = 0;
+  globalThis.window.location = {
+    reload() {
+      reloads += 1;
+    },
+  };
+  try {
+    await session.createSession("1001", "pw");
+    assert.equal(csrfCalls, 3, "exactly three adoption attempts");
+    assert.equal(reloads, 1, "the third failure falls back to one reload");
+    assert.ok(
+      logTexts().some((line) => line.includes("csrf adoption failed")),
+      "the failure must reach #log before the reload",
+    );
+  } finally {
+    delete globalThis.window.location;
+  }
+});
