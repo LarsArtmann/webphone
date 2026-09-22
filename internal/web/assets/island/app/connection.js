@@ -107,6 +107,10 @@ async function rebuildConnection(reason) {
   }
   log(`reconnect watchdog: ${reason} — rebuilding connection`);
   resetting = true;
+  // The transient rebuilding pill: the watchdog just decided to tear
+  // the agent down — the user sees WORK happening before the fresh
+  // REGISTER lands (or fails) and flips the pill for real.
+  setRegStatus("status-offline", t("regRebuilding"));
   // A rebuild supersedes every pending recovery rhythm: the reconnect
   // timer AND the cycle deadline belong to the fresh agent from here.
   if (reconnectTimer) {

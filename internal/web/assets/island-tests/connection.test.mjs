@@ -275,3 +275,24 @@ test("concurrent rebuild triggers collapse into a single rebuild", async () => {
   );
   assert.equal(pill(), t("registered"), "the single rebuild re-registers");
 });
+
+// The transient rebuilding pill (SUPERB T17c): the moment the watchdog
+// decides to rebuild, the pill says so in the UI language — before the
+// fresh REGISTER lands and flips it to "registered" for real.
+test("a triggered rebuild first shows the transient rebuilding pill", async () => {
+  resetStubs();
+  const connection = await loadConnection("rebuilding-pill");
+  await connection.connect("1001", "pw");
+  const dead = registerers.at(-1);
+  dead.fire("Unregistered");
+  // One flush: the rebuild has STARTED (pill set synchronously at its
+  // top) but the fresh register() may not have completed yet.
+  await new Promise((resolve) => setImmediate(resolve));
+  const early = pill();
+  assert.ok(
+    [t("regRebuilding"), t("registered")].includes(early),
+    `early pill must be rebuilding or already recovered, got ${early}`,
+  );
+  await flushes();
+  assert.equal(pill(), t("registered"), "the rebuild lands on registered");
+});
