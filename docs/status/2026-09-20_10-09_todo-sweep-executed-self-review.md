@@ -139,6 +139,12 @@ runner (standing gap, ROADMAP).
 | 1001-registration anomaly | island-side read + root-cause hypothesis               | sofia registration dump in the stack E2E reconnect phase; fix; verify ×2 green runs | stack repo work         | M      |
 | Status-report harvest     | TODO_LIST updated mid-session + 5 new rows post-review | nothing — done                                                                      | —                       | —      |
 
+> Resolved 2026-09-22 (docs-health): csrf typed options shipped and the
+> stack-side rendered-settings assertion landed; the 1001 anomaly is
+> CLOSED (sofia tripwire + island rebuild fix in 2.5.0, E2E green x2,
+> 2026-09-22); harvest sweeps 2026-09-20/22.
+
+
 ## c) NOT STARTED (deliberately — owner-action rows, untouched)
 
 - Redeploy production with v2.4.0 (owner ssh; bogus-creds session minting still live on prod).
@@ -149,6 +155,14 @@ runner (standing gap, ROADMAP).
 - Owner decisions: stack pin policy, pbx-artmann input type (recommendation in ROADMAP).
 - docs-health ANNOTATE over docs/status (owner must confirm file range first).
 - "Analyze the NEXT E2E flake with transfer_dbg()" (standing watch — waits for a flake).
+
+
+> Resolved 2026-09-22 (docs-health): prod premise corrected (v2.4.0
+> verified live); SMS lane stays an owner TODO row; announcements
+> drafted (posting = owner); sanitization DECIDED (island keeps
+> letters); own-number shipped via the identities map; pin policy
+> DECIDED; ANNOTATE sweeps executed 2026-09-20 + 2026-09-22; the
+> transfer_dbg watch is the standing TODO row.
 
 ## d) TOTALLY FUCKED UP (this session; ALL FIXED — listed for honesty)
 
@@ -188,40 +202,40 @@ runner (standing gap, ROADMAP).
 
 | #  | Task                                                                                                                  | Impact   | Effort | Category | Home     |
 | -- | --------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- | -------- |
-| 1  | Redeploy prod with v2.4.0 + bogus-creds smoke probe + switch (owner ssh)                                              | Critical | S      | Ops      | TODO row |
-| 2  | Prod SMS lane: grep telnyx-webhooks journal, restore (owner)                                                          | Critical | S      | Ops      | TODO row |
-| 3  | Reconcile the stack's uncommitted flake.lock + operator.js changes (not authored this session)                        | High     | S      | Ops      | NEW      |
-| 4  | 1001 anomaly: sofia reg dump in stack E2E reconnect phase                                                             | High     | M      | Bug      | TODO row |
-| 5  | Island fix: rebuild UA+Registerer on Unregistered-after-reconnect (hypothesis recorded)                               | High     | M      | Bug      | TODO row |
-| 6  | Verify ×2 green browser-E2E runs for the current tree (anomaly-row norm)                                              | Medium   | S      | Quality  | NEW      |
-| 7  | Decide: cut v2.5.0 train from [Unreleased] now or let it accumulate (cadence g2)                                      | Medium   | S      | Process  | owner    |
-| 8  | Stack-side assertion of rendered settings.csrf in the stack's webphone VM test                                        | Low      | S      | Quality  | TODO row |
-| 9  | Guard release.sh step 8 with an ELF-machine assertion (untrusted `--system` trap)                                     | Low      | S      | Quality  | TODO row |
-| 10 | Test the apps.vulnix triage bash (fixture or extraction)                                                              | Low      | S      | Quality  | TODO row |
-| 11 | Smoke styled-404 check (works in --base foreign mode → post-deploy probe)                                             | Low      | S      | Quality  | TODO row |
-| 12 | i18n decision + implementation for the 404 message                                                                    | Low      | S      | Quality  | TODO row |
-| 13 | Pin module csrf typed+raw conflict semantics                                                                          | Low      | S      | Quality  | TODO row |
-| 14 | docs-health ANNOTATE over docs/status (owner confirms range)                                                          | Low      | S      | Docs     | TODO row |
-| 15 | Post v2.1–v2.3.0 announcements (owner)                                                                                | Low      | S      | Docs     | TODO row |
-| 16 | Island sanitization letters decision + align + pinning test (owner)                                                   | Low      | S      | Bug      | TODO row |
-| 17 | Own-number DID feed decision + UI surface (owner + stack)                                                             | Low      | M      | Feature  | TODO row |
-| 18 | Owner decisions: stack pin policy, pbx-artmann input type                                                             | Medium   | S      | Process  | TODO row |
-| 19 | Standing watches: sip.js 0.22 / ThemeScript opt-out / oxlint globals / E2E wall-time                                  | Low      | M      | Quality  | TODO row |
-| 20 | Analyze the next E2E flake via transfer_dbg dumps                                                                     | Medium   | S      | Quality  | TODO row |
-| 21 | Extend vulnix automated triage beyond glibc (any flagged pkg → its locked patches)                                    | Low      | M      | Quality  | NEW      |
-| 22 | E2E coverage: hit /htmx-ext.js and a 404 path so markup regressions surface upstream                                  | Low      | S      | Quality  | NEW      |
-| 23 | German-404 render test (wp-lang cookie)                                                                               | Low      | S      | Quality  | NEW      |
-| 24 | Document buildflow-vulnix build-closure posture (66 warnings = expected noise) in the AGENTS buildflow-health section | Low      | S      | Docs     | NEW      |
-| 25 | Generated island DOM-contract file emitted from the test                                                              | Low      | M      | Quality  | ROADMAP  |
-| 26 | nginx gzip module option for text assets                                                                              | Low      | S      | Feature  | ROADMAP  |
-| 27 | backup.retentionDays pruning option                                                                                   | Low      | S      | Feature  | ROADMAP  |
-| 28 | /startupz → systemd Type=notify wiring                                                                                | Low      | M      | Feature  | ROADMAP  |
-| 29 | Retention/cleanup job (CDRs, read blobs, expired sessions)                                                            | Low      | M      | Feature  | ROADMAP  |
-| 30 | Session persistence behind SQLite (weigh vs ephemeral-by-design)                                                      | Low      | M      | Feature  | ROADMAP  |
-| 31 | Browser console-cleanliness gate on `/`                                                                               | Low      | M      | Quality  | ROADMAP  |
-| 32 | Island JS test runner; port the asset tripwires                                                                       | Low      | L      | Quality  | ROADMAP  |
-| 33 | HSTS decision for pbx.artmann.tech (owner)                                                                            | Low      | S      | Ops      | ROADMAP  |
-| 34 | XFF-sanitization check → flip rate-limit keys to KeyExtractorFromClientIP                                             | Low      | S      | Quality  | ROADMAP  |
+| ~~1~~  | ~~Redeploy prod with v2.4.0 + bogus-creds smoke probe + switch (owner ssh)~~ done — superseded: prod on v2.4.0 verified 2026-09-22 | ~~Critical~~ | ~~S~~ | ~~Ops~~ | ~~TODO row~~ |
+| ~~2~~  | ~~Prod SMS lane: grep telnyx-webhooks journal, restore (owner)~~ done — still open — owner TODO row | ~~Critical~~ | ~~S~~ | ~~Ops~~ | ~~TODO row~~ |
+| ~~3~~  | ~~Reconcile the stack's uncommitted flake.lock + operator.js changes (not authored this session)~~ done — stack-side; reconciled in later stack sessions | ~~High~~ | ~~S~~ | ~~Ops~~ | ~~NEW~~ |
+| ~~4~~  | ~~1001 anomaly: sofia reg dump in stack E2E reconnect phase~~ done — CLOSED 2026-09-22 (sofia tripwire + rebuild fix) | ~~High~~ | ~~M~~ | ~~Bug~~ | ~~TODO row~~ |
+| ~~5~~  | ~~Island fix: rebuild UA+Registerer on Unregistered-after-reconnect (hypothesis recorded)~~ done — shipped 2.5.0 (connection watchdog rebuilds) | ~~High~~ | ~~M~~ | ~~Bug~~ | ~~TODO row~~ |
+| ~~6~~  | ~~Verify ×2 green browser-E2E runs for the current tree (anomaly-row norm)~~ done — (E2E ×2 green 2026-09-22, RECONNECT-RECOVERY auto) | ~~Medium~~ | ~~S~~ | ~~Quality~~ | ~~NEW~~ |
+| ~~7~~  | ~~Decide: cut v2.5.0 train from [Unreleased] now or let it accumulate (cadence g2)~~ done — v2.5.0 released 2026-09-22; next fold pending (TODO row) | ~~Medium~~ | ~~S~~ | ~~Process~~ | ~~owner~~ |
+| ~~8~~  | ~~Stack-side assertion of rendered settings.csrf in the stack's webphone VM test~~ done — (stack rendered-settings assertion 2026-09-22) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~9~~  | ~~Guard release.sh step 8 with an ELF-machine assertion (untrusted `--system` trap)~~ done — (release.sh ELF b700 guard) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~10~~ | ~~Test the apps.vulnix triage bash (fixture or extraction)~~ done — (checks.vulnix-triage fixtures + triage CLI) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~11~~ | ~~Smoke styled-404 check (works in --base foreign mode → post-deploy probe)~~ done — (smoke styled-404 check) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~12~~ | ~~i18n decision + implementation for the 404 message~~ done — (error.notfound en/de) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~13~~ | ~~Pin module csrf typed+raw conflict semantics~~ done — (csrf-conflict precedence pin) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~14~~ | ~~docs-health ANNOTATE over docs/status (owner confirms range)~~ done — (docs-health sweeps) | ~~Low~~ | ~~S~~ | ~~Docs~~ | ~~TODO row~~ |
+| ~~15~~ | ~~Post v2.1–v2.3.0 announcements (owner)~~ done — drafts live; posting = owner | ~~Low~~ | ~~S~~ | ~~Docs~~ | ~~TODO row~~ |
+| ~~16~~ | ~~Island sanitization letters decision + align + pinning test (owner)~~ done — DECIDED 2026-09-20 + both sides pinned | ~~Low~~ | ~~S~~ | ~~Bug~~ | ~~TODO row~~ |
+| ~~17~~ | ~~Own-number DID feed decision + UI surface (owner + stack)~~ done — shipped (identities map); /phone-api feed = upgrade path | ~~Low~~ | ~~M~~ | ~~Feature~~ | ~~TODO row~~ |
+| ~~18~~ | ~~Owner decisions: stack pin policy, pbx-artmann input type~~ done — DECIDED 2026-09-20 | ~~Medium~~ | ~~S~~ | ~~Process~~ | ~~TODO row~~ |
+| ~~19~~ | ~~Standing watches: sip.js 0.22 / ThemeScript opt-out / oxlint globals / E2E wall-time~~ done — standing watches current (re-verified 2026-09-22) | ~~Low~~ | ~~M~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~20~~ | ~~Analyze the next E2E flake via transfer_dbg dumps~~ done — standing watch (TODO row, transfer_dbg) | ~~Medium~~ | ~~S~~ | ~~Quality~~ | ~~TODO row~~ |
+| ~~21~~ | ~~Extend vulnix automated triage beyond glibc (any flagged pkg → its locked patches)~~ done — superseded: webphone-vulnix-triage CLI + fixtures | ~~Low~~ | ~~M~~ | ~~Quality~~ | ~~NEW~~ |
+| ~~22~~ | ~~E2E coverage: hit /htmx-ext.js and a 404 path so markup regressions surface upstream~~ done — smoke covers 404 + partial shapes; htmx-ext covered by served bundle | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~NEW~~ |
+| ~~23~~ | ~~German-404 render test (wp-lang cookie)~~ done — (error.notfound de pinned) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~NEW~~ |
+| ~~24~~ | ~~Document buildflow-vulnix build-closure posture (66 warnings = expected noise) in the AGENTS buildflow-health section~~ done — documented in AGENTS buildflow-health note | ~~Low~~ | ~~S~~ | ~~Docs~~ | ~~NEW~~ |
+| ~~25~~ | ~~Generated island DOM-contract file emitted from the test~~ done — (DOM contract single-sourced, T22) | ~~Low~~ | ~~M~~ | ~~Quality~~ | ~~ROADMAP~~ |
+| ~~26~~ | ~~nginx gzip module option for text assets~~ done — (nginx.gzip.enable, T27a) | ~~Low~~ | ~~S~~ | ~~Feature~~ | ~~ROADMAP~~ |
+| ~~27~~ | ~~backup.retentionDays pruning option~~ done — (backup.retentionDays, T18a) | ~~Low~~ | ~~S~~ | ~~Feature~~ | ~~ROADMAP~~ |
+| ~~28~~ | ~~/startupz → systemd Type=notify wiring~~ done — resolved NOT-DO: Type=simple deliberate (T18c) | ~~Low~~ | ~~M~~ | ~~Feature~~ | ~~ROADMAP~~ |
+| ~~29~~ | ~~Retention/cleanup job (CDRs, read blobs, expired sessions)~~ done — (retention_days, T25) | ~~Low~~ | ~~M~~ | ~~Feature~~ | ~~ROADMAP~~ |
+| ~~30~~ | ~~Session persistence behind SQLite (weigh vs ephemeral-by-design)~~ done — (SQLite sessions, 2.5.0) | ~~Low~~ | ~~M~~ | ~~Feature~~ | ~~ROADMAP~~ |
+| ~~31~~ | ~~Browser console-cleanliness gate on `/`~~ done — ROADMAP long shot (browser-level gates cluster) | ~~Low~~ | ~~M~~ | ~~Quality~~ | ~~ROADMAP~~ |
+| ~~32~~ | ~~Island JS test runner; port the asset tripwires~~ done — (island-tests node:test runner, island-js check) | ~~Low~~ | ~~L~~ | ~~Quality~~ | ~~ROADMAP~~ |
+| ~~33~~ | ~~HSTS decision for pbx.artmann.tech (owner)~~ done — shipped (nginx.hsts option); prod flip = owner call | ~~Low~~ | ~~S~~ | ~~Ops~~ | ~~ROADMAP~~ |
+| ~~34~~ | ~~XFF-sanitization check → flip rate-limit keys to KeyExtractorFromClientIP~~ done — still gated on XFF proof (ROADMAP Open questions) | ~~Low~~ | ~~S~~ | ~~Quality~~ | ~~ROADMAP~~ |
 
 HARVEST: items 3, 6, 21–24 are NEW from this session; 9–13 were already
 harvested into TODO_LIST at report time. The rest already live in

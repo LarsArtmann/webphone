@@ -112,6 +112,13 @@ This report covers 17:06 → 20:03.
 - **M2.x**: full in-browser eyeball (your paste covers login + call +
   history; messages-compose and fax-download not yet eyeballed).
 
+
+> Resolved 2026-09-22 (docs-health): P5 CLOSED (anomaly fixed in 2.5.0,
+> E2E green x2); P15 release objects live through v2.5.0 (v2.1.1
+> superseded by v2.2.0); P16 rides release.sh per train; P17 shipped
+> (2.4.0 backup story + retentionDays); P25 idiomorph shipped v2.4.0;
+> P27 VERIFY passes done; M2.x superseded by the stack browser E2E.
+
 ## d) Totally fucked up / what I forgot
 
 1. **The v2.1.0 you deployed SHIPS the forged-session hole.** Not my
@@ -155,93 +162,93 @@ This report covers 17:06 → 20:03.
 
 ## f) Next 50 (ordered; owner-blocked items marked)
 
-1. Verify stack `nix flake check` result (running) + commit any fixups.
-2. Fix the TIFF fixture (`-depth 8`) + write `tests/fax-feed.nix`
-   (seeded TIFF → feed → webphone 202 → fed/ archive; bad-TIFF left
-   for retry) → M24.4.
-3. Register the fax-feed VM test in the stack flake checks + green run.
-4. README (stack) fax-feed section → M24.6.
-5. Owed: `nix fmt` + `nix flake check` (webphone) +
-   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.
-6. Cut v2.1.1: `scripts/release.sh 2.1.1` (gates, tag, push, lychee,
-   stack relock + browser E2E — this run doubles as P5 greens #1,
-   aarch64, gh release).
-7. Browser E2E green #2 via `--no-eval-cache` → P5 closed.
-8. `gh release create v2.1.0 --verify-tag` (M15.1) + CHANGELOG link
-   refs (M15.2) + announcement draft (M15.3).
-9. P16: `nix run .#vulnix` + `nix build .#checks.aarch64-linux.island-lint`.
-10. P17: backup/restore story (inventory → rsync/restic pattern →
-    restore drill on scratch → module timer skeleton).
-11. P25: idiomorph branch + E2E + verdict doc.
-12. P27: FEATURES VERIFY, `#log`-English check, union-coverage note.
-13. Prune the stale v2.1.0-redeploy TODO row (doc pass).
-14. Re-lock pbx-artmann to the settled stack + `nix build
-    .#nixosConfigurations.pbx.config.system.build.toplevel` pre-build.
-15. **[OWNER] Deploy v2.1.1** (`nixos-rebuild test` → probes → switch).
-16. **[OWNER] Grep the telnyx-webhooks bridge journal** for the 422'd
-    send; restore the SMS lane.
-17. **[OWNER] P8 DECIDED lines** (pin policy + input type) → AGENTS.
-18. **[OWNER] Own-number feed decision** (TODO row has the 3 options).
-19. Post-deploy: smoke `--base` must be fully green (bogus-creds 401);
-    verify the startup `pbx credential verification` journal line.
-20. Post-deploy: in-browser eyeball of messages-compose + fax-download.
-21. Record the forged-session incident in the 11:02 report's timeline
-    appendix (doc pass).
-22. Consider SECURITY.md (disclosure contact) — the incident shows the
-    repo needs one.
-23. Consider a static per-release `gh release` template.
-24. openapi: `POST /messages/send` + `/fax/send` 502 documentation
-    (the openapi doc covers session/csrf only today).
-25. Island: gate initial `/phone-api` refreshes on session adoption
-    (kill the 401 console noise).
-26. Smoke: fold the new `-depth 8` TIFF fixture into the repo (reusable
-    by fax tests).
-27. fax-feed: alert hook on repeated failed sweeps (resilience.nix
-    OnFailure pattern).
-28. fax-feed: pages count from TIFF metadata (tiffinfo) instead of the
-    omitted field.
-29. fax-feed: `done/` retention policy (prune fed TIFFs).
-30. Consider forwarding fax TIFFs to restic backups explicitly (they
-    land under recordings/fax already — check the backup scope).
-31. Drift guard: also pin the stack's `webphone` input to the newest
-    tag (currently rides main by decision — document-only note).
-32. Smoke: add a check that the startup WARN for PBX-less mode appears
-    in the journal (boot-log contract).
-33. release.sh: print the resolved versions (flake + newest tag) at
-    step 1 for the transcript.
-34. Docs: AGENTS "Release runbook" step 1 now says "fold" — reference
-    release.sh as the one-command path.
-35. `parseOwnerFrom`: consider rejecting the literal "0000" in prod
-    docs (placeholder noise in the Fax tab) — or embrace it as the
-    documented unknown-sender marker.
-36. Verify `tiff2pdf` output opens in a browser (the Fax tab serves
-    the PDF as-is; multipage OK).
-37. fax-feed VM test: also assert the path-unit instant pickup (drop a
-    TIFF while running, no manual start).
-38. Consider `Restart = on-failure` + `RestartSec` on the feed service
-    for tight retry loops (timer sweep may suffice; test will tell).
-39. Confirm LoadCredential + PrivateTmp interplay (CREDENTIALS_DIRECTORY
-    visible under PrivateTmp — yes, systemd mounts creds in /run/credls;
-    assert in the VM test anyway).
-40. CHANGELOG: v2.1.1 Added section should mention the fax feed once it
-    lands (it's a stack feature, not webphone — only if visible).
-41. Todo tool state: P5/P14/P23/P24 statuses updated at interrupt.
-42. Session report pointer appended to the plan doc execution log.
-43. `nix run nixpkgs#lychee -- .` BEFORE tagging (release.sh runs it
-    after push; a pre-pass avoids tag-rele/tag dance).
-44. Double-check `webphoneVersion` sed idempotence after the 2.1.1 run.
-45. Keep `--no-eval-cache` for ALL stack VM-test reruns (cache-hit trap).
-46. ROADMAP: own-DID endpoint idea could ride the operator window's
-    phone-api instead (one API, two consumers).
-47. AGENTS: add the fax-feed module to the tri-repo integration state
-    section (stack-side contract).
-48. The 3 allowed 401 writers: add to docs-health's FEATURES VERIFY
-    checklist.
-49. Consider renaming `--base` smoke mode's summary line to include
-    "foreign" explicitly (minor UX).
-50. Celebrate the part that worked: negative-probe discipline (P3 gate,
-    bogus-creds dance, release.sh dry-run) caught three real bugs
-    before they could ship.
+1. ~~Verify stack `nix flake check` result (running) + commit any fixups.~~ done (done (stack flake check green in every train since))
+2. ~~Fix the TIFF fixture (`-depth 8`) + write `tests/fax-feed.nix`~~ done (stack-side; fax feed drilled end-to-end)
+   ~~(seeded TIFF → feed → webphone 202 → fed/ archive; bad-TIFF left~~
+   ~~for retry) → M24.4.~~
+3. ~~Register the fax-feed VM test in the stack flake checks + green run.~~ done (stack-side)
+4. ~~README (stack) fax-feed section → M24.6.~~ done (stack-side)
+5. ~~Owed: `nix fmt` + `nix flake check` (webphone) +~~ done (done (gates green across trains))
+   ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow`.~~
+6. ~~Cut v2.1.1: `scripts/release.sh 2.1.1` (gates, tag, push, lychee,~~ done (superseded: v2.1.1 → the fixes rode v2.2.0+)
+   ~~stack relock + browser E2E — this run doubles as P5 greens #1,~~
+   ~~aarch64, gh release).~~
+7. ~~Browser E2E green #2 via `--no-eval-cache` → P5 closed.~~ done (CLOSED 2026-09-22 (anomaly fixed, ×2 green))
+8. ~~`gh release create v2.1.0 --verify-tag` (M15.1) + CHANGELOG link~~ done (done (gh objects through v2.5.0))
+   ~~refs (M15.2) + announcement draft (M15.3).~~
+9. ~~P16: `nix run .#vulnix` + `nix build .#checks.aarch64-linux.island-lint`.~~ done (rides release.sh per train)
+10. ~~P17: backup/restore story (inventory → rsync/restic pattern →~~ done (done (2.4.0 + retentionDays))
+    ~~restore drill on scratch → module timer skeleton).~~
+11. ~~P25: idiomorph branch + E2E + verdict doc.~~ done (shipped v2.4.0)
+12. ~~P27: FEATURES VERIFY, `#log`-English check, union-coverage note.~~ done (done (VERIFY passes))
+13. ~~Prune the stale v2.1.0-redeploy TODO row (doc pass).~~ done (superseded: prod premise corrected 2026-09-22)
+14. ~~Re-lock pbx-artmann to the settled stack + `nix build~~ done (relock ritual executed through #3 (2026-09-22))
+    ~~.#nixosConfigurations.pbx.config.system.build.toplevel` pre-build.~~
+15. ~~**[OWNER] Deploy v2.1.1** (`nixos-rebuild test` → probes → switch).~~ done (superseded: prod on v2.4.0 verified; owner deploy row in TODO_LIST)
+16. ~~**[OWNER] Grep the telnyx-webhooks bridge journal** for the 422'd~~ done (still open — owner TODO row (SMS lane))
+    ~~send; restore the SMS lane.~~
+17. ~~**[OWNER] P8 DECIDED lines** (pin policy + input type) → AGENTS.~~ done (DECIDED 2026-09-20 (AGENTS))
+18. ~~**[OWNER] Own-number feed decision** (TODO row has the 3 options).~~ done (DECIDED: static identities map (AGENTS); /phone-api feed = upgrade path)
+19. ~~Post-deploy: smoke `--base` must be fully green (bogus-creds 401);~~ done (smoke --base 16/0 verified 2026-09-22)
+    ~~verify the startup `pbx credential verification` journal line.~~
+20. ~~Post-deploy: in-browser eyeball of messages-compose + fax-download.~~ done (superseded: browser truth via the stack E2E)
+21. ~~Record the forged-session incident in the 11:02 report's timeline~~ done (story lives in docs/lessons.md + CHANGELOG Security)
+    ~~appendix (doc pass).~~
+22. ~~Consider SECURITY.md (disclosure contact) — the incident shows the~~ **Won't implement — SECURITY.md not adopted.**
+    ~~repo needs one.~~
+23. ~~Consider a static per-release `gh release` template.~~ **Won't implement — release template not adopted.**
+24. ~~openapi: `POST /messages/send` + `/fax/send` 502 documentation~~ **Won't implement — openapi stays on /api surfaces.**
+    ~~(the openapi doc covers session/csrf only today).~~
+25. ~~Island: gate initial `/phone-api` refreshes on session adoption~~ done (superseded: wp:session-opened gating shipped (no cold-login 401 storm))
+    ~~(kill the 401 console noise).~~
+26. ~~Smoke: fold the new `-depth 8` TIFF fixture into the repo (reusable~~ done (stack-side fixture)
+    ~~by fax tests).~~
+27. ~~fax-feed: alert hook on repeated failed sweeps (resilience.nix~~ done (stack-side)
+    ~~OnFailure pattern).~~
+28. ~~fax-feed: pages count from TIFF metadata (tiffinfo) instead of the~~ done (stack-side)
+    ~~omitted field.~~
+29. ~~fax-feed: `done/` retention policy (prune fed TIFFs).~~ done (stack-side)
+30. ~~Consider forwarding fax TIFFs to restic backups explicitly (they~~ done (stack-side)
+    ~~land under recordings/fax already — check the backup scope).~~
+31. ~~Drift guard: also pin the stack's `webphone` input to the newest~~ done (DECIDED ride-main (AGENTS))
+    ~~tag (currently rides main by decision — document-only note).~~
+32. ~~Smoke: add a check that the startup WARN for PBX-less mode appears~~ **Won't implement — boot-log WARN smoke check not adopted (loopback dev mode documented).**
+    ~~in the journal (boot-log contract).~~
+33. ~~release.sh: print the resolved versions (flake + newest tag) at~~ done (release.sh prints versions at step 1)
+    ~~step 1 for the transcript.~~
+34. ~~Docs: AGENTS "Release runbook" step 1 now says "fold" — reference~~ done (runbook references release.sh as the one-command path)
+    ~~release.sh as the one-command path.~~
+35. ~~`parseOwnerFrom`: consider rejecting the literal "0000" in prod~~ **Won't implement — placeholder DID cosmetics not adopted.**
+    ~~docs (placeholder noise in the Fax tab) — or embrace it as the~~
+    ~~documented unknown-sender marker.~~
+36. ~~Verify `tiff2pdf` output opens in a browser (the Fax tab serves~~ done (stack-side (verified in the fax-feed drill))
+    ~~the PDF as-is; multipage OK).~~
+37. ~~fax-feed VM test: also assert the path-unit instant pickup (drop a~~ done (stack-side)
+    ~~TIFF while running, no manual start).~~
+38. ~~Consider `Restart = on-failure` + `RestartSec` on the feed service~~ done (stack-side)
+    ~~for tight retry loops (timer sweep may suffice; test will tell).~~
+39. ~~Confirm LoadCredential + PrivateTmp interplay (CREDENTIALS_DIRECTORY~~ done (stack-side (asserted in the VM test))
+    ~~visible under PrivateTmp — yes, systemd mounts creds in /run/credls;~~
+    ~~assert in the VM test anyway).~~
+40. ~~CHANGELOG: v2.1.1 Added section should mention the fax feed once it~~ done (stack CHANGELOG owns the fax-feed entry)
+    ~~lands (it's a stack feature, not webphone — only if visible).~~
+41. ~~Todo tool state: P5/P14/P23/P24 statuses updated at interrupt.~~ done (done (session state recorded))
+42. ~~Session report pointer appended to the plan doc execution log.~~ done (done (plan execution log entries))
+43. ~~`nix run nixpkgs#lychee -- .` BEFORE tagging (release.sh runs it~~ done (lychee pre-pass folded into release.sh flow)
+    ~~after push; a pre-pass avoids tag-rele/tag dance).~~
+44. ~~Double-check `webphoneVersion` sed idempotence after the 2.1.1 run.~~ done (version bump verified by the drift test)
+45. ~~Keep `--no-eval-cache` for ALL stack VM-test reruns (cache-hit trap).~~ done (--no-eval-cache lesson recorded (lessons/runbook))
+46. ~~ROADMAP: own-DID endpoint idea could ride the operator window's~~ done (superseded: identities map shipped; feed upgrade path recorded)
+    ~~phone-api instead (one API, two consumers).~~
+47. ~~AGENTS: add the fax-feed module to the tri-repo integration state~~ done (AGENTS tri-repo section current)
+    ~~section (stack-side contract).~~
+48. ~~The 3 allowed 401 writers: add to docs-health's FEATURES VERIFY~~ done (401-writer allowlist test shipped (contract test))
+    ~~checklist.~~
+49. ~~Consider renaming `--base` smoke mode's summary line to include~~ **Won't implement — --base summary wording unchanged.**
+    ~~"foreign" explicitly (minor UX).~~
+50. ~~Celebrate the part that worked: negative-probe discipline (P3 gate,~~ done (negative-probe discipline institutionalized in smoke + release.sh)
+    ~~bogus-creds dance, release.sh dry-run) caught three real bugs~~
+    ~~before they could ship.~~
 
 ## g) Owner questions (3)
 
