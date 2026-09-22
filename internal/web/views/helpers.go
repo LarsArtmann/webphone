@@ -100,25 +100,28 @@ func isSelfThread(identity string, remote domain.Phone) bool {
 	return own == remote
 }
 
-// formatClock renders a wall-clock time for bubble meta: German gets
-// the 24h convention ("16:09"), English keeps the meridiem form
-// ("4:09PM") it has always shown — English output must stay
+// formatFor is the one home of the language switch behind the timestamp
+// helpers: German renders its de convention, English keeps its en form
 // byte-stable so existing pins and the stack E2E never churn.
-func formatClock(lang Lang, t time.Time) string {
+func formatFor(lang Lang, t time.Time, de, en string) string {
 	if lang == LangDE {
-		return t.Local().Format("15:04")
+		return t.Local().Format(de)
 	}
-	return t.Local().Format(time.Kitchen)
+	return t.Local().Format(en)
+}
+
+// formatClock renders a wall-clock time for bubble meta: German gets
+// the 24h convention ("16:09"), English the meridiem form
+// ("4:09PM") it has always shown.
+func formatClock(lang Lang, t time.Time) string {
+	return formatFor(lang, t, "15:04", time.Kitchen)
 }
 
 // formatStamp renders a beyond-24h timestamp for row meta: German gets
-// the numeric date convention ("22.09. 16:09"), English keeps its
+// the numeric date convention ("22.09. 16:09"), English its
 // existing "Sep 22, 16:09".
 func formatStamp(lang Lang, t time.Time) string {
-	if lang == LangDE {
-		return t.Local().Format("02.01. 15:04")
-	}
-	return t.Local().Format("Jan 2, 15:04")
+	return formatFor(lang, t, "02.01. 15:04", "Jan 2, 15:04")
 }
 
 // fullStamp renders the unambiguous absolute moment (date, year, time)
@@ -126,8 +129,5 @@ func formatStamp(lang Lang, t time.Time) string {
 // gain the exact instant on hover instead of hiding it. German uses the
 // ISO-shaped numeric convention, English its meridiem form.
 func fullStamp(lang Lang, t time.Time) string {
-	if lang == LangDE {
-		return t.Local().Format("02.01.2006 15:04")
-	}
-	return t.Local().Format("Jan 2, 2006, 3:04PM")
+	return formatFor(lang, t, "02.01.2006 15:04", "Jan 2, 2006, 3:04PM")
 }

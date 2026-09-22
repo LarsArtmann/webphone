@@ -36,10 +36,7 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	numbers := make([]string, 0, len(threads))
-	for _, summary := range threads {
-		numbers = append(numbers, summary.Thread.Remote.String())
-	}
+	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
 	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Query: query, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
@@ -95,10 +92,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 	if err != nil {
 		return nil, err
 	}
-	numbers := make([]string, 0, len(jobs))
-	for _, job := range jobs {
-		numbers = append(numbers, job.Remote.String())
-	}
+	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
 	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
@@ -115,18 +109,18 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
 		Enabled: true, Summary: summary, Messages: messages,
-		Names: h.crmNames(r.Context(), voicemailNumbers(messages)), Lang: h.lang(r),
+		Names: h.crmNames(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
 	}), nil
 }
 
-// voicemailNumbers collects the resolvable caller numbers of a voicemail
-// page (skipping withheld/blank CID). Order is irrelevant; the resolver
-// dedupes via its cache.
-func voicemailNumbers(messages []pbx.VoicemailMessage) []string {
-	numbers := make([]string, 0, len(messages))
-	for _, msg := range messages {
-		if msg.CIDNumber != "" {
-			numbers = append(numbers, msg.CIDNumber)
+// crmNumbers collects the numbers of a page of rows for CRM resolution,
+// skipping blanks (withheld/blank caller ID, CDRs without a dial target).
+// Order is irrelevant; the resolver dedupes via its cache.
+func crmNumbers[T any](rows []T, number func(T) string) []string {
+	numbers := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if n := number(row); n != "" {
+			numbers = append(numbers, n)
 		}
 	}
 	return numbers
@@ -180,12 +174,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if len(entries) > historyPageSize {
 		entries = entries[:historyPageSize]
 	}
-	numbers := make([]string, 0, len(entries))
-	for _, cdr := range entries {
-		if dial := views.CDRDialTarget(cdr); dial != "" {
-			numbers = append(numbers, dial)
-		}
-	}
+	numbers := crmNumbers(entries, views.CDRDialTarget)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Names: h.crmNames(r.Context(), numbers), Lang: lang,
 	}), nil

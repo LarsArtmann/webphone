@@ -46,10 +46,7 @@ func (s *Faxes) UpdateStatus(
 	if err != nil {
 		return fmt.Errorf("update fax job: %w", err)
 	}
-	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
-		return ErrNotFound
-	}
-	return nil
+	return updatedOrNotFound(res)
 }
 
 // List returns the owner's fax jobs, newest first.

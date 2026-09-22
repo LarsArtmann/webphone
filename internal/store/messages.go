@@ -95,10 +95,7 @@ func (s *Messages) UpdateOutboundStatus(
 	if err != nil {
 		return fmt.Errorf("update status of message %s: %w", id, err)
 	}
-	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
-		return ErrNotFound
-	}
-	return nil
+	return updatedOrNotFound(res)
 }
 
 // MessageByProviderRef resolves an outbound message by its gateway

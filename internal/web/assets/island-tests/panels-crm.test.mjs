@@ -71,5 +71,9 @@ test("a failed journal report toasts instead of vanishing", async () => {
 
   const toast = doc.getElementById("toasts").children.at(-1);
   assert.ok(toast, "a CRM failure must surface a toast");
-  assert.match(toast.textContent, /HTTP 502/, `toast must carry the detail, got: ${toast.textContent}`);
+  assert.match(
+    toast.textContent,
+    /HTTP 502/,
+    `toast must carry the detail, got: ${toast.textContent}`,
+  );
 });

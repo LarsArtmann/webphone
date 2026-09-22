@@ -66,7 +66,12 @@ test("a nudged list renders the fetched rows", async () => {
 
 test("recordCrmCall stays silent when the CRM integration is off", async () => {
   fetchCalls = [];
-  await panelsMod.recordCrmCall({ dir: "out", target: "+493012345678", dur: 10, established: true });
+  await panelsMod.recordCrmCall({
+    dir: "out",
+    target: "+493012345678",
+    dur: 10,
+    established: true,
+  });
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(
     fetchCalls.filter((url) => url.includes("/api/calls")).length,
