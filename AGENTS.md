@@ -27,10 +27,9 @@ database would be a split brain.
 
 ## Tri-repo integration rules
 
-- Changes must be PUSHED in webphone before the stack re-pins, and
-  the stack tree must be CLEAN before pbx-artmann re-locks (its
-  narHash covers the whole tree). Re-lock ritual: see
-  [docs/release-runbook.md](docs/release-runbook.md).
+- Changes must be PUSHED in webphone before the stack re-pins, and the
+  stack tree must be CLEAN before pbx-artmann re-locks (its narHash
+  covers the whole tree). Re-lock ritual: [docs/release-runbook.md](docs/release-runbook.md).
 - The NixOS module options: `enable`, `package`, `dataDir` (MUST live
   under `/var/lib/` — assertion), `settings` (freeform),
   `environmentFile`, `memoryMax`, `csrf.{trustedProxies,trustedOrigins}`,
@@ -158,11 +157,11 @@ the island remotely — re-run it after any markup change.
   `hx-swap="morph:innerHTML"` (idiomorph via `/htmx-ext.js`, ONE
   bundle). Morph preserves focus/drafts/listeners; STATEFUL nodes in
   morph surfaces must carry stable ids (idiomorph persists by id).
-  Payloads stay bare fragments (no wrappers). Event names:
-  `threads`, `thread`, `fax`, `voicemail`, `contacts`. The
-  `voicemail` and `contacts` events are payload-less NUDGES (the
-  panel re-fetches with per-session credentials). New live surfaces
-  follow the morph pattern.
+  Payloads stay bare fragments (no wrappers). Event names: `threads`,
+  `thread`, `fax`, `voicemail`, `contacts`. The `voicemail` and
+  `contacts` events are payload-less NUDGES (the panel re-fetches
+  with per-session credentials). New live surfaces follow the morph
+  pattern.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
@@ -171,9 +170,8 @@ the island remotely — re-run it after any markup change.
   only successes are recorded (failures stay retryable); replays
   answer `202` inertly. The window only has to cover provider BURST
   retries; status transitions converge, so no persistence.
-- **Owner scoping everywhere**: every store query is
-  extension-scoped; attachments/faxes stream through session-gated
-  handlers only.
+- **Owner scoping everywhere**: every store query is extension-scoped;
+  attachments/faxes stream through session-gated handlers only.
 - **One-home helpers from the 2026-09-22 dedup train**: `listRows[T]`
   (store/db.go) owns the query→close→scan→`rows.Err()` lifecycle for
   every list query and wraps both failure shapes with the `op`
@@ -190,9 +188,8 @@ the island remotely — re-run it after any markup change.
   phone), keeping the old id on rename). The legacy
   `localStorage["pbx-contacts"]` list imports once post-login and is
   REMOVED only after the server accepted every row (failed imports
-  retry; upsert makes re-import idempotent). Load trigger:
-  session.js dispatches `wp:session-opened` AFTER cookie mint + CSRF
-  adoption. History stays hybrid BY DESIGN (local session log + same
+  retry; upsert makes re-import idempotent). Load trigger: session.js
+  dispatches `wp:session-opened` AFTER cookie mint + CSRF adoption. History stays hybrid BY DESIGN (local session log + same
   CDR API) — not a split brain, don't "fix" it.
 - **Tab→island affordances live in shell.js**, never island modules
   — the shell must keep working when island scripts fail. shell.js
