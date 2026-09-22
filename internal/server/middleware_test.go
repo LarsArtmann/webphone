@@ -229,6 +229,56 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	if !ok || csrf.Get == nil {
 		t.Error("/api/csrf must document GET")
 	}
+	contacts, ok := doc.Paths["/api/contacts"]
+	if !ok || contacts.Get == nil || contacts.Post == nil || contacts.Delete == nil {
+		t.Error("/api/contacts must document GET, POST and DELETE")
+	}
+}
+
+// TestOpenAPIContactsMatchesHandlers pins the contacts spec against the
+// handlers it describes: every documented response code is one the
+// handler actually emits, and the 429 the limiter adds (T12) is
+// documented with its Retry-After header — the spec must not promise
+// (or hide) behavior the route does not have.
+func TestOpenAPIContactsMatchesHandlers(t *testing.T) {
+	var doc struct {
+		Paths map[string]map[string]struct {
+			Responses map[string]struct {
+				Headers map[string]any `json:"headers"`
+			} `json:"responses"`
+		} `json:"paths"`
+	}
+	if err := json.Unmarshal([]byte(openapiSpec), &doc); err != nil {
+		t.Fatalf("openapiSpec is not JSON: %v", err)
+	}
+	contacts := doc.Paths["/api/contacts"]
+	if contacts == nil {
+		t.Fatal("/api/contacts missing from the spec")
+	}
+
+	post := contacts["post"]
+	for _, code := range []string{"204", "400", "401", "422", "429", "500"} {
+		if _, ok := post.Responses[code]; !ok {
+			t.Errorf("POST /api/contacts spec missing documented response %s", code)
+		}
+	}
+	if _, ok := post.Responses["429"].Headers["Retry-After"]; !ok {
+		t.Error("POST /api/contacts 429 must document the Retry-After header (limiter contract)")
+	}
+
+	del := contacts["delete"]
+	for _, code := range []string{"204", "401", "404"} {
+		if _, ok := del.Responses[code]; !ok {
+			t.Errorf("DELETE /api/contacts spec missing documented response %s", code)
+		}
+	}
+
+	get := contacts["get"]
+	for _, code := range []string{"200", "401", "500"} {
+		if _, ok := get.Responses[code]; !ok {
+			t.Errorf("GET /api/contacts spec missing documented response %s", code)
+		}
+	}
 }
 
 // TestRequestIDEnrichmentWiredIntoTheChain guards the observability wiring:
