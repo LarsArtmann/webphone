@@ -72,6 +72,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   comparison runs both sides through `ParsePhone` (config DID spacing
   cannot hide the match); pinned by `TestIsSelfThread` and
   `TestThreadViewWarnsOnSelfSend`.
+- Composer UX batch (plan
+  `docs/planning/2026-09-22_16-36_SUPERB-composer-ux.md`): message
+  composers are auto-growing textareas (Enter sends, Shift+Enter breaks
+  a line — IME-composition guarded, shell.js; the multipart wire format
+  is unchanged), a correct SMS segment counter shows "N SMS" past one
+  segment (GSM-7 160/153 with two-unit extension characters, UCS-2
+  70/67 — language-neutral by design), attachment chips with remove
+  cover the reply and fax file inputs (DataTransfer rebuild,
+  feature-detected; the native input stays the fallback), and German
+  renders 24h timestamps (`formatClock` "16:09" for bubbles,
+  `formatStamp` "22.09. 16:09" for row fallbacks in messages, fax and
+  voicemail) while English output stays byte-identical. Pinned by
+  `TestFormatClockAndStampFollowLanguage`,
+  `TestComposerCarriesSegmentCounterAndTextarea`,
+  `TestBubbleClockFollowsLanguage`, and five composer specs in
+  `island-tests/composer.test.mjs` (49/49 node tests).
 
 ### Changed
 
