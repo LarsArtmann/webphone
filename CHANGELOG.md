@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   store already sweeps its own expiry. Pinned by a store sweep test
   (old-only deletion, live content kept, idempotent second pass,
   empty-thread age rule).
+- Short-lived TURN credentials (plan T26b): `turn_rest.secret` +
+  `turn_rest.ttl` (default 48h). When the secret is set, `/config.js`
+  derives a coturn REST pair per response (username = unix expiry,
+  credential = base64(HMAC-SHA1(secret, username))) for every
+  `turn:`/`turns:` entry, so a long-lived TURN password never sits in
+  config or the browser; STUN-only entries and the static passthrough
+  (secret unset) stay verbatim. Validation rejects a secret without a
+  TURN URL (dead config) and non-positive TTLs.
 - Per-thread composer drafts (plan T21d): message text survives tab
   and thread switches — the paths that re-render the composer empty.
   Drafts save debounced (4k cap), restore only into an EMPTY composer,

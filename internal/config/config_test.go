@@ -381,3 +381,66 @@ func TestValidateRejectsUnknownTimezone(t *testing.T) {
 		t.Error("a typo'd zone name must fail validation, not silently render UTC")
 	}
 }
+
+func TestTurnRESTConfig(t *testing.T) {
+	t.Run("default ttl is the 48h credential window", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.TURN.Secret != "" {
+			t.Errorf("turn_rest.secret: got %q, want empty default", cfg.TURN.Secret)
+		}
+		if cfg.TURN.TTL != 48*time.Hour {
+			t.Errorf("turn_rest.ttl: got %s, want the 48h default", cfg.TURN.TTL)
+		}
+	})
+
+	t.Run("secret without a turn url is dead config", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{
+			"ice_servers": [{"urls": ["stun:stun.example.org:3478"]}],
+			"turn_rest": {"secret": "coturn-shared-secret"}
+		}`))
+
+		_, err := Load()
+		if err == nil || !strings.Contains(err.Error(), "dead config") {
+			t.Fatalf("error %v, want the dead-config rejection (a secret no TURN server ever sees)", err)
+		}
+	})
+
+	t.Run("secret with a turn url loads and keeps the ttl default", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{
+			"ice_servers": [{"urls": ["turn:turn.example.org:3478?transport=udp"]}],
+			"turn_rest": {"secret": "coturn-shared-secret"}
+		}`))
+
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.TURN.Secret != "coturn-shared-secret" {
+			t.Errorf("turn_rest.secret: got %q", cfg.TURN.Secret)
+		}
+		if cfg.TURN.TTL != 48*time.Hour {
+			t.Errorf("turn_rest.ttl: got %s, want the 48h default", cfg.TURN.TTL)
+		}
+	})
+
+	t.Run("non-positive ttl with a secret is rejected", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{
+			"ice_servers": [{"urls": ["turn:turn.example.org:3478"]}],
+			"turn_rest": {"secret": "s", "ttl": "0s"}
+		}`))
+
+		_, err := Load()
+		if err == nil || !strings.Contains(err.Error(), "turn_rest.ttl must be positive") {
+			t.Fatalf("error %v, want the ttl rejection", err)
+		}
+	})
+}

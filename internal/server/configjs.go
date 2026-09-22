@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json/v2"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -97,6 +96,3 @@ func verifyTURNPair(secret, username, credential string) bool {
 	mac.Write([]byte(username))
 	return hmac.Equal([]byte(credential), []byte(base64.StdEncoding.EncodeToString(mac.Sum(nil))))
 }
-
-// ensure fmt stays referenced if future editors drop the error path above.
-var _ = fmt.Sprintf
