@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Call cards carry a state chip + spoken transitions (plan T20a):
+  `data-state` (ringing/established/ending) drives a colored dot —
+  pulsing while ringing, green when established,
+  `prefers-reduced-motion` aware — and state TRANSITIONS announce
+  through the toast live region (en/de); the per-second duration tick
+  stays silent.
+- Affordances across the surfaces (plan T20c/d/e): thread-LIST rows
+  offer a dial button OUTSIDE the anchor; history and voicemail rows
+  offer `data-sms` (Messages tab, recipient prefilled) and the ☆
+  save-as-contact bridging to the island (`wp:save-contact` — the
+  island keeps sole /api/contacts ownership, saved/failed toasts en/de,
+  the CDR's caller-id name rides along first).
 - Bounded retention (plan T25): `retention_days` (default 0 = keep
   everything forever). When set, a daily sweep (boot + 24h ticker in
   the binary — no extra endpoint to protect) deletes messages with
@@ -23,6 +35,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Drafts save debounced (4k cap), restore only into an EMPTY composer,
   and clear after a successful send; a failed send keeps the draft for
   the retry. Pinned by a shell spec driving the real listeners.
+- The failed bubble tells its story (plan T21a/b): failure kind +
+  reason persist on the message row (idempotent column migration);
+  the send path classifies (rejection vs transient via the error
+  family), the delivery webhook persists the provider reason, and a
+  delivered verdict clears it. The bubble shows the reason and a
+  retry form (same recipient + body) ONLY for transient failures; the
+  delivered badge gained the ✓ glyph.
+- Inline image thumbnails with sniffed types (plan T21c + T26e):
+  image attachments render lazy CSS-scaled inline; the server no
+  longer trusts client-declared multipart types
+  (http.DetectContentType when missing or octet-stream). The
+  legacy-contacts migration announces itself (en/de toast).
 - Single-source DOM contract (plan T22): the 35 island element ids now
   live in `docs/dom-contract.md`; `TestServedPageHoldsTheDomContract`
   parses that file as the golden source, so the test, AGENTS, and the
@@ -109,6 +133,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/favicon.ico` answers with the SVG icon (plan T27b); the views
+  gained the i18n referenced-keys guard (every `T(lang, "…")` literal
+  must exist in the dictionary — T() would render the raw key at
+  runtime) and a validated `timezone` config key owning every wall
+  clock and log line (plan T27d + T26d).
+- The dial field clears once the INVITE actually went out
+  (`placeCall` reports it; validation errors keep the typed text) —
+  until now the value accumulated, and the stack E2E literally dialed
+  "10011001" on its post-transfer redials.
 - AGENTS.md size pass (plan T16a): 705 → 337 lines. Every rule stays;
   war stories moved to `docs/lessons.md`, the failure→feedback table
   to `docs/error-contract.md` (now carrying the rate-limit-keying ops
