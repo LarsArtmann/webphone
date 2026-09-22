@@ -118,11 +118,14 @@ export function renderCalls() {
     if (!entry.dom) return;
     const sessionState = entry.session.state;
     const stateEl = entry.dom.querySelector(".call-state-text");
+    let dataState = "ending";
     if (sessionState === SIP.SessionState.Established) {
+      dataState = "established";
       stateEl.textContent = entry.transferring
         ? t("transferring")
         : `${entry.held ? t("onHold") : t("inCall")} · ${durationLabel(entry.startedAt)}`;
     } else if (sessionState === SIP.SessionState.Establishing) {
+      dataState = "ringing";
       stateEl.textContent = t("ringing");
     } else if (
       sessionState === SIP.SessionState.Terminating ||
@@ -130,6 +133,8 @@ export function renderCalls() {
     ) {
       stateEl.textContent = t("ending");
     }
+    entry.dom.dataset.state = dataState;
+    announceCallState(entry, dataState);
     entry.dom.classList.toggle("focused", id === state.focusedId);
     const holdBtn = entry.dom.querySelector(".hold-btn");
     holdBtn.textContent = entry.held ? t("resume") : t("hold");
@@ -150,6 +155,23 @@ export function renderCalls() {
   // the module-graph invariant the arch test enforces).
   document.dispatchEvent(new CustomEvent("wp:calls-changed"));
   if (outgoingCount() === 0) ringbackStop();
+}
+
+// announceCallState speaks only state TRANSITIONS through the toast
+// live region: the state text itself swaps silently, and once
+// established it ticks once per second — announcing those would be
+// noise, not signal (screen readers get ringing/connected/ended as
+// discrete events instead).
+function announceCallState(entry, dataState) {
+  if (entry.announcedState === dataState) return;
+  entry.announcedState = dataState;
+  if (dataState === "ringing") {
+    announce(t("callRinging")(entry.target), "info");
+  } else if (dataState === "established") {
+    announce(t("callEstablished")(entry.target), "ok");
+  } else if (dataState === "ending") {
+    announce(t("callEnded")(entry.target), "info");
+  }
 }
 
 function addCallCard(id, target) {

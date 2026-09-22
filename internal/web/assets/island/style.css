@@ -355,6 +355,43 @@ button.small {
   font-variant-numeric: tabular-nums;
 }
 
+/* State chip: the dot's color + motion carries the call state at a
+   glance (data-state set by renderCalls). */
+.call-card .call-state-text::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: var(--muted);
+}
+
+.call-card[data-state="ringing"] .call-state-text::before {
+  background: var(--accent-strong);
+  animation: wp-state-pulse 1.2s ease-in-out infinite;
+}
+
+.call-card[data-state="established"] .call-state-text::before {
+  background: var(--ok);
+}
+
+.call-card[data-state="ending"] .call-state-text::before {
+  background: var(--muted);
+}
+
+@keyframes wp-state-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-card[data-state="ringing"] .call-state-text::before {
+    animation: none;
+  }
+}
+
 /* --- keypad ---------------------------------------------------------------- */
 
 #keypad {
