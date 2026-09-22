@@ -14,8 +14,12 @@ import (
 // Contacts tab, the island's contacts dropdown) with the payload-less
 // "contacts" SSE event — the voicemail-nudge pattern: both consumers
 // re-fetch with their own session credentials instead of trusting a
-// push payload.
+// push payload. A missing hub wiring (fuzz/minimal harnesses) skips
+// the push: one lost nudge is cosmetic, the next mutation catches up.
 func (h *handlers) notifyContactsChanged(extension domain.Extension) {
+	if h.deps.Hubs == nil {
+		return
+	}
 	h.deps.Hubs.Publish(extension, sseEventContacts, "")
 }
 

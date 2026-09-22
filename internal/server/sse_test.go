@@ -3,7 +3,9 @@ package server
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"testing"
@@ -220,8 +222,15 @@ func TestSSEContactsNudgeIsPayloadLess(t *testing.T) {
 	}
 
 	_, listBody := c.do(http.MethodGet, "/api/contacts", nil, "")
-	id := jsonStringField(t, listBody, "id")
-	if resp, body := c.do(http.MethodDelete, "/api/contacts?id="+urlQueryEscape(id), nil, ""); resp.StatusCode != http.StatusNoContent {
+	var listed struct {
+		Personal []struct {
+			ID string `json:"id"`
+		} `json:"personal"`
+	}
+	if err := json.Unmarshal(listBody, &listed); err != nil || len(listed.Personal) == 0 {
+		t.Fatalf("list after save: err=%v rows=%d", err, len(listed.Personal))
+	}
+	if resp, body := c.do(http.MethodDelete, "/api/contacts?id="+url.QueryEscape(listed.Personal[0].ID), nil, ""); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", resp.StatusCode, body)
 	}
 	deleted := expectEvent(t, events, "contacts")

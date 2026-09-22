@@ -28,6 +28,10 @@ export function installBrowserGlobals() {
       child.parent = this;
       this.children.unshift(child);
     },
+    replaceChildren(...kids) {
+      for (const kid of kids) kid.parent = this;
+      this.children = [...kids];
+    },
     remove() {
       if (this.parent) {
         this.parent.children = this.parent.children.filter((c) => c !== this);
