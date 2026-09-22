@@ -40,6 +40,19 @@ session produced TWO identical failed rows), and a self-thread
 in-bubble failure story (persisted reason + kind, retry only where
 retryable) is the planned follow-up in TODO_LIST.
 
+## Rate-limit keying (ops note, 2026-09-22)
+
+The login/hook/contacts limiters key on the PEER host
+(`remoteHostKey`, port-stripped). Behind the consuming stack's
+fronting nginx every browser shares the proxy's address — one rate
+bucket for ALL users of a deployment. This is accepted while the
+deployments are small; the widening to per-client keys
+(`KeyExtractorFromClientIP`) is deliberately gated on the stack
+proving X-Forwarded-For sanitization first (spoofable XFF would let
+one client dodge the limiter by rotating a header). If a deployment
+ever sees collective 429s on login, THIS is the first suspect —
+check the limiter's key, not the users.
+
 ## Cross-repo sync
 
 The operator-facing semantics of these surfaces — status meanings,
