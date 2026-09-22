@@ -465,14 +465,14 @@
                   path = pkgs.writeText "backup-retention" (
                     let
                       plainScript =
-                        (lib.evalModules (moduleSet { backup.enable = true; }))
-                        .config.systemd.services.webphone-backup.script;
+                        (lib.evalModules (moduleSet {
+                          backup.enable = true;
+                        })).config.systemd.services.webphone-backup.script;
                       retentionScript =
                         (lib.evalModules (moduleSet {
                           backup.enable = true;
                           backup.retentionDays = 7;
-                        }))
-                        .config.systemd.services.webphone-backup.script;
+                        })).config.systemd.services.webphone-backup.script;
                     in
                     if
                       !lib.hasInfix "snapshots" plainScript
@@ -541,6 +541,7 @@
                     enable = true;
                     package = self'.packages.webphone;
                     backup.enable = true;
+                    backup.retentionDays = 7;
                   };
                   environment.systemPackages = [ pkgs.sqlite ];
                   system.stateVersion = "26.05";
@@ -581,7 +582,28 @@
                 # Online claim: the phone service never restarted for the
                 # backup (uptime predates the oneshot run).
                 machine.succeed(
-                    "systemctl show webphone.service -p NRestarts | grep -q 'NRestarts=0'"
+                "systemctl show webphone.service -p NRestarts | grep -q 'NRestarts=0'"
+                )
+
+                # Retention (retentionDays = 7): plant a stale dated
+                # snapshot AFTER a first successful run (so the StateDirectory
+                # and snapshots/ tree exist under the service user), rerun the
+                # oneshot — the stale directory is pruned, today's dated
+                # snapshot survives with an intact db, and the same-day rerun
+                # must not have used itself as the rsync basis.
+                machine.succeed(
+                "install -d -o webphone -g webphone /var/lib/webphone-backup/snapshots/2000-01-01"
+                )
+                machine.succeed(
+                "touch /var/lib/webphone-backup/snapshots/2000-01-01/stale.db && touch -d '2000-01-01' /var/lib/webphone-backup/snapshots/2000-01-01"
+                )
+                machine.succeed("systemctl start webphone-backup.service")
+                machine.succeed("test ! -e /var/lib/webphone-backup/snapshots/2000-01-01")
+                machine.succeed(
+                "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/webphone.db'"
+                )
+                machine.succeed(
+                "sqlite3 '/var/lib/webphone-backup/snapshots/'$(date +%F)'/webphone.db' 'pragma integrity_check' | grep -q '^ok$'"
                 )
               '';
             };

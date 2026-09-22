@@ -265,6 +265,16 @@ python3 scripts/webphone-backup-drill.py   # end-to-end restore drill (boots a t
 3. start the service — sessions are in-memory by design, so nothing
    else to replay; sign in and the tabs render from the restored store.
 
+Dated history (point-in-time restore): set
+`services.webphone.backup.retentionDays` (default `null` = single
+latest snapshot, the historical behavior). When set — e.g. `30` — each
+daily run additionally writes `destDir/snapshots/<date>/` (db + blob
+tree, unchanged blobs hardlinked against the previous snapshot, so a
+month of history typically costs little more than one snapshot) and
+deletes snapshot directories older than the given days. Restore from a
+specific day: stop the service, copy `snapshots/<date>/webphone.db`
+and `snapshots/<date>/files/` back into the data directory, start it.
+
 Keep a copy OFF the machine: the snapshot directory (`destDir`) lives on
 the same host as the service, so it is not a backup yet — a disk loss
 takes both. Point an off-machine restic/borg repository (or any remote
