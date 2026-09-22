@@ -17,11 +17,15 @@ type handlers struct {
 	deps Deps
 	// Per-client flood protection for the unauthenticated-by-session
 	// surfaces: login attempts, inbound webhooks, SSE connects, and the
-	// anonymous CSRF token endpoint.
-	loginLimiter  *httputil.KeyedRateLimiter
-	hookLimiter   *httputil.KeyedRateLimiter
-	eventsLimiter *httputil.KeyedRateLimiter
-	csrfLimiter   *httputil.KeyedRateLimiter
+	// anonymous CSRF token endpoint. Contacts saves carry a session but
+	// join the flood budget class: the legacy import bursts one POST
+	// per row, so it gets the generous hook-grade bucket, not the tight
+	// login one.
+	loginLimiter    *httputil.KeyedRateLimiter
+	hookLimiter     *httputil.KeyedRateLimiter
+	eventsLimiter   *httputil.KeyedRateLimiter
+	csrfLimiter     *httputil.KeyedRateLimiter
+	contactsLimiter *httputil.KeyedRateLimiter
 	// Dedupe memory for replayed provider status callbacks (provider_ref).
 	hooksIdem *idemStore
 	// Memoized nav-badge totals, invalidated on every unread mutation.

@@ -48,14 +48,18 @@ const contentSecurityPolicy = "default-src 'self'; " +
 
 // Rate limits for the two flood-sensitive surfaces, per client IP:
 // login attempts (password guessing) and inbound webhooks (provider
-// floods share one source behind the stack's proxy). Windows are one
-// minute; httputil computes Retry-After from the window instead of a
-// hardcoded guess.
+// floods share one source behind the stack's proxy). Contacts saves
+// get the hook-grade budget: the legacy-import path bursts one POST
+// per row, so the burst must cover a realistic import while still
+// fencing runaway write loops. Windows are one minute; httputil
+// computes Retry-After from the window instead of a hardcoded guess.
 const (
-	loginLimit = 30
-	loginBurst = 5
-	hookLimit  = 60
-	hookBurst  = 60
+	loginLimit     = 30
+	loginBurst     = 5
+	hookLimit      = 60
+	hookBurst      = 60
+	contactsLimit  = 60
+	contactsBurst  = 60
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -145,10 +149,11 @@ func New(deps Deps) http.Handler {
 	lifetime := session.Lifetime{Idle: deps.Config.SessionTTL, Max: deps.Config.SessionMaxTTL}
 	h := &handlers{
 		deps:          deps,
-		loginLimiter:  newKeyedRateLimiter(loginLimit, loginBurst),
-		hookLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
-		eventsLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
-		csrfLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
+		loginLimiter:    newKeyedRateLimiter(loginLimit, loginBurst),
+		hookLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
+		eventsLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
+		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
+		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
 		unread:        newUnreadCache(5 * time.Second),
 		hooksIdem:     newIdemStore(hookIdempotencyTTL),
 	}
@@ -202,7 +207,7 @@ func New(deps Deps) http.Handler {
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
 	protected.HandleFunc("GET /api/contacts", h.apiListContacts)
-	protected.HandleFunc("POST /api/contacts", h.apiSaveContact)
+	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiSaveContact)))
 	protected.HandleFunc("DELETE /api/contacts", h.apiDeleteContact)
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
@@ -455,6 +460,96 @@ const openapiSpec = `{
               "Retry-After": {"schema": {"type": "integer"}, "description": "Seconds until the bucket refills"}
             }
           }
+        }
+      }
+    },
+    "/api/contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "List the session extension's personal contacts plus the configured shared contacts",
+        "responses": {
+          "200": {
+            "description": "Personal (store-backed, per extension) and shared (config) contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["personal", "shared"],
+                  "properties": {
+                    "personal": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "name", "number"],
+                        "properties": {
+                          "id": {"type": "string", "description": "Branded contact id; the LIST is the only drift-free id source (renames keep the old id)"},
+                          "name": {"type": "string"},
+                          "number": {"type": "string", "examples": ["+4917012345678"]}
+                        }
+                      }
+                    },
+                    "shared": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["name", "number"],
+                        "properties": {
+                          "name": {"type": "string"},
+                          "number": {"type": "string"}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "No live session"},
+          "500": {"description": "Store failure"}
+        }
+      },
+      "post": {
+        "operationId": "saveContact",
+        "summary": "Upsert one personal contact (a repeated number renames; mutations answer 204 and the list is the id source)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["number"],
+                "properties": {
+                  "name": {"type": "string"},
+                  "number": {"type": "string", "examples": ["+4917012345678"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {"description": "Saved (upsert by number within the session's extension)"},
+          "400": {"description": "Invalid body (or body over 4 KiB)"},
+          "401": {"description": "No live session"},
+          "422": {"description": "Number failed dialable validation"},
+          "429": {
+            "description": "Per-client write flood budget exhausted (generous: the legacy import bursts one POST per row); retry after the Retry-After seconds",
+            "headers": {
+              "Retry-After": {"schema": {"type": "integer"}, "description": "Seconds until the bucket refills"}
+            }
+          },
+          "500": {"description": "Store failure"}
+        }
+      },
+      "delete": {
+        "operationId": "deleteContact",
+        "summary": "Delete one personal contact by id (scoped to the session's extension)",
+        "parameters": [
+          {"name": "id", "in": "query", "required": true, "schema": {"type": "string"}}
+        ],
+        "responses": {
+          "204": {"description": "Deleted"},
+          "401": {"description": "No live session"},
+          "404": {"description": "Unknown id (or another extension's contact)"}
         }
       }
     }

@@ -129,6 +129,41 @@ func TestEventsRateLimitBounded(t *testing.T) {
 	}
 }
 
+// TestContactsSaveRateLimitPerClient pins the write bound on the
+// contacts JSON API: POST /api/contacts shares the flood-budget class
+// (60/min burst 60 — generous enough that the legacy import's one-POST-
+// per-row burst never trips it in normal sizes), while the read side
+// (GET list) rides no limiter and keeps answering after the write
+// bucket drains.
+func TestContactsSaveRateLimitPerClient(t *testing.T) {
+	server := newTestServer(t)
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	limited := false
+	for i := range contactsBurst + 5 {
+		resp, _ := c.do(http.MethodPost, "/api/contacts",
+			[]byte(`{"name":"flood `+strconv.Itoa(i)+`","number":"+49170"+strconv.Itoa(1000000+i)}`),
+			"application/json")
+		if resp.StatusCode == http.StatusTooManyRequests {
+			limited = true
+			retryAfter(t, resp)
+			break
+		}
+	}
+	if !limited {
+		t.Errorf("contacts saves never hit the rate limit after %d posts", contactsBurst+5)
+	}
+
+	resp, body := c.do(http.MethodGet, "/api/contacts", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("list after write flood got %d, want 200 (reads carry no limiter)", resp.StatusCode)
+	}
+	if len(body) == 0 {
+		t.Error("contacts list body empty after flood")
+	}
+}
+
 // TestHookLimiterWrapsSecretGate pins the middleware order decided when
 // the hooks landed: the limiter sits OUTSIDE the secret gate, so (a) a
 // flood is 429'd even when every request also fails the gate, and (b) an
