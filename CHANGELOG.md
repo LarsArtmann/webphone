@@ -157,6 +157,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gzipped by nginx itself); module-eval stand-in pinned.
 - Signed release tags (plan T27c): `scripts/release.sh` now cuts
   `git tag -s` and verifies the signature locally before pushing.
+- Thread search in the Messages tab (ux-raw-ideas E): a debounced
+  search form (300 ms, morph-safe focus via `wp-thread-search-input`)
+  filters threads by remote or any message body — `SearchThreads`
+  matches with `ESCAPE '\''` handling so `%`/`_` search literally,
+  orders by last activity, and stays owner-scoped (7-case store test).
+  Live SSE pushes are suppressed while a query is active (shell.js
+  guard) so a filtered view is never stomped by a newest-row push.
+- Audio output picker (ux-raw-ideas F): when the machine exposes two
+  or more real outputs, the island unhides a `setSinkId` picker for the
+  REMOTE audio only (ring tones stay room alarms); the pick persists
+  in `localStorage["wp-sink"]`, follows `devicechange` with live
+  selection preserved, re-labels on language change, and every
+  unsupported/failure path stays hidden (6 island specs incl. the
+  single-output env).
+- Idempotent CRM call journal: `POST /api/calls` accepts an
+  island-generated UUID `key` — a browser-level retry or double-fire
+  replays the SAME key and journals once (replay answers inert 204);
+  a failed (502) attempt stays retryable, the silent unknown-number
+  drop consumes its key too, and an absent/empty key keeps the legacy
+  never-dedupe shape (4 new contract tests). The island sends
+  `crypto.randomUUID()` per ended call; dedupe is extension-
+  namespaced with its own 1h TTL store.
+- CRM resolver hardening: a 30-row history cache-miss burst now
+  fans out ONE upstream lookup per number (leader/waiter single-
+  flight, waiters honor their own context), and the resolver
+  counts upstream outcomes (hit/miss/failure, upstream round-trips
+  only — cache hits don't count). Both nil-safe, race-tested.
+- `/metrics` gains `webphone_crm_lookups_total{outcome="hit|miss
+  |failure"}` when the CRM integration is on; the family is absent
+  entirely when off (a disabled deploy must not publish zero-lines
+  that read as "CRM broken"). Aggregates only — pinned by the
+  leak-guard.
 
 ### Changed
 
@@ -191,6 +223,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - templ-components bumped v1.18.0 → v1.19.2 (upstream: popover/dropdown
   positioning fixes, `DropdownProps.Trigger`, `ListNote` count variant,
   `NoMainWrapper`, `NoThemeScript`).
+- `crm.Client` adopts the same disabled-policy chokepoint as
+  `pbx.Client` (a `do()` prologue that fails every method with the
+  sentinel when the integration is unconfigured; a nil client is
+  nil-safe) — the deliberate split brain between the two gateway
+  seams is closed, and a disabled CRM builds no URL at all.
 
 ## [2.5.0] - 2026-09-22
 

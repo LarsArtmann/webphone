@@ -280,6 +280,18 @@ ports of already-pinned paths.
   CSRF — machine surface) and gained `phones` on contacts
   (comma/semicolon-split ONLY — whitespace is formatting inside a
   number; verbatim at rest). Both sides' tests pin the wire shapes.
+  Hardening (2026-09-22 night): `crm.Client` uses the SAME `do()`
+  disabled-policy chokepoint as `pbx.Client` (nil-safe, `ErrDisabled`
+  everywhere, no URL built when off) — the split brain is closed.
+  `Resolver` single-flights concurrent misses (one upstream lookup
+  per number; waiters honor their own ctx) and counts upstream
+  outcomes (`LookupCounters` hit/miss/failure, upstream round-trips
+  only) → `/metrics` renders `webphone_crm_lookups_total{outcome=…}`
+  only when `CRM.Enabled()`. The call journal is idempotent: the
+  island sends `crypto.randomUUID()` per ended call, `POST /api/calls`
+  dedupes on the extension-namespaced `key` (`callsIdem`, own 1h TTL;
+  replay = inert 204, 502 stays retryable, the unknown-number drop
+  consumes its key too, absent key = legacy never-dedupe).
 - erraudit honors `//nolint:erraudit // reason`; branching-flow
   honors NO nolint (documented skip in `.buildflow.yml`; same for
   go-structure-linter, cqrs-lint, nix-hash-fix). **The erraudit
