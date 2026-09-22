@@ -66,12 +66,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   where sofia said `user_not_registered` while the island kept its dead
   Registerer forever). The reconnect retry path also rebuilds on a
   Terminated registerer instead of retrying `register()` on a dead
-  object; a bogus-credentials LOGIN still shows the `registration
-  rejected` pill with no rebuild loop (E2E contract preserved). Pinned
-  by `island-tests/connection.test.mjs` (six scenarios over a SIP.js
-  stub: happy path, lost/terminated-after-registered rebuilds,
-  bogus-login pill, Terminated-registerer retry rebuild, logout
-  inertness).
+  object, a registration lost during a transport OUTAGE stays on the
+  backoff (no rebuild into a dead network), and an INDEPENDENT
+  cycle-deadline timer (15s) force-rebuilds if a reconnect cycle wedges
+  without settling. A bogus-credentials LOGIN still shows the
+  `registration rejected` pill with no rebuild loop (E2E contract
+  preserved). Pinned by `island-tests/connection.test.mjs` (nine
+  scenarios over a SIP.js stub: happy path, lost/terminated-after-
+  registered rebuilds, bogus-login pill, Terminated-registerer retry
+  rebuild, logout inertness, outage gate, cycle deadline, stale pill).
+- The reconnect pill no longer lies after a successful recovery:
+  sip.js fires NO `stateChange` when a Registerer re-registers without
+  having left `Registered` (a transport loss does not demote it), so
+  the pill kept showing the last backoff state ("reconnecting in 4s
+  (try 2)") while the phone was fully re-registered — the 2026-09-22
+  E2E failure chain started exactly there (the suite read the stale
+  pill as "stuck", fell back to reloads, and the reloaded pages
+  resumed without a login click). The reconnect success path now sets
+  the registered pill explicitly (plus the preserved-sessions note).
+  Same class as the watchdog's bounded rebuild: recovery must never
+  depend on a state event that only fires on a transition.
 - Provider rejections no longer masquerade as "The message gateway is
   unreachable": a non-2xx gateway ANSWER is now a typed
   `gateway.ErrProviderRejected` whose detail (unwrapped from the

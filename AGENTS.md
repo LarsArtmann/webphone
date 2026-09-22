@@ -441,6 +441,18 @@ Ginkgo DescribeTable when the subject is a state machine.
   Pinned by `island-tests/connection.test.mjs`. The stack E2E carries
   the sofia tripwire for recurrences (`REGS-AT-RECONNECT`/
   `REGS-AT-DIAL` dumps in its browser.nix).
+- **sip.js fires NO stateChange when a Registerer re-registers without
+  leaving `Registered`** (a transport loss does not demote it): any UI
+  that keys on registration state must be refreshed by the recovery
+  path itself, never only by the listener. The 2026-09-22 E2E chain:
+  reconnect succeeded, the pill stayed on the stale backoff text, the
+  suite read "stuck", reload-fell-back, and the resumed pages never
+  clicked login (breaking the notification-permission marker). The
+  reconnect success path in `connection.js` sets the pill explicitly.
+  The stack E2E suite runs ~293-322s under the 2026-09-22 scenario set
+  (restart + transfer + FS-outage drills) — the old 151s wall-time
+  budget is STALE until re-baselined; both 2026-09-22 validation runs
+  recovered via `RECONNECT-RECOVERY: auto (watchdog)`.
 - SDK decision: KEEP sip.js 0.21.2; **JsSIP 3.13.8 is the named
   fallback** (the only maintained alternative). Swap ONLY on Chromium
   WebRTC breakage, a sip.js security advisory, or a needed capability —
