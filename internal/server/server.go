@@ -54,12 +54,12 @@ const contentSecurityPolicy = "default-src 'self'; " +
 // fencing runaway write loops. Windows are one minute; httputil
 // computes Retry-After from the window instead of a hardcoded guess.
 const (
-	loginLimit     = 30
-	loginBurst     = 5
-	hookLimit      = 60
-	hookBurst      = 60
-	contactsLimit  = 60
-	contactsBurst  = 60
+	loginLimit    = 30
+	loginBurst    = 5
+	hookLimit     = 60
+	hookBurst     = 60
+	contactsLimit = 60
+	contactsBurst = 60
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -148,14 +148,14 @@ func New(deps Deps) http.Handler {
 	// behavior instead of renewing against a zero cap.
 	lifetime := session.Lifetime{Idle: deps.Config.SessionTTL, Max: deps.Config.SessionMaxTTL}
 	h := &handlers{
-		deps:          deps,
+		deps:            deps,
 		loginLimiter:    newKeyedRateLimiter(loginLimit, loginBurst),
 		hookLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		eventsLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
-		unread:        newUnreadCache(5 * time.Second),
-		hooksIdem:     newIdemStore(hookIdempotencyTTL),
+		unread:          newUnreadCache(5 * time.Second),
+		hooksIdem:       newIdemStore(hookIdempotencyTTL),
 	}
 
 	// The CSRF-protected surface: pages, partials, tab actions, the

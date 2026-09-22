@@ -66,3 +66,15 @@ func avatarHue(nameOrNumber string) int {
 func avatarHueClass(nameOrNumber string) string {
 	return "wp-av-h" + fmtInt(avatarHue(nameOrNumber)/10*10)
 }
+
+// displayName prefers the CRM-resolved contact name and falls back to the
+// raw number, so no surface ever renders blank when the integration is off
+// or the number is unknown. The number itself stays on the functional
+// attributes (data-dial, hidden inputs, avatar seed) — only the visible
+// label switches to the name.
+func displayName(number string, names map[string]string) string {
+	if name, ok := names[number]; ok && name != "" {
+		return name
+	}
+	return number
+}
