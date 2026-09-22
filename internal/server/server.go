@@ -588,6 +588,43 @@ const openapiSpec = `{
           "404": {"description": "Unknown id (or another extension's contact)"}
         }
       }
+    },
+    "/api/calls": {
+      "post": {
+        "operationId": "logCall",
+        "summary": "Journal one finished call on the CRM contact that owns the number (no-op when the CRM is disabled or the number matches no contact — the integration never creates contacts)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["number", "direction"],
+                "properties": {
+                  "number": {"type": "string", "examples": ["+4917012345678"]},
+                  "direction": {"type": "string", "enum": ["in", "out"]},
+                  "seconds": {"type": "integer", "description": "Duration in seconds; negative values are clamped to 0"},
+                  "outcome": {"type": "string", "enum": ["answered", "missed"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {"description": "Logged, or deliberately dropped (CRM disabled, or the number matches no CRM contact)"},
+          "400": {"description": "Malformed body, or direction not in/out"},
+          "401": {"description": "No live session"},
+          "403": {"description": "CSRF token missing or invalid"},
+          "422": {"description": "Number failed dialable validation"},
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); retry after the Retry-After seconds",
+            "headers": {
+              "Retry-After": {"schema": {"type": "integer"}, "description": "Seconds until the bucket refills"}
+            }
+          },
+          "502": {"description": "The CRM could not record the call (unreachable or 5xx) — the island toasts"}
+        }
+      }
     }
   }
 }`

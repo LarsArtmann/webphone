@@ -233,6 +233,10 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	if !ok || contacts.Get == nil || contacts.Post == nil || contacts.Delete == nil {
 		t.Error("/api/contacts must document GET, POST and DELETE")
 	}
+	calls, ok := doc.Paths["/api/calls"]
+	if !ok || calls.Post == nil {
+		t.Error("/api/calls must document POST")
+	}
 }
 
 // TestOpenAPIContactsMatchesHandlers pins the contacts spec against the
@@ -278,6 +282,36 @@ func TestOpenAPIContactsMatchesHandlers(t *testing.T) {
 		if _, ok := get.Responses[code]; !ok {
 			t.Errorf("GET /api/contacts spec missing documented response %s", code)
 		}
+	}
+}
+
+// TestOpenAPICallLogMatchesHandler pins the /api/calls spec against the
+// handler it describes: every documented response is one apiLogCall (or
+// its limiter) actually emits, and the shared contacts budget's 429
+// carries the Retry-After header — the spec must not promise (or hide)
+// behavior the route does not have.
+func TestOpenAPICallLogMatchesHandler(t *testing.T) {
+	var doc struct {
+		Paths map[string]map[string]struct {
+			Responses map[string]struct {
+				Headers map[string]any `json:"headers"`
+			} `json:"responses"`
+		} `json:"paths"`
+	}
+	if err := json.Unmarshal([]byte(openapiSpec), &doc); err != nil {
+		t.Fatalf("openapiSpec is not JSON: %v", err)
+	}
+	post := doc.Paths["/api/calls"]["post"]
+	if post == nil {
+		t.Fatal("/api/calls must document POST")
+	}
+	for _, code := range []string{"204", "400", "401", "403", "422", "429", "502"} {
+		if _, ok := post.Responses[code]; !ok {
+			t.Errorf("POST /api/calls spec missing documented response %s", code)
+		}
+	}
+	if _, ok := post.Responses["429"].Headers["Retry-After"]; !ok {
+		t.Error("POST /api/calls 429 must document the Retry-After header (limiter contract)")
 	}
 }
 
