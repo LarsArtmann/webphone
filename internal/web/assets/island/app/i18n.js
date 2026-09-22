@@ -148,7 +148,6 @@ export const I18N = {
     ringing: "klingelt…",
     callRinging: (target) => `klingelt bei ${target}`,
     callEstablished: (target) => `verbunden mit ${target}`,
-    callEnded: (target) => `Anruf beendet: ${target}`,
     ending: "wird beendet…",
     transfer: "Weiterleiten",
     transferPrompt: "weiterleiten an",
