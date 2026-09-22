@@ -228,6 +228,8 @@ els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 
 initShortcuts();
 initSseLiveIndicator();
+initDialTypeahead();
+relabelTypeahead(t("typeaheadLabel"));
 
 // Server-driven toasts: tab-action responses carry an HX-Trigger header
 // ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});

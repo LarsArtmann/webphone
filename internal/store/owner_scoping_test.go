@@ -85,6 +85,17 @@ func TestOwnerScopedReads(t *testing.T) {
 		}
 	})
 
+	t.Run("ListThreads", func(t *testing.T) {
+		ownerThreads, err := f.messages.ListThreads(ctx, f.owner)
+		if err != nil || len(ownerThreads) != 1 {
+			t.Fatalf("owner ListThreads: %d threads, err %v", len(ownerThreads), err)
+		}
+		foreignThreads, err := f.messages.ListThreads(ctx, f.foreign)
+		if err != nil || len(foreignThreads) != 0 {
+			t.Fatalf("foreign ListThreads leaked %d threads (err %v)", len(foreignThreads), err)
+		}
+	})
+
 	t.Run("ListMessages", func(t *testing.T) {
 		msgs, err := f.messages.ListMessages(ctx, f.owner, f.threadID, 10)
 		if err != nil || len(msgs) != 1 {

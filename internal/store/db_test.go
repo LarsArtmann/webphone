@@ -2,9 +2,12 @@ package store
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"strings"
 	"testing"
+
+	"modernc.org/sqlite"
 )
 
 // Contract pins for the listRows extraction (2026-09-22 dedup train):
@@ -42,21 +45,39 @@ func TestListRowsErrorShapes(t *testing.T) {
 	})
 
 	t.Run("iteration failure wraps the op rows shape", func(t *testing.T) {
-		iterCtx, cancel := context.WithCancel(ctx)
-		defer cancel()
-		scanCancels := func(row rowScanner) (int, error) {
-			n, scanErr := scanNum(row)
-			// Cancel mid-iteration: the NEXT rows.Next() fails, so the
-			// failure must surface through the rows.Err() wrap, not the
-			// scan pass-through.
-			cancel()
-			return n, scanErr
+		// A scalar UDF that answers the first call and fails the second
+		// makes the ITERATION fail deterministically (the query itself
+		// succeeds): the failure must surface through the rows.Err()
+		// wrap with the op shape, not the scan pass-through.
+		calls := 0
+		sqlite.MustRegisterScalarFunction("wp_test_boom_second_call", 0,
+			func(_ *sqlite.FunctionContext, _ []driver.Value) (driver.Value, error) {
+				calls++
+				if calls > 1 {
+					return nil, errors.New("boom on second call")
+				}
+				return int64(1), nil
+			})
+
+		udfDB, err := Open(":memory:")
+		if err != nil {
+			t.Fatal(err)
 		}
-		_, err := listRows(iterCtx, db, "walk nums", `SELECT n FROM nums`, nil, scanCancels)
+		t.Cleanup(func() { _ = udfDB.Close() })
+		if _, err := udfDB.ExecContext(ctx, `CREATE TABLE nums (n INTEGER)`); err != nil {
+			t.Fatal(err)
+		}
+		for range 2 {
+			if _, err := udfDB.ExecContext(ctx, `INSERT INTO nums (n) VALUES (7)`); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		_, err = listRows(ctx, udfDB, "walk nums", `SELECT wp_test_boom_second_call() FROM nums`, nil, scanNum)
 		if err == nil || !strings.Contains(err.Error(), "walk nums rows:") {
 			t.Fatalf("iteration failure must carry the op-rows wrap, got %v", err)
 		}
-		if !errors.Is(err, context.Canceled) {
+		if !strings.Contains(err.Error(), "boom on second call") {
 			t.Fatalf("iteration failure must wrap the driver cause, got %v", err)
 		}
 	})

@@ -22,12 +22,9 @@ class StubEmitter {
   }
 }
 
-const missedEvents = () => {
-  const seen = [];
-  doc.addEventListener("wp:call-missed", (event) => seen.push(event.detail));
-  return () => seen;
-};
-const watch = missedEvents();
+const seen = [];
+doc.addEventListener("wp:call-missed", (event) => seen.push(event.detail));
+const since = (mark) => seen.slice(mark);
 
 // --- path 1: caller gives up while the incoming banner is up -------------
 
@@ -81,6 +78,7 @@ globalThis.AudioContext = class {
 };
 
 test("a caller who gives up before the answer dispatches wp:call-missed", async () => {
+  const mark = seen.length;
   const connection = await import("../island/app/connection.js");
   await connection.connect("1001", "pw");
   const invitation = {
@@ -92,13 +90,14 @@ test("a caller who gives up before the answer dispatches wp:call-missed", async 
   assert.equal(doc.getElementById("incoming-call").hidden, false);
 
   invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
-  const seen = watch();
-  assert.equal(seen.length, 1, "exactly one missed-call event");
-  assert.equal(seen[0].target, "+493012345678");
+  const events = since(mark);
+  assert.equal(events.length, 1, "exactly one missed-call event");
+  assert.equal(events[0].target, "+493012345678");
   assert.equal(doc.getElementById("incoming-call").hidden, true);
 });
 
 test("a deliberate REJECT never dispatches wp:call-missed", async () => {
+  const mark = seen.length;
   const { rejectIncoming } = await import("../island/app/calls.js");
   const connection = await import("../island/app/connection.js");
   const invitation = {
@@ -110,13 +109,14 @@ test("a deliberate REJECT never dispatches wp:call-missed", async () => {
 
   rejectIncoming();
   invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
-  assert.equal(watch().length, 0, "a seen (rejected) call is not missed");
+  assert.equal(since(mark).length, 0, "a seen (rejected) call is not missed");
   connection.disconnect();
 });
 
 // --- path 2: accepted call dies before any media --------------------------
 
 test("an accepted call that dies before media dispatches wp:call-missed", async () => {
+  const mark = seen.length;
   const { sessions } = await import("../island/app/state.js");
   const { bindSession } = await import("../island/app/calls.js");
   const { state } = await import("../island/app/state.js");
@@ -137,14 +137,15 @@ test("an accepted call that dies before media dispatches wp:call-missed", async 
   session.state = globalThis.SIP.SessionState.Terminated;
   session.stateChange.fire(globalThis.SIP.SessionState.Terminated);
 
-  const seen = watch();
-  assert.equal(seen.length, 1, "the dead inbound call counts as missed");
-  assert.equal(seen[0].target, "+441632960111");
+  const events = since(mark);
+  assert.equal(events.length, 1, "the dead inbound call counts as missed");
+  assert.equal(events[0].target, "+441632960111");
   assert.equal(sessions.has("dead-inbound"), false, "session torn down");
   state.focusedId = null;
 });
 
 test("an OUTBOUND call that never connects is not missed", async () => {
+  const mark = seen.length;
   const { sessions } = await import("../island/app/state.js");
   const { bindSession } = await import("../island/app/calls.js");
   const { state } = await import("../island/app/state.js");
@@ -164,7 +165,7 @@ test("an OUTBOUND call that never connects is not missed", async () => {
   session.state = globalThis.SIP.SessionState.Terminated;
   session.stateChange.fire(globalThis.SIP.SessionState.Terminated);
 
-  assert.equal(watch().length, 0, "outbound failures are not missed calls");
+  assert.equal(since(mark).length, 0, "outbound failures are not missed calls");
   sessions.delete("dead-outbound");
   state.focusedId = null;
 });
