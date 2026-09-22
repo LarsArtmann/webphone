@@ -2,8 +2,6 @@ package server
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json/v2"
 	"fmt"
 	"mime/multipart"
@@ -118,9 +116,16 @@ func newTestServerWithConfig(
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
+	// SQLite session store (not the mem store): the /metrics aggregates
+	// count the sessions TABLE, which only the SQLite store's schema
+	// creates — TestMetricsServesAggregatesOnly pins that surface.
+	sessions, err := session.NewSQLiteStore(db, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
 	deps := Deps{
 		Config:    cfg,
-		Sessions:  session.NewMemStore(time.Hour),
+		Sessions:  sessions,
 		Messages:  messages,
 		Faxes:     faxes,
 		Contacts:  store.NewContacts(db),
@@ -383,15 +388,14 @@ func TestNotFoundRendersTheShell(t *testing.T) {
 	}
 }
 
-// TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: every
-// inline script the page serves must be covered by an exact hash in the
-// script-src directive, and vice versa, so a stale hash cannot linger.
-// The single allowed inline script is templ-components' theme preload
-// (see contentSecurityPolicy in server.go); a dependency bump that
-// changes its bytes fails here until the hash is refreshed deliberately.
-// It also pins the htmx-config meta (keeps htmx from injecting
-// CSP-hostile inline indicator styles) and the icon link (without it
-// browsers request /favicon.ico and 404).
+// TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: the
+// page serves ZERO inline scripts and script-src allows none — no hashes,
+// no unsafe-inline — so a dependency bump can never silently change
+// served script bytes (the theme preload ships as the same-origin
+// /assets/theme-preload.js instead; see contentSecurityPolicy in
+// server.go). It also pins the htmx-config meta (keeps htmx from
+// injecting CSP-hostile inline indicator styles) and the icon link
+// (without it browsers request /favicon.ico and 404).
 func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	c := newClient(t)
 	resp, body := c.do(http.MethodGet, "/", nil, "")
@@ -404,27 +408,16 @@ func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	if scriptSrc == "" {
 		t.Fatal("no script-src directive in CSP header")
 	}
-	allowed := map[string]bool{}
-	for _, hash := range regexp.MustCompile(`'sha256-[^']+'`).FindAllString(scriptSrc, -1) {
-		allowed[hash] = true
+	if hashes := regexp.MustCompile(`'sha256-[^']+'|'unsafe-inline'`).FindAllString(scriptSrc, -1); len(hashes) > 0 {
+		t.Errorf("script-src must allow no hashes and no unsafe-inline (zero inline scripts), found %v", hashes)
 	}
-	served := map[string]bool{}
-	for _, match := range regexp.MustCompile(`(?s)<script([^>]*)>(.*?)</script>`).FindAllSubmatch(body, -1) {
-		if strings.Contains(string(match[1]), "src=") {
-			continue
-		}
-		sum := sha256.Sum256(match[2])
-		served[fmt.Sprintf("'sha256-%s'", base64.StdEncoding.EncodeToString(sum[:]))] = true
-	}
-	for hash := range served {
-		if !allowed[hash] {
-			t.Errorf("served inline script %s is not allowed by script-src", hash)
+	for _, match := range regexp.MustCompile(`(?s)<script([^>]*)>`).FindAllSubmatch(body, -1) {
+		if !strings.Contains(string(match[1]), "src=") {
+			t.Errorf("page serves an inline <script> without src: %.80s", match[0])
 		}
 	}
-	for hash := range allowed {
-		if !served[hash] {
-			t.Errorf("script-src allows %s but no served inline script matches it (stale hash?)", hash)
-		}
+	if !strings.Contains(page, `<script src="/assets/theme-preload.js"></script>`) {
+		t.Error("theme preload script tag missing: forced themes would flash the OS theme before shell.js runs")
 	}
 
 	for _, forbidden := range []string{" onclick=", " onload=", " javascript:"} {
