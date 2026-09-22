@@ -590,9 +590,10 @@ func TestThreadSearchFiltersPanel(t *testing.T) {
 		t.Fatalf("no-match search must render the quoted empty state: %.400s", list)
 	}
 
-	// Empty q keeps the plain unfiltered list.
+	// Empty q keeps the plain unfiltered list (quote-terminated match:
+	// wp-thread-row must not also count wp-thread-rowwrap).
 	_, list = c.do(http.MethodGet, "/partials/messages", nil, "")
-	if strings.Count(string(list), "wp-thread-row") != 2 {
+	if strings.Count(string(list), `wp-thread-row"`) != 2 {
 		t.Fatalf("empty q must list every thread: %.400s", list)
 	}
 }

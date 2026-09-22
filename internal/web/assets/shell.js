@@ -315,6 +315,18 @@
         jumpChip = null;
       }
     });
+
+    // 3b-3. Thread-search guard: a live "threads" push re-renders the
+    //     UNFILTERED list, so while the reader has a query in the search
+    //     box that swap would stomp the filtered view and lie about the
+    //     matches. Cancel the push until the box is empty again — the
+    //     next keystroke's debounced fetch re-renders the list anyway.
+    document.addEventListener("htmx:sseBeforeMessage", function (event) {
+      var list = event.target;
+      if (!list || !list.classList || !list.classList.contains("wp-thread-list")) return;
+      var input = document.getElementById("wp-thread-search-input");
+      if (input && input.value.trim() !== "") event.preventDefault();
+    });
     // The island's language switch re-labels itself and re-fetches the open
     // tab; the nav is shell territory, so it asks via this event.
     document.addEventListener("wp:lang-changed", refreshNav);

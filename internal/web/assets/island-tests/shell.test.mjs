@@ -299,3 +299,48 @@ test("missed calls badge in the header and clear when History opens", () => {
 
   doc.querySelector = realQuerySelector;
 });
+
+// 3b-3. Thread-search guard: a live threads push must not stomp an
+// active search; it goes through once the box is empty again. The next
+// keystroke's debounced fetch re-renders the list, so nothing is lost.
+test("live threads pushes are cancelled while a search query is active", () => {
+  const list = doc.createElement();
+  list.className = "wp-thread-list";
+
+  const realQuerySelector = doc.querySelector.bind(doc);
+  const input = { value: "launch code" };
+  doc.querySelector = (selector) =>
+    selector === "#wp-thread-search-input" ? input : realQuerySelector(selector);
+
+  let prevented = 0;
+  doc.dispatch("htmx:sseBeforeMessage", {
+    target: list,
+    preventDefault: () => (prevented += 1),
+  });
+  assert.equal(prevented, 1, "push cancelled while the query is set");
+
+  input.value = "   ";
+  doc.dispatch("htmx:sseBeforeMessage", {
+    target: list,
+    preventDefault: () => (prevented += 1),
+  });
+  assert.equal(prevented, 1, "whitespace-only counts as an empty box");
+
+  input.value = "";
+  doc.dispatch("htmx:sseBeforeMessage", {
+    target: list,
+    preventDefault: () => (prevented += 1),
+  });
+  assert.equal(prevented, 1, "empty box lets the push through");
+
+  // A transcript push (different target) is never touched by the guard.
+  const transcript = doc.createElement();
+  transcript.id = "thread-transcript";
+  doc.dispatch("htmx:sseBeforeMessage", {
+    target: transcript,
+    preventDefault: () => (prevented += 1),
+  });
+  assert.equal(prevented, 1, "the guard only guards the thread list");
+
+  doc.querySelector = realQuerySelector;
+});
