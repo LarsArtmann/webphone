@@ -23,9 +23,8 @@ const CONTACTS = [
 globalThis.window = { PBX_CONFIG: { contacts: CONTACTS } };
 
 const { els } = await import("../island/app/ui.js");
-const { rankContacts, initDialTypeahead, relabelTypeahead } = await import(
-  "../island/app/typeahead.js"
-);
+const { rankContacts, initDialTypeahead, relabelTypeahead } =
+  await import("../island/app/typeahead.js");
 
 const fire = (element, type, event = {}) => {
   for (const fn of element.listeners[type] ?? []) {
@@ -34,14 +33,14 @@ const fire = (element, type, event = {}) => {
 };
 
 test("ranking: name-prefix beats name-contains beats number-contains", () => {
-  assert.deepEqual(rankContacts(CONTACTS, "ann").map((c) => c.name), [
-    "Anna Kellner",
-    "Anna Licht",
-    "Kellerei Anna",
-  ]);
-  assert.deepEqual(rankContacts(CONTACTS, "960").map((c) => c.name), [
-    "Bolt Delivery",
-  ]);
+  assert.deepEqual(
+    rankContacts(CONTACTS, "ann").map((c) => c.name),
+    ["Anna Kellner", "Anna Licht", "Kellerei Anna"],
+  );
+  assert.deepEqual(
+    rankContacts(CONTACTS, "960").map((c) => c.name),
+    ["Bolt Delivery"],
+  );
   assert.deepEqual(rankContacts(CONTACTS, "110"), [{ name: "Zentrum", number: "110" }]);
   assert.deepEqual(rankContacts(CONTACTS, "   "), [], "blank query suggests nothing");
   assert.deepEqual(rankContacts(CONTACTS, "kein treffer"), []);

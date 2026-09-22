@@ -82,7 +82,11 @@ test("choosing an output applies it to the remote audio and persists", () => {
 
   select.value = "";
   select.listeners.change.at(-1)({ target: select });
-  assert.equal(globalThis.localStorage.getItem("wp-sink"), "", "returning to the default persists too");
+  assert.equal(
+    globalThis.localStorage.getItem("wp-sink"),
+    "",
+    "returning to the default persists too",
+  );
 });
 
 test("device churn keeps a live selection and falls back off a dead one", async () => {
@@ -90,7 +94,10 @@ test("device churn keeps a live selection and falls back off a dead one", async 
   select.listeners.change.at(-1)({ target: select });
 
   // Device churn: spk-2 vanishes, a new one appears.
-  outputs = [device("audiooutput", "spk-1", "Speakers"), device("audiooutput", "spk-3", "New dock")];
+  outputs = [
+    device("audiooutput", "spk-1", "Speakers"),
+    device("audiooutput", "spk-3", "New dock"),
+  ];
   for (const fn of listeners.get("devicechange") ?? []) {
     fn({});
   }
