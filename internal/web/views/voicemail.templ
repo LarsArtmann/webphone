@@ -11,11 +11,14 @@ import (
 // SSE event carries no payload (voicemail lives behind the extension's own
 // PBX credentials) — it nudges the tab to re-fetch its partial instead.
 type VoicemailPanelProps struct {
-	Enabled bool
-	Summary pbx.VoicemailSummary
+	Enabled  bool
+	Summary  pbx.VoicemailSummary
 	Messages []pbx.VoicemailMessage
-	Error   string
-	Lang    Lang
+	Error    string
+	// Names maps phone numbers to CRM contact names (optional integration);
+	// unresolved numbers render verbatim.
+	Names map[string]string
+	Lang  Lang
 }
 
 templ VoicemailPanel(props VoicemailPanelProps) {
@@ -46,7 +49,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 			</p>
 		}
 		for _, msg := range props.Messages {
-			@VoicemailRow(msg, props.Lang)
+			@VoicemailRow(msg, props.Names, props.Lang)
 		}
 		if props.Enabled && len(props.Messages) == 0 {
 			<p class="wp-empty">{ T(props.Lang, "vm.empty") }</p>
@@ -54,7 +57,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 	</section>
 }
 
-templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
+templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang) {
 	// Stable ids are the idiomorph persistence contract: the panel re-fetch
 	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
 	// any element whose id exists in BOTH trees morphing it in place — so a
@@ -66,7 +69,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 	// restoreFocus, which equally needs an id to restore to).
 	<article class={ "wp-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
 		<span class="wp-thread-text">
-			<strong class="wp-thread-remote">{ vmCaller(msg, lang) }</strong>
+			<strong class="wp-thread-remote">{ vmCaller(msg, names, lang) }</strong>
 			<span class="wp-muted">{ vmWhen(msg.Created) } · { fmtInt(msg.Seconds) }s</span>
 		</span>
 		<span class="wp-row-actions">
@@ -87,7 +90,12 @@ templ VoicemailRow(msg pbx.VoicemailMessage, lang Lang) {
 	</article>
 }
 
-func vmCaller(msg pbx.VoicemailMessage, lang Lang) string {
+func vmCaller(msg pbx.VoicemailMessage, names map[string]string, lang Lang) string {
+	if msg.CIDNumber != "" {
+		if name, ok := names[msg.CIDNumber]; ok && name != "" {
+			return name
+		}
+	}
 	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber {
 		return msg.CIDName + " (" + msg.CIDNumber + ")"
 	}

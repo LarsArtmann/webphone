@@ -14,6 +14,9 @@ type HistoryPanelProps struct {
 	// Current filter (echoed back into the form after a re-render).
 	Query string
 	Dir   string
+	// Names maps phone numbers to CRM contact names (optional integration);
+	// unresolved numbers render verbatim.
+	Names map[string]string
 	Lang  Lang
 }
 
@@ -56,16 +59,16 @@ templ HistoryPanel(props HistoryPanelProps) {
 			<p class="wp-empty">{ T(props.Lang, "history.empty") }</p>
 		}
 		for _, cdr := range props.Entries {
-			@CDRRow(cdr, props.Lang)
+			@CDRRow(cdr, props.Names, props.Lang)
 		}
 	</section>
 }
 
-templ CDRRow(cdr pbx.CDR, lang Lang) {
+templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 	<article class="wp-row">
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public") } aria-hidden="true">{ cdrDirGlyph(cdr) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
-			<strong class="wp-thread-remote">{ cdrTarget(cdr) }</strong>
+			<strong class="wp-thread-remote">{ displayName(cdrTarget(cdr), names) }</strong>
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
 		</span>
 		if dial := cdrDialTarget(cdr); dial != "" {

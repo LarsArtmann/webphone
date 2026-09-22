@@ -16,7 +16,10 @@ type ThreadsPanelProps struct {
 	Error   string
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	Lang     Lang
+	// Names maps phone numbers to CRM contact names (optional integration);
+	// unresolved numbers render verbatim.
+	Names map[string]string
+	Lang  Lang
 }
 
 templ ThreadsPanel(props ThreadsPanelProps) {
@@ -29,7 +32,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}
 		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
-			@ThreadsList(props.Threads, props.Lang)
+			@ThreadsList(props.Threads, props.Names, props.Lang)
 		</div>
 		if props.Identity != "" {
 			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
@@ -41,16 +44,16 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 // ThreadsList renders the thread rows (or the empty state). It is the
 // payload of the SSE "threads" event, so it must stay swap-safe: no
 // wrapper element, no composer.
-templ ThreadsList(threads []store.ThreadSummary, lang Lang) {
+templ ThreadsList(threads []store.ThreadSummary, names map[string]string, lang Lang) {
 	if len(threads) == 0 {
 		<p class="wp-empty">{ T(lang, "threads.empty") }</p>
 		}
 	for _, summary := range threads {
-		@ThreadRow(summary, lang)
+		@ThreadRow(summary, names, lang)
 	}
 }
 
-templ ThreadRow(summary store.ThreadSummary, lang Lang) {
+templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang) {
 	<a
 		class={ "wp-thread-row", templ.KV("wp-unread", summary.Thread.Unread > 0) }
 		href={ "/messages/" + summary.Thread.ID.String() }
@@ -59,9 +62,9 @@ templ ThreadRow(summary store.ThreadSummary, lang Lang) {
 		hx-swap="innerHTML show:window:top"
 		hx-push-url={ "/messages/" + summary.Thread.ID.String() }
 	>
-		<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(summary.Thread.Remote.String()) }</span>
+		<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
 		<span class="wp-thread-text">
-			<span class="wp-thread-remote">{ summary.Thread.Remote.String() }</span>
+			<span class="wp-thread-remote">{ displayName(summary.Thread.Remote.String(), names) }</span>
 			<span class="wp-thread-preview">{ preview(summary.LastBody, summary.LastChannel, lang) }</span>
 		</span>
 		<span class="wp-thread-side">
@@ -108,7 +111,9 @@ type ThreadViewProps struct {
 	HasMore bool
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	Lang     Lang
+	// Names maps phone numbers to CRM contact names (optional integration).
+	Names map[string]string
+	Lang  Lang
 }
 
 templ ThreadView(props ThreadViewProps) {
@@ -122,7 +127,7 @@ templ ThreadView(props ThreadViewProps) {
 				hx-swap="innerHTML show:window:top"
 				hx-push-url="/messages"
 			>← All messages</a>
-			<h2>{ props.Thread.Remote.String() }</h2>
+			<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
 			<button class="wp-primary" data-dial={ props.Thread.Remote.String() }>{ T(props.Lang, "contacts.call") }</button>
 		</header>
 		if props.Error != "" {

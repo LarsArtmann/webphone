@@ -10,7 +10,9 @@ type FaxPanelProps struct {
 	Error string
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	Lang     Lang
+	// Names maps phone numbers to CRM contact names (optional integration).
+	Names map[string]string
+	Lang  Lang
 }
 
 templ FaxPanel(props FaxPanelProps) {
@@ -42,29 +44,29 @@ templ FaxPanel(props FaxPanelProps) {
 			</button>
 		</form>
 		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
-			@FaxList(props.Jobs, props.Lang)
+			@FaxList(props.Jobs, props.Names, props.Lang)
 		</div>
 	</section>
 }
 
 // FaxList renders the fax rows (or the empty state). It is the payload of
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
-templ FaxList(jobs []domain.FaxJob, lang Lang) {
+templ FaxList(jobs []domain.FaxJob, names map[string]string, lang Lang) {
 	if len(jobs) == 0 {
 		<p class="wp-empty">{ T(lang, "fax.empty") }</p>
 	}
 	for _, job := range jobs {
-		@FaxRow(job, lang)
+		@FaxRow(job, names, lang)
 	}
 }
 
-templ FaxRow(job domain.FaxJob, lang Lang) {
+templ FaxRow(job domain.FaxJob, names map[string]string, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract
 	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
-			<strong class="wp-thread-remote">{ job.Remote.String() }</strong>
+			<strong class="wp-thread-remote">{ displayName(job.Remote.String(), names) }</strong>
 			<span class="wp-muted">
 				{ job.CreatedAt.Local().Format("Jan 2, 15:04") }
 				{ " " }
