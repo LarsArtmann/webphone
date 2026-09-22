@@ -133,6 +133,106 @@ func TestAPICallLoggingContract(t *testing.T) {
 		}
 	})
 
+	t.Run("same key journals once, replay is an inert 204", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+		payload := func(key string) map[string]any {
+			return map[string]any{"number": "+493012345678", "direction": "in", "key": key}
+		}
+
+		if status, body := report(t, c, payload("11111111-1111-4111-8111-111111111111")); status != http.StatusNoContent {
+			t.Fatalf("first report: %d %s", status, body)
+		}
+		if status, _ := report(t, c, payload("11111111-1111-4111-8111-111111111111")); status != http.StatusNoContent {
+			t.Fatalf("replayed report: %d (want inert 204)", status)
+		}
+		if status, _ := report(t, c, payload("22222222-2222-4222-8222-222222222222")); status != http.StatusNoContent {
+			t.Fatalf("different-key report: %d (want 204)", status)
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if len(stub.logBodies) != 2 {
+			t.Fatalf("dedupe is key-scoped: journaled %d times (want 2: once per key)", len(stub.logBodies))
+		}
+	})
+
+	t.Run("502 keeps the key retryable", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		stub.logStatus = http.StatusInternalServerError
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+		payload := map[string]any{"number": "+493012345678", "direction": "in", "key": "33333333-3333-4333-8333-333333333333"}
+
+		if status, _ := report(t, c, payload); status != http.StatusBadGateway {
+			t.Fatalf("failing report: %d (want 502)", status)
+		}
+
+		stub.mu.Lock()
+		stub.logStatus = http.StatusNoContent
+		stub.mu.Unlock()
+
+		if status, body := report(t, c, payload); status != http.StatusNoContent {
+			t.Fatalf("retry after 502: %d %s (want 204)", status, body)
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if len(stub.logBodies) != 1 {
+			t.Fatalf("retry journaled %d times (want exactly 1)", len(stub.logBodies))
+		}
+	})
+
+	t.Run("absent key never dedupes", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+		payload := map[string]any{"number": "+493012345678", "direction": "in"}
+
+		for i := 0; i < 2; i++ {
+			if status, _ := report(t, c, payload); status != http.StatusNoContent {
+				t.Fatalf("report %d: got %d (want 204)", i+1, status)
+			}
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if len(stub.logBodies) != 2 {
+			t.Fatalf("legacy no-key shape must journal every call, saw %d", len(stub.logBodies))
+		}
+	})
+
+	t.Run("unknown-number drop consumes the key", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		stub.lookupJSON = `{"results":[]}`
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+		key := "44444444-4444-4444-8444-444444444444"
+
+		if status, _ := report(t, c, map[string]any{"number": "+449900000000", "direction": "out", "key": key}); status != http.StatusNoContent {
+			t.Fatalf("dropped report: %d (want 204)", status)
+		}
+
+		stub.mu.Lock()
+		stub.lookupJSON = `{"results":[{"id":"01M","first_name":"Ada","last_name":"Lovelace","email":"ada@example.com"}]}`
+		stub.mu.Unlock()
+
+		if status, _ := report(t, c, map[string]any{"number": "+493012345678", "direction": "in", "key": key}); status != http.StatusNoContent {
+			t.Fatalf("same-key report for a known number: %d (want inert 204)", status)
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if len(stub.logBodies) != 0 {
+			t.Fatalf("a consumed key must never journal later, saw %+v", stub.logBodies)
+		}
+	})
+
 	t.Run("disabled CRM is a no-op 204", func(t *testing.T) {
 		server := newTestServer(t)
 		c := signIn(t, server)
