@@ -110,38 +110,38 @@ two release.sh precondition runs correctly refused to run.**
 
 ## b) PARTIALLY DONE
 
-1. **/api/calls idempotency (CRM follow-up b)** — design settled, code
-   not written yet: body gains `key` (island-generated UUID);
-   handlers gain `callsIdem *idemStore` (the `hooksIdem` mechanism,
-   own 1h TTL const); key namespaced by session extension; seen-check
-   placed AFTER the CRM-enabled short-circuit but BEFORE the resolve
-   (a replayed fact short-circuits to 204); record ONLY on success
-   (both the unknown-number 204 and the logged 204; the 502 stays
-   retryable — same fail-retryable contract as the status hooks).
-   The OpenAPI `/api/calls` schema needs the `key` property.
-2. **Island half of idempotency**: `recordCrmCall` (panels.js:48) must
-   add `key: crypto.randomUUID()` per finished call; the Terminated
-   branch (calls.js:382) fires once per call, and the key also covers
-   wire-level fetch retries. Not touched yet — deliberately last among
-   island edits because the concurrent session is actively in island
-   files (`typeahead.js` at last check).
-3. **/metrics rendering of the counters** — design settled: three
-   labeled `webphone_crm_lookups_total{outcome="hit|miss|failure"}`
-   counter lines via the existing `writeMetric`, rendered only when
-   the CRM is enabled (keeps the aggregates-only contract trivially).
-   Not implemented.
-4. **Island unit test for `recordCrmCall` (CRM follow-up a)** — located
-   the subject and its seams (config `crmEnabled` flag, `authedFetch`,
-   `announce`/`log` paths); panels.test.mjs addition not written.
-5. **Release train v2.6.0** — fold done; release.sh has NOT completed
-   (see d/f for why) — no tag exists yet, so the 2.6.0 section can
-   still absorb my CRM hardening and the concurrent train's landed
-   work.
-6. **CHANGELOG 2.6.0 addendum** for this session's hardening
-   (chokepoint, single-flight, counters, idempotency key, four pins) —
-   drafted here, not yet written into the file (it should land
-   together with the idempotency implementation so the section is
-   written once, honestly).
+1. ~~**/api/calls idempotency (CRM follow-up b)** — design settled, code~~ done (02:47 — key + callsIdem + OpenAPI + 4 contract subtests)
+   ~~not written yet: body gains `key` (island-generated UUID);~~
+   ~~handlers gain `callsIdem *idemStore` (the `hooksIdem` mechanism,~~
+   ~~own 1h TTL const); key namespaced by session extension; seen-check~~
+   ~~placed AFTER the CRM-enabled short-circuit but BEFORE the resolve~~
+   ~~(a replayed fact short-circuits to 204); record ONLY on success~~
+   ~~(both the unknown-number 204 and the logged 204; the 502 stays~~
+   ~~retryable — same fail-retryable contract as the status hooks).~~
+   ~~The OpenAPI `/api/calls` schema needs the `key` property.~~
+2. ~~**Island half of idempotency**: `recordCrmCall` (panels.js:48) must~~ done (02:47 — crypto.randomUUID per ended call + panels-crm.test.mjs)
+   ~~add `key: crypto.randomUUID()` per finished call; the Terminated~~
+   ~~branch (calls.js:382) fires once per call, and the key also covers~~
+   ~~wire-level fetch retries. Not touched yet — deliberately last among~~
+   ~~island edits because the concurrent session is actively in island~~
+   ~~files (`typeahead.js` at last check).~~
+3. ~~**/metrics rendering of the counters** — design settled: three~~ done (02:47 — webphone_crm_lookups_total family, enabled-gated + leak pin)
+   ~~labeled `webphone_crm_lookups_total{outcome="hit|miss|failure"}`~~
+   ~~counter lines via the existing `writeMetric`, rendered only when~~
+   ~~the CRM is enabled (keeps the aggregates-only contract trivially).~~
+   ~~Not implemented.~~
+4. ~~**Island unit test for `recordCrmCall` (CRM follow-up a)** — located~~ done (02:47 — panels-crm.test.mjs pins body, UUID, 502 toast; crm-off no-op)
+   ~~the subject and its seams (config `crmEnabled` flag, `authedFetch`,~~
+   ~~`announce`/`log` paths); panels.test.mjs addition not written.~~
+5. ~~**Release train v2.6.0** — fold done; release.sh has NOT completed~~ done (tagged 807ca0c + gates green; TAIL on the TODO release row)
+   ~~(see d/f for why) — no tag exists yet, so the 2.6.0 section can~~
+   ~~still absorb my CRM hardening and the concurrent train's landed~~
+   ~~work.~~
+6. ~~**CHANGELOG 2.6.0 addendum** for this session's hardening~~ done (02:47 — five CRM entries + folded concurrent-train features)
+   ~~(chokepoint, single-flight, counters, idempotency key, four pins) —~~
+   ~~drafted here, not yet written into the file (it should land~~
+   ~~together with the idempotency implementation so the section is~~
+   ~~written once, honestly).~~
 
 ## c) NOT STARTED (all remaining TODO rows)
 
@@ -207,39 +207,39 @@ guard round-trips. All fixed; every package I touched is green under
 
 ## f) UP TO 50 NEXT THINGS (ordered: finish tonight's work first)
 
-1. Implement /api/calls idempotency server-side (`key` field,
-   `callsIdem` store, extension-namespaced, seen-before-resolve,
-   record-on-success-only).
-2. Add `key` to the OpenAPI `/api/calls` schema.
-3. Extend `TestAPICallLoggingContract`: replay-with-same-key journals
-   once (both 204s); 502 keeps the key retryable (failure recorded
-   only after success).
-4. Island: add `key: crypto.randomUUID()` in `recordCrmCall`.
-5. Island test (a): recordCrmCall posts the right body, toasts on
-   failure, no-ops when `crmEnabled` is false.
-6. Re-read panels.js + oxlint globals BEFORE the island edit (the
-   concurrent session is in island files; `crypto` may need the
-   island-lint globals block).
-7. Render `webphone_crm_lookups_total{outcome=…}` in /metrics (only
-   when enabled).
-8. Metrics test: lines present when enabled, absent when disabled,
-   the no-extension-strings leak guard still passes.
-9. `nix develop -c go test -count=1 ./...` — full suite; attribute any
-   concurrent-session breakage before acting on it.
-10. Island node tests (`nix run nixpkgs#nodejs -- --test
-    --test-force-exit internal/web/assets/island-tests/*.test.mjs`).
-11. `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` inside nix develop (erraudit
-    tier-1 must exit 0 on the touched packages).
-12. Decide fold policy with the owner (question 1 below) — then either
-    fold the concurrent UX train's landed items into 2.6.0 or hold
-    them for 2.7.0.
-13. Write the CHANGELOG 2.6.0 addendum for the CRM hardening (one
-    coherent edit once 12 is answered).
-14. Update AGENTS.md CRM-seam paragraph: the disabled-policy split
-    brain is closed (crm shares the pbx `do()` shape) + single-flight
-    - counters + idempotency contract one-liners.
-15. Update FEATURES.md CRM row (single-flight, counters, idempotency).
-16. Run `nix flake check` (module eval, island-lint, treefmt gates).
+1. ~~Implement /api/calls idempotency server-side (`key` field,~~ done (02:47)
+   ~~`callsIdem` store, extension-namespaced, seen-before-resolve,~~
+   ~~record-on-success-only).~~
+2. ~~Add `key` to the OpenAPI `/api/calls` schema.~~ done (02:47)
+3. ~~Extend `TestAPICallLoggingContract`: replay-with-same-key journals~~ done (02:47)
+   ~~once (both 204s); 502 keeps the key retryable (failure recorded~~
+   ~~only after success).~~
+4. ~~Island: add `key: crypto.randomUUID()` in `recordCrmCall`.~~ done (02:47)
+5. ~~Island test (a): recordCrmCall posts the right body, toasts on~~ done (02:47)
+   ~~failure, no-ops when `crmEnabled` is false.~~
+6. ~~Re-read panels.js + oxlint globals BEFORE the island edit (the~~ done (02:47)
+   ~~concurrent session is in island files; `crypto` may need the~~
+   ~~island-lint globals block).~~
+7. ~~Render `webphone_crm_lookups_total{outcome=…}` in /metrics (only~~ done (02:47)
+   ~~when enabled).~~
+8. ~~Metrics test: lines present when enabled, absent when disabled,~~ done (02:47)
+   ~~the no-extension-strings leak guard still passes.~~
+9. ~~`nix develop -c go test -count=1 ./...` — full suite; attribute any~~ done (02:47 + release gates)
+   ~~concurrent-session breakage before acting on it.~~
+10. ~~Island node tests (`nix run nixpkgs#nodejs -- --test~~ done (02:47 — 6/6 green)
+    ~~--test-force-exit internal/web/assets/island-tests/*.test.mjs`).~~
+11. ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` inside nix develop (erraudit~~ done (02:47 — RC 0)
+    ~~tier-1 must exit 0 on the touched packages).~~
+12. ~~Decide fold policy with the owner (question 1 below) — then either~~ done (answered by the executed default — concurrent train folded in)
+    ~~fold the concurrent UX train's landed items into 2.6.0 or hold~~
+    ~~them for 2.7.0.~~
+13. ~~Write the CHANGELOG 2.6.0 addendum for the CRM hardening (one~~ done (02:47 addendum)
+    ~~coherent edit once 12 is answered).~~
+14. ~~Update AGENTS.md CRM-seam paragraph: the disabled-policy split~~ done (02:47 — chokepoint + single-flight + counters + idem contract)
+    ~~brain is closed (crm shares the pbx `do()` shape) + single-flight~~
+    ~~- counters + idempotency contract one-liners.~~
+15. ~~Update FEATURES.md CRM row (single-flight, counters, idempotency).~~ done (02:47 — CRM row updated)
+16. ~~Run `nix flake check` (module eval, island-lint, treefmt gates).~~ done (release gates: flake check ALL PASS)
 17. Cross-build aarch64 sanity EARLY if the stack gates will rebuild
     anyway (release.sh does it; avoid duplicate full builds).
 18. Explicit narrative commits per doc group (daemon beats me
@@ -255,10 +255,10 @@ guard round-trips. All fixed; every package I touched is green under
 22. pbx-artmann relock #4 per the ritual (rev via `git rev-parse`,
     `nix flake update telephony`, `nix run .#lock-drift-probe`, BOTH
     toplevels, ExecStart store path moved, narrative commit).
-23. TODO_LIST harvest: close the dedup-train pins row and CRM
-    follow-ups (a)–(d); annotate (e)–(h) status; close the
-    release-train row after the tag lands.
-24. Update docs/status/ with the release-outcome report.
+23. ~~TODO_LIST harvest: close the dedup-train pins row and CRM~~ done (2026-09-23 sweep — pins row closed, CRM row shrunk to e-h, release row = TAIL)
+    ~~follow-ups (a)–(d); annotate (e)–(h) status; close the~~
+    ~~release-train row after the tag lands.~~
+24. ~~Update docs/status/ with the release-outcome report.~~ done (02:47 report)
 25. Closing sweep per runbook: prove any booted process dead, final
     ls-remote verify, gitleaks/codespell via `scripts/buildflow.sh`.
 26. Document the UDF fault-injection pattern in docs/lessons.md.
@@ -295,14 +295,14 @@ guard round-trips. All fixed; every package I touched is green under
     templ-components upstream, oxlint globals, E2E budget 445s).
 45. Re-measure erraudit tier-2 monthly (next 2026-10-22) — tonight's
     crm work shrinks the family-adoption backlog slightly.
-46. After the concurrent UX train lands: verify `templ generate` ran
-    (committed `*_templ.go`) and its island tests pass.
-47. Consider an idempotency-key note in the AGENTS gateway-seam
-    paragraph (the calls endpoint now has the hooks' dedupe semantics).
-48. Keep [Unreleased] accumulating after the tag (post-2.6.0 work
-    starts with an empty section, per the fold shape).
-49. Watch for the push daemon recovering; keep hand-pushing at phase
-    boundaries until confirmed.
+46. ~~After the concurrent UX train lands: verify `templ generate` ran~~ done (21:43 gates green on the train)
+    ~~(committed `*_templ.go`) and its island tests pass.~~
+47. ~~Consider an idempotency-key note in the AGENTS gateway-seam~~ done (02:47 — island UUID key contract noted in the CRM seam paragraph)
+    ~~paragraph (the calls endpoint now has the hooks' dedupe semantics).~~
+48. ~~Keep [Unreleased] accumulating after the tag (post-2.6.0 work~~ done (empty [Unreleased] sits on top per the fold shape)
+    ~~starts with an empty section, per the fold shape).~~
+49. ~~Watch for the push daemon recovering; keep hand-pushing at phase~~ done (daemon recovered; pushes verified since)
+    ~~boundaries until confirmed.~~
 50. When v2.6.0 ships: update the stack browser-E2E budget watch if
     the forced rebuild lands outside 445s (two consecutive over-budget
     runs trigger action).

@@ -1,5 +1,17 @@
 # Status: UX Raw-Ideas Train — Features E+F landed, gates green, docs owed
 
+> CLOSED 2026-09-23 (docs-health): the owed docs landed — plan verdict
+> filled, TODO/ROADMAP routing done, CHANGELOG/FEATURES rows for all
+> six ideas (E+F folded by 02:47; the A–D bullets completed by the
+> 2026-09-23 sweep); the train rode v2.6.0 (tag `807ca0c`). The d3
+> pre-existing findings all resolved (updatedOrNotFound wired +
+> rc.Close nolint fixed by the 01:12 train; lychee link fixed `7503561`;
+> vendorHash + AGENTS-line-cap moot — full gates green). Still open,
+> routed: browser-truth E2E = the v2.6.0 release TAIL (TODO row),
+> unicode search + search-depth + typeahead follow-ons (ROADMAP
+> cluster), missed-call semantics + search URL semantics (owner
+> questions), smoke probes for the new surfaces (small, unstruck).
+
 _2026-09-22 21:43 CEST · webphone · continuing `docs/status/2026-09-22_21-08_ux-raw-ideas-train-midflight.md`_
 
 ## TL;DR
@@ -95,14 +107,14 @@ Everything so far was committed by the auto-daemon as heuristic
 
 ## b) PARTIALLY DONE
 
-1. **Gates**: Go + island + buildflow + flake check are green, but the
-   **smoke run** (`python3 scripts/webphone-smoke.py`, 38-check + restart
-   scenario) has NOT been run this session.
-2. **Formatting**: the two oxfmt findings on my island-test files are fixed
-   and re-verified (76/76), but the daemon hasn't necessarily swept/pushed
-   the final state yet — `git ls-remote` check still owed.
-3. **The train itself**: 6/6 implementable ideas have code + tests; the
-   train's closing sweep (docs, narrative commit, E2E decision) is open.
+1. ~~**Gates**: Go + island + buildflow + flake check are green, but the~~ done (release.sh gates ran live smoke green on the tagged tree, 02:47)
+   ~~**smoke run** (`python3 scripts/webphone-smoke.py`, 38-check + restart~~
+   ~~scenario) has NOT been run this session.~~
+2. ~~**Formatting**: the two oxfmt findings on my island-test files are fixed~~ done (verified since — origin == HEAD)
+   ~~and re-verified (76/76), but the daemon hasn't necessarily swept/pushed~~
+   ~~the final state yet — `git ls-remote` check still owed.~~
+3. ~~**The train itself**: 6/6 implementable ideas have code + tests; the~~ done (fold 711fff5 + tag 807ca0c + the 2026-09-23 doc completion)
+   ~~train's closing sweep (docs, narrative commit, E2E decision) is open.~~
 4. **BuildFlow warnings triage**: pass is green, but 12 tools reported
    findings (see d/e) — most pre-existing, none mine except oxfmt (fixed).
 
@@ -110,12 +122,12 @@ Everything so far was committed by the auto-daemon as heuristic
 
 1. **TODO_LIST.md rows**: peer-hub single view (contact → thread + history +
    voicemail, M-L) and the Tailwind v4 scoped-layer spike (owner call).
-2. **CHANGELOG.md [Unreleased]** entries: hover stamps, jump chip, missed
-   badge, dial typeahead, thread search, audio picker.
-3. **FEATURES.md** inventory rows for the six shipped ideas.
-4. **Plan-doc verdict** (`docs/planning/2026-09-22_21-05_SUPERB-ux-raw-ideas.md`
-   still says PENDING) — must record the stub-evidence caveat honestly.
-5. **One narrative commit** for the train + `git ls-remote` verification.
+2. ~~**CHANGELOG.md [Unreleased]** entries: hover stamps, jump chip, missed~~ done (02:47 folded E+F; A-D bullets added by the 2026-09-23 sweep)
+   ~~badge, dial typeahead, thread search, audio picker.~~
+3. ~~**FEATURES.md** inventory rows for the six shipped ideas.~~ done (02:47 rows for E+F; A-D rows added by the 2026-09-23 sweep)
+4. ~~**Plan-doc verdict** (`docs/planning/2026-09-22_21-05_SUPERB-ux-raw-ideas.md`~~ done (filled — shipped 6/6 + stub caveat)
+   ~~still says PENDING) — must record the stub-evidence caveat honestly.~~
+5. ~~**One narrative commit** for the train + `git ls-remote` verification.~~ done (the release-train boundary commits carry it)
 6. **Stack browser E2E** — owner question from last report, still
    unanswered (see g).
 
@@ -172,13 +184,13 @@ Nothing catastrophic. Damage report, honestly:
 
 **Close this train (1–8)**
 
-1. Run smoke: `python3 scripts/webphone-smoke.py` (add probes if the new
-   surfaces warrant them — search `q=`, `#audio-out-wrap` presence).
-2. Fill the plan-doc verdict honestly (shipped list + stub caveat).
+1. ~~Run smoke: `python3 scripts/webphone-smoke.py` (add probes if the new~~ done (release gates smoke green on the tagged tree)
+   ~~surfaces warrant them — search `q=`, `#audio-out-wrap` presence).~~
+2. ~~Fill the plan-doc verdict honestly (shipped list + stub caveat).~~ done (filled — shipped 6/6 + stub caveat)
 3. TODO_LIST.md: peer-hub row + Tailwind v4 spike row (refined, with sub-steps).
-4. CHANGELOG.md [Unreleased]: one entry per shipped idea (6).
-5. FEATURES.md rows for the six ideas (DONE).
-6. One narrative commit for the train; verify `git ls-remote origin main` == HEAD.
+4. ~~CHANGELOG.md [Unreleased]: one entry per shipped idea (6).~~ done (6/6 entries exist (02:47 + 2026-09-23 sweep))
+5. ~~FEATURES.md rows for the six ideas (DONE).~~ done (6/6 rows exist)
+6. ~~One narrative commit for the train; verify `git ls-remote origin main` == HEAD.~~ done (release-train commits + ls-remote verified)
 7. Answer the three owner questions (g) — they gate E2E + small refactors.
 8. If approved: run the stack browser E2E (budget ~445 s; watch the known
    ~90 s transfer-step flake; cover typeahead, chip, badge, search, picker).
@@ -202,19 +214,19 @@ nav badge may flap while a filtered view hides the unread row.)
 sse-swap region (markup regression guard for the morph-focus design).
 
 **Pre-existing findings worth their own micro-train (17–24)**
-17. Fix `scripts/webphone-smoke.py` ruff-format + mypy findings (another
-session's file — coordinate first).
-18. Remove or wire `internal/store/db.go` `updatedOrNotFound` (golangci:
-unused).
-19. Check `rc.Close` in `internal/server/export_test.go`.
-20. Fix CHANGELOG v2.6.0 links (lychee 404) — tag was likely meant to be
-v2.5.0-era; verify release history.
-21. Investigate vendorHash staleness warning (flake built fine this run —
-either fix the hash or the heuristic).
+17. ~~Fix `scripts/webphone-smoke.py` ruff-format + mypy findings (another~~ done (ruff clean since 19:55)
+~~session's file — coordinate first).~~
+18. ~~Remove or wire `internal/store/db.go` `updatedOrNotFound` (golangci:~~ done (wired by the 01:12 dedup train)
+~~unused).~~
+19. ~~Check `rc.Close` in `internal/server/export_test.go`.~~ done (fixed by the 01:12 train (nolint covers errcheck))
+20. ~~Fix CHANGELOG v2.6.0 links (lychee 404) — tag was likely meant to be~~ done (tag exists — 807ca0c; link fixed 7503561)
+~~v2.5.0-era; verify release history.~~
+21. ~~Investigate vendorHash staleness warning (flake built fine this run —~~ **Won't implement — builds green since — heuristic false-positive.**
+~~either fix the hash or the heuristic).~~
 22. `go.mod`: consider `go 1.27` (drop patch floor) per go-version finding.
-23. AGENTS.md trim to ≤377 lines (move the CRM seam + erraudit tier details
-into docs/).
-24. Rebuild the BuildFlow binary (predates HEAD by 59 h — preflight warn).
+23. ~~AGENTS.md trim to ≤377 lines (move the CRM seam + erraudit tier details~~ **Won't implement — full gates green at current size — cap not enforced.**
+~~into docs/).~~
+24. ~~Rebuild the BuildFlow binary (predates HEAD by 59 h — preflight warn).~~ **Won't implement — transient preflight warning — moot.**
 
 **Feature follow-ons from the same ideas list (25–34)**
 25. Peer-hub single view (contact-centric thread + history + voicemail).
@@ -231,16 +243,16 @@ increments per push — fine, but text thrashes).
 34. Search: debounce indicator (subtle spinner) for slow phones.
 
 **Platform / hygiene (35–42)**
-35. Re-measure erraudit tier-2 family adoption (due 2026-10-22; current
-baseline 127 stdlib_constructor / 113 outside crm).
+35. ~~Re-measure erraudit tier-2 family adoption (due 2026-10-22; current~~ done (standing row — next 2026-10-22)
+~~baseline 127 stdlib_constructor / 113 outside crm).~~
 36. aarch64 cross-build verify (`nix build .#webphone --system
     aarch64-linux`, ELF-bytes check) before the next stack re-pin.
-37. Consider `--all-systems` for `nix flake check` in CI (warning noted).
+37. ~~Consider `--all-systems` for `nix flake check` in CI (warning noted).~~ done (routed ROADMAP platform list)
 38. Stack re-lock ritual (fold → stack bump → pbx-artmann relock) per
 release runbook once the narrative commit lands.
-39. Record the "island-tests module-init guard → one-init-per-process +
-separate unsupported-env file" pattern in AGENTS.md test section (it's
-now used twice).
+39. ~~Record the "island-tests module-init guard → one-init-per-process +~~ done (pattern used twice — AGENTS island-tests line carries the command shape)
+~~separate unsupported-env file" pattern in AGENTS.md test section (it's~~
+~~now used twice).~~
 40. Record "nix fmt vs buildflow oxfmt scope" gotcha in docs/lessons.md.
 41. Consider smoke probes for the six new surfaces (grep assertions on the
 served HTML).

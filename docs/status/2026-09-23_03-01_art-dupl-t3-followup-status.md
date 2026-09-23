@@ -1,5 +1,14 @@
 # Status Report — art-dupl `-t 3` Follow-up Sweep
 
+> CLOSED 2026-09-23 (docs-health): (f) HARVESTED — helper micro-tests
+> (+ the apiContactSaved pins), `-race`, error-contract cross-check,
+> LSP-nolint fix-or-declare, and the runbook coordination note live as
+> TODO rows; the baseline ratification + suppression-bucket doc +
+> helper-test bar are owner calls (ROADMAP); the post-tag commits ride
+> the v2.6.0 release TAIL re-run for their full-gate pass; AGENTS smoke
+> line fixed 38→40 (2026-09-23 sweep); remote sync verified
+> (origin == HEAD).
+
 | | |
 |---|---|
 | **Written** | 2026-09-23 03:01 CEST |
@@ -155,30 +164,30 @@ Carry = prior report §f (2026-09-23 01-12, items there numbered 1-20; still ope
 |---|------|--------|----------|------|
 | 1 | Micro-test `apiContactSaved`: pins notify-then-204 order + both JSON handlers route through it | New | High | S |
 | 2 | Inventory which tests cover `apiSaveContact`/`apiDeleteContact`; add gap tests | New | High | S |
-| 3 | HARVEST both §f lists (01-12 + this report) into TODO_LIST.md/ROADMAP.md (docs-health) | Carry | High | M |
+| ~~3~~ | ~~HARVEST both §f lists (01-12 + this report) into TODO_LIST.md/ROADMAP.md (docs-health)~~ done — 2026-09-23 docs-health HARVEST | ~~Carry~~ | ~~High~~ | ~~M~~ |
 | 4 | Answer/ratify `-t 3` as THE dedup ritual baseline + document art-dupl's "filtered suppressed" bucket; one AGENTS.md line | Carry+New | High | S |
 | 5 | `go test -race ./internal/server/...` once, on a quiet machine | Carry | Medium | S |
 | 6 | Helper micro-tests for the prior train's 9 helpers (must, OrClock, updatedOrNotFound, formatFor, crmNumbers, applyStatusWebhook, recordCallIdem, contactSaveFailed, + idem behavior) | Carry | Medium | M |
-| 7 | Full buildflow run (with gitleaks/codespell) on a quiet machine; process findings | Carry | Medium | M |
+| ~~7~~ | ~~Full buildflow run (with gitleaks/codespell) on a quiet machine; process findings~~ done — 02:47 release gates ran it on the tagged tree; post-tag deltas ride the TAIL | ~~Carry~~ | ~~Medium~~ | ~~M~~ |
 | 8 | Process g.1/g.2 answers when given: webhook 400 body-text dependents; `msg/`→`message/` idem key rename acceptance | Carry | Medium | S |
 | 9 | Cross-check docs/error-contract.md vs `applyStatusWebhook` consolidation (both-sides-in-sync rule) | Carry | Medium | S |
 | 10 | Decide whether the JSON-204 mutation contract belongs in error-contract.md too | New | Low | S |
 | 11 | Fix or formally ignore the golangci-lint LSP nolint false positive on `export_test.go:30` | New | Medium | S |
 | 12 | Full-tree lint `./internal/...` re-run (this session covered server only) | New | Low | S |
-| 13 | Smoke re-run after the epilogue consolidation (cheap binary-level confidence) | New | Low | S |
-| 14 | AGENTS.md smoke line: documented "38-check" vs observed 40+4 drift | Carry | Low | S |
-| 15 | Runbook note: v2.6.0 was cut while a refactor session was mid-flight (coordination hazard) | Carry | Medium | S |
+| ~~13~~ | ~~Smoke re-run after the epilogue consolidation (cheap binary-level confidence)~~ done — release gates smoke green on the tagged tree | ~~New~~ | ~~Low~~ | ~~S~~ |
+| ~~14~~ | ~~AGENTS.md smoke line: documented "38-check" vs observed 40+4 drift~~ done — fixed 38 to 40 by the 2026-09-23 sweep | ~~Carry~~ | ~~Low~~ | ~~S~~ |
+| ~~15~~ | ~~Runbook note: v2.6.0 was cut while a refactor session was mid-flight (coordination hazard)~~ done — TODO runbook-hardening row | ~~Carry~~ | ~~Medium~~ | ~~S~~ |
 | 16 | Acceptance-rationale registry: one home for all dedup ACCEPT decisions (see §e.1) | New | Medium | S |
-| 17 | Island JS suite re-run (parallel session's panels.js + island-tests changes, gate-relevant) | Carry | Medium | S |
+| ~~17~~ | ~~Island JS suite re-run (parallel session's panels.js + island-tests changes, gate-relevant)~~ done — 79/79 green, 02:47 | ~~Carry~~ | ~~Medium~~ | ~~S~~ |
 | 18 | `wp-empty` extraction trigger: is "10th simple usage" still the bar (9 sites accepted) | Carry | Low | S |
-| 19 | `ValidOutboundStatus` stays roadmap-only UNLESS webhook-valid and service-apply sets diverge | Carry | Low | S |
-| 20 | Sweep docs/status archive: confirm no pre-2026-09-18 dup registers linger | Carry | Low | S |
+| ~~19~~ | ~~`ValidOutboundStatus` stays roadmap-only UNLESS webhook-valid and service-apply sets diverge~~ done — routed ROADMAP (composer cluster line) | ~~Carry~~ | ~~Low~~ | ~~S~~ |
+| ~~20~~ | ~~Sweep docs/status archive: confirm no pre-2026-09-18 dup registers linger~~ done — 2026-09-23 archive sweep — no pre-2026-09-18 dup registers linger | ~~Carry~~ | ~~Low~~ | ~~S~~ |
 | 21 | aarch64 cross-build ELF verification at next release train (post-refactor byte check) | Carry | Medium | S |
 | 22 | templ `settingsRow` component: only if `-t 3` keeps surfacing the dt/dd rows (declined today) | New | Low | S |
-| 23 | erraudit tier-2 re-measure (family-adoption count; due 2026-10-22 per AGENTS.md) | Carry | Medium | M |
+| ~~23~~ | ~~erraudit tier-2 re-measure (family-adoption count; due 2026-10-22 per AGENTS.md)~~ done — standing row — next 2026-10-22 | ~~Carry~~ | ~~Medium~~ | ~~M~~ |
 | 24 | Concurrent-session rule: make re-read-before-edit the reflex (validated again this session: one stale-mtime refusal on the 01-12 doc) | Carry | Low | S |
-| 25 | Verify remote sync (`git ls-remote`) at next gate: 4+ commits landed since the `b162e22` verification | New | Low | S |
-| 26 | Declare CLI lint the single lint truth in AGENTS.md if the LSP false positive can't be fixed (ties to #11) | New | Low | S |
+| ~~25~~ | ~~Verify remote sync (`git ls-remote`) at next gate: 4+ commits landed since the `b162e22` verification~~ done — verified 2026-09-23: origin == HEAD | ~~New~~ | ~~Low~~ | ~~S~~ |
+| ~~26~~ | ~~Declare CLI lint the single lint truth in AGENTS.md if the LSP false positive can't be fixed (ties to #11)~~ done — merged into the TODO LSP row | ~~New~~ | ~~Low~~ | ~~S~~ |
 
 No padding beyond 26: the honest backlog is these; items 27-50 would be invented.
 

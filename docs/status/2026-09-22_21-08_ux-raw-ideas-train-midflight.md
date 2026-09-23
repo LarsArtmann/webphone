@@ -38,21 +38,24 @@ only (verified before running).
 
 | Item                                      | What's missing                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| E: Thread search                          | DESIGN COMPLETE (store `SearchThreads` LIKE over remote+all bodies with `%`/`_`/`\` escaping; `messaging.ThreadSearch`; `messagesPanel` reads `?q=` for page AND partial; search form with 300ms debounced input, `hx-sync` last-wins, morph swap + input id so focus survives; SSE guard cancelling "threads" pushes while the search input holds text; new en/de keys). ZERO lines landed. This is the next action. |
-| Gates at train end                        | Full go suite NOT re-run since the asset-only changes (island i18n/main.js/style.css/typeahead/shell); `nix fmt`, island-lint, buildflow, smoke — none run yet this session                                                                                                                                                                                                                                           |
-| Plan doc verdict                          | PENDING placeholder — fill only after E/F land                                                                                                                                                                                                                                                                                                                                                                        |
-| Narrative commit                          | Daemon chore commits hold the work (79410f2 et al.); the boundary commit with a real message is owed at fold time                                                                                                                                                                                                                                                                                                     |
-| CHANGELOG / FEATURES / TODO_LIST / AGENTS | Untouched — owed after E+F                                                                                                                                                                                                                                                                                                                                                                                            |
+| ~~E: Thread search~~ done — landed at 21:43 with 7-case store test, panel wiring, shell guard, i18n; shipped in v2.6.0 | DESIGN COMPLETE… ZERO lines landed → superseded by the close-out |
+| ~~Gates at train end~~ done — full suite + island 76/76 + flake check + buildflow 52/0 at 21:43 | none run → ran at close-out |
+| ~~Plan doc verdict~~ done — filled (shipped 6/6 + stub caveat) | PENDING placeholder → filled 2026-09-23 |
+| ~~Narrative commit~~ done — the release-train boundary commits carry it (711fff5 fold, b162e22 bump, tag 807ca0c) | daemon chore commits → superseded |
+| ~~CHANGELOG / FEATURES / TODO_LIST / AGENTS~~ done — 02:47 (E+F + AGENTS CRM) + the 2026-09-23 sweep (A–D bullets + FEATURES rows; ROADMAP cluster rewritten) | untouched → synced |
 
 ## c) NOT STARTED (none silently skipped)
 
-- F: Audio output picker (`setSinkId`): audioout.js module, phone.templ
-  picker wrap, island i18n keys, audioout.test.mjs — designed in the
-  plan (apply to `#remote-audio` only; ring tones stay room-alarms).
+- ~~F: Audio output picker (`setSinkId`): audioout.js module, phone.templ
+  picker wrap, island i18n keys, audioout.test.mjs~~ done — landed at
+  21:43 (apply to `#remote-audio` only; ring tones stay room-alarms);
+  shipped in v2.6.0
 - TODO_LIST rows for the two deferred ideas: peer hub (M-L view train)
-  and the Tailwind v4 coexistence spike (owner-gated by design).
+  and the Tailwind v4 coexistence spike (owner-gated by design). ←
+  routed (ROADMAP composer cluster)
 - Browser-truth verification of ANY of this session's JS (same blind
-  spot as the previous trains — everything is stub-level evidence).
+  spot as the previous trains — everything is stub-level evidence). ←
+  routed (v2.6.0 release TAIL row: stack E2E ×2 on the new chain)
 
 ## d) TOTALLY FUCKED UP (mine, no excuses)
 

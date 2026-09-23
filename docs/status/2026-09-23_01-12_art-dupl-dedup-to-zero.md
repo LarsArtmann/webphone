@@ -1,5 +1,16 @@
 # Status Report — art-dupl Dedup-to-Zero Session
 
+> CLOSED 2026-09-23 (docs-health): (f) HARVESTED — micro-tests + `-race`
+> + error-contract cross-check + full-code-review live as TODO rows;
+> the art-dupl baseline ratification + drift root-cause + webhook/idem
+> questions are owner calls (ROADMAP); the full gates over this
+> refactor ran green inside the v2.6.0 release run (buildflow full,
+> 14-pkg suite, flake check, smoke, vulnix — the tagged tree includes
+> this train); the island suite re-ran green (79/79); the 23:03:03
+> toucher was the concurrent 21:46 formatter sweep (landed `8956fa9`);
+> AGENTS smoke line fixed 38→40 (2026-09-23 sweep). The §h follow-up
+> (`-t 3`) closed the loop: shown 5→3 = exactly the accepted trio.
+
 **Date:** 2026-09-23 01:12 CEST
 **Session scope:** Deduplicate the 13 clone groups from the user-provided `art-dupl --sort total-tokens -t 1 --type-aware` output. No other work.
 **Rule honored:** report covers only this session's run and what it directly observed. (f) needs HARVEST into TODO_LIST/ROADMAP or it dies in this file.
@@ -97,26 +108,26 @@ Honest count: 20 genuine items harvested from this session — not padded to 50.
 
 | #  | Task                                                                                                                                                          | Impact   | Effort | Category |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |
-| 1  | Full `buildflow` (+ `nix run .#vulnix`) on a quiet machine to properly gate v2.6.0, which carries this refactor                                                    | Critical | M      | Infra    |
+| ~~1~~  | ~~Full `buildflow` (+ `nix run .#vulnix`) on a quiet machine to properly gate v2.6.0, which carries this refactor~~ done — 02:47 release gates, RC 0 | ~~Critical~~ | ~~M~~ | ~~Infra~~ |
 | 2  | `go test -race ./internal/server/...` over the idem/hub paths (prior-session precedent)                                                                           | High     | S      | Quality  |
 | 3  | Micro-tests: `crmNumbers` blank-skip, `domain.OrClock`, `updatedOrNotFound`, `recordCallIdem` empty-key, `formatFor`                                               | High     | S      | Quality  |
-| 4  | HARVEST this report's (f) into TODO_LIST/ROADMAP (docs-health HARVEST, TODO_LIST cross-check)                                                                      | High     | S      | Process  |
+| ~~4~~  | ~~HARVEST this report's (f) into TODO_LIST/ROADMAP (docs-health HARVEST, TODO_LIST cross-check)~~ done — 2026-09-23 docs-health HARVEST | ~~High~~ | ~~S~~ | ~~Process~~ |
 | 5  | Answer g.1–g.3 below; encode the answers (webhook precedence contract, idem key namespace, art-dupl baseline) in docs                                              | High     | S      | Docs     |
-| 6  | Root-cause the art-dupl drift (13 vs 45/508): version, config threshold 15 vs `-t 1`, filter lists — then pin the ritual in AGENTS.md commands                     | Medium   | S      | Process  |
-| 7  | Attribute the 23:03:03 store-file toucher (formatter sweep? which tool?) so mid-session mtimes stop being mysteries                                                | Medium   | S      | Process  |
+| ~~6~~  | ~~Root-cause the art-dupl drift (13 vs 45/508): version, config threshold 15 vs `-t 1`, filter lists — then pin the ritual in AGENTS.md commands~~ done — merged into the 03:01 g1 ratification ask (ROADMAP) | ~~Medium~~ | ~~S~~ | ~~Process~~ |
+| ~~7~~  | ~~Attribute the 23:03:03 store-file toucher (formatter sweep? which tool?) so mid-session mtimes stop being mysteries~~ done — attributed — the concurrent 21:46 formatter sweep, 8956fa9 | ~~Medium~~ | ~~S~~ | ~~Process~~ |
 | 8  | Make the auto-commit daemon refuse sweeps of non-compiling trees (`go build ./...` as a pre-sweep check) — kills the d.1 race class                                | High     | M      | Infra    |
-| 9  | Re-run art-dupl after the composer-UX train lands (expect new groups in messages.templ/island tests)                                                               | Medium   | S      | Quality  |
+| ~~9~~  | ~~Re-run art-dupl after the composer-UX train lands (expect new groups in messages.templ/island tests)~~ done — 03:01 re-ran it — shown 5 to 3 = the accepted trio | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 | 10 | Full-code-review over the interleaved day (CRM train + composer-UX + this dedup) once both parallel trains land                                                    | High     | M      | Quality  |
 | 11 | Cross-check docs/error-contract.md against the consolidated webhook tail (keep both sides in sync rule)                                                            | Medium   | S      | Docs     |
-| 12 | Update AGENTS.md smoke line: documented "38-check" now prints 40+4 (drift observed this session)                                                                   | Low      | S      | Docs     |
-| 13 | Note in the release runbook: v2.6.0 was cut while a refactor session was mid-flight — coordination hazard worth one line                                           | Medium   | S      | Docs     |
+| ~~12~~ | ~~Update AGENTS.md smoke line: documented "38-check" now prints 40+4 (drift observed this session)~~ done — fixed 38 to 40 by the 2026-09-23 sweep | ~~Low~~ | ~~S~~ | ~~Docs~~ |
+| ~~13~~ | ~~Note in the release runbook: v2.6.0 was cut while a refactor session was mid-flight — coordination hazard worth one line~~ done — TODO runbook-hardening row | ~~Medium~~ | ~~S~~ | ~~Docs~~ |
 | 14 | Decide whether `wp-empty` extraction trigger (10th simple usage) is still the right bar (9 sites accepted; unchanged today)                                         | Low      | S      | Cleanup  |
 | 15 | Keep `ValidOutboundStatus` on the roadmap ONLY if the webhook-valid set and service-apply set ever diverge (deliberately accepted today as two distinct contracts)  | Low      | S      | Cleanup  |
-| 16 | Island JS test suite re-run (parallel session changed panels.js + island-tests mid-flight; outside this session's scope but gate-relevant)                          | Medium   | S      | Quality  |
-| 17 | Sweep `docs/status/` archive: this + 2026-09-18 dedup sessions supersede any older dup registers (none should exist — re-verified NOT-DO stands)                    | Low      | S      | Docs     |
-| 18 | Consider `-t 3` (skill default) as the periodic-ritual threshold vs `-t 1` forensic runs — today proved `-t 1` surfaces mostly idiom noise                          | Low      | S      | Process  |
+| ~~16~~ | ~~Island JS test suite re-run (parallel session changed panels.js + island-tests mid-flight; outside this session's scope but gate-relevant)~~ done — 79/79 green, 02:47 | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~17~~ | ~~Sweep `docs/status/` archive: this + 2026-09-18 dedup sessions supersede any older dup registers (none should exist — re-verified NOT-DO stands)~~ done — 2026-09-23 archive sweep — no pre-2026-09-18 dup registers linger | ~~Low~~ | ~~S~~ | ~~Docs~~ |
+| ~~18~~ | ~~Consider `-t 3` (skill default) as the periodic-ritual threshold vs `-t 1` forensic runs — today proved `-t 1` surfaces mostly idiom noise~~ done — merged into the 03:01 g1 ratification ask | ~~Low~~ | ~~S~~ | ~~Process~~ |
 | 19 | After gates: verify aarch64 cross-build still clean (post-refactor ELF check per lessons) if v2.6.0 targets it                                                     | Medium   | S      | Infra    |
-| 20 | Keep the concurrent-session rules sharp: this session validated re-read-before-edit, but only after one refusal — make it the reflex                               | Low      | S      | Process  |
+| ~~20~~ | ~~Keep the concurrent-session rules sharp: this session validated re-read-before-edit, but only after one refusal — make it the reflex~~ done — standing AGENTS rule — validated twice | ~~Low~~ | ~~S~~ | ~~Process~~ |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
