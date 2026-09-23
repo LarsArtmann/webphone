@@ -1,8 +1,11 @@
-// classifyForUser pins (SUPERB error-excellence T04): the family→status
-// half of the failure→feedback table. Rejection answers 422, every
-// system-side family answers 502 with the transport copy — including the
-// fail-open default for unknown errors (an untagged error classifies as
-// Transient, never as a user mistake).
+// classifyForUser pins (SUPERB error-excellence T04 + send-failure
+// train E): the family→status half of the failure→feedback table.
+// Rejection answers 422 — including a provider's own 4xx refusal
+// (user-actionable, rendered with its detail) — every system-side
+// family answers 502 with the transport copy, including a provider 5xx
+// ANSWER (its family classifies Transient by the provider's own
+// status) and the fail-open default for unknown errors (an untagged
+// error classifies as Transient, never as a user mistake).
 package server
 
 import (
@@ -31,8 +34,8 @@ func TestClassifyForUserMapsFamiliesToStatuses(t *testing.T) {
 	}{
 		{"validation is 422", &messaging.ErrInvalidSend{Reason: "no text"}, http.StatusUnprocessableEntity},
 		{"fax validation is 422", &fax.ErrInvalidFax{Reason: "no pdf"}, http.StatusUnprocessableEntity},
-		{"provider 4xx stays 502 with its detail fast path", providerRefused, http.StatusBadGateway},
-		{"provider 5xx is 502", providerDown, http.StatusBadGateway},
+		{"provider 4xx refusal is 422 (train E)", providerRefused, http.StatusUnprocessableEntity},
+		{"provider 5xx answer is 502", providerDown, http.StatusBadGateway},
 		{"transport is 502", transport, http.StatusBadGateway},
 		{"infrastructure is 502", infrastructure, http.StatusBadGateway},
 		{"unknown error is 502 generic, never a client error", unknown, http.StatusBadGateway},
@@ -46,8 +49,8 @@ func TestClassifyForUserMapsFamiliesToStatuses(t *testing.T) {
 
 	t.Run("classification survives the service wrap", func(t *testing.T) {
 		wrapped := fmt.Errorf("gateway: %w", providerRefused)
-		if got := classifyForUser(wrapped); got != http.StatusBadGateway {
-			t.Errorf("wrapped rejection: %d, want 502", got)
+		if got := classifyForUser(wrapped); got != http.StatusUnprocessableEntity {
+			t.Errorf("wrapped rejection: %d, want 422", got)
 		}
 		wrapped = fmt.Errorf("gateway: %w", transport)
 		if got := classifyForUser(wrapped); got != http.StatusBadGateway {

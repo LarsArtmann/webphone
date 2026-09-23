@@ -295,17 +295,17 @@ type sendFailureKeys struct {
 	transport string // the system-side copy carrying the retry advice
 }
 
-// classifyForUser maps a send-path failure to its user-facing HTTP status.
-// Provider refusals keep their pinned 502-with-detail surface (the status
-// must never drift from the copy their fast path renders); for everything
-// else the family decides: Rejection is a 422 the caller can act on, every
-// system-side family is a 502 whose transport copy carries the retry
-// advice. ErrInvalidSend/ErrInvalidFax never reach the system-side arm —
-// their fast path renders the service's own reason at 422.
+// classifyForUser maps a send-path failure to its user-facing HTTP
+// status: the family decides — Rejection (including a provider's own
+// 4xx refusal: user-actionable content or destination, send-failure
+// train E) is a 422 the caller can act on, every system-side family is
+// a 502 whose transport copy carries the retry advice. A provider 5xx
+// ANSWER classifies Transient by its own status
+// (gateway.ErrProviderRejected.ErrorFamily), so it lands on the 502
+// transport arm, never on the refusal arm. ErrInvalidSend/
+// ErrInvalidFax never reach this function — their fast path renders
+// the service's own reason at 422.
 func classifyForUser(err error) int {
-	if _, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok { //nolint:erraudit // presence check only: the typed value is intentionally unused, ok is checked
-		return http.StatusBadGateway
-	}
 	if errorfamily.Classify(err) == errorfamily.Rejection {
 		return http.StatusUnprocessableEntity
 	}
@@ -330,14 +330,18 @@ func (h *handlers) sendFailure(
 		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, invalid.Reason)
 		return
 	}
-	if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok {
-		// The provider ANSWERED with an actionable refusal (invalid
+	if rejected, ok := errors.AsType[*gateway.ErrProviderRejected](err); ok && errorfamily.Classify(err) == errorfamily.Rejection {
+		// The provider ANSWERED with an actionable 4xx refusal (invalid
 		// destination, provider policy) — the gateway itself is fine.
-		// Surface the reason; the generic transport banner would
-		// misdiagnose a working system (2026-09-21 self-send burn).
+		// Surface the reason at 422 (send-failure train E): a refusal
+		// the user can fix is input feedback, not a system fault; the
+		// generic transport banner would misdiagnose a working system
+		// (2026-09-21 self-send burn). A provider 5xx answer falls to
+		// the system-side arm below — their side is failing, so the
+		// transport copy and the transient family are the honest story.
 		slog.WarnContext(r.Context(), lane+" send rejected by provider", "status", rejected.Status,
 			"family", errorfamily.Classify(err).String())
-		h.renderPanelError(w, r, sess, tab, http.StatusBadGateway, fmt.Sprintf(h.T(r, k.rejected), rejected.Detail))
+		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, fmt.Sprintf(h.T(r, k.rejected), rejected.Detail))
 		return
 	}
 	// System-side failure: the send is safe in the thread as failed; the

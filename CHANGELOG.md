@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Provider refusals answer 422 with their reason (send-failure train
+  E): a provider that ANSWERS with a 4xx (Telnyx 40310 self-send,
+  invalid destination, content policy) is input feedback the user can
+  act on, not a system fault — the refusal arm of the shared
+  send-failure ladder moved from 502 to 422 while keeping the
+  provider's own detail text verbatim and the no-retry affordance. A
+  provider 5xx ANSWER classifies transient by its own status and now
+  lands on the 502 transport arm with the honest `family=transient`
+  log line. Pinned by the classify table, the messages refusal arm,
+  and a new fax-lane refusal test; error-contract + stack runbook
+  ladders updated in lockstep.
+
 ## [2.6.0] - 2026-09-23
 
 ### Added

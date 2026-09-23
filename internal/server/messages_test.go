@@ -427,11 +427,11 @@ func TestFailedBubbleCarriesReasonAndRetry(t *testing.T) {
 	c2 := clientFor(t, server2)
 	c2.login("1001", "pw")
 	form, contentType = multipartBody(t, map[string]string{"to": "+441632960977", "body": "no retry"}, nil)
-	// Provider refusals still answer 502 (the typed ErrProviderRejected
-	// arm of sendFailure — the 422 move is plan E, owner-gated); the pin
-	// here is the BUBBLE story: reason shown, no retry affordance.
-	if resp, body := c2.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusBadGateway {
-		t.Fatalf("rejected send: %d %s (want 502, the typed refusal arm)", resp.StatusCode, body)
+	// Provider refusals answer 422 (send-failure train E: a refusal the
+	// user can fix is input feedback, not a system fault); the pin here
+	// is the BUBBLE story: reason shown, no retry affordance.
+	if resp, body := c2.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("rejected send: %d %s (want 422, the refusal arm)", resp.StatusCode, body)
 	}
 	view := threadViewFor(t, c2, "+441632960977")
 	if !strings.Contains(view, "wp-failed-detail") {
