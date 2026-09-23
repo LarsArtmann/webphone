@@ -1,5 +1,14 @@
 # CRM-integration follow-up + gates train — status (2026-09-22 19:11 CEST)
 
+> CLOSED 2026-09-23 (docs-health): c1 (vulnix NVD-404) resolved itself
+> transient — every later gate green incl. the release run; c2 quiet-host
+> reruns landed (E2E ×2 green + buildflow + flake check, 19:55); c4–c6
+> and c12's counters shipped in the 21:12/02:47 trains (island test,
+> idempotency, single-flight, `/metrics` family). Still open, routed:
+> c7–c9 stack-side CRM wiring (TODO CRM row), c10 aarch64/stack bump +
+> the v2.6.0 TAIL (TODO row), c11 + the c12 policy tails (owner-calls),
+> c13 daemon pre-sweep (ROADMAP infra ask), c3 CRM-repo gates (CRM repo).
+
 Session scope: execute the nine REMAINING items from
 `docs/status/2026-09-22_16-54_crm-integration-train-status.md` (the
 integration itself was already landed and green): re-verify both repos'
@@ -108,26 +117,32 @@ saturator — load peaked at 142).
 
 ## c) NOT started
 
-1. **vulnix NVD-404 fix** (newly discovered; blocks the next release) —
-   TODO_LIST High row, no fix attempt (owner/triage call).
-2. Quiet-host reruns: stack E2E attempt 3, webphone full buildflow,
-   webphone `nix flake check`.
-3. CRM gitleaks + codespell runs.
-4. Island unit test for `recordCrmCall` (coverage is still server
-   contract + i18n parity only).
-5. Idempotency key on `POST /api/calls` (a retry can double-journal).
-6. Single-flight in `crm.Resolver` (history burst fans out).
-7. Stack-side `crm.url`/`crm.token` wiring story (secrets dir).
-8. Cross-doc CRM surfaces into the stack runbook § error contract.
-9. Restore-drill proving `call_logged` survives a CRM journal restore.
-10. aarch64 cross-build + stack input bump (release territory; gated on
-    the vulnix fix anyway).
-11. NixOS typed `crm.{url,token}` options decision (owner).
-12. Lookup hit/miss/timeout counters; multi-contact "+N more";
-    English-only journal confirm; CSV import E2E (CRM row added);
-    plan v1.1 (CRM + webphone on different hosts).
+1. ~~**vulnix NVD-404 fix** (newly discovered; blocks the next release) —
+   TODO_LIST High row, no fix attempt (owner/triage call).~~ done
+   (transient — `nix run .#vulnix` green with full triage since 19:55
+   and inside the v2.6.0 release gates)
+2. ~~Quiet-host reruns: stack E2E attempt 3, webphone full buildflow,
+   webphone `nix flake check`.~~ done (E2E ×2 green 19:55; buildflow
+   RC 0; flake check ALL PASS — 19:55)
+3. CRM gitleaks + codespell runs. ← CRM repo
+4. ~~Island unit test for `recordCrmCall` (coverage is still server
+   contract + i18n parity only).~~ done (02:47, `panels-crm.test.mjs`)
+5. ~~Idempotency key on `POST /api/calls` (a retry can double-journal).~~
+   done (02:47, UUID key + `callsIdem`, 4 contract subtests)
+6. ~~Single-flight in `crm.Resolver` (history burst fans out).~~ done
+   (21:12, leader/waiter single-flight, race-tested)
+7. Stack-side `crm.url`/`crm.token` wiring story (secrets dir). ← TODO CRM row
+8. Cross-doc CRM surfaces into the stack runbook § error contract. ← TODO CRM row
+9. Restore-drill proving `call_logged` survives a CRM journal restore. ← TODO CRM row
+10. ~~aarch64 cross-build + stack input bump~~ (release territory; gated on
+    the vulnix fix anyway). ← release-TAIL row
+11. NixOS typed `crm.{url,token}` options decision (owner). ← owner-calls row
+12. ~~Lookup hit/miss/timeout counters;~~ done (21:12 + 02:47 metrics
+    family) multi-contact "+N more"; English-only journal confirm; CSV
+    import E2E (CRM row added); plan v1.1 (CRM + webphone on different
+    hosts) — ← owner-calls / CRM repo.
 13. Pre-sweep build check in the auto-commit daemon (fleet-level ask;
-    today alone saw THREE sessions hit committed-broken main).
+    today alone saw THREE sessions hit committed-broken main). ← ROADMAP infra ask
 
 ## d) TOTALLY fucked up
 

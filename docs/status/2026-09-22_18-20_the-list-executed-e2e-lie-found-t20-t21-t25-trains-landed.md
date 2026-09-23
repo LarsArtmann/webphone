@@ -1,5 +1,15 @@
 # Session Status Report — 2026-09-22 18:20 CEST
 
+> CLOSED 2026-09-23 (docs-health): every train in (a) plus the (c)
+> remainder (T26b webphone half `c1971c4`, T26c `37aae5a`, T27a
+> `9f93537`, T27c `4f067f8`, T16d, FEATURES/CHANGELOG sync `4c4b36b`)
+> shipped the same day and rode v2.6.0 (tag `807ca0c`); aarch64 + lychee
+> + push-state verified 19:55. Still open, routed: the owner console
+> (TODO rows), the v2.6.0 release TAIL incl. stack E2E ×2 on the new
+> chain + pbx-artmann relock #4 (TODO row), the E2E retry-path-lie
+> runbook line + the 10011001/amend lessons (TODO runbook-hardening
+> row), makeEl export (small island-test idea, unstruck below).
+
 Continuation of the "whole list" run (previous report 16:52; the
 standing directive kept execution going after it). This report covers
 16:52 → 18:20 only. All findings from THIS run.
@@ -113,17 +123,19 @@ standing directive kept execution going after it). This report covers
 
 ## c) Not started
 
-- T26b TURN REST creds via /config.js; T26c per-extension data
+- ~~T26b TURN REST creds via /config.js; T26c per-extension data
   export (zip); T27a nginx gzip module option; T27c signed tags in
-  release.sh.
-- T16d: 19-37 plan checkbox hygiene + the FEATURES VERIFY pass;
+  release.sh.~~ done (`c1971c4`, `37aae5a`, `9f93537`+`44c0b8e`,
+  `4f067f8`)
+- ~~T16d: 19-37 plan checkbox hygiene + the FEATURES VERIFY pass;
   FEATURES rows for today's trains (T20a-e, T21a-d, T25, T26d/e,
   T27b/d, metrics); CHANGELOG bullets for T20a-e + T21c + T26d/e +
-  T27b/d.
-- Post-train ritual: aarch64 cross-build, lychee, smoke, push-state
-  verify on all three repos.
-- Owner console (unchanged): deploy, T4a banner check, T5 SMS lane,
-  T11 batch, announcements.
+  T27b/d.~~ done (18:46 `4c4b36b` — full sync for every train)
+- ~~Post-train ritual: aarch64 cross-build, lychee, smoke, push-state
+  verify on all three repos.~~ done (19:55 scoreboard: ELF `b7 00`,
+  lychee 0 errors, smoke 40+4, ls-remote verified)
+- **Owner console** (unchanged): deploy, T4a banner check, T5 SMS lane,
+  T11 batch, announcements. ← still open (TODO rows)
 
 ## d) Totally fucked up (process failures, lessons kept)
 
@@ -173,41 +185,41 @@ standing directive kept execution going after it). This report covers
 
 ## f) NEXT — up to 50, in order
 
-1. Read the in-flight fixed-script E2E verdict; run the second one —
-   ×2 green closes T20f/g/h.
-2. Commit the metrics work + go.mod tidy; finish T26a: module
-   `/metrics` location, flake-check location list, metrics test
-   (aggregates only — fail on any extension-like string).
-3. Final full gates on the final tree: `go test -count=1 ./...`,
-   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`,
-   `python3 scripts/webphone-smoke.py`.
-4. `nix develop -c templ generate` check + `nix fmt` + gofmt sweep.
-5. T16d: 19-37 plan checkbox hygiene (7 open boxes).
-6. FEATURES rows for every train landed today (T20a-e, T21a-d, T25,
-   T26d/e, T27b/d, T26a, plus the E2E scenario coverage).
-7. CHANGELOG bullets for T20a-e, T21c, T26d/e, T27b/d (T21a/b/T25/T22
-   already have theirs).
-8. T26b TURN REST creds (webphone half: config keys + /config.js
-   emission + test; stack half — coturn secret — TODO row).
-9. T26c per-extension export (zip: messages JSON, contacts vCard,
-   fax list) — session-gated, owner-scoped.
-10. T27a nginx gzip module option (+ module check stand-in).
-11. T27c signed tags (`git tag -s`) wired into release.sh.
-12. aarch64 cross-build + ELF byte check (runbook step 8).
-13. lychee link check after the doc batch.
-14. Push-state verify all three repos (`git ls-remote`).
-15. Update TODO_LIST: delete done rows (send-failure D is T21a —
-    RESOLVED by this session; E2E flake row — resolved by the 10011001
-    fix), add the coturn secret row (T26b stack half).
-16. ROADMAP: harvest today's resolutions; E2E budget watch note about
-    the retry-path lie.
+1. ~~Read the in-flight fixed-script E2E verdict; run the second one —~~ done (x2 green 19:55)
+   ~~×2 green closes T20f/g/h.~~
+2. ~~Commit the metrics work + go.mod tidy; finish T26a: module~~ done (9f93537 + leak-pin test, 18:46)
+   ~~`/metrics` location, flake-check location list, metrics test~~
+   ~~(aggregates only — fail on any extension-like string).~~
+3. ~~Final full gates on the final tree: `go test -count=1 ./...`,~~ done (green 18:55 + 19:55)
+   ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`,~~
+   ~~`python3 scripts/webphone-smoke.py`.~~
+4. ~~`nix develop -c templ generate` check + `nix fmt` + gofmt sweep.~~ done (clean at close-out)
+5. ~~T16d: 19-37 plan checkbox hygiene (7 open boxes).~~ done (18:46)
+6. ~~FEATURES rows for every train landed today (T20a-e, T21a-d, T25,~~ done (4c4b36b)
+   ~~T26d/e, T27b/d, T26a, plus the E2E scenario coverage).~~
+7. ~~CHANGELOG bullets for T20a-e, T21c, T26d/e, T27b/d (T21a/b/T25/T22~~ done (4c4b36b + 2.6.0 fold)
+   ~~already have theirs).~~
+8. ~~T26b TURN REST creds (webphone half: config keys + /config.js~~ done (webphone half c1971c4; stack half = TODO row)
+   ~~emission + test; stack half — coturn secret — TODO row).~~
+9. ~~T26c per-extension export (zip: messages JSON, contacts vCard,~~ done (37aae5a)
+   ~~fax list) — session-gated, owner-scoped.~~
+10. ~~T27a nginx gzip module option (+ module check stand-in).~~ done (9f93537 + 44c0b8e)
+11. ~~T27c signed tags (`git tag -s`) wired into release.sh.~~ done (4f067f8)
+12. ~~aarch64 cross-build + ELF byte check (runbook step 8).~~ done (ELF b700 verified 19:55)
+13. ~~lychee link check after the doc batch.~~ done (0 errors 19:55; 7503561 fixed the later break)
+14. ~~Push-state verify all three repos (`git ls-remote`).~~ done (19:55 ls-remote)
+15. ~~Update TODO_LIST: delete done rows (send-failure D is T21a —~~ done (evening TODO harvest)
+    ~~RESOLVED by this session; E2E flake row — resolved by the 10011001~~
+    ~~fix), add the coturn secret row (T26b stack half).~~
+16. ~~ROADMAP: harvest today's resolutions; E2E budget watch note about~~ done (evening ROADMAP harvest)
+    ~~the retry-path lie.~~
 17. AGENTS: the 10011001 lesson + the amend-protocol line (already in
     this report; make them durable).
-18. Next-train fold decision: today's [Unreleased] is a THEME (the
-    "every surface answers back" train) — cut v2.6.0 or let it
-    accumulate? (owner call adjacent — see g2)
-19. After the fold+release: stack re-pin + E2E + pbx-artmann relock
-    #4 (the full runbook dance).
+18. ~~Next-train fold decision: today's [Unreleased] is a THEME (the~~ done (v2.6.0 folded + tagged 807ca0c)
+    ~~"every surface answers back" train) — cut v2.6.0 or let it~~
+    ~~accumulate? (owner call adjacent — see g2)~~
+19. ~~After the fold+release: stack re-pin + E2E + pbx-artmann relock~~ done (stack relocked in the resumes; E2E x2 + pbx-artmann relock #4 = release TAIL row)
+    ~~#4 (the full runbook dance).~~
 20. Owner console: deploy v2.5.0 (command in TODO_LIST).
 21. Owner console: T4a rejection-banner live check (self-send →
     40310 reason) — NOTE: with T21a shipped on main, the NEXT deploy
@@ -219,12 +231,12 @@ standing directive kept execution going after it). This report covers
 26. Monthly erraudit re-measure (2026-10-22; also after any new
     train).
 27. Quarterly watches re-check (2026-12-20).
-28. Review the CRM session's landing end-to-end once both sessions
-    are quiet (their /api/calls limiter wiring, contacts cap
-    interplay, config validation).
+28. ~~Review the CRM session's landing end-to-end once both sessions~~ done (4320c7d + 19:11 re-verification)
+    ~~are quiet (their /api/calls limiter wiring, contacts cap~~
+    ~~interplay, config validation).~~
 29. Consider teaching island-tests helpers to export makeEl.
 30. Runbook line: E2E retry-path lies (from e).
-31. The PWA manifest-lite stays parked behind demand (no action).
+31. ~~The PWA manifest-lite stays parked behind demand (no action).~~ done (parked as designed, ROADMAP line stands)
 32. Session lessons → docs/lessons.md (inline-style CSP-class edit
     incidents: string surgery).
 

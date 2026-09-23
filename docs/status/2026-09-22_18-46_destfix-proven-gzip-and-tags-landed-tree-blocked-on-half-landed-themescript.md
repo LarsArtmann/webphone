@@ -1,5 +1,15 @@
 # Session Status Report — 2026-09-22 18:46 CEST
 
+> CLOSED 2026-09-23 (docs-health): f1–f9 all landed — the ThemeScript
+> adoption completed end-to-end (18:55), E2E ×2 green on the fixed
+> driver (19:55), final gates + aarch64 + lychee + push-state verified
+> (19:55), T26b/T26c shipped (`c1971c4`/`37aae5a`), and the v2.6.0
+> train folded + tagged (`807ca0c`); erraudit re-measured (f16).
+> Still open, routed: the owner console (TODO rows), daemon disposition
+> (ROADMAP infra ask), the release TAIL — stack E2E ×2 on the v2.6.0
+> chain + pbx-artmann relock #4 (TODO row), the REGISTRATIONS-0 watch
+> (standing, AGENTS flake note).
+
 Third mid-flight report (15:06 → 16:52 → 18:20 → now); covers
 18:20–18:46. The standing "whole list" directive kept execution
 running after the 18:20 report.
@@ -56,10 +66,12 @@ running after the 18:20 report.
 
 ## c) Not started
 
-- T26b webphone half (TURN REST creds in /config.js), T26c
-  per-extension export (zip). Post-gate ritual (aarch64, lychee,
-  smoke, push-state verify). Next-train fold decision (v2.6.0).
-- Owner console items (unchanged).
+- ~~T26b webphone half (TURN REST creds in /config.js), T26c
+  per-extension export (zip).~~ done (`c1971c4`, `37aae5a`)
+  ~~Post-gate ritual (aarch64, lychee,
+  smoke, push-state verify).~~ done (19:55) ~~Next-train fold decision
+  (v2.6.0).~~ done (folded + tagged `807ca0c`)
+- Owner console items (unchanged). ← still open (TODO rows)
 
 ## d) Totally fucked up (this window; lessons kept)
 
@@ -100,26 +112,26 @@ running after the 18:20 report.
 
 ## f) NEXT — up to 50, in order
 
-1. Verify whether templ-components v1.19.x ships `NoThemeScript`
-   (right GOMODCACHE / `go doc`); then either complete the adoption —
-   go.mod bump + vendorHash + flake + DROP the CSP-hash exception and
-   the `!important` color-scheme rules (the standing watch says take
-   the knob) — or, if no release has the field, revert their
-   layout.templ hunk (with their session's awareness).
-2. E2E run 4 verdict; run 5 if the flake repeats; ×2 green closes
-   T20f/g/h.
-3. Final gates on the converged tree: full suite, erraudit,
-   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`, smoke.
-4. aarch64 cross-build + ELF `b700` check (runbook step 8).
-5. lychee link check over the docs batch.
-6. Push-state verify all three repos (`git ls-remote`).
-7. T26b webphone half: `turn_rest_secret` + TTL, `/config.js`
-   emission, test (stack coturn row already parked).
-8. T26c per-extension export (zip: messages JSON, contacts vCard,
-   fax list) — session-gated, owner-scoped.
-9. Decide + execute the v2.6.0 fold (the g2 theme + the CRM train's
-   bullet are both in [Unreleased]); release via the now
-   signed-tagging script; stack re-pin + E2E + pbx-artmann relock #4.
+1. ~~Verify whether templ-components v1.19.x ships `NoThemeScript`~~ done (v1.19.2 shipped the knob; adoption completed 18:55)
+   ~~(right GOMODCACHE / `go doc`); then either complete the adoption —~~
+   ~~go.mod bump + vendorHash + flake + DROP the CSP-hash exception and~~
+   ~~the `!important` color-scheme rules (the standing watch says take~~
+   ~~the knob) — or, if no release has the field, revert their~~
+   ~~layout.templ hunk (with their session's awareness).~~
+2. ~~E2E run 4 verdict; run 5 if the flake repeats; ×2 green closes~~ done (x2 green 19:55)
+   ~~T20f/g/h.~~
+3. ~~Final gates on the converged tree: full suite, erraudit,~~ done (green 18:55 + 19:55)
+   ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check`, smoke.~~
+4. ~~aarch64 cross-build + ELF `b700` check (runbook step 8).~~ done (ELF b700 verified 19:55)
+5. ~~lychee link check over the docs batch.~~ done (0 errors 19:55; 7503561 fixed the later break)
+6. ~~Push-state verify all three repos (`git ls-remote`).~~ done (19:55 ls-remote)
+7. ~~T26b webphone half: `turn_rest_secret` + TTL, `/config.js`~~ done (c1971c4)
+   ~~emission, test (stack coturn row already parked).~~
+8. ~~T26c per-extension export (zip: messages JSON, contacts vCard,~~ done (37aae5a)
+   ~~fax list) — session-gated, owner-scoped.~~
+9. ~~Decide + execute the v2.6.0 fold (the g2 theme + the CRM train's~~ done (tag 807ca0c pushed + gate-verified; stack E2E x2 + pbx relock #4 = release TAIL row)
+   ~~bullet are both in [Unreleased]); release via the now~~
+   ~~signed-tagging script; stack re-pin + E2E + pbx-artmann relock #4.~~
 10. Owner console: deploy decision (v2.5.0 now vs fold-first).
 11. Owner console: T4a rejection-banner live check (the NEXT deploy
     also shows the persisted reason in the bubble — T21a).
@@ -127,8 +139,8 @@ running after the 18:20 report.
 13. Owner console: T11 14-decision batch (briefing doc).
 14. Owner console: announcement drafts approval.
 15. Daemon disposition (docs/status+planning exclusion ask).
-16. erraudit tier-1 re-check after the concurrent train fully lands;
-    tier-2 recount (bar: 102, must shrink).
+16. ~~erraudit tier-1 re-check after the concurrent train fully lands;~~ done (19:55, tier-1 0 + tier-2 127/113)
+    ~~tier-2 recount (bar: 102, must shrink).~~
 17. The REGISTRATIONS-0 secondary E2E wedge — still unexplained; the
     dumps are the first stop if it recurs.
 18. AGENTS/lessons candidates from today: the phantom-run trap, the
@@ -136,8 +148,8 @@ running after the 18:20 report.
     tax (from the 18:20 report).
 19. Monthly erraudit re-measure (2026-10-22); quarterly watches
     (2026-12-20 — the ThemeScript knob watch may close FIRST via f1).
-20. Final closing sweep: pgrep my booted processes (none should
-    survive), one last `git ls-remote`, final report.
+20. ~~Final closing sweep: pgrep my booted processes (none should~~ done (per-session closing sweeps ran)
+    ~~survive), one last `git ls-remote`, final report.~~
 
 ## g) Questions I cannot answer myself
 

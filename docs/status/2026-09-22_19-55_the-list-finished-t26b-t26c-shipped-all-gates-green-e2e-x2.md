@@ -1,5 +1,13 @@
 # Status 2026-09-22 ~19:55 — the list is finished: T26b/T26c shipped, every gate green, E2E ×2 green
 
+> CLOSED 2026-09-23 (docs-health): f1 executed — v2.6.0 folded, gated,
+> signed (`807ca0c`) and pushed; the TAIL (stack E2E ×2 on the v2.6.0
+> chain, aarch64 re-verify, gh release object, smoke `--expect-version`,
+> pbx-artmann relock #4) stays on the TODO release row. g1 (fold timing)
+> answered by execution. Still open, routed: f2–f5 owner items (TODO
+> rows: deploy, post-deploy probes, T26b stack half, owner-calls batch,
+> announcements).
+
 The finishing session of the SUPERB 20-year durability plan. Every
 actionable row of the TODO list that does not require the owner's
 terminal or an owner decision is DONE and VERIFIED. This report closes
@@ -99,23 +107,26 @@ the train.
 
 ## f) What remains (all owner-gated or owner-terminal — by design)
 
-1. v2.6.0 fold decision + release train (TODO row 1): [Unreleased]
+1. ~~v2.6.0 fold decision + release train (TODO row 1): [Unreleased]
    holds three coherent themes; every precondition I could satisfy is
-   green (E2E ×2, aarch64, gates). Then stack re-pin + pbx-artmann
-   relock #4 per docs/release-runbook.md.
-2. Deploy + post-deploy smoke (owner terminal; command in TODO row 2).
+   green (E2E ×2, aarch64, gates).~~ done (folded + signed tag
+   `807ca0c` pushed 2026-09-23) Then stack re-pin + pbx-artmann
+   relock #4 per docs/release-runbook.md. ← release-TAIL row
+2. Deploy + post-deploy smoke (owner terminal; command in TODO row 2). ← open
 3. T26b STACK half: coturn `static-auth-secret` sharing webphone's
-   `turn_rest.secret` (parked row).
-4. Owner-calls batch session (~15 decisions, briefing doc ready).
-5. Release announcements (drafts ready; owner picks channels).
+   `turn_rest.secret` (parked row). ← open
+4. Owner-calls batch session (~15 decisions, briefing doc ready). ← open
+5. Release announcements (drafts ready; owner picks channels). ← open (v2.6.0 draft owed after the tail)
 
 ## g) Owner questions (carried from 18:46, still open)
 
-1. **v2.6.0 fold timing** — fold the three [Unreleased] themes and cut
-   now (everything is green), or hold for more? The plan is complete;
+1. ~~**v2.6.0 fold timing** — fold the three [Unreleased] themes and cut
+   now (everything is green), or hold for more?~~ answered by execution
+   (folded + tagged `807ca0c`, 2026-09-23) The plan is complete;
    every day unreleased is a day prod serves v2.4.0.
 2. **Deploy cadence** — deploy the v2.5.0 chain that pbx-artmann
-   already locked, or wait for v2.6.0 and deploy once?
+   already locked, or wait for v2.6.0 and deploy once? ← moot — deploy
+   the v2.6.0 chain after the TAIL lands (TODO row)
 3. (Resolved without asking: ThemeScript adoption ownership — the CRM
    session completed it cleanly and the standing watch was taken: CSP
    is now `script-src 'self'` with zero inline scripts, hash-pin

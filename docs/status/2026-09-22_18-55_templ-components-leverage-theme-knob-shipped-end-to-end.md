@@ -1,5 +1,15 @@
 # 2026-09-22 18:55 — templ-components leverage: ThemeScript knob shipped end-to-end, webphone de-hashed
 
+> CLOSED 2026-09-23 (docs-health): f1–f7 (the session's own gaps)
+> shipped at 19:55 (`9cb1c37` island-lint scope + node spec + smoke
+> checks; gates green; vulnix clean; aarch64 ELF verified) and f8/f9
+> completed by the v2.6.0 train (fold + signed tag `807ca0c`; stack
+> re-pin verification + pbx relock #4 remain on the release-TAIL TODO
+> row, f10 rides it). Still open, routed: the Tailwind spike + upstream
+> items f11–f30 (owner-gated / templ-components repo — ROADMAP),
+> stack-runbook CSP cross-doc (TODO send-failure row), the platform
+> hardening ideas f36–f41 (ROADMAP platform list).
+
 Session mandate: "Review how we can better leverage ~/projects/templ-components —
 READ, UNDERSTAND, RESEARCH, REFLECT; break into steps; execute and verify one at
 a time; keep going until everything works." Skills loaded: `templ-components`
@@ -86,15 +96,15 @@ next strategic unlock.
 
 **Ship what this session started**
 
-1. Run the stack browser E2E (nix-international-telephony) against this webphone main; re-baseline wall time.
-2. Add `internal/web/assets/theme-preload.js` to the `island-lint` oxlint invocation (close my own gap).
-3. Add a node:test spec for theme-preload.js (formalize the ad-hoc eval test I ran) in `island-tests/`.
-4. Add a smoke check: `/assets/theme-preload.js` → 200 + correct Content-Type; served `/` has no inline `<script>`.
-5. Full `buildflow` gate on webphone (gitleaks/codespell/markdown-lint/tier-2 count check — re-measure the 102 count if touched).
-6. `nix run .#vulnix` over the runtime closure (release-gate hygiene even between releases).
-7. aarch64 cross-build `nix build .#webphone --system aarch64-linux` + ELF-bytes verification.
-8. Cut the webphone release (fold CHANGELOG → bump → gates → tag) via docs/release-runbook.md.
-9. Push webphone main (daemon/owner), then the stack re-pin ritual; then pbx-artmann relock chain.
+1. ~~Run the stack browser E2E (nix-international-telephony) against this webphone main; re-baseline wall time.~~ done (x2 green 19:55)
+2. ~~Add `internal/web/assets/theme-preload.js` to the `island-lint` oxlint invocation (close my own gap).~~ done (9cb1c37)
+3. ~~Add a node:test spec for theme-preload.js (formalize the ad-hoc eval test I ran) in `island-tests/`.~~ done (9cb1c37, vm.runInThisContext spec)
+4. ~~Add a smoke check: `/assets/theme-preload.js` → 200 + correct Content-Type; served `/` has no inline `<script>`.~~ done (9cb1c37, smoke checks 4a)
+5. ~~Full `buildflow` gate on webphone (gitleaks/codespell/markdown-lint/tier-2 count check — re-measure the 102 count if touched).~~ done (RC 0, 19:55 + release gates)
+6. ~~`nix run .#vulnix` over the runtime closure (release-gate hygiene even between releases).~~ done (zero real advisories, 19:55 + release gates)
+7. ~~aarch64 cross-build `nix build .#webphone --system aarch64-linux` + ELF-bytes verification.~~ done (ELF b700 verified 19:55)
+8. ~~Cut the webphone release (fold CHANGELOG → bump → gates → tag) via docs/release-runbook.md.~~ done (v2.6.0 signed tag 807ca0c)
+9. ~~Push webphone main (daemon/owner), then the stack re-pin ritual; then pbx-artmann relock chain.~~ done (pushed + stack relocked in the resumes; E2E x2 + pbx relock #4 = release TAIL row)
 10. Post-release: `--expect-version` smoke against the deployed binary (TODO_LIST owner row).
 
 **Templ-components relationship (consumer side)**
@@ -126,7 +136,7 @@ next strategic unlock.
 32. Add the FOUC mechanism (preload sets `data-theme`; library script never did) to README's themes row if the README ever details theming.
 33. Record the dprint/templ-fmt alignment war story in templ-components docs/lessons equivalent (its docs/status has entries; add the fixed-point resolution).
 34. Note in webphone AGENTS "Concurrent sessions" that 2026-09-22 had THREE-way overlap (CRM session earlier, destfix session in parallel, this session) — the coordination rules held.
-35. Archивные: mark the historical docs/status files that mention "hash pin" as resolved-by-date (they are point-in-time snapshots; annotation policy says resolve inline only when re-annotated — otherwise leave).
+35. ~~Archивные: mark the historical docs/status files that mention "hash pin" as resolved-by-date (they are point-in-time snapshots; annotation policy says resolve inline only when re-annotated — otherwise leave).~~ **Won't implement — sweeps annotate on policy; hash-pin mentions are historical records.**
 
 **Hardening / polish**
 36. `Cache-Control` for `/assets/vendor/sip.min.js` — currently no-store via the asset mux; vendored lib is content-stable, could be `no-cache`→long-lived immutable with a versioned path (needs cache-busting path change).
