@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.6.0] - 2026-09-22
+## [2.6.0] - 2026-09-23
 
 ### Added
 
@@ -171,6 +171,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   selection preserved, re-labels on language change, and every
   unsupported/failure path stays hidden (6 island specs incl. the
   single-output env).
+- Hover timestamps (ux-raw-ideas A): `fullStamp` titles on thread-row
+  relative times and bubble clocks carry the full date (de
+  "22.09.2026 16:09", en "Sep 22, 2026, 4:09PM") — relative stamps
+  stay relative, the absolute truth is one hover away. Pinned by
+  `TestFullStampCarriesDateYearAndTime` and
+  `TestTranscriptCarriesHoverStampsAndJumpChip`.
+- Jump-to-latest chip (ux-raw-ideas B): while the transcript is
+  scrolled away from the bottom, live SSE pushes accumulate into a
+  hidden server-rendered chip ("↓ N new", language-neutral); clicking
+  returns to the newest message, near-bottom pushes still pin the
+  view, scrolling back down resets it (shell.js §3b-2, 2 specs).
+- Missed-call badge (ux-raw-ideas C): the island dispatches
+  `wp:call-missed` on the two genuinely-missed paths (caller gave up
+  pre-answer; accepted call died before media — a deliberate REJECT
+  never dispatches); shell.js renders an English "missed · N" header
+  badge cleared when History opens (5 island specs).
+- Dial typeahead (ux-raw-ideas D): the dial field suggests
+  `PBX_CONFIG.contacts` as you type — zero round-trips, ranked
+  name-prefix < name-contains < number-contains, capped at 6, full
+  keyboard support (↑/↓/Enter/Escape), idempotent init, and a
+  JS-created listbox so the served DOM contract stays untouched;
+  re-labels on language change (en/de).
 - Idempotent CRM call journal: `POST /api/calls` accepts an
   island-generated UUID `key` — a browser-level retry or double-fire
   replays the SAME key and journals once (replay answers inert 204);

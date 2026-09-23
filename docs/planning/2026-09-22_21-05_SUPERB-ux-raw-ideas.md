@@ -109,4 +109,28 @@ input; two are owner-gated by design and get refined TODO rows instead.
 
 ## Verdict
 
-PENDING.
+SHIPPED — all six implementable ideas (A hover stamps, B jump chip,
+C missed-call badge, D dial typeahead, E thread search, F audio
+output picker) landed on `main` and rode the v2.6.0 release (tag
+`807ca0c`, 2026-09-23). Gates at train close (21:43 report): full
+`go test -count=1 ./...` 14 pkgs, island suite 76/76, `nix flake
+check` ALL PASS, BuildFlow 52/0, gitleaks clean; the release gates
+re-ran the full battery green on the tagged tree. Two deferred ideas
+stayed deferred by design: peer-hub single view and the Tailwind v4
+coexistence spike (ROADMAP raw ideas; the Tailwind spike is
+owner-gated).
+
+Honest caveats, on record:
+
+- **Stub-evidence gap**: every JS surface (typeahead, chip, badge,
+  audioout, search guard) is node:test-verified only — the stack
+  browser E2E has not exercised them yet (it is part of the open
+  v2.6.0 release tail: two load-shaped E2E stalls, chained retry
+  never fired).
+- **Search is ASCII-case-insensitive only** (SQLite `LIKE`): a query
+  for "MÜNCHEN" will not match "münchen". Unicode-insensitive search
+  needs `lower()` collation or an FTS5 column — real design work,
+  deliberately not patched (raw idea on the ROADMAP).
+- Search UX depth (clear button, result count, URL persistence, CRM
+  display-name matching) deliberately out of scope; owner question
+  on `?q=` URL semantics is open on the ROADMAP.
