@@ -39,6 +39,33 @@ run() {
 	if [ "$DRY_RUN" = "1" ]; then echo "  [dry-run] $*"; else "$@"; fi
 }
 
+# Load precondition (2026-09-23 tail lesson: two E2E marker-stalls at host
+# load 60-174 were load-shaped, not code-shaped; a quiet-host check is
+# cheap and masks nothing, where an E2E auto-retry would mask real
+# regressions — chosen as the default pending owner ratification, 02:47
+# §g1). Override deliberately via WEBPHONE_RELEASE_MAX_LOAD=999.
+load_gate() {
+	local max="${WEBPHONE_RELEASE_MAX_LOAD:-8}"
+	local one five
+	read -r one five _ </proc/loadavg
+	if awk -v l="$one" -v m="$max" 'BEGIN { exit !(l + 0 >= m + 0) }'; then
+		echo "host load $one >= $max (5min: $five): the browser E2E and VM tests are timing-sensitive under contention. Wait for sustained quiet, or override with WEBPHONE_RELEASE_MAX_LOAD." >&2
+		exit 1
+	fi
+	echo "ok: host load $one (< $max)"
+}
+
+# The daemon commits continuously; the gates take tens of minutes. A
+# dirty tree AT TAG TIME means the tag would carry swept content nobody
+# reviewed mid-release (2026-09-22: f50e825 landed between tag push and
+# lychee) — fail and let the human inspect before re-running.
+assert_clean_tree() {
+	[ -z "$(git status --porcelain)" ] || {
+		echo "tree went dirty mid-release (auto-commit daemon?): inspect git status, then re-run — the tag must not silently carry swept content" >&2
+		exit 1
+	}
+}
+
 cd "$REPO"
 
 step "1/9 preconditions"
@@ -102,6 +129,9 @@ step "5/9 tag + push + verify"
 if [ "$RESUME_TAG" = "1" ]; then
 	echo "skipped: $TAG already pushed"
 else
+	if [ "$DRY_RUN" != "1" ]; then
+		assert_clean_tree
+	fi
 	# Signed tags (plan T27c): the release is an artifact others may
 	# clone — a GPG signature makes provenance checkable offline
 	# (the daemon's sweep commits already sign, so the key exists).
@@ -138,6 +168,9 @@ run bash -c "cd '$STACK' && nix flake lock --update-input webphone"
 if [ "$DRY_RUN" != "1" ]; then
 	git -C "$STACK" add flake.lock
 	git -C "$STACK" diff --cached --quiet || git -C "$STACK" commit -m "chore: bump webphone input to $TAG"
+fi
+if [ "$DRY_RUN" != "1" ]; then
+	load_gate
 fi
 run bash -c "cd '$STACK' && nix build -L .#telephony-browser"
 run bash -c "cd '$STACK' && nix build -L .#checks.x86_64-linux.telephony-webphone"

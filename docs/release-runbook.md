@@ -60,6 +60,37 @@ re-run the formatter if it moved styled files.
    promotes them); the daemon's last commits verified pushed
    (`git ls-remote origin main` vs local HEAD).
 
+## Hard-won release rules (2026-09-23 tail, the v2.6.0 E2E stalls)
+
+- **Load precondition**: `release.sh` step 7 refuses to start the
+  stack E2E/VM gates while `/proc/loadavg` (1-minute) is ≥ 8
+  (`WEBPHONE_RELEASE_MAX_LOAD` overrides deliberately). Default
+  mechanism = the gate, NOT an E2E auto-retry — a retry masks real
+  regressions at +10 min per true failure (owner ratification of the
+  choice pending, 02:47 §g1). Nothing of YOURS runs during a release
+  E2E: the v2.6.0 attempt-2 stall was self-inflicted (own background
+  `nix flake check` competing for KVM/CPU).
+- **The flake heuristic**: same E2E step stalls TWICE in a row = dig
+  into code; DIFFERENT steps inside the post-FS-restart tail = host
+  load — wait for sustained quiet and retry once. (Derived from two
+  full 7000-line logs; one line each, no more archaeology.)
+- **Release-attempt logging**: always
+  `> /tmp/release-<v>-<n>.log`; NEVER pipe a 30-minute multi-phase
+  script through `tail` (it buffers everything until exit — the
+  attempt-1/2 monitoring blind spot). Tail the FILE mid-run instead.
+- **Mid-release tree asserts**: `release.sh` re-asserts a clean tree
+  at tag time — the daemon committing between gates and tag means the
+  tag would carry swept content nobody reviewed (f50e825 precedent).
+- **Coordination hazard**: v2.6.0 was cut while another session's
+  refactor train was mid-flight — the release train folded their
+  landed items and rode per-package verification only. Before cutting,
+  check for in-flight sessions (dirty files you did not author in ANY
+  of the three repos) and either wait or fold explicitly.
+- **Chained auto-retries don't fire themselves**: the armed
+  wait-for-quiet chained job NEVER ran (log gone, no process). On a
+  contended host, plan MANUAL re-execution of the tail steps rather
+  than arming background retries.
+
 ## pbx-artmann relock ritual (2026-09-21/22)
 
 The stack is consumed by pbx-artmann via a rev pin in its flake.nix
