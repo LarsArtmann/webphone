@@ -1,5 +1,16 @@
 # Status: v2.6.0 train mid-flight — CRM hardening shipped, release blocked on concurrent session
 
+> CLOSED 2026-09-23 (docs-health): (b) completed by the 02:47 train —
+> idempotency end-to-end (server + island + OpenAPI + 4 contract
+> subtests), `/metrics` CRM family, island `recordCrmCall` test,
+> CHANGELOG addendum; the release itself folded + tagged (`807ca0c`)
+> with the TAIL (stack E2E ×2, gh release, aarch64, pbx relock #4)
+> on the TODO release row. g1 (fold policy) answered by the executed
+> default; g2 (idempotency shape) answered — implemented as designed;
+> g3 (daemon) — it recovered. Still open, routed: CRM (e)–(h) (TODO
+> row), send-failure C/E/F + fax guard (TODO row), owner console (TODO
+> rows), UDF fault-injection lessons entry (small, unstruck).
+
 2026-09-22 21:12 CEST. Session started from the pasted TODO_LIST sweep
 (2026-09-22 night). One line summarized: **the release train's fold is
 committed and pushed; all four dedup-train contract pins plus the CRM

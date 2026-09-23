@@ -1,5 +1,16 @@
 # Session Status Report — 2026-09-22 20:19 CEST
 
+> UPDATED 2026-09-23 (docs-health follow-up sweep): b3 closed — the
+> full-suite gates ran green on the v2.6.0 tagged tree (02:47 release
+> gates: buildflow full RC 0, go test 14 pkgs, flake check, smoke,
+> vulnix); b4 closed — this 2026-09-23 sweep annotated the remaining
+> report f-lists; b5 closed — the push daemon recovered (pushes verified
+> by ls-remote since). The v2.6.0 train folded + tagged (`807ca0c`);
+> its TAIL (stack E2E ×2, gh release, pbx relock #4) is the TODO
+> release row. Still open, routed: b1/b2 + f20/f21 (annotation hash
+> bar, 3 prior-sweep files — owner calls), the owner console (TODO
+> rows), daemon asks (ROADMAP infra).
+
 Scope: THIS session only — the docs-health AUDIT mandated as
 "View ALL *_/2026-0_ files; execute the docs-health skill; all six living
 docs superb; archive fully-done and updated reports". Documentation-only:
@@ -111,9 +122,9 @@ information.
 | - | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | 43 of 46 archived files pass the strict `check-rows.py`                              | 3 files archived by the ACCEPTED 2026-09-19 sweep (`16-37`, `21-38`, `22-55`) still flag — their inline-phrase marker style + reference tables predate the strict checker. Deliberately left: restyling another sweep's accepted markers is churn without reader value |
 | 2 | 21-45 planning doc: all 62 M-rows verdicted (previous sweep) + UB1 row cleaned today | Its 81 micro-rows stay unstruck BY DECISION — each is a sub-step of a struck parent; disclosed above                                                                                                                                                                   |
-| 3 | Full-suite verification                                                              | `buildflow` (and full `go test -count=1 ./...`) not run this session — docs-only delta on a tree that was fully green at 18:55; the vulnix NVD-404 row blocks the release gate regardless                                                                              |
-| 4 | Today's nine status reports annotated                                                | b/c sections carry resolution notes; their f-lists are routed via the rebuilt TODO_LIST rather than per-item markers (disclosed scope call)                                                                                                                            |
-| 5 | The push-stall find                                                                  | Detected, verified, documented as TODO row 1 — but NOT pushed (unauthorized; daemon-owned ritual)                                                                                                                                                                      |
+| ~~3~~ | ~~Full-suite verification~~ done — full gates green on the v2.6.0 tagged tree, 02:47 release run | ~~`buildflow` (and full `go test -count=1 ./...`) not run this session — docs-only delta on a tree that was fully green at 18:55; the vulnix NVD-404 row blocks the release gate regardless~~ |
+| ~~4~~ | ~~Today's nine status reports annotated~~ done — 2026-09-23 follow-up sweep annotated the remaining report f-lists | ~~b/c sections carry resolution notes; their f-lists are routed via the rebuilt TODO_LIST rather than per-item markers (disclosed scope call)~~ |
+| ~~5~~ | ~~The push-stall find~~ done — daemon recovered; pushes verified by ls-remote since | ~~Detected, verified, documented as TODO row 1 — but NOT pushed (unauthorized; daemon-owned ritual)~~ |
 
 ## c) NOT STARTED
 
@@ -177,44 +188,44 @@ information.
 
 ## f) NEXT — up to 50, in order (HARVEST-consistent; rows 1–18 are the TODO_LIST, restated here in execution order)
 
-1. Push webphone `main` (40 commits) / revive the daemon pusher; verify `git ls-remote` (TODO row 1, High).
-2. Stack browser E2E re-run on this main (the twice-skipped declared markup gate; budget 445s).
-3. Cut the next release train: fold [Unreleased] (three coherent themes), bump, gates, signed tag (release.sh T27c), aarch64 ELF guard, smoke `--expect-version`.
-4. Resolve the vulnix NVD feed 404 (blocks step 3's gate): upstream bump/patch, mirror, or govulncheck swap (owner triage).
+1. ~~Push webphone `main` (40 commits) / revive the daemon pusher; verify `git ls-remote` (TODO row 1, High).~~ done (daemon caught up; origin == HEAD verified repeatedly since)
+2. ~~Stack browser E2E re-run on this main (the twice-skipped declared markup gate; budget 445s).~~ done (x2 green 19:55 on the v2.5.0-era chain; the x2 on the v2.6.0 chain rides the release TAIL row)
+3. ~~Cut the next release train: fold [Unreleased] (three coherent themes), bump, gates, signed tag (release.sh T27c), aarch64 ELF guard, smoke `--expect-version`.~~ done (folded + signed tag 807ca0c, gates green; stack re-pin + pbx relock #4 = TAIL row)
+4. ~~Resolve the vulnix NVD feed 404 (blocks step 3's gate): upstream bump/patch, mirror, or govulncheck swap (owner triage).~~ done (transient — vulnix green with full triage since 19:55 + release gates)
 5. Stack re-pin + pbx-artmann relock #4 after 3; both-arch toplevels.
 6. OWNER: deploy decision — v2.5.0 tag now vs fold-first (asked 18:46 g3; now on the TODO row).
 7. OWNER: post-deploy verification (smoke `--expect-version`, persisted-reason bubble check).
 8. OWNER: restore the outbound SMS lane (telnyx-webhooks journal; TODO row).
 9. OWNER-calls batch session (~15 decisions; briefing doc ready; now includes the three CRM policy calls, train-C semantics, Tailwind spike, history-blemish disposition).
-10. Full gates on the converged tree: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` + repo-wide erraudit tier-1 + tier-2 recount (bar 102, must shrink).
-11. Theme-knob gaps: island-lint scope for theme-preload.js, its node spec, smoke zero-inline + asset checks (small, one sitting).
-12. Dedup-train contract pins (listRows op-wrap, requireMultipartTo 422 keys, pbx do() nil-client, owner-scoping over the helper) + crm disabled-policy chokepoint-or-documentation.
-13. CRM follow-ups (a)–(h) incl. `/api/calls` idempotency key and single-flight resolver.
+10. ~~Full gates on the converged tree: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` + repo-wide erraudit tier-1 + tier-2 recount (bar 102, must shrink).~~ done (full gates green on the tagged tree; tier-2 recount = monthly standing row)
+11. ~~Theme-knob gaps: island-lint scope for theme-preload.js, its node spec, smoke zero-inline + asset checks (small, one sitting).~~ done (verification gaps closed 9cb1c37; FOUC + de review + screenshots = TODO theme-knob row)
+12. ~~Dedup-train contract pins (listRows op-wrap, requireMultipartTo 422 keys, pbx do() nil-client, owner-scoping over the helper) + crm disabled-policy chokepoint-or-documentation.~~ done (all four pins shipped, 21:12)
+13. ~~CRM follow-ups (a)–(h) incl. `/api/calls` idempotency key and single-flight resolver.~~ done (a-d shipped 21:12 + 02:47; e-h = TODO CRM row)
 14. Send-failure UX: train E (422 + honest family vocabulary, runbook sync) — last non-owner piece; train C after the owner call; fax-lane guard with C.
 15. T26b TURN REST credentials, both halves.
 16. Post the release announcements (drafts live; owner channel/wording).
 17. Analyze the next E2E flake with `transfer_dbg()` dumps (standing row; REGISTRATIONS-0 wedge unexplained).
 18. Standing watches re-check 2026-12-20 (sip.js, templ-components v1.20.x, oxlint globals, 445s budget, nanoid closed).
-19. Annotate today's nine reports' f-lists per-item when their residue closes (archive-day work, not now).
+19. ~~Annotate today's nine reports' f-lists per-item when their residue closes (archive-day work, not now).~~ done (2026-09-23 follow-up sweep)
 20. Decide the annotation hash bar (`v` vs per-item `-S` hashes) and write it into AGENTS' docs-health note (e5).
 21. Optionally restyle the 3 prior-sweep files to the strict check-rows bar — or record them as accepted baseline (g3 below).
 22. Restart-liveness watch for the push daemon (e7) — ROADMAP infra ask.
 23. FOUC screenshot pair (pre-paint data-theme evidence) — routed Medium.
 24. De native review of the new copy + composer screenshot QA.
-25. aarch64 cross-build + ELF verify early (pre-fold insurance).
+25. ~~aarch64 cross-build + ELF verify early (pre-fold insurance).~~ done (ELF b700 verified 19:55; v2.6.0 re-verify = TAIL row)
 26. Sweep the remaining `~90-key` i18n count claims in living docs for an honest number.
-27. `nginx.gzip.enable` + signed-tags entries: fold-check the FEATURES module row when the train cuts.
+27. ~~`nginx.gzip.enable` + signed-tags entries: fold-check the FEATURES module row when the train cuts.~~ done (module row synced with the 2.6.0 fold)
 28. After the theme train's E2E: re-baseline the 445s budget if the markup grew runtime.
 29. Consider `docs/status/` index (17:40 f26, still open, still cheap).
 30. Daemon exclusion ask (docs/status+planning) — still live in ROADMAP (upstream infra).
-31. Delete the TODO_LIST "closed since previous sweep" paragraph's aging entries at the next sweep (keep it ≤8 lines).
+31. ~~Delete the TODO_LIST "closed since previous sweep" paragraph's aging entries at the next sweep (keep it ≤8 lines).~~ done (TODO_LIST sweep-log paragraph rewritten 2026-09-23)
 32. Verify the archived-file reference graph once more after the daemon sweeps this report (`grep -rn "docs/planning/2026-09-19_19-37" --include=*.md | grep -v archived` style).
-33. When the release folds [Unreleased]: move the CRM + ThemeScript + every-surface trains into the dated section per the runbook fold pattern.
-34. erraudit tier-2 recount: include `internal/crm` explicitly (16:54 f23).
+33. ~~When the release folds [Unreleased]: move the CRM + ThemeScript + every-surface trains into the dated section per the runbook fold pattern.~~ done (v2.6.0 section carries them)
+34. ~~erraudit tier-2 recount: include `internal/crm` explicitly (16:54 f23).~~ done (19:55 count includes the crm seam (127/113))
 35. `listRows` variadic args + `query.go` split — only next time the file is open (17:40 e4/f47).
 36. art-dupl `-t 2` sweep — standing low watch.
 37. Re-check `TestShellJSSurfacesHtmxErrors` throttle pins after any shell.js growth (17:40 f42).
-38. When T26b lands: `turn_rest_secret` needs the module stand-in option (module-check ritual).
+38. ~~When T26b lands: `turn_rest_secret` needs the module stand-in option (module-check ritual).~~ done (T26b webphone half shipped with checks green)
 39. Tailwind spike decision rides the owner batch — if yes, one-component proof first (18:55 f12).
 40. `check-rows.py` upstream nicety: accept 2-dash separators (the mismatch cost this session real time; 12 false flags).
 41. teach annotate tools a `--list-unmarked` mode (would have replaced my grep loops).
@@ -222,10 +233,10 @@ information.
 43. Announcement drafts: fold a v2.6.0 one-liner when the train cuts.
 44. When the daemon exclusion lands: sweep stale `chore: auto-commit` archaeology burden out of the runbook narrative.
 45. Consider marking archived reports with a one-line banner pointing at TODO_LIST (cheap findability for the "is this done?" reader) — verdict pending the so-what test.
-46. icomposer typeahead train (17:53 recommendation) — the leading candidate for the next product train after the fold.
+46. ~~icomposer typeahead train (17:53 recommendation) — the leading candidate for the next product train after the fold.~~ done (typeahead shipped — ux-raw-ideas D, v2.6.0)
 47. Re-verify `/assets/*` 404 parity (18:55 f40) — routed to ROADMAP hardening, cheap to check during the next asset change.
 48. Keep the sweep-log paragraph in TODO_LIST as the ONLY temporal narrative in the living set (verify-checklist regression guard).
-49. `git ls-remote` on all three repos at session end (runbook closing sweep) — next session's first ritual, given the stall.
+49. ~~`git ls-remote` on all three repos at session end (runbook closing sweep) — next session's first ritual, given the stall.~~ done (verified 2026-09-23: origin == HEAD)
 50. Celebrate the part that worked: the inventory-then-batch-specs loop annotated ~430 items with zero fabricated hashes and zero corrupted tables — the tools + dry-run discipline held everywhere it was actually followed.
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF

@@ -1,5 +1,13 @@
 # Status 2026-09-22 21:08 — UX raw-ideas train MIDFLIGHT (A–D shipped, E in flight, F+docs owed)
 
+> CLOSED 2026-09-23 (docs-health): superseded by the 21:43 close-out
+> — E and F landed with green gates, the plan verdict is filled, and
+> the whole train (A–F) rode v2.6.0 (tag `807ca0c`) with docs complete
+> (CHANGELOG/FEATURES rows for all six ideas; the four A–D bullets
+> completed by the 2026-09-23 sweep). Still open, routed: peer hub +
+> Tailwind spike (ROADMAP), browser-truth E2E for the train's JS = the
+> v2.6.0 release TAIL (TODO row).
+
 Scope: THIS session only — the owner pasted the "Composer/UX raw ideas
 (2026-09-22 trains, unshipped)" list with an execute order. Plan doc:
 `docs/planning/2026-09-22_21-05_SUPERB-ux-raw-ideas.md` (verdict still

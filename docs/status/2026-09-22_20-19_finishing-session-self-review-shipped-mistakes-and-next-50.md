@@ -1,5 +1,15 @@
 # Status 2026-09-22 20:19 — finishing-session self-review: what shipped, what I got wrong, what's next
 
+> UPDATED 2026-09-23 (docs-health follow-up sweep): the release chain
+> executed — v2.6.0 folded, gated, signed (`807ca0c`) and pushed; the
+> TAIL (stack E2E ×2 on the new chain, gh release object, aarch64
+> re-verify, smoke `--expect-version`, pbx-artmann relock #4) is the
+> TODO release row. CRM (a)–(d), the four dedup pins, and the typeahead
+> train all shipped (21:12 / 02:47 trains). Still open, routed: owner
+> console (TODO rows), erraudit seam conversions f18–f21 (AGENTS tier-2
+> bar + monthly re-measure), export OpenAPI/counters f42/f43, devShell
+> + lessons items f44–f47 (small, unstruck).
+
 Full accounting of the 18:55–20:15 finishing session (E2E verdict →
 tree unbreak → final gates → T26b + T26c → post-train ritual →
 closing report), including the mistakes, told straight.
@@ -55,9 +65,9 @@ closing report), including the mistakes, told straight.
    historical transfer-step channel-count flake was never
    root-caused — it simply did not recur. The documented re-run-once
    posture stands on hope plus four clean runs.
-3. **Release-train readiness**: every precondition I can satisfy is
-   green (E2E ×2, aarch64, gates); the fold/tag/re-pin/relock chain is
-   untouched — owner-gated by design.
+3. ~~**Release-train readiness**: every precondition I can satisfy is~~ done (executed — v2.6.0 folded + signed tag 807ca0c; TAIL on the TODO release row)
+   ~~green (E2E ×2, aarch64, gates); the fold/tag/re-pin/relock chain is~~
+   ~~untouched — owner-gated by design.~~
 4. **Stack-side verification of my stack edits**: the E2E built green,
    but I never ran the STACK repo's own formatters/lints over
    tests/browser-e2e.py (that repo treefmts its Python — old commit
@@ -145,10 +155,10 @@ closing report), including the mistakes, told straight.
 ## f) NEXT UP TO 50 (prioritized)
 
 1. Fix the stale plan-log "Run 7 in flight" line (one edit).
-2. Fix CHANGELOG `[Unreleased]` compare link → v2.5.0.
-3. OWNER: confirm the pma daemon is healthy again (it auto-committed
-   at 20:19) or restart it.
-4. OWNER: v2.6.0 fold decision → `scripts/release.sh` (signs tags).
+2. ~~Fix CHANGELOG `[Unreleased]` compare link → v2.5.0.~~ done (fixed by the 711fff5 fold (Unreleased compare now v2.6.0...HEAD))
+3. ~~OWNER: confirm the pma daemon is healthy again (it auto-committed~~ done (daemon recovered; pushes verified since)
+   ~~at 20:19) or restart it.~~
+4. ~~OWNER: v2.6.0 fold decision → `scripts/release.sh` (signs tags).~~ done (folded + tagged 807ca0c, 2026-09-23)
 5. Push the signed tag; GitHub release object for v2.6.0.
 6. Stack re-pin to the released webphone; stack gates re-run.
 7. pbx-artmann relock #4 (runbook ritual; CLEAN tree first).
@@ -161,7 +171,7 @@ closing report), including the mistakes, told straight.
 13. Export rate limiting (reuse the keyed limiter pattern).
 14. Export blobs decision (see question 3) + optional inclusion.
 15. Stack repo: treefmt/format check over my browser-e2e.py edits.
-16. Re-baseline the E2E budget (198/237s actual vs 445s documented).
+16. ~~Re-baseline the E2E budget (198/237s actual vs 445s documented).~~ done (data recorded (198/237 + 384/373 datapoints; 445s budget stands))
 17. Keep transfer_dbg armed for the next channel-count flake; if it
     recurs twice, root-cause it properly.
 18. erraudit seam conversion: config.go (22 findings) → errorfamily.
@@ -174,10 +184,10 @@ closing report), including the mistakes, told straight.
 24. Screenshot QA of the four composer affordances.
 25. Owner-calls batch session (15 decisions; briefing ready).
 26. Post release announcements (drafts ready).
-27. CRM (a): island unit test for `recordCrmCall`.
-28. CRM (b): idempotency key on POST /api/calls.
-29. CRM (c): single-flight in `crm.Resolver`.
-30. CRM (d): hit/miss/timeout counters.
+27. ~~CRM (a): island unit test for `recordCrmCall`.~~ done (02:47, panels-crm.test.mjs)
+28. ~~CRM (b): idempotency key on POST /api/calls.~~ done (02:47, UUID key + 4 contract subtests)
+29. ~~CRM (c): single-flight in `crm.Resolver`.~~ done (21:12, leader/waiter single-flight)
+30. ~~CRM (d): hit/miss/timeout counters.~~ done (21:12 counters + 02:47 /metrics family)
 31. CRM (e): stack-side wiring for crm.url/crm.token (secrets dir).
 32. CRM (f): cross-doc CRM surfaces into the stack runbook.
 33. CRM (g): restore drill for `call_logged` journal entries.
@@ -186,10 +196,10 @@ closing report), including the mistakes, told straight.
 36. Send-failure E: provider refusal → 422 + wire docs together.
 37. Send-failure F: own-DID live composer warning.
 38. Fax-lane self-send guard (rides C).
-39. Dedup contract pins: listRows error-shape test.
-40. Dedup contract pins: requireMultipartTo 422 test.
-41. Dedup contract pins: pbx.do() disabled short-circuit + owner
-    scoping over the new helper path.
+39. ~~Dedup contract pins: listRows error-shape test.~~ done (TestListRowsErrorShapes, 21:12)
+40. ~~Dedup contract pins: requireMultipartTo 422 test.~~ done (TestRequireMultipartToAnswersPerTab422, 21:12)
+41. ~~Dedup contract pins: pbx.do() disabled short-circuit + owner~~ done (TestNilClientReturnsErrDisabled + ListThreads subtest, 21:12)
+    ~~scoping over the new helper path.~~
 42. OpenAPI: document `/api/export` (spec-vs-handler test).
 43. Metrics: export/download counters (aggregate-only).
 44. devShell: add codespell + shellcheck (kill nix-run fallback).
@@ -197,8 +207,8 @@ closing report), including the mistakes, told straight.
 46. AGENTS: add the verify-the-run-happened E2E ritual + the
     vm.runInThisContext island-test pattern.
 47. docs/lessons.md: phantom-run-7 + import-cache war stories.
-48. ROADMAP harvest of tonight's verdicts (export manifest decision,
-    TURN seam, daemon stall).
+48. ~~ROADMAP harvest of tonight's verdicts (export manifest decision,~~ done (2026-09-22 evening + 2026-09-23 sweeps)
+    ~~TURN seam, daemon stall).~~
 49. Watch: sip.js 0.22 / templ-components v1.20.x quarterly re-check
     (due 2026-12-20; ThemeScript knob shipped — keep the adoption
     table honest).
