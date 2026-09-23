@@ -82,6 +82,10 @@ gate protocol.
 ## b) PARTIALLY DONE
 
 1. **release.sh steps 6–9 (lychee → stack relock → stack E2E → aarch64 → gh release).**
+   PARTIAL (2026-09-23 evening): lychee 0 errors, stack pin verified at `7197f1c`
+   (the lock legally rides main; the stack's own CRM+TURN surgery is `be876ae`
+   there), aarch64 re-verified by ELF `b7 00`. STILL OWED behind the host-load
+   gate (load 19–104 all evening): browser E2E ×2, `gh release create`, smoke.
    - Run 1 died at the lychee gate: one broken relative link in an archived planning doc
      (`docs/planning/archived/2026-09-18_21-45_*` → status report moved under
      `docs/status/archived/` after the plan was archived). FIXED (7503561) and verified
@@ -103,6 +107,10 @@ gate protocol.
    the v2.6.0 tag legally diverge per the 2026-09-20 owner decision and the v2.5.0
    precedent). The E2E against any relock has not passed yet; pbx-artmann relock #4 comes
    after the stack goes green.
+   UPDATE 2026-09-23 evening: pin re-verified (`7197f1c` ≥ e01f75d); the stack landed its
+   CRM+TURN surgery (`937b94f`+`be876ae`, eval checks green incl. new CRM coverage); E2E
+   still owed (load-gated); pbx-artmann relock #4 blocked by a concurrent session's dirty
+   AGENTS.md/FEATURES.md in that tree.
 3. ~~**TODO_LIST harvest.** Deliberately untouched until the release completes (rows change~~ done (2026-09-23 docs-health HARVEST — release row rewritten around the TAIL)
    ~~state; the file was also mid-edit by the other session earlier tonight).~~
 
@@ -139,22 +147,29 @@ gate protocol.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **release.sh should gate on host load** — read `/proc/loadavg` in preconditions (e.g.
+1. ~~**release.sh should gate on host load** — read `/proc/loadavg` in preconditions (e.g.
    refuse to start the E2E phases above load ~8, or at least WARN), or the stack E2E
-   should auto-retry once on a marker-stall. Either would have saved ~40 minutes tonight.
-2. **Codify the flake heuristic with step context** in AGENTS/runbook: "same E2E step
+   should auto-retry once on a marker-stall. Either would have saved ~40 minutes tonight.~~
+   done at `a24496a` — `load_gate()` (1-min loadavg ≥8 refuses; `WEBPHONE_RELEASE_MAX_LOAD`
+   override; tested both directions) + `assert_clean_tree()` at tag time. The
+   load-gate-vs-retry ratification is an open ROADMAP question.
+2. ~~**Codify the flake heuristic with step context** in AGENTS/runbook: "same E2E step
    stalls twice in a row = dig into code; different steps inside the post-FS-restart tail
    = host load, wait for quiet and retry." Tonight I had to derive this from two full
-   logs; it should be a one-line rule.
+   logs; it should be a one-line rule.~~ done at `a24496a` — "Hard-won release rules
+   (2026-09-23 tail)" in docs/release-runbook.md.
 3. **Cross-session load protocol:** nothing tells a session "another session is running
    gates right now". A tiny flock convention (`/tmp/webphone-gates.lock` holding pid +
    scope) would let concurrent sessions yield instead of colliding.
-4. **The auto-commit daemon sweeping mid-release is a live hazard:** it committed f50e825
+4. ~~**The auto-commit daemon sweeping mid-release is a live hazard:** it committed f50e825
    (a docs file, harmless) BETWEEN the tag push and the lychee step, and earlier swept my
    in-flight edits mid-work twice. release.sh asserts a clean tree only in preconditions;
-   asserting at each step boundary (or at least before the tag) would catch drift.
-5. **Release-attempt logging:** always `> /tmp/release-<v>-<n>.log`; never pipe a
-   30-minute multi-phase script through `tail`.
+   asserting at each step boundary (or at least before the tag) would catch drift.~~ done
+   (the "at least before the tag" variant) at `a24496a` — `assert_clean_tree()` runs at
+   tag time; per-step-boundary asserts stay unimplemented (daemon-exclusion ask lives in
+   ROADMAP infra).
+5. ~~**Release-attempt logging:** always `> /tmp/release-<v>-<n>.log`; never pipe a
+   30-minute multi-phase script through `tail`.~~ done at `a24496a` — runbook rule.
 
 ## f) NEXT (prioritized)
 
@@ -163,6 +178,8 @@ gate protocol.
 2. On success: confirm the stack E2E passed, the stack relock commit exists and pins the
    intended webphone rev, aarch64 cross-builds verify by ELF machine bytes (`b7 00` at
    offset 0x12), and `gh release view v2.6.0` shows the extracted CHANGELOG body.
+   PARTIAL 2026-09-23 evening: aarch64 `b7 00` re-verified; pin verified (`7197f1c`);
+   E2E and the gh release object still owed (load-gated).
 3. `python3 scripts/webphone-smoke.py --expect-version 2.6.0` → 0 failed.
 4. pbx-artmann relock #4 (see c2): rev swap → lock-drift-probe → both toplevels →
    ExecStart store-path moved → narrative commit + push.

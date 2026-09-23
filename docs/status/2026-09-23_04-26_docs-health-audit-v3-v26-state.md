@@ -99,8 +99,8 @@ command outputs in this session.
 
 | # | What works | What remains |
 | - | ---------- | ------------ |
-| 1 | Quality gate | Scoped (drift + DOM-contract + codespell + marker/link gates) — buildflow full, `nix flake check`, island suite NOT run (docs-only delta; host load 58 from parallel sessions) |
-| 2 | The v2.6.0 TAIL verification | Proven never-fired + no gh release (routed to the TODO release row); the TAIL itself (stack E2E ×2, gh release, aarch64 re-verify, `--expect-version`, pbx relock #4) NOT executed — owner/next-session work |
+| 1 | Quality gate | Scoped (drift + DOM-contract + codespell + marker/link gates) — buildflow full, `nix flake check`, island suite NOT run (docs-only delta; host load 58 from parallel sessions). CLOSED 2026-09-23 evening: buildflow full 53/53 + island 79/79 + vulnix zero-real + unit 14 pkgs + full-package `-race` green; only `nix flake check` (KVM backup VM) still load-gated |
+| 2 | The v2.6.0 TAIL verification | Proven never-fired + no gh release (routed to the TODO release row); the TAIL itself (stack E2E ×2, gh release, aarch64 re-verify, `--expect-version`, pbx relock #4) NOT executed — owner/next-session work. ADVANCED 2026-09-23 evening: lychee 0 errors, stack pin verified `7197f1c`, aarch64 `b7 00` re-verified; E2E ×2 + gh release + smoke still behind the load gate |
 | 3 | Push state | All work committed by the daemon; the daemon's PUSHER lags again (HEAD `0023e3b` vs origin `0cb6d2c`) — known mode, runbook covers it, not a docs session's call to push main |
 | 4 | Annotation hash depth | Train-level `v` markers throughout (same disclosed bar as both accepted sweeps); per-item `git log -S` hashing would roughly double sweep cost — ratify-or-retire still open (g3) |
 
@@ -160,35 +160,60 @@ command outputs in this session.
 1. **v2.6.0 release TAIL** (TODO row 1): re-run release.sh steps 6–9 on
    a quiet host → gh release → `--expect-version 2.6.0` → pbx-artmann
    relock #4 → closing ls-remote sweep.
-2. Check the daemon pusher (HEAD ahead of origin again).
+2. ~~Check the daemon pusher (HEAD ahead of origin again).~~ done (2026-09-23
+   evening: all three repos pushed to origin == HEAD at every phase boundary;
+   hand-push after each narrative commit held all session)
 3. Owner: deploy the released chain to prod (command in TODO row 2) +
    post-deploy probes (row 3).
 4. Owner: SMS-lane journalctl (row 4).
-5. Quiet-machine full gate over the post-tag tree (buildflow full +
+5. ~~Quiet-machine full gate over the post-tag tree (buildflow full +
    flake check + island suite) — doubles as the art-dupl post-tag
-   verification (b2 of the 03:01 report).
-6. Helper micro-tests for the ten one-home helpers + coverage
-   inventory of the two JSON contact handlers (TODO row 5).
-7. `go test -race ./internal/server/...` full-package pass (row 6).
-8. Error-contract cross-check vs `applyStatusWebhook` + JSON-204
-   contract + the AGENTS acceptance-rationale registry line (row 7).
-9. Release-runbook hardening once the owner picks the mechanism
+   verification (b2 of the 03:01 report).~~ mostly done 2026-09-23 evening:
+   buildflow full 53/53 (BUILDFLOW_NO_RESULT_CACHE), island 79/79, vulnix
+   zero-real, `-race` full-package green; `nix flake check` (KVM backup VM)
+   still waits for the load window
+6. ~~Helper micro-tests for the ten one-home helpers + coverage
+   inventory of the two JSON contact handlers (TODO row 5).~~ done at
+   `7bf32a3` (both batches + the apiSave/apiDelete gap tests)
+7. ~~`go test -race ./internal/server/...` full-package pass (row 6).~~ done
+   (2026-09-23 evening, green in 8.3s)
+8. ~~Error-contract cross-check vs `applyStatusWebhook` + JSON-204
+   contract + the AGENTS acceptance-rationale registry line (row 7).~~ done
+   at `d42902b`
+9. ~~Release-runbook hardening once the owner picks the mechanism
    (load-gate vs E2E-retry + flake heuristic + logging rule + the
-   coordination-hazard note) (row 8).
-10. golangci-lint LSP nolint fix-or-declare + full-tree lint re-run
-    (row 9).
-11. Full-code-review over the interleaved 2026-09-22 day (row 10).
-12. Theme-knob verification: FOUC pair, de-native review, composer
-    screenshots (row 11).
+   coordination-hazard note) (row 8).~~ done at `a24496a` (conservative
+   load-gate default + heuristic + logging rule; ratification = open
+   ROADMAP question)
+10. ~~golangci-lint LSP nolint fix-or-declare + full-tree lint re-run
+    (row 9).~~ premise eliminated at `92715a0` (explicit read-then-close;
+    the nolint is gone); full-tree `./internal/...` re-run 0 issues
+11. ~~Full-code-review over the interleaved 2026-09-22 day (row 10).~~ done
+    at `a43737f` (report: `docs/reviews/2026-09-23_06-20_full-code-review.html`;
+    findings fixed in the same train)
+12. ~~Theme-knob verification: FOUC pair, de-native review, composer
+    screenshots (row 11).~~ FOUC done as a deterministic E2E scenario (stack
+    `c2220d3` — body-gated assertions, not screenshot races; first live run
+    rides the pending browser E2E); aarch64 re-verified
 13. Send-failure trains C/E/F + fax guard + stack-runbook CSP cross-doc
-    (row 12).
-14. CRM follow-ups (e)–(h): stack wiring, runbook cross-doc,
-    restore-drill, integration test (row 13).
+    (row 12). E SHIPPED at `6ac8962` (refusals 422, family-honest, both
+    runbooks synced); C/F/fax-guard remain owner-gated.
+14. ~~CRM follow-ups (e)–(h): stack wiring, runbook cross-doc,
+    restore-drill, integration test (row 13).~~ done 2026-09-23 evening:
+    (e)+(f) stack `937b94f`+`be876ae` (crm.{enable,url,tokenFile} options +
+    assertion + runbook); (g) crm `1358e6f` (drill proves call_logged
+    round-trips); (h) webphone `29e0d95` (island wire-contract test)
 15. OWNER-calls batch session (~24 decisions now — the row carries the
     full list; briefing doc + ROADMAP questions ready) (row 14).
 16. T26b stack half; announcements (v2.6.0 draft owed after the tail);
     standing watches + monthly erraudit (2026-10-22) (rows 15–17).
+    UPDATE 2026-09-23 evening: T26b stack half DONE (stack `937b94f`+`be876ae`
+    — per-response derivation via settings.turn_rest + the env-file seam; the
+    shadow+timer retired; VM contract re-pins the HMAC oracle); v2.6.0 draft
+    written (`c5e92d9`); watches re-checked (C22); erraudit due 2026-10-22.
 17. Decide DOMAIN_LANGUAGE.md (g2) and the annotation hash bar (g3).
+    UPDATE: DOMAIN_LANGUAGE.md drafted (`c5e92d9`, owner-ratification banner
+    — the g2 decision is now a yes/no on the draft); hash bar still open.
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 

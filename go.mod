@@ -46,7 +46,9 @@ require (
 	github.com/larsartmann/go-cqrs-lite/metadata/v4 v4.7.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/query/v4 v4.8.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.5.0 // indirect
-	github.com/larsartmann/go-etag v0.4.0 // indirect
+	github.com/larsartmann/go-etag v0.6.0 // indirect
+	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
+	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
 	github.com/larsartmann/templ-components/icons v1.19.2 // indirect
 	github.com/larsartmann/templ-components/utils v1.19.2 // indirect
