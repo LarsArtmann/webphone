@@ -4,11 +4,12 @@
 > remainder (T26b webphone half `c1971c4`, T26c `37aae5a`, T27a
 > `9f93537`, T27c `4f067f8`, T16d, FEATURES/CHANGELOG sync `4c4b36b`)
 > shipped the same day and rode v2.6.0 (tag `807ca0c`); aarch64 + lychee
-> + push-state verified 19:55. Still open, routed: the owner console
-> (TODO rows), the v2.6.0 release TAIL incl. stack E2E ×2 on the new
-> chain + pbx-artmann relock #4 (TODO row), the E2E retry-path-lie
-> runbook line + the 10011001/amend lessons (TODO runbook-hardening
-> row), makeEl export (small island-test idea, unstruck below).
+>
+> - push-state verified 19:55. Still open, routed: the owner console
+>   (TODO rows), the v2.6.0 release TAIL incl. stack E2E ×2 on the new
+>   chain + pbx-artmann relock #4 (TODO row), the E2E retry-path-lie
+>   runbook line + the 10011001/amend lessons (TODO runbook-hardening
+>   row), makeEl export (small island-test idea, unstruck below).
 
 Continuation of the "whole list" run (previous report 16:52; the
 standing directive kept execution going after it). This report covers

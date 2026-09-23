@@ -36,13 +36,13 @@ only (verified before running).
 
 ## b) PARTIALLY DONE
 
-| Item                                      | What's missing                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~E: Thread search~~ done — landed at 21:43 with 7-case store test, panel wiring, shell guard, i18n; shipped in v2.6.0 | ~~DESIGN COMPLETE… ZERO lines landed → superseded by the close-out~~ |
-| ~~Gates at train end~~ done — full suite + island 76/76 + flake check + buildflow 52/0 at 21:43 | ~~none run → ran at close-out~~ |
-| ~~Plan doc verdict~~ done — filled (shipped 6/6 + stub caveat) | ~~PENDING placeholder → filled 2026-09-23~~ |
-| ~~Narrative commit~~ done — the release-train boundary commits carry it (711fff5 fold, b162e22 bump, tag 807ca0c) | ~~daemon chore commits → superseded~~ |
-| ~~CHANGELOG / FEATURES / TODO_LIST / AGENTS~~ done — 02:47 (E+F + AGENTS CRM) + the 2026-09-23 sweep (A–D bullets + FEATURES rows; ROADMAP cluster rewritten) | ~~untouched → synced~~ |
+| Item                                                                                                                                                          | What's missing                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| ~~E: Thread search~~ done — landed at 21:43 with 7-case store test, panel wiring, shell guard, i18n; shipped in v2.6.0                                        | ~~DESIGN COMPLETE… ZERO lines landed → superseded by the close-out~~ |
+| ~~Gates at train end~~ done — full suite + island 76/76 + flake check + buildflow 52/0 at 21:43                                                               | ~~none run → ran at close-out~~                                      |
+| ~~Plan doc verdict~~ done — filled (shipped 6/6 + stub caveat)                                                                                                | ~~PENDING placeholder → filled 2026-09-23~~                          |
+| ~~Narrative commit~~ done — the release-train boundary commits carry it (711fff5 fold, b162e22 bump, tag 807ca0c)                                             | ~~daemon chore commits → superseded~~                                |
+| ~~CHANGELOG / FEATURES / TODO_LIST / AGENTS~~ done — 02:47 (E+F + AGENTS CRM) + the 2026-09-23 sweep (A–D bullets + FEATURES rows; ROADMAP cluster rewritten) | ~~untouched → synced~~                                               |
 
 ## c) NOT STARTED (none silently skipped)
 

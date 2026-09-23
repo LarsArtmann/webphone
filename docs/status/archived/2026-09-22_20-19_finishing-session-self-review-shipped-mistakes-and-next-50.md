@@ -8,7 +8,8 @@
 > train all shipped (21:12 / 02:47 trains). Still open, routed: owner
 > console (TODO rows), erraudit seam conversions f18–f21 (AGENTS tier-2
 > bar + monthly re-measure), export OpenAPI/counters f42/f43, devShell
-> + lessons items f44–f47 (small, unstruck).
+>
+> - lessons items f44–f47 (small, unstruck).
 
 Full accounting of the 18:55–20:15 finishing session (E2E verdict →
 tree unbreak → final gates → T26b + T26c → post-train ritual →

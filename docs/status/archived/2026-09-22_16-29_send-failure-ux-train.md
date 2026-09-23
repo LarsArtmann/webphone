@@ -95,13 +95,13 @@ inside its planned A+B scope (no verschlimmbessern).
 
 ## c) NOT STARTED
 
-| Item                                                                                                                              | Note                                                                  |
-| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Train C: pre-flight self-send 422 fast path (blocked on owner call, see g)                                                        | instant refusal vs evidence-preserving failed row ← still open (TODO row) |
-| Train E: provider refusal → 422 + honest log family (contract test + failure table + stack runbook sync move together)            | best bundled with D ← still open (TODO row)                           |
-| ~~Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable)~~ done at `1bec154` | ~~store migration — the biggest remaining UX lever~~ |
-| Train F: own-DID on the session payload + live composer warning                                                                   | only if self-sends recur after B(+C) ← still open (demand-gated)      |
-| ~~Stack browser E2E re-run over this markup change~~ done (×2 green 19:55; ×2 again owed on the v2.6.0 chain = release TAIL)      | ~~the declared gate I skipped; ~6-7 min in the stack repo (445s budget)~~ |
+| Item                                                                                                                                                    | Note                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Train C: pre-flight self-send 422 fast path (blocked on owner call, see g)                                                                              | instant refusal vs evidence-preserving failed row ← still open (TODO row) |
+| Train E: provider refusal → 422 + honest log family (contract test + failure table + stack runbook sync move together)                                  | best bundled with D ← still open (TODO row)                               |
+| ~~Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable)~~ done at `1bec154` | ~~store migration — the biggest remaining UX lever~~                      |
+| Train F: own-DID on the session payload + live composer warning                                                                                         | only if self-sends recur after B(+C) ← still open (demand-gated)          |
+| ~~Stack browser E2E re-run over this markup change~~ done (×2 green 19:55; ×2 again owed on the v2.6.0 chain = release TAIL)                            | ~~the declared gate I skipped; ~6-7 min in the stack repo (445s budget)~~ |
 
 ## d) TOTALLY FUCKED UP
 
@@ -139,21 +139,21 @@ Nothing product-breaking shipped. Process stumbles, honestly:
 
 ## f) Next tasks (session-scoped, impact/effort-sorted)
 
-| #  | Task                                                                                                                       | Impact  | Effort |
-| -- | -------------------------------------------------------------------------------------------------------------------------- | ------- | ------ |
-| ~~1~~  | ~~Stack browser E2E re-run over the A+B markup change (declared gate, skipped)~~ done — E2E ×2 green 19:55 | ~~High~~ | ~~S~~ |
-| 2  | Verify + pin htmx disabled-elt `find` behavior (served htmx.min.js + a DOM-level island-style test if feasible)            | Med     | S      |
-| 3  | Owner call on train C, then implement pre-flight 422 (messages + fax lanes together, reusing `isSelfThread`)               | High    | S      |
-| ~~4~~  | ~~Re-green buildflow after the concurrent contacts/crm train folds (7 erraudit findings are theirs)~~ done — buildflow re-greened, 4320c7d + evening gates | ~~High~~ | ~~S~~ |
-| 5  | Fax-lane self-send caution (or fold into #3's pre-flight)                                                                  | Med     | S      |
-| ~~6~~  | ~~Train D: persist failure detail+kind on message rows; `wp-failed` bubble, disclosure, retry-when-retryable~~ done — train D shipped 1bec154 | ~~High~~ | ~~M-L~~ |
-| 7  | Train E with D: provider refusal → 422, honest `family=` vocabulary, contract test + failure table + stack runbook sync    | Med     | S-M    |
-| 8  | Contacts add/import forms: consider the same in-flight guard (idempotent upsert makes it lower risk — decide deliberately) | Low     | XS     |
-| 9  | `role="note"`/a11y assertion for the notice in the existing pin test                                                       | Low     | XS     |
-| 10 | German copy native review of `thread.selfNotice`                                                                           | Low     | XS     |
-| 11 | Screenshot QA of the notice in both themes (auto/light/dark)                                                               | Low     | XS     |
-| 12 | If self-sends recur after #3: train F (own-DID on session payload, live composer warning)                                  | Low-Med | M      |
-| ~~13~~ | ~~TODO_LIST hygiene: fold items 1-4 above into rows if owner approves (HARVEST)~~ done — 2026-09-22 evening + 2026-09-23 docs-health sweeps | ~~Low~~ | ~~XS~~ |
+| #      | Task                                                                                                                                                       | Impact   | Effort  |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
+| ~~1~~  | ~~Stack browser E2E re-run over the A+B markup change (declared gate, skipped)~~ done — E2E ×2 green 19:55                                                 | ~~High~~ | ~~S~~   |
+| 2      | Verify + pin htmx disabled-elt `find` behavior (served htmx.min.js + a DOM-level island-style test if feasible)                                            | Med      | S       |
+| 3      | Owner call on train C, then implement pre-flight 422 (messages + fax lanes together, reusing `isSelfThread`)                                               | High     | S       |
+| ~~4~~  | ~~Re-green buildflow after the concurrent contacts/crm train folds (7 erraudit findings are theirs)~~ done — buildflow re-greened, 4320c7d + evening gates | ~~High~~ | ~~S~~   |
+| 5      | Fax-lane self-send caution (or fold into #3's pre-flight)                                                                                                  | Med      | S       |
+| ~~6~~  | ~~Train D: persist failure detail+kind on message rows; `wp-failed` bubble, disclosure, retry-when-retryable~~ done — train D shipped 1bec154              | ~~High~~ | ~~M-L~~ |
+| 7      | Train E with D: provider refusal → 422, honest `family=` vocabulary, contract test + failure table + stack runbook sync                                    | Med      | S-M     |
+| 8      | Contacts add/import forms: consider the same in-flight guard (idempotent upsert makes it lower risk — decide deliberately)                                 | Low      | XS      |
+| 9      | `role="note"`/a11y assertion for the notice in the existing pin test                                                                                       | Low      | XS      |
+| 10     | German copy native review of `thread.selfNotice`                                                                                                           | Low      | XS      |
+| 11     | Screenshot QA of the notice in both themes (auto/light/dark)                                                                                               | Low      | XS      |
+| 12     | If self-sends recur after #3: train F (own-DID on session payload, live composer warning)                                                                  | Low-Med  | M       |
+| ~~13~~ | ~~TODO_LIST hygiene: fold items 1-4 above into rows if owner approves (HARVEST)~~ done — 2026-09-22 evening + 2026-09-23 docs-health sweeps                | ~~Low~~  | ~~XS~~  |
 
 (13 items, honestly scoped to this session's blast radius; the
 project-wide backlog lives in TODO_LIST.md and is NOT restated here

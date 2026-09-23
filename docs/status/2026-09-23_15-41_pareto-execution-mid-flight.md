@@ -76,8 +76,8 @@ release, smoke --expect-version) never got its quiet-host window.
    `21cbda5..6ac8962` and stack `08c9c9d..c96d45c` (daemon pusher
    stalled ~1h), ls-remote verified both.
 9. **C21**: `docs/announcements/2026-09-23_v2-6-0_drafts.md` (one-liner
-   + headline post; the post-tag 422 train deliberately EXCLUDED;
-   disclosure posture carried from v2.5.0). Commit `c5e92d9`.
+   - headline post; the post-tag 422 train deliberately EXCLUDED;
+     disclosure posture carried from v2.5.0). Commit `c5e92d9`.
 10. **C22 watches re-check**: sip.js npm latest 0.21.2 == pin;
     templ-components latest tag **v1.19.2** (below the v1.20.x watch
     threshold — and I re-derived it with `sort -V` after catching the
@@ -220,32 +220,32 @@ release, smoke --expect-version) never got its quiet-host window.
 
 ## f) NEXT (prioritized, no padding — the honest backlog is these 24)
 
-| # | Item | Size |
-|---|------|------|
-| 1 | Finish C20/C18 stack surgery: web.nix settings/env/nginx/systemd + options.nix crm + assertion + dead-let cleanup | M |
-| 2 | Stack: bump webphone input to 2356ec8, THEN eval (`nix build --dry-run .#telephony-browser`, `.#checks` eval) | S |
-| 3 | tests/webphone.nix: app-served config.js contract (crm key, isdigit username, HMAC oracle vs "test-turn-rest-4d5e6f", future expiry) | S |
-| 4 | Fold `8a141b1` (half-done web.nix) into the finished narrative commit | S |
-| 5 | Stack runbook: CRM section (options, secrets dir, failure mode) + T26b note (shadow+timer gone) | S |
-| 6 | E2E run 1 on the finished chain (quiet host; also the FOUC scenario's first live run) → log /tmp/release-2.6.0-5.log | M |
-| 7 | E2E run 2 forced --rebuild | M |
-| 8 | aarch64 cross-build + ELF `b7 00` byte verify | S |
-| 9 | `gh release create v2.6.0` with the extracted CHANGELOG body → `gh release view` | S |
-| 10 | `python3 scripts/webphone-smoke.py --expect-version 2.6.0` + prove process dead | S |
-| 11 | C8 full gates on webphone HEAD: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check` (incl. the starved backup VM), island suite, vulnix | M |
-| 12 | pbx-artmann relock #4 once that tree is clean (rev swap → flake update telephony → lock-drift-probe → both toplevels → ExecStart moved → narrative commit + push) | M |
-| 13 | C19 (g): CRM restore-drill proving `call_logged` survives a journal restore (CRM repo) | M |
-| 14 | C19 (h): one HTTP-level island→server→CRM-stub integration test (or settle the level: contract test here vs stack E2E) | M |
-| 15 | C24: docs-health HARVEST of this session into TODO_LIST/ROADMAP | S |
-| 16 | Annotate 02-47 + 04-26 reports + the 04-29 plan verdict (`PENDING` → filled) | S |
-| 17 | Closing sweep: `git ls-remote` all three repos; owner-decision summary (C2 deploy, C3 probes, C7 SMS-lane, C4 batch, announcements posting) | S |
-| 18 | TODO_LIST rows to close/rewrite: T5 (micro-tests) DONE, T6 (-race) DONE, T7 (error-contract) DONE, T9 (LSP) DONE, T8 done-pending-ratification, T10 (review) DONE, T11 (theme) done-sans-E2E-run, T12 shrinks to C/F/fax-guard | S |
-| 19 | ROADMAP: mark answered-by-default items (release.sh mechanism = loadavg gate, DOMAIN_LANGUAGE drafted) | S |
-| 20 | Watch the E2E wall-time budget after the FOUC scenario lands (445s budget; baseline 373–384s + scenario) — two-run verdict, then re-baseline or trim | S |
-| 21 | CHANGELOG (stack): TURN per-response derivation + CRM wiring rows | S |
-| 22 | webphone README capability table: TURN REST credentials row (per-response derivation) if missing | S |
-| 23 | Orphan-blob reconciler (routed by the code review): reuse the retention ticker for a blob-files-without-rows scan | M |
-| 24 | CRM client decode-style consistency (`json.UnmarshalRead`) next time the file is touched (routed, low) | S |
+| #  | Item                                                                                                                                                                                                                           | Size |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| 1  | Finish C20/C18 stack surgery: web.nix settings/env/nginx/systemd + options.nix crm + assertion + dead-let cleanup                                                                                                              | M    |
+| 2  | Stack: bump webphone input to 2356ec8, THEN eval (`nix build --dry-run .#telephony-browser`, `.#checks` eval)                                                                                                                  | S    |
+| 3  | tests/webphone.nix: app-served config.js contract (crm key, isdigit username, HMAC oracle vs "test-turn-rest-4d5e6f", future expiry)                                                                                           | S    |
+| 4  | Fold `8a141b1` (half-done web.nix) into the finished narrative commit                                                                                                                                                          | S    |
+| 5  | Stack runbook: CRM section (options, secrets dir, failure mode) + T26b note (shadow+timer gone)                                                                                                                                | S    |
+| 6  | E2E run 1 on the finished chain (quiet host; also the FOUC scenario's first live run) → log /tmp/release-2.6.0-5.log                                                                                                           | M    |
+| 7  | E2E run 2 forced --rebuild                                                                                                                                                                                                     | M    |
+| 8  | aarch64 cross-build + ELF `b7 00` byte verify                                                                                                                                                                                  | S    |
+| 9  | `gh release create v2.6.0` with the extracted CHANGELOG body → `gh release view`                                                                                                                                               | S    |
+| 10 | `python3 scripts/webphone-smoke.py --expect-version 2.6.0` + prove process dead                                                                                                                                                | S    |
+| 11 | C8 full gates on webphone HEAD: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`, `nix flake check` (incl. the starved backup VM), island suite, vulnix                                                                                 | M    |
+| 12 | pbx-artmann relock #4 once that tree is clean (rev swap → flake update telephony → lock-drift-probe → both toplevels → ExecStart moved → narrative commit + push)                                                              | M    |
+| 13 | C19 (g): CRM restore-drill proving `call_logged` survives a journal restore (CRM repo)                                                                                                                                         | M    |
+| 14 | C19 (h): one HTTP-level island→server→CRM-stub integration test (or settle the level: contract test here vs stack E2E)                                                                                                         | M    |
+| 15 | C24: docs-health HARVEST of this session into TODO_LIST/ROADMAP                                                                                                                                                                | S    |
+| 16 | Annotate 02-47 + 04-26 reports + the 04-29 plan verdict (`PENDING` → filled)                                                                                                                                                   | S    |
+| 17 | Closing sweep: `git ls-remote` all three repos; owner-decision summary (C2 deploy, C3 probes, C7 SMS-lane, C4 batch, announcements posting)                                                                                    | S    |
+| 18 | TODO_LIST rows to close/rewrite: T5 (micro-tests) DONE, T6 (-race) DONE, T7 (error-contract) DONE, T9 (LSP) DONE, T8 done-pending-ratification, T10 (review) DONE, T11 (theme) done-sans-E2E-run, T12 shrinks to C/F/fax-guard | S    |
+| 19 | ROADMAP: mark answered-by-default items (release.sh mechanism = loadavg gate, DOMAIN_LANGUAGE drafted)                                                                                                                         | S    |
+| 20 | Watch the E2E wall-time budget after the FOUC scenario lands (445s budget; baseline 373–384s + scenario) — two-run verdict, then re-baseline or trim                                                                           | S    |
+| 21 | CHANGELOG (stack): TURN per-response derivation + CRM wiring rows                                                                                                                                                              | S    |
+| 22 | webphone README capability table: TURN REST credentials row (per-response derivation) if missing                                                                                                                               | S    |
+| 23 | Orphan-blob reconciler (routed by the code review): reuse the retention ticker for a blob-files-without-rows scan                                                                                                              | M    |
+| 24 | CRM client decode-style consistency (`json.UnmarshalRead`) next time the file is touched (routed, low)                                                                                                                         | S    |
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 

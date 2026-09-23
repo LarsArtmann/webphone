@@ -101,7 +101,7 @@ en/de UI strings' English anchors.
 ## Integrations
 
 - **CRM seam** — optional read-only enrichment (`crm.url`/`crm.token`)
-  + idempotent post-call journaling; a dead CRM never breaks a page.
+  - idempotent post-call journaling; a dead CRM never breaks a page.
 - **consuming stack** — nix-international-telephony: fronts the
   binary with TLS, proxies `/sip`, `/events`, `/phone-api`; pbx
   -artmann consumes the stack via a rev pin. Tri-repo chain.

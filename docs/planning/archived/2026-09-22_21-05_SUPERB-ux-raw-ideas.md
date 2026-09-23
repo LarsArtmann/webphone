@@ -66,23 +66,23 @@ input; two are owner-gated by design and get refined TODO rows instead.
 
 ## Fine plan (≤ 12 min each)
 
-| #   | Task                                                                    | Verifies via                   |
-| --- | ----------------------------------------------------------------------- | ------------------------------ |
-| ~~A.1~~ | ~~helpers.go fullStamp + tests~~ done — TestFullStampCarriesDateYearAndTime green | ~~`go test ./internal/web/views`~~ |
-| ~~A.2~~ | ~~messages.templ titles (thread-when, bubble clock) + templ generate~~ done — TestTranscriptCarriesHoverStampsAndJumpChip green | ~~server render test~~ |
-| ~~B.1~~ | ~~messages.templ transcript-wrap + chip; app.css~~ done — server render pin green | ~~server render test~~ |
-| ~~B.2~~ | ~~shell.js §3b chip logic~~ done — 2 shell specs green | ~~shell.test.mjs~~ |
-| ~~C.1~~ | ~~calls.js + connection.js wp:call-missed; dead callEnded key removed~~ done — missed-call + calls specs green; dead key removed | ~~island node tests~~ |
-| ~~C.2~~ | ~~shell.js missed badge + History-tab clear; app.css~~ done — shell badge spec green | ~~shell.test.mjs~~ |
-| ~~D.1~~ | ~~island typeahead.js + main.js wiring + i18n-free list markup~~ done — typeahead + typeahead-empty specs green | ~~typeahead.test.mjs~~ |
-| ~~D.2~~ | ~~app.css typeahead dropdown~~ done — served asset + island style | ~~served asset~~ |
-| ~~E.1~~ | ~~store.SearchThreads + test~~ done — TestSearchThreads 7 cases green | ~~`go test ./internal/store`~~ |
-| ~~E.2~~ | ~~messaging.ThreadSearch + panels.go ?q= + templ search form + i18n keys~~ done — TestThreadSearchFiltersPanel green | ~~`go test ./...`~~ |
-| ~~E.3~~ | ~~shell.js SSE search guard~~ done — 4-assertion shell spec green | ~~shell.test.mjs~~ |
-| ~~F.1~~ | ~~audioout.js + main.js + phone.templ wrap + island i18n keys + templ gen~~ done — 6 specs across audioout + audioout-unsupported green | ~~audioout.test.mjs~~ |
-| ~~G.1~~ | ~~TODO_LIST rows: peer hub + Tailwind spike~~ done — routed ROADMAP composer cluster | ~~review~~ |
-| ~~G.2~~ | ~~CHANGELOG, FEATURES, plan verdict~~ done — 6/6 entries + rows (02:47 + 2026-09-23 sweep); verdict filled | ~~review~~ |
-| ~~G.3~~ | ~~Gates: go test full, node tests, nix fmt, island-lint, buildflow~~ done — green at 21:43 + release gates | ~~green~~ |
+| #       | Task                                                                                                                                    | Verifies via                       |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| ~~A.1~~ | ~~helpers.go fullStamp + tests~~ done — TestFullStampCarriesDateYearAndTime green                                                       | ~~`go test ./internal/web/views`~~ |
+| ~~A.2~~ | ~~messages.templ titles (thread-when, bubble clock) + templ generate~~ done — TestTranscriptCarriesHoverStampsAndJumpChip green         | ~~server render test~~             |
+| ~~B.1~~ | ~~messages.templ transcript-wrap + chip; app.css~~ done — server render pin green                                                       | ~~server render test~~             |
+| ~~B.2~~ | ~~shell.js §3b chip logic~~ done — 2 shell specs green                                                                                  | ~~shell.test.mjs~~                 |
+| ~~C.1~~ | ~~calls.js + connection.js wp:call-missed; dead callEnded key removed~~ done — missed-call + calls specs green; dead key removed        | ~~island node tests~~              |
+| ~~C.2~~ | ~~shell.js missed badge + History-tab clear; app.css~~ done — shell badge spec green                                                    | ~~shell.test.mjs~~                 |
+| ~~D.1~~ | ~~island typeahead.js + main.js wiring + i18n-free list markup~~ done — typeahead + typeahead-empty specs green                         | ~~typeahead.test.mjs~~             |
+| ~~D.2~~ | ~~app.css typeahead dropdown~~ done — served asset + island style                                                                       | ~~served asset~~                   |
+| ~~E.1~~ | ~~store.SearchThreads + test~~ done — TestSearchThreads 7 cases green                                                                   | ~~`go test ./internal/store`~~     |
+| ~~E.2~~ | ~~messaging.ThreadSearch + panels.go ?q= + templ search form + i18n keys~~ done — TestThreadSearchFiltersPanel green                    | ~~`go test ./...`~~                |
+| ~~E.3~~ | ~~shell.js SSE search guard~~ done — 4-assertion shell spec green                                                                       | ~~shell.test.mjs~~                 |
+| ~~F.1~~ | ~~audioout.js + main.js + phone.templ wrap + island i18n keys + templ gen~~ done — 6 specs across audioout + audioout-unsupported green | ~~audioout.test.mjs~~              |
+| ~~G.1~~ | ~~TODO_LIST rows: peer hub + Tailwind spike~~ done — routed ROADMAP composer cluster                                                    | ~~review~~                         |
+| ~~G.2~~ | ~~CHANGELOG, FEATURES, plan verdict~~ done — 6/6 entries + rows (02:47 + 2026-09-23 sweep); verdict filled                              | ~~review~~                         |
+| ~~G.3~~ | ~~Gates: go test full, node tests, nix fmt, island-lint, buildflow~~ done — green at 21:43 + release gates                              | ~~green~~                          |
 
 ## Constraints (do not break)
 

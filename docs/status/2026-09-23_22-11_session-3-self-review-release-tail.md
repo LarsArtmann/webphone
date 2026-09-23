@@ -93,7 +93,7 @@ is the cross-session record.
    For dependency changes the pre-push check must be
    `nix build .#webphone`, not a dev-shell go build. My push
    published the broken state (the daemon would have anyway — but
-   I *verified* the wrong thing and called it BUILD_OK).
+   I _verified_ the wrong thing and called it BUILD_OK).
 3. **Two theory-driven FOUC fixes before hard evidence.** Run 2
    (`setCacheDisabled`) and run 4 (`Page.reload{ignoreCache}`) were
    plausible-theory commits; each cost a ~6-min VM run. Run 3's
@@ -143,6 +143,7 @@ is the cross-session record.
 ## f) NEXT — up to 50 things, roughest order by leverage
 
 **Owner-gated (nothing moves without these):**
+
 1. C2 deploy the chain (command in the close-out summary).
 2. C3 post-deploy probes incl. the rejection-banner check.
 3. C4 owner-calls batch — now with: g1 (force-push policy), g2
@@ -154,73 +155,73 @@ is the cross-session record.
 
 **Release-train health (assistant-executable next session):**
 7. Re-run the aarch64 cross-build + ELF check on the POST-vendorHash
-   tree (`0a7a732`+) — C1c's evidence predates the fix; low risk,
-   but the ritual is cheap.
+tree (`0a7a732`+) — C1c's evidence predates the fix; low risk,
+but the ritual is cheap.
 8. Next stack train: fold post-tag webphone main into the stack
-   lock (`bd77669` MMS fix, `e85923d`+`0a7a732` dep/vendorHash) —
-   the deployed chain intentionally rides `7197f1c`; the MMS fix is
-   NOT live on the deploy path yet.
+lock (`bd77669` MMS fix, `e85923d`+`0a7a732` dep/vendorHash) —
+the deployed chain intentionally rides `7197f1c`; the MMS fix is
+NOT live on the deploy path yet.
 9. Auto-gate for daemon dep sweeps: `nix build .#webphone` (or a
-   flake check) post-sweep when go.mod/go.sum changed — kills the
-   broken-main window class.
+flake check) post-sweep when go.mod/go.sum changed — kills the
+broken-main window class.
 10. Smoke-script fix: auto-detect bare-`go build` binaries and warn
-    (or fail with a hint) when `--expect-version` is used without
-    `--bin`; document `--bin` in the help text.
+(or fail with a hint) when `--expect-version` is used without
+`--bin`; document `--bin` in the help text.
 11. ROADMAP: strike g3 with the 195s/184s evidence.
 12. webphone `docs/lessons.md`: the FOUC harness arc (cache-dodging
-    blocks; chromedriver mid-navigation blindness; instrument
-    first).
+blocks; chromedriver mid-navigation blindness; instrument
+first).
 13. Stack ops-runbook/AGENTS: one paragraph on the E2E measurement
-    model (in-page recorders; why driver polling can't see
-    navigation windows).
+model (in-page recorders; why driver polling can't see
+navigation windows).
 14. release-runbook: record this session's flake precedent —
-    "different post-drill steps twice = re-run once more; third
-    failure = dig" (it worked; the heuristic needs the new data
-    point).
+"different post-drill steps twice = re-run once more; third
+failure = dig" (it worked; the heuristic needs the new data
+point).
 15. Consider `nix flake check --all-systems` (or an explicit
-    aarch64 eval check) in the gate set — the current check omits
-    aarch64 with a warning only.
+aarch64 eval check) in the gate set — the current check omits
+aarch64 with a warning only.
 
 **E2E/test hardening:**
 16. Harden the post-reconnect recovery window (the 2/6 flake
-    source): longer settle, or retry the dial once on ring-timeout
-    death, or reload the CALLEE (not just on wedged registration).
+source): longer settle, or retry the dial once on ring-timeout
+death, or reload the CALLEE (not just on wedged registration).
 17. FOUC pair 1: once stable across ~5 green runs, tighten the
-    assertion to `rafUnthemed > 0` strictly (drop the interval
-    backstop from the pass condition; keep it as diagnostics).
+assertion to `rafUnthemed > 0` strictly (drop the interval
+backstop from the pass condition; keep it as diagnostics).
 18. Add FOUC pair 3: auto/system theme (no stored wp-theme) — the
-    preload's no-op path is untested.
+preload's no-op path is untested.
 19. Stack check that py_compiles browser-e2e.py on eval (a syntax
-    slip currently costs a 6-min VM run to discover).
+slip currently costs a 6-min VM run to discover).
 20. The theme scenario's recorder source is a Python string —
-    consider hoisting it to a checked-in .js asset imported by the
-    test (reviewability).
+consider hoisting it to a checked-in .js asset imported by the
+test (reviewability).
 
 **Repo/product hygiene:**
 21. Prune/curate `/tmp/release-2.6.0-*` logs (12 files) + toplevel
-    symlinks into a dated folder or delete.
+symlinks into a dated folder or delete.
 22. CHANGELOG: keep accumulating the post-tag Unreleased section
-    (provider-refusal 422 already there; MMS fix landed post-tag —
-    verify it's listed).
+(provider-refusal 422 already there; MMS fix landed post-tag —
+verify it's listed).
 23. Verify the MMS composer fix (`bd77669`) has island tests
-    covering the new accept path (it's the other session's work —
-    a review pass, not a rewrite).
+covering the new accept path (it's the other session's work —
+a review pass, not a rewrite).
 24. Stack vulnix feed: replace the retired NVD 2.0 endpoint (OSV
-    mirror or pinned feed) — turn documented noise into a working
-    gate.
+mirror or pinned feed) — turn documented noise into a working
+gate.
 25. LSP noise: the GOTOOLCHAIN=local gopls/templ failures appear
-    every session — configure the LSP to use the devShell Go or
-    silence outside-shell instances.
+every session — configure the LSP to use the devShell Go or
+silence outside-shell instances.
 26. pbx-artmann: consider a fast re-pin path (eval + store-path
-    compare only) when the stack delta is test-only — the full
-    toplevel rebuild added ~5 min for byte-identical closures.
+compare only) when the stack delta is test-only — the full
+toplevel rebuild added ~5 min for byte-identical closures.
 27. Quarterly watches are parked until 2026-12-20; erraudit tier-2
-    re-measure due 2026-10-22 (baseline 127/113 must shrink).
+re-measure due 2026-10-22 (baseline 127/113 must shrink).
 28. CRM restore drill on a quarterly cadence (calendar row).
 29. The `result` symlink from `nix build` — confirm gitignore
-    coverage (tree stayed clean, but verify explicitly once).
+coverage (tree stayed clean, but verify explicitly once).
 30. Consider attaching built binaries (x86_64 + aarch64) to GitHub
-    releases — currently notes-only (owner preference, see §g).
+releases — currently notes-only (owner preference, see §g).
 
 **From the earlier sessions' backlog (still open, unchanged):**
 31. Send-failure train C/F remainder (owner call first).
@@ -235,13 +236,13 @@ is the cross-session record.
 40. Multi-contact "+N more" CRM display call.
 41. English-only journal bodies call.
 42. `/livez` consumer decision; HSTS; XFF sanitization; loopback
-    `delivered` semantics; handler dual-layer; gh-release habit;
-    Go module v2 policy; recordings intent; TEMP-DIAG keep;
-    oops ratification; `backup.retentionDays` — the rest of the
-    owner-calls list (folded into item 3's sitting).
+`delivered` semantics; handler dual-layer; gh-release habit;
+Go module v2 policy; recordings intent; TEMP-DIAG keep;
+oops ratification; `backup.retentionDays` — the rest of the
+owner-calls list (folded into item 3's sitting).
 
-*(43–50 intentionally unlisted: no padding — the list above is the
-real remainder.)*
+_(43–50 intentionally unlisted: no padding — the list above is the
+real remainder.)_
 
 ## g) Questions I cannot answer myself (max 3)
 

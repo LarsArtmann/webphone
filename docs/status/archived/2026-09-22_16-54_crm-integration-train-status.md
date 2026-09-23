@@ -3,12 +3,13 @@
 > CLOSED 2026-09-23 (docs-health): the integration shipped in v2.6.0
 > (tag `807ca0c`) with its follow-up trains — `/api/calls` in OpenAPI,
 > island `recordCrmCall` test, UUID idempotency, resolver single-flight
-> + counters, `/metrics` CRM family, the `crm.Client` `do()` chokepoint
-> (the disabled-policy split brain is closed). Still open, routed:
-> stack-side wiring + runbook cross-doc + restore-drill + the HTTP-level
-> integration test (TODO CRM row), typed `crm.{url,token}` options +
-> multi-contact + English-only journal + call-card-enrichment scope
-> (owner-calls / ROADMAP), CSV import E2E (CRM repo).
+>
+> - counters, `/metrics` CRM family, the `crm.Client` `do()` chokepoint
+>   (the disabled-policy split brain is closed). Still open, routed:
+>   stack-side wiring + runbook cross-doc + restore-drill + the HTTP-level
+>   integration test (TODO CRM row), typed `crm.{url,token}` options +
+>   multi-contact + English-only journal + call-card-enrichment scope
+>   (owner-calls / ROADMAP), CSV import E2E (CRM repo).
 
 Session scope: design + full implementation of the **optional webphone ↔
 Ledger CRM integration** across BOTH repos (`~/projects/webphone` and

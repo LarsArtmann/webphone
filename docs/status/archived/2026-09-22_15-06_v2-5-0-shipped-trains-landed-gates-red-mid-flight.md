@@ -176,7 +176,7 @@ That red is the live fire right now.
 - ~~**T26 platform tail 1** (metrics endpoint, TURN creds via config.js,
   per-extension export, timezone timestamps, MIME sniffing).~~ done
   (metrics 18:46+19:11; TURN `c1971c4`; export `37aae5a`; timezone
-  + sniffing `d131e11`)
+  - sniffing `d131e11`)
 - ~~**T27 platform tail 2** (gzip option, favicon route, signed tags,
   i18n key-sync guard, idempotency durability decision, OpenAPI
   boundary decision, limiter-key runbook line).~~ done (`9f93537`+

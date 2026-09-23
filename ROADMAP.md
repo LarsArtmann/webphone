@@ -324,7 +324,7 @@ unshipped fuel — refine into TODO_LIST only on demand.
   exposes it first).
 - `ValidOutboundStatus` extraction: stays un-built UNLESS the
   webhook-valid set and the service-apply set ever diverge (two
-deliberate distinct contracts today).
+  deliberate distinct contracts today).
 
 ## Local Playwright island E2E (consciously deferred, plan T27 2026-09-20)
 
