@@ -89,9 +89,9 @@ green — all re-runnable. Everything else is honestly labeled unrun.
 
 | Item                                                                                                                                   | Note                           |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| ~~Next-train ideas from the plan: dial typeahead (PBX_CONFIG contacts), jump-to-latest chip, per-thread drafts~~ done (all shipped in v2.6.0 — ux-raw-ideas train + T21d) | planned, coarse table rows 6-8 |
-| Carried from train 1: C (pre-flight self-send, owner call open), ~~D (bubble failure story)~~ done `1bec154`, E (422 semantics), F (live own-DID warning) | TODO_LIST row ← C/E/F still open |
-| ~~Stack browser E2E re-run — now covers TWO trains of markup changes~~ done (×2 green 19:55; ×2 owed on the v2.6.0 chain = release TAIL)                              | declared gate, still skipped   |
+| ~~Next-train ideas from the plan: dial typeahead (PBX_CONFIG contacts), jump-to-latest chip, per-thread drafts~~ done (all shipped in v2.6.0 — ux-raw-ideas train + T21d) | ~~planned, coarse table rows 6-8~~ |
+| ~~Carried from train 1: C (pre-flight self-send, owner call open), D (bubble failure story), E (422 semantics), F (live own-DID warning)~~ done — D only (`1bec154`); C/E/F still open (TODO row) | ~~TODO_LIST row~~ |
+| ~~Stack browser E2E re-run — now covers TWO trains of markup changes~~ done (×2 green 19:55; ×2 owed on the v2.6.0 chain = release TAIL)                              | ~~declared gate, still skipped~~   |
 
 ## d) TOTALLY FUCKED UP
 

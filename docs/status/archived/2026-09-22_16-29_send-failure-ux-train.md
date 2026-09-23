@@ -99,9 +99,9 @@ inside its planned A+B scope (no verschlimmbessern).
 | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Train C: pre-flight self-send 422 fast path (blocked on owner call, see g)                                                        | instant refusal vs evidence-preserving failed row ← still open (TODO row) |
 | Train E: provider refusal → 422 + honest log family (contract test + failure table + stack runbook sync move together)            | best bundled with D ← still open (TODO row)                           |
-| ~~Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable)~~ done at `1bec154` | store migration — the biggest remaining UX lever                     |
+| ~~Train D: bubble failure story (persist failure detail+kind; `wp-failed` treatment; reason disclosure; retry only where retryable)~~ done at `1bec154` | ~~store migration — the biggest remaining UX lever~~ |
 | Train F: own-DID on the session payload + live composer warning                                                                   | only if self-sends recur after B(+C) ← still open (demand-gated)      |
-| ~~Stack browser E2E re-run over this markup change~~ done (×2 green 19:55; ×2 again owed on the v2.6.0 chain = release TAIL)      | the declared gate I skipped; ~6-7 min in the stack repo (445s budget) |
+| ~~Stack browser E2E re-run over this markup change~~ done (×2 green 19:55; ×2 again owed on the v2.6.0 chain = release TAIL)      | ~~the declared gate I skipped; ~6-7 min in the stack repo (445s budget)~~ |
 
 ## d) TOTALLY FUCKED UP
 
