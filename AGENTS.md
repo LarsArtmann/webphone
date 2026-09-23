@@ -197,7 +197,10 @@ the island remotely — re-run it after any markup change.
   idempotency record and the one contact-save 500 text);
   `server.apiContactSaved` (the JSON mutation epilogue: contacts nudge
   + bare 204; the tab handlers share the nudge but answer
-  toast + partial). Each carries its own micro-test
+  toast + partial); `views.panelHead` (2026-09-23 `-t 2` sweep: the
+  title+subtitle header six tab panels share — voicemail's conditional
+  sub and ThreadView's back-link head stay hand-rolled; pinned by the
+  DOM/CSP tests + smoke, no micro-test yet). Each carries its own micro-test
   (`TestApplyStatusWebhookContract`, `TestRecordCallIdemContract`,
   `TestContactSaveFailedText`, `TestCRMNumbersSkipsBlanks`,
   `TestMustUnwrapsOrPanics`, `TestOrClockPinsTheZeroFallback`,
