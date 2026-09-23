@@ -129,7 +129,7 @@ Honest count: 20 genuine items harvested from this session — not padded to 50.
 The user's paste showed 49 detected / 5 shown (all priority low). Triage per the skill's bar:
 
 - **Extracted (1):** the JSON contact-mutation epilogue (`notifyContactsChanged` + 204, twice in
-  contacts_api.go and paired with `contactSaveFailed` in actions.go's import path) → new
+  contacts_api.go and paired with `contactSaveFailed` in actions.go's tab-form `saveContact`) → new
   `apiContactSaved` one-home in contacts_api.go; doc comment owns the "mutations answer 204,
   island re-fetches" contract. The tab handlers (actions.go) keep notify + toast + partial —
   a 4-params-for-3-lines abstraction was correctly declined.
