@@ -197,7 +197,18 @@ the island remotely — re-run it after any markup change.
   idempotency record and the one contact-save 500 text);
   `server.apiContactSaved` (the JSON mutation epilogue: contacts nudge
   + bare 204; the tab handlers share the nudge but answer
-  toast + partial).
+  toast + partial). Each carries its own micro-test
+  (`TestApplyStatusWebhookContract`, `TestRecordCallIdemContract`,
+  `TestContactSaveFailedText`, `TestCRMNumbersSkipsBlanks`,
+  `TestMustUnwrapsOrPanics`, `TestOrClockPinsTheZeroFallback`,
+  `TestUpdatedOrNotFoundShapes`, `TestFormatForSwitchesAndDefaults` —
+  the avatarFor lesson). **Dedup acceptance registry**: the WHY behind
+  every accepted/declined clone lives at the in-code comment of its
+  site; the sweep-level decisions live in the archived
+  `2026-09-23_01-12` + `2026-09-23_03-01` art-dupl reports (and the
+  2026-09-18 original) — read those BEFORE re-litigating an accepted
+  similarity; `-t 3` is the working baseline pending owner
+  ratification.
 - **Personal contacts have ONE home**: the per-extension SQLite
   store, read/written via `/api/contacts` (session-gated, 60/min
   POST limiter, 500-per-extension atomic cap). Mutations answer 204;

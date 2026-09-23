@@ -17,6 +17,7 @@ only user feedback.
 | PBX rejects login (401 island REGISTER) | `loginError` inline + `reg-status` pill "registration rejected"                     | island i18n `loginError`/`regRejected` | i18n parity tests                                               |
 | SSE feed dead (3 consecutive errors)    | One warn toast + pill label flips to "not connected"                                | island i18n `sseDropped`/`ssePillDown` | session.test.mjs                                                |
 | CRM call journal failed (502 / network) | Warn toast: "Call not recorded in the CRM (…) — you can log it manually." en/de     | island i18n `crmLogFailed`             | crm_test.go 502 contract + i18n parity tests                    |
+| Contact write failed (JSON API 500)     | Warn toast: "contact save failed (…) ; kept locally" / "Kontakt speichern fehlgeschlagen (…); lokal behalten" — the same 500 text the tab banner shows | server `contactSaveFailed` (one home)  | `helpers_contract_test.go` (500 text + routing)                 |
 | Unknown path (404)                      | Styled 404 (shell + error panel), status stays 404                                  | server `error.notfound` en/de          | `TestNotFoundRendersTheShell`                                   |
 | Handler panic                           | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface  | cqrshtmx.RecoveryMiddleware            | library + server middleware tests                               |
 
@@ -40,6 +41,23 @@ session produced TWO identical failed rows), and a self-thread
 `wp-notice` caution (en/de, `thread.selfNotice`). The durable
 in-bubble failure story (persisted reason + kind, retry only where
 retryable) is the planned follow-up in TODO_LIST.
+
+## Provider verdict hooks (ops note, 2026-09-23)
+
+The outbound verdict hooks (`/hooks/{message,fax}/status`) share one
+tail, `applyStatusWebhook`: the STATUS is validated BEFORE the ref
+(consolidation flipped the old ref-first precedence), the 400 texts
+are byte-stable ("status must be delivered or failed" /
+"…transmitted or failed", "provider_ref is required") because
+providers log them, a replayed ref answers 202 inertly, an unknown
+ref is a 404 that names the lane ("could not update message: …") so
+the provider stops retrying it, and any other apply failure is a 500
+that stays retryable — only a SUCCESSFUL apply consumes the idem key
+(`hooksIdem`, in-memory 1h). Pinned by `TestApplyStatusWebhookContract`
+(`internal/server/helpers_contract_test.go`). The related JSON
+mutation contract: contact mutations answer bare 204 (no body — the
+island re-fetches, the list is the only id source), pinned by
+`TestContactsAPIMutationsNudgeThen204` + the round-trip tests.
 
 ## Rate-limit keying (ops note, 2026-09-22)
 
