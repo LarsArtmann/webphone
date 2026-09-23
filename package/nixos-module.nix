@@ -73,6 +73,20 @@ in
       example = "/run/secrets/webphone-env";
     };
 
+    environmentFiles = lib.mkOption {
+      type = with lib.types; listOf path;
+      default = [ ];
+      description = ''
+        Additional EnvironmentFiles loaded AFTER environmentFile — the
+        seam a fronting module (e.g. the telephony stack) uses to inject
+        its own rendered secrets (WEBPHONE_TURN_REST__SECRET,
+        WEBPHONE_CRM__TOKEN, …) without owning the operator's primary
+        environmentFile. Later files win on duplicate keys (systemd
+        semantics).
+      '';
+      example = [ "/var/lib/telephony/webphone-env" ];
+    };
+
     # Typed front for settings.csrf.trusted_*: same values the freeform
     # settings accept, but discoverable and checkable as module options.
     # Precedence per key: typed csrf.* (mkForce) beats a raw
@@ -263,7 +277,9 @@ in
 
           serviceConfig = {
             ExecStart = lib.getExe cfg.package;
-            EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [ cfg.environmentFile ];
+            EnvironmentFile = lib.mkIf (cfg.environmentFile != null || cfg.environmentFiles != [ ]) (
+              (lib.optional (cfg.environmentFile != null) cfg.environmentFile) ++ cfg.environmentFiles
+            );
             User = "webphone";
             Group = "webphone";
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;

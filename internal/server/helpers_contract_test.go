@@ -193,7 +193,6 @@ func TestContactsAPIListCapRefusesNewNumbers(t *testing.T) {
 	}
 }
 
-
 // TestCRMNumbersSkipsBlanks pins the page-collection helper: blank
 // caller IDs (withheld numbers, CDRs without a dial target) never reach
 // the resolver, and the extractor keeps it generic over row types.
