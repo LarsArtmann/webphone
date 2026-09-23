@@ -140,7 +140,7 @@
                     ];
                   };
 
-                  vendorHash = "sha256-sdF62Hi/pxyR0cc3dOhDhoAgeqgKpoZ+sFAjSaqnoJQ=";
+                  vendorHash = "sha256-1p9j7kTfF73veVajLTtqVYRYU7+ACmL7lp7edIVgL34=";
 
                   proxyVendor = true;
 
