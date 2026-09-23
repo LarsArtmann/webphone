@@ -1,5 +1,13 @@
 # Status report: composer UX train, mid-flight freeze (2026-09-22 16:48)
 
+> CLOSED 2026-09-23 (docs-health): the frozen 20% landed at close-out
+> (`5cce98d` — gates, docs, narrative commit); per-thread drafts shipped
+> as T21d; the next-train ideas below all shipped in v2.6.0 (typeahead,
+> jump chip + the rest of the ux-raw-ideas train, tag `807ca0c`). Still
+> open, routed: trains C/E/F + fax guard (TODO send-failure row), de
+> native review + screenshot QA (TODO theme-knob row), contacts in-flight
+> guard decision (owner-calls).
+
 Scope: THIS session's second train (composer UX batch) as frozen by
 the owner's report request. The train is ~80% implemented and gated on
 its fast paths; the remaining 20% is enumerated below so resuming is a
@@ -81,9 +89,9 @@ green — all re-runnable. Everything else is honestly labeled unrun.
 
 | Item                                                                                                                                   | Note                           |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
-| Next-train ideas from the plan: dial typeahead (PBX_CONFIG contacts), jump-to-latest chip, per-thread drafts                           | planned, coarse table rows 6-8 |
-| Carried from train 1: C (pre-flight self-send, owner call open), D (bubble failure story), E (422 semantics), F (live own-DID warning) | TODO_LIST row                  |
-| Stack browser E2E re-run — now covers TWO trains of markup changes                                                                     | declared gate, still skipped   |
+| ~~Next-train ideas from the plan: dial typeahead (PBX_CONFIG contacts), jump-to-latest chip, per-thread drafts~~ done (all shipped in v2.6.0 — ux-raw-ideas train + T21d) | planned, coarse table rows 6-8 |
+| Carried from train 1: C (pre-flight self-send, owner call open), ~~D (bubble failure story)~~ done `1bec154`, E (422 semantics), F (live own-DID warning) | TODO_LIST row ← C/E/F still open |
+| ~~Stack browser E2E re-run — now covers TWO trains of markup changes~~ done (×2 green 19:55; ×2 owed on the v2.6.0 chain = release TAIL)                              | declared gate, still skipped   |
 
 ## d) TOTALLY FUCKED UP
 
@@ -111,19 +119,19 @@ Nothing shipped broken (nothing final shipped yet at all). Stumbles:
 
 | #  | Task                                                                                                     | Impact          | Effort |
 | -- | -------------------------------------------------------------------------------------------------------- | --------------- | ------ |
-| 1  | Add DataTransfer to island/oxlint.json globals; run island-lint command locally                          | High (gate red) | XS     |
-| 2  | `nix fmt` (prettier owns shell.js/app.css/island-tests)                                                  | High            | XS     |
-| 3  | Full `go test -count=1 ./...`                                                                            | High            | S      |
-| 4  | Buildflow (attribute any concurrent-train findings first) + smoke 38/0                                   | High            | S      |
-| 5  | CHANGELOG Unreleased entries + plan verdict                                                              | Med             | S      |
-| 6  | Narrative commit + push + `git ls-remote` verify                                                         | High            | XS     |
-| 7  | Stack browser E2E re-run (covers train 1 + 2 markup; ~6-7 min)                                           | High            | S      |
-| 8  | Verify requestSubmit↔htmx at served htmx.min.js / E2E; field-sizing in E2E chromium                      | Med             | S      |
-| 9  | Dial typeahead train (PBX_CONFIG contacts, zero round-trips)                                             | High            | M      |
-| 10 | Jump-to-latest chip on live pushes while scrolled up                                                     | Med             | S      |
-| 11 | Per-thread draft persistence (localStorage)                                                              | Med             | S      |
+| ~~1~~  | ~~Add DataTransfer to island/oxlint.json globals; run island-lint command locally~~ done — env.browser already covered DataTransfer — gate green on resume | ~~High (gate red)~~ | ~~XS~~ |
+| ~~2~~  | ~~`nix fmt` (prettier owns shell.js/app.css/island-tests)~~ done — nix fmt clean at close | ~~High~~ | ~~XS~~ |
+| ~~3~~  | ~~Full `go test -count=1 ./...`~~ done — full suite green, 5cce98d close-out | ~~High~~ | ~~S~~ |
+| ~~4~~  | ~~Buildflow (attribute any concurrent-train findings first) + smoke 38/0~~ done — buildflow green post-convergence + smoke 38/0 | ~~High~~ | ~~S~~ |
+| ~~5~~  | ~~CHANGELOG Unreleased entries + plan verdict~~ done — CHANGELOG entries + plan verdict landed with the close-out | ~~Med~~ | ~~S~~ |
+| ~~6~~  | ~~Narrative commit + push + `git ls-remote` verify~~ done — narrative commit 5cce98d pushed + verified | ~~High~~ | ~~XS~~ |
+| ~~7~~  | ~~Stack browser E2E re-run (covers train 1 + 2 markup; ~6-7 min)~~ done — E2E ×2 green 19:55 | ~~High~~ | ~~S~~ |
+| ~~8~~  | ~~Verify requestSubmit↔htmx at served htmx.min.js / E2E; field-sizing in E2E chromium~~ done — covered by the ×2 green E2E runs (forms driven end-to-end) | ~~Med~~ | ~~S~~ |
+| ~~9~~  | ~~Dial typeahead train (PBX_CONFIG contacts, zero round-trips)~~ done — typeahead shipped, ux-raw-ideas D in v2.6.0 | ~~High~~ | ~~M~~ |
+| ~~10~~ | ~~Jump-to-latest chip on live pushes while scrolled up~~ done — jump chip shipped, ux-raw-ideas B in v2.6.0 | ~~Med~~ | ~~S~~ |
+| ~~11~~ | ~~Per-thread draft persistence (localStorage)~~ done — drafts shipped, T21d in v2.6.0 | ~~Med~~ | ~~S~~ |
 | 12 | Train C decision + implementation (owner call, see g/1)                                                  | High            | S      |
-| 13 | Train D bubble failure story (persist reason+kind, retry-where-retryable)                                | High            | M-L    |
+| ~~13~~ | ~~Train D bubble failure story (persist reason+kind, retry-where-retryable)~~ done — train D shipped 1bec154 | ~~High~~ | ~~M-L~~ |
 | 14 | Train E: provider refusal → 422 + family vocabulary + runbook sync                                       | Med             | S-M    |
 | 15 | Fax-lane self-send guard (with C)                                                                        | Med             | S      |
 | 16 | Contacts add/import in-flight guard decision (idempotent upsert — decide deliberately)                   | Low             | XS     |

@@ -7,6 +7,17 @@ did and noticed.
 
 ## The one-paragraph truth
 
+> CLOSED 2026-09-23 (docs-health): everything in (b)/(c) either
+> shipped the same day (T16 docs kernel `c53ee81`; T18a/b/c retention;
+> T20a-e affordances; T21a-d failed-bubble/thumbnails/drafts; T22 DOM
+> contract; T23 PWA verdict; T25 retention; T26a-e platform tail;
+> T27a-d platform tail 2 — 16:52/18:20/18:46/19:55 reports) or rode
+> v2.6.0 (signed tag `807ca0c`, 2026-09-23). The RED gates of (d1)
+> went green on the quiesced tree (19:55 gate scoreboard; the 02:47
+> release gates re-ran everything green on the tagged tree).
+> Owner-terminal items live as TODO_LIST rows (deploy, post-deploy
+> probes, SMS lane, announcements, owner-calls batch).
+
 The release machine worked end to end: **v2.5.0 is cut, gated, tagged,
 published** (gh object live), the stack is relocked to it in-train
 (browser E2E + VM test + full stack flake check green), pbx-artmann is
@@ -115,8 +126,10 @@ That red is the live fire right now.
    step): the treefmt check inside `nix flake check` IS the drift gate
    (it caught operator.js today); the process gap was fixed by the
    runbook lines. Not yet recorded in the plan log/TODO.
+   ~~recorded later~~ done (16:52 session closed the plan-log entries)
 2. **T15c release.sh auto-lychee** — verified ALREADY SHIPPED (step 6,
-   ran green in the release). Not yet recorded in the plan log.
+   ran green in the release). ~~Not yet recorded in the plan log.~~
+   done (same)
 3. **T17 final verification** — the T17 files (connection.js, i18n.js,
    connection.test.mjs) were UNCOMMITTED at report time; the stack's
    browser.nix marker edit was daemon-swept into stack `1ea7dfc`
@@ -124,39 +137,52 @@ That red is the live fire right now.
 4. **T9 announcements** — v2.5.0 drafts written (headline + one-liner,
    `docs/announcements/2026-09-22_v2-5-0_drafts.md`) and committed;
    posting waits on owner channels + posture (briefing #5).
-5. **T18a backup.retentionDays** — investigation started (module backup
-   block + oneshot script read); NO code written yet.
-6. **Plan execution log** — appended through T19/T2' but NOT updated
-   for T12/T13/T14/T15/T17.
-7. **CHANGELOG/FEATURES for the post-2.5.0 trains** — T12/T13/T14/T17
-   features are on main with NO `[Unreleased]` entries yet. Same class
+5. **T18a backup.retentionDays** — ~~investigation started (module backup
+   block + oneshot script read); NO code written yet.~~ done (shipped
+   same day: `3f90b01`/`32e1ac0`/`c893683`, VM-verified)
+6. **Plan execution log** — ~~appended through T19/T2' but NOT updated
+   for T12/T13/T14/T15/T17.~~ done (16:52 session: entries closed)
+7. **CHANGELOG/FEATURES for the post-2.5.0 trains** — ~~T12/T13/T14/T17
+   features are on main with NO `[Unreleased]` entries yet.~~ done
+   (`4c4b36b` synced every train; the 2.6.0 fold `711fff5` carried
+   them into the release) Same class
    of miss the runbook's fold step exists for — caught here before any
    next release, but it is a discipline miss (see e).
 
 ## c) NOT STARTED (from the plan, in order)
 
-- **T16 docs kernel**: AGENTS size pass (657+ lines → <400), HARVEST
+- ~~**T16 docs kernel**: AGENTS size pass (657+ lines → <400), HARVEST
   routing of report f-items, 18-49 ANNOTATE (owner-gated scope),
-  19-37 plan checkbox hygiene, FEATURES VERIFY pass.
-- **T18 rest**: README off-machine restic/borg pointer (18b — cheap),
-  `/startupz`→systemd `Type=notify` contract doc (18c).
-- **T20 UX/a11y pass** (badge states + aria-live, migration toast,
+  19-37 plan checkbox hygiene, FEATURES VERIFY pass.~~ done (AGENTS
+  705→337 `c53ee81`; 18-49 ANNOTATE + plan hygiene closed 18:46;
+  HARVEST = the 2026-09-22 evening docs-health sweep)
+- ~~**T18 rest**: README off-machine restic/borg pointer (18b — cheap),
+  `/startupz`→systemd `Type=notify` contract doc (18c).~~ done (same
+  day: README dated-history row; T18c documented NOT-DO verdict)
+- ~~**T20 UX/a11y pass** (badge states + aria-live, migration toast,
   thread-list `data-dial`, `data-sms`, history ☆ save, three E2E
-  scenarios).
-- **T21 messaging polish** (persist/display failure reasons, delivered
-  badge, image thumbnails, draft persistence).
-- **T22 generated DOM-contract file** (emit from
-  TestServedPageHoldsTheDomContract; AGENTS links it).
-- **T23 PWA spike** (verdict doc; build gated on owner #11).
-- **T24 recordings** (product-intent decision = owner #11 → then panel).
-- **T25 retention/cleanup job** (gated on T18a).
-- **T26 platform tail 1** (metrics endpoint, TURN creds via config.js,
-  per-extension export, timezone timestamps, MIME sniffing).
-- **T27 platform tail 2** (gzip option, favicon route, signed tags,
+  scenarios).~~ done (`03b9431`, `7a6e8ac`, `bf4476e`, `5ae71b1`;
+  E2E scenarios ×2 green 19:55)
+- ~~**T21 messaging polish** (persist/display failure reasons, delivered
+  badge, image thumbnails, draft persistence).~~ done (`1bec154`,
+  `5ae71b1`, `25b0cf9`)
+- ~~**T22 generated DOM-contract file** (emit from
+  TestServedPageHoldsTheDomContract; AGENTS links it).~~ done
+  (`docs/dom-contract.md` golden file, verified green 18:20)
+- ~~**T23 PWA spike** (verdict doc; build gated on owner #11).~~ done
+  (NOT-DO verdict `docs/planning/2026-09-22_17-05_pwa-spike-verdict.md`)
+- **T24 recordings** (product-intent decision = owner #11 → then panel). ← still open (owner-calls row)
+- ~~**T25 retention/cleanup job** (gated on T18a).~~ done (`d857568`)
+- ~~**T26 platform tail 1** (metrics endpoint, TURN creds via config.js,
+  per-extension export, timezone timestamps, MIME sniffing).~~ done
+  (metrics 18:46+19:11; TURN `c1971c4`; export `37aae5a`; timezone
+  + sniffing `d131e11`)
+- ~~**T27 platform tail 2** (gzip option, favicon route, signed tags,
   i18n key-sync guard, idempotency durability decision, OpenAPI
-  boundary decision, limiter-key runbook line).
+  boundary decision, limiter-key runbook line).~~ done (`9f93537`+
+  `44c0b8e`, `d131e11`, `4f067f8`, verdicts `0afe26d`)
 - **Owner-gated**: T3 deploy command, T4a prod banner check, T5 SMS
-  journal grep, T9 posting, T11 the 14 decisions themselves.
+  journal grep, T9 posting, T11 the 14 decisions themselves. ← still open (TODO_LIST owner rows)
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -240,54 +266,54 @@ That red is the live fire right now.
 
 **Fire first:**
 
-1. Commit the pending T17 files (connection.js, i18n.js, connection.test.mjs).
-2. `nix fmt` the server.go constructor alignment; verify with gofmt.
-3. Triage the govulncheck failure (restore `.buildflow.yml` env for that
-   step OR rebuild govulncheck on 1.27) — decide sweep-adjust vs revert
-   of that one env line.
-4. Re-run BOTH gates on the quiesced tree; read the verdicts. GREEN
-   before anything else ships.
-5. Verify the stack's daemon commit `1ea7dfc` (my browser.nix marker
-   edit) is pushed; run one forced E2E to validate the marker change;
-   relock pbx-artmann if the stack moves (owner deploy carries it).
+1. ~~Commit the pending T17 files (connection.js, i18n.js, connection.test.mjs).~~ done (files committed; gates re-ran green on the quiesced tree)
+2. ~~`nix fmt` the server.go constructor alignment; verify with gofmt.~~ done (nix fmt fixed; treefmt green since)
+3. ~~Triage the govulncheck failure (restore `.buildflow.yml` env for that~~ done (govulncheck green when quiesced, 16:52 session)
+   ~~step OR rebuild govulncheck on 1.27) — decide sweep-adjust vs revert~~
+   ~~of that one env line.~~
+4. ~~Re-run BOTH gates on the quiesced tree; read the verdicts. GREEN~~ done (19:55 gate scoreboard all green)
+   ~~before anything else ships.~~
+5. ~~Verify the stack's daemon commit `1ea7dfc` (my browser.nix marker~~ done (stack 1ea7dfc validated by a green forced E2E; pbx-artmann relock #3 done 18:20)
+   ~~edit) is pushed; run one forced E2E to validate the marker change;~~
+   ~~relock pbx-artmann if the stack moves (owner deploy carries it).~~
 
 **Then (plan order):**
-6. CHANGELOG `[Unreleased]` bullets for T12/T13/T14/T17 + FEATURES rows.
-7. Plan execution-log update (T12-T17, gate incident).
-8. T18a `backup.retentionDays` (null default = keep-forever; prune in
-the oneshot; module check stand-ins).
-9. T18b README off-machine restic/borg pointer.
-10. T18c `/startupz`→systemd contract doc (+ optional wiring).
-11. T16b HARVEST routing of still-open report f-items.
-12. T16d 19-37 plan checkbox hygiene + FEATURES VERIFY.
-13. T16a AGENTS size pass (657 → <400; move detail to docs/).
-14. T22 generated DOM-contract file + AGENTS/stack-doc link swap.
-15. T21a persist + display message failure reasons.
-16. T21b distinct delivered badge.
-17. T21c image thumbnails (decide server-side vs CSS first).
-18. T21d draft persistence per thread.
-19. T20a badge ringing/established states + aria-live.
-20. T20b migration completion toast en/de.
-21. T20c thread-LIST `data-dial` restructure.
-22. T20d `data-sms` affordance (history/voicemail → compose prefilled).
-23. T20e history ☆ save-as-contact.
-24. T20f/g/h the three E2E scenarios (logged-out dial, contacts
-round-trip, live badge) — each ×2 green.
-25. T23a PWA spike verdict doc.
-26. T26a metrics endpoint (Prometheus text).
-27. T26b short-lived TURN REST creds via /config.js.
-28. T26c per-extension data export (zip).
-29. T26d timezone-aware timestamps.
-30. T26e MIME sniffing on attachments.
-31. T27a nginx gzip module option.
-32. T27b /favicon.ico route.
-33. T27c signed tags (git tag -s) in release.sh.
-34. T27d i18n dynamic-template key-sync guard.
-35. T27e webhook idempotency durability decision record.
-36. T27f OpenAPI boundary decision record.
-37. T27g limiter-key widening runbook line.
+6. ~~CHANGELOG `[Unreleased]` bullets for T12/T13/T14/T17 + FEATURES rows.~~ done (4c4b36b synced every train; the 2.6.0 fold 711fff5 carried them into the release)
+7. ~~Plan execution-log update (T12-T17, gate incident).~~ done (16:52 session closed the plan-log entries)
+8. ~~T18a `backup.retentionDays` (null default = keep-forever; prune in~~ done (T18a shipped same day, 3f90b01/32e1ac0/c893683, VM-verified)
+~~the oneshot; module check stand-ins).~~
+9. ~~T18b README off-machine restic/borg pointer.~~ done (T18b README dated-history row, same day)
+10. ~~T18c `/startupz`→systemd contract doc (+ optional wiring).~~ done (T18c documented NOT-DO verdict, same day)
+11. ~~T16b HARVEST routing of still-open report f-items.~~ done (2026-09-22 evening docs-health sweep)
+12. ~~T16d 19-37 plan checkbox hygiene + FEATURES VERIFY.~~ done (18:46 session)
+13. ~~T16a AGENTS size pass (657 → <400; move detail to docs/).~~ done (c53ee81, AGENTS 705 to 337 lines)
+14. ~~T22 generated DOM-contract file + AGENTS/stack-doc link swap.~~ done (T22 dom-contract.md golden file, verified green 18:20)
+15. ~~T21a persist + display message failure reasons.~~ done (1bec154)
+16. ~~T21b distinct delivered badge.~~ done (1bec154)
+17. ~~T21c image thumbnails (decide server-side vs CSS first).~~ done (5ae71b1)
+18. ~~T21d draft persistence per thread.~~ done (25b0cf9)
+19. ~~T20a badge ringing/established states + aria-live.~~ done (03b9431)
+20. ~~T20b migration completion toast en/de.~~ done (5ae71b1)
+21. ~~T20c thread-LIST `data-dial` restructure.~~ done (7a6e8ac)
+22. ~~T20d `data-sms` affordance (history/voicemail → compose prefilled).~~ done (bf4476e)
+23. ~~T20e history ☆ save-as-contact.~~ done (bf4476e)
+24. ~~T20f/g/h the three E2E scenarios (logged-out dial, contacts~~ done (19:55 E2E x2 green, 198s + 237s)
+~~round-trip, live badge) — each ×2 green.~~
+25. ~~T23a PWA spike verdict doc.~~ done (verdict doc written, 16:52)
+26. ~~T26a metrics endpoint (Prometheus text).~~ done (metrics + module location, 9f93537)
+27. ~~T26b short-lived TURN REST creds via /config.js.~~ done (c1971c4)
+28. ~~T26c per-extension data export (zip).~~ done (37aae5a)
+29. ~~T26d timezone-aware timestamps.~~ done (d131e11)
+30. ~~T26e MIME sniffing on attachments.~~ done (5ae71b1)
+31. ~~T27a nginx gzip module option.~~ done (9f93537 + 44c0b8e)
+32. ~~T27b /favicon.ico route.~~ done (d131e11)
+33. ~~T27c signed tags (git tag -s) in release.sh.~~ done (4f067f8)
+34. ~~T27d i18n dynamic-template key-sync guard.~~ done (d131e11)
+35. ~~T27e webhook idempotency durability decision record.~~ done (0afe26d)
+36. ~~T27f OpenAPI boundary decision record.~~ done (0afe26d)
+37. ~~T27g limiter-key widening runbook line.~~ done (0afe26d + error-contract section)
 38. release.sh self-heal into nix develop (the e/6 improvement).
-39. T25a-c retention/cleanup job (after T18a).
+39. ~~T25a-c retention/cleanup job (after T18a).~~ done (d857568)
 
 **Owner console (one sitting):**
 40. T3: run the deploy command (in the TODO row) + smoke
@@ -304,8 +330,8 @@ round-trip, live badge) — each ×2 green.
 48. E2E budget watch from the new 445s baseline (two consecutive
 over-budget runs before digging).
 49. Decide/act on the daemon docs/status exclusion ask (ROADMAP line).
-50. Next train fold: the accumulating [Unreleased] (T12-T17 + whatever
-lands) — g2 theme already forming ("live surfaces + honesty").
+50. ~~Next train fold: the accumulating [Unreleased] (T12-T17 + whatever~~ done (v2.6.0 folded and tagged 807ca0c)
+~~lands) — g2 theme already forming ("live surfaces + honesty").~~
 
 ## g) Questions I cannot answer myself
 
