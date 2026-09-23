@@ -106,3 +106,23 @@ func TestListRowsErrorShapes(t *testing.T) {
 }
 
 var errScanBoom = errors.New("scan boom")
+
+// staticResult is a sql.Result whose RowsAffected answer is fixed —
+// enough to drive updatedOrNotFound without a live statement.
+type staticResult int
+
+func (r staticResult) LastInsertId() (int64, error) { return 0, nil }
+func (r staticResult) RowsAffected() (int64, error) { return int64(r), nil }
+
+// TestUpdatedOrNotFoundShapes pins the write-side twin of listRows: a
+// status-advance UPDATE that matched no row is the caller-visible
+// ErrNotFound miss, a matched row is a plain success — so callers can
+// map store misses to 404s without string matching.
+func TestUpdatedOrNotFoundShapes(t *testing.T) {
+	if err := updatedOrNotFound(staticResult(0)); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("zero rows affected: %v (want ErrNotFound)", err)
+	}
+	if err := updatedOrNotFound(staticResult(2)); err != nil {
+		t.Fatalf("matched rows: %v (want nil)", err)
+	}
+}

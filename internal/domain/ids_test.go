@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestParseExtension(t *testing.T) {
 	tests := []struct {
@@ -112,4 +115,27 @@ func cut(s string, sep byte) (string, string, bool) {
 		}
 	}
 	return s, "", false
+}
+
+// TestMustUnwrapsOrPanics pins the Must engine itself: success passes
+// the value through untouched, an error panics with that exact error —
+// the Must forms are for literals and database rows, so a failure is a
+// broken literal or a corrupt database, never bad user input.
+func TestMustUnwrapsOrPanics(t *testing.T) {
+	want := GenerateThreadID()
+	if got := must(want, nil); got != want {
+		t.Fatalf("must success: %v", got)
+	}
+	boom := errors.New("corrupt id")
+	func() {
+		defer func() {
+			r := recover()
+			err, ok := r.(error)
+			if !ok || !errors.Is(err, boom) {
+				t.Fatalf("must panic carried %v, want the original error", r)
+			}
+		}()
+		_ = must(GenerateThreadID(), boom)
+		t.Fatal("must must panic on error")
+	}()
 }

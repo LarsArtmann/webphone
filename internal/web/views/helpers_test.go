@@ -117,3 +117,21 @@ func TestFullStampCarriesDateYearAndTime(t *testing.T) {
 		t.Errorf("fullStamp(de) = %q, want %q", got, "22.09.2026 16:09")
 	}
 }
+
+// TestFormatForSwitchesAndDefaults pins the one home of the language
+// switch itself: German takes the de layout, EVERY other lang takes the
+// en layout (English is the default, so a future lang value degrades to
+// the byte-stable form the E2E greps), and rendering always rides
+// t.Local() regardless of the input's zone.
+func TestFormatForSwitchesAndDefaults(t *testing.T) {
+	utc := time.Date(2026, 9, 22, 16, 9, 0, 0, time.UTC)
+	localExpect := utc.Local().Format("15:04")
+	if got := formatFor(LangDE, utc, "15:04", "3:04PM"); got != localExpect {
+		t.Errorf("formatFor(de) = %q, want the de layout on local time %q", got, localExpect)
+	}
+	for _, lang := range []Lang{LangEN, "fr", ""} {
+		if got := formatFor(lang, utc, "15:04", time.Kitchen); got != utc.Local().Format(time.Kitchen) {
+			t.Errorf("formatFor(%q) = %q, want the en layout (English is the default)", lang, got)
+		}
+	}
+}
