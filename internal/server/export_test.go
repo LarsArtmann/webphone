@@ -27,10 +27,16 @@ func readZipEntry(t *testing.T, archive *zip.Reader, name string) []byte {
 		if err != nil {
 			t.Fatalf("open %s: %v", name, err)
 		}
-		defer rc.Close() //nolint:staticcheck,errcheck // test helper: one entry, process exits anyway
-		content, err := io.ReadAll(rc)
-		if err != nil {
-			t.Fatalf("read %s: %v", name, err)
+		// No defer: it would sit inside the loop (staticcheck) and
+		// ignore Close's error (errcheck) — the explicit close keeps
+		// both honest without a nolint the LSP ignores anyway.
+		content, readErr := io.ReadAll(rc)
+		closeErr := rc.Close()
+		if readErr != nil {
+			t.Fatalf("read %s: %v", name, readErr)
+		}
+		if closeErr != nil {
+			t.Fatalf("close %s: %v", name, closeErr)
 		}
 		return content
 	}
