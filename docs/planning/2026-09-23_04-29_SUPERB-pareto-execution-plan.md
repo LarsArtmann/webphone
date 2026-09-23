@@ -243,4 +243,63 @@ flowchart TD
 - Fine tasks are units of WORK, not of verification skipping: every
   code task lands with its test in the same change.
 
-_Verdict: PENDING — filled when the cycle closes._
+## Outcomes (cycle close, 2026-09-23 evening session 3)
+
+All 18 assistant-executable coarse tasks DONE; the 6 owner-terminal
+halves (C2 deploy, C3 post-deploy probes, C4 owner-calls batch, C7
+SMS-lane journalctl, C21 posting, C23 owner decision) are routed to
+the closing owner summary. Session-3 specifics (sessions 1–2's
+evidence lives in the annotated status reports and the TODO_LIST
+sweep log):
+
+- **C1 release tail** — DONE. E2E ×2 GREEN at stack `271f5ef`
+  (195s + 184s; budget 445s untouched — the FOUC scenario costs
+  ~15s, answering ROADMAP g3: no budget growth). C1b needed a third
+  attempt: runs 10–11 flaked at different post-drill steps
+  (CONTACTS-ROUNDTRIP, INCOMING-SHOWN — the known tail variance),
+  run 12 green. aarch64 ELF `b7 00` (prior session). Release
+  published: `gh release view v2.6.0` (body = CHANGELOG 2.6.0).
+  Smoke 41+4 checks, 0 failed, `/version` exactly v2.6.0 against
+  the nix binary (a bare `go build` reports Go's pseudo-version —
+  `--expect-version` wants `--bin $(nix build .#webphone)`).
+- **FOUC E2E harness arc** (stack commits `784126c` → `9fb0539` →
+  `f42cf9d` → `271f5ef`) — the scenario had never passed; three
+  blind fixes were rejected by instrumented evidence before the
+  real two-part cause: (1) a soft reload serves subresources from
+  cache where `Network.setBlockedURLs` cannot intercept — fixed
+  with `Page.reload{ignoreCache}`; (2) chromedriver executes no
+  scripts against a document mid-navigation, so driver-side polling
+  is structurally blind to the flash — fixed by counting theme
+  ticks IN-PAGE (`addScriptToEvaluateOnNewDocument`; evidence:
+  `rafUnthemed=106` flash ticks then settle-dark).
+- **C5 relock #4** — DONE, then RE-PINNED. First pin `be876ae`
+  (daemon-swept into `8104448`, pushed `438c348`): probe green,
+  both toplevels green, webphone ExecStart moved
+  `lq5fj…-2.5.0` → `7bm0h…-2.6.0`. After the E2E harness fixes
+  moved the verified stack rev, re-pinned to `271f5ef` with a
+  narrative commit (`20b2a18`): webphone derivation byte-identical
+  (both stack revs lock train `7197f1c`), probe + both toplevels
+  green again.
+- **C8 quiet-machine gates** — DONE after a real catch: the
+  daemon-swept go-etag v0.6.0 bump (`e85923d`) broke the sandboxed
+  package build (split submodules outside the pinned modules set);
+  vendorHash recomputed and pushed (`0a7a732`) — webphone main had
+  a broken `nix build` for ~2h. Full `nix flake check` then green
+  in 24s including the KVM backup VM test. Buildflow full 53/53,
+  island 79/79, unit + `-race` green: prior sessions.
+- **C6 push-reconcile** — held all session; the docs-harvest push
+  carried the concurrent session's MMS fix (`bd77669`); crm's
+  daemon dep sweep pushed too.
+
+_Verdict: CLOSED — every assistant-executable task in this plan is
+done and verified; the release is out (v2.6.0 tag `807ca0c`,
+release published), the deploy chain is locked and green end-to-end
+(webphone train `7197f1c` → stack `271f5ef` → pbx-artmann `20b2a18`),
+and the only open items are owner-terminal by design (deploy,
+post-deploy probes, SMS-lane journalctl, the owner-calls batch,
+announcement posting). Two cycle-level lessons: the E2E FOUC
+scenario should never have shipped untested-first-live (its two
+failure layers — cache-dodging blocks and driver blindness to
+mid-navigation state — were both knowable), and dep bumps swept by
+the daemon must carry the vendorHash roundtrip in the same breath
+(buildflow's sandbox caught it, but 2h of broken main was avoidable)._
