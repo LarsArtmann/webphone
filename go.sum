@@ -90,10 +90,6 @@ github.com/larsartmann/go-cqrs-lite/storage/memory/v4 v4.5.1 h1:332H8TuZy+XZ1ob4
 github.com/larsartmann/go-cqrs-lite/storage/memory/v4 v4.5.1/go.mod h1:BXfT13JgxuQL1qwlVBdmQUxCiwnxwB5EkktLe5A7hYw=
 github.com/larsartmann/go-error-family v0.10.1 h1:lf1RNjpdK7k+tCzphkg5qRolAY76U8OGEc09ZsZ5S6A=
 github.com/larsartmann/go-error-family v0.10.1/go.mod h1:SYSVwVMTkw2GcqXI4khjMYOg7ey39o8sh7rXC9LfNcY=
-github.com/larsartmann/go-etag v0.4.0 h1:QsMgYKOgsE//KVXRW42KuVfKAlpYMek8OZVBfMKvt7M=
-github.com/larsartmann/go-etag v0.4.0/go.mod h1:CzORLh9Ws2B8MWq5HLfdwqq7xUh9TLTG268sE/YwDcg=
-github.com/larsartmann/go-etag v0.6.0 h1:43stOYdTa8/woRt7pGyEMUhgrZCzdIBsEYk1uEcTMO4=
-github.com/larsartmann/go-etag v0.6.0/go.mod h1:ts9V8UTryTjZ/Aw+ZCi9w2i5L33nwUZmScQsPxsm1cg=
 github.com/larsartmann/go-etag/entitytag v0.6.0 h1:YM7Jl93ibYjBClycH/+hcLgna+KaZicyD2lWIRsbiyg=
 github.com/larsartmann/go-etag/entitytag v0.6.0/go.mod h1:g9FENLhssbRTfvSJ2WfKKToNMYngm+W9k6C3NutO9Ok=
 github.com/larsartmann/go-etag/server v0.6.0 h1:ohPi9d1AtSy4ByonsQc+bOl6uih8y3rBG1hmJ1QgI2I=

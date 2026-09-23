@@ -14,6 +14,7 @@ require (
 	github.com/larsartmann/go-error-family v0.10.1
 	github.com/larsartmann/go-health v0.3.0
 	github.com/larsartmann/go-sse v0.6.0
+	github.com/larsartmann/go-sse/ssetest v0.3.0
 	github.com/larsartmann/httputil v1.2.0
 	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.19.2
@@ -46,7 +47,6 @@ require (
 	github.com/larsartmann/go-cqrs-lite/metadata/v4 v4.7.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/query/v4 v4.8.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.5.0 // indirect
-	github.com/larsartmann/go-etag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect

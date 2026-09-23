@@ -1,17 +1,16 @@
 package server
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/go-sse"
+	"github.com/larsartmann/go-sse/ssetest"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -132,71 +131,29 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 		t.Fatalf("events content-type %q", ct)
 	}
 
-	reader := bufio.NewReader(resp.Body)
+	reader := ssetest.NewStreamReader(resp.Body)
 
 	// v4.11.0 leads with exactly one reconnect hint (sse.WriteRetry:
 	// `retry: <millis>` + blank frame terminator), then the connected
-	// handshake frame — assert the shape instead of skipping past it, so a
-	// future bump that changes the stream head fails here, loudly.
-	retryLine, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no retry hint line: %v", err)
-	}
-	if !strings.HasPrefix(retryLine, "retry: ") {
-		t.Fatalf("first stream line %q, want a `retry:` reconnect hint", retryLine)
-	}
-	if millis, convErr := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(retryLine, "retry: "))); convErr != nil || millis <= 0 {
-		t.Fatalf("retry hint %q is not a positive millisecond value", retryLine)
-	}
-	blank, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no blank line after retry hint: %v", err)
-	}
-	if blank != "\n" {
-		t.Fatalf("line after retry hint %q, want the blank frame terminator", blank)
+	// handshake frame. The retry hint is sticky SSE connection state: the
+	// FIRST decoded event must already report it, so a future bump that
+	// changes the stream head fails here, loudly.
+	handshake := ssetest.MustReadNextEvent(t, reader)
+	ssetest.RequireEventType(t, handshake, sse.EventConnected)
+	ssetest.RequireData(t, handshake, "connected")
+	if handshake.Retry == 0 {
+		t.Fatalf("first event carries no positive retry hint (retry=%d) — stream head changed", handshake.Retry)
 	}
 
-	head, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no connected frame: %v", err)
-	}
-	if head != "event: connected\n" {
-		t.Errorf("first event line %q, want %q", head, "event: connected\n")
-	}
-	data, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no connected data line: %v", err)
-	}
-	if data != "data: connected\n" {
-		t.Errorf("connected data line %q, want %q", data, "data: connected\n")
-	}
-
-	// Broadcast after connect: arrives as event + data on the same stream.
-	// Blank lines are frame terminators — skip them while scanning for the
-	// next event line.
+	// Broadcast after connect: arrives as a decoded threads event on the
+	// same stream.
 	ext := domain.MustParseExtension("1001")
 	server.hubs.Publish(ext, sseEventThreads, "<div class=\"wp-thread-row\">wire</div>")
 
-	var line string
-	for {
-		var err error
-		line, err = reader.ReadString('\n')
-		if err != nil {
-			t.Fatalf("no threads event line: %v", err)
-		}
-		if line != "\n" {
-			break
-		}
-	}
-	if line != "event: threads\n" {
-		t.Errorf("event line %q, want %q", line, "event: threads\n")
-	}
-	dataLine, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("no threads data line: %v", err)
-	}
-	if !strings.Contains(dataLine, "wp-thread-row") {
-		t.Errorf("threads data line missing the fragment: %q", dataLine)
+	threads := ssetest.MustReadNextEvent(t, reader)
+	ssetest.RequireEventType(t, threads, sseEventThreads)
+	if !strings.Contains(threads.Data(), "wp-thread-row") {
+		t.Errorf("threads payload missing the fragment: %q", threads.Data())
 	}
 }
 
