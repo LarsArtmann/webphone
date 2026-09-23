@@ -124,6 +124,22 @@ Honest count: 20 genuine items harvested from this session — not padded to 50.
 2. **Idempotency key namespace:** The in-memory replay key changed `msg/<ref>` → `message/<ref>` (no persistence; worst case after a deploy restart is one harmless re-apply of an already-terminal status — the documented trade). Acceptable, or do you want the old prefix kept verbatim for cross-restart conservatism?
 3. **Art-dupl baseline:** Your paste ends "Found total 13 clone groups."; the installed 0.7.0 prints "508 detected / 43 shown". Which binary/flags produced your paste, and which instrument should future dedup sessions treat as THE baseline — 0.7.0 with `-t 1 --type-aware`, or the config's threshold 15?
 
+## h) FOLLOW-UP SWEEP — same day, `-t 3 --type-aware`
+
+The user's paste showed 49 detected / 5 shown (all priority low). Triage per the skill's bar:
+
+- **Extracted (1):** the JSON contact-mutation epilogue (`notifyContactsChanged` + 204, twice in
+  contacts_api.go and paired with `contactSaveFailed` in actions.go's import path) → new
+  `apiContactSaved` one-home in contacts_api.go; doc comment owns the "mutations answer 204,
+  island re-fetches" contract. The tab handlers (actions.go) keep notify + toast + partial —
+  a 4-params-for-3-lines abstraction was correctly declined.
+- **Accepted (3), re-confirmed:** settings.templ dt/dd rows (markup with divergent value shapes —
+  orUnset/fmtInt/conditional/link; 2 params for 2 lines); history.templ ↔ voicemail.templ
+  error+needsAPI empty-state markup (2026-09-18 §a.5 prior triage stands; per-panel i18n keys);
+  idempotency.go clock+lock prologue (in-code rationale at the site).
+- **Verified:** `go test -count=1 ./...` 15/15 ok; `golangci-lint run ./internal/server/...` 0 issues;
+  art-dupl re-run at `-t 3`: detected 49→47, shown 5→3, and the 3 shown are exactly the accepted trio.
+
 ---
 
 _Point-in-time snapshot — goes stale. Feed (f) to `docs-health` HARVEST; annotate, never rewrite, when bringing current later._

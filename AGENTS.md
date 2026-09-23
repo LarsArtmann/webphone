@@ -190,7 +190,10 @@ the island remotely — re-run it after any markup change.
   `server.applyStatusWebhook` (the shared status-hook tail: 400 empty
   ref, 202 replay, 404 unknown, 500 retryable, record-on-success),
   `server.recordCallIdem` + `server.contactSaveFailed` (call-log
-  idempotency record and the one contact-save 500 text).
+  idempotency record and the one contact-save 500 text);
+  `server.apiContactSaved` (the JSON mutation epilogue: contacts nudge
+  + bare 204; the tab handlers share the nudge but answer
+  toast + partial).
 - **Personal contacts have ONE home**: the per-extension SQLite
   store, read/written via `/api/contacts` (session-gated, 60/min
   POST limiter, 500-per-extension atomic cap). Mutations answer 204;
