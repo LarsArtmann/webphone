@@ -82,6 +82,15 @@ func contactSaveFailed(w http.ResponseWriter) {
 	http.Error(w, "could not save the contact", http.StatusInternalServerError)
 }
 
+// apiContactSaved closes a successful JSON contact mutation: nudge the
+// extension's other surfaces, then the bare 204 the island's re-fetch
+// contract expects. The tab handlers share the nudge but answer with a
+// toast + partial instead — this epilogue belongs to the JSON API only.
+func (h *handlers) apiContactSaved(w http.ResponseWriter, extension domain.Extension) {
+	h.notifyContactsChanged(extension)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // apiSaveContact upserts one personal contact (same store semantics as
 // the tab: a repeated number renames the entry). Mutations answer 204
 // and the island re-fetches the list — the store mints IDs on insert
@@ -120,8 +129,7 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 		contactSaveFailed(w)
 		return
 	}
-	h.notifyContactsChanged(sess.Extension)
-	w.WriteHeader(http.StatusNoContent)
+	h.apiContactSaved(w, sess.Extension)
 }
 
 // apiDeleteContact removes one personal contact scoped to the session's
@@ -140,6 +148,5 @@ func (h *handlers) apiDeleteContact(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	h.notifyContactsChanged(sess.Extension)
-	w.WriteHeader(http.StatusNoContent)
+	h.apiContactSaved(w, sess.Extension)
 }
