@@ -908,7 +908,7 @@ func ThreadView(props ThreadViewProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\"></textarea> <input type=\"file\" name=\"attachment\" multiple accept=\"image/*,application/pdf,.vcf\" aria-label=\"Attachments\"> <span class=\"wp-segcount\" hidden aria-live=\"polite\"></span> <button type=\"submit\" class=\"wp-primary\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\"></textarea> <input type=\"file\" name=\"attachment\" multiple accept=\"image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,audio/mpeg,audio/wav,audio/amr,audio/ogg,video/mp4,video/3gpp,video/quicktime,application/pdf,text/vcard,.vcf\" aria-label=\"Attachments\"> <span class=\"wp-segcount\" hidden aria-live=\"polite\"></span> <button type=\"submit\" class=\"wp-primary\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
