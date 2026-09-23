@@ -18,10 +18,21 @@ type crmStub struct {
 	logBodies  []map[string]any
 	lookupJSON string
 	logStatus  int
+
+	// Wire evidence for the cross-repo contract tests: every request's
+	// Authorization header, and the decoded number of every lookup.
+	auths          []string
+	lookupNumbers  []string
 }
 
 func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
+	s.mu.Lock()
+	s.auths = append(s.auths, r.Header.Get("Authorization"))
+	s.mu.Unlock()
 	if r.URL.Path == "/api/contacts/by-phone" {
+		s.mu.Lock()
+		s.lookupNumbers = append(s.lookupNumbers, r.URL.Query().Get("number"))
+		s.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(s.lookupJSON)) //nolint:erraudit // test stub write
@@ -263,6 +274,47 @@ func TestAPICallLoggingContract(t *testing.T) {
 			t.Fatalf("not-json: %d (want 400)", resp.StatusCode)
 		}
 	})
+}
+
+// TestAPICallLoggingIslandWireContract pins the CROSS-REPO wire at HTTP
+// level end to end: the exact object panels.js recordCrmCall posts after
+// a terminated call must (a) reach the CRM machine API with the
+// configured bearer token on every request, (b) carry the number
+// VERBATIM (E.164, post-sanitize — the CRM owns all matching), and
+// (c) journal exactly the four island-contract fields.
+func TestAPICallLoggingIslandWireContract(t *testing.T) {
+	stub := &crmStub{}
+	resolver := crmResolverFor(t, stub)
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+	c := signIn(t, server)
+
+	resp, body := postJSONRaw(t, c, "/api/calls", map[string]any{
+		"number": "+493012345678", "direction": "out", "seconds": 42,
+		"outcome": "completed", "key": "71111111-1111-4111-8111-111111111111",
+	})
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("island-shaped report: %d %s", resp.StatusCode, body)
+	}
+
+	stub.mu.Lock()
+	defer stub.mu.Unlock()
+
+	if len(stub.logBodies) != 1 {
+		t.Fatalf("upstream saw %d call logs", len(stub.logBodies))
+	}
+	for _, auth := range stub.auths {
+		if auth != "Bearer crm-token" {
+			t.Fatalf("machine-API auth: got %q, want the configured bearer on every request", auth)
+		}
+	}
+	if len(stub.lookupNumbers) != 1 || stub.lookupNumbers[0] != "+493012345678" {
+		t.Fatalf("lookup must carry the number verbatim: %q", stub.lookupNumbers)
+	}
+	got := stub.logBodies[0]
+	if len(got) != 4 || got["direction"] != "out" || got["number"] != "+493012345678" ||
+		got["seconds"] != float64(42) || got["outcome"] != "completed" {
+		t.Fatalf("journaled body must be exactly the island contract: %+v", got)
+	}
 }
 
 // TestMetricsRendersCRMLookupCounters pins the metrics family: with the
