@@ -22,7 +22,8 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Phone calls   | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad                                                                                 |
 | Resilience    | Bounded reconnect watchdog with re-registration; live calls survive                                                                                 |
-| SMS & MMS     | Threads with unread badges, attachments in/out, delivery receipts, live updates                                                                     |
+| Call comfort  | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                  |
+| SMS & MMS     | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies |
 | Fax           | Send PDFs, receive documents, provider status (transmitted/failed), download                                                                        |
 | Voicemail     | List, play, delete — straight from the PBX's per-extension API                                                                                      |
 | Call history  | Server-side CDR records through the same API                                                                                                        |

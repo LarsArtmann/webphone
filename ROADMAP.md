@@ -170,13 +170,71 @@ the stack browser E2E passed on the bumped tree. What remains:
   emerges — switching to tag pins buys reproducibility at the cost of
   a manual bump step on every fix. Revisit when a security fix ever
   needs to ship inside an hour.
+- Release.sh load handling (from the v2.6.0 release night, two
+  load-shaped E2E stalls): a `/proc/loadavg` precondition before the
+  E2E phases (cheap, no downside) or a single E2E auto-retry (+10 min
+  per true failure, masks real regressions) — which, and do retries
+  count toward the "two consecutive over-budget" watch? (02:47 §g1)
+- Stack pin vs tag on release trains: the v2.6.0 stack relock pins
+  post-tag main (`7503561` — carrying another session's refactor
+  covered by per-package tests + the upcoming stack E2E) while the
+  tag pins `b162e22`. Matches the documented "ride main" decision and
+  the v2.5.0 precedent (lock ≠ tag), but re-pinning the stack to the
+  tag itself for release trains is the alternative. (02:47 §g2)
+- Art-dupl ritual baseline: ratify `art-dupl 0.7.0 --sort
+  total-tokens -t 3 --type-aware` as THE dedup baseline (`-t 1` is
+  forensic-only — 43-45 shown groups of mostly idiom noise) and the
+  `-t 3` sweep's triage (1 extract / 3 accept), and document what the
+  0.7.0 "filtered suppressed" bucket hides before crowning it.
+  (03:01 §g1, 01:12 §g3)
+- Webhook 400 contract + idem key namespace (from the dedup trains):
+  does any stack-side tooling/runbook grep the `/hooks/*/status` 400
+  body texts or depend on the OLD validation precedence
+  (provider_ref-before-status; both hooks now validate status first)?
+  And is the in-memory idem key rename `msg/<ref>` → `message/<ref>`
+  acceptable given no persistence? (01:12 §g1/g2, 03:01 §g2)
+- Helper micro-test bar: must a one-home helper land ONLY with a
+  micro-test pinning its contract (would have blocked
+  `apiContactSaved`), or is suite-level coverage acceptable with
+  micro-tests batched later? Decides whether the TODO row is a rule
+  or a task. (03:01 §g3)
+- Missed-call semantics: does a deliberately REJECTED incoming call
+  count as missed (current: no — REJECT never dispatches
+  `wp:call-missed`), and should the badge also clear when the
+  island's _Recent calls_ panel opens (current: History tab click
+  only)? (21:43 §g2)
+- Search `?q=` URL semantics: should a typed query push `?q=` into
+  browser history (deep-linkable, back-button unwinds filters) or
+  stay ephemeral as implemented? (21:43 §g1)
+- Store `Must*` panic policy: store scans call
+  `MustParsePhone`/`MustContactID`/`MustParseExtension` on raw DB
+  strings — a corrupted/hand-edited row panics the server at query
+  time. Panic-on-corrupt deliberate (data only ever written through
+  validated paths) or degrade to an error? One decision covers all
+  `Must` call sites in scans. (17:40 §g3)
+- Concurrent-session breakage policy: when another session's
+  committed-but-broken code blocks the shared gate, fix-and-commit
+  immediately (unblock everyone, risk colliding with their next edit)
+  or keep the hands-off rule and report only? (17:40 §g1 — HEAD went
+  red twice on 2026-09-22 under this policy)
 - Infra ask (upstream of this repo): teach the auto-commit daemon to
   EXCLUDE `docs/status/` and `docs/planning/` (or only sweep on
   quiescence) — its heuristic commits have twice swept half-written
   reports (2026-09-22 12:57: 11-file sweep) and reintroduced
   formatting drift in the stack (operator.js, fixed in `1a95a73`
-  there). Until then: the runbook's narrative-commit-at-phase-boundary
-  line is the mitigation.
+  there). Grew two sharper variants from the v2.6.0 night: a
+  PRE-SWEEP BUILD GATE (never commit a non-compiling tree — three
+  sessions hit committed-broken main on 2026-09-22) and asserting a
+  clean tree at each release.sh step boundary (the daemon swept
+  mid-release between tag push and lychee). Until then: the runbook's
+  narrative-commit-at-phase-boundary line is the mitigation.
+- Cross-session gate protocol (from the v2.6.0 release night, load
+  60-174 from parallel agent sessions): a flock convention
+  (`/tmp/webphone-gates.lock` holding pid + scope) so concurrent
+  sessions yield instead of colliding, staggered schedules, or
+  "sustained quiet" as the accepted de-facto rule — owner call.
+- Consider `--all-systems` for `nix flake check` in CI (warning
+  noted in the 21:43 buildflow pass).
 
 ## Harvested raw ideas (2026-09-19 docs-health sweep)
 
@@ -230,20 +288,35 @@ is committed work — refine into TODO_LIST only on demand.
 
 ## Composer/UX raw ideas (2026-09-22 trains, unshipped)
 
-From the send-failure and composer train brainstorms; nothing here is
-committed work — refine into TODO_LIST only on demand.
+From the send-failure and composer train brainstorms. The first six
+ideas SHIPPED 2026-09-22/23 in v2.6.0 (dial typeahead, jump-to-
+latest chip, missed-call badge, thread search, absolute-time-on-
+hover, audio output picker — see FEATURES); what remains here is
+unshipped fuel — refine into TODO_LIST only on demand.
 
-- Dial typeahead: ranked suggestions from PBX_CONFIG contacts in the
-  dial field, zero round-trips (17:53 f7 — recommended next train).
-- Jump-to-latest chip on live transcript pushes while scrolled up.
-- Missed-call nav badge (header badge counts live calls only today).
-- Thread search: server LIKE over bodies/remotes.
-- Absolute-time-on-hover (`title`) for relative timestamps.
-- Audio output picker (`setSinkId`) for multi-output desks.
 - Peer hub: contact → thread + history + voicemail in one view.
 - Tailwind v4 scoped-layer coexistence spike for templ-components
   (designed in the 2026-09-22 deep-dive report; owner call pending —
   one-component proof before any adoption).
+- Unicode-insensitive thread search: SQLite `LIKE` folds ASCII only
+  ("MÜNCHEN" does not match "münchen") — needs `lower()` collation
+  or an FTS5 column; a real design decision, not a patch (small ADR;
+  21:43 report §e4).
+- Search depth follow-ons: clear-button affordance, result count +
+  active-filter chip, deep-link return with the query preserved,
+  CRM display-name matching (today the query matches raw numbers
+  only), debounce indicator (21:43 §e5/§f27-28).
+- Typeahead follow-ons: also search thread remotes (contacts only
+  today), recent-calls recency boost in `rankContacts`.
+- Jump-chip coalescing of rapid pushes; hover `title`s for the nav
+  badge and voicemail rows too.
+- Missed-badge / jump-chip localization — only if the owner ever
+  overturns the language-neutral-shell decision (D3).
+- Voicemail transcription (demand-gated; verify the phone API even
+  exposes it first).
+- `ValidOutboundStatus` extraction: stays un-built UNLESS the
+  webhook-valid set and the service-apply set ever diverge (two
+deliberate distinct contracts today).
 
 ## Local Playwright island E2E (consciously deferred, plan T27 2026-09-20)
 

@@ -16,9 +16,13 @@ SQLite (modernc). The consuming stack
 ([nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony))
 imports this repo's `nixosModules.default`, fronts the binary with
 TLS + the WSS `/sip` proxy, and RIDES webphone `main` (per-train lock
-bump); pbx-artmann consumes the stack via a rev pin. v2.5.0 (tag
-`25740c6`) released 2026-09-22; stack relocked to `91ac2c8`,
-pbx-artmann to the tag chain at `36ae250`.
+bump); pbx-artmann consumes the stack via a rev pin. v2.6.0 (signed
+tag `807ca0c`) released 2026-09-23; the release TAIL (stack browser
+E2E green on the relock, aarch64 re-verify, gh release object,
+smoke `--expect-version 2.6.0`, pbx-artmann relock #4) is open on
+the TODO_LIST release row — two load-shaped E2E stalls, the armed
+chained retry never fired. The stack currently pins webphone
+`7503561` (post-tag main).
 
 The cqrs-htmx `setup` bundle is rejected deliberately (split-brain
 identity): this product's identity is the PBX extension + directory
@@ -66,7 +70,7 @@ database would be a split brain.
 nix develop                        # Go, templ, golangci-lint, esbuild, … — GOTOOLCHAIN=local; bare `go` works inside. Host go (1.26.7) is below the 1.27.1 floor: OUTSIDE-the-shell go commands need `nix develop -c`
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
-python3 scripts/webphone-smoke.py          # 38-check live smoke (+4-check restart scenario; boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)
+python3 scripts/webphone-smoke.py          # 40-check live smoke (+4-check restart scenario; boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
 nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test
