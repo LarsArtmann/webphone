@@ -171,16 +171,24 @@ the stack browser E2E passed on the bumped tree. What remains:
   a manual bump step on every fix. Revisit when a security fix ever
   needs to ship inside an hour.
 - Release.sh load handling (from the v2.6.0 release night, two
-  load-shaped E2E stalls): a `/proc/loadavg` precondition before the
-  E2E phases (cheap, no downside) or a single E2E auto-retry (+10 min
-  per true failure, masks real regressions) — which, and do retries
-  count toward the "two consecutive over-budget" watch? (02:47 §g1)
-- Stack pin vs tag on release trains: the v2.6.0 stack relock pins
-  post-tag main (`7503561` — carrying another session's refactor
-  covered by per-package tests + the upcoming stack E2E) while the
-  tag pins `b162e22`. Matches the documented "ride main" decision and
-  the v2.5.0 precedent (lock ≠ tag), but re-pinning the stack to the
-  tag itself for release trains is the alternative. (02:47 §g2)
+  load-shaped E2E stalls): SHIPPED 2026-09-23 as the conservative
+  default — `release.sh` `load_gate()` refuses at 1-min loadavg ≥8
+  (`WEBPHONE_RELEASE_MAX_LOAD` override) plus `assert_clean_tree()`
+  at tag time (`a24496a`). Remaining owner call: ratify, or switch to
+  a single E2E auto-retry (+10 min per true failure, masks real
+  regressions)? And g3: the new FOUC E2E scenario adds ~30–60s —
+  bump the 445s budget? (02:47 §g1, 15:41 §g)
+- One-time force-push ratification (15:41 §g1): during the v2.6.0
+  fold a `--force-with-lease` was used ONCE on a self-authored
+  commit ~1 minute after pushing it (daemon raced `git add`). The
+  runbook forbids force-push; ratify the exception shape (own commit,
+  seconds old, lease-protected) or forbid outright.
+- Stack pin vs tag on release trains: the v2.6.0-era stack lock pins
+  post-tag main (`7197f1c` — carrying the CRM wire-contract test and
+  the pre-surgery state; the stack's own surgery is `be876ae`) while
+  the tag pins `807ca0c`. Matches the documented "ride main" decision
+  and the v2.5.0 precedent (lock ≠ tag), but re-pinning the stack to
+  the tag itself for release trains is the alternative. (02:47 §g2)
 - Art-dupl ritual baseline: ratify `art-dupl 0.7.0 --sort
   total-tokens -t 3 --type-aware` as THE dedup baseline (`-t 1` is
   forensic-only — 43-45 shown groups of mostly idiom noise) and the
