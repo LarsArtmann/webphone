@@ -1,5 +1,14 @@
 # Session Status Report — 2026-09-22 16:52 CEST
 
+> CLOSED 2026-09-23 (docs-health): every (c) train shipped the same day
+> (T20a-e `03b9431`/`7a6e8ac`/`bf4476e`/`5ae71b1`, T21a-c `1bec154`/
+> `5ae71b1`, T25 `d857568`, T26a-e, T27a-d — 18:20/18:46/19:55 reports)
+> and rode v2.6.0 (tag `807ca0c`). CHANGELOG/FEATURES synced (`4c4b36b`,
+> fold `711fff5`). The g1 gate-ownership question resolved itself: the
+> CRM session's findings were fixed at 18:20 (`4320c7d`). Still open,
+> routed: the owner console (deploy/probes/SMS/T11 batch/announcements —
+> TODO rows), daemon disposition (ROADMAP infra ask).
+
 The "GET SHIT DONE, the whole list" session (resumed ~16:05 after the
 15:06 report). All times CEST, this session only.
 
@@ -102,18 +111,23 @@ The "GET SHIT DONE, the whole list" session (resumed ~16:05 after the
 
 ## c) Not started
 
-- T20a (badge states + aria-live; design ready, needs calls.js +
+- ~~T20a (badge states + aria-live; design ready, needs calls.js +
   i18n.js — both actively churned by the CRM session), T20b
   (migration toast), T20c (thread-LIST data-dial), T20d (data-sms
-  affordance), T20e (history ☆ save-as-contact).
-- T21a (persist + display failure reasons), T21b (distinct delivered
-  badge), T21c (image thumbnails).
-- T26a-e (metrics, TURN creds, data export, timezone timestamps, MIME
+  affordance), T20e (history ☆ save-as-contact).~~ done (`03b9431`,
+  `5ae71b1`, `7a6e8ac`, `bf4476e`)
+- ~~T21a (persist + display failure reasons), T21b (distinct delivered
+  badge), T21c (image thumbnails).~~ done (`1bec154`, `5ae71b1`)
+- ~~T26a-e (metrics, TURN creds, data export, timezone timestamps, MIME
   sniffing), T27a-d (nginx gzip, /favicon.ico, signed tags, i18n
-  key-sync guard), T25 (retention job — unblocked since T18a).
-- CHANGELOG bullets for T16a/T22/T21d (T21d and T22 deserve entries).
-- Owner-console items (deploy, T4a banner check, T5 SMS lane, T11
-  batch, announcements) — owner-terminal-only, unchanged.
+  key-sync guard), T25 (retention job — unblocked since T18a).~~ done
+  (metrics `9f93537`+19:11, TURN `c1971c4`, export `37aae5a`,
+  timezone+favicon+key-sync `d131e11`, sniffing `5ae71b1`, retention
+  `d857568`, gzip `9f93537`/`44c0b8e`, signed tags `4f067f8`)
+- ~~CHANGELOG bullets for T16a/T22/T21d (T21d and T22 deserve entries).~~
+  done (`4c4b36b` + the 2.6.0 fold)
+- **Owner-console items** (deploy, T4a banner check, T5 SMS lane, T11
+  batch, announcements) — owner-terminal-only, unchanged. ← still open (TODO rows)
 
 ## d) Totally fucked up (process failures, lessons kept)
 
@@ -155,53 +169,53 @@ The "GET SHIT DONE, the whole list" session (resumed ~16:05 after the
 
 ## f) NEXT — up to 50, in order
 
-1. Finish pbx-artmann relock #3: aarch64 toplevel, webphone store-path
-   sanity, commit ("relock: telephony 1ea7dfc1").
-2. Verify webphone push state (`git ls-remote`): mine + the daemon's
-   commits since `43f544e`.
-3. Poll for CRM-session quiescence; then re-run erraudit tier 1
-   (their 7 findings must be 0 — by their hand).
-4. On the quiesced tree: `TestServedPageHoldsTheDomContract` green
-   (T22's missing verification).
-5. `nix develop -c go test -count=1 ./...` full suite.
-6. `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` + `nix flake check` — the
-   FIRE item's true green.
-7. Append the promised gate-verdict entry to the plan execution log.
-8. ROADMAP: add the PWA manifest-lite park line (T23).
-9. TODO_LIST/ROADMAP harvest: T18/T22/T23/T27e/f/g/T16a closed rows.
-10. CHANGELOG bullets for T16a/T22/T21d.
-11. Write T20f/g/h: browser-e2e.py (badge, contacts_roundtrip,
-    dialguard) + browser.nix markers (BADGE-LIVE,
-    CONTACTS-ROUNDTRIP-OK, LOGGED-OUT-DIAL-GUARDED).
-12. E2E ×2 green for the new scenarios; watch the 445s budget (two
-    consecutive overruns before digging).
-13. T20a badge states + aria-live (design ready; needs calls.js +
-    i18n.js + style.css, all mine once churn stops).
-14. T20b migration completion toast en/de.
-15. T20c thread-LIST data-dial restructure.
-16. T20d data-sms affordance (history/voicemail → compose prefilled).
-17. T20e history ☆ save-as-contact.
-18. T21a persist + display message failure reasons.
-19. T21b distinct delivered badge.
-20. T21c image thumbnails (decide CSS vs server first).
-21. T25a-c retention/cleanup job (unblocked).
-22. T26a metrics endpoint (Prometheus text).
-23. T26b short-lived TURN REST creds via /config.js.
-24. T26c per-extension data export (zip).
-25. T26d timezone-aware timestamps.
-26. T26e MIME sniffing on attachments.
-27. T27a nginx gzip module option.
-28. T27b /favicon.ico route (alias of the SVG).
-29. T27c signed tags (`git tag -s`) in release.sh.
-30. T27d i18n dynamic-template key-sync guard.
-31. T16d: 19-37 plan checkbox hygiene (7 open) + FEATURES VERIFY pass.
-32. Smoke a fresh binary (webphone-smoke.py, 32 checks) post-quiescence.
-33. aarch64 cross-build + named checks post-train (runbook step 8).
-34. Review the CRM session's landing once quiesced (their `/api/calls`
-    limiter wiring, contacts cap interplay, erraudit state).
-35. Update TODO_LIST's deploy handover row to relock #3.
-36. lychee link check after the next docs batch.
-37. Next train fold when [Unreleased] accumulates (g2 theme forming).
+1. ~~Finish pbx-artmann relock #3: aarch64 toplevel, webphone store-path~~ done (relock #3 completed + pushed, 24cb90d)
+   ~~sanity, commit ("relock: telephony 1ea7dfc1").~~
+2. ~~Verify webphone push state (`git ls-remote`): mine + the daemon's~~ done (verified since (19:55 ls-remote))
+   ~~commits since `43f544e`.~~
+3. ~~Poll for CRM-session quiescence; then re-run erraudit tier 1~~ done (4320c7d, tier-1 = 0)
+   ~~(their 7 findings must be 0 — by their hand).~~
+4. ~~On the quiesced tree: `TestServedPageHoldsTheDomContract` green~~ done (green 18:20)
+   ~~(T22's missing verification).~~
+5. ~~`nix develop -c go test -count=1 ./...` full suite.~~ done (green, 14 pkgs)
+6. ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow` + `nix flake check` — the~~ done (green 18:55 + 19:55 scoreboard)
+   ~~FIRE item's true green.~~
+7. ~~Append the promised gate-verdict entry to the plan execution log.~~ done (closed 18:20 with its verdict)
+8. ~~ROADMAP: add the PWA manifest-lite park line (T23).~~ done (ROADMAP carries the PWA park line)
+9. ~~TODO_LIST/ROADMAP harvest: T18/T22/T23/T27e/f/g/T16a closed rows.~~ done (2026-09-22 evening sweep)
+10. ~~CHANGELOG bullets for T16a/T22/T21d.~~ done (4c4b36b + 2.6.0 fold)
+11. ~~Write T20f/g/h: browser-e2e.py (badge, contacts_roundtrip,~~ done (written + run, 19:55)
+    ~~dialguard) + browser.nix markers (BADGE-LIVE,~~
+    ~~CONTACTS-ROUNDTRIP-OK, LOGGED-OUT-DIAL-GUARDED).~~
+12. ~~E2E ×2 green for the new scenarios; watch the 445s budget (two~~ done (19:55, 198s + 237s)
+    ~~consecutive overruns before digging).~~
+13. ~~T20a badge states + aria-live (design ready; needs calls.js +~~ done (03b9431)
+    ~~i18n.js + style.css, all mine once churn stops).~~
+14. ~~T20b migration completion toast en/de.~~ done (5ae71b1)
+15. ~~T20c thread-LIST data-dial restructure.~~ done (7a6e8ac)
+16. ~~T20d data-sms affordance (history/voicemail → compose prefilled).~~ done (bf4476e)
+17. ~~T20e history ☆ save-as-contact.~~ done (bf4476e)
+18. ~~T21a persist + display message failure reasons.~~ done (1bec154)
+19. ~~T21b distinct delivered badge.~~ done (1bec154)
+20. ~~T21c image thumbnails (decide CSS vs server first).~~ done (5ae71b1)
+21. ~~T25a-c retention/cleanup job (unblocked).~~ done (d857568)
+22. ~~T26a metrics endpoint (Prometheus text).~~ done (9f93537 + 19:11)
+23. ~~T26b short-lived TURN REST creds via /config.js.~~ done (c1971c4)
+24. ~~T26c per-extension data export (zip).~~ done (37aae5a)
+25. ~~T26d timezone-aware timestamps.~~ done (d131e11)
+26. ~~T26e MIME sniffing on attachments.~~ done (5ae71b1)
+27. ~~T27a nginx gzip module option.~~ done (9f93537 + 44c0b8e)
+28. ~~T27b /favicon.ico route (alias of the SVG).~~ done (d131e11)
+29. ~~T27c signed tags (`git tag -s`) in release.sh.~~ done (4f067f8)
+30. ~~T27d i18n dynamic-template key-sync guard.~~ done (d131e11)
+31. ~~T16d: 19-37 plan checkbox hygiene (7 open) + FEATURES VERIFY pass.~~ done (18:46)
+32. ~~Smoke a fresh binary (webphone-smoke.py, 32 checks) post-quiescence.~~ done (smoke green 19:55)
+33. ~~aarch64 cross-build + named checks post-train (runbook step 8).~~ done (ELF b700 verified 19:55)
+34. ~~Review the CRM session's landing once quiesced (their `/api/calls`~~ done (18:20 FIRE fix + 19:11 re-verification)
+    ~~limiter wiring, contacts cap interplay, erraudit state).~~
+35. ~~Update TODO_LIST's deploy handover row to relock #3.~~ done (evening TODO harvest)
+36. ~~lychee link check after the next docs batch.~~ done (0 errors 19:55; 7503561 fixed the one break found later)
+37. ~~Next train fold when [Unreleased] accumulates (g2 theme forming).~~ done (v2.6.0 folded + tagged 807ca0c)
 38. Owner console: deploy v2.5.0 (command prepared) + smoke
     `--expect-version 2.5.0`.
 39. Owner console: T4a rejection-banner live check.
@@ -209,12 +223,12 @@ The "GET SHIT DONE, the whole list" session (resumed ~16:05 after the
 41. Owner console: T11 14-decision batch (briefing doc).
 42. Owner console: announcement drafts approval.
 43. Daemon disposition (docs/status+planning exclusions ask).
-44. Monthly erraudit re-measure (2026-10-22, or right after the CRM
-    train lands).
+44. ~~Monthly erraudit re-measure (2026-10-22, or right after the CRM~~ done (19:55, 127/113 recorded)
+    ~~train lands).~~
 45. Quarterly watches re-check (2026-12-20).
 46. Teach helpers.mjs to export `makeEl` (e-item).
 47. Runbook line for the invalid-store-path E2E recovery (e-item).
-48. Re-baseline the E2E budget if the new scenarios push runtime.
+48. ~~Re-baseline the E2E budget if the new scenarios push runtime.~~ done (445s baseline set)
 49. Consider a "contested files" note in AGENTS while sessions overlap.
 50. Closing sweep: pgrep my booted processes (none should survive),
     final `git ls-remote` on all three repos.

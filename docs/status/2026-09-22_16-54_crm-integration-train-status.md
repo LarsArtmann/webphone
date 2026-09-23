@@ -1,5 +1,15 @@
 # CRM integration train — status (2026-09-22 16:54 CEST)
 
+> CLOSED 2026-09-23 (docs-health): the integration shipped in v2.6.0
+> (tag `807ca0c`) with its follow-up trains — `/api/calls` in OpenAPI,
+> island `recordCrmCall` test, UUID idempotency, resolver single-flight
+> + counters, `/metrics` CRM family, the `crm.Client` `do()` chokepoint
+> (the disabled-policy split brain is closed). Still open, routed:
+> stack-side wiring + runbook cross-doc + restore-drill + the HTTP-level
+> integration test (TODO CRM row), typed `crm.{url,token}` options +
+> multi-contact + English-only journal + call-card-enrichment scope
+> (owner-calls / ROADMAP), CSV import E2E (CRM repo).
+
 Session scope: design + full implementation of the **optional webphone ↔
 Ledger CRM integration** across BOTH repos (`~/projects/webphone` and
 `~/projects/crm`): caller-name enrichment (CRM → phone) and call-activity
@@ -117,21 +127,32 @@ host is UTC+2). Not introduced or touched by this train.
 
 ## c) NOT started
 
-- Webphone `buildflow` (THE quality gate).
+- ~~Webphone `buildflow` (THE quality gate).~~ done (green post-
+  convergence, 18:55/19:55; full RC 0 again on the v2.6.0 tree)
 - CRM `buildflow` (only go build + race tests ran in the pinned sandbox).
-- `nix flake check` (webphone) — only `nix build .#webphone` ran.
-- Stack browser E2E — island JS changed; runbook says re-run
-  (`nix build -L .#telephony-browser` in the stack repo).
-- OpenAPI spec: `/api/calls` missing from `openapi.json` (contacts API
-  has spec-vs-handler pinning; this endpoint does not).
-- TODO_LIST sweeps in both repos.
-- Plan doc in `docs/planning/` (this report stands in).
+  ← CRM-repo row
+- ~~`nix flake check` (webphone) — only `nix build .#webphone` ran.~~
+  done (ALL PASS 18:55 + 21:43 + release gates)
+- ~~Stack browser E2E — island JS changed; runbook says re-run
+  (`nix build -L .#telephony-browser` in the stack repo).~~ done ×2
+  green 19:55 (v2.5.0-era chain); the ×2 on the v2.6.0 chain rides the
+  open release TAIL (TODO row)
+- ~~OpenAPI spec: `/api/calls` missing from `openapi.json` (contacts API
+  has spec-vs-handler pinning; this endpoint does not).~~ done (19:11:
+  spec + `TestOpenAPICallLogMatchesHandler`)
+- ~~TODO_LIST sweeps in both repos.~~ done (19:11 + evening sweep)
+- ~~Plan doc in `docs/planning/` (this report stands in).~~ Won't
+  implement — **this report is the design record; AGENTS carries the
+  seam contract.**
 - NixOS module typed `crm.{url,token}` options (freeform documented
-  instead — decision to record).
-- Stack input bump / aarch64 cross-build (release territory).
-- Island unit test for `recordCrmCall` (coverage is server-side
-  contract + i18n parity only).
-- CSV import E2E for the phones column (unit-level only).
+  instead — decision to record). ← owner-calls row
+- Stack input bump / aarch64 cross-build (release territory). ←
+  release-TAIL row
+- ~~Island unit test for `recordCrmCall` (coverage is server-side
+  contract + i18n parity only).~~ done (02:47: `panels-crm.test.mjs`
+  pins the wire body, fresh-UUID-per-call, 502 toast; crm-off no-op in
+  `panels.test.mjs`)
+- CSV import E2E for the phones column (unit-level only). ← CRM-repo row
 
 ## d) Totally fucked up
 
@@ -173,19 +194,19 @@ host is UTC+2). Not introduced or touched by this train.
 
 ## f) Next things (ordered, 24)
 
-1. Re-run the CRM full suite in the pinned sandbox, quiet machine.
-2. Webphone `buildflow` (inside `nix develop`).
+1. ~~Re-run the CRM full suite in the pinned sandbox, quiet machine.~~ done (19:11, quiet-machine sandbox green)
+2. ~~Webphone `buildflow` (inside `nix develop`).~~ done (green post-convergence)
 3. CRM `buildflow` (`scripts/buildflow.sh` modes for gitleaks/codespell).
-4. `nix flake check` (webphone).
-5. Stack browser E2E (`nix build -L .#telephony-browser`).
-6. `/api/calls` → `openapi.json` + spec-vs-handler test.
-7. Verify CRM repo daemon commit/push state.
-8. Add `crmLogFailed` row to the failure-map table (webphone AGENTS.md).
-9. TODO_LIST sweeps in both repos.
-10. Island unit test for `recordCrmCall` (helpers.mjs fetch stubs).
+4. ~~`nix flake check` (webphone).~~ done (ALL PASS 18:55 + 21:43 + release gates)
+5. ~~Stack browser E2E (`nix build -L .#telephony-browser`).~~ done (x2 green 19:55; v2.6.0 chain rides the release TAIL)
+6. ~~`/api/calls` → `openapi.json` + spec-vs-handler test.~~ done (19:11, spec + TestOpenAPICallLogMatchesHandler)
+7. ~~Verify CRM repo daemon commit/push state.~~ done (verified 19:11, changes committed)
+8. ~~Add `crmLogFailed` row to the failure-map table (webphone AGENTS.md).~~ done (row lives in docs/error-contract.md)
+9. ~~TODO_LIST sweeps in both repos.~~ done (19:11 + evening sweep)
+10. ~~Island unit test for `recordCrmCall` (helpers.mjs fetch stubs).~~ done (02:47, panels-crm.test.mjs)
 11. Decide typed NixOS `crm.{url,token}` options vs documented freeform.
-12. Idempotency key on `/api/calls` (a retry could double-journal).
-13. Single-flight resolver lookups (30-row history cache miss burst).
+12. ~~Idempotency key on `/api/calls` (a retry could double-journal).~~ done (02:47, UUID key + 4 contract subtests)
+13. ~~Single-flight resolver lookups (30-row history cache miss burst).~~ done (21:12, leader/waiter single-flight)
 14. CSV import E2E for the `phones` column.
 15. Stack-side wiring story for CRM URL/token (secrets dir) when
     co-located with the stack.
@@ -193,14 +214,14 @@ host is UTC+2). Not introduced or touched by this train.
 17. Cross-doc the CRM surfaces in the stack runbook's webphone error
     contract section.
 18. Restore-drill: prove call_logged events survive a journal restore.
-19. Lookup hit/miss/timeout counters (slog debug exists; counters
-    better).
+19. ~~Lookup hit/miss/timeout counters (slog debug exists; counters~~ done (21:12 counters + 02:47 /metrics family)
+    ~~better).~~
 20. Multi-contact number policy: webphone takes the first match;
     consider surfacing "+N more".
 21. Confirm English-only journal bodies are wanted for CRM lines.
 22. Island local recent-calls enrichment via a lookup endpoint.
-23. Include `internal/crm` in the next erraudit tier-2 re-measure
-    (due 2026-10-22).
+23. ~~Include `internal/crm` in the next erraudit tier-2 re-measure~~ done (19:55 re-measure, 127/113 includes the crm seam)
+    ~~(due 2026-10-22).~~
 24. Plan v1.1: CRM + webphone on different hosts (TLS, token rotation).
 
 ## g) Questions

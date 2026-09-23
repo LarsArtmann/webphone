@@ -1,5 +1,15 @@
 # Status report: session close — send-failure + composer UX trains (2026-09-22 17:53)
 
+> CLOSED 2026-09-23 (docs-health): trains A/B (this session), D
+> (`1bec154`), per-thread drafts (T21d), and the entire ux-raw-ideas
+> extension (typeahead, jump chip, missed badge, hover stamps, thread
+> search, audio picker) shipped in v2.6.0 (tag `807ca0c`); the skipped
+> E2E went ×2 green on the fixed driver (19:55). Still open, routed:
+> trains C/E/F + fax guard + stack-runbook CSP cross-doc (TODO
+> send-failure row), de native review + screenshots (TODO theme-knob
+> row), a11y pass / peer hub / transcription (ROADMAP raw ideas),
+> contacts in-flight guard (owner-calls).
+
 Scope: THIS session's full run (both trains, three reports). End
 state: both trains shipped, gated, and verified pushed (`56caf37`,
 `5cce98d` == origin/main at last ls-remote). A concurrent session ran
@@ -114,23 +124,23 @@ buildflow) — all handled without touching their files.
 
 | #  | Task                                                                                              | Impact  | Effort   |
 | -- | ------------------------------------------------------------------------------------------------- | ------- | -------- |
-| 1  | Stack browser E2E (covers both trains' markup + the three JS behaviors)                           | High    | S        |
+| ~~1~~  | ~~Stack browser E2E (covers both trains' markup + the three JS behaviors)~~ done — x2 green 19:55, 198s + 237s | ~~High~~ | ~~S~~ |
 | 2  | Owner call: train C semantics (422-no-row vs failed-row evidence)                                 | High    | decision |
 | 3  | Implement C for messages + fax (reuse `isSelfThread`)                                             | High    | S        |
-| 4  | Re-green buildflow once the CRM train folds (9 attributed findings)                               | High    | S        |
-| 5  | Train D: bubble failure story (store field, wp-failed, disclosure, retry-when-retryable)          | High    | M-L      |
+| ~~4~~  | ~~Re-green buildflow once the CRM train folds (9 attributed findings)~~ done — re-greened, 4320c7d + evening gates | ~~High~~ | ~~S~~ |
+| ~~5~~  | ~~Train D: bubble failure story (store field, wp-failed, disclosure, retry-when-retryable)~~ done — shipped 1bec154 | ~~High~~ | ~~M-L~~ |
 | 6  | Train E with D: 422 + family vocabulary + failure table + stack runbook sync                      | Med     | S-M      |
-| 7  | Dial typeahead (PBX_CONFIG contacts, ranked, zero round-trips)                                    | High    | M        |
-| 8  | Jump-to-latest chip on live pushes while scrolled up                                              | Med     | S        |
-| 9  | Per-thread draft persistence (localStorage)                                                       | Med     | S        |
+| ~~7~~  | ~~Dial typeahead (PBX_CONFIG contacts, ranked, zero round-trips)~~ done — shipped — ux-raw-ideas D, v2.6.0 | ~~High~~ | ~~M~~ |
+| ~~8~~  | ~~Jump-to-latest chip on live pushes while scrolled up~~ done — shipped — ux-raw-ideas B, v2.6.0 | ~~Med~~ | ~~S~~ |
+| ~~9~~  | ~~Per-thread draft persistence (localStorage)~~ done — shipped — T21d, v2.6.0 | ~~Med~~ | ~~S~~ |
 | 10 | Fax-lane self-send guard (rides #3)                                                               | Med     | S        |
 | 11 | de native review of `thread.selfNotice` + screenshot QA of the four affordances                   | Low     | XS       |
 | 12 | Contacts add/import in-flight guard decision (upsert idempotency argues skip — decide explicitly) | Low     | XS       |
-| 13 | Missed-call nav badge (header badge counts live calls only)                                       | Med     | S        |
-| 14 | Absolute-time-on-hover (`title`) for relative timestamps                                          | Low     | XS       |
-| 15 | Thread search (server LIKE over bodies/remotes)                                                   | Med     | M        |
+| ~~13~~ | ~~Missed-call nav badge (header badge counts live calls only)~~ done — shipped — ux-raw-ideas C, v2.6.0 | ~~Med~~ | ~~S~~ |
+| ~~14~~ | ~~Absolute-time-on-hover (`title`) for relative timestamps~~ done — shipped — ux-raw-ideas A, v2.6.0 | ~~Low~~ | ~~XS~~ |
+| ~~15~~ | ~~Thread search (server LIKE over bodies/remotes)~~ done — shipped — ux-raw-ideas E, v2.6.0 | ~~Med~~ | ~~M~~ |
 | 16 | a11y pass: prefers-reduced-motion, aria-live on toasts, focus-visible                             | Med     | S        |
-| 17 | Audio output picker (`setSinkId`) for multi-output desks                                          | Med     | S-M      |
+| ~~17~~ | ~~Audio output picker (`setSinkId`) for multi-output desks~~ done — shipped — ux-raw-ideas F, v2.6.0 | ~~Med~~ | ~~S-M~~ |
 | 18 | Voicemail transcription (ONLY if the phone API exposes it — verify first)                         | ?       | M        |
 | 19 | Peer hub: contact → thread + history + VM in one view                                             | Med     | M        |
 | 20 | Train F own-DID live warning (demand-gated)                                                       | Low-Med | M        |
