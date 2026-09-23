@@ -143,6 +143,17 @@ templ NavLinks(props ShellProps) {
 	}
 }
 
+// panelHead is the one home for the panel header shape (title +
+// subtitle) every tab panel opens with. Voicemail's conditional
+// subtitle and ThreadView's back-link head are different shapes and
+// stay hand-rolled.
+templ panelHead(lang Lang, titleKey, subtitleKey string) {
+	<header class="wp-panel-head">
+		<h2>{ T(lang, titleKey) }</h2>
+		<p class="wp-panel-sub">{ T(lang, subtitleKey) }</p>
+	</header>
+}
+
 // headExtras applies the theme BEFORE anything paints (render-blocking,
 // same-origin — the CSP allows no inline scripts), loads htmx deferred —
 // AFTER the htmx-config meta, so htmx sees it at startup and skips its

@@ -22,10 +22,7 @@ type HistoryPanelProps struct {
 
 templ HistoryPanel(props HistoryPanelProps) {
 	<section class="wp-panel" id="history-panel">
-		<header class="wp-panel-head">
-			<h2>{ T(props.Lang, "tab.history") }</h2>
-			<p class="wp-panel-sub">{ T(props.Lang, "history.subtitle") }</p>
-		</header>
+		@panelHead(props.Lang, "tab.history", "history.subtitle")
 		if props.Enabled {
 			<form
 				class="wp-filter"

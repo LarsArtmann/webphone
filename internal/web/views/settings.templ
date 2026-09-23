@@ -16,10 +16,7 @@ type SettingsPanelProps struct {
 
 templ SettingsPanel(props SettingsPanelProps) {
 	<section class="wp-panel" id="settings-panel">
-		<header class="wp-panel-head">
-			<h2>{ T(props.Lang, "tab.settings") }</h2>
-			<p class="wp-panel-sub">{ T(props.Lang, "settings.subtitle") }</p>
-		</header>
+		@panelHead(props.Lang, "tab.settings", "settings.subtitle")
 		<dl class="wp-settings">
 			<dt>{ T(props.Lang, "settings.sipDomain") }</dt>
 			<dd>{ orUnset(props.SIPDomain, props.Lang) }</dd>

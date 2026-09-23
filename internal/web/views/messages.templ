@@ -28,10 +28,7 @@ type ThreadsPanelProps struct {
 
 templ ThreadsPanel(props ThreadsPanelProps) {
 	<section class="wp-panel" id="messages-panel">
-		<header class="wp-panel-head">
-			<h2>{ T(props.Lang, "tab.messages") }</h2>
-			<p class="wp-panel-sub">{ T(props.Lang, "messages.subtitle") }</p>
-		</header>
+		@panelHead(props.Lang, "tab.messages", "messages.subtitle")
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}

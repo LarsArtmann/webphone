@@ -4,10 +4,7 @@ package views
 // needs: what happened, reassurance, and what to do next.
 templ ErrorPanel(message string, lang Lang) {
 	<section class="wp-panel">
-		<header class="wp-panel-head">
-			<h2>{ T(lang, "error.title") }</h2>
-			<p class="wp-panel-sub">{ T(lang, "error.subtitle") }</p>
-		</header>
+		@panelHead(lang, "error.title", "error.subtitle")
 		<p class="wp-error" role="alert">{ message }</p>
 		<button class="wp-primary" data-reload>{ T(lang, "error.reload") }</button>
 	</section>

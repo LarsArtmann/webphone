@@ -17,10 +17,7 @@ type FaxPanelProps struct {
 
 templ FaxPanel(props FaxPanelProps) {
 	<section class="wp-panel" id="fax-panel">
-		<header class="wp-panel-head">
-			<h2>{ T(props.Lang, "tab.fax") }</h2>
-			<p class="wp-panel-sub">{ T(props.Lang, "fax.subtitle") }</p>
-		</header>
+		@panelHead(props.Lang, "tab.fax", "fax.subtitle")
 		if props.Error != "" {
 			<p class="wp-error" role="alert">{ props.Error }</p>
 		}

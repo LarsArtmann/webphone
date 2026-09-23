@@ -20,10 +20,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 		hx-target="#tab-content"
 		hx-swap="morph:innerHTML show:window:top"
 	>
-		<header class="wp-panel-head">
-			<h2>{ T(props.Lang, "tab.contacts") }</h2>
-			<p class="wp-panel-sub">{ T(props.Lang, "contacts.subtitle") }</p>
-		</header>
+		@panelHead(props.Lang, "tab.contacts", "contacts.subtitle")
 		<form
 			class="wp-compose wp-compose-new"
 			hx-post="/contacts/save"
