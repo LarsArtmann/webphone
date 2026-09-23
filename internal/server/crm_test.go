@@ -21,8 +21,8 @@ type crmStub struct {
 
 	// Wire evidence for the cross-repo contract tests: every request's
 	// Authorization header, and the decoded number of every lookup.
-	auths          []string
-	lookupNumbers  []string
+	auths         []string
+	lookupNumbers []string
 }
 
 func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
