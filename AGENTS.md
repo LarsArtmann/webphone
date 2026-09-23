@@ -17,12 +17,20 @@ SQLite (modernc). The consuming stack
 imports this repo's `nixosModules.default`, fronts the binary with
 TLS + the WSS `/sip` proxy, and RIDES webphone `main` (per-train lock
 bump); pbx-artmann consumes the stack via a rev pin. v2.6.0 (signed
-tag `807ca0c`) released 2026-09-23; the release TAIL (stack browser
-E2E green on the relock, aarch64 re-verify, gh release object,
-smoke `--expect-version 2.6.0`, pbx-artmann relock #4) is open on
-the TODO_LIST release row — two load-shaped E2E stalls, the armed
-chained retry never fired. The stack currently pins webphone
-`7503561` (post-tag main).
+tag `807ca0c`) released + tail CLOSED 2026-09-23 evening: stack
+browser E2E ×2 green at `271f5ef` (195s/184s — the FOUC scenario
+added ~15s, no budget bump), gh release object published, smoke
+41+4 with `/version` exactly v2.6.0 (use `--bin $(nix build
+.#webphone)` locally — a bare `go build` reports Go's
+pseudo-version), `nix flake check` green incl. the KVM backup VM,
+and pbx-artmann relock #4 + re-pin at `20b2a18` (webphone ExecStart
+moved 2.5.0→2.6.0; lock-drift-probe + both toplevels green). The
+stack pins webphone train `7197f1c`. Post-close reminders: dep
+bumps swept by the daemon need the vendorHash roundtrip in the same
+breath (`0a7a732` repaired a ~2h broken `nix build`), and the FOUC
+E2E harness lessons (soft reloads dodge URL blocks via cache;
+chromedriver is blind mid-navigation — count in-page) live in the
+stack repo's browser-e2e.py.
 
 The cqrs-htmx `setup` bundle is rejected deliberately (split-brain
 identity): this product's identity is the PBX extension + directory
