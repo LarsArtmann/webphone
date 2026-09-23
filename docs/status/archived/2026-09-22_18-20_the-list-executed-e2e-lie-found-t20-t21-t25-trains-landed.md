@@ -94,7 +94,7 @@ standing directive kept execution going after it). This report covers
     CHANGELOG bullets for T25/T16a/T22/T21d/T18; the plan log's
     gate-incident entry closed with its verdict.
 13. **16:52 status report** written at
-    `docs/status/2026-09-22_16-52_…md` mid-flight.
+    `docs/status/archived/2026-09-22_16-52_…md` mid-flight.
 
 ## b) Partially done
 

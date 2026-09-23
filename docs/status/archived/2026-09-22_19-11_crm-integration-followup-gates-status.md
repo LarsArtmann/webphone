@@ -10,7 +10,7 @@
 > c13 daemon pre-sweep (ROADMAP infra ask), c3 CRM-repo gates (CRM repo).
 
 Session scope: execute the nine REMAINING items from
-`docs/status/2026-09-22_16-54_crm-integration-train-status.md` (the
+`docs/status/archived/2026-09-22_16-54_crm-integration-train-status.md` (the
 integration itself was already landed and green): re-verify both repos'
 suites, run every outstanding gate, close the openapi/docs gaps, sweep
 TODO_LISTs, and triage what the gates surfaced. Three concurrent sessions

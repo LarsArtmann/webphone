@@ -1,5 +1,13 @@
 # Status — 20-year plan cut, both repos published, stack gate red→fixed
 
+> CLOSED 2026-09-23 (docs-health): the plan executed to completion —
+> v2.5.0 AND v2.6.0 both cut (tags `25740c6`, `807ca0c`), T12–T27
+> closed or routed (19:55 + 02:47 trains), the prod premise corrected,
+> the daemon diagnosed + since recovered. Still open, routed: the
+> owner console (deploy, T4a probes, T5 SMS lane, T11 batch,
+> announcements — TODO rows), the v2.6.0 release TAIL (TODO row),
+> daemon-disposition asks (ROADMAP infra).
+
 - **Date:** 2026-09-22 12:56 CEST
 - **Session scope:** the SUPERB 20-year planning directive — pareto
   plan over ALL open TODOs, then commit + push (explicitly authorized).

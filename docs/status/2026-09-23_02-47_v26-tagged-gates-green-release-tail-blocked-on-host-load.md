@@ -1,5 +1,15 @@
 # Status: v2.6.0 shipped through the tag — release tail blocked on host contention, chained retry armed
 
+> UPDATED 2026-09-23 (docs-health): the chained attempt NEVER FIRED —
+> verified: `/tmp/release26d.log` gone, NO gh release object for
+> v2.6.0, origin == HEAD (`0cb6d2c`), tag `807ca0c` on origin; the
+> stack pins webphone `7503561`. The tail (stack E2E ×2 green, gh
+> release, aarch64 re-verify, smoke `--expect-version 2.6.0`,
+> pbx-artmann relock #4) is the TODO release row — THIS report stays
+> the operative pointer. g1–g3 routed to ROADMAP open questions + the
+> owner-calls row; e1–e5 improvements ride the TODO runbook-hardening
+> row + the ROADMAP infra/protocol asks.
+
 _2026-09-23 02:47 CEST. Session: CRM idempotency + metrics train executed to green; release
 train advanced to the signed tag; remaining steps (stack E2E → aarch64 → gh release) blocked
 on host load from parallel agent sessions. A chained wait-for-sustained-quiet job is live and
@@ -93,8 +103,8 @@ gate protocol.
    the v2.6.0 tag legally diverge per the 2026-09-20 owner decision and the v2.5.0
    precedent). The E2E against any relock has not passed yet; pbx-artmann relock #4 comes
    after the stack goes green.
-3. **TODO_LIST harvest.** Deliberately untouched until the release completes (rows change
-   state; the file was also mid-edit by the other session earlier tonight).
+3. ~~**TODO_LIST harvest.** Deliberately untouched until the release completes (rows change~~ done (2026-09-23 docs-health HARVEST — release row rewritten around the TAIL)
+   ~~state; the file was also mid-edit by the other session earlier tonight).~~
 
 ## c) NOT STARTED
 
@@ -148,22 +158,22 @@ gate protocol.
 
 ## f) NEXT (prioritized)
 
-1. **Verify the live chained attempt:** when load < 6 sustained, it fires
-   `release.sh 2.6.0`; check `RELEASE-EXIT=0` at the end of `/tmp/release26d.log`.
+1. ~~**Verify the live chained attempt:** when load < 6 sustained, it fires~~ done (NEVER FIRED — verified: log gone, no gh release, TAIL row owns the retry)
+   ~~`release.sh 2.6.0`; check `RELEASE-EXIT=0` at the end of `/tmp/release26d.log`.~~
 2. On success: confirm the stack E2E passed, the stack relock commit exists and pins the
    intended webphone rev, aarch64 cross-builds verify by ELF machine bytes (`b7 00` at
    offset 0x12), and `gh release view v2.6.0` shows the extracted CHANGELOG body.
 3. `python3 scripts/webphone-smoke.py --expect-version 2.6.0` → 0 failed.
 4. pbx-artmann relock #4 (see c2): rev swap → lock-drift-probe → both toplevels →
    ExecStart store-path moved → narrative commit + push.
-5. TODO_LIST harvest: release row → DONE (v2.6.0, released 2026-09-23, tag `807ca0c`);
-   dedup-pins row → DONE (listRows / requireMultipartTo / pbx nil-client / ListThreads
-   all shipped earlier in this train); CRM follow-ups row shrinks to remaining
-   stack-side items (e)–(h): `crm.{url,token}` NixOS wiring, stack runbook cross-doc,
-   restore-drill, one HTTP-level integration test — (a)–(d) are SHIPPED this train.
-6. CHANGELOG: nothing owed — the addendum is already folded.
-7. Re-surface the three owner questions (21:12 report + this report §g); if still
-   unanswered, note the defaults taken.
+5. ~~TODO_LIST harvest: release row → DONE (v2.6.0, released 2026-09-23, tag `807ca0c`);~~ done (2026-09-23 sweep — release row rewritten, CRM row shrunk to e-h, pins row closed)
+   ~~dedup-pins row → DONE (listRows / requireMultipartTo / pbx nil-client / ListThreads~~
+   ~~all shipped earlier in this train); CRM follow-ups row shrinks to remaining~~
+   ~~stack-side items (e)–(h): `crm.{url,token}` NixOS wiring, stack runbook cross-doc,~~
+   ~~restore-drill, one HTTP-level integration test — (a)–(d) are SHIPPED this train.~~
+6. ~~CHANGELOG: nothing owed — the addendum is already folded.~~ done (E+F were folded; the four A-D bullets completed by the 2026-09-23 sweep)
+7. ~~Re-surface the three owner questions (21:12 report + this report §g); if still~~ done (routed — ROADMAP open questions + owner-calls row)
+   ~~unanswered, note the defaults taken.~~
 8. Closing sweep per runbook step 9: `git ls-remote` verify main + tag end states,
    narrative commit at the phase boundary.
 

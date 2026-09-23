@@ -10,7 +10,7 @@
 
 Scope: THIS session only — the owner pasted the "Composer/UX raw ideas
 (2026-09-22 trains, unshipped)" list with an execute order. Plan doc:
-`docs/planning/2026-09-22_21-05_SUPERB-ux-raw-ideas.md` (verdict still
+`docs/planning/archived/2026-09-22_21-05_SUPERB-ux-raw-ideas.md` (verdict still
 PENDING — written before execution, not yet filled). End state at
 freeze: four of six implementable ideas shipped with green scoped
 gates, the fifth (thread search) fully designed but ONE LINE written,

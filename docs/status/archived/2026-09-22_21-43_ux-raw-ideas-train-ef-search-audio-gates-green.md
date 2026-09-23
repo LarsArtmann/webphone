@@ -12,7 +12,7 @@
 > cluster), missed-call semantics + search URL semantics (owner
 > questions), smoke probes for the new surfaces (small, unstruck).
 
-_2026-09-22 21:43 CEST · webphone · continuing `docs/status/2026-09-22_21-08_ux-raw-ideas-train-midflight.md`_
+_2026-09-22 21:43 CEST · webphone · continuing `docs/status/archived/2026-09-22_21-08_ux-raw-ideas-train-midflight.md`_
 
 ## TL;DR
 
@@ -125,7 +125,7 @@ Everything so far was committed by the auto-daemon as heuristic
 2. ~~**CHANGELOG.md [Unreleased]** entries: hover stamps, jump chip, missed~~ done (02:47 folded E+F; A-D bullets added by the 2026-09-23 sweep)
    ~~badge, dial typeahead, thread search, audio picker.~~
 3. ~~**FEATURES.md** inventory rows for the six shipped ideas.~~ done (02:47 rows for E+F; A-D rows added by the 2026-09-23 sweep)
-4. ~~**Plan-doc verdict** (`docs/planning/2026-09-22_21-05_SUPERB-ux-raw-ideas.md`~~ done (filled — shipped 6/6 + stub caveat)
+4. ~~**Plan-doc verdict** (`docs/planning/archived/2026-09-22_21-05_SUPERB-ux-raw-ideas.md`~~ done (filled — shipped 6/6 + stub caveat)
    ~~still says PENDING) — must record the stub-evidence caveat honestly.~~
 5. ~~**One narrative commit** for the train + `git ls-remote` verification.~~ done (the release-train boundary commits carry it)
 6. **Stack browser E2E** — owner question from last report, still
