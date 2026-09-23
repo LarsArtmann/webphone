@@ -5,18 +5,13 @@ through (docs-health style: one home per fact, no decay). Long-shot ideas
 live in ROADMAP.md (raw ideas + open questions); owner calls there too.
 
 Last sweep: 2026-09-23 (docs-health AUDIT over the v2.6.0 state).
-Closed since the 2026-09-22 night sweep: the v2.6.0 train itself —
-fold, gates, signed tag `807ca0c` pushed to origin; all four
-dedup-train contract pins + the crm `do()` chokepoint + resolver
-single-flight/counters + `/api/calls` UUID idempotency
-(`TestAPICallLoggingContract` ×4 under `-race`); the CRM metrics
-family; thread search + audio picker + hover stamps + jump chip +
-missed-call badge + dial typeahead (the full ux-raw-ideas train);
-the `-t 1` and `-t 3` art-dupl trains (13+5 groups triaged, 10
-one-home helpers extracted, zero harmful clones at `-t 3`); the
-theme-preload verification gaps (island-lint scope, node spec, smoke
-4a); buildflow full RC 0 + `nix flake check` all-green on the tagged
-tree; lychee broken-link fix (`7503561`).
+Closed since the 2026-09-22 night sweep: v2.6.0 itself (fold, gates,
+signed tag `807ca0c` pushed) — it carries the CRM hardening trains
+(chokepoint, single-flight, counters, `/api/calls` idempotency), the
+full ux-raw-ideas train (six features), both art-dupl trains (zero
+harmful clones at `-t 3`), all four dedup contract pins, and the
+theme-preload verification gaps; full gates green on the tagged tree;
+lychee fixed (`7503561`).
 
 | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Status       | Priority | Effort | Evidence / notes                                                                                                                                 |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
