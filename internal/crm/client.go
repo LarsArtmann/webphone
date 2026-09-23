@@ -183,7 +183,8 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 		return ErrUnauthorized
 	case resp.StatusCode >= 400 && resp.StatusCode < 500:
 		// 404 (contact gone) and 400/409 (domain rejections) are CRM-side
-		// answers, not our bugs — surface them wrapped, not as errors.
+		// answers, not our bugs — wrap them with the status so the caller
+		// sees a rejection, not a transport panic.
 		return fmt.Errorf("crm: call log rejected (contact %s, status %d)", contactID, resp.StatusCode)
 	default:
 		return fmt.Errorf("crm: call log failed (contact %s, status %d)", contactID, resp.StatusCode)

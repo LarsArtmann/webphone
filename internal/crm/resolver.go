@@ -150,16 +150,50 @@ func (r *Resolver) Name(ctx context.Context, number string) string {
 	return match.Name
 }
 
+// namesWorkerCap bounds the fan-out of Names: enough parallelism that a
+// slow CRM costs ONE timeout per page (not one per number), few enough
+// requests that a page render never stampedes the CRM.
+const namesWorkerCap = 8
+
 // Names resolves a batch of numbers and returns the number→name map for
 // view props. Unresolved numbers are absent, not empty-stringed, so the
-// displayName fallback needs no extra policy.
+// displayName fallback needs no extra policy. Resolution runs bounded-
+// concurrent: a page holds tens of numbers and each lookup may take the
+// full request timeout against a slow CRM — sequential resolution would
+// hang the tab render for N×timeout, violating the "decoration, never a
+// prerequisite" contract of the whole seam.
 func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]string {
 	names := make(map[string]string, len(numbers))
+	if len(numbers) == 0 {
+		return names
+	}
 
+	type resolved struct{ number, name string }
+	results := make(chan resolved, len(numbers))
+	jobs := make(chan string)
+
+	workers := min(len(numbers), namesWorkerCap)
+	var wg sync.WaitGroup
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for number := range jobs {
+				if name := r.Name(ctx, number); name != "" {
+					results <- resolved{number: number, name: name}
+				}
+			}
+		}()
+	}
 	for _, number := range numbers {
-		if name := r.Name(ctx, number); name != "" {
-			names[number] = name
-		}
+		jobs <- number
+	}
+	close(jobs)
+	wg.Wait()
+	close(results)
+
+	for res := range results {
+		names[res.number] = res.name
 	}
 
 	return names
