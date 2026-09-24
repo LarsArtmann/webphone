@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	"log/slog"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -261,15 +261,16 @@ func errorPanel(message string, lang views.Lang) templ.Component {
 }
 
 // internalError is the one-home 500 writer (SafeDetail consistency,
-// 2026-09-24): the full detail goes to the operator log (English op +
-// error + family) while the client body carries only the family
-// default message — internal store errors (SQL text, file paths)
-// never reach the browser. Sub-500 writers keep their own texts:
-// client-caused 4xx detail is safe by construction and the webhook
-// bodies are byte-stable-pinned for providers.
+// 2026-09-24): the full detail goes to the operator log via
+// errorfamily.LogErrorContext (message "op: detail", attrs family/code/
+// retryable/exit_code; a transient classification logs Warn — the
+// library's self-healing semantics) while the client body carries only
+// the family default message — internal store errors (SQL text, file
+// paths) never reach the browser. Sub-500 writers keep their own
+// texts: client-caused 4xx detail is safe by construction and the
+// webhook bodies are byte-stable-pinned for providers.
 func (h *handlers) internalError(w http.ResponseWriter, r *http.Request, op string, err error) {
-	slog.ErrorContext(r.Context(), op, "error", err,
-		"family", errorfamily.Classify(err).String())
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
 	http.Error(w, op+": "+cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 

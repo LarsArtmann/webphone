@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log/slog"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -87,13 +87,13 @@ func (h *handlers) identityFor(ext domain.Extension) string {
 	return h.deps.Config.Identities[ext.String()]
 }
 
-// safeDetail logs the full error for the operator (English op text) and
+// safeDetail logs the full error for the operator (English op text,
+// via errorfamily.LogErrorContext — family/code/retryable attrs) and
 // returns the client-safe copy: the family default message, never the
 // raw internal detail. Panels that degrade a page keep their own op
 // string so the log line names the surface that failed.
 func (h *handlers) safeDetail(r *http.Request, op string, err error) string {
-	slog.ErrorContext(r.Context(), op, "error", err,
-		"family", errorfamily.Classify(err).String())
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
 	return cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false)
 }
 

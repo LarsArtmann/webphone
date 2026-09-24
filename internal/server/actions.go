@@ -353,11 +353,11 @@ func (h *handlers) sendFailure(
 	}
 	// System-side failure: the send is safe in the thread as failed; the
 	// detail stays in the log (gateway errors can carry internal URLs)
-	// while the user gets reassurance + a retry path. The family rides the
-	// log line so an unclassified error (defaults to transient) is
-	// visible without changing what the user sees.
-	slog.ErrorContext(r.Context(), lane+" send gateway failure", "error", err,
-		"family", errorfamily.Classify(err).String())
+	// while the user gets reassurance + a retry path. The family rides
+	// the log attrs (errorfamily.LogErrorContext: family/code/retryable)
+	// so an unclassified error (defaults to transient) is visible
+	// without changing what the user sees.
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s send gateway failure: %w", lane, err), nil)
 	h.renderPanelError(w, r, sess, tab, classifyForUser(err), h.T(r, k.transport))
 }
 
