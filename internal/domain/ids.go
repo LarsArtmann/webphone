@@ -188,6 +188,14 @@ func MustContactID(s string) ContactID { return must(ParseContactID(s)) }
 
 // parseID re-brands a stored nanoid-backed identifier. Both the branded
 // ("Thread:xxx") and raw ("xxx") forms parse; anything else is an error.
+//
+// Parked adoption decision (stack audit finding #8, 2026-09-24): the
+// go-branded-id library has no prefix-aware parser/Valuer/Scanner — it
+// round-trips its own "Brand:value" form only, while rows at rest carry
+// raw nano ids. This hand-rolled parseID stays the one home for the
+// both-forms tolerance; adopt the library's Valuer/Scanner seam only on
+// the next storage-format touch (a migration that rewrites id columns
+// can unify the wire format at the same time).
 func parseID[B any](s string, kind string) (id.ID[B, nanoid.ID], error) {
 	raw := s
 	if _, rest, found := strings.Cut(s, ":"); found {

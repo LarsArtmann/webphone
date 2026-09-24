@@ -262,15 +262,23 @@ the island remotely — re-run it after any markup change.
 - **templ-components adoption** (grep-able table per the library's
   consumer tip): `layout.Base` adopted (layout.templ, with
   `NoThemeScript` + `CSSPath`/`HTMXVersion` suppressed via props);
-  everything else is a DELIBERATE custom hand-roll — avatars
-  (`avatarFor`/`avatarHue`, hue-class CSP workaround), nav badges
-  (`wp-nav-badge`), empty states (`wp-empty`), error panel
-  (error.templ), timestamps (`formatClock`/`formatStamp`, byte-stable
-  pins), brand SVG. The blocker for further component adoption is
-  Tailwind: the library emits Tailwind v4 classes and webphone ships a
-  hand-rolled token CSS (app.css, no Tailwind build) — coexistence is
-  possible (Tailwind output is layered; unlayered app.css wins
-  collisions) but unproven here.
+  `display.EmptyState` adopted (2026-09-24, six true empty-state sites)
+  with a PERMANENT scoped Tailwind v4 build at `/assets/tw.css`
+  (14.5KB, `@source` of exactly the adopted components from the module
+  cache — rebuild with `nix run nixpkgs#tailwindcss_4`, NEVER
+  nixpkgs#tailwindcss which is v3 and cannot parse v4 syntax;
+  coexistence PROVEN by the 2026-09-24 spike: Tailwind emits `@layer`
+  only, unlayered app.css wins every collision — verdict + data in
+  docs/planning/2026-09-24_16-38_tailwind-coexistence-verdict.md).
+  DELIBERATE custom hand-rolls stay: avatars (`avatarFor`/`avatarHue`,
+  hue-class CSP workaround), nav badges (`wp-nav-badge`), the three
+  informational `wp-empty` occurrences, error panel (error.templ),
+  timestamps (`formatClock`/`formatStamp`, byte-stable pins), brand
+  SVG. `display.RelativeTime` (browser-locale strings violate the
+  per-extension language invariant), `display.CountBadge` (icon-overlay
+  shape, wrong for the pill), and the errorpage module (404 is
+  shell-integrated; `.wp-error` is an htmx wire contract) are REJECTED
+  with rationale in the verdict doc's wave dispositions.
 - `window.PBX_CONFIG` (`/config.js`): keys `sipDomain`,
   `websocketPath`, `iceServers`, `phoneApi`, `contacts`.
 
