@@ -77,3 +77,34 @@ DOM-contract tests + smoke + stack browser E2E as the safety net.
   above is the durable copy)
 - diff run: `internal/server` suite green + CSP/DOM-contract tests green
   at commit time of this doc.
+
+## Wave dispositions (added 2026-09-24 evening)
+
+- **Wave 1 (EmptyState): SHIPPED.** Six empty-state sites adopted (see
+  the wave-1 commit); the CSS question this doc answers is what made it
+  possible. `/assets/tw.css` is permanent; regenerate on templ-components
+  version bumps or when a new wave adopts more components.
+- **Wave 2 (RelativeTime + CountBadge): REJECTED on product grounds**
+  (not CSS grounds — coexistence is proven). RelativeTime renders
+  browser-locale relative strings: webphone's language invariant is the
+  per-extension `wp-lang` cookie with SERVER-rendered en/de, and the
+  absolute `formatClock`/`formatStamp` forms are deliberate byte-stable
+  pins ("existing pins and the stack E2E never churn" — helpers.go);
+  its live-update script is also dead under the zero-inline-script CSP.
+  CountBadge is an icon-overlay pattern — the wrong shape for the
+  standalone `wp-nav-badge` count pill that the smoke suite, DOM
+  greps, and `unreadBadge` regex pin. Both stay hand-rolled; this is
+  the audit's deliberate-non-use treatment (non-use with a written why).
+- **Wave 3 (errorpage module): KEEP the hand-rolls.** The module
+  (NotFound404/ErrorPage/ErrorAlert/ErrorDetail + FromError + handler)
+  is family-aware and well-built, but every webphone error surface is
+  structural, not cosmetic: the 404 is SHELL-integrated (the phone
+  island stays alive; the smoke pins `wp-panel` + `data-reload` +
+  `id="login-view"`), the tab error banner is a wire contract (htmx
+  `responseHandling` selects `.wp-error` from any 4xx/5xx swap), and
+  family-aware copy already lives server-side (Classify → SafeDetail →
+  errorfamily defaults, pinned by TestInternalErrorRedactsDetail). A
+  standalone library page or alert block would break the island
+  contract or the htmx selector for zero user-visible gain. Dep not
+  added; revisit only if webphone ever grows a standalone error
+  surface (e.g. an operator status page).
