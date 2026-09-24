@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -108,12 +109,8 @@ func TestPostFailuresCarryFamilies(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if family := errorfamily.Classify(tc.err); family != tc.wantFamily {
-				t.Errorf("Classify(%v) = %s, want %s", tc.err, family, tc.wantFamily)
-			}
-			if code := errorfamily.Code(tc.err); code != tc.wantCode {
-				t.Errorf("Code(%v) = %q, want %q", tc.err, code, tc.wantCode)
-			}
+			errorfamilytest.AssertFamily(t, tc.err, tc.wantFamily)
+			errorfamilytest.AssertCode(t, tc.err, tc.wantCode)
 		})
 	}
 
@@ -158,10 +155,6 @@ func TestFaxFormFailureIsInfrastructure(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected an error")
 	}
-	if family := errorfamily.Classify(err); family != errorfamily.Infrastructure {
-		t.Errorf("Classify(%v) = %s, want infrastructure", err, family)
-	}
-	if code := errorfamily.Code(err); code != "gateway.form" {
-		t.Errorf("Code(%v) = %q, want gateway.form", err, code)
-	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+	errorfamilytest.AssertCode(t, err, "gateway.form")
 }

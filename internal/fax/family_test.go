@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/fax"
 )
 
@@ -20,13 +21,9 @@ func TestValidationRefusalsAreRejections(t *testing.T) {
 		{"not a pdf", &fax.ErrInvalidFax{Reason: "only PDF documents can be faxed"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if family := errorfamily.Classify(tc.err); family != errorfamily.Rejection {
-				t.Errorf("Classify(%v) = %s, want rejection", tc.err, family)
-			}
+			errorfamilytest.AssertFamily(t, tc.err, errorfamily.Rejection)
 			wrapped := fmt.Errorf("send: %w", tc.err)
-			if family := errorfamily.Classify(wrapped); family != errorfamily.Rejection {
-				t.Errorf("Classify through wrap = %s, want rejection", family)
-			}
+			errorfamilytest.AssertFamily(t, wrapped, errorfamily.Rejection)
 		})
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/messaging"
 )
 
@@ -22,13 +23,9 @@ func TestValidationRefusalsAreRejections(t *testing.T) {
 		{"body too long", &messaging.ErrInvalidSend{Reason: "message longer than 1600 characters"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if family := errorfamily.Classify(tc.err); family != errorfamily.Rejection {
-				t.Errorf("Classify(%v) = %s, want rejection", tc.err, family)
-			}
+			errorfamilytest.AssertFamily(t, tc.err, errorfamily.Rejection)
 			wrapped := fmt.Errorf("send: %w", tc.err)
-			if family := errorfamily.Classify(wrapped); family != errorfamily.Rejection {
-				t.Errorf("Classify through wrap = %s, want rejection", family)
-			}
+			errorfamilytest.AssertFamily(t, wrapped, errorfamily.Rejection)
 		})
 	}
 }
