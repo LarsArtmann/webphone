@@ -35,8 +35,6 @@ type handlers struct {
 	callsIdem *idemStore
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
-	// go-health evaluation outcome counters for /metrics (M18).
-	health *healthOutcomes
 }
 
 // page renders the full shell for the root URL.

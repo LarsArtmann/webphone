@@ -158,7 +158,6 @@ func New(deps Deps) http.Handler {
 		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
 		unread:          newUnreadCache(5 * time.Second),
-		health:          newHealthOutcomes(),
 		hooksIdem:       newIdemStore(hookIdempotencyTTL),
 		callsIdem:       newIdemStore(callsIdempotencyTTL),
 	}
@@ -292,8 +291,7 @@ func New(deps Deps) http.Handler {
 		"blob-dir": func(_ context.Context) error {
 			return probeBlobDir(deps.BlobRoot)
 		},
-	}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0),
-		health.WithEvaluationHook(h.health.record))
+	}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
 	open.Handle("GET /livez", selfHealth.LivenessHandler())
 	open.Handle("GET /startupz", selfHealth.StartupHandler())
 	open.Handle("GET /version", versionHandler())
