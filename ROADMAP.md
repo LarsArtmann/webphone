@@ -176,8 +176,9 @@ the stack browser E2E passed on the bumped tree. What remains:
   (`WEBPHONE_RELEASE_MAX_LOAD` override) plus `assert_clean_tree()`
   at tag time (`a24496a`). Remaining owner call: ratify, or switch to
   a single E2E auto-retry (+10 min per true failure, masks real
-  regressions)? And g3: the new FOUC E2E scenario adds ~30–60s —
-  bump the 445s budget? (02:47 §g1, 15:41 §g)
+  regressions)? g3 CLOSED 2026-09-23 evening: with the FOUC scenario
+  aboard the stack E2E ran green twice at 195s/184s against the 445s
+  budget — no bump. (02:47 §g1, 15:41 §g)
 - One-time force-push ratification (15:41 §g1): during the v2.6.0
   fold a `--force-with-lease` was used ONCE on a self-authored
   commit ~1 minute after pushing it (daemon raced `git add`). The
@@ -241,8 +242,12 @@ the stack browser E2E passed on the bumped tree. What remains:
   (`/tmp/webphone-gates.lock` holding pid + scope) so concurrent
   sessions yield instead of colliding, staggered schedules, or
   "sustained quiet" as the accepted de-facto rule — owner call.
-- Consider `--all-systems` for `nix flake check` in CI (warning
-  noted in the 21:43 buildflow pass).
+- `nix flake check --all-systems`: RESOLVED as a NOT-DO (runbook §8,
+  verified 2026-09-19) — for other systems it is evaluation-only
+  (zero derivations built, gates nothing); the aarch64 gate is the
+  explicit cross-build of the package + the checks that matter, with
+  the ELF machine-bytes assert. The 21:43 buildflow warning is the
+  reminder, not an open question.
 
 ## Harvested raw ideas (2026-09-19 docs-health sweep)
 

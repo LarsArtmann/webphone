@@ -187,3 +187,20 @@ and the evidence. Newest last is NOT enforced — group by topic.
   StaleElementReference. Verdict rule: registration + DTMF + ICE
   stats green before a ~90s death = flake, not an island regression —
   re-run once before digging.
+- The FOUC E2E harness arc (2026-09-23, four stack commits to the
+  first green): TWO measurement-model traps, both knowable upfront.
+  (1) Soft reloads (`driver.navigate().refresh()`) are served from
+  cache and DODGE the URL-level request blocks the scenario relied on
+  to force a fresh theme-preload — only
+  `Page.reload {ignoreCache: true}` actually re-fetches. (2)
+  chromedriver executes NOTHING mid-navigation: any polling loop on
+  the driver side is blind exactly during the window the test
+  measures; the recorder must be injected to run IN the page
+  (`addScriptToEvaluateOnNewDocument` writing tick counters into the
+  DOM, counted after load). Two theory-driven fixes (cache-disable,
+  ignoreCache) each cost a ~6-min VM run before the instrumentation
+  commit moved the diagnosis. Lesson: INSTRUMENT FIRST — a state
+  timeline + document truth + server truth dump in the FIRST
+  follow-up turns an unfixable-looking flake into a 20-minute fix
+  (the PAIR1-DIAG pattern stays in the stack's browser-e2e.py as the
+  permanent failure-path diagnostic).

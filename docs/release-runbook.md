@@ -73,7 +73,13 @@ re-run the formatter if it moved styled files.
 - **The flake heuristic**: same E2E step stalls TWICE in a row = dig
   into code; DIFFERENT steps inside the post-FS-restart tail = host
   load — wait for sustained quiet and retry once. (Derived from two
-  full 7000-line logs; one line each, no more archaeology.)
+  full 7000-line logs; one line each, no more archaeology.) New data
+  point 2026-09-23 evening: the E2E×2 runs flaked at DIFFERENT
+  post-drill steps (CONTACTS-ROUNDTRIP, INCOMING-SHOWN) at load ~2 —
+  low load does NOT clear the different-steps class, the
+  post-reconnect recovery window is itself fragile (2 flakes / 6
+  runs). So: different steps twice = re-run ONCE more; a THIRD
+  failure = dig.
 - **Release-attempt logging**: always
   `> /tmp/release-<v>-<n>.log`; NEVER pipe a 30-minute multi-phase
   script through `tail` (it buffers everything until exit — the
