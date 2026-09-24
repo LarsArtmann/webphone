@@ -40,16 +40,30 @@ type ChangeFunc func(ctx context.Context, owner domain.Extension, jobID domain.F
 
 // Service wires the fax store, blob store, and outbound gateway.
 type Service struct {
-	faxes    *store.Faxes
-	blobs    *blob.Store
-	gateway  gateway.FaxGateway
-	onChange ChangeFunc
-	clock    func() time.Time
+	faxes     *store.Faxes
+	blobs     *blob.Store
+	gateway   gateway.FaxGateway
+	onChange  ChangeFunc
+	clock     func() time.Time
+	identities map[string]string
 }
 
-// New builds the fax service. onChange may be nil.
-func New(faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange ChangeFunc) *Service {
-	return &Service{faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now}
+// selfSendDetail is the local refusal text for a fax addressed to the
+// extension's own DID (config identities) — the send-failure train C
+// fast path. English like every service reason (operator-greppable).
+const selfSendDetail = "faxes cannot be sent to your own number"
+
+// New builds the fax service. onChange may be nil. identities maps an
+// extension to its presented DID (config identities); a fax to the owner's
+// own DID is refused locally before the gateway roundtrip (nil or missing
+// entry = guard off).
+func New(
+	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange ChangeFunc, identities map[string]string,
+) *Service {
+	return &Service{
+		faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now,
+		identities: identities,
+	}
 }
 
 // Send validates the PDF, spools it, creates the job, and drives the
@@ -91,9 +105,17 @@ func (s *Service) Send(
 	}
 	s.notify(ctx, owner, job.ID)
 
-	receipt, err := s.gateway.SendFax(ctx, gateway.OutboundFax{
-		Owner: owner, To: to, PDFPath: s.blobs.Abs(path),
-	})
+	// Self-send fast path (train C): refuse locally instead of burning a
+	// provider roundtrip the provider would refuse anyway; the failed job
+	// below is the evidence-preserving half of the design.
+	var receipt gateway.Receipt
+	if rejection := gateway.SelfSendRejection(s.identities, owner, to, selfSendDetail); rejection != nil {
+		err = rejection
+	} else {
+		receipt, err = s.gateway.SendFax(ctx, gateway.OutboundFax{
+			Owner: owner, To: to, PDFPath: s.blobs.Abs(path),
+		})
+	}
 	if err != nil {
 		job.Status = domain.FaxFailed
 		job.Error = err.Error()

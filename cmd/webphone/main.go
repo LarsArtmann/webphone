@@ -124,8 +124,8 @@ func run() error {
 	messageGateway := gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient())
 	faxGateway := gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient())
 
-	messagingService := messaging.New(messages, blobs, messageGateway, notifier.MessagesChanged)
-	faxService := fax.New(faxes, blobs, faxGateway, notifier.FaxChanged)
+	messagingService := messaging.New(messages, blobs, messageGateway, notifier.MessagesChanged, cfg.Identities)
+	faxService := fax.New(faxes, blobs, faxGateway, notifier.FaxChanged, cfg.Identities)
 
 	handler := server.New(server.Deps{
 		Config:    cfg,

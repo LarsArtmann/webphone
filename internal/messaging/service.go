@@ -47,21 +47,33 @@ type ChangeFunc func(ctx context.Context, owner domain.Extension, threadID domai
 
 // Service wires the message store, blob store, and outbound gateway.
 type Service struct {
-	messages *store.Messages
-	blobs    *blob.Store
-	gateway  gateway.MessageGateway
-	onChange ChangeFunc
-	clock    func() time.Time
+	messages  *store.Messages
+	blobs     *blob.Store
+	gateway   gateway.MessageGateway
+	onChange  ChangeFunc
+	clock     func() time.Time
+	identities map[string]string
 }
 
-// New builds the messaging service. onChange may be nil.
-func New(messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange ChangeFunc) *Service {
+// selfSendDetail is the local refusal text for a send addressed to the
+// extension's own DID (config identities) — the send-failure train C
+// fast path. English like every service reason (operator-greppable).
+const selfSendDetail = "messages cannot be sent to your own number"
+
+// New builds the messaging service. onChange may be nil. identities maps
+// an extension to its presented DID (config identities); a send to the
+// owner's own DID is refused locally before the gateway roundtrip (nil or
+// missing entry = guard off).
+func New(
+	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange ChangeFunc, identities map[string]string,
+) *Service {
 	return &Service{
-		messages: messages,
-		blobs:    blobs,
-		gateway:  gw,
-		onChange: onChange,
-		clock:    time.Now,
+		messages:  messages,
+		blobs:     blobs,
+		gateway:   gw,
+		onChange:  onChange,
+		clock:     time.Now,
+		identities: identities,
 	}
 }
 
@@ -131,17 +143,25 @@ func (s *Service) Send(
 	}
 	s.notify(ctx, owner, threadID)
 
-	receipt, err := s.gateway.SendMessage(ctx, outbound)
+	// Self-send fast path (train C): refuse locally instead of burning a
+	// provider roundtrip the provider would refuse anyway; the failed row
+	// below is the evidence-preserving half of the design.
+	var receipt gateway.Receipt
+	if rejection := gateway.SelfSendRejection(s.identities, owner, to, selfSendDetail); rejection != nil {
+		err = rejection
+	} else {
+		receipt, err = s.gateway.SendMessage(ctx, outbound)
+	}
 	switch {
 	case err != nil:
 		msg.Status = domain.StatusFailed
 		msg.FailureKind = failureKindOf(err)
 		msg.FailureDetail = err.Error()
-		sendErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "",
+		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "",
 			msg.FailureKind, msg.FailureDetail)
 		s.notify(ctx, owner, threadID)
-		if sendErr != nil {
-			slog.Warn("messaging: mark failed", "error", sendErr)
+		if updateErr != nil {
+			slog.Warn("messaging: mark failed", "error", updateErr)
 		}
 		return msg, fmt.Errorf("gateway: %w", err)
 	default:
