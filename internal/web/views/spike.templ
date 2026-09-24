@@ -1,0 +1,71 @@
+package views
+
+import (
+	"time"
+
+	"github.com/larsartmann/templ-components/display"
+)
+
+// SpikeTailwind renders the throwaway Tailwind-coexistence experiment
+// (plan M7, 2026-09-24): three templ-components beside REAL webphone
+// surfaces on one page, with the library's Tailwind build loaded only
+// when withTailwind is set — the A/B probe (spike/probe.js) diffs
+// computed styles between both states, so the verdict is empirical:
+// webphone surfaces must not move, library components must style.
+// REMOVED again after the M9-M11 waves (or immediately on a red
+// verdict) — it never rides a release.
+templ SpikeTailwind(withTailwind bool, now time.Time) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"></meta>
+			<title>tailwind coexistence spike</title>
+			<link rel="stylesheet" href="/assets/app.css"></link>
+			if withTailwind {
+				<link rel="stylesheet" href="/assets/spike/tw.css"></link>
+			}
+			<script src="/assets/spike/probe.js" defer></script>
+		</head>
+		<body>
+			<main class="wp-layout">
+				<section class="wp-panel" id="wp-panel">
+					<div class="wp-panel-head" id="wp-panel-head">
+						<h2>Webphone surface (control)</h2>
+						<p class="wp-panel-sub">Margins, list markers, and panel chrome must survive the Tailwind preflight.</p>
+					</div>
+					<ul class="wp-welcome-points" id="wp-list">
+						<li>first point</li>
+						<li>second point</li>
+					</ul>
+					<p class="wp-error" role="alert">error banner surface</p>
+				</section>
+				<section class="wp-panel">
+					<div class="wp-panel-head">
+						<h2>templ-components (experiment)</h2>
+						<p class="wp-panel-sub">Styled only while the Tailwind build loads; probe.js records both states.</p>
+					</div>
+					<div id="lib-empty">
+						@display.EmptyState(display.EmptyStateProps{
+							Title:       "No messages yet",
+							Description: "Inbound SMS land here as threads.",
+							Icon:        "inbox",
+						})
+					</div>
+					<div id="lib-time">
+						@display.RelativeTime(display.RelativeTimeProps{
+							Time:        now.Add(-2 * time.Hour),
+							Now:         now,
+							AutoRefresh: false,
+						})
+					</div>
+					<div id="lib-badge">
+						@display.CountBadge(display.CountBadgeProps{Count: 7}) {
+							<span>inbox</span>
+						}
+					</div>
+				</section>
+			</main>
+			<pre id="probe-out">probe pending</pre>
+		</body>
+	</html>
+}

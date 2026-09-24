@@ -50,6 +50,7 @@ require (
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
+	github.com/larsartmann/templ-components/htmx v1.19.2 // indirect
 	github.com/larsartmann/templ-components/icons v1.19.2 // indirect
 	github.com/larsartmann/templ-components/utils v1.19.2 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
