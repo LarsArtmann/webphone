@@ -48,6 +48,9 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"miss\"} %d\n", miss)
 		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"failure\"} %d\n", failure)
 	}
+	// go-health probe outcomes (M18): aggregate counters by construction
+	// (check names and statuses only). Absent until the first evaluation.
+	h.health.render(&b)
 
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	_, _ = w.Write([]byte(b.String())) //nolint:erraudit // best-effort body write; nothing left to do on failure
