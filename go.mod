@@ -18,6 +18,7 @@ require (
 	github.com/larsartmann/httputil v1.3.0
 	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.19.2
+	github.com/larsartmann/templ-components/icons v1.19.2
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
 	github.com/sixafter/nanoid v1.65.1
@@ -51,7 +52,6 @@ require (
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
 	github.com/larsartmann/templ-components/htmx v1.19.2 // indirect
-	github.com/larsartmann/templ-components/icons v1.19.2 // indirect
 	github.com/larsartmann/templ-components/utils v1.19.2 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
