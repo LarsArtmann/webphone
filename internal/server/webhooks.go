@@ -87,6 +87,7 @@ func (h *handlers) secretGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		secret := h.deps.Config.Gateway.WebhookSecret
 		if secret == "" {
+			w.Header().Set("Retry-After", retryAfterHint)
 			http.Error(w, "webhooks not configured", http.StatusServiceUnavailable)
 			return
 		}
