@@ -336,6 +336,37 @@ func TestComposerCarriesSegmentCounterAndTextarea(t *testing.T) {
 	}
 }
 
+// TestComposerAttachmentPickerOffersBridgeMediaTypes pins the post-2.6.0
+// MMS fix (bd77669): the picker's accept attribute must offer the audio
+// and video types the messaging bridge already delivers — a picker that
+// hides them is a silent capability regression the island suite cannot
+// catch (its file input is a stub with no attributes).
+func TestComposerAttachmentPickerOffersBridgeMediaTypes(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "mms"}, nil)
+	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
+	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
+	if match == nil {
+		t.Fatal("no thread link in list")
+	}
+	_, body = c.do(http.MethodGet, "/partials"+string(match[1]), nil, "")
+	accept := regexp.MustCompile(`name="attachment"[^>]*accept="([^"]*)"`).FindSubmatch(body)
+	if accept == nil {
+		t.Fatal("reply composer attachment input has no accept attribute")
+	}
+	for _, media := range []string{"audio/mpeg", "audio/wav", "audio/amr", "audio/ogg", "video/mp4", "video/3gpp", "video/quicktime"} {
+		if !strings.Contains(string(accept[1]), media) {
+			t.Errorf("attachment picker accept list missing %s (the bridge delivers it): %s", media, accept[1])
+		}
+	}
+}
+
 // TestBubbleClockFollowsLanguage pins the German 24h convention: with
 // wp-lang=de the bubble meta carries a zero-padded 24h clock and never
 // a meridiem; the default English rendering keeps its meridiem form.

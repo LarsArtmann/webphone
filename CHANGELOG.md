@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and a new fax-lane refusal test; error-contract + stack runbook
   ladders updated in lockstep.
 
+### Fixed
+
+- The message composer's attachment picker now offers the audio and
+  video types the messaging bridge already delivers (`bd77669`): the
+  dialog was filtered to images, PDFs and vCards, so a user could not
+  even select a voice note or video clip the backend would have
+  accepted. The accept list mirrors the bridge's media types
+  (mp3/wav/amr/ogg audio, mp4/3gpp/mov video) and is pinned by a
+  render test — the island suite stubs the file input and cannot see
+  the attribute.
+
 ## [2.6.0] - 2026-09-23
 
 ### Added

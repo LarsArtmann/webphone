@@ -398,10 +398,19 @@ def run_checks(
     )
     if expect_version is not None:
         want = expect_version.lstrip("v")
+        detail = f"{body[:120]!r}"
+        served = re.search(rb'"version":"([^"]+)"', body)
+        if served and (
+            served[1].startswith(b"v0.0.0-") or b"devel" in served[1]
+        ):
+            detail += (
+                " — the served build is a bare `go build` artifact (Go's "
+                "pseudo-version); rebuild via nix: --bin $(nix build .#webphone)"
+            )
         c.ok(
             f"version is exactly {expect_version}",
             f'"version":"v{want}"'.encode() in body,
-            f"{body[:120]!r}",
+            detail,
         )
 
     # 3b. openapi.json publishes the session API contract (3.1.0).
@@ -710,7 +719,12 @@ def run_checks(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--base", help="smoke an already-running server")
-    parser.add_argument("--bin", help="webphone binary to boot (default: go build)")
+    parser.add_argument(
+        "--bin",
+        help="webphone binary to boot (default: bare 'go build', whose "
+        "/version reports Go's pseudo-version — pair --expect-version "
+        "with a released build: --bin $(nix build .#webphone))",
+    )
     parser.add_argument(
         "--go", default="go", help="go toolchain command for --bin build"
     )
@@ -720,6 +734,13 @@ def main() -> int:
         "(leading v optional) — the post-deploy did-it-switch probe",
     )
     args = parser.parse_args()
+
+    if args.expect_version and not args.base and not args.bin:
+        parser.error(
+            "--expect-version needs --base or --bin: the default bare "
+            "`go build` binary reports Go's pseudo-version, never a release "
+            "version — pass --bin $(nix build .#webphone)"
+        )
 
     ensure_go_toolchain(args)
 
