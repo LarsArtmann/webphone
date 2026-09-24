@@ -92,6 +92,35 @@ func TestFaxProviderRefusalAnswers422(t *testing.T) {
 	}
 }
 
+// TestFaxToOwnNumberIsRefusedLocally pins the fax lane's self-send guard
+// (send-failure train C): with the owner's DID known (config identities),
+// a fax to it is refused locally — 422 with the reason, no provider
+// roundtrip — and the job is saved as failed (evidence-preserving).
+func TestFaxToOwnNumberIsRefusedLocally(t *testing.T) {
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Identities = map[string]string{"1001": "+17287289311"}
+	})
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	form, contentType := multipartBody(t,
+		map[string]string{"to": "+17287289311"},
+		map[string]struct {
+			Name    string
+			Content []byte
+		}{"document": {Name: "doc.pdf", Content: []byte("%PDF-1.4\n%test\ntrailer<<>>\n%%EOF\n")}})
+	resp, body := c.do(http.MethodPost, "/fax/send", form, contentType)
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("self fax: %d %s (want 422, refused locally)", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), "own number") {
+		t.Fatalf("422 body lost the refusal reason: %.300s", body)
+	}
+	if !strings.Contains(string(body), "failed") {
+		t.Fatal("the refused job must show as failed in the re-rendered panel")
+	}
+}
+
 func TestInboundFaxWebhookStoresDocument(t *testing.T) {
 	server := newTestServer(t)
 	pdf := []byte("%PDF-1.4 hook\n%%EOF\n")

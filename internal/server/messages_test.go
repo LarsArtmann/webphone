@@ -208,11 +208,12 @@ func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
 	}
 }
 
-// TestThreadViewWarnsOnSelfSend pins the intent-time self-send caution:
-// when the thread's remote number is the extension's own DID (config
-// identities), the thread view warns BEFORE the user can discover the
-// provider's refusal (Telnyx 40310) by failing. A non-self thread must
-// never carry the notice.
+// TestThreadViewWarnsOnSelfSend pins both self-send surfaces: the
+// send-failure train C guard refuses a send to the extension's own DID
+// (config identities) LOCALLY — 422 with the reason, provider never
+// consulted — while the failed row/thread survives as evidence, and the
+// thread view still carries the intent-time caution (train B). A non-self
+// thread must never carry the notice.
 func TestThreadViewWarnsOnSelfSend(t *testing.T) {
 	server := newTestServerWithConfig(t, "", func(c *config.Config) {
 		c.Identities = map[string]string{"1001": "+17287289311"}
@@ -222,9 +223,14 @@ func TestThreadViewWarnsOnSelfSend(t *testing.T) {
 
 	form, contentType := multipartBody(t, map[string]string{"to": "+17287289311", "body": "self"}, nil)
 	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("self send (loopback accepts): %d %s", resp.StatusCode, body)
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("self send (refused locally, train C): %d %s (want 422)", resp.StatusCode, body)
 	}
+	if !strings.Contains(string(body), "own number") {
+		t.Fatalf("422 body lost the refusal reason: %.300s", body)
+	}
+	// The evidence half: the refused send still leaves the thread and its
+	// failed bubble behind ("saved as failed — nothing was lost").
 	_, body = c.do(http.MethodGet, "/partials/messages", nil, "")
 	selfLink := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)
 	if selfLink == nil {
@@ -232,6 +238,9 @@ func TestThreadViewWarnsOnSelfSend(t *testing.T) {
 	}
 	_, body = c.do(http.MethodGet, "/partials"+string(selfLink[1]), nil, "")
 	view := string(body)
+	if !strings.Contains(view, "wp-status-failed") {
+		t.Errorf("self thread view missing the failed bubble: %.300s", view)
+	}
 	if !strings.Contains(view, `class="wp-notice"`) || !strings.Contains(view, "This is your own number") {
 		t.Errorf("self thread view missing the notice: %.300s", view)
 	}
