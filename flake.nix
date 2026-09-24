@@ -115,7 +115,7 @@
             # injection — keep it in lockstep with the git tag at release.
             webphone =
               let
-                webphoneVersion = "2.6.0";
+                webphoneVersion = "2.7.0";
               in
               pkgs.buildGoModule.override
                 {
