@@ -47,11 +47,11 @@ type ChangeFunc func(ctx context.Context, owner domain.Extension, threadID domai
 
 // Service wires the message store, blob store, and outbound gateway.
 type Service struct {
-	messages  *store.Messages
-	blobs     *blob.Store
-	gateway   gateway.MessageGateway
-	onChange  ChangeFunc
-	clock     func() time.Time
+	messages   *store.Messages
+	blobs      *blob.Store
+	gateway    gateway.MessageGateway
+	onChange   ChangeFunc
+	clock      func() time.Time
 	identities map[string]string
 }
 
@@ -68,11 +68,11 @@ func New(
 	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange ChangeFunc, identities map[string]string,
 ) *Service {
 	return &Service{
-		messages:  messages,
-		blobs:     blobs,
-		gateway:   gw,
-		onChange:  onChange,
-		clock:     time.Now,
+		messages:   messages,
+		blobs:      blobs,
+		gateway:    gw,
+		onChange:   onChange,
+		clock:      time.Now,
 		identities: identities,
 	}
 }

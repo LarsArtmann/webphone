@@ -5,6 +5,22 @@ self-send test on pbx.artmann.tech (Telnyx HTTP 400, error 40310,
 "Source and destination cannot be the same number: +17287289311")
 followed by a UX review of the failure flow.
 
+**2026-09-24 update — train C SHIPPED** (`gateway.SelfSendRejection`,
+both lanes). The owner dichotomy ("instant refusal vs
+evidence-preserving failed row") resolved with BOTH properties: the
+services refuse a send to the extension's own DID (config identities)
+BEFORE the gateway call — zero provider roundtrip — but after the row
+is persisted, so the failed message/fax job survives as evidence and
+the SSE nudge fires. The refusal is a locally synthesized
+`gateway.ErrProviderRejected` (Status 400), which classifies Rejection
+and therefore rides the EXISTING train-E 422 arm unchanged: banner +
+toast with the reason, no retry affordance. Guard off = no identities
+map/entry (loopback dev and unconfigured installs unaffected). Pinned
+by `selfsend_test.go` in both service packages (provider never
+consulted, row failed, family Rejection) and the server tests
+(`TestThreadViewWarnsOnSelfSend`, `TestFaxToOwnNumberIsRefusedLocally`).
+F stays deferred per its own rule (no self-send recurrence observed).
+
 ## Context and evidence
 
 Three findings from the live transcript plus the code, each with its

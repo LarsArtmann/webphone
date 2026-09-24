@@ -40,11 +40,11 @@ type ChangeFunc func(ctx context.Context, owner domain.Extension, jobID domain.F
 
 // Service wires the fax store, blob store, and outbound gateway.
 type Service struct {
-	faxes     *store.Faxes
-	blobs     *blob.Store
-	gateway   gateway.FaxGateway
-	onChange  ChangeFunc
-	clock     func() time.Time
+	faxes      *store.Faxes
+	blobs      *blob.Store
+	gateway    gateway.FaxGateway
+	onChange   ChangeFunc
+	clock      func() time.Time
 	identities map[string]string
 }
 
