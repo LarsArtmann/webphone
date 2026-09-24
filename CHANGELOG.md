@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-09-24
+
+### Added
+
+- Self-sends to your own number are refused before the provider
+  roundtrip (send-failure train C): a message or fax addressed to the
+  extension's own DID (config `identities`) fails fast with the 422
+  refusal arm — the provider (Telnyx 40310) would reject it anyway —
+  while the failed row/job is still persisted first, so the evidence a
+  provider refusal would have left survives. The guard is off entirely
+  when no identities are configured; both lanes pinned by service and
+  server tests.
+- Empty states now render through the templ-components
+  `display.EmptyState` (six true empty-state sites: messages search,
+  thread list, fax list, contacts, voicemail inbox, history) with a
+  permanent scoped Tailwind v4 build served at `/assets/tw.css`
+  (14.5KB): coexistence with the hand-rolled token CSS is PROVEN, not
+  assumed — a Chromium A/B spike found all existing surfaces
+  byte-identical across 14 computed properties because Tailwind v4
+  emits `@layer` only and unlayered CSS wins every collision (verdict
+  with data: docs/planning/2026-09-24_16-38).
+
 ### Changed
 
 - Provider refusals answer 422 with their reason (send-failure train
@@ -21,8 +43,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and a new fax-lane refusal test; error-contract + stack runbook
   ladders updated in lockstep.
 
+- Dependency train swept: cqrs-htmx v4.12.0, httputil v1.3.0,
+  go-error-family v0.10.2, go-sse v0.6.1 (go-health held at v0.3.0 —
+  the evaluation-hook telemetry idea was parked with evidence: the
+  hook cannot fire in this wiring; see TODO_LIST).
+- Internal quality: family-field logging via
+  `errorfamily.LogErrorContext`, library asserts via
+  `errorfamilytest`, and the middleware chain pinned by httputil's
+  19-spec httpspec suite (all green first run — zero divergences).
+
 ### Fixed
 
+- Upload bodies are bounded (61MB envelope) before multipart parsing:
+  `http.MaxBytesReader` wraps the request body, so an oversized upload
+  answers a plain 400 instead of streaming unbounded into memory — the
+  ParseMultipartForm argument was only a memory threshold, not a size
+  cap. Pinned by a unit test and a live smoke probe.
+- Store/render failures on panel and thread loads send only the
+  op-prefixed family default to the browser; the raw error text goes
+  to the operator log (one-home `internalError`/`safeDetail` helpers,
+  SafeDetail at every 500 writer).
+- Fail-closed surfaces answer 503 with a `Retry-After: 1` hint: the
+  unconfigured inbound-hooks gate and the unconfigured phone-api proxy
+  tell well-behaved callers when to come back (liveness probes ignore
+  headers, so startupz deliberately carries none).
 - The message composer's attachment picker now offers the audio and
   video types the messaging bridge already delivers (`bd77669`): the
   dialog was filtered to images, PDFs and vCards, so a user could not
