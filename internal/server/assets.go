@@ -34,6 +34,14 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/theme-preload.js", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "theme-preload.js", "application/javascript; charset=utf-8")
 	})
+	// Throwaway spike assets (plan M7): the Tailwind build + the A/B
+	// computed-style probe. Removed with the spike route.
+	mux.HandleFunc("GET /assets/spike/tw.css", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "spike/tw.css", "text/css; charset=utf-8")
+	})
+	mux.HandleFunc("GET /assets/spike/probe.js", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "spike/probe.js", "application/javascript; charset=utf-8")
+	})
 	return noStore(mux)
 }
 
