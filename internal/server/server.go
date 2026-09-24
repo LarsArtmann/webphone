@@ -229,10 +229,6 @@ func New(deps Deps) http.Handler {
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
-	// Throwaway Tailwind-coexistence spike (plan M7, 2026-09-24):
-	// session-gated A/B page for the templ-components adoption verdict.
-	// Removed before the next release fold.
-	protected.HandleFunc("GET /dev/spike/tailwind", h.spikeTailwind)
 	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
