@@ -132,7 +132,9 @@ the island remotely — re-run it after any markup change.
   `/livez` = fetch-free liveness; `/startupz` = latched
   503-until-first-pass (go-health `NewChecks`, SAME check functions —
   no second readiness truth). `/events` rides
-  `Broadcaster.ServeSSE` (v4.11.0 leads with a `retry:` hint).
+  `Broadcaster.ServeSSE` (v4.11.0 leads with a `retry:` hint); the
+  whole chain is pinned by httputil's 19-spec httpspec suite
+  (`TestHTTPSpectChainConformance`, 2026-09-24).
   The unit deliberately stays `Type=simple` — see README
   "Readiness vs systemd".
 - **Module graph stays acyclic**: the island's `state.js` + `auth.js`
@@ -176,6 +178,10 @@ the island remotely — re-run it after any markup change.
   pattern.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
+  Self-sends to the owner's own DID (config `identities`) never reach
+  the provider: `gateway.SelfSendRejection` refuses locally after the
+  row is persisted (evidence kept), riding the 422 refusal arm
+  (send-failure train C, 2026-09-24).
   Inbound hooks `/hooks/*` share the same secret and fail CLOSED
   (503) when none is configured. Status hooks are idempotent:
   `hooksIdem` (in-memory 1h TTL) dedupes replayed `provider_ref` —
