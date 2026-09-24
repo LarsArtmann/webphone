@@ -64,6 +64,7 @@ func domContractIDs(t testing.TB) []string {
 // proxy tests need to reach (hubs for subscriptions, phone API wiring).
 type testServer struct {
 	*httptest.Server
+	handler  http.Handler
 	hubs     *ExtensionHubs
 	messages *store.Messages
 	faxes    *store.Faxes
@@ -144,7 +145,7 @@ func newTestServerWithConfig(
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return &testServer{Server: server, hubs: hubs, messages: messages, faxes: faxes, phoneAPI: phoneAPI}
+	return &testServer{Server: server, handler: handler, hubs: hubs, messages: messages, faxes: faxes, phoneAPI: phoneAPI}
 }
 
 type client struct {
