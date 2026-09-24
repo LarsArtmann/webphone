@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -33,6 +34,32 @@ func unreadBadge(t *testing.T, c *client) string {
 		return ""
 	}
 	return string(match[1])
+}
+
+// TestFailClosedHooksCarryRetryAfter pins the politeness contract of the
+// fail-closed lane: without a configured secret the hooks answer 503 with
+// the byte-stable body AND a Retry-After hint (cqrs-htmx's conservative
+// 1s) so provider retry bursts back off instead of hammering.
+func TestFailClosedHooksCarryRetryAfter(t *testing.T) {
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Gateway.WebhookSecret = ""
+	})
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/hooks/message", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("fail-closed hooks: %d (want 503)", resp.StatusCode)
+	}
+	if got := resp.Header.Get("Retry-After"); got != retryAfterHint {
+		t.Fatalf("Retry-After: %q (want %q)", got, retryAfterHint)
+	}
 }
 
 func deliverInbound(t *testing.T, server *testServer, from, bodyText string) {
