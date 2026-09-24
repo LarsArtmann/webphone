@@ -142,6 +142,26 @@ is the cross-session record.
 
 ## f) NEXT — up to 50 things, roughest order by leverage
 
+**Session-4 execution note (2026-09-24):** of the list below, DONE
+this session: 7 (aarch64 cross-build + `b7 00` ELF verified on
+current main), 10 (smoke `--expect-version` fail-fast without
+`--base/--bin`, `--bin` help text, pseudo-version failure hint —
+verified live, 40+4 checks), 11 (ROADMAP g3 struck with the 195s/184s
+evidence; the `--all-systems` open question closed as the runbook §8
+NOT-DO), 12 (lessons.md FOUC arc), 13 (stack ops-runbook "E2E
+measurement model" section, stack `9070323`), 14 (flake-heuristic
+bullet refined with the 2/6 low-load data point), 19 (stack
+`checks.browser-e2e-pycompile` — built green, formatter-clean),
+21 (/tmp logs already gone), 22 (CHANGELOG [Unreleased] Fixed entry
+for the MMS picker), 23 (review pass: nothing pinned the accept
+attribute → `TestComposerAttachmentPickerOffersBridgeMediaTypes`
+added), 29 (`result`+`result-*` gitignored). Gates: go test ×2,
+`nix flake check` (incl. KVM backup VM), buildflow exit-0, gitleaks/
+codespell — all green; both repos origin==HEAD. NOT done, by design:
+8 (gated by owner §g1 deploy-vs-train call), 9 (owner §g3), 16-18/20
+(need 6-min VM validation loops; 17 waits for ~5 green runs, 2 exist),
+24 (scanner/data-source decision), 25 (user-level LSP config).
+
 **Owner-gated (nothing moves without these):**
 
 1. C2 deploy the chain (command in the close-out summary).
