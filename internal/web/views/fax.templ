@@ -18,12 +18,8 @@ type FaxPanelProps struct {
 templ FaxPanel(props FaxPanelProps) {
 	<section class="wp-panel" id="fax-panel">
 		@panelHead(props.Lang, "tab.fax", "fax.subtitle")
-		if props.Error != "" {
-			<p class="wp-error" role="alert">{ props.Error }</p>
-		}
-		if props.Identity != "" {
-			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
-		}
+		@panelError(props.Error)
+		@identityLine(props.Lang, props.Identity)
 		<form
 			class="wp-compose wp-compose-fax"
 			hx-post="/fax/send"

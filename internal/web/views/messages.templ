@@ -29,9 +29,7 @@ type ThreadsPanelProps struct {
 templ ThreadsPanel(props ThreadsPanelProps) {
 	<section class="wp-panel" id="messages-panel">
 		@panelHead(props.Lang, "tab.messages", "messages.subtitle")
-		if props.Error != "" {
-			<p class="wp-error" role="alert">{ props.Error }</p>
-		}
+		@panelError(props.Error)
 		// The search form lives OUTSIDE the sse-swap region so live list
 		// pushes never re-render it; htmx morph keeps the input's focus
 		// across debounced re-fetches (stable id below).
@@ -61,9 +59,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 				@ThreadsList(props.Threads, props.Names, props.Lang)
 			}
 		</div>
-		if props.Identity != "" {
-			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
-		}
+		@identityLine(props.Lang, props.Identity)
 		@NewMessageForm("", props.Lang)
 	</section>
 }
@@ -175,9 +171,7 @@ templ ThreadView(props ThreadViewProps) {
 			<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
 			<button class="wp-primary" data-dial={ props.Thread.Remote.String() }>{ T(props.Lang, "contacts.call") }</button>
 		</header>
-		if props.Error != "" {
-			<p class="wp-error" role="alert">{ props.Error }</p>
-		}
+		@panelError(props.Error)
 		if isSelfThread(props.Identity, props.Thread.Remote) {
 			<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
 		}
@@ -205,9 +199,7 @@ templ ThreadView(props ThreadViewProps) {
 			</div>
 			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
 		</div>
-		if props.Identity != "" {
-			<p class="wp-identity">{ T(props.Lang, "identity.from") } <strong>{ props.Identity }</strong></p>
-		}
+		@identityLine(props.Lang, props.Identity)
 		<form
 			class="wp-compose"
 			hx-post={ "/messages/send?thread=" + props.Thread.ID.String() }

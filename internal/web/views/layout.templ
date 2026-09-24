@@ -154,6 +154,31 @@ templ panelHead(lang Lang, titleKey, subtitleKey string) {
 	</header>
 }
 
+// errorBanner is the one home of the error node itself: the .wp-error
+// p that htmx's responseHandling config selects on 4xx/5xx swaps, so
+// its bytes are a wire contract. ErrorPanel renders it unconditionally
+// (the error IS the panel); panelError adds the optional wrapper the
+// data panels need.
+templ errorBanner(message string) {
+	<p class="wp-error" role="alert">{ message }</p>
+}
+
+// panelError renders the error banner only when there is one — the
+// shared failure surface every tab panel opens with.
+templ panelError(message string) {
+	if message != "" {
+		@errorBanner(message)
+	}
+}
+
+// identityLine is the one home of the from-identity line the composer
+// panels render when the deployment knows the extension's DID.
+templ identityLine(lang Lang, identity string) {
+	if identity != "" {
+		<p class="wp-identity">{ T(lang, "identity.from") } <strong>{ identity }</strong></p>
+	}
+}
+
 // headExtras applies the theme BEFORE anything paints (render-blocking,
 // same-origin — the CSP allows no inline scripts), loads htmx deferred —
 // AFTER the htmx-config meta, so htmx sees it at startup and skips its

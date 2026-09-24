@@ -46,9 +46,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 				<button type="submit">{ T(props.Lang, "history.filter") }</button>
 			</form>
 		}
-		if props.Error != "" {
-			<p class="wp-error" role="alert">{ props.Error }</p>
-		}
+		@panelError(props.Error)
 		if !props.Enabled {
 			<p class="wp-empty">{ T(props.Lang, "history.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "history.needsAPI.post") }</p>
 		}

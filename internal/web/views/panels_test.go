@@ -24,11 +24,11 @@ const wantIdentityNode = `<p class="wp-identity">sending as <strong>+49151234567
 
 func renderComponent(t *testing.T, component templ.Component) string {
 	t.Helper()
-	rendered, err := templ.RenderToString(component)
-	if err != nil {
+	var buf strings.Builder
+	if err := component.Render(t.Context(), &buf); err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	return rendered
+	return buf.String()
 }
 
 func requireNode(t *testing.T, panel, rendered, want string, wantPresent bool) {
@@ -84,5 +84,55 @@ func TestPanelsRenderTheSharedErrorAndIdentityNodes(t *testing.T) {
 		clean := renderComponent(t, panel.clean)
 		requireNode(t, name, clean, `<p class="wp-error"`, false)
 		requireNode(t, name, clean, `<p class="wp-identity"`, false)
+	}
+}
+
+// TestPanelHeadPinsBothLanguages is the micro-test panelHead was born
+// without (2026-09-23 sweep confession): the exact header bytes, both
+// languages, so a future edit that reshapes the shared head fails here
+// instead of silently drifting six panels.
+func TestPanelHeadPinsBothLanguages(t *testing.T) {
+	cases := map[Lang]string{
+		LangEN: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p></header>`,
+		LangDE: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">PDFs als Faxe senden; empfangene Faxe erscheinen hier.</p></header>`,
+	}
+	for lang, want := range cases {
+		if got := renderComponent(t, panelHead(lang, "tab.fax", "fax.subtitle")); got != want {
+			t.Errorf("panelHead(%s) =\n%s\nwant\n%s", lang, got, want)
+		}
+	}
+}
+
+// TestErrorBannerEscapesAndPanelErrorHidesEmpty pins the two usage
+// shapes of the shared error node: the banner always renders (and
+// escapes), the panel wrapper renders nothing when there is nothing to
+// say — a panel without a failure must not emit an empty alert.
+func TestErrorBannerEscapesAndPanelErrorHidesEmpty(t *testing.T) {
+	if got := renderComponent(t, errorBanner(hostile)); got != wantErrorNode {
+		t.Errorf("errorBanner(hostile) = %q, want %q", got, wantErrorNode)
+	}
+	if got := renderComponent(t, panelError(hostile)); got != wantErrorNode {
+		t.Errorf("panelError(hostile) = %q, want %q", got, wantErrorNode)
+	}
+	if got := renderComponent(t, panelError("")); got != "" {
+		t.Errorf("panelError(\"\") = %q, want no output", got)
+	}
+}
+
+// TestIdentityLineHidesEmptyAndFollowsLanguage pins the from-identity
+// line: present with the deployment's DID in both languages, absent
+// when the DID is unknown.
+func TestIdentityLineHidesEmptyAndFollowsLanguage(t *testing.T) {
+	cases := map[Lang]string{
+		LangEN: wantIdentityNode,
+		LangDE: `<p class="wp-identity">Senden als <strong>+491512345678</strong></p>`,
+	}
+	for lang, want := range cases {
+		if got := renderComponent(t, identityLine(lang, "+491512345678")); got != want {
+			t.Errorf("identityLine(%s) = %q, want %q", lang, got, want)
+		}
+	}
+	if got := renderComponent(t, identityLine(LangEN, "")); got != "" {
+		t.Errorf("identityLine(en, \"\") = %q, want no output", got)
 	}
 }

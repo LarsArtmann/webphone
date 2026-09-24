@@ -5,7 +5,7 @@ package views
 templ ErrorPanel(message string, lang Lang) {
 	<section class="wp-panel">
 		@panelHead(lang, "error.title", "error.subtitle")
-		<p class="wp-error" role="alert">{ message }</p>
+		@errorBanner(message)
 		<button class="wp-primary" data-reload>{ T(lang, "error.reload") }</button>
 	</section>
 }
