@@ -1,10 +1,13 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/a-h/templ"
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -66,7 +69,7 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 		if component, err := h.tabComponent(r, tab, sess); err == nil {
 			props.TabContent = component
 		} else {
-			props.TabContent = errorPanel(err.Error(), lang)
+			props.TabContent = errorPanel(h.safeDetail(r, "render tab", err), lang)
 		}
 	}
 
@@ -84,6 +87,16 @@ func (h *handlers) identityFor(ext domain.Extension) string {
 	return h.deps.Config.Identities[ext.String()]
 }
 
+// safeDetail logs the full error for the operator (English op text) and
+// returns the client-safe copy: the family default message, never the
+// raw internal detail. Panels that degrade a page keep their own op
+// string so the log line names the surface that failed.
+func (h *handlers) safeDetail(r *http.Request, op string, err error) string {
+	slog.ErrorContext(r.Context(), op, "error", err,
+		"family", errorfamily.Classify(err).String())
+	return cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false)
+}
+
 // partial renders just the tab region for an HTMX swap.
 func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab) {
 	sess, ok := h.requireSession(w, r)
@@ -94,7 +107,7 @@ func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab
 	if err != nil {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		_ = errorPanel(err.Error(), h.lang(r)).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
+		_ = errorPanel(h.safeDetail(r, "render tab", err), h.lang(r)).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

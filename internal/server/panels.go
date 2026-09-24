@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/a-h/templ"
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -78,7 +81,7 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 	}
 	component, err := h.threadPanel(r, sess, id, page)
 	if err != nil {
-		http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
+		h.internalError(w, r, "load conversation", err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -255,6 +258,19 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 
 func errorPanel(message string, lang views.Lang) templ.Component {
 	return views.ErrorPanel(message, lang)
+}
+
+// internalError is the one-home 500 writer (SafeDetail consistency,
+// 2026-09-24): the full detail goes to the operator log (English op +
+// error + family) while the client body carries only the family
+// default message — internal store errors (SQL text, file paths)
+// never reach the browser. Sub-500 writers keep their own texts:
+// client-caused 4xx detail is safe by construction and the webhook
+// bodies are byte-stable-pinned for providers.
+func (h *handlers) internalError(w http.ResponseWriter, r *http.Request, op string, err error) {
+	slog.ErrorContext(r.Context(), op, "error", err,
+		"family", errorfamily.Classify(err).String())
+	http.Error(w, op+": "+cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
 func csrfToken(r *http.Request) string {

@@ -91,7 +91,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		component, err := h.threadPanel(r, sess, threadID, 0)
 		if err != nil {
-			http.Error(w, "load conversation: "+err.Error(), http.StatusInternalServerError)
+			h.internalError(w, r, "load conversation", err)
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

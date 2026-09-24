@@ -125,6 +125,36 @@ func TestContactSaveFailedText(t *testing.T) {
 	}
 }
 
+// TestInternalErrorRedactsDetail pins the SafeDetail consistency
+// contract (audit finding #3): a 500 body carries the op prefix and the
+// family default message, NEVER the raw internal error text — while the
+// panel variant (safeDetail) returns the same redacted copy for
+// degraded page renders.
+func TestInternalErrorRedactsDetail(t *testing.T) {
+	h := &handlers{}
+	internal := errors.New("sql: database is closed (file /var/lib/webphone/x.db)")
+	r := httptest.NewRequest(http.MethodGet, "/partials/messages/t-1", nil)
+
+	w := httptest.NewRecorder()
+	h.internalError(w, r, "load conversation", internal)
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("internalError: %d (want 500)", w.Code)
+	}
+	// An unclassified error defaults to the transient family (the
+	// classify-for-user precedent) — the user gets a retryable story,
+	// never the raw store text.
+	if got := w.Body.String(); got != "load conversation: A temporary error occurred. Please try again in a few moments.\n" {
+		t.Fatalf("internalError body: %q", got)
+	}
+	if strings.Contains(w.Body.String(), "database is closed") {
+		t.Fatal("internalError leaked the internal detail")
+	}
+
+	if got := h.safeDetail(r, "render tab", internal); got != "A temporary error occurred. Please try again in a few moments." {
+		t.Fatalf("safeDetail: %q (want the family default, not the raw text)", got)
+	}
+}
+
 // TestContactsAPIStoreFailureRoutesThroughContactSaveFailed pins the
 // JSON API's store-failure lane: a broken store surfaces as the shared
 // 500 (save) and a plain 404 (delete never leaks store detail).
