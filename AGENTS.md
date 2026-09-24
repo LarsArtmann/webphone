@@ -207,8 +207,17 @@ the island remotely — re-run it after any markup change.
   - bare 204; the tab handlers share the nudge but answer
     toast + partial); `views.panelHead` (2026-09-23 `-t 2` sweep: the
     title+subtitle header six tab panels share — voicemail's conditional
-    sub and ThreadView's back-link head stay hand-rolled; pinned by the
-    DOM/CSP tests + smoke, no micro-test yet). Each carries its own micro-test
+    sub and ThreadView's back-link head stay hand-rolled) and its
+    2026-09-24 companions from the second `-t 2` sweep:
+    `views.errorBanner` (the ONE `.wp-error` node home — its bytes are a
+    wire contract, selected by the htmx responseHandling on 4xx/5xx
+    swaps), `views.panelError` (the conditional wrapper every tab panel
+    opens its failure surface with) and `views.identityLine` (the
+    from-identity line ×3 composer panels). All four pinned byte-exact
+    in `views/panels_test.go`, incl. the panelHead both-langs backfill,
+    and the refactor was proven by an old-vs-new binary render diff
+    (7/7 partials byte-identical with error banners + identity lines
+    exercised live). Each carries its own micro-test
     (`TestApplyStatusWebhookContract`, `TestRecordCallIdemContract`,
     `TestContactSaveFailedText`, `TestCRMNumbersSkipsBlanks`,
     `TestMustUnwrapsOrPanics`, `TestOrClockPinsTheZeroFallback`,
