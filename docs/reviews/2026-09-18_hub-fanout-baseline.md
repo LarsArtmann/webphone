@@ -50,3 +50,20 @@ broadcast path.
 Methodology note for the NEXT re-run: prefer
 `-benchtime=1s -count=5` over `-benchtime 2000x` — longer, repeated
 runs average out the coarse-iteration noise both tables above carry.
+
+## 2026-09-24 re-run — cqrs-htmx v4.12.0 + go-sse v0.6.1 (v2.7.0 train)
+
+`nix develop -c go test -run '^$' -bench BenchmarkHubFanOut -benchtime=1s -count=5`
+· same machine · median of 5 (per the methodology note; spreads were
+≤ ±1.5 ns on every shape).
+
+| Shape (hubs × subs) | ns/op median | v4.11.0 (2000x) |
+| ------------------- | ------------ | --------------- |
+| 1 × 1               | 35.0         | 40.0            |
+| 10 × 2              | 39.8         | 42.6            |
+| 100 × 2             | 39.5         | 45.3            |
+| 100 × 10            | 105.0        | 119.0           |
+
+**Reading:** no regression — every shape at or below the v4.11.0
+numbers (part methodology: 1s×5 medians are tighter than the 2000x
+single shots). The broadcast path is untouched by both bumps.
