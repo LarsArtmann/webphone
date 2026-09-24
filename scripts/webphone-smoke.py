@@ -229,6 +229,55 @@ class Smoke:
         return None
 
 
+def oversized_upload(s: Smoke) -> tuple[int, bytes]:
+    """POST a multipart body just past the 61 MB upload cap to
+    /messages/send and return the (status, body) of the early response.
+
+    Sends via http.client in chunks with send errors swallowed: the
+    server trips MaxBytesReader and answers 400 while the client is
+    still uploading, so the write side may raise BrokenPipe before the
+    response is readable — the response is the evidence, not the send.
+    """
+    boundary = "----webphonesmokeboundary"
+    prefix = (
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="to"\r\n\r\n'
+        "+15551234567\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="body"\r\n\r\n'
+        "hi\r\n"
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="attachment"; '
+        'filename="huge.bin"\r\n'
+        "Content-Type: application/octet-stream\r\n\r\n"
+    ).encode()
+    suffix = f"\r\n--{boundary}--\r\n".encode()
+    # 61 MB envelope + 64 KB: past uploadBodyLimit whatever the exact
+    # multipart overhead is.
+    payload = 61 * 1024 * 1024 + 64 * 1024 - len(prefix) - len(suffix)
+    total = len(prefix) + payload + len(suffix)
+    cookie = "; ".join(f"{c.name}={c.value}" for c in s.jar)
+    conn = http.client.HTTPConnection(s.host, s.port, timeout=TIMEOUT)
+    try:
+        conn.putrequest("POST", "/messages/send")
+        conn.putheader("Content-Type", f"multipart/form-data; boundary={boundary}")
+        conn.putheader("Content-Length", str(total))
+        conn.putheader("X-CSRF-Token", s.csrf)
+        if cookie:
+            conn.putheader("Cookie", cookie)
+        conn.endheaders()
+        chunks = [prefix, b"\0" * payload, suffix]
+        try:
+            for chunk in chunks:
+                conn.send(chunk)
+        except OSError:
+            pass  # early 400 closes the socket mid-upload
+        resp = conn.getresponse()
+        return resp.status, resp.read()
+    finally:
+        conn.close()
+
+
 def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
@@ -529,6 +578,7 @@ def run_checks(
             "live thread event",
             "thread fragment is bubbles only",
             "live mark-read 204",
+            "oversized upload rejected",
         ):
             c.skip(
                 name, "needs a self-booted server: real credentials + webhook secret"
@@ -678,6 +728,16 @@ def run_checks(
             c.ok("live mark-read 204", status == 204, f"got {status}")
             if stop is not None:
                 stop.set()
+
+        # 13b. The upload body cap: a multipart just past the 61 MB
+        # envelope must answer 400 naming the size — the only unbounded
+        # request path the audit found (finding #1), pinned live.
+        status, upload_body = oversized_upload(s)
+        c.ok(
+            "oversized upload rejected",
+            status == 400 and b"too large" in upload_body,
+            f"got {status}: {upload_body[:120]!r}",
+        )
 
     # 14. Phone-api proxy fails closed while the PBX API is not configured.
     status, _, _ = s.request("GET", "/phone-api/history?limit=5")

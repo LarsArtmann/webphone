@@ -25,6 +25,13 @@ import (
 // uploadLimit bounds multipart bodies (5 attachments + a PDF fit easily).
 const uploadLimit = 60 << 20
 
+// uploadBodyLimit is the hard ceiling on the raw request body: the
+// upload envelope (uploadLimit) plus ~1 MB of multipart boundaries
+// and text fields. ParseMultipartForm's argument is only a MEMORY
+// threshold (parts spill to disk beyond it), so without MaxBytesReader
+// an authenticated client could stream an unbounded body to disk.
+const uploadBodyLimit = uploadLimit + 1<<20
+
 // attachmentMimeType prefers the client-declared part type but falls
 // back to content sniffing when the declaration is missing or is the
 // generic octet-stream default (browsers send real types for file
@@ -418,6 +425,7 @@ func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return session.Session{}, false
 	}
+	r.Body = http.MaxBytesReader(w, r.Body, uploadBodyLimit)
 	if err := r.ParseMultipartForm(uploadLimit); err != nil {
 		http.Error(w, "could not read the form: "+err.Error(), http.StatusBadRequest)
 		return session.Session{}, false
