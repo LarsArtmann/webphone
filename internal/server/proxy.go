@@ -17,6 +17,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.deps.PhoneAPI.Enabled() {
+		w.Header().Set("Retry-After", retryAfterHint)
 		http.Error(w, "phone api not configured", http.StatusServiceUnavailable)
 		return
 	}

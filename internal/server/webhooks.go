@@ -28,6 +28,15 @@ func webhookFail(w http.ResponseWriter, kind string, err error) {
 	http.Error(w, cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
+// retryAfterHint is the Retry-After value the 503 writers send: one
+// second, matching cqrs-htmx's DefaultRetryAfter (deliberately
+// conservative — standards-compliant clients back off without a retry
+// storm). Sent where the CONSUMER honors it: provider retry machinery
+// on the fail-closed hooks and any HTTP client on the proxy. The
+// startupz latch deliberately does NOT send it (its consumers are
+// liveness probes that ignore response headers).
+const retryAfterHint = "1"
+
 // Webhook contracts (inbound). The gateway secret authenticates both.
 //
 // POST /hooks/message — inbound SMS/MMS:
