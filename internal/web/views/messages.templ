@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
@@ -54,7 +56,10 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 		</form>
 		<div class="wp-thread-list" sse-swap="threads" hx-swap="morph:innerHTML">
 			if props.Query != "" && len(props.Threads) == 0 {
-				<p class="wp-empty">{ T(props.Lang, "threads.noMatch.pre") }“{ props.Query }”{ T(props.Lang, "threads.noMatch.post") }</p>
+				@display.EmptyState(display.EmptyStateProps{
+					Title: T(props.Lang, "threads.noMatch.pre") + "“" + props.Query + "”" + T(props.Lang, "threads.noMatch.post"),
+					Icon:  icons.Search,
+				})
 			} else {
 				@ThreadsList(props.Threads, props.Names, props.Lang)
 			}
@@ -69,8 +74,8 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 // wrapper element, no composer.
 templ ThreadsList(threads []store.ThreadSummary, names map[string]string, lang Lang) {
 	if len(threads) == 0 {
-		<p class="wp-empty">{ T(lang, "threads.empty") }</p>
-		}
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox})
+	}
 	for _, summary := range threads {
 		@ThreadRow(summary, names, lang)
 	}

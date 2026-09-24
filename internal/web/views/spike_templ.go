@@ -48,7 +48,7 @@ func SpikeTailwind(withTailwind bool, now time.Time) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if withTailwind {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<link rel=\"stylesheet\" href=\"/assets/spike/tw.css\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<link rel=\"stylesheet\" href=\"/assets/tw.css\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

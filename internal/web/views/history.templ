@@ -1,6 +1,8 @@
 package views
 
 import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/pbx"
 )
 
@@ -51,7 +53,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 			<p class="wp-empty">{ T(props.Lang, "history.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "history.needsAPI.post") }</p>
 		}
 		if props.Enabled && len(props.Entries) == 0 {
-			<p class="wp-empty">{ T(props.Lang, "history.empty") }</p>
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "history.empty"), Icon: icons.Clock})
 		}
 		for _, cdr := range props.Entries {
 			@CDRRow(cdr, props.Names, props.Lang)

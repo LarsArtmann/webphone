@@ -34,13 +34,18 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/theme-preload.js", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "theme-preload.js", "application/javascript; charset=utf-8")
 	})
-	// Throwaway spike assets (plan M7): the Tailwind build + the A/B
-	// computed-style probe. Removed with the spike route.
-	mux.HandleFunc("GET /assets/spike/tw.css", func(w http.ResponseWriter, r *http.Request) {
-		serveEmbedded(w, r, "spike/tw.css", "text/css; charset=utf-8")
-	})
+	// Throwaway spike probe (plan M7): the A/B computed-style probe.
+	// Removed with the spike route. The Tailwind build itself is
+	// permanent: /assets/tw.css.
 	mux.HandleFunc("GET /assets/spike/probe.js", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "spike/probe.js", "application/javascript; charset=utf-8")
+	})
+	// The templ-components Tailwind build (v4, layered — coexistence
+	// verdict 2026-09-24): regenerated from the ADOPTED components'
+	// sources whenever the library version bumps or a wave adopts more
+	// components (recipe: docs/planning/2026-09-24_16-38_*.md).
+	mux.HandleFunc("GET /assets/tw.css", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "tw.css", "text/css; charset=utf-8")
 	})
 	return noStore(mux)
 }

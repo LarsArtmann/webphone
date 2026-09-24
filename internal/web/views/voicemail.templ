@@ -3,6 +3,8 @@ package views
 import (
 	"time"
 
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/pbx"
 )
 
@@ -50,7 +52,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 			@VoicemailRow(msg, props.Names, props.Lang)
 		}
 		if props.Enabled && len(props.Messages) == 0 {
-			<p class="wp-empty">{ T(props.Lang, "vm.empty") }</p>
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "vm.empty"), Icon: icons.Phone})
 		}
 	</section>
 }

@@ -1,6 +1,10 @@
 package views
 
-import 	"github.com/larsartmann/webphone/internal/domain"
+import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/webphone/internal/domain"
+)
 
 // FaxPanel is the Fax tab: PDF upload form plus the job list (outbox and
 // inbox). Only the list region carries sse-swap="fax" so live pushes
@@ -47,7 +51,7 @@ templ FaxPanel(props FaxPanelProps) {
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
 templ FaxList(jobs []domain.FaxJob, names map[string]string, lang Lang) {
 	if len(jobs) == 0 {
-		<p class="wp-empty">{ T(lang, "fax.empty") }</p>
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "fax.empty"), Icon: icons.Document})
 	}
 	for _, job := range jobs {
 		@FaxRow(job, names, lang)

@@ -1,6 +1,10 @@
 package views
 
-import "github.com/larsartmann/webphone/internal/domain"
+import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/webphone/internal/domain"
+)
 
 // ContactsPanel merges per-extension personal contacts (stored on this
 // server) with operator-provided shared contacts (from config). The dial
@@ -45,7 +49,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
 		</div>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
-			<p class="wp-empty">{ T(props.Lang, "contacts.empty") }</p>
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users})
 		}
 		for _, contact := range props.Personal {
 			@ContactRow(contact, props.Lang)
