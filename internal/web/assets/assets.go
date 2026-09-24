@@ -10,7 +10,7 @@ import (
 	"io/fs"
 )
 
-//go:embed all:island all:vendor app.css shell.js theme-preload.js all:spike
+//go:embed all:island all:vendor app.css tw.css shell.js theme-preload.js all:spike
 var embedded embed.FS
 
 // FS returns the embedded assets rooted at the package directory, so paths
