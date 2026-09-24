@@ -401,7 +401,10 @@ def run_checks(
         detail = f"{body[:120]!r}"
         served = re.search(rb'"version":"([^"]+)"', body)
         if served and (
-            served[1].startswith(b"v0.0.0-") or b"devel" in served[1]
+            served[1].startswith(b"v0.0.0-")
+            or b"-0." in served[1]  # tag-based pseudo-version: vX.Y.Z-0.<ts>-<hash>
+            or b"+dirty" in served[1]
+            or b"devel" in served[1]
         ):
             detail += (
                 " — the served build is a bare `go build` artifact (Go's "
