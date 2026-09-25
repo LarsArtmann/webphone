@@ -77,6 +77,16 @@ step "1/9 preconditions"
 	echo "not on main" >&2
 	exit 1
 }
+# Host health preflight (2026-09-24 outage: /run/binfmt vanished ~19:10 and
+# every nix build on the host died for 9+ hours with a cryptic
+# 'getting attributes of path "/run/binfmt"' MID-GATE — after buildflow had
+# already burned a full cycle. The kernel's binfmt_misc registration
+# survives; only the /run/binfmt symlink is gone. Failing HERE turns that
+# into a one-line actionable message instead of a mid-gate cryptic death.
+if [ "$DRY_RUN" != "1" ] && [ ! -e /run/binfmt ]; then
+	echo "host nix is broken: /run/binfmt is missing, so every nix build on this host fails. Fix (root): sudo systemctl restart systemd-binfmt.service — then confirm with: ls -la /run/binfmt" >&2
+	exit 1
+fi
 git fetch origin --tags --quiet
 [ "$(git rev-parse main)" = "$(git rev-parse origin/main)" ] || {
 	echo "main diverged from origin/main" >&2
@@ -115,7 +125,12 @@ else
 fi
 
 step "4/9 gates (fail-fast)"
-run env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
+# scripts/buildflow.sh, NOT bare buildflow (attempt-1 trap, 2026-09-24):
+# the wrapper re-execs inside `nix develop -c` when the ambient go is below
+# the go.mod floor — a bare call launched outside a develop shell fails all
+# Go steps on the host's older GOTOOLCHAIN=local go. The wrapper also
+# appends the gitleaks/codespell scans that fast mode skips (T21).
+run env BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh
 run go test -count=1 ./...
 run nix flake check
 run python3 scripts/webphone-smoke.py
