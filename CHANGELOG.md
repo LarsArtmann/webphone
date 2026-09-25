@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `display.EmptyState` (six true empty-state sites: messages search,
   thread list, fax list, contacts, voicemail inbox, history) with a
   permanent scoped Tailwind v4 build served at `/assets/tw.css`
-  (14.5KB): coexistence with the hand-rolled token CSS is PROVEN, not
+  (18.9KB): coexistence with the hand-rolled token CSS is PROVEN, not
   assumed — a Chromium A/B spike found all existing surfaces
   byte-identical across 14 computed properties because Tailwind v4
   emits `@layer` only and unlayered CSS wins every collision (verdict

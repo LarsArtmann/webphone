@@ -283,7 +283,7 @@ the island remotely — re-run it after any markup change.
   `NoThemeScript` + `CSSPath`/`HTMXVersion` suppressed via props);
   `display.EmptyState` adopted (2026-09-24, six true empty-state sites)
   with a PERMANENT scoped Tailwind v4 build at `/assets/tw.css`
-  (14.5KB, `@source` of exactly the adopted components from the module
+  (18.9KB, `@source` of exactly the adopted components from the module
   cache — rebuild with `nix run nixpkgs#tailwindcss_4`, NEVER
   nixpkgs#tailwindcss which is v3 and cannot parse v4 syntax;
   coexistence PROVEN by the 2026-09-24 spike: Tailwind emits `@layer`

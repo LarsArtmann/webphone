@@ -39,9 +39,12 @@ again whenever a GC collects it.
 
 ## 1. Deploy the released chain to prod (M1, TODO row "Deploy the released chain")
 
-prod serves v2.5.0 today. After v2.7.0 is cut the chain is
-READY (webphone tag `v2.7.0` → stack `<STACK_HASH>` → pbx-artmann
-re-pin pending, see §2):
+prod served v2.5.0 at drafting time; the 2.6.0 chain was DEPLOYED
+early 2026-09-25 (prod `/version` = v2.6.0, probed and recorded in
+TODO_LIST) — so the deploy-ordering question is settled: go STRAIGHT
+to 2.7.0 once tagged, no stepping stone. After v2.7.0 is cut the
+chain is READY (webphone tag `v2.7.0` → stack `<STACK_HASH>` →
+pbx-artmann re-pin pending, see §2):
 
 ```console
 cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech
