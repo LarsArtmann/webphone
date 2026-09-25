@@ -95,6 +95,16 @@ WEBPHONE_ADDR=127.0.0.1:18099 WEBPHONE_DATA_DIR=/tmp/wp-data \
   WEBPHONE_GATEWAY__WEBHOOK_SECRET=devsecret /tmp/webphone-bin
 ```
 
+Host-nix-down fallback (the daemon can break while the store stays
+healthy — e.g. the 2026-09-24 `/run/binfmt` outage): run gates with
+STORE toolchains directly — `GOTOOLCHAIN=local
+/nix/store/*-go-1.27*/bin/go test -count=1 ./...`, the store nodejs
+for island tests, and `-ldflags "-X
+github.com/larsartmann/webphone/internal/server.buildVersion=vX.Y.Z"`
+for a version-stamped smoke binary (NOT `main.displayVersion`). Full
+story: docs/lessons.md, Nix section. release.sh preflights the
+outage.
+
 ## The DOM + bundle contract (DO NOT BREAK CASUALLY)
 
 The id list lives in [docs/dom-contract.md](docs/dom-contract.md) —

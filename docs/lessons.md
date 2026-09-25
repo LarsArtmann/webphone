@@ -89,6 +89,24 @@ and the evidence. Newest last is NOT enforced — group by topic.
   were patch-covered). The exit-nonzero-on-findings shape is expected
   noise; the runtime closure itself carried zero real advisories at
   last scan.
+- Host nix can die while the STORE stays healthy (2026-09-24/25
+  outage: `/run/binfmt` — the symlink nix stats for emulation
+  detection — vanished ~19:10 and every `nix develop`/`nix build` on
+  the host failed for 9+ hours with `getting attributes of path
+  "/run/binfmt"`; the kernel's binfmt_misc registration was intact,
+  only the symlink died. Unprivileged escapes are closed:
+  `--option extra-platforms` and `--option sandbox` are restricted for
+  untrusted users, `/run` is root-owned. Fix is root-only: `sudo
+  systemctl restart systemd-binfmt.service`; release.sh preflights
+  this now). Fallback that kept verification moving for hours: run
+  gates with STORE toolchains directly — `/nix/store/*-go-1.27*/bin/go`
+  with `GOTOOLCHAIN=local` exported (without it, store go tries to
+  fetch its own toolchain and hits the same floor failure), the store
+  nodejs for island tests, and a version-stamped smoke binary via
+  `go build -ldflags "-X
+  github.com/larsartmann/webphone/internal/server.buildVersion=vX.Y.Z"`
+  — the ldflags variable is `internal/server.buildVersion` (see
+  flake.nix's buildGoModule args); `main.displayVersion` is NOT it.
 
 ## Tooling traps
 
