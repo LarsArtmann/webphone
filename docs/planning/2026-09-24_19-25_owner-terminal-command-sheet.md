@@ -77,6 +77,11 @@ refused LOCALLY (train C): expect the 422 banner
 the thread (evidence row). On v2.6.0 the provider's 40310 text was the
 expectation; that changed with train C.
 
+One more 2.7.0-visible check: type a shared-directory contact's name
+into the dial destination — the typeahead must offer it again (the
+capitalized-wire bug silently hid every shared contact; fixed by
+`e43fea8`).
+
 ## 4. Outbound SMS bridge failure on prod (M3, TODO row 40)
 
 webphone-side classification is correct since `1d53f44`/`6ac8962`; the

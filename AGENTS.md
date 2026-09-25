@@ -25,7 +25,10 @@ added ~15s, no budget bump), gh release object published, smoke
 pseudo-version), `nix flake check` green incl. the KVM backup VM,
 and pbx-artmann relock #4 + re-pin at `20b2a18` (webphone ExecStart
 moved 2.5.0→2.6.0; lock-drift-probe + both toplevels green). The
-stack pins webphone train `7197f1c`. Post-close reminders: dep
+stack rode train `7197f1c` at that close, was forward-locked to
+`94ae28d` on 2026-09-24 (upstream vendorHash repair; stack `dea945c`
+rides it + the flipped lowercase contacts assert awaiting the v2.7.0
+relock). Post-close reminders: dep
 bumps swept by the daemon need the vendorHash roundtrip in the same
 breath (`0a7a732` repaired a ~2h broken `nix build`), and the FOUC
 E2E harness lessons (soft reloads dodge URL blocks via cache;
