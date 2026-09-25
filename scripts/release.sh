@@ -136,7 +136,11 @@ step "4/9 gates (fail-fast)"
 # Go steps on the host's older GOTOOLCHAIN=local go. The wrapper also
 # appends the gitleaks/codespell scans that fast mode skips (T21).
 run env BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh
-run go test -count=1 ./...
+# Same trap class for the direct go call: webphone-smoke.py self-heals the
+# same way, and `nix develop -c` is cheap here (the preflight above already
+# proved nix works; the devShell is cached) — so the test suite runs on the
+# go.mod-floor toolchain no matter how this script was launched.
+run nix develop -c go test -count=1 ./...
 run nix flake check
 run python3 scripts/webphone-smoke.py
 # Vulnix cadence (TODO row closed 2026-09-20): every train scans the
