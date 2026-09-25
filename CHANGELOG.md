@@ -42,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   log line. Pinned by the classify table, the messages refusal arm,
   and a new fax-lane refusal test; error-contract + stack runbook
   ladders updated in lockstep.
-
 - Dependency train swept: cqrs-htmx v4.12.0, httputil v1.3.0,
   go-error-family v0.10.2, go-sse v0.6.1 (go-health held at v0.3.0 —
   the evaluation-hook telemetry idea was parked with evidence: the
@@ -989,7 +988,8 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.7.0
 [2.6.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.6.0
 [2.5.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.5.0
 [2.4.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.4.0
