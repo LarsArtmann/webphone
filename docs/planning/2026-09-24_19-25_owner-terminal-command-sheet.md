@@ -5,19 +5,37 @@ assistant ssh/deploy, and host-root operations are owner-only. Commands
 are copy-paste ready; run in order. Item 0 is URGENT — the host's nix
 is down until it runs.
 
-## 0. URGENT: restore host nix (binfmt symlink vanished)
+## 0. URGENT: restore host nix (binfmt directory vanished; UPDATED 2026-09-25 with the verified root cause)
 
 `/run/binfmt` disappeared (~19:10 on 2026-09-24) while the kernel
 still has aarch64 emulation registered; EVERY nix build on this host —
 `nix develop`, `nix build`, VM tests, release gates — fails with
 `getting attributes of path "/run/binfmt": No such file or directory`.
 Client-side options (extra-platforms, sandbox) are restricted for
-untrusted users, so only root heals it:
+untrusted users, so only root heals it.
+
+Root cause (verified 2026-09-25 ~04:30, cross-checked with the stack
+session's forensics): the kernel binfmt entry `aarch64-linux` names
+`/run/binfmt/aarch64-linux` as its interpreter, `/etc/nix/nix.conf`
+pins `extra-sandbox-paths = /run/binfmt /nix/store/31rksc1wkr54dadg615g1qd0rxk9gnk6-qemu-aarch64-binfmt-P`
+— but this generation's tmpfiles.d carries NO binfmt rules, and
+`systemd-binfmt.service` "finished OK" at the 22:35 reboot without
+creating anything. **A service restart heals nothing.** Plant the
+interpreter symlink by hand (paths verified live on this host):
 
 ```console
-systemctl restart systemd-binfmt.service
-ls -la /run/binfmt   # must exist again (symlink → /proc/sys/fs/binfmt_misc)
+sudo mkdir -p /run/binfmt
+sudo ln -s /nix/store/31rksc1wkr54dadg615g1qd0rxk9gnk6-qemu-aarch64-binfmt-P/bin/qemu-aarch64-binfmt-P /run/binfmt/aarch64-linux
+ls -la /run/binfmt        # must show aarch64-linux -> the qemu binary
+nix build nixpkgs#hello  # sanity: any nix build must work again
 ```
+
+Durable fix (pick one, host config): switch the host to
+`boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` so nixpkgs owns
+the tmpfiles rules (survives reboots), or drop aarch64 emulation and
+remove `/run/binfmt` from `extra-sandbox-paths`. Rot risk while the
+hand-rolled pin stays: the hard store path in nix.conf breaks builds
+again whenever a GC collects it.
 
 ## 1. Deploy the released chain to prod (M1, TODO row "Deploy the released chain")
 

@@ -77,14 +77,19 @@ step "1/9 preconditions"
 	echo "not on main" >&2
 	exit 1
 }
-# Host health preflight (2026-09-24 outage: /run/binfmt vanished ~19:10 and
-# every nix build on the host died for 9+ hours with a cryptic
+# Host health preflight (2026-09-24/25 outage: /run/binfmt vanished ~19:10
+# and every nix build on the host died for 9+ hours with a cryptic
 # 'getting attributes of path "/run/binfmt"' MID-GATE — after buildflow had
 # already burned a full cycle. The kernel's binfmt_misc registration
-# survives; only the /run/binfmt symlink is gone. Failing HERE turns that
-# into a one-line actionable message instead of a mid-gate cryptic death.
+# survives; the generation CANNOT recreate the symlink: its tmpfiles.d
+# carries no binfmt rules and systemd-binfmt.service "finished OK" at the
+# 22:35 reboot without creating it, so a service restart heals nothing —
+# the interpreter symlink must be planted by hand (see the message).
+# Failing HERE turns that into an actionable message instead of a
+# mid-gate cryptic death.
 if [ "$DRY_RUN" != "1" ] && [ ! -e /run/binfmt ]; then
-	echo "host nix is broken: /run/binfmt is missing, so every nix build on this host fails. Fix (root): sudo systemctl restart systemd-binfmt.service — then confirm with: ls -la /run/binfmt" >&2
+	fix_bin="$(ls -d /nix/store/*-qemu-aarch64-binfmt-P/bin/* 2>/dev/null | head -1)"
+	echo "host nix is broken: /run/binfmt is missing, so every nix build on this host fails (the generation cannot recreate it — restarting systemd-binfmt heals nothing). Fix (root): sudo mkdir -p /run/binfmt && sudo ln -s ${fix_bin:-<qemu-aarch64-binfmt-P binary>} /run/binfmt/aarch64-linux — full story + durable fix: docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md §0" >&2
 	exit 1
 fi
 git fetch origin --tags --quiet

@@ -90,16 +90,25 @@ and the evidence. Newest last is NOT enforced — group by topic.
   noise; the runtime closure itself carried zero real advisories at
   last scan.
 - Host nix can die while the STORE stays healthy (2026-09-24/25
-  outage: `/run/binfmt` — the symlink nix stats for emulation
-  detection — vanished ~19:10 and every `nix develop`/`nix build` on
+  outage: `/run/binfmt` — the directory carrying the emulation
+  interpreter symlink that nix stats for emulation detection —
+  vanished ~19:10 and every `nix develop`/`nix build` on
   the host failed for 9+ hours with `getting attributes of path
   "/run/binfmt"`; the kernel's binfmt_misc registration was intact,
   only the symlink died. Unprivileged escapes are closed:
   `--option extra-platforms` and `--option sandbox` are restricted for
-  untrusted users, `/run` is root-owned. Fix is root-only: `sudo
-  systemctl restart systemd-binfmt.service`; release.sh preflights
-  this now). Fallback that kept verification moving for hours: run
-  gates with STORE toolchains directly — `/nix/store/*-go-1.27*/bin/go`
+  untrusted users, `/run` is root-owned. The generation CANNOT
+  recreate the symlink — its tmpfiles.d carries no binfmt rules and
+  `systemd-binfmt.service` finished OK at the 22:35 reboot without
+  creating it, so a service restart heals nothing; the fix plants the
+  interpreter symlink by hand: `sudo mkdir -p /run/binfmt && sudo
+  ln -s <the -qemu-aarch64-binfmt-P store binary from nix.conf's
+  extra-sandbox-paths> /run/binfmt/aarch64-linux`. Durable fix is a
+  host-config change (boot.binfmt.emulatedSystems, or drop the
+  hand-rolled extra-sandbox-paths); release.sh preflights the
+  missing symlink). Fallback that kept verification moving for hours:
+  run gates with STORE toolchains directly —
+  `/nix/store/*-go-1.27*/bin/go`
   with `GOTOOLCHAIN=local` exported (without it, store go tries to
   fetch its own toolchain and hits the same floor failure), the store
   nodejs for island tests, and a version-stamped smoke binary via
