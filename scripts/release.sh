@@ -225,15 +225,26 @@ if [ "$DRY_RUN" = "1" ]; then
 	echo "  [dry-run] gh release create $TAG --verify-tag --title $TAG --notes <CHANGELOG $VERSION section>"
 else
 	notes="$(mktemp)"
-	# Escape the [brackets]: want feeds a DYNAMIC awk regex, where a bare
-	# [2.4.0] is a bracket expression (one char of {2,.,4,0}) that never
-	# matches the literal heading — the bug that shipped v2.3.0/v2.4.0
-	# with empty release notes (audit 2026-09-20).
-	awk -v want="## \\[$VERSION\\]" '
-    $0 ~ "^" want {on=1; next}
+	# Literal prefix match, NOT a dynamic regex: as a regex, the heading
+	# `## [2.4.0]` makes the brackets a one-char class ({2,.,4,0}) that
+	# never matches the literal heading — the bug that shipped
+	# v2.3.0/v2.4.0 with empty release notes (audit 2026-09-20). The
+	# 2026-09-20 "fix" (escaped brackets through -v) only works on awks
+	# whose string parser PRESERVES unknown escapes: host gawk 5.4.1
+	# warns and DROPS the backslash, collapsing back into the class bug
+	# (found 2026-09-25 pre-tag — 0 extracted lines). index() is literal
+	# substring matching in every awk; == 1 anchors it to the line start.
+	awk -v want="## [$VERSION]" '
+    index($0, want) == 1 {on=1; next}
     /^## / && on {exit}
     on {print}
   ' CHANGELOG.md >"$notes"
+	# Belt and braces: refuse to publish tag notes that came out empty.
+	if [ ! -s "$notes" ]; then
+		echo "extracted CHANGELOG $VERSION section is EMPTY — refusing to publish empty release notes (see the awk comment above)" >&2
+		rm -f "$notes"
+		exit 1
+	fi
 	gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
 	rm -f "$notes"
 fi
