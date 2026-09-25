@@ -308,9 +308,10 @@ hover, audio output picker — see FEATURES); what remains here is
 unshipped fuel — refine into TODO_LIST only on demand.
 
 - Peer hub: contact → thread + history + voicemail in one view.
-- Tailwind v4 scoped-layer coexistence spike for templ-components
-  (designed in the 2026-09-22 deep-dive report; owner call pending —
-  one-component proof before any adoption).
+- Tailwind v4 scoped-layer coexistence: RESOLVED 2026-09-24 — spike
+  GREEN, wave 1 (EmptyState ×6 + `/assets/tw.css`) shipped, waves 2+3
+  rejected on product grounds (verdict:
+  `docs/planning/2026-09-24_16-38_tailwind-coexistence-verdict.md`).
 - Unicode-insensitive thread search: SQLite `LIKE` folds ASCII only
   ("MÜNCHEN" does not match "münchen") — needs `lower()` collation
   or an FTS5 column; a real design decision, not a patch (small ADR;
@@ -345,9 +346,10 @@ node:test suite plus the E2E caught everything).
 
 ## Test-infra follow-ups (from the 2026-09-20 testing train)
 
-- Long-tail coverage: `internal/blob`, `internal/fax`,
-  `internal/messaging` still have no direct tests (exercised only
-  through the server suite); `views` stays transitive BY DECISION (see
+- Long-tail coverage: `internal/blob` still has no direct tests
+  (exercised only through the server suite); `internal/fax` and
+  `internal/messaging` gained direct suites 2026-09-24 (family +
+  selfsend). `views` stays transitive BY DECISION (see
   `docs/reviews/2026-09-20_coverage-baseline.md`).
 - The fuzz target (`FuzzContactsAPISave`) runs its seed corpus in CI;
   a scheduled longer `-fuzztime` run (and more targets: message send
