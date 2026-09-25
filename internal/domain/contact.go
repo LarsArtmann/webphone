@@ -13,8 +13,11 @@ type Contact struct {
 }
 
 // SharedContact is an operator-provided contact from the server config,
-// rendered alongside personal ones.
+// rendered alongside personal ones. The json tags ARE the
+// window.PBX_CONFIG wire contract: the island's dial typeahead reads
+// lowercase name/number, and the config-file contacts list uses the
+// same keys.
 type SharedContact struct {
-	Name   string
-	Number string
+	Name   string `json:"name"`
+	Number string `json:"number"`
 }

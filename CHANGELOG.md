@@ -58,6 +58,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   answers a plain 400 instead of streaming unbounded into memory — the
   ParseMultipartForm argument was only a memory threshold, not a size
   cap. Pinned by a unit test and a live smoke probe.
+- Shared contacts render in the dial typeahead again: `SharedContact`
+  marshaled Go-style `Name`/`Number` onto `window.PBX_CONFIG` while
+  the island reads lowercase `name`/`number` (the README always
+  documented lowercase), so every operator-configured shared contact
+  silently vanished from the dial suggestions. The json tags now pin
+  the wire shape, asserted capitalized-absent by
+  `TestConfigJSContactsWireKeys` (re-do of the fix the 2026-09-24 host
+  reboot destroyed in a /tmp worktree).
 - Store/render failures on panel and thread loads send only the
   op-prefixed family default to the browser; the raw error text goes
   to the operator log (one-home `internalError`/`safeDetail` helpers,

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // decodePBXConfig strips the window.PBX_CONFIG assignment and decodes the
@@ -93,5 +94,45 @@ func TestConfigJSStaticICEWithoutTurnSecret(t *testing.T) {
 	}
 	if iceServers[0].Username != "static-user" || iceServers[0].Credential != "static-password" {
 		t.Errorf("static ICE credentials must pass through verbatim without turn_rest.secret: %+v", iceServers[0])
+	}
+}
+
+// TestConfigJSContactsWireKeys pins the contacts wire shape of
+// window.PBX_CONFIG: the island's dial typeahead reads lowercase
+// name/number (island config.js passes the contacts array through
+// verbatim), so a SharedContact marshaling Go-style Name/Number made
+// every operator-configured shared contact silently vanish from the
+// suggestions. The quote in the name doubles as the JSON-escaping
+// regression the stack's VM test pinned. The capitalized shape is
+// asserted ABSENT so the tags cannot regress unnoticed.
+func TestConfigJSContactsWireKeys(t *testing.T) {
+	server := newTestServerWithConfig(t, "", nil, func(d *Deps) {
+		d.Shared = []domain.SharedContact{{Name: `O"Brien`, Number: "1000"}}
+	})
+	c := signIn(t, server)
+
+	resp, body := c.do(http.MethodGet, "/config.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("config.js status %d", resp.StatusCode)
+	}
+	payload := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.TrimPrefix(string(body), "window.PBX_CONFIG =")), ";"))
+	var parsed struct {
+		Contacts []map[string]string `json:"contacts"`
+	}
+	if err := json.Unmarshal([]byte(payload), &parsed); err != nil {
+		t.Fatalf("config.js payload is not JSON: %v\n%s", err, payload)
+	}
+	if len(parsed.Contacts) != 1 {
+		t.Fatalf("contacts: got %d entries, want 1\n%s", len(parsed.Contacts), payload)
+	}
+	contact := parsed.Contacts[0]
+	if contact["name"] != `O"Brien` || contact["number"] != "1000" {
+		t.Errorf("contacts wire keys must be lowercase name/number (the island typeahead reads them): got %v", contact)
+	}
+	if _, ok := contact["Name"]; ok {
+		t.Errorf("capitalized Name leaked onto the wire: %v", contact)
+	}
+	if _, ok := contact["Number"]; ok {
+		t.Errorf("capitalized Number leaked onto the wire: %v", contact)
 	}
 }
