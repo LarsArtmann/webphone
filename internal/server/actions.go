@@ -311,7 +311,12 @@ type sendFailureKeys struct {
 // (gateway.ErrProviderRejected.ErrorFamily), so it lands on the 502
 // transport arm, never on the refusal arm. ErrInvalidSend/
 // ErrInvalidFax never reach this function — their fast path renders
-// the service's own reason at 422.
+// the service's own reason at 422. Family.HTTPStatus() is the
+// rejected alternative: its canonical mapping (Rejection→400,
+// Transient/Infrastructure→503, Corruption/Orchestration→500) would
+// downgrade a fixable refusal to a bare 400 and scatter the
+// system-side families across 500/503, losing the one 502 that names
+// the upstream gateway seam; the pinned two-value contract stays.
 func classifyForUser(err error) int {
 	if errorfamily.Classify(err) == errorfamily.Rejection {
 		return http.StatusUnprocessableEntity
