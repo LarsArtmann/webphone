@@ -2,10 +2,17 @@
 
 Everything an assistant cannot run itself: pbx-artmann AGENTS forbids
 assistant ssh/deploy, and host-root operations are owner-only. Commands
-are copy-paste ready; run in order. Item 0 is URGENT — the host's nix
-is down until it runs.
+are copy-paste ready; run in order. Item 0 was URGENT — the host's nix
+is down until it runs (as of 2026-09-26 it is healed, see the STATUS
+note in §0).
 
 ## 0. URGENT: restore host nix (binfmt directory vanished; UPDATED 2026-09-25 with the verified root cause)
+
+> STATUS 2026-09-26: healed on this host — `/run/binfmt/aarch64-linux`
+> symlink in place (planted 2026-09-25 05:32) and `nix build
+> nixpkgs#hello` verified green 2026-09-26; skip to §1. The DURABLE fix
+> below stays open: the hand-rolled store-path pin in `nix.conf` rots
+> on the next GC of that path or a reboot without tmpfiles rules.
 
 `/run/binfmt` disappeared (~19:10 on 2026-09-24) while the kernel
 still has aarch64 emulation registered; EVERY nix build on this host —
@@ -85,7 +92,7 @@ into the dial destination — the typeahead must offer it again (the
 capitalized-wire bug silently hid every shared contact; fixed by
 `e43fea8`).
 
-## 4. Outbound SMS bridge failure on prod (M3, TODO row 40)
+## 4. Outbound SMS bridge failure on prod (M3, TODO row "Outbound SMS bridge failure on prod")
 
 webphone-side classification is correct since `1d53f44`/`6ac8962`; the
 root cause is stack-side. On the pbx host:
@@ -93,18 +100,18 @@ root cause is stack-side. On the pbx host:
 ```console
 journalctl -u telnyx-webhooks.service --since today | grep -Ei 'sms|422|error'
 # restart or fix creds per findings, then send a test SMS; record the root cause
-# in TODO_LIST row 40 + the stack runbook
+# in the TODO_LIST SMS-bridge row + the stack runbook
 ```
 
-## 5. OWNER-calls batch session (M16, TODO row 42)
+## 5. OWNER-calls batch session (M16, TODO row "OWNER-calls batch session")
 
 One sitting, briefing ready at
 `docs/planning/2026-09-22_13-50_owner-calls-briefing.md` (~15 original
 + 3 CRM + the newer g1/g2/g3/art-dupl/webhook/idem additions).
 Decisions land back into TODO_LIST.
 
-## 6. Release announcements (M17, TODO row 43)
+## 6. Release announcements (M17, TODO row "Post the release announcements")
 
-Drafts for v2.1.0–v2.3.0, v2.5.0, v2.6.0 live at `docs/announcements/`
-(v2.7.0 draft to be added post-release). Owner picks channels,
-approves wording, decides the disclosure posture.
+Drafts for v2.1.0–v2.3.0, v2.5.0, v2.6.0 AND v2.7.0 live at
+`docs/announcements/` (v2.7.0 = `2026-09-24_v2-7-0_drafts.md`, `357ffec`).
+Owner picks channels, approves wording, decides the disclosure posture.
