@@ -58,6 +58,18 @@ finding #4, the last open slice of the error-family row):
 `classifyForUser` comment (canonical Rejection→400 / Transient→503
 mapping vs the pinned two-value 422/502 contract, verified against the
 v0.10.2 source).
+Also closed 2026-09-26, the post-heal gate battery (makes up the
+outage-skipped legs of the 2026-09-25 sweep + self-review items
+7/13): main is FULLY GREEN after the binfmt heal — `nix build
+.#webphone` (2.7.0, no vendorHash drift), `nix flake check` all checks
+passed incl. the KVM backup VM, loopback smoke 41+4, `nix run .#vulnix`
+zero real advisories, buildflow full exit 0, erraudit tier 1 exit 0,
+aarch64 cross-build ELF-verified (e_machine=183 — the healed
+`/run/binfmt` path proven end-to-end); prod re-probed 2026-09-26 (19
+passed / 0 failed, still v2.6.0). FEATURES.md gained the missing
+templ-components adoption row; command sheet §4-§6 row-number refs
+converted to stable names and §6 updated (v2.7.0 drafts exist since
+`357ffec`).
 
 | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Status       | Priority | Effort | Evidence / notes                                                                                             |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ------ | ------------------------------------------------------------------------------------------------------------ |
