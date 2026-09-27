@@ -25,16 +25,16 @@ either side?
 
 ## Data (2026-09-24, Chromium 153 headless)
 
-| Surface                | tw=0 → tw=1                                                                                                     |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `.wp-panel`            | IDENTICAL (all 14 probed properties)                                                                            |
-| `.wp-panel-head h2`    | IDENTICAL                                                                                                       |
-| `.wp-welcome-points li`| IDENTICAL — list markers/margins survive the preflight                                                          |
-| `.wp-error`            | IDENTICAL                                                                                                       |
-| `.wp-panel-sub`        | IDENTICAL                                                                                                       |
-| `EmptyState`           | styles GAIN: padding 60px/15px, icon 22.5px block, title 15px                                                   |
-| `RelativeTime`         | styles GAIN: text-sm (13.125px) muted color                                                                     |
-| `CountBadge` pill      | styles GAIN: absolute overlay, red bg, white 10px text, ring                                                     |
+| Surface                 | tw=0 → tw=1                                                   |
+| ----------------------- | ------------------------------------------------------------- |
+| `.wp-panel`             | IDENTICAL (all 14 probed properties)                          |
+| `.wp-panel-head h2`     | IDENTICAL                                                     |
+| `.wp-welcome-points li` | IDENTICAL — list markers/margins survive the preflight        |
+| `.wp-error`             | IDENTICAL                                                     |
+| `.wp-panel-sub`         | IDENTICAL                                                     |
+| `EmptyState`            | styles GAIN: padding 60px/15px, icon 22.5px block, title 15px |
+| `RelativeTime`          | styles GAIN: text-sm (13.125px) muted color                   |
+| `CountBadge` pill       | styles GAIN: absolute overlay, red bg, white 10px text, ring  |
 
 CSP: the spike page renders with ZERO inline scripts and ZERO `style=`
 attributes (the probed components emit only classes;

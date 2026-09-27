@@ -16,15 +16,15 @@ hardening `9f7badd`) — their work is context, not mine.
    review doc exists, incl. the pareto plan, deep-dive HTML, all spike
    verdicts, all announcement drafts (v2.1.0–v2.7.0).
 3. **Code-claim verification**: `SelfSendRejection` + selfsend tests ×2 lanes
-   + server pins; `LogErrorContext` adoption; `errorfamilytest` in exactly 5
-   family test files; `TestHTTPSpectChainConformance` (19/19 per commit);
-   EmptyState ×6 across 5 .templ files; spike route zero-refs; release.sh
-   `load_gate` (default 8, `WEBPHONE_RELEASE_MAX_LOAD` override) +
-   `assert_clean_tree` + `git tag -s`; go.mod pins (templ-components
-   v1.19.2 = adopted claim, local latest tag v1.19.3 = watch claim);
-   retention_days, gzip option, `/metrics`, `/favicon.ico`, `timezone`,
-   hand-rolled parseID, `FuzzContactsAPISave`, island-tests dir, no
-   recordings surface, LIKE search unchanged, blob-without-tests.
+   - server pins; `LogErrorContext` adoption; `errorfamilytest` in exactly 5
+     family test files; `TestHTTPSpectChainConformance` (19/19 per commit);
+     EmptyState ×6 across 5 .templ files; spike route zero-refs; release.sh
+     `load_gate` (default 8, `WEBPHONE_RELEASE_MAX_LOAD` override) +
+     `assert_clean_tree` + `git tag -s`; go.mod pins (templ-components
+     v1.19.2 = adopted claim, local latest tag v1.19.3 = watch claim);
+     retention_days, gzip option, `/metrics`, `/favicon.ico`, `timezone`,
+     hand-rolled parseID, `FuzzContactsAPISave`, island-tests dir, no
+     recordings surface, LIKE search unchanged, blob-without-tests.
 4. **Prod probe**: `https://pbx.artmann.tech/version` → exactly
    `{"goVersion":"go1.27.1","title":"…","version":"v2.6.0"}` — proved the
    "deploy the chain" rows DONE (docs claimed prod still on v2.5.0).
