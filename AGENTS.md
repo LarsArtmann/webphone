@@ -241,13 +241,13 @@ the island remotely — re-run it after any markup change.
     `TestContactSaveFailedText`, `TestCRMNumbersSkipsBlanks`,
     `TestMustUnwrapsOrPanics`, `TestOrClockPinsTheZeroFallback`,
     `TestUpdatedOrNotFoundShapes`, `TestFormatForSwitchesAndDefaults` —
-    the avatarFor lesson). **Dedup acceptance registry**: the WHY behind
-    every accepted/declined clone lives at the in-code comment of its
-    site; the sweep-level decisions live in the archived
-    `2026-09-23_01-12` + `2026-09-23_03-01` art-dupl reports (and the
-    2026-09-18 original) — read those BEFORE re-litigating an accepted
-    similarity; `-t 3` is the working baseline pending owner
-    ratification.
+    the avatarFor lesson). **Dedup acceptance registry**: the ONE home
+    for every accepted/declined clone ruling + its WHY is
+    [docs/dedup-registry.md](docs/dedup-registry.md) — read it BEFORE
+    re-litigating an accepted similarity, and append a sweep-log line
+    per run (supersedes the five scattered report homes; they remain
+    as provenance; some sites also carry in-code rationale comments).
+    `-t 3` is the working baseline pending owner ratification.
 - **Personal contacts have ONE home**: the per-extension SQLite
   store, read/written via `/api/contacts` (session-gated, 60/min
   POST limiter, 500-per-extension atomic cap). Mutations answer 204;
