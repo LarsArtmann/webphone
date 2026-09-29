@@ -20,7 +20,7 @@ require (
 	github.com/larsartmann/templ-components v1.19.4
 	github.com/larsartmann/templ-components/icons v1.19.4
 	github.com/onsi/ginkgo/v2 v2.33.0
-	github.com/onsi/gomega v1.43.1
+	github.com/onsi/gomega v1.44.0
 	github.com/sixafter/nanoid v1.65.1
 	modernc.org/sqlite v1.60.0
 )
