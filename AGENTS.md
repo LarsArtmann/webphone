@@ -209,6 +209,12 @@ the island remotely — re-run it after any markup change.
   pattern.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt).
+  File parts carry their HONEST Content-Type (`createFilePart` in
+  internal/gateway/webhook.go: the attachment's stored mime; fax parts
+  `application/pdf`) — the producer owns the type, and the Telnyx
+  bridge prefers it, magic-byte-sniffing only as the octet-stream
+  fallback for pre-2.8 binaries (verified cross-repo on real wire
+  bytes).
   Self-sends to the owner's own DID (config `identities`) never reach
   the provider: `gateway.SelfSendRejection` refuses locally after the
   row is persisted (evidence kept), riding the 422 refusal arm

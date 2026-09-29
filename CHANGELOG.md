@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Webhook gateway: attachment and fax file parts now carry their honest
+  Content-Type on the wire (the attachment's stored mime; fax parts are
+  `application/pdf`) instead of the `application/octet-stream` default
+  Go's `CreateFormFile` stamps on every part. The producing side owns
+  the type, so consuming bridges can stop magic-byte sniffing; the
+  Content-Disposition bytes are unchanged.
 - Nix: split the 803-line `flake.nix` into focused flake-parts modules
   under `nix/` (packages, checks, module-check, vm-tests, apps,
   devshell, treefmt). The `webphoneVersion` binding stays in
