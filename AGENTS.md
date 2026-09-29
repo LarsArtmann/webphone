@@ -59,6 +59,24 @@ database would be a split brain.
   single-assignment style (all `locations` in ONE attrset).
   `checks.x86_64-linux.webphone-backup` (KVM-gated) and
   `webphone-backup-drill` cover backup snapshot AND restore.
+- **flake.nix layout (2026-09-29 nix-review train)**: flake.nix is a
+  slim ENTRY (inputs, systems, imports, nixosModules); the meat lives
+  in `nix/packages.nix`, `nix/checks.nix`, `nix/module-check.nix`,
+  `nix/vm-tests.nix`, `nix/apps.nix`, `nix/devshell.nix`,
+  `nix/treefmt.nix`. The `webphoneVersion` let-binding MUST stay in
+  flake.nix — `scripts/release.sh` greps/seds it there (`grep
+  "webphoneVersion = " flake.nix`); it reaches `nix/packages.nix` via
+  a `{ _module.args.webphoneVersion = ...; }` module. Gotcha: `self`
+  is a TOP-level-only flake-parts module arg — declare it on the
+  module function, never inside the `perSystem` pattern (it reaches
+  the perSystem body via lexical closure). Module hardening from the
+  same train: `backup.destDir` gets the same `/var/lib/` assertion as
+  `dataDir` (pinned by the `backup-destdir-assertion` linkFarm entry),
+  both units set `UMask=0077` + `StateDirectoryMode=0750` (private
+  comms data is not world-readable), and the backup oneshot orders
+  `after = [ "webphone.service" ]` so a Persistent catch-up at boot
+  cannot race db creation. The `| tee $out` check pattern is safe as
+  written: the locked stdenv setup sets `set -euo pipefail`.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge — contracts in the plan
   docs under `docs/planning/archived/2026-09-19_11-51_SUPERB-*`.

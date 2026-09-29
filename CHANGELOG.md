@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Nix: split the 803-line `flake.nix` into focused flake-parts modules
+  under `nix/` (packages, checks, module-check, vm-tests, apps,
+  devshell, treefmt). The `webphoneVersion` binding stays in
+  `flake.nix` — `scripts/release.sh` continues to sed it there.
+
+### Fixed
+
+- NixOS module: `services.webphone.backup.destDir` now gets the same
+  `/var/lib/` assertion as `dataDir` (an off-`/var/lib` path used to
+  render a unit systemd refuses to load, with no clear message).
+- NixOS module: backup oneshot orders `after = [ "webphone.service" ]`
+  so a boot-time Persistent timer catch-up cannot race the database
+  into existence.
+
+### Security
+
+- NixOS module: both units set `UMask=0077` and
+  `StateDirectoryMode=0750` — message threads, faxes, and voicemail
+  blobs are no longer world-readable on disk (existing files keep
+  their old modes; re-backup or `chmod` to tighten in place).
+
 ## [2.7.0] - 2026-09-24
 
 ### Added
