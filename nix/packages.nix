@@ -1,8 +1,8 @@
 # Package definitions: the webphone binary and the vulnix triage CLI.
-# webphoneVersion is passed in from flake.nix — release.sh seds the binding
-# there (grep "webphoneVersion = "), so it must not move into this file.
+# webphoneVersion arrives as a module arg from flake.nix — release.sh
+# seds the binding there (grep "webphoneVersion = "), so it must not
+# move into this file.
 {
-  lib,
   webphoneVersion,
   ...
 }:

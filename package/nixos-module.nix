@@ -225,7 +225,8 @@ in
           StateDirectory value for the webphone unit.
         '';
       }
-    ] ++ lib.optionals cfg.backup.enable [
+    ]
+    ++ lib.optionals cfg.backup.enable [
       {
         assertion = lib.hasPrefix "/var/lib/" cfg.backup.destDir && cfg.backup.destDir != "/var/lib/";
         message = ''
