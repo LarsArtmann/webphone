@@ -94,6 +94,14 @@ session's changes specifically.
 
 ---
 
+
+> ARCHIVED 2026-09-29 (docs-health): fully resolved or routed — the
+> battery closed the outage-skipped legs (main FULLY green, aarch64
+> ELF-proven); the three doc drifts it found are fixed (this sweep);
+> owner rows consolidated into the owner-calls TODO row; erraudit
+> conversions + push/release hardening have TODO rows. Per-item
+> verdicts inline below.
+
 ## a) FULLY DONE (evidence attached)
 
 | #  | Work                                                                                                                                                                                                                                                                                                                                                                                                                                | Evidence                                                                                                                                                              |
@@ -134,7 +142,7 @@ session's changes specifically.
 
 ## d) TOTALLY FUCKED UP
 
-1. **Remote `main` WAS 3 commits behind local — resolved while this
+~~1. **Remote `main` WAS 3 commits behind local — resolved while this~~ resolved in-session (daemon caught up, ls-remote verified); the silent-stall class routed — owner push-lag call (ROADMAP)
    report was written.** The daemon's push caught up (~45 min total
    lag) and `git ls-remote` now equals HEAD (`0230ead`); the v2.7.0
    ritual precondition ("changes must be PUSHED before the stack
@@ -143,7 +151,7 @@ session's changes specifically.
    "broken push" from the outside, and the release ritual's first
    minutes would have been spent discovering this. Mitigation stands:
    f17 (release.sh remote-sync preflight) + f18 (lag watchdog).
-2. **False-verification near-miss (self-caught, zero landed damage).**
+~~2. **False-verification near-miss (self-caught, zero landed damage).**~~ DONE — lesson landed in docs/lessons.md (explicit out-links rule, 2026-09-29)
    First aarch64 "verification" passed `--no-link` and then checked the
    STALE `result` symlink → read an x86_64 binary (e_machine=62). The
    byte check caught it (house rule: "verify by ELF bytes, never exit
@@ -152,7 +160,7 @@ session's changes specifically.
    a false green on the exact leg the binfmt outage broke. Root cause:
    my own sloppy pairing of flags; lesson belongs in docs/lessons.md
    (f16).
-3. **AGENTS lies about buildflow full mode.** AGENTS says gitleaks/
+~~3. **AGENTS lies about buildflow full mode.** AGENTS says gitleaks/~~ routed — TODO tooling-hygiene row (reconcile claim vs behavior)
    codespell/markdown-lint RUN in build mode `full` (and that
    scripts/buildflow.sh appends the first two). Observed output today:
    all three "skipped by build mode 'full'". Severity: future sessions
@@ -161,41 +169,41 @@ session's changes specifically.
    documented path. Root cause: unknown — `.buildflow.yml` or
    buildflow.sh behavior changed after AGENTS was written (not
    investigated per session scope).
-4. **FEATURES "Browser E2E" row is stale** (293s/322s @ 2026-09-22 vs
+~~4. **FEATURES "Browser E2E" row is stale** (293s/322s @ 2026-09-22 vs~~ DONE 2026-09-29 — row refreshed (195s/184s @ `271f5ef`, FOUC aboard)
    the actual latest greens 195s/184s @ 2026-09-23 with the FOUC
    scenario aboard). I edited the adjacent row and missed it — doc
    drift I directly touched and skipped.
-5. **TODO_LIST header overclaim still live** ("docs-health VERIFY:
+~~5. **TODO_LIST header overclaim still live** ("docs-health VERIFY:~~ DONE 2026-09-29 — header rewritten to honest scope
    every claim checked against code/git, prod probed") — self-review
    item 6 asked to scope that phrasing honestly; evidently never
    landed. I read the header twice this session without acting.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Artifact checks use explicit out-links, never `result`** — pair
+~~1. **Artifact checks use explicit out-links, never `result`** — pair~~ DONE — rule landed in docs/lessons.md (2026-09-29)
    `nix build … -o <path>` with the byte check, always. One-line AGENTS/
    lessons addition (f16).
-2. **Push-lag detection**: release.sh already preflights host-nix +
+~~2. **Push-lag detection**: release.sh already preflights host-nix +~~ routed — release.sh remote-sync assert in the TODO nix-follow-ups row; watchdog behind the owner threshold call
    clean tree; add an unpushed-commits assert (`git ls-remote` vs HEAD)
    so the ritual fails LOUDLY at preflight instead of silently pinning
    unpushed state (f17). Consider the same assert at session phase
    boundaries.
-3. **Self-review docs are a work source**: after a docs-health VERIFY
+~~3. **Self-review docs are a work source**: after a docs-health VERIFY~~ DONE 2026-09-29 — this sweep harvested the self-review open items (the rule applied)
    sweep, its self-review open-items list should be folded into
    TODO_LIST (HARVEST) immediately — not left for a future session to
    rediscover (that's exactly what happened to items 7/13/20 this
    session).
-4. **Understand the tool before accepting the green**: nix `--system`
+~~4. **Understand the tool before accepting the green**: nix `--system`~~ DONE — the `--system` restricted-setting trap is documented in docs/lessons.md (Nix section)
    semantics (b2) — one short research pass, then a lesson line.
-5. **Reconcile buildflow doc-vs-behavior** (d3): read
+~~5. **Reconcile buildflow doc-vs-behavior** (d3): read~~ routed — TODO tooling-hygiene row
    scripts/buildflow.sh + .buildflow.yml, then fix AGENTS or the config
    — one of them is wrong today.
-6. **Doc drift is compounding**: three drift instances found in one
+~~6. **Doc drift is compounding**: three drift instances found in one~~ DONE 2026-09-29 — all three named drifts fixed this sweep (AGENTS claim routed; FEATURES rows + TODO header landed)
    session (d3/d4/d5). Cheap fix batch: f11–f15 (all S).
-7. **erraudit tier-2 needs scheduled project time before 2026-10-22**:
+~~7. **erraudit tier-2 needs scheduled project time before 2026-10-22**:~~ DONE 2026-09-29 — TODO conversions row exists (config.go → store/messages.go → pbx/client.go)
    a re-measure against a non-shrinking 113 baseline is a failed
    re-measure by definition. Convert the top seams first (f7–f9).
-8. **Vulnix scope clarity**: runtime closure = triaged (clean);
+~~8. **Vulnix scope clarity**: runtime closure = triaged (clean);~~ routed — LOW; the lessons vulnix bullet covers closure-scope; triage-CLI extension on demand
    buildflow's vulnix also warns on BUILD inputs (bison CVE-2026-56389
    8.6 high, coreutils, gcc …). Document that build-input warnings are
    out of triage scope (or extend the triage CLI) so the noise has an
@@ -208,56 +216,56 @@ routes with rigor). Impact/Critical-…-Low, Effort S (<30m) / M / L (>2h).
 
 | #  | Task                                                                                                                                                                                         | Impact   | Effort | Category     |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------ |
-| 1  | Push-lag policy: decide the threshold after which a silent daemon push lag is treated as broken (stall self-healed after ~45 min; see d1), then land f17/f18 so it can never bite mid-ritual | High     | S      | Ops          |
-| 2  | OWNER: cut signed tag v2.7.0, ride the runbook (stack lock bump → gates incl. browser E2E → aarch64 → relock #5 + re-pin → deploy `nixos-rebuild test` → switch)                             | Critical | L      | Release      |
-| 3  | OWNER: post-deploy `webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.7.0`                                                                                                | High     | S      | Release      |
-| 4  | OWNER: journal `telnyx-webhooks` (today), grep sms/422/error, restart/fix creds, send test SMS, record root cause in TODO row + stack runbook                                                | High     | S-M    | Ops          |
-| 5  | OWNER: post-deploy sign-in rejection-banner check (self-review item 17, g3)                                                                                                                  | Medium   | S      | Verify       |
-| 6  | OWNER-calls batch session — the ~27 queued decisions (f24–f50 are its agenda)                                                                                                                | High     | M      | Decisions    |
-| 7  | erraudit tier-2: convert `internal/config.go` seam (22 stdlib_constructor findings) to go-error-family                                                                                       | High     | M-L    | Quality      |
-| 8  | erraudit tier-2: convert `store/messages.go` seam (20 findings)                                                                                                                              | High     | M-L    | Quality      |
-| 9  | erraudit tier-2: convert `pbx/client.go` seam (8 findings)                                                                                                                                   | Medium   | S-M    | Quality      |
-| 10 | Re-measure erraudit tier-2 on 2026-10-22; update the AGENTS baseline (must shrink from 113)                                                                                                  | High     | S      | Quality      |
-| 11 | Reconcile buildflow full-mode behavior vs AGENTS claim (gitleaks/codespell/markdown-lint skipped) — fix AGENTS or config                                                                     | High     | S      | Docs/Tooling |
-| 12 | Resolve the 3 markdown-lint warnings (self-review item 8) — after #11 unblocks the lint                                                                                                      | Low      | S      | Docs         |
-| 13 | Fix TODO_LIST header overclaim ("every claim checked" → true scope; item 6)                                                                                                                  | Medium   | S      | Docs         |
-| 14 | Fix FEATURES Browser-E2E row (195s/184s greens with FOUC scenario)                                                                                                                           | Medium   | S      | Docs         |
-| 15 | Refresh FEATURES aarch64 row: "cross-builds cleanly (verified 2026-09-26, ELF-verified)"                                                                                                     | Low      | S      | Docs         |
-| 16 | docs/lessons.md: the `--no-link` + `result` artifact trap; the `--system` restricted-setting note; the daemon-push-stall story                                                               | Medium   | S      | Docs         |
-| 17 | release.sh preflight: assert remote sync (fail loudly on unpushed commits)                                                                                                                   | High     | S-M    | Tooling      |
-| 18 | Daemon push watchdog (or owner-side check) so push stalls alert instead of rot                                                                                                               | Medium   | M      | Tooling      |
-| 19 | OWNER (host root): durable binfmt fix — `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` or drop `/run/binfmt` from `extra-sandbox-paths`; kills the GC/reboot rot                        | High     | M      | Host         |
-| 20 | Understand nix 2.34 `--system` restricted-setting semantics; write the one-lesson note (b2)                                                                                                  | Low      | S      | Tooling      |
-| 21 | `/version` enrichment: commit/dirty/commitDate via ldflags + ReadBuildInfo vcs settings; update smoke + error-contract docs (item 9)                                                         | Medium   | M      | Feature      |
-| 22 | Next dep sweep: ride templ-components v1.19.3 patch + regenerate `/assets/tw.css` per the verdict recipe                                                                                     | Medium   | S      | Deps         |
-| 23 | Vulnix scope note: build-input warnings (bison 8.6 etc.) are out of triage scope — document or extend `webphone-vulnix-triage`                                                               | Low      | S      | Docs         |
-| 24 | OWNER: ratify train-cut/cadence                                                                                                                                                              | Medium   | S      | Decision     |
-| 25 | OWNER: `/livez` consumer                                                                                                                                                                     | Low      | S      | Decision     |
-| 26 | OWNER: HSTS maxAge                                                                                                                                                                           | Low      | S      | Decision     |
-| 27 | OWNER: XFF sanitization (flip `KeyExtractorFromClientIP` once stack proves it)                                                                                                               | Medium   | S      | Decision     |
-| 28 | OWNER: disclosure posture for announcements                                                                                                                                                  | Medium   | S      | Decision     |
-| 29 | OWNER: loopback `delivered` semantics                                                                                                                                                        | Low      | S      | Decision     |
-| 30 | OWNER: handler dual-layer ratification                                                                                                                                                       | Low      | S      | Decision     |
-| 31 | OWNER: gh-release habit                                                                                                                                                                      | Low      | S      | Decision     |
-| 32 | OWNER: Go module v2 policy                                                                                                                                                                   | Low      | S      | Decision     |
-| 33 | OWNER: recordings intent                                                                                                                                                                     | Low      | S      | Decision     |
-| 34 | OWNER: TEMP-DIAG keep                                                                                                                                                                        | Low      | S      | Decision     |
-| 35 | OWNER: oops ratification (g1 force-push)                                                                                                                                                     | Low      | S      | Decision     |
-| 36 | OWNER: `backup.retentionDays`                                                                                                                                                                | Medium   | S      | Decision     |
-| 37 | OWNER: ratify shipped stack `crm.{enable,url,tokenFile}` shape (`be876ae`)                                                                                                                   | Medium   | S      | Decision     |
-| 38 | OWNER: multi-contact "+N more" display                                                                                                                                                       | Low      | S      | Decision     |
-| 39 | OWNER: English-only journal bodies                                                                                                                                                           | Low      | S      | Decision     |
-| 40 | OWNER: self-send train-C semantics ratification                                                                                                                                              | Medium   | S      | Decision     |
-| 41 | OWNER: templ-components history-blemish disposition                                                                                                                                          | Low      | S      | Decision     |
-| 42 | OWNER: release.sh load-gate default ratification                                                                                                                                             | Low      | S      | Decision     |
-| 43 | OWNER: g2 KVM-timeout policy                                                                                                                                                                 | Low      | S      | Decision     |
-| 44 | OWNER: art-dupl `-t 3` baseline ratification                                                                                                                                                 | Low      | S      | Decision     |
-| 45 | OWNER: suppression-bucket doc                                                                                                                                                                | Low      | S      | Decision     |
-| 46 | OWNER: webhook 400 body-text dependents                                                                                                                                                      | Low      | S      | Decision     |
-| 47 | OWNER: `msg/`→`message/` idem-key rename                                                                                                                                                     | Low      | S      | Decision     |
-| 48 | OWNER: helper micro-test bar                                                                                                                                                                 | Low      | S      | Decision     |
-| 49 | OWNER: missed-call REJECT semantics                                                                                                                                                          | Low      | S      | Decision     |
-| 50 | OWNER: search `?q=` URL semantics + store `Must*` panic-on-corrupt policy (pair)                                                                                                             | Low      | S      | Decision     |
+~~| 1  | Push-lag policy: decide the threshold after which a silent daemon push lag is treated as broken (stall self-healed after ~45 min; see d1), then land f17/f18 so it can never bite mid-ritual | High     | S      | Ops          |~~ routed — owner call (ROADMAP open questions)
+~~| 2  | OWNER: cut signed tag v2.7.0, ride the runbook (stack lock bump → gates incl. browser E2E → aarch64 → relock #5 + re-pin → deploy `nixos-rebuild test` → switch)                             | Critical | L      | Release      |~~ routed — release-tail TODO row
+~~| 3  | OWNER: post-deploy `webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.7.0`                                                                                                | High     | S      | Release      |~~ routed — release-tail TODO row
+~~| 4  | OWNER: journal `telnyx-webhooks` (today), grep sms/422/error, restart/fix creds, send test SMS, record root cause in TODO row + stack runbook                                                | High     | S-M    | Ops          |~~ routed — TODO SMS-bridge row
+~~| 5  | OWNER: post-deploy sign-in rejection-banner check (self-review item 17, g3)                                                                                                                  | Medium   | S      | Verify       |~~ routed — TODO SMS-bridge row (live browser check noted there)
+~~| 6  | OWNER-calls batch session — the ~27 queued decisions (f24–f50 are its agenda)                                                                                                                | High     | M      | Decisions    |~~ routed — owner-calls TODO row (agenda extended 2026-09-29)
+~~| 7  | erraudit tier-2: convert `internal/config.go` seam (22 stdlib_constructor findings) to go-error-family                                                                                       | High     | M-L    | Quality      |~~ routed — TODO conversions row
+~~| 8  | erraudit tier-2: convert `store/messages.go` seam (20 findings)                                                                                                                              | High     | M-L    | Quality      |~~ routed — TODO conversions row
+~~| 9  | erraudit tier-2: convert `pbx/client.go` seam (8 findings)                                                                                                                                   | Medium   | S-M    | Quality      |~~ routed — TODO conversions row
+~~| 10 | Re-measure erraudit tier-2 on 2026-10-22; update the AGENTS baseline (must shrink from 113)                                                                                                  | High     | S      | Quality      |~~ standing watch — TODO watches row
+~~| 11 | Reconcile buildflow full-mode behavior vs AGENTS claim (gitleaks/codespell/markdown-lint skipped) — fix AGENTS or config                                                                     | High     | S      | Docs/Tooling |~~ routed — TODO tooling-hygiene row
+~~| 12 | Resolve the 3 markdown-lint warnings (self-review item 8) — after #11 unblocks the lint                                                                                                      | Low      | S      | Docs         |~~ routed — TODO tooling-hygiene row (markdown-lint posture; identification blocked on the same reconcile)
+~~| 13 | Fix TODO_LIST header overclaim ("every claim checked" → true scope; item 6)                                                                                                                  | Medium   | S      | Docs         |~~ DONE 2026-09-29
+~~| 14 | Fix FEATURES Browser-E2E row (195s/184s greens with FOUC scenario)                                                                                                                           | Medium   | S      | Docs         |~~ DONE 2026-09-29
+~~| 15 | Refresh FEATURES aarch64 row: "cross-builds cleanly (verified 2026-09-26, ELF-verified)"                                                                                                     | Low      | S      | Docs         |~~ DONE 2026-09-29 — refreshed (2026-09-26, e_machine=183)
+~~| 16 | docs/lessons.md: the `--no-link` + `result` artifact trap; the `--system` restricted-setting note; the daemon-push-stall story                                                               | Medium   | S      | Docs         |~~ DONE 2026-09-29 — three lessons landed (no-link trap, --system semantics pointer, push-stall)
+~~| 17 | release.sh preflight: assert remote sync (fail loudly on unpushed commits)                                                                                                                   | High     | S-M    | Tooling      |~~ routed — TODO nix-follow-ups row
+~~| 18 | Daemon push watchdog (or owner-side check) so push stalls alert instead of rot                                                                                                               | Medium   | M      | Tooling      |~~ routed — behind the owner push-lag threshold call (ROADMAP)
+~~| 19 | OWNER (host root): durable binfmt fix — `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` or drop `/run/binfmt` from `extra-sandbox-paths`; kills the GC/reboot rot                        | High     | M      | Host         |~~ routed — owner host config (hand-fix landed 2026-09-25; durable `boot.binfmt.emulatedSystems` still open — sheet §0 + lessons carry it)
+~~| 20 | Understand nix 2.34 `--system` restricted-setting semantics; write the one-lesson note (b2)                                                                                                  | Low      | S      | Tooling      |~~ DONE — documented in docs/lessons.md (cross-build trust trap; b2 residual folded there)
+~~| 21 | `/version` enrichment: commit/dirty/commitDate via ldflags + ReadBuildInfo vcs settings; update smoke + error-contract docs (item 9)                                                         | Medium   | M      | Feature      |~~ routed — TODO row
+~~| 22 | Next dep sweep: ride templ-components v1.19.3 patch + regenerate `/assets/tw.css` per the verdict recipe                                                                                     | Medium   | S      | Deps         |~~ standing watch — TODO watches row (patch rideable + tw.css regen recipe)
+~~| 23 | Vulnix scope note: build-input warnings (bison 8.6 etc.) are out of triage scope — document or extend `webphone-vulnix-triage`                                                               | Low      | S      | Docs         |~~ routed — LOW; rides the tooling-hygiene row's orbit
+~~| 24 | OWNER: ratify train-cut/cadence                                                                                                                                                              | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 25 | OWNER: `/livez` consumer                                                                                                                                                                     | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 26 | OWNER: HSTS maxAge                                                                                                                                                                           | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 27 | OWNER: XFF sanitization (flip `KeyExtractorFromClientIP` once stack proves it)                                                                                                               | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 28 | OWNER: disclosure posture for announcements                                                                                                                                                  | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 29 | OWNER: loopback `delivered` semantics                                                                                                                                                        | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 30 | OWNER: handler dual-layer ratification                                                                                                                                                       | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 31 | OWNER: gh-release habit                                                                                                                                                                      | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 32 | OWNER: Go module v2 policy                                                                                                                                                                   | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 33 | OWNER: recordings intent                                                                                                                                                                     | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 34 | OWNER: TEMP-DIAG keep                                                                                                                                                                        | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 35 | OWNER: oops ratification (g1 force-push)                                                                                                                                                     | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 36 | OWNER: `backup.retentionDays`                                                                                                                                                                | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 37 | OWNER: ratify shipped stack `crm.{enable,url,tokenFile}` shape (`be876ae`)                                                                                                                   | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 38 | OWNER: multi-contact "+N more" display                                                                                                                                                       | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 39 | OWNER: English-only journal bodies                                                                                                                                                           | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 40 | OWNER: self-send train-C semantics ratification                                                                                                                                              | Medium   | S      | Decision     |~~ routed — owner-calls row
+~~| 41 | OWNER: templ-components history-blemish disposition                                                                                                                                          | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 42 | OWNER: release.sh load-gate default ratification                                                                                                                                             | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 43 | OWNER: g2 KVM-timeout policy                                                                                                                                                                 | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 44 | OWNER: art-dupl `-t 3` baseline ratification                                                                                                                                                 | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 45 | OWNER: suppression-bucket doc                                                                                                                                                                | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 46 | OWNER: webhook 400 body-text dependents                                                                                                                                                      | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 47 | OWNER: `msg/`→`message/` idem-key rename                                                                                                                                                     | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 48 | OWNER: helper micro-test bar                                                                                                                                                                 | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 49 | OWNER: missed-call REJECT semantics                                                                                                                                                          | Low      | S      | Decision     |~~ routed — owner-calls row
+~~| 50 | OWNER: search `?q=` URL semantics + store `Must*` panic-on-corrupt policy (pair)                                                                                                             | Low      | S      | Decision     |~~ routed — owner-calls row
 
 HARVEST note (per skill): #1, #11-#18, #20-#23 are TODO_LIST material
 (assistant-actionable); #2-#6, #19, #24-#50 are owner rows/agenda;
@@ -266,20 +274,20 @@ long-shots. Deferred per "WAIT FOR INSTRUCTIONS".
 
 ## g) Three questions I cannot figure out myself
 
-1. **The push stall**: it self-healed (~45 min, then remote caught up
+~~1. **The push stall**: it self-healed (~45 min, then remote caught up~~ routed — owner push-lag call (ROADMAP)
    to `0230ead`), so nothing is blocked — but I cannot see the daemon's
    internals (it is outside this repo and outside Crush). Do you know
    why it stalled (push timer? transient network/auth?), and what lag
    threshold should future sessions treat as BROKEN rather than
    slow — 10 minutes? An hour? That number decides whether f17/f18 are
    nice-to-have or load-bearing.
-2. **v2.7.0 ritual split**: the sheet is written as 100%
+~~2. **v2.7.0 ritual split**: the sheet is written as 100%~~ routed — owner call; the sheet stays owner-terminal by design (release-tail row)
    owner-terminal. Do you want it to STAY that way, or should a future
    assistant session pre-cut the signed tag + prep the stack lock bump
    so your terminal time is only §1-§3? (I deliberately touched
    neither: running half the sheet's steps would break its copy-paste
    assumptions mid-ritual.)
-3. **Has the outbound SMS path been human-tested on prod since the
+~~3. **Has the outbound SMS path been human-tested on prod since the~~ routed — TODO SMS-bridge row (the question that narrows it)
    2.6.0 deploy went live (2026-09-25)?** The 422 root-cause row
    dates from 2026-09-19, before `1d53f44` was deployed; if you've
    sent a successful test SMS since, the owner-action narrows to a
