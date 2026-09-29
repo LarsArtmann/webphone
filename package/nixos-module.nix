@@ -225,6 +225,16 @@ in
           StateDirectory value for the webphone unit.
         '';
       }
+    ] ++ lib.optionals cfg.backup.enable [
+      {
+        assertion = lib.hasPrefix "/var/lib/" cfg.backup.destDir && cfg.backup.destDir != "/var/lib/";
+        message = ''
+          services.webphone.backup.destDir must name a directory under /var/lib/
+          (got `${cfg.backup.destDir}`): the backup unit's StateDirectory manages
+          exactly that tree, and anything else would yield an invalid relative
+          StateDirectory value for the webphone-backup unit.
+        '';
+      }
     ];
 
     services.webphone.settings = {
@@ -283,6 +293,11 @@ in
             User = "webphone";
             Group = "webphone";
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;
+            # Private data (message threads, faxes, voicemail blobs): files
+            # the app creates stay owner-only and the state dir drops to
+            # 0750 — the group is webphone-only and nginx never reads here.
+            StateDirectoryMode = "0750";
+            UMask = "0077";
 
             # Hardening: the service needs almost nothing — network, its state
             # directory, and nothing else.
@@ -322,11 +337,17 @@ in
 
         webphone-backup = lib.mkIf cfg.backup.enable {
           description = "webphone online backup (sqlite .backup + blob rsync)";
+          # Order after the phone service when both start together (a boot
+          # with a Persistent timer catch-up fire): the oneshot reads the
+          # live webphone.db and must not race its creation.
+          after = [ "webphone.service" ];
           serviceConfig = {
             Type = "oneshot";
             User = "webphone";
             Group = "webphone";
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
+            StateDirectoryMode = "0750";
+            UMask = "0077";
             NoNewPrivileges = true;
             PrivateTmp = true;
             PrivateDevices = true;
