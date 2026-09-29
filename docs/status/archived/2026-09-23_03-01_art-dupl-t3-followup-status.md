@@ -1,5 +1,7 @@
 # Status Report — art-dupl `-t 3` Follow-up Sweep
 
+> SUPERSEDED by [docs/dedup-registry.md](../../dedup-registry.md) — the ONE acceptance home (2026-09-27); this report is historical provenance only.
+
 > CLOSED 2026-09-23 (docs-health): (f) HARVESTED — helper micro-tests
 > (+ the apiContactSaved pins), `-race`, error-contract cross-check,
 > LSP-nolint fix-or-declare, and the runbook coordination note live as

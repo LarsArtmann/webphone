@@ -1,5 +1,7 @@
 # Status Report — art-dupl Deduplication Session
 
+> SUPERSEDED by [docs/dedup-registry.md](../../dedup-registry.md) — the ONE acceptance home (2026-09-27); this report is historical provenance only.
+
 **Date:** 2026-09-18 22:55 CEST
 **Session scope:** Deduplicate the 9 clone groups from `art-dupl --sort total-tokens -t 1 --type-aware` (user-provided output). No other work.
 **Rule honored:** report covers only this session's run and what it directly observed. Section (f) items are session observations plus their obvious follow-ups; HARVEST must cross-check `TODO_LIST.md` before routing (existing open items there were deliberately not re-researched here).
