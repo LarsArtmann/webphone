@@ -105,6 +105,12 @@ func TestConfigJSStaticICEWithoutTurnSecret(t *testing.T) {
 // suggestions. The quote in the name doubles as the JSON-escaping
 // regression the stack's VM test pinned. The capitalized shape is
 // asserted ABSENT so the tags cannot regress unnoticed.
+//
+// Cross-repo seam (the 2026-09-24 breakage crossed exactly here): the
+// consumer side of this contract is pinned by the
+// nix-international-telephony stack — tests/configjs_check.py (shared
+// config.js fixture, used by tests/webphone.nix) and the
+// tests/browser-e2e.py contacts round-trip. Change all three together.
 func TestConfigJSContactsWireKeys(t *testing.T) {
 	server := newTestServerWithConfig(t, "", nil, func(d *Deps) {
 		d.Shared = []domain.SharedContact{{Name: `O"Brien`, Number: "1000"}}
