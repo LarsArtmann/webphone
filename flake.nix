@@ -16,7 +16,7 @@
   };
 
   outputs =
-    inputs@{ self, flake-parts, ... }:
+    inputs@{ flake-parts, ... }:
     let
       # The release version — the package version AND the /version
       # ldflags injection in one place. release.sh seds THIS binding

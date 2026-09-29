@@ -3,7 +3,7 @@
 # island sources — BuildFlow's oxfmt owns island-tests and the rest).
 {
   perSystem =
-    { config, ... }:
+    _:
     {
       treefmt = {
         projectRootFile = "flake.nix";
