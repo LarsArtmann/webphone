@@ -421,6 +421,10 @@ ports of already-pinned paths.
     AND `internal/web/assets/island-tests/*.mjs` (prettier does NOT
     claim island-tests — no two-formatter war). Markdown is NOT in
     treefmt scope; `*_templ.go` and `vendor/` are excluded everywhere.
+    `.templ` SOURCES are deliberately formatter-unowned
+    (nix/treefmt.nix scope excludes them — verified 2026-09-29,
+    closing the 09-23 open question; the "0 changed" treefmt passes
+    over them were no-ops, not ownership).
 - Island no-undef gate: `nix flake check` runs `island-lint` (oxlint,
   all categories off, `no-undef` on, `SIP` declared readonly). New
   browser globals go in the config's `globals` block; the check fails

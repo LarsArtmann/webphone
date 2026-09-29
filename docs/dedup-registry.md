@@ -8,14 +8,18 @@ those reports remain as historical provenance — annotate, never rewrite.
 
 ## Protocol (every dedup session)
 
-1. Run art-dupl (working baseline `-t 3`; `-t 2` deep sweeps by owner
-   request — baseline ratification is an open owner call).
+1. Run art-dupl YOURSELF (working baseline `-t 3`; `-t 2` deep sweeps
+   by owner request — baseline ratification is an open owner call).
+   Attribute against YOUR re-run, never against a pasted report — a
+   paste is evidence of ITS run, not of HEAD.
 2. Read THIS table before judging anything. A group that matches a
-   standing ruling below is ACCEPTED — do not re-litigate it.
+   standing ruling below is ACCEPTED — do not re-litigate it. Re-read
+   EVERY occurrence of a group at HEAD, not one site per group.
 3. A NEW harmful group gets extracted (helper + micro-test in the same
    change set; templ refactors proven with an old-vs-new binary render
    diff), then a ruling row is added here.
-4. Append one line to the sweep log. Nothing else.
+4. Append one line to the sweep log (with a link to its status doc).
+   Nothing else.
 
 A re-run regenerates the GROUPS cheaply; it cannot regenerate the
 RULINGS — that is why this file exists (09-18 f.14 declared a

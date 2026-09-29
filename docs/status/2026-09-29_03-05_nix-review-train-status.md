@@ -5,6 +5,13 @@ _Repo: `webphone` @ `2808a90` (daemon commits 83cdf46 → 2808a90 are this sessi
 
 ---
 
+
+> ARCHIVED 2026-09-29 (docs-health): train landed green (`2808a90`;
+> all 20 flake checks incl. KVM backup VM) and the end state was
+> re-proven by the 2026-09-26 gate battery. The [R] follow-up set is
+> harvested into TODO_LIST (nix-follow-ups row + §f citation);
+> owner questions into ROADMAP. Per-item verdicts inline below.
+
 ## Executive summary
 
 A full nix-review (checklist-driven, both `.nix` files, 1,267 lines read in full) of the flake and the shipped NixOS module. Every "found issue" was premise-verified before touching code — which **refuted the biggest suspected finding** (checks allegedly not gating) and confirmed three real ones. Fixed: 1 correctness gap (missing `destDir` assertion), 1 ordering race (backup oneshot vs `webphone.service`), 1 security gap (world-readable private comms data), 1 structural debt (803-line flake.nix). Final state: **`nix flake check` — all 20 checks green** including the KVM backup VM test running the hardened units, `nix build .#webphone` → 2.7.0, aarch64 eval green, statix/deadnix/nixfmt clean. Documentation (AGENTS.md, CHANGELOG) updated. Nothing in the end state is broken.
@@ -60,81 +67,81 @@ The honest headline for section (d): the **process** stumbled three times (self-
 
 **Nothing in the end state** — every gate green, no regressions shipped, no reverted work. What _was_ fucked up mid-flight, caught and corrected (recorded so the pattern is visible):
 
-1. **Almost shipped a no-op "fix"**: the top-ranked finding was "four checks don't gate (`\| tee $out` masks failures)". One grep of the locked stdenv refuted it (`pipefail` is set). Had I "fixed" it, the diff would have been harmless but the claim false — a textbook unverified-premise mistake, avoided by verification **only because I checked before editing**.
-2. **First split draft had three self-inflicted bugs**: (a) `flake-parts-lib.importApply` used outside its scope (`undefined variable`); (b) `self` destructured inside `perSystem` (flake-parts error: top-level-only arg); (c) `root = ./.` in `nix/packages.nix` pointing at the wrong directory — self-caught before eval. All were structural-split mistakes from not re-reading flake-parts' module-args model first.
-3. **Malformed verification probe**: `nix eval .#nixosModules.default --apply 'm: m.import'` — wrong shape, wasted a cycle and produced a misleading "error" in the transcript (the module was fine).
-4. **Edit-tool mtime-guard fumbling**: two rejected edits after the daemon touched file mtimes; required a re-view cycle (correct behavior, sloppy sequence).
+~~1. **Almost shipped a no-op "fix"**: the top-ranked finding was "four checks don't gate (`\| tee $out` masks failures)". One grep of the locked stdenv refuted it (`pipefail` is set). Had I "fixed" it, the diff would have been harmless but the claim false — a textbook unverified-premise mistake, avoided by verification **only because I checked before editing**.~~ resolved by verification discipline — the refutation is this report's most valuable non-change; premise-check rule recorded (§e1)
+~~2. **First split draft had three self-inflicted bugs**: (a) `flake-parts-lib.importApply` used outside its scope (`undefined variable`); (b) `self` destructured inside `perSystem` (flake-parts error: top-level-only arg); (c) `root = ./.` in `nix/packages.nix` pointing at the wrong directory — self-caught before eval. All were structural-split mistakes from not re-reading flake-parts' module-args model first.~~ lesson recorded — §e2 (read the module-args model first)
+~~3. **Malformed verification probe**: `nix eval .#nixosModules.default --apply 'm: m.import'` — wrong shape, wasted a cycle and produced a misleading "error" in the transcript (the module was fine).~~ one wasted cycle, zero damage; recorded here
+~~4. **Edit-tool mtime-guard fumbling**: two rejected edits after the daemon touched file mtimes; required a re-view cycle (correct behavior, sloppy sequence).~~ correct tool behavior, sloppy sequence; recorded
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Premise-check discipline is load-bearing** — the pipefail refutation is the session's most valuable non-change. Codify: no fix diff without evidence of the failure mode (locked-stdenv grep, drv inspection, eval probe).
-2. **Read the framework's module-args model before restructuring** — all three split bugs were flake-parts scoping assumptions (importApply, `self`, path roots). A 2-minute docs read would have saved three gate cycles.
-3. **Move-rewrites need a path checklist** — every `./x` becomes `../x` and every `./.` becomes `./..`; make it an explicit reflex, not a catch (this one _was_ caught, by luck of rereading).
-4. **New behavior should be pinned at the same moment it is written** — the UMask/StateDirectoryMode/`after` hardening shipped with VM-test coverage but no eval-time pin in the module check (the repo's own standard: "the avatarFor lesson"). Fix in f-13/14.
-5. **statix/deadnix belong in the devShell** — the style finding surfaced only at gate time; local tools would catch it per-edit.
-6. **Record output-parity evidence for pure moves** — a pre/post `nix flake show --json` diff would turn "I moved code" into "outputs are byte-equivalent" (f-28).
-7. **Local commit ≠ pushed** — end-state verification (`git ls-remote`) must stay a standing step; the daemon's push lags its commit (currently 6 commits behind origin).
+~~1. **Premise-check discipline is load-bearing** — the pipefail refutation is the session's most valuable non-change. Codify: no fix diff without evidence of the failure mode (locked-stdenv grep, drv inspection, eval probe).~~ rule recorded (§e1) — the pipefail refutation technique lives in AGENTS flake-layout bullet
+~~2. **Read the framework's module-args model before restructuring** — all three split bugs were flake-parts scoping assumptions (importApply, `self`, path roots). A 2-minute docs read would have saved three gate cycles.~~ rule recorded (§e2)
+~~3. **Move-rewrites need a path checklist** — every `./x` becomes `../x` and every `./.` becomes `./..`; make it an explicit reflex, not a catch (this one _was_ caught, by luck of rereading).~~ rule recorded (§e3)
+~~4. **New behavior should be pinned at the same moment it is written** — the UMask/StateDirectoryMode/`after` hardening shipped with VM-test coverage but no eval-time pin in the module check (the repo's own standard: "the avatarFor lesson"). Fix in f-13/14.~~ rule recorded (§e4); the pins themselves routed (TODO nix-follow-ups row)
+~~5. **statix/deadnix belong in the devShell** — the style finding surfaced only at gate time; local tools would catch it per-edit.~~ routed — TODO nix-follow-ups row
+~~6. **Record output-parity evidence for pure moves** — a pre/post `nix flake show --json` diff would turn "I moved code" into "outputs are byte-equivalent" (f-28).~~ rule recorded (§e6); the parity proof itself routed (TODO nix-follow-ups row)
+~~7. **Local commit ≠ pushed** — end-state verification (`git ls-remote`) must stay a standing step; the daemon's push lags its commit (currently 6 commits behind origin).~~ standing ritual — AGENTS conventions; push lag observed again at the 2026-09-29 sweep close
 
 ## f) NEXT — up to 50 things to get done
 
 _**[R]** = READY (small, session-adjacent, actionable now) · **[T]** = needs a train/ritual · **[?]** = needs an owner decision (see g) · **[O]** = ops/host action. Ordered by impact._
 
-1. **[R]** Add eval-time pins for the new hardening to the module check: assert `UMask == "0077"` and `StateDirectoryMode == "0750"` on both units (currently only incidentally covered).
-2. **[R]** Add eval-time pin for backup ordering: `service.after == [ "webphone.service" ]` in a linkFarm entry.
-3. **[?]→[R]** Assert `backup.destDir` is not inside `dataDir` (and vice versa) — needs your legality call (g-3).
-4. **[R]** Add statix + deadnix to `devShells.default.packages` (local catch before the gate).
-5. **[R]** VM test: assert backup files are not world-readable (`stat -c '%a'` → 600/700) — behavioral pin of the UMask fix.
-6. **[R]** VM test: assert `/var/lib/webphone` mode is 0750.
-7. **[T]** Stack-side integration: nix-international-telephony relock at next train close + its `nix flake check` + browser E2E against the hardened module.
-8. **[R]** Verify daemon push caught up (`git ls-remote` vs `2808a90`) — end-state contract.
-9. **[T]** Live smoke of the built binary before next release: `scripts/webphone-smoke.py --bin $(nix build .#webphone) --expect-version v2.7.0`.
-10. **[T]** aarch64 cross build + ELF-bytes verification (release ritual step, not yet run this train).
-11. **[R]** HARVEST this report's section (f) into TODO_LIST.md / ROADMAP.md via docs-health (skill contract; awaiting instruction).
-12. **[R]** docs/lessons.md entry: "stdenv sets `set -euo pipefail` — verify premises against the locked stdenv before 'fixing' check plumbing" (with the drv-grep technique).
-13. **[R]** Pin the `dataDir` assertion at eval level too (only `destDir` has a dedicated check entry today).
-14. **[?]→[R]** Whitespace policy for `dataDir`/`destDir` (StateDirectory space-splitting) — assertion vs documented constraint (g-3 follow-up).
-15. **[R]** One-command `nix build .#checks.x86_64-linux.<name>` convention documented in AGENTS.md Commands block (used repeatedly this session, currently tribal knowledge).
-16. **[R]** Output-parity proof: worktree at `46ad1d3`, `nix flake show --json` diff vs HEAD (closes b-6; expected: identical).
-17. **[R]** vulnix app cwd guard: fail with "run from the repo root" when `flake.lock` is absent.
-18. **[R]** Exhaustive grep for other scripts referencing `flake.nix` structure (release.sh + .buildflow.yml done; one final sweep of scripts/).
-19. **[R]** Confirm `checks.treefmt` pre-existed the split (one git-archaeology command) — closes the one unproven observation.
-20. **[R]** Remove-or-justify `ReadWritePaths` in the backup unit (redundant with StateDirectory) — decide, then comment or delete.
-21. **[O]** Existing-deployment tightening: one-time `chmod`/re-backup so current files match the new UMask (g-1).
-22. **[?]** Whether the stack should be verified NOW vs at train close (g-2) — if NOW, pull item 7 forward.
-23. **[R]** Backup-unit hardening (item c-1) behind a re-run of the VM test + drill in the same change.
-24. **[R]** Shell-quote the interpolated paths in the backup script + drill re-run (item c-2).
-25. **[R]** `nix flake check --all-systems` trial: close the "omitted incompatible systems: aarch64-linux" warning in the release ritual.
-26. **[R]** Verify the KVM-less skip warning path once (AGENTS claims skip-with-warning; unproven this session).
-27. **[T]** Release ritual for the next train will fold CHANGELOG Unreleased (Changed/Fixed/Security) — nothing to do now, listed to keep the fold honest.
-28. **[R]** Re-run `nix flake check` for a truly-final green snapshot post-doc-edits (c-9) — cheap.
-29. **[R]** nil/LSP sanity over the new `nix/*.nix` via the project crushrc (crushrc line 8 references the devShell; confirm the LSP picks the new dir up).
-30. **[R]** AGENTS.md one-liner: `self` gotcha is now documented; consider the same note inline as a comment in `nix/checks.nix`/`nix/vm-tests.nix` (already present — verify it survived fmt; it did).
-31. **[R]** Consider a `formatter` alias sanity check (`nix fmt` used this session; confirm it's in `nix flake show`).
-32. **[R]** Decide the fate of the `nixosModules.webphone` alias (documented as consumer convenience; keep — pin with a one-line check that both attrs import the same file).
-33. **[R]** `memoryMax`: add a README recommendation paragraph (checklist wanted MemoryMax set; owner prefers null-by-default — document the tradeoff).
-34. **[R]** `/metrics` vhost location: consider a module helper for scraper fencing (`allow/deny` snippet generation) — ROADMAP fuel, product decision.
-35. **[R]** backup `calendar` option: doc example uses `*:00/15:00` — verify that systemd syntax form is valid in a VM test run (untested option path).
-36. **[R]** `nginx.hsts.maxAge` unit-test the rendered header value with a custom maxAge (only default 63072000 pinned today).
-37. **[R]** `serverTiming` env gate: pin `WEBPHONE_DEBUG_TIMING` absence when the option is off (only presence is pinned).
-38. **[R]** CSRF typed-override check: add the empty-typed-lists case ("empty lists never clobber raw values" is documented but unpinned).
-39. **[R]** Module `environmentFiles` (plural) seam: no check entry exercises it — add one (stack uses this seam per its header comment).
-40. **[R]** VM test currently asserts NRestarts=0 for the no-restart claim — also assert the oneshot's own result is `success` (`systemctl show -p Result`).
-41. **[R]** Drill: assert restored file mode ≤ 0640 (privacy carries through restore).
-42. **[T]** Next erraudit tier-2 re-measure is due 2026-10-22 (standing AGENTS cadence; unrelated to this train, listed so it isn't lost).
-43. **[R]** README: mention the new `nix/` module layout in the contributor/hacking section (one paragraph; README sells, so keep it short).
-44. **[R]** Consider `deadnix --report` (non-fail) locally documented for quick scans while authoring.
-45. **[R]** AGENTS.md "Tri-repo integration rules": add the UMask/StateDirectoryMode hardening to the module options bullet (options unchanged, but deployment shape changed — the bullet lists deployment shape).
-46. **[R]** Add `lib.optionals cfg.backup.enable`-style gating audit: confirm no other assertion can fire for unused options (dataDir always used; only destDir gated — verified this session; note it in the module header comment).
-47. **[R]** Consider renaming `checks.webphone` → keep as-is (checklist's `checks.build` analog; naming matches the package) — documented decision, no action; listed to close the checklist item explicitly.
-48. **[T]** At next release: bump `webphoneVersion` via release.sh ONLY (sed target verified this session) — ritual reminder.
-49. **[R]** Brutal-self-review pass over this nix train (sibling skill; "what did we get wrong" beyond this report's inventory).
-50. **[R]** Delete stale store garbage from the failed first statix run (`l44w1dpp…-statix-check` output path from the pre-fix build) — cosmetic hygiene, `nix store gc` covers it.
+~~1. **[R]** Add eval-time pins for the new hardening to the module check: assert `UMask == "0077"` and `StateDirectoryMode == "0750"` on both units (currently only incidentally covered).~~ routed — TODO nix-follow-ups row
+~~2. **[R]** Add eval-time pin for backup ordering: `service.after == [ "webphone.service" ]` in a linkFarm entry.~~ routed — TODO nix-follow-ups row
+~~3. **[?]→[R]** Assert `backup.destDir` is not inside `dataDir` (and vice versa) — needs your legality call (g-3).~~ routed — owner legality call (ROADMAP) then the nix-follow-ups row
+~~4. **[R]** Add statix + deadnix to `devShells.default.packages` (local catch before the gate).~~ routed — TODO nix-follow-ups row
+~~5. **[R]** VM test: assert backup files are not world-readable (`stat -c '%a'` → 600/700) — behavioral pin of the UMask fix.~~ routed — TODO nix-follow-ups row
+~~6. **[R]** VM test: assert `/var/lib/webphone` mode is 0750.~~ routed — TODO nix-follow-ups row
+~~7. **[T]** Stack-side integration: nix-international-telephony relock at next train close + its `nix flake check` + browser E2E against the hardened module.~~ routed — release-tail TODO row (relock rides the untagged release)
+~~8. **[R]** Verify daemon push caught up (`git ls-remote` vs `2808a90`) — end-state contract.~~ standing ritual — remote trails local again at the 2026-09-29 sweep close
+~~9. **[T]** Live smoke of the built binary before next release: `scripts/webphone-smoke.py --bin $(nix build .#webphone) --expect-version v2.7.0`.~~ routed — release-tail row (smoke + --expect-version at tag time)
+~~10. **[T]** aarch64 cross build + ELF-bytes verification (release ritual step, not yet run this train).~~ routed — release-tail row (ritual step; last proven 2026-09-26, e_machine=183)
+~~11. **[R]** HARVEST this report's section (f) into TODO_LIST.md / ROADMAP.md via docs-health (skill contract; awaiting instruction).~~ DONE 2026-09-29 — this §f is the source of the rebuilt TODO rows
+~~12. **[R]** docs/lessons.md entry: "stdenv sets `set -euo pipefail` — verify premises against the locked stdenv before 'fixing' check plumbing" (with the drv-grep technique).~~ DONE — carried in AGENTS flake.nix-layout bullet ("pipefail-safe" note); lessons.md defers to it
+~~13. **[R]** Pin the `dataDir` assertion at eval level too (only `destDir` has a dedicated check entry today).~~ routed — TODO nix-follow-ups row
+~~14. **[?]→[R]** Whitespace policy for `dataDir`/`destDir` (StateDirectory space-splitting) — assertion vs documented constraint (g-3 follow-up).~~ routed — owner call (ROADMAP) then the nix-follow-ups row
+~~15. **[R]** One-command `nix build .#checks.x86_64-linux.<name>` convention documented in AGENTS.md Commands block (used repeatedly this session, currently tribal knowledge).~~ routed — TODO nix-follow-ups row
+~~16. **[R]** Output-parity proof: worktree at `46ad1d3`, `nix flake show --json` diff vs HEAD (closes b-6; expected: identical).~~ routed — TODO nix-follow-ups row
+~~17. **[R]** vulnix app cwd guard: fail with "run from the repo root" when `flake.lock` is absent.~~ routed — TODO nix-follow-ups row
+~~18. **[R]** Exhaustive grep for other scripts referencing `flake.nix` structure (release.sh + .buildflow.yml done; one final sweep of scripts/).~~ DONE 2026-09-29 — grep clean: buildflow.sh (existence check), release.sh (verified by the train), webphone-smoke.py (existence-only)
+~~19. **[R]** Confirm `checks.treefmt` pre-existed the split (one git-archaeology command) — closes the one unproven observation.~~ DONE 2026-09-29 — pre-split flake.nix at `46ad1d3` carries the treefmt check (grep = 6 hits)
+~~20. **[R]** Remove-or-justify `ReadWritePaths` in the backup unit (redundant with StateDirectory) — decide, then comment or delete.~~ routed — TODO nix-follow-ups row (§f citation)
+~~21. **[O]** Existing-deployment tightening: one-time `chmod`/re-backup so current files match the new UMask (g-1).~~ routed — owner ops call (ROADMAP open questions)
+~~22. **[?]** Whether the stack should be verified NOW vs at train close (g-2) — if NOW, pull item 7 forward.~~ routed — owner call (ROADMAP open questions)
+~~23. **[R]** Backup-unit hardening (item c-1) behind a re-run of the VM test + drill in the same change.~~ routed — TODO nix-follow-ups row (§f citation)
+~~24. **[R]** Shell-quote the interpolated paths in the backup script + drill re-run (item c-2).~~ routed — TODO nix-follow-ups row (§f citation)
+~~25. **[R]** `nix flake check --all-systems` trial: close the "omitted incompatible systems: aarch64-linux" warning in the release ritual.~~ RESOLVED NOT-DO — runbook §8 (evaluation-only for other systems); ROADMAP records it
+~~26. **[R]** Verify the KVM-less skip warning path once (AGENTS claims skip-with-warning; unproven this session).~~ routed — TODO nix-follow-ups row (§f citation)
+~~27. **[T]** Release ritual for the next train will fold CHANGELOG Unreleased (Changed/Fixed/Security) — nothing to do now, listed to keep the fold honest.~~ routed — release-tail row
+~~28. **[R]** Re-run `nix flake check` for a truly-final green snapshot post-doc-edits (c-9) — cheap.~~ DONE — the 2026-09-26 post-heal battery re-ran full flake check green incl. KVM backup VM (`0230ead` evidence)
+~~29. **[R]** nil/LSP sanity over the new `nix/*.nix` via the project crushrc (crushrc line 8 references the devShell; confirm the LSP picks the new dir up).~~ routed — TODO tooling-hygiene row
+~~30. **[R]** AGENTS.md one-liner: `self` gotcha is now documented; consider the same note inline as a comment in `nix/checks.nix`/`nix/vm-tests.nix` (already present — verify it survived fmt; it did).~~ resolved — verified in-train (the comment survived fmt; report f.30)
+~~31. **[R]** Consider a `formatter` alias sanity check (`nix fmt` used this session; confirm it's in `nix flake show`).~~ routed — TODO nix-follow-ups row (§f citation)
+~~32. **[R]** Decide the fate of the `nixosModules.webphone` alias (documented as consumer convenience; keep — pin with a one-line check that both attrs import the same file).~~ resolved — decided KEEP (documented consumer convenience); pin-both-attrs rides the nix-follow-ups row (§f citation)
+~~33. **[R]** `memoryMax`: add a README recommendation paragraph (checklist wanted MemoryMax set; owner prefers null-by-default — document the tradeoff).~~ routed — TODO nix-follow-ups row (§f citation)
+~~34. **[R]** `/metrics` vhost location: consider a module helper for scraper fencing (`allow/deny` snippet generation) — ROADMAP fuel, product decision.~~ routed — ROADMAP raw ideas (scraper-fencing helper)
+~~35. **[R]** backup `calendar` option: doc example uses `*:00/15:00` — verify that systemd syntax form is valid in a VM test run (untested option path).~~ routed — TODO nix-follow-ups row (§f citation)
+~~36. **[R]** `nginx.hsts.maxAge` unit-test the rendered header value with a custom maxAge (only default 63072000 pinned today).~~ routed — TODO nix-follow-ups row (§f citation)
+~~37. **[R]** `serverTiming` env gate: pin `WEBPHONE_DEBUG_TIMING` absence when the option is off (only presence is pinned).~~ routed — TODO nix-follow-ups row (§f citation)
+~~38. **[R]** CSRF typed-override check: add the empty-typed-lists case ("empty lists never clobber raw values" is documented but unpinned).~~ routed — TODO nix-follow-ups row (§f citation)
+~~39. **[R]** Module `environmentFiles` (plural) seam: no check entry exercises it — add one (stack uses this seam per its header comment).~~ routed — TODO nix-follow-ups row (§f citation; the seam itself verified live in README this sweep)
+~~40. **[R]** VM test currently asserts NRestarts=0 for the no-restart claim — also assert the oneshot's own result is `success` (`systemctl show -p Result`).~~ routed — TODO nix-follow-ups row (§f citation)
+~~41. **[R]** Drill: assert restored file mode ≤ 0640 (privacy carries through restore).~~ routed — TODO nix-follow-ups row
+~~42. **[T]** Next erraudit tier-2 re-measure is due 2026-10-22 (standing AGENTS cadence; unrelated to this train, listed so it isn't lost).~~ standing watch — TODO watches row (2026-10-22)
+~~43. **[R]** README: mention the new `nix/` module layout in the contributor/hacking section (one paragraph; README sells, so keep it short).~~ DONE 2026-09-29 — one-paragraph Development-section pointer landed
+~~44. **[R]** Consider `deadnix --report` (non-fail) locally documented for quick scans while authoring.~~ routed — TODO nix-follow-ups row (§f citation)
+~~45. **[R]** AGENTS.md "Tri-repo integration rules": add the UMask/StateDirectoryMode hardening to the module options bullet (options unchanged, but deployment shape changed — the bullet lists deployment shape).~~ resolved — the hardening facts live in the flake.nix-layout bullet (added by this same train)
+~~46. **[R]** Add `lib.optionals cfg.backup.enable`-style gating audit: confirm no other assertion can fire for unused options (dataDir always used; only destDir gated — verified this session; note it in the module header comment).~~ routed — TODO nix-follow-ups row (§f citation)
+~~47. **[R]** Consider renaming `checks.webphone` → keep as-is (checklist's `checks.build` analog; naming matches the package) — documented decision, no action; listed to close the checklist item explicitly.~~ resolved — documented decision: keep as-is (report f.47 closes the checklist item explicitly)
+~~48. **[T]** At next release: bump `webphoneVersion` via release.sh ONLY (sed target verified this session) — ritual reminder.~~ routed — release-tail row (ritual reminder)
+~~49. **[R]** Brutal-self-review pass over this nix train (sibling skill; "what did we get wrong" beyond this report's inventory).~~ resolved — this report's own §d/§e IS that pass (honest inventory, no end-state damage)
+~~50. **[R]** Delete stale store garbage from the failed first statix run (`l44w1dpp…-statix-check` output path from the pre-fix build) — cosmetic hygiene, `nix store gc` covers it.~~ routed — cosmetic; `nix store gc` covers it
 
 ## g) Questions I can NOT figure out myself
 
-1. **Existing data on the production host**: should the UMask/`StateDirectoryMode` tightening be applied retroactively (one-time `chmod -R go-rwx /var/lib/webphone /var/lib/webphone-backup` + re-backup), or is new-files-only acceptable until the next backup cycle? I cannot see the host, and the right answer depends on your downtime/ops window.
-2. **Stack verification timing**: is the consuming stack's per-train relock the intended vehicle for this module change (my default assumption), or do you want nix-international-telephony relocked + browser-E2E'd **now** (the module's unit environment changed, not just packaging)?
-3. **`backup.destDir` / `dataDir` nesting legality**: would you ever legitimately configure `destDir` inside `dataDir` (or the reverse)? If never, I'll add a forbid-assertion (f-3); if sometimes, it needs documented semantics instead.
+~~1. **Existing data on the production host**: should the UMask/`StateDirectoryMode` tightening be applied retroactively (one-time `chmod -R go-rwx /var/lib/webphone /var/lib/webphone-backup` + re-backup), or is new-files-only acceptable until the next backup cycle? I cannot see the host, and the right answer depends on your downtime/ops window.~~ routed — ROADMAP open questions + owner-calls row
+~~2. **Stack verification timing**: is the consuming stack's per-train relock the intended vehicle for this module change (my default assumption), or do you want nix-international-telephony relocked + browser-E2E'd **now** (the module's unit environment changed, not just packaging)?~~ routed — ROADMAP open questions + owner-calls row
+~~3. **`backup.destDir` / `dataDir` nesting legality**: would you ever legitimately configure `destDir` inside `dataDir` (or the reverse)? If never, I'll add a forbid-assertion (f-3); if sometimes, it needs documented semantics instead.~~ routed — ROADMAP open questions + owner-calls row
 
 ---
 

@@ -2,6 +2,14 @@
 
 Date: 2026-09-29 04:32 · Scope: this session only (analysis → move → self-review)
 
+> ARCHIVED 2026-09-29 (docs-health): fully resolved or routed. The
+> change itself is verified green on both repos (gateway tests + bridge
+> 35/35 + wire-byte interop proof). Open remainder lives in TODO_LIST
+> (release-tail, gateway follow-ups, tooling-hygiene rows) and ROADMAP
+> open questions (numbering, attachment_limit, sniff lifespan);
+> per-item verdicts inline below.
+
+
 ## Mission recap
 
 1. Asked: what from `pbx-artmann` / `nix-international-telephony` makes sense
@@ -51,20 +59,20 @@ Date: 2026-09-29 04:32 · Scope: this session only (analysis → move → self-r
 
 ## d) TOTALLY FUCKED UP (own goals, all caught or low-blast)
 
-1. **Unverifiable version claims**: wrote "webphone >= 2.8" / "pre-2.8
+~~1. **Unverifiable version claims**: wrote "webphone >= 2.8" / "pre-2.8~~ routed — webphone AGENTS claim re-pinned to `e6ea2c7` + the never-write-version-claims rule (2026-09-29 sweep); stack-side reword rides the release-tail TODO row
    binaries" into THREE docs (stack CHANGELOG, bridge docstring,
    pbx-artmann AGENTS) + webphone AGENTS while the change is UNRELEASED
    and the current tag is v2.7.0. If the next release is 2.7.1, every one
    of those claims is wrong. Violates this repo's verify-before-writing
    culture. Should have used a date or commit ref.
-2. **Silent scope drop**: "do it" covered the optional knob; I decided
+~~2. **Silent scope drop**: "do it" covered the optional knob; I decided~~ lesson recorded — §e2 states the rule; the knob question itself routed (ROADMAP open questions + owner-calls row)
    alone it was optional and dropped it without flagging until now.
-3. **Sloppy edit sequencing**: my first multiedit round injected a bogus
+~~3. **Sloppy edit sequencing**: my first multiedit round injected a bogus~~ caught by the compiler in-cycle; multiedit-placeholder lesson lives in docs/lessons.md Tooling traps (2026-09-29)
    `quotedprintable.KeepCRLF` placeholder (1 of 6 edits failed on my own
    mismatched text; compiler caught it instantly). Sloppy, zero damage.
-4. **First analysis answer was hedge-heavy** — user had to force the
+~~4. **First analysis answer was hedge-heavy** — user had to force the~~ lesson recorded — §e5
    direct list out of me. Lesson recorded.
-5. **Missed the FEATURES.md sweep**: I grepped AGENTS.md for stale sniff
+~~5. **Missed the FEATURES.md sweep**: I grepped AGENTS.md for stale sniff~~ routed — doc-sync rule (§e3) covers AGENTS+CHANGELOG+FEATURES+runbooks; pbx-artmann stale text routed via the gateway follow-ups TODO row
    claims but not FEATURES.md (found stale only during THIS review).
 
 ## e) WHAT TO IMPROVE
@@ -80,63 +88,63 @@ Date: 2026-09-29 04:32 · Scope: this session only (analysis → move → self-r
 
 ## f) NEXT WORK (session-derived, ~in priority order)
 
-1. Re-check `git ls-remote` until daemon pushes webphone + stack; verify
+~~1. Re-check `git ls-remote` until daemon pushes webphone + stack; verify~~ standing ritual — AGENTS conventions; push lag observed again at this sweep's close (remote trails local)
    pbx-artmann's remote (ls-remote failed silently — find out why).
-2. Fix the ">= 2.8" claims in 3–4 files (or confirm 2.8.0 is the number).
-3. Update pbx-artmann FEATURES.md:87 (stale sniffing text; also verify its
+~~2. Fix the ">= 2.8" claims in 3–4 files (or confirm 2.8.0 is the number).~~ DONE 2026-09-29 for webphone AGENTS (commit-pinned `e6ea2c7`); stack/pbx copies reword-or-confirm-2.8.0 routed to the release-tail row
+~~3. Update pbx-artmann FEATURES.md:87 (stale sniffing text; also verify its~~ routed — cross-repo (gateway follow-ups TODO row names it)
    PARTIALLY_FUNCTIONAL "not deployed / 502s" claim is still true at all).
-4. Owner decision: implement `gateway.attachment_limit` or ratify the
+~~4. Owner decision: implement `gateway.attachment_limit` or ratify the~~ routed — ROADMAP "Open questions" + owner-calls row
    bridge-422-teaches design as final.
-5. Owner decision: lifespan of the sniff fallback — permanent seam
+~~5. Owner decision: lifespan of the sniff fallback — permanent seam~~ routed — ROADMAP "Open questions" + owner-calls row
    robustness vs delete-after-deploy-confirmed (set a deadline).
-6. Add `ftypqt` → `video/quicktime` to `sniff_mime` (pre-honest-type .mov
+~~6. Add `ftypqt` → `video/quicktime` to `sniff_mime` (pre-honest-type .mov~~ routed — stack-repo item (gateway follow-ups TODO row notes it)
    files mis-sniff as video/mp4 today).
-7. Byte-exact part-HEADER-block golden in webphone (current golden greps
+~~7. Byte-exact part-HEADER-block golden in webphone (current golden greps~~ routed — TODO gateway follow-ups row
    fields individually; a full header-block pin catches reordering).
-8. Check whether ANY stack E2E covers the outbound MMS gateway path; if
+~~8. Check whether ANY stack E2E covers the outbound MMS gateway path; if~~ routed — stack-repo item (gateway follow-ups TODO row notes it)
    none, add one (contract tests are the only coverage today).
-9. Fold this change into the next webphone release (runbook dance), then
+~~9. Fold this change into the next webphone release (runbook dance), then~~ routed — release-tail TODO row ([Unreleased] carries it)
    stack relock + lock-drift-probe + both toplevels + browser E2E re-run.
-10. Add a webphone CHANGELOG entry for the drift-test regex fix (fixed the
+~~10. Add a webphone CHANGELOG entry for the drift-test regex fix (fixed the~~ DONE 2026-09-29 — CHANGELOG [Unreleased] Fixed (drift-test regex)
     code, forgot the changelog line).
-11. Cross-check the concurrent session's stack FEATURES.md edit against
+~~11. Cross-check the concurrent session's stack FEATURES.md edit against~~ resolved — the concurrent session's stack FEATURES edit already described this change (this report's §b1); coherence re-checked at next release
     mine for contradictions (it already describes my change — make sure
     the test counts and claims stay coherent at next release).
-12. Verify stack `nix flake check` before its next release (VM suites
+~~12. Verify stack `nix flake check` before its next release (VM suites~~ routed — release ritual (runbook) covers it at the next stack train
     unaffected by a python-internal change, but the ritual requires it).
-13. erraudit tier-2 family-adoption re-measure due 2026-10-22 (baseline
+~~13. erraudit tier-2 family-adoption re-measure due 2026-10-22 (baseline~~ standing watch — TODO watches row (due 2026-10-22)
     113 outside the crm seam).
-14. Decide codespell policy for the 2 `pre-emptive` warnings in old
+~~14. Decide codespell policy for the 2 `pre-emptive` warnings in old~~ routed — TODO tooling-hygiene row
     webphone status snapshots (exclude `docs/status/**` like the stack
     does, or fix the words).
-15. Investigate the buildflow binary-freshness advisory (binary e881e96 vs
+~~15. Investigate the buildflow binary-freshness advisory (binary e881e96 vs~~ routed — TODO tooling-hygiene row
     its repo HEAD 625d258) — advisory only, but it skews verdicts.
-16. Harvest this session into webphone TODO_LIST (items 2–12 here).
-17. Record the version-claim lesson + multiedit-placeholder lesson in
+~~16. Harvest this session into webphone TODO_LIST (items 2–12 here).~~ DONE 2026-09-29 — this file's §f is the source of the rebuilt TODO rows
+~~17. Record the version-claim lesson + multiedit-placeholder lesson in~~ DONE 2026-09-29 — rule landed in AGENTS gateway bullet + docs/lessons.md Tooling traps (multiedit placeholder)
     docs/lessons.md.
-18. Confirm no OTHER multipart writer exists in webphone (single home for
+~~18. Confirm no OTHER multipart writer exists in webphone (single home for~~ DONE 2026-09-29 — grep-verified: `createFilePart` is the only file-part writer under internal/
     part-writing; `createFilePart` should stay the only one).
-19. Document the webphone×bridge compat matrix (old binary → sniff lane;
+~~19. Document the webphone×bridge compat matrix (old binary → sniff lane;~~ routed — TODO gateway follow-ups row
     new binary → declared lane) next to the gateway-seam bullet.
-20. The identity-endpoint project (stack `/phone-api` + webphone consumer)
+~~20. The identity-endpoint project (stack `/phone-api` + webphone consumer)~~ routed — ROADMAP raw ideas (2026-09-29)
     — the remaining sanctioned move from the original analysis.
-21. Next release smoke: `--expect-version` + 41+4 checks per runbook.
-22. Consider whether the webphone smoke should grow a webhook-mode probe
+~~21. Next release smoke: `--expect-version` + 41+4 checks per runbook.~~ routed — release-tail TODO row
+~~22. Consider whether the webphone smoke should grow a webhook-mode probe~~ routed — TODO gateway follow-ups row (webhook-mode probe)
     (loopback-only today; the webhook lane has zero black-box coverage in
     this repo).
-23. Keep an eye on the concurrent stack session's doc-archival staging —
+~~23. Keep an eye on the concurrent stack session's doc-archival staging —~~ resolved — that session closed (its reports archived this sweep); the relock's clean-tree precondition lives in the runbook
     not ours to touch, but the relock needs a clean tree.
-24. pbx-artmann docs/status snapshots + OWNER-ACTIONS mention sniffing —
+~~24. pbx-artmann docs/status snapshots + OWNER-ACTIONS mention sniffing —~~ resolved by its own design — historical snapshots stay, per this report's §f24 ruling (dedup-registry-style note)
     point-in-time/historical, leave; note in dedup-registry style that
     they predate the move.
-25. Future: when sniff fallback is deleted (if ever), shrink
+~~25. Future: when sniff fallback is deleted (if ever), shrink~~ routed — conditional on the sniff-lifespan owner call (ROADMAP)
     `sniff_mime` + its tests in one train, changelog both repos.
 
 ## g) QUESTIONS FOR THE OWNER (cannot be self-answered)
 
-1. Is the next webphone release **2.8.0** (making the ">= 2.8" doc claims
+~~1. Is the next webphone release **2.8.0** (making the ">= 2.8" doc claims~~ routed — ROADMAP "Open questions" + owner-calls row
    true), or should I reword to commit/date-based claims now?
-2. `gateway.attachment_limit`: implement the local-cap knob, or is the
+~~2. `gateway.attachment_limit`: implement the local-cap knob, or is the~~ routed — ROADMAP "Open questions" + owner-calls row
    bridge's honest-422-teaching design final?
-3. Sniff fallback lifespan: keep forever as seam robustness, or delete
+~~3. Sniff fallback lifespan: keep forever as seam robustness, or delete~~ routed — ROADMAP "Open questions" + owner-calls row
    once production provably runs the honest-type release (deadline?)?
