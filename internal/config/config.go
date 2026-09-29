@@ -3,6 +3,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -95,7 +96,19 @@ type Gateway struct {
 	Mode          GatewayMode `json:"mode" koanf:"mode"`
 	WebhookURL    string      `json:"webhook_url,omitempty" koanf:"webhook_url"`
 	WebhookSecret string      `json:"webhook_secret,omitempty" koanf:"webhook_secret"`
+	// WebhookSecretFile reads the shared secret from a runtime file at
+	// startup (single line, surrounding whitespace trimmed) instead of an
+	// env var / config value — a deployment then maintains ONE file that
+	// both the gateway and the receiving bridge read, instead of keeping
+	// an env copy and the receiver's copy in sync by hand. Exactly one
+	// of webhook_secret / webhook_secret_file may be set.
+	WebhookSecretFile string `json:"webhook_secret_file,omitempty" koanf:"webhook_secret_file"`
 }
+
+// errGatewaySecretBothSources: exactly-one-of gateway.webhook_secret /
+// gateway.webhook_secret_file — two sources for one secret is a drift
+// bug waiting to happen.
+var errGatewaySecretBothSources = errors.New("gateway: set at most one of webhook_secret / webhook_secret_file")
 
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
@@ -177,6 +190,23 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("config unmarshal: %w", err)
 	}
 
+	if cfg.Gateway.WebhookSecretFile != "" && cfg.Gateway.WebhookSecret != "" {
+		// Shape check BEFORE the file read: both sources set is a config
+		// drift bug regardless of whether the file is readable.
+		return Config{}, fmt.Errorf("config invalid: %w", errGatewaySecretBothSources)
+	}
+	if cfg.Gateway.WebhookSecretFile != "" {
+		data, err := os.ReadFile(cfg.Gateway.WebhookSecretFile)
+		if err != nil {
+			return Config{}, fmt.Errorf("gateway.webhook_secret_file %s: %w", cfg.Gateway.WebhookSecretFile, err)
+		}
+		secret := strings.TrimSpace(string(data))
+		if secret == "" {
+			return Config{}, fmt.Errorf("gateway.webhook_secret_file %s is empty", cfg.Gateway.WebhookSecretFile)
+		}
+		cfg.Gateway.WebhookSecret = secret
+	}
+
 	if err := validate(cfg); err != nil {
 		return Config{}, fmt.Errorf("config invalid: %w", err)
 	}
@@ -206,6 +236,9 @@ func validate(cfg Config) error {
 	}
 	if cfg.Gateway.Mode == GatewayWebhook && cfg.Gateway.WebhookURL == "" {
 		return fmt.Errorf("gateway.webhook_url is required in webhook mode")
+	}
+	if cfg.Gateway.WebhookSecret != "" && cfg.Gateway.WebhookSecretFile != "" {
+		return errGatewaySecretBothSources
 	}
 	if cfg.Addr == "" {
 		return fmt.Errorf("addr is empty")

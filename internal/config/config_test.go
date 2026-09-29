@@ -172,6 +172,82 @@ func TestLoadFileOverriddenByEnv(t *testing.T) {
 	}
 }
 
+func TestLoadWebhookSecretFile(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+	t.Setenv("WEBPHONE_ADDR", "127.0.0.1:9099")
+	t.Setenv("WEBPHONE_DATA_DIR", t.TempDir())
+	t.Setenv("WEBPHONE_GATEWAY__MODE", "webhook")
+	t.Setenv("WEBPHONE_GATEWAY__WEBHOOK_URL", "http://provider.example:9000")
+
+	secretFile := filepath.Join(t.TempDir(), "gateway-secret")
+	if err := os.WriteFile(secretFile, []byte("file-secret\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("WEBPHONE_GATEWAY__WEBHOOK_SECRET_FILE", secretFile) // single underscores stay literal
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Gateway.WebhookSecret != "file-secret" {
+		t.Errorf("gateway.webhook_secret from file: got %q, want %q (trailing newline trimmed)", cfg.Gateway.WebhookSecret, "file-secret")
+	}
+	if cfg.Gateway.WebhookSecretFile != secretFile {
+		t.Errorf("gateway.webhook_secret_file: got %q", cfg.Gateway.WebhookSecretFile)
+	}
+}
+
+func TestLoadWebhookSecretFileErrors(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+	t.Setenv("WEBPHONE_ADDR", "127.0.0.1:9099")
+	t.Setenv("WEBPHONE_DATA_DIR", t.TempDir())
+	t.Setenv("WEBPHONE_GATEWAY__MODE", "webhook")
+	t.Setenv("WEBPHONE_GATEWAY__WEBHOOK_URL", "http://provider.example:9000")
+
+	emptyFile := filepath.Join(t.TempDir(), "empty")
+	if err := os.WriteFile(emptyFile, []byte("   \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		name    string
+		env     map[string]string
+		wantErr string
+	}{
+		{
+			name:    "missing file",
+			env:     map[string]string{"WEBPHONE_GATEWAY__WEBHOOK_SECRET_FILE": "/nonexistent/gateway-secret"},
+			wantErr: "gateway.webhook_secret_file /nonexistent/gateway-secret",
+		},
+		{
+			name:    "empty file",
+			env:     map[string]string{"WEBPHONE_GATEWAY__WEBHOOK_SECRET_FILE": emptyFile},
+			wantErr: "is empty",
+		},
+		{
+			name: "both secret and secret file",
+			env: map[string]string{
+				"WEBPHONE_GATEWAY__WEBHOOK_SECRET":      "inline-secret",
+				"WEBPHONE_GATEWAY__WEBHOOK_SECRET_FILE": emptyFile,
+			},
+			wantErr: "at most one of webhook_secret / webhook_secret_file",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			for k, v := range tc.env {
+				t.Setenv(k, v)
+			}
+			_, err := Load()
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("Load() error = %v, want containing %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestLoadRejectsInvalidConfigs(t *testing.T) {
 	cases := []struct {
 		name    string
