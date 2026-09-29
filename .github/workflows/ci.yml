@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # The forward-pin enabler: proves vendorHash + build of the exact rev.
+  # Consumers relock this repo's main on trust; without this job "green
+  # at HEAD" is unproven (the 2026-09-24 stale-vendorHash class arrived
+  # via a relock and only failed downstream).
+  build:
+    name: nix build .#webphone
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Build the webphone binary
+        run: nix build -L .#webphone
+
+  # Go unit/contract tests (cmd + internal). The devshell's Go matches
+  # the go.mod floor; GOTOOLCHAIN=local forbids surprise toolchain
+  # downloads inside the hermetic shell.
+  go-tests:
+    name: go test ./...
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Run the Go test suite
+        run: nix develop -c sh -c 'GOTOOLCHAIN=local go test ./...'
+
+  # Fast flake checks without the VM suites (module-check/vm-tests stay
+  # consumer-side; they need KVM and tens of minutes).
+  fast-checks:
+    name: fast flake checks (format, island, lints)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Build the fast check derivations
+        run: >
+          nix build -L
+          .#checks.x86_64-linux.webphone
+          .#checks.x86_64-linux.format
+          .#checks.x86_64-linux.island-js
+          .#checks.x86_64-linux.island-lint
+          .#checks.x86_64-linux.statix
+          .#checks.x86_64-linux.deadnix
+          .#checks.x86_64-linux.vulnix-triage
+          .#checks.x86_64-linux.webphone-module
