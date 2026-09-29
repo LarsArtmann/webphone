@@ -31,7 +31,10 @@ func TestFlakeVersionMatchesNewestTag(t *testing.T) {
 	if err != nil {
 		t.Skipf("flake.nix not readable here: %v", err)
 	}
-	match := regexp.MustCompile(`webphoneVersion\s*=\s*"([^"]+)"`).FindSubmatch(flake)
+	// Anchored to the line start: the flake carries a comment quoting the
+	// literal `webphoneVersion = ` (scripts/release.sh greps it there), and
+	// an unanchored match spans from that comment to the binding's quote.
+	match := regexp.MustCompile(`(?m)^\s*webphoneVersion\s*=\s*"([^"]+)"`).FindSubmatch(flake)
 	if match == nil {
 		t.Fatal("webphoneVersion not found in flake.nix")
 	}
