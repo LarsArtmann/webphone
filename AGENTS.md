@@ -213,8 +213,9 @@ the island remotely — re-run it after any markup change.
   internal/gateway/webhook.go: the attachment's stored mime; fax parts
   `application/pdf`) — the producer owns the type, and the Telnyx
   bridge prefers it, magic-byte-sniffing only as the octet-stream
-  fallback for pre-2.8 binaries (verified cross-repo on real wire
-  bytes).
+  fallback for binaries predating `e6ea2c7` (2026-09-29; verified
+  cross-repo on real wire bytes). Never write version claims for
+  unreleased code — pin by date or commit.
   Self-sends to the owner's own DID (config `identities`) never reach
   the provider: `gateway.SelfSendRejection` refuses locally after the
   row is persisted (evidence kept), riding the 422 refusal arm
