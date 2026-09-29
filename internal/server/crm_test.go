@@ -210,7 +210,7 @@ func TestAPICallLoggingContract(t *testing.T) {
 		c := signIn(t, server)
 		payload := map[string]any{"number": "+493012345678", "direction": "in"}
 
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			if status, _ := report(t, c, payload); status != http.StatusNoContent {
 				t.Fatalf("report %d: got %d (want 204)", i+1, status)
 			}

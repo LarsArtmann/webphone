@@ -49,7 +49,7 @@ func domContractIDs(t testing.TB) []string {
 		t.Fatal("docs/dom-contract.md lost its dom-contract marker comments")
 	}
 	var ids []string
-	for _, line := range strings.Split(body[i+len(beginMark):j], "\n") {
+	for line := range strings.SplitSeq(body[i+len(beginMark):j], "\n") {
 		if id := strings.TrimSpace(line); id != "" {
 			ids = append(ids, id)
 		}

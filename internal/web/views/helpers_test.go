@@ -49,7 +49,7 @@ func TestAvatarForBlank(t *testing.T) {
 
 func TestAvatarHueStableAndBounded(t *testing.T) {
 	first := avatarHue("+441632960961")
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		if got := avatarHue("+441632960961"); got != first {
 			t.Fatalf("avatarHue not deterministic: %d then %d", first, got)
 		}

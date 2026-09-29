@@ -224,14 +224,12 @@ func TestResolveSingleFlightsConcurrentLookups(t *testing.T) {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 	for range racers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			if _, ok := resolver.Resolve(context.Background(), "+493012345678"); !ok {
 				t.Error("a joined Resolve must inherit the leader's match")
 			}
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

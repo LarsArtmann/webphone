@@ -175,15 +175,13 @@ func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]strin
 	workers := min(len(numbers), namesWorkerCap)
 	var wg sync.WaitGroup
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for number := range jobs {
 				if name := r.Name(ctx, number); name != "" {
 					results <- resolved{number: number, name: name}
 				}
 			}
-		}()
+		})
 	}
 	for _, number := range numbers {
 		jobs <- number
