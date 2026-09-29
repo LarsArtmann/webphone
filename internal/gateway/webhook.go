@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"os"
 	"strings"
 	"time"
@@ -18,7 +19,8 @@ import (
 // Webhook forwards outbound messages to a provider URL as multipart/form-data:
 //
 //	form fields : kind=message, owner, to, body
-//	files       : one part per attachment (field "attachment", filename kept)
+//	files       : one part per attachment (field "attachment", filename kept,
+//	              part Content-Type = the attachment's stored mime)
 //
 // The secret rides the Authorization header, not a form field. A 2xx
 // answer with body {"provider_ref": "..."} (or a bare token) is the
@@ -99,7 +101,7 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 
 	body, contentType, err := providerForm("fax", fax.Owner.String(), fax.To.String(),
 		func(writer *multipart.Writer) error {
-			part, err := writer.CreateFormFile("document", "fax.pdf")
+			part, err := createFilePart(writer, "document", "fax.pdf", "application/pdf")
 			if err != nil {
 				return fmt.Errorf("create fax form file: %w", err)
 			}
@@ -114,6 +116,30 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 
 	return w.post(ctx, w.cfg.WebhookURL+"/fax", contentType, body)
 }
+
+// createFilePart writes a file part carrying the file's OWN Content-Type
+// instead of the application/octet-stream that CreateFormFile stamps on
+// every part. The producer owns the honest type (it already derives one
+// from the browser declaration with content sniffing as fallback), so
+// consumers of this seam no longer need to magic-byte-sniff. The
+// Content-Disposition mirrors CreateFormFile byte-for-byte so the only
+// wire change is the added type header. An empty mimeType degrades to
+// the octet-stream default.
+func createFilePart(writer *multipart.Writer, field, filename, mimeType string) (io.Writer, error) {
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition",
+		fmt.Sprintf("form-data; name=\"%s\"; filename=\"%s\"", quoted(field), quoted(filename)))
+	header.Set("Content-Type", mimeType)
+	return writer.CreatePart(header)
+}
+
+// quoted escapes a form parameter exactly like multipart.Writer's
+// private helper, keeping Content-Disposition bytes identical to what
+// CreateFormFile produced before createFilePart existed.
+var quoted = strings.NewReplacer("\\", "\\\\", "\"", "\\\"").Replace
 
 // providerForm writes the provider envelope every webhook shares (the
 // kind/owner/to fields), hands the writer to addFiles for the payload
@@ -148,7 +174,7 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 			if err != nil {
 				return fmt.Errorf("open attachment %s: %w", att.Name, err)
 			}
-			part, err := writer.CreateFormFile("attachment", att.Name)
+			part, err := createFilePart(writer, "attachment", att.Name, att.MimeType)
 			if err != nil {
 				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 				return fmt.Errorf("create attachment form file: %w", err)

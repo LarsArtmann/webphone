@@ -38,9 +38,10 @@ type capturedRequest struct {
 }
 
 type filePart struct {
-	name    string
-	content []byte
-	present bool
+	name        string
+	contentType string
+	content     []byte
+	present     bool
 }
 
 func captureProvider(t *testing.T, respond func(w http.ResponseWriter)) (*httptest.Server, *capturedRequest) {
@@ -76,7 +77,7 @@ func readFilePart(r *http.Request, field string) filePart {
 	if err != nil {
 		return filePart{}
 	}
-	return filePart{name: header.Filename, content: content, present: true}
+	return filePart{name: header.Filename, contentType: header.Header.Get("Content-Type"), content: content, present: true}
 }
 
 func writeTempFile(t *testing.T, dir, name, content string) string {
@@ -125,6 +126,7 @@ func TestWebhookSendMessagePostsMultipartWithBearer(t *testing.T) {
 		t.Errorf("form fields: %+v", captured.form)
 	}
 	if !captured.attachment.present || captured.attachment.name != "pic.jpg" ||
+		captured.attachment.contentType != "image/jpeg" ||
 		string(captured.attachment.content) != "jpeg-bytes" {
 		t.Errorf("attachment part: %+v", captured.attachment)
 	}
@@ -232,6 +234,7 @@ func TestFaxWebhookPostsPDFDocument(t *testing.T) {
 		t.Errorf("form fields: %+v", captured.form)
 	}
 	if !captured.document.present || captured.document.name != "fax.pdf" ||
+		captured.document.contentType != "application/pdf" ||
 		string(captured.document.content) != "%PDF-fake" {
 		t.Errorf("document part: %+v", captured.document)
 	}
@@ -294,7 +297,7 @@ func TestProviderFormFieldOrderGolden(t *testing.T) {
 	}
 	defer func() { _ = pdf.Close() }()
 	faxBody, _, err := providerForm("fax", "1001", "+441632960961", func(w *multipart.Writer) error {
-		part, err := w.CreateFormFile("document", "fax.pdf")
+		part, err := createFilePart(w, "document", "fax.pdf", "application/pdf")
 		if err != nil {
 			return err
 		}
@@ -309,4 +312,37 @@ func TestProviderFormFieldOrderGolden(t *testing.T) {
 		t.Fatal(err)
 	}
 	order(t, string(body), "kind", "owner", "to", "document")
+}
+
+// TestProviderFormCarriesHonestContentTypes pins the part headers the
+// wire carries: the attachment's stored mime rides the part Content-Type
+// (consumers of the seam rely on it instead of magic-byte sniffing), a
+// missing mime degrades to the octet-stream default, and the
+// Content-Disposition stays byte-identical to the old CreateFormFile
+// form (quoted name/filename) so position-grepping consumers keep working.
+func TestProviderFormCarriesHonestContentTypes(t *testing.T) {
+	declared := writeTempFile(t, t.TempDir(), "photo.heic", "heic-bytes")
+	unknown := writeTempFile(t, t.TempDir(), "blob.bin", "opaque")
+	raw, _, err := messageForm("message", "1001", "+441632960961", "hi", []OutboundAttachment{
+		{Name: "photo.heic", MimeType: "image/heic", Path: declared},
+		{Name: "blob.bin", MimeType: "", Path: unknown},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := io.ReadAll(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire := string(body)
+	for _, want := range []string{
+		`Content-Disposition: form-data; name="attachment"; filename="photo.heic"`,
+		"Content-Type: image/heic\r\n",
+		`Content-Disposition: form-data; name="attachment"; filename="blob.bin"`,
+		"Content-Type: application/octet-stream\r\n",
+	} {
+		if !strings.Contains(wire, want) {
+			t.Errorf("provider form missing %q", want)
+		}
+	}
 }
