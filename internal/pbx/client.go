@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -40,12 +41,12 @@ func NewClient(baseURL string) (*Client, error) {
 }
 
 // ErrDisabled is returned when no phone API is configured.
-var ErrDisabled = fmt.Errorf("phone api not configured")
+var ErrDisabled = errors.New("phone api not configured")
 
 // ErrUnauthorized is returned when the phone API rejected the presented
 // credentials (HTTP 401/403): the server-side proof that the
 // extension/password pair is not valid in the PBX directory.
-var ErrUnauthorized = fmt.Errorf("phone api rejected the credentials")
+var ErrUnauthorized = errors.New("phone api rejected the credentials")
 
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }

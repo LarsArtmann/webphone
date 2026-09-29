@@ -382,6 +382,11 @@ ports of already-pinned paths.
   converts wholesale);
   tier 3 owner-only full audit (never gates). Re-measure tiers 1+2
   monthly (next: 2026-10-22) and update the tier-2 count above.
+  `erraudit tree` draws hierarchy edges ONLY from package-level
+  declarations and dedupes same-named sentinels to one row — the 7
+  package-level sentinels across crm/pbx/store (all `errors.New`) show
+  as 4 rows at max depth 0, so a short flat tree is the DESIGN (all
+  wrapping is inline until family-adoption lands), not a tooling gap.
 - `pbx.Client` owns the timeout-bounded HTTP client; the
   `/phone-api` proxy rides `PhoneAPI.HTTPClient()`, never
   `http.DefaultClient`. Join path and query separately
