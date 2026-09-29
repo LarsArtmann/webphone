@@ -1,10 +1,15 @@
 # The heavyweight checks: the KVM-gated backup VM test and the
 # sandboxed backup/restore drill.
+# `self` is a TOP-level flake-parts module arg (not perSystem) — it is
+# declared here and reaches the perSystem body via lexical closure.
+{
+  self,
+  ...
+}:
 {
   perSystem =
     {
       pkgs,
-      self,
       self',
       ...
     }:

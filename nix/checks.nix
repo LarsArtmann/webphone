@@ -2,13 +2,18 @@
 # JS tests, the vulnix-triage fixture smoke, the Nix linters, and the
 # island no-undef gate. The module-eval check and the VM-backed tests
 # live in ./module-check.nix and ./vm-tests.nix.
+# `self` is a TOP-level flake-parts module arg (not perSystem) — it is
+# declared here and reaches the perSystem body via lexical closure.
+{
+  self,
+  ...
+}:
 {
   perSystem =
     {
       config,
       lib,
       pkgs,
-      self,
       self',
       ...
     }:

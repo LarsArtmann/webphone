@@ -234,7 +234,11 @@
             path = pkgs.writeText "backup-destdir-assertion" (
               let
                 failedAssertionsOf =
-                  extra: lib.filter (a: !a.assertion) ((lib.evalModules (moduleSet extra)).config.assertions);
+                  extra:
+                  let
+                    evaled = lib.evalModules (moduleSet extra);
+                  in
+                  lib.filter (a: !a.assertion) evaled.config.assertions;
                 bad = failedAssertionsOf {
                   backup.enable = true;
                   backup.destDir = "/tmp/webphone-backup";
