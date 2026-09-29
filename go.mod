@@ -10,19 +10,19 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.3.7
 	github.com/larsartmann/cqrs-htmx/v4 v4.12.0
-	github.com/larsartmann/go-branded-id v0.6.0
+	github.com/larsartmann/go-branded-id v0.7.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/go-health v0.4.1
 	github.com/larsartmann/go-sse v0.6.1
-	github.com/larsartmann/go-sse/ssetest v0.3.0
+	github.com/larsartmann/go-sse/ssetest v0.4.0
 	github.com/larsartmann/httputil v1.4.0
 	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.19.4
 	github.com/larsartmann/templ-components/icons v1.19.4
 	github.com/onsi/ginkgo/v2 v2.33.0
-	github.com/onsi/gomega v1.43.1
+	github.com/onsi/gomega v1.44.0
 	github.com/sixafter/nanoid v1.65.1
-	modernc.org/sqlite v1.60.0
+	modernc.org/sqlite v1.60.1
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260802141513-ef3492d7dac3 // indirect
+	github.com/google/pprof v0.0.0-20260926063103-aaccee046517 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/justinas/nosurf v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
@@ -51,12 +51,13 @@ require (
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
+	github.com/larsartmann/go-sse/sseparse v0.1.0 // indirect
 	github.com/larsartmann/templ-components/htmx v1.19.4 // indirect
 	github.com/larsartmann/templ-components/utils v1.19.4 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
-	github.com/ncruces/go-strftime v1.0.0 // indirect
+	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/samber/do/v2 v2.1.0 // indirect
