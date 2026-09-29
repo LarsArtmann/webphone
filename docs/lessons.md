@@ -116,6 +116,17 @@ and the evidence. Newest last is NOT enforced — group by topic.
   github.com/larsartmann/webphone/internal/server.buildVersion=vX.Y.Z"`
   — the ldflags variable is `internal/server.buildVersion` (see
   flake.nix's buildGoModule args); `main.displayVersion` is NOT it.
+- Artifact checks need explicit out-links (2026-09-26 near-miss): a
+  `nix build --no-link` leaves the PREVIOUS `result` symlink in place —
+  a follow-up byte check then reads a STALE artifact (the first
+  "aarch64 verification" read an x86_64 binary, e_machine=62; only the
+  ELF byte rule caught it). Always pair `nix build … -o <path>` with
+  the byte check; never trust a `result` symlink after `--no-link`.
+- The auto-commit daemon's PUSH loop stalls silently (2026-09-24/25/26:
+  ~45 min to 11 h, both repos, self-healed) — nothing distinguishes a
+  slow push from a broken one without checking. End-state contract:
+  `git ls-remote` vs HEAD at every phase boundary; the release ritual
+  now depends on pushes, so treat an unpushed HEAD as unshipped work.
 
 ## Tooling traps
 
@@ -125,7 +136,15 @@ and the evidence. Newest last is NOT enforced — group by topic.
   matched the literal heading and shipped v2.3.0/v2.4.0 with EMPTY
   GitHub release bodies. The fold-check grep passed because ITS
   pattern had shell-escaped `\[`. Found by the 2026-09-20 release
-  audit; both objects backfilled from CHANGELOG.
+  audit; both objects backfilled from CHANGELOG. The 2026-09-25
+  variant: host gawk 5.4.1 WARNs on unknown escapes and DROPS the
+  backslash, so the "escaped" pattern collapsed back into the bracket
+  class and extracted 0 lines (caught only by idling re-test; a
+  comment claiming the 2026-09-20 fix had kept it trusted for hours).
+  Final fix: no regex at all — literal `index(line, heading) == 1`
+  prefix match, identical in every awk — plus a guard refusing empty
+  notes. Two lessons: escape classes in dynamic patterns, and a
+  comment claiming a fix is not evidence the fix works.
 - Verify dependency internals at the CONSUMED tag (module cache or
   `git show v4.9.0:<path>`), never master: the 2026-09-18 audit
   over-credited v4.9.0's `ServeSSE` with a `retry:` hint that only

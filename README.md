@@ -385,6 +385,7 @@ Module options beyond `enable`/`package`/`settings`:
 | --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------- |
 | `dataDir`                         | `/var/lib/webphone`        | State directory (must stay under `/var/lib/` — asserted)                                  |
 | `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                  |
+| `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)  |
 | `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                         |
 | `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the nginx-derived default when set |
 | `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the nginx-derived default when set |

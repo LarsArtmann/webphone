@@ -19,12 +19,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   under `nix/` (packages, checks, module-check, vm-tests, apps,
   devshell, treefmt). The `webphoneVersion` binding stays in
   `flake.nix` — `scripts/release.sh` continues to sed it there.
+- Internal: the pbx client's `ErrDisabled`/`ErrUnauthorized` sentinels
+  construct via `errors.New` (matching crm/store) instead of
+  directive-less `fmt.Errorf` — zero behavior change, identity
+  preserved for `errors.Is`.
 
 ### Fixed
 
 - NixOS module: `services.webphone.backup.destDir` now gets the same
   `/var/lib/` assertion as `dataDir` (an off-`/var/lib` path used to
   render a unit systemd refuses to load, with no clear message).
+- Nix: the flake-version drift test no longer false-matches the
+  version string inside comments — the 2026-09-29 flake split added a
+  comment containing the literal `webphoneVersion = "`, tripping the
+  unanchored regex; it now anchors to the assignment.
 - NixOS module: backup oneshot orders `after = [ "webphone.service" ]`
   so a boot-time Persistent timer catch-up cannot race the database
   into existence.
