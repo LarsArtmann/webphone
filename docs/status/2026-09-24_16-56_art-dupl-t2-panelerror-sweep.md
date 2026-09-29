@@ -6,6 +6,13 @@
 
 ---
 
+
+> ARCHIVED 2026-09-29 (docs-health): fully resolved — every triage row
+> is a standing ruling in docs/dedup-registry.md (which SUPERSEDES this
+> report as the acceptance home); owner calls sit in the owner-calls
+> TODO row; the E2E re-run rides the release-tail row. Per-item
+> verdicts inline below.
+
 ## Headline
 
 **All 16 shown groups resolved: 3 extractions (one family, 8 call sites) + 13 accepts; every remaining clone re-attributed in the re-run.** The anticipated `wp-error` family (15:58 report e.6/f.15: "pre-judge whether they're accepted-unless-flagged or extraction candidates") got FLAGGED by this run (groups #4/#10/#13) and is now extracted: `views.errorBanner` owns the ONE `.wp-error` node (wire contract — selected by htmx responseHandling), `views.panelError` owns the conditional wrapper (×5 panels), `views.identityLine` owns the from-identity line (×3 composer panels, same family decision, closes f.15). The re-run at the identical flags shows the two cross-file `wp-error` groups dissolved; what remains maps line-by-line to the accepted set, the on-record "helper call sites ARE the dedup" class (now incl. the three `@panelError` call lines), and the concurrent session's spike noise.
@@ -20,22 +27,22 @@
 
 | #  | Sites                                                                 | Verdict                         | Why                                                                                                                                                  |
 | -- | --------------------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1  | settings.templ:21+23 (dt/dd window)                                   | ACCEPT                          | On prior record ×2 ("divergent value shapes"); the `settingsRow` trigger question stays the owner's (15:58 g.2) — it surfaced again here, third time |
-| 2  | layout.templ:135/137 + messages.templ:102 (`wp-nav-badge`)            | ACCEPT                          | Deliberate hand-roll per AGENTS.md templ table; conditions and count sources differ                                                                  |
-| 3  | layout.templ:152/193/198 + settings.templ:40 (T() paragraphs)         | ACCEPT                          | panelHead-internal vs call-site-adjacent paragraph noise; different keys/classes                                                                     |
-| 4  | history.templ:46 + voicemail.templ:39 (error + needsAPI)              | EXTRACT (`panelError`) + ACCEPT | needsAPI half on prior record; error half → the new wrapper                                                                                          |
-| 5  | vcard.go:160/164 + i18n_test.go:78 (`i++`/`continue`)                 | ACCEPT                          | Loop-skip idiom; the two vcard branches handle different escapes                                                                                     |
-| 6  | contacts.templ:58 + messages.templ:98/276                             | ACCEPT                          | Coincidental closing-`</span>` display fragments                                                                                                     |
-| 7  | idempotency.go:44/54                                                  | ACCEPT                          | On record with its in-code rationale (`idempotency.go:39`) — verified at the site, not re-litigated                                                  |
-| 8  | fax.templ:40 + messages.templ:233 (`wp-attach`)                       | ACCEPT                          | One empty dropzone div per form; island JS wiring differs per form                                                                                   |
-| 9  | messages.templ:143/235 (`wp-segcount`)                                | ACCEPT                          | On record: a component call is the same length                                                                                                       |
-| 10 | messages.templ:176/179 (error + selfNotice)                           | EXTRACT (`panelError`) + ACCEPT | error half → wrapper; selfNotice is a distinct one-off                                                                                               |
-| 11 | actions.go:231 + contacts_api.go:129 (`contactSaveFailed(w); return`) | ACCEPT                          | Helper call sites ARE the dedup (on record)                                                                                                          |
-| 12 | contacts.templ:45 + history.templ:53 (`wp-empty`)                     | ACCEPT                          | Deliberate hand-roll; different conditions/keys                                                                                                      |
-| 13 | fax.templ:20 + messages.templ:31 (`@panelHead` + error, MEDIUM)       | EXTRACT (`panelError`)          | The flagship: the conditional error banner flagged cross-file at MEDIUM                                                                              |
-| 14 | phone.templ:43/72 (`data-i18n` spans)                                 | ACCEPT                          | Island DOM contract, ported verbatim — untouchable                                                                                                   |
-| 15 | history.templ:68 + voicemail.templ:72 (row heads)                     | ACCEPT                          | Different content expressions; an abstraction would take more params than lines                                                                      |
-| 16 | contacts.templ:55/71 (shared vs personal rows)                        | ACCEPT                          | Different domain rules: mutable personal (delete affordance) vs read-only shared (tagged); avatar pair already on record                             |
+~~| 1  | settings.templ:21+23 (dt/dd window)                                   | ACCEPT                          | On prior record ×2 ("divergent value shapes"); the `settingsRow` trigger question stays the owner's (15:58 g.2) — it surfaced again here, third time |~~ ruling ACCEPT — standing ruling in docs/dedup-registry.md
+~~| 2  | layout.templ:135/137 + messages.templ:102 (`wp-nav-badge`)            | ACCEPT                          | Deliberate hand-roll per AGENTS.md templ table; conditions and count sources differ                                                                  |~~ ruling ACCEPT — standing ruling (deliberate hand-roll)
+~~| 3  | layout.templ:152/193/198 + settings.templ:40 (T() paragraphs)         | ACCEPT                          | panelHead-internal vs call-site-adjacent paragraph noise; different keys/classes                                                                     |~~ ruling ACCEPT — standing ruling
+~~| 4  | history.templ:46 + voicemail.templ:39 (error + needsAPI)              | EXTRACT (`panelError`) + ACCEPT | needsAPI half on prior record; error half → the new wrapper                                                                                          |~~ ruling EXTRACT (panelError) + ACCEPT — done (extracted this sweep; registry row)
+~~| 5  | vcard.go:160/164 + i18n_test.go:78 (`i++`/`continue`)                 | ACCEPT                          | Loop-skip idiom; the two vcard branches handle different escapes                                                                                     |~~ ruling ACCEPT — standing ruling
+~~| 6  | contacts.templ:58 + messages.templ:98/276                             | ACCEPT                          | Coincidental closing-`</span>` display fragments                                                                                                     |~~ ruling ACCEPT — standing ruling
+~~| 7  | idempotency.go:44/54                                                  | ACCEPT                          | On record with its in-code rationale (`idempotency.go:39`) — verified at the site, not re-litigated                                                  |~~ ruling ACCEPT — standing ruling (in-code rationale verified)
+~~| 8  | fax.templ:40 + messages.templ:233 (`wp-attach`)                       | ACCEPT                          | One empty dropzone div per form; island JS wiring differs per form                                                                                   |~~ ruling ACCEPT — standing ruling
+~~| 9  | messages.templ:143/235 (`wp-segcount`)                                | ACCEPT                          | On record: a component call is the same length                                                                                                       |~~ ruling ACCEPT — standing ruling
+~~| 10 | messages.templ:176/179 (error + selfNotice)                           | EXTRACT (`panelError`) + ACCEPT | error half → wrapper; selfNotice is a distinct one-off                                                                                               |~~ ruling EXTRACT (panelError) + ACCEPT — done (registry row)
+~~| 11 | actions.go:231 + contacts_api.go:129 (`contactSaveFailed(w); return`) | ACCEPT                          | Helper call sites ARE the dedup (on record)                                                                                                          |~~ ruling ACCEPT — standing ruling
+~~| 12 | contacts.templ:45 + history.templ:53 (`wp-empty`)                     | ACCEPT                          | Deliberate hand-roll; different conditions/keys                                                                                                      |~~ ruling ACCEPT — standing ruling
+~~| 13 | fax.templ:20 + messages.templ:31 (`@panelHead` + error, MEDIUM)       | EXTRACT (`panelError`)          | The flagship: the conditional error banner flagged cross-file at MEDIUM                                                                              |~~ ruling EXTRACT (`panelError`) — done (the flagship; registry row)
+~~| 14 | phone.templ:43/72 (`data-i18n` spans)                                 | ACCEPT                          | Island DOM contract, ported verbatim — untouchable                                                                                                   |~~ ruling ACCEPT — standing ruling (untouchable)
+~~| 15 | history.templ:68 + voicemail.templ:72 (row heads)                     | ACCEPT                          | Different content expressions; an abstraction would take more params than lines                                                                      |~~ ruling ACCEPT — standing ruling
+~~| 16 | contacts.templ:55/71 (shared vs personal rows)                        | ACCEPT                          | Different domain rules: mutable personal (delete affordance) vs read-only shared (tagged); avatar pair already on record                             |~~ ruling ACCEPT — standing ruling
 
 Plus the unflagged family pre-judgment the 15:58 report asked for: **`wp-identity` ×3 extracted** (`identityLine`) — same optional-prologue-line shape, shared `identity.from` key, extraction strictly shortens all three sites; **fax.templ:76 `wp-error` span deliberately NOT folded in** — different element and context (per-job inline status inside a muted row, not a panel-level banner).
 
@@ -61,9 +68,9 @@ Instrument mechanics for the render diff (reusable): partials only — the shell
 
 ## d) Still open (owner)
 
-1. Baseline ratification `-t 3` vs `-t 2` (15:58 f.4) — this run again shows `-t 2` yielding ~16 mostly-idiom groups vs the on-record `-t 3` trio.
-2. `settingsRow` trigger (15:58 g.2) — surfaced a third time (group #1).
-3. Stack browser E2E timing (15:58 g.3) — served markup structure changed again (panel prologues now route through components; ids/classes/strings intact, render-diff byte-proof in hand).
+~~1. Baseline ratification `-t 3` vs `-t 2` (15:58 f.4) — this run again shows `-t 2` yielding ~16 mostly-idiom groups vs the on-record `-t 3` trio.~~ routed — owner-calls row (FIFTH ask)
+~~2. `settingsRow` trigger (15:58 g.2) — surfaced a third time (group #1).~~ routed — owner-calls row (FOURTH surfacing)
+~~3. Stack browser E2E timing (15:58 g.3) — served markup structure changed again (panel prologues now route through components; ids/classes/strings intact, render-diff byte-proof in hand).~~ routed — release-tail row (rides the tag gate)
 
 ---
 

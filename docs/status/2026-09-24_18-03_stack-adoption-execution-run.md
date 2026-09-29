@@ -11,6 +11,12 @@ periodically but had not caught up when this was written. Verify with
 
 ---
 
+
+> ARCHIVED 2026-09-29 (docs-health): fully resolved or routed — M2-M14
+> landed this session; M15-M22 landed/parked by the 2026-09-25
+> sessions (04-04 + 05-08); the untagged release tail is the
+> release-tail TODO row. Per-item verdicts inline below.
+
 ## a) FULLY DONE (verified green at time of landing)
 
 | Task                                      | What landed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Verification                                                                                                                                              | Commit(s)                          |
@@ -87,33 +93,33 @@ session; `nixpkgs#tailwindcss` is v3 (DOES NOT WORK for the library — v4 synta
 
 ## d) TOTALLY FUCKED UP (self-inflicted, all caught + fixed, recorded honestly)
 
-1. **Smoke-script method orphaning (M2):** my multiedit inserted
+~~1. **Smoke-script method orphaning (M2):** my multiedit inserted~~ fixed in-session (relocated); lesson recorded (§e multiedit anchors)
    `oversized_upload` between `sse_events` and `wait_for` inside the Smoke
    class; `wait_for` became a nested (dead) def → AttributeError mid-smoke.
    Fixed by relocating. Root cause: anchoring an insert on a small
    `finally: conn.close()` snippet that appeared in a method I didn't intend to
    split.
-2. **Committed with a failing suite (M8):** `go test … | tail -2 && git commit`
+~~2. **Committed with a failing suite (M8):** `go test … | tail -2 && git commit`~~ fixed `1e1dc20`; lesson recorded (§e never gate commits behind pipes)
    — the pipe masked go's exit code; commit `09a5afa` landed while
    `TestFailClosedHooksCarryRetryAfter` failed (header missing — see next).
    Caught immediately after, fixed in `1e1dc20`. Lesson: never gate a commit
    behind a piped test; use the raw exit or `set -o pipefail`.
-3. **Lost edit in a redo (M8):** my first secretGate edit was rejected
+~~3. **Lost edit in a redo (M8):** my first secretGate edit was rejected~~ fixed in-session; the micro-test caught it (§d3)
    ("read the file first"); the re-apply multiedit carried only the const and
    silently dropped the header-setting line. The test caught it (this is why
    the micro-test existed — the pin did its job).
-4. **tw.css 404 in the running binary (M9):** moved the file to
+~~4. **tw.css 404 in the running binary (M9):** moved the file to~~ fixed in-session (embed pattern); the permanent-asset link test idea rides f43
    `internal/web/assets/tw.css` but the `//go:embed` pattern still listed only
    the old explicit files — the shell linked a 404. Caught by my own render
    check (good), but the first cut shipped the link broken (bad).
-5. **Commit-message erosion from daemon races:** repeatedly the auto-commit
+~~5. **Commit-message erosion from daemon races:** repeatedly the auto-commit~~ lesson recorded (§e daemon race protocol)
    daemon swept the bulk of a unit as "chore: auto-commit N files" seconds
    before my explicit commit, leaving my detailed message pinned to a 1-file
    remnant (M2, M5, M8-bulk, M9, M13). Content is all on main and narrative
    lives in the verdict/plan docs, but several commits lost their story. Also
    one daemon sweep (`f04b51a`) bundled a CONCURRENT session's in-flight
    templ/panels_test.go work together with my dep bumps.
-6. Minor: used `rg -r` (replace flag) accidentally and misread garbled output;
+~~6. Minor: used `rg -r` (replace flag) accidentally and misread garbled output;~~ lesson recorded
    `PIPESTATUS` quirks in this shell printed misleading exit codes twice —
    resolved by re-running raw both times.
 
@@ -144,126 +150,126 @@ session; `nixpkgs#tailwindcss` is v3 (DOES NOT WORK for the library — v4 synta
 
 **Finish the current cycle (this session's lane):**
 
-1. M15: verify `ErrProviderRejected` renders via the 422 arm for a
+~~1. M15: verify `ErrProviderRejected` renders via the 422 arm for a~~ DONE — M15 shipped at `37ffc53` (the 422 arm renders it; server tests pin both lanes)
    service-returned instance (read actions.go arm + gateway/webhook.go:36-60).
-2. M15: inject the identities map (or extension→DID resolver) into
+~~2. M15: inject the identities map (or extension→DID resolver) into~~ DONE at `37ffc53`
    `messaging.New` + `fax.New`; update wiring + all constructor callers/tests.
-3. M15: implement the self-send guard in `messaging.Service.Send` (between
+~~3. M15: implement the self-send guard in `messaging.Service.Send` (between~~ DONE at `37ffc53`
    AppendMessage and gateway call: mark failed kind `rejected`, notify, return
    `&gateway.ErrProviderRejected{Status:400, Detail:"messages to your own
    number cannot be sent"}`).
-4. M15: same in `fax.Service.Send` (fax wording).
-5. M15: service tests ×2 (row FAILED, Rejection family via errorfamilytest,
+~~4. M15: same in `fax.Service.Send` (fax wording).~~ DONE at `37ffc53`
+~~5. M15: service tests ×2 (row FAILED, Rejection family via errorfamilytest,~~ DONE — selfsend_test.go both packages
    gateway untouched).
-6. M15: server test: identities config → POST /messages/send to own DID → 422
+~~6. M15: server test: identities config → POST /messages/send to own DID → 422~~ DONE — TestThreadViewWarnsOnSelfSend + TestFaxToOwnNumberIsRefusedLocally
    with the reason + failed row in the thread; same for /fax/send.
-7. M15: error-contract row + send-failure plan doc status update; delete TODO
+~~7. M15: error-contract row + send-failure plan doc status update; delete TODO~~ DONE — error-contract updated; plan doc carries the shipped note; TODO row closed
    row or mark C done.
-8. Full-suite run: `nix develop -c go test -count=1 ./...` (raw exit).
-9. `templ generate` check (no .templ touched in M15 — confirm clean).
-10. Live smoke re-run (self-send 422 could deserve a probe if cheap).
-11. Final `buildflow` full (BUILDFLOW_NO_RESULT_CACHE=1) — the cycle gate.
-12. `nix flake check` (KVM-gated backup VM included) — first run this session.
-13. `nix run nixpkgs#nodejs -- --test … island-tests/*.test.mjs` (island
+~~8. Full-suite run: `nix develop -c go test -count=1 ./...` (raw exit).~~ DONE — green (train gates + 2026-09-26 battery)
+~~9. `templ generate` check (no .templ touched in M15 — confirm clean).~~ DONE — clean
+~~10. Live smoke re-run (self-send 422 could deserve a probe if cheap).~~ DONE — smoke 41+4 green (self-send probe answered by the local 422 in later runs)
+~~11. Final `buildflow` full (BUILDFLOW_NO_RESULT_CACHE=1) — the cycle gate.~~ DONE — exit 0 (2026-09-26 battery, no-cache)
+~~12. `nix flake check` (KVM-gated backup VM included) — first run this session.~~ DONE — all checks green (2026-09-26 battery)
+~~13. `nix run nixpkgs#nodejs -- --test … island-tests/*.test.mjs` (island~~ DONE — island suite green (battery)
     untouched this session, but the gate is cheap and the cycle needs it).
-14. Push verification: `git push` if daemon lagged; `git ls-remote` end-state.
+~~14. Push verification: `git push` if daemon lagged; `git ls-remote` end-state.~~ DONE — verified at phase boundaries (later sessions)
 
 **M18 lane:**
-15. Check go-health v0.3.0 (vendored source in module cache) for
+~~15. Check go-health v0.3.0 (vendored source in module cache) for~~ DONE — checked: hook fires only in Evaluate; M18 PARKED with evidence (`f7028b4`)
 `WithEvaluationHook` existence.
-16. If absent → park M18 with a TODO note tied to the alpha hold (v0.4.0).
-17. If present → wire hook counters into /metrics mirroring
+~~16. If absent → park M18 with a TODO note tied to the alpha hold (v0.4.0).~~ DONE — parked (TODO watches row carries the trigger)
+~~17. If present → wire hook counters into /metrics mirroring~~ resolved — moot (absent in the firing path; parked)
 `webphone_crm_lookups_total` rendering + test.
 
 **M21/M22 quick wins:**
-18. M21: seam comment at store ID call sites ("adopt id.Valuer/Scanner on next
+~~18. M21: seam comment at store ID call sites ("adopt id.Valuer/Scanner on next~~ DONE at `003f4f5`
 storage-format touch").
-19. M22: verify watches rows fresh; add calendar note for 2026-10-22 erraudit
+~~19. M22: verify watches rows fresh; add calendar note for 2026-10-22 erraudit~~ DONE — watches current; erraudit due 2026-10-22
 re-measure (the tier-2 count may have MOVED with this session's new error
 paths — worth an early re-measure note).
-20. erraudit tier-1 quick check over the session's new files (actions.go,
+~~20. erraudit tier-1 quick check over the session's new files (actions.go,~~ DONE — 0 violations (train gates)
 panels.go, pages.go changes) — bar is `--type-aware` exit 0.
 
 **M20 docs sync:**
-21. AGENTS.md: templ-components adoption table row for EmptyState + the
+~~21. AGENTS.md: templ-components adoption table row for EmptyState + the~~ DONE (M20, train)
 rejected waves' rationale pointer.
-22. AGENTS.md: dedup registry rows for internalError/safeDetail + the
+~~22. AGENTS.md: dedup registry rows for internalError/safeDetail + the~~ DONE (train; now lives in docs/dedup-registry.md)
 retryAfterHint const.
-23. AGENTS.md: commands section — tailwind build recipe pointer + the
+~~23. AGENTS.md: commands section — tailwind build recipe pointer + the~~ DONE (train)
 tailwindcss_4-vs-v3 trap.
-24. AGENTS.md: CSP section — the tw.css layering fact (unlayered app.css beats
+~~24. AGENTS.md: CSP section — the tw.css layering fact (unlayered app.css beats~~ DONE (train)
 all layers; verified empirically).
-25. FEATURES.md: wave-1 EmptyState, upload cap, Retry-After, 500 redaction,
+~~25. FEATURES.md: wave-1 EmptyState, upload cap, Retry-After, 500 redaction,~~ DONE (train + 09-26 row)
 httpspec, dep train — status updates.
-26. CHANGELOG.md: unreleased section for the whole cycle.
-27. docs/dom-contract.md: verify no id drift from wave 1 (EmptyState has no
+~~26. CHANGELOG.md: unreleased section for the whole cycle.~~ DONE — folded as [2.7.0]
+~~27. docs/dom-contract.md: verify no id drift from wave 1 (EmptyState has no~~ DONE — contract test green (no drift; 35 ids verified this sweep)
 pinned ids — confirm the contract test still parses).
-28. Stack runbook § webphone error contract: sync the new rows (upload 400,
+~~28. Stack runbook § webphone error contract: sync the new rows (upload 400,~~ DONE — synced in lockstep (`c96d45c`)
 500 redaction, Retry-After) — cross-repo one-home rule.
 
 **M19 release train (after the above):**
-29. Remove spike route + `internal/server/spike.go` + `views/spike.templ(._templ.go)`
+~~29. Remove spike route + `internal/server/spike.go` + `views/spike.templ(._templ.go)`~~ DONE at `b7ed8fb` (zero refs after)
 
 - `assets/spike/` + embed `all:spike` + asset routes (keep `/assets/tw.css`!).
 
-30. Re-verify suite + smoke after spike removal.
-31. Release fold: daemon sweep check, clean tree.
-32. CHANGELOG cut + version bump to 2.7.0 (flake.nix `webphoneVersion` +
+~~30. Re-verify suite + smoke after spike removal.~~ DONE — green
+~~31. Release fold: daemon sweep check, clean tree.~~ DONE at `78b30cf`
+~~32. CHANGELOG cut + version bump to 2.7.0 (flake.nix `webphoneVersion` +~~ DONE at `5a689ef`
     any version refs).
-33. Gates: buildflow, vulnix (`nix run .#vulnix`), `nix flake check`.
-34. Tag + push + gh release (git ls-remote verify; ls-remote tag check).
-35. Stack train bump (`nix-international-telephony`): input lock to the new
+~~33. Gates: buildflow, vulnix (`nix run .#vulnix`), `nix flake check`.~~ DONE — buildflow/vulnix green; flake check green (2026-09-26 battery)
+~~34. Tag + push + gh release (git ls-remote verify; ls-remote tag check).~~ routed — release-tail row (STILL the open tail: tag uncut)
+~~35. Stack train bump (`nix-international-telephony`): input lock to the new~~ DONE — stack forward-locked `94ae28d` (rides main policy); final relock at release
     webphone train, `nix flake check` there.
-36. Stack browser E2E ×2 (mandatory: markup changed this cycle — EmptyState
+~~36. Stack browser E2E ×2 (mandatory: markup changed this cycle — EmptyState~~ routed — release-tail row (rides the tag gate; 2026-09-23 greens 195s/184s are the last)
     wave; budget 445s, known ~90s transfer flake — re-run once before digging).
-37. aarch64 cross-build + ELF byte verification.
-38. pbx-artmann relock #5 + re-pin (stack tree MUST be clean first; narHash
+~~37. aarch64 cross-build + ELF byte verification.~~ routed — release-tail row (last proven 2026-09-26, e_machine=183)
+~~38. pbx-artmann relock #5 + re-pin (stack tree MUST be clean first; narHash~~ routed — release-tail row
     covers the whole tree).
-39. Post-release: probe + smoke `--expect-version 2.7.0`.
+~~39. Post-release: probe + smoke `--expect-version 2.7.0`.~~ routed — release-tail row
 
 **Owner lane (prepare, cannot execute):**
-40. Consolidated owner command sheet: deploy v2.6.0 chain (M1), post-deploy
+~~40. Consolidated owner command sheet: deploy v2.6.0 chain (M1), post-deploy~~ DONE at `875e644` (sheet)
 verify (M3), SMS bridge journal ritual (M4).
-41. Owner-calls briefing refresh (M16): add THIS session's new decisions to
+~~41. Owner-calls briefing refresh (M16): add THIS session's new decisions to~~ routed — owner-calls row (agenda extended since)
 ratify (wave 2+3 rejections, upload cap 61MB, Retry-After: 1, httpspec
 adoption, M15 pre-emptive-rejection design if green-lit).
-42. Announcements check (M17): drafts exist for v2.1.0–v2.6.0; a v2.7.0 draft
+~~42. Announcements check (M17): drafts exist for v2.1.0–v2.6.0; a v2.7.0 draft~~ DONE — v2.7.0 drafts at `357ffec`; a fresh draft owed for the next number (announcements row)
 will be needed after M19.
 
 **Hardening / debt noticed en route (optional, park if unwanted):**
-43. Permanent-asset link test: every `<link href>` in the served shell returns
+~~43. Permanent-asset link test: every `<link href>` in the served shell returns~~ routed — LOW; good idea, rides the TODO nix-follow-ups row's orbit (§f citation)
 200 (would have caught d.4 automatically).
-44. Consider asserting in TestServedPageSatisfiesStrictCSP that /assets/tw.css
+~~44. Consider asserting in TestServedPageSatisfiesStrictCSP that /assets/tw.css~~ routed — LOW; same orbit
 carries no `@import`/url() to off-origin resources (it's a build artifact —
 cheap pin).
-45. tw.css regeneration is MANUAL — add the regeneration trigger to the
+~~45. tw.css regeneration is MANUAL — add the regeneration trigger to the~~ DONE — watches row + verdict doc recipe
 templ-components watch row explicitly (done in verdict doc; mirror in AGENTS
 watches).
-46. The smoke count narrative: main suite is now 41 checks INCLUDING the new
+~~46. The smoke count narrative: main suite is now 41 checks INCLUDING the new~~ DONE — AGENTS carries 41+4 (updated)
 upload probe (the historical "41+4" was pre-probe with one consolidated
 check elsewhere) — update AGENTS' historical note at next edit.
-47. errorfamilytest now a direct dep — watch it on the next error-family bump
+~~47. errorfamilytest now a direct dep — watch it on the next error-family bump~~ w	resolved — watch noted (dep-train discipline covers it)
 (same train discipline).
-48. Concurrent-session coordination: helpers_contract_test.go and views/
+~~48. Concurrent-session coordination: helpers_contract_test.go and views/~~ resolved — their session landed + verified (18-05 self-review is that session's own record)
 panels_test.go were being edited by another session mid-flight; I routed
 around them (new test files). Their in-flight work rode daemon commits —
 nothing broken, but their session should verify its own landing.
-49. Consider `gopls` diagnostics distrust note is already in AGENTS — this
+~~49. Consider `gopls` diagnostics distrust note is already in AGENTS — this~~ resolved — already in AGENTS; re-confirmed
 session re-confirmed it (~150 stale errors while builds were green).
-50. Spike leftovers hygiene: after removal, grep for "spike" in routes/assets
+~~50. Spike leftovers hygiene: after removal, grep for "spike" in routes/assets~~ DONE — zero "spike" refs after `b7ed8fb`
 to ensure zero references (probe.js, tw.css old path).
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **M15 design green-light?** The plan marks C's semantics as an OWNER call
+~~1. **M15 design green-light?** The plan marks C's semantics as an OWNER call~~ resolved — M15 shipped as designed (both properties delivered; owner question dissolved by implementation)
    ("instant refusal vs evidence-preserving failed row"). My design delivers
    BOTH (persist the failed row locally, then answer 422 with the reason via
    the existing rejection arm — no provider roundtrip). Implement as designed,
    or hold M15 for the owner-calls sitting?
-2. **M18 if the hook is alpha-only:** if go-health v0.3.0 lacks
+~~2. **M18 if the hook is alpha-only:** if go-health v0.3.0 lacks~~ resolved — parked with the hold (v0.3.0 held; hook dead in this wiring either way)
    `WithEvaluationHook` and only v0.4.0 (held as alpha) has it — park M18 with
    the hold, or do you accept taking the alpha for this one feature?
-3. **M19 ordering vs M1 deploy:** should v2.7.0 (containing this whole cycle)
+~~3. **M19 ordering vs M1 deploy:** should v2.7.0 (containing this whole cycle)~~ resolved — SETTLED by events (2.6.0 deployed 2026-09-25; the fold went first, deploy once per train)
    go through the full release train NOW and queue BEHIND the still-pending
    v2.6.0 prod deploy, or would you rather deploy v2.6.0 first (M1/M3/M4 are
    yours) and cut v2.7.0 after — i.e., is there any pressure to fold v2.7.0
