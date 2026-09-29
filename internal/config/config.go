@@ -237,9 +237,6 @@ func validate(cfg Config) error {
 	if cfg.Gateway.Mode == GatewayWebhook && cfg.Gateway.WebhookURL == "" {
 		return fmt.Errorf("gateway.webhook_url is required in webhook mode")
 	}
-	if cfg.Gateway.WebhookSecret != "" && cfg.Gateway.WebhookSecretFile != "" {
-		return errGatewaySecretBothSources
-	}
 	if cfg.Addr == "" {
 		return fmt.Errorf("addr is empty")
 	}
