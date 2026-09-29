@@ -6,26 +6,33 @@ sweep log. Evidence hashes live inline; the plan's Outcomes/Verdict
 section (`docs/planning/2026-09-23_04-29_SUPERB-pareto-execution-plan.md`)
 is the cross-session record.
 
+
+> ARCHIVED 2026-09-29 (docs-health): fully resolved or routed — the
+> v2.6.0 tail closed (E2E ×2, gh release, relock #4 + re-pin) and the
+> chain deployed 2026-09-25; session-4 executed the executable §f
+> items; owner calls consolidated in the owner-calls TODO row.
+> Per-item verdicts inline below.
+
 ## a) FULLY DONE (verified, end states checked)
 
-1. **Docs-harvest push + crm push** — webphone `6a43a08`→`bd77669`
+~~1. **Docs-harvest push + crm push** — webphone `6a43a08`→`bd77669`~~ done — `bd77669`/crm `643df16`, ls-remote verified
    (carried the concurrent session's MMS composer fix + go-etag
    bump; daemon-sanctioned), crm →`643df16`. origin==HEAD verified
    by ls-remote, not push logs.
-2. **C5 relock #4** to stack `be876ae` — rev swap, flake update,
+~~2. **C5 relock #4** to stack `be876ae` — rev swap, flake update,~~ done — `438c348`/`8104448`, both toplevels green
    lock-drift-probe ALL-OK, BOTH toplevels (x86_64 + cross
    aarch64) green, webphone ExecStart moved
    `lq5fj…-2.5.0`→`7bm0h…-2.6.0`. Pushed (`438c348`, daemon-swept
    `8104448` — folding rejected: it mixed a foreign session's doc).
-3. **C5b re-pin** to the verified stack rev `271f5ef` — probe green
+~~3. **C5b re-pin** to the verified stack rev `271f5ef` — probe green~~ r	done at `20b2a18` — probe + toplevels green
    both times, toplevels green (webphone derivation byte-identical:
    both stack revs lock train `7197f1c`), narrative commit
    `20b2a18` pushed.
-4. **C1a/C1b stack browser E2E ×2 GREEN** — 195s (plain) + 184s
+~~4. **C1a/C1b stack browser E2E ×2 GREEN** — 195s (plain) + 184s~~ done — 195s + 184s at `271f5ef`
    (`--rebuild`) at `271f5ef`, budget 445s untouched. REGISTRATION,
    DTMF, ICE, transfer, reconnect, contacts, logout-guard all
    green; `E2E-OK`.
-5. **FOUC E2E harness repaired** (4 stack commits `784126c`→
+~~5. **FOUC E2E harness repaired** (4 stack commits `784126c`→~~ s	done — 4 stack commits; green proof
    `9fb0539`→`f42cf9d`→`271f5ef`) with hard evidence at each step:
    soft reloads dodge URL blocks via cache (→ `Page.reload
    {ignoreCache}`); chromedriver executes nothing mid-navigation
@@ -33,59 +40,59 @@ is the cross-session record.
    Green proof: `THEME-PAIR1-TICKS rafUnthemed=106 … final=dark`,
    pair 2 zero unthemed ticks. Permanent failure-path diagnostics
    added (the PAIR1-DIAG/TIMELINE dump stays in the script).
-6. **C8 `nix flake check` GREEN** (24s) incl. the KVM backup-VM
+~~6. **C8 `nix flake check` GREEN** (24s) incl. the KVM backup-VM~~ done — incl. KVM backup VM (post-repair)
    test — after catching and repairing a REAL breakage (see §d).
-7. **C1d v2.6.0 GitHub release PUBLISHED** — tag `807ca0c`, full
+~~7. **C1d v2.6.0 GitHub release PUBLISHED** — tag `807ca0c`, full~~ done — tag `807ca0c`, 14864-char body
    CHANGELOG body (14864 chars), verified via `gh release view`.
-8. **C1e release smoke GREEN** — 41 + 4 restart checks, 0 failed,
+~~8. **C1e release smoke GREEN** — 41 + 4 restart checks, 0 failed,~~ done — 41+4, /version v2.6.0
    `/version` exactly `v2.6.0`, no stray process.
-9. **C24 close-out** — plan Verdict filled ONCE + Outcomes section;
+~~9. **C24 close-out** — plan Verdict filled ONCE + Outcomes section;~~ f	done — TODO swept; AGENTS corrected `959b825`
    TODO_LIST: TAIL row + relock row deleted with evidence, deploy/
    probes/watches rows refreshed; owner summary written
    (`docs/status/2026-09-23_21-15_pareto-cycle-close.md`); AGENTS.md
    chain facts corrected (`959b825`); closing ls-remote sweep: all
    four repos origin==HEAD, trees clean.
-10. **C6 push-reconcile** held at every phase boundary all session.
-11. **C1c (prior session) re-confirmed as complete** in the todo
+~~10. **C6 push-reconcile** held at every phase boundary all session.~~ done
+~~11. **C1c (prior session) re-confirmed as complete** in the todo~~ a	done — ELF `b7 00` stands (re-proven 2026-09-24 + 09-26)
     recreation — aarch64 ELF `b7 00` evidence stands (but see §b/§f
     for the post-vendorHash caveat).
 
 ## b) PARTIALLY DONE
 
-1. **E2E flake posture** — two green runs secured, but runs 10–11
+~~1. **E2E flake posture** — two green runs secured, but runs 10–11~~ r	resolved — two greens secured; the 2/6 flake class documented in the runbook heuristic; stack-side hardening = its repo's fuel
    flaked at DIFFERENT post-drill steps (CONTACTS-ROUNDTRIP,
    INCOMING-SHOWN) at load ~2; the third attempt passed. The
    post-reconnect recovery window (dial vs callee re-REGISTER race,
    already mitigated in-script) remains fragile: 2 flakes / 6 runs.
-2. **g3 E2E-budget question** — answered everywhere EXCEPT
+~~2. **g3 E2E-budget question** — answered everywhere EXCEPT~~ r	resolved — struck in ROADMAP by session 4 (195s/184s evidence)
    ROADMAP.md's Open-questions list (answer: ~15s scenario cost,
    no bump; noted in TODO watches row, plan, owner summary — the
    ROADMAP strike is left for the owner-calls harvest).
-3. **FOUC harness knowledge** — the measurement-model lessons live
+~~3. **FOUC harness knowledge** — the measurement-model lessons live~~ r	resolved — lessons.md carries the FOUC arc; stack runbook § measurement model landed (`9070323`)
    in commit messages + webphone's AGENTS pointer; NOT yet in the
    stack repo's own docs (ops-runbook/AGENTS) nor in webphone
    `docs/lessons.md` (the designated war-story home).
 
 ## c) NOT STARTED (owner-terminal by design — routed, not executed)
 
-1. C2 prod deploy (`nixos-rebuild test → switch`).
-2. C3 post-deploy probes (smoke `--base` + rejection-banner with a
+~~1. C2 prod deploy (`nixos-rebuild test → switch`).~~ routed — v2.6.0 chain deployed 2026-09-25 (probed); the next chain rides the release-tail row
+~~2. C3 post-deploy probes (smoke `--base` + rejection-banner with a~~ r	routed — prod smoke green 2026-09-26; the rejection-banner live check rides the SMS-bridge row
    real extension session).
-3. C4 owner-calls batch (~24 decisions; briefing ready; g1/g3 now
+~~3. C4 owner-calls batch (~24 decisions; briefing ready; g1/g3 now~~ r	routed — owner-calls TODO row
    evidence-closable, g2 still open).
-4. C7 SMS-lane root cause (telnyx-webhooks journalctl).
-5. C21 announcement posting (drafts ready; owner picks channels).
-6. C23 DOMAIN_LANGUAGE owner decision.
+~~4. C7 SMS-lane root cause (telnyx-webhooks journalctl).~~ r	routed — SMS-bridge TODO row
+~~5. C21 announcement posting (drafts ready; owner picks channels).~~ r	routed — announcements TODO row
+~~6. C23 DOMAIN_LANGUAGE owner decision.~~ resolved — drafted `c5e92d9` with the ratification banner (the owner yes/no stands in the owner-calls orbit)
 
 ## d) TOTALLY FUCKED UP (caught; impact assessed honestly)
 
-1. **I fabricated a full git rev.** Writing the re-pin, I typed
+~~1. **I fabricated a full git rev.** Writing the re-pin, I typed~~ lesson recorded — rev-parse FIRST (§e3)
    `271f5ef064a24e44a462…` — a GUESSED hash tail. Caught it on the
    next breath via `rev-parse` and corrected before any lock
    update. Zero impact, but it is the exact hallucination class
    this workflow forbids. Rule reinforced: rev-parse FIRST, paste
    SECOND, always.
-2. **My pre-push "sanity build" gave false confidence for the dep
+~~2. **My pre-push "sanity build" gave false confidence for the dep~~ f	lesson recorded — dep changes gate on `nix build` (§e2; the vendorHash same-breath rule)
    bump.** Before pushing the go-etag train I ran
    `nix develop -c go build ./...` — green, because dev-mode Go
    fetches from the proxy. The NIX package was broken (vendorHash
@@ -94,7 +101,7 @@ is the cross-session record.
    `nix build .#webphone`, not a dev-shell go build. My push
    published the broken state (the daemon would have anyway — but
    I _verified_ the wrong thing and called it BUILD_OK).
-3. **Two theory-driven FOUC fixes before hard evidence.** Run 2
+~~3. **Two theory-driven FOUC fixes before hard evidence.** Run 2~~ f	lesson recorded — instrument before theorizing (§e1; lessons.md)
    (`setCacheDisabled`) and run 4 (`Page.reload{ignoreCache}`) were
    plausible-theory commits; each cost a ~6-min VM run. Run 3's
    instrumentation was the step that actually moved the diagnosis —
@@ -103,7 +110,7 @@ is the cross-session record.
    unreliable for blocked requests) into a wrong-but-useful cache
    conclusion. Net: ~13 min of VM time + 2 stack commits that were
    superseded within the hour.
-4. **Wrong smoke invocation** — ran `--expect-version 2.6.0`
+~~4. **Wrong smoke invocation** — ran `--expect-version 2.6.0`~~ lesson recorded — the footgun is documented (TODO + AGENTS; fixed session 4)
    without `--bin`, following the prior session's summary verbatim
    instead of reading the flag's contract first. The "failure" was
    my invocation (bare `go build` reports Go's pseudo-version).
@@ -111,30 +118,30 @@ is the cross-session record.
 
 ## e) WHAT WE SHOULD IMPROVE (process, from this session's scars)
 
-1. **Instrument before theorizing** — every E2E/debugging failure
+~~1. **Instrument before theorizing** — every E2E/debugging failure~~ rule recorded — §e1 + lessons.md
    gets a diagnostics dump in the FIRST follow-up, not the third.
    The PAIR1-DIAG pattern (state timeline + document truth + server
    truth) turned an unfixable-looking flake into a 20-minute fix.
-2. **Dep-bump reflex** — any commit touching go.mod/go.sum must
+~~2. **Dep-bump reflex** — any commit touching go.mod/go.sum must~~ t	rule recorded — AGENTS post-close reminders carry it
    trigger the vendorHash roundtrip (`nix build .#webphone`) in the
    same breath; better: the auto-commit daemon runs it
    automatically on such sweeps (see §f).
-3. **Rev hygiene** — never type a rev; always `rev-parse` into the
+~~3. **Rev hygiene** — never type a rev; always `rev-parse` into the~~ rule recorded — §e3
    clipboard/edit. My near-miss argues for a lock-drift-probe
    pre-check that rejects non-existent revs before `flake update`
    (nix would have errored anyway, but the guard belongs upstream
    of the lockfile).
-4. **Old-state capture discipline** — my "old store path" eval
+~~4. **Old-state capture discipline** — my "old store path" eval~~ rule recorded — §e4
    silently auto-updated the lock (nix re-evaluates when the input
    URL changed). Correct pattern (used after catching it): measure
    old state from a `git worktree` at the pushed HEAD.
-5. **ROADMAP/TODO single-home sync** — answered questions (g3)
+~~5. **ROADMAP/TODO single-home sync** — answered questions (g3)~~ rule recorded — §e5
    should be closed in ROADMAP the moment evidence lands, not left
    for the owner-calls harvest to re-derive.
-6. **War stories belong in docs/lessons.md** — the FOUC arc is a
+~~6. **War stories belong in docs/lessons.md** — the FOUC arc is a~~ rule recorded — §e6 (done: FOUC arc landed)
    textbook lessons entry (two failure layers, both knowable);
    commit messages are not the home.
-7. **Concurrent-session push transitivity** — my phase-boundary
+~~7. **Concurrent-session push transitivity** — my phase-boundary~~ r	rule recorded — §e7 (prospective disclosure habit)
    pushes carried two foreign commits (benign, daemon-sanctioned).
    A one-line "pushed X..Y including foreign Z" habit in commit
    messages/summaries would keep the audit trail honest. (Done
@@ -164,98 +171,98 @@ codespell — all green; both repos origin==HEAD. NOT done, by design:
 
 **Owner-gated (nothing moves without these):**
 
-1. C2 deploy the chain (command in the close-out summary).
-2. C3 post-deploy probes incl. the rejection-banner check.
-3. C4 owner-calls batch — now with: g1 (force-push policy), g2
+~~1. C2 deploy the chain (command in the close-out summary).~~ resolved — v2.6.0 deployed 2026-09-25; next chain = release-tail row
+~~2. C3 post-deploy probes incl. the rejection-banner check.~~ r	routed — SMS-bridge row (the live-check residue)
+~~3. C4 owner-calls batch — now with: g1 (force-push policy), g2~~ r	routed — owner-calls TODO row
    (KVM timeout), g3 CLOSE (evidence recorded), CRM option-shape
    ratification, dep-bump→vendorHash policy, train cadence.
-4. C7 SMS-lane journalctl + fix + test SMS.
-5. C21 post announcements (v2.6.0 drafts + back-catalog).
-6. C23 DOMAIN_LANGUAGE decision.
+~~4. C7 SMS-lane journalctl + fix + test SMS.~~ r	routed — SMS-bridge TODO row
+~~5. C21 post announcements (v2.6.0 drafts + back-catalog).~~ r	routed — announcements TODO row
+~~6. C23 DOMAIN_LANGUAGE decision.~~ resolved — drafted with ratification banner
 
 **Release-train health (assistant-executable next session):**
-7. Re-run the aarch64 cross-build + ELF check on the POST-vendorHash
+~~7. Re-run the aarch64 cross-build + ELF check on the POST-vendorHash~~ DONE — re-verified 2026-09-24 (`b7 00`) and 2026-09-26 (e_machine=183)
 tree (`0a7a732`+) — C1c's evidence predates the fix; low risk,
 but the ritual is cheap.
-8. Next stack train: fold post-tag webphone main into the stack
+~~8. Next stack train: fold post-tag webphone main into the stack~~ DONE — stack forward-locked `94ae28d`; final relock rides the release tail
 lock (`bd77669` MMS fix, `e85923d`+`0a7a732` dep/vendorHash) —
 the deployed chain intentionally rides `7197f1c`; the MMS fix is
 NOT live on the deploy path yet.
-9. Auto-gate for daemon dep sweeps: `nix build .#webphone` (or a
+~~9. Auto-gate for daemon dep sweeps: `nix build .#webphone` (or a~~ r	routed — ROADMAP infra ask
 flake check) post-sweep when go.mod/go.sum changed — kills the
 broken-main window class.
-10. Smoke-script fix: auto-detect bare-`go build` binaries and warn
+~~10. Smoke-script fix: auto-detect bare-`go build` binaries and warn~~ DONE — session 4, three layers
 (or fail with a hint) when `--expect-version` is used without
 `--bin`; document `--bin` in the help text.
-11. ROADMAP: strike g3 with the 195s/184s evidence.
-12. webphone `docs/lessons.md`: the FOUC harness arc (cache-dodging
+~~11. ROADMAP: strike g3 with the 195s/184s evidence.~~ DONE — session 4
+~~12. webphone `docs/lessons.md`: the FOUC harness arc (cache-dodging~~ DONE — session 4
 blocks; chromedriver mid-navigation blindness; instrument
 first).
-13. Stack ops-runbook/AGENTS: one paragraph on the E2E measurement
+~~13. Stack ops-runbook/AGENTS: one paragraph on the E2E measurement~~ DONE — stack `9070323` (session 4)
 model (in-page recorders; why driver polling can't see
 navigation windows).
-14. release-runbook: record this session's flake precedent —
+~~14. release-runbook: record this session's flake precedent —~~ DONE — session 4 (flake heuristic refined)
 "different post-drill steps twice = re-run once more; third
 failure = dig" (it worked; the heuristic needs the new data
 point).
-15. Consider `nix flake check --all-systems` (or an explicit
+~~15. Consider `nix flake check --all-systems` (or an explicit~~ resolved — NOT-DO (runbook §8; ROADMAP records the verdict)
 aarch64 eval check) in the gate set — the current check omits
 aarch64 with a warning only.
 
 **E2E/test hardening:**
-16. Harden the post-reconnect recovery window (the 2/6 flake
+~~16. Harden the post-reconnect recovery window (the 2/6 flake~~ r	routed — stack-repo fuel
 source): longer settle, or retry the dial once on ring-timeout
 death, or reload the CALLEE (not just on wedged registration).
-17. FOUC pair 1: once stable across ~5 green runs, tighten the
+~~17. FOUC pair 1: once stable across ~5 green runs, tighten the~~ r	routed — stack-repo fuel
 assertion to `rafUnthemed > 0` strictly (drop the interval
 backstop from the pass condition; keep it as diagnostics).
-18. Add FOUC pair 3: auto/system theme (no stored wp-theme) — the
+~~18. Add FOUC pair 3: auto/system theme (no stored wp-theme) — the~~ r	routed — stack-repo fuel
 preload's no-op path is untested.
-19. Stack check that py_compiles browser-e2e.py on eval (a syntax
+~~19. Stack check that py_compiles browser-e2e.py on eval (a syntax~~ DONE — session 4 (`checks.browser-e2e-pycompile`)
 slip currently costs a 6-min VM run to discover).
-20. The theme scenario's recorder source is a Python string —
+~~20. The theme scenario's recorder source is a Python string —~~ r	routed — stack-repo fuel
 consider hoisting it to a checked-in .js asset imported by the
 test (reviewability).
 
 **Repo/product hygiene:**
-21. Prune/curate `/tmp/release-2.6.0-*` logs (12 files) + toplevel
+~~21. Prune/curate `/tmp/release-2.6.0-*` logs (12 files) + toplevel~~ resolved — /tmp logs gone (session 4 confirmed)
 symlinks into a dated folder or delete.
-22. CHANGELOG: keep accumulating the post-tag Unreleased section
+~~22. CHANGELOG: keep accumulating the post-tag Unreleased section~~ DONE — Unreleased discipline held (2.7.0 folded; Unreleased current)
 (provider-refusal 422 already there; MMS fix landed post-tag —
 verify it's listed).
-23. Verify the MMS composer fix (`bd77669`) has island tests
+~~23. Verify the MMS composer fix (`bd77669`) has island tests~~ DONE — session 4 (review pass + pin added)
 covering the new accept path (it's the other session's work —
 a review pass, not a rewrite).
-24. Stack vulnix feed: replace the retired NVD 2.0 endpoint (OSV
+~~24. Stack vulnix feed: replace the retired NVD 2.0 endpoint (OSV~~ r	routed — stack-repo decision
 mirror or pinned feed) — turn documented noise into a working
 gate.
-25. LSP noise: the GOTOOLCHAIN=local gopls/templ failures appear
+~~25. LSP noise: the GOTOOLCHAIN=local gopls/templ failures appear~~ r	routed — LOW (user-level config)
 every session — configure the LSP to use the devShell Go or
 silence outside-shell instances.
-26. pbx-artmann: consider a fast re-pin path (eval + store-path
+~~26. pbx-artmann: consider a fast re-pin path (eval + store-path~~ r	routed — LOW (pbx-artmann repo)
 compare only) when the stack delta is test-only — the full
 toplevel rebuild added ~5 min for byte-identical closures.
-27. Quarterly watches are parked until 2026-12-20; erraudit tier-2
+~~27. Quarterly watches are parked until 2026-12-20; erraudit tier-2~~ standing watch — TODO watches row
 re-measure due 2026-10-22 (baseline 127/113 must shrink).
-28. CRM restore drill on a quarterly cadence (calendar row).
-29. The `result` symlink from `nix build` — confirm gitignore
+~~28. CRM restore drill on a quarterly cadence (calendar row).~~ r	routed — LOW; calendar row on demand (drill proven `1358e6f`)
+~~29. The `result` symlink from `nix build` — confirm gitignore~~ DONE — session 4 (gitignore confirmed)
 coverage (tree stayed clean, but verify explicitly once).
-30. Consider attaching built binaries (x86_64 + aarch64) to GitHub
+~~30. Consider attaching built binaries (x86_64 + aarch64) to GitHub~~ r	routed — owner-calls row (gh-release habit)
 releases — currently notes-only (owner preference, see §g).
 
 **From the earlier sessions' backlog (still open, unchanged):**
-31. Send-failure train C/F remainder (owner call first).
-32. Tailwind coexistence spike (owner-call adjacent).
-33. templ-components history-blemish disposition.
-34. art-dupl `-t 3` baseline + suppression-bucket doc.
-35. `msg/`→`message/` idem-key rename.
-36. Missed-call REJECT semantics decision.
-37. Search `?q=` URL semantics decision.
-38. Store `Must*` panic-on-corrupt policy.
-39. Helper micro-test bar policy.
-40. Multi-contact "+N more" CRM display call.
-41. English-only journal bodies call.
-42. `/livez` consumer decision; HSTS; XFF sanitization; loopback
+~~31. Send-failure train C/F remainder (owner call first).~~ DONE — C shipped `37ffc53`; F NOT-DO unless recurrence
+~~32. Tailwind coexistence spike (owner-call adjacent).~~ resolved — spike GREEN, wave 1 shipped, waves 2+3 rejected (verdict doc)
+~~33. templ-components history-blemish disposition.~~ r	routed — owner-calls row
+~~34. art-dupl `-t 3` baseline + suppression-bucket doc.~~ r	routed — owner-calls row (FIFTH ask)
+~~35. `msg/`→`message/` idem-key rename.~~ r	routed — owner-calls row
+~~36. Missed-call REJECT semantics decision.~~ r	routed — owner-calls row
+~~37. Search `?q=` URL semantics decision.~~ r	routed — owner-calls row
+~~38. Store `Must*` panic-on-corrupt policy.~~ r	routed — owner-calls row
+~~39. Helper micro-test bar policy.~~ r	routed — owner-calls row
+~~40. Multi-contact "+N more" CRM display call.~~ r	routed — owner-calls row
+~~41. English-only journal bodies call.~~ r	routed — owner-calls row
+~~42. `/livez` consumer decision; HSTS; XFF sanitization; loopback~~ r	routed — owner-calls row
 `delivered` semantics; handler dual-layer; gh-release habit;
 Go module v2 policy; recordings intent; TEMP-DIAG keep;
 oops ratification; `backup.retentionDays` — the rest of the
@@ -266,18 +273,18 @@ real remainder.)_
 
 ## g) Questions I cannot answer myself (max 3)
 
-1. **Deploy-first or train-first?** The locked chain (`7197f1c` →
+~~1. **Deploy-first or train-first?** The locked chain (`7197f1c` →~~ resolved — SETTLED by events (deploy happened; fold-first became the pattern)
    `271f5ef` → `20b2a18`) is green and deployable NOW, but webphone
    main already carries the MMS composer fix + dep/vendorHash
    repairs that are NOT in that train. Deploy v2.6.0 as locked and
    cut a v2.6.1 train after the owner-calls, or fold a v2.6.1 train
    first and deploy once? (This is the train-cadence call in
    miniature — it gates C2's timing.)
-2. **Do GitHub releases carry binaries?** v2.6.0 is notes-only
+~~2. **Do GitHub releases carry binaries?** v2.6.0 is notes-only~~ r	routed — owner-calls row (gh-release habit)
    (matches v2.5.0). Should future releases attach the x86_64 +
    aarch64 binaries (or a channel tarball), given deployment is
    Nix-first and nobody downloads loose binaries today?
-3. **The daemon dep-sweep gate (§f item 9):** I can add a
+~~3. **The daemon dep-sweep gate (§f item 9):** I can add a~~ r	routed — ROADMAP infra ask (standing host cost is the owner's call)
    post-sweep `nix build .#webphone` hook for go.mod/go.sum
    changes — but it runs on YOUR host continuously. Is a ~1–3 min
    build per dep sweep an acceptable standing cost, or should it be

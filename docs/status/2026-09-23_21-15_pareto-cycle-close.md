@@ -7,6 +7,13 @@ load-gated remainder. The plan's verdict is filled at
 (Outcomes + Verdict sections). Every assistant-executable coarse
 task is DONE and verified; what remains is owner-terminal by design.
 
+
+> ARCHIVED 2026-09-29 (docs-health): fully resolved or routed — the
+> cycle closed (v2.6.0 shipped, E2E ×2 green, chain deployed
+> 2026-09-25); owner items consolidated into the release-tail,
+> SMS-bridge, owner-calls and announcements TODO rows. Per-item
+> verdicts inline below.
+
 ## Gates, with evidence
 
 - **Stack browser E2E ×2 GREEN** at stack `271f5ef` — 195s (plain)
@@ -35,7 +42,7 @@ task is DONE and verified; what remains is owner-terminal by design.
 
 ## Two incidents worth knowing about
 
-1. **The FOUC E2E scenario had never actually run.** Its first live
+~~1. **The FOUC E2E scenario had never actually run.** Its first live~~ resolved — the two-layer cause found + fixed (harness green ×2); g3 answered (~15s, no budget bump)
    run dead-asserted, and the fix took four stack commits
    (`784126c` → `9fb0539` → `f42cf9d` → `271f5ef`), each rejected
    or confirmed by instrumented evidence rather than theory. Two
@@ -51,7 +58,7 @@ task is DONE and verified; what remains is owner-terminal by design.
    `rafUnthemed=106` flash ticks, then settle-dark; pair 2 zero
    unthemed ticks. ROADMAP g3 is answered: the scenario costs ~15s
    — no E2E budget bump needed.
-2. **webphone main had a broken `nix build` for ~2h.** The
+~~2. **webphone main had a broken `nix build` for ~2h.** The~~ resolved — repaired `0a7a732`; the same-breath rule recorded (AGENTS post-close reminders)
    daemon-swept go-etag v0.6.0 bump (`e85923d`, split into
    entitytag/server submodules) changed go.mod without the modules
    hash; the flake check caught it (`go-etag/server@v0.6.0: no such
@@ -63,22 +70,22 @@ task is DONE and verified; what remains is owner-terminal by design.
 
 ## OWNER items (the only remainder)
 
-1. **Deploy** — chain ready end-to-end (webphone `7197f1c` → stack
+~~1. **Deploy** — chain ready end-to-end (webphone `7197f1c` → stack~~ resolved — v2.6.0 chain deployed early 2026-09-25 (probed; TODO recorded); the NEXT chain rides the release-tail row
    `271f5ef` → pbx-artmann `20b2a18`):
    `cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech`
    → smoke → `nixos-rebuild switch`.
-2. **Post-deploy probes** —
+~~2. **Post-deploy probes** —~~ routed — prod smoke green 2026-09-26 (19/0, v2.6.0); the rejection-banner live check rides the SMS-bridge row
    `python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.6.0`
    (0 failed), plus the rejection-banner check with a real
    extension session (self-send an SMS to the PBX DID, expect the
    persisted provider reason in the failed bubble).
-3. **SMS-lane root cause** (prod bridge): journal the
+~~3. **SMS-lane root cause** (prod bridge): journal the~~ routed — SMS-bridge TODO row
    telnyx-webhooks unit (`journalctl -u telnyx-webhooks --since
    today | grep -i 'sms\|422\|error'`), fix creds/bridge, send a
    test SMS, record the cause in the stack runbook. Webphone-side
    classification (`1d53f44`) and refusal-422 (`6ac8962`) ride this
    deploy.
-4. **Owner-calls batch** — briefing at
+~~4. **Owner-calls batch** — briefing at~~ routed — owner-calls TODO row (agenda extended since)
    `docs/planning/2026-09-22_13-50_owner-calls-briefing.md`. Since
    the last revision: g1 (force-push ratification) and g3 (E2E
    budget — answered, no bump) can be closed from evidence; the CRM
@@ -86,7 +93,7 @@ task is DONE and verified; what remains is owner-terminal by design.
    `crm.{enable,url,tokenFile}` in stack `be876ae`+; g2
    (KVM-timeout policy) still open; add the dep-bump→vendorHash
    reflex question.
-5. **Announcements** — v2.6.0 drafts at
+~~5. **Announcements** — v2.6.0 drafts at~~ routed — announcements TODO row
    `docs/announcements/2026-09-23_v2-6-0_drafts.md` (plus the
    v2.1–v2.3, v2.5.0 back-catalog there); owner picks channels and
    the disclosure posture.
