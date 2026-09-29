@@ -5,7 +5,6 @@ _Repo: `webphone` @ `2808a90` (daemon commits 83cdf46 → 2808a90 are this sessi
 
 ---
 
-
 > ARCHIVED 2026-09-29 (docs-health): train landed green (`2808a90`;
 > all 20 flake checks incl. KVM backup VM) and the end state was
 > re-proven by the 2026-09-26 gate battery. The [R] follow-up set is
