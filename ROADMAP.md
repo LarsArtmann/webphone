@@ -248,6 +248,59 @@ the stack browser E2E passed on the bumped tree. What remains:
   explicit cross-build of the package + the checks that matter, with
   the ELF machine-bytes assert. The 21:43 buildflow warning is the
   reminder, not an open question.
+- Release numbering + bridge version claims (2026-09-29): is the next
+  webphone release 2.8.0 (making the stack/pbx bridge docs'
+  "webphone >= 2.8" claims true), or reword them to commit/date form?
+  Webphone's own AGENTS line is already commit-pinned (`e6ea2c7`).
+- `gateway.attachment_limit`: implement the local-cap knob, or ratify
+  the bridge's honest-422-teaches design as final? (04:32 §g2)
+- Sniff-fallback lifespan in the bridge: permanent seam robustness vs
+  delete-after-deploy-confirmed (set a deadline)? (04:32 §g3)
+- Push-lag policy: after what silent daemon push lag (10 min? 1 h?) is
+  the pusher treated as BROKEN rather than slow — decides whether a
+  release.sh remote-sync preflight + push watchdog are nice-to-have or
+  load-bearing. (09-26 §g1; stalls observed 2026-09-24/25/26)
+- Session phase-boundary pushes: three hand-pushes of daemon-swept
+  content (one carrying a concurrent session's in-flight file)
+  followed runbook precedent but overrode the hard never-push rule —
+  ratify as standing session duty or forbid? (09-24 12:41 §g1)
+- Tier-2 family-adoption intent: `go-error-family` v0.11.0 landed in
+  go.mod via daemon sweep with no narrative — is the migration project
+  starting (see the TODO conversions row), or is the dep swept-but-
+  unused until the owner calls the family shape? (02:26 §g1)
+- Report the erraudit `tree` same-name-dedupe display defect upstream
+  (it hid 3 of 7 sentinels; pick site flips between runs)? It is the
+  owner's own tool — owner call. (02:26 §g2)
+- AGENTS.md restructure permission: 498 lines vs the 377 buildflow
+  cap; compaction moves war-story prose to docs/lessons.md and
+  rewrites sections every concurrent session depends on — explicit
+  permission + quiet window requested. (02:26 §g3)
+- Existing prod data + the UMask tightening: one-time `chmod -R
+  go-rwx` / re-backup so current files match `UMask=0077`, or
+  new-files-only until the next backup cycle? Owner ops window.
+  (03:05 §g1)
+- `backup.destDir`/`dataDir` nesting legality + whitespace policy
+  (systemd StateDirectory splits on spaces): forbid by assertion, or
+  document semantics? (03:05 §g3)
+- Stack verification timing for the hardened module: ride the per-train
+  relock (default), or relock + browser-E2E nix-international-
+  telephony NOW (unit environment changed, not just packaging)?
+  (03:05 §g2)
+
+## Raw ideas (2026-09-29 harvest)
+
+- `/metrics` scraper fencing helper: a module-level `allow`/`deny`
+  snippet generator for the dedicated `/metrics` vhost location, so
+  fleets don't hand-roll `extraConfig` fencing. Product decision, low
+  urgency — the location + fencing-by-extraConfig works today.
+- Stack `/phone-api` identity endpoint + webphone consumer: the
+  sanctioned upgrade path for the static `identities` config map (the
+  2026-09-20 owner decision recorded it as THE upgrade path; the
+  2026-09-29 bridge analysis re-sanctioned it as the remaining
+  cross-repo move). Needs stack-side work first.
+- Micro-check (or upstream erraudit rule) failing when a package-level
+  sentinel is built with anything but `errors.New` — protects the
+  `b03327f` pbx fix's pattern fleet-wide.
 
 ## Harvested raw ideas (2026-09-19 docs-health sweep)
 

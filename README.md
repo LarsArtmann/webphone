@@ -429,6 +429,10 @@ nix build .#webphone --system aarch64-linux   # cross-builds (pure Go)
 ./update.sh [version]           # repin vendored sip.js (esbuild IIFE bundle)
 ```
 
+The flake is a slim entry point; its packages, checks (incl. the KVM
+backup-VM test), NixOS module checks, devShell and formatting live as
+flake-parts modules under [`nix/`](nix/).
+
 The island sources live in `internal/web/assets/island/app/` (ES modules,
 served as-is, CSP-strict); their DOM element ids are a published contract
 (see [AGENTS.md](AGENTS.md)) driven by the consuming stack's browser E2E.
