@@ -100,6 +100,13 @@ re-check:
 
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
+**go-cqrs-lite (`system` + `metaengine`) revisit trigger** (wontfix
+closure 2026-09-30, evidence in `docs/status/2026-09-30_12-58_*`
+appendix): revisit ONLY when webphone grows event-sourced state or a
+second Go binary. ADR-0123 (v5 unification) is Proposed upstream and
+touches none of the 7 pinned v4 modules until cqrs-htmx itself
+migrates — a watched upstream event, not a webphone task.
+
 Source: `docs/planning/archived/2026-09-18_21-45_cqrs-htmx-adoption-pareto-execution-plan.md`
 §Phases 5-7. Status 2026-09-20: P5-P6 shipped in full — OOB spike
 (verdict: PARKED), toasts, `/version`, Server-Timing, `/openapi.json`,

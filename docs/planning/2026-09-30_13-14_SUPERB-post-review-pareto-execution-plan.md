@@ -3,6 +3,13 @@
 **Created:** 2026-09-30 13:14 CEST · **Series:** 2026-09-30 review-series (follows the 12:58 session status + brutal self-review)
 **Inputs:** `docs/status/2026-09-30_12-58_go-cqrs-lite-question-session-status.md` §f (40 items), `TODO_LIST.md` as swept 2026-09-29, AGENTS.md rules. Deduped: TODO_LIST rows are authoritative where they overlap my §f items.
 **Mode:** PLANNING ONLY — no execution triggered yet ("wait for instructions" stands until the owner says GO).
+**UPDATE 2026-09-30 ~15:00:** GO arrived; executing. Events that overtook the
+plan: upstream shipped the setup-shell seams itself (cqrs-htmx setup/v4.13.x —
+T11's upstream legs done, webphone-side adoption NO-GO on the footprint gate,
+salvage rides v2.9.0 per the TODO_LIST setup row); T01 resolved the release
+number as **v2.8.0** (tag cut 2026-09-30, tag `5c666a3`+gates); T02's owner
+triage pack landed in the command sheet §4; T04/T19 verified + annotated.
+Item-level verdicts live in the T21 harvest.
 
 ## Situation & scope fences
 
