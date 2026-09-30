@@ -15,6 +15,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/larsartmann/go-error-family"
 )
 
 // Client talks to one phone API base URL.
@@ -32,12 +34,23 @@ func NewClient(baseURL string) (*Client, error) {
 	}
 	parsed, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse phone api url %q: %w", baseURL, err)
+		return nil, errorfamily.WrapRejectionf(err, "pbx.url", "parse phone api url %q", baseURL)
 	}
 	return &Client{
 		base:   parsed.JoinPath("/phone-api"),
 		client: &http.Client{Timeout: 15 * time.Second},
 	}, nil
+}
+
+// Sentinel families (family-adoption train, 2026-09-30): an
+// unconfigured phone API cannot serve (Infrastructure, nil-deps
+// class), and rejected credentials are the operator's/user's to fix
+// (Rejection). The sentinels keep their errors.New identity.
+func init() {
+	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
+		ErrDisabled:     errorfamily.Infrastructure,
+		ErrUnauthorized: errorfamily.Rejection,
+	})
 }
 
 // ErrDisabled is returned when no phone API is configured.
@@ -177,7 +190,7 @@ func (c *Client) do(
 	if in != nil {
 		encoded, err := json.Marshal(in)
 		if err != nil {
-			return fmt.Errorf("encode request: %w", err)
+			return errorfamily.WrapInfrastructuref(err, "pbx.encode", "encode request")
 		}
 		bodyReader = bytes.NewReader(encoded)
 	}
@@ -192,7 +205,7 @@ func (c *Client) do(
 	}
 	req, err := http.NewRequestWithContext(ctx, method, target, bodyReader)
 	if err != nil {
-		return fmt.Errorf("build request: %w", err)
+		return errorfamily.WrapInfrastructuref(err, "pbx.request", "build request")
 	}
 	req.SetBasicAuth(creds.Extension, creds.Password)
 	if bodyReader != nil {
@@ -201,7 +214,7 @@ func (c *Client) do(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("phone api call: %w", err)
+		return errorfamily.WrapTransientf(err, "pbx.transport", "phone api call")
 	}
 	defer func() { _ = resp.Body.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
@@ -209,11 +222,17 @@ func (c *Client) do(
 		return ErrUnauthorized
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("phone api: HTTP %d", resp.StatusCode)
+		// 4xx is a refusal (Rejection), 5xx the phone API failing
+		// (Transient) — the same split the gateway seam pins.
+		family := errorfamily.Transient
+		if resp.StatusCode < 500 {
+			family = errorfamily.Rejection
+		}
+		return errorfamily.Newf(family, "pbx.http", "phone api: HTTP %d", resp.StatusCode)
 	}
 	if out != nil {
 		if err := json.UnmarshalRead(resp.Body, out); err != nil {
-			return fmt.Errorf("decode phone api response: %w", err)
+			return errorfamily.WrapTransientf(err, "pbx.decode", "decode phone api response")
 		}
 	}
 
