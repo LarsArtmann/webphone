@@ -95,8 +95,7 @@ func run() error {
 		ShutdownTimeout:   30 * time.Second,
 	}, application.Handler)
 	if err != nil {
-		_ = application.Shutdown()
-		return err
+		return errors.Join(err, application.Shutdown())
 	}
 
 	slog.Info("listening", "addr", cfg.Addr)

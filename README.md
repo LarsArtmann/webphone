@@ -58,6 +58,23 @@ only. Readiness stays `/healthz` alone; `/livez` deliberately runs no
 checks so a prober can tell "wedged process" from "degraded
 dependencies".
 
+### Health dashboard (optional, off by default)
+
+Set `WEBPHONE_DASHBOARD__ENABLE=true` (or `dashboard.enable` in the
+config file) and `/health` serves a live operator dashboard — check
+cards over SSE (go-health-dashboard), the container's health checks
+(sqlite, blob-dir, plus the dashboard's own pusher staleness as a
+non-critical warn), a status trend, and JSON on `Accept:
+application/json`. The page is CSP-strict: per-request nonces, the
+Datastar SDK and its stylesheet served same-origin from the binary
+(`unsafe-eval` is scoped to this subtree only, because the SDK compiles
+its expressions). Probe aliases live at `/health/livez`,
+`/health/readyz`, `/health/startupz` — same probe as the root triple,
+never a second truth. Treat the subtree like the probe triple in front
+of it: it is an operator surface, so fence it (the NixOS module's
+Caddy vhost already proxies it unbuffered for the SSE stream).
+`dashboard.title` names the deployment on the page.
+
 Open the page, sign in on the phone panel (any extension format your PBX
 accepts; against nothing it will just fail to register), and the tabs
 unlock with the same login.

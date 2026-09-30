@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Service-oriented composition root: `internal/app` wires every service
+  through a samber/do v2 container (promoted from indirect — it arrived
+  via go-health). The critical pair (`sqlite`, `blob-dir`) registers as
+  named services implementing the container's health-check interface,
+  the go-health probe reads them from the injector, and `App.Shutdown`
+  runs the container cascade (dashboard pusher drain, SQLite close)
+  after the HTTP drain. Wire contracts are unchanged: `/healthz` keeps
+  the cqrshtmx readiness shape, `/livez` and `/startupz` serve from
+  the injected probe (a nil `Deps.Probe` falls back to the equivalent
+  standalone probe, so test composition is untouched).
+- Optional health dashboard (go-health-dashboard v0.10.1) at `/health`,
+  disabled by default (`WEBPHONE_DASHBOARD__ENABLE=true` or
+  `dashboard.enable`; `dashboard.title` names the deployment). Live
+  check cards over SSE, status trend, JSON via content negotiation,
+  and its own scoped Tailwind build at `/assets/health.css` (the app's
+  `tw.css` stays untouched). CSP: per-request nonces + the dashboard's
+  verified policy with `unsafe-eval` scoped to the subtree (the
+  Datastar SDK compiles its expressions); every other surface keeps
+  the stricter app-wide policy. The NixOS module's Caddy vhost proxies
+  `/health/*` unbuffered like `/events`. The smoke suite boots with
+  the dashboard enabled and covers the page, the CSP nonce, the
+  same-origin SDK, and the probe aliases. Footprint: +1.1 MB unstripped
+  (+5.1%), stripped release binary 15.25 → ~15.4 MB — far inside the
+  ≤ +8 MB / ≤ +20 % gate that rejected the 2026-09-30 setup-shell
+  adoption.
+
 ### Changed
 
 - Server lifecycle: `cmd/webphone` now serves via `httputil.NewServer`
