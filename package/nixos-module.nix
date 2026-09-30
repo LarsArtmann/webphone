@@ -181,17 +181,29 @@ in
     caddy = {
       enable = lib.mkEnableOption ''
         a Caddy vhost that terminates TLS (automatic HTTPS by default)
-        and proxies HTTP and the SIP WebSocket — websockets and SSE need
-        no special plumbing in Caddy beyond an explicit unbuffered flush
-        for /events. Enabling it also defaults settings.csrf to trust
-        the loopback proxy and the https://<hostName> origin; without
-        that fronting shape (or a hand-rolled equivalent in
-        settings.csrf) the CSRF middleware rejects every browser POST
-        behind TLS.'';
+        and proxies the app's HTTP surface. Enabling it also defaults
+        settings.csrf to trust the loopback proxy and the
+        https://<hostName> origin; without that fronting shape (or a
+        hand-rolled equivalent in settings.csrf) the CSRF middleware
+        rejects every browser POST behind TLS.'';
       hostName = lib.mkOption {
         type = lib.types.str;
         example = "phone.example.org";
         description = "Virtual host name for the generated Caddy vhost.";
+      };
+      sipUpstream = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "https://pbx.example.org:7443";
+        description = ''
+          Upstream the SIP WebSocket path is bridged to (the PBX's
+          sofia wss binding; an https:// scheme makes Caddy speak TLS
+          to the upstream). The app itself never terminates the SIP
+          WebSocket — the island's wss connection must reach the PBX,
+          so this bridge is what makes calls work behind the vhost.
+          null (default) renders no /sip handle: the deployment then
+          routes the path itself (the telephony stack does exactly
+          that with its own front).'';
       };
       hsts = {
         enable = lib.mkEnableOption ''
@@ -408,13 +420,14 @@ in
       };
     };
 
-    # The Caddy front: one catch-all reverse_proxy plus the two streaming
-    # paths Caddy benefits from naming explicitly — the SIP WebSocket
-    # (transparent in Caddy; the handle documents it) and SSE (explicit
-    # flush_interval -1 so /events bytes reach the browser unbuffered).
-    # The JSON probes (/healthz /livez /startupz /metrics) need no handle
-    # of their own: fence scrapers with a remote_ip matcher in extraConfig
-    # instead of nginx-style per-location blocks.
+    # The Caddy front: a catch-all reverse_proxy plus the two paths that
+    # need explicit treatment — the SIP WebSocket bridge (only when an
+    # upstream is configured; the app never terminates the wss itself)
+    # and SSE (explicit flush_interval -1 so /events bytes reach the
+    # browser unbuffered). The JSON probes (/healthz /livez /startupz
+    # /metrics) need no handle of their own: fence scrapers with a
+    # remote_ip matcher in extraConfig instead of nginx-style
+    # per-location blocks.
     services.caddy = lib.mkIf cfg.caddy.enable {
       enable = lib.mkDefault true;
       virtualHosts.${cfg.caddy.hostName}.extraConfig = ''
@@ -422,9 +435,11 @@ in
         ${lib.optionalString cfg.caddy.hsts.enable ''
           header Strict-Transport-Security "max-age=${toString cfg.caddy.hsts.maxAge}"
         ''}
-        handle ${cfg.settings.websocket_path} {
-          reverse_proxy 127.0.0.1:${listenPort}
-        }
+        ${lib.optionalString (cfg.caddy.sipUpstream != null) ''
+          handle ${cfg.settings.websocket_path} {
+            reverse_proxy ${cfg.caddy.sipUpstream}
+          }
+        ''}
         handle /events {
           reverse_proxy 127.0.0.1:${listenPort} {
             flush_interval -1
