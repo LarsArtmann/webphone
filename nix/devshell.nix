@@ -30,6 +30,14 @@
           pkgs.oxlint
           pkgs.vulnix
           pkgs.go-licenses
+          # codespell in the shell so BuildFlow's on-demand step runs the
+          # REAL binary (it honors .codespellrc; BuildFlow's built-in
+          # fallback scanner does not — 3894 vendor/noise findings,
+          # T14 2026-09-30). statix + deadnix: the nix-review follow-ups
+          # (TODO row) want them one command away.
+          pkgs.codespell
+          pkgs.statix
+          pkgs.deadnix
         ];
         env = {
           # json/v2 shipped stable in Go 1.27: no GOEXPERIMENT since

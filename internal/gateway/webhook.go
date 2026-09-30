@@ -227,12 +227,12 @@ func (p provider) post(
 		// the acceptance receipt: any small answer that is not a JSON
 		// object is taken verbatim as the ref.
 		if ref := strings.TrimSpace(string(raw)); ref != "" && len(ref) <= 256 && !strings.ContainsRune(ref, '{') {
-			return Receipt{ProviderRef: ref}, nil
+			return Receipt{ProviderRef: ref, Resolution: ResolutionDeferred}, nil
 		}
 		return Receipt{}, errorfamily.WrapTransientf(err, "gateway.receipt", "decode provider receipt (content-type %s)", contentType)
 	}
 
-	return Receipt{ProviderRef: receipt.ProviderRef}, nil
+	return Receipt{ProviderRef: receipt.ProviderRef, Resolution: ResolutionDeferred}, nil
 }
 
 // DefaultClient is the shared HTTP client for provider calls.

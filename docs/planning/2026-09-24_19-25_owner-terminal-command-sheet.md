@@ -1,4 +1,4 @@
-# Owner-terminal command sheet (2026-09-24, v2.7.0 cycle)
+# Owner-terminal command sheet (2026-09-24, v2.8.0 cycle — updated 2026-09-30)
 
 Everything an assistant cannot run itself: pbx-artmann AGENTS forbids
 assistant ssh/deploy, and host-root operations are owner-only. Commands
@@ -46,12 +46,10 @@ again whenever a GC collects it.
 
 ## 1. Deploy the released chain to prod (M1, TODO row "Deploy the released chain")
 
-prod served v2.5.0 at drafting time; the 2.6.0 chain was DEPLOYED
-early 2026-09-25 (prod `/version` = v2.6.0, probed and recorded in
-TODO_LIST) — so the deploy-ordering question is settled: go STRAIGHT
-to 2.7.0 once tagged, no stepping stone. After v2.7.0 is cut the
-chain is READY (webphone tag `v2.7.0` → stack `<STACK_HASH>` →
-pbx-artmann re-pin pending, see §2):
+UPDATE 2026-09-30: **v2.8.0 is CUT and the stack is relocked** (webphone
+signed tag pushed, stack `3afcf57` carries the lock bump + caddy guard
+fix, browser E2E + webphone VM test + stack flake check green). The
+chain is READY — deploy straight to v2.8.0 (prod currently v2.6.0):
 
 ```console
 cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech
@@ -59,7 +57,7 @@ cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root
 nixos-rebuild switch --flake .#pbx --target-host root@pbx.artmann.tech
 ```
 
-## 2. pbx-artmann relock ritual (AFTER the v2.7.0 stack bump landed)
+## 2. pbx-artmann relock ritual (AFTER the v2.8.0 stack bump landed — stack `3afcf57` is pushed and ready)
 
 Per docs/release-runbook.md — ALWAYS `git rev-parse`, never typed:
 
@@ -77,20 +75,21 @@ nix build .#nixosConfigurations.pbx-aarch64.config.system.build.toplevel  # NOT 
 ## 3. Post-deploy verification (M1 tail, from the webphone repo)
 
 ```console
-python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.7.0
+python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.8.0
 ```
 
 Then the live self-send check (needs a real extension session):
-sign in, self-send an SMS to the PBX DID — with 2.7.0 the send is
-refused LOCALLY (train C): expect the 422 banner
-"messages cannot be sent to your own number" AND the failed bubble in
-the thread (evidence row). On v2.6.0 the provider's 40310 text was the
-expectation; that changed with train C.
+sign in, self-send an SMS to the PBX DID — with 2.8.0 (as with the
+staged 2.7.0 content) the send is refused LOCALLY (train C): expect
+the 422 banner "messages cannot be sent to your own number" AND the
+failed bubble in the thread (evidence row).
 
-One more 2.7.0-visible check: type a shared-directory contact's name
-into the dial destination — the typeahead must offer it again (the
+One more 2.8.0-visible check: type a shared-directory contact's name
+into the dial destination — the typeahead must offer it (the
 capitalized-wire bug silently hid every shared contact; fixed by
-`e43fea8`).
+`e43fea8`). NEW in 2.8.0: `curl https://pbx.artmann.tech/version` now
+reports `commit` + `commitDate` — the store-path chain-verification
+dance is retired.
 
 ## 4. Outbound SMS bridge failure on prod (M3, TODO row "Outbound SMS bridge failure on prod")
 

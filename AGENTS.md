@@ -125,6 +125,7 @@ python3 scripts/webphone-smoke.py          # 40-check live smoke (+4-check resta
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
 nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test
+nix build .#checks.x86_64-linux.webphone-module   # ONE check without the whole flake check (also: webphone-backup-drill; webphone-backup is KVM-gated)
 nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs   # island JS tests alone (stubs in island-tests/helpers.mjs)
 nix build .#webphone --system aarch64-linux   # cross-builds — verify by ELF bytes, never exit code alone (docs/lessons.md)
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
@@ -238,6 +239,13 @@ the island remotely — re-run it after any markup change.
   fallback for binaries predating `e6ea2c7` (2026-09-29; verified
   cross-repo on real wire bytes). Never write version claims for
   unreleased code — pin by date or commit.
+  Compat matrix (webphone × bridge, 2026-09-30): pre-`e6ea2c7`
+  binaries send octet-stream → bridge SNIFFS; `e6ea2c7`+ sends the
+  declared mime → bridge USES it (sniff only for octet-stream); the
+  full part-header block is byte-pinned by
+  `TestProviderFormPartHeaderBlockGolden`. A webhook-lane smoke probe
+  stays DECIDED-AGAINST until the gateway lane changes again (the
+  golden + bridge cross-repo contract tests own the shape today).
   Self-sends to the owner's own DID (config `identities`) never reach
   the provider: `gateway.SelfSendRejection` refuses locally after the
   row is persisted (evidence kept), riding the 422 refusal arm
@@ -532,11 +540,15 @@ theirs to land); and leave their booted dev servers running.
 ## Buildflow health warning (as of 2026-09-19)
 
 "9 tools unavailable (health check failed)" is NOISE here: all nine
-are JS/TS or Python steps that land "not applicable". The one real
-gap was go-licenses — now in the devShell, so run buildflow inside
-`nix develop` (or `scripts/buildflow.sh`). gitleaks/codespell/
-markdown-lint run in build mode `full` — `scripts/buildflow.sh`
-appends the first two by default.
+are JS/TS or Python steps that land "not applicable". Real gaps,
+fixed: go-licenses and codespell are in the devShell now — run
+buildflow inside `nix develop` (or `scripts/buildflow.sh`). On-demand
+scanners (`buildflow -s gitleaks`, `-s codespell`) need the REAL
+binary in the shell: BuildFlow's built-in fallback spellchecker does
+NOT read `.codespellrc` (it reported 3894 vendor noise findings while
+the real codespell, honoring the rc, reports none). markdown-lint
+runs detect-only by posture (owner decision row 18, briefing
+2026-09-22_13-50): never "fix" the corpus by reflowing.
 
 ## Conventions
 

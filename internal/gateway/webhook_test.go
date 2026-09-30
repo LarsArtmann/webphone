@@ -346,3 +346,52 @@ func TestProviderFormCarriesHonestContentTypes(t *testing.T) {
 		}
 	}
 }
+
+// TestProviderFormPartHeaderBlockGolden pins the ENTIRE wire body of the
+// multipart form, byte for byte (2026-09-30 follow-up: the per-field
+// greps above cannot catch a REORDERED or added/removed header line —
+// the bridge parses the block, so the block is the contract). The
+// boundary is read from the first line of the actual body, everything
+// else must match exactly: envelope field order (kind, owner, to), the
+// part-header lines in their exact order and \r\n framing, the honest
+// Content-Type on file parts, and the closing boundary.
+func TestProviderFormPartHeaderBlockGolden(t *testing.T) {
+	declared := writeTempFile(t, t.TempDir(), "photo.heic", "heic-bytes")
+	raw, _, err := messageForm("message", "1001", "+441632960961", "hi", []OutboundAttachment{
+		{Name: "photo.heic", MimeType: "image/heic", Path: declared},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := io.ReadAll(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire := string(body)
+	boundary := wire[:strings.Index(wire, "\r\n")]
+	if !strings.HasPrefix(boundary, "--") {
+		t.Fatalf("no boundary at body start: %q", wire[:40])
+	}
+
+	expected := boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"kind\"\r\n\r\n" +
+		"message\r\n" +
+		boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"owner\"\r\n\r\n" +
+		"1001\r\n" +
+		boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"to\"\r\n\r\n" +
+		"+441632960961\r\n" +
+		boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"body\"\r\n\r\n" +
+		"hi\r\n" +
+		boundary + "\r\n" +
+		"Content-Disposition: form-data; name=\"attachment\"; filename=\"photo.heic\"\r\n" +
+		"Content-Type: image/heic\r\n\r\n" +
+		"heic-bytes\r\n" +
+		boundary + "--\r\n"
+
+	if wire != expected {
+		t.Fatalf("part-header block drifted from the golden wire form:\n got: %q\nwant: %q", wire, expected)
+	}
+}

@@ -65,6 +65,23 @@
                 "sqlite3 /var/lib/webphone-backup/webphone.db 'pragma integrity_check' | grep -q '^ok$'"
             )
 
+            # Private-data hardening (2026-09-29 train, pinned 2026-09-30):
+            # the oneshot succeeded, the state dir is group-readable at
+            # most, and backup artifacts are owner-only (UMask=0077 ->
+            # files 600, dirs 700) — comms data never world-readable.
+            machine.succeed(
+                "systemctl show webphone-backup.service -p Result | grep -q 'Result=success'"
+            )
+            machine.succeed(
+                "test \"$(stat -c %a /var/lib/webphone)\" = 750"
+            )
+            machine.succeed(
+                "stat -c %a /var/lib/webphone-backup/webphone.db | grep -qE '^(600|700)$'"
+            )
+            machine.succeed(
+                "stat -c %a /var/lib/webphone-backup/files | grep -qE '^(700|750)$'"
+            )
+
             # The timer is wired to the oneshot on the default calendar
             # (systemctl show has no OnCalendar unit property — the
             # rendered unit file is the truth here).

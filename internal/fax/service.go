@@ -126,14 +126,16 @@ func (s *Service) Send(
 		return job, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	}
 
-	// Loopback resolves instantly (transmitted); webhook providers only
-	// accepted the job — the verdict arrives on the status webhook.
+	// The receipt itself says whether this acceptance is already the
+	// verdict (loopback resolves immediate) or the webhook still owes
+	// the outcome (deferred). No gateway-type sniffing: the Receipt is
+	// the contract.
 	job.Status = domain.FaxSending
 	job.ProviderRef = receipt.ProviderRef
 	if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, receipt.ProviderRef, "", 0); updateErr != nil {
 		slog.Warn("fax: mark sending", "error", updateErr)
 	}
-	if _, isLoopback := s.gateway.(*gateway.Loopback); isLoopback {
+	if receipt.Resolution == gateway.ResolutionImmediate {
 		job.Status = domain.FaxTransmitted
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 1); updateErr != nil {
 			slog.Warn("fax: mark transmitted", "error", updateErr)

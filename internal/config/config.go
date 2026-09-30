@@ -294,6 +294,11 @@ func validate(cfg Config) error {
 			return errorfamily.Newf(errorfamily.Rejection, "config.identities", "identities: DID for extension %q has no dialable characters", ext)
 		}
 	}
+	for _, contact := range cfg.Contacts {
+		if _, err := domain.ParsePhone(contact.Number); err != nil {
+			return errorfamily.Newf(errorfamily.Rejection, "config.contacts", "contacts: shared contact %q has no dialable characters in %q (fix the config file — a silently un-dialable directory entry is worse than a failed boot)", contact.Name, contact.Number)
+		}
+	}
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
 		return nil

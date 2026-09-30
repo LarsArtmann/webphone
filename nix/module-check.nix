@@ -268,6 +268,56 @@
             );
           }
           {
+            # Eval-time pins for the private-data hardening (2026-09-29
+            # nix-review train): BOTH units must keep UMask=0077 +
+            # StateDirectoryMode=0750 so message threads, faxes,
+            # voicemail blobs and the session DB never land
+            # world-readable. A regression here fails the check, not
+            # prod.
+            name = "unit-hardening-pins";
+            path = pkgs.writeText "unit-hardening-pins" (
+              let
+                mainUnit = evaluated.config.systemd.services.webphone.serviceConfig;
+                backupUnit =
+                  (lib.evalModules (moduleSet { backup.enable = true; }))
+                  .config.systemd.services.webphone-backup.serviceConfig;
+              in
+              if
+                mainUnit.UMask == "0077"
+                && mainUnit.StateDirectoryMode == "0750"
+                && backupUnit.UMask == "0077"
+                && backupUnit.StateDirectoryMode == "0750"
+              then
+                "both units pin UMask=0077 + StateDirectoryMode=0750"
+              else
+                throw "webphone-module check: private-data hardening regressed (UMask/StateDirectoryMode)"
+            );
+          }
+          {
+            # dataDir gets the same dedicated assertion coverage destDir
+            # has: an off-/var/lib path must trip exactly the dataDir
+            # assertion, and the base eval stays assertion-clean.
+            name = "datadir-assertion";
+            path = pkgs.writeText "datadir-assertion" (
+              let
+                failedAssertionsOf =
+                  extra:
+                  let
+                    evaled = lib.evalModules (moduleSet extra);
+                  in
+                  lib.filter (a: !a.assertion) evaled.config.assertions;
+                bad = failedAssertionsOf {
+                  dataDir = "/tmp/webphone-data";
+                };
+                clean = failedAssertionsOf { };
+              in
+              if lib.length bad == 1 && lib.length clean == 0 then
+                "dataDir assertion fires exactly off-/var/lib"
+              else
+                throw "webphone-module check: dataDir assertion mis-fires (bad=${toString (lib.length bad)}, clean=${toString (lib.length clean)})"
+            );
+          }
+          {
             # serverTiming.enable must set the env gate the middleware
             # reads; without it the environment key stays absent.
             name = "server-timing";

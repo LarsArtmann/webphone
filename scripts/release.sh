@@ -93,10 +93,20 @@ if [ "$DRY_RUN" != "1" ] && [ ! -e /run/binfmt ]; then
 	exit 1
 fi
 git fetch origin --tags --quiet
-[ "$(git rev-parse main)" = "$(git rev-parse origin/main)" ] || {
-	echo "main diverged from origin/main" >&2
+# Unpushed-commits preflight (2026-09-30, T6 of the pareto plan): the
+# ritual must fail LOUDLY on unpushed local state instead of pinning it
+# into a tag. ls-remote is the remote truth; the fetched ref alone can
+# lag a racing daemon push.
+remote_main="$(git ls-remote origin refs/heads/main | cut -f1)"
+local_main="$(git rev-parse main)"
+if [ "$local_main" != "$remote_main" ]; then
+	if git merge-base --is-ancestor "$remote_main" "$local_main" 2>/dev/null; then
+		echo "main is AHEAD of origin ($(git rev-list --count "$remote_main..$local_main" 2>/dev/null || echo '?') unpushed commit(s)) — push first; the tag must not pin unpushed state" >&2
+	else
+		echo "main diverged from origin/main — fetch/rebase before releasing" >&2
+	fi
 	exit 1
-}
+fi
 RESUME_TAG=0
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
 	if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then

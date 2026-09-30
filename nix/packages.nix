@@ -1,8 +1,11 @@
 # Package definitions: the webphone binary and the vulnix triage CLI.
 # webphoneVersion arrives as a module arg from flake.nix — release.sh
 # seds the binding there (grep "webphoneVersion = "), so it must not
-# move into this file.
+# move into this file. self is the flake source: its rev/dirtyRev and
+# lastModifiedDate feed /version's commit enrichment (commit-time facts
+# only — no build clock, byte-reproducibility preserved).
 {
+  self,
   webphoneVersion,
   ...
 }:
@@ -121,6 +124,17 @@
                 # /version reports the released version (v-prefixed, like
                 # the git tag) instead of Go's "(devel)".
                 "-X github.com/larsartmann/webphone/internal/server.buildVersion=v${webphoneVersion}"
+                # Commit enrichment (T12): self.rev when clean, dirtyRev
+                # when the tree is dirty, lastModifiedDate = the commit
+                # timestamp — all commit-time facts, so the aarch64
+                # byte-reproducibility assert stays honest.
+                "-X github.com/larsartmann/webphone/internal/server.buildCommit=${
+                  if self ? rev && self.rev != null then self.rev else (self.dirtyRev or "unknown")
+                }"
+                "-X github.com/larsartmann/webphone/internal/server.buildCommitDate=${
+                  let d = self.lastModifiedDate; in
+                  "${builtins.substring 0 4 d}-${builtins.substring 4 2 d}-${builtins.substring 6 2 d}T${builtins.substring 8 2 d}:${builtins.substring 10 2 d}:${builtins.substring 12 2 d}Z"
+                }"
               ];
 
               doCheck = true;

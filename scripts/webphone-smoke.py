@@ -445,6 +445,20 @@ def run_checks(
         status == 200 and b'"version"' in body,
         f"{status} {body[:80]!r}",
     )
+    # Key-checked (not shape-pinned): when the flake injected commit
+    # metadata, both keys must be present and non-empty — the enrichment
+    # that kills the store-path chain-verification dance.
+    if b'"commit"' in body:
+        c.ok(
+            "version commit enrichment present",
+            re.search(rb'"commit":"[0-9a-f]{7,40}(-dirty)?"', body) is not None,
+            f"{body[:160]!r}",
+        )
+        c.ok(
+            "version commitDate present",
+            re.search(rb'"commitDate":"\d{4}-\d{2}-\d{2}T', body) is not None,
+            f"{body[:160]!r}",
+        )
     if expect_version is not None:
         want = expect_version.lstrip("v")
         detail = f"{body[:120]!r}"

@@ -365,6 +365,17 @@ func probeBlobDir(root string) error {
 // `go build`/`go test` runs — the handler then falls back to build info.
 var buildVersion string
 
+// buildCommit and buildCommitDate are link-time injections too (the
+// flake passes self.rev/self.dirtyRev and self.lastModifiedDate) —
+// commit-time facts ONLY, never a build clock, so the byte-reproducibility
+// the aarch64 ELF assert depends on stays honest. Empty in plain go
+// builds; the handler falls back to ReadBuildInfo's vcs settings, which
+// carry the same facts for `go build` runs inside the repo.
+var (
+	buildCommit     string
+	buildCommitDate string
+)
+
 // DisplayVersion names the running build for operator surfaces
 // (/version, /metrics).
 func DisplayVersion() string {
@@ -386,9 +397,62 @@ func DisplayVersionWith(info *debug.BuildInfo, ok bool) string {
 	}
 }
 
+// vcsSetting reads one build-info settings pair (vcs.revision,
+// vcs.time, vcs.modified) — that is where go build embeds VCS facts.
+func vcsSetting(info *debug.BuildInfo, key string) string {
+	if info == nil {
+		return ""
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == key {
+			return setting.Value
+		}
+	}
+	return ""
+}
+
+// buildCommitWith resolves the source revision: the ldflags injection
+// wins, build-info vcs settings follow (suffixed -dirty when modified),
+// unknown builds report "".
+func buildCommitWith(info *debug.BuildInfo, ok bool) string {
+	if buildCommit != "" {
+		return buildCommit
+	}
+	if !ok {
+		return ""
+	}
+	if rev := vcsSetting(info, "vcs.revision"); rev != "" {
+		if vcsSetting(info, "vcs.modified") == "true" {
+			return rev + "-dirty"
+		}
+		return rev
+	}
+	return ""
+}
+
+// buildCommitDateWith resolves the commit date: ldflags injection
+// (RFC 3339) first, build-info vcs time second, "" otherwise.
+func buildCommitDateWith(info *debug.BuildInfo, ok bool) string {
+	if buildCommitDate != "" {
+		return buildCommitDate
+	}
+	if !ok {
+		return ""
+	}
+	if raw := vcsSetting(info, "vcs.time"); raw != "" {
+		if stamp, err := time.Parse(time.RFC3339, raw); err == nil {
+			return stamp.UTC().Format(time.RFC3339)
+		}
+		return raw
+	}
+	return ""
+}
+
 // versionHandler reports build metadata for the operator's curl one-liner
-// (library DebugHandler pattern): module version, Go version, module path.
-// Captured at construction time — it is build info, not live state.
+// (library DebugHandler pattern): module version, source revision +
+// commit date (when known — kills the store-path chain-verification
+// dance), Go version, module path. Captured at construction time — it is
+// build info, not live state.
 func versionHandler() http.HandlerFunc {
 	info, ok := debug.ReadBuildInfo()
 	version := DisplayVersionWith(info, ok)
@@ -397,11 +461,18 @@ func versionHandler() http.HandlerFunc {
 	if ok {
 		title = info.Main.Path
 	}
-	return cqrshtmx.DebugHandler(map[string]any{
+	payload := map[string]any{
 		"version":   version,
 		"goVersion": goVersion,
 		"title":     title,
-	})
+	}
+	if commit := buildCommitWith(info, ok); commit != "" {
+		payload["commit"] = commit
+	}
+	if date := buildCommitDateWith(info, ok); date != "" {
+		payload["commitDate"] = date
+	}
+	return cqrshtmx.DebugHandler(payload)
 }
 
 // openapiSpec is the hand-written OpenAPI 3.1 document for the session

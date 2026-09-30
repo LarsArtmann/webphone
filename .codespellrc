@@ -5,5 +5,5 @@
 # "enourmous"/"theses": docs deliberately QUOTE the historical plan
 # typo ("enourmous") and use "theses" in its plain English sense.
 [codespell]
-ignore-words-list = adresse,unter,oder,als,ot,alle,ist,sie,cancelability,statics,unparseable,refering,re-declares,re-declared,lokal,lokale,manuell,enourmous,theses
-skip = internal/web/assets/vendor/*,*.min.js,package-lock.json
+ignore-words-list = adresse,unter,oder,als,ot,alle,ist,sie,cancelability,statics,unparseable,refering,re-declares,re-declared,lokal,lokale,manuell,enourmous,theses,pre-emptive
+skip = internal/web/assets/vendor/*,*.min.js,package-lock.json,vendor,go.sum,flake.lock

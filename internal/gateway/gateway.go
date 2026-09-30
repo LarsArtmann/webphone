@@ -35,9 +35,28 @@ type OutboundMessage struct {
 	Attachments []OutboundAttachment
 }
 
+// Resolution says whether a Receipt is the final verdict or only an
+// acceptance: loopback gateways resolve synchronously (immediate), while
+// webhook providers merely accepted the job and the verdict arrives later
+// on the status webhook (deferred). Deferred is the zero value on purpose:
+// a Receipt constructed without an explicit resolution promises nothing.
+type Resolution int
+
+const (
+	// ResolutionDeferred: the provider accepted the job; the outcome
+	// arrives on the status webhook (or never, if it stays silent).
+	ResolutionDeferred Resolution = iota
+	// ResolutionImmediate: the receipt IS the verdict (loopback mode).
+	ResolutionImmediate
+)
+
 // Receipt is the gateway's acceptance answer.
 type Receipt struct {
 	ProviderRef string
+	// Resolution tells the caller whether this receipt already settles
+	// the delivery (immediate) or only acknowledges acceptance
+	// (deferred — wait for the status webhook).
+	Resolution Resolution
 }
 
 // MessageGateway delivers outbound messages.
@@ -84,12 +103,20 @@ type Loopback struct {
 	prefix string
 }
 
-// SendMessage accepts the message instantly.
+// SendMessage accepts the message instantly — and that acceptance IS the
+// verdict (nothing outside this machine will ever say more about it).
 func (l *Loopback) SendMessage(_ context.Context, _ OutboundMessage) (Receipt, error) {
-	return Receipt{ProviderRef: fmt.Sprintf("%s-%d", l.prefix, time.Now().UnixNano())}, nil
+	return Receipt{
+		ProviderRef: fmt.Sprintf("%s-%d", l.prefix, time.Now().UnixNano()),
+		Resolution:  ResolutionImmediate,
+	}, nil
 }
 
-// SendFax accepts the fax instantly.
+// SendFax accepts the fax instantly — resolution immediate, same story as
+// SendMessage.
 func (l *Loopback) SendFax(_ context.Context, _ OutboundFax) (Receipt, error) {
-	return Receipt{ProviderRef: fmt.Sprintf("%s-%d", l.prefix, time.Now().UnixNano())}, nil
+	return Receipt{
+		ProviderRef: fmt.Sprintf("%s-%d", l.prefix, time.Now().UnixNano()),
+		Resolution:  ResolutionImmediate,
+	}, nil
 }

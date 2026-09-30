@@ -18,6 +18,7 @@ import os
 import shutil
 import socket
 import sqlite3
+import stat as stat_module
 import subprocess
 import tarfile
 import tempfile
@@ -168,6 +169,14 @@ def main():
         print("[3] restored store serves the attachment byte-identical")
         status, _ = client.request("GET", "/partials/messages")
         assert status == 200, "restored messages panel failed to render"
+        # Restored artifacts keep the private-data posture: files at most
+        # group-readable (0640), directories at most 0750 — the UMask
+        # tightening must survive a disaster/restore cycle.
+        for name in ("webphone.db", "files"):
+            mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
+            limit = 0o750 if name == "files" else 0o640
+            assert mode <= limit, f"restored {name} mode {oct(mode)} exceeds {oct(limit)}"
+        print("[5] restored artifacts keep private modes (files <=0640, dirs <=0750)")
         print("[4] restore drill PASSED: sqlite rows + blob content survive")
     finally:
         proc.terminate()

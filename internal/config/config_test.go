@@ -386,6 +386,27 @@ func TestLoadValidatesIdentities(t *testing.T) {
 	}
 }
 
+// TestLoadValidatesSharedContacts pins the directory feed's fail-closed
+// posture (2026-09-30 data-model review, the contacts half of the
+// identities rule): a shared contact whose number has no dialable
+// characters boots LOUD instead of silently missing at dial time.
+func TestLoadValidatesSharedContacts(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"contacts":[{"name":"Alice","number":"+49 30 12345678"}]}`))
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Contacts) != 1 || cfg.Contacts[0].Name != "Alice" {
+		t.Fatalf("contacts: got %v", cfg.Contacts)
+	}
+
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"contacts":[{"name":"Bob","number":"???"}]}`))
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "dialable") {
+		t.Fatalf("dialable-less contact: err %v, want dialable rejection", err)
+	}
+}
+
 // TestLoadValidatesCRMConfig pins the integration's fail-closed posture:
 // half a configuration (URL without token, token without URL) is a startup
 // error, not a silently broken enrichment, and the URL must be absolute

@@ -31,6 +31,13 @@
               self'.packages.webphone-vulnix-triage
             ];
             text = ''
+              # Cwd guard: the triage below reads flake.lock from the
+              # current directory; run from anywhere else it dies with a
+              # jq parse error instead of an actionable message.
+              if [ ! -f flake.lock ]; then
+                echo "webphone-vulnix: no flake.lock in $(pwd) — run from the webphone repo root" >&2
+                exit 1
+              fi
               out=$(nix build --no-link --print-out-paths .#webphone)
               echo "webphone-vulnix: scanning the runtime closure of $out ($(nix-store -qR "$out" | wc -l) derivations)"
               # --closure: runtime dependencies ONLY. Without it vulnix
