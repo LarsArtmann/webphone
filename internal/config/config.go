@@ -106,8 +106,8 @@ type Gateway struct {
 }
 
 // errGatewaySecretBothSources: exactly-one-of gateway.webhook_secret /
-// gateway.webhook_secret_file — two sources for one secret is a drift
-// bug waiting to happen. Classified Rejection: the operator must fix
+// gateway.webhook_secret_file — two sources for one secret invite drift.
+// Classified Rejection: the operator must fix
 // the deployment's config before the service can start.
 var errGatewaySecretBothSources error = errorfamily.NewRejection("config.gateway_secret_sources", "gateway: set at most one of webhook_secret / webhook_secret_file")
 
