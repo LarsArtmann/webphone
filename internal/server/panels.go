@@ -270,7 +270,7 @@ func errorPanel(message string, lang views.Lang) templ.Component {
 // texts: client-caused 4xx detail is safe by construction and the
 // webhook bodies are byte-stable-pinned for providers.
 func (h *handlers) internalError(w http.ResponseWriter, r *http.Request, op string, err error) {
-	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil) //nolint:erraudit // log-context wrap: the inner error owns the family
 	http.Error(w, op+": "+cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 

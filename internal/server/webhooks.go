@@ -6,7 +6,6 @@ import (
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
@@ -171,10 +171,10 @@ func (p *flexPages) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	trimmed := strings.Trim(strings.TrimSpace(string(value)), `"`)
 	pages, err := strconv.Atoi(trimmed)
 	if err != nil {
-		return fmt.Errorf("page count must be a number, got %s", value)
+		return errorfamily.Newf(errorfamily.Rejection, "webhook.fax_pages", "page count must be a number, got %s", value)
 	}
 	if pages < 0 {
-		return fmt.Errorf("page count must not be negative, got %d", pages)
+		return errorfamily.Newf(errorfamily.Rejection, "webhook.fax_pages", "page count must not be negative, got %d", pages)
 	}
 	*p = flexPages(pages)
 	return nil

@@ -93,7 +93,7 @@ func (h *handlers) identityFor(ext domain.Extension) string {
 // raw internal detail. Panels that degrade a page keep their own op
 // string so the log line names the surface that failed.
 func (h *handlers) safeDetail(r *http.Request, op string, err error) string {
-	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil) //nolint:erraudit // log-context wrap: the inner error owns the family
 	return cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false)
 }
 
