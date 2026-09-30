@@ -176,11 +176,11 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 			}
 			part, err := createFilePart(writer, "attachment", att.Name, att.MimeType)
 			if err != nil {
-				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				_ = file.Close()                                          //nolint:erraudit // close-after-use: nothing left to do on failure
 				return fmt.Errorf("create attachment form file: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			if _, err := io.Copy(part, file); err != nil {
-				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				_ = file.Close()                                           //nolint:erraudit // close-after-use: nothing left to do on failure
 				return fmt.Errorf("copy attachment %s: %w", att.Name, err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure

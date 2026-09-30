@@ -23,7 +23,7 @@ import (
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
 		ErrNotFound: errorfamily.Rejection,
-		ErrListFull:  errorfamily.Rejection,
+		ErrListFull: errorfamily.Rejection,
 	})
 }
 
