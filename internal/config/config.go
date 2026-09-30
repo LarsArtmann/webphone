@@ -3,7 +3,6 @@
 package config
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 
 	"github.com/knadh/koanf/parsers/json"
@@ -107,8 +107,9 @@ type Gateway struct {
 
 // errGatewaySecretBothSources: exactly-one-of gateway.webhook_secret /
 // gateway.webhook_secret_file — two sources for one secret is a drift
-// bug waiting to happen.
-var errGatewaySecretBothSources = errors.New("gateway: set at most one of webhook_secret / webhook_secret_file")
+// bug waiting to happen. Classified Rejection: the operator must fix
+// the deployment's config before the service can start.
+var errGatewaySecretBothSources = errorfamily.NewRejection("config.gateway_secret_sources", "gateway: set at most one of webhook_secret / webhook_secret_file")
 
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
@@ -167,7 +168,7 @@ func Load() (Config, error) {
 		"gateway.mode":   string(cfg.Gateway.Mode),
 		"turn_rest.ttl":  (48 * time.Hour).String(),
 	}, "."), nil); err != nil {
-		return Config{}, fmt.Errorf("config defaults: %w", err)
+		return Config{}, errorfamily.WrapOrchestrationf(err, "config.defaults", "config defaults")
 	}
 
 	path := os.Getenv("WEBPHONE_CONFIG")
@@ -176,39 +177,39 @@ func Load() (Config, error) {
 	}
 	if _, err := os.Stat(path); err == nil {
 		if err := k.Load(file.Provider(path), json.Parser()); err != nil {
-			return Config{}, fmt.Errorf("config file %s: %w", path, err)
+			return Config{}, errorfamily.WrapRejectionf(err, "config.file", "config file %s", path)
 		}
 	}
 
 	if err := k.Load(env.Provider("WEBPHONE_", ".", func(s string) string {
 		return envKeyToPath(s)
 	}), nil); err != nil {
-		return Config{}, fmt.Errorf("config env: %w", err)
+		return Config{}, errorfamily.WrapRejectionf(err, "config.env", "config env")
 	}
 
 	if err := k.Unmarshal("", &cfg); err != nil {
-		return Config{}, fmt.Errorf("config unmarshal: %w", err)
+		return Config{}, errorfamily.WrapRejectionf(err, "config.unmarshal", "config unmarshal")
 	}
 
 	if cfg.Gateway.WebhookSecretFile != "" && cfg.Gateway.WebhookSecret != "" {
 		// Shape check BEFORE the file read: both sources set is a config
 		// drift bug regardless of whether the file is readable.
-		return Config{}, fmt.Errorf("config invalid: %w", errGatewaySecretBothSources)
+		return Config{}, fmt.Errorf("config invalid: %w", errGatewaySecretBothSources) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 	}
 	if cfg.Gateway.WebhookSecretFile != "" {
 		data, err := os.ReadFile(cfg.Gateway.WebhookSecretFile)
 		if err != nil {
-			return Config{}, fmt.Errorf("gateway.webhook_secret_file %s: %w", cfg.Gateway.WebhookSecretFile, err)
+			return Config{}, errorfamily.WrapRejectionf(err, "config.webhook_secret_file", "gateway.webhook_secret_file %s", cfg.Gateway.WebhookSecretFile)
 		}
 		secret := strings.TrimSpace(string(data))
 		if secret == "" {
-			return Config{}, fmt.Errorf("gateway.webhook_secret_file %s is empty", cfg.Gateway.WebhookSecretFile)
+			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.webhook_secret_file", "gateway.webhook_secret_file %s is empty", cfg.Gateway.WebhookSecretFile)
 		}
 		cfg.Gateway.WebhookSecret = secret
 	}
 
 	if err := validate(cfg); err != nil {
-		return Config{}, fmt.Errorf("config invalid: %w", err)
+		return Config{}, fmt.Errorf("config invalid: %w", err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 	}
 
 	return cfg, nil
@@ -230,30 +231,30 @@ func validate(cfg Config) error {
 	switch cfg.Gateway.Mode {
 	case GatewayLoopback, GatewayWebhook:
 	case "":
-		return fmt.Errorf("gateway.mode is empty")
+		return errorfamily.NewRejection("config.gateway.mode", "gateway.mode is empty")
 	default:
-		return fmt.Errorf("gateway.mode %q is not one of loopback|webhook", cfg.Gateway.Mode)
+		return errorfamily.Newf(errorfamily.Rejection, "config.gateway.mode", "gateway.mode %q is not one of loopback|webhook", cfg.Gateway.Mode)
 	}
 	if cfg.Gateway.Mode == GatewayWebhook && cfg.Gateway.WebhookURL == "" {
-		return fmt.Errorf("gateway.webhook_url is required in webhook mode")
+		return errorfamily.NewRejection("config.gateway.webhook_url", "gateway.webhook_url is required in webhook mode")
 	}
 	if cfg.Addr == "" {
-		return fmt.Errorf("addr is empty")
+		return errorfamily.NewRejection("config.addr", "addr is empty")
 	}
 	if cfg.DataDir == "" {
-		return fmt.Errorf("data_dir is empty")
+		return errorfamily.NewRejection("config.data_dir", "data_dir is empty")
 	}
 	if cfg.SessionTTL <= 0 {
-		return fmt.Errorf("session_ttl must be positive")
+		return errorfamily.NewRejection("config.session_ttl", "session_ttl must be positive")
 	}
 	if cfg.Timezone != "" {
 		if _, err := time.LoadLocation(cfg.Timezone); err != nil {
-			return fmt.Errorf("timezone %q is not an IANA zone name: %w", cfg.Timezone, err)
+			return errorfamily.WrapRejectionf(err, "config.timezone", "timezone %q is not an IANA zone name", cfg.Timezone)
 		}
 	}
 	if cfg.TURN.Secret != "" {
 		if cfg.TURN.TTL <= 0 {
-			return fmt.Errorf("turn_rest.ttl must be positive when turn_rest.secret is set")
+			return errorfamily.NewRejection("config.turn_rest.ttl", "turn_rest.ttl must be positive when turn_rest.secret is set")
 		}
 		hasTurnURL := false
 		for _, server := range cfg.ICEServers {
@@ -265,45 +266,45 @@ func validate(cfg Config) error {
 			}
 		}
 		if !hasTurnURL {
-			return fmt.Errorf("turn_rest.secret is set but no ice_servers entry carries a turn:/turns: URL: the secret would be dead config (coturn never sees a derived credential)")
+			return errorfamily.NewRejection("config.turn_rest.dead_secret", "turn_rest.secret is set but no ice_servers entry carries a turn:/turns: URL: the secret would be dead config (coturn never sees a derived credential)")
 		}
 	}
 	if cfg.SessionMaxTTL < cfg.SessionTTL {
-		return fmt.Errorf("session_max_ttl (%s) must be >= session_ttl (%s): the absolute cap cannot be shorter than the idle window it bounds", cfg.SessionMaxTTL, cfg.SessionTTL)
+		return errorfamily.Newf(errorfamily.Rejection, "config.session_max_ttl", "session_max_ttl (%s) must be >= session_ttl (%s): the absolute cap cannot be shorter than the idle window it bounds", cfg.SessionMaxTTL, cfg.SessionTTL)
 	}
 	for _, origin := range cfg.CSRF.TrustedOrigins {
 		u, err := url.Parse(origin)
 		if err != nil || u.Scheme == "" || u.Host == "" {
-			return fmt.Errorf("csrf.trusted_origins: %q is not an absolute origin (want scheme://host, e.g. https://pbx.example.org)", origin)
+			return errorfamily.Newf(errorfamily.Rejection, "config.csrf.trusted_origins", "csrf.trusted_origins: %q is not an absolute origin (want scheme://host, e.g. https://pbx.example.org)", origin)
 		}
 	}
 	for _, proxy := range cfg.CSRF.TrustedProxies {
 		if net.ParseIP(proxy) == nil {
 			if _, _, err := net.ParseCIDR(proxy); err != nil {
-				return fmt.Errorf("csrf.trusted_proxies: %q is not an IP address or CIDR network", proxy)
+				return errorfamily.Newf(errorfamily.Rejection, "config.csrf.trusted_proxies", "csrf.trusted_proxies: %q is not an IP address or CIDR network", proxy)
 			}
 		}
 	}
 	for ext, did := range cfg.Identities {
 		parsed, err := domain.ParseExtension(ext)
 		if err != nil || parsed.String() != ext {
-			return fmt.Errorf("identities: key %q is not a normalized extension (sanitize it exactly as it appears after login)", ext)
+			return errorfamily.Newf(errorfamily.Rejection, "config.identities", "identities: key %q is not a normalized extension (sanitize it exactly as it appears after login)", ext)
 		}
 		if _, err := domain.ParsePhone(did); err != nil {
-			return fmt.Errorf("identities: DID for extension %q has no dialable characters", ext)
+			return errorfamily.Newf(errorfamily.Rejection, "config.identities", "identities: DID for extension %q has no dialable characters", ext)
 		}
 	}
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
 		return nil
 	case cfg.CRM.URL == "":
-		return fmt.Errorf("crm.token is set without crm.url: the integration needs both (or neither)")
+		return errorfamily.NewRejection("config.crm.url", "crm.token is set without crm.url: the integration needs both (or neither)")
 	case cfg.CRM.Token == "":
-		return fmt.Errorf("crm.url is set without crm.token: the CRM machine API answers 401 without a bearer token")
+		return errorfamily.NewRejection("config.crm.token", "crm.url is set without crm.token: the CRM machine API answers 401 without a bearer token")
 	}
 	u, err := url.Parse(cfg.CRM.URL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return fmt.Errorf("crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
+		return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
 	}
 	return nil
 }
