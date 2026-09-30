@@ -1264,35 +1264,36 @@ errorfamily.LogErrorContext(ctx, logger, err) // family, code, retryable fields,
           <tr><th>Library</th><th>Pinned</th><th>Latest</th><th>Notable in the gap</th><th>Verdict</th></tr>
         </thead>
         <tbody>
+          <tr><td colspan="5" style="padding:4px 10px"><em>ANNOTATED 2026-09-30 (T19.3): all gap verdicts below have since executed — this snapshot is preserved as-is; per-row updates in the verdict column.</em></td></tr>
           <tr>
             <td>cqrs-htmx/v4</td><td>v4.11.0</td><td>v4.12.0</td>
             <td>Retry-After on 503; client metadata capture; SSE replay options</td>
-            <td class="no">Bump next train</td>
+            <td class="no"><s>Bump next train</s> → done: pinned v4.12.0 since 2026-09-24</td>
           </tr>
           <tr>
             <td>httputil</td><td>v1.2.0</td><td>v1.3.0</td>
             <td>etagmetrics extracted to go-etag (migration doc present)</td>
-            <td>Bump next train</td>
+            <td><s>Bump next train</s> → done: v1.3.0+ via the 2026-09-29 sweep; httpspec 19-suite pinned on it</td>
           </tr>
           <tr>
             <td>go-error-family</td><td>v0.10.1</td><td>v0.10.2</td>
             <td>Patch (cqrs-htmx HEAD already wants it)</td>
-            <td>Ride along</td>
+            <td><s>Ride along</s> → done: v0.11.0, then ADOPTED as the error convention (2026-09-30 family train, tier-2 = 0)</td>
           </tr>
           <tr>
             <td>go-sse (+ssetest)</td><td>v0.6.0</td><td>v0.6.1</td>
             <td>Patch</td>
-            <td>Ride along</td>
+            <td><s>Ride along</s> → done: v0.6.1</td>
           </tr>
           <tr>
             <td>go-health</td><td>v0.3.0</td><td>v0.4.0</td>
             <td>Three-probe API stable; release marked alpha; WithGETOnly deprecated</td>
-            <td class="yes">Hold until stable</td>
+            <td class="yes"><s>Hold until stable</s> → HOLD overridden by the 2026-09-29 daemon sweep (0816f15): now v0.4.1 (v0.4.1 = go-directive fix only, no API change); wiring verified at v0.4.0; M18 park condition unaffected</td>
           </tr>
           <tr>
             <td>templ-components</td><td>v1.19.2</td><td>v1.19.2</td>
             <td>Current. v2.0 module-split work landed upstream &mdash; future major</td>
-            <td class="yes">Current</td>
+            <td class="yes">Current (swept to v1.19.4 2026-09-30; tw.css verified class-identical, no regen)</td>
           </tr>
           <tr>
             <td>go-branded-id</td><td>v0.6.0</td><td>v0.6.0</td>

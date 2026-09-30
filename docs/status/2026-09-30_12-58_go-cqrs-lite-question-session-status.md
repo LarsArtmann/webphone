@@ -43,9 +43,9 @@
 
 Nothing code-level (no code touched — a fucked-up *finding*, not a fucked-up *build*). Three findings that belong in this bucket by severity:
 
-1. **Answered from the wrong tree.** I cited READMEs from the local go-cqrs-lite working tree (HEAD today) while webphone consumes pinned v4.12.0 — without checking drift. If local is ahead of the pin (likely, given v5-boundary ADRs are visible in the local tree), parts of my answer describe capabilities/deprecations webphone cannot see. That's exactly the "verify external claims before encoding" failure mode, applied inbound.
-2. **Inference presented as fact.** "A `system.New` root would fight that plan [the pinned middleware chain]" — plausible reasoning from a README, stated as certainty. I never opened `system.go`'s composition surface. The verdict's conclusion is probably still right (the deep-dive ruled independently), but the argument chain had one unverified link.
-3. **Missed the intent read.** "Why are we not using X *yet*?" is a classic adoption-prompt phrasing. I answered and stopped. The cost: one round-trip of latency if the user actually wanted a plan. Now asked as g-Q1.
+1. ~~**Answered from the wrong tree.** I cited READMEs from the local go-cqrs-lite working tree (HEAD today) while webphone consumes pinned v4.12.0 — without checking drift. If local is ahead of the pin (likely, given v5-boundary ADRs are visible in the local tree), parts of my answer describe capabilities/deprecations webphone cannot see. That's exactly the "verify external claims before encoding" failure mode, applied inbound.~~ resolved 2026-09-30 (closure train): drift CHECKED — `system/README.md` byte-identical since `system/v4.10.0`; `metaengine/README.md` differs by one SSE-signature example fix since `metaengine/v4.15.0`; webphone's actual pin set (go.mod:44-50) = command@v4.12.0, dispatcher@v4.5.0, event@v4.12.0, id@v4.6.1, metadata@v4.7.1, query@v4.9.0, record@v4.6.0 — the 12:58 evidence was tag-equivalent; the verdict stands as stated.
+2. ~~**Inference presented as fact.** "A `system.New` root would fight that plan [the pinned middleware chain]" — plausible reasoning from a README, stated as certainty. I never opened `system.go`'s composition surface. The verdict's conclusion is probably still right (the deep-dive ruled independently), but the argument chain had one unverified link.~~ resolved + claim REFUTED 2026-09-30: source read of `system/constructor.go` `New()` (constructor.go:26) shows it composes the event-sourcing DOMAIN runtime — dispatchers, engines, event stores, projections, buses — and never touches `http.Handler` wiring at all. It would not "fight" the middleware chain; the honest non-adoption reason is that webphone has NO event-sourced state for `system.New` to compose. Conclusion (non-adoption) unchanged; the argument is now source-grounded.
+3. ~~**Missed the intent read.** "Why are we not using X *yet*?" is a classic adoption-prompt phrasing. I answered and stopped. The cost: one round-trip of latency if the user actually wanted a plan. Now asked as g-Q1.~~ resolved 2026-09-30: the 13:14 pareto plan (`9772ce0`) closed it as curiosity→wontfix (assumption A1, overridable at the owner sitting); the owner's subsequent full-execution GO covered the post-review queue with NO adoption mandate. Revisit trigger recorded in ROADMAP (event-sourced state or a second Go binary).
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -61,9 +61,9 @@ Provenance: **[S]** = session finding (this run's gaps), **[R]** = noticed in th
 
 **Session findings (act on these first):**
 
-1. [S][d1] Verify go-cqrs-lite local-HEAD vs webphone pin v4.12.0 drift; restate the verdict with pin-grounded citations if materially different.
-2. [S][d2] Read `system.New`'s composition API (not the README) before the "would fight the middleware chain" claim is ever repeated.
-3. [S][g1] Resolve the adoption-question intent (Q1 below); if mandate → `docs/planning/` doc; if curiosity → close as wontfix with the deep-dive pointer.
+1. ~~[S][d1] Verify go-cqrs-lite local-HEAD vs webphone pin v4.12.0 drift; restate the verdict with pin-grounded citations if materially different.~~ done 2026-09-30 — no material drift (see d1 resolution above).
+2. ~~[S][d2] Read `system.New`'s composition API (not the README) before the "would fight the middleware chain" claim is ever repeated.~~ done 2026-09-30 — claim refuted, replaced with the source-grounded reason (d2 resolution above).
+3. ~~[S][g1] Resolve the adoption-question intent (Q1 below); if mandate → `docs/planning/` doc; if curiosity → close as wontfix with the deep-dive pointer.~~ done 2026-09-30 — wontfix + ROADMAP revisit trigger.
 4. [S] Decide the AGENTS.md pointer question (Q2 below): one line pointing at the deep-dive's go-cqrs-lite verdict vs strict one-home.
 5. [S] Check whether ADR-0123 (v5 read-model/`stack` cut) affects the 7 indirect go-cqrs-lite modules cqrs-htmx drags in, at the next major bump.
 6. [S] QMD: evaluate indexing this repo's docs (currently only `cv` collection visible) for cross-session ruling recall.
@@ -109,10 +109,19 @@ Provenance: **[S]** = session finding (this run's gaps), **[R]** = noticed in th
 
 ## g) Up to 3 questions I cannot figure out myself
 
-1. **Intent of the go-cqrs-lite question:** curiosity, roadmap probe, or adoption mandate? If mandate, for WHICH future (an auditable message/fax event log is the only product shape where `system`+`metaengine` would pay)? This decides wontfix-with-pointer vs a planning doc.
-2. **Docs policy:** should recurring "why not library X" rulings get a one-line AGENTS.md pointer (cheaper recall, mild duplication of the deep-dive's one-home), or does strict one-home-per-fact win and sessions are expected to find the research doc?
-3. **Next-train sequencing:** v2.7.0 close + stack re-lock FIRST, or the upstream setup-shell seams (cqrs-htmx `Config.DisableAuth` + service-optional `New()`) first? Both are queued; the order is an owner call I can't derive from the repo.
+1. ~~**Intent of the go-cqrs-lite question:** curiosity, roadmap probe, or adoption mandate? If mandate, for WHICH future (an auditable message/fax event log is the only product shape where `system`+`metaengine` would pay)? This decides wontfix-with-pointer vs a planning doc.~~ resolved 2026-09-30: curiosity → CLOSED as wontfix (deep-dive verdict + source-grounded closure above); revisit trigger = event-sourced state or a second Go binary (ROADMAP).
+2. **Docs policy:** should recurring "why not library X" rulings get a one-line AGENTS.md pointer (cheaper recall, mild duplication of the deep-dive's one-home), or does strict one-home-per-fact win and sessions are expected to find the research doc? ← still open; routed into the owner-calls briefing (2026-09-30 T03 update).
+3. ~~**Next-train sequencing:** v2.7.0 close + stack re-lock FIRST, or the upstream setup-shell seams (cqrs-htmx `Config.DisableAuth` + service-optional `New()`) first? Both are queued; the order is an owner call I can't derive from the repo.~~ resolved by events: upstream shipped the seams itself (cqrs-htmx setup/v4.13.0+v4.13.1); webphone-side adoption measured NO-GO on the footprint gate (+68.2% > +20%); release tail runs FIRST per the TODO_LIST PREREQ — order settled.
 
 ---
 
-**WAITING FOR INSTRUCTIONS** — no HARVEST, no code changes, no commit beyond the auto-commit daemon picking this file up.
+**WAITING FOR INSTRUCTIONS** — ~~no HARVEST, no code changes, no commit beyond the auto-commit daemon picking this file up.~~ The instructions arrived 2026-09-30 ~13:45 (full-execution GO); execution runs under the 13:14 pareto plan.
+
+## Closure appendix (2026-09-30, T04 of the 13:14 pareto plan)
+
+The go-cqrs-lite question is CLOSED with evidence:
+
+- **Drift (d1):** zero for `system`, cosmetic for `metaengine` — see d1 resolution.
+- **`system.New` (d2):** domain composition root, no HTTP surface — see d2 resolution. Non-adoption reason is "nothing event-sourced to compose", not middleware friction.
+- **ADR-0123 (v5 unification):** status **Proposed** (2026-08-09), migration path staged (v4.x parity → v4.x+1 deprecations → v5.0 clean break). Of the surfaces v5 deletes — `stack.Bundle`, `simpleBus`, v1 read-model tiers — webphone pins NONE (its 7 indirect modules are command/dispatcher/event/id/metadata/query/record). The metadata consolidation touches pinned modules but only at new /v5 paths; v4 keeps resolving. **Impact on webphone: zero direct, deferred via cqrs-htmx's own v5 migration** — a watched upstream event, not a webphone task.
+- **Wontfix stands** (2026-09-24 deep-dive ruling + this closure); revisit trigger: webphone grows event-sourced state or a second Go binary (recorded in ROADMAP).

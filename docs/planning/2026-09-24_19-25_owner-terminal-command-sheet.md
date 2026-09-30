@@ -95,13 +95,36 @@ capitalized-wire bug silently hid every shared contact; fixed by
 ## 4. Outbound SMS bridge failure on prod (M3, TODO row "Outbound SMS bridge failure on prod")
 
 webphone-side classification is correct since `1d53f44`/`6ac8962`; the
-root cause is stack-side. On the pbx host:
+root cause is stack-side. Triage pack (assembled 2026-09-30 from the
+stack's `modules/telephony/messaging.nix` + `telnyx-webhooks.py`; the
+bridge prints its OWN actionable fix strings — read them first):
 
 ```console
+# 1. Is the unit even up? (Restart=on-failure, so a crash-loop shows here)
+systemctl status telnyx-webhooks.service
+
+# 2. The evidence grep (bridge logs "telnyx-webhooks: <event> <details>")
 journalctl -u telnyx-webhooks.service --since today | grep -Ei 'sms|422|error'
-# restart or fix creds per findings, then send a test SMS; record the root cause
-# in the TODO_LIST SMS-bridge row + the stack runbook
+
+# 3. Restart after any cred fix
+sudo systemctl restart telnyx-webhooks.service
 ```
+
+Decision tree — match what you saw:
+
+| Observation | Meaning | Fix |
+| --- | --- | --- |
+| Unit `failed`/crash-looping, log says `telnyx_api_key is not configured` | Telnyx V2 API key file empty/placeholder | Create a key at portal.telnyx.com, write to `/var/lib/telephony-secrets/telnyx_api_key` (root, 0600), restart |
+| Log says `webphone_secret credential is missing` | Shared gateway secret missing/mismatched | Write it to `/var/lib/telephony-secrets/webphone_gateway_secret` — must EQUAL `WEBPHONE_GATEWAY__WEBHOOK_SECRET` in the webphone env file — then restart |
+| Unit up, but webphone send gets 502 "gateway" fast, bridge log shows connection refused to webphone | Bridge cannot reach `WEBPHONE_URL` | Check `webphone.service` is up and `messaging.webphoneUrl` points at it |
+| Bridge log shows Telnyx 401/403 on the outbound POST | Telnyx rejecting the key | Rotate the API key, update the cred file, restart |
+| 422 "messages cannot be sent to your own number" on a self-send | NOT a failure — train-C local refusal (expected ≥ v2.7.0) | None; this also closes the self-send banner browser check |
+| Provider text `40310`/self-DID rejection on v2.6.0 | Known pre-2.7.0 self-send lane | None; disappears with the release-tail deploy |
+
+After any fix: send a test SMS from the web UI to a REAL external
+number (not the PBX DID — that is the self-send lane above). Then
+record the root cause in the TODO_LIST SMS-bridge row + the stack
+runbook § "Webphone error contract" side.
 
 ## 5. OWNER-calls batch session (M16, TODO row "OWNER-calls batch session")
 
