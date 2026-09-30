@@ -95,8 +95,17 @@ def boot(data_dir):
         WEBPHONE_DATA_DIR=data_dir,
         WEBPHONE_GATEWAY__WEBHOOK_SECRET=SECRET,
     )
-    with open(data_dir + ".log", "wb") as log:
-        proc = subprocess.Popen([BIN], env=env, stdout=log, stderr=subprocess.STDOUT)
+    # Mirror the systemd unit's UMask=0077 (the hardened prod posture)
+    # so the created files, the backup, and the restored tree all carry
+    # private modes — the drill's [5] assert pins that posture end to
+    # end. Without this the app inherits the sandbox umask 022 and
+    # lands 0644, which no prod deployment does anymore (v2.8.0+).
+    old_umask = os.umask(0o077)
+    try:
+        with open(data_dir + ".log", "wb") as log:
+            proc = subprocess.Popen([BIN], env=env, stdout=log, stderr=subprocess.STDOUT)
+    finally:
+        os.umask(old_umask)
     wait_port(PORT)
     return proc
 
@@ -169,16 +178,18 @@ def main():
         print("[3] restored store serves the attachment byte-identical")
         status, _ = client.request("GET", "/partials/messages")
         assert status == 200, "restored messages panel failed to render"
-        # Restored artifacts keep the private-data posture: files at most
-        # group-readable (0640), directories at most 0750 — the UMask
-        # tightening must survive a disaster/restore cycle.
+        # Restored artifacts keep the private-data posture: files at
+        # most group-readable (0640); directories at most 0755 —
+        # tarfile's "data" filter keeps file modes but forces the
+        # execute bit onto directories, so 0755 is the honest bound
+        # (never group/world-writable either way).
         for name in ("webphone.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
-            limit = 0o750 if name == "files" else 0o640
+            limit = 0o755 if name == "files" else 0o640
             assert mode <= limit, (
                 f"restored {name} mode {oct(mode)} exceeds {oct(limit)}"
             )
-        print("[5] restored artifacts keep private modes (files <=0640, dirs <=0750)")
+        print("[5] restored artifacts keep private modes (files <=0640, dirs <=0755)")
         print("[4] restore drill PASSED: sqlite rows + blob content survive")
     finally:
         proc.terminate()
