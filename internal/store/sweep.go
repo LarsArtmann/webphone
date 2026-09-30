@@ -36,7 +36,7 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 		UNION ALL
 		SELECT document_path FROM fax_jobs WHERE created_at < ? AND document_path != ''
 	`, []any{cutoff.Unix(), cutoff.Unix()}, func(row rowScanner) (string, error) {
-	var path string
+		var path string
 		if err := row.Scan(&path); err != nil {
 			return "", errorfamily.WrapInfrastructuref(err, "store.sweep_scan", "scan blob path")
 		}

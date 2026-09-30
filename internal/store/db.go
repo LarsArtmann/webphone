@@ -43,7 +43,7 @@ func Open(path string) (*sql.DB, error) {
 	defer cancel()
 
 	if err := migrate(ctx, db); err != nil {
-		_ = db.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+		_ = db.Close()                                      //nolint:erraudit // close-after-use: nothing left to do on failure
 		return nil, fmt.Errorf("migrate %s: %w", path, err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 	}
 
