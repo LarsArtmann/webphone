@@ -881,6 +881,24 @@
           </div>
         </div>
 
+        <div class="card card-problem">
+          <h4>VERDICT — executed 2026-09-30, adoption NO-GO (measured), salvage verified</h4>
+          <p>
+            T02–T07 shipped upstream (setup/v4.13.0 + v4.13.1: DisableAuth, DisableService, NewShell;
+            ADR-0054; 19 tests; all gates green). T09+T10 were composed in a sandbox worktree and every
+            behavioral gate went green (httpspec 19-suite chain parity, full go suite, smoke 41+4) —
+            then T12 measured the footprint: 15.25 → 25.65 MB, <strong>+10.40 MB = +68.2%</strong> against the
+            recorded ≤ +8 MB / ≤ +20% gate. <strong>NO-GO.</strong> Importing the setup package links its whole
+            +72-module import graph even through NewShell (Go links package init + package-level state
+            regardless of function reachability). Fallback R3 executed and verified in the same worktree:
+            server.go reverts to the hand chain, the lifecycle value rides <code>httputil.NewServer</code>
+            (the primitive RunHandler wraps — SSE-safe timeouts + 30 s drain) at
+            <strong>+8 KB = +0.05%</strong>, smoke 41+4 green. The rejection stands (identity + footprint);
+            salvage lands after the v2.8.0 tail ships. Evidence: AGENTS setup paragraph, TODO_LIST row,
+            ADR-0054 annotation (cqrs-htmx 51a96899).
+          </p>
+        </div>
+
         <p>
           <strong>Thesis.</strong> The documented rejection of the <code>setup</code> bundle
           (split-brain identity) concerned its <em>identity surfaces</em> — the event-sourced

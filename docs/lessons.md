@@ -21,7 +21,9 @@ and the evidence. Newest last is NOT enforced — group by topic.
 - The `setup` bundle, CQRS dispatch layer and usermgmt stay rejected
   (split-brain identity: this product's identity is the PBX extension
   - directory password, proven by the island's SIP REGISTER — a second
-    user database would be a split brain). Security presets are NEVER
+    user database would be a split brain) AND on footprint (2026-09-30:
+    the shell-only adoption measured +10.40 MB / +68.2% binary delta —
+    see the import-graph lesson below). Security presets are NEVER
     adopted wholesale — the library's `RecommendedPermissionsPolicy`
     denies `microphone`, which would kill the WebRTC phone.
     `toastDetail` is a type alias of `cqrshtmx.ToastDetail`
@@ -35,6 +37,21 @@ and the evidence. Newest last is NOT enforced — group by topic.
     the mapping now lives in ui.js `toastKindFor`, pinned by ui.test.mjs.
     Audit trail (deep-dives, plans, idiomorph verdict): `docs/research/`
   - `docs/planning/` 2026-09-18..20.
+- **Importing a package links its whole import graph — measure, don't
+  assume the linker saves you (2026-09-30 footprint train).** Go links
+  the init functions and package-level state of every transitively
+  imported package regardless of function reachability: the shell-only
+  setup adoption called `NewShell` (never `New`), kept the service path
+  unreachable, passed every behavioral gate (httpspec chain parity, full
+  suite, smoke 41+4) — and still shipped +72 modules (usermgmt,
+  adminui, dashboardui, loginpage, casbin, appkit, datastar) into the
+  binary: 15.25 → 25.65 MB. Embedded panel assets and package-level
+  registries are exactly the weight pruning cannot touch. The fix was
+  going one level down: the lifecycle value lived in
+  `httputil.NewServer` (already linked) at +8 KB. Corollary: a
+  composition root that "just wires" heavy submodules is a dependency
+  on all of them at link time; the measured go/no-go gate in AGENTS is
+  the only honest arbiter.
 
 ## CSRF
 

@@ -25,7 +25,8 @@ en/de UI strings' English anchors.
 
 - **extension** — the PBX phone identity ("1001"): the product's ONLY
   user concept. No user table exists by design (split-brain refusal of
-  the cqrs-htmx `setup` bundle).
+  the cqrs-htmx `setup` bundle — reinforced 2026-09-30 by the measured
+  footprint refusal: +10.40 MB / +68.2% for the shell-only adoption).
 - **directory password** — the PBX FreeSWITCH directory credential;
   proven by the island's SIP REGISTER, stored in the session row for
   the `/phone-api` proxy.
