@@ -13,12 +13,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 )
@@ -127,7 +127,7 @@ func NewMemStore(ttl time.Duration) *MemStore {
 func mintToken() (string, error) {
 	buf := make([]byte, tokenBytes)
 	if _, err := rand.Read(buf); err != nil {
-		return "", fmt.Errorf("generate session token: %w", err)
+		return "", errorfamily.WrapInfrastructuref(err, "session.token", "generate session token")
 	}
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }

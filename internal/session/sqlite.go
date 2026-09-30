@@ -6,9 +6,9 @@ package session
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 
 	_ "modernc.org/sqlite" // registers the "sqlite" driver
@@ -40,14 +40,14 @@ const sessionsExpiryIndex = `CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON s
 // the honest migration, nothing is resurrected.
 func NewSQLiteStore(db *sql.DB, ttl time.Duration) (*SQLiteStore, error) {
 	if db == nil {
-		return nil, fmt.Errorf("session store: nil db")
+		return nil, errorfamily.NewInfrastructure("session.nil_db", "session store: nil db")
 	}
 	if ttl <= 0 {
-		return nil, fmt.Errorf("session store: ttl must be positive, got %s", ttl)
+		return nil, errorfamily.Newf(errorfamily.Infrastructure, "session.ttl", "session store: ttl must be positive, got %s", ttl)
 	}
 	for _, stmt := range []string{sessionsSchema, sessionsExpiryIndex} {
 		if _, err := db.Exec(stmt); err != nil {
-			return nil, fmt.Errorf("migrate sessions: %w", err)
+			return nil, errorfamily.WrapInfrastructuref(err, "session.migrate", "migrate sessions")
 		}
 	}
 	return &SQLiteStore{db: db, ttl: ttl}, nil
@@ -66,14 +66,14 @@ func (s *SQLiteStore) Create(extension domain.Extension, password string) (strin
 	if _, err := s.db.Exec(
 		`DELETE FROM sessions WHERE expires_at < ?`, now.UnixMilli(),
 	); err != nil {
-		return "", fmt.Errorf("sweep sessions: %w", err)
+		return "", errorfamily.WrapInfrastructuref(err, "session.sweep", "sweep sessions")
 	}
 	if _, err := s.db.Exec(
 		`INSERT INTO sessions (token, extension, password, created_at, expires_at)
 		 VALUES (?, ?, ?, ?, ?)`,
 		token, extension.String(), password, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
 	); err != nil {
-		return "", fmt.Errorf("insert session: %w", err)
+		return "", errorfamily.WrapInfrastructuref(err, "session.insert", "insert session")
 	}
 	return token, nil
 }
