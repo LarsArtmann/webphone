@@ -5,13 +5,13 @@ package blob
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/sixafter/nanoid"
 )
 
@@ -23,7 +23,7 @@ type Store struct {
 // New creates the store, making the root directory if needed.
 func New(root string) (*Store, error) {
 	if err := os.MkdirAll(root, 0o750); err != nil {
-		return nil, fmt.Errorf("create blob root %s: %w", root, err)
+		return nil, errorfamily.WrapInfrastructuref(err, "blob.root", "create blob root %s", root)
 	}
 	return &Store{root: root}, nil
 }
@@ -34,18 +34,18 @@ func New(root string) (*Store, error) {
 func (s *Store) Save(subDir, ext string, content []byte) (string, error) {
 	if subDir != "" {
 		if err := os.MkdirAll(filepath.Join(s.root, subDir), 0o750); err != nil {
-			return "", fmt.Errorf("create %s: %w", subDir, err)
+			return "", errorfamily.WrapInfrastructuref(err, "blob.subdir", "create %s", subDir)
 		}
 	}
 	name, err := nanoid.New()
 	if err != nil {
-		return "", fmt.Errorf("generate file name: %w", err)
+		return "", errorfamily.WrapInfrastructuref(err, "blob.name", "generate file name")
 	}
 	rel := filepath.Join(subDir, string(name)+ext)
 	abs := filepath.Join(s.root, rel)
 
 	if err := os.WriteFile(abs, content, 0o640); err != nil {
-		return "", fmt.Errorf("write %s: %w", rel, err)
+		return "", errorfamily.WrapInfrastructuref(err, "blob.write", "write %s", rel)
 	}
 
 	return rel, nil
@@ -56,11 +56,11 @@ func (s *Store) Save(subDir, ext string, content []byte) (string, error) {
 func (s *Store) Open(rel string) (io.ReadSeekCloser, error) {
 	clean := filepath.Clean(rel)
 	if filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
-		return nil, fmt.Errorf("refusing path %q outside store", rel)
+		return nil, errorfamily.Newf(errorfamily.Rejection, "blob.escape", "refusing path %q outside store", rel)
 	}
 	file, err := os.Open(filepath.Join(s.root, clean))
 	if err != nil {
-		return nil, fmt.Errorf("open %s: %w", clean, err)
+		return nil, errorfamily.WrapInfrastructuref(err, "blob.open", "open %s", clean)
 	}
 	return file, nil
 }
@@ -79,7 +79,7 @@ func (s *Store) Root() string { return s.root }
 // unlinked it); any other failure is.
 func (s *Store) Remove(rel string) error {
 	if err := os.Remove(s.Abs(rel)); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("remove blob %s: %w", rel, err)
+		return errorfamily.WrapInfrastructuref(err, "blob.remove", "remove blob %s", rel)
 	}
 	return nil
 }
