@@ -331,3 +331,79 @@ done"), waiving D1's wait-for-switch ordering:
 - OWNER-OPEN: T01 (train-1 switch), T11 (train-2 deploy chain — now
   carries BOTH trains), T12 (carrier-phone MMS isolation test), T15
   (oops ratification), T18 (post-train-2 verification).
+
+## Appendix: family-adoption execution (2026-09-30)
+
+Owner re-ran the full audit set (`--type-aware --enforce-go-error-family
+--no-suppress --enforce-samber-oops --enforce-generic-return
+--disable-extensions`, 217 violations / 132 tier-2 stdlib_constructor
+suppressed-inclusive baseline 2026-09-30) and ordered the tier-2
+family-adoption conversions executed ("most superb error handling
+possible"). That confirms the migration intent TODO_LIST carried and
+resolves the "dep swept-but-unused?" owner question: the dep is used.
+
+### Principles (the one family decision, written down first)
+
+- **P1 — constructors classify at ORIGIN.** The site that knows the
+  failure's nature picks the family; every constructor site becomes an
+  `errorfamily.New*/Wrap*` call with a stable dot-notation code.
+- **P2 — propagation wraps family-NEUTRALLY.** Where the inner error's
+  family is polymorphic (a wrap can carry Rejection OR Infrastructure
+  depending on the cause), a family-fixed `Wrap*` would CLOBBER the
+  inner classification — `Classify` finds the outermost `Classified`
+  first. Those sites keep `fmt.Errorf("…: %w")` with a
+  `//nolint:erraudit // family-neutral propagation: the inner error owns
+  the family` marker. Known sites: cmd/webphone main.go wiring wraps;
+  the messaging/fax `"gateway: %w"` service wraps (pinned by
+  family_test.go since T02).
+- **P3 — sentinels stay sentinels** (plan guardrail #4). `errors.New`
+  vars keep their identity; their families are REGISTERED in the owning
+  package's `init()` (`errorfamily.RegisterClassification`) — the
+  library's documented pattern for stable error values. ErrNotFound →
+  Rejection (absence), ErrDisabled → Infrastructure (nil deps), ErrUnauthorized →
+  Rejection, ErrListFull → Rejection (input cap), crm.ErrNotFound →
+  Rejection.
+- **P4 — rendered strings never change.** `(*errorfamily.Error).Error()`
+  prefixes `[family:code]`, so any error whose string reaches a pinned
+  or user-rendered surface stays a custom typed struct implementing
+  `Classified` (the ErrInvalidSend pattern). Verified for every
+  converted seam: the remaining handlers render fixed copy
+  ("invalid extension", "enter a valid number", i18n keys), never
+  `err.Error()`; config tests match by `strings.Contains` on the
+  message body.
+- **P5 — codes are dot-notation, seam-prefixed, stable, non-empty**
+  (the `--enforce-coded-errors` bar; verified in the final gate).
+- **P6 — generic_return: ONE decision, zero new types.** Functions keep
+  the `error` interface return. Typed returns exist ONLY where callers
+  branch structurally — `ErrInvalidSend`, `ErrInvalidFax`,
+  `ErrProviderRejected` already do (that is what powers
+  `classifyForUser`). erraudit's own default ("returning error is
+  standard Go practice") and plan guardrail #4 concur. No piecemeal
+  `FooError` structs (TODO_LIST row 30's "fold into ONE decision").
+- **P7 — ignored/silent_swallow: no churn.** The 40 ignored findings
+  are defer-close/read-side-close standard practice
+  (`--enforce-deferred-close` is off by default for exactly this); the
+  2 vcard-import swallows are the T05 counted-skip pattern with
+  reasoned nolints. Re-verified 2026-09-30, unchanged.
+
+### Family table per seam (as implemented)
+
+| Seam | Codes | Family |
+| --- | --- | --- |
+| blob | `blob.root`, `blob.subdir`, `blob.name`, `blob.write`, `blob.open`, `blob.remove` | Infrastructure |
+| blob traversal refusal | `blob.escape` | Rejection |
+| store (all persistence ops) | `store.open`, `store.migrate`, `store.close`, `<op>` via listRows/execRows | Infrastructure |
+| domain validation | `domain.extension`, `domain.phone` | Rejection |
+| domain malformed id | `domain.id` | Corruption |
+| session | `session.token`, `session.<op>` | Infrastructure |
+| config validation + file IO | `config.<key>`, `config.file` | Rejection (operator input); IO wraps stay Rejection-classified at the boundary |
+| pbx url/encode/build | `pbx.url`, `pbx.encode`, `pbx.request` | url Rejection, encode/build Infrastructure |
+| pbx transport/decode | `pbx.transport`, `pbx.decode` | Transient |
+| pbx non-2xx | `pbx.http` | Rejection (4xx) / Transient (5xx) |
+| crm | mirrors pbx (`crm.*`) | mirrors pbx |
+| gateway form/PDF build | `gateway.form` (per T02 record) | Infrastructure |
+| messaging/fax inbound store failures | `store.*` codes per T02 record | Infrastructure |
+| webhook payload decode | `webhook.payload` | Rejection |
+
+Measured outcome: see the execution log at the end of this appendix
+(final tier-2 count recorded after the gates).
