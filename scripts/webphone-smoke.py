@@ -435,6 +435,32 @@ def run_checks(
         f"{status} {body[:80]!r}",
     )
 
+    # 2c. the health dashboard (this suite boots with
+    # WEBPHONE_DASHBOARD__ENABLE=true): HTML page under the dashboard's
+    # nonce'd CSP, the embedded Datastar SDK served same-origin, and the
+    # namespaced probe alias answering from the same probe as /livez.
+    status, body, headers = s.request("GET", "/health")
+    page = body.decode("utf-8", "replace")
+    c.ok(
+        "dashboard html serves",
+        status == 200 and "/health/datastar.js" in page and "nonce=" in page,
+        f"{status} {body[:80]!r}",
+    )
+    csp = headers.get("Content-Security-Policy", "")
+    c.ok(
+        "dashboard nonce csp",
+        "unsafe-eval" in csp and "nonce-" in csp,
+        csp[:100],
+    )
+    status, body, _ = s.request("GET", "/health/datastar.js")
+    c.ok("dashboard sdk same-origin", status == 200, f"got {status}")
+    status, body, _ = s.request("GET", "/health/livez")
+    c.ok(
+        "dashboard probe alias pass",
+        status == 200 and b'"status":"pass"' in body,
+        f"{status} {body[:80]!r}",
+    )
+
     # 3. version reports build metadata. With --expect-version the probe
     # FAILS unless the served build is exactly that version (accepts the
     # form with or without the leading v) — the post-deploy check that
@@ -894,6 +920,9 @@ def main() -> int:
             # Without a configured secret the hooks fail CLOSED (503) — the
             # suite exercises the open path, so it configures one.
             "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
+            # The dashboard is part of the product surface now: boot it
+            # enabled so its checks are standing smoke coverage.
+            "WEBPHONE_DASHBOARD__ENABLE": "true",
         }
     )
     server = subprocess.Popen(
