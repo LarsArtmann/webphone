@@ -7,12 +7,13 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
@@ -154,27 +155,33 @@ func run() error {
 	})
 
 	// --- serve ---------------------------------------------------------------
-	httpServer := &http.Server{
+	// httputil.Server owns the lifecycle — the same tested primitive the
+	// cqrs-htmx setup bundle's RunHandler wraps (footprint train
+	// 2026-09-30: the setup ADOPTION measured +10.4 MB / +68.2% binary
+	// delta and failed the recorded go/no-go gate, so the bundle stays
+	// rejected; the lifecycle value rides the wrapper's own dependency).
+	// SSE-safe timeout set: ReadHeaderTimeout bounds slowloris, IdleTimeout
+	// reaps dead keep-alives, NO Read/Write deadlines — SSE streams outlive
+	// any fixed deadline. The 30s shutdown budget covers the SSE hub drain
+	// (the manual block this replaced gave itself 10s).
+	httpServer, err := httputil.NewServer(httputil.ServerConfig{
 		Addr:              cfg.Addr,
-		Handler:           handler,
-		ReadHeaderTimeout: 10 * time.Second,
-		IdleTimeout:       120 * time.Second,
-		// no WriteTimeout: SSE streams outlive any fixed deadline
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		ShutdownTimeout:   30 * time.Second,
+	}, handler)
+	if err != nil {
+		return err
 	}
 
-	errCh := make(chan error, 1)
-	go func() {
-		slog.Info("listening", "addr", cfg.Addr)
-		errCh <- httpServer.ListenAndServe()
-	}()
+	slog.Info("listening", "addr", cfg.Addr)
+	errCh := httpServer.Start()
 
 	select {
 	case err := <-errCh:
 		return propagatef("serve: %w", err)
 	case <-ctx.Done():
 		slog.Info("shutting down")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		return httpServer.Shutdown(shutdownCtx)
+		return httpServer.Shutdown(context.WithoutCancel(ctx))
 	}
 }
