@@ -20,7 +20,7 @@ let
 
   configFile = (pkgs.formats.json { }).generate "webphone-config.json" cfg.settings;
 
-  # "127.0.0.1:8080" / ":8080" → "8080" (the nginx upstream needs the port).
+  # "127.0.0.1:8080" / ":8080" → "8080" (the Caddy upstream needs the port).
   listenPort = lib.last (lib.splitString ":" cfg.settings.addr);
 in
 {
@@ -55,7 +55,7 @@ in
           websocket_path = lib.mkOption {
             type = lib.types.str;
             default = "/sip";
-            description = "Path the SIP WebSocket is served on (the nginx vhost proxies it).";
+            description = "Path the SIP WebSocket is served on (the Caddy vhost proxies it).";
           };
         };
       };
@@ -90,7 +90,7 @@ in
     # Typed front for settings.csrf.trusted_*: same values the freeform
     # settings accept, but discoverable and checkable as module options.
     # Precedence per key: typed csrf.* (mkForce) beats a raw
-    # settings.csrf.* value, which beats the nginx.enable defaults
+    # settings.csrf.* value, which beats the caddy.enable defaults
     # (mkDefault). Empty typed lists never clobber raw values.
     csrf = {
       trustedProxies = lib.mkOption {
@@ -101,7 +101,7 @@ in
           Proxies whose X-Forwarded-Proto header the CSRF middleware may
           believe (IP or CIDR entries). Renders into
           `settings.csrf.trusted_proxies`; wins over BOTH a raw
-          `settings.csrf.trusted_proxies` value and the `nginx.enable`
+          `settings.csrf.trusted_proxies` value and the `caddy.enable`
           default when non-empty.
         '';
       };
@@ -113,7 +113,7 @@ in
           Browser-facing origins counted as same-origin by the CSRF
           middleware (the TLS vhost). Renders into
           `settings.csrf.trusted_origins`; wins over BOTH a raw
-          `settings.csrf.trusted_origins` value and the `nginx.enable`
+          `settings.csrf.trusted_origins` value and the `caddy.enable`
           default when non-empty.
         '';
       };
@@ -178,32 +178,29 @@ in
       };
     };
 
-    nginx = {
+    caddy = {
       enable = lib.mkEnableOption ''
-        an nginx vhost that terminates TLS and proxies HTTP and the SIP
-        WebSocket. Enabling it also defaults settings.csrf to trust the
-        loopback proxy and the https://<hostName> origin; without that
-        fronting shape (or a hand-rolled equivalent in settings.csrf)
-        the CSRF middleware rejects every browser POST behind TLS.'';
+        a Caddy vhost that terminates TLS (automatic HTTPS by default)
+        and proxies HTTP and the SIP WebSocket — websockets and SSE need
+        no special plumbing in Caddy beyond an explicit unbuffered flush
+        for /events. Enabling it also defaults settings.csrf to trust
+        the loopback proxy and the https://<hostName> origin; without
+        that fronting shape (or a hand-rolled equivalent in
+        settings.csrf) the CSRF middleware rejects every browser POST
+        behind TLS.'';
       hostName = lib.mkOption {
         type = lib.types.str;
         example = "phone.example.org";
-        description = "Virtual host name for the generated nginx vhost.";
-      };
-      gzip = {
-        enable = lib.mkEnableOption ''
-          nginx's recommended gzip settings on the generated vhost.
-          The app's payloads compress well (HTML partials, the island
-          sources, JSON) and the CPU cost is negligible at this scale;
-          SSE (/events) is excluded by nginx itself (proxied streaming
-          responses are not gzipped), so live updates stay untouched.'';
+        description = "Virtual host name for the generated Caddy vhost.";
       };
       hsts = {
         enable = lib.mkEnableOption ''
           Strict-Transport-Security on the generated vhost. Default off:
           HSTS pins browsers to https for maxAge seconds, so flipping it
           on before the deployment is genuinely https-only (ACME working,
-          no http-only tooling left) can brick the domain for that window.'';
+          no http-only tooling left) can brick the domain for that window.
+          Caddy serves the header on both schemes unless fenced — verify
+          the https-only story before enabling.'';
         maxAge = lib.mkOption {
           type = lib.types.ints.positive;
           default = 63072000;
@@ -242,15 +239,15 @@ in
       data_dir = lib.mkDefault cfg.dataDir;
       # Fronted shape: the generated vhost terminates TLS, so the browser's
       # Origin is https://<hostName> while the listener sees plain HTTP from
-      # the local nginx. Without these the CSRF middleware reads the truthful
+      # the local Caddy. Without these the CSRF middleware reads the truthful
       # Origin as a forged same-origin attestation and 403s every POST.
       # Precedence per key (pinned by the flake check's csrf-conflict case):
       # typed csrf.* (mkForce) > raw settings.csrf.* (plain) > the
-      # nginx-derived defaults (mkDefault).
+      # caddy-derived defaults (mkDefault).
       csrf = lib.mkMerge [
-        (lib.mkIf cfg.nginx.enable {
+        (lib.mkIf cfg.caddy.enable {
           trusted_proxies = lib.mkDefault [ "127.0.0.1" ];
-          trusted_origins = lib.mkDefault [ "https://${cfg.nginx.hostName}" ];
+          trusted_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
         })
         (lib.mkIf (cfg.csrf.trustedProxies != [ ]) {
           trusted_proxies = lib.mkForce cfg.csrf.trustedProxies;
@@ -296,7 +293,7 @@ in
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;
             # Private data (message threads, faxes, voicemail blobs): files
             # the app creates stay owner-only and the state dir drops to
-            # 0750 — the group is webphone-only and nginx never reads here.
+            # 0750 — the group is webphone-only and Caddy never reads here.
             StateDirectoryMode = "0750";
             UMask = "0077";
 
@@ -411,76 +408,32 @@ in
       };
     };
 
-    services.nginx = lib.mkIf cfg.nginx.enable {
+    # The Caddy front: one catch-all reverse_proxy plus the two streaming
+    # paths Caddy benefits from naming explicitly — the SIP WebSocket
+    # (transparent in Caddy; the handle documents it) and SSE (explicit
+    # flush_interval -1 so /events bytes reach the browser unbuffered).
+    # The JSON probes (/healthz /livez /startupz /metrics) need no handle
+    # of their own: fence scrapers with a remote_ip matcher in extraConfig
+    # instead of nginx-style per-location blocks.
+    services.caddy = lib.mkIf cfg.caddy.enable {
       enable = lib.mkDefault true;
-      recommendedProxySettings = lib.mkDefault true;
-      recommendedGzipSettings = lib.mkDefault cfg.nginx.gzip.enable;
-      virtualHosts.${cfg.nginx.hostName} = {
-        extraConfig = lib.mkIf cfg.nginx.hsts.enable ''
-          add_header Strict-Transport-Security "max-age=${toString cfg.nginx.hsts.maxAge}" always;
-        '';
-        locations = {
-          # "/" carries the whole app. The JSON probe endpoints have their
-          # OWN locations below so a fleet health hub can be allowlisted or
-          # restricted per location without touching the app's.
-          "/" = {
-            recommendedProxySettings = true;
-            proxyWebsockets = false;
-            proxyPass = "http://127.0.0.1:${listenPort}";
-          };
-          # The probe triple, as dedicated locations: GET /healthz
-          # (readiness: sqlite + blob-dir, bounded checks), GET /livez
-          # (process liveness, fetch-free) and GET /startupz (503 until the
-          # backing resources first pass, then latched). All three are
-          # session-free GETs whose bodies name checks and statuses only,
-          # never secrets — safe to expose or scrape by a fleet health hub;
-          # override one with extraConfig (allow/deny) to fence scrapers.
-          "/healthz" = {
-            recommendedProxySettings = true;
-            proxyWebsockets = false;
-            proxyPass = "http://127.0.0.1:${listenPort}";
-          };
-          "/livez" = {
-            recommendedProxySettings = true;
-            proxyWebsockets = false;
-            proxyPass = "http://127.0.0.1:${listenPort}";
-          };
-          "/startupz" = {
-            recommendedProxySettings = true;
-            proxyWebsockets = false;
-            proxyPass = "http://127.0.0.1:${listenPort}";
-          };
-          # /metrics: the aggregate-only Prometheus scrape surface —
-          # same fencing story as the probe triple (allow/deny via
-          # extraConfig keeps the scraper list explicit).
-          "/metrics" = {
-            recommendedProxySettings = true;
-            proxyWebsockets = false;
-            proxyPass = "http://127.0.0.1:${listenPort}";
-          };
-          # The SIP WebSocket path: upgrade + no read timeout (calls are
-          # long-lived; the island's reconnect watchdog handles drops).
-          ${cfg.settings.websocket_path} = {
-            proxyPass = "http://127.0.0.1:${listenPort}";
-            recommendedProxySettings = true;
-            proxyWebsockets = true;
-            extraConfig = ''
-              proxy_read_timeout 3600s;
-            '';
-          };
-          # Server-sent events: unbuffered, HTTP/1.1, long read timeout so
-          # the event stream stays open for the whole session.
-          "/events" = {
-            proxyPass = "http://127.0.0.1:${listenPort}";
-            recommendedProxySettings = true;
-            extraConfig = ''
-              proxy_buffering off;
-              proxy_read_timeout 3600s;
-              proxy_http_version 1.1;
-            '';
-          };
-        };
-      };
+      virtualHosts.${cfg.caddy.hostName}.extraConfig = ''
+        encode zstd gzip
+        ${lib.optionalString cfg.caddy.hsts.enable ''
+          header Strict-Transport-Security "max-age=${toString cfg.caddy.hsts.maxAge}"
+        ''}
+        handle ${cfg.settings.websocket_path} {
+          reverse_proxy 127.0.0.1:${listenPort}
+        }
+        handle /events {
+          reverse_proxy 127.0.0.1:${listenPort} {
+            flush_interval -1
+          }
+        }
+        handle {
+          reverse_proxy 127.0.0.1:${listenPort}
+        }
+      '';
     };
   };
 }
