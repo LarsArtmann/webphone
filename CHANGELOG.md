@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.8.0] - 2026-09-30
+
+Ships together with the never-separately-tagged [2.7.0] content below
+(prod jumps 2.6.0 → 2.8.0 in one release).
 
 ### Breaking (NixOS module)
 
@@ -76,7 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blobs are no longer world-readable on disk (existing files keep
   their old modes; re-backup or `chmod` to tighten in place).
 
-## [2.7.0] - 2026-09-24
+## [2.7.0 (staged 2026-09-24, never tagged; ships in v2.8.0 above)]
 
 ### Added
 
