@@ -159,7 +159,7 @@ the stack browser E2E passed on the bumped tree. What remains:
   access.
 - Stack-side: keep or revert the TEMP-DIAG answer-phase dump in the
   stack's browser E2E (commit `b96d4c2` there).
-- HSTS on prod (owner call): the `nginx.hsts` option ships opt-in —
+- HSTS on prod (owner call): the `caddy.hsts` option ships opt-in —
   decide for `pbx.artmann.tech` once https-only is proven
   (01:04 report §f/21).
 - Release cadence / pin policy (g2, owner call; recommendation
