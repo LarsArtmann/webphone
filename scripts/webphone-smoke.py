@@ -440,10 +440,10 @@ def run_checks(
     # nonce'd CSP, the embedded Datastar SDK served same-origin, and the
     # namespaced probe alias answering from the same probe as /livez.
     status, body, headers = s.request("GET", "/health")
-    page = body.decode("utf-8", "replace")
+    dash_page = body.decode("utf-8", "replace")
     c.ok(
         "dashboard html serves",
-        status == 200 and "/health/datastar.js" in page and "nonce=" in page,
+        status == 200 and "/health/datastar.js" in dash_page and "nonce=" in dash_page,
         f"{status} {body[:80]!r}",
     )
     csp = headers.get("Content-Security-Policy", "")
@@ -531,10 +531,11 @@ def run_checks(
         status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
         f"{status} {ctype!r}",
     )
+    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", page, re.S)
     c.ok(
         "shell has zero inline scripts",
-        re.search(r"<script(?![^>]*\bsrc=)[^>]*>", page) is None,
-        "inline <script> without src found",
+        inline is None,
+        f"inline <script> without src found: {inline.group(0)[:140]!r}" if inline else "",
     )
 
     # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels
