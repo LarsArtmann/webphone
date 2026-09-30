@@ -123,6 +123,7 @@ delegation-by-documentation path worked. The review roadmap deltas
 ## f) NEXT (prioritized)
 
 P1 — close this change's verification debt:
+
 1. `caddy validate`/`adapt` pass over the rendered extraConfig (add to
    module-check or a devshell alias).
 2. Check `docs/release-runbook.md` (and other live docs) for stale
@@ -132,7 +133,7 @@ P1 — close this change's verification debt:
 4. caddy-equipped VM test: boot webphone+caddy.enable+sipUpstream
    stand-in; assert /healthz through TLS, /events streams, sip bridge
    hits the fake PBX port.
-P2 — hardening + follow-through:
+   P2 — hardening + follow-through:
 5. Example `remote_ip` fencing snippet for probes/metrics in README
    (the option docs reference the pattern but show nothing).
 6. HSTS fencing example (https-only matcher) next to `caddy.hsts`.
@@ -142,7 +143,7 @@ P2 — hardening + follow-through:
 9. Stack-front nginx→Caddy migration decision (owner appetite; would
    retire the fail2ban nginx scanner dependency or need a caddy
    equivalent).
-P3 — carried from the morning report, still open:
+   P3 — carried from the morning report, still open:
 10. Data-model review honesty line (read vcard/blob/session-sqlite/
     store-row-shapes/Deps or soften "every type file was read") — note
     the deltas themselves (Receipt.Resolution, config typing) are NOW

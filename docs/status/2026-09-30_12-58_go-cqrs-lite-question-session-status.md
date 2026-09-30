@@ -1,7 +1,7 @@
 # Session Status + Brutal Self-Review — 2026-09-30 12:58 CEST
 
 **Series:** 2026-09-30 review-series (continues `97d9c79` status, `e9f37ef` harvest, `e023c49` data-model review)
-**Session scope:** TWO conversational turns, ZERO code changes. Turn 1 answered a library-adoption question ("Why are we not using go-cqrs-lite `system` + `metaengine` yet?"). Turn 2 is this report. No product code, no tests, no configs touched. Honest consequence: sections a–d inventory a *question-answering* session, not a build session — by design of the run, not by omission of assigned work.
+**Session scope:** TWO conversational turns, ZERO code changes. Turn 1 answered a library-adoption question ("Why are we not using go-cqrs-lite `system` + `metaengine` yet?"). Turn 2 is this report. No product code, no tests, no configs touched. Honest consequence: sections a–d inventory a _question-answering_ session, not a build session — by design of the run, not by omission of assigned work.
 
 ---
 
@@ -9,7 +9,7 @@
 
 1. Loaded the `go-cqrs-lite` skill (mandatory trigger — module named explicitly).
 2. Grepped webphone for `cqrs-lite|metaengine|cqrshtmx`; read `go.mod` (confirmed: go-cqrs-lite is **100% indirect**, 7 modules dragged in by cqrs-htmx v4.12.0; zero direct requires).
-3. Located the prior ruling: `docs/research/2026-09-24_larsartmann-stack-deep-dive.html`, finding "go-appkit and go-cqrs-lite: zero usage" — verdict: *correct to leave alone; revisit only if webphone grows event-sourced state or a second binary*.
+3. Located the prior ruling: `docs/research/2026-09-24_larsartmann-stack-deep-dive.html`, finding "go-appkit and go-cqrs-lite: zero usage" — verdict: _correct to leave alone; revisit only if webphone grows event-sourced state or a second binary_.
 4. Read `system/README.md` + `metaengine/README.md` from the LOCAL checkout `/home/lars/projects/go-cqrs-lite` (clean tree, HEAD `004298c1a` 2026-09-30 08:22).
 5. Delivered the non-adoption verdict: 5 reasons (no event-sourced state; SSE already lives in `cqrshtmx.Broadcaster`; composition root pinned by other decisions; footprint-gate culture vs metaengine's ~15 engines; deliberate-simplicity invariants) + the deep-dive's revisit trigger.
 6. This turn: loaded `brutal-self-review` + `status-report` skills, ran `date`, wrote this report.
@@ -18,19 +18,19 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
+| Item                                                                                                                                                | Evidence                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | go-cqrs-lite `system`/`metaengine` non-adoption question answered with a grounded, prior-ruling-cited verdict instead of re-litigating from scratch | Deep-dive finding cited as the one home; no new duplicate doc created (one-home-per-fact held) |
-| Skill contract followed (go-cqrs-lite, brutal-self-review, status-report all loaded before task action) | Skill views in session trace |
-| Zero collateral damage: no edits, no test runs needed, no doc drift introduced | `git log` clean of session-authored code commits |
+| Skill contract followed (go-cqrs-lite, brutal-self-review, status-report all loaded before task action)                                             | Skill views in session trace                                                                   |
+| Zero collateral damage: no edits, no test runs needed, no doc drift introduced                                                                      | `git log` clean of session-authored code commits                                               |
 
 ## b) PARTIALLY DONE
 
-| Item | What's missing |
-|---|---|
+| Item                                        | What's missing                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Verification depth of the delivered verdict | (1) Local go-cqrs-lite checkout (HEAD 2026-09-30) vs webphone's pinned v4.12.0 — drift NEVER checked; my deprecation claims (ADR-0123 v5 cut) come from a tree possibly AHEAD of what webphone consumes. (2) The "a `system.New` root would fight the middleware chain" claim is inference from the README quick start — I never read `system.New`'s actual composition API. |
-| Session record | This report completes it; nothing else documented because nothing else was produced (correct — the verdict already has its one home) |
-| Intent resolution of the user's question | Answered "why not" but never asked whether the question was an adoption mandate. Closed in section g, Q1. |
+| Session record                              | This report completes it; nothing else documented because nothing else was produced (correct — the verdict already has its one home)                                                                                                                                                                                                                                         |
+| Intent resolution of the user's question    | Answered "why not" but never asked whether the question was an adoption mandate. Closed in section g, Q1.                                                                                                                                                                                                                                                                    |
 
 ## c) NOT STARTED
 
@@ -41,11 +41,11 @@
 
 ## d) TOTALLY FUCKED UP
 
-Nothing code-level (no code touched — a fucked-up *finding*, not a fucked-up *build*). Three findings that belong in this bucket by severity:
+Nothing code-level (no code touched — a fucked-up _finding_, not a fucked-up _build_). Three findings that belong in this bucket by severity:
 
 1. ~~**Answered from the wrong tree.** I cited READMEs from the local go-cqrs-lite working tree (HEAD today) while webphone consumes pinned v4.12.0 — without checking drift. If local is ahead of the pin (likely, given v5-boundary ADRs are visible in the local tree), parts of my answer describe capabilities/deprecations webphone cannot see. That's exactly the "verify external claims before encoding" failure mode, applied inbound.~~ resolved 2026-09-30 (closure train): drift CHECKED — `system/README.md` byte-identical since `system/v4.10.0`; `metaengine/README.md` differs by one SSE-signature example fix since `metaengine/v4.15.0`; webphone's actual pin set (go.mod:44-50) = command@v4.12.0, dispatcher@v4.5.0, event@v4.12.0, id@v4.6.1, metadata@v4.7.1, query@v4.9.0, record@v4.6.0 — the 12:58 evidence was tag-equivalent; the verdict stands as stated.
 2. ~~**Inference presented as fact.** "A `system.New` root would fight that plan [the pinned middleware chain]" — plausible reasoning from a README, stated as certainty. I never opened `system.go`'s composition surface. The verdict's conclusion is probably still right (the deep-dive ruled independently), but the argument chain had one unverified link.~~ resolved + claim REFUTED 2026-09-30: source read of `system/constructor.go` `New()` (constructor.go:26) shows it composes the event-sourcing DOMAIN runtime — dispatchers, engines, event stores, projections, buses — and never touches `http.Handler` wiring at all. It would not "fight" the middleware chain; the honest non-adoption reason is that webphone has NO event-sourced state for `system.New` to compose. Conclusion (non-adoption) unchanged; the argument is now source-grounded.
-3. ~~**Missed the intent read.** "Why are we not using X *yet*?" is a classic adoption-prompt phrasing. I answered and stopped. The cost: one round-trip of latency if the user actually wanted a plan. Now asked as g-Q1.~~ resolved 2026-09-30: the 13:14 pareto plan (`9772ce0`) closed it as curiosity→wontfix (assumption A1, overridable at the owner sitting); the owner's subsequent full-execution GO covered the post-review queue with NO adoption mandate. Revisit trigger recorded in ROADMAP (event-sourced state or a second Go binary).
+3. ~~**Missed the intent read.** "Why are we not using X _yet_?" is a classic adoption-prompt phrasing. I answered and stopped. The cost: one round-trip of latency if the user actually wanted a plan. Now asked as g-Q1.~~ resolved 2026-09-30: the 13:14 pareto plan (`9772ce0`) closed it as curiosity→wontfix (assumption A1, overridable at the owner sitting); the owner's subsequent full-execution GO covered the post-review queue with NO adoption mandate. Revisit trigger recorded in ROADMAP (event-sourced state or a second Go binary).
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -105,7 +105,7 @@ Provenance: **[S]** = session finding (this run's gaps), **[R]** = noticed in th
 39. [R] Keep the host-nix-down fallback path honest: verify `scripts/buildflow.sh` preflight + store-toolchain commands still work after the next nixpkgs bump.
 40. [R] Go floor discipline: outside-the-shell go commands need `nix develop -c` (host 1.26.7 < 1.27.1 floor) — verify no script regressed to bare `go`.
 
-*(40 items — under the 50 ceiling by choice: the remaining slots would be filler, and the status-report skill explicitly calls the extended N a brainstorm, not a commitment list.)*
+_(40 items — under the 50 ceiling by choice: the remaining slots would be filler, and the status-report skill explicitly calls the extended N a brainstorm, not a commitment list.)_
 
 ## g) Up to 3 questions I cannot figure out myself
 

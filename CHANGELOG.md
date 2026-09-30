@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Server lifecycle: `cmd/webphone` now serves via `httputil.NewServer`
+  (the primitive the rejected cqrs-htmx setup bundle's RunHandler
+  wraps) — SSE-safe timeouts (ReadHeaderTimeout 5s bounds slowloris,
+  IdleTimeout 60s reaps dead keep-alives, deliberately NO read/write
+  deadlines so SSE streams outlive any fixed bound) and a 30s shutdown
+  drain budget replacing the hand-rolled 10s one. This is the salvage
+  of the 2026-09-30 setup-shell adoption NO-GO: adopting the bundle
+  measured +10.40 MB (+68.2%) against the recorded ≤ +8 MB / ≤ +20%
+  footprint gate — importing the setup package links its +72-module
+  import graph even through the prunable constructor — so the bundle
+  stays rejected (identity split-brain + footprint) and the lifecycle
+  value rides the already-dependency at +8 KB. Verdict + measurement:
+  `docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`.
+
 ## [2.8.0] - 2026-09-30
 
 Ships together with the never-separately-tagged [2.7.0] content below

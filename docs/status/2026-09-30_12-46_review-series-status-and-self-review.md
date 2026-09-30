@@ -133,10 +133,11 @@ changed. This report covers ONLY what this session did and noticed.
 ## f) NEXT (prioritized, from this session's outputs only)
 
 P1 — close the honesty gap:
+
 1. Read vcard, blob, session/sqlite.go, store row-shape files, full
    schema DDL, server.Deps; amend or soften the data-model report's
    read-claim; append findings if any surface.
-P2 — the review roadmap (already in TODO_LIST, restated):
+   P2 — the review roadmap (already in TODO_LIST, restated):
 2. Receipt.Resolution enum; delete fax `*gateway.Loopback` assert
    (service.go:136).
 3. config.Load() fail-closed typing: ParseExtension over identities
@@ -144,7 +145,7 @@ P2 — the review roadmap (already in TODO_LIST, restated):
 4. Server carve into server/api + server/hooks at the next-file-added
    trigger; move tests; update 401-writer allowlist + DOM pins.
 5. schema_version table (gated on first altering migration).
-P2 — session-hygiene follow-ups:
+   P2 — session-hygiene follow-ups:
 6. Verify `e023c49`/`e9f37ef` reached the remote (daemon lag check).
 7. Link or inline the D2 SVGs into both HTML reports.
 8. Convert SVGs to PNG and visually inspect layout.
@@ -163,7 +164,7 @@ P2 — session-hygiene follow-ups:
 16. Skim the 2026-09-18 structural-health report; add any still-open
     items to the series cross-reference.
 17. Fix the d2-syntax reference at its source repo (crush-config) —
-   border-dash keyword; consider adding the ELK + stroke-dash recipe.
+    border-dash keyword; consider adding the ELK + stroke-dash recipe.
 18. Decide (owner): standalone docs/modularization/ assessment
     artifact vs arch-review §05 as the one home.
 19. Decide (owner): underscore vs hyphen D2 filenames — codify one in

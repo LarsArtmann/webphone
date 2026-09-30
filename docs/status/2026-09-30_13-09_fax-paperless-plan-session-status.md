@@ -46,10 +46,10 @@ during this window.
 ## b) PARTIALLY DONE
 
 1. **The integration itself is DESIGNED, not built** — what exists: plan doc
-   + TODO row. What remains: every implementation step (section c). Blocker:
-   owner go + the 3 questions in (g). Effort: S-M (~400–500 lines). This is
-   intentional staging, not drift — but it means the session's only durable
-   artifact is a proposal.
+   - TODO row. What remains: every implementation step (section c). Blocker:
+     owner go + the 3 questions in (g). Effort: S-M (~400–500 lines). This is
+     intentional staging, not drift — but it means the session's only durable
+     artifact is a proposal.
 2. **SDK claim verification is HALF-done** — verified locally: go.mod `go 1.27`,
    json/v2 requirement, `UploadRequest` shape (Title/Created/CorrespondentID/
    TagIDs/DocumentTypeID/CustomFields), `Ensure*` helpers, task polling +
@@ -99,9 +99,9 @@ implementation starts.
 1. **Verify-external-claims applies to PLAN DOCS too** — I gated the claim
    mentally on "implementation will check", but a committed plan doc IS an
    encoded claim. Fix: run `go list -m github.com/larsartmann/go-paperless@latest`
-   + check git tags BEFORE writing the `go get` line; pin the version in the
-   doc. (Pattern → worth a line in the verify-external-claims skill trigger:
-   "plan/TODO docs naming a dependency".)
+   - check git tags BEFORE writing the `go get` line; pin the version in the
+     doc. (Pattern → worth a line in the verify-external-claims skill trigger:
+     "plan/TODO docs naming a dependency".)
 2. **Consult `docs/DOMAIN_LANGUAGE.md` before coining seam names** — the
    naming reflection exists in AGENTS; I skipped the domain-glossary lookup
    step for `Archiver`/`paperless`. Impact: a rename after landing costs a
@@ -131,52 +131,52 @@ item already lives. Rows 25–44 were NOTICED this session (full TODO_LIST
 read) and are already routed there — listed so HARVEST doesn't duplicate
 them; the >25 extras are brainstorm-grade per the skill (ROADMAP fuel).
 
-| #  | Task                                                                                                           | Impact  | Effort | Category      | Routing |
-| -- | -------------------------------------------------------------------------------------------------------------- | ------- | ------ | ------------- | ------- |
-| 1  | Answer (g) Q1–Q3 (go/no-go, Paperless hosting, v1 scope) — unblocks everything else in 1–24                    | High    | S      | Decision      | this report §g |
-| 2  | Verify go-paperless publishability (`go list -m @latest` + git tags), pin the version in the plan doc            | High    | S      | Quality       | plan doc amendment |
-| 3  | Check `docs/DOMAIN_LANGUAGE.md` for `Archiver`/`paperless` collisions before implementation                      | Medium  | S      | Quality       | plan doc amendment |
-| 4  | Amend plan doc: CRM-parity items — smoke gate line, `environmentFile` token-at-rest, observability story          | Medium  | S      | Documentation | plan doc |
-| 5  | Amend plan doc: extension in the provenance metadata (owner-DID scoping in Paperless)                            | Medium  | S      | Documentation | plan doc |
-| 6  | Grep `fax.New(` call sites; confirm the signature-growth blast radius claimed by the sizing                       | Medium  | S      | Quality       | plan doc |
-| 7  | `Config.Paperless` block + env keys + both-or-neither + URL validation                                            | High    | S-M    | Feature       | plan doc §Config |
-| 8  | `TestLoadValidatesPaperlessConfig` beside the CRM pin                                                            | High    | S      | Quality       | plan doc §Gates |
-| 9  | `fax.Archiver` interface in `internal/fax` + nil-safe service field + `fax.New` param                             | High    | S      | Feature       | plan doc §Seam |
-| 10 | Nil-archiver zero-delta test (every existing fax test passes untouched)                                           | High    | S      | Quality       | plan doc §Gates |
-| 11 | `internal/paperless` package skeleton: client construction from config                                            | High    | S      | Feature       | plan doc §Adapter |
-| 12 | Lazily-cached `EnsureTag`/`EnsureDocumentType`/`EnsureCustomField` with stub-server test                          | High    | M      | Feature       | plan doc §Adapter |
-| 13 | `ArchiveFax` upload: title format, `Created` from job, provenance field, ≤20 MiB buffer                          | High    | M      | Feature       | plan doc §Adapter |
-| 14 | Fire-and-forget hook in `Receive` after persist+notify (detached goroutine, own timeout, WARN)                    | High    | S      | Feature       | plan doc §Wire-up |
-| 15 | `internal/paperless/family_test.go` error-family pin (codes at origin, per the 2026-09-30 convention)             | High    | S      | Quality       | plan doc §Gates |
-| 16 | Adapter httptest stub: upload form fields + task-poll verdict + duplicate-refusal path                            | High    | M      | Quality       | plan doc §Gates |
-| 17 | Server `Deps` wiring (nil when config absent)                                                                    | High    | S      | Feature       | plan doc §Wire-up |
-| 18 | vendorHash roundtrip same-breath as go.mod addition + `nix build` proof                                          | High    | S      | Feature       | plan doc §Gates |
-| 19 | Full gates: `nix develop -c go test -count=1 ./...` + buildflow                                                  | High    | S      | Quality       | plan doc §Gates |
-| 20 | Config-off smoke zero-delta (fresh binary boots, fax lane unchanged)                                             | Medium  | S      | Quality       | plan doc §Gates (amend per #4) |
-| 21 | Decide upload-outcome metrics (`webphone_paperless_uploads_total{outcome}`) or reject with rationale               | Medium  | S      | Decision      | plan doc follow-up |
-| 22 | Post-landing docs: AGENTS seam bullet + FEATURES row + CHANGELOG Unreleased                                       | Medium  | S      | Documentation | plan doc |
-| 23 | Verify NixOS module needs no change (`settings` freeform carries the new keys) — note the verdict                 | Low     | S      | Documentation | plan doc |
-| 24 | Outbound-fax archiving on `transmitted` (same seam, direction-flavored title/tag)                                 | Low     | M      | Feature       | plan doc follow-up |
-| 25 | `archive_status` column + boot-time sweep (self-healing upload queue; closes the SIGTERM gap)                     | Low     | M-L    | Feature       | plan doc follow-up |
-| 26 | Retry-posture decision: SDK `WithRetry` wrapper vs fire-and-forget-forever for a routinely-down Paperless          | Low     | S      | Decision      | new → ROADMAP |
-| 27 | Deep-link "open in Paperless" affordance from the fax panel (needs document ID round-trip — post-#25)              | Low     | M      | Feature       | new → ROADMAP |
-| 28 | v2.7.0+ release tail + deploy (OWNER terminal; everything release-ish queues behind it)                          | High    | S-M    | Release       | TODO_LIST row 1 |
-| 29 | cqrs-htmx setup-shell adoption train (upstream gaps first)                                                        | High    | L      | Feature       | TODO_LIST row 2 |
-| 30 | Prod outbound-SMS 422 root cause (OWNER journal/ssh on pbx)                                                       | High    | S      | Bug           | TODO_LIST row 3 |
-| 31 | erraudit tier-2 re-measure (next due 2026-10-22; must stay 0)                                                     | High    | S      | Quality       | TODO_LIST standing watches |
-| 32 | Nix-review follow-ups batch (eval pins, VM asserts, release.sh preflight)                                        | High    | S-M    | Quality       | TODO_LIST row |
-| 33 | OWNER-calls batch session (~15+ pending decisions incl. release number)                                           | High    | S      | Decision      | TODO_LIST row |
-| 34 | Review-series deltas: `Receipt.Resolution` enum (kills the `*gateway.Loopback` type-assert)                       | Medium  | S      | Quality       | TODO_LIST row |
-| 35 | Review-series deltas: config fail-closed typing for `identities`/shared contacts                                  | Medium  | S      | Quality       | TODO_LIST row |
-| 36 | Review-series deltas: `schema_version` table before first ALTER (gated on its arrival)                            | Medium  | S      | Quality       | TODO_LIST row |
-| 37 | Gateway honest-Content-Type follow-ups (header-block golden, compat matrix, webhook-mode smoke probe)             | Medium  | S      | Quality       | TODO_LIST row |
-| 38 | `/version` enrichment via ldflags + vcs.buildinfo fallback                                                        | Medium  | M      | Feature       | TODO_LIST row |
-| 39 | internal/server god-package carve (trigger-based: next file added)                                                | Medium  | M      | Cleanup       | TODO_LIST row |
-| 40 | templ-components release-gate leg (stack E2E rides the release tail)                                              | Medium  | S      | Quality       | TODO_LIST row |
-| 41 | AGENTS.md compaction ≤377 lines (owner-permission gate)                                                          | Medium  | M      | Documentation | TODO_LIST row |
-| 42 | Tooling hygiene batch (markdown-lint posture, codespell policy, render-diff script commit)                        | Low     | S      | Cleanup       | TODO_LIST row |
-| 43 | Post release announcements (v2.1–v2.7 drafts exist)                                                               | Low     | S      | Documentation | TODO_LIST row |
-| 44 | Standing watches quarterly re-check (sip.js, templ-components, E2E budget; due 2026-12-20)                        | Low     | S      | Quality       | TODO_LIST row |
+| #  | Task                                                                                                      | Impact | Effort | Category      | Routing                        |
+| -- | --------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- | ------------------------------ |
+| 1  | Answer (g) Q1–Q3 (go/no-go, Paperless hosting, v1 scope) — unblocks everything else in 1–24               | High   | S      | Decision      | this report §g                 |
+| 2  | Verify go-paperless publishability (`go list -m @latest` + git tags), pin the version in the plan doc     | High   | S      | Quality       | plan doc amendment             |
+| 3  | Check `docs/DOMAIN_LANGUAGE.md` for `Archiver`/`paperless` collisions before implementation               | Medium | S      | Quality       | plan doc amendment             |
+| 4  | Amend plan doc: CRM-parity items — smoke gate line, `environmentFile` token-at-rest, observability story  | Medium | S      | Documentation | plan doc                       |
+| 5  | Amend plan doc: extension in the provenance metadata (owner-DID scoping in Paperless)                     | Medium | S      | Documentation | plan doc                       |
+| 6  | Grep `fax.New(` call sites; confirm the signature-growth blast radius claimed by the sizing               | Medium | S      | Quality       | plan doc                       |
+| 7  | `Config.Paperless` block + env keys + both-or-neither + URL validation                                    | High   | S-M    | Feature       | plan doc §Config               |
+| 8  | `TestLoadValidatesPaperlessConfig` beside the CRM pin                                                     | High   | S      | Quality       | plan doc §Gates                |
+| 9  | `fax.Archiver` interface in `internal/fax` + nil-safe service field + `fax.New` param                     | High   | S      | Feature       | plan doc §Seam                 |
+| 10 | Nil-archiver zero-delta test (every existing fax test passes untouched)                                   | High   | S      | Quality       | plan doc §Gates                |
+| 11 | `internal/paperless` package skeleton: client construction from config                                    | High   | S      | Feature       | plan doc §Adapter              |
+| 12 | Lazily-cached `EnsureTag`/`EnsureDocumentType`/`EnsureCustomField` with stub-server test                  | High   | M      | Feature       | plan doc §Adapter              |
+| 13 | `ArchiveFax` upload: title format, `Created` from job, provenance field, ≤20 MiB buffer                   | High   | M      | Feature       | plan doc §Adapter              |
+| 14 | Fire-and-forget hook in `Receive` after persist+notify (detached goroutine, own timeout, WARN)            | High   | S      | Feature       | plan doc §Wire-up              |
+| 15 | `internal/paperless/family_test.go` error-family pin (codes at origin, per the 2026-09-30 convention)     | High   | S      | Quality       | plan doc §Gates                |
+| 16 | Adapter httptest stub: upload form fields + task-poll verdict + duplicate-refusal path                    | High   | M      | Quality       | plan doc §Gates                |
+| 17 | Server `Deps` wiring (nil when config absent)                                                             | High   | S      | Feature       | plan doc §Wire-up              |
+| 18 | vendorHash roundtrip same-breath as go.mod addition + `nix build` proof                                   | High   | S      | Feature       | plan doc §Gates                |
+| 19 | Full gates: `nix develop -c go test -count=1 ./...` + buildflow                                           | High   | S      | Quality       | plan doc §Gates                |
+| 20 | Config-off smoke zero-delta (fresh binary boots, fax lane unchanged)                                      | Medium | S      | Quality       | plan doc §Gates (amend per #4) |
+| 21 | Decide upload-outcome metrics (`webphone_paperless_uploads_total{outcome}`) or reject with rationale      | Medium | S      | Decision      | plan doc follow-up             |
+| 22 | Post-landing docs: AGENTS seam bullet + FEATURES row + CHANGELOG Unreleased                               | Medium | S      | Documentation | plan doc                       |
+| 23 | Verify NixOS module needs no change (`settings` freeform carries the new keys) — note the verdict         | Low    | S      | Documentation | plan doc                       |
+| 24 | Outbound-fax archiving on `transmitted` (same seam, direction-flavored title/tag)                         | Low    | M      | Feature       | plan doc follow-up             |
+| 25 | `archive_status` column + boot-time sweep (self-healing upload queue; closes the SIGTERM gap)             | Low    | M-L    | Feature       | plan doc follow-up             |
+| 26 | Retry-posture decision: SDK `WithRetry` wrapper vs fire-and-forget-forever for a routinely-down Paperless | Low    | S      | Decision      | new → ROADMAP                  |
+| 27 | Deep-link "open in Paperless" affordance from the fax panel (needs document ID round-trip — post-#25)     | Low    | M      | Feature       | new → ROADMAP                  |
+| 28 | v2.7.0+ release tail + deploy (OWNER terminal; everything release-ish queues behind it)                   | High   | S-M    | Release       | TODO_LIST row 1                |
+| 29 | cqrs-htmx setup-shell adoption train (upstream gaps first)                                                | High   | L      | Feature       | TODO_LIST row 2                |
+| 30 | Prod outbound-SMS 422 root cause (OWNER journal/ssh on pbx)                                               | High   | S      | Bug           | TODO_LIST row 3                |
+| 31 | erraudit tier-2 re-measure (next due 2026-10-22; must stay 0)                                             | High   | S      | Quality       | TODO_LIST standing watches     |
+| 32 | Nix-review follow-ups batch (eval pins, VM asserts, release.sh preflight)                                 | High   | S-M    | Quality       | TODO_LIST row                  |
+| 33 | OWNER-calls batch session (~15+ pending decisions incl. release number)                                   | High   | S      | Decision      | TODO_LIST row                  |
+| 34 | Review-series deltas: `Receipt.Resolution` enum (kills the `*gateway.Loopback` type-assert)               | Medium | S      | Quality       | TODO_LIST row                  |
+| 35 | Review-series deltas: config fail-closed typing for `identities`/shared contacts                          | Medium | S      | Quality       | TODO_LIST row                  |
+| 36 | Review-series deltas: `schema_version` table before first ALTER (gated on its arrival)                    | Medium | S      | Quality       | TODO_LIST row                  |
+| 37 | Gateway honest-Content-Type follow-ups (header-block golden, compat matrix, webhook-mode smoke probe)     | Medium | S      | Quality       | TODO_LIST row                  |
+| 38 | `/version` enrichment via ldflags + vcs.buildinfo fallback                                                | Medium | M      | Feature       | TODO_LIST row                  |
+| 39 | internal/server god-package carve (trigger-based: next file added)                                        | Medium | M      | Cleanup       | TODO_LIST row                  |
+| 40 | templ-components release-gate leg (stack E2E rides the release tail)                                      | Medium | S      | Quality       | TODO_LIST row                  |
+| 41 | AGENTS.md compaction ≤377 lines (owner-permission gate)                                                   | Medium | M      | Documentation | TODO_LIST row                  |
+| 42 | Tooling hygiene batch (markdown-lint posture, codespell policy, render-diff script commit)                | Low    | S      | Cleanup       | TODO_LIST row                  |
+| 43 | Post release announcements (v2.1–v2.7 drafts exist)                                                       | Low    | S      | Documentation | TODO_LIST row                  |
+| 44 | Standing watches quarterly re-check (sip.js, templ-components, E2E budget; due 2026-12-20)                | Low    | S      | Quality       | TODO_LIST row                  |
 
 **HARVEST note:** items 1–6, 21, 26–27 are NOT yet routed anywhere durable
 (1 is answered by replying, 2–6/21 are plan-doc amendments, 26–27 are new).

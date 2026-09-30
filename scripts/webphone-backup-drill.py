@@ -175,7 +175,9 @@ def main():
         for name in ("webphone.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
             limit = 0o750 if name == "files" else 0o640
-            assert mode <= limit, f"restored {name} mode {oct(mode)} exceeds {oct(limit)}"
+            assert mode <= limit, (
+                f"restored {name} mode {oct(mode)} exceeds {oct(limit)}"
+            )
         print("[5] restored artifacts keep private modes (files <=0640, dirs <=0750)")
         print("[4] restore drill PASSED: sqlite rows + blob content survive")
     finally:

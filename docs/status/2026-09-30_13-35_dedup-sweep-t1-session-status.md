@@ -148,30 +148,30 @@ nearest misses, for the record:
 
 ## f) NEXT TASKS (session-scoped, impact-sorted; "up to 50" = 22 real ones — padding to 50 would be ROADMAP spam, per the skill's own warning)
 
-| #  | Task                                                                                                                     | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
-| 1  | Add direct unit test: `DeliveryReceipt` non-verdict status → Rejection `messaging.verdict` (check family_test.go first)   | High   | S      | Bug (test gap)|
-| 2  | Registry protocol: insert mandatory sibling-grep step (2.5) for new rulings                                              | High   | S      | Quality       |
-| 3  | Owner call: ratify sweep baseline threshold (`-t 3` ritual / `-t 2` deep / `-t 1` targeted-only)                          | High   | S      | Decision      |
-| 4  | HARVEST this f-list into TODO_LIST.md (docs-health)                                                                       | High   | S      | Process       |
-| 5  | Owner call: `settingsRow` — build the component or accept dt/dd permanently                                              | Medium | M      | Decision      |
-| 6  | Owner call: ratify registry as the ONE acceptance home (3rd request)                                                      | Medium | S      | Decision      |
-| 7  | Verify `data-dial` attribute is in docs/dom-contract.md; add it if absent (wire contract currently only in AGENTS prose)  | Medium | S      | Documentation |
-| 8  | Update AGENTS.md dedup line after baseline ratification (currently says `-t 3` pending)                                   | Medium | S      | Documentation |
-| 9  | One addendum sweep-log line recording the a7 sibling-greps (log symmetry with 12:59)                                      | Low    | S      | Documentation |
-| 10 | Upstream (verify-first): art-dupl flag to enumerate/break down the filtered-suppressed bucket                             | Low    | M      | Quality       |
-| 11 | One-time suppression audit: flip filter, read the 123, record "clean" in the sweep log                                    | Medium | M      | Quality       |
-| 12 | `scripts/dedup-sweep.sh` canonical-flags wrapper (post-ratification only)                                                 | Low    | S      | Cleanup       |
-| 13 | Cross-link the three same-day sweep docs (related/supersedes lines) so HARVEST can't triple-count                         | Low    | S      | Documentation |
-| 14 | Record art-dupl version in each sweep-log line (reproducibility)                                                          | Low    | S      | Process       |
-| 15 | Decide sweep-report format policy (.md vs HTML) — see question 3                                                          | Low    | S      | Process       |
-| 16 | `DeliveryReceipt`: decide whether a provider failure with EMPTY errMsg should still `slog.Warn` (currently silent)         | Low    | S      | Quality       |
-| 17 | Registry hygiene: refresh "sites at last sighting" counts on pre-09-27 rows (some cite stale shapes)                       | Low    | S      | Documentation |
-| 18 | Fold the ratification outcome into the registry protocol text ("`-t 2` deep sweeps by owner request" line)                 | Low    | S      | Documentation |
-| 19 | Consider a rolling per-day sweep doc instead of per-sweep files (e5)                                                      | Low    | S      | Process       |
-| 20 | Re-run `art-dupl -t 2` after tasks 1–2 land to confirm the group set is unchanged (regression ritual)                      | Low    | S      | Quality       |
-| 21 | Grep-audit remaining unruled shapes from the -t 1 report (option rows, hidden inputs) for one-line registry notes          | Low    | S      | Documentation |
-| 22 | Close the loop: annotate 12:59 + 13:17 docs with "superseded by rulings in registry, not by this report" pointer           | Low    | S      | Documentation |
+| #  | Task                                                                                                                     | Impact | Effort | Category       |
+| -- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | -------------- |
+| 1  | Add direct unit test: `DeliveryReceipt` non-verdict status → Rejection `messaging.verdict` (check family_test.go first)  | High   | S      | Bug (test gap) |
+| 2  | Registry protocol: insert mandatory sibling-grep step (2.5) for new rulings                                              | High   | S      | Quality        |
+| 3  | Owner call: ratify sweep baseline threshold (`-t 3` ritual / `-t 2` deep / `-t 1` targeted-only)                         | High   | S      | Decision       |
+| 4  | HARVEST this f-list into TODO_LIST.md (docs-health)                                                                      | High   | S      | Process        |
+| 5  | Owner call: `settingsRow` — build the component or accept dt/dd permanently                                              | Medium | M      | Decision       |
+| 6  | Owner call: ratify registry as the ONE acceptance home (3rd request)                                                     | Medium | S      | Decision       |
+| 7  | Verify `data-dial` attribute is in docs/dom-contract.md; add it if absent (wire contract currently only in AGENTS prose) | Medium | S      | Documentation  |
+| 8  | Update AGENTS.md dedup line after baseline ratification (currently says `-t 3` pending)                                  | Medium | S      | Documentation  |
+| 9  | One addendum sweep-log line recording the a7 sibling-greps (log symmetry with 12:59)                                     | Low    | S      | Documentation  |
+| 10 | Upstream (verify-first): art-dupl flag to enumerate/break down the filtered-suppressed bucket                            | Low    | M      | Quality        |
+| 11 | One-time suppression audit: flip filter, read the 123, record "clean" in the sweep log                                   | Medium | M      | Quality        |
+| 12 | `scripts/dedup-sweep.sh` canonical-flags wrapper (post-ratification only)                                                | Low    | S      | Cleanup        |
+| 13 | Cross-link the three same-day sweep docs (related/supersedes lines) so HARVEST can't triple-count                        | Low    | S      | Documentation  |
+| 14 | Record art-dupl version in each sweep-log line (reproducibility)                                                         | Low    | S      | Process        |
+| 15 | Decide sweep-report format policy (.md vs HTML) — see question 3                                                         | Low    | S      | Process        |
+| 16 | `DeliveryReceipt`: decide whether a provider failure with EMPTY errMsg should still `slog.Warn` (currently silent)       | Low    | S      | Quality        |
+| 17 | Registry hygiene: refresh "sites at last sighting" counts on pre-09-27 rows (some cite stale shapes)                     | Low    | S      | Documentation  |
+| 18 | Fold the ratification outcome into the registry protocol text ("`-t 2` deep sweeps by owner request" line)               | Low    | S      | Documentation  |
+| 19 | Consider a rolling per-day sweep doc instead of per-sweep files (e5)                                                     | Low    | S      | Process        |
+| 20 | Re-run `art-dupl -t 2` after tasks 1–2 land to confirm the group set is unchanged (regression ritual)                    | Low    | S      | Quality        |
+| 21 | Grep-audit remaining unruled shapes from the -t 1 report (option rows, hidden inputs) for one-line registry notes        | Low    | S      | Documentation  |
+| 22 | Close the loop: annotate 12:59 + 13:17 docs with "superseded by rulings in registry, not by this report" pointer         | Low    | S      | Documentation  |
 
 Items 3/5/6 are the owner calls — everything else is executable without input.
 

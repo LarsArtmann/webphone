@@ -387,22 +387,22 @@ end to end.
 
 Module options beyond `enable`/`package`/`settings`:
 
-| Option                            | Default                    | Meaning                                                                                   |
-| --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------- |
-| `dataDir`                         | `/var/lib/webphone`        | State directory (must stay under `/var/lib/` — asserted)                                  |
-| `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                  |
-| `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)  |
-| `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                         |
-| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the caddy-derived default when set |
-| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the caddy-derived default when set |
-| `serverTiming.enable`             | `false`                    | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`)                           |
-| `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                               |
-| `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                      |
-| `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                            |
-| `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days   |
-| `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
+| Option                            | Default                    | Meaning                                                                                         |
+| --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `dataDir`                         | `/var/lib/webphone`        | State directory (must stay under `/var/lib/` — asserted)                                        |
+| `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                        |
+| `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)        |
+| `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                               |
+| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the caddy-derived default when set       |
+| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the caddy-derived default when set       |
+| `serverTiming.enable`             | `false`                    | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`)                                 |
+| `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                                     |
+| `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                            |
+| `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                                  |
+| `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days         |
+| `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                       |
 | `caddy.sipUpstream`               | `null`                     | Bridge the SIP WebSocket path to the PBX (e.g. `https://pbx:7443`); null = deployment routes it |
-| `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
+| `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                |
 
 **Health probes behind the vhost:** `/healthz` (readiness), `/livez`
 (process liveness) and `/startupz` (startup completion) ride the same

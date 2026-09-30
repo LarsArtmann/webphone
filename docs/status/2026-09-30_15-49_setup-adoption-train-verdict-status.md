@@ -175,9 +175,9 @@ Radical honesty; severity-ordered.
 
 1. **Pre-flight "is this train still unclaimed" re-check immediately before release
    actions** — not hours before. Concretely: before ANY tag/fold, `git fetch --tags`
-   + scan for in-flight fold commits (`git log --since="2 hours" -- CHANGELOG.md
+   - scan for in-flight fold commits (`git log --since="2 hours" -- CHANGELOG.md
    flake.nix`) in ALL directions. This session's near-miss cost real risk for zero
-   benefit.
+     benefit.
 2. **Make the sandbox-first pattern the documented default for cross-repo adoption
    trains.** The `/tmp` worktree pattern (compose → measure → verdict → replay or
    discard) is the single reason this session produced zero revert debt. It deserves a
@@ -239,8 +239,8 @@ TODO_LIST); the rest already live in TODO_LIST/ROADMAP and are listed for rankin
    compare vs a committed baseline file, fail on > threshold; wire into buildflow or
    release.sh. High / M / Quality.
 8. 🌾 Run the full gate battery on the current main (buildflow FULL + nix flake check
-   + vulnix + smoke) so the salvage commit is gated, not just smoke-tested. High / M /
-   Quality.
+   - vulnix + smoke) so the salvage commit is gated, not just smoke-tested. High / M /
+     Quality.
 9. Root-cause the dprint corpus drift in cqrs-htmx (when/why was the formatter config
    added without a sweep + CI gate) and add the atomic enablement rule. Medium / S /
    Quality.
@@ -392,5 +392,5 @@ TODO_LIST); the rest already live in TODO_LIST/ROADMAP and are listed for rankin
 
 ---
 
-*Point-in-time snapshot. Section (f) 🌾 items are the docs-health HARVEST input.
-Supersedes nothing; complements the plan doc's verdict card (same date).*
+_Point-in-time snapshot. Section (f) 🌾 items are the docs-health HARVEST input.
+Supersedes nothing; complements the plan doc's verdict card (same date)._

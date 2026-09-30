@@ -279,8 +279,9 @@
               let
                 mainUnit = evaluated.config.systemd.services.webphone.serviceConfig;
                 backupUnit =
-                  (lib.evalModules (moduleSet { backup.enable = true; }))
-                  .config.systemd.services.webphone-backup.serviceConfig;
+                  (lib.evalModules (moduleSet {
+                    backup.enable = true;
+                  })).config.systemd.services.webphone-backup.serviceConfig;
               in
               if
                 mainUnit.UMask == "0077"

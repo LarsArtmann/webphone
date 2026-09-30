@@ -10,13 +10,13 @@ what protects it, what changed since the 2026-09-20 spike verdict, verdict.
 `webphone.db` (SQLite, modernc) table `sessions`
 (`internal/session/sqlite.go:25`):
 
-| Column     | Content                                  | Notes                                    |
-| ---------- | ---------------------------------------- | ---------------------------------------- |
-| token      | opaque session token (PK, plaintext)     | minted by `mintToken` (crypto-rand)      |
-| extension  | PBX extension                            | owner scoping key for every query        |
+| Column     | Content                                    | Notes                                                                                   |
+| ---------- | ------------------------------------------ | --------------------------------------------------------------------------------------- |
+| token      | opaque session token (PK, plaintext)       | minted by `mintToken` (crypto-rand)                                                     |
+| extension  | PBX extension                              | owner scoping key for every query                                                       |
 | password   | the PBX **directory password** (plaintext) | feeds `Session.Credentials()` → the `/phone-api` proxy and the island's SIP re-register |
-| created_at | unix millis                              |                                          |
-| expires_at | unix millis                              | idle 7d / absolute 30d (`normalized()`)   |
+| created_at | unix millis                                |                                                                                         |
+| expires_at | unix millis                                | idle 7d / absolute 30d (`normalized()`)                                                 |
 
 ## Why plaintext is load-bearing (not an oversight)
 

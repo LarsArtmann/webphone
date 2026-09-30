@@ -132,7 +132,9 @@
                   if self ? rev && self.rev != null then self.rev else (self.dirtyRev or "unknown")
                 }"
                 "-X github.com/larsartmann/webphone/internal/server.buildCommitDate=${
-                  let d = self.lastModifiedDate; in
+                  let
+                    d = self.lastModifiedDate;
+                  in
                   "${builtins.substring 0 4 d}-${builtins.substring 4 2 d}-${builtins.substring 6 2 d}T${builtins.substring 8 2 d}:${builtins.substring 10 2 d}:${builtins.substring 12 2 d}Z"
                 }"
               ];

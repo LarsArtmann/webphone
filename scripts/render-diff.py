@@ -96,11 +96,18 @@ def wait_up(port: int, deadline_s: float = 20.0) -> bool:
 def make_opener() -> urllib.request.OpenerDirector:
     import http.cookiejar
 
-    return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    return urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar())
+    )
 
 
 def request(
-    opener, port: int, method: str, path: str, body: bytes | None = None, headers: dict | None = None
+    opener,
+    port: int,
+    method: str,
+    path: str,
+    body: bytes | None = None,
+    headers: dict | None = None,
 ) -> tuple[int, bytes]:
     req = urllib.request.Request(
         f"http://127.0.0.1:{port}{path}", data=body, method=method
@@ -144,7 +151,7 @@ def seed_error_row(opener, port: int, headers: dict) -> None:
     parts = []
     for name, value in (("to", "+491700000000"), ("body", "render-diff probe")):
         parts.append(
-            f"--{BOUNDARY}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n".encode()
+            f'--{BOUNDARY}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'.encode()
         )
     body = b"".join(parts) + f"--{BOUNDARY}--\r\n".encode()
     status, _ = request(
@@ -203,10 +210,14 @@ def main() -> int:
     failures = 0
     for path in PARTIALS:
         same = old[path] == new[path]
-        print(f"  {'OK ' if same else 'DIFF'}  {path} ({len(old[path])}B vs {len(new[path])}B)")
+        print(
+            f"  {'OK ' if same else 'DIFF'}  {path} ({len(old[path])}B vs {len(new[path])}B)"
+        )
         if not same:
             failures += 1
-            for i, (a, b) in enumerate(zip(old[path].splitlines(), new[path].splitlines())):
+            for i, (a, b) in enumerate(
+                zip(old[path].splitlines(), new[path].splitlines())
+            ):
                 if a != b:
                     print(f"       first differing line {i + 1}:")
                     print(f"       old: {a[:160]!r}")
