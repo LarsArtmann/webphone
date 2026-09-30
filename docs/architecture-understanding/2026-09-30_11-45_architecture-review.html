@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture Review 2026-09-30 - webphone</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>Architecture Review</span>
+      <span>2026-09-30</span>
+      <span>webphone &middot; series 2</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">00 Summary</a>
+          <a href="#continuity">01 Since 2026-09-19</a>
+          <a href="#structure">02 Structural map</a>
+          <a href="#scores">03 Scores</a>
+          <a href="#findings">04 Findings</a>
+          <a href="#modules">05 Go modules?</a>
+          <a href="#roadmap">06 Roadmap</a>
+          <a href="#verify">07 Verification</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Architecture Review</div>
+          <h1>webphone, re-reviewed at 16 packages</h1>
+          <p class="hero-subtitle">
+            Point-in-time structural assessment, 2026-09-30 — second entry in the
+            review series (companion: the 2026-09-19 review, the 2026-09-30 D2 pair in
+            this directory, and the 2026-09-30 data-model review in docs/reviews/).
+            Scope: what the 09-22&rarr;09-30 feature trains (CRM, retention, vcard,
+            session persistence, error-family adoption, templ-components, nix/ split)
+            did to the structure. All dependency claims re-verified against tests run
+            during this review.
+          </p>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#summary">00 Summary</a></li>
+            <li><a href="#continuity">01 Since 2026-09-19</a></li>
+            <li><a href="#structure">02 Structural map</a></li>
+            <li><a href="#scores">03 Scores</a></li>
+            <li><a href="#findings">04 Findings</a></li>
+            <li><a href="#modules">05 Go modules?</a></li>
+            <li><a href="#roadmap">06 Action roadmap</a></li>
+            <li><a href="#verify">07 Verification</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">4.4</div>
+            <div class="stat-label">Overall (1&ndash;5)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">16</div>
+            <div class="stat-label">Packages (was 13)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Import cycles (arch-enforced)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Findings (2 carried, 1 new)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">19</div>
+            <div class="stat-label">Files in internal/server</div>
+          </div>
+        </div>
+        <p>
+          The 2026-09-19 verdict ("deliberately small, sharply layered single binary,
+          dependency direction enforced by test") survives eleven days of the heaviest
+          feature traffic this repo has seen — and it survives <em>stronger</em>: three
+          of that review's four open roadmap items resolved (liveness, readiness
+          bounds, sanitizer alignment), and every new package (crm, retention, vcard)
+          landed inside the existing invariants without a single new layering
+          violation. The overall score moves 4.3 &rarr; 4.4: self-health rose (bounded
+          readiness + /livez + /startupz all shipped), and nothing structural
+          regressed.
+        </p>
+        <p>
+          The watch item is <strong>internal/server</strong>: 19 source files, 3,268
+          non-test LOC, 6,073 test LOC, imports of 12 of the 15 sibling packages, and
+          the most-touched package in the repo since 09-23 (51 file-touch events). It
+          is not a god module — its exported surface is tiny (29 doc lines:
+          <code>Deps</code>, <code>New</code>, <code>DisplayVersion</code>&hellip;) and
+          every file serves the one concept "the HTTP surface" — but it now sits ON the
+          review-methodology flag threshold (&gt;1000 LOC / &gt;20 files), and the
+          trend line crosses it at the next feature.
+        </p>
+
+        <h2 id="continuity"><span class="num">01</span>Since 2026-09-19 — series continuity</h2>
+        <p>
+          The prior review's roadmap, re-checked against code and git today:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>2026-09-19 item</th><th>Pri</th><th>Status today</th><th>Evidence</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Liveness/watchdog owner decision</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>/livez (fetch-free) + /startupz (latched 503-until-first-pass) shipped; unit deliberately Type=simple, documented in README "Readiness vs systemd"</td>
+              </tr>
+              <tr>
+                <td>Readiness check timeout guard</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>/healthz = sqlite ping + blob-dir write probe, 2s bounds, 503 names the failing check</td>
+              </tr>
+              <tr>
+                <td>Island sanitizer alignment</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>Owner decision 2026-09-20: island keeps letters; both sides pinned (domain test + served-asset table)</td>
+              </tr>
+              <tr>
+                <td>fax service: replace *gateway.Loopback type-assert with a receipt-verbosity seam</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><span class="badge badge-low">Still open</span></td>
+                <td>internal/fax/service.go:136 — the assert is unchanged; re-filed below</td>
+              </tr>
+              <tr>
+                <td>Type SharedContact.Number as Phone with config-load validation</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><span class="badge badge-low">Still open</span></td>
+                <td>internal/domain/contact.go:22 — raw string; folded into the new config-typing finding</td>
+              </tr>
+              <tr>
+                <td>Per-check timeout proposal upstream (cqrs-htmx)</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><span class="badge badge-low">Moot here</span></td>
+                <td>Webphone side resolved its own bounds; upstream proposal optional</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          New since that review, all inside the invariants: <code>crm</code>
+          (optional read-only enrichment, nil-safe everywhere, own error sentinels),
+          <code>retention</code> (daily bounded sweep over store.Sweep),
+          <code>vcard</code> (pure parser), SQLite-backed sessions (the store seam the
+          09-19 spike verdict predicted), the go-error-family adoption (132&thinsp;&rarr;&thinsp;0
+          tier-2 findings, per-seam family pins), templ-components adoption
+          (layout.Base + EmptyState with a scoped Tailwind build), and the flake.nix
+          split into nix/*.None of it moved a dependency arrow the wrong way.
+        </p>
+
+        <h2 id="structure"><span class="num">02</span>Structural map</h2>
+        <p>
+          16 packages, single module, one composition root. Internal import graph
+          (re-derived today from <code>go list</code>; the D2 rendering of it lives at
+          <code>2026-09-30_11-45-webphone-architecture.svg</code> in this directory):
+        </p>
+        <div class="dep-tree">cmd/webphone &rarr; 11 packages (composition root, leaf)
+<span class="ok">domain</span>      &rarr; 0 internal imports (pure; test-enforced)
+<span class="ok">arch</span>        &rarr; 0 (test-only invariant guard)
+blob, pbx, crm, vcard, web/assets &rarr; 0 (base services)
+store          &rarr; domain
+config         &rarr; domain
+gateway        &rarr; config, domain
+session        &rarr; domain, pbx
+web/views      &rarr; domain, pbx, store
+messaging      &rarr; blob, domain, gateway, store
+fax            &rarr; blob, domain, gateway, store
+retention      &rarr; blob, store
+<span class="unwanted">server</span>         &rarr; 12 of 15 siblings (config, crm, domain, fax,
+                 gateway, messaging, pbx, session, store,
+                 vcard, web/assets, web/views)</div>
+        <p>
+          Sizes (non-test LOC / files): server 3,268/19, store 949/5, crm 490/2,
+          session 441/2, web/views 434/2(+9 templ), domain 424/5, gateway 368/3,
+          messaging 347/1, config 310/1, pbx 240/1, fax 219/1, vcard 194/1,
+          cmd 180/1, blob 85/1, retention 64/1. Change ripple since 2026-09-23
+          (file-touch events): web 56, <strong>server 51</strong>, store 15, config 7,
+          gateway 6 — the product surface concentrates exactly where the size does.
+        </p>
+
+        <h2 id="scores"><span class="num">03</span>Scores (1&ndash;5)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Dimension</th><th>09-19</th><th>Today</th><th>Basis</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Coupling</td><td>4.5</td><td>4.5</td><td>One Deps wiring site, no globals; named deductions unchanged (fax type-assert; views reaches pbx+store prop types)</td></tr>
+              <tr><td>Cohesion</td><td>5</td><td>4.5</td><td>server's one-concept-per-package claim now strains at 19 files — the sole regression</td></tr>
+              <tr><td>Modularity</td><td>4.5</td><td>4.5</td><td>internal/ opacity + arch test; server flagged, boundary still clean</td></tr>
+              <tr><td>Composability</td><td>4</td><td>4</td><td>CRM Resolver is a composability win (nil-safe, optional, single-flight); fax leak unchanged — net held</td></tr>
+              <tr><td>Scalability</td><td>4</td><td>4</td><td>Single-node SQLite stays the correct product call; retention bounds data growth</td></tr>
+              <tr><td>Service orientation</td><td>4.5</td><td>4.5</td><td>crm/retention/vcard all landed HTTP-free; identity seam unchanged</td></tr>
+              <tr><td>Dependency direction</td><td>5</td><td>5</td><td>arch_test green, re-run during this review</td></tr>
+              <tr><td>Self-health</td><td>4</td><td>4.5</td><td>livez + startupz + bounded, named readiness checks all shipped</td></tr>
+              <tr><td><strong>Overall</strong></td><td><strong>4.3</strong></td><td><strong>4.4</strong></td><td>Good band: address the lowest dimensions (composability, scalability) — no urgent restructuring</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="findings"><span class="num">04</span>Findings</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Watch / trigger-based</span>
+          <h3>internal/server sits on the god-package threshold</h3>
+          <div class="where">internal/server — 19 files, 3,268 LOC + 6,073 test LOC, 12/15 sibling imports, 51 touches since 09-23</div>
+          <p>
+            The methodology flags any package over 1,000 LOC or 20 files for review.
+            server is at 19/3,268 with the strongest touch-rate in the repo. It is not
+            a god module today: the exported surface is 29 doc lines (Deps, New,
+            DisplayVersion), every file serves "the HTTP surface", and its breadth of
+            imports is what a composition surface is <em>for</em>. But three distinct
+            sub-concepts now live inside it — JSON APIs (contacts_api, calls_api,
+            session_api, csrf_api), webhook ingest (webhooks, idempotency), and
+            page/partial rendering (pages, panels, actions) — and the next feature
+            that adds a file crosses the threshold.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Trigger-based carve, not an immediate one: at the next file added to
+            internal/server, split along the three natural seams — server keeps
+            wiring (Deps, chain, mount), server/api takes the JSON endpoints,
+            server/hooks takes webhook ingest + idempotency. Tests move with their
+            files; the two file-name pins (contract_test's three-401-writer allowlist,
+            the DOM contract test) update mechanically. Behavior-safe by
+            construction: the 401 allowlist and toast tests pin outcomes, and the
+            render-diff harness (old-vs-new binary) proves byte parity.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Carried since 09-19 (P2)</span>
+          <h3>fax.Service type-asserts its own gateway seam</h3>
+          <div class="where">internal/fax/service.go:136</div>
+          <p>
+            <code>s.gateway.(*gateway.Loopback)</code> leaks the implementation
+            through the interface the package exists to hide: adding a second
+            synchronous gateway (a spooler, a second provider) silently takes the
+            wrong branch. The 09-19 review filed this; nothing has changed it since.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Make the receipt carry the fact: <code>Receipt.Sync bool</code> (loopback
+            mints it true; webhook false) or a <code>FaxGateway.ResolvesSynchronously()</code>
+            capability method. The service branches on the contract, not the concrete
+            type. S effort, fax-service tests already cover both arms.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">New (cross-file with the data-model review)</span>
+          <h3>Operator config types fail silent instead of fail-closed</h3>
+          <div class="where">internal/config/config.go — Identities map[string]string; domain.SharedContact.Number</div>
+          <p>
+            Two operator-supplied values still cross the config boundary as raw
+            strings: the <code>identities</code> map keys (meant to be extensions —
+            the doc comment itself warns "keys must be normalized extensions or
+            lookups by the signed-in extension silently miss") and
+            <code>SharedContact.Number</code> (meant to be a Phone — a bad entry
+            renders verbatim in the dial typeahead). Both are validated value-object
+            types in domain today; neither is applied where the data enters the
+            process. A typo produces a silently broken feature, not a failed boot —
+            the opposite of the fail-closed posture everywhere else (timezone typos
+            DO fail the boot, by contrast).
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            One home: config.Load() validates every identities key via
+            domain.ParseExtension and every shared contact number via
+            domain.ParsePhone, rejecting the boot with the offending key. S&ndash;M
+            effort. The data-model review (same date, docs/reviews/) files the type
+            side of this.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Carried (P3)</span>
+          <h3>Still no schema_version table</h3>
+          <div class="where">internal/store/db.go — CREATE TABLE IF NOT EXISTS only</div>
+          <p>
+            Harmless today because no migration alters an existing table. The 09-19
+            recommendation stands: add the version table before the first altering
+            migration, not after. Nothing currently pending makes that day imminent.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Accepted pattern, recorded</span>
+          <h3>web/views reaches pbx + store for prop types</h3>
+          <div class="where">internal/web/views &rarr; domain, pbx, store</div>
+          <p>
+            Presentation depends on infrastructure <em>types</em> (pbx.VoicemailPage
+            and friends flow straight into view props). Go-idiomatic and deliberate:
+            the views are this binary's rendering layer, not a reusable library. No
+            action — recorded so the next review doesn't re-derive it as a finding.
+          </p>
+        </div>
+
+        <h2 id="modules"><span class="num">05</span>Should this be split into Go modules?</h2>
+        <p>
+          Re-run of the go-modularize assessment (Phase 1 state: single go.mod, 16
+          packages, monolith) against today's evidence:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Signal</th><th>Weight</th><th>Today's reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Small project, single domain</td><td><span class="badge badge-high">High</span></td><td>~7.6k non-test LOC, one product surface, one team, one binary</td></tr>
+              <tr><td>No external Go consumers</td><td><span class="badge badge-medium">Medium</span></td><td>The stack consumes the built binary + nixosModules, never packages</td></tr>
+              <tr><td>All packages change together</td><td><span class="badge badge-high">High</span></td><td>Partial — server/views/store dominate, but changes ride single features, not the whole tree</td></tr>
+              <tr><td>Prototype</td><td><span class="badge badge-high">High</span></td><td>No — v2.6.0 in production</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Verdict: <strong>no go.mod split</strong> — same as 09-19, now with more
+          evidence. The composability payoff is zero (nobody imports the packages);
+          the cost is real and specific to this repo: the Nix build hashes a single
+          vendor tree (vendorHash roundtrips already bit this repo once), and the
+          release ritual (release.sh, per-train stack locks, whole-tree tags) would
+          gain per-module version ceremony with no consumer to serve. The DAG the
+          modularize skill enforces via module boundaries is <em>already</em>
+          enforced here by internal/arch at package granularity, green today:
+          domain imports nothing internal, services never import server/web, the
+          island JS graph stays acyclic. A second Go consumer importing
+          internal/domain or internal/gateway is the named revisit trigger.
+        </p>
+        <p>
+          The refinement that IS worth it operates below module level: the
+          server carve (finding 1) and the seam typing (findings 2&ndash;3) deliver
+          everything a module split would, at package-move cost.
+        </p>
+
+        <h2 id="roadmap"><span class="num">06</span>Action roadmap</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Pri</th><th>Action</th><th>Effort</th><th>Depends on</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="badge badge-medium">P2</span></td><td>server carve into api/hooks seams — AT the next file added to internal/server (trigger, not date)</td><td>M</td><td>Nothing; tests move with files, 401 allowlist + DOM pins update mechanically</td></tr>
+              <tr><td><span class="badge badge-medium">P2</span></td><td>fax receipt-verbosity seam; delete the *gateway.Loopback assert</td><td>S</td><td>Nothing (filed 09-19, carried twice — do it before it files a third time)</td></tr>
+              <tr><td><span class="badge badge-medium">P2</span></td><td>config.Load() fail-closed typing: ParseExtension on identities keys, ParsePhone on shared contacts</td><td>S&ndash;M</td><td>Pairs with the data-model review's config-typing item — one change, two reviews closed</td></tr>
+              <tr><td><span class="badge badge-low">P3</span></td><td>schema_version table before the first altering migration</td><td>S</td><td>Nothing pending; gate on that migration's arrival</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Roadmap items harvested into TODO_LIST.md (one home per fact); this report
+          is the rationale snapshot. No P0/P1: no structural debt is actively blocking
+          or accumulating fast.
+        </p>
+
+        <h2 id="verify"><span class="num">07</span>Verification</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Full Go suite green during this review</strong>
+              <span>nix develop -c go test -count=1 ./... — ok across all packages (retention + web/assets have no direct test files by design; their logic lives tested at its one home: store.Sweep, embedded assets)</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Architecture invariants re-proven</strong>
+              <span>internal/arch green: domain purity, services-never-import-server/web, island module acyclicity</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Diagrams rendered from compilable sources</strong>
+              <span>Both D2 files compile (d2 --layout=elk, exit-code gated); SVGs sit beside their sources</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Every finding cites a stable name</strong>
+              <span>fax service assert (service.go:136), SharedContact.Number (contact.go), identities keys (config.go), 401-writer allowlist (contract_test.go) — all greppable</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-09-30 &middot; Series: 2026-09-18 structural-health &rarr;
+          2026-09-19 architecture review (4.3) &rarr; this (4.4) &middot; Companion:
+          docs/reviews/2026-09-30_data-model-review.html
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
