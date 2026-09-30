@@ -1,7 +1,9 @@
-# Owner-Calls Briefing — the 14 Decisions (SUPERB T11)
+# Owner-Calls Briefing — the 28 Decisions (SUPERB T11)
 
-- **Date:** 2026-09-22 13:50 CEST
-- **Purpose:** one sitting, ~15 minutes. Every row blocks or shapes
+- **Date:** 2026-09-22 13:50 CEST, updated 2026-09-30 14:00 CEST (rows
+  15–28 = everything accumulated since; rows 15/16 ratify autonomous
+  calls already executed under the 2026-09-30 full-execution GO)
+- **Purpose:** one sitting, ~30 minutes. Every row blocks or shapes
   downstream work in the 20-year plan
   (`docs/planning/2026-09-22_12-02_SUPERB-20-year-durability.md`).
   Each row: the question, what it gates, options, MY recommendation.
