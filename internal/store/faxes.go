@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -27,7 +28,7 @@ func (s *Faxes) Create(ctx context.Context, job domain.FaxJob) error {
 		string(job.Status), job.Pages, job.DocumentPath, job.ProviderRef, job.Error,
 		job.CreatedAt.Unix(), job.UpdatedAt.Unix())
 	if err != nil {
-		return fmt.Errorf("insert fax job: %w", err)
+		return errorfamily.WrapInfrastructuref(err, "store.fax_insert", "insert fax job")
 	}
 	return nil
 }
@@ -44,7 +45,7 @@ func (s *Faxes) UpdateStatus(
 		WHERE id = ?
 	`, string(status), providerRef, providerRef, errorText, pages, time.Now().Unix(), id.String())
 	if err != nil {
-		return fmt.Errorf("update fax job: %w", err)
+		return errorfamily.WrapInfrastructuref(err, "store.fax_update", "update fax job")
 	}
 	return updatedOrNotFound(res)
 }

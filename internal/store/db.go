@@ -10,15 +10,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	_ "modernc.org/sqlite" // registers the "sqlite" driver
 )
+
+// Sentinel families (family-adoption train, 2026-09-30): absence and
+// input caps are user-facing outcomes, so both sentinels classify
+// Rejection — classifyForUser and any future handler can branch on the
+// family without another ladder. Registration follows the library's
+// documented pattern for stable error values; the sentinels keep their
+// errors.New identity.
+func init() {
+	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
+		ErrNotFound: errorfamily.Rejection,
+		ErrListFull:  errorfamily.Rejection,
+	})
+}
 
 // Open opens (creating if needed) the database at path and applies the
 // schema. Path may be ":memory:" for tests.
 func Open(path string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(ON)")
 	if err != nil {
-		return nil, fmt.Errorf("open sqlite %s: %w", path, err)
+		return nil, errorfamily.WrapInfrastructuref(err, "store.open", "open sqlite %s", path)
 	}
 	// modernc sqlite is happiest with one writer connection; the app is
 	// single-process and low-traffic, so serialize everything.
@@ -30,7 +44,7 @@ func Open(path string) (*sql.DB, error) {
 
 	if err := migrate(ctx, db); err != nil {
 		_ = db.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-		return nil, fmt.Errorf("migrate %s: %w", path, err)
+		return nil, fmt.Errorf("migrate %s: %w", path, err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 	}
 
 	slog.Info("store ready", "path", path)
@@ -101,7 +115,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	}
 	for _, stmt := range statements {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
-			return fmt.Errorf("apply %q: %w", firstLine(stmt), err)
+			return errorfamily.WrapInfrastructuref(err, "store.migrate", "apply %q", firstLine(stmt))
 		}
 	}
 	// Additive column migrations: CREATE IF NOT EXISTS never extends an
@@ -115,7 +129,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	for _, stmt := range alters {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
 			if !strings.Contains(err.Error(), "duplicate column name") {
-				return fmt.Errorf("apply %q: %w", firstLine(stmt), err)
+				return errorfamily.WrapInfrastructuref(err, "store.migrate", "apply %q", firstLine(stmt))
 			}
 		}
 	}
@@ -135,7 +149,7 @@ func listRows[T any](
 ) ([]T, error) {
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return nil, errorfamily.WrapInfrastructuref(err, "store.query", "%s", op)
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -148,7 +162,7 @@ func listRows[T any](
 		out = append(out, v)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("%s rows: %w", op, err)
+		return nil, errorfamily.WrapInfrastructuref(err, "store.query", "%s rows", op)
 	}
 	return out, nil
 }

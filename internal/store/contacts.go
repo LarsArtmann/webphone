@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -44,10 +45,10 @@ func (s *Contacts) Save(ctx context.Context, contact domain.Contact) error {
 		contact.Owner.String(), contact.Phone.String(),
 		contact.Owner.String(), ContactsMaxPerExtension)
 	if err != nil {
-		return fmt.Errorf("save contact: %w", err)
+		return errorfamily.WrapInfrastructuref(err, "store.contact_save", "save contact")
 	}
 	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort read right after the exec whose error is handled above
-		return fmt.Errorf("%w: %s at %d contacts", ErrListFull, contact.Owner.String(), ContactsMaxPerExtension)
+		return errorfamily.WrapRejectionf(ErrListFull, "store.contact_list_full", "%s at %d contacts", contact.Owner.String(), ContactsMaxPerExtension)
 	}
 	return nil
 }
@@ -67,7 +68,7 @@ func scanContact(row rowScanner) (domain.Contact, error) {
 		created                int64
 	)
 	if err := row.Scan(&id, &owner, &name, &phone, &created); err != nil {
-		return domain.Contact{}, fmt.Errorf("scan contact: %w", err)
+		return domain.Contact{}, errorfamily.WrapInfrastructuref(err, "store.contact_scan", "scan contact")
 	}
 	return domain.Contact{
 		ID:        domain.MustContactID(id),
@@ -84,10 +85,10 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 		DELETE FROM contacts WHERE id = ? AND owner = ?
 	`, id.String(), owner.String())
 	if err != nil {
-		return fmt.Errorf("delete contact: %w", err)
+		return errorfamily.WrapInfrastructuref(err, "store.contact_delete", "delete contact")
 	}
 	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
-		return errors.Join(ErrNotFound, fmt.Errorf("contact %s", id.String()))
+		return errors.Join(ErrNotFound, errorfamily.Newf(errorfamily.Rejection, "store.contact_missing", "contact %s", id.String()))
 	}
 	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/larsartmann/go-error-family"
 )
 
 // SweepResult reports one retention pass: what was deleted and which
@@ -35,9 +37,9 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 		UNION ALL
 		SELECT document_path FROM fax_jobs WHERE created_at < ? AND document_path != ''
 	`, []any{cutoff.Unix(), cutoff.Unix()}, func(row rowScanner) (string, error) {
-		var path string
+	var path string
 		if err := row.Scan(&path); err != nil {
-			return "", fmt.Errorf("scan blob path: %w", err)
+			return "", errorfamily.WrapInfrastructuref(err, "store.sweep_scan", "scan blob path")
 		}
 		return path, nil
 	})
@@ -78,7 +80,7 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (int64, error) {
 	res, err := db.ExecContext(ctx, query, args...)
 	if err != nil {
-		return 0, fmt.Errorf("%s: %w", op, err)
+		return 0, errorfamily.WrapInfrastructuref(err, "store.exec", "%s", op)
 	}
 	n, _ := res.RowsAffected() //nolint:erraudit // count is informational
 	return n, nil
@@ -109,7 +111,7 @@ func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 			(SELECT COUNT(*) FROM sessions)
 	`).Scan(&c.Threads, &c.Messages, &c.Faxes, &c.Contacts, &c.Sessions)
 	if err != nil {
-		return c, fmt.Errorf("count aggregates: %w", err)
+		return c, errorfamily.WrapInfrastructuref(err, "store.counts", "count aggregates")
 	}
 	return c, nil
 }
