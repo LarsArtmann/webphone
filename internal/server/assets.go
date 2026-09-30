@@ -41,6 +41,16 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/tw.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "tw.css", "text/css; charset=utf-8")
 	})
+	// The dashboard's own scoped Tailwind build: same generator, but
+	// sourced from the go-health-dashboard page + the templ-components
+	// subtrees IT renders (layout/display/feedback/utils/datastar). Kept
+	// separate from tw.css so the app surface's build stays the proven
+	// adopted-components set — neither page loads the other's classes.
+	// Regenerate together with tw.css on templ-components bumps (recipe
+	// in AGENTS.md, assets section).
+	mux.HandleFunc("GET /assets/health.css", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "health.css", "text/css; charset=utf-8")
+	})
 	return noStore(mux)
 }
 

@@ -45,11 +45,11 @@ func dashboardCSP(nonce string) string { return dashboard.RecommendedCSP(nonce) 
 func newDashboard(injector *do.RootScope, probe *health.Probe, cfg config.Config) http.Handler {
 	opts := []dashboard.Option{
 		dashboard.WithTitle(cfg.Dashboard.Title),
-		// The scoped Tailwind build webphone already serves — the
-		// dashboard's classes live in the same file (see tw.css
-		// rebuild notes in AGENTS.md). Without a CSSPath the library
-		// falls back to the Tailwind Play CDN, which the CSP blocks.
-		dashboard.WithCSSPath("/assets/tw.css"),
+		// The dashboard's own scoped Tailwind build (/assets/health.css,
+		// sourced from the dashboard page + the templ-components subtrees
+		// it renders). Without a CSSPath the library falls back to the
+		// Tailwind Play CDN, which the CSP blocks.
+		dashboard.WithCSSPath("/assets/health.css"),
 		// Serve the pinned Datastar SDK from the embedded bundle — a
 		// same-origin script, the only kind script-src 'self' allows.
 		dashboard.WithEmbeddedDatastarSDK(),

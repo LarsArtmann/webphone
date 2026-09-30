@@ -13,6 +13,7 @@ require (
 	github.com/larsartmann/go-branded-id v0.7.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/go-health v0.4.1
+	github.com/larsartmann/go-health-dashboard v0.10.1
 	github.com/larsartmann/go-sse v0.6.1
 	github.com/larsartmann/go-sse/ssetest v0.4.0
 	github.com/larsartmann/httputil v1.4.0
@@ -21,6 +22,7 @@ require (
 	github.com/larsartmann/templ-components/icons v1.19.4
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.44.0
+	github.com/samber/do/v2 v2.1.0
 	github.com/sixafter/nanoid v1.65.1
 	modernc.org/sqlite v1.60.1
 )
@@ -52,7 +54,6 @@ require (
 	github.com/larsartmann/go-datastar/static v0.6.0 // indirect
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
-	github.com/larsartmann/go-health-dashboard v0.10.1 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.1.0 // indirect
 	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
@@ -64,7 +65,6 @@ require (
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/samber/do/v2 v2.1.0 // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/sixafter/aes-ctr-drbg v1.20.0 // indirect
 	github.com/sixafter/prng-chacha v1.17.1 // indirect

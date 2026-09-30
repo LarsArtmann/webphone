@@ -306,9 +306,13 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /startupz", selfHealth.StartupHandler())
 	// The dashboard subtree (config-gated upstream): its own mux carries
 	// /health, /health/sse, the embedded Datastar SDK and its namespaced
-	// probe aliases. Not registered when Deps.Dashboard is nil.
+	// probe aliases. Both patterns delegate: Go's mux matches "/health"
+	// exactly and "/health/" as the subtree — one without the other
+	// would 404 either the page or everything under it. Not registered
+	// when Deps.Dashboard is nil.
 	if deps.Dashboard != nil {
 		open.Handle("/health", deps.Dashboard)
+		open.Handle("/health/", deps.Dashboard)
 	}
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)
@@ -325,6 +329,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/livez", open)
 	root.Handle("/startupz", open)
 	root.Handle("/health", open)
+	root.Handle("/health/", open)
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
