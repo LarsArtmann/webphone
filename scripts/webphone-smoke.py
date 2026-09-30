@@ -832,7 +832,7 @@ def main() -> int:
 
     def boot_configured() -> tuple[str, Callable[[], None]]:
         """Boot a second server with the TLS-fronting csrf shape configured
-        (the NixOS module ships these defaults when nginx.enable)."""
+        (the NixOS module ships these defaults when caddy.enable)."""
         port2 = free_port()
         cfg = {
             "addr": f"127.0.0.1:{port2}",
