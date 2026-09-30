@@ -549,6 +549,15 @@ NOT read `.codespellrc` (it reported 3894 vendor noise findings while
 the real codespell, honoring the rc, reports none). markdown-lint
 runs detect-only by posture (owner decision row 18, briefing
 2026-09-22_13-50): never "fix" the corpus by reflowing.
+KNOWN TOOL BUG — gomod-check's vendor-consistency rule reports ~51
+findings on this repo ("explicit in vendor/modules.txt but not
+explicitly required" + "vendor not ignored"): verified FALSE POSITIVE
+2026-10-01 — `go mod vendor` regenerates vendor/modules.txt
+byte-identically (sorted diff empty) and `go build -mod=vendor ./...`
+is green; the marker heuristic disagrees with the toolchain. Do NOT
+hand-edit vendor markers to silence it; the findings gate tripping on
+gomod-check alone is this known deviation (route a fix upstream in
+BuildFlow).
 
 ## Conventions
 

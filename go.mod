@@ -48,10 +48,14 @@ require (
 	github.com/larsartmann/go-cqrs-lite/metadata/v4 v4.7.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/query/v4 v4.9.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.0 // indirect
+	github.com/larsartmann/go-datastar v0.5.0 // indirect
+	github.com/larsartmann/go-datastar/static v0.6.0 // indirect
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
+	github.com/larsartmann/go-health-dashboard v0.10.1 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.1.0 // indirect
+	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
 	github.com/larsartmann/templ-components/htmx v1.19.4 // indirect
 	github.com/larsartmann/templ-components/utils v1.19.4 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
