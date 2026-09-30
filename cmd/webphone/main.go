@@ -34,10 +34,20 @@ func main() {
 	}
 }
 
+// propagatef is the ONE home for startup wiring's family-neutral
+// wraps (family-adoption train, 2026-09-30): each run() step wraps an
+// inner error whose family varies by cause (config mistakes are
+// Rejections, storage failures Infrastructure), so a fixed-family
+// wrap here would clobber the constructor's classification. The inner
+// error owns the family; this only adds context.
+func propagatef(format string, args ...any) error {
+	return fmt.Errorf(format, args...) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+}
+
 func run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+		return propagatef("load config: %w", err)
 	}
 	slog.Info("webphone starting",
 		"addr", cfg.Addr, "dataDir", cfg.DataDir, "gateway", string(cfg.Gateway.Mode))
@@ -68,29 +78,29 @@ func run() error {
 	// otherwise surface as SQLite's cryptic "unable to open database
 	// file (14)".
 	if err := os.MkdirAll(cfg.DataDir, 0o700); err != nil {
-		return fmt.Errorf("create data dir: %w", err)
+		return propagatef("create data dir: %w", err)
 	}
 
 	// --- infrastructure --------------------------------------------------
 	db, err := store.Open(filepath.Join(cfg.DataDir, "webphone.db"))
 	if err != nil {
-		return fmt.Errorf("open store: %w", err)
+		return propagatef("open store: %w", err)
 	}
 	defer func() { _ = db.Close() }()
 
 	blobs, err := blob.New(filepath.Join(cfg.DataDir, "files"))
 	if err != nil {
-		return fmt.Errorf("open blob store: %w", err)
+		return propagatef("open blob store: %w", err)
 	}
 
 	phoneAPI, err := pbx.NewClient(cfg.PhoneAPIURL)
 	if err != nil {
-		return fmt.Errorf("phone api client: %w", err)
+		return propagatef("phone api client: %w", err)
 	}
 
 	crmClient, err := crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
 	if err != nil {
-		return fmt.Errorf("crm client: %w", err)
+		return propagatef("crm client: %w", err)
 	}
 	crmResolver := crm.NewResolver(crmClient, slog.Default())
 
@@ -100,7 +110,7 @@ func run() error {
 	contacts := store.NewContacts(db)
 	sessions, err := session.NewSQLiteStore(db, cfg.SessionTTL)
 	if err != nil {
-		return fmt.Errorf("open session store: %w", err)
+		return propagatef("open session store: %w", err)
 	}
 
 	// Wall-clock zone (plan T26d): the configured IANA zone owns every
@@ -108,7 +118,7 @@ func run() error {
 	if cfg.Timezone != "" {
 		loc, err := time.LoadLocation(cfg.Timezone)
 		if err != nil {
-			return fmt.Errorf("load timezone: %w", err)
+			return propagatef("load timezone: %w", err)
 		}
 		time.Local = loc
 		slog.Info("timezone applied", "zone", cfg.Timezone)
@@ -160,7 +170,7 @@ func run() error {
 
 	select {
 	case err := <-errCh:
-		return fmt.Errorf("serve: %w", err)
+		return propagatef("serve: %w", err)
 	case <-ctx.Done():
 		slog.Info("shutting down")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
