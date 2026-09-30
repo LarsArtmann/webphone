@@ -12,7 +12,9 @@ A single-binary Go unified-communications web app: the proven SIP.js
 call island plus server-rendered tabs (Messages SMS/MMS, Fax,
 Voicemail, History, Contacts, Settings) on one page. Built on
 cqrs-htmx (root library only) + templ-components `layout.Base` +
-SQLite (modernc). The consuming stack
+SQLite (modernc), wired through a samber/do v2 composition root
+(`internal/app`) with go-health probes and an optional
+ go-health-dashboard at `/health`. The consuming stack
 ([nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony))
 imports this repo's `nixosModules.default`, fronts the binary with
 TLS + the WSS `/sip` proxy, and RIDES webphone `main` (per-train lock
@@ -182,15 +184,63 @@ the island remotely — re-run it after any markup change.
   port-stripped peer-host keys (`remoteHostKey`; flip to
   `KeyExtractorFromClientIP` only once the stack proves XFF
   sanitization). `/healthz` = honest readiness (sqlite ping +
-  blob-dir write probe, 2s bounds, 503 names the failing check);
-  `/livez` = fetch-free liveness; `/startupz` = latched
-  503-until-first-pass (go-health `NewChecks`, SAME check functions —
-  no second readiness truth). `/events` rides
-  `Broadcaster.ServeSSE` (v4.11.0 leads with a `retry:` hint); the
-  whole chain is pinned by httputil's 19-spec httpspec suite
+  blob-dir write probe, 2s bounds, 503 names the failing check;
+  the blob check calls `blob.ProbeWrite` — the ONE home, shared with
+  `blob.Store.HealthCheck`); `/livez` = fetch-free liveness;
+  `/startupz` = latched 503-until-first-pass (served from
+  `Deps.Probe`, the container-built go-health probe over the named
+  services `sqlite`/`blob-dir`; nil Probe = the NewChecks fallback
+  for hand-composed test Deps — same checks, same truth). `/events`
+  rides `Broadcaster.ServeSSE` (v4.11.0 leads with a `retry:` hint);
+  the whole chain is pinned by httputil's 19-spec httpspec suite
   (`TestHTTPSpectChainConformance`, 2026-09-24).
   The unit deliberately stays `Type=simple` — see README
   "Readiness vs systemd".
+- **Composition root is `internal/app`** (samber/do v2, 2026-10-01):
+  ONE container owns object lifetime; `cmd/webphone` owns process
+  concerns (config, logging, signals, the HTTP listener). Rules:
+  the injector lives ONLY in `internal/app` (services hold resolved
+  deps, never the container — the service packages stay
+  framework-free; the do lifecycle-interface conformance is asserted
+  adapter-side in app.go); the critical pair registers NAMED
+  (`sqlite` = `store.Database` with HealthCheck+Shutdown, `blob-dir` =
+  `*blob.Store` with HealthCheck) because the names are the probe's
+  critical-service contract; both + the handler are EAGERLY invoked
+  in `New` (a never-invoked lazy service health-checks as silently
+  passing — go-health gotcha); the probe is built ONCE and threaded
+  to both server.Deps and the dashboard (never registered in the
+  injector it reads — `*health.Probe` conforms to the health-check
+  interface, self-registration recurses); shutdown order = HTTP
+  drain → `Probe.Shutdown` (draining overlay) → `do.Shutdown`
+  cascade (dashboard pusher, `Database.Shutdown` — idempotent).
+  `Deps.Probe`/`Deps.Dashboard` nil-fallback keeps every existing
+  test composition working.
+- **Health dashboard seam** (go-health-dashboard v0.10.1,
+  2026-10-01): config-gated `dashboard.{enable,title}`, DEFAULT OFF —
+  an operator surface the deployment deliberately exposes (fence it
+  like the probe triple; the module's Caddy vhost proxies `/health/*`
+  unbuffered like `/events`). Mounted at `/health` (subtree patterns
+  `/health` AND `/health/` — Go mux exact-vs-subtree, one without
+  the other 404s half the surface); probe aliases live at
+  `/health/{livez,readyz,startupz}` (SAME probe instance as the root
+  triple, plain duplicates); the dashboard registers in the
+  container under the name `dashboard` (its pusher-staleness check
+  shows as non-critical warn). CSP: subtree override via
+  `httputil.Nonce` + `dashboard.RecommendedCSP(nonce)` —
+  `unsafe-eval` is scoped to `/health` ONLY (Datastar SDK compiles
+  expressions); every other surface keeps the strict app policy
+  (`TestAppServesMainPageUnderStrictCSP` pins the boundary). Its
+  stylesheet is its OWN scoped build `/assets/health.css`
+  (prettier-formatted, treefmt owns it; regenerated from the
+  go-health-dashboard + templ-components layout/display/feedback/
+  utils/datastar sources with `nix run nixpkgs#tailwindcss_4` —
+  NEVER nixpkgs#tailwindcss v3; the app's `tw.css` stays the
+  adopted-components set, the two builds never merge). Probe
+  refresh: 1s background loop ONLY while the dashboard is enabled
+  (the pusher reads CachedResponse; live mode would freeze at the
+  boot snapshot); dashboard off = interval 0, the pre-container
+  behavior. The smoke boots WITH the dashboard on (standing
+  coverage).
 - **Module graph stays acyclic**: the island's `state.js` + `auth.js`
   exist so calls/ice/connection never import each other; ice syncs
   via the `wp:calls-changed` CustomEvent — enforced by
