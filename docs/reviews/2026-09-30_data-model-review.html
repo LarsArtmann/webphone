@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Model Review 2026-09-30 - webphone</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>Data Model Review</span>
+      <span>2026-09-30</span>
+      <span>webphone &middot; series 2</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#current">00 Current state</a>
+          <a href="#catalog">01 Problem catalog</a>
+          <a href="#vision">02 The vision</a>
+          <a href="#model">03 Go data model</a>
+          <a href="#composition">04 Composition in action</a>
+          <a href="#validation">05 Validation layer</a>
+          <a href="#decisions">06 Decision log</a>
+          <a href="#anti">07 Anti-patterns</a>
+          <a href="#migration">08 Migration roadmap</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Architecture Deep-Dive</div>
+          <h1>The webphone data model, re-reviewed</h1>
+          <p class="hero-subtitle">
+            First-principles review of every type definition, 2026-09-30 — second
+            entry in the data-model series (companion: the 2026-09-19 review in this
+            directory and the 2026-09-30 architecture review in
+            docs/architecture-understanding/, which shares one root cause with
+            finding&nbsp;#3 below). Every type file was read for this review; every
+            claim cites a stable name.
+          </p>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#current">00 Current state</a></li>
+            <li><a href="#catalog">01 Problem catalog</a></li>
+            <li><a href="#vision">02 The vision</a></li>
+            <li><a href="#model">03 Go data model</a></li>
+            <li><a href="#composition">04 Composition in action</a></li>
+            <li><a href="#validation">05 Validation layer</a></li>
+            <li><a href="#decisions">06 Decision log</a></li>
+            <li><a href="#anti">07 Anti-patterns</a></li>
+            <li><a href="#migration">08 Migration roadmap</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="current"><span class="num">00</span>Current state</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Branded ID families</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Validated value objects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Closed string enums</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Open problems (1 new)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Accepted, documented</div>
+          </div>
+        </div>
+        <p>
+          The 2026-09-19 review's headline holds: <em>this is a model where the
+          invalid states mostly cannot be constructed</em>. All five aggregates carry
+          branded nanoid identifiers with the Parse/Must split (client input
+          404s, database corruption panics); Extension and Phone are
+          constructor-validated struct wrappers; inbound and outbound lifecycles are
+          separate types, not nullable-flag minefields; and the provider-ref partial
+          unique indexes still make replayed status webhooks unrepresentable at the
+          storage layer. Since that review the model grew — Message.FailureKind /
+          FailureDetail (send-failure train&nbsp;C), the CRM Match/Resolver types,
+          retention's SweepResult/Counts, session sliding-TTL Lifetime — and every
+          addition followed the established patterns.
+        </p>
+        <p>
+          What changed for the worse: nothing inside domain. What remains open lives
+          exactly where the 09-19 review left it — at the operator-config boundary —
+          plus one genuinely new finding: the gateway <code>Receipt</code> type is
+          too thin to carry a fact the fax service needs, which forces an
+          implementation type-assert that the architecture review also flags.
+        </p>
+
+        <h2 id="catalog"><span class="num">01</span>Problem catalog</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">New &middot; P5</span>
+          <h3>Receipt cannot express how a gateway resolves — the type-assert is a symptom</h3>
+          <div class="where">internal/gateway/gateway.go — Receipt{ProviderRef string}; internal/fax/service.go:136</div>
+          <p>
+            The fax service branches on <em>which implementation</em> it got
+            (<code>s.gateway.(*gateway.Loopback)</code>) because the data it needs —
+            "does this receipt already carry the final verdict, or do I wait for a
+            status hook?" — has no home in the model. A second synchronous gateway
+            (spooler, second provider) silently takes the wrong branch. This is the
+            architecture review's carried finding&nbsp;#2, re-filed here because the
+            honest fix is a model fix: the interface's return type is missing a
+            field, and the assert is the caller reaching around the missing field.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Give Receipt a closed two-value enum for resolution (see &sect;03): the
+            service switches on the contract; implementations declare what they are.
+            The assert dies without touching either gateway implementation's shape.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Carried &middot; P4</span>
+          <h3>identities keys are Extensions that nothing validates</h3>
+          <div class="where">internal/config/config.go — Identities map[string]string</div>
+          <p>
+            The own-number feed maps extension &rarr; DID, but the key is a raw
+            string. The type's own doc comment carries the warning — "keys must be
+            normalized extensions or lookups by the signed-in extension silently
+            miss" — which is the definition of a fail-silent boundary: the process
+            boots green on a typo, and the feature it broke is discovered by a human
+            weeks later. Contrast the same package's timezone handling, where a typo
+            fails the boot on purpose.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Validate at Load(): every key through domain.ParseExtension, reject the
+            boot naming the offending key. The wire shape stays
+            map[string]string (koanf + the config-file contract are untouched);
+            the guarantee moves from a comment to a check.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Carried since 09-19 &middot; P4</span>
+          <h3>SharedContact.Number is the one unbranded number</h3>
+          <div class="where">internal/domain/contact.go:22</div>
+          <p>
+            Personal contacts store <code>Phone</code> (branded, validated); shared
+            contacts store a raw string whose lowercase JSON form is the
+            window.PBX_CONFIG wire contract. A malformed operator entry renders
+            verbatim in the island's dial typeahead. The 09-19 review accepted this
+            pending "a config-validation decision" — that decision is now overdue
+            and has an obvious answer (same as finding&nbsp;#2: validate at load).
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            ParsePhone on every shared-contact number in Load(), same home as
+            finding&nbsp;#2 — one change, two reviews' items closed. The wire stays
+            lowercase strings; only the boot-time guarantee changes.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Carried &middot; P8</span>
+          <h3>No schema version home yet</h3>
+          <div class="where">internal/store/db.go — CREATE TABLE IF NOT EXISTS only</div>
+          <p>
+            Every schema statement today is idempotent-create; nothing alters an
+            existing table, so no version marker is needed <em>yet</em>. The model
+            should grow <code>schema_version</code> before the first altering
+            migration arrives, not during it. (Same item, same status, in the
+            architecture review.)
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Accepted, re-confirmed</span>
+          <h3>Two documented deviations stay</h3>
+          <div class="where">FaxJob.Error &middot; session.Session.Password</div>
+          <p>
+            <code>FaxJob.Error</code> remains a display-only reason string (structured
+            error typing would buy a join table's complexity for zero behavior —
+            09-19 verdict re-read and re-accepted). <code>Session.Password</code>
+            remains at rest by design: the row must carry the directory password the
+            /phone-api proxy needs, the trade-off is documented at the package doc,
+            and the value is swept on read/Create. Both carry doc comments stating
+            the acceptance — the pattern to copy for future deviations.
+          </p>
+        </div>
+
+        <h2 id="vision"><span class="num">02</span>The vision</h2>
+        <div class="strengths">
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Every id is branded, every boundary validates</strong><span>Client input meets Parse* (404/reject), database rows meet Must* (panic = corruption), config meets&hellip; validation too, once &sect;08 step&nbsp;2 lands — no fourth path.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Interfaces return facts, implementations stay anonymous</strong><span>No caller of MessageGateway/FaxGateway ever learns which concrete type answered — after the Receipt fix removes the one exception.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Lifecycle states are types, not flags</strong><span>InboundMessage/Message and InboundFax/FaxJob pairs keep "no status" and "status pending" unrepresentable-by-construction; OutboundStatus's zero value means not-applicable, documented.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Storage enforces what handlers merely re-check</strong><span>Partial unique indexes on provider_ref make webhook replays unrepresentable; owner scoping lives in every query.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Wire contracts stay boring</strong><span>pbx CDR/voicemail field names mirror the upstream API exactly; SharedContact JSON tags are the PBX_CONFIG contract — types stay honest inside, payloads stay verbatim outside.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Zero values tell the truth</strong><span>RetentionDays 0 = keep forever, Gateway.Mode "" = loopback, Lifetime normalizes a missing cap — every zero value is a documented, safe default.</span></div></div>
+        </div>
+
+        <h2 id="model"><span class="num">03</span>Go data model — the three deltas</h2>
+        <p>
+          The redesign here is surgical: three type-level changes, nothing else. The
+          existing model earns "keep" everywhere else.
+        </p>
+        <pre><code><span class="tok-comment">// gateway: resolution becomes a closed two-value enum on the receipt.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Resolution</span> <span class="tok-keyword">string</span>
+
+<span class="tok-keyword">const</span> (
+	ResolutionImmediate <span class="tok-type">Resolution</span> = <span class="tok-string">"immediate"</span> <span class="tok-comment">// verdict already final (loopback)</span>
+	ResolutionDeferred  <span class="tok-type">Resolution</span> = <span class="tok-string">"deferred"</span>   <span class="tok-comment">// status hook will speak next (webhook)</span>
+)
+
+<span class="tok-keyword">type</span> <span class="tok-type">Receipt</span> <span class="tok-keyword">struct</span> {
+	ProviderRef <span class="tok-type">string</span>
+	Resolution  <span class="tok-type">Resolution</span> <span class="tok-comment">// gateway declares its own resolution shape</span>
+}</code></pre>
+        <pre><code><span class="tok-comment">// config: the map's wire shape is untouched; the guarantee moves into Load().</span>
+<span class="tok-keyword">func</span> <span class="tok-func">validateIdentities</span>(m <span class="tok-keyword">map</span>[<span class="tok-type">string</span>]<span class="tok-type">string</span>) <span class="tok-type">error</span> {
+	<span class="tok-keyword">for</span> key := <span class="tok-keyword">range</span> m {
+		<span class="tok-keyword">if</span> _, err := domain.<span class="tok-func">ParseExtension</span>(key); err != <span class="tok-keyword">nil</span> {
+			<span class="tok-keyword">return</span> errorfamily.<span class="tok-func">WrapRejectionf</span>(err, <span class="tok-string">"config.identities"</span>,
+				<span class="tok-string">"identities key %q is not a dialable extension"</span>, key)
+		}
+	}
+	<span class="tok-keyword">return</span> <span class="tok-keyword">nil</span>
+}</code></pre>
+        <pre><code><span class="tok-comment">// store: the version home, before the first altering migration needs it.</span>
+<span class="tok-keyword">CREATE TABLE IF NOT EXISTS</span> schema_version (version <span class="tok-type">INTEGER</span> <span class="tok-keyword">NOT NULL</span>)</code></pre>
+
+        <h2 id="composition"><span class="num">04</span>Composition in action</h2>
+        <div class="compare-header">
+          <div class="compare-before">Before — caller reaches around the model</div>
+          <div class="compare-after">After — the contract carries the fact</div>
+        </div>
+        <div class="compare-row">
+          <div>
+            <pre><code><span class="tok-comment">// fax/service.go: the one type-assert in the repo</span>
+receipt, err := s.gateway.<span class="tok-func">SendFax</span>(ctx, out)
+<span class="tok-keyword">if</span> _, isLoopback := s.gateway.(*gateway.Loopback); isLoopback {
+	<span class="tok-comment">// pretend the status hook already arrived</span>
+}</code></pre>
+          </div>
+          <div>
+            <pre><code><span class="tok-comment">// branch on the receipt, not the implementation</span>
+receipt, err := s.gateway.<span class="tok-func">SendFax</span>(ctx, out)
+<span class="tok-keyword">if</span> receipt.Resolution == gateway.ResolutionImmediate {
+	<span class="tok-comment">// the verdict is already final</span>
+}</code></pre>
+          </div>
+        </div>
+        <div class="compare-header">
+          <div class="compare-before">Before — a typo boots green, feature dead</div>
+          <div class="compare-after">After — the boot names the offender</div>
+        </div>
+        <div class="compare-row">
+          <div>
+            <pre><code><span class="tok-comment"># config.json: operator pastes from a directory listing</span>
+{ <span class="tok-string">"identities"</span>: { <span class="tok-string">"1001 "</span>: <span class="tok-string">"+49 30 12345678"</span> } }
+
+<span class="tok-comment"># server starts; every lookup by extension "1001"</span>
+<span class="tok-comment"># silently misses — found by a human, weeks later</span></code></pre>
+          </div>
+          <div>
+            <pre><code>webphone: config invalid: identities key <span class="tok-string">"1001 "</span> is not
+a dialable extension (config.identities): extension <span class="tok-string">"1001 "</span>
+has no dialable characters
+
+<span class="tok-comment"># boot fails; the operator fixes it now</span></code></pre>
+          </div>
+        </div>
+
+        <h2 id="validation"><span class="num">05</span>Validation layer — three doors, no windows</h2>
+        <p>
+          After the deltas, every way into the process meets a validated type or a
+          named rejection:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Boundary</th><th>Guard</th><th>Failure shape</th></tr></thead>
+            <tbody>
+              <tr><td>Browser input (ids, forms)</td><td>domain.Parse*</td><td>404 / 422 with per-tab key — a forged id can never panic</td></tr>
+              <tr><td>Database rows</td><td>domain.Must*</td><td>panic — corruption is the only source; the honest crash</td></tr>
+              <tr><td>Operator config</td><td>Load() validation (timezone today; identities + contacts after &sect;08)</td><td>rejected boot naming the key — fail-closed everywhere</td></tr>
+              <tr><td>Provider webhooks</td><td>secret gate + provider-ref unique index + hooksIdem</td><td>503/401/404/replay-inert — replays unrepresentable in storage</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="decisions"><span class="num">06</span>Decision log</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Decision</th><th>Rationale</th><th>Rejected alternative</th></tr></thead>
+            <tbody>
+              <tr><td>Resolution enum, not a <code>Sync bool</code></td><td>Reads as a lifecycle fact at every call site; a third mode (partial-then-final) extends the enum without a semantic lie</td><td>Bool — "receipt.Sync == false" forces readers to parse a negation about the future</td></tr>
+              <tr><td>Validate identities in Load(), keep map keys as strings</td><td>One home; koanf wiring and the config-file contract untouched</td><td><code>map[domain.Extension]string</code> — needs custom unmarshal plumbing to protect a wire shape nobody violates on purpose</td></tr>
+              <tr><td>SharedContact stays string-typed on the wire, validated at load</td><td>JSON tags are the PBX_CONFIG contract; validation belongs at the boundary, not in the DTO</td><td>Struct wrapper with custom MarshalJSON — contract churn for zero added safety</td></tr>
+              <tr><td>Extension/Phone stay struct wrappers (unchanged)</td><td>Runtime validation at mint; zero value inspectable via IsZero</td><td>Alias branding — no validation home; the dialable alphabet rule would live in callers</td></tr>
+              <tr><td>IDs stay alias-branded generics (unchanged)</td><td>Zero value = pre-mint is fine; Parse/Must split already separates client input from rows</td><td>Struct wrappers — 5 families &times; constructor boilerplate for no new guarantee</td></tr>
+              <tr><td>pbx wire DTOs stay stringly</td><td>Field names ARE the upstream API; the leaf client converts at one home (session.PBXCredentials)</td><td>Branding inside pbx — pbx is deliberately domain-free (leaf package)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="anti"><span class="num">07</span>Anti-patterns to keep avoiding</h2>
+        <div class="card card-problem">
+          <h4>Recorded for the next contributor (carried from 09-19, still true)</h4>
+          <p>
+            Do not add a new ID without its Brand struct. Do not "simplify" Must*
+            back into handler paths — a panic per forged URL is a log-flooding
+            vector. Do not widen predicates with unused parameters "for symmetry"
+            (the ChannelOf lesson). Do not reach for a second user identity — the
+            extension IS the identity. Do not add a nullable pointer where a
+            separate inbound/outbound type says it better. And new: do not branch on
+            a gateway's concrete type — if the interface's answer type lacks a fact,
+            add the fact to the type.
+          </p>
+        </div>
+
+        <h2 id="migration"><span class="num">08</span>Migration roadmap</h2>
+        <div class="migration-step">
+          <div class="migration-num">1</div>
+          <div class="migration-content">
+            <h4>Receipt.Resolution + delete the type-assert</h4>
+            <p>Add the enum, Loopback mints ResolutionImmediate, webhook mints ResolutionDeferred, fax.Service switches on it. Existing fax tests cover both arms; run nix develop -c go test ./internal/fax/ ./internal/gateway/. S effort.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">2</div>
+          <div class="migration-content">
+            <h4>config.Load() fail-closed typing</h4>
+            <p>ParseExtension over identities keys, ParsePhone over shared contacts, Rejection family errors naming the offender. New config tests boot with a bad key and a bad number and assert the messages. S&ndash;M effort; closes this review's findings #2+#3 and the architecture review's finding #3.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>schema_version before the first ALTER</h4>
+            <p>Version table + a one-statement migration runner home in store/db.go when (and only when) an altering migration is actually authored. S effort, gated on that day.</p>
+          </div>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-09-30 &middot; Series: 2026-09-19 data-model review &rarr;
+          this &middot; Companion: docs/architecture-understanding/2026-09-30_11-45_architecture-review.html
+          &middot; All type files read; tests green during the review
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
