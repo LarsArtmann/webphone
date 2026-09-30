@@ -1,0 +1,1335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>setup shell adoption — Pareto plan (2026-09-30)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+    <body>
+    <div class="top-bar">
+      <span>PARETO EXECUTION PLAN</span>
+      <span>2026-09-30</span>
+      <span>webphone ⇄ cqrs-htmx</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#findings">Findings</a>
+          <a href="#decision">Decision</a>
+          <a href="#plan">Comprehensive Plan</a>
+          <a href="#fine">Fine Breakdown</a>
+          <a href="#graph">Execution Graph</a>
+          <a href="#gates">Gates &amp; Context</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Pareto Plan · upstream-first</div>
+          <h1>Adopting the cqrs-htmx <code>setup</code> bundle</h1>
+          <p class="hero-subtitle">
+            Runtime shell in, identity out: webphone adopts setup&#39;s serve/probe/mount
+            composition while the PBX extension + directory password remain the one identity.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">18</div>
+            <div class="stat-label">Active tasks (30–100 min)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Upstream gaps to close</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Repos in the train</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Documented decision to amend</div>
+          </div>
+        </div>
+
+        <p>
+          <strong>Thesis.</strong> The documented rejection of the <code>setup</code> bundle
+          (split-brain identity) concerned its <em>identity surfaces</em> — the event-sourced
+          <code>usermgmt.Service</code>, <code>/auth/*</code>, login page. That substance stays
+          rejected. What webphone adopts is the <strong>runtime shell</strong>: the
+          serve/drain/close lifecycle (<code>RunHandler</code>), the one-surface readiness
+          composition (<code>HealthPath</code> + <code>HealthChecks</code>), opt-in
+          <code>LivePath</code>, and the machine-endpoint mounts — composed behind
+          webphone&#39;s existing, httpspec-pinned middleware chain via
+          <code>ExtraMiddleware</code> + <code>DisableSecurityMiddleware</code>.
+        </p>
+
+        <div class="card card-warning">
+          <h4>Decision conflict — must be ratified, not silently reversed</h4>
+          <p>
+            AGENTS.md, docs/lessons.md:21, and docs/DOMAIN_LANGUAGE.md:28 all pin the rejection.
+            T01 writes a scope-limited amendment: identity surfaces stay rejected; shell surfaces
+            are adopted after the upstream seams land. History docs stay untouched as provenance.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Two upstream gaps block adoption today</h4>
+          <p>
+            1) No <code>Config.DisableAuth</code> — <code>/auth/*</code> is built and mounted
+            unconditionally (setup.go:68, mount.go:45), which would expose open registration into
+            an in-memory second user database. 2) <code>New()</code> always constructs or adopts a
+            <code>usermgmt.Service</code> (setup.go:38-48) — the service is the bundle&#39;s spine
+            (<code>svc.Journal()</code>/<code>EventBus()</code>). Both need an upstream,
+            test-pinned seam before webphone can compose the shell split-brain-free.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Why the shell is worth it</h4>
+          <p>
+            webphone already rides the same root-library primitives
+            (<code>cqrshtmx.ReadinessHandler</code> + <code>NamedCheck</code> power
+            <code>/healthz</code> today; server.go:270-274). Adopting setup deletes the
+            hand-rolled main.go serve/shutdown block for the tested <code>RunHandler</code>
+            (SSE-safe timeouts, 30 s shutdown budget, exactly-once Close), moves probe mounting
+            behind one composition root, and — the strategic prize — makes webphone the
+            reference identity-external consumer that hardens setup for a whole class of apps.
+          </p>
+        </div>
+
+        <h2 id="findings"><span class="num">01</span>Findings</h2>
+
+        <h3>Verified seams (source-level, 2026-09-30)</h3>
+        <table>
+          <thead>
+            <tr><th>Seam</th><th>State</th><th>Evidence</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>External handler served as-is</td>
+              <td><span class="badge badge-fixed">Ready</span></td>
+              <td>run.go:58 &quot;served as-is (no extra middleware)&quot; — webphone&#39;s whole chain can ride RunHandler</td>
+            </tr>
+            <tr>
+              <td>ExtraMiddleware + DisableSecurityMiddleware</td>
+              <td><span class="badge badge-fixed">Ready</span></td>
+              <td>bundle.go:159-193; RequestLogging=nil → chain is exactly extras → routes (byte-parity possible)</td>
+            </tr>
+            <tr>
+              <td>HealthPath + consumer HealthChecks</td>
+              <td><span class="badge badge-fixed">Ready</span></td>
+              <td>mount.go:157-175 — appends after built-ins; same cqrshtmx.ReadinessHandler webphone calls today</td>
+            </tr>
+            <tr>
+              <td>LivePath opt-in</td>
+              <td><span class="badge badge-fixed">Ready</span></td>
+              <td>mount.go:102-104 — always-200; body shape differs from go-health livez (stack checks status)</td>
+            </tr>
+            <tr>
+              <td>DisableAuth</td>
+              <td><span class="badge badge-critical">Missing</span></td>
+              <td>Auth built unconditionally (setup.go:68), mounted when non-nil (mount.go:45)</td>
+            </tr>
+            <tr>
+              <td>Service-optional mode</td>
+              <td><span class="badge badge-critical">Missing</span></td>
+              <td>New() derives stores from svc (setup.go:53); healthHandler already nil-guards Service (mount.go:160)</td>
+            </tr>
+            <tr>
+              <td>RunHandler metrics/version</td>
+              <td><span class="badge badge-low">N/A</span></td>
+              <td>Metrics/Version are RunWithAppkit-only (config.go:308-335); appkit adds its own outer middleware → rejected here</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Dependency footprint — the honest cost</h3>
+        <p>
+          setup/v4 (@ v4.12.0-era main; latest submodule tag setup/v4.9.0) drags in:
+          usermgmt, adminui, dashboardui, loginpage, datastar, identity-model, go-appkit,
+          five go-cqrs-lite modules, casbin/v3, watermill, lipgloss, templ runtime — into
+          webphone&#39;s vendor tree and binary even in shell mode (package-level imports link
+          regardless of construction). T02 decides <em>minimal vs split</em> (a zero-usermgmt
+          <code>shell</code> submodule); T12 measures the binary-size delta against the
+          owner-set go/no-go threshold from T01.
+        </p>
+
+        <h3>Sequencing constraint</h3>
+        <p>
+          v2.7/v2.8 is FOLDED but UNTAGGED and the stack is forward-locked awaiting its relock
+          (TODO_LIST row 1, owner terminal). The setup train must not ride a folded tree:
+          <strong>T00 = finish the pending release tail first.</strong>
+        </p>
+
+        <h2 id="decision"><span class="num">02</span>Decision</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Adopted</span>
+          <h3>Mode S — runtime shell, identity untouched</h3>
+          <div class="where">upstream-first: DisableAuth + service-optional land in cqrs-htmx first</div>
+          <p>
+            webphone composes setup.New with DisableAdmin + DisableDashboard + DisableLogin +
+            DisableAuth (new) + shell mode (new), DisableSecurityMiddleware, RequestLogging=nil,
+            ExtraMiddleware = the exact five-layer httpspec-pinned chain
+            (ContextEnrichment → RequestLoggingSlog → ServerTiming → SecurityHeaders → Recovery),
+            HealthPath=/healthz with HealthChecks=[sqlite, blob-dir @2s], LivePath=/livez.
+            /startupz, /version, /metrics, /events stay webphone-mounted (no upstream
+            equivalent / wire contracts pinned by stack + smoke).
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-critical">Rejected</span>
+          <h3>R1 — usermgmt as the identity (full reversal)</h3>
+          <div class="where">docs/lessons.md:21 · AGENTS.md</div>
+          <p>
+            Sessions must carry the PBX directory password (the /phone-api proxy and
+            GET /api/session&#39;s SIP-credential resume depend on it); usermgmt sessions cannot.
+            Bridging would need a side credential table = two session truths. The original
+            rejection stands unchanged.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-critical">Rejected</span>
+          <h3>R2 — adopt as-is, dormant service, /auth mounted</h3>
+          <div class="where">mount.go:45</div>
+          <p>
+            An always-mounted /auth/* writes into an in-memory second user database with open
+            registration — attack surface plus the split brain the rejection named. Non-negotiable
+            blocker; this is why T03 exists.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-important">Fallback</span>
+          <h3>R3 — cherry-pick into the root library instead</h3>
+          <div class="where">fallback if T12 size gate fails</div>
+          <p>
+            If the footprint verdict is no-go and the owner declines a split submodule, the
+            shell value (lifecycle, probe composition) gets promoted into cqrs-htmx root instead
+            and setup stays rejected. Documented, not planned.
+          </p>
+        </div>
+
+        <h2 id="plan"><span class="num">03</span>Comprehensive Plan</h2>
+        <p>
+          18 active tasks (30–100 min each) + 1 prerequisite + 5 parked. Sorted by importance
+          within execution order. Tier badges mark the Pareto cut:
+          <span class="badge badge-critical">P1</span> = the 1% delivering 51%,
+          <span class="badge badge-high">P4</span> = next 4% → 64%,
+          <span class="badge badge-fixed">P20</span> = the 20% → 80%.
+        </p>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Tier</th><th>Task</th><th>Outcome / Verify</th><th>Est</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>T00</td><td><span class="badge badge-critical">GATE</span></td><td><strong>Prereq:</strong> finish the pending v2.7/2.8 release tail (existing TODO_LIST row — owner terminal deploy, stack relock, pbx-artmann relock #5)</td><td>prod serves the new version; tree untagged-free</td><td>—</td></tr>
+            <tr><td>T01</td><td><span class="badge badge-critical">P1</span></td><td>Ratify scope-limited adoption: draft AGENTS.md amendment (identity surfaces stay rejected; shell adopted) + set the binary-size go/no-go threshold</td><td>owner sign-off; decision wording committed</td><td>45m</td></tr>
+            <tr><td>T02</td><td><span class="badge badge-critical">P1</span></td><td>Upstream ADR: DisableAuth semantics, service-optional semantics, minimal-vs-split decision, compat matrix (which Config fields die in shell mode)</td><td>ADR merged in cqrs-htmx</td><td>90m</td></tr>
+            <tr><td>T03</td><td><span class="badge badge-critical">P1</span></td><td>Implement Config.DisableAuth upstream (no AuthHandler build, no /auth/* mount) + mount-surface contract tests</td><td>/auth/* 404s; gates green</td><td>75m</td></tr>
+            <tr><td>T04</td><td><span class="badge badge-high">P4</span></td><td>Implement service-optional New() upstream (stores from Config.EventStore/EventBus; nil-safe Bundle; health = consumer checks only; Close skips service) + tests</td><td>shell-mode bundle builds, serves, closes idempotently</td><td>100m</td></tr>
+            <tr><td>T05</td><td><span class="badge badge-high">P4</span></td><td>SSE hub + machine endpoints service-less (hub from stores; no journal replay; catalog/debug path validation per ADR) + tests</td><td>SSEPath feed works in shell mode</td><td>60m</td></tr>
+            <tr><td>T06</td><td><span class="badge badge-fixed">P20</span></td><td>Upstream docs: doc.go flags, README canonical table, setup-vs-hand-wiring guide § identity-external apps</td><td>docs fresh-gate green</td><td>45m</td></tr>
+            <tr><td>T07</td><td><span class="badge badge-high">P4</span></td><td>Upstream release train: full gates (check-modules --strict, cqrs-lint via flake app), setup/vX tag per go-release rules, proxy verify, CHANGELOG, gh release</td><td>go get setup/v4@tag resolves from the proxy</td><td>90m</td></tr>
+            <tr><td>T08</td><td><span class="badge badge-high">P4</span></td><td>webphone go.mod + vendor + <strong>vendorHash roundtrip in the same breath</strong> (lesson 0a7a732) + buildflow</td><td>nix build .#webphone green</td><td>60m</td></tr>
+            <tr><td>T09</td><td><span class="badge badge-high">P4</span></td><td>server.New shell swap: buildShell() with the exact chain via ExtraMiddleware; HealthPath+HealthChecks replace hand-mounted /healthz; livez decision; keep /startupz /version /metrics /events</td><td>httpspec 19-suite + probes tests green; chain byte-parity</td><td>100m</td></tr>
+            <tr><td>T10</td><td><span class="badge badge-fixed">P20</span></td><td>main.go: replace manual ListenAndServe/Shutdown with bundle.RunHandler(ctx, addr, handler)</td><td>SSE flush + drain + restart scenario green</td><td>60m</td></tr>
+            <tr><td>T11</td><td><span class="badge badge-fixed">P20</span></td><td>Full verification battery: go test -count=1 ./..., island node tests, DOM contract, smoke 41+4, buildflow FULL, nix flake check (incl. KVM backup VM), vulnix</td><td>all green, zero unexplained diffs</td><td>90m</td></tr>
+            <tr><td>T12</td><td><span class="badge badge-fixed">P20</span></td><td>Footprint gate: binary size delta vs T01 threshold, vendor growth, vulnix closure, aarch64 ELF check → record verdict</td><td>go / no-go recorded in plan + TODO_LIST</td><td>60m</td></tr>
+            <tr><td>T13</td><td><span class="badge badge-fixed">P20</span></td><td>Amend rejection records: AGENTS.md, lessons.md:21, DOMAIN_LANGUAGE.md:28 + pointer notes in research docs (never rewrite provenance)</td><td>fresh session reads one coherent decision</td><td>45m</td></tr>
+            <tr><td>T14</td><td><span class="badge badge-fixed">P20</span></td><td>CHANGELOG [Unreleased] + FEATURES row + README probe-path-stability note</td><td>docs consistent</td><td>30m</td></tr>
+            <tr><td>T15</td><td><span class="badge badge-fixed">P20</span></td><td>webphone release train per docs/release-runbook.md (bump → gates → signed tag → push → gh release → local smoke --expect-version)</td><td>git ls-remote shows the tag; smoke exact</td><td>90m</td></tr>
+            <tr><td>T16</td><td><span class="badge badge-fixed">P20</span></td><td>Stack re-pin: lock bump, flake check, browser E2E ×2 ≤ 445 s (incl. FOUC), probe-triple fencing diff (expect zero changes)</td><td>stack green at the new tag</td><td>100m</td></tr>
+            <tr><td>T17</td><td><span class="badge badge-fixed">P20</span></td><td>pbx-artmann relock #6 + ExecStart version move + toplevels + lock-drift-probe; owner-terminal deploy per runbook</td><td>relock green; deploy commanded by owner</td><td>75m</td></tr>
+            <tr><td>T18</td><td><span class="badge badge-fixed">P20</span></td><td>Post-deploy prod smoke --base --expect-version; close TODO rows; ANNOTATE this plan (docs-health); dedup-registry sweep line if helpers touched</td><td>prod serves the version; records closed</td><td>45m</td></tr>
+            <tr><td>P1–P4</td><td><span class="badge badge-low">PARKED</span></td><td>startupz latch seam upstream · DebugPath//version JSON alignment · dashboard/admin bridge authorizer (webphone-session-gated) · /events → bundle hub unification</td><td>documented options, not scheduled</td><td>—</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="fine"><span class="num">04</span>Fine Breakdown</h2>
+        <p>105 steps, each ≤ 15 minutes. Phase-grouped; step ids extend their task id.</p>
+
+        <h3>Phase A — Decision + design</h3>
+        <table>
+          <thead><tr><th>Step</th><th>Work</th><th>Verify</th><th>Est</th></tr></thead>
+          <tbody>
+            <tr><td>1a</td><td>Re-read rejection records (AGENTS.md, lessons.md:21, DOMAIN_LANGUAGE.md:28) + the 2026-09-19 deep-dive verdicts</td><td>quotes in hand</td><td>10m</td></tr>
+            <tr><td>1b</td><td>Draft the scope-limited amendment paragraph</td><td>wording states both halves</td><td>15m</td></tr>
+            <tr><td>1c</td><td>Owner sign-off + binary-size go/no-go threshold (e.g. +X MB)</td><td>number recorded</td><td>10m</td></tr>
+            <tr><td>1d</td><td>Commit decision draft (docs-only)</td><td>clean tree</td><td>10m</td></tr>
+            <tr><td>2a</td><td>ADR: DisableAuth semantics (no build, no mount, SessionMiddleware fails closed)</td><td>section done</td><td>15m</td></tr>
+            <tr><td>2b</td><td>ADR: service-optional semantics (stores source, nil Service, health shape)</td><td>section done</td><td>15m</td></tr>
+            <tr><td>2c</td><td>Decide minimal vs split submodule; record estimation method</td><td>decision + rationale</td><td>15m</td></tr>
+            <tr><td>2d</td><td>Map validate() rules affected (path collisions, HealthChecks name set)</td><td>list</td><td>10m</td></tr>
+            <tr><td>2e</td><td>Compat matrix: Config fields invalid in shell mode (Service, ServiceConfig, TOTP, WebAuthn, OAuth2, panels)</td><td>table</td><td>10m</td></tr>
+            <tr><td>2f</td><td>Review against setup/README canonical table + doc.go</td><td>no contradictions</td><td>10m</td></tr>
+            <tr><td>2g</td><td>Commit ADR upstream</td><td>green gates</td><td>10m</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Phase B — Upstream implementation + release</h3>
+        <table>
+          <thead><tr><th>Step</th><th>Work</th><th>Verify</th><th>Est</th></tr></thead>
+          <tbody>
+            <tr><td>3a</td><td>Add Config.DisableAuth + doc comment</td><td>field</td><td>10m</td></tr>
+            <tr><td>3b</td><td>New(): skip AuthHandler construction (Auth=nil)</td><td>unit test</td><td>10m</td></tr>
+            <tr><td>3c</td><td>validate(): DisableAuth × login-page interplay rule</td><td>rejection test</td><td>15m</td></tr>
+            <tr><td>3d</td><td>Contract test: /auth/* 404 with DisableAuth; /health still served</td><td>test green</td><td>15m</td></tr>
+            <tr><td>3e</td><td>Test: cookie flows fail closed in DisableAuth mode</td><td>401s</td><td>15m</td></tr>
+            <tr><td>3f</td><td>Upstream buildflow + cqrs-lint (flake app only)</td><td>exit 0</td><td>10m</td></tr>
+            <tr><td>4a</td><td>Config: shell-mode switch per ADR</td><td>field + validation</td><td>15m</td></tr>
+            <tr><td>4b</td><td>New(): shell branch — no buildService; stores from Config</td><td>unit test</td><td>15m</td></tr>
+            <tr><td>4c</td><td>Bundle nil-safety sweep (Service/Auth/Stores/ownsService)</td><td>no nil derefs</td><td>15m</td></tr>
+            <tr><td>4d</td><td>healthHandler(): projection check skipped when Service nil</td><td>body test</td><td>10m</td></tr>
+            <tr><td>4e</td><td>Close(): skip service close; hub drain intact</td><td>test</td><td>10m</td></tr>
+            <tr><td>4f</td><td>Tests: shell defaults, health = consumer-checks-only, Close idempotent, no goroutine leak</td><td>green</td><td>15m</td></tr>
+            <tr><td>4g</td><td>Test: shell + HealthChecks parity with flattened consumer usage</td><td>green</td><td>10m</td></tr>
+            <tr><td>4h</td><td>Upstream gates re-run</td><td>exit 0</td><td>10m</td></tr>
+            <tr><td>5a</td><td>attachSSE(): hub from stores without svc journal; replay off documented</td><td>test</td><td>15m</td></tr>
+            <tr><td>5b</td><td>Machine endpoints service-less behavior per ADR (reject or serve from Stores)</td><td>validate/test</td><td>15m</td></tr>
+            <tr><td>5c</td><td>Tests: SSE feed + heartbeat in shell mode; DataStar same hub</td><td>green</td><td>15m</td></tr>
+            <tr><td>5d</td><td>README rows touched</td><td>docs gate</td><td>15m</td></tr>
+            <tr><td>6a</td><td>doc.go feature-flag section entries</td><td>rendered</td><td>15m</td></tr>
+            <tr><td>6b</td><td>Guide: “identity-external apps” section (webphone pattern)</td><td>linked</td><td>15m</td></tr>
+            <tr><td>6c</td><td>Upstream CHANGELOG [Unreleased]</td><td>entry</td><td>15m</td></tr>
+            <tr><td>7a</td><td>check-modules --strict (pre-push hook parity)</td><td>exit 0</td><td>15m</td></tr>
+            <tr><td>7b</td><td>cqrs-lint via flake app + toolchain check</td><td>exit 0</td><td>10m</td></tr>
+            <tr><td>7c</td><td>Full test suite all modules</td><td>green</td><td>15m</td></tr>
+            <tr><td>7d</td><td>Version + setup/vX tag per go-release rules (order, no proxy poisoning)</td><td>tag pushed</td><td>15m</td></tr>
+            <tr><td>7e</td><td>Scratch-module go get dry-run against the proxy</td><td>resolves</td><td>15m</td></tr>
+            <tr><td>7f</td><td>Upstream CHANGELOG cut + gh release</td><td>published</td><td>15m</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Phase C — webphone adoption</h3>
+        <table>
+          <thead><tr><th>Step</th><th>Work</th><th>Verify</th><th>Est</th></tr></thead>
+          <tbody>
+            <tr><td>8a</td><td>go get setup/v4@tag; go mod tidy</td><td>go.sum clean</td><td>10m</td></tr>
+            <tr><td>8b</td><td>go mod vendor; go build ./...</td><td>compiles</td><td>15m</td></tr>
+            <tr><td>8c</td><td>vendorHash roundtrip (nix build, fix hash, rebuild) — same breath</td><td>nix build green</td><td>15m</td></tr>
+            <tr><td>8d</td><td>buildflow</td><td>exit 0</td><td>15m</td></tr>
+            <tr><td>8e</td><td>Commit deps-only change</td><td>isolated commit</td><td>5m</td></tr>
+            <tr><td>9a</td><td>buildShell(cfg) helper: bundle config with all Disable* + chain as ExtraMiddleware</td><td>compiles</td><td>15m</td></tr>
+            <tr><td>9b</td><td>HealthPath=/healthz + HealthChecks [sqlite, blob-dir @2s]; LivePath decision by body-shape check</td><td>config set</td><td>15m</td></tr>
+            <tr><td>9c</td><td>Mount shell surfaces on root mux; delete replaced hand-mounts</td><td>diff minimal</td><td>15m</td></tr>
+            <tr><td>9d</td><td>Chain byte-parity: httpspec 19-suite + middleware_test</td><td>green</td><td>15m</td></tr>
+            <tr><td>9e</td><td>probes/healthz tests updated (bodies, 503 names)</td><td>green</td><td>15m</td></tr>
+            <tr><td>9f</td><td>/startupz stays: go-health wiring intact, one readiness truth</td><td>test</td><td>10m</td></tr>
+            <tr><td>9g</td><td>Diff review + erraudit on changed files; commit</td><td>clean</td><td>15m</td></tr>
+            <tr><td>10a</td><td>main.go → bundle.RunHandler(ctx, addr, handler)</td><td>boots</td><td>15m</td></tr>
+            <tr><td>10b</td><td>WEBPHONE_ADDR + error-log behavior parity</td><td>manual check</td><td>10m</td></tr>
+            <tr><td>10c</td><td>drift_test + version stamping unaffected</td><td>green</td><td>10m</td></tr>
+            <tr><td>10d</td><td>SSE-flush + restart-scenario smoke (smoke script restart arm)</td><td>4-check green</td><td>15m</td></tr>
+            <tr><td>10e</td><td>Commit</td><td>clean</td><td>10m</td></tr>
+            <tr><td>11a</td><td>go test -count=1 ./...</td><td>green</td><td>15m</td></tr>
+            <tr><td>11b</td><td>Island node tests</td><td>green</td><td>10m</td></tr>
+            <tr><td>11c</td><td>DOM contract + strict-CSP tests</td><td>green</td><td>10m</td></tr>
+            <tr><td>11d</td><td>Smoke 41+4 fresh binary</td><td>green</td><td>15m</td></tr>
+            <tr><td>11e</td><td>buildflow FULL (no result cache)</td><td>exit 0</td><td>15m</td></tr>
+            <tr><td>11f</td><td>nix flake check (KVM backup VM, island-lint)</td><td>green</td><td>15m</td></tr>
+            <tr><td>11g</td><td>vulnix + webphone-vulnix-triage</td><td>verdict</td><td>10m</td></tr>
+            <tr><td>12a</td><td>Binary size old vs new vs T01 threshold (nix build both)</td><td>number</td><td>15m</td></tr>
+            <tr><td>12b</td><td>aarch64 cross-build + ELF e_machine=183</td><td>verified by bytes</td><td>15m</td></tr>
+            <tr><td>12c</td><td>Vendor growth + vulnix closure re-run</td><td>recorded</td><td>15m</td></tr>
+            <tr><td>12d</td><td>Go/no-go verdict recorded in plan + TODO_LIST</td><td>written</td><td>15m</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Phase D + E — records, release, consumers</h3>
+        <table>
+          <thead><tr><th>Step</th><th>Work</th><th>Verify</th><th>Est</th></tr></thead>
+          <tbody>
+            <tr><td>13a</td><td>AGENTS.md setup paragraph rewritten (cite decision date)</td><td>one coherent stance</td><td>15m</td></tr>
+            <tr><td>13b</td><td>lessons.md:21 update (+ new lesson if footprint surprised)</td><td>updated</td><td>10m</td></tr>
+            <tr><td>13c</td><td>DOMAIN_LANGUAGE.md:28 touch</td><td>updated</td><td>5m</td></tr>
+            <tr><td>13d</td><td>Pointer notes in research/architecture docs (provenance kept)</td><td>annotated</td><td>15m</td></tr>
+            <tr><td>14a</td><td>CHANGELOG [Unreleased]</td><td>entry</td><td>10m</td></tr>
+            <tr><td>14b</td><td>FEATURES inventory row</td><td>entry</td><td>10m</td></tr>
+            <tr><td>14c</td><td>README probe-path stability statement</td><td>consistent</td><td>10m</td></tr>
+            <tr><td>15a</td><td>Version decision + bump (next minor after the pending release)</td><td>flake webphoneVersion</td><td>10m</td></tr>
+            <tr><td>15b</td><td>Release gates re-run (buildflow, vulnix, flake check)</td><td>green</td><td>15m</td></tr>
+            <tr><td>15c</td><td>Signed tag + push + git ls-remote verify</td><td>remote shows tag</td><td>10m</td></tr>
+            <tr><td>15d</td><td>gh release object + notes</td><td>published</td><td>15m</td></tr>
+            <tr><td>15e</td><td>Local smoke --bin $(nix build .#webphone) --expect-version</td><td>exact</td><td>15m</td></tr>
+            <tr><td>15f</td><td>aarch64 cross-build verify</td><td>ELF bytes</td><td>15m</td></tr>
+            <tr><td>15g</td><td>Daemon auto-push check + stack forward-lock note</td><td>ls-remote</td><td>10m</td></tr>
+            <tr><td>16a</td><td>Stack lock bump to the tag (+ hash roundtrip if needed)</td><td>flake eval</td><td>15m</td></tr>
+            <tr><td>16b</td><td>Stack nix flake check</td><td>green</td><td>15m</td></tr>
+            <tr><td>16c</td><td>Browser E2E run 1 (≤445 s incl. FOUC)</td><td>green</td><td>15m</td></tr>
+            <tr><td>16d</td><td>Browser E2E run 2 (flake guard)</td><td>green</td><td>10m</td></tr>
+            <tr><td>16e</td><td>Probe-triple + fencing diff review (expect zero)</td><td>no diff</td><td>10m</td></tr>
+            <tr><td>16f</td><td>Commit + push stack</td><td>clean</td><td>10m</td></tr>
+            <tr><td>17a</td><td>pbx-artmann relock #6 (clean tree first — narHash covers it)</td><td>locked</td><td>15m</td></tr>
+            <tr><td>17b</td><td>ExecStart version move + toplevels build</td><td>green</td><td>15m</td></tr>
+            <tr><td>17c</td><td>lock-drift-probe green</td><td>green</td><td>15m</td></tr>
+            <tr><td>17d</td><td>OWNER terminal: nixos-rebuild test → pbx.artmann.tech (assistant never deploys)</td><td>commanded</td><td>5m</td></tr>
+            <tr><td>17e</td><td>Post-deploy /version check</td><td>new version</td><td>10m</td></tr>
+            <tr><td>18a</td><td>Prod smoke --base https://pbx.artmann.tech --expect-version</td><td>exact</td><td>10m</td></tr>
+            <tr><td>18b</td><td>Close TODO rows + CHANGELOG</td><td>updated</td><td>10m</td></tr>
+            <tr><td>18c</td><td>ANNOTATE this plan with verdicts (docs-health)</td><td>annotated</td><td>15m</td></tr>
+            <tr><td>18d</td><td>Dedup-registry sweep-log line if shared helpers touched</td><td>logged</td><td>10m</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="graph"><span class="num">05</span>Execution Graph</h2>
+        <div class="graph" style="overflow-x:auto;"><?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 7161 1116"><svg class="d2-1793759081 d2-svg" width="7161" height="1116" viewBox="-116 -172 7161 1116"><rect x="-116" y="-172" width="7161" height="1116" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-1793759081 .text {
+	font-family: "d2-1793759081-font-regular";
+}
+@font-face {
+	font-family: d2-1793759081-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-1793759081 .text-bold {
+	font-family: "d2-1793759081-font-bold";
+}
+@font-face {
+	font-family: d2-1793759081-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-1793759081 .text-italic {
+	font-family: "d2-1793759081-font-italic";
+}
+@font-face {
+	font-family: d2-1793759081-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-1793759081 .fill-N1{fill:#0A0F25;}
+		.d2-1793759081 .fill-N2{fill:#676C7E;}
+		.d2-1793759081 .fill-N7{fill:#FFFFFF;}
+		.d2-1793759081 .fill-B1{fill:#0D32B2;}
+		.d2-1793759081 .fill-B4{fill:#E3E9FD;}
+		.d2-1793759081 .fill-B5{fill:#EDF0FD;}
+		.d2-1793759081 .fill-B6{fill:#F7F8FE;}
+		.d2-1793759081 .stroke-B1{stroke:#0D32B2;}
+		.d2-1793759081 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="dGl0bGU="><g class="shape" ><rect x="3318" y="-71" width="292" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3464" y="-32.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">setup shell adoption — critical path</text></g><g class="cHJlcmVx"><g class="shape" ><rect x="67" y="145" width="274" height="98" stroke="#0D32B2" fill="#f4d35e" class=" stroke-B1" style="stroke-width:2;" /></g><text x="204" y="183.5" fill="#111111" class="text-bold" style="text-anchor:middle;font-size:16px"><tspan x="204" dy="0">T00 PREREQ</tspan><tspan x="204" dy="17.666667">v2.7/2.8 release tail</tspan><tspan x="204" dy="17.666667">(owner terminal, existing TODO)</tspan></text></g><g class="cGhhc2VB"><g class="shape" ><rect x="670" y="115" width="745" height="158" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="1042.5" y="102" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Phase A — Decision + design (1% → 51%)</text></g><g class="cGhhc2VC"><g class="shape" ><rect x="1664" y="56" width="1333" height="268" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="2330.5" y="43" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Phase B — Upstream cqrs-htmx (4% → 64%)</text></g><g class="cGhhc2VD"><g class="shape" ><rect x="3294" y="56" width="1374" height="268" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="3981" y="43" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Phase C — Webphone adoption (→ 80%)</text></g><g class="cGhhc2VE"><g class="shape" ><rect x="4941" y="131" width="319" height="252" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="5100.5" y="118" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Phase D — Records</text></g><g class="cGhhc2VF"><g class="shape" ><rect x="5466" y="186" width="1478" height="142" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="6205" y="173" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Phase E — Release + consumers</text></g><g class="cGFya2Vk"><g class="shape" ><rect x="49" y="339" width="309" height="504" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="203.5" y="326" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Parked — documented, not scheduled</text></g><g class="cGhhc2VBLnQwMQ=="><g class="shape" ><rect x="700" y="153" width="290" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="845" y="191.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="845" dy="0">T01 · ratify scope-limited adoption</tspan><tspan x="845" dy="18.5">AGENTS.md amendment draft</tspan></text></g><g class="cGhhc2VBLnQwMg=="><g class="shape" ><rect x="1123" y="145" width="262" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1254" y="183.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="1254" dy="0">T02 · upstream ADR</tspan><tspan x="1254" dy="17.666667">DisableAuth + service-optional</tspan><tspan x="1254" dy="17.666667">minimal vs split decision</tspan></text></g><g class="cGhhc2VCLnQwMw=="><g class="shape" ><rect x="2070" y="228" width="219" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2179.5" y="266.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T03 · Config.DisableAuth</text></g><g class="cGhhc2VCLnQwNA=="><g class="shape" ><rect x="1694" y="94" width="243" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1815.5" y="132.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T04 · service-optional New()</text></g><g class="cGhhc2VCLnQwNQ=="><g class="shape" ><rect x="2072" y="86" width="215" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2179.5" y="124.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2179.5" dy="0">T05 · SSE hub + machine</tspan><tspan x="2179.5" dy="18.5">endpoints service-less</tspan></text></g><g class="cGhhc2VCLnQwNg=="><g class="shape" ><rect x="2422" y="161" width="187" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2515.5" y="199.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T06 · upstream docs</text></g><g class="cGhhc2VCLnQwNw=="><g class="shape" ><rect x="2742" y="153" width="225" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2854.5" y="191.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2854.5" dy="0">T07 · gates + setup/vX tag</tspan><tspan x="2854.5" dy="18.5">release train</tspan></text></g><g class="cGhhc2VDLnQwOA=="><g class="shape" ><rect x="3324" y="153" width="234" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3441" y="191.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3441" dy="0">T08 · go.mod + vendor</tspan><tspan x="3441" dy="18.5">+ vendorHash same breath</tspan></text></g><g class="cGhhc2VDLnQwOQ=="><g class="shape" ><rect x="3691" y="153" width="240" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3811" y="191.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3811" dy="0">T09 · server.New shell swap</tspan><tspan x="3811" dy="18.5">chain via ExtraMiddleware</tspan></text></g><g class="cGhhc2VDLnQxMA=="><g class="shape" ><rect x="4064" y="228" width="243" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4185.5" y="266.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T10 · main.go → RunHandler</text></g><g class="cGhhc2VDLnQxMQ=="><g class="shape" ><rect x="4440" y="228" width="198" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4539" y="266.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T11 · full gate battery</text></g><g class="cGhhc2VDLnQxMg=="><g class="shape" ><rect x="4440" y="86" width="197" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4538.5" y="124.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4538.5" dy="0">T12 · footprint gate</tspan><tspan x="4538.5" dy="18.5">size / vulnix / aarch64</tspan></text></g><g class="cGhhc2VELnQxMw=="><g class="shape" ><rect x="4977" y="161" width="247" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5100.5" y="199.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T13 · amend rejection record</text></g><g class="cGhhc2VELnQxNA=="><g class="shape" ><rect x="4971" y="287" width="259" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5100.5" y="325.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T14 · CHANGELOG + FEATURES</text></g><g class="cGhhc2VFLnQxNQ=="><g class="shape" ><rect x="5496" y="224" width="231" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5611.5" y="262.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T15 · webphone tag vX.Y.Z</text></g><g class="cGhhc2VFLnQxNg=="><g class="shape" ><rect x="5910" y="224" width="268" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6044" y="262.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T16 · stack re-pin + browser E2E</text></g><g class="cGhhc2VFLnQxNw=="><g class="shape" ><rect x="6311" y="216" width="224" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6423" y="254.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="6423" dy="0">T17 · pbx-artmann relock</tspan><tspan x="6423" dy="18.5">(owner terminal)</tspan></text></g><g class="cGhhc2VFLnQxOA=="><g class="shape" ><rect x="6668" y="224" width="246" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6791" y="262.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">T18 · prod smoke + close-out</text></g><g class="cGFya2VkLnAx"><g class="shape" ><rect x="112" y="369" width="184" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="204" y="407.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">startupz latch seam</text></g><g class="cGFya2VkLnAy"><g class="shape" ><rect x="91" y="495" width="226" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="204" y="533.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">DebugPath / version align</text></g><g class="cGFya2VkLnAz"><g class="shape" ><rect x="79" y="621" width="249" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="203.5" y="659.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">dashboard bridge authorizer</text></g><g class="cGFya2VkLnA0"><g class="shape" ><rect x="99" y="747" width="209" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="203.5" y="785.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">/events hub unification</text></g><g class="KHByZXJlcSAtJmd0OyBwaGFzZUEudDAxKVswXQ=="><marker id="mk-d2-1793759081-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 343.5 194 C 393.899994 194 429.600006 194 463.5 194 C 497.399994 194 646.299988 194 695.5 194" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="520.5" y="192" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px"><tspan x="520.5" dy="0">folded tree</tspan><tspan x="520.5" dy="18.5">must ship first</tspan></text></g><g class="cGhhc2VBLih0MDEgLSZndDsgdDAyKVswXQ=="><path d="M 992.5 194 C 1042.900024 194 1069.300049 194 1118.5 194" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="KHBoYXNlQS50MDIgLSZndDsgcGhhc2VCLnQwMylbMF0="><path d="M 1387.390979 239.091307 C 1437.900024 256.488007 1468.599976 261 1495 261 C 1521.400024 261 1556.599976 261 1583 261 C 1609.400024 261 1664.599976 261 1721 261 C 1777.400024 261 2016.300049 261 2065.5 261" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="1725.5" y="267" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">design</text></g><g class="KHBoYXNlQS50MDIgLSZndDsgcGhhc2VCLnQwNClbMF0="><path d="M 1387.390979 148.907701 C 1437.900024 131.511002 1468.599976 127 1495 127 C 1521.400024 127 1640.300049 127 1689.5 127" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="1537.5" y="133" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">design</text></g><g class="cGhhc2VCLih0MDQgLSZndDsgdDA1KVswXQ=="><path d="M 1939.5 127 C 1989.900024 127 2016.699951 127 2067.5 127" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VCLih0MDMgLSZndDsgdDA2KVswXQ=="><path d="M 2291.5 261 C 2341.899902 261 2371.199951 254.199997 2432.311746 228.548155" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VCLih0MDUgLSZndDsgdDA2KVswXQ=="><path d="M 2289.5 127 C 2341.5 127 2371.199951 133.800003 2432.311746 159.451845" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VCLih0MDYgLSZndDsgdDA3KVswXQ=="><path d="M 2611.5 194 C 2661.899902 194 2688.300049 194 2737.5 194" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="KHBoYXNlQi50MDcgLSZndDsgcGhhc2VDLnQwOClbMF0="><path d="M 2969.5 194 C 3019.899902 194 3055.399902 194 3089 194 C 3122.600098 194 3270.300049 194 3319.5 194" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="3145.5" y="200" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">published tag</text></g><g class="cGhhc2VDLih0MDggLSZndDsgdDA5KVswXQ=="><path d="M 3560.5 194 C 3610.899902 194 3637.300049 194 3686.5 194" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VDLih0MDkgLSZndDsgdDEwKVswXQ=="><path d="M 3926.881108 235.679288 C 3982.600098 255.800003 4010.300049 261 4059.5 261" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VDLih0MDkgLSZndDsgdDEyKVswXQ=="><path d="M 3926.881108 152.320712 C 3982.600098 132.199997 4034.600098 127 4091 127 C 4147.398926 127 4386.399902 127 4436 127" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="4180.5" y="133" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">binary exists</text></g><g class="cGhhc2VDLih0MTAgLSZndDsgdDExKVswXQ=="><path d="M 4309.5 261 C 4359.899902 261 4386.299805 261 4435.5 261" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="KHBoYXNlQy50MTEgLSZndDsgcGhhc2VELnQxMylbMF0="><path d="M 4640.5 261 C 4690.899902 261 4724 261 4754 261 C 4784 261 4923.799805 254.199997 4999.216886 228.299248" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="KHBoYXNlQy50MTIgLSZndDsgcGhhc2VELnQxMylbMF0="><path d="M 4639 127 C 4690.600098 127 4724 127 4754 127 C 4784 127 4923.799805 133.800003 4999.216886 159.700752" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="4822.5" y="134" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">go / no-go</text></g><g class="KHBoYXNlRC50MTMgLSZndDsgcGhhc2VFLnQxNSlbMF0="><path d="M 5226.5 194 C 5281.700195 194 5309.299805 194 5329.25 194 C 5349.200195 194 5446.399902 200 5512.218508 222.696039" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="KHBoYXNlRC50MTQgLSZndDsgcGhhc2VFLnQxNSlbMF0="><path d="M 5232.5 320 C 5282.899902 320 5309.299805 320 5329.25 320 C 5349.200195 320 5446.399902 314 5512.218508 291.303961" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VFLih0MTUgLSZndDsgdDE2KVswXQ=="><path d="M 5729.5 257 C 5799.899902 257 5836.299805 257 5905.5 257" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /><text x="5819" y="263" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">pushed</text></g><g class="cGhhc2VFLih0MTYgLSZndDsgdDE3KVswXQ=="><path d="M 6180.5 257 C 6230.899902 257 6257.299805 257 6306.5 257" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><g class="cGhhc2VFLih0MTcgLSZndDsgdDE4KVswXQ=="><path d="M 6537.5 257 C 6587.899902 257 6614.299805 257 6663.5 257" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1793759081-3488378134)" mask="url(#d2-1793759081)" /></g><mask id="d2-1793759081" maskUnits="userSpaceOnUse" x="-116" y="-172" width="7161" height="1116">
+<rect x="-116" y="-172" width="7161" height="1116" fill="white"></rect>
+<rect x="472" y="176" width="97" height="37" fill="black"></rect>
+<rect x="1702" y="251" width="47" height="21" fill="black"></rect>
+<rect x="1514" y="117" width="47" height="21" fill="black"></rect>
+<rect x="3098" y="184" width="95" height="21" fill="black"></rect>
+<rect x="4137" y="117" width="87" height="21" fill="black"></rect>
+<rect x="4787" y="118" width="71" height="21" fill="black"></rect>
+<rect x="5792" y="247" width="54" height="21" fill="black"></rect>
+</mask></svg></svg>
+</div>
+
+        <h2 id="gates"><span class="num">06</span>Gates &amp; Context</h2>
+        <h3>Hard gates (train stops when red)</h3>
+        <div class="strengths">
+          <div class="strength"><div class="check">+</div><div class="text"><strong>No /auth/* surface</strong><span>DisableAuth contract test proves 404 — the split-brain guard is executable, not aspirational.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Chain byte-parity</strong><span>httpspec 19-suite (TestHTTPSpectChainConformance) stays green — ExtraMiddleware reproduces the pinned order exactly.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Probe wire stability</strong><span>/healthz /livez /startupz /version /metrics keep paths + semantics; stack fencing and smoke assert nothing moved.</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>vendorHash same-breath</strong><span>dep bump + hash roundtrip in one commit (lesson 0a7a732: ~2 h of broken nix build otherwise).</span></div></div>
+          <div class="strength"><div class="check">+</div><div class="text"><strong>Footprint go/no-go</strong><span>measured binary delta vs owner threshold; R3 fallback pre-agreed.</span></div></div>
+        </div>
+
+        <h3>Existing TODO board (honest mapping)</h3>
+        <table>
+          <thead><tr><th>Row</th><th>Relation to this train</th></tr></thead>
+          <tbody>
+            <tr><td>v2.7/2.8 release tail (High, owner terminal)</td><td><strong>T00 prerequisite</strong> — this train rides the tree after it ships</td></tr>
+            <tr><td>Outbound SMS bridge failure (High, owner journal)</td><td>Unrelated; stack-side root cause; unaffected by shell adoption</td></tr>
+            <tr><td>erraudit tier-2 family adoption (due 2026-10-22)</td><td>Unrelated seam; new upstream code follows file-local idiom until its seam converts</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Pareto read</h3>
+        <p>
+          <strong>1% → 51%:</strong> T01–T03 — the decision amendment plus the single upstream
+          flag that removes the split-brain surface. Nothing is adoptable without them.<br>
+          <strong>4% → 64%:</strong> T04, T05, T07, T08, T09 — the shell exists upstream and
+          webphone composes it behind the pinned chain.<br>
+          <strong>20% → 80%:</strong> the rest — parity gates, records, release, stack +
+          pbx-artmann consumers. The long tail (parked P1–P4) is option value, not commitment.
+        </p>
+
+        <footer class="footer">
+          Generated 2026-09-30 · seams verified against cqrs-htmx main (setup @ v4.12.0-era) and
+          webphone main · plan artifact: docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

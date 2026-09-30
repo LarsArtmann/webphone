@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/larsartmann/go-error-family"
@@ -101,7 +100,7 @@ func scanFax(row rowScanner) (domain.FaxJob, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.FaxJob{}, err
 		}
-		return domain.FaxJob{}, fmt.Errorf("scan fax job row (document %s): %w", documentPath, err)
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_scan", "scan fax job row (document %s)", documentPath)
 	}
 	return domain.FaxJob{
 		ID:           domain.MustFaxID(id),
