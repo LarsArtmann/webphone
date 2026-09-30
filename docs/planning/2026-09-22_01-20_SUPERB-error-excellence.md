@@ -384,7 +384,10 @@ resolves the "dep swept-but-unused?" owner question: the dep is used.
   are defer-close/read-side-close standard practice
   (`--enforce-deferred-close` is off by default for exactly this); the
   2 vcard-import swallows are the T05 counted-skip pattern with
-  reasoned nolints. Re-verified 2026-09-30, unchanged.
+  reasoned nolints (re-read at their source this train). The 40
+  ignored sites were re-triaged against the 2026-09-21/22 documented
+  triage (locations and shapes unchanged in the audit diff), not
+  individually re-walked; a per-site walk stays open as follow-up.
 
 ### Family table per seam (as implemented)
 
