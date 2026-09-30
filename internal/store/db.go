@@ -52,6 +52,56 @@ func Open(path string) (*sql.DB, error) {
 	return db, nil
 }
 
+// Database adapts the SQLite handle to the container's health and
+// lifecycle contracts: HealthCheck pings the live connection,
+// Shutdown closes it exactly once on the container's shutdown cascade.
+// The service constructors keep taking *sql.DB (tests compose the raw
+// handle); the composition root wraps via OpenDatabase and exposes the
+// handle back through SQL. Structural conformance to the container's
+// HealthcheckerWithContext / ShutdownerWithError interfaces is asserted
+// in internal/app — service packages stay framework-free.
+type Database struct {
+	db     *sql.DB
+	closed bool
+}
+
+// OpenDatabase opens (creating if needed) the database at path and
+// wraps it in the container-adapted Database. Path may be ":memory:"
+// for tests.
+func OpenDatabase(path string) (*Database, error) {
+	db, err := Open(path)
+	if err != nil {
+		return nil, err //nolint:erraudit // family-neutral propagation: Open owns the classification
+	}
+	return &Database{db: db}, nil
+}
+
+// SQL returns the underlying handle for the service constructors and
+// the /healthz readiness wiring.
+func (d *Database) SQL() *sql.DB { return d.db }
+
+// HealthCheck pings the database: a closed or corrupt handle, or a
+// lost database file, fails here.
+func (d *Database) HealthCheck(ctx context.Context) error {
+	if err := d.db.PingContext(ctx); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.ping", "ping sqlite")
+	}
+	return nil
+}
+
+// Shutdown closes the database. Closing an already-closed Database is
+// inert — the shutdown cascade must stay idempotent.
+func (d *Database) Shutdown() error {
+	if d.closed {
+		return nil
+	}
+	d.closed = true
+	if err := d.db.Close(); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.close", "close sqlite")
+	}
+	return nil
+}
+
 func migrate(ctx context.Context, db *sql.DB) error {
 	statements := []string{
 		`CREATE TABLE IF NOT EXISTS threads (

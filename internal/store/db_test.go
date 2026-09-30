@@ -133,3 +133,40 @@ func TestUpdatedOrNotFoundShapes(t *testing.T) {
 		t.Fatalf("matched rows: %v (want nil)", err)
 	}
 }
+
+// TestDatabaseAdapterHealthAndShutdown pins the container adapter's
+// contract: HealthCheck pings a live handle (and reports a closed one
+// as an Infrastructure failure under the store.ping code), SQL hands
+// back the underlying handle, and Shutdown is idempotent — the
+// container's shutdown cascade may run it twice.
+func TestDatabaseAdapterHealthAndShutdown(t *testing.T) {
+	db, err := OpenDatabase(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Shutdown() })
+
+	ctx := context.Background()
+	if err := db.HealthCheck(ctx); err != nil {
+		t.Fatalf("live database HealthCheck: %v", err)
+	}
+	if db.SQL() == nil {
+		t.Fatal("SQL() returned nil")
+	}
+
+	if err := db.Shutdown(); err != nil {
+		t.Fatalf("first Shutdown: %v", err)
+	}
+	if err := db.Shutdown(); err != nil {
+		t.Fatalf("second Shutdown must be inert, got: %v", err)
+	}
+
+	err = db.HealthCheck(ctx)
+	if err == nil {
+		t.Fatal("closed database must fail HealthCheck")
+	}
+	var classified errorfamily.Classified
+	if !errors.As(err, &classified) || classified.ErrorFamily() != errorfamily.Infrastructure {
+		t.Errorf("closed-database HealthCheck family = %v, want Infrastructure (%v)", classified, err)
+	}
+}

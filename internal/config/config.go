@@ -72,6 +72,23 @@ type Config struct {
 	// local zone. A typo fails validation — times silently rendering in
 	// UTC would be worse than a failed boot.
 	Timezone string `json:"timezone" koanf:"timezone"`
+	// Dashboard mounts the go-health-dashboard operator surface at
+	// /health (live check cards over SSE). Zero value = disabled: no
+	// /health route exists and the styled 404 answers — the default,
+	// because the dashboard is an OPT-IN operator surface the deployment
+	// must deliberately expose (and fence) like the probe triple.
+	Dashboard Dashboard `json:"dashboard" koanf:"dashboard"`
+}
+
+// Dashboard configures the optional go-health-dashboard mount.
+// Enabled serves /health (HTML by default, JSON via Accept), /health/sse
+// and the embedded Datastar SDK; the page is CSP-strict (nonce'd inline
+// scripts, same-origin assets only).
+type Dashboard struct {
+	Enable bool `json:"enable" koanf:"enable"`
+	// Title names the deployment on the dashboard page (e.g. the PBX
+	// host). Empty keeps the library default.
+	Title string `json:"title,omitempty" koanf:"title"`
 }
 
 // CRM configures the optional Ledger CRM integration. Both fields must be

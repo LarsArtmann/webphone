@@ -50,7 +50,11 @@ PARTIALS = [
     "/partials/nav",
 ]
 
-THREAD_ID = re.compile(rb"\bt-[A-Za-z0-9_-]{16,}\b")
+THREAD_ID = re.compile(rb"\b(?:t-|Thread:)[A-Za-z0-9_-]{16,}\b")  # branded ids: t-… / Thread:…
+# Wall-clock stamps in failed-row/thread rendering (same length, different
+# digits across boots — the second sanctioned non-determinism; the fixed
+# probe content contains no clock-like text).
+CLOCK = re.compile(rb"\b\d{1,2}:\d{2}(?::\d{2})?\b")
 BOUNDARY = "----renderdiff" + uuid.uuid4().hex
 
 
@@ -126,6 +130,16 @@ def login_session(opener, port: int) -> dict:
     adoption; returns the header dict later requests need."""
     import json
 
+    # Order matters (the smoke script's pinned-403 lesson): adopt a CSRF
+    # token FIRST (the session POST is token-gated), then log in, then
+    # RE-adopt — login rotates the token.
+    status, token_body = request(opener, port, "GET", "/api/csrf")
+    if status != 200:
+        raise SystemExit(f"initial csrf adopt failed: {status}")
+    token = json.loads(token_body).get("token", "")
+    if not token:
+        raise SystemExit("initial csrf adopt: empty token")
+
     form = json.dumps({"extension": "1001", "password": "pw"}).encode()
     status, body = request(
         opener,
@@ -133,16 +147,17 @@ def login_session(opener, port: int) -> dict:
         "POST",
         "/api/session",
         form,
-        {"Content-Type": "application/json"},
+        {"Content-Type": "application/json", "X-CSRF-Token": token},
     )
     if status != 201:
         raise SystemExit(f"login failed: {status} {body[:200]!r}")
+
     status, token_body = request(opener, port, "GET", "/api/csrf")
     if status != 200:
-        raise SystemExit(f"csrf adopt failed: {status}")
+        raise SystemExit(f"post-login csrf adopt failed: {status}")
     token = json.loads(token_body).get("token", "")
     if not token:
-        raise SystemExit("csrf adopt: empty token")
+        raise SystemExit("post-login csrf adopt: empty token")
     return {"X-CSRF-Token": token}
 
 
@@ -182,7 +197,8 @@ def collect(binary: str, error_instrument: bool) -> dict[str, bytes]:
                 status, body = request(opener, port, "GET", path, None, headers)
                 if status != 200:
                     raise SystemExit(f"{path}: expected 200, got {status}")
-                out[path] = THREAD_ID.sub(b"t-<NORMALIZED>", body)
+                normalized = THREAD_ID.sub(b"t-<NORMALIZED>", body)
+                out[path] = CLOCK.sub(b"<TIME>", normalized)
             return out
         finally:
             proc.terminate()

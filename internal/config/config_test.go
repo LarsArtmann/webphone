@@ -541,3 +541,33 @@ func TestTurnRESTConfig(t *testing.T) {
 		}
 	})
 }
+
+// TestLoadDashboardConfig pins the dashboard surface's config round
+// trip: disabled by default (the zero value), enabled + titled via
+// WEBPHONE_DASHBOARD__* nesting.
+func TestLoadDashboardConfig(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Dashboard.Enable {
+		t.Error("dashboard.enable must default to false (opt-in operator surface)")
+	}
+
+	t.Setenv("WEBPHONE_DASHBOARD__ENABLE", "true")
+	t.Setenv("WEBPHONE_DASHBOARD__TITLE", "pbx webphone")
+
+	cfg, err = Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Dashboard.Enable {
+		t.Error("dashboard.enable: got false, want true")
+	}
+	if cfg.Dashboard.Title != "pbx webphone" {
+		t.Errorf("dashboard.title: got %q", cfg.Dashboard.Title)
+	}
+}

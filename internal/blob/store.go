@@ -4,6 +4,7 @@
 package blob
 
 import (
+	"context"
 	"errors"
 	"io"
 	"io/fs"
@@ -83,3 +84,32 @@ func (s *Store) Remove(rel string) error {
 	}
 	return nil
 }
+
+// ProbeWrite proves the root accepts writes: a temp file is created,
+// closed and removed again. A full disk or a lost/read-only mount
+// fails here — the failure mode that would otherwise silently eat
+// attachments. This is the ONE home of the blob write probe: the
+// server's /healthz check and the container health check both call it.
+func ProbeWrite(root string) error {
+	if err := os.MkdirAll(root, 0o750); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "blob.probe", "create blob root %s", root)
+	}
+	file, err := os.CreateTemp(root, ".healthz-*")
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "blob.probe", "write probe in %s", root)
+	}
+	name := file.Name()
+	if err := file.Close(); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "blob.probe", "close probe file")
+	}
+	if err := os.Remove(name); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "blob.probe", "remove probe file")
+	}
+	return nil
+}
+
+// HealthCheck answers the container's health question with the write
+// probe: the store is stateless (no held file descriptors), so
+// writability IS its health. Structural conformance to the container's
+// HealthcheckerWithContext interface is asserted in internal/app.
+func (s *Store) HealthCheck(_ context.Context) error { return ProbeWrite(s.root) }

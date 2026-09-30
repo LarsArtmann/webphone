@@ -22,6 +22,7 @@ import (
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
+	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -135,6 +136,15 @@ type Deps struct {
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.
 	CRM *crm.Resolver
+	// Probe is the go-health probe serving /livez and /startupz. When
+	// nil (tests composing Deps by hand), New falls back to building the
+	// equivalent NewChecks probe over the same backing checks — one
+	// fallback home, identical wire behavior.
+	Probe *health.Probe
+	// Dashboard mounts the go-health-dashboard subtree at /health when
+	// non-nil (config-gated in the composition root). Nil: no /health
+	// surface exists, the styled 404 answers.
+	Dashboard http.Handler
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -269,7 +279,7 @@ func New(deps Deps) http.Handler {
 	// the DI/health review, now upstream).
 	readiness := cqrshtmx.ReadinessHandler(
 		cqrshtmx.NamedCheck{Name: "sqlite", Check: deps.DB.Ping, Timeout: checkTimeout},
-		cqrshtmx.NamedCheck{Name: "blob-dir", Check: func() error { return probeBlobDir(deps.BlobRoot) }, Timeout: checkTimeout},
+		cqrshtmx.NamedCheck{Name: "blob-dir", Check: func() error { return blob.ProbeWrite(deps.BlobRoot) }, Timeout: checkTimeout},
 	)
 	open.Handle("GET /healthz", readiness)
 
@@ -277,19 +287,29 @@ func New(deps Deps) http.Handler {
 	// readiness truth: /healthz above stays the continuous readiness gate,
 	// while go-health serves /livez (fetch-free process liveness) and
 	// /startupz (503 until the backing resources first pass, then latched).
-	// The probe's checks share the same functions /healthz evaluates — same
-	// truth, different probe lifecycles. JSON only: no scripts, CSP-neutral.
-	// GET-open like /healthz: probers need no session and the bodies carry
-	// check names/statuses only, never secrets. No background refresh loop
-	// (live mode): two local checks per probe hit are cheap.
-	selfHealth := health.NewChecks(map[string]health.CheckFunc{
-		"sqlite": func(ctx context.Context) error { return deps.DB.PingContext(ctx) },
-		"blob-dir": func(_ context.Context) error {
-			return probeBlobDir(deps.BlobRoot)
-		},
-	}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
+	// The composition root passes the container-built probe in Deps.Probe;
+	// the nil fallback (tests) builds the equivalent NewChecks probe over
+	// the same backing checks — same truth, different construction.
+	// JSON only: no scripts, CSP-neutral. GET-open like /healthz: probers
+	// need no session and the bodies carry check names/statuses only,
+	// never secrets.
+	selfHealth := deps.Probe
+	if selfHealth == nil {
+		selfHealth = health.NewChecks(map[string]health.CheckFunc{
+			"sqlite": func(ctx context.Context) error { return deps.DB.PingContext(ctx) },
+			"blob-dir": func(_ context.Context) error {
+				return blob.ProbeWrite(deps.BlobRoot)
+			},
+		}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
+	}
 	open.Handle("GET /livez", selfHealth.LivenessHandler())
 	open.Handle("GET /startupz", selfHealth.StartupHandler())
+	// The dashboard subtree (config-gated upstream): its own mux carries
+	// /health, /health/sse, the embedded Datastar SDK and its namespaced
+	// probe aliases. Not registered when Deps.Dashboard is nil.
+	if deps.Dashboard != nil {
+		open.Handle("/health", deps.Dashboard)
+	}
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
@@ -304,6 +324,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/healthz", open)
 	root.Handle("/livez", open)
 	root.Handle("/startupz", open)
+	root.Handle("/health", open)
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
@@ -340,24 +361,6 @@ func New(deps Deps) http.Handler {
 // instead of hanging the prober. The overdue call keeps running — the
 // timeout bounds the probe's wait, it does not cancel the check.
 const checkTimeout = 2 * time.Second
-
-// probeBlobDir proves the blob store accepts writes: temp file in the
-// files root, then remove it. A full disk or a lost mount fails here and
-// the operator sees it in /healthz instead of silently losing attachments.
-func probeBlobDir(root string) error {
-	if err := os.MkdirAll(root, 0o750); err != nil {
-		return err
-	}
-	file, err := os.CreateTemp(root, ".healthz-*")
-	if err != nil {
-		return err
-	}
-	name := file.Name()
-	if err := file.Close(); err != nil {
-		return err
-	}
-	return os.Remove(name)
-}
 
 // buildVersion is injected at link time by the flake build
 // (-X ...internal/server.buildVersion=<version>), so /version reports the
