@@ -103,7 +103,9 @@ def boot(data_dir):
     old_umask = os.umask(0o077)
     try:
         with open(data_dir + ".log", "wb") as log:
-            proc = subprocess.Popen([BIN], env=env, stdout=log, stderr=subprocess.STDOUT)
+            proc = subprocess.Popen(
+                [BIN], env=env, stdout=log, stderr=subprocess.STDOUT
+            )
     finally:
         os.umask(old_umask)
     wait_port(PORT)

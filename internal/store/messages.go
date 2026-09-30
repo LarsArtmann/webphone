@@ -179,7 +179,7 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 		lastBody, lastDir, lastCh sql.NullString
 	)
 	if err := row.Scan(&id, &owner, &remote, &lastActivity, &unread, &lastBody, &lastDir, &lastCh); err != nil {
-		return ThreadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row")
+		return ThreadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row") //nolint:erraudit // context_loss FP: lastDir is an OUT param, garbage exactly when the scan failed — no honest context to include
 	}
 
 	sum := ThreadSummary{
