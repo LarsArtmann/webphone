@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Added `SECURITY.md` (nix-ssh-config parity adapted to a runtime
+  service): GitHub private vulnerability reporting as the preferred
+  channel, per-surface triage guidance (island / tabs / phone-api
+  proxy / bundle / NixOS module), posture facts verified at module
+  source, tags-trail-versions note for lock-riding consumers.
 - Webhook gateway: attachment and fax file parts now carry their honest
   Content-Type on the wire (the attachment's stored mime; fax parts are
   `application/pdf`) instead of the `application/octet-stream` default
