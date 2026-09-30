@@ -1,58 +1,171 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  delta: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      stroke-width: 2
+      font-color: "#f4d35e"
+      bold: true
+    }
+  }
+}
+
 direction: down
 
-browser: Browser (operator) {
-  island: SIP Island (never unloads)
-  tabs: HTMX Tabs
-  sse: SSE listeners
+operator: Operator (browser) {
+  class: actor
+  island: SIP island — calls survive tab switches
+  tabs: HTMX tabs — Messages · Fax · Voicemail · History · Contacts · Settings
 }
 
-webphone: webphone Go binary {
-  shell: cqrs-htmx shell (RunHandler serve/drain) {
-    style.stroke-dash: 4
+front: TLS front — Caddy (module option) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy / + /events flush_interval -1
+  sip: /sip WSS — sipUpstream bridge to the PBX
+  tls: automatic HTTPS · encode zstd gzip
+}
+
+webphone: webphone Go binary — target state {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
   }
-  server: internal/server {
-    wiring: wiring (Deps + chain + mount)
-    api: server/api (JSON endpoints) {
-      style.stroke-dash: 4
-    }
-    hooks: server/hooks (webhook ingest + idem) {
-      style.stroke-dash: 4
-    }
+
+  boot: boot — fail-closed typing {
+    class: delta
+    gate1: identities keys → ParseExtension
+    gate2: shared contacts → ParsePhone
+  }
+
+  http: HTTP surface — carved {
+    class: surface
+    wiring: wiring — Deps · chain · mount
+    api: server/api — JSON endpoints
+    hooks: server/hooks — webhook ingest + idempotency
     pages: pages + partials (templ rendering)
   }
-  services: Services (messaging, fax, session, retention, crm, vcard)
-  gateway: Gateway seam (loopback + webhook)
-  pbx: pbx.Client
-  store: store (SQLite WAL)
-  blobs: blob.Store
-  domain: internal/domain
+
+  services: services — HTTP-free by test {
+    class: service
+    messaging: messaging.Service
+    faxsvc: fax.Service — branches on Receipt.Resolution
+    sessionsvc: session (SQLite, sliding TTL)
+    retention: retention sweeper (daily)
+    crmres: crm.Resolver (TTL cache, single-flight)
+    vcard: vcard (pure parser)
+  }
+
+  seams: seams {
+    class: seam
+    gateway: "gateway: loopback | webhook — Receipt{ProviderRef, Resolution}"
+    pbx: pbx.Client (leaf client)
+  }
+
+  domain: domain — branded IDs · value objects · enums {
+    class: base
+  }
 }
 
-pbxstack: Telephony stack (nginx + FreeSWITCH)
-crmledger: Ledger CRM
-
-existing edges: {
-  browser.tabs -> webphone.server: "HTMX partials"
-  browser.sse -> webphone.server: "GET /events"
-  browser.island -> pbxstack: "SIP over WSS"
-  pbxstack -> webphone.server.hooks: "webhooks"
-  webphone.services -> webphone.store: "owner-scoped SQL"
-  webphone.server -> webphone.pbx: "directory proof"
-  webphone.services.crmres -> crmledger: "bearer"
+store: SQLite (WAL, owner-scoped) {
+  shape: sql_table
+  class: base
+  threads: threads
+  messages: messages
+  attachments: attachments
+  fax_jobs: fax_jobs
+  contacts: contacts
+  sessions: sessions
+  schema_version: schema_version (delta)
 }
 
-changed: Proposed deltas (this review) {
-  color: "#f4d35e"
-  serversplit: carve the 19-file HTTP surface into api/ + hooks/ (wiring stays)
-  faxseam: receipt-verbosity seam replaces the *gateway.Loopback type-assert
-  configtyping: Load() validates SharedContact.Number + identities keys (fail-closed boot)
-  schemaver: schema_version table before the first altering migration
-  shelladopt: cqrs-htmx setup-shell adoption (owner-pending, TODO_LIST)
+blobs: blob tree (nanoid files) {
+  shape: stored_data
+  class: base
 }
 
-changed.serversplit -> webphone.server.api: "3 seams, tests move with files"
-changed.serversplit -> webphone.server.hooks: "401-writer allowlist follows"
-changed.faxseam -> webphone.gateway: "Receipt carries sync-verbosity"
-changed.configtyping -> webphone.domain: "ParsePhone + ParseExtension at boot"
-changed.schemaver -> webphone.store: "versioned migrations"
-changed.shelladopt -> webphone.shell: "replaces manual serve/drain"
+pbxstack: FreeSWITCH PBX {
+  class: external
+}
+bridge: telnyx-webhooks bridge {
+  class: external
+}
+ledger: Ledger CRM (bearer /api) {
+  class: external
+}
+
+operator -> front: "HTTPS · WSS /sip"
+front.web -> webphone.http.wiring: proxies
+front.sip -> pbxstack: "SIP over WSS"
+webphone.boot -> webphone.domain: "validated at boot (delta)"
+webphone.http.wiring -> webphone.services: calls
+webphone.http.hooks -> webphone.seams.gateway: "status updates (delta: no type-assert)"
+webphone.services -> webphone.seams: gateway + directory
+webphone.services -> store: "owner-scoped SQL"
+webphone.services -> blobs: "attachments & fax PDFs"
+webphone.seams.gateway -> bridge: "outbound multipart + Bearer"
+bridge -> webphone.http.hooks: "inbound + status /hooks/*"
+webphone.seams.pbx -> pbxstack: "phone-api (Basic auth)"
+webphone.services.crmres -> ledger: "GET /api (bearer)"
+webphone.http -> webphone.domain: types
