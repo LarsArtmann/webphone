@@ -163,7 +163,7 @@ func (s *Service) Send(
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
 		}
-		return msg, fmt.Errorf("gateway: %w", err)
+		return msg, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	default:
 		msg.Status = domain.StatusSent
 		msg.ProviderRef = receipt.ProviderRef
@@ -181,7 +181,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	now := domain.OrClock(inbound.ReceivedAt, s.clock)
 	threadID, err := s.messages.FindThread(ctx, inbound.Owner, inbound.From, now)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("resolve thread: %w", err)
+		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}
 
 	msg := domain.Message{
@@ -197,7 +197,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	for _, att := range inbound.Attachments {
 		path, err := s.blobs.Save("attachments", extensionOf(att), att.Bytes)
 		if err != nil {
-			return domain.Message{}, fmt.Errorf("store inbound attachment: %w", err)
+			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store inbound attachment")
 		}
 		msg.Attachments = append(msg.Attachments, domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
@@ -210,7 +210,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
-		return domain.Message{}, fmt.Errorf("persist inbound message: %w", err)
+		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist inbound message")
 	}
 	s.notify(ctx, inbound.Owner, threadID)
 
@@ -271,7 +271,7 @@ func (s *Service) DeliveryReceipt(
 	switch status {
 	case domain.StatusDelivered, domain.StatusFailed:
 	default:
-		return domain.Message{}, fmt.Errorf("%q is not a delivery verdict", status)
+		return domain.Message{}, errorfamily.Newf(errorfamily.Rejection, "messaging.verdict", "%q is not a delivery verdict", status)
 	}
 	msg, err := s.messages.MessageByProviderRef(ctx, providerRef)
 	if err != nil {
@@ -287,7 +287,7 @@ func (s *Service) DeliveryReceipt(
 	}
 	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, status, msg.ProviderRef,
 		failureKind, failureDetail); err != nil {
-		return domain.Message{}, fmt.Errorf("record delivery status: %w", err)
+		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.outbound_status", "record delivery status")
 	}
 	msg.Status = status
 	msg.FailureKind, msg.FailureDetail = failureKind, failureDetail

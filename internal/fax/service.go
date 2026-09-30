@@ -123,7 +123,7 @@ func (s *Service) Send(
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
 		s.notify(ctx, owner, job.ID)
-		return job, fmt.Errorf("gateway: %w", err)
+		return job, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	}
 
 	// Loopback resolves instantly (transmitted); webhook providers only
@@ -152,7 +152,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	}
 	path, err := s.blobs.Save("faxes", ".pdf", inbound.PDFBytes)
 	if err != nil {
-		return domain.FaxJob{}, fmt.Errorf("spool inbound pdf: %w", err)
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool inbound pdf")
 	}
 
 	job := domain.FaxJob{
@@ -168,7 +168,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 		UpdatedAt:    now,
 	}
 	if err := s.faxes.Create(ctx, job); err != nil {
-		return domain.FaxJob{}, fmt.Errorf("persist inbound fax: %w", err)
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist inbound fax")
 	}
 	s.notify(ctx, inbound.Owner, job.ID)
 

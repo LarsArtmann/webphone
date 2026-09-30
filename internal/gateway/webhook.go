@@ -103,10 +103,10 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 		func(writer *multipart.Writer) error {
 			part, err := createFilePart(writer, "document", "fax.pdf", "application/pdf")
 			if err != nil {
-				return fmt.Errorf("create fax form file: %w", err)
+				return fmt.Errorf("create fax form file: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			if _, err := io.Copy(part, pdf); err != nil {
-				return fmt.Errorf("copy fax pdf: %w", err)
+				return fmt.Errorf("copy fax pdf: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			return nil
 		})
@@ -158,7 +158,7 @@ func providerForm(kind, owner, to string, addFiles func(*multipart.Writer) error
 		return nil, "", err
 	}
 	if err := writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("close provider form: %w", err)
+		return nil, "", fmt.Errorf("close provider form: %w", err) //nolint:erraudit // family-neutral propagation: the caller's gateway.form wrap classifies
 	}
 
 	return strings.NewReader(buf.String()), writer.FormDataContentType(), nil
@@ -172,16 +172,16 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 		for _, att := range attachments {
 			file, err := os.Open(att.Path)
 			if err != nil {
-				return fmt.Errorf("open attachment %s: %w", att.Name, err)
+				return fmt.Errorf("open attachment %s: %w", att.Name, err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			part, err := createFilePart(writer, "attachment", att.Name, att.MimeType)
 			if err != nil {
 				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-				return fmt.Errorf("create attachment form file: %w", err)
+				return fmt.Errorf("create attachment form file: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			if _, err := io.Copy(part, file); err != nil {
 				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
-				return fmt.Errorf("copy attachment %s: %w", att.Name, err)
+				return fmt.Errorf("copy attachment %s: %w", att.Name, err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
 			}
 			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		}
