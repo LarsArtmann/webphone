@@ -109,8 +109,7 @@
                 bridgedEvaluated = lib.evalModules (moduleSet {
                   caddy.sipUpstream = "https://pbx.example.org:7443";
                 });
-                bridgedVhost =
-                  bridgedEvaluated.config.services.caddy.virtualHosts."phone.example.org";
+                bridgedVhost = bridgedEvaluated.config.services.caddy.virtualHosts."phone.example.org";
               in
               if
                 !lib.hasInfix sipHandle vhost.extraConfig

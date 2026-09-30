@@ -100,7 +100,7 @@ in the JSON file.
 | `gateway.webhook_url`         | _empty_             | Provider base URL in webhook mode (required there)                                                                                                                                                                   |
 | `gateway.webhook_secret`      | _empty_             | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)**                                                                                                           |
 | `gateway.webhook_secret_file` | _empty_             | Read the shared secret from a runtime file at startup (single line) instead — one file both sides read beats keeping an env copy and the receiver's copy in sync; at most one of the two may be set                  |
-| `csrf.trusted_proxies`        | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (loopback nginx) — IP or CIDR entries                                                                                                                        |
+| `csrf.trusted_proxies`        | _empty_             | Local proxies whose `X-Forwarded-Proto` may be believed (the loopback front) — IP or CIDR entries                                                                                                                    |
 | `csrf.trusted_origins`        | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                                                                                                                        |
 | `crm.url`                     | _empty_ = disabled  | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                                                                                                                      |
 | `crm.token`                   | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
@@ -109,7 +109,7 @@ in the JSON file.
 then arrives with `Origin: https://host` while the listener sees plain
 HTTP, and unconfigured the CSRF middleware rejects it as a forged
 same-origin attestation (403 on every POST, logins included). The
-NixOS module sets both keys when `nginx.enable` is on.
+NixOS module sets both keys when `caddy.enable` is on.
 
 Example file:
 
@@ -253,19 +253,21 @@ process supervision belong to the serving stack
 ([nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony)
 today) or any reverse proxy in front:
 
-```nginx
-location / { proxy_pass http://127.0.0.1:8080; }
-location /sip {                       # WebSocket → PBX sofia wss-binding
-  proxy_pass https://pbx.internal:7443;
-  proxy_http_version 1.1;
-  proxy_set_header Upgrade $http_upgrade;
-  proxy_set_header Connection "upgrade";
+```caddy
+handle /sip {                      # WebSocket → PBX sofia wss-binding
+  reverse_proxy https://pbx.internal:7443
 }
-location /events {                    # SSE: no buffering
-  proxy_pass http://127.0.0.1:8080;
-  proxy_buffering off;
+handle /events {                   # SSE: unbuffered
+  reverse_proxy 127.0.0.1:8080 {
+    flush_interval -1
+  }
 }
-client_max_body_size 64m;             # attachments (≤5×10 MiB) + PDFs (≤20 MiB)
+handle {
+  reverse_proxy 127.0.0.1:8080
+}
+request_body {
+  max_size 64MB                     # attachments (≤5×10 MiB) + PDFs (≤20 MiB)
+}
 ```
 
 ### Backups and restore
@@ -340,11 +342,11 @@ believed and the https origin is trusted:
 }
 ```
 
-The NixOS module ships exactly these defaults when `nginx.enable` is set
-(derived from `nginx.hostName`); a startup log line `csrf fronting
+The NixOS module ships exactly these defaults when `caddy.enable` is set
+(derived from `caddy.hostName`); a startup log line `csrf fronting
 trustedProxies=… trustedOrigins=…` shows the effective shape at boot.
 
-`nginx.hsts.enable` (default **off**) adds Strict-Transport-Security to
+`caddy.hsts.enable` (default **off**) adds Strict-Transport-Security to
 the generated vhost; keep it off until the deployment is genuinely
 https-only — HSTS pins browsers to https for `maxAge` (default 2 years).
 
@@ -365,20 +367,23 @@ services.webphone = {
     ice_servers = [{ urls = [ "stun:pbx.example.com:3478" ]; }];
   };
   environmentFile = "/run/secrets/webphone-env";   # WEBPHONE_GATEWAY__WEBHOOK_SECRET
-  nginx = {
+  caddy = {
     enable = true;
     hostName = "phone.example.org";
+    sipUpstream = "https://pbx.example.com:7443";   # bridge the SIP WebSocket to the PBX
   };
 };
 ```
 
 `settings` is the same JSON config the binary reads (rendered to a
 `WEBPHONE_CONFIG` file); secrets belong in `environmentFile`, not the
-world-readable config. The generated vhost terminates TLS, proxies `/`
-and upgrades the SIP WebSocket path with a long read timeout. A flake
-check evaluates the module, so `nix flake check` catches breakage, and a
-kvm-gated VM test (`checks.x86_64-linux.webphone-backup`) proves the
-backup story end to end.
+world-readable config. The generated Caddy vhost terminates TLS
+(automatic HTTPS) and proxies the app; with `caddy.sipUpstream` set it
+also bridges the SIP WebSocket path to the PBX — without the bridge
+the deployment must route that path itself. A flake check evaluates
+the module, so `nix flake check` catches breakage, and a kvm-gated VM
+test (`checks.x86_64-linux.webphone-backup`) proves the backup story
+end to end.
 
 Module options beyond `enable`/`package`/`settings`:
 
@@ -388,25 +393,25 @@ Module options beyond `enable`/`package`/`settings`:
 | `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                  |
 | `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)  |
 | `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                         |
-| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the nginx-derived default when set |
-| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the nginx-derived default when set |
+| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the caddy-derived default when set |
+| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the caddy-derived default when set |
 | `serverTiming.enable`             | `false`                    | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`)                           |
 | `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                               |
 | `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                      |
 | `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                            |
 | `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days   |
-| `nginx.enable` / `nginx.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
-| `nginx.gzip.enable`               | _off_                      | nginx recommended gzip settings on the vhost (SSE is never gzipped)                       |
-| `nginx.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
+| `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                 |
+| `caddy.sipUpstream`               | `null`                     | Bridge the SIP WebSocket path to the PBX (e.g. `https://pbx:7443`); null = deployment routes it |
+| `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                          |
 
-**Health probes behind the vhost:** the module ships dedicated nginx
-locations for `/healthz` (readiness), `/livez` (process liveness) and
-`/startupz` (startup completion) instead of riding `/` — a fleet health
-hub can scrape or be fenced (`allow`/`deny` via `extraConfig`) per
-location without touching the app's location. All three are session-free
-GETs whose bodies name checks and statuses only, never secrets. A fourth
-dedicated location serves `/metrics` (Prometheus text, aggregate counts
-only — never per-extension data) and can be fenced the same way.
+**Health probes behind the vhost:** `/healthz` (readiness), `/livez`
+(process liveness) and `/startupz` (startup completion) ride the same
+reverse proxy as the app. All three are session-free GETs whose bodies
+name checks and statuses only, never secrets — safe to expose or
+scrape. Fence a fleet health hub the Caddy way with a `remote_ip`
+matcher in the vhost's `extraConfig` instead of per-location blocks;
+`/metrics` (Prometheus text, aggregate counts only — never
+per-extension data) fences the same way.
 
 **Readiness vs systemd:** the service unit stays `Type=simple` by
 DELIBERATE decision — the module does NOT wire `Type=notify`.

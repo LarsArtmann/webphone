@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking (NixOS module)
+
+- `services.webphone.nginx.*` is REPLACED by `services.webphone.caddy.*`:
+  the module now generates a Caddy vhost (automatic HTTPS, `encode zstd
+  gzip`, unbuffered `/events` via `flush_interval -1`) instead of an
+  nginx one. The old nginx generator had zero users — the telephony
+  stack force-disables it (`nginx.enable = mkForce false` plus an
+  assertion) and fronts the app with its own vhost. `nginx.gzip.enable`
+  is gone with it (Caddy compresses unconditionally). The csrf fronting
+  defaults (`trusted_proxies`/`trusted_origins`) now derive from
+  `caddy.enable`/`caddy.hostName` with the same precedence. New
+  `caddy.sipUpstream` bridges the SIP WebSocket path to the PBX when
+  set — fixing a latent dead-end: the old vhost proxied the websocket
+  path to the app, which never terminates the SIP wss (the island's
+  connection must reach the PBX; the stack routes it there itself).
+
 ### Changed
 
 - Error architecture: completed the tier-2 family adoption — every

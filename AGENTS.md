@@ -63,13 +63,19 @@ into the cqrs-htmx root library instead).
   `environmentFile`, `memoryMax`, `csrf.{trustedProxies,trustedOrigins}`,
   `serverTiming.enable`, `backup.{enable,destDir,calendar,retentionDays}`
   (retentionDays null = single snapshot; set = dated history +
-  prune), `nginx.{enable,hostName}`, `nginx.hsts.{enable,maxAge}`.
-  Its vhost proxies `/`, the websocket path (3600s), `/events` (SSE)
-  and the probe triple as DEDICATED locations.
+  prune), `caddy.{enable,hostName,sipUpstream}`,
+  `caddy.hsts.{enable,maxAge}` (2026-09-30: the front is CADDY, not
+  nginx — the module's old nginx generator was never used: the stack
+  force-disables it and fronts with its own vhost). The generated
+  vhost reverse-proxies the app, bridges the websocket path ONLY when
+  `caddy.sipUpstream` is set (the Go app never terminates the SIP
+  wss — proxying it to the app was a latent dead-end), and flushes
+  `/events` unbuffered (`flush_interval -1`); probes fence via
+  `remote_ip` matchers, not per-location blocks.
 - The `webphone-module` flake check evaluates the module with
-  stand-in options (nginx/systemd/users + `assertions`; new config
+  stand-in options (caddy/systemd/users + `assertions`; new config
   keys the module writes need a stand-in there). Statix pins
-  single-assignment style (all `locations` in ONE attrset).
+  single-assignment style (the vhost is ONE extraConfig string).
   `checks.x86_64-linux.webphone-backup` (KVM-gated) and
   `webphone-backup-drill` cover backup snapshot AND restore.
 - **flake.nix layout (2026-09-29 nix-review train)**: flake.nix is a
