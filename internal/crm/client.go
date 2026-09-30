@@ -10,13 +10,26 @@ import (
 	"context"
 	"encoding/json/v2"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/larsartmann/go-error-family"
 )
+
+// Sentinel families (family-adoption train, 2026-09-30), mirroring
+// the pbx seam: disabled is Infrastructure (nil deps), a rejected
+// bearer token and a no-match lookup are Rejections. The sentinels
+// keep their errors.New identity — errIsMiss compares by equality.
+func init() {
+	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
+		ErrDisabled:     errorfamily.Infrastructure,
+		ErrUnauthorized: errorfamily.Rejection,
+		ErrNotFound:     errorfamily.Rejection,
+	})
+}
 
 // ErrDisabled is returned when no CRM is configured.
 var ErrDisabled = errors.New("crm not configured")
@@ -49,7 +62,7 @@ func NewClient(baseURL, token string) (*Client, error) {
 
 	parsed, err := url.Parse(baseURL)
 	if err != nil {
-		return nil, fmt.Errorf("parse crm url %q: %w", baseURL, err)
+		return nil, errorfamily.WrapRejectionf(err, "crm.url", "parse crm url %q", baseURL)
 	}
 
 	return &Client{
@@ -86,7 +99,7 @@ func (c *Client) do(
 
 	req, err := http.NewRequestWithContext(ctx, method, target, bytes.NewReader(body))
 	if err != nil {
-		return nil, fmt.Errorf("crm: build request: %w", err)
+		return nil, errorfamily.WrapInfrastructuref(err, "crm.request", "crm: build request")
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
@@ -96,7 +109,7 @@ func (c *Client) do(
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("crm: request: %w", err)
+		return nil, errorfamily.WrapTransientf(err, "crm.transport", "crm: request")
 	}
 
 	return resp, nil
@@ -129,18 +142,22 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return Match{}, ErrUnauthorized
 	case resp.StatusCode != http.StatusOK:
-		return Match{}, fmt.Errorf("crm: lookup failed with status %d", resp.StatusCode)
+		family := errorfamily.Transient
+		if resp.StatusCode < 500 {
+			family = errorfamily.Rejection
+		}
+		return Match{}, errorfamily.Newf(family, "crm.http", "crm: lookup failed with status %d", resp.StatusCode)
 	}
 
 	var buf bytes.Buffer
 
 	if _, err := buf.ReadFrom(resp.Body); err != nil {
-		return Match{}, fmt.Errorf("crm: read response: %w", err)
+		return Match{}, errorfamily.WrapTransientf(err, "crm.read", "crm: read response")
 	}
 
 	var parsed lookupResponse
 	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
-		return Match{}, fmt.Errorf("crm: decode lookup response: %w", err)
+		return Match{}, errorfamily.WrapTransientf(err, "crm.decode", "crm: decode lookup response")
 	}
 
 	if len(parsed.Results) == 0 {
@@ -167,7 +184,7 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 
 	encoded, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("crm: encode call log (contact %s): %w", contactID, err)
+		return errorfamily.WrapInfrastructuref(err, "crm.encode", "crm: encode call log (contact %s)", contactID)
 	}
 
 	resp, err := c.do(ctx, http.MethodPost, "/api/contacts/"+contactID+"/calls", nil, encoded)
@@ -185,9 +202,9 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 		// 404 (contact gone) and 400/409 (domain rejections) are CRM-side
 		// answers, not our bugs — wrap them with the status so the caller
 		// sees a rejection, not a transport panic.
-		return fmt.Errorf("crm: call log rejected (contact %s, status %d)", contactID, resp.StatusCode)
+		return errorfamily.Newf(errorfamily.Rejection, "crm.call_log.rejected", "crm: call log rejected (contact %s, status %d)", contactID, resp.StatusCode)
 	default:
-		return fmt.Errorf("crm: call log failed (contact %s, status %d)", contactID, resp.StatusCode)
+		return errorfamily.Newf(errorfamily.Transient, "crm.call_log.failed", "crm: call log failed (contact %s, status %d)", contactID, resp.StatusCode)
 	}
 }
 
