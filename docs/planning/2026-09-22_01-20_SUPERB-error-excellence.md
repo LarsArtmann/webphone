@@ -388,22 +388,48 @@ resolves the "dep swept-but-unused?" owner question: the dep is used.
 
 ### Family table per seam (as implemented)
 
-| Seam | Codes | Family |
-| --- | --- | --- |
-| blob | `blob.root`, `blob.subdir`, `blob.name`, `blob.write`, `blob.open`, `blob.remove` | Infrastructure |
-| blob traversal refusal | `blob.escape` | Rejection |
-| store (all persistence ops) | `store.open`, `store.migrate`, `store.close`, `<op>` via listRows/execRows | Infrastructure |
-| domain validation | `domain.extension`, `domain.phone` | Rejection |
-| domain malformed id | `domain.id` | Corruption |
-| session | `session.token`, `session.<op>` | Infrastructure |
-| config validation + file IO | `config.<key>`, `config.file` | Rejection (operator input); IO wraps stay Rejection-classified at the boundary |
-| pbx url/encode/build | `pbx.url`, `pbx.encode`, `pbx.request` | url Rejection, encode/build Infrastructure |
-| pbx transport/decode | `pbx.transport`, `pbx.decode` | Transient |
-| pbx non-2xx | `pbx.http` | Rejection (4xx) / Transient (5xx) |
-| crm | mirrors pbx (`crm.*`) | mirrors pbx |
-| gateway form/PDF build | `gateway.form` (per T02 record) | Infrastructure |
-| messaging/fax inbound store failures | `store.*` codes per T02 record | Infrastructure |
-| webhook payload decode | `webhook.payload` | Rejection |
+| Seam                                 | Codes                                                                             | Family                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| blob                                 | `blob.root`, `blob.subdir`, `blob.name`, `blob.write`, `blob.open`, `blob.remove` | Infrastructure                                                                 |
+| blob traversal refusal               | `blob.escape`                                                                     | Rejection                                                                      |
+| store (all persistence ops)          | `store.open`, `store.migrate`, `store.close`, `<op>` via listRows/execRows        | Infrastructure                                                                 |
+| domain validation                    | `domain.extension`, `domain.phone`                                                | Rejection                                                                      |
+| domain malformed id                  | `domain.id`                                                                       | Corruption                                                                     |
+| session                              | `session.token`, `session.<op>`                                                   | Infrastructure                                                                 |
+| config validation + file IO          | `config.<key>`, `config.file`                                                     | Rejection (operator input); IO wraps stay Rejection-classified at the boundary |
+| pbx url/encode/build                 | `pbx.url`, `pbx.encode`, `pbx.request`                                            | url Rejection, encode/build Infrastructure                                     |
+| pbx transport/decode                 | `pbx.transport`, `pbx.decode`                                                     | Transient                                                                      |
+| pbx non-2xx                          | `pbx.http`                                                                        | Rejection (4xx) / Transient (5xx)                                              |
+| crm                                  | mirrors pbx (`crm.*`)                                                             | mirrors pbx                                                                    |
+| gateway form/PDF build               | `gateway.form` (per T02 record)                                                   | Infrastructure                                                                 |
+| messaging/fax inbound store failures | `store.*` codes per T02 record                                                    | Infrastructure                                                                 |
+| webhook payload decode               | `webhook.payload`                                                                 | Rejection                                                                      |
 
 Measured outcome: see the execution log at the end of this appendix
 (final tier-2 count recorded after the gates).
+
+### Execution log (2026-09-30, same day as the order)
+
+- Seams converted, each with tests green + its own family_test.go
+  pins: blob → store (db/messages/contacts/faxes/sweep) → domain →
+  session → config → pbx → crm → gateway/messaging/fax inbound →
+  server stragglers (webhook flexPages → Rejection) → cmd wiring.
+- Tier-2 enforced set: **132 → 0** findings; `--enforce-coded-errors`
+  also 0; tier-1 green (after one real catch: erraudit's
+  `sentinel_concrete_type` rule forced the config both-sources
+  sentinel to be declared as the `error` interface — concrete
+  `*errorfamily.Error` sentinels break the legacy_is sentinel guard).
+- Full audit mode (the owner's exact flag set, `--no-suppress
+  --enforce-samber-oops --enforce-generic-return`): 217 → 77
+  violations, all documented residue — the generic_return P6
+  decision, 40 defer-close ignores, 2 counted-skip swallows, and the
+  reasoned nolints that `--no-suppress` intentionally re-surfaces.
+- Wire truth: the full Go suite (15 packages), the byte-pinned
+  views/classify/i18n contract tests, and the Contains-based config
+  tests pass unchanged — zero rendered-string drift, by guardrail #1.
+- Log-line change (accepted, operator-facing only): failing paths now
+  log `[family:code] message` prefixes; LogErrorContext already
+  carried family/code attrs, so dashboards keyed on those are stable.
+- The oops question (T15/D2) stays owner-gated and UNCHANGED by this
+  train: no go.mod movement, no oops import; the bridge/ module
+  remains the staged path if enrichment is ever ratified.

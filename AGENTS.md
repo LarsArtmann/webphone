@@ -395,23 +395,44 @@ ports of already-pinned paths.
 - erraudit honors `//nolint:erraudit // reason`; branching-flow
   honors NO nolint (documented skip in `.buildflow.yml`; same for
   go-structure-linter, cqrs-lint, nix-hash-fix). **The erraudit
-  bar** (2026-09-22): tier 1 enforced (`--type-aware
-  --disable-extensions`, must exit 0); tier 2 family-adoption
-  tracking (`--enforce-go-error-family`; re-measured 2026-09-22
-  evening EARLY per TODO: 127 stdlib_constructor findings total, 113
-  outside the crm seam — GREW from 102 via the CRM train (store/
-  messaging paths) + the turn_rest validation idioms; top unconverted
-  seams: config.go 22, store/messages.go 20, pbx/client.go 8 — the
-  family-adoption project must shrink it from 113, and new error
-  paths keep following the file-local idiom until their seam
-  converts wholesale);
-  tier 3 owner-only full audit (never gates). Re-measure tiers 1+2
-  monthly (next: 2026-10-22) and update the tier-2 count above.
-  `erraudit tree` draws hierarchy edges ONLY from package-level
-  declarations and dedupes same-named sentinels to one row — the 7
-  package-level sentinels across crm/pbx/store (all `errors.New`) show
-  as 4 rows at max depth 0, so a short flat tree is the DESIGN (all
-  wrapping is inline until family-adoption lands), not a tooling gap.
+  bar** (updated 2026-09-30 by the family-adoption train): tier 1
+  enforced (`--type-aware --disable-extensions`, must exit 0 — the
+  one tier-1 rule the train met: package-level sentinels must be
+  declared as the `error` INTERFACE, concrete `*Error` sentinels
+  trip `sentinel_concrete_type`); tier 2 enforced green
+  (`--enforce-go-error-family` — 132 stdlib_constructor findings on
+  2026-09-30 → 0 after converting every seam to go-error-family
+  constructors with stable dot-notation codes; `--enforce-coded-errors`
+  also 0). Rules of the adopted convention (decision record: the
+  error-excellence plan appendix, 2026-09-30): constructors classify
+  at ORIGIN (P1); propagation over polymorphic inner errors wraps
+  family-NEUTRALLY — `fmt.Errorf("…: %w")` + reasoned nolint, a
+  fixed-family Wrap would clobber the inner classification (P2;
+  homes: `cmd/webphone.propagatef`, the `"gateway: %w"` service
+  wraps, the three LogErrorContext log-context wraps, gateway
+  form-builder inner wraps); sentinels stay `errors.New` vars (P3,
+  guardrail #4) and classify via `init()` registration in the owning
+  package (store.ErrNotFound/ErrListFull, pbx.ErrDisabled/
+  ErrUnauthorized, crm.ErrDisabled/ErrUnauthorized/ErrNotFound);
+  functions keep the bare `error` return — typed structs only where
+  callers branch (ErrInvalidSend pattern, P6 — generic_return stays
+  audit-only); defer-close ignores are standard practice (P7).
+  NEW error paths MUST follow the convention: errorfamily.New*/Wrap*
+  - a stable `<seam>.<op>` code, never bare fmt.Errorf, and never a
+    family-fixed wrap over a polymorphic cause. Per-seam family pins
+    live in each package's family_test.go.
+    tier 3 owner-only full audit (never gates; `--no-suppress
+  --enforce-samber-oops --enforce-generic-return` shows the
+    documented residue: generic_return decisions, 40 defer-close
+    ignores, 2 counted-skip swallows, the nolint'd neutral wraps).
+    Re-measure tiers 1+2 monthly (next: 2026-10-22) — tier-2 must
+    STAY 0.
+    `erraudit tree` draws hierarchy edges ONLY from package-level
+    declarations and dedupes same-named sentinels to one row — the 7
+    package-level sentinels across crm/pbx/store (all `errors.New`)
+    show as 4 rows at max depth 0 by DESIGN (classification rides the
+    constructors and the registry, not sentinel hierarchy), not a
+    tooling gap.
 - `pbx.Client` owns the timeout-bounded HTTP client; the
   `/phone-api` proxy rides `PhoneAPI.HTTPClient()`, never
   `http.DefaultClient`. Join path and query separately
