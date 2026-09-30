@@ -7,14 +7,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"modernc.org/sqlite"
 )
 
-// Contract pins for the listRows extraction (2026-09-22 dedup train):
-// one home for the query→close→scan→rows.Err() lifecycle, with the
-// documented error shape — query AND iteration failures wrap the op,
-// scan failures pass the scan function's own (already contextual)
-// error through untouched.
+// Contract pins for the listRows extraction (2026-09-22 dedup train;
+// families added by the 2026-09-30 family-adoption train): one home
+// for the query→close→scan→rows.Err() lifecycle, with the documented
+// error shape — query AND iteration failures wrap the op and classify
+// Infrastructure under the store.query code, scan failures pass the
+// scan function's own (already contextual) error through untouched.
 func TestListRowsErrorShapes(t *testing.T) {
 	db, err := Open(":memory:")
 	if err != nil {
@@ -39,9 +42,11 @@ func TestListRowsErrorShapes(t *testing.T) {
 
 	t.Run("query failure wraps the op", func(t *testing.T) {
 		_, err := listRows(ctx, db, "walk nums", `SELECT * FROM no_such_table`, nil, scanNum)
-		if err == nil || !strings.HasPrefix(err.Error(), "walk nums: ") {
+		if err == nil || !strings.Contains(err.Error(), "walk nums: ") {
 			t.Fatalf("query failure must wrap the op, got %v", err)
 		}
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "store.query")
 	})
 
 	t.Run("iteration failure wraps the op rows shape", func(t *testing.T) {
@@ -80,6 +85,8 @@ func TestListRowsErrorShapes(t *testing.T) {
 		if !strings.Contains(err.Error(), "boom on second call") {
 			t.Fatalf("iteration failure must wrap the driver cause, got %v", err)
 		}
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "store.query")
 	})
 
 	t.Run("scan failure passes through unwrapped", func(t *testing.T) {
