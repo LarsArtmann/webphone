@@ -35,10 +35,23 @@ E2E harness lessons (soft reloads dodge URL blocks via cache;
 chromedriver is blind mid-navigation — count in-page) live in the
 stack repo's browser-e2e.py.
 
-The cqrs-htmx `setup` bundle is rejected deliberately (split-brain
-identity): this product's identity is the PBX extension + directory
-password, proven by the island's SIP REGISTER — a second user
-database would be a split brain.
+The cqrs-htmx `setup` bundle's IDENTITY surfaces stay rejected
+(usermgmt.Service, `/auth/*`, login page — the split-brain record):
+this product's identity is the PBX extension + directory password,
+proven by the island's SIP REGISTER — a second user database would be
+a split brain. AMENDED 2026-09-30 (plan
+`docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`),
+scope-limited: the bundle's RUNTIME SHELL is adopted — `RunHandler`
+serve/drain, `HealthPath`+`HealthChecks`, opt-in `LivePath` — composed
+behind the existing httpspec-pinned chain via `ExtraMiddleware` +
+`DisableSecurityMiddleware` + `RequestLogging=nil`, only AFTER the
+upstream seams land (`Config.DisableAuth` so `/auth/*` never mounts,
+service-optional `New()` so no usermgmt.Service exists). Probe paths
+(`/healthz` `/livez` `/startupz` `/version` `/metrics`) and `/events`
+stay webphone-mounted wire contracts. Footprint gate: go if the
+stripped-binary delta is ≤ +8 MB absolute AND ≤ +20% relative vs the
+pre-adoption build; otherwise fallback R3 (promote the shell value
+into the cqrs-htmx root library instead).
 
 ## Tri-repo integration rules
 

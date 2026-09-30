@@ -87,6 +87,22 @@
   box-sizing: border-box;
 }
 
+/* Root sizing is a PERCENTAGE, not px: 15px at the default 16px browser
+ * setting, but it keeps the whole rem scale tracking the user's browser
+ * font-size preference — an explicit px root would pin every rem to a
+ * size the user cannot change. */
+html {
+  font-size: 93.75%;
+
+  /* Rendering baseline (inherited by the island stylesheet): crisper
+   * light-on-dark glyphs without color fringing, and no synthetic bold
+   * for the 550-750 weights a platform's system font may not carry. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+
 html,
 body {
   margin: 0;
@@ -95,11 +111,14 @@ body {
     -apple-system,
     "Segoe UI",
     Roboto,
+    "Noto Sans",
+    "Helvetica Neue",
+    Arial,
     sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
-  font-size: 15px;
+  font-size: 1rem;
 }
 
 /* The framework layout emits a Tailwind-styled skip link
@@ -140,6 +159,7 @@ h2,
 h3 {
   letter-spacing: -0.015em;
   line-height: 1.25;
+  text-wrap: balance;
 }
 
 /* --- shell layout -------------------------------------------------------- */
@@ -1117,6 +1137,7 @@ select:focus-visible {
   margin: 0;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  text-wrap: pretty;
 }
 
 .wp-bubble-meta {
