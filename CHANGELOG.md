@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Error architecture: completed the tier-2 family adoption — every
+  internal error constructor site now builds `go-error-family` errors
+  with stable dot-notation codes (blob/store/session/config/pbx/crm/
+  domain/messaging/fax/gateway seams; sentinels keep their
+  `errors.New` identity and classify via package registration).
+  Wire behavior is unchanged: rendered strings, HTTP statuses, and
+  the classify ladder are pinned by tests; log lines gain the
+  `[family:code]` prefix. Startup wiring wraps stay family-neutral by
+  design (inner constructors own the family). The enforced erraudit
+  tier-2 set reads zero findings; the decision record lives in the
+  error-excellence plan appendix.
 - Added `SECURITY.md` (nix-ssh-config parity adapted to a runtime
   service): GitHub private vulnerability reporting as the preferred
   channel, per-surface triage guidance (island / tabs / phone-api
