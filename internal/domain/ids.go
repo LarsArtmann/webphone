@@ -1,13 +1,15 @@
-// Package domain holds the pure webphone domain types: no external
-// dependencies, no I/O. Identifiers are branded so a ThreadID can never be
-// passed where a FaxID is expected.
+// Package domain holds the pure webphone domain types: no I/O, no
+// sibling-internal imports (enforced by internal/arch). Identifiers
+// are branded so a ThreadID can never be passed where a FaxID is
+// expected; validation failures classify via go-error-family (itself
+// stdlib-only, so the transitive dependency surface stays unchanged).
 package domain
 
 import (
-	"fmt"
 	"strings"
 
 	id "github.com/larsartmann/go-branded-id"
+	"github.com/larsartmann/go-error-family"
 	"github.com/sixafter/nanoid"
 )
 
@@ -23,10 +25,10 @@ type Extension struct {
 func ParseExtension(raw string) (Extension, error) {
 	clean := sanitizeDialable(raw)
 	if clean == "" {
-		return Extension{}, fmt.Errorf("extension %q has no dialable characters", raw)
+		return Extension{}, errorfamily.Newf(errorfamily.Rejection, "domain.extension", "extension %q has no dialable characters", raw)
 	}
 	if len(clean) > 32 {
-		return Extension{}, fmt.Errorf("extension %q longer than 32 characters", raw)
+		return Extension{}, errorfamily.Newf(errorfamily.Rejection, "domain.extension", "extension %q longer than 32 characters", raw)
 	}
 	return Extension{value: clean}, nil
 }
@@ -53,10 +55,10 @@ type Phone struct {
 func ParsePhone(raw string) (Phone, error) {
 	clean := sanitizeDialable(raw)
 	if clean == "" {
-		return Phone{}, fmt.Errorf("number %q has no dialable characters", raw)
+		return Phone{}, errorfamily.Newf(errorfamily.Rejection, "domain.phone", "number %q has no dialable characters", raw)
 	}
 	if len(clean) > 32 {
-		return Phone{}, fmt.Errorf("number %q longer than 32 characters", raw)
+		return Phone{}, errorfamily.Newf(errorfamily.Rejection, "domain.phone", "number %q longer than 32 characters", raw)
 	}
 	return Phone{value: clean}, nil
 }
@@ -202,7 +204,7 @@ func parseID[B any](s string, kind string) (id.ID[B, nanoid.ID], error) {
 		raw = rest
 	}
 	if len(raw) != 21 {
-		return id.ID[B, nanoid.ID]{}, fmt.Errorf("corrupt %s id %q: want 21 nanoid chars", kind, s)
+		return id.ID[B, nanoid.ID]{}, errorfamily.Newf(errorfamily.Corruption, "domain.id", "corrupt %s id %q: want 21 nanoid chars", kind, s)
 	}
 	return id.NewID[B](nanoid.ID(raw)), nil
 }
