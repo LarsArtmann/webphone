@@ -420,13 +420,14 @@ in
       };
     };
 
-    # The Caddy front: a catch-all reverse_proxy plus the two paths that
+    # The Caddy front: a catch-all reverse_proxy plus the paths that
     # need explicit treatment — the SIP WebSocket bridge (only when an
-    # upstream is configured; the app never terminates the wss itself)
-    # and SSE (explicit flush_interval -1 so /events bytes reach the
-    # browser unbuffered). The JSON probes (/healthz /livez /startupz
-    # /metrics) need no handle of their own: fence scrapers with a
-    # remote_ip matcher in extraConfig instead of nginx-style
+    # upstream is configured; the app never terminates the wss itself),
+    # SSE (explicit flush_interval -1 so /events bytes reach the
+    # browser unbuffered; the /health/* dashboard subtree streams the
+    # same way), and the JSON probes (/healthz /livez /startupz
+    # /metrics) which need no handle of their own: fence scrapers with
+    # a remote_ip matcher in extraConfig instead of nginx-style
     # per-location blocks.
     services.caddy = lib.mkIf cfg.caddy.enable {
       enable = lib.mkDefault true;
@@ -441,6 +442,15 @@ in
           }
         ''}
         handle /events {
+          reverse_proxy 127.0.0.1:${listenPort} {
+            flush_interval -1
+          }
+        }
+        # The health dashboard subtree (only served when the operator
+        # enabled dashboard.enable in settings): same unbuffered
+        # proxying as /events — the dashboard's SSE stream must not
+        # buffer behind the front.
+        handle /health/* {
           reverse_proxy 127.0.0.1:${listenPort} {
             flush_interval -1
           }
