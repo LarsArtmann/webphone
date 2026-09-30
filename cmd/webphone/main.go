@@ -5,27 +5,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/larsartmann/httputil"
 
-	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/app"
 	"github.com/larsartmann/webphone/internal/config"
-	"github.com/larsartmann/webphone/internal/crm"
-	"github.com/larsartmann/webphone/internal/fax"
-	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/retention"
-	"github.com/larsartmann/webphone/internal/server"
-	"github.com/larsartmann/webphone/internal/session"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 func main() {
@@ -71,90 +62,24 @@ func run() error {
 	if cfg.CRM.URL != "" {
 		slog.Info("crm integration", "mode", "enabled", "url", cfg.CRM.URL)
 	}
+	if cfg.Dashboard.Enable {
+		slog.Info("health dashboard", "mode", "enabled", "path", "/health")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Create the data dir up front: a missing parent directory would
-	// otherwise surface as SQLite's cryptic "unable to open database
-	// file (14)".
-	if err := os.MkdirAll(cfg.DataDir, 0o700); err != nil {
-		return propagatef("create data dir: %w", err)
-	}
-
-	// --- infrastructure --------------------------------------------------
-	db, err := store.Open(filepath.Join(cfg.DataDir, "webphone.db"))
+	// The container (internal/app) owns object lifetime: every service,
+	// the go-health probe over the container's health-checkable
+	// services, and the optional dashboard.
+	application, err := app.New(cfg, slog.Default())
 	if err != nil {
-		return propagatef("open store: %w", err)
+		return propagatef("build app: %w", err)
 	}
-	defer func() { _ = db.Close() }()
-
-	blobs, err := blob.New(filepath.Join(cfg.DataDir, "files"))
-	if err != nil {
-		return propagatef("open blob store: %w", err)
+	if err := application.Start(ctx); err != nil {
+		return propagatef("start app: %w", err)
 	}
 
-	phoneAPI, err := pbx.NewClient(cfg.PhoneAPIURL)
-	if err != nil {
-		return propagatef("phone api client: %w", err)
-	}
-
-	crmClient, err := crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
-	if err != nil {
-		return propagatef("crm client: %w", err)
-	}
-	crmResolver := crm.NewResolver(crmClient, slog.Default())
-
-	// --- services ----------------------------------------------------------
-	messages := store.NewMessages(db)
-	faxes := store.NewFaxes(db)
-	contacts := store.NewContacts(db)
-	sessions, err := session.NewSQLiteStore(db, cfg.SessionTTL)
-	if err != nil {
-		return propagatef("open session store: %w", err)
-	}
-
-	// Wall-clock zone (plan T26d): the configured IANA zone owns every
-	// rendered time and log line (validation already rejected typos).
-	if cfg.Timezone != "" {
-		loc, err := time.LoadLocation(cfg.Timezone)
-		if err != nil {
-			return propagatef("load timezone: %w", err)
-		}
-		time.Local = loc
-		slog.Info("timezone applied", "zone", cfg.Timezone)
-	}
-
-	// Bounded retention (plan T25): retention_days > 0 starts the daily
-	// sweep; the default keeps everything forever and starts nothing.
-	retention.Start(ctx, db, blobs, time.Duration(cfg.RetentionDays)*24*time.Hour)
-
-	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, messages, faxes, crmResolver)
-
-	messageGateway := gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient())
-	faxGateway := gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient())
-
-	messagingService := messaging.New(messages, blobs, messageGateway, notifier.MessagesChanged, cfg.Identities)
-	faxService := fax.New(faxes, blobs, faxGateway, notifier.FaxChanged, cfg.Identities)
-
-	handler := server.New(server.Deps{
-		Config:    cfg,
-		Sessions:  sessions,
-		Messages:  messages,
-		Faxes:     faxes,
-		Contacts:  contacts,
-		Messaging: messagingService,
-		Fax:       faxService,
-		PhoneAPI:  phoneAPI,
-		Hubs:      hubs,
-		Shared:    cfg.Contacts,
-		CRM:       crmResolver,
-		DB:        db,
-		BlobRoot:  blobs.Root(),
-	})
-
-	// --- serve ---------------------------------------------------------------
 	// httputil.Server owns the lifecycle — the same tested primitive the
 	// cqrs-htmx setup bundle's RunHandler wraps (footprint train
 	// 2026-09-30: the setup ADOPTION measured +10.4 MB / +68.2% binary
@@ -162,15 +87,15 @@ func run() error {
 	// rejected; the lifecycle value rides the wrapper's own dependency).
 	// SSE-safe timeout set: ReadHeaderTimeout bounds slowloris, IdleTimeout
 	// reaps dead keep-alives, NO Read/Write deadlines — SSE streams outlive
-	// any fixed deadline. The 30s shutdown budget covers the SSE hub drain
-	// (the manual block this replaced gave itself 10s).
+	// any fixed deadline. The 30s shutdown budget covers the SSE hub drain.
 	httpServer, err := httputil.NewServer(httputil.ServerConfig{
 		Addr:              cfg.Addr,
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		ShutdownTimeout:   30 * time.Second,
-	}, handler)
+	}, application.Handler)
 	if err != nil {
+		_ = application.Shutdown()
 		return err
 	}
 
@@ -179,9 +104,15 @@ func run() error {
 
 	select {
 	case err := <-errCh:
-		return propagatef("serve: %w", err)
+		return errors.Join(propagatef("serve: %w", err), application.Shutdown())
 	case <-ctx.Done():
 		slog.Info("shutting down")
-		return httpServer.Shutdown(context.WithoutCancel(ctx))
+		// Order matters: the HTTP drain finishes in-flight responses
+		// (SSE hubs flush), THEN the container closes the dashboard
+		// pusher and the SQLite handle.
+		if err := httpServer.Shutdown(context.WithoutCancel(ctx)); err != nil {
+			return errors.Join(propagatef("http shutdown: %w", err), application.Shutdown())
+		}
+		return application.Shutdown()
 	}
 }
