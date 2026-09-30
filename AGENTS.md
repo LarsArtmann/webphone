@@ -35,23 +35,26 @@ E2E harness lessons (soft reloads dodge URL blocks via cache;
 chromedriver is blind mid-navigation — count in-page) live in the
 stack repo's browser-e2e.py.
 
-The cqrs-htmx `setup` bundle's IDENTITY surfaces stay rejected
-(usermgmt.Service, `/auth/*`, login page — the split-brain record):
-this product's identity is the PBX extension + directory password,
-proven by the island's SIP REGISTER — a second user database would be
-a split brain. AMENDED 2026-09-30 (plan
-`docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`),
-scope-limited: the bundle's RUNTIME SHELL is adopted — `RunHandler`
-serve/drain, `HealthPath`+`HealthChecks`, opt-in `LivePath` — composed
-behind the existing httpspec-pinned chain via `ExtraMiddleware` +
-`DisableSecurityMiddleware` + `RequestLogging=nil`, only AFTER the
-upstream seams land (`Config.DisableAuth` so `/auth/*` never mounts,
-service-optional `New()` so no usermgmt.Service exists). Probe paths
-(`/healthz` `/livez` `/startupz` `/version` `/metrics`) and `/events`
-stay webphone-mounted wire contracts. Footprint gate: go if the
-stripped-binary delta is ≤ +8 MB absolute AND ≤ +20% relative vs the
-pre-adoption build; otherwise fallback R3 (promote the shell value
-into the cqrs-htmx root library instead).
+The cqrs-htmx `setup` bundle stays REJECTED for this product: (1) the
+original split-brain identity record stands — identity is the PBX
+extension + directory password proven by the island's SIP REGISTER, a
+second user database would be a split brain; (2) the 2026-09-30
+footprint measurement killed the scope-limited runtime-shell adoption
+(plan `docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`):
+upstream seams shipped first (setup/v4.13.1: `DisableAuth`,
+`DisableService`, `NewShell` — ADR-0054 in cqrs-htmx), webphone
+composed the full shell behind its httpspec-pinned chain and every test
+went green, but importing the setup package links its whole import
+graph (+72 modules: usermgmt, adminui, dashboardui, loginpage, casbin,
+appkit, datastar) even with `NewShell` — binary 15.25 → 25.65 MB,
++10.40 MB = +68.2% against the recorded gate (≤ +8 MB AND ≤ +20%):
+NO-GO. The shell VALUE landed anyway via the primitive setup's
+RunHandler itself wraps — `httputil.NewServer` (already a dependency):
+SSE-safe timeouts (ReadHeader 5s, Idle 60s, no Read/Write deadlines),
+30s graceful-shutdown budget for the SSE drain — at +8 KB. Rationale
+for future re-litigation: a zero-usermgmt `shell` submodule upstream
+would dodge the import graph; only worth it if the shell grows more
+value than the lifecycle.
 
 ## Tri-repo integration rules
 
