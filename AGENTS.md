@@ -470,6 +470,20 @@ ports of already-pinned paths.
   greppable row classes (`wp-thread-row`, `wp-bubble`, `wp-fax-row`).
   The green dot is `#wp-sse-live` (JS-created so the served DOM
   contract stays untouched).
+- Typography craft (2026-09-30 font-design train): the CSS root is
+  `font-size: 93.75%` (app.css `html` rule) — a PERCENTAGE, never px,
+  so the whole rem scale tracks the browser font-size preference
+  (15px at the default 16px setting; `.island` mirrors it as `1rem`).
+  The html rule also owns the rendering baseline
+  (`-webkit-font-smoothing`, `text-rendering: optimizeLegibility`,
+  `font-synthesis: none` — no synthetic bold for the 550-750 weights),
+  inherited by the island stylesheet, so do NOT duplicate it there.
+  Headings carry `text-wrap: balance`; `.wp-bubble-body` carries
+  `text-wrap: pretty`; `#log`/`.ice` use the full local mono stack
+  (ui-monospace → SF Mono → Menlo → Consolas → Liberation Mono).
+  `html lang` follows the session: layout.templ passes
+  `Locale: string(props.Lang)` to `layout.Base` (library default is a
+  hardcoded "en") — German sessions announce/hyphenate as de.
 - CSRF: login/logout rotate the token; the island adopts the fresh
   one WITHOUT reload via `GET /api/csrf` (retry ladder: recover on
   retry 2, reload only after 3 failures). Tests that POST after

@@ -58,6 +58,10 @@ templ Shell(props ShellProps) {
 		CSSPath:        "/assets/app.css",
 		Favicon:        "/favicon.svg",
 		Nonce:          "",
+		// Locale becomes the html lang attribute — the per-extension
+		// session language, so screen readers and hyphenation follow en/de
+		// instead of the library's hardcoded "en" default.
+		Locale:         string(props.Lang),
 		SEO:            layout.SEOMeta{NoIndex: true},
 		// NoThemeScript: the library's inline dark-mode preload violates the
 		// zero-inline-script CSP — the same job is done pre-paint by the
