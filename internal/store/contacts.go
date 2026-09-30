@@ -23,7 +23,7 @@ const ContactsMaxPerExtension = 500
 
 // ErrListFull is returned when a NEW number would exceed the per-owner
 // cap; the rename path (upsert on an existing number) stays open.
-var ErrListFull = errors.New("contact list full")
+var ErrListFull = errors.New("contact list full") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // NewContacts builds the contact store.
 func NewContacts(db *sql.DB) *Contacts { return &Contacts{db: db} }
@@ -87,7 +87,7 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 		return errorfamily.WrapInfrastructuref(err, "store.contact_delete", "delete contact")
 	}
 	if rows, _ := res.RowsAffected(); rows == 0 { //nolint:erraudit // best-effort write; the response is already committed
-		return errors.Join(ErrNotFound, errorfamily.Newf(errorfamily.Rejection, "store.contact_missing", "contact %s", id.String()))
+		return errors.Join(ErrNotFound, errorfamily.Newf(errorfamily.Rejection, "store.contact_missing", "contact %s", id.String())) //nolint:erraudit // Join keeps both arms errors.Is-matchable; family via ErrNotFound registration
 	}
 	return nil
 }

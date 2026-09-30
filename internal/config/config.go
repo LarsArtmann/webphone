@@ -109,7 +109,7 @@ type Gateway struct {
 // gateway.webhook_secret_file — two sources for one secret is a drift
 // bug waiting to happen. Classified Rejection: the operator must fix
 // the deployment's config before the service can start.
-var errGatewaySecretBothSources = errorfamily.NewRejection("config.gateway_secret_sources", "gateway: set at most one of webhook_secret / webhook_secret_file")
+var errGatewaySecretBothSources error = errorfamily.NewRejection("config.gateway_secret_sources", "gateway: set at most one of webhook_secret / webhook_secret_file")
 
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is

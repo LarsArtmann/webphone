@@ -54,12 +54,12 @@ func init() {
 }
 
 // ErrDisabled is returned when no phone API is configured.
-var ErrDisabled = errors.New("phone api not configured")
+var ErrDisabled = errors.New("phone api not configured") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // ErrUnauthorized is returned when the phone API rejected the presented
 // credentials (HTTP 401/403): the server-side proof that the
 // extension/password pair is not valid in the PBX directory.
-var ErrUnauthorized = errors.New("phone api rejected the credentials")
+var ErrUnauthorized = errors.New("phone api rejected the credentials") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }

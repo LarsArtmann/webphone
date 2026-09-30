@@ -32,14 +32,14 @@ func init() {
 }
 
 // ErrDisabled is returned when no CRM is configured.
-var ErrDisabled = errors.New("crm not configured")
+var ErrDisabled = errors.New("crm not configured") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // ErrUnauthorized is returned when the CRM rejected the bearer token
 // (HTTP 401/403): the integration is half-configured and must surface.
-var ErrUnauthorized = errors.New("crm rejected the bearer token")
+var ErrUnauthorized = errors.New("crm rejected the bearer token") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // ErrNotFound is returned when the CRM holds no contact for the number.
-var ErrNotFound = errors.New("crm has no contact for this number")
+var ErrNotFound = errors.New("crm has no contact for this number") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 
 // requestTimeout bounds every CRM round-trip. The integration is
 // best-effort decoration around the phone: a slow CRM must never make a

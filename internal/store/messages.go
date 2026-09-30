@@ -14,7 +14,7 @@ import (
 )
 
 // ErrNotFound is returned when a row the caller asked for does not exist.
-var ErrNotFound = errors.New("not found")
+var ErrNotFound = errors.New("not found") //nolint:erraudit // sentinel: absence is not an error family (plan guardrail #4); classified via init registration
 
 // Messages is the thread/message persistence.
 type Messages struct {
