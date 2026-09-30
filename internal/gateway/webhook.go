@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/textproto"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -48,13 +50,35 @@ func (e *ErrProviderRejected) Error() string {
 	return fmt.Sprintf("provider rejected: HTTP %d: %s", e.Status, e.Detail)
 }
 
+// embeddedBridgeEnvelope matches the messaging-bridge error envelope for an
+// embedded Telnyx API refusal ("telnyx rejected the send (HTTP 403, …") —
+// byte-shape pinned by the bridge suite (tests/test_telnyx_bridge.py). The
+// bridge answers 502 for every failed forward, so its own status cannot
+// distinguish a provider refusal from a bridge fault; the verdict that
+// drives the family rides inside the detail.
+var embeddedBridgeEnvelope = regexp.MustCompile(`^telnyx rejected the send \(HTTP (\d{3})`)
+
 // ErrorFamily classifies the refusal by the provider's own status: a 4xx
 // answer refused the request content (Rejection — the user can fix the
 // request), anything else (5xx, odd 3xx) is the provider's side failing
-// (Transient — retry later). The type is NOT wrapped in an errorfamily.Error:
+// (Transient — retry later). For bridge-transported refusals the provider's
+// status is embedded in the detail (embeddedBridgeEnvelope) and takes
+// precedence over the bridge's 502: without it a Telnyx 4xx policy refusal
+// (the +48 40306 class) lands on the transport arm and renders as
+// "gateway did not answer" (2026-09-30). The type is NOT wrapped in an
+// errorfamily.Error:
 // its Error/Detail strings are pinned by tests and rendered to users, so it
 // implements the Classified interface instead.
 func (e *ErrProviderRejected) ErrorFamily() errorfamily.Family {
+	if match := embeddedBridgeEnvelope.FindStringSubmatch(e.Detail); match != nil {
+		if embedded, err := strconv.Atoi(match[1]); err == nil {
+			if embedded >= http.StatusInternalServerError {
+				return errorfamily.Transient
+			}
+
+			return errorfamily.Rejection
+		}
+	}
 	if e.Status >= http.StatusInternalServerError {
 		return errorfamily.Transient
 	}

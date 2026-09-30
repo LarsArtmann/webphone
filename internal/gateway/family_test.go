@@ -158,3 +158,46 @@ func TestFaxFormFailureIsInfrastructure(t *testing.T) {
 	errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 	errorfamilytest.AssertCode(t, err, "gateway.form")
 }
+
+func TestBridgeEnvelopeEmbeddedTelnyxStatusDrivesFamily(t *testing.T) {
+	post := func(t *testing.T, upstreamStatus int, body string) error {
+		t.Helper()
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(upstreamStatus)
+			_, _ = w.Write([]byte(body))
+		}))
+		t.Cleanup(srv.Close)
+
+		return postProbe(t, webhookGateway(srv.URL, "s", srv.Client()))
+	}
+
+	// The bridge answers 502 for every failed forward (its pinned
+	// contract), so the provider's own verdict rides inside the
+	// envelope detail: classification must read it, or a Telnyx 4xx
+	// policy refusal (the +48 40306 class) renders as the transport
+	// "gateway did not answer" copy instead of the actionable refusal.
+	rejection := post(t, http.StatusBadGateway,
+		`{"error":"telnyx rejected the send (HTTP 403, error 40306): The messaging profile doesn't have an associated alphanumeric sender ID"}`)
+	var rejected *ErrProviderRejected
+	if !errors.As(rejection, &rejected) {
+		t.Fatalf("expected ErrProviderRejected, got %T: %v", rejection, rejection)
+	}
+	if rejected.Status != http.StatusBadGateway {
+		t.Fatalf("envelope status = %d, want the bridge's 502", rejected.Status)
+	}
+	if got := errorfamily.Classify(rejection); got != errorfamily.Rejection {
+		t.Fatalf("embedded Telnyx 403 over a bridge 502: family = %s, want Rejection", got)
+	}
+
+	transient := post(t, http.StatusBadGateway,
+		`{"error":"telnyx rejected the send (HTTP 503): telnyx api is degraded"}`)
+	if got := errorfamily.Classify(transient); got != errorfamily.Transient {
+		t.Fatalf("embedded Telnyx 503 over a bridge 502: family = %s, want Transient", got)
+	}
+
+	plain := post(t, http.StatusBadGateway, `{"error":"webphone forward failed upstream"}`)
+	if got := errorfamily.Classify(plain); got != errorfamily.Transient {
+		t.Fatalf("bridge 502 without an embedded verdict: family = %s, want Transient", got)
+	}
+}
