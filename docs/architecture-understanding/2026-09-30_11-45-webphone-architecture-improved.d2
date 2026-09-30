@@ -1,0 +1,58 @@
+direction: down
+
+browser: Browser (operator) {
+  island: SIP Island (never unloads)
+  tabs: HTMX Tabs
+  sse: SSE listeners
+}
+
+webphone: webphone Go binary {
+  shell: cqrs-htmx shell (RunHandler serve/drain) {
+    style.stroke-dash: 4
+  }
+  server: internal/server {
+    wiring: wiring (Deps + chain + mount)
+    api: server/api (JSON endpoints) {
+      style.stroke-dash: 4
+    }
+    hooks: server/hooks (webhook ingest + idem) {
+      style.stroke-dash: 4
+    }
+    pages: pages + partials (templ rendering)
+  }
+  services: Services (messaging, fax, session, retention, crm, vcard)
+  gateway: Gateway seam (loopback + webhook)
+  pbx: pbx.Client
+  store: store (SQLite WAL)
+  blobs: blob.Store
+  domain: internal/domain
+}
+
+pbxstack: Telephony stack (nginx + FreeSWITCH)
+crmledger: Ledger CRM
+
+existing edges: {
+  browser.tabs -> webphone.server: "HTMX partials"
+  browser.sse -> webphone.server: "GET /events"
+  browser.island -> pbxstack: "SIP over WSS"
+  pbxstack -> webphone.server.hooks: "webhooks"
+  webphone.services -> webphone.store: "owner-scoped SQL"
+  webphone.server -> webphone.pbx: "directory proof"
+  webphone.services.crmres -> crmledger: "bearer"
+}
+
+changed: Proposed deltas (this review) {
+  color: "#f4d35e"
+  serversplit: carve the 19-file HTTP surface into api/ + hooks/ (wiring stays)
+  faxseam: receipt-verbosity seam replaces the *gateway.Loopback type-assert
+  configtyping: Load() validates SharedContact.Number + identities keys (fail-closed boot)
+  schemaver: schema_version table before the first altering migration
+  shelladopt: cqrs-htmx setup-shell adoption (owner-pending, TODO_LIST)
+}
+
+changed.serversplit -> webphone.server.api: "3 seams, tests move with files"
+changed.serversplit -> webphone.server.hooks: "401-writer allowlist follows"
+changed.faxseam -> webphone.gateway: "Receipt carries sync-verbosity"
+changed.configtyping -> webphone.domain: "ParsePhone + ParseExtension at boot"
+changed.schemaver -> webphone.store: "versioned migrations"
+changed.shelladopt -> webphone.shell: "replaces manual serve/drain"

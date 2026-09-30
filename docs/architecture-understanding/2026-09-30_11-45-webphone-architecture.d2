@@ -1,0 +1,85 @@
+direction: down
+
+browser: Browser (operator) {
+  island: SIP Island (never unloads) {
+    sipjs: sip.js 0.21.2 (vendored IIFE)
+    reconnect: bounded reconnect watchdog
+    state: state.js + auth.js (shared state, no cross-imports)
+  }
+  shell: shell.js (tab affordances, htmx error surfacing)
+  tabs: HTMX Tabs (Messages / Fax / Voicemail / History / Contacts / Settings, morph-swap)
+  sse: SSE listeners (wp-sse-live)
+}
+
+webphone: webphone Go binary {
+  cmd: cmd/webphone (composition root) {
+    main: config.Load + service wiring
+  }
+  server: internal/server (HTTP surface, 19 files) {
+    middleware: Middleware chain {
+      enrich: ContextEnrichment (RequestID)
+      log: RequestLoggingSlog
+      timing: ServerTiming (env-gated)
+      security: SecurityHeaders (CSP, Permissions-Policy)
+      recovery: Recovery
+      csrf: CSRF (nosurf, proxy-trust)
+    }
+    routes: HTTP surface {
+      pages: Shell + tab partials (templ)
+      jsonapi: JSON APIs (/api/session, /api/csrf, /api/contacts, /api/calls)
+      ssep: GET /events (ExtensionHubs SSE)
+      proxy: /phone-api proxy (session Basic-auth)
+      hooks: /hooks/* (secret gate + idempotency)
+      export: ZIP export
+      probes: /healthz /livez /startupz /version /metrics
+    }
+  }
+  views: internal/web/views (templ + i18n) {
+    panels: panelHead / errorBanner / identityLine
+  }
+  services: Services (HTTP-free) {
+    messaging: messaging.Service
+    faxsvc: fax.Service
+    sessionsvc: session (SQLite store, sliding TTL)
+    retention: retention.Sweeper (daily prune)
+    crmres: crm.Resolver (TTL cache, single-flight)
+    vcard: vcard (pure parser)
+  }
+  gateway: internal/gateway (seam) {
+    loopback: Loopback (dev)
+    webhook: Webhook (multipart, Bearer secret, honest Content-Type)
+  }
+  pbx: internal/pbx.Client (leaf client: directory proof, voicemail, CDR)
+  store: internal/store (SQLite WAL, owner-scoped, listRows)
+  blobs: internal/blob.Store (nanoid-named files)
+  domain: internal/domain (branded ids, value objects, enums)
+}
+
+pbxstack: Telephony stack (consuming repo) {
+  nginx: TLS termination, WSS /sip proxy, /events SSE
+  telnyx: telnyx-webhooks.py bridge -> /hooks/*
+  fs: FreeSWITCH (SIP + server-side recordings)
+}
+
+crmledger: Ledger CRM {
+  api: "-api-token bearer, /api/* only"
+}
+
+browser.island -> pbxstack.fs: "SIP REGISTER + WSS (via /sip)"
+browser.tabs -> server.routes: "hx-*, partial swaps"
+browser.shell -> server.routes: "fetch /api/*, CSRF"
+browser.sse -> server.routes.ssep: "per-session events"
+server -> views: renders
+server -> services: calls
+services.messaging -> gateway: Send
+services.faxsvc -> gateway: Send (type-asserts Loopback)
+services.sessionsvc -> pbx: VerifyCredentials
+server.proxy -> pbx: passthrough
+services.crmres -> crmledger.api: "GET /api (bearer)"
+services -> store: "owner-scoped queries"
+store -> blobs: file references
+server -> domain: types
+views -> domain: types
+gateway -> domain: types
+pbxstack.telnyx -> server.routes.hooks: "inbound + status webhooks"
+cmd -> server: wires
