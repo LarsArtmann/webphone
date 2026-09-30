@@ -65,7 +65,7 @@ file implements that proposal and records the supersession).
 - 2026-09-23 15:58 — `-t 2`, 16 groups: `panelHead` extracted (6 sites), 15 accepted.
 - 2026-09-24 16:56 — `-t 2`, 16 groups: `errorBanner`/`panelError`/`identityLine` extracted (8 sites), 13 accepted; re-run fully attributed.
 - 2026-09-27 — `-t 2`, 15 groups, all verified at HEAD against this table: 0 new, 0 extracted, 15 attributed (EmptyState ruling rationale updated). Zero harmful duplication; re-run at the same flags confirmed the group set.
-- 2026-09-30 — `-t 2 --suggest-generics`, 15 groups (owner-requested sweep from pasted report; re-run at HEAD `97d9c79` matched the paste exactly). Every occurrence site re-read: 0 new, 0 extracted, 15/15 attributed; sibling-site greps (wp-nav-badge ×3, wp-segcount ×2, data-i18n phone-only, contactSaveFailed ×2) found no unreported sites. Two rows widened to cover previously-implicit attributions (closing-tag fragments, cross-tab send buttons). Zero harmful duplication unchanged.
+- 2026-09-30 — `-t 2 --suggest-generics`, 15 groups (owner-requested sweep from pasted report; re-run at HEAD `97d9c79` matched the paste exactly). Every occurrence site re-read: 0 new, 0 extracted, 15/15 attributed; sibling-site greps (wp-nav-badge ×3, wp-segcount ×2, data-i18n phone-only, contactSaveFailed ×2) found no unreported sites. Two rows widened to cover previously-implicit attributions (closing-tag fragments, cross-tab send buttons). Zero harmful duplication unchanged. Status: docs/status/2026-09-30_12-59_dedup-sweep-t2-status.md.
 
 ## Open owner calls (do not resolve unilaterally)
 
