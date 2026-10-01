@@ -573,11 +573,14 @@
     var tickRelative = function () {
       var nodes = document.querySelectorAll("[data-when]");
       for (var i = 0; i < nodes.length; i++) {
-        var seconds = Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
+        var seconds =
+          Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
         if (!(seconds >= 0)) continue;
         if (seconds < 60) nodes[i].textContent = "now";
-        else if (seconds < 3600) nodes[i].textContent = Math.floor(seconds / 60) + "m";
-        else if (seconds < 86400) nodes[i].textContent = Math.floor(seconds / 3600) + "h";
+        else if (seconds < 3600)
+          nodes[i].textContent = Math.floor(seconds / 60) + "m";
+        else if (seconds < 86400)
+          nodes[i].textContent = Math.floor(seconds / 3600) + "h";
       }
     };
     setInterval(tickRelative, 30000);

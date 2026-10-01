@@ -133,7 +133,7 @@ templ NavLinks(props ShellProps) {
 		<a
 			class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
 			href={ tab.Path() }
-			aria-current={ templ.KV("page", props.ActiveTab == tab) }
+			aria-current={ currentAttr(props.ActiveTab == tab) }
 			hx-get={ "/partials" + tab.Path() }
 			hx-target="#tab-content"
 			hx-swap="innerHTML show:window:top"
@@ -149,6 +149,17 @@ templ NavLinks(props ShellProps) {
 			}
 		</a>
 	}
+}
+
+// currentAttr renders the spec-exact aria-current value: "page" marks
+// the active tab, "false" states the rest explicitly (the attribute is
+// always written, so the shell's swap-time toggle flips between the two
+// definite values instead of adding/removing).
+func currentAttr(active bool) string {
+	if active {
+		return "page"
+	}
+	return "false"
 }
 
 // badgeCount composes an SR label for a nav badge ("3 unread"): the
