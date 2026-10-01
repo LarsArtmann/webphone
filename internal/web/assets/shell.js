@@ -652,6 +652,196 @@
       });
     }
 
+    // 5. Command palette (Ctrl/Cmd-K) and shortcut help (?): one
+    //    lazily-built overlay, two modes. The palette lists the tabs
+    //    plus a few shell actions and filters as you type; the help
+    //    mode lists every binding that actually exists (island keys
+    //    included) instead of the ones we wish existed. Overlay markup
+    //    is JS-created like the toasts — the served DOM contract stays
+    //    untouched, and every string is shell English (D3).
+    var HELP_ITEMS = [
+      ["A", "Answer the incoming call"],
+      ["H", "Hang up the focused call"],
+      ["M", "Mute / unmute the focused call"],
+      ["P", "Hold / resume the focused call"],
+      ["Esc", "Reject incoming, or hang up"],
+      ["Enter", "Send the message you are typing"],
+      ["Shift+Enter", "New line in the composer"],
+      ["Ctrl/Cmd+K", "Command palette"],
+      ["?", "This help"],
+    ];
+    var overlay = null;
+    var overlayInput = null;
+    var overlayList = null;
+    var overlayMode = "commands";
+    var overlayItems = [];
+    var overlayIndex = 0;
+    var overlayReturnFocus = null;
+
+    var collectCommands = function () {
+      var items = [];
+      var links = document.querySelectorAll("#wp-nav .wp-nav-link");
+      for (var i = 0; i < links.length; i++) {
+        (function (link) {
+          items.push({
+            label: "Go to " + link.textContent.trim(),
+            run: function () {
+              link.click();
+            },
+          });
+        })(links[i]);
+      }
+      items.push({
+        label: "Call a number",
+        run: function () {
+          var dest = document.getElementById("dest");
+          if (dest) dest.focus();
+        },
+      });
+      items.push({
+        label: "New message",
+        run: function () {
+          var messages = document.querySelector("[data-tab='messages']");
+          if (messages) messages.click();
+        },
+      });
+      items.push({
+        label: "Cycle color theme",
+        run: function () {
+          var themeButton = document.getElementById("theme-toggle");
+          if (themeButton) themeButton.click();
+        },
+      });
+      return items;
+    };
+
+    var renderOverlay = function () {
+      overlayList.replaceChildren();
+      overlayItems = [];
+      overlayIndex = 0;
+      var query = overlayInput.value.trim().toLowerCase();
+      var source =
+        overlayMode === "commands"
+          ? collectCommands()
+          : HELP_ITEMS.map(function (pair) {
+              return { label: pair[0] + " — " + pair[1] };
+            });
+      for (var i = 0; i < source.length; i++) {
+        if (query && source[i].label.toLowerCase().indexOf(query) < 0)
+          continue;
+        overlayItems.push(source[i]);
+      }
+      for (var j = 0; j < overlayItems.length; j++) {
+        var li = document.createElement("li");
+        li.className = "wp-overlay-item" + (j === 0 ? " wp-selected" : "");
+        li.textContent = overlayItems[j].label;
+        (function (index) {
+          li.addEventListener("click", function () {
+            overlayIndex = index;
+            runOverlayItem();
+          });
+        })(j);
+        overlayList.append(li);
+      }
+    };
+
+    var selectOverlay = function (delta) {
+      if (overlayItems.length === 0) return;
+      overlayIndex =
+        (overlayIndex + delta + overlayItems.length) % overlayItems.length;
+      var rows = overlayList.children;
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].className =
+          "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
+      }
+    };
+
+    var runOverlayItem = function () {
+      var item = overlayItems[overlayIndex];
+      if (!item) return;
+      closeOverlay();
+      if (item.run) item.run();
+    };
+
+    var buildOverlay = function () {
+      overlay = document.createElement("div");
+      overlay.id = "wp-palette";
+      overlay.className = "wp-overlay";
+      overlay.hidden = true;
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-label", "Command palette");
+      overlayInput = document.createElement("input");
+      overlayInput.type = "text";
+      overlayInput.className = "wp-overlay-input";
+      overlayInput.setAttribute("aria-label", "Search commands");
+      overlayInput.placeholder = "Type a command…";
+      overlayList = document.createElement("ul");
+      overlayList.className = "wp-overlay-list";
+      overlay.append(overlayInput, overlayList);
+      document.body.append(overlay);
+      overlayInput.addEventListener("input", renderOverlay);
+      overlayInput.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowDown") {
+          selectOverlay(1);
+          event.preventDefault();
+        } else if (event.key === "ArrowUp") {
+          selectOverlay(-1);
+          event.preventDefault();
+        } else if (event.key === "Enter") {
+          runOverlayItem();
+          event.preventDefault();
+        } else if (event.key === "Escape") {
+          closeOverlay();
+          event.preventDefault();
+        }
+      });
+      overlay.addEventListener("click", function (event) {
+        if (event.target === overlay) closeOverlay();
+      });
+    };
+
+    var openOverlay = function (mode) {
+      if (!overlay) buildOverlay();
+      overlayMode = mode;
+      overlayReturnFocus = document.activeElement;
+      overlay.hidden = false;
+      overlayInput.value = "";
+      overlayInput.placeholder =
+        mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";
+      renderOverlay();
+      overlayInput.focus();
+    };
+
+    var closeOverlay = function () {
+      if (overlay) overlay.hidden = true;
+      if (overlayReturnFocus && overlayReturnFocus.focus)
+        overlayReturnFocus.focus();
+      overlayReturnFocus = null;
+    };
+
+    document.addEventListener("keydown", function (event) {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        (event.key === "k" || event.key === "K")
+      ) {
+        event.preventDefault();
+        if (overlay && !overlay.hidden) closeOverlay();
+        else openOverlay("commands");
+        return;
+      }
+      if (event.key === "?" && !event.ctrlKey && !event.metaKey) {
+        var target = event.target;
+        if (
+          target &&
+          target.closest &&
+          target.closest("input, textarea, select, [contenteditable='true']")
+        )
+          return;
+        event.preventDefault();
+        openOverlay("help");
+      }
+    });
+
     // ----------------------------------------------------------------
     // Composer UX: Enter sends / Shift+Enter breaks a line in the
     // composer textareas, an SMS segment counter that only speaks past

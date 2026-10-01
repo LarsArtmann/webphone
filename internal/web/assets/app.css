@@ -1473,6 +1473,81 @@ select:focus-visible {
   }
 }
 
+/* Command palette / shortcut help overlay (M8): JS-created, centered
+   column card over a dim scrim. */
+.wp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12vh 16px 16px;
+  background: rgb(3 10 12 / 45%);
+}
+
+.wp-overlay[hidden] {
+  display: none;
+}
+
+.wp-overlay-input {
+  width: 100%;
+  max-width: 480px;
+  padding: 10px 14px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.wp-overlay-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 6px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 50vh;
+  overflow: auto;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.wp-overlay-item {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text);
+}
+
+.wp-overlay-item.wp-selected {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* Keyboard shortcut keys in the settings cheat-sheet (H2). */
+.wp-settings kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 6px;
+  text-align: center;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 0.8em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+}
+
+.wp-settings-head {
+  margin: 18px 0 0;
+  font-size: 1.05rem;
+}
+
 /* htmx indicator parity: the library's own <style> injection is disabled
  * via the htmx-config meta (strict CSP); these are the same rules it
  * would have injected, so hx-indicator keeps working if used later. */
