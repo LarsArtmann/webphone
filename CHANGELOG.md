@@ -80,6 +80,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stays rejected (identity split-brain + footprint) and the lifecycle
   value rides the already-dependency at +8 KB. Verdict + measurement:
   `docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`.
+- Nix flake polish (2026-10-01 nix-review train): the `webphone-module`
+  check split into base/csrf/backup files, its NixOS stand-in gained a
+  `freeformType` so a new config key can no longer break the check, and
+  the `services.webphone.package` option moved to `mkPackageOption`
+  (still required). Added a minimal `devShells.ci` (go + templ +
+  golangci-lint) that the `go-tests` CI job now enters instead of the
+  heavy interactive shell. The NixOS module was split under the
+  ~300-line guideline — config stays in `nixos-module.nix`, with
+  options, the Caddy vhost body, and the backup shell in their own
+  files — output proven byte-identical by an eval diff of the generated
+  vhost and both backup scripts.
 
 ## [2.8.0] - 2026-09-30
 

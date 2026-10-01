@@ -582,6 +582,31 @@
     };
     setInterval(tickRelative, 30000);
 
+    // 3h. Tab skeleton (F1): navigation swaps (tab links, thread rows,
+    //     back) reveal the shimmer placeholder while the partial is in
+    //     flight. Typing-driven fetches (search, composer) stay quiet —
+    //     morph keeps those surfaces alive and a flash there would be
+    //     noise, not signal.
+    var skeleton = null;
+    var navigatingSwap = function (elt) {
+      if (!elt || !elt.matches) return false;
+      return Boolean(
+        (elt.hasAttribute && elt.hasAttribute("data-tab")) ||
+          (elt.closest && elt.closest(".wp-thread-rowwrap, .wp-back")),
+      );
+    };
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      if (!navigatingSwap(event.target)) return;
+      skeleton = skeleton || document.getElementById("wp-tab-skeleton");
+      if (skeleton) skeleton.hidden = false;
+    });
+    var hideSkeleton = function () {
+      if (skeleton) skeleton.hidden = true;
+    };
+    document.addEventListener("htmx:afterRequest", hideSkeleton);
+    document.addEventListener("htmx:responseError", hideSkeleton);
+    document.addEventListener("htmx:sendError", hideSkeleton);
+
     // 4. Manual theme override: cycles auto (prefers-color-scheme) →
     //    light → dark, persisted in localStorage. data-theme on <html>
     //    beats both stylesheets' media queries via attribute specificity.

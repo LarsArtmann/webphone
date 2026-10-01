@@ -121,6 +121,14 @@ templ ShellBody(props ShellProps) {
 				}
 			</main>
 			<div id="wp-tab-error"></div>
+			// Skeleton placeholder (F1): the shell reveals this while a
+			// navigation partial is in flight, so a slow tab reads as
+			// loading instead of dead air.
+			<div id="wp-tab-skeleton" class="wp-skeleton" hidden aria-hidden="true">
+				<span></span>
+				<span></span>
+				<span></span>
+			</div>
 		</div>
 	</div>
 	// The SR-only live region the shell announces through (new-message

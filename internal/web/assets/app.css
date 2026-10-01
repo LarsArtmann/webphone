@@ -380,6 +380,68 @@ h3 {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 22px 24px 24px;
+  /* Panel entrance (F2): a short fade/slide when a fresh panel swaps
+     in. Morph-driven updates reuse the existing nodes and never re-run
+     the animation, so live pushes stay calm; reduced motion disables it
+     with the global guard below. */
+  animation: wp-panel-in 160ms ease-out;
+}
+
+@keyframes wp-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Tab skeleton (F1): shimmer bars revealed while a navigation partial
+   is in flight (shell.js 3h). */
+.wp-skeleton {
+  display: grid;
+  gap: 10px;
+  padding: 18px 16px;
+}
+
+.wp-skeleton[hidden] {
+  display: none;
+}
+
+.wp-skeleton span {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    color-mix(in srgb, var(--text) 8%, var(--surface-2)) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: wp-shimmer 1.1s linear infinite;
+}
+
+.wp-skeleton span:first-child {
+  width: 40%;
+}
+
+.wp-skeleton span:nth-child(2) {
+  width: 85%;
+}
+
+.wp-skeleton span:last-child {
+  width: 65%;
+}
+
+@keyframes wp-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 .wp-panel-head h2 {
