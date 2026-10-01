@@ -12,6 +12,7 @@
 import { setCredentials, clearCredentials, getCredentials } from "./auth.js";
 import { iceServers, sipDomain, websocketUrl } from "./config.js";
 import { ringbackStop, ringToneStart, ringToneStop } from "./audio.js";
+import { micMediaStreamFactory, releaseWarmMic, warmMic } from "./mic.js";
 import { recordHistory } from "./panels.js";
 import { titleFlashStart, titleFlashStop, notifyIncoming } from "./notify.js";
 import { t } from "./i18n.js";
@@ -219,8 +220,9 @@ async function buildConnection() {
     authorizationPassword: password,
     transportOptions: { server: websocketUrl },
     sessionDescriptionHandlerFactory:
-      SIP.Web.defaultSessionDescriptionHandlerFactory(),
+      SIP.Web.defaultSessionDescriptionHandlerFactory(micMediaStreamFactory),
     sessionDescriptionHandlerFactoryOptions: {
+      iceGatheringTimeout: 1000,
       peerConnectionConfiguration: { iceServers },
     },
     // Built-in logger sends SIP-stack warnings (transport failures,
@@ -248,6 +250,7 @@ async function buildConnection() {
           return;
         }
         state.incomingSession = invitation;
+        warmMic();
         const from = (invitation.remoteIdentity &&
           invitation.remoteIdentity.uri) || {
           user: "unknown",
@@ -264,6 +267,7 @@ async function buildConnection() {
             state.incomingSession = null;
             ringToneStop();
             titleFlashStop();
+            releaseWarmMic();
             // The far end gave up before the user answered: say so and
             // keep the attempt in Recent calls (dir in, no duration).
             const missed = from.user || "unknown";
@@ -361,6 +365,7 @@ export async function disconnect() {
   clearReconnectCycleDeadline();
   setOfflineBanner(false);
   ringbackStop();
+  releaseWarmMic();
   // Null the handles like the original single-file app did on logout:
   // a later placeCall must see "not connected", not a stopped agent.
   state.userAgent = null;
