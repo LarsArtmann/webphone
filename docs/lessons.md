@@ -288,3 +288,230 @@ and the evidence. Newest last is NOT enforced — group by topic.
   follow-up turns an unfixable-looking flake into a 20-minute fix
   (the PAIR1-DIAG pattern stays in the stack's browser-e2e.py as the
   permanent failure-path diagnostic).
+
+## Provenance moved out of AGENTS.md (2026-10-01 compaction)
+
+AGENTS.md was compacted to a rules-only doc (705 → ~370 lines) because
+BuildFlow's `docs/agents-md-size` preflight caps it at 377. The rules
+stay there; the dates, hashes, and train narratives moved here.
+
+### Release / train chronology (v2.6.0 and after)
+
+v2.6.0 (signed tag `807ca0c`) released + tail CLOSED 2026-09-23
+evening: stack browser E2E ×2 green at `271f5ef` (195s/184s — the FOUC
+scenario added ~15s, no budget bump), gh release object published,
+smoke 41+4 with `/version` exactly v2.6.0 (use `--bin $(nix build
+.#webphone)` locally — a bare `go build` reports Go's pseudo-version),
+`nix flake check` green incl. the KVM backup VM, and pbx-artmann relock
+#4 + re-pin at `20b2a18` (webphone ExecStart moved 2.5.0→2.6.0;
+lock-drift-probe + both toplevels green). The stack rode train
+`7197f1c` at that close, was forward-locked to `94ae28d` on 2026-09-24
+(upstream vendorHash repair; stack `dea945c` rides it + the flipped
+lowercase contacts assert awaiting the v2.7.0 relock). Post-close
+reminders: dep bumps swept by the daemon need the vendorHash roundtrip
+in the same breath (`0a7a732` repaired a ~2h broken `nix build`), and
+the FOUC E2E harness lessons live in the stack repo's browser-e2e.py.
+
+### Setup-bundle footprint GO/NO-GO measurement
+
+The cqrs-htmx `setup` bundle stays REJECTED: (1) split-brain identity —
+identity is the PBX extension + directory password proven by the
+island's SIP REGISTER, a second user database would be a split brain;
+(2) the 2026-09-30 footprint measurement killed the scope-limited
+runtime-shell adoption (plan
+`docs/planning/2026-09-30_10-37_SUPERB-setup-shell-adoption.html`):
+upstream seams shipped first (setup/v4.13.1: `DisableAuth`,
+`DisableService`, `NewShell` — ADR-0054 in cqrs-htmx), webphone
+composed the full shell behind its httpspec-pinned chain and every test
+went green, but importing the setup package links its whole import
+graph (+72 modules: usermgmt, adminui, dashboardui, loginpage, casbin,
+appkit, datastar) even with `NewShell` — binary 15.25 → 25.65 MB,
++10.40 MB = +68.2% against the recorded gate (≤ +8 MB AND ≤ +20%):
+NO-GO. The shell VALUE landed anyway via `httputil.NewServer` (already
+a dependency): SSE-safe timeouts (ReadHeader 5s, Idle 60s, no
+Read/Write deadlines), 30s graceful-shutdown budget for the SSE drain
+— at +8 KB. A zero-usermgmt `shell` submodule upstream would dodge the
+import graph; only worth it if the shell grows more value than the
+lifecycle.
+
+### flake.nix layout train (2026-09-29 nix-review)
+
+flake.nix is a slim ENTRY (inputs, systems, imports, nixosModules);
+the meat lives in `nix/packages.nix`, `nix/checks.nix`,
+`nix/module-check.nix` (+ `module-check-base.nix` eval helpers and the
+`module-check-csrf.nix` / `module-check-backup.nix` case groups),
+`nix/vm-tests.nix`, `nix/apps.nix`, `nix/devshell.nix`,
+`nix/treefmt.nix`. The `webphoneVersion` let-binding MUST stay in
+flake.nix — `scripts/release.sh` greps/seds it there (`grep
+"webphoneVersion = " flake.nix`); it reaches `nix/packages.nix` via a
+`{ _module.args.webphoneVersion = ...; }` module. Gotcha: `self` is a
+TOP-level-only flake-parts module arg — declare it on the module
+function, never inside the `perSystem` pattern. Module hardening:
+`backup.destDir` gets the same `/var/lib/` assertion as `dataDir`
+(pinned by the `backup-destdir-assertion` linkFarm entry), both units
+set `UMask=0077` + `StateDirectoryMode=0750`, and the backup oneshot
+orders `after = [ "webphone.service" ]` so a Persistent catch-up at
+boot cannot race db creation. The `| tee $out` check pattern is safe:
+the locked stdenv setup sets `set -euo pipefail`.
+
+### Second nix-review polish train (2026-10-01)
+
+The module check split into base + csrf + backup case files (each
+`checks.webphone-module` linkFarm entry preserved byte-for-byte —
+15/15); the stand-in module gained `freeformType = attrsOf anything`
+so a new top-level config key the webphone module writes can no longer
+break the check; `services.webphone.package` moved to `mkPackageOption`
+(still REQUIRED: `default = null`); `devShells.ci` joined the devShell
+module — a minimal `mkShellNoCC` (go_1_27 + templ + golangci-lint,
+`GOTOOLCHAIN=local`) that `.github/workflows/ci.yml`'s `go-tests` job
+enters instead of the heavy interactive shell. The NixOS module was
+split under the ~300-line guideline, output PROVEN byte-identical:
+`package/nixos-module.nix` holds the config only (213 lines) and
+imports `package/options.nix`, `package/caddy-vhost.nix`, and
+`package/backup-script.nix`. The `webphoneVersion` hardcode stays an
+accepted exception (Nix cannot read git tags without impurity);
+`release.sh` owns the tag↔version lockstep.
+
+### erraudit family-adoption train (2026-09-30)
+
+Tier 1 enforced (`--type-aware --disable-extensions`, must exit 0;
+package-level sentinels must be the `error` INTERFACE — concrete
+`*Error` sentinels trip `sentinel_concrete_type`); tier 2 enforced
+green (`--enforce-go-error-family` — 132 stdlib_constructor findings on
+2026-09-30 → 0 after converting every seam to go-error-family
+constructors with stable dot-notation codes; `--enforce-coded-errors`
+also 0). Rules: constructors classify at ORIGIN (P1); propagation over
+polymorphic inner errors wraps family-NEUTRALLY — `fmt.Errorf("…: %w")`
++ reasoned nolint, a fixed-family Wrap would clobber the inner
+classification (P2; homes: `cmd/webphone.propagatef`, the `"gateway: %w"`
+service wraps, LogErrorContext log-context wraps, gateway form-builder
+inner wraps); sentinels stay `errors.New` vars (P3) and classify via
+`init()` registration in the owning package (store.ErrNotFound/
+ErrListFull, pbx.ErrDisabled/ErrUnauthorized, crm.ErrDisabled/
+ErrUnauthorized/ErrNotFound); functions keep the bare `error` return —
+typed structs only where callers branch (ErrInvalidSend pattern, P6);
+defer-close ignores are standard practice (P7). Tier 3 owner-only full
+audit (never gates; `--no-suppress --enforce-samber-oops
+--enforce-generic-return` shows the residue: generic_return decisions,
+40 defer-close ignores, 2 counted-skip swallows, the nolint'd neutral
+wraps). Re-measure tiers 1+2 monthly (next: 2026-10-22). `erraudit
+tree` draws hierarchy edges ONLY from package-level declarations and
+dedupes same-named sentinels — the 7 package-level sentinels across
+crm/pbx/store show as 4 rows at max depth 0 BY DESIGN.
+
+### Health-dashboard seam (go-health-dashboard v0.10.1, 2026-10-01)
+
+Config-gated `dashboard.{enable,title}`, DEFAULT OFF — an operator
+surface the deployment deliberately exposes (fence it like the probe
+triple; the module's Caddy vhost proxies `/health/*` unbuffered like
+`/events`). Mounted at `/health` (subtree patterns `/health` AND
+`/health/` — Go mux exact-vs-subtree, one without the other 404s half
+the surface); probe aliases at `/health/{livez,readyz,startupz}` (SAME
+probe instance as the root triple). The dashboard registers in the
+container under the name `dashboard` (its pusher-staleness check shows
+as non-critical warn). CSP: subtree override via `httputil.Nonce` +
+`dashboard.RecommendedCSP(nonce)` — `unsafe-eval` scoped to `/health`
+ONLY (Datastar SDK compiles expressions); every other surface keeps the
+strict app policy. Its stylesheet is its OWN scoped build
+`/assets/health.css` (prettier-formatted, treefmt owns it; regenerated
+from the go-health-dashboard + templ-components layout/display/
+feedback/utils/datastar sources with `nix run nixpkgs#tailwindcss_4` —
+NEVER nixpkgs#tailwindcss v3; the app's `tw.css` stays the
+adopted-components set, the two builds never merge). Probe refresh: 1s
+background loop ONLY while the dashboard is enabled (the pusher reads
+CachedResponse; live mode would freeze at boot); dashboard off =
+interval 0. The smoke boots WITH the dashboard on (standing coverage).
+
+### Composition-root train (samber/do v2, 2026-10-01)
+
+ONE container in `internal/app` owns object lifetime; `cmd/webphone`
+owns process concerns (config, logging, signals, the HTTP listener).
+The injector lives ONLY in `internal/app` (services hold resolved deps,
+never the container — service packages stay framework-free; the do
+lifecycle-interface conformance is asserted adapter-side in app.go);
+the critical pair registers NAMED (`sqlite`, `blob-dir`) because the
+names are the probe's critical-service contract; both + the handler are
+EAGERLY invoked in `New` (a never-invoked lazy service health-checks as
+silently passing — go-health gotcha); the probe is built ONCE and
+threaded to both server.Deps and the dashboard (never registered in the
+injector it reads — `*health.Probe` conforms to the health-check
+interface, self-registration recurses); shutdown order = HTTP drain →
+`Probe.Shutdown` → `do.Shutdown` cascade (dashboard pusher,
+`Database.Shutdown` — idempotent). `Deps.Probe`/`Deps.Dashboard`
+nil-fallback keeps every existing test composition working.
+`samber-linter` HW-4 warns the named pair is lazy-registered; suppressed
+with a reason at the ProvideNamed sites because the pair IS eagerly
+resolved via `MustInvokeNamed` in `New` (the linter cannot see
+transitive resolution).
+
+### Dedup trains (2026-09-22 / 09-23 / 09-24)
+
+One-home helpers: `listRows[T]` (store/db.go) owns the query→close→
+scan→`rows.Err()` lifecycle; `pbx.do()` is the single disabled-policy
+chokepoint (`VerifyCredentials` delegates to `VoicemailSummary`);
+`session.makeSession` owns the session birth invariant; server
+`requireMultipartTo` is the send-form prologue. The late-night pass
+added `domain.must`, `domain.OrClock`, `store.updatedOrNotFound`,
+`views.formatFor`, `server.crmNumbers`, `server.applyStatusWebhook`,
+`server.recordCallIdem`, `server.contactSaveFailed`,
+`server.apiContactSaved`, `views.panelHead`, `views.errorBanner`,
+`views.panelError`, `views.identityLine` — all pinned byte-exact in
+`views/panels_test.go` (incl. the panelHead both-langs backfill) and
+proven by an old-vs-new binary render diff (7/7 partials
+byte-identical with error banners + identity lines exercised live).
+Each carries its own micro-test. The dedup acceptance registry
+([docs/dedup-registry.md](dedup-registry.md)) is the ONE home for every
+accepted/declined clone ruling; `-t 3` is the working baseline pending
+owner ratification.
+
+### Mic pre-warm seam (2026-10-01)
+
+`mic.js`: `onInvite` starts `getUserMedia` while the phone rings (mic
+indicator lights at ring — owner decision: speak ASAP after accept), and
+a custom media stream factory passed to
+`SIP.Web.defaultSessionDescriptionHandlerFactory` (0.21.2 accepts the
+factory argument, verified in the vendored bundle) hands the warm stream
+to the session one-shot; every non-answer exit (reject, caller gave up,
+logout) releases the device, and a take/release during a PENDING
+acquisition stops the late stream. `iceGatheringTimeout: 1000` in the
+factory options caps the pre-200 wait (the 0.21.2 default is 5000).
+Pinned by `mic.test.mjs` + the connection mic-wiring tests.
+
+### Typography craft train (2026-09-30 font-design)
+
+The CSS root is `font-size: 93.75%` (app.css `html` rule) — a
+PERCENTAGE, never px, so the whole rem scale tracks the browser
+font-size preference; `.island` mirrors it as `1rem`. The html rule
+also owns the rendering baseline (`-webkit-font-smoothing`,
+`text-rendering: optimizeLegibility`, `font-synthesis: none` —
+no synthetic bold for 550-750 weights), inherited by the island
+stylesheet — do NOT duplicate it there. Headings carry `text-wrap:
+balance`; `.wp-bubble-body` carries `text-wrap: pretty`; `#log`/`.ice`
+use the full local mono stack. `html lang` follows the session
+(layout.templ passes `Locale: string(props.Lang)` to `layout.Base` —
+library default is a hardcoded "en").
+
+### Shell & accessibility train (2026-10-01 UI/UX)
+
+The shell (shell.js + layout.templ + app.css) owns the command palette,
+the "?" shortcut help + Settings cheat-sheet, the skip-to-content link,
+the `#wp-tab-skeleton` reveal + panel transition on navigation swaps,
+the morph focus-to-heading move, the `#wp-live` live-region
+announcements (both new DOM-contract ids), the fixed bottom tab bar
+(mobile), `aria-current` on the nav, and the optimistic send bubble with
+draft-restore-on-failure. OPERATOR RULING (2026-10-01): contacts depth
+(manager search/sections/edit, single-vCard export) is LEDGER's domain
+(~/projects/crm) — this app keeps its per-extension personal-contacts
+store + `/api/contacts` seam but does NOT grow a contacts manager (an
+in-train workstream was reverted, `6989b99`).
+
+### Paperless seam (2026-10-01)
+
+Optional, OFF by default — `paperless.url`+`paperless.token`
+both-or-neither build `internal/paperless.Archiver` (go-paperless
+v0.4.2) injected as `fax.New`'s archiver; nil-safe everywhere. Inbound
+faxes only, fire-and-forget after persist+notify
+(`fax.archiveInbound`: re-reads the spooled PDF, 2-min bound, WARN on
+failure); metadata ids (tag `fax` / type `Fax` / field
+`webphone-fax-id`) lazily ensured per first SUCCESS; duplicate refusal =
+inert success; blob store stays the only storage truth.

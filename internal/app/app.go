@@ -124,10 +124,15 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 
 	// --- infrastructure ------------------------------------------------
 	// The critical pair carries the check names the probe classifies by
-	// (health.WithCriticalServices below) — the names are contract.
+	// (health.WithCriticalServices below) — the names are contract. Both
+	// members ARE constructed during New (the service providers and the
+	// handler below MustInvokeNamed them), so HW-4's lazy-registration
+	// warning cannot apply — the linter cannot see transitive resolution.
+	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
 	do.ProvideNamed(injector, "sqlite", func(i do.Injector) (*store.Database, error) {
 		return store.OpenDatabase(filepath.Join(cfg.DataDir, "webphone.db"))
 	})
+	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
 	do.ProvideNamed(injector, "blob-dir", func(i do.Injector) (*blob.Store, error) {
 		return blob.New(filepath.Join(cfg.DataDir, "files"))
 	})
