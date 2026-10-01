@@ -57,5 +57,6 @@ toasts
 remote-audio
 lang
 wp-live
+wp-tab-skeleton
 
 <!-- dom-contract:end -->
