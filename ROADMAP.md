@@ -294,6 +294,45 @@ the stack browser E2E passed on the bumped tree. What remains:
   telephony NOW (unit environment changed, not just packaging)?
   (03:05 §g2)
 
+- UI/UX execution shape (2026-10-01): does the 120-idea catalogue and its
+  Pareto plan graduate into ROADMAP/`TODO_LIST.md` clusters, and is mobile
+  (theme I) first-class or graceful-degradation? Which `SEAM` workstreams
+  (messaging richness M21, pin/archive/mute M22) need a server-side design
+  before UI work starts? (plan `2026-10-01_03-53_SUPERB-ui-ux-pareto-plan.md`)
+- v2.9.0 fold timing: fold now (it would carry the setup salvage, the UI/UX
+  batch, fax→Paperless, mic pre-warm + island honesty) or bundle with the
+  next train? (02:12 §g3, 03:52 §g1)
+- Stack `/health` exposure policy for the dashboard subtree: `remote_ip`
+  fencing, go-health `PublicMode`, or basic auth? (02:12 §g1)
+- Ring-silence autoplay fix authorization: green-light the gesture-scoped
+  `AudioContext` fix + its pin, and confirm the original ring was actually
+  silent? (02:54 §g1)
+- Token-hygiene parity: do the newer secrets (`paperless.token`,
+  `crm.token`) need `*_file` variants like `gateway.webhook_secret_file`, or
+  is `environmentFile`-only the standing answer? (03:52 §g2)
+- Contacts ownership: CONFIRMED 2026-10-01 — manager/search/edit depth is
+  Ledger's domain (M23 reassigned; an in-train workstream reverted
+  `6989b99`). Webphone keeps only its per-extension store + `/api/contacts`.
+  No longer an owner call; recorded here as the boundary.
+
+## Raw ideas (2026-10-01 harvest)
+
+From the UI/UX catalogue/plan and the verification+performance plan; nothing
+here is committed work — refine into TODO_LIST on demand.
+
+- M23 contacts depth → route to Ledger's ROADMAP (search-everywhere,
+  sections, single-vCard export are its core, not this app's).
+- Messaging richness (M21: snippets, scheduled send) and pin/archive/mute
+  (M22) — `SEAM` features that need a server-side design pass first.
+- M24 i18n depth (locale switch UI, RTL, message status dots) and M25 call
+  depth (A6 speaker/focus mode, A10 mic/media test) — catalogue fuel.
+- WebTransport long-shot: revisit ONLY if sip.js ever ships a WebTransport
+  transport (SIP-over-WebTransport is not standardized; the adopted rationale
+  is chat-only and wants a short verdict doc).
+- Perf ideas now tracked in the verification+performance plan: ETag+304 for
+  `/assets/*`, scoped gzip for static handlers, `modulepreload` for the island
+  ESM graph — all deferred to that plan, not ad-hoc work.
+
 ## Raw ideas (2026-09-29 harvest)
 
 - `/metrics` scraper fencing helper: a module-level `allow`/`deny`
