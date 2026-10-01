@@ -7,7 +7,7 @@
 // Replaces) — the browser only sends REFER and waits for the NOTIFY
 // sipfrag verdict.
 
-import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
+import { resumeAudio, ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
 import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { releaseWarmMic } from "./mic.js";
@@ -76,7 +76,7 @@ async function holdSession(id, hold) {
     setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
   } catch (err) {
     log(`hold toggle failed: ${err.message}`, "error");
-    announce(t("holdFailed")(err.message), "error");
+    announce(t(hold ? "holdFailed" : "resumeFailed")(err.message), "error");
   } finally {
     entry.holdPending = null;
     const queued = entry.holdQueued;
@@ -387,6 +387,11 @@ export function bindSession(newSession, target) {
       titleFlashStop();
       ringToneStop();
     } else if (sessionState === SIP.SessionState.Terminated) {
+      // A dead session settles its hold state machine: the re-INVITE
+      // answer never arrives, so no pending chip may outlive the call
+      // (the watchdog-rebuild teardown lands here too).
+      live.holdPending = null;
+      live.holdQueued = undefined;
       const dur = Math.floor((Date.now() - live.startedAt) / 1000);
       if (live.established) {
         announce(t("callEnded")(durationLabel(live.startedAt)));
@@ -478,6 +483,9 @@ export function sendDtmf(tone) {
 // form can clear itself ONLY then (a validation error keeps the typed
 // text for editing).
 export async function placeCall(raw) {
+  // The dial click is a user gesture: unlock the shared AudioContext so
+  // the ringback is audible (audio.js).
+  resumeAudio().catch(() => {});
   const userAgent = state.userAgent;
   if (!userAgent) {
     announce(t("notConnected"), "error");
@@ -549,6 +557,9 @@ export function hangupFocused() {
 export function answerIncoming() {
   const invitation = state.incomingSession;
   if (!invitation) return false;
+  // The accept click is a user gesture — bring the shared AudioContext
+  // out of Chrome's suspended state so call audio starts immediately.
+  resumeAudio().catch(() => {});
   els.incoming.hidden = true;
   state.incomingSession = null;
   ringToneStop();
@@ -570,6 +581,8 @@ export function answerIncoming() {
 
 export function rejectIncoming() {
   if (!state.incomingSession) return;
+  // Gesture: unlock the shared context for every later tone.
+  resumeAudio().catch(() => {});
   state.incomingSession.reject();
   els.incoming.hidden = true;
   state.incomingSession = null;

@@ -96,6 +96,7 @@ export const I18N = {
     nothingDialable: "no dialable characters — use digits, letters, +, * or #",
     invalidDest: "invalid destination number",
     holdFailed: (detail) => `hold failed: ${detail}`,
+    resumeFailed: (detail) => `resume failed: ${detail}`,
     acceptFailed: (detail) => `could not accept the call: ${detail}`,
     hangupFailed: (detail) => `could not end the call: ${detail}`,
     dtmfFailed: (detail) => `could not send tone: ${detail}`,
@@ -211,6 +212,7 @@ export const I18N = {
       "keine wählbaren Zeichen — Ziffern, Buchstaben, +, * oder # verwenden",
     invalidDest: "ungültige Zielnummer",
     holdFailed: (detail) => `Halten fehlgeschlagen: ${detail}`,
+    resumeFailed: (detail) => `Fortsetzen fehlgeschlagen: ${detail}`,
     acceptFailed: (detail) => `Anruf konnte nicht angenommen werden: ${detail}`,
     hangupFailed: (detail) => `Anruf konnte nicht beendet werden: ${detail}`,
     dtmfFailed: (detail) => `Ton konnte nicht gesendet werden: ${detail}`,
@@ -241,7 +243,18 @@ export const I18N = {
   },
 };
 
+// The wp-lang cookie is what the SERVER already renders the shell, tabs
+// and <html lang> from (pages.go) — read it FIRST so a cookie≠navigator
+// user gets one language everywhere: German tabs under a German phone,
+// screen readers announcing with the right phonemes. localStorage only
+// leads before the first setLang (which is what writes the cookie).
+function cookieLang() {
+  const match = document.cookie.match(/(?:^|;\s*)wp-lang=(de|en)\b/);
+  return match ? match[1] : "";
+}
+
 let lang =
+  cookieLang() ||
   localStorage.getItem(LANG_KEY) ||
   ((navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en");
 
