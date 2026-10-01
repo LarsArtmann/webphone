@@ -619,6 +619,19 @@ ports of already-pinned paths.
   rejected registration, ON for the browser `offline` event; `online`
   only nudges `connection.networkOnline()` (down + no pending retry)
   and never claims registered.
+- **Shell & accessibility contract (2026-10-01 UI/UX train)**: the shell
+  (shell.js + layout.templ + app.css) owns the command palette (Ctrl/Cmd-K:
+  tabs + Call / New message / Cycle theme), the "?" shortcut help and the
+  Settings cheat-sheet, the skip-to-content link, the `#wp-tab-skeleton`
+  reveal + panel transition on navigation swaps, the morph focus-to-heading
+  move, the `#wp-live` live-region announcements (both new DOM-contract
+  ids), the fixed bottom tab bar (mobile), `aria-current` on the nav, and
+  the optimistic send bubble with draft-restore-on-failure. OPERATOR RULING
+  (2026-10-01): contacts depth (manager search/sections/edit, single-vCard
+  export) is LEDGER's domain (~/projects/crm) — this app keeps its
+  per-extension personal-contacts store + the `/api/contacts` seam but does
+  NOT grow a contacts manager (an in-train workstream was reverted,
+  `6989b99`). The served-markup change owes a fresh stack browser E2E.
 - Stack browser E2E: budget 445s (2026-09-22 baseline, two
   forced-rebuild runs 384s/373s); a ~90s transfer-step death after
   green registration+DTMF+ICE is a known flake mode (re-run once
@@ -643,7 +656,10 @@ revert/"fix" their in-flight files; re-read any shared file
 (i18n.go, pages.go, flake.nix) immediately before editing; a
 full-suite gate run may catch THEIR transient breakage — attribute
 failures before acting (erraudit findings in THEIR new packages are
-theirs to land); and leave their booted dev servers running.
+theirs to land); and leave their booted dev servers running. The
+auto-commit/treefmt daemon is adversarial to in-flight edits: it can
+reformat a file between View and Edit (silently discarding the edit),
+so re-View immediately before each Edit or write the file atomically.
 
 ## Buildflow health warning (as of 2026-09-19)
 

@@ -64,6 +64,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (+5.1%), stripped release binary 15.25 → ~15.4 MB — far inside the
   ≤ +8 MB / ≤ +20 % gate that rejected the 2026-09-30 setup-shell
   adoption.
+- Trust + accessibility batch (2026-10-01 UI/UX train, committed after the
+  v2.8.0 tag): the reply composer shows an optimistic pending bubble that
+  flips to failed and restores the draft on a send error; transcripts gained
+  day separators (Today / Yesterday / weekday) with a group count and an
+  "N unread" divider; navigation swaps move focus to the new panel heading
+  and announce through a screen-reader live region while the nav marks the
+  current tab with `aria-current`; a tab-loading skeleton and a short panel
+  transition make swaps feel instant; a skip-to-content link and form
+  `aria-describedby` aid keyboard/screen-reader users; the nav becomes a
+  fixed bottom tab bar on phones with a sticky call-prominent island; and a
+  Ctrl/Cmd-K command palette plus a "?" shortcut help (mirrored as a
+  Settings cheat-sheet) expose the shell's actions. A contacts-manager
+  workstream built in the same train was reverted — contacts depth is
+  Ledger's domain, not this app's.
 
 ### Changed
 
