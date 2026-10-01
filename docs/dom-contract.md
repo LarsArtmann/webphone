@@ -51,6 +51,8 @@ vm-badge
 vm-list
 vm-refresh
 vm-status
+wp-adv-toggle
+wp-advanced
 ice-wrap
 ice-panel
 log

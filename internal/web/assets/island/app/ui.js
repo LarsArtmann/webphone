@@ -131,3 +131,27 @@ export function dialFromUi(number) {
   els.dest.value = number;
   els.dialForm.requestSubmit();
 }
+
+// The diagnostics gear (K5): collapses the ICE panel + event log on
+// request. Ships OPEN — the E2E and the operator runbook must never
+// meet a hidden diagnostics tree — and persists the choice, the same
+// key style as the theme/extension precedents.
+const ADVANCED_COLLAPSED_KEY = "wp-advanced-collapsed";
+
+export function initAdvancedToggle() {
+  const toggle = $("wp-adv-toggle");
+  const advanced = $("wp-advanced");
+  if (!toggle || !advanced) return;
+
+  const apply = (collapsed) => {
+    advanced.hidden = collapsed;
+    toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  };
+  apply(localStorage.getItem(ADVANCED_COLLAPSED_KEY) === "1");
+
+  toggle.addEventListener("click", () => {
+    const collapsed = localStorage.getItem(ADVANCED_COLLAPSED_KEY) !== "1";
+    localStorage.setItem(ADVANCED_COLLAPSED_KEY, collapsed ? "1" : "0");
+    apply(collapsed);
+  });
+}

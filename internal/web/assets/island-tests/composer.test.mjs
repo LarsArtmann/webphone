@@ -145,12 +145,19 @@ test("byte-limit countdown: silent far from the cap, counting near, loud over", 
     doc.dispatch("input", { target: area });
   };
 
+  type("a".repeat(160));
+  assert.ok(counter.hidden, "one segment far from the cap is fully silent");
+
   type("a".repeat(1400));
-  assert.ok(counter.hidden, "1400 bytes is still silent (one segment)");
+  assert.ok(!counter.hidden, "multi-segment shows the segment count");
+  assert.doesNotMatch(
+    counter.textContent,
+    /\//,
+    "outside the limit window no byte countdown appears",
+  );
 
   type("a".repeat(1401));
-  assert.ok(!counter.hidden, "inside the 200-byte window the countdown appears");
-  assert.match(counter.textContent, /1401\/1600/);
+  assert.match(counter.textContent, /1401\/1600/, "inside the window the countdown appears");
   assert.equal(
     counter.className.includes("wp-segcount-over"),
     false,

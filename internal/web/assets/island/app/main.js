@@ -39,6 +39,7 @@ import { initDialTypeahead, relabelTypeahead } from "./typeahead.js";
 import {
   announce,
   els,
+  initAdvancedToggle,
   log,
   setOfflineBanner,
   setRegStatus,
@@ -243,6 +244,7 @@ initSseLiveIndicator();
 initDialTypeahead();
 initDialHint();
 initDialWarm();
+initAdvancedToggle();
 relabelTypeahead(t("typeaheadLabel"));
 initAudioOutput();
 

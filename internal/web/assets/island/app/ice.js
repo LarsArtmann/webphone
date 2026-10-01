@@ -33,7 +33,8 @@ function setupLine(pc, firstMediaAt) {
   if (setup.gatherMs != null) parts.push(`gather ${setup.gatherMs} ms`);
   else if (setup.gatherCapped)
     parts.push("gather capped (>1 s, partial candidates)");
-  if (setup.iceConnectedAt) parts.push(`ice +${secondsFrom(setup.iceConnectedAt)}`);
+  if (setup.iceConnectedAt)
+    parts.push(`ice +${secondsFrom(setup.iceConnectedAt)}`);
   if (firstMediaAt) parts.push(`first media +${secondsFrom(firstMediaAt)}`);
   return parts.length ? `setup: ${parts.join("  ·  ")}` : null;
 }

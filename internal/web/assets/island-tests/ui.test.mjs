@@ -97,3 +97,36 @@ test("identical consecutive toasts are deduped, different ones are not", () => {
   ui.announce("same", "error");
   assert.equal(toasts.children.length, 3, "dedup only compares against the LAST toast");
 });
+
+test("the diagnostics gear collapses on demand and persists the choice", () => {
+  localStorage.removeItem("wp-advanced-collapsed");
+  const toggle = document.getElementById("wp-adv-toggle");
+  const advanced = document.getElementById("wp-advanced");
+
+  ui.initAdvancedToggle();
+  assert.equal(advanced.hidden, false, "ships OPEN (E2E/runbook safety)");
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+
+  toggle.listeners.click[0]();
+  assert.equal(advanced.hidden, true, "one click collapses");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(localStorage.getItem("wp-advanced-collapsed"), "1", "persisted");
+
+  toggle.listeners.click[0]();
+  assert.equal(advanced.hidden, false, "second click reopens");
+  assert.equal(localStorage.getItem("wp-advanced-collapsed"), "0");
+
+  localStorage.removeItem("wp-advanced-collapsed");
+});
+
+test("a persisted collapse restores hidden at boot", () => {
+  localStorage.setItem("wp-advanced-collapsed", "1");
+  const toggle = document.getElementById("wp-adv-toggle");
+  const advanced = document.getElementById("wp-advanced");
+
+  ui.initAdvancedToggle();
+  assert.equal(advanced.hidden, true, "the stored choice applies at boot");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+
+  localStorage.removeItem("wp-advanced-collapsed");
+});

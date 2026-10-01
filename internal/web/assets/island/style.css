@@ -599,6 +599,13 @@ button.small {
   overflow-wrap: anywhere;
 }
 
+/* Diagnostics gear bar (K5): right-aligned, one small control. */
+.wp-advanced-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
 /* --- incoming call ------------------------------------------------------------ */
 
 .incoming {

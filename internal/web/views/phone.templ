@@ -105,15 +105,24 @@ templ PhoneIsland() {
 					<ul id="vm-list" class="vm"></ul>
 				</details>
 
-				<details class="log-wrap" id="ice-wrap" hidden>
-					<summary data-i18n="connectionQuality">Connection quality</summary>
-					<div id="ice-panel" class="ice">—</div>
-				</details>
+				// Advanced diagnostics behind a gear (K5): ICE panel + event
+				// log collapse on request, choice persisted. Ships OPEN by
+				// default — the operator runbook greps the served #log, and
+				// the stack E2E must never meet a hidden diagnostics tree.
+				<div class="wp-advanced-bar">
+					<button id="wp-adv-toggle" class="ghost small" type="button" aria-expanded="true" aria-controls="wp-advanced" data-i18n-title="advancedSection">⚙</button>
+				</div>
+				<div id="wp-advanced">
+					<details class="log-wrap" id="ice-wrap" hidden>
+						<summary data-i18n="connectionQuality">Connection quality</summary>
+						<div id="ice-panel" class="ice">—</div>
+					</details>
 
-				<details class="log-wrap">
-					<summary data-i18n="eventLog">Event log</summary>
-					<ul id="log"></ul>
-				</details>
+					<details class="log-wrap">
+						<summary data-i18n="eventLog">Event log</summary>
+						<ul id="log"></ul>
+					</details>
+				</div>
 			</section>
 		</main>
 
