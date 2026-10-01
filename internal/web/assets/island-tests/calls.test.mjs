@@ -271,7 +271,14 @@ test("a failed hold announces the hold direction", async () => {
   await settle();
   gates.pop().reject(new Error("nope"));
   await settle();
-  assert.match(lastToast().textContent, /hold failed/i);
+  // The failed HOLD re-renders the settled state, which re-announces
+  // "connected" — so the hold-failed toast is somewhere in the stack,
+  // not necessarily the last one.
+  const toasts = doc.getElementById("toasts").children;
+  assert.ok(
+    toasts.some((el) => /hold failed/i.test(el.textContent)),
+    "the hold direction is named in the failure copy",
+  );
   assert.equal(entry.held, false, "the settled truth stays un-held");
 
   entry.session.state = globalThis.SIP.SessionState.Terminated;
