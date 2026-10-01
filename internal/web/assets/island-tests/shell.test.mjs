@@ -570,6 +570,28 @@ test("typing-driven fetches never flash the skeleton", () => {
   assert.equal(skeleton.hidden, true, "search/composer stays quiet");
 });
 
+// 1. Nav active state after a partial swap (shell §1): the server marks
+// the active link on full renders, but after a partial swap only the
+// clicked link knows — the shell mirrors wp-active onto aria-current so
+// screen readers keep the active-tab announcement in step.
+test("a partial swap moves aria-current to the clicked nav link", () => {
+  const clicked = doc.createElement();
+  clicked.className = "wp-nav-link";
+  clicked.setAttribute("data-tab", "messages");
+  const other = doc.createElement();
+  other.className = "wp-nav-link";
+  const nav = doc.createElement();
+  nav.querySelectorAll = (selector) =>
+    selector === ".wp-nav-link" ? [clicked, other] : [];
+  clicked.closest = (selector) => (selector === ".wp-nav" ? nav : null);
+
+  doc.dispatch("htmx:afterRequest", { target: clicked });
+  assert.equal(clicked.getAttribute("aria-current"), "page");
+  assert.equal(other.getAttribute("aria-current"), "false");
+  assert.ok(clicked.classList.contains("wp-active"));
+  assert.ok(!other.classList.contains("wp-active"));
+});
+
 // 3e (edge). The successful server swap owns the bubble: once the send
 // settles OK the pending record is dropped, so a LATER unrelated error
 // must not resurrect a rollback of the already-sent bubble (the morph

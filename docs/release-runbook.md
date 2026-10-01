@@ -62,6 +62,14 @@ re-run the formatter if it moved styled files.
 
 ## Hard-won release rules (2026-09-23 tail, the v2.6.0 E2E stalls)
 
+- **Served-markup changes owe the stack E2E**: any diff that moves the
+  served markup (templ/components/partials), the DOM-contract ids, or
+  the island assets the stack's `tests/browser-e2e.py` greps MUST
+  re-run step 7's `.#telephony-browser` against the new lock before the
+  tag. The Go tests + island specs pin the contract in-repo; only the
+  cross-repo E2E proves the consuming stack still drives the island.
+  A train that only touches server internals, docs, or Go logic the E2E
+  never exercises is exempt — state the exemption explicitly.
 - **Load precondition**: `release.sh` step 7 refuses to start the
   stack E2E/VM gates while `/proc/loadavg` (1-minute) is ≥ 8
   (`WEBPHONE_RELEASE_MAX_LOAD` overrides deliberately). Default
