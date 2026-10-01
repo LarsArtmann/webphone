@@ -539,3 +539,55 @@ test("? opens the shortcut help outside typing fields", () => {
   });
   assert.equal(overlay.hidden, true, "stays closed");
 });
+
+// 3h. Tab skeleton (F1): a NAVIGATING swap (tab link, thread row, back
+// link) reveals the shimmer while the partial is in flight; a
+// typing-driven fetch (search, composer) deliberately stays quiet —
+// morph keeps those surfaces alive and a flash there would be noise.
+test("the tab skeleton reveals during a navigating swap and hides after", () => {
+  const skeleton = doc.getElementById("wp-tab-skeleton");
+  const tabLink = {
+    matches: () => false,
+    hasAttribute: (attr) => attr === "data-tab",
+    closest: () => null,
+  };
+  skeleton.hidden = true;
+  doc.dispatch("htmx:beforeRequest", { target: tabLink, detail: {} });
+  assert.equal(skeleton.hidden, false, "navigating swap reveals the skeleton");
+  doc.dispatch("htmx:afterRequest", { target: tabLink, detail: {} });
+  assert.equal(skeleton.hidden, true, "the settled swap hides it again");
+});
+
+test("typing-driven fetches never flash the skeleton", () => {
+  const skeleton = doc.getElementById("wp-tab-skeleton");
+  const search = {
+    matches: () => false,
+    hasAttribute: () => false,
+    closest: () => null,
+  };
+  skeleton.hidden = true;
+  doc.dispatch("htmx:beforeRequest", { target: search, detail: {} });
+  assert.equal(skeleton.hidden, true, "search/composer stays quiet");
+});
+
+// 3e (edge). The successful server swap owns the bubble: once the send
+// settles OK the pending record is dropped, so a LATER unrelated error
+// must not resurrect a rollback of the already-sent bubble (the morph
+// swap replaced it with the real one).
+test("a settled send is never rolled back by a later error", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const before = transcript.children.length;
+  const { form } = makeComposeForm();
+  // The nav-active listener (shell §1) fires on every htmx:afterRequest;
+  // give the form the DOM method it probes.
+  form.hasAttribute = () => false;
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  assert.equal(transcript.children.length, before + 1);
+  const bubble = transcript.children.at(-1);
+
+  doc.dispatch("htmx:afterRequest", { target: form, detail: { successful: true } });
+  doc.dispatch("htmx:responseError", { target: form });
+  assert.match(bubble.className, /\bwp-opt\b/, "still the pending bubble");
+  assert.doesNotMatch(bubble.className, /wp-opt-failed/, "no rollback after success");
+  assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
+});
