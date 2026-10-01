@@ -566,6 +566,39 @@ button.small {
   letter-spacing: 0.15em;
 }
 
+/* Sent-tone pulse: fires on INVOCATION (keypad click or keyboard
+   shortcut alike) — press acknowledgement, not a delivery claim. */
+@keyframes wp-key-sent {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+#keypad button.wp-key-sent {
+  animation: wp-key-sent 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #keypad button.wp-key-sent {
+    animation: none;
+  }
+}
+
+/* Transient tones-sent trail (JS-created, aria-hidden: #log is the
+   durable record). */
+.wp-tones {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.35em;
+  overflow-wrap: anywhere;
+}
+
 /* --- incoming call ------------------------------------------------------------ */
 
 .incoming {

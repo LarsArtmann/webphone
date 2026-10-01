@@ -13,6 +13,25 @@ let entries = [];
 let activeIndex = -1;
 let initialized = false;
 
+// Per-extension personal contacts (the server store, fed by panels.js
+// once the session exists). A number present in both worlds yields ONE
+// suggestion — the personal name wins, it is the one the user edits.
+let personalContacts = [];
+
+export function setExtraContacts(contacts) {
+  personalContacts = Array.isArray(contacts)
+    ? contacts.filter((contact) => contact && contact.number)
+    : [];
+}
+
+function suggestionSource() {
+  const personalNumbers = new Set(personalContacts.map((c) => c.number));
+  return [
+    ...personalContacts,
+    ...sharedContacts.filter((c) => !personalNumbers.has(c.number)),
+  ];
+}
+
 // rankContacts scores a contact against the query: a name that starts
 // with it beats a name that merely contains it, which beats a number
 // that contains it. Ties break by name, then number — stable enough
@@ -97,7 +116,8 @@ function render(matches) {
 
 export function initDialTypeahead() {
   if (initialized) return;
-  if (!els.dest || !els.dialForm || sharedContacts.length === 0) return;
+  if (!els.dest || !els.dialForm) return;
+  if (sharedContacts.length === 0 && personalContacts.length === 0) return;
   initialized = true;
 
   list = document.createElement("ul");
@@ -109,7 +129,7 @@ export function initDialTypeahead() {
   els.dialForm.append(list);
 
   els.dest.addEventListener("input", () => {
-    render(rankContacts(sharedContacts, els.dest.value));
+    render(rankContacts(suggestionSource(), els.dest.value));
   });
 
   els.dest.addEventListener("keydown", (event) => {

@@ -649,6 +649,13 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Over the server's 1600-byte send cap: the counter warns loudly (the
+ * submit itself stays enabled — the server 422 banner enforces). */
+.wp-segcount-over {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* Attachment chips (shell.js §4): full-width row under the composer
  * line. The [hidden] guard matters: author display beats the UA's
  * hidden rule, and the container must stay invisible until shell.js

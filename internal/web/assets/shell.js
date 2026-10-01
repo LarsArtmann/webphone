@@ -879,17 +879,42 @@
       return units <= 160 ? 1 : Math.ceil(units / 153);
     }
 
-    // updateSegcount shows "N SMS" only past one segment — silent
-    // otherwise, in every language (deliberately language-neutral).
+    // The server's hard cap, mirrored client-side: messaging's
+    // MaxBodyLength (1600) counts BYTES (Go len over UTF-8), so the
+    // countdown measures encoded bytes, not characters.
+    var MAX_BODY_BYTES = 1600;
+    // Show the countdown only inside this window of the cap — silent
+    // while the body is comfortably small.
+    var LIMIT_WINDOW_BYTES = 200;
+
+    function bodyBytes(text) {
+      return new TextEncoder().encode(String(text == null ? "" : text)).length;
+    }
+
+    // updateSegcount shows "N SMS" past one segment, and near/over the
+    // byte cap appends "bytes/1600" — silent otherwise, in every
+    // language (deliberately language-neutral). Over-cap turns the
+    // counter loud; the submit stays enabled so the server's own 422
+    // banner remains the enforcing verdict (the counter warns, it does
+    // not block).
     function updateSegcount(form, body) {
       var counter = form.querySelector(".wp-segcount");
       if (!counter) return;
       var segments = smsSegments(body);
-      if (segments > 1) {
-        counter.textContent = segments + " SMS";
+      var bytes = bodyBytes(body);
+      var nearLimit = bytes > MAX_BODY_BYTES - LIMIT_WINDOW_BYTES;
+      var over = bytes > MAX_BODY_BYTES;
+      if (segments > 1 || nearLimit) {
+        var text = segments > 1 ? segments + " SMS" : "";
+        if (nearLimit) {
+          text += (text ? " · " : "") + bytes + "/" + MAX_BODY_BYTES;
+        }
+        counter.textContent = text;
+        counter.classList.toggle("wp-segcount-over", over);
         counter.hidden = false;
       } else {
         counter.textContent = "";
+        counter.classList.remove("wp-segcount-over");
         counter.hidden = true;
       }
     }

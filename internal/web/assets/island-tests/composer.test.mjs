@@ -137,3 +137,48 @@ test("a file input outside a compose form renders no chips", () => {
   doc.dispatch("change", { target: stranger });
   assert.ok(true, "listener declines politely");
 });
+
+test("byte-limit countdown: silent far from the cap, counting near, loud over", () => {
+  const { area, counter } = composer();
+  const type = (value) => {
+    area.value = value;
+    doc.dispatch("input", { target: area });
+  };
+
+  type("a".repeat(1400));
+  assert.ok(counter.hidden, "1400 bytes is still silent (one segment)");
+
+  type("a".repeat(1401));
+  assert.ok(!counter.hidden, "inside the 200-byte window the countdown appears");
+  assert.match(counter.textContent, /1401\/1600/);
+  assert.equal(
+    counter.className.includes("wp-segcount-over"),
+    false,
+    "within the cap the counter stays calm",
+  );
+
+  // Bytes, not chars: one umlaut is two UTF-8 bytes.
+  type("ä".repeat(801));
+  assert.match(counter.textContent, /1602\/1600/, "801 umlauts are 1602 bytes");
+  assert.equal(
+    counter.className.includes("wp-segcount-over"),
+    true,
+    "over the cap the counter goes loud",
+  );
+
+  type("short");
+  assert.ok(counter.hidden, "back to a small body, the counter hides again");
+  assert.equal(
+    counter.className.includes("wp-segcount-over"),
+    false,
+    "the over flag clears with the body",
+  );
+});
+
+test("segment count and byte countdown combine", () => {
+  const { area, counter } = composer();
+  area.value = "a".repeat(1000) + "\r\n" + "b".repeat(500);
+  doc.dispatch("input", { target: area });
+
+  assert.match(counter.textContent, /SMS · 1502\/1600/, "both facts in one line");
+});

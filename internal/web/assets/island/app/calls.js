@@ -460,12 +460,50 @@ export async function hangup(id) {
   }
 }
 
+// DTMF feedback (A8): the pressed key pulses — on INVOCATION, not
+// delivery, so keyboard-triggered tones flash too and the press is
+// acknowledged instantly; the #log line records the verdict.
+function flashKey(tone) {
+  const key = els.keypad.querySelector(`button[data-tone="${tone}"]`);
+  if (!key || !key.classList) return;
+  key.classList.remove("wp-key-sent");
+  void key.offsetWidth; // restart the animation on rapid repeats
+  key.classList.add("wp-key-sent");
+}
+
+// The transient tones-sent trail under the keypad: the last ≤12 digits,
+// fading to hidden after 3 s of silence. #log stays the durable record;
+// this is the in-the-moment confirmation for mid-call menus.
+let tonesSent = [];
+let tonesTimer = null;
+
+function noteToneSent(tone) {
+  let trail = document.getElementById("wp-tones");
+  if (!trail) {
+    trail = document.createElement("p");
+    trail.id = "wp-tones";
+    trail.className = "wp-tones";
+    trail.setAttribute("aria-hidden", "true");
+    els.keypad.append(trail);
+  }
+  tonesSent.push(tone);
+  trail.textContent = tonesSent.slice(-12).join("·");
+  trail.hidden = false;
+  if (tonesTimer) clearTimeout(tonesTimer);
+  tonesTimer = setTimeout(() => {
+    trail.hidden = true;
+    trail.textContent = "";
+    tonesSent = [];
+  }, 3000);
+}
+
 export function sendDtmf(tone) {
   const entry = state.focusedId && sessions.get(state.focusedId);
   if (!entry || entry.session.state !== SIP.SessionState.Established) {
     announce(t("noActiveCall"), "info");
     return;
   }
+  flashKey(tone);
   // application/dtmf-relay with "Signal=<d>" (equals): that is the
   // only form mod_sofia parses, and only with the profile flag
   // extended-info-parsing enabled (the generated profiles set it).
@@ -477,7 +515,10 @@ export function sendDtmf(tone) {
   };
   entry.session
     .info({ requestOptions: { body } })
-    .then(() => log(`dtmf ${tone}`))
+    .then(() => {
+      log(`dtmf ${tone}`);
+      noteToneSent(tone);
+    })
     .catch((err) => {
       log(`dtmf failed: ${err.message}`, "error");
       announce(t("dtmfFailed")(err.message), "error");

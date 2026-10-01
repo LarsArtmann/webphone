@@ -12,6 +12,7 @@ import {
   noteThrottled,
 } from "./auth.js";
 import { t } from "./i18n.js";
+import { initDialTypeahead, setExtraContacts } from "./typeahead.js";
 import { announce, dialFromUi, els, log } from "./ui.js";
 
 // --- call history ----------------------------------------------------------
@@ -308,6 +309,12 @@ async function removeServerContact(contact) {
 }
 
 export function renderContacts() {
+  // Every contact render also refreshes the dial typeahead's source
+  // (and re-attempts its boot — at first load it may have bailed with
+  // no contacts at all). Legacy-only contacts are deliberately not
+  // suggested: they migrate to the server on first login.
+  setExtraContacts(personalContacts);
+  initDialTypeahead();
   if (!phoneApiEnabled && sharedContacts.length === 0) return;
   els.contactsWrap.hidden = false;
   // Server rows first; legacy rows render only for numbers the server

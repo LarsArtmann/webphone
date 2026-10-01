@@ -23,7 +23,7 @@ const CONTACTS = [
 globalThis.window = { PBX_CONFIG: { contacts: CONTACTS } };
 
 const { els } = await import("../island/app/ui.js");
-const { rankContacts, initDialTypeahead, relabelTypeahead } =
+const { rankContacts, initDialTypeahead, relabelTypeahead, setExtraContacts } =
   await import("../island/app/typeahead.js");
 
 const fire = (element, type, event = {}) => {
@@ -116,4 +116,62 @@ test("relabel updates the listbox aria-label", () => {
   const list = els.dialForm.children.find((el) => el.id === "dial-suggest");
   relabelTypeahead("Kontaktvorschläge");
   assert.equal(list.getAttribute("aria-label"), "Kontaktvorschläge");
+});
+
+test("personal contacts join the suggestions and win number collisions", () => {
+  setExtraContacts([
+    { name: "Anna Privat", number: "+491512345678" },
+    { name: "Zahnarzt", number: "117" },
+  ]);
+  initDialTypeahead();
+  const list = [...els.dialForm.children].find(
+    (child) => child.id === "dial-suggest",
+  );
+  const type = (value) => {
+    els.dest.value = value;
+    fire(els.dest, "input");
+  };
+
+  type("");
+  assert.equal(list.children.length, 0, "empty query shows nothing");
+
+  type("ann");
+  const names = [...list.children].map(
+    (option) => option.children[0].textContent,
+  );
+  assert.ok(
+    names.includes("Anna Privat"),
+    "the personal contact is suggested",
+  );
+  assert.equal(
+    names.filter((name) => name === "Anna Kellner").length,
+    0,
+    "the colliding shared suggestion is deduped away (personal wins the number)",
+  );
+  assert.deepEqual(
+    names.filter((name) => name.startsWith("Anna")),
+    ["Anna Licht", "Anna Privat"],
+    "ranking still orders the suggestions; dedupe only removes collisions",
+  );
+
+  type("zahnar");
+  assert.equal(list.children.length, 1, "a personal-only contact is findable");
+  assert.equal(list.children[0].children[0].textContent, "Zahnarzt");
+
+  setExtraContacts([]);
+});
+
+test("the typeahead boots from personal contacts alone", () => {
+  // A deployment with zero shared contacts still gets suggestions once
+  // the personal store loads — renderContacts re-attempts the boot.
+  setExtraContacts([{ name: "Nur Persönlich", number: "1002" }]);
+  initDialTypeahead();
+  const list = [...els.dialForm.children].find(
+    (child) => child.id === "dial-suggest",
+  );
+  assert.ok(list, "the list booted without shared contacts");
+  els.dest.value = "nur";
+  fire(els.dest, "input");
+  assert.equal(list.children[0].children[0].textContent, "Nur Persönlich");
+  setExtraContacts([]);
 });

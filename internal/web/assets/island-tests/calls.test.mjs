@@ -18,8 +18,9 @@ globalThis.SIP = {
   Inviter: class {},
 };
 
-const { sessions } = await import("../island/app/state.js");
-const { initDialWarm, renderCalls } = await import("../island/app/calls.js");
+const { sessions, state } = await import("../island/app/state.js");
+const { initDialHint, initDialWarm, renderCalls, sanitizeDialable, sendDtmf } =
+  await import("../island/app/calls.js");
 const { t } = await import("../island/app/i18n.js");
 
 const stateText = { textContent: "" };
@@ -319,7 +320,7 @@ test("dial focus starts a bounded mic warm (the outgoing pre-warm)", async () =>
 });
 
 test("sanitizeDialable keeps the dialable charset and strips formatting", () => {
-  assert.equal(sanitizeDialable("+49 (30) 1234-56"), "+493012345 6".replace(" ", ""));
+  assert.equal(sanitizeDialable("+49 (30) 1234-56"), "+4930123456");
   assert.equal(sanitizeDialable("\u202D1003\u202C"), "1003", "direction marks are stripped");
   assert.equal(sanitizeDialable("*#abcABC"), "*#abcABC");
   assert.equal(sanitizeDialable("   "), "");
@@ -336,7 +337,7 @@ test("the dial hint previews the dialable form while typing", async () => {
 
   type("+49 (30) 1234-56");
   assert.equal(hint.hidden, false, "a formatted number reveals the hint");
-  assert.equal(hint.textContent, "→ +493012345 6".replace(" ", ""), "the hint shows the dialable form");
+  assert.equal(hint.textContent, "→ +4930123456", "the hint shows the dialable form");
 
   type("1003");
   assert.equal(hint.hidden, true, "an already-dialable number stays silent");
@@ -344,4 +345,42 @@ test("the dial hint previews the dialable form while typing", async () => {
 
   type("+49 30 \u202D1234\u202C");
   assert.equal(hint.hidden, false, "invisible direction marks still trigger the preview");
+});
+
+test("sent DTMF tones pulse the key and collect a transient trail", async () => {
+  const infos = [];
+  sessions.set("dtmf1", {
+    session: {
+      state: globalThis.SIP.SessionState.Established,
+      info: (payload) => {
+        infos.push(payload.requestOptions.body.content);
+        return Promise.resolve();
+      },
+    },
+    startedAt: Date.now(),
+  });
+  state.focusedId = "dtmf1";
+
+  const key = doc.createElement();
+  key.selector = 'button[data-tone="1"]';
+  doc.getElementById("keypad").append(key);
+
+  await sendDtmf("1");
+  assert.equal(infos.length, 1);
+  assert.match(infos[0], /Signal=1/);
+  assert.equal(
+    key.className.includes("wp-key-sent"),
+    true,
+    "the pressed key pulses",
+  );
+
+  const trail = doc.getElementById("wp-tones");
+  assert.equal(trail.hidden, false);
+  assert.equal(trail.textContent, "1", "the sent tone lands in the trail");
+
+  await sendDtmf("#");
+  assert.equal(trail.textContent, "1·#", "tones accumulate dot-separated");
+
+  sessions.delete("dtmf1");
+  state.focusedId = null;
 });
