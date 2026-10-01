@@ -120,8 +120,8 @@ github.com/larsartmann/go-idempotency v0.3.0 h1:iCuxh2gdr3iSqpaKLfilkXTzT0s6ha3x
 github.com/larsartmann/go-idempotency v0.3.0/go.mod h1:VjTQypq0FQLA9AmageDkuFoUFfN2hd3eErSFZo9ip+I=
 github.com/larsartmann/go-paperless v0.4.2 h1:vtF+C2h5lYs7QD0Km1TnT7ATyl1VGLtuJ0mnL1YIne0=
 github.com/larsartmann/go-paperless v0.4.2/go.mod h1:7+0hI42j1XnpJ2Z7sznzOpWSHE+pWtBYKcFwNEK0trM=
-github.com/larsartmann/go-retry v0.7.0 h1:pp4IXRtj9lG6bwkTAPoeOTNVE3ZDnXw9MMBtkaJv9jQ=
-github.com/larsartmann/go-retry v0.7.0/go.mod h1:jIPlAHcD/D+lqBo9CLWAEaJQqDgyFtvDE2RoG1SbZL4=
+github.com/larsartmann/go-retry v0.7.1 h1:e3MwEB8SvR0p1XMOtkFofFOS2y5rITzNLmbgZfCtO0c=
+github.com/larsartmann/go-retry v0.7.1/go.mod h1:jIPlAHcD/D+lqBo9CLWAEaJQqDgyFtvDE2RoG1SbZL4=
 github.com/larsartmann/go-sse v0.6.1 h1:GSc2ueXIjNAsYlZjOR8kfOlm/UwiOh5eNwVmnrqyGVw=
 github.com/larsartmann/go-sse v0.6.1/go.mod h1:yN/gsqxOYwt9aqfcsfnIAzENNk+libcm2t3M4ByW1KU=
 github.com/larsartmann/go-sse/sseparse v0.1.0 h1:GwMNf9cKhO1ST77LR3CYYrLluNRuiEwhqm7x3HVIf20=

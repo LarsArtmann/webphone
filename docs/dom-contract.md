@@ -28,6 +28,7 @@ ext
 pass
 remember
 phone-view
+offline-banner
 whoami-ext
 logout
 dial-form

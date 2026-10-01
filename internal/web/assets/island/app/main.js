@@ -2,7 +2,7 @@
 // else lives in its feature module — this file is the composition root.
 
 import { ringToneStop } from "./audio.js";
-import { connect, disconnect } from "./connection.js";
+import { connect, disconnect, networkOnline } from "./connection.js";
 import {
   answerIncoming,
   placeCall,
@@ -34,7 +34,14 @@ import {
 import { initShortcuts } from "./shortcuts.js";
 import { sessions, state } from "./state.js";
 import { initDialTypeahead, relabelTypeahead } from "./typeahead.js";
-import { announce, els, log, setRegStatus, toastKindFor } from "./ui.js";
+import {
+  announce,
+  els,
+  log,
+  setOfflineBanner,
+  setRegStatus,
+  toastKindFor,
+} from "./ui.js";
 import { initAudioOutput } from "./audioout.js";
 
 const REMEMBER_KEY = "pbx-extension";
@@ -234,6 +241,20 @@ initSseLiveIndicator();
 initDialTypeahead();
 relabelTypeahead(t("typeaheadLabel"));
 initAudioOutput();
+
+// The browser's own network truth is the EARLIEST offline signal (the
+// websocket notices later). "offline" says so immediately; "online"
+// only nudges recovery — it never claims registered, that verdict
+// stays with the REGISTER.
+window.addEventListener("offline", () => {
+  setRegStatus("status-offline", t("browserOffline"));
+  setOfflineBanner(true);
+  log("browser reports network offline", "warn");
+});
+window.addEventListener("online", () => {
+  log("browser reports network back");
+  networkOnline();
+});
 
 // Server-driven toasts: tab-action responses carry an HX-Trigger header
 // ("showMessage", the cqrs-htmx ToastDetail wire shape {message, kind});

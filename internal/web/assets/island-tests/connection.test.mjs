@@ -295,3 +295,69 @@ test("a triggered rebuild first shows the transient rebuilding pill", async () =
   await flushes();
   assert.equal(pill(), t("registered"), "the rebuild lands on registered");
 });
+
+// The offline banner is the loud honest surface: visible whenever the
+// phone cannot call (transport down, reconnecting, rebuilding,
+// registration rejected), gone exactly when the REGISTER re-lands.
+const banner = () => doc.getElementById("offline-banner");
+
+test("connect hides the banner only once registered", async () => {
+  resetStubs();
+  const connection = await loadConnection("banner-happy");
+  const pending = connection.connect("1001", "pw");
+  // Between connect() and the REGISTER's verdict the banner is ON.
+  assert.equal(banner().hidden, false, "unregistered phone cannot call");
+  await pending;
+  assert.equal(banner().hidden, true, "registered hides the banner");
+});
+
+test("the banner tracks transport loss and re-registered recovery", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("banner-cycle");
+  await connection.connect("1001", "pw");
+  assert.equal(banner().hidden, true);
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+  agents.at(-1).delegate.onDisconnect(new Error("ws closed"));
+  assert.equal(banner().hidden, false, "transport loss shows the banner");
+  await tc.mock.timers.tick(2000); // try 1: reconnect + register succeed
+  await flushes();
+  assert.equal(banner().hidden, true, "re-registered hides the banner");
+  assert.equal(pill(), t("registered"));
+});
+
+test("a rejected registration keeps the banner up", async () => {
+  resetStubs();
+  const connection = await loadConnection("banner-rejected");
+  StubRegisterer.nextRejectWith = new Error("403 Forbidden");
+  await assert.rejects(() => connection.connect("1001", "bogus"));
+  await flushes();
+  assert.equal(banner().hidden, false, "rejected phone cannot call");
+});
+
+// networkOnline is the browser "online" event's nudge: it may schedule a
+// recovery ONLY when the transport is actually down and nothing is
+// pending — and it never claims registered by itself.
+test("networkOnline nudges recovery only for a down, idle transport", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("banner-netback");
+  await connection.connect("1001", "pw");
+  const agent = agents.at(-1);
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+
+  agent.connected = false;
+  connection.networkOnline(); // down + no pending retry: schedule one
+  await tc.mock.timers.tick(2000);
+  await flushes();
+  assert.equal(pill(), t("registered"), "the nudge recovered the transport");
+  assert.equal(banner().hidden, true);
+
+  connection.networkOnline(); // connected: inert
+  agent.connected = false;
+  agents.at(-1).delegate.onDisconnect(new Error("ws closed")); // retry pending
+  const before = agents.length;
+  connection.networkOnline(); // a retry is already scheduled: inert
+  await tc.mock.timers.tick(2000);
+  await flushes();
+  assert.equal(agents.length, before, "no double recovery");
+  assert.equal(pill(), t("registered"));
+});

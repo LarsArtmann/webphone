@@ -180,6 +180,7 @@ async function attemptReconnect() {
     // fully re-registered (the 2026-09-22 E2E runs read that stale
     // pill as "stuck" and fell back to reloads).
     setRegStatus("status-registered", t("registered"));
+    setOfflineBanner(false);
     if (sessions.size > 0) {
       log(t("reconnectPreserved")(sessions.size));
     }

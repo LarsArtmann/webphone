@@ -31,15 +31,15 @@ I added the owed CHANGELOG entry.
 
 ## b) PARTIALLY DONE
 
-| Item | What remains |
-|---|---|
-| T01 release tail | OWNER: deploy (sheet §1), post-deploy probes incl. the new `/version` commit/commitDate check (§3), pbx-artmann relock #5 (§2) |
-| T02 SMS bridge | OWNER journal/restart/test-SMS leg (decision tree ready in sheet §4) |
-| T03 owner-calls | The sitting (28 rows ready) |
-| T14 | markdownlint posture = owner pick (briefing row 18) |
-| T10.51 | **E2E budget-line update: I never recorded the RETRY run's wall-time** — the watches row still shows only the 2026-09-22 greens (195s/184s); my retry was green but unmeasured |
-| TODO row 1 freshness | The harvest wrote "stack `3afcf57`" — the stack has since advanced (`8cf9e48` at 02:14, other trains landing); the row will read stale within days (lock bump itself IS in `3afcf57`'s ancestry — factually true, aesthetically rotting) |
-| Render-diff TODO note | Row 37 still says "LIVE-VERIFY owed next quiet window" — I completed the live verify AFTER the harvest; row not re-touched |
+| Item                  | What remains                                                                                                                                                                                                                             |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T01 release tail      | OWNER: deploy (sheet §1), post-deploy probes incl. the new `/version` commit/commitDate check (§3), pbx-artmann relock #5 (§2)                                                                                                           |
+| T02 SMS bridge        | OWNER journal/restart/test-SMS leg (decision tree ready in sheet §4)                                                                                                                                                                     |
+| T03 owner-calls       | The sitting (28 rows ready)                                                                                                                                                                                                              |
+| T14                   | markdownlint posture = owner pick (briefing row 18)                                                                                                                                                                                      |
+| T10.51                | **E2E budget-line update: I never recorded the RETRY run's wall-time** — the watches row still shows only the 2026-09-22 greens (195s/184s); my retry was green but unmeasured                                                           |
+| TODO row 1 freshness  | The harvest wrote "stack `3afcf57`" — the stack has since advanced (`8cf9e48` at 02:14, other trains landing); the row will read stale within days (lock bump itself IS in `3afcf57`'s ancestry — factually true, aesthetically rotting) |
+| Render-diff TODO note | Row 37 still says "LIVE-VERIFY owed next quiet window" — I completed the live verify AFTER the harvest; row not re-touched                                                                                                               |
 
 ## c) NOT STARTED (deliberately)
 
@@ -89,7 +89,7 @@ I added the owed CHANGELOG entry.
    I silently let them ride); (iv) re-touch row 37 after completing the
    render-diff live verify (b section above).
 7. **Did I lie?** Not in the final states — every closing claim re-derived
-   (ls-remote, gh view, ELF bytes). But mid-session I *reported* a masked
+   (ls-remote, gh view, ELF bytes). But mid-session I _reported_ a masked
    rc as a gate result (d1) — a lie by instrumentation, caught and
    disclosed here.
 
@@ -126,7 +126,7 @@ I added the owed CHANGELOG entry.
 ## f) Up to 50 next items ([S] = this session's findings, [R] = noticed in passing; brainstorm, HARVEST routes)
 
 1. [S] OWNER: the sitting — 28-row briefing (ratify v2.8.0 + setup NO-GO
-   + compaction + postures).
+   - compaction + postures).
 2. [S] OWNER: deploy v2.8.0 + relock #5 + post-deploy probes (sheet §1–3).
 3. [S] OWNER: SMS-bridge journal leg (sheet §4 decision tree).
 4. [S] T13 compaction on permission grant (573→≤377; the doctor warning
@@ -186,7 +186,7 @@ I added the owed CHANGELOG entry.
     tag-binary HEAD-binary` post-tag (cheap, catches render drift at
     release time — only if a view train ever lands mid-release).
 
-*(30 items — under the 50 ceiling by choice: filler would dilute routing.)*
+_(30 items — under the 50 ceiling by choice: filler would dilute routing.)_
 
 ## g) Questions I can NOT figure out myself
 

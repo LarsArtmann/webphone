@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Honest hold UI + loud offline banner in the call island: the hold
+  button no longer flips to the settled state optimistically — a
+  pending re-INVITE shows the WORK ("holding…" / "resuming…", pulsing
+  chip, disabled button) and only a settled 200-OK shows "on hold" /
+  "in call"; a failed toggle snaps the card back to the state that
+  actually still holds. The phone view gains an `#offline-banner`
+  (new DOM-contract id) driven by the same registration truth as the
+  status pill — visible from login until the REGISTER lands, on any
+  transport loss or rejected registration, and on the browser's own
+  `offline` event (whose `online` counterpart nudges recovery without
+  ever claiming registered on its own). Banner text rides data-i18n
+  (en/de); new island i18n keys ship in both dictionaries.
 - Optional Paperless-ngx archive for inbound faxes (`paperless.url` +
   `paperless.token`, both-or-neither like the CRM seam): each inbound
   fax is offered to a go-paperless-backed archiver fire-and-forget after

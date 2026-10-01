@@ -164,6 +164,38 @@
   color: var(--muted);
 }
 
+/* Offline banner: the loud honest "you cannot call right now" surface
+ * (connection.js flips it with the registration truth; the pill keeps
+ * the precise reason). The [hidden] guard matters: the UA's hidden
+ * rule must always win over the display below. */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 550;
+}
+
+.offline-banner::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  flex: none;
+  animation: wp-state-pulse 1.2s ease-in-out infinite;
+}
+
+.offline-banner[hidden] {
+  display: none;
+}
+
 /* --- cards and sections ------------------------------------------------- */
 
 .card {
@@ -456,6 +488,19 @@ button.small {
   background: var(--ok);
 }
 
+.call-card[data-state="held"] .call-state-text::before {
+  background: var(--warn);
+}
+
+/* Pending hold transitions pulse: the UI says WORK, not the hoped-for
+ * end state (calls.js sets data-state to holding/resuming only while
+ * the re-INVITE is in flight). */
+.call-card[data-state="holding"] .call-state-text::before,
+.call-card[data-state="resuming"] .call-state-text::before {
+  background: var(--accent-strong);
+  animation: wp-state-pulse 1.2s ease-in-out infinite;
+}
+
 .call-card[data-state="ending"] .call-state-text::before {
   background: var(--muted);
 }
@@ -467,7 +512,10 @@ button.small {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .call-card[data-state="ringing"] .call-state-text::before {
+  .call-card[data-state="ringing"] .call-state-text::before,
+  .call-card[data-state="holding"] .call-state-text::before,
+  .call-card[data-state="resuming"] .call-state-text::before,
+  .offline-banner::before {
     animation: none;
   }
 }
