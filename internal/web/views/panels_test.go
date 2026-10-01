@@ -136,3 +136,41 @@ func TestIdentityLineHidesEmptyAndFollowsLanguage(t *testing.T) {
 		t.Errorf("identityLine(en, \"\") = %q, want no output", got)
 	}
 }
+
+// TestTranscriptRendersDaySeparatorsAndTheUnreadDivider pins the
+// transcript's group structure: one day head per calendar day with the
+// visible-group count, the unread divider ahead of the thread's trailing
+// unread inbound bubbles on the page-0 open, the top-of-window fallback
+// when more unread exist than the page holds, and the notifier-safe
+// plain shape (no divider) from Transcript itself.
+func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
+	now := time.Now()
+	yesterday := now.Add(-24 * time.Hour)
+	msgs := []domain.Message{
+		{ID: domain.GenerateMessageID(), Direction: domain.DirectionOutbound, Body: "old out", CreatedAt: yesterday},
+		{ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound, Body: "old in", CreatedAt: yesterday},
+		{ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound, Body: "new in 1", CreatedAt: now},
+		{ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound, Body: "new in 2", CreatedAt: now},
+		{ID: domain.GenerateMessageID(), Direction: domain.DirectionOutbound, Body: "new out", CreatedAt: now},
+	}
+
+	open := renderComponent(t, TranscriptAt(msgs, LangEN, 2))
+	if got := strings.Count(open, `class="wp-day-head"`); got != 2 {
+		t.Errorf("open transcript: day heads = %d, want 2; rendered:\n%s", got, open)
+	}
+	if !strings.Contains(open, "Today") || !strings.Contains(open, "Yesterday") {
+		t.Errorf("open transcript: missing en day labels; rendered:\n%s", open)
+	}
+	for _, count := range []string{"· 2", "· 3"} {
+		if !strings.Contains(open, count) {
+			t.Errorf("open transcript: missing day count %q; rendered:\n%s", count, open)
+		}
+	}
+	dividerAt := strings.Index(open, "wp-unread-divider")
+	if dividerAt < 0 {
+		t.Fatalf("open transcript: unread divider missing; rendered:\n%s", open)
+	}
+	if !strings.Contains(open, "— 2 unread —") {
+		t.Errorf("open transcript: divider text wrong; rendered:\n%s", open)
+	}
+	if first := strings.Index(open, "new in 1"); !open[dividerAt:first].Leading... {

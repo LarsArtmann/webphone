@@ -1115,6 +1115,50 @@ select:focus-visible {
   color: var(--accent-strong);
 }
 
+/* Transcript day separators (B4/B20): a centered hairline label between
+   calendar-day groups, with the visible-group count beside it. */
+.wp-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-day-count {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* Unread divider (B5): a danger-accented rule ahead of the first unread
+   inbound bubble on the newest page — the "you are here" mark. */
+.wp-unread-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  color: var(--danger);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-unread-divider::before,
+.wp-unread-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
 .wp-bubble {
   max-width: min(78%, 34rem);
   padding: 9px 13px;
