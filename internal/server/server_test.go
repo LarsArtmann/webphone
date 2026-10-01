@@ -359,6 +359,48 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 }
 
+// TestShellHtmlLangFollowsSessionLang pins the <html lang> contract from
+// the language leg: the served shell announces the NEGOTIATED language
+// so German sessions hyphenate/announce as de. Order is wp-lang cookie
+// (the island's switch) → Accept-Language "de*" → English.
+func TestShellHtmlLangFollowsSessionLang(t *testing.T) {
+	c := newClient(t)
+	cases := []struct {
+		name   string
+		cookie string
+		accept string
+		want   string
+	}{
+		{"cookie de beats Accept-Language en", "wp-lang=de", "en-US,en;q=0.9", `<html lang="de"`},
+		{"cookie en beats Accept-Language de", "wp-lang=en", "de-DE,de;q=0.9", `<html lang="en"`},
+		{"German Accept-Language without a cookie", "", "de-DE,de;q=0.9", `<html lang="de"`},
+		{"English is the default", "", "en-US,en;q=0.9", `<html lang="en"`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, c.base+"/", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.cookie != "" {
+				req.Header.Set("Cookie", tc.cookie)
+			}
+			if tc.accept != "" {
+				req.Header.Set("Accept-Language", tc.accept)
+			}
+			resp, err := c.http.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			body := readAll(t, resp)
+			_ = resp.Body.Close()
+			if !bytes.Contains(body, []byte(tc.want)) {
+				t.Errorf("served shell missing %s", tc.want)
+			}
+		})
+	}
+}
+
 // TestNotFoundRendersTheShell pins error-page parity (re-verified
 // 2026-09-20 after the templ-components adoption): unknown paths answer
 // 404 with the app shell and the styled error panel, not Go's bare

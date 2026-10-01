@@ -212,7 +212,7 @@ func (s *Service) archiveInbound(job domain.FaxJob) {
 		slog.Warn("fax: archive: open spooled pdf", "error", err, "fax_id", job.ID.String())
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	pdf, err := io.ReadAll(file)
 	if err != nil {
 		slog.Warn("fax: archive: read spooled pdf", "error", err, "fax_id", job.ID.String())

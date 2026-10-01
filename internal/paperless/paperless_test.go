@@ -74,7 +74,7 @@ func (s *paperlessStub) serve(t *testing.T) *httptest.Server {
 				http.Error(w, "missing document part", http.StatusBadRequest)
 				return
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			s.uploadedFile, _ = io.ReadAll(file)
 			_, _ = io.WriteString(w, `"task-1"`)
 		case r.Method == http.MethodGet && r.URL.Path == "/api/tasks/":
