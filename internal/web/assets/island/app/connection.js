@@ -215,20 +215,21 @@ async function buildConnection() {
   const uri = SIP.UserAgent.makeURI(`sip:${extension}@${sipDomain}`);
   if (!uri) throw new Error(`invalid extension "${extension}"`);
 
+  // The base factory hands the warm mic to the session; the thin wrap
+  // additionally instruments each fresh handler's peer connection so
+  // ICE setup timings are captured from construction (pcsetup.js) —
+  // sip.js invokes the factory as a plain function, so an arrow wrapper
+  // is safe, and the base call stays eager (one factory, many sessions).
+  const baseDescriptionHandlerFactory =
+    SIP.Web.defaultSessionDescriptionHandlerFactory(micMediaStreamFactory);
+
   state.userAgent = new SIP.UserAgent({
     uri,
     authorizationUsername: extension,
     authorizationPassword: password,
     transportOptions: { server: websocketUrl },
-    // The base factory hands the warm mic to the session; this thin
-    // wrap additionally instruments the fresh handler's peer connection
-    // so ICE setup timings are captured from construction (pcsetup.js)
-    // — sip.js invokes the factory as a plain function, so an arrow
-    // wrapper is safe.
     sessionDescriptionHandlerFactory: (session, options) => {
-      const handler = SIP.Web.defaultSessionDescriptionHandlerFactory(
-        micMediaStreamFactory,
-      )(session, options);
+      const handler = baseDescriptionHandlerFactory(session, options);
       instrumentSessionDescriptionHandler(handler);
       return handler;
     },

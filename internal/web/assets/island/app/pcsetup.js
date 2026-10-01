@@ -46,7 +46,7 @@ export function instrumentSessionDescriptionHandler(sdh) {
     const state = pc.iceConnectionState;
     if (
       (state === "connected" || state === "completed") &&
-      !marks.iceConnectedAt
+      marks.iceConnectedAt == null
     ) {
       marks.iceConnectedAt = Date.now();
     }
@@ -70,7 +70,7 @@ export function setupSummary(pc) {
   const marks = pc ? timings.get(pc) : null;
   if (!marks) return null;
   const gatherMs =
-    marks.gatheringStartedAt && marks.gatheringEndedAt
+    marks.gatheringStartedAt != null && marks.gatheringEndedAt != null
       ? marks.gatheringEndedAt - marks.gatheringStartedAt
       : null;
   const gatherCapped =

@@ -30,70 +30,58 @@ test("gathering start and complete are captured, duration reported", async () =>
 
   pc.iceGatheringState = "gathering";
   pc.fire("icegatheringstatechange");
-  const startedAt = Date.now();
   pc.iceGatheringState = "complete";
   pc.fire("icegatheringstatechange");
 
   const summary = setupSummary(pc);
-  assert.ok(summary.gatherMs <= Date.now() - startedAt + 5, "gatherMs is the observed span");
+  assert.notEqual(summary.gatherMs, null, "the observed span is reported");
+  assert.ok(summary.gatherMs >= 0);
   assert.equal(summary.gatherCapped, false);
   assert.equal(summary.iceConnectedAt, null);
 });
 
-test("ICE connected/completed is captured once", async () => {
+test("ICE connected is captured once, at the first connected/completed", async (t) => {
+  const timers = t.mock.timers;
+  timers.enable({ apis: ["Date"] });
   const { instrumentSessionDescriptionHandler, setupSummary } = await load("ice-connected");
   const pc = makePC();
   instrumentSessionDescriptionHandler({ peerConnection: pc });
 
   pc.iceGatheringState = "gathering";
   pc.fire("icegatheringstatechange");
-  const firstConnected = Date.now();
+  timers.tick(120);
   pc.iceConnectionState = "connected";
   pc.fire("iceconnectionstatechange");
+  const firstMark = setupSummary(pc).iceConnectedAt;
+  timers.tick(50);
   pc.iceConnectionState = "completed";
   pc.fire("iceconnectionstatechange");
 
   const summary = setupSummary(pc);
-  assert.ok(summary.iceConnectedAt <= Date.now(), "connected timestamp recorded");
-  assert.equal(
-    summary.iceConnectedAt <= firstConnected + 5,
-    true,
-    "later transitions do not move the first mark",
-  );
+  assert.equal(summary.iceConnectedAt, firstMark, "later transitions do not move the mark");
 });
 
-test("a gather still running past the cap reads as capped", async () => {
+test("a gather still running past the cap reads as capped", async (t) => {
+  const timers = t.mock.timers;
+  timers.enable({ apis: ["Date"] });
   const { instrumentSessionDescriptionHandler, setupSummary } = await load("capped");
   const pc = makePC();
   instrumentSessionDescriptionHandler({ peerConnection: pc });
 
   pc.iceGatheringState = "gathering";
   pc.fire("icegatheringstatechange");
-  // Force the cap arithmetic deterministically: the mark is in the past.
-  const summary = setupSummary(pc);
-  assert.equal(summary.gatherCapped, false, "freshly gathering is not capped");
-  assert.equal(summary.gatherMs, null);
-});
+  assert.equal(setupSummary(pc).gatherCapped, false, "within the cap window");
 
-test("capping is detected once the stale gathering outlives the cap", async () => {
-  const { instrumentSessionDescriptionHandler, setupSummary } = await load("capped-stale");
-  const pc = makePC();
-  instrumentSessionDescriptionHandler({ peerConnection: pc });
-  // Simulate a mark 2 s in the past by re-instrumenting a PC that
-  // reports it has been gathering all along: construct marks directly
-  // through the public path — start gathering "long ago" cannot be
-  // faked via events, so pin the detection threshold via the summary
-  // contract on a mid-gathering PC instead.
-  pc.iceGatheringState = "gathering";
+  timers.tick(1300);
+  const stale = setupSummary(pc);
+  assert.equal(stale.gatherMs, null, "no end mark ever arrived");
+  assert.equal(stale.gatherCapped, true, "the stale gathering is flagged as capped");
+
+  pc.iceGatheringState = "complete";
   pc.fire("icegatheringstatechange");
-
-  const fresh = setupSummary(pc);
-  assert.equal(fresh.gatherMs, null, "no end mark yet");
-  assert.equal(
-    fresh.gatherCapped,
-    false,
-    "a just-started gather is within the cap window",
-  );
+  const settled = setupSummary(pc);
+  assert.equal(settled.gatherCapped, false, "a late complete un-flags the cap");
+  assert.notEqual(settled.gatherMs, null);
 });
 
 test("uninstrumented and absent PCs summarize to null", async () => {
