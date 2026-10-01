@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional Paperless-ngx archive for inbound faxes (`paperless.url` +
+  `paperless.token`, both-or-neither like the CRM seam): each inbound
+  fax is offered to a go-paperless-backed archiver fire-and-forget after
+  persist + SSE notify — tagged `fax`, typed `Fax`, titled
+  `Fax from <number> <date>`, provenance custom field carrying the
+  webphone fax id; a content-hash duplicate refusal is inert. The blob
+  store stays the only storage truth: a slow or dead Paperless never
+  delays or fails a fax, failures WARN in the log, and unconfigured
+  deployments behave exactly as before. Outbound faxes are v1
+  out-of-scope (seam supports them; hook lands later).
 - Service-oriented composition root: `internal/app` wires every service
   through a samber/do v2 container (promoted from indirect — it arrived
   via go-health). The critical pair (`sqlite`, `blob-dir`) registers as

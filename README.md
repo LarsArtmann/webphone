@@ -121,6 +121,8 @@ in the JSON file.
 | `csrf.trusted_origins`        | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                                                                                                                        |
 | `crm.url`                     | _empty_ = disabled  | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                                                                                                                      |
 | `crm.token`                   | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
+| `paperless.url`               | _empty_ = disabled  | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
+| `paperless.token`             | _empty_             | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
 
 `csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
 then arrives with `Origin: https://host` while the listener sees plain
@@ -177,6 +179,20 @@ CRM must run with `-api-token <same-token>`):
 Enable it on both sides: webphone gets `crm.url` + `crm.token`, the CRM
 gets `-api-token <same value>` (its machine API is unmounted without
 that flag).
+
+### Paperless-ngx fax archive (optional)
+
+With `paperless.url` + `paperless.token` configured, every INBOUND fax
+is additionally filed into a Paperless-ngx instance (the storage truth
+stays webphone's blob store — Paperless is a downstream copy):
+
+each document uploads tagged `fax`, typed `Fax`, titled
+`Fax from <number> <date>`, and carries the webphone fax id in the
+`webphone-fax-id` custom field (the provenance link back). A server-side
+content-hash duplicate refusal is inert — Paperless keeps one copy.
+Archiving is fire-and-forget after the fax is persisted: a slow or dead
+Paperless never delays or fails a fax, and failures only WARN in the
+log. Outbound faxes are not archived (v1 scope).
 
 ### The page (`window.PBX_CONFIG`)
 

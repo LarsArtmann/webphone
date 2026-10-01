@@ -51,6 +51,7 @@ Code wins when doc and code disagree.
 | Provider status callback | 🟢 FULLY_FUNCTIONAL | `/hooks/fax/status` flips job to transmitted/failed with error text      |
 | Page-count parsing       | 🟢 FULLY_FUNCTIONAL | flexPages: `pages`/`page_count`/`num_pages` as number or string (tested) |
 | Document download        | 🟢 FULLY_FUNCTIONAL | Session-gated, owner-scoped PDF streaming                                |
+| Paperless-ngx archive (inbound) | 🟢 FULLY_FUNCTIONAL | OPTIONAL (`paperless.url`+`paperless.token` both-or-neither): every inbound fax uploaded tagged `fax` / typed `Fax` with the `webphone-fax-id` provenance field, fire-and-forget after persist (blob store stays the storage truth), duplicate refusal inert; nil archiver = off |
 
 ## Voicemail & history (phone API)
 

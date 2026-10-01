@@ -1,7 +1,11 @@
 # Fax → Paperless-ngx archive — optional integration (go-paperless)
 
-**Status:** PLANNED — designed 2026-09-30, awaits the owner go before
-implementation. Linked from TODO_LIST.md.
+**Status:** EXECUTED 2026-10-01 — design landed unchanged on `main`
+(config block + test, `fax.Archiver` seam + nil tests, `internal/paperless`
+adapter + httptest stub suite + family pin, composition-root wiring,
+go-paperless v0.4.2 + vendorHash roundtrip). Gates: full Go suite, smoke
+47+4, flake checks incl. the KVM backup VM + drill, vulnix zero-real,
+erraudit 0. Named follow-ups below stay open as their own trains.
 
 **Client SDK:** `github.com/larsartmann/go-paperless` (LarsArtmann,
 Go 1.27 + `encoding/json/v2` — webphone's 1.27.1 floor imports it

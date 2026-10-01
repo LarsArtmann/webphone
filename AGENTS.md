@@ -472,6 +472,17 @@ ports of already-pinned paths.
   dedupes on the extension-namespaced `key` (`callsIdem`, own 1h TTL;
   replay = inert 204, 502 stays retryable, the unknown-number drop
   consumes its key too, absent key = legacy never-dedupe).
+- **Paperless seam (2026-10-01, plan 2026-09-30_12-53)**: optional,
+  OFF by default — `paperless.url`+`paperless.token` both-or-neither
+  (CRM posture) build `internal/paperless.Archiver` (go-paperless v0.4.2,
+  the SDK's third consumer) injected as `fax.New`'s archiver; nil-safe
+  everywhere. Inbound faxes only, fire-and-forget after persist+notify
+  (`fax.archiveInbound`: re-reads the spooled PDF, 2-min bound, WARN on
+  failure); metadata ids (tag `fax` / type `Fax` / field
+  `webphone-fax-id`) lazily ensured per first SUCCESS, never at boot;
+  duplicate refusal = inert success; blob store stays the only storage
+  truth. Adapter creates no errors of its own — SDK failures propagate
+  family-neutrally (reasoned nolints), pinned by the package family test.
 - erraudit honors `//nolint:erraudit // reason`; branching-flow
   honors NO nolint (documented skip in `.buildflow.yml`; same for
   go-structure-linter, cqrs-lint, nix-hash-fix). **The erraudit
@@ -599,15 +610,14 @@ NOT read `.codespellrc` (it reported 3894 vendor noise findings while
 the real codespell, honoring the rc, reports none). markdown-lint
 runs detect-only by posture (owner decision row 18, briefing
 2026-09-22_13-50): never "fix" the corpus by reflowing.
-KNOWN TOOL BUG — gomod-check's vendor-consistency rule reports ~51
-findings on this repo ("explicit in vendor/modules.txt but not
-explicitly required" + "vendor not ignored"): verified FALSE POSITIVE
-2026-10-01 — `go mod vendor` regenerates vendor/modules.txt
-byte-identically (sorted diff empty) and `go build -mod=vendor ./...`
-is green; the marker heuristic disagrees with the toolchain. Do NOT
-hand-edit vendor markers to silence it; the findings gate tripping on
-gomod-check alone is this known deviation (route a fix upstream in
-BuildFlow).
+KNOWN TOOL BUG — gomod-check's vendor-consistency rule reports ~54
+findings on this repo ("explicit in vendor/modules.txt but not explicitly
+required" + "vendor not ignored"): verified FALSE POSITIVE 2026-10-01
+(`go mod vendor` regenerates modules.txt byte-identically; `go build
+-mod=vendor` green; the marker heuristic disagrees with the toolchain).
+Do NOT hand-edit vendor markers to silence it — the findings gate
+tripping on gomod-check ALONE is this known deviation (fix belongs
+upstream in BuildFlow).
 
 ## Conventions
 
