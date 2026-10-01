@@ -11,27 +11,34 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
+// archivedFax is what the fake records per offer.
+type archivedFax struct {
+	job domain.FaxJob
+	pdf []byte
+}
+
 // recordingArchiver captures one archive offer.
 type recordingArchiver struct {
-	offered chan fax.ArchiveOffer
+	offered chan archivedFax
 }
 
 func newRecordingArchiver() *recordingArchiver {
-	return &recordingArchiver{offered: make(chan fax.ArchiveOffer, 1)}
+	return &recordingArchiver{offered: make(chan archivedFax, 1)}
 }
 
 func (a *recordingArchiver) ArchiveFax(_ context.Context, job domain.FaxJob, pdf []byte) error {
-	a.offered <- fax.ArchiveOffer{Job: job, PDF: pdf}
+	a.offered <- archivedFax{job: job, pdf: pdf}
 	return nil
 }
 
-func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *store.Faxes, *blob.Store) {
+func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *store.Faxes) {
 	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
@@ -44,9 +51,9 @@ func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *s
 	}
 	faxes := store.NewFaxes(db)
 	svc := fax.New(faxes, blobs, gateway.NewFaxGateway(
-		gateway.Config{Mode: gateway.Loopback}, nil,
+		config.Gateway{Mode: config.GatewayLoopback}, gateway.DefaultClient(),
 	), nil, nil, archiver)
-	return svc, faxes, blobs
+	return svc, faxes
 }
 
 // TestReceiveArchivesInbound pins the happy path: the archived payload is
@@ -55,7 +62,7 @@ func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *s
 func TestReceiveArchivesInbound(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		archiver := newRecordingArchiver()
-		svc, faxes, _ := newArchiveFaxService(t, archiver)
+		svc, faxes := newArchiveFaxService(t, archiver)
 
 		received := time.Date(2026, 10, 1, 12, 30, 0, 0, time.UTC)
 		job, err := svc.Receive(context.Background(), domain.InboundFax{
@@ -69,31 +76,31 @@ func TestReceiveArchivesInbound(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		var offer fax.ArchiveOffer
+		var got archivedFax
 		select {
-		case offer = <-archiver.offered:
+		case got = <-archiver.offered:
 		case <-time.After(10 * time.Second):
 			t.Fatal("archiver was never offered the fax")
 		}
 
-		if offer.Job.ID != job.ID {
-			t.Errorf("archived job id = %s, want %s", offer.Job.ID, job.ID)
+		if got.job.ID != job.ID {
+			t.Errorf("archived job id = %s, want %s", got.job.ID, job.ID)
 		}
-		if offer.Job.Remote.String() != "+4930123456" || offer.Job.Direction != domain.FaxInbound {
-			t.Errorf("archived job lost remote/direction: %+v", offer.Job)
+		if got.job.Remote.String() != "+4930123456" || got.job.Direction != domain.FaxInbound {
+			t.Errorf("archived job lost remote/direction: %+v", got.job)
 		}
-		if !offer.Job.CreatedAt.Equal(received) {
-			t.Errorf("archived job created = %v, want %v", offer.Job.CreatedAt, received)
+		if !got.job.CreatedAt.Equal(received) {
+			t.Errorf("archived job created = %v, want %v", got.job.CreatedAt, received)
 		}
-		if string(offer.PDF) != string(testPDF) {
-			t.Errorf("archived bytes differ from the spooled pdf (%d vs %d)", len(offer.PDF), len(testPDF))
+		if string(got.pdf) != string(testPDF) {
+			t.Errorf("archived bytes differ from the spooled pdf (%d vs %d)", len(got.pdf), len(testPDF))
 		}
-		if filepath.Base(offer.Job.DocumentPath) == "" {
+		if filepath.Base(got.job.DocumentPath) == "" {
 			t.Error("archived job carries no document path")
 		}
 
 		// The offer rides AFTER persistence: the job is already in the store.
-		if _, err := faxes.ByID(context.Background(), job.ID); err != nil {
+		if _, err := faxes.Get(context.Background(), job.Owner, job.ID); err != nil {
 			t.Errorf("archived fax is not persisted: %v", err)
 		}
 	})
@@ -103,7 +110,7 @@ func TestReceiveArchivesInbound(t *testing.T) {
 // archiver, no goroutine, unchanged flow.
 func TestReceiveWithoutArchiverPinsNilOff(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		svc, faxes, _ := newArchiveFaxService(t, nil)
+		svc, faxes := newArchiveFaxService(t, nil)
 
 		job, err := svc.Receive(context.Background(), domain.InboundFax{
 			Owner:    domain.MustParseExtension("100"),
@@ -116,7 +123,7 @@ func TestReceiveWithoutArchiverPinsNilOff(t *testing.T) {
 		if job.Status != domain.FaxReceived {
 			t.Errorf("status = %q, want received", job.Status)
 		}
-		if _, err := faxes.ByID(context.Background(), job.ID); err != nil {
+		if _, err := faxes.Get(context.Background(), job.Owner, job.ID); err != nil {
 			t.Errorf("fax not persisted: %v", err)
 		}
 		time.Sleep(time.Second) // synctest: would surface a stray archive goroutine panic

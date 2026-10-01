@@ -131,7 +131,7 @@ func newTestServerWithConfig(
 		Faxes:     faxes,
 		Contacts:  store.NewContacts(db),
 		Messaging: messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.MessagesChanged, cfg.Identities),
-		Fax:       fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.FaxChanged, cfg.Identities),
+		Fax:       fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.FaxChanged, cfg.Identities, nil),
 		PhoneAPI:  phoneAPI,
 		Hubs:      hubs,
 		Shared:    []domain.SharedContact{{Name: "Support", Number: "2000"}},

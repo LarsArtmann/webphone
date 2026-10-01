@@ -40,7 +40,7 @@ func newSelfSendFaxService(t *testing.T, identities map[string]string) (*fax.Ser
 		t.Fatal(err)
 	}
 	gw := &countingFaxGateway{}
-	return fax.New(store.NewFaxes(db), blobs, gw, nil, identities), gw
+	return fax.New(store.NewFaxes(db), blobs, gw, nil, identities, nil), gw
 }
 
 var testPDF = []byte("%PDF-1.4\n%test\ntrailer<<>>\n%%EOF\n")
