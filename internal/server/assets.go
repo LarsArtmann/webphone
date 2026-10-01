@@ -1,8 +1,12 @@
 package server
 
 import (
+	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/larsartmann/webphone/internal/web/assets"
 )
@@ -51,7 +55,91 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/health.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "health.css", "text/css; charset=utf-8")
 	})
-	return noStore(mux)
+	// Revalidate-always + content ETag + scoped gzip: a repeat visit skips
+	// the payload transfer (304) while a redeploy is still picked up on the
+	// next request. gzip wraps ONLY this static subtree — /events must stay
+	// uncompressed (its SSE frames are flushed incrementally).
+	return noStore(assetHeaders(gzipAssets(mux)))
+}
+
+// assetHeaders gives every embedded asset a strong content ETag so repeat
+// visits revalidate with 304 instead of re-downloading. Cache-Control
+// stays no-cache (see noStore): the browser may cache but MUST revalidate,
+// so a redeploy is picked up immediately while the body transfer is
+// skipped. The ETag is the sha256 of the served bytes, so it changes
+// exactly when the content does.
+func assetHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name, ok := strings.CutPrefix(r.URL.Path, "/assets/")
+		if !ok || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+		content, err := fs.ReadFile(assets.FS(), name)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		sum := sha256.Sum256(content)
+		etag := `"` + hex.EncodeToString(sum[:]) + `"`
+		w.Header().Set("Vary", "Accept-Encoding")
+		w.Header().Set("ETag", etag)
+		if ifNoneMatch(r.Header.Get("If-None-Match"), etag) {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// ifNoneMatch reports whether an If-None-Match header value selects etag.
+// Handles the wildcard and comma-separated lists (weak W/ prefixes are
+// compared as strong, which is safe for our stable content hashes).
+func ifNoneMatch(header, etag string) bool {
+	if header == "" {
+		return false
+	}
+	for _, candidate := range strings.Split(header, ",") {
+		candidate = strings.TrimSpace(candidate)
+		candidate = strings.TrimPrefix(candidate, "W/")
+		if candidate == "*" || candidate == etag {
+			return true
+		}
+	}
+	return false
+}
+
+// gzipAssets compresses the static subtree when the client accepts gzip.
+// It never sees /events (that handler is mounted outside this subtree),
+// and it runs BELOW assetHeaders, so a 304 short-circuits before any
+// Content-Encoding is set.
+func gzipAssets(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer func() { _ = gz.Close() }()
+		next.ServeHTTP(&gzipResponseWriter{ResponseWriter: w, Writer: gz}, r)
+	})
+}
+
+// gzipResponseWriter drops the Content-Length the file server would set
+// (the compressed length differs) and streams the body through gzip.
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	Writer *gzip.Writer
+}
+
+func (g *gzipResponseWriter) WriteHeader(status int) {
+	g.Header().Del("Content-Length")
+	g.ResponseWriter.WriteHeader(status)
+}
+
+func (g *gzipResponseWriter) Write(b []byte) (int, error) {
+	return g.Writer.Write(b)
 }
 
 func serveEmbedded(w http.ResponseWriter, r *http.Request, name, contentType string) {
@@ -61,7 +149,6 @@ func serveEmbedded(w http.ResponseWriter, r *http.Request, name, contentType str
 		return
 	}
 	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Cache-Control", "no-cache")
 	if r.Method == http.MethodHead {
 		return
 	}
@@ -69,7 +156,10 @@ func serveEmbedded(w http.ResponseWriter, r *http.Request, name, contentType str
 }
 
 // noStore keeps development honest: a stale island bundle is the worst
-// kind of bug to chase. Static assets are tiny; caching buys nothing here.
+// kind of bug to chase. Assets are served no-cache (must-revalidate) —
+// the content ETag (assetHeaders) turns the revalidation into a bodyless
+// 304, so a redeploy is picked up immediately without re-downloading
+// unchanged bytes.
 func noStore(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
