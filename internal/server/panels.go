@@ -159,12 +159,16 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if dir != "in" && dir != "out" {
 		dir = ""
 	}
+	outcome := r.URL.Query().Get("outcome")
+	if outcome != "answered" && outcome != "missed" {
+		outcome = ""
+	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang}), nil
 	}
 	// A filter needs a wider window than the unfiltered top-30 view.
 	limit := historyPageSize
-	if query != "" || dir != "" {
+	if query != "" || dir != "" || outcome != "" {
 		limit = historyFilterFetchSize
 	}
 	page, err := h.deps.PhoneAPI.History(r.Context(), sess.PBXCredentials(), limit)
@@ -173,13 +177,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 			Enabled: true, Error: h.T(r, "history.unreachable"), Lang: lang,
 		}), nil
 	}
-	entries := filterCDRs(page.Entries, query, dir)
+	entries := filterCDRs(page.Entries, query, dir, outcome)
 	if len(entries) > historyPageSize {
 		entries = entries[:historyPageSize]
 	}
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	return views.HistoryPanel(views.HistoryPanelProps{
-		Enabled: true, Entries: entries, Query: query, Dir: dir, Names: h.crmNames(r.Context(), numbers), Lang: lang,
+		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
+		Names: h.crmNames(r.Context(), numbers), Lang: lang,
 	}), nil
 }
 
@@ -191,10 +196,13 @@ const (
 )
 
 // filterCDRs keeps records whose number/name contains the query (case-
-// insensitive) and whose direction matches "in" (public context) or
-// "out" (internal context).
-func filterCDRs(entries []pbx.CDR, query, dir string) []pbx.CDR {
-	if query == "" && dir == "" {
+// insensitive), whose direction matches "in" (public context) or "out"
+// (internal context), and whose outcome matches: "missed" is an inbound
+// leg that never carried media (billsec 0), "answered" is any leg with
+// billsec > 0. Outbound legs bill nothing until answered, so they can
+// never be "missed" by this definition.
+func filterCDRs(entries []pbx.CDR, query, dir, outcome string) []pbx.CDR {
+	if query == "" && dir == "" && outcome == "" {
 		return entries
 	}
 	needle := strings.ToLower(query)
@@ -211,6 +219,12 @@ func filterCDRs(entries []pbx.CDR, query, dir string) []pbx.CDR {
 			if !strings.Contains(haystack, needle) {
 				continue
 			}
+		}
+		if outcome == "missed" && (cdr.Context != "public" || cdr.Billsec != 0) {
+			continue
+		}
+		if outcome == "answered" && cdr.Billsec == 0 {
+			continue
 		}
 		filtered = append(filtered, cdr)
 	}
