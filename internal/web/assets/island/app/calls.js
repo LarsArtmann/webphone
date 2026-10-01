@@ -15,7 +15,7 @@ import {
 } from "./audio.js";
 import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
-import { releaseWarmMic } from "./mic.js";
+import { releaseWarmMic, warmMic } from "./mic.js";
 import {
   recordCrmCall,
   recordHistory,
@@ -482,6 +482,20 @@ export function sendDtmf(tone) {
       log(`dtmf failed: ${err.message}`, "error");
       announce(t("dtmfFailed")(err.message), "error");
     });
+}
+
+// Dial-focus mic warm (the outgoing mirror of the incoming onInvite
+// warm): the first focus in the dial field IS dial intent — start the
+// getUserMedia acquisition while the user is still typing, so the
+// INVITE's session-description handler finds a warm stream instead of
+// paying the device-open latency on the call path. The TTL bounds the
+// intent: an abandoned dial must not keep the mic indicator lit.
+// Session-open is deliberately NOT a trigger — lighting the mic right
+// after login expresses no call intent at all.
+const DIAL_WARM_TTL_MS = 45_000;
+
+export function initDialWarm() {
+  els.dest.addEventListener("focus", () => warmMic(DIAL_WARM_TTL_MS));
 }
 
 // placeCall returns whether an INVITE actually went out, so the dial

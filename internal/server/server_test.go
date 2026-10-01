@@ -360,6 +360,39 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 }
 
+// TestServedPagePreloadsIslandGraph pins the head preload contract: one
+// modulepreload link per island ES module (the graph list is generated
+// from the embedded files — it can only drift if the rendering loop is
+// dropped) plus the preload hint for the one big classic script. The
+// entry script tag sits at the END of body; without these head hints the
+// browser discovers each module only after fetching and parsing its
+// parent (a 17-step waterfall).
+func TestServedPagePreloadsIslandGraph(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("page status %d", resp.StatusCode)
+	}
+	page := string(body)
+	headEnd := strings.Index(page, "</head>")
+	if headEnd < 0 {
+		t.Fatal("no </head> in served page")
+	}
+	head := page[:headEnd]
+	for _, module := range assets.IslandModules() {
+		link := fmt.Sprintf(`<link rel="modulepreload" href=%q`, module)
+		if !strings.Contains(head, link) {
+			t.Errorf("modulepreload for %s missing from <head>", module)
+		}
+	}
+	if got := strings.Count(head, `rel="modulepreload"`); got != len(assets.IslandModules()) {
+		t.Errorf("modulepreload link count = %d, want %d (exactly the island graph)", got, len(assets.IslandModules()))
+	}
+	if !strings.Contains(head, `<link rel="preload" as="script" href="/assets/vendor/sip.min.js"`) {
+		t.Error("preload hint for the vendored sip.js bundle missing from <head>")
+	}
+}
+
 // TestShellHtmlLangFollowsSessionLang pins the <html lang> contract from
 // the language leg: the served shell announces the NEGOTIATED language
 // so German sessions hyphenate/announce as de. Order is wp-lang cookie
