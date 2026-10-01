@@ -385,6 +385,39 @@ decide its shape first). The dotted arrow is a soft coupling only.
 - Which `SEAM` workstreams (M21–M24, parts of M18/M25) get a server-side design
   before any UI work?
 
+## Execution log (2026-10-01 train)
+
+- **M1 messaging trust**: shipped (optimistic bubble + failed-rollback;
+  delivery badges, retry, and the status-hook SSE push already existed).
+- **M2 transcript clarity**: shipped (day separators + counts, unread
+  divider on the page-0 open; notifier shape unchanged).
+- **M3 call state**: verified pre-existing (control cluster, timer, and
+  the ringing state-dot pulse with reduced-motion guard were already in
+  calls.js + island/style.css).
+- **M4 morph a11y**: shipped (focus-to-heading on navigation swaps,
+  #wp-live SR announcements, aria-current page/false, badge labels).
+- **M5 perceived speed**: shipped (tab skeleton, panel transition,
+  30s relative-time tick).
+- **M6 keyboard reachability**: shipped (skip link, aria-describedby on
+  island forms, theme state to SRs; muted-contrast audit passed as-is).
+- **M7 mobile spine**: shipped (fixed bottom tab bar + safe-area inset,
+  sticky call island, 44px tap targets; autofill attributes verified).
+- **M8 palette + help**: shipped (Ctrl/Cmd-K palette, "?" help overlay,
+  Settings cheat-sheet en/de).
+- **M10 contacts navigation: DROPPED — boundary ruling.** Ledger
+  (~/projects/crm) is the contacts app: event-sourced on go-cqrs-lite,
+  with search-everywhere, contact journals, and data export as core
+  features. Webphone's personal contacts stay a minimal per-extension
+  dialing scratchpad; the 2026-09-22 seam (read-only enrichment, call
+  journal POST, never-mint-contacts) is the whole integration surface.
+  D1/D2/D7 were Ledger features rebuilt inside a phone UI; the in-flight
+  batch was reverted (6989b99). **M23's management features (merge,
+  favorites, detail drawer) reassign to Ledger's roadmap**, as do any
+  future D4–D7 aspirations; webphone-side contact depth is rejected
+  unless the owner re-draws the boundary.
+- A common Go SDK for the CRM seam stays deferred until a second Go
+  consumer exists (today: webphone only; the stack bridge is Python).
+
 ## Next action
 
 Awaiting approval. On approval, execute in tier order — 1% first — with the

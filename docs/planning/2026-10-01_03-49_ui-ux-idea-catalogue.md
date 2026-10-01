@@ -115,6 +115,12 @@ the _state_ of a message and the richness of an MMS.
 
 ## D. Contacts, directory & history
 
+> **Boundary ruling (2026-10-01):** contact management lives in Ledger
+> (~/projects/crm), not here. D4–D7 route to Ledger's roadmap; D1–D3
+> stay rejected for the same reason — webphone's personal contacts are a
+> dialing scratchpad, and the CRM seam (enrichment + call journal) is
+> the integration surface. D8–D10 (history) are unaffected.
+
 | ID  | Idea                                                                               | Priority | Effort | Constraint   |
 | --- | ---------------------------------------------------------------------------------- | -------- | ------ | ------------ |
 | D1  | Search input at the top of the Contacts panel.                                     | Now      | S      | —            |
