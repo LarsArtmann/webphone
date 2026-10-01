@@ -14,7 +14,12 @@
     }:
     let
       base = import ./module-check-base.nix { inherit lib pkgs self'; };
-      inherit (base) moduleSet evaluated cfg vhost;
+      inherit (base)
+        moduleSet
+        evaluated
+        cfg
+        vhost
+        ;
 
       csrfCases = import ./module-check-csrf.nix { inherit lib pkgs base; };
       backupCases = import ./module-check-backup.nix { inherit lib pkgs base; };

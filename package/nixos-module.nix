@@ -27,11 +27,15 @@ in
   options.services.webphone = {
     enable = lib.mkEnableOption "webphone, the self-hosted unified-communications web app (calls, SMS/MMS, fax, voicemail)";
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      description = ''
-        The webphone package. Point this at the flake's package:
-        `inputs.webphone.packages.\${pkgs.system}.webphone`.
+    package = lib.mkPackageOption pkgs "webphone" {
+      # No default: the consumer points this at its own flake package
+      # (there is no pkgs.webphone). `default = null` makes the option
+      # required while mkPackageOption still supplies the type and the
+      # "The webphone package to use." description.
+      default = null;
+      extraDescription = ''
+        Point this at the flake's package:
+        `inputs.webphone.packages.''${pkgs.system}.webphone`.
       '';
     };
 

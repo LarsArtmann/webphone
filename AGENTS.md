@@ -85,8 +85,10 @@ value than the lifecycle.
   `webphone-backup-drill` cover backup snapshot AND restore.
 - **flake.nix layout (2026-09-29 nix-review train)**: flake.nix is a
   slim ENTRY (inputs, systems, imports, nixosModules); the meat lives
-  in `nix/packages.nix`, `nix/checks.nix`, `nix/module-check.nix`,
-  `nix/vm-tests.nix`, `nix/apps.nix`, `nix/devshell.nix`,
+  in `nix/packages.nix`, `nix/checks.nix`,
+  `nix/module-check.nix` (+ the `module-check-base.nix` eval helpers
+  and the `module-check-csrf.nix` / `module-check-backup.nix` case
+  groups), `nix/vm-tests.nix`, `nix/apps.nix`, `nix/devshell.nix`,
   `nix/treefmt.nix`. The `webphoneVersion` let-binding MUST stay in
   flake.nix — `scripts/release.sh` greps/seds it there (`grep
   "webphoneVersion = " flake.nix`); it reaches `nix/packages.nix` via
@@ -101,6 +103,17 @@ value than the lifecycle.
   `after = [ "webphone.service" ]` so a Persistent catch-up at boot
   cannot race db creation. The `| tee $out` check pattern is safe as
   written: the locked stdenv setup sets `set -euo pipefail`.
+  Second nix-review polish train (2026-10-01): the module check split
+  into base + csrf + backup case files (each `checks.webphone-module`
+  linkFarm entry preserved byte-for-byte — 15/15), the stand-in module
+  gained `freeformType = attrsOf anything` so a new top-level config
+  key the webphone module writes can no longer break the check, the
+  `services.webphone.package` option moved to `mkPackageOption` (still
+  REQUIRED: `default = null`), and `devShells.ci` joined the devShell
+  module — a minimal `mkShellNoCC` (go_1_27 + templ + golangci-lint,
+  `GOTOOLCHAIN=local`) that `.github/workflows/ci.yml`'s `go-tests` job
+  enters (`nix develop .#ci -c go test ./...`) instead of the heavy
+  interactive shell.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge — contracts in the plan
   docs under `docs/planning/archived/2026-09-19_11-51_SUPERB-*`.
@@ -121,6 +134,7 @@ value than the lifecycle.
 
 ```console
 nix develop                        # Go, templ, golangci-lint, esbuild, … — GOTOOLCHAIN=local; bare `go` works inside. Host go (1.26.7) is below the 1.27.1 floor: OUTSIDE-the-shell go commands need `nix develop -c`
+nix develop .#ci                   # minimal CI shell (go + templ + golangci-lint only); what the `go-tests` CI job enters
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
 python3 scripts/webphone-smoke.py          # 40-check live smoke (+4-check restart scenario; boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)

@@ -1,7 +1,11 @@
 # csrf.* precedence cases for the webphone-module check: the caddy
 # fronting defaults, the typed csrf.* options, and the raw→typed→default
 # precedence lane. Extracted from module-check.nix (monolith split).
-{ lib, pkgs, base }:
+{
+  lib,
+  pkgs,
+  base,
+}:
 let
   inherit (base) moduleSet cfg;
 in

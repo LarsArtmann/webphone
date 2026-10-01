@@ -1,7 +1,11 @@
 # backup.* cases for the webphone-module check: the timer/oneshot pair,
 # the retention gate, and the destDir assertion. Extracted from
 # module-check.nix (monolith split).
-{ lib, pkgs, base }:
+{
+  lib,
+  pkgs,
+  base,
+}:
 let
   inherit (base) moduleSet;
 in

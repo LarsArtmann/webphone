@@ -18,6 +18,13 @@
       if (!nav) return;
       nav.querySelectorAll(".wp-nav-link").forEach(function (link) {
         link.classList.toggle("wp-active", link === element);
+        // aria-current mirrors wp-active so screen readers keep the
+        // active-tab announcement in step with the visual state.
+        if (link === element) {
+          link.setAttribute("aria-current", "page");
+        } else {
+          link.removeAttribute("aria-current");
+        }
       });
     });
 
@@ -236,6 +243,13 @@
       var transcript = event.target;
       if (!transcript || transcript.id !== "thread-transcript") return;
       if (transcript.dataset.page !== "0" || !transcript.dataset.thread) return;
+      // Politely announce the arrival (the live region is SR-only, so
+      // sighted readers only see the bubble itself).
+      var live = document.getElementById("wp-live");
+      if (live) {
+        live.textContent = "";
+        live.textContent = "New message";
+      }
       fetch("/messages/" + transcript.dataset.thread + "/read", {
         method: "POST",
         headers: { "X-CSRF-Token": csrfToken() },
@@ -529,6 +543,44 @@
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (event.detail && event.detail.successful) optPending.delete(form);
     });
+
+    // 3f. Focus lands on the new panel's heading after a navigation
+    //     swap (tab click, thread open, back link): keyboard and
+    //     screen-reader users start reading at the top of what just
+    //     arrived instead of wherever focus happened to be. Typing-
+    //     driven swaps (search, composer, drafts) deliberately keep
+    //     focus where the user is.
+    document.addEventListener("htmx:afterSwap", function (event) {
+      var elt = event.target;
+      if (!elt || !elt.matches) return;
+      var navigating =
+        elt.hasAttribute && elt.hasAttribute("data-tab")
+          ? true
+          : Boolean(elt.closest && elt.closest(".wp-thread-rowwrap, .wp-back"));
+      if (!navigating) return;
+      var heading = document.querySelector("#tab-content h2");
+      if (!heading || typeof heading.focus !== "function") return;
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+    });
+
+    // 3g. Relative-time tick: thread-list stamps ("3m") go stale while
+    //     the page sits open. Every 30s the client recomputes the short
+    //     forms from the element's data-when epoch — deliberately the
+    //     same language-neutral vocabulary the server renders
+    //     (now / Nm / Nh). Stamps older than a day already carry an
+    //     absolute date and are left untouched.
+    var tickRelative = function () {
+      var nodes = document.querySelectorAll("[data-when]");
+      for (var i = 0; i < nodes.length; i++) {
+        var seconds = Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
+        if (!(seconds >= 0)) continue;
+        if (seconds < 60) nodes[i].textContent = "now";
+        else if (seconds < 3600) nodes[i].textContent = Math.floor(seconds / 60) + "m";
+        else if (seconds < 86400) nodes[i].textContent = Math.floor(seconds / 3600) + "h";
+      }
+    };
+    setInterval(tickRelative, 30000);
 
     // 4. Manual theme override: cycles auto (prefers-color-scheme) →
     //    light → dark, persisted in localStorage. data-theme on <html>

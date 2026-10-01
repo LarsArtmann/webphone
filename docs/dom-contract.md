@@ -56,5 +56,6 @@ log
 toasts
 remote-audio
 lang
+wp-live
 
 <!-- dom-contract:end -->

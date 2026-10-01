@@ -59,7 +59,7 @@ var dictionaries = map[Lang]map[string]string{
 		"day.today":                 "Today",
 		"day.yesterday":             "Yesterday",
 		"thread.unread.pre":         "— ",
-		"thread.unread.post":       " unread —",
+		"thread.unread.post":        " unread —",
 		"identity.from":             "sending as",
 		"thread.loadOlder":          "Load older messages",
 		"thread.selfNotice":         "This is your own number — your provider refuses texts sent to it.",
