@@ -235,6 +235,7 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
 
 test("a failed hold announces the hold direction", async () => {
   const gates = [];
+  let holdMode = "resolve"; // the INITIAL invite must settle; only the toggle gates
   class HoldInviter {
     constructor() {
       this.id = "s-hold2";
@@ -247,6 +248,7 @@ test("a failed hold announces the hold direction", async () => {
       };
     }
     invite() {
+      if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
   }
@@ -264,6 +266,7 @@ test("a failed hold announces the hold direction", async () => {
     for (let i = 0; i < 12; i++) await new Promise((r) => setImmediate(r));
   };
 
+  holdMode = "gate";
   entry.dom.querySelector(".hold-btn").listeners.click[0]();
   await settle();
   gates.pop().reject(new Error("nope"));
