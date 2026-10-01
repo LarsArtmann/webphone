@@ -22,6 +22,11 @@ const (
 	MaxPDFSize   = 20 << 20 // 20 MiB
 	faxPageSize  = 100
 	pdfSignature = "%PDF-"
+
+	// archiveTimeout bounds one downstream archive offer (metadata ensure
+	// + upload + consumption-task poll). The archive runs detached, so
+	// this never delays a fax — it only caps the goroutine's life.
+	archiveTimeout = 2 * time.Minute
 )
 
 // ErrInvalidFax describes a rejected fax with a user-facing message.
@@ -38,6 +43,14 @@ func (e *ErrInvalidFax) ErrorFamily() errorfamily.Family { return errorfamily.Re
 // extension (SSE fan-out).
 type ChangeFunc func(ctx context.Context, owner domain.Extension, jobID domain.FaxID)
 
+// Archiver is the optional downstream filing home for INBOUND faxes
+// (Paperless-ngx today, internal/paperless). The blob store stays the
+// only storage truth: an archive failure is logged, never surfaced, and
+// a nil archiver means the integration is off.
+type Archiver interface {
+	ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte) error
+}
+
 // Service wires the fax store, blob store, and outbound gateway.
 type Service struct {
 	faxes      *store.Faxes
@@ -46,6 +59,7 @@ type Service struct {
 	onChange   ChangeFunc
 	clock      func() time.Time
 	identities map[string]string
+	archiver   Archiver
 }
 
 // selfSendDetail is the local refusal text for a fax addressed to the
@@ -56,13 +70,14 @@ const selfSendDetail = "faxes cannot be sent to your own number"
 // New builds the fax service. onChange may be nil. identities maps an
 // extension to its presented DID (config identities); a fax to the owner's
 // own DID is refused locally before the gateway roundtrip (nil or missing
-// entry = guard off).
+// entry = guard off). archiver is the optional Paperless-ngx filing home
+// for inbound faxes (nil = integration off).
 func New(
-	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange ChangeFunc, identities map[string]string,
+	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange ChangeFunc, identities map[string]string, archiver Archiver,
 ) *Service {
 	return &Service{
 		faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now,
-		identities: identities,
+		identities: identities, archiver: archiver,
 	}
 }
 
@@ -174,7 +189,38 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	}
 	s.notify(ctx, inbound.Owner, job.ID)
 
+	// Fire-and-forget archive offer AFTER persist + notify (the plan's
+	// async posture): a slow or dead Paperless never delays or fails the
+	// webhook ack, and the blob store keeps the original either way.
+	if s.archiver != nil {
+		go s.archiveInbound(job)
+	}
+
 	return job, nil
+}
+
+// archiveInbound offers one persisted inbound fax to the downstream
+// archive on its own goroutine: the PDF is re-read from the blob store
+// (never the webhook payload), bounded by archiveTimeout. Every failure
+// is a WARN with the fax id — operator-greppable, never a user surface.
+func (s *Service) archiveInbound(job domain.FaxJob) {
+	ctx, cancel := context.WithTimeout(context.Background(), archiveTimeout)
+	defer cancel()
+
+	file, err := s.blobs.Open(job.DocumentPath)
+	if err != nil {
+		slog.Warn("fax: archive: open spooled pdf", "error", err, "fax_id", job.ID.String())
+		return
+	}
+	defer file.Close()
+	pdf, err := io.ReadAll(file)
+	if err != nil {
+		slog.Warn("fax: archive: read spooled pdf", "error", err, "fax_id", job.ID.String())
+		return
+	}
+	if err := s.archiver.ArchiveFax(ctx, job, pdf); err != nil {
+		slog.Warn("fax: archive", "error", err, "fax_id", job.ID.String())
+	}
 }
 
 // UpdateProviderStatus advances an outbound job located by provider ref.
