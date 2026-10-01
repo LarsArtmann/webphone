@@ -1,6 +1,8 @@
 package views
 
 import (
+	"time"
+
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/pbx"
@@ -13,9 +15,10 @@ type HistoryPanelProps struct {
 	Enabled bool
 	Entries []pbx.CDR
 	Error   string
-	// Current filter (echoed back into the form after a re-render).
-	Query string
-	Dir   string
+	// Current filters (echoed back into the form after a re-render).
+	Query   string
+	Dir     string
+	Outcome string
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
@@ -26,12 +29,16 @@ templ HistoryPanel(props HistoryPanelProps) {
 	<section class="wp-panel" id="history-panel">
 		@panelHead(props.Lang, "tab.history", "history.subtitle")
 		if props.Enabled {
+			// E2: the filter state is URL-addressable — the form pushes its
+			// request URL (query included), so a filtered view is a
+			// shareable/deep-linkable address.
 			<form
 				class="wp-filter"
 				hx-get="/partials/history"
 				hx-target="#history-panel"
 				hx-swap="outerHTML"
 				hx-trigger="submit"
+				hx-push-url="true"
 			>
 				<input
 					type="search"
@@ -45,6 +52,11 @@ templ HistoryPanel(props HistoryPanelProps) {
 					<option value="in" selected?={ props.Dir == "in" }>{ T(props.Lang, "history.dir.in") }</option>
 					<option value="out" selected?={ props.Dir == "out" }>{ T(props.Lang, "history.dir.out") }</option>
 				</select>
+				<select name="outcome" aria-label={ T(props.Lang, "history.outcome.label") }>
+					<option value="" selected?={ props.Outcome == "" }>{ T(props.Lang, "history.outcome.any") }</option>
+					<option value="answered" selected?={ props.Outcome == "answered" }>{ T(props.Lang, "history.outcome.answered") }</option>
+					<option value="missed" selected?={ props.Outcome == "missed" }>{ T(props.Lang, "history.outcome.missed") }</option>
+				</select>
 				<button type="submit">{ T(props.Lang, "history.filter") }</button>
 			</form>
 		}
@@ -55,15 +67,60 @@ templ HistoryPanel(props HistoryPanelProps) {
 		if props.Enabled && len(props.Entries) == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "history.empty"), Icon: icons.Clock})
 		}
-		for _, cdr := range props.Entries {
-			@CDRRow(cdr, props.Names, props.Lang)
+		// D9: rows group under calendar-day heads (Today / Yesterday /
+		// weekday + date, with the group count) — the same separator
+		// vocabulary the message transcript established.
+		for _, group := range groupCDRsByDay(props.Entries) {
+			if group.Key != "" {
+				@dayHead(props.Lang, group.Day, len(group.Rows))
+			}
+			for _, cdr := range group.Rows {
+				@CDRRow(cdr, props.Names, props.Lang)
+			}
 		}
 	</section>
 }
 
+// cdrDayGroup is one calendar-day bucket of call records.
+type cdrDayGroup struct {
+	// Key is the day prefix ("2006-01-02"); "" means the record's start
+	// carried no parseable date (the rows render headless rather than
+	// under a wrong label).
+	Key  string
+	Day  time.Time
+	Rows []pbx.CDR
+}
+
+// groupCDRsByDay buckets consecutive records by their Start date. The
+// phone API's start is "YYYY-MM-DD HH:MM", so the bucket key is the
+// 10-byte prefix; a short or unparsable start lands in the headless
+// group keyed "".
+func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
+	groups := make([]cdrDayGroup, 0, len(entries))
+	for _, cdr := range entries {
+		key := ""
+		var day time.Time
+		if len(cdr.Start) >= 10 {
+			if parsed, err := time.ParseInLocation("2006-01-02", cdr.Start[:10], time.Local); err == nil {
+				key = cdr.Start[:10]
+				day = parsed
+			}
+		}
+		if key != "" && len(groups) > 0 && groups[len(groups)-1].Key == key {
+			groups[len(groups)-1].Rows = append(groups[len(groups)-1].Rows, cdr)
+			continue
+		}
+		groups = append(groups, cdrDayGroup{Key: key, Day: day, Rows: []pbx.CDR{cdr}})
+	}
+	return groups
+}
+
 templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
-	<article class="wp-row">
-		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public") } aria-hidden="true">{ cdrDirGlyph(cdr) }</span>
+	<article class={ "wp-row", templ.KV("wp-row-missed", cdrMissed(cdr)) }>
+		<span
+			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
+			aria-hidden="true"
+		>{ cdrDirGlyph(cdr) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
 			<strong class="wp-thread-remote">{ displayName(cdrTarget(cdr), names) }</strong>
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
@@ -85,6 +142,9 @@ templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 }
 
 func cdrDirGlyph(cdr pbx.CDR) string {
+	if cdrMissed(cdr) {
+		return "✖"
+	}
 	if cdr.Context == "public" {
 		return "↓"
 	}
@@ -92,10 +152,19 @@ func cdrDirGlyph(cdr pbx.CDR) string {
 }
 
 func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
+	if cdrMissed(cdr) {
+		return T(lang, "history.missed")
+	}
 	if cdr.Context == "public" {
 		return T(lang, "history.dirIn")
 	}
 	return T(lang, "history.dirOut")
+}
+
+// cdrMissed: an inbound leg that never carried media (billsec 0) — the
+// caller rang, nobody answered.
+func cdrMissed(cdr pbx.CDR) bool {
+	return cdr.Context == "public" && cdr.Billsec == 0
 }
 
 func cdrTarget(cdr pbx.CDR) string {

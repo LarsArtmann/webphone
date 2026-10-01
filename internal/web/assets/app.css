@@ -1114,6 +1114,17 @@ select:focus-visible {
   background: var(--accent-soft);
 }
 
+/* Missed inbound legs: the chip goes danger-red and the row's leading
+ * edge flags it (the outcome filter's visual anchor). */
+.wp-dir-chip.wp-dir-missed {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.wp-row.wp-row-missed {
+  border-left-color: var(--danger);
+}
+
 .wp-row.wp-unread {
   border-left-color: var(--warn);
 }

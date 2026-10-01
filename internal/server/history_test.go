@@ -132,3 +132,69 @@ func TestHistoryRowsOfferCallBack(t *testing.T) {
 		t.Errorf("the CRM-resolved name should ride the save-as-contact gesture: %.400s", page)
 	}
 }
+
+// TestHistoryOutcomeFilterAndDayGroups pins the D8 outcome filter, the
+// D9 day grouping, the D10 missed styling, and the E2 URL-addressable
+// filter state.
+func TestHistoryOutcomeFilterAndDayGroups(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if !strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"entries":[
+			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"2026-09-18 09:00","billsec":30},
+			{"context":"public","caller_id_number":"+491700000000","caller_id_name":"Bob","destination_number":"1001","start":"2026-09-19 11:00","billsec":0},
+			{"context":"from-internal","caller_id_number":"1001","caller_id_name":"","destination_number":"+493012345678","start":"2026-09-19 12:00","billsec":12}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+
+	server := newTestServerWithPhoneAPI(t, upstream.URL)
+	c := signIn(t, server)
+
+	// Missed: only the inbound zero-billsec record survives.
+	_, body := c.do(http.MethodGet, "/partials/history?outcome=missed", nil, "")
+	page := string(body)
+	if !strings.Contains(page, "+491700000000") || strings.Contains(page, "+441632960961") || strings.Contains(page, "+493012345678") {
+		t.Errorf("outcome=missed must keep only Bob's missed record: %.400s", page)
+	}
+	if !strings.Contains(page, `value="missed" selected`) {
+		t.Errorf("the outcome select must echo the filter: %.400s", page)
+	}
+
+	// Answered drops both zero-billsec shapes (missed inbound AND any
+	// unanswered leg).
+	_, body = c.do(http.MethodGet, "/partials/history?outcome=answered", nil, "")
+	page = string(body)
+	if !strings.Contains(page, "+441632960961") || !strings.Contains(page, "+493012345678") || strings.Contains(page, "+491700000000") {
+		t.Errorf("outcome=answered must keep only the two answered records: %.400s", page)
+	}
+
+	// Unfiltered: day groups render one head per distinct day, in order,
+	// with the group count; the missed row carries the danger styling.
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	page = string(body)
+	if got := strings.Count(page, "wp-day-head"); got != 2 {
+		t.Errorf("two distinct days must render two day heads, got %d: %.600s", got, page)
+	}
+	head1 := strings.Index(page, "wp-day-head")
+	head2 := strings.Index(page[head1+1:], "wp-day-head") + head1 + 1
+	if !(head1 < head2) {
+		t.Errorf("day heads must render in record order")
+	}
+	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, "✖") {
+		t.Errorf("the missed record must carry the missed row styling + glyph: %.600s", page)
+	}
+
+	// E2: the filter form pushes its URL — filters are addressable.
+	if !strings.Contains(page, `hx-push-url="true"`) {
+		t.Errorf("the filter form must push its request URL: %.400s", page)
+	}
+}
