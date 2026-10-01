@@ -488,3 +488,69 @@ test("a missed call releases the warm mic", async () => {
     "the device is released when the caller gives up",
   );
 });
+
+// The second-invite guard: one call at a time. A second INVITE arriving
+// while one rings is rejected on the spot and must not touch the first
+// call's banner, session or warm mic.
+test("a second incoming call is rejected without disturbing the first", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  const { gumCalls } = stubMic();
+  const connection = await loadConnection("second-invite");
+  await connection.connect("1001", "pw");
+
+  const first = incomingInvitation();
+  agents.at(-1).delegate.onInvite(first);
+  await flushes();
+  let secondRejected = false;
+  const second = {
+    remoteIdentity: { uri: { user: "+493099998888" } },
+    stateChange: { addListener() {} },
+    reject() {
+      secondRejected = true;
+    },
+  };
+  agents.at(-1).delegate.onInvite(second);
+  await flushes();
+
+  assert.equal(secondRejected, true, "the second INVITE is rejected");
+  assert.equal(state.incomingSession, first, "the first call keeps the banner");
+  assert.equal(doc.getElementById("incoming-call").hidden, false);
+  assert.equal(gumCalls.length, 1, "no second microphone acquisition");
+
+  first.stateChange.fire(globalThis.SIP.SessionState.Terminated);
+  state.incomingSession = null;
+});
+
+// The watchdog rebuild (recover a wedged agent) must NOT release the
+// warm mic: the call that is ringing is still ringing — only a missed
+// call, a reject or logout returns the device.
+test("a watchdog rebuild keeps the warm mic", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  const { gumCalls } = stubMic();
+  const connection = await loadConnection("mic-survives-rebuild");
+  await connection.connect("1001", "pw");
+
+  const invitation = incomingInvitation();
+  agents.at(-1).delegate.onInvite(invitation);
+  await flushes();
+  assert.equal(gumCalls.length, 1, "the ring warmed the mic");
+
+  // A registration lost after it was established forces a full rebuild.
+  registerers.at(-1).fire("Unregistered");
+  await flushes();
+  assert.equal(agents.length, 2, "the watchdog rebuilt the agent");
+  const stillWarm = micModule.takeWarmMic();
+  assert.notEqual(stillWarm, null, "the rebuild did not release the warm mic");
+  assert.equal(
+    stillWarm.tracks.every((track) => !track.stopped),
+    true,
+    "the warm tracks stay live across the rebuild",
+  );
+  micModule.releaseWarmMic();
+  invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
+  state.incomingSession = null;
+});
