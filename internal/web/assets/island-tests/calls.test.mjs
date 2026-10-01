@@ -214,9 +214,63 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
   assert.equal(card.dataset.state, "held", "failure keeps the settled truth");
   assert.match(chipText(), /on hold/i);
   assert.equal(holdBtn.disabled, false);
+  // The failed toggle above was a RESUME: the copy must name the
+  // direction (island-honesty follow-up — split holdFailed/resumeFailed).
+  assert.match(lastToast().textContent, /resume failed/i);
+
+  // Terminated while a toggle is still in flight: the pending state
+  // must not outlive the session (the re-INVITE answer never arrives;
+  // the watchdog-rebuild teardown lands here too).
+  holdMode = "gate";
+  holdBtn.listeners.click[0]();
+  await settle();
+  assert.equal(card.dataset.state, "holding");
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  assert.equal(entry.holdPending, null, "Terminated settles the pending toggle");
+  assert.equal(entry.holdQueued, undefined);
+  assert.equal(sessions.has("s-hold"), false, "teardown cleans the timer");
+});
+
+test("a failed hold announces the hold direction", async () => {
+  const gates = [];
+  class HoldInviter {
+    constructor() {
+      this.id = "s-hold2";
+      this.state = globalThis.SIP.SessionState.Establishing;
+      this.stateChange = {
+        listeners: [],
+        addListener(fn) {
+          this.listeners.push(fn);
+        },
+      };
+    }
+    invite() {
+      return new Promise((resolve, reject) => gates.push({ resolve, reject }));
+    }
+  }
+  globalThis.SIP.Inviter = HoldInviter;
+  globalThis.SIP.UserAgent = { makeURI: (raw) => ({ toString: () => raw }) };
+  const { placeCall } = await import("../island/app/calls.js");
+  const { sessions, state } = await import("../island/app/state.js");
+
+  state.userAgent = {};
+  assert.equal(await placeCall("1003"), true);
+  const entry = sessions.get("s-hold2");
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  const settle = async () => {
+    for (let i = 0; i < 12; i++) await new Promise((r) => setImmediate(r));
+  };
+
+  entry.dom.querySelector(".hold-btn").listeners.click[0]();
+  await settle();
+  gates.pop().reject(new Error("nope"));
+  await settle();
   assert.match(lastToast().textContent, /hold failed/i);
+  assert.equal(entry.held, false, "the settled truth stays un-held");
 
   entry.session.state = globalThis.SIP.SessionState.Terminated;
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
-  assert.equal(sessions.has("s-hold"), false, "teardown cleans the timer");
+  state.userAgent = null;
 });

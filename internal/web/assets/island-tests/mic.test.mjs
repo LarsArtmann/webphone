@@ -174,6 +174,26 @@ test("an ended track invalidates the warm cache", async () => {
   assert.equal(mic.takeWarmMic(), null, "a dead device is not handed off");
 });
 
+test("dialing after a missed call acquires fresh, never the stopped stream", async () => {
+  const mic = await loadMic("dial-after-missed");
+  const gum = recorder();
+  setMediaDevices(gum.fn);
+
+  mic.warmMic();
+  await flushes();
+  // The missed-call exit (connection.js fires releaseWarmMic when the
+  // caller gives up): the warm stream's tracks stop.
+  mic.releaseWarmMic();
+  const handed = await mic.micMediaStreamFactory({ audio: true, video: false });
+  assert.equal(gum.length, 2, "the dial triggers a new device acquisition");
+  assert.equal(handed, gum.streams[1], "the outgoing call gets the fresh stream");
+  assert.equal(
+    gum.streams[0].tracks.every((track) => track.stopped),
+    true,
+    "the missed call's stream stays released",
+  );
+});
+
 test("factory hands the warm stream to audio-only constraints", async () => {
   const mic = await loadMic("factory-warm");
   const gum = recorder();
