@@ -1,0 +1,115 @@
+# Status: Performance-inventory train (analysis) + session state
+
+**When:** 2026-10-01 05:27 CEST · **Scope:** everything since `2026-10-01_04-07_mic-prewarm-accept-latency-train-status.md` — ONE turn: the "other performance improvements" question, answered analysis-only. **Zero code changed by this segment.**
+**Concurrent session observed (per repo rules):** the working tree carries files I did not author — `internal/web/assets/island-tests/shell.test.mjs` (modified) and `docs/status/2026-10-01_05-26_nix-file-review-session-status.md` (another session's report). Left untouched, reported here as noticed; my own train's work is fully committed (`c349950`/`4266b8d`/`e26d1aa`).
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+|---|------|----------|
+| a1 | **Performance inventory delivered, grounded line-by-line.** Seven proposals + explicit non-proposals, each with file evidence: (1) ETag+304 for `/assets/*` — every asset is `Cache-Control: no-cache` with **no ETag** (`internal/server/assets.go:64-96`, read in full, including its now-stale "caching buys nothing" rationale written before the 273 KB vendor bundle); (2) scoped gzip for static handlers only (grep: zero compression anywhere; SSE unbuffered path untouchable); (3) `modulepreload` for the island ESM graph (absent); (4) outgoing-call mic warm — the mirror of the shipped incoming fix (`calls.js:481-488` pays `getUserMedia` inside `invite()`); (5) relay-frequency check via the existing ICE panel; (6) server-honesty: WAL+`busy_timeout`+FK already set (`store/db.go:33`), proxy rides the shared keep-alive client (`proxy.go:39`), CRM single-flight present — plus the HONEST non-win of extra indexes at per-extension scale; (7) stack-side: Caddy `encode` + UDP 443/h3. Non-proposals honor repo pins: verbatim island (no bundling), `no-store` on session/CSRF (security-correct), no speculative DB tuning without a ServerTiming reading. | reads/greps this segment |
+| a2 | **Skill compliance:** `how-to-golang` loaded before the Go-performance answer; its "measure first / benchmarks over vibes" framing shaped the inventory (ServerTiming named as the gate for any DB work). | SKILL.md read |
+| a3 | **Question-mode discipline held:** analysis only, no implementation without a go-ahead; the three cheapest wins were sized and explicitly offered ("say the word"). | session transcript |
+| a4 | **Tree truth established:** my trains fully committed and clean; concurrent session's in-flight files identified and left alone (repo concurrent-sessions rule). | `git status`, daemon log |
+
+## b) PARTIALLY DONE
+
+| # | Item | Works | Open | Effort |
+|---|------|-------|------|--------|
+| b1 | **The performance inventory is analysis-only.** All seven items proposed, zero implemented; the three shipped-candidates (ETag, scoped gzip, outgoing warm) await one owner word. | fully sized with evidence | implementation + tests + the ritual (stack E2E for #3; none for 1–2 beyond unit tests) | S each |
+| b2 | **The mic pre-warm train (04:07) is still reality-unverified** — no real call, no buildflow, no stack E2E, no smoke boot. Now stacked behind a second analysis-only segment; the session produces docs faster than reality-checks. | unit+contract green | the field evidence | S–M |
+| b3 | **Carried:** ring-silence AudioContext bug (diagnosed, unfixed, owner decision pending since the 02:54 report). | diagnosis | fix + test | S |
+
+## c) NOT STARTED
+
+| # | Item | Why | Wanted? |
+|---|------|-----|---------|
+| c1 | Reconcile the ETag proposal with `server.go:252`'s "composite ETag" comment — I cited it unread; the main page may already carry partial ETag machinery my proposal must not duplicate | cited-but-not-read (see d2) | Yes — FIRST step of the ETag item |
+| c2 | Caddy `encode` + UDP 443/h3 enablement | lives in the stack repo (nix-international-telephony / pbx-artmann); my claims about the vhost ("likely no encode", "UDP 443 maybe not open") are UNVERIFIED labels, not findings | Medium |
+| c3 | HARVEST of three status reports into `TODO_LIST.md`/`ROADMAP.md` | owner word still pending (asked twice) | Yes |
+| c4 | Every carried item from the 02:54 + 04:07 reports not named above: ops-runbook recipe, deploy.md path column, MOH audibility, `/recordings/` check, WebTransport verdict doc, `/tmp/song.wav`, devicechange re-warm, answer-latency `#log` lines, ice-panel gathering duration, autoplay fix, README FAQ, FEATURES row, lessons.md candidate, helper dedupe, VM tests, sofia/gateway variant, Option B … | out of scope per-turn; waiting on harvest/owner | Yes (mostly S) |
+
+## d) TOTALLY FUCKED UP
+
+Brutal honesty for a light segment:
+
+1. **I published a claim against evidence I never read.** The inventory's ETag item stands on `assets.go` (read fully — solid), but I ALSO gestured at `server.go:252`'s "composite ETag" without opening that context. If the main page already has ETag machinery, my proposal partially duplicates an existing mechanism. Probability of real conflict: low; the sin is citing unread lines as support. Fix queued as c1 and it now gates item #1.
+2. **Recurring shell-syntax slip:** the second grep died on an unescaped `http.Client{` regex (brace = repetition quantifier) — one wasted round trip, same "compose-then-verify" failure class as the last report's `gum.fn` bug. Twice in two segments means: check compound commands before sending.
+3. **Stack-side claims shipped as labels, not findings.** "Caddy likely doesn't encode, UDP 443 probably closed" — hedged, but still unverified statements about a repo I didn't open this segment. They must be read in `nix-international-telephony` before anyone acts on items (c2).
+4. **The meta-smell, named:** three status reports in one session, and the reality-check pile grows while analysis grows — no live call, no buildflow, no HARVEST, no autoplay fix. The bottleneck is not output; it is the owner-decision loop (questions asked, answers pending). This report's (g) tries to collapse that loop into one-word decisions.
+5. (Not mine, but noticed:) another session is mid-flight in this repo (`shell.test.mjs` dirty). Per the concurrent-sessions rule I touched nothing of theirs — and neither report this session attributed failures to their code, correctly.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Cite only read lines.** If a file anchors a claim, open the anchor's context in the same breath. (d1)
+2. **Pre-flight compound commands** — quotes/regex/braces — before sending; the failure rate on second-and-later greps is now a pattern. (d2)
+3. **Convert inventory to tracked work the moment it's spoken:** either HARVEST on owner word, or drop a TODO_LIST row immediately — chat-only knowledge has already required two "carried items" sections and will drift. (c3)
+4. **Batch the reality-check:** ONE live-call session retires five open items at once (mic-train verification, ICE path/rtt, MOH audibility, BT-vs-wired, autoplay bite). Propose the ritual instead of drip-asking per item. (b2)
+5. **Keep the question/engineering mode split** — this segment's restraint (no unrequested implementation) matched the house rules; do keep it.
+
+## f) Up to 50 things to get done next
+
+> ⟲ = carried open from the 02:54/04:07 reports (still open, still valid). New perf items first. Impact / Effort / Category.
+
+1. **Read `server.go:252` composite-ETag context**, reconcile with the assets proposal (gates everything below). High / S / Quality
+2. **ETag + 304 for `/assets/*`** (sha over embedded bytes; keep `no-cache` revalidation; the stale "caching buys nothing" comment gets rewritten). High / S / Feature
+3. **Scoped gzip for the static handlers** (never `/events`). High / S / Feature
+4. **Outgoing-call mic warm** via `mic.js` (dialpad focus or session-open gesture; reuse the factory). High / S / Feature
+5. **Island unit tests for 2–4** + the stack browser E2E ritual for #4 (served-markup untouched for 2–3; E2E still cheap insurance). High / M / Quality
+6. **Curl timing baseline** (first-load + reload) before/after 2–3 — the "measured" tag the latency claims never got. Medium / S / Quality
+7. **`modulepreload` for the island graph** (served-markup change → E2E ritual). Medium / M / Feature
+8. **ICE panel relay-frequency field check** (if `relay` common: UDP 3478 reachability, not code). Medium / S / Quality
+9. **ServerTiming reading over the tab endpoints** — gate for any index talk (contacts/calls/voicemail stay honest non-wins until numbers exist). Medium / S / Quality
+10. **Stack repo read: the module's Caddy vhost** — verify encode absence + UDP 443 state before proposing c2 changes. Medium / S / Research
+11. ⟲ **Live-call verification of the mic train** (accept→speak, indicator-at-ring). High / S / Quality
+12. ⟲ **Run the full buildflow gate** on the mic train. High / S / Quality
+13. ⟲ **Stack browser E2E re-run** for the island. High / M / Quality
+14. ⟲ **Fix the ring-silence AudioContext bug** (gesture-scoped create/resume + pin test). High / S / Bug
+15. ⟲ **Smoke binary boot** over the current island. Medium / S / Quality
+16. ⟲ **HARVEST the three reports** into `TODO_LIST.md`/`ROADMAP.md`. High / S / Documentation
+17. ⟲ ICE panel `path:`/`rtt:` numbers from a real call (merged into #11's ritual). High / S / Quality
+18. ⟲ Answer-latency `#log` lines (click → 200 → Established). Medium / M / Feature
+19. ⟲ Ice panel: gathering duration + time-to-media + "gather cap hit" hint. Medium / M / Feature
+20. ⟲ `devicechange` re-warm. Medium / M / Feature
+21. ⟲ MOH audibility + track inventory on prod. Medium / S / Quality
+22. ⟲ Demo-call landing in `/recordings/` + CDR check. Medium / S / Quality
+23. ⟲ Ops-runbook demo-call recipe (+ password path). High / S / Documentation
+24. ⟲ `deploy.md` secret PATH column. Medium / S / Documentation
+25. ⟲ Option B teaser playback end-to-end. Low / S / Quality
+26. ⟲ `sofia/gateway/itsp` mobile variant (owner-approved spend). Low / S / Quality
+27. ⟲ WebTransport verdict planning doc. Medium / S / Documentation
+28. ⟲ `/tmp/song.wav` cleanup + Option A/B standing-demo decision. Low / S / Cleanup
+29. ⟲ Warm-mic: survives-rebuild test, dial-after-missed test, second-onInvite guard test. Low / S / Quality
+30. ⟲ Dedupe mic/track/mediaDevices stubs into `helpers.mjs`. Low / S / Quality
+31. ⟲ `pagehide` warm release. Low / S / Feature
+32. ⟲ Mic-permission-denied `announce()` at ring. Low / S / Feature
+33. ⟲ Warm-on-login option (owner decision). Low / S / Feature
+34. ⟲ Cross-browser gesture-less `getUserMedia` at ring (Safari/Firefox). Medium / M / Quality
+35. ⟲ `iceServers` trimming evaluation. Medium / M / Quality
+36. ⟲ Trickle-ICE named-trigger investigation. Low / L / Feature
+37. ⟲ Share ONE AudioContext (ringback + ring tone). Medium / S / Refactor
+38. ⟲ README FAQ: fast-answer + indicator-at-ring. Low / S / Documentation
+39. ⟲ FEATURES.md island row update. Low / S / Documentation
+40. ⟲ CHANGELOG fold at next release train. Low / S / Documentation
+41. Verify `c349950`/`4266b8d`/`e26d1aa` pushed (`git ls-remote`). Low / S / Ops
+42. ⟲ Annotate closed items in the 02:54 report (docs-health ANNOTATE). Low / S / Documentation
+43. ⟲ pbx-artmann runbook note: island warms mic at ring. Low / S / Documentation
+44. ⟲ lessons.md candidate: "derive runtime paths from config values, not docs tables". Medium / S / Lesson
+45. ⟲ `sofia status` originate caller-ID `0000000000` doc/fix. Low / S / Quality
+46. ⟲ Originate timeout knob documented. Low / S / Documentation
+47. ⟲ `pbx-fs` wrapper on prod. Low / S / Feature
+48. ⟲ Telephony VM tests: `local_stream://moh` wired; originate+`&playback` smoke. Medium / M / Quality
+49. ⟲ Gather-cap observability (log when the 1 s cap bites) + 1000 ms-vs-config decision. Low / S / Feature/Decision
+50. ⟲ Shorten the AGENTS.md mic bullet post-release. Low / S / Documentation
+
+## g) Questions I can NOT answer myself (answer to unblock)
+
+1. **Which of the three perf ships do I green-light — ETag+304, scoped gzip, outgoing mic warm — and is "all three as one train" acceptable?** (Each is small; the train stays out of served-markup, so the ritual cost is one E2E run.)
+2. **The mic train is still reality-unverified after two reports — do you want to do the ONE live-call ritual now (accept→speak + ICE panel + MOH audibility in a single session), or should I stop re-asking and fold it into the next release train's checklist?**
+3. **HARVEST now?** Three reports of (f)-sections are piling up un-harvested; one word starts the docs-health pass that turns this backlog into `TODO_LIST.md`/`ROADMAP.md` — or the reports stay scratch and the pile grows.
+
+---
+
+*Point-in-time snapshot. This segment changed no code; its product is the inventory. The session-wide pattern to fix: analysis and reports are outrunning verification and harvest — (g) is written to collapse that in one reply. Markdown per explicit user instruction (skill default is HTML — override honored, flagged).*
