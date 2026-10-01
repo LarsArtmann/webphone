@@ -49,11 +49,13 @@ type Archiver struct {
 }
 
 // NewArchiver builds the adapter. An empty url+token pair means the
-// integration is OFF: it returns (nil, nil) so the composition root can
-// hand the nil straight to fax.New. Config validation (both-or-neither)
-// rejects half a configuration before this runs; the SDK constructor
-// classifies an unusable URL as a Rejection at origin.
-func NewArchiver(baseURL, token string, log *slog.Logger) (*Archiver, error) {
+// integration is OFF: it returns a nil fax.Archiver (interface-typed on
+// purpose — a nil *Archiver would smuggle a non-nil interface into
+// fax.New) so the composition root can hand it straight to fax.New.
+// Config validation (both-or-neither) rejects half a configuration
+// before this runs; the SDK constructor classifies an unusable URL as a
+// Rejection at origin.
+func NewArchiver(baseURL, token string, log *slog.Logger) (fax.Archiver, error) {
 	if baseURL == "" && token == "" {
 		return nil, nil
 	}

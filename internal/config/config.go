@@ -61,6 +61,10 @@ type Config struct {
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
 	CRM CRM `json:"crm" koanf:"crm"`
+	// Paperless is the OPTIONAL downstream archive for inbound faxes
+	// (Paperless-ngx via go-paperless). Zero value = disabled: faxes stay
+	// blob-store-only, which is and remains the storage truth.
+	Paperless Paperless `json:"paperless" koanf:"paperless"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -96,6 +100,15 @@ type Dashboard struct {
 // a URL has nowhere to go) — config validation fails closed on half a
 // configuration so a typo can never silently disable or enable the client.
 type CRM struct {
+	URL   string `json:"url" koanf:"url"`
+	Token string `json:"token" koanf:"token"`
+}
+
+// Paperless configures the optional Paperless-ngx archive for inbound
+// faxes. Both fields must be set together, exactly like the CRM seam —
+// half a configuration would mint a client that cannot authenticate (or
+// one with nowhere to go), and config validation fails closed on that.
+type Paperless struct {
 	URL   string `json:"url" koanf:"url"`
 	Token string `json:"token" koanf:"token"`
 }
@@ -314,6 +327,17 @@ func validate(cfg Config) error {
 	for _, contact := range cfg.Contacts {
 		if _, err := domain.ParsePhone(contact.Number); err != nil {
 			return errorfamily.Newf(errorfamily.Rejection, "config.contacts", "contacts: shared contact %q has no dialable characters in %q (fix the config file — a silently un-dialable directory entry is worse than a failed boot)", contact.Name, contact.Number)
+		}
+	}
+	if cfg.Paperless.URL != "" || cfg.Paperless.Token != "" {
+		switch {
+		case cfg.Paperless.URL == "":
+			return errorfamily.NewRejection("config.paperless.url", "paperless.token is set without paperless.url: the integration needs both (or neither)")
+		case cfg.Paperless.Token == "":
+			return errorfamily.NewRejection("config.paperless.token", "paperless.url is set without paperless.token: the archive API rejects anonymous uploads")
+		}
+		if u, err := url.Parse(cfg.Paperless.URL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.paperless.url", "paperless.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:2280)", cfg.Paperless.URL)
 		}
 	}
 	switch {

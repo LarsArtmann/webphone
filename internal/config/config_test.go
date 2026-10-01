@@ -467,6 +467,67 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 	}
 }
 
+// TestLoadValidatesPaperlessConfig pins the archive seam's fail-closed
+// posture, copied from the CRM seam: half a configuration is a startup
+// error, never a silently disabled (or broken) archive, and the URL must
+// be absolute http(s) — the SDK constructor would reject it at boot
+// anyway, but the config error names the offending key.
+func TestLoadValidatesPaperlessConfig(t *testing.T) {
+	cases := []struct {
+		name    string
+		env     map[string]string
+		wantErr string
+	}{
+		{
+			name:    "url without token",
+			env:     map[string]string{"WEBPHONE_PAPERLESS__URL": "http://127.0.0.1:2280"},
+			wantErr: "paperless.url is set without paperless.token",
+		},
+		{
+			name:    "token without url",
+			env:     map[string]string{"WEBPHONE_PAPERLESS__TOKEN": "sekrit"},
+			wantErr: "paperless.token is set without paperless.url",
+		},
+		{
+			name: "relative url",
+			env: map[string]string{
+				"WEBPHONE_PAPERLESS__URL":   "paperless.example.org",
+				"WEBPHONE_PAPERLESS__TOKEN": "sekrit",
+			},
+			wantErr: "not an absolute http(s) URL",
+		},
+		{
+			name: "valid paperless section loads",
+			env: map[string]string{
+				"WEBPHONE_PAPERLESS__URL":   "https://paperless.example.org",
+				"WEBPHONE_PAPERLESS__TOKEN": "sekrit",
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			scrubEnv(t)
+			t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+			for key, value := range tc.env {
+				t.Setenv(key, value)
+			}
+			cfg, err := Load()
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Errorf("Load() = error %v, want nil", err)
+				}
+				if cfg.Paperless.URL != tc.env["WEBPHONE_PAPERLESS__URL"] || cfg.Paperless.Token != "sekrit" {
+					t.Errorf("paperless block: %+v", cfg.Paperless)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("error %v, want containing %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidateRejectsUnknownTimezone(t *testing.T) {
 	cfg := defaults()
 	cfg.Timezone = "Europe/Berlin"

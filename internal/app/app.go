@@ -42,7 +42,8 @@ import (
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/pbx"
+"github.com/larsartmann/webphone/internal/paperless"
+"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
@@ -140,6 +141,15 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), log), nil
 	})
 
+	// Optional Paperless-ngx archive for inbound faxes: config-absent →
+	// a nil fax.Archiver (fax.Service treats nil as off). A present but
+	// UNUSABLE configuration fails the boot here — archiving must never
+	// half-exist.
+	archiver, err := paperless.NewArchiver(cfg.Paperless.URL, cfg.Paperless.Token, log)
+	if err != nil {
+		return nil, wrapf("paperless: %w", err)
+	}
+
 	// --- services --------------------------------------------------------
 	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
 		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
@@ -186,6 +196,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvoke[gateway.FaxGateway](i),
 			do.MustInvoke[*server.Notifier](i).FaxChanged,
 			cfg.Identities,
+			archiver,
 		), nil
 	})
 
