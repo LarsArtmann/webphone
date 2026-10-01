@@ -102,10 +102,10 @@ github.com/larsartmann/go-cqrs-lite/snapshot/v4 v4.5.1 h1:hY3ROnoTs7KZdz0eCa9V4M
 github.com/larsartmann/go-cqrs-lite/snapshot/v4 v4.5.1/go.mod h1:dYEMrEHsuREOwTeVHPjBMQeBugZc/km4oD7mEpBr1A0=
 github.com/larsartmann/go-cqrs-lite/storage/memory/v4 v4.5.2 h1:fViHIT2sakt1E6nfWZ+MRJGFN9Hjt8iD5YYkRkyXHHs=
 github.com/larsartmann/go-cqrs-lite/storage/memory/v4 v4.5.2/go.mod h1:mP//5AQ7Kt+BQ83I+dv7PpEBSyuFJmSXqyiGb6p5n6Q=
-github.com/larsartmann/go-datastar v0.5.0 h1:KjX6yJuuhQ97Het+AtLKJ6Gmk6qx4kzVmus179P2Feo=
-github.com/larsartmann/go-datastar v0.5.0/go.mod h1:Jp9k6m5b8GecLU1xmMT+CV1UfDjw7gU/W944XVU/Ns0=
-github.com/larsartmann/go-datastar/static v0.6.0 h1:tiBq1J+QE8jN2UW15AvckBBdT2b2z7AsGqaes+tz5lk=
-github.com/larsartmann/go-datastar/static v0.6.0/go.mod h1:t981dvnOKLlKU/Bo8BXlQSgwnifi18t+qtOkFNPfba8=
+github.com/larsartmann/go-datastar v0.6.1 h1:e1TiSx3lWjsTv2q+fWWvusrEbdemlG2Kgbd6k+YmXWY=
+github.com/larsartmann/go-datastar v0.6.1/go.mod h1:QtykJEQxPmDMhlg+9kNh+UxEibl/nxrtbG0aerpFUmw=
+github.com/larsartmann/go-datastar/static v0.6.1 h1:f9uKQG0tabjkdYVHM0qVmZlGDGsUVRxPU+UuelGhpxk=
+github.com/larsartmann/go-datastar/static v0.6.1/go.mod h1:t981dvnOKLlKU/Bo8BXlQSgwnifi18t+qtOkFNPfba8=
 github.com/larsartmann/go-error-family v0.11.0 h1:xqXLKrTMznStmHUapxd/6Fj5/878sb4SIZiy4JvCItQ=
 github.com/larsartmann/go-error-family v0.11.0/go.mod h1:CAzjAVWjAFDUXEaaRqIgjW28i/NrQ07OsE9Dffhx29c=
 github.com/larsartmann/go-etag/entitytag v0.6.0 h1:YM7Jl93ibYjBClycH/+hcLgna+KaZicyD2lWIRsbiyg=

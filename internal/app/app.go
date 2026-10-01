@@ -261,7 +261,7 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 func (a *App) Start(ctx context.Context) error {
 	if a.cfg.Dashboard.Enable {
 		dash := do.MustInvokeNamed[*dashboard.Dashboard](a.injector, "dashboard")
-		dash.Start(ctx)
+		_ = dash.Start(ctx)
 	}
 	if err := a.Probe.Start(ctx); err != nil {
 		return wrapf("start health probe: %w", err)

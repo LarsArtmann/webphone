@@ -531,7 +531,7 @@ def run_checks(
         status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
         f"{status} {ctype!r}",
     )
-    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", page, re.S)
+    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", page, re.DOTALL)
     c.ok(
         "shell has zero inline scripts",
         inline is None,
