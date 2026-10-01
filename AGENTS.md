@@ -115,13 +115,13 @@ value than the lifecycle.
   enters (`nix develop .#ci -c go test ./...`) instead of the heavy
   interactive shell. The NixOS module was also split under the ~300-line
   guideline, output PROVEN byte-identical (eval diff of the caddy vhost
-  + both backup scripts): `package/nixos-module.nix` now holds the
-  config only (213 lines) and imports `package/options.nix` (the option
-  surface), `package/caddy-vhost.nix` (the vhost body), and
-  `package/backup-script.nix` (the backup shell). The
-  `webphoneVersion` hardcode stays an accepted exception — a pure
-  eval-time tag-drift guard is impossible (Nix cannot read git tags
-  without impurity); `release.sh` owns the tag↔version lockstep.
+  - both backup scripts): `package/nixos-module.nix` now holds the
+    config only (213 lines) and imports `package/options.nix` (the option
+    surface), `package/caddy-vhost.nix` (the vhost body), and
+    `package/backup-script.nix` (the backup shell). The
+    `webphoneVersion` hardcode stays an accepted exception — a pure
+    eval-time tag-drift guard is impossible (Nix cannot read git tags
+    without impurity); `release.sh` owns the tag↔version lockstep.
 - webphone's gateway seam (loopback vs webhook) is consumed by
   pbx-artmann's `telnyx-webhooks.py` bridge — contracts in the plan
   docs under `docs/planning/archived/2026-09-19_11-51_SUPERB-*`.

@@ -8,7 +8,7 @@ Markdown file with a mermaid graph (skill default: styled HTML), and the
 fine-grain cap is 12 min (skill: 15).
 
 **The one-line goal:** turn a fast, shipped-but-unverified phone into a
-*verified* fast phone, and capture the session's knowledge where the next
+_verified_ fast phone, and capture the session's knowledge where the next
 session finds it — without Verschlimmbessern (every task leaves the repo
 verifiably no worse; the island's verbatim-serving pin, the strict CSP, the
 `no-store` security pins, and the DOM contract are load-bearing and untouchable).
@@ -73,35 +73,35 @@ tables below — nothing from the three reports is dropped.
 Sorted by tier → impact → effort. "Size" = wall-clock estimate incl. tests.
 `Dep` = dependency edge in the graph below.
 
-| ID | Tier | Task | Size | Impact | Dep |
-|----|------|------|------|--------|-----|
-| T01 | 1% | **Live-call ritual** (user dials; I prep the checklist and collect: accept→speak, indicator-at-ring, ICE `path:`/`rtt:`, MOH audible, BT/wired, ring audible?, `/recordings/`+CDR) | 45m | Critical | — |
-| T02 | 4% | **buildflow full gate** on the current tree | 60m | Critical | — |
-| T03 | 4% | **Stack browser E2E re-run** (nix-international-telephony `tests/browser.nix` flow) | 90m | Critical | — |
-| T04 | 4% | **Smoke boot**: `go build` + `scripts/webphone-smoke.py` over the current island | 30m | High | — |
-| T09 | 4% | **Ring-silence fix**: gesture-scoped AudioContext create/resume; unify ringback+ringTone into ONE ctx; island tests pin no-ctx-before-gesture | 90m | High | — |
-| T05 | 20% | **ETag + 304 for `/assets/*`**: read `server.go:252` composite-ETag context FIRST, then sha-of-bytes strong ETag, keep `no-cache`, rewrite the stale comment, unit tests (200/304/HEAD) | 60m | High | T01(calibrates), T02 |
-| T06 | 20% | **Scoped gzip** for the static handlers only (never `/events`), + tests incl. "SSE response has no Content-Encoding" pin | 60m | High | T02 |
-| T07 | 20% | **Outgoing mic warm** via `mic.js` on dialpad focus / session-open; factory already reuses it; tests | 60m | High | T01 |
-| T10 | 20% | **HARVEST** the three reports into `TODO_LIST.md`/`ROADMAP.md` (docs-health) | 45m | High | — |
-| T08 | 20% | **Curl timing baseline** first-load + reload, before/after T05/T06 (numbers into the plan file as an appendix) | 30m | Medium | T05, T06 |
-| T11 | 20% | **ops-runbook demo-call recipe** (telephony repo): originate+playback, corrected `/var/lib/telephony-secrets/` password path, kill switch, originate caller-ID note | 30m | High | — |
-| T12 | 20% | **`deploy.md` secret PATH column** (telephony repo) — kills the `/run/secrets` confusion class at the source | 30m | Medium | — |
-| T13 | 20% | **WebTransport verdict doc** under `docs/planning/` (rationale + revisit triggers from the 02:54 answer) | 30m | Medium | — |
-| T14 | 20% | **Answer-latency `#log` lines** (English, greppable: click→200-sent→Established) + island tests | 60m | Medium | T09 |
-| T27 | 20% | **Push verification** `git ls-remote` for all train commits | 15m→30m | Medium | — |
-| T20 | 80% | **Prod hygiene batch**: delete `/tmp/song.wav`, Option A (MOH) vs B (file) standing-demo decision, document one | 30m | Medium | T01 |
-| T15 | 80% | **Mic test hardening**: survives-rebuild, dial-after-missed consumes warm, second-onInvite guard; dedupe stubs into `helpers.mjs` | 45m | Medium | T07 |
-| T16 | 80% | **Lifecycle hygiene**: `devicechange` re-warm + `pagehide` release | 45m | Medium | T07 |
-| T17 | 80% | **Mic-failure `announce()`** at ring time (permission-denied visibility) | 30m | Medium | — |
-| T18 | 80% | **iceServers trimming evaluation** (needs T01's path numbers; fewer TURN allocations) | 45m | Medium | T01 |
-| T19 | 80% | **Cross-browser gUM check** (Safari 26.4 / Firefox: gesture-less getUserMedia at ring) | 45m | Medium | — |
-| T21 | 80% | **Telephony VM tests**: `local_stream://moh` wired under default sounds; originate+`&playback` smoke | 90m | Medium | — |
-| T22 | 80% | **Ice panel enrichment**: gathering duration, time-to-first-media, "gather cap hit" hint | 60m | Medium | T01 |
-| T23 | 80% | **`pbx-fs` wrapper** on prod + `sofia` caller-ID/timeout-knob docs | 30m | Low | T11 |
-| T24 | 80% | **Stack vhost read**: verify `encode` absence + UDP 443 state; write the h3/encode recommendation (no change without it) | 45m | Low | — |
-| T25 | 80% | **Docs sweep**: README FAQ (fast answer + indicator-at-ring), FEATURES.md island row, annotate the 02:54/04:07 reports (ANNOTATE mode) | 45m | Low | T05–T07 |
-| T26 | 80% | **lessons.md candidate** (crush-config commit): "derive runtime paths from config values, not docs tables" + trickle-ICE investigation note | 45m | Low | — |
+| ID  | Tier | Task                                                                                                                                                                                    | Size    | Impact   | Dep                  |
+| --- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------- | -------------------- |
+| T01 | 1%   | **Live-call ritual** (user dials; I prep the checklist and collect: accept→speak, indicator-at-ring, ICE `path:`/`rtt:`, MOH audible, BT/wired, ring audible?, `/recordings/`+CDR)      | 45m     | Critical | —                    |
+| T02 | 4%   | **buildflow full gate** on the current tree                                                                                                                                             | 60m     | Critical | —                    |
+| T03 | 4%   | **Stack browser E2E re-run** (nix-international-telephony `tests/browser.nix` flow)                                                                                                     | 90m     | Critical | —                    |
+| T04 | 4%   | **Smoke boot**: `go build` + `scripts/webphone-smoke.py` over the current island                                                                                                        | 30m     | High     | —                    |
+| T09 | 4%   | **Ring-silence fix**: gesture-scoped AudioContext create/resume; unify ringback+ringTone into ONE ctx; island tests pin no-ctx-before-gesture                                           | 90m     | High     | —                    |
+| T05 | 20%  | **ETag + 304 for `/assets/*`**: read `server.go:252` composite-ETag context FIRST, then sha-of-bytes strong ETag, keep `no-cache`, rewrite the stale comment, unit tests (200/304/HEAD) | 60m     | High     | T01(calibrates), T02 |
+| T06 | 20%  | **Scoped gzip** for the static handlers only (never `/events`), + tests incl. "SSE response has no Content-Encoding" pin                                                                | 60m     | High     | T02                  |
+| T07 | 20%  | **Outgoing mic warm** via `mic.js` on dialpad focus / session-open; factory already reuses it; tests                                                                                    | 60m     | High     | T01                  |
+| T10 | 20%  | **HARVEST** the three reports into `TODO_LIST.md`/`ROADMAP.md` (docs-health)                                                                                                            | 45m     | High     | —                    |
+| T08 | 20%  | **Curl timing baseline** first-load + reload, before/after T05/T06 (numbers into the plan file as an appendix)                                                                          | 30m     | Medium   | T05, T06             |
+| T11 | 20%  | **ops-runbook demo-call recipe** (telephony repo): originate+playback, corrected `/var/lib/telephony-secrets/` password path, kill switch, originate caller-ID note                     | 30m     | High     | —                    |
+| T12 | 20%  | **`deploy.md` secret PATH column** (telephony repo) — kills the `/run/secrets` confusion class at the source                                                                            | 30m     | Medium   | —                    |
+| T13 | 20%  | **WebTransport verdict doc** under `docs/planning/` (rationale + revisit triggers from the 02:54 answer)                                                                                | 30m     | Medium   | —                    |
+| T14 | 20%  | **Answer-latency `#log` lines** (English, greppable: click→200-sent→Established) + island tests                                                                                         | 60m     | Medium   | T09                  |
+| T27 | 20%  | **Push verification** `git ls-remote` for all train commits                                                                                                                             | 15m→30m | Medium   | —                    |
+| T20 | 80%  | **Prod hygiene batch**: delete `/tmp/song.wav`, Option A (MOH) vs B (file) standing-demo decision, document one                                                                         | 30m     | Medium   | T01                  |
+| T15 | 80%  | **Mic test hardening**: survives-rebuild, dial-after-missed consumes warm, second-onInvite guard; dedupe stubs into `helpers.mjs`                                                       | 45m     | Medium   | T07                  |
+| T16 | 80%  | **Lifecycle hygiene**: `devicechange` re-warm + `pagehide` release                                                                                                                      | 45m     | Medium   | T07                  |
+| T17 | 80%  | **Mic-failure `announce()`** at ring time (permission-denied visibility)                                                                                                                | 30m     | Medium   | —                    |
+| T18 | 80%  | **iceServers trimming evaluation** (needs T01's path numbers; fewer TURN allocations)                                                                                                   | 45m     | Medium   | T01                  |
+| T19 | 80%  | **Cross-browser gUM check** (Safari 26.4 / Firefox: gesture-less getUserMedia at ring)                                                                                                  | 45m     | Medium   | —                    |
+| T21 | 80%  | **Telephony VM tests**: `local_stream://moh` wired under default sounds; originate+`&playback` smoke                                                                                    | 90m     | Medium   | —                    |
+| T22 | 80%  | **Ice panel enrichment**: gathering duration, time-to-first-media, "gather cap hit" hint                                                                                                | 60m     | Medium   | T01                  |
+| T23 | 80%  | **`pbx-fs` wrapper** on prod + `sofia` caller-ID/timeout-knob docs                                                                                                                      | 30m     | Low      | T11                  |
+| T24 | 80%  | **Stack vhost read**: verify `encode` absence + UDP 443 state; write the h3/encode recommendation (no change without it)                                                                | 45m     | Low      | —                    |
+| T25 | 80%  | **Docs sweep**: README FAQ (fast answer + indicator-at-ring), FEATURES.md island row, annotate the 02:54/04:07 reports (ANNOTATE mode)                                                  | 45m     | Low      | T05–T07              |
+| T26 | 80%  | **lessons.md candidate** (crush-config commit): "derive runtime paths from config values, not docs tables" + trickle-ICE investigation note                                             | 45m     | Low      | —                    |
 
 Deliberately OUT of this plan (release-coupled, not forgotten): CHANGELOG
 version fold + AGENTS.md mic-bullet shortening happen at the next release train;
@@ -113,80 +113,80 @@ version fold + AGENTS.md mic-bullet shortening happen at the next release train;
 
 Dependency groups run in the order below; IDs are stable for the graph.
 
-| µID | Task | Min | Dep |
-|-----|------|-----|-----|
-| **Group G0 — parallel start: gates + user ritual (no code)** | | | |
-| µ01 | Prep T01 checklist: the six observations, in page order, with where each is read (island console, ICE panel, `/recordings/`) | 10 | — |
-| µ02 | T01 execution: user places + accepts a real call; six observations recorded verbatim | 12 | µ01 |
-| µ03 | T01: ICE panel screenshot/transcript → `path:`/`rtt:` noted in this file's appendix | 6 | µ02 |
-| µ04 | T01: `/recordings/` + CDR check for the demo call (basic-auth URL) | 8 | µ02 |
-| µ05 | T01 verdicts: mark the six questions answered; flag any regression found | 6 | µ03,µ04 |
-| µ06 | T02: run `buildflow` (BUILDFLOW_NO_RESULT_CACHE=1), capture verdict | 12 | — |
-| µ07 | T02: triage any finding (known gomod-check FP documented in AGENTS → route, don't fix) | 10 | µ06 |
-| µ08 | T03: run the stack browser E2E, capture timing vs 445s budget | 12 | — |
-| µ09 | T03: verdict + (if the known transfer-step flake) one re-run before digging | 10 | µ08 |
-| µ10 | T04: `nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone` | 6 | — |
-| µ11 | T04: `scripts/webphone-smoke.py` against the fresh binary; verdict | 10 | µ10 |
-| µ12 | G0 wrap: record all gate verdicts in this file's appendix; commit narrative | 10 | µ05,µ07,µ09,µ11 |
-| **Group G1 — the diagnosed bug (island)** | | | |
-| µ13 | T09: read `audio.js` + `notifyIncoming`/`ringToneStart` call sites; decide gesture points (accept click, first pointerdown) | 10 | — |
-| µ14 | T09: unify ringback+ringTone into ONE lazily-created ctx in `audio.js` | 12 | µ13 |
-| µ15 | T09: resume-on-gesture wiring (pointerdown/keydown/visibilitychange once-listener) | 10 | µ14 |
-| µ16 | T09: island test — ctx created only after gesture (stub AudioContext state machine) | 12 | µ15 |
-| µ17 | T09: island test — ring audible after gesture resume; run full island suite | 12 | µ16 |
-| **Group G2 — performance train** | | | |
-| µ18 | T05: read `server.go:240-270` composite-ETag context; write the reconcile note (no duplication) | 10 | — |
-| µ19 | T05: implement sha-of-bytes ETag in `serveEmbedded` + island mux wrapper; keep `no-cache` | 12 | µ18 |
-| µ20 | T05: unit tests — 200 with ETag, 304 on If-None-Match, HEAD no body | 12 | µ19 |
-| µ21 | T05: rewrite the stale "caching buys nothing" comment to the new contract | 5 | µ20 |
-| µ22 | T06: implement gzip for `serveEmbedded` + island static handlers only (`gzip.NewWriterLevel` or httputil seam if cqrs-htmx ships one) | 12 | — |
-| µ23 | T06: tests — Content-Encoding on accept-gzip asset, ABSENT on `/events` (SSE pin), Vary header | 12 | µ22 |
-| µ24 | T06: verify op breakdown: serve `text/plain` fallback? no — run oxlint/format on touched files | 6 | µ23 |
-| µ25 | T07: add `warmMic()` trigger on dialpad focus + session-open (guarded by `mediaDevices`) | 10 | — |
-| µ26 | T07: test — outgoing invite consumes warm stream, no double gUM | 12 | µ25 |
-| µ27 | T07: test — cold dial (no warm) falls back exactly like today | 8 | µ26 |
-| µ28 | T08: curl baseline BEFORE numbers (already have T05/T06 diffs; re-run after) — record table | 8 | µ21,µ24 |
-| µ29 | T08: re-run AFTER; append before/after table to this file; commit the perf train narrative | 10 | µ28 |
-| **Group G3 — knowledge capture** | | | |
-| µ30 | T10: docs-health HARVEST pass 1 — read the three reports' (f)-sections, dedupe into master rows | 12 | — |
-| µ31 | T10: HARVEST pass 2 — TODO_LIST rows (30–100min, owner-actionable) + ROADMAP rows (long tail) | 12 | µ30 |
-| µ32 | T10: mark harvested items with their source report IDs; commit | 8 | µ31 |
-| µ33 | T13: write WebTransport verdict doc (decision, four structural reasons, revisit triggers) | 12 | — |
-| µ34 | T13: cross-link from FEATURES/TODO row; commit | 6 | µ33 |
-| µ35 | T11: write the ops-runbook recipe (telephony repo): originate+playback, password path, hupall kill, caller-ID note | 12 | — |
-| µ36 | T11: buildflow/docs-gates on the telephony change; commit | 10 | µ35 |
-| µ37 | T12: add PATH column to deploy.md secrets table; same gates; commit | 12 | — |
-| µ38 | T27: `git ls-remote` verify every train commit (webphone + telephony) | 8 | — |
-| **Group G4 — call-path visibility** | | | |
-| µ39 | T14: add timestamps to the answer flow (`calls.js` answerIncoming + Established listener) → `#log` lines | 12 | µ17 |
-| µ40 | T14: i18n keys (en+de, service-English rule check — `#log` stays English) | 8 | µ39 |
-| µ41 | T14: island tests pin the log lines; run suite | 12 | µ40 |
-| µ42 | T22: ice panel — gather-duration stat + "cap hit" hint line | 12 | µ17 |
-| µ43 | T22: test the hint copy (en/de) + suite | 10 | µ42 |
-| **Group G5 — island hardening (tail)** | | | |
-| µ44 | T15: test warm survives agent rebuild (module state is intentional) | 10 | µ27 |
-| µ45 | T15: test dial-after-missed consumes stale warm | 8 | µ44 |
-| µ46 | T15: test second-onInvite keeps ONE warm (guard) | 8 | µ45 |
-| µ47 | T15: move track/stream/mediaDevices stubs into `helpers.mjs`; shrink the two test files | 12 | µ46 |
-| µ48 | T16: `devicechange` re-warm (drop stale stream, warm again) | 12 | µ27 |
-| µ49 | T16: `pagehide` release; tests for both | 12 | µ48 |
-| µ50 | T17: announce() on warm failure (once per ring, i18n en/de) + test | 12 | — |
-| µ51 | T19: Safari 26.4/Firefox gesture-less gUM — research note + island guard if needed | 12 | — |
-| µ52 | T18: read T01 path numbers; propose trimmed `iceServers`; write the evaluation into the plan appendix (no change without numbers) | 12 | µ03 |
-| **Group G6 — pbx/telephony tail** | | | |
-| µ53 | T20: delete `/tmp/song.wav` (local); write the Option A/B decision + rationale here | 6 | µ02 |
-| µ54 | T21: VM test — assert `local_stream://moh` configured under default sounds package | 12 | — |
-| µ55 | T21: VM test — originate + `&playback` smoke (reuse the conference two-leg harness pattern) | 12 | µ54 |
-| µ56 | T21: run the VM suites; verdict | 12 | µ55 |
-| µ57 | T23: `pbx-fs` wrapper script (telephony repo or runbook snippet); caller-ID + timeout-knob docs | 12 | µ36 |
-| µ58 | T24: read the module's Caddy vhost generator; verify encode/UDP443 claims; write the recommendation | 12 | — |
-| **Group G7 — docs + lessons sweep** | | | |
-| µ59 | T25: README FAQ section (fast answer, indicator-at-ring) | 10 | µ29 |
-| µ60 | T25: FEATURES.md island row update (mic seam + warm) | 8 | µ59 |
-| µ61 | T25: ANNOTATE the 02:54/04:07 reports (closed items marked, never rewritten) | 12 | µ60 |
-| µ62 | T26: lessons.md commit in crush-config (paths-from-config-values) | 10 | — |
-| µ63 | T26: trickle-ICE investigation note (named-trigger policy respected) into the plan appendix | 12 | — |
-| µ64 | Final sweep: full island suite + arch + server tests; narrative commit; `git ls-remote` verify; update this file's verdict table | 12 | µ12,µ38,µ41,µ43,µ50–µ63 |
+| µID                                                          | Task                                                                                                                                  | Min | Dep                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | --- | ----------------------- |
+| **Group G0 — parallel start: gates + user ritual (no code)** |                                                                                                                                       |     |                         |
+| µ01                                                          | Prep T01 checklist: the six observations, in page order, with where each is read (island console, ICE panel, `/recordings/`)          | 10  | —                       |
+| µ02                                                          | T01 execution: user places + accepts a real call; six observations recorded verbatim                                                  | 12  | µ01                     |
+| µ03                                                          | T01: ICE panel screenshot/transcript → `path:`/`rtt:` noted in this file's appendix                                                   | 6   | µ02                     |
+| µ04                                                          | T01: `/recordings/` + CDR check for the demo call (basic-auth URL)                                                                    | 8   | µ02                     |
+| µ05                                                          | T01 verdicts: mark the six questions answered; flag any regression found                                                              | 6   | µ03,µ04                 |
+| µ06                                                          | T02: run `buildflow` (BUILDFLOW_NO_RESULT_CACHE=1), capture verdict                                                                   | 12  | —                       |
+| µ07                                                          | T02: triage any finding (known gomod-check FP documented in AGENTS → route, don't fix)                                                | 10  | µ06                     |
+| µ08                                                          | T03: run the stack browser E2E, capture timing vs 445s budget                                                                         | 12  | —                       |
+| µ09                                                          | T03: verdict + (if the known transfer-step flake) one re-run before digging                                                           | 10  | µ08                     |
+| µ10                                                          | T04: `nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone`                                                                    | 6   | —                       |
+| µ11                                                          | T04: `scripts/webphone-smoke.py` against the fresh binary; verdict                                                                    | 10  | µ10                     |
+| µ12                                                          | G0 wrap: record all gate verdicts in this file's appendix; commit narrative                                                           | 10  | µ05,µ07,µ09,µ11         |
+| **Group G1 — the diagnosed bug (island)**                    |                                                                                                                                       |     |                         |
+| µ13                                                          | T09: read `audio.js` + `notifyIncoming`/`ringToneStart` call sites; decide gesture points (accept click, first pointerdown)           | 10  | —                       |
+| µ14                                                          | T09: unify ringback+ringTone into ONE lazily-created ctx in `audio.js`                                                                | 12  | µ13                     |
+| µ15                                                          | T09: resume-on-gesture wiring (pointerdown/keydown/visibilitychange once-listener)                                                    | 10  | µ14                     |
+| µ16                                                          | T09: island test — ctx created only after gesture (stub AudioContext state machine)                                                   | 12  | µ15                     |
+| µ17                                                          | T09: island test — ring audible after gesture resume; run full island suite                                                           | 12  | µ16                     |
+| **Group G2 — performance train**                             |                                                                                                                                       |     |                         |
+| µ18                                                          | T05: read `server.go:240-270` composite-ETag context; write the reconcile note (no duplication)                                       | 10  | —                       |
+| µ19                                                          | T05: implement sha-of-bytes ETag in `serveEmbedded` + island mux wrapper; keep `no-cache`                                             | 12  | µ18                     |
+| µ20                                                          | T05: unit tests — 200 with ETag, 304 on If-None-Match, HEAD no body                                                                   | 12  | µ19                     |
+| µ21                                                          | T05: rewrite the stale "caching buys nothing" comment to the new contract                                                             | 5   | µ20                     |
+| µ22                                                          | T06: implement gzip for `serveEmbedded` + island static handlers only (`gzip.NewWriterLevel` or httputil seam if cqrs-htmx ships one) | 12  | —                       |
+| µ23                                                          | T06: tests — Content-Encoding on accept-gzip asset, ABSENT on `/events` (SSE pin), Vary header                                        | 12  | µ22                     |
+| µ24                                                          | T06: verify op breakdown: serve `text/plain` fallback? no — run oxlint/format on touched files                                        | 6   | µ23                     |
+| µ25                                                          | T07: add `warmMic()` trigger on dialpad focus + session-open (guarded by `mediaDevices`)                                              | 10  | —                       |
+| µ26                                                          | T07: test — outgoing invite consumes warm stream, no double gUM                                                                       | 12  | µ25                     |
+| µ27                                                          | T07: test — cold dial (no warm) falls back exactly like today                                                                         | 8   | µ26                     |
+| µ28                                                          | T08: curl baseline BEFORE numbers (already have T05/T06 diffs; re-run after) — record table                                           | 8   | µ21,µ24                 |
+| µ29                                                          | T08: re-run AFTER; append before/after table to this file; commit the perf train narrative                                            | 10  | µ28                     |
+| **Group G3 — knowledge capture**                             |                                                                                                                                       |     |                         |
+| µ30                                                          | T10: docs-health HARVEST pass 1 — read the three reports' (f)-sections, dedupe into master rows                                       | 12  | —                       |
+| µ31                                                          | T10: HARVEST pass 2 — TODO_LIST rows (30–100min, owner-actionable) + ROADMAP rows (long tail)                                         | 12  | µ30                     |
+| µ32                                                          | T10: mark harvested items with their source report IDs; commit                                                                        | 8   | µ31                     |
+| µ33                                                          | T13: write WebTransport verdict doc (decision, four structural reasons, revisit triggers)                                             | 12  | —                       |
+| µ34                                                          | T13: cross-link from FEATURES/TODO row; commit                                                                                        | 6   | µ33                     |
+| µ35                                                          | T11: write the ops-runbook recipe (telephony repo): originate+playback, password path, hupall kill, caller-ID note                    | 12  | —                       |
+| µ36                                                          | T11: buildflow/docs-gates on the telephony change; commit                                                                             | 10  | µ35                     |
+| µ37                                                          | T12: add PATH column to deploy.md secrets table; same gates; commit                                                                   | 12  | —                       |
+| µ38                                                          | T27: `git ls-remote` verify every train commit (webphone + telephony)                                                                 | 8   | —                       |
+| **Group G4 — call-path visibility**                          |                                                                                                                                       |     |                         |
+| µ39                                                          | T14: add timestamps to the answer flow (`calls.js` answerIncoming + Established listener) → `#log` lines                              | 12  | µ17                     |
+| µ40                                                          | T14: i18n keys (en+de, service-English rule check — `#log` stays English)                                                             | 8   | µ39                     |
+| µ41                                                          | T14: island tests pin the log lines; run suite                                                                                        | 12  | µ40                     |
+| µ42                                                          | T22: ice panel — gather-duration stat + "cap hit" hint line                                                                           | 12  | µ17                     |
+| µ43                                                          | T22: test the hint copy (en/de) + suite                                                                                               | 10  | µ42                     |
+| **Group G5 — island hardening (tail)**                       |                                                                                                                                       |     |                         |
+| µ44                                                          | T15: test warm survives agent rebuild (module state is intentional)                                                                   | 10  | µ27                     |
+| µ45                                                          | T15: test dial-after-missed consumes stale warm                                                                                       | 8   | µ44                     |
+| µ46                                                          | T15: test second-onInvite keeps ONE warm (guard)                                                                                      | 8   | µ45                     |
+| µ47                                                          | T15: move track/stream/mediaDevices stubs into `helpers.mjs`; shrink the two test files                                               | 12  | µ46                     |
+| µ48                                                          | T16: `devicechange` re-warm (drop stale stream, warm again)                                                                           | 12  | µ27                     |
+| µ49                                                          | T16: `pagehide` release; tests for both                                                                                               | 12  | µ48                     |
+| µ50                                                          | T17: announce() on warm failure (once per ring, i18n en/de) + test                                                                    | 12  | —                       |
+| µ51                                                          | T19: Safari 26.4/Firefox gesture-less gUM — research note + island guard if needed                                                    | 12  | —                       |
+| µ52                                                          | T18: read T01 path numbers; propose trimmed `iceServers`; write the evaluation into the plan appendix (no change without numbers)     | 12  | µ03                     |
+| **Group G6 — pbx/telephony tail**                            |                                                                                                                                       |     |                         |
+| µ53                                                          | T20: delete `/tmp/song.wav` (local); write the Option A/B decision + rationale here                                                   | 6   | µ02                     |
+| µ54                                                          | T21: VM test — assert `local_stream://moh` configured under default sounds package                                                    | 12  | —                       |
+| µ55                                                          | T21: VM test — originate + `&playback` smoke (reuse the conference two-leg harness pattern)                                           | 12  | µ54                     |
+| µ56                                                          | T21: run the VM suites; verdict                                                                                                       | 12  | µ55                     |
+| µ57                                                          | T23: `pbx-fs` wrapper script (telephony repo or runbook snippet); caller-ID + timeout-knob docs                                       | 12  | µ36                     |
+| µ58                                                          | T24: read the module's Caddy vhost generator; verify encode/UDP443 claims; write the recommendation                                   | 12  | —                       |
+| **Group G7 — docs + lessons sweep**                          |                                                                                                                                       |     |                         |
+| µ59                                                          | T25: README FAQ section (fast answer, indicator-at-ring)                                                                              | 10  | µ29                     |
+| µ60                                                          | T25: FEATURES.md island row update (mic seam + warm)                                                                                  | 8   | µ59                     |
+| µ61                                                          | T25: ANNOTATE the 02:54/04:07 reports (closed items marked, never rewritten)                                                          | 12  | µ60                     |
+| µ62                                                          | T26: lessons.md commit in crush-config (paths-from-config-values)                                                                     | 10  | —                       |
+| µ63                                                          | T26: trickle-ICE investigation note (named-trigger policy respected) into the plan appendix                                           | 12  | —                       |
+| µ64                                                          | Final sweep: full island suite + arch + server tests; narrative commit; `git ls-remote` verify; update this file's verdict table      | 12  | µ12,µ38,µ41,µ43,µ50–µ63 |
 
 64 micro-tasks, every medium task expanded, every one of the ~50 backlog items
 mapped (carried items live in T15–T26; release-coupled items explicitly parked
@@ -296,12 +296,12 @@ cheaper or better-targeted after G0's numbers exist.
 
 ## Appendix — verdicts & numbers (filled during execution)
 
-| When | What | Result |
-|------|------|--------|
-| *(pending G0)* | T01 six observations | — |
-| *(pending G0)* | T02 buildflow verdict | — |
-| *(pending G0)* | T03 E2E timing/verdict | — |
-| *(pending G0)* | T04 smoke verdict | — |
-| *(pending G2)* | T08 before/after timing table | — |
-| *(pending G5/G6)* | T18 iceServers evaluation | — |
-| *(pending G6)* | T24 vhost encode/h3 findings | — |
+| When              | What                          | Result |
+| ----------------- | ----------------------------- | ------ |
+| _(pending G0)_    | T01 six observations          | —      |
+| _(pending G0)_    | T02 buildflow verdict         | —      |
+| _(pending G0)_    | T03 E2E timing/verdict        | —      |
+| _(pending G0)_    | T04 smoke verdict             | —      |
+| _(pending G2)_    | T08 before/after timing table | —      |
+| _(pending G5/G6)_ | T18 iceServers evaluation     | —      |
+| _(pending G6)_    | T24 vhost encode/h3 findings  | —      |

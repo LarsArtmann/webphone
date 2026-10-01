@@ -592,7 +592,7 @@
       if (!elt || !elt.matches) return false;
       return Boolean(
         (elt.hasAttribute && elt.hasAttribute("data-tab")) ||
-          (elt.closest && elt.closest(".wp-thread-rowwrap, .wp-back")),
+        (elt.closest && elt.closest(".wp-thread-rowwrap, .wp-back")),
       );
     };
     document.addEventListener("htmx:beforeRequest", function (event) {

@@ -378,14 +378,8 @@ test("the reply composer appends a pending bubble the moment it submits", () => 
   assert.match(bubble.className, /\bwp-bubble\b/);
   assert.match(bubble.className, /\bwp-out\b/);
   assert.match(bubble.className, /\bwp-opt\b/);
-  assert.match(
-    bubble.querySelector(".wp-bubble-body").textContent,
-    /optimistic hello/,
-  );
-  assert.match(
-    bubble.querySelector(".wp-status").className,
-    /wp-status-queued/,
-  );
+  assert.match(bubble.querySelector(".wp-bubble-body").textContent, /optimistic hello/);
+  assert.match(bubble.querySelector(".wp-status").className, /wp-status-queued/);
   assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
 });
 
@@ -416,10 +410,7 @@ test("a failed send flips the optimistic bubble to failed and restores the draft
   doc.dispatch("htmx:responseError", { target: form });
   const bubble = transcript.children.at(-1);
   assert.match(bubble.className, /\bwp-opt-failed\b/);
-  assert.match(
-    bubble.querySelector(".wp-status").className,
-    /wp-status-failed/,
-  );
+  assert.match(bubble.querySelector(".wp-status").className, /wp-status-failed/);
   assert.match(bubble.querySelector(".wp-status").textContent, /failed/);
   assert.equal(area.value, "optimistic hello", "the draft comes back");
   // A validation failure (HX-Trigger) still rolls the bubble back via

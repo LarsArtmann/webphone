@@ -89,7 +89,7 @@ not a mistake with consequences.
    `module-check-backup.nix`) imported from the entry.
 2. **Module-check stand-ins are brittle.** The `moduleSet` stand-in only
    declares `services.caddy`, `systemd.{services,timers}`, `users.*`,
-   `assertions`. Any *new* top-level config key the module writes fails
+   `assertions`. Any _new_ top-level config key the module writes fails
    eval with an opaque error. A permissive `freeformType = anything`
    stand-in (or a documented checklist in the check header) would soften
    this — AGENTS.md already flags it as a known constraint.
@@ -117,6 +117,7 @@ not a mistake with consequences.
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
 ### Directly from this review (high → low)
+
 1. Split `nix/module-check.nix` csrf cases into their own file.
 2. Split `nix/module-check.nix` backup cases into their own file.
 3. Make the module-check stand-in permissive (`freeformType`), or add a
@@ -138,6 +139,7 @@ not a mistake with consequences.
     `docs/dedup-registry.md` if any become clone rulings — unlikely here).
 
 ### Repo-wide Nix hygiene (observed while reading)
+
 14. Confirm `nix/packages.nix`'s vulnix-triage script (70 lines) stays in
     `packages.nix` vs. its own file — currently cohesive, revisit if it
     grows.
@@ -166,6 +168,7 @@ not a mistake with consequences.
     interactively.
 
 ### Module / deployment (from reading `nixos-module.nix`)
+
 26. Document that `/health` (root) is intentionally not in the
     `flush_interval -1` handles (only `/health/*`).
 27. Consider an explicit `handle /health` block if the dashboard root ever
@@ -186,6 +189,7 @@ not a mistake with consequences.
 35. Consider exposing `caddy.extraConfig` append for operator additions.
 
 ### Verification / gates
+
 36. Add the review's low-severity items to `TODO_LIST.md` with owners.
 37. Re-run `nix flake check` after any split of module-check.
 38. Add a CI job that runs `nix flake check --no-build` to catch eval
@@ -195,6 +199,7 @@ not a mistake with consequences.
     job if runner budget allows).
 
 ### Meta / process
+
 41. Adopt the skill's two-step read (skill body + both reference files)
     as a standing rule for future Nix reviews.
 42. Keep citing stable names, not `file:line`, per AGENTS.md conventions.
