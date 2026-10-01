@@ -16,7 +16,7 @@ import { recordHistory } from "./panels.js";
 import { titleFlashStart, titleFlashStop, notifyIncoming } from "./notify.js";
 import { t } from "./i18n.js";
 import { sessions, state } from "./state.js";
-import { announce, els, log, setRegStatus } from "./ui.js";
+import { announce, els, log, setOfflineBanner, setRegStatus } from "./ui.js";
 
 let registerer = null;
 let reconnectAttempts = 0;
@@ -36,10 +36,29 @@ const RECONNECT_ATTEMPT_TIMEOUT_MS = 5000;
 // of the wedged chain.
 const RECONNECT_CYCLE_DEADLINE_MS = 15000;
 
+// Every offline-truth pill flips the banner on: the pill carries the
+// precise reason, the banner is the loud "you cannot call right now".
+function setOfflinePill(text) {
+  setRegStatus("status-offline", text);
+  setOfflineBanner(true);
+}
+
+// The browser's network came back: recover ONLY if the transport is
+// actually down and no retry is pending. It never claims registered —
+// that verdict stays with the REGISTER (the pill flips there).
+export function networkOnline() {
+  if (stopping || resetting) return;
+  if (!state.userAgent || state.userAgent.isConnected()) return;
+  if (!reconnectTimer) scheduleReconnect();
+}
+
 export async function connect(extension, password) {
   stopping = false;
   reconnectAttempts = 0;
   setCredentials(extension, password);
+  // Honest until proven otherwise: between login and the REGISTER's
+  // 200-OK the phone cannot call — the banner says so.
+  setOfflineBanner(true);
   await buildConnection();
 }
 
@@ -47,7 +66,7 @@ function scheduleReconnect() {
   if (stopping || reconnectTimer) return;
   reconnectAttempts += 1;
   const delay = Math.min(30, 2 ** reconnectAttempts);
-  setRegStatus("status-offline", t("reconnecting")(delay, reconnectAttempts));
+  setOfflinePill(t("reconnecting")(delay, reconnectAttempts));
   log(`transport lost; reconnect try ${reconnectAttempts} in ${delay}s`);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
@@ -110,7 +129,7 @@ async function rebuildConnection(reason) {
   // The transient rebuilding pill: the watchdog just decided to tear
   // the agent down — the user sees WORK happening before the fresh
   // REGISTER lands (or fails) and flips the pill for real.
-  setRegStatus("status-offline", t("regRebuilding"));
+  setOfflinePill(t("regRebuilding"));
   // A rebuild supersedes every pending recovery rhythm: the reconnect
   // timer AND the cycle deadline belong to the fresh agent from here.
   if (reconnectTimer) {
@@ -217,7 +236,7 @@ async function buildConnection() {
         const reason = error
           ? `offline: ${error.message || error}`
           : t("offline");
-        setRegStatus("status-offline", reason);
+        setOfflinePill(reason);
         if (error) scheduleReconnect();
       },
       onInvite: (invitation) => {
@@ -304,6 +323,7 @@ async function buildConnection() {
       const wasReconnecting = reconnectAttempts > 0;
       reconnectAttempts = 0;
       setRegStatus("status-registered", t("registered"));
+      setOfflineBanner(false);
       // Reconnect polish: after a transport recovery, say what the user
       // still has instead of silently resuming.
       if (wasReconnecting && sessions.size > 0) {
@@ -320,14 +340,14 @@ async function buildConnection() {
       }
       // The REGISTER never succeeded (wrong credentials, account
       // disabled): say so instead of "offline".
-      setRegStatus("status-offline", t("regRejected"));
+      setOfflinePill(t("regRejected"));
       return;
     }
     if (regState === SIP.RegistererState.Terminated && wasRegistered) {
       registrationLost();
       return;
     }
-    setRegStatus("status-offline", regState.toLowerCase());
+    setOfflinePill(regState.toLowerCase());
   });
   await registerer.register();
 }
@@ -338,6 +358,7 @@ export async function disconnect() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
   reconnectTimer = null;
   clearReconnectCycleDeadline();
+  setOfflineBanner(false);
   ringbackStop();
   // Null the handles like the original single-file app did on logout:
   // a later placeCall must see "not connected", not a stopped agent.

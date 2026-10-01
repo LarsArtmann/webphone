@@ -60,16 +60,36 @@ async function holdSession(id, hold) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
   if (entry.held === hold) return;
-  entry.held = hold; // preemptive; undone if the re-INVITE fails
+  // Honest pending state: the UI shows the WORK until the re-INVITE
+  // settles — never the hoped-for end state. A toggle arriving mid-flight
+  // (e.g. focus preemption) queues the latest wish instead of being lost.
+  if (entry.holdPending) {
+    entry.holdQueued = hold;
+    return;
+  }
+  entry.holdPending = hold ? "holding" : "resuming";
+  renderCalls();
   try {
     await entry.session.invite();
+    entry.held = hold;
     setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
   } catch (err) {
-    entry.held = !hold;
     log(`hold toggle failed: ${err.message}`, "error");
     announce(t("holdFailed")(err.message), "error");
+  } finally {
+    entry.holdPending = null;
+    const queued = entry.holdQueued;
+    entry.holdQueued = undefined;
+    if (
+      queued !== undefined &&
+      queued !== entry.held &&
+      entry.session.state === SIP.SessionState.Established
+    ) {
+      holdSession(id, queued);
+    } else {
+      renderCalls();
+    }
   }
-  renderCalls();
 }
 
 function focusSession(id) {
@@ -120,10 +140,12 @@ export function renderCalls() {
     const stateEl = entry.dom.querySelector(".call-state-text");
     let dataState = "ending";
     if (sessionState === SIP.SessionState.Established) {
-      dataState = "established";
+      dataState = entry.holdPending || (entry.held ? "held" : "established");
       stateEl.textContent = entry.transferring
         ? t("transferring")
-        : `${entry.held ? t("onHold") : t("inCall")} · ${durationLabel(entry.startedAt)}`;
+        : entry.holdPending
+          ? t(entry.holdPending === "holding" ? "callHolding" : "callResuming")
+          : `${entry.held ? t("onHold") : t("inCall")} · ${durationLabel(entry.startedAt)}`;
     } else if (sessionState === SIP.SessionState.Establishing) {
       dataState = "ringing";
       stateEl.textContent = t("ringing");
@@ -137,7 +159,12 @@ export function renderCalls() {
     announceCallState(entry, dataState);
     entry.dom.classList.toggle("focused", id === state.focusedId);
     const holdBtn = entry.dom.querySelector(".hold-btn");
-    holdBtn.textContent = entry.held ? t("resume") : t("hold");
+    holdBtn.disabled = Boolean(entry.holdPending);
+    holdBtn.textContent = entry.holdPending
+      ? t(entry.holdPending === "holding" ? "callHolding" : "callResuming")
+      : entry.held
+        ? t("resume")
+        : t("hold");
     const muteBtn = entry.dom.querySelector(".mute-btn");
     muteBtn.textContent = entry.muted ? t("unmute") : t("mute");
     const focusBtn = entry.dom.querySelector(".focus-btn");
@@ -334,6 +361,8 @@ export function bindSession(newSession, target) {
     session: newSession,
     target,
     held: false,
+    holdPending: null,
+    holdQueued: undefined,
     muted: false,
     established: false,
     startedAt: Date.now(),

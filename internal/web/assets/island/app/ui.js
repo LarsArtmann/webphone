@@ -39,6 +39,7 @@ export const els = {
   log: $("log"),
   toasts: $("toasts"),
   dialError: $("dial-error"),
+  offlineBanner: $("offline-banner"),
   remoteAudio: $("remote-audio"),
 };
 
@@ -115,6 +116,14 @@ export function showDialError(message) {
 export function setRegStatus(state, text) {
   els.regStatus.textContent = text;
   els.regStatus.className = `status ${state}`;
+}
+
+// The offline banner: the loud honest surface for "you cannot call right
+// now". Visibility is the only API — its text lives in the markup with
+// data-i18n so a language switch re-localizes it; the precise reason
+// stays in the #reg-status pill.
+export function setOfflineBanner(visible) {
+  els.offlineBanner.hidden = !visible;
 }
 
 export function dialFromUi(number) {
