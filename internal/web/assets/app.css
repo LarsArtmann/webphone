@@ -247,6 +247,26 @@ h3 {
   border-color: var(--accent);
 }
 
+/* Skip link (E4): the first tab stop jumps past the island straight to
+   the tab content; visible only while focused. */
+.wp-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  text-decoration: none;
+}
+
+.wp-skip:focus {
+  left: 8px;
+  top: 8px;
+}
+
 .wp-body {
   display: grid;
   grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);

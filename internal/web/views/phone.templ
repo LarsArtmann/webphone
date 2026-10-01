@@ -20,7 +20,7 @@ templ PhoneIsland() {
 
 			<section id="login-view" class="card">
 				<h1 data-i18n="signin">Sign in to your extension</h1>
-				<form id="login-form" autocomplete="off">
+				<form id="login-form" autocomplete="off" aria-describedby="login-error">
 					<label>
 						<span data-i18n="extension">Extension</span>
 						<input id="ext" name="extension" inputmode="numeric" autocomplete="username" placeholder="1000" required></input>
@@ -46,7 +46,7 @@ templ PhoneIsland() {
 					<button id="logout" class="ghost small" data-i18n="signOut" data-i18n-title="signOutTitle">sign out</button>
 				</div>
 
-				<form id="dial-form" autocomplete="off">
+				<form id="dial-form" autocomplete="off" aria-describedby="dial-error">
 					<input id="dest" inputmode="tel" data-i18n-placeholder="dialPlaceholder" aria-label="Number to call" required></input>
 					<button type="submit" class="primary" id="call-btn" data-i18n="call">Call</button>
 				</form>

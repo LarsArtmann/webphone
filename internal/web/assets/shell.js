@@ -629,7 +629,13 @@
         document.documentElement.setAttribute("data-theme", theme);
       }
       var button = document.getElementById("theme-toggle");
-      if (button) button.textContent = "Theme: " + theme;
+      if (button) {
+        button.textContent = "Theme: " + theme;
+        // G10: the accessible name carries the current state too, so a
+        // screen reader hears the theme change without re-reading the
+        // visible label.
+        button.setAttribute("aria-label", "Color theme: " + theme);
+      }
     };
     applyTheme();
 
