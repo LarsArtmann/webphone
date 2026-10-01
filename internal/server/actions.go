@@ -550,3 +550,28 @@ func (h *handlers) exportContacts(w http.ResponseWriter, r *http.Request) {
 		slog.WarnContext(r.Context(), "contacts export stream broke mid-response", "error", err)
 	}
 }
+
+// exportContact streams ONE personal contact as vCard (row-level export
+// beside the whole-list export). Owner-scoped like every contact read: a
+// foreign or unknown id is a plain 404 — this is a download endpoint, so
+// the styled page-404 does not apply.
+func (h *handlers) exportContact(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	contact, err := h.deps.Contacts.ByID(r.Context(), sess.Extension, domain.MustContactID(r.PathValue("id")))
+	if err != nil {
+		http.Error(w, "contact not found", http.StatusNotFound)
+		return
+	}
+	filename := "contact.vcf"
+	if contact.Name != "" {
+		filename = contact.Name + ".vcf"
+	}
+	w.Header().Set("Content-Type", "text/vcard; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	if _, err := w.Write(vcard.Encode([]vcard.Card{{Name: contact.Name, Number: contact.Phone.String()}})); err != nil {
+		slog.WarnContext(r.Context(), "contact export stream broke mid-response", "error", err)
+	}
+}
