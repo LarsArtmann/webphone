@@ -1397,6 +1397,7 @@ select:focus-visible {
   .wp-body {
     grid-template-columns: 1fr;
     padding: 14px;
+    padding-bottom: 88px; /* clear the fixed bottom tab bar */
     gap: 16px;
   }
 
@@ -1408,6 +1409,51 @@ select:focus-visible {
 
   .wp-island {
     position: static;
+  }
+
+  /* A live call pulls the island to the front (I1): sticky at the top,
+   * it stays on screen while the tabs scroll underneath. */
+  .wp-island:has(.call-card) {
+    order: -1;
+    position: sticky;
+    top: 8px;
+    z-index: 50;
+  }
+
+  /* Bottom tab bar (I2): the nav pins to the viewport bottom on
+   * phones — thumb-reachable, no horizontal strip scrolling, and the
+   * safe-area inset keeps it clear of the home indicator (I8). */
+  .wp-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: var(--hairline);
+    border-bottom: none;
+    box-shadow: 0 -4px 16px rgb(3 10 12 / 25%);
+  }
+
+  .wp-nav-link {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    border-radius: 8px;
+  }
+
+  .wp-nav-link.wp-active {
+    border-bottom-color: transparent;
+    background: var(--accent-soft);
+  }
+
+  /* I5: comfortable tap targets on the mini row buttons. */
+  .wp-mini {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .wp-panel {
