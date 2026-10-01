@@ -10,7 +10,7 @@ import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
 const { t } = await import("../island/app/i18n.js");
-const ui = await import("../island/app/ui.js");
+await import("../island/app/ui.js");
 const session = await import("../island/app/session.js");
 
 const toastsHost = () => doc.getElementById("toasts");

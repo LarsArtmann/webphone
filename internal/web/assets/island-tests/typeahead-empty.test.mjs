@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 
 import { installBrowserGlobals } from "./helpers.mjs";
 
-const doc = installBrowserGlobals();
+installBrowserGlobals();
 globalThis.window = { PBX_CONFIG: {} };
 
 const { els } = await import("../island/app/ui.js");

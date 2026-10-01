@@ -8,7 +8,7 @@
   var theme = null;
   try {
     theme = localStorage.getItem("wp-theme");
-  } catch (err) {
+  } catch {
     return; // storage unavailable (private mode) — ride the OS theme
   }
   if (theme === "light" || theme === "dark") {
