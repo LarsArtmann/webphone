@@ -96,13 +96,13 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
    error-excellence T01-T18, 20-year-durability T1-T27): read,
    classified FULLY-RESOLVED-or-routed, banners + table strikes NOT
    yet applied.
-3. **ARCHIVE leg not started**: ZERO `git mv` has run — all 16
+~~3. **ARCHIVE leg not started**: ZERO `git mv` has run — all 16~~ done 2026-10-01 (this sweep): 16 status reports + 2 planning docs git mv-ed to archived/
    annotated files still live in docs/status/. Order will be
    annotate → verify → archive (the 04-26 audit's own lesson).
 
 ## c) NOT STARTED
 
-- `git mv` of the 22 files (16 status + 6 plans) into `archived/`.
+~~- `git mv` of the 22 files (16 status + 6 plans) into `archived/`.~~ done 2026-10-01 — 18 moved (16 status + send-failure-ux + composer-ux); the other 4 plans stay live (owner g1 + owner-open remainder)
 - Post-move gates: `grep -rLn '~~'` completeness over both archived
   dirs; check-rows.py uniformity over every annotated file; stale
   reference sweep (TODO_LIST already cites the post-move archived

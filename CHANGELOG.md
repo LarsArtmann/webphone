@@ -372,7 +372,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
   TWO identical failed messages because the multi-second gateway
   round-trip left Send live. Pinned by `TestSendFormsDisableWhileInFlight`.
 - Self-send notice (plan
-  `docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md`): opening
+  `docs/planning/archived/2026-09-22_16-07_SUPERB-send-failure-ux.md`): opening
   a thread whose remote number is the extension's own DID (config
   `identities`) renders a warn notice (en/de) at intent time —
   providers refuse self-addressed sends (Telnyx 40310), and the
@@ -381,7 +381,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
   cannot hide the match); pinned by `TestIsSelfThread` and
   `TestThreadViewWarnsOnSelfSend`.
 - Composer UX batch (plan
-  `docs/planning/2026-09-22_16-36_SUPERB-composer-ux.md`): message
+  `docs/planning/archived/2026-09-22_16-36_SUPERB-composer-ux.md`): message
   composers are auto-growing textareas (Enter sends, Shift+Enter breaks
   a line — IME-composition guarded, shell.js; the multipart wire format
   is unchanged), a correct SMS segment counter shows "N SMS" past one

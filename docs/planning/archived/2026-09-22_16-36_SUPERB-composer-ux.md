@@ -66,11 +66,11 @@ transcript from the 40310 session:
 
 | # | Task                                                 | Impact | Effort | Status     |
 | - | ---------------------------------------------------- | ------ | ------ | ---------- |
-| 1 | T1 textarea composers + Enter/Shift+Enter            | High   | S      | this train |
-| 2 | T2 segment counter (server span + shell.js math)     | High   | S      | this train |
-| 3 | T3 formatClock/formatStamp + 4 call sites + tests    | Med    | S      | this train |
-| 4 | T4 attachment chips (reply + fax) + tests            | Med    | S      | this train |
-| 5 | Plan doc, CHANGELOG, gates, commit+push              | Med    | S      | this train |
+~~| 1 | T1 textarea composers + Enter/Shift+Enter | High | S | this train |~~ done at v2.6.0
+~~| 2 | T2 segment counter (server span + shell.js math) | High | S | this train |~~ done at v2.6.0
+~~| 3 | T3 formatClock/formatStamp + 4 call sites + tests | Med | S | this train |~~ done at v2.6.0
+~~| 4 | T4 attachment chips (reply + fax) + tests | Med | S | this train |~~ done at v2.6.0
+~~| 5 | Plan doc, CHANGELOG, gates, commit+push | Med | S | this train |~~ done at v2.6.0
 | 6 | Dial typeahead (contacts from PBX_CONFIG)            | High   | M      | next train |
 | 7 | Jump-to-latest chip on live pushes while scrolled up | Med    | S-M    | next train |
 | 8 | Per-thread draft persistence (localStorage)          | Med    | S      | next train |
@@ -145,7 +145,7 @@ flowchart TD
 
 ## Verdict
 
-EXECUTED 2026-09-22, complete (T1-T4 shipped; typeahead /
+~~EXECUTED 2026-09-22, complete (T1-T4 shipped; typeahead /~~ done at v2.6.0 (2026-09-22)
 jump-to-latest / drafts remain planned next trains).
 
 - T1: both message composers are textareas; Enter sends via

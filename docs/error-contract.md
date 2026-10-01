@@ -32,7 +32,7 @@ if a tabs-style per-extension UX demand shows up.
 
 ## Send-failure UX layering (2026-09-22)
 
-(plan `docs/planning/2026-09-22_16-07_SUPERB-send-failure-ux.md`):
+(plan `docs/planning/archived/2026-09-22_16-07_SUPERB-send-failure-ux.md`):
 the durable 4xx/5xx banner lands in `#wp-tab-error` ABOVE the tab
 region while the reply composer swaps `show:window:bottom` — the
 reason is durable but OFF-VIEWPORT, and the failed bubble in view
