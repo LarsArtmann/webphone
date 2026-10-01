@@ -123,6 +123,9 @@ templ ShellBody(props ShellProps) {
 			<div id="wp-tab-error"></div>
 		</div>
 	</div>
+	// The SR-only live region the shell announces through (new-message
+	// pushes, connection recovery): visually silent, politely spoken.
+	<div id="wp-live" class="sr-only" role="status" aria-live="polite"></div>
 }
 
 templ NavLinks(props ShellProps) {
@@ -130,6 +133,7 @@ templ NavLinks(props ShellProps) {
 		<a
 			class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
 			href={ tab.Path() }
+			aria-current={ templ.KV("page", props.ActiveTab == tab) }
 			hx-get={ "/partials" + tab.Path() }
 			hx-target="#tab-content"
 			hx-swap="innerHTML show:window:top"
@@ -138,13 +142,20 @@ templ NavLinks(props ShellProps) {
 		>
 			<span>{ T(props.Lang, "tab."+string(tab)) }</span>
 			if tab == TabMessages && props.Unread > 0 {
-				<span class="wp-nav-badge">{ fmtInt(props.Unread) }</span>
+				<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
 			}
 			if tab == TabVoicemail && props.NewVoicemail > 0 {
-				<span class="wp-nav-badge">{ fmtInt(props.NewVoicemail) }</span>
+				<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
 			}
 		</a>
 	}
+}
+
+// badgeCount composes an SR label for a nav badge ("3 unread"): the
+// visible text stays the bare count, the accessible name carries the
+// meaning (screen readers announce badges, not just numbers).
+func badgeCount(lang Lang, n int, key string) string {
+	return fmtInt(n) + " " + T(lang, key)
 }
 
 // panelHead is the one home for the panel header shape (title +

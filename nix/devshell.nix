@@ -1,6 +1,7 @@
-# The interactive development shell: Go 1.27 (the go.mod floor), templ,
-# the Go LSP pair, and the linters. GOTOOLCHAIN=local forbids toolchain
-# downloads behind the user's back.
+# The interactive development shell (default): Go 1.27 (the go.mod
+# floor), templ, the Go LSP pair, and the linters — plus a minimal `ci`
+# shell with only the build/test tools. GOTOOLCHAIN=local in both
+# forbids toolchain downloads behind the user's back.
 {
   perSystem =
     {
@@ -45,6 +46,20 @@
           # shell copied it into docs and scripts that then failed
           # in-train). local keeps the shell's go_1_27 instead of
           # downloading a toolchain behind the user's back.
+          GOTOOLCHAIN = "local";
+        };
+      };
+
+      # A minimal CI shell: only the build/test tools (Go, templ) with
+      # no interactive LSP/editor tooling, so the CI job enters a small
+      # closure quickly. GOTOOLCHAIN=local mirrors the default shell.
+      devShells.ci = pkgs.mkShellNoCC {
+        packages = [
+          pkgs.go_1_27
+          pkgs.templ
+          pkgs.golangci-lint
+        ];
+        env = {
           GOTOOLCHAIN = "local";
         };
       };
