@@ -121,12 +121,6 @@ test("an accepted call that dies before media dispatches wp:call-missed", async 
   const { bindSession } = await import("../island/app/calls.js");
   const { state } = await import("../island/app/state.js");
 
-  const card = {
-    dataset: {},
-    classList: { toggle() {} },
-    remove() {},
-    querySelector: () => ({ textContent: "" }),
-  };
   const session = {
     id: "dead-inbound",
     state: globalThis.SIP.SessionState.Establishing,
@@ -150,12 +144,6 @@ test("an OUTBOUND call that never connects is not missed", async () => {
   const { bindSession } = await import("../island/app/calls.js");
   const { state } = await import("../island/app/state.js");
 
-  const card = {
-    dataset: {},
-    classList: { toggle() {} },
-    remove() {},
-    querySelector: () => ({ textContent: "" }),
-  };
   const session = new globalThis.SIP.Inviter();
   session.id = "dead-outbound";
   session.state = globalThis.SIP.SessionState.Establishing;

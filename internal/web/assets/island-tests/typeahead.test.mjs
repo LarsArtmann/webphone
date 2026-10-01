@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 
 import { installBrowserGlobals } from "./helpers.mjs";
 
-const doc = installBrowserGlobals();
+installBrowserGlobals();
 
 const CONTACTS = [
   { name: "Anna Kellner", number: "+491512345678" },
@@ -55,7 +55,7 @@ test("ranking: capped at six, ties alphabetical by name", () => {
   assert.equal(ranked.length, 6);
   assert.deepEqual(
     ranked.map((c) => c.name),
-    [...ranked.map((c) => c.name)].sort((a, b) => a.localeCompare(b)),
+    ranked.map((c) => c.name).sort((a, b) => a.localeCompare(b)),
   );
 });
 

@@ -253,7 +253,6 @@ test("reconnect success refreshes the pill despite no state transition", async (
   resetStubs();
   const connection = await loadConnection("stale-pill");
   await connection.connect("1001", "pw");
-  const dead = registerers.at(-1);
   tc.mock.timers.enable({ apis: ["setTimeout"] });
   agents.at(-1).delegate.onDisconnect(new Error("ws closed"));
   await tc.mock.timers.tick(2000); // try 1: reconnect succeeds, no state event
