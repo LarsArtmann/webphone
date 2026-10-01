@@ -39,6 +39,7 @@ export const els = {
   log: $("log"),
   toasts: $("toasts"),
   dialError: $("dial-error"),
+  dialHint: $("wp-dial-hint"),
   offlineBanner: $("offline-banner"),
   remoteAudio: $("remote-audio"),
 };

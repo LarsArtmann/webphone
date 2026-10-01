@@ -484,6 +484,34 @@ export function sendDtmf(tone) {
     });
 }
 
+// sanitizeDialable strips everything that is not dialable: pasted
+// numbers routinely carry invisible Unicode direction marks (macOS/phone
+// apps add them around telephone numbers) and formatting (spaces,
+// dashes, parentheses), and makeURI rejects all of it. ONE home for the
+// charset — placeCall dials it, initDialHint previews it.
+export function sanitizeDialable(raw) {
+  return raw.replace(/[^\d+*#a-zA-Z]/g, "");
+}
+
+// Input-time normalization preview (A5): shows exactly what placeCall
+// would dial, while the number is still being typed — a pasted
+// "+49 (30) 1234-56" reveals its dialable form before the Call button
+// commits to it. Visual aid only (aria-hidden): screen readers already
+// hear the input, and dial errors announce themselves.
+export function initDialHint() {
+  els.dest.addEventListener("input", () => {
+    const raw = els.dest.value;
+    const dialable = sanitizeDialable(raw);
+    if (dialable && dialable !== raw.trim()) {
+      els.dialHint.textContent = `→ ${dialable}`;
+      els.dialHint.hidden = false;
+    } else {
+      els.dialHint.textContent = "";
+      els.dialHint.hidden = true;
+    }
+  });
+}
+
 // Dial-focus mic warm (the outgoing mirror of the incoming onInvite
 // warm): the first focus in the dial field IS dial intent — start the
 // getUserMedia acquisition while the user is still typing, so the
@@ -515,11 +543,7 @@ export async function placeCall(raw) {
     return false;
   }
 
-  // Pasted numbers routinely carry invisible Unicode direction marks
-  // (macOS/phone apps add them around telephone numbers) and formatting
-  // (spaces, dashes, parentheses). makeURI rejects all of that, so strip
-  // everything that is not dialable before building the SIP URI.
-  const target = raw.replace(/[^\d+*#a-zA-Z]/g, "");
+  const target = sanitizeDialable(raw);
   if (!target) {
     log(
       `nothing dialable in "${raw}" — enter digits or letters, or + * #`,

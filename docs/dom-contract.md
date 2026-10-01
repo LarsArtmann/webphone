@@ -35,6 +35,7 @@ dial-form
 dest
 call-btn
 dial-error
+wp-dial-hint
 calls
 keypad
 incoming-call

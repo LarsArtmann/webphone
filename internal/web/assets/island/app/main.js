@@ -5,6 +5,7 @@ import { ringToneStop } from "./audio.js";
 import { connect, disconnect, networkOnline } from "./connection.js";
 import {
   answerIncoming,
+  initDialHint,
   initDialWarm,
   placeCall,
   rejectIncoming,
@@ -240,6 +241,7 @@ els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 initShortcuts();
 initSseLiveIndicator();
 initDialTypeahead();
+initDialHint();
 initDialWarm();
 relabelTypeahead(t("typeaheadLabel"));
 initAudioOutput();

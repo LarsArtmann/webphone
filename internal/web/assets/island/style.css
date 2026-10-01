@@ -424,6 +424,13 @@ button.small {
   margin: 8px 0 0;
 }
 
+.wp-dial-hint {
+  margin: 6px 0 0;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
 /* --- call cards ----------------------------------------------------------- */
 
 .call-state {

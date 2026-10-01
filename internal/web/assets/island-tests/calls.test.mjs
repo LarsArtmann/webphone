@@ -317,3 +317,31 @@ test("dial focus starts a bounded mic warm (the outgoing pre-warm)", async () =>
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(acquisitions.length, 1, "idempotent while pending");
 });
+
+test("sanitizeDialable keeps the dialable charset and strips formatting", () => {
+  assert.equal(sanitizeDialable("+49 (30) 1234-56"), "+493012345 6".replace(" ", ""));
+  assert.equal(sanitizeDialable("\u202D1003\u202C"), "1003", "direction marks are stripped");
+  assert.equal(sanitizeDialable("*#abcABC"), "*#abcABC");
+  assert.equal(sanitizeDialable("   "), "");
+});
+
+test("the dial hint previews the dialable form while typing", async () => {
+  initDialHint();
+  const dest = doc.getElementById("dest");
+  const hint = doc.getElementById("wp-dial-hint");
+  const type = (value) => {
+    dest.value = value;
+    dest.listeners.input[0]();
+  };
+
+  type("+49 (30) 1234-56");
+  assert.equal(hint.hidden, false, "a formatted number reveals the hint");
+  assert.equal(hint.textContent, "→ +493012345 6".replace(" ", ""), "the hint shows the dialable form");
+
+  type("1003");
+  assert.equal(hint.hidden, true, "an already-dialable number stays silent");
+  assert.equal(hint.textContent, "");
+
+  type("+49 30 \u202D1234\u202C");
+  assert.equal(hint.hidden, false, "invisible direction marks still trigger the preview");
+});
