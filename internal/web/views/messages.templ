@@ -200,7 +200,15 @@ templ ThreadView(props ThreadViewProps) {
 				data-page={ fmtInt(props.Page) }
 				data-thread={ props.Thread.ID.String() }
 			>
-				@Transcript(props.Messages, props.Lang)
+				if props.Page == 0 {
+					// Page 0 renders the unread divider (the thread's Unread
+					// was captured before the handler marked it read); older
+					// pages hold no unread bubbles — a top divider there
+					// would lie about where they live.
+					@TranscriptAt(props.Messages, props.Lang, props.Thread.Unread)
+				} else {
+					@Transcript(props.Messages, props.Lang)
+				}
 			</div>
 			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
 		</div>
@@ -236,17 +244,53 @@ templ ThreadView(props ThreadViewProps) {
 	</section>
 }
 
-// Transcript renders the message bubbles, oldest first. It is the payload
-// of the SSE "thread" event: the swap replaces #thread-transcript's
-// innerHTML with exactly these bubbles, so an open conversation updates
-// live while the reply composer below stays untouched. The host div also
-// carries data-page/data-thread (shell.js contract): pushes are cancelled
-// while older pages are open, and a newest-page push marks the thread
-// read client-side.
+// Transcript renders the message bubbles, oldest first, with day
+// separators between calendar-day groups (Today / Yesterday / weekday +
+// date, with the visible-group count). It is the payload of the SSE
+// "thread" event: the swap replaces #thread-transcript's innerHTML with
+// exactly these bubbles, so an open conversation updates live while the
+// reply composer below stays untouched. The host div also carries
+// data-page/data-thread (shell.js contract): pushes are cancelled while
+// older pages are open, and a newest-page push marks the thread read
+// client-side. The notifier renders this shape — the unread divider
+// lives only on TranscriptAt, because a push can never know the reader's
+// unread state.
 templ Transcript(messages []domain.Message, lang Lang) {
-	for _, msg := range messages {
+	@transcriptBody(messages, lang, -1, 0)
+}
+
+// TranscriptAt is the page-0 open shape: the unread divider sits ahead
+// of the thread's trailing unread inbound bubbles (Unread was captured
+// before the open marked the thread read).
+templ TranscriptAt(messages []domain.Message, lang Lang, unread int) {
+	@transcriptBody(messages, lang, firstUnreadIndex(unread, messages), unread)
+}
+
+templ transcriptBody(messages []domain.Message, lang Lang, unreadAt, unread int) {
+	for i, msg := range messages {
+		if i == 0 || dayKey(messages[i-1].CreatedAt) != dayKey(msg.CreatedAt) {
+			@dayHead(lang, msg.CreatedAt, dayCount(messages, i))
+		}
+		if i == unreadAt {
+			@unreadDivider(lang, unread)
+		}
 		@Bubble(msg, lang)
 	}
+}
+
+templ dayHead(lang Lang, at time.Time, count int) {
+	<div class="wp-day-head">
+		<span>{ dayHeadLabel(lang, at) }</span>
+		if count > 0 {
+			<span class="wp-day-count">· { fmtInt(count) }</span>
+		}
+	</div>
+}
+
+templ unreadDivider(lang Lang, unread int) {
+	<div class="wp-unread-divider" role="separator" aria-label={ fmtInt(unread) + T(lang, "thread.unread.post") }>
+		{ T(lang, "thread.unread.pre") + fmtInt(unread) + T(lang, "thread.unread.post") }
+	</div>
 }
 
 templ Bubble(msg domain.Message, lang Lang) {
@@ -338,5 +382,68 @@ func relativeTime(t time.Time, lang Lang) string {
 		return fmtInt(int(delta.Hours())) + "h"
 	default:
 		return formatStamp(lang, t)
+	}
+}
+
+// dayKey buckets a timestamp by its local calendar day — the group
+// boundary the transcript separators follow.
+func dayKey(t time.Time) string { return t.Local().Format("2006-01-02") }
+
+// dayCount counts the visible bubbles in the day group starting at
+// start (the rendered-window count the day header shows).
+func dayCount(messages []domain.Message, start int) int {
+	count := 0
+	for i := start; i < len(messages) && dayKey(messages[i].CreatedAt) == dayKey(messages[start].CreatedAt); i++ {
+		count++
+	}
+	return count
+}
+
+// firstUnreadIndex locates the first of the thread's trailing unread
+// inbound bubbles in the window (walking back from the newest end,
+// exactly Unread inbound messages are unread). More unread than the
+// window holds means they start above it — the divider lands at the top.
+func firstUnreadIndex(unread int, messages []domain.Message) int {
+	if unread <= 0 {
+		return -1
+	}
+	seen := 0
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Direction != domain.DirectionInbound {
+			continue
+		}
+		seen++
+		if seen == unread {
+			return i
+		}
+	}
+	return 0
+}
+
+// weekdayLabel renders an abbreviated weekday in the panel language;
+// Go's Format carries no localized names, so the two UI languages keep
+// tiny maps (same shape as formatFor).
+func weekdayLabel(lang Lang, d time.Weekday) string {
+	if lang == LangDE {
+		return [...]string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}[d]
+	}
+	return [...]string{"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}[d]
+}
+
+// dayHeadLabel names a calendar day for the transcript separators:
+// Today / Yesterday in the panel language, then weekday + numeric date.
+func dayHeadLabel(lang Lang, t time.Time) string {
+	local := t.Local()
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	day := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, local.Location())
+	days := int(today.Sub(day).Hours() / 24)
+	switch {
+	case days <= 0:
+		return T(lang, "day.today")
+	case days == 1:
+		return T(lang, "day.yesterday")
+	default:
+		return weekdayLabel(lang, local.Weekday()) + ", " + formatFor(lang, local, "02.01.", "Jan 2")
 	}
 }
