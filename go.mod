@@ -55,6 +55,8 @@ require (
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
+	github.com/larsartmann/go-paperless v0.4.2 // indirect
+	github.com/larsartmann/go-retry v0.7.0 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.1.0 // indirect
 	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
 	github.com/larsartmann/templ-components/htmx v1.19.4 // indirect
