@@ -1,7 +1,7 @@
 # Session Status — 2026-10-01 01:45 CEST (post-review pareto FULL-EXECUTION)
 
 **Trigger:** owner GO on the 13:14 pareto plan ("GET SHIT DONE, the WHOLE
-TODO LIST"). ~6h execution. Plan: `docs/planning/2026-09-30_13-14_SUPERB-post-review-pareto-execution-plan.md`
+TODO LIST"). ~6h execution. Plan: `docs/planning/archived/2026-09-30_13-14_SUPERB-post-review-pareto-execution-plan.md`
 (header banner carries the execution update).
 
 ## a) FULLY DONE

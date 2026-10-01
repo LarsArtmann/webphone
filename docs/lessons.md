@@ -183,6 +183,27 @@ and the evidence. Newest last is NOT enforced — group by topic.
   it (13/13 packages). The old trap (commands failing outside the
   shell for a missing flag) is gone; the remaining toolchain trap is
   the host's below-floor go — use `nix develop -c`.
+- A gate script that can lie is worse than no gate script
+  (2026-10-01, post-v2.8.0 self-review §d1): the battery ran
+  `nix flake check 2>&1 | tail -4; echo rc=$?` — that rc is TAIL's,
+  not nix's, so a FAILED drill printed "rc=0" and was reported
+  green; only buildflow's independent nix step caught the real
+  failure. Rule: every scripted gate uses `PIPESTATUS[0]` or the
+  repo's documented `set -euo pipefail` pattern — never a bare `$?`
+  after a pipe. Grep scripts/ for `| tail` + `$?` pairs before
+  trusting any battery output.
+- /tmp is not a holding area for verified-uncommitted work
+  (2026-10-01): the setup-salvage worktree at /tmp/wp-shell died to
+  a tmp cleanup; only luck (the owning session had already landed
+  the work) avoided real loss. Park verified-uncommitted work in a
+  BRANCH — cheap, greppable, survives reboot.
+- Quiet-host windows for timing-sensitive gates (2026-10-01): nix/go
+  evaluations running during the stack browser E2E caused a 180s
+  timeout + full retry (~8 min) — the runbook documented this EXACT
+  self-inflicted pattern from v2.6.0 and it repeated anyway. Two
+  flakes across two releases is a pattern. Convention: touch
+  /tmp/webphone-e2e-window before E2E/VM gates, have every session's
+  nix/go launchers check it, remove after.
 
 ## Telephony
 

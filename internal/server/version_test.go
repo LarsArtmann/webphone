@@ -1,8 +1,11 @@
 package server
 
 import (
+	"encoding/json"
+	"net/http"
 	"runtime/debug"
 	"testing"
+	"time"
 )
 
 func fakeBuildInfo(revision, modified, vcsTime string) *debug.BuildInfo {
@@ -55,5 +58,52 @@ func TestBuildCommitDateResolution(t *testing.T) {
 	}
 	if got := buildCommitDateWith(nil, false); got != "" {
 		t.Fatalf("unknown build must stay empty: got %q", got)
+	}
+}
+
+// TestVersionHandlerShape pins the /version payload at the Go level:
+// the smoke probe key-checks the black-box surface only. The key SET is
+// the contract (version, goVersion, title always; commit, commitDate
+// only when known — their presence depends on the build environment,
+// so absence is not asserted). Any new key is a deliberate change.
+func TestVersionHandlerShape(t *testing.T) {
+	server := newTestServer(t)
+	resp, err := http.Get(server.URL + "/version")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status: got %d, want 200", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("content type: got %q, want application/json", ct)
+	}
+
+	var payload map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	allowed := map[string]bool{
+		"version": true, "goVersion": true, "title": true,
+		"commit": true, "commitDate": true,
+	}
+	for key, value := range payload {
+		if !allowed[key] {
+			t.Errorf("unexpected key %q in /version payload — extend the contract deliberately", key)
+		}
+		if s, ok := value.(string); !ok || s == "" {
+			t.Errorf("key %q must be a non-empty string, got %#v", key, value)
+		}
+	}
+	for _, key := range []string{"version", "goVersion", "title"} {
+		if _, ok := payload[key]; !ok {
+			t.Errorf("required key %q missing from /version payload", key)
+		}
+	}
+	if raw, ok := payload["commitDate"]; ok {
+		if _, err := time.Parse(time.RFC3339, raw.(string)); err != nil {
+			t.Errorf("commitDate must be RFC 3339: %q — %v", raw, err)
+		}
 	}
 }
