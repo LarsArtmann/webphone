@@ -99,7 +99,7 @@ func ifNoneMatch(header, etag string) bool {
 	if header == "" {
 		return false
 	}
-	for _, candidate := range strings.Split(header, ",") {
+	for candidate := range strings.SplitSeq(header, ",") {
 		candidate = strings.TrimSpace(candidate)
 		candidate = strings.TrimPrefix(candidate, "W/")
 		if candidate == "*" || candidate == etag {

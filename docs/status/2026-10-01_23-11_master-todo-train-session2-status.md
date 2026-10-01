@@ -65,30 +65,30 @@ T04 stays **BLOCKED / handover-only**.
 
 **Verification ledger:**
 
-| Gate | Result |
-| --- | --- |
-| island `node:test` | 120 pass / 0 fail |
-| `go test -count=1 ./...` | all packages ok |
-| fresh-binary smoke | 47 passed + 4 restart, 0 failed |
-| `buildflow` (full, no cache) | all steps green; findings gate tripped by **gomod-check (54) ONLY** (known false positive) |
-| `nix flake check` | "all checks passed!" |
-| `nix build .#checks.x86_64-linux.format` | green |
-| golangci-lint | 0 issues |
-| lychee | 1 finding = **external** `https://pbx.artmann.tech/` HTTP 502 (owner's PBX down; not a repo defect) |
+| Gate                                     | Result                                                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| island `node:test`                       | 120 pass / 0 fail                                                                                   |
+| `go test -count=1 ./...`                 | all packages ok                                                                                     |
+| fresh-binary smoke                       | 47 passed + 4 restart, 0 failed                                                                     |
+| `buildflow` (full, no cache)             | all steps green; findings gate tripped by **gomod-check (54) ONLY** (known false positive)          |
+| `nix flake check`                        | "all checks passed!"                                                                                |
+| `nix build .#checks.x86_64-linux.format` | green                                                                                               |
+| golangci-lint                            | 0 issues                                                                                            |
+| lychee                                   | 1 finding = **external** `https://pbx.artmann.tech/` HTTP 502 (owner's PBX down; not a repo defect) |
 
 ---
 
 ## b) PARTIALLY DONE
 
 1. **T20** — the three actionable finding clusters are fixed, but the
-   *preflight* advisories remain: `go-line-flipflop` (go.mod `go` line changed
+   _preflight_ advisories remain: `go-line-flipflop` (go.mod `go` line changed
    10×/20 commits), `vendor/vendor-freshness` ("go.mod newer than
    vendor/modules.txt"), and the low-disk warning on `/mnt/buildcache`. These
    are advisory, not gate failures, and were deliberately left (touching vendor
    risks the vendorHash roundtrip).
 2. **T10** — code + tests done; **10.6 curl timing baseline was NOT produced**
    (`curl` is a banned tool in this harness; I did not substitute a
-   Python/`time` baseline). The perf *claim* is currently backed by the
+   Python/`time` baseline). The perf _claim_ is currently backed by the
    ETag/gzip tests, not a before/after number.
 3. **T05** — the island boot-language fix (earlier session) + the new server
    pin are done; a **stack browser E2E** to confirm the `html lang` change
@@ -128,14 +128,14 @@ T04 stays **BLOCKED / handover-only**.
 
 1. **I shipped a broken test and called the suite "hung".** My
    `calls.test.mjs` "failed hold announces the hold direction" test's
-   `HoldInviter.invite()` returned an *ungated* promise, but `placeCall` awaits
+   `HoldInviter.invite()` returned an _ungated_ promise, but `placeCall` awaits
    `inviter.invite()` on the **initial** call — so `await placeCall("1003")`
    never resolved and node:test cancelled the file after 60s. Two background
    shells were consumed chasing this before I read the code. **Lesson:** read
    the production function's await graph before stubbing its collaborator.
 2. **Then I got the toast assertion wrong.** I asserted the failure toast was
    `lastToast()`, but a failed HOLD re-renders the settled state and
-   re-announces "connected", so the failure toast is *not* last. Fixed by
+   re-announces "connected", so the failure toast is _not_ last. Fixed by
    scanning all toasts. **Lesson:** an assertion about "last" is a claim about
    ordering; verify nothing else appends.
 3. **I never ran the formatter after the earlier T06 import edit.**
@@ -150,7 +150,7 @@ T04 stays **BLOCKED / handover-only**.
    grep for existing coverage before adding a test with a similar name.
 5. **My AGENTS.md compaction took three passes** (501 → 490 → 392 → 364) because
    I preserved too much elaboration on the first two. **Lesson:** compact by
-   *moving* paragraphs wholesale, not by trimming words within them.
+   _moving_ paragraphs wholesale, not by trimming words within them.
 6. **Wasted tool calls on stale LSP diagnostics.** `vtsls` and
    `golangci_lint_ls` kept reporting errors at old line numbers after edits
    (missed-call syntax "errors", the 3 errcheck warnings) that `node --check`,
@@ -162,15 +162,15 @@ T04 stays **BLOCKED / handover-only**.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Formatter ownership is a trap.** BuildFlow's oxfmt *excludes* island files
-   but the flake's treefmt *owns* them. Nothing in the loop reminded me, so
+1. **Formatter ownership is a trap.** BuildFlow's oxfmt _excludes_ island files
+   but the flake's treefmt _owns_ them. Nothing in the loop reminded me, so
    drift hid for a whole session. Add a memory line: "island `.js`/`shell.js`/
    `*.css` → `nix fmt` after edits; BuildFlow does not format them."
 2. **The test harness's silent-hang failure mode** (`await` on an
    always-pending stub) should be a documented gotcha next to the existing
    "reload must be stubbed" rule — it cost the most time this session.
 3. **`lastToast()` is a footgun** in `calls.test.mjs`; a helper that asserts a
-   message is *present among* toasts (not necessarily last) would prevent the
+   message is _present among_ toasts (not necessarily last) would prevent the
    regression I wrote.
 4. **Perf claims without numbers.** T10's value is a load-time improvement; the
    plan asks for a curl baseline. Without it the change is contract-tested but
@@ -178,7 +178,7 @@ T04 stays **BLOCKED / handover-only**.
    the next perf task.
 5. **LSP freshness.** Consider `BUILDFLOW_NO_RESULT_CACHE=1` in more Go loops,
    and treat stale LSP diagnostics as known-noisy rather than re-checking.
-6. **Gate honesty.** "buildflow green" must mean the *current* tree; the
+6. **Gate honesty.** "buildflow green" must mean the _current_ tree; the
    inherited claim was stale. Always re-run the cheap format check after an
    island edit before trusting a prior green.
 
@@ -189,6 +189,7 @@ T04 stays **BLOCKED / handover-only**.
 Ordered roughly by the plan's Pareto ranking; [owner] = handover-only.
 
 **Perf / verification**
+
 1. T10.6 — produce a real before/after timing baseline (Python, not curl).
 2. T11 — `modulepreload` for the island ESM graph (+ fresh stack E2E).
 3. T11 — outgoing-call mic warm, mirroring `mic.js` (node:test).
