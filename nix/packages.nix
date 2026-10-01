@@ -81,6 +81,18 @@
             fi
             exit 1
           '';
+          meta = {
+            description = "Triage helper for webphone's vulnix scan: verdicts distro-patched vs real advisories";
+            license = lib.licenses.mit;
+            mainProgram = "webphone-vulnix-triage";
+            platforms = lib.platforms.linux;
+            maintainers = [
+              {
+                name = "Lars Artmann";
+                github = "LarsArtmann";
+              }
+            ];
+          };
         };
 
         # One Go binary: templ shell + embedded island assets + SQLite.

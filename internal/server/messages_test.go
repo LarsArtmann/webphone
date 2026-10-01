@@ -135,8 +135,8 @@ func TestNavPartialAndLiveMarkRead(t *testing.T) {
 	if !strings.Contains(navBody, "Nachrichten") {
 		t.Errorf("nav partial ignored the wp-lang cookie: %.200s", navBody)
 	}
-	if !strings.Contains(navBody, `wp-nav-badge">1<`) {
-		t.Errorf("nav partial missing the unread badge: %.200s", navBody)
+	if !strings.Contains(navBody, `wp-nav-badge" aria-label="1 ungelesen">1<`) {
+		t.Errorf("nav partial missing the aria-labeled unread badge: %.200s", navBody)
 	}
 
 	// The live-swap read endpoint: clears the badge, idempotent.

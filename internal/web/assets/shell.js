@@ -18,13 +18,10 @@
       if (!nav) return;
       nav.querySelectorAll(".wp-nav-link").forEach(function (link) {
         link.classList.toggle("wp-active", link === element);
-        // aria-current mirrors wp-active so screen readers keep the
-        // active-tab announcement in step with the visual state.
-        if (link === element) {
-          link.setAttribute("aria-current", "page");
-        } else {
-          link.removeAttribute("aria-current");
-        }
+        // aria-current mirrors wp-active with the same definite values
+        // the server renders ("page" / "false") — screen readers keep
+        // the active-tab announcement in step with the visual state.
+        link.setAttribute("aria-current", link === element ? "page" : "false");
       });
     });
 
