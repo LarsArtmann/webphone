@@ -82,50 +82,52 @@ gate protocol.
 ## b) PARTIALLY DONE
 
 ~~1. **release.sh steps 6–9 (lychee → stack relock → stack E2E → aarch64 → gh release).**~~ done — v2.6.0 fully released 2026-09-23 (stack E2E ×2 green, gh release object published, aarch64 ELF `b7 00`)
-   PARTIAL (2026-09-23 evening): lychee 0 errors, stack pin verified at `7197f1c`
-   (the lock legally rides main; the stack's own CRM+TURN surgery is `be876ae`
-   there), aarch64 re-verified by ELF `b7 00`. STILL OWED behind the host-load
-   gate (load 19–104 all evening): browser E2E ×2, `gh release create`, smoke.
-   - Run 1 died at the lychee gate: one broken relative link in an archived planning doc
-     (`docs/planning/archived/2026-09-18_21-45_*` → status report moved under
-     `docs/status/archived/` after the plan was archived). FIXED (7503561) and verified
-     with a targeted lychee run (0 errors) before resuming.
-   - Run 2 (resume) relocked the stack and died in the stack browser E2E waiting for
-     `CONTACTS-ROUNDTRIP-OK` — AFTER the entire post-FS-restart transfer saga passed green
-     (FS-RECOVERED → TRANSFER-BLIND-INITIATED → channel settle → `->9196` leg →
-     TRANSFER-CALLER-RELEASED → TRANSFER-CALLEE-MEDIA).
-   - Run 3 (resume) stalled EARLIER, at the transfer channel-settle wait
-     (`fs_cli show channels | grep '^1 total'`, 180s) — the transfer initiated fine 22s in.
-   - Diagnosis: two failures, DIFFERENT steps, same 180s marker-wait shape in the fragile
-     post-restart tail = environment variance (host load 60–174 from parallel agent
-     sessions), not a deterministic code regression. Run 1 of these two proved the whole
-     transfer path works end-to-end.
-   - Attempt 4 is CHAINED and LIVE: waits for load < 6 sustained (2 consecutive minutes),
-     then fires `release.sh 2.6.0` automatically, logging to `/tmp/release26d.log`.
-~~2. **Stack relock + pbx-artmann relock #4.** The stack re-relocked to webphone main during~~ done — stack relocked + gates green; pbx-artmann relock #4 + re-pin landed (TODO row superseded)
-   the resumes (pin needs re-verification against e01f75d on the next run — the pin and
-   the v2.6.0 tag legally diverge per the 2026-09-20 owner decision and the v2.5.0
-   precedent). The E2E against any relock has not passed yet; pbx-artmann relock #4 comes
-   after the stack goes green.
-   UPDATE 2026-09-23 evening: pin re-verified (`7197f1c` ≥ e01f75d); the stack landed its
-   CRM+TURN surgery (`937b94f`+`be876ae`, eval checks green incl. new CRM coverage); E2E
-   still owed (load-gated); pbx-artmann relock #4 blocked by a concurrent session's dirty
-   AGENTS.md/FEATURES.md in that tree.
+PARTIAL (2026-09-23 evening): lychee 0 errors, stack pin verified at `7197f1c`
+(the lock legally rides main; the stack's own CRM+TURN surgery is `be876ae`
+there), aarch64 re-verified by ELF `b7 00`. STILL OWED behind the host-load
+gate (load 19–104 all evening): browser E2E ×2, `gh release create`, smoke.
+
+- Run 1 died at the lychee gate: one broken relative link in an archived planning doc
+  (`docs/planning/archived/2026-09-18_21-45_*` → status report moved under
+  `docs/status/archived/` after the plan was archived). FIXED (7503561) and verified
+  with a targeted lychee run (0 errors) before resuming.
+- Run 2 (resume) relocked the stack and died in the stack browser E2E waiting for
+  `CONTACTS-ROUNDTRIP-OK` — AFTER the entire post-FS-restart transfer saga passed green
+  (FS-RECOVERED → TRANSFER-BLIND-INITIATED → channel settle → `->9196` leg →
+  TRANSFER-CALLER-RELEASED → TRANSFER-CALLEE-MEDIA).
+- Run 3 (resume) stalled EARLIER, at the transfer channel-settle wait
+  (`fs_cli show channels | grep '^1 total'`, 180s) — the transfer initiated fine 22s in.
+- Diagnosis: two failures, DIFFERENT steps, same 180s marker-wait shape in the fragile
+  post-restart tail = environment variance (host load 60–174 from parallel agent
+  sessions), not a deterministic code regression. Run 1 of these two proved the whole
+  transfer path works end-to-end.
+- Attempt 4 is CHAINED and LIVE: waits for load < 6 sustained (2 consecutive minutes),
+  then fires `release.sh 2.6.0` automatically, logging to `/tmp/release26d.log`.
+  ~~2. **Stack relock + pbx-artmann relock #4.** The stack re-relocked to webphone main during~~ done — stack relocked + gates green; pbx-artmann relock #4 + re-pin landed (TODO row superseded)
+  the resumes (pin needs re-verification against e01f75d on the next run — the pin and
+  the v2.6.0 tag legally diverge per the 2026-09-20 owner decision and the v2.5.0
+  precedent). The E2E against any relock has not passed yet; pbx-artmann relock #4 comes
+  after the stack goes green.
+  UPDATE 2026-09-23 evening: pin re-verified (`7197f1c` ≥ e01f75d); the stack landed its
+  CRM+TURN surgery (`937b94f`+`be876ae`, eval checks green incl. new CRM coverage); E2E
+  still owed (load-gated); pbx-artmann relock #4 blocked by a concurrent session's dirty
+  AGENTS.md/FEATURES.md in that tree.
+
 3. ~~**TODO_LIST harvest.** Deliberately untouched until the release completes (rows change~~ done (2026-09-23 docs-health HARVEST — release row rewritten around the TAIL)
    ~~state; the file was also mid-edit by the other session earlier tonight).~~
 
 ## c) NOT STARTED
 
 ~~1. `python3 scripts/webphone-smoke.py --expect-version 2.6.0` — the explicit post-release~~ done — post-deploy smoke 41+4, /version exactly v2.6.0
-   verification run (release.sh runs its own smoke during gates; the runbook's
-   expect-version check is still owed after the tag exists).
+verification run (release.sh runs its own smoke during gates; the runbook's
+expect-version check is still owed after the tag exists).
 ~~2. pbx-artmann relock #4: rev-parse webphone main → pbx-artmann `flake.nix` telephony URL~~ done — relock #4 + re-pin landed
-   → `nix flake update telephony` → `nix run .#lock-drift-probe` → build both toplevels →
-   verify webphone ExecStart store path moved → narrative commit + push.
+→ `nix flake update telephony` → `nix run .#lock-drift-probe` → build both toplevels →
+verify webphone ExecStart store path moved → narrative commit + push.
 ~~3. The three owner questions from the 21:12 status report remain unanswered; I executed the~~ routed — ROADMAP open questions + owner-calls row
-   documented defaults (fold policy → concurrent train's landed items folded into 2.6.0;
-   UUID-key idempotency → implemented exactly as designed; push-daemon handling → kept
-   hand-pushing at phase boundaries).
+documented defaults (fold policy → concurrent train's landed items folded into 2.6.0;
+UUID-key idempotency → implemented exactly as designed; push-daemon handling → kept
+hand-pushing at phase boundaries).
 
 ## d) TOTALLY FUCKED UP
 
@@ -175,38 +177,38 @@ gate protocol.
 
 1. ~~**Verify the live chained attempt:** when load < 6 sustained, it fires~~ done (NEVER FIRED — verified: log gone, no gh release, TAIL row owns the retry)
    ~~`release.sh 2.6.0`; check `RELEASE-EXIT=0` at the end of `/tmp/release26d.log`.~~
-~~2. On success: confirm the stack E2E passed, the stack relock commit exists and pins the~~ done — E2E ×2 green, gh release object verified, aarch64 `b7 00`
+   ~~2. On success: confirm the stack E2E passed, the stack relock commit exists and pins the~~ done — E2E ×2 green, gh release object verified, aarch64 `b7 00`
    intended webphone rev, aarch64 cross-builds verify by ELF machine bytes (`b7 00` at
    offset 0x12), and `gh release view v2.6.0` shows the extracted CHANGELOG body.
    PARTIAL 2026-09-23 evening: aarch64 `b7 00` re-verified; pin verified (`7197f1c`);
    E2E and the gh release object still owed (load-gated).
-~~3. `python3 scripts/webphone-smoke.py --expect-version 2.6.0` → 0 failed.~~ done — smoke 41+4 green
-~~4. pbx-artmann relock #4 (see c2): rev swap → lock-drift-probe → both toplevels →~~ done
+   ~~3. `python3 scripts/webphone-smoke.py --expect-version 2.6.0` → 0 failed.~~ done — smoke 41+4 green
+   ~~4. pbx-artmann relock #4 (see c2): rev swap → lock-drift-probe → both toplevels →~~ done
    ExecStart store-path moved → narrative commit + push.
-5. ~~TODO_LIST harvest: release row → DONE (v2.6.0, released 2026-09-23, tag `807ca0c`);~~ done (2026-09-23 sweep — release row rewritten, CRM row shrunk to e-h, pins row closed)
+2. ~~TODO_LIST harvest: release row → DONE (v2.6.0, released 2026-09-23, tag `807ca0c`);~~ done (2026-09-23 sweep — release row rewritten, CRM row shrunk to e-h, pins row closed)
    ~~dedup-pins row → DONE (listRows / requireMultipartTo / pbx nil-client / ListThreads~~
    ~~all shipped earlier in this train); CRM follow-ups row shrinks to remaining~~
    ~~stack-side items (e)–(h): `crm.{url,token}` NixOS wiring, stack runbook cross-doc,~~
    ~~restore-drill, one HTTP-level integration test — (a)–(d) are SHIPPED this train.~~
-6. ~~CHANGELOG: nothing owed — the addendum is already folded.~~ done (E+F were folded; the four A-D bullets completed by the 2026-09-23 sweep)
-7. ~~Re-surface the three owner questions (21:12 report + this report §g); if still~~ done (routed — ROADMAP open questions + owner-calls row)
+3. ~~CHANGELOG: nothing owed — the addendum is already folded.~~ done (E+F were folded; the four A-D bullets completed by the 2026-09-23 sweep)
+4. ~~Re-surface the three owner questions (21:12 report + this report §g); if still~~ done (routed — ROADMAP open questions + owner-calls row)
    ~~unanswered, note the defaults taken.~~
-~~8. Closing sweep per runbook step 9: `git ls-remote` verify main + tag end states,~~ done — `git ls-remote` main+tag end states verified
+   ~~8. Closing sweep per runbook step 9: `git ls-remote` verify main + tag end states,~~ done — `git ls-remote` main+tag end states verified
    narrative commit at the phase boundary.
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
 ~~1. **Load precondition or E2E auto-retry in release.sh?** Tonight's two failures were~~ answered — `load_gate()` shipped (`a24496a`); single auto-retry declined
-   both load-shaped; a load check is cheap with no downside, a single E2E retry masks
-   real regressions at +10 min per true failure. Which do you want — and should E2E
-   retries count toward the "two consecutive over-budget" watch?
+both load-shaped; a load check is cheap with no downside, a single E2E retry masks
+real regressions at +10 min per true failure. Which do you want — and should E2E
+retries count toward the "two consecutive over-budget" watch?
 ~~2. **Stack pin vs tag divergence:** the stack will pin webphone main (e01f75d — carrying~~ answered — ride-main confirmed (v2.5.0 precedent)
-   the other session's `apiContactSaved` refactor) while the v2.6.0 tag pins b162e22.
-   This matches the documented "ride main" decision and the v2.5.0 precedent
-   (lock ≠ tag), but the delta now includes another session's refactor covered only by
-   per-package tests + the upcoming stack E2E. Acceptable, or re-pin the stack to the
-   tag itself for release trains?
+the other session's `apiContactSaved` refactor) while the v2.6.0 tag pins b162e22.
+This matches the documented "ride main" decision and the v2.5.0 precedent
+(lock ≠ tag), but the delta now includes another session's refactor covered only by
+per-package tests + the upcoming stack E2E. Acceptable, or re-pin the stack to the
+tag itself for release trains?
 ~~3. **Host contention convention:** the load is partly OTHER projects' agent sessions~~ routed — ROADMAP infra ask (flock convention uncoded)
-   (nsfw-classifier-go, providers.test, parallel nix builds) — not just webphone. Do you
-   want a flock-file protocol (sessions yield to a held gate lock), staggered schedules,
-   or is "wait for sustained quiet" the accepted de-facto protocol?
+(nsfw-classifier-go, providers.test, parallel nix builds) — not just webphone. Do you
+want a flock-file protocol (sessions yield to a held gate lock), staggered schedules,
+or is "wait for sustained quiet" the accepted de-facto protocol?

@@ -54,4 +54,4 @@ Body/FailureDetail conditionals), coincidental single-token pairs (`default:` ×
 `wp-tab-error`/`calls` divs), and `wp-error`/`wp-notice` (errorBanner is the
 one-home; the notice is a different role).
 
-**Done:** zero harmful duplication at `-t 1`. Registry rows + sweep log updated.
+~~**Done:** zero harmful duplication at `-t 1`. Registry rows + sweep log updated.~~ done (2026-09-30: registry rows + sweep log updated; re-confirmed at the 2026-10-01 UI/UX train)

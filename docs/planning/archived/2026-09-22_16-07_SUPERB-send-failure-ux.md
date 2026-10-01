@@ -72,16 +72,16 @@ Deferred items and why:
 
 ## Coarse plan (tasks 30–100 min), sorted by impact/effort
 
-| # | Task                                                                                | Impact   | Effort | Status     |
-| - | ----------------------------------------------------------------------------------- | -------- | ------ | ---------- |
-~~| 1 | Double-submit guard: `hx-disabled-elt` on the three send forms | High | XS | this train |~~ done at v2.6.0
-~~| 2 | Self-send notice in ThreadView (helper + i18n + CSS + tests) | High | S | this train |~~ done at v2.6.0
-~~| 3 | Plan doc, CHANGELOG, TODO_LIST, AGENTS.md durable knowledge | Med | S | this train |~~ done at v2.6.0
-~~| 4 | Gates: templ generate, go test -count=1 ./…, nix fmt, buildflow, smoke, commit+push | Med | S | this train |~~ done at v2.6.0
-| 5 | C: pre-flight self-send 422 fast path (owner decision: keep failed-row evidence?)   | Med-High | S      | next       |
-| 6 | E: provider refusal → 422 + family vocabulary; contract + runbook sync              | Med      | S-M    | next       |
-| 7 | D: persist failure detail+kind; wp-failed bubble, disclosure, retry-when-retryable  | High     | M-L    | next       |
-| 8 | F: own-DID on session payload + live composer warning                               | Low-Med  | M      | on demand  |
+| #  | Task                                                                               | Impact                                                                              | Effort | Status    |
+| -- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------ | --------- |
+| ~~ | 1                                                                                  | Double-submit guard: `hx-disabled-elt` on the three send forms                      | High   | XS        |
+| ~~ | 2                                                                                  | Self-send notice in ThreadView (helper + i18n + CSS + tests)                        | High   | S         |
+| ~~ | 3                                                                                  | Plan doc, CHANGELOG, TODO_LIST, AGENTS.md durable knowledge                         | Med    | S         |
+| ~~ | 4                                                                                  | Gates: templ generate, go test -count=1 ./…, nix fmt, buildflow, smoke, commit+push | Med    | S         |
+| 5  | C: pre-flight self-send 422 fast path (owner decision: keep failed-row evidence?)  | Med-High                                                                            | S      | next      |
+| 6  | E: provider refusal → 422 + family vocabulary; contract + runbook sync             | Med                                                                                 | S-M    | next      |
+| 7  | D: persist failure detail+kind; wp-failed bubble, disclosure, retry-when-retryable | High                                                                                | M-L    | next      |
+| 8  | F: own-DID on session payload + live composer warning                              | Low-Med                                                                             | M      | on demand |
 
 ## Fine plan (tasks ≤ 12 min each) — this train
 

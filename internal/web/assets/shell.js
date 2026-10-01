@@ -727,8 +727,7 @@
               return { label: pair[0] + " — " + pair[1] };
             });
       for (var i = 0; i < source.length; i++) {
-        if (query && source[i].label.toLowerCase().indexOf(query) < 0)
-          continue;
+        if (query && source[i].label.toLowerCase().indexOf(query) < 0) continue;
         overlayItems.push(source[i]);
       }
       for (var j = 0; j < overlayItems.length; j++) {

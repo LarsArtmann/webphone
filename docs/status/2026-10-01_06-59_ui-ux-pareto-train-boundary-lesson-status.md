@@ -12,19 +12,19 @@ Ledger (~/projects/crm). Then a boundary reflection.
 
 ## Session ledger (what actually landed)
 
-| Commit | Workstream | Note |
-| --- | --- | --- |
-| `163a3fb` | catalogue + plan | 120 ideas / 26 workstreams / 146 micro-tasks / mermaid graph |
-| `0bbf37e` | M1 | optimistic bubble + failed-rollback (daemon swept; narrative lost) |
-| `a7157eb` | M2 | day separators + unread divider (explicit commit) |
-| (daemon) | M3 | **verified pre-existing** — no code needed |
-| (daemon) | M4 | morph a11y: focus, #wp-live, aria-current, badge labels |
-| `2b4807b` | M5 | tab skeleton + panel transition (explicit) |
-| `0b8f458` | M6 | skip link, aria-describedby, theme SR (explicit) |
-| `31c9f97` | M7 | bottom tab bar, sticky call island, 44px targets (explicit) |
-| `0d34384` | M8 | command palette, "?" help, Settings cheat-sheet (explicit) |
-| `6989b99` | M10 | **revert** — contacts CRUD is Ledger's domain |
-| `f605ece` | docs | ruling recorded in plan execution log + catalogue D-theme |
+| Commit    | Workstream       | Note                                                               |
+| --------- | ---------------- | ------------------------------------------------------------------ |
+| `163a3fb` | catalogue + plan | 120 ideas / 26 workstreams / 146 micro-tasks / mermaid graph       |
+| `0bbf37e` | M1               | optimistic bubble + failed-rollback (daemon swept; narrative lost) |
+| `a7157eb` | M2               | day separators + unread divider (explicit commit)                  |
+| (daemon)  | M3               | **verified pre-existing** — no code needed                         |
+| (daemon)  | M4               | morph a11y: focus, #wp-live, aria-current, badge labels            |
+| `2b4807b` | M5               | tab skeleton + panel transition (explicit)                         |
+| `0b8f458` | M6               | skip link, aria-describedby, theme SR (explicit)                   |
+| `31c9f97` | M7               | bottom tab bar, sticky call island, 44px targets (explicit)        |
+| `0d34384` | M8               | command palette, "?" help, Settings cheat-sheet (explicit)         |
+| `6989b99` | M10              | **revert** — contacts CRUD is Ledger's domain                      |
+| `f605ece` | docs             | ruling recorded in plan execution log + catalogue D-theme          |
 
 Verification at every boundary: `go test` (server + views), `node:test` island suite
 (grew 102 → 105, all green), `templ generate` on every `.templ` edit.
@@ -74,11 +74,11 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 
 - **M12 Compose ergonomics** — B11 (enter-send) and B12 (per-thread drafts) verified
   **pre-existing** in `shell.js`; **B8** (segment counter) exists as a bare "N SMS" count —
-  the *over-limit countdown* half is still missing.
+  the _over-limit countdown_ half is still missing.
 - **M17 Feedback/trust** — J5 (toast dismiss) and stacking exist pre-existing (click/Enter/Esc,
   max 4 in the shell; island `announce`); J2 reconnect banner, J3 undo, J4 retry-in-banner,
   J7 confirm consistency, J8 button spinner, J9 success pulse **not started**.
-- **M7** — core shipped; the M19 mobile *extras* (I3 action bar, I6 swipe, I7 pull-to-refresh,
+- **M7** — core shipped; the M19 mobile _extras_ (I3 action bar, I6 swipe, I7 pull-to-refresh,
   I9 header collapse) not started.
 - **Cross-repo obligation** — `docs/dom-contract.md` gained `wp-live` + `wp-tab-skeleton`;
   the consuming stack's browser E2E has **not** been re-run (and no obligation note was
@@ -111,7 +111,7 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 1. **Built an entire contacts-manager workstream in the wrong repo's domain.** M10
    (search, sections, edit, single vCard) duplicated Ledger (~/projects/crm — event-sourced
    on go-cqrs-lite; search-everywhere and export are its core). I had **read** the AGENTS.md
-   CRM-seam line earlier in the session and still never asked *"whose domain is this?"*
+   CRM-seam line earlier in the session and still never asked _"whose domain is this?"_
    before writing CRUD. The owner had to stop the train. Cleanly reverted (`6989b99`), but
    it was ~1.5h of avoidable work.
 2. **A red test was committed.** The M10 `contacts.templ` rewrite referenced six i18n keys
@@ -153,19 +153,22 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 - **Don't execute while open questions are unanswered** — surface them first.
 
 ### What I forgot
+
 - That Ledger exists as the contacts owner (documented in the very AGENTS.md I read).
-- To run the pre-existing-feature audit *before* implementing (did it only mid-flight).
+- To run the pre-existing-feature audit _before_ implementing (did it only mid-flight).
 - To run any of the repo's real gates (smoke / flake check / buildflow).
 - To test after the `contacts.templ` rewrite.
 - That a red test had been committed until the revert.
 
 ### What I could have done better
+
 - Asked the boundary question before building, not after being challenged.
 - Kept a per-workstream "already exists?" checklist next to the plan.
 - Committed atomically and immediately, defeating the daemon instead of racing it.
 - Surfaced the plan's three open questions before executing.
 
 ### What I can still improve
+
 - Land the remaining phone-domain workstreams with the ownership check + full gate per unit.
 - Add the missing pins (aria-current values, skeleton reveal, optimistic-bubble morph edge).
 - Close the small M2 edges (year-boundary day labels; zero-inbound unread window; SR
@@ -181,6 +184,7 @@ Tags: **[P1]** immediate, **[P2]** next, **[P3]** later/roadmap, **[OWNER]** nee
 **[XREPO]** cross-repo.
 
 **Gates & verification (do first)**
+
 1. **[P1]** Run `buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`) on current HEAD.
 2. **[P1]** Run `nix flake check` (package + tests + treefmt + island-lint + island-js + KVM backup).
 3. **[P1]** Boot + run `python3 scripts/webphone-smoke.py` against a fresh binary.

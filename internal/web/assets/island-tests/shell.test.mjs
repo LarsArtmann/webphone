@@ -449,8 +449,7 @@ const fireOn = (el, type, props = {}) =>
   (el.listeners[type] ?? []).forEach((fn) =>
     fn({ target: el, preventDefault: () => {}, ...props }),
   );
-const findOverlay = () =>
-  doc.body.children.find((el) => el.id === "wp-palette");
+const findOverlay = () => doc.body.children.find((el) => el.id === "wp-palette");
 
 test("Ctrl+K opens the palette, filters, runs, and closes", () => {
   const clicked = [];
@@ -532,10 +531,7 @@ test("? opens the shortcut help outside typing fields", () => {
   doc.dispatch("keydown", {
     key: "?",
     target: {
-      closest: (sel) =>
-        sel === "input, textarea, select, [contenteditable='true']"
-          ? {}
-          : null,
+      closest: (sel) => (sel === "input, textarea, select, [contenteditable='true']" ? {} : null),
     },
     preventDefault: () => {
       throw new Error("preventDefault should not fire while typing");

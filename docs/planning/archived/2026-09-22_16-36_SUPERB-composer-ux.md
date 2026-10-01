@@ -64,16 +64,16 @@ transcript from the 40310 session:
 
 ## Coarse plan (30–100 min), impact/effort-sorted
 
-| # | Task                                                 | Impact | Effort | Status     |
-| - | ---------------------------------------------------- | ------ | ------ | ---------- |
-~~| 1 | T1 textarea composers + Enter/Shift+Enter | High | S | this train |~~ done at v2.6.0
-~~| 2 | T2 segment counter (server span + shell.js math) | High | S | this train |~~ done at v2.6.0
-~~| 3 | T3 formatClock/formatStamp + 4 call sites + tests | Med | S | this train |~~ done at v2.6.0
-~~| 4 | T4 attachment chips (reply + fax) + tests | Med | S | this train |~~ done at v2.6.0
-~~| 5 | Plan doc, CHANGELOG, gates, commit+push | Med | S | this train |~~ done at v2.6.0
-| 6 | Dial typeahead (contacts from PBX_CONFIG)            | High   | M      | next train |
-| 7 | Jump-to-latest chip on live pushes while scrolled up | Med    | S-M    | next train |
-| 8 | Per-thread draft persistence (localStorage)          | Med    | S      | next train |
+| #  | Task                                                 | Impact                                            | Effort | Status     |
+| -- | ---------------------------------------------------- | ------------------------------------------------- | ------ | ---------- |
+| ~~ | 1                                                    | T1 textarea composers + Enter/Shift+Enter         | High   | S          |
+| ~~ | 2                                                    | T2 segment counter (server span + shell.js math)  | High   | S          |
+| ~~ | 3                                                    | T3 formatClock/formatStamp + 4 call sites + tests | Med    | S          |
+| ~~ | 4                                                    | T4 attachment chips (reply + fax) + tests         | Med    | S          |
+| ~~ | 5                                                    | Plan doc, CHANGELOG, gates, commit+push           | Med    | S          |
+| 6  | Dial typeahead (contacts from PBX_CONFIG)            | High                                              | M      | next train |
+| 7  | Jump-to-latest chip on live pushes while scrolled up | Med                                               | S-M    | next train |
+| 8  | Per-thread draft persistence (localStorage)          | Med                                               | S      | next train |
 
 ## Fine plan (≤ 12 min each)
 
