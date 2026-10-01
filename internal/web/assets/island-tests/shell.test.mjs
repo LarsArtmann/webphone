@@ -342,3 +342,100 @@ test("live threads pushes are cancelled while a search query is active", () => {
   });
   assert.equal(prevented, 1, "the guard only guards the thread list");
 });
+
+// 3e. Optimistic send: the reply composer appends a pending bubble on
+// submit; a failure flips it to the failed state and restores the draft.
+const makeComposeForm = () => {
+  const area = {
+    selector: "textarea.wp-compose-body",
+    value: "optimistic hello",
+  };
+  const files = { selector: 'input[type="file"]', files: [] };
+  const form = {
+    selector: "form.wp-compose",
+    className: "wp-compose",
+    dataset: {},
+    querySelector(sel) {
+      if (sel === "textarea.wp-compose-body") return area;
+      if (sel === 'input[type="file"]') return files;
+      return null;
+    },
+  };
+  return { form, area, files };
+};
+
+test("the reply composer appends a pending bubble the moment it submits", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const before = transcript.children.length;
+  const { form } = makeComposeForm();
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  assert.equal(transcript.children.length, before + 1);
+  const bubble = transcript.children.at(-1);
+  assert.match(bubble.className, /\bwp-bubble\b/);
+  assert.match(bubble.className, /\bwp-out\b/);
+  assert.match(bubble.className, /\bwp-opt\b/);
+  assert.match(
+    bubble.querySelector(".wp-bubble-body").textContent,
+    /optimistic hello/,
+  );
+  assert.match(
+    bubble.querySelector(".wp-status").className,
+    /wp-status-queued/,
+  );
+  assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
+});
+
+test("attachment-only sends render the optimistic attachment chips", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const before = transcript.children.length;
+  const { form, area, files } = makeComposeForm();
+  area.value = "";
+  files.files = [{ name: "cat.png" }, { name: "notes.pdf" }];
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  assert.equal(transcript.children.length, before + 1);
+  const bubble = transcript.children.at(-1);
+  assert.equal(bubble.querySelectorAll(".wp-attachment").length, 2);
+  assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
+});
+
+test("a failed send flips the optimistic bubble to failed and restores the draft", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const before = transcript.children.length;
+  const { form, area } = makeComposeForm();
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  assert.equal(transcript.children.length, before + 1);
+  area.value = ""; // htmx may already have reset the form when errors fire
+  doc.dispatch("htmx:responseError", { target: form });
+  const bubble = transcript.children.at(-1);
+  assert.match(bubble.className, /\bwp-opt-failed\b/);
+  assert.match(
+    bubble.querySelector(".wp-status").className,
+    /wp-status-failed/,
+  );
+  assert.match(bubble.querySelector(".wp-status").textContent, /failed/);
+  assert.equal(area.value, "optimistic hello", "the draft comes back");
+  // A validation failure (HX-Trigger) still rolls the bubble back via
+  // the same listener, while the 3c toast contract stays untouched.
+  doc.dispatch("htmx:responseError", {
+    target: form,
+    detail: { xhr: fakeXhr(422, { "HX-Trigger": '{"showMessage":{}}' }) },
+  });
+  assert.equal(area.value, "optimistic hello");
+});
+
+test("the new-conversation composer and non-compose forms never get a bubble", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const before = transcript.children.length;
+  const fresh = makeComposeForm();
+  fresh.form.className = "wp-compose wp-compose-new";
+  doc.dispatch("htmx:beforeRequest", { target: fresh.form });
+  assert.equal(transcript.children.length, before);
+  doc.dispatch("htmx:beforeRequest", {
+    target: { selector: "form.wp-other" },
+  });
+  assert.equal(transcript.children.length, before);
+  const empty = makeComposeForm();
+  empty.area.value = "   ";
+  doc.dispatch("htmx:beforeRequest", { target: empty.form });
+  assert.equal(transcript.children.length, before, "no empty-body bubbles");
+});

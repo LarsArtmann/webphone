@@ -1206,6 +1206,20 @@ select:focus-visible {
   color: var(--danger);
 }
 
+/* Optimistic send (B2/J1): a pending bubble is visually provisional
+   (dashed border, slightly transparent) until the server's own bubble
+   replaces it; a failed send keeps text and attachments visible with a
+   danger tint so the retry never loses context. */
+.wp-bubble.wp-opt {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.wp-bubble.wp-opt-failed {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface-2));
+}
+
 /* --- settings -------------------------------------------------------------- */
 
 .wp-settings {

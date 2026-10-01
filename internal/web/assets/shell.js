@@ -449,6 +449,87 @@
       saveDraft(currentDraftId(), "");
     });
 
+    // 3e. Optimistic send: the reply composer appends a pending bubble
+    //     the instant the form submits, so a send reads as instant
+    //     instead of waiting on the POST round-trip. The server's
+    //     response (or an SSE push carrying the sent message) swaps the
+    //     transcript and replaces the node with the real bubble; on
+    //     failure the bubble flips to a failed state and the typed text
+    //     is restored, so a retry never loses the draft. The
+    //     new-conversation composer has no transcript to append to and
+    //     is skipped. Shell copy stays English (D3) — the pending state
+    //     is transient by design.
+    var optPending = new WeakMap();
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      var form = (event.detail && event.detail.elt) || event.target;
+      if (!form || !form.matches || !form.matches("form.wp-compose")) return;
+      if (form.classList.contains("wp-compose-new")) return;
+      var transcript = document.getElementById("thread-transcript");
+      if (!transcript) return;
+      var area = form.querySelector("textarea.wp-compose-body");
+      var body = area ? area.value : "";
+      var fileInput = form.querySelector('input[type="file"]');
+      var names = [];
+      if (fileInput && fileInput.files) {
+        for (var i = 0; i < fileInput.files.length; i++)
+          names.push(fileInput.files[i].name);
+      }
+      if (!body.trim() && names.length === 0) return;
+      var bubble = document.createElement("div");
+      bubble.className = "wp-bubble wp-out wp-opt";
+      if (body) {
+        var text = document.createElement("p");
+        text.className = "wp-bubble-body";
+        text.textContent = body;
+        bubble.append(text);
+      }
+      names.forEach(function (name) {
+        var chip = document.createElement("span");
+        chip.className = "wp-attachment";
+        chip.textContent = "📎 " + name;
+        bubble.append(chip);
+      });
+      var meta = document.createElement("span");
+      meta.className = "wp-bubble-meta";
+      var clock = document.createElement("span");
+      var stamp = new Date();
+      var pad = function (n) {
+        return (n < 10 ? "0" : "") + n;
+      };
+      clock.textContent = pad(stamp.getHours()) + ":" + pad(stamp.getMinutes());
+      var status = document.createElement("span");
+      status.className = "wp-status wp-status-queued";
+      status.textContent = "sending";
+      meta.append(clock, status);
+      bubble.append(meta);
+      transcript.append(bubble);
+      transcript.scrollTop = transcript.scrollHeight;
+      optPending.set(form, { bubble: bubble, body: body });
+    });
+    var rollbackOptimistic = function (event) {
+      var form = (event.detail && event.detail.elt) || event.target;
+      if (!form || !form.matches || !form.matches("form.wp-compose")) return;
+      var record = optPending.get(form);
+      if (!record) return;
+      optPending.delete(form);
+      var status = record.bubble.querySelector(".wp-status");
+      if (status) {
+        status.className = "wp-status wp-status-failed";
+        status.textContent = "failed";
+      }
+      record.bubble.classList.remove("wp-opt");
+      record.bubble.classList.add("wp-opt-failed");
+      var area = form.querySelector("textarea.wp-compose-body");
+      if (area && area.value === "" && record.body) area.value = record.body;
+    };
+    document.addEventListener("htmx:responseError", rollbackOptimistic);
+    document.addEventListener("htmx:sendError", rollbackOptimistic);
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var form = (event.detail && event.detail.elt) || event.target;
+      if (!form || !form.matches || !form.matches("form.wp-compose")) return;
+      if (event.detail && event.detail.successful) optPending.delete(form);
+    });
+
     // 4. Manual theme override: cycles auto (prefers-color-scheme) →
     //    light → dark, persisted in localStorage. data-theme on <html>
     //    beats both stylesheets' media queries via attribute specificity.
