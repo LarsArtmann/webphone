@@ -4,8 +4,39 @@
 // WHAT to suspect instead of only showing numbers.
 
 import { t } from "./i18n.js";
+import { setupSummary } from "./pcsetup.js";
 import { sessions, state } from "./state.js";
 import { els } from "./ui.js";
+
+// First-media timestamps per peer connection: the polled counterpart to
+// pcsetup's event marks (setup timing needs both — events catch the
+// sub-second gathering phase, only the poll sees bytes actually flow).
+const firstMediaByPC = new WeakMap();
+
+function noteFirstMedia(pc, bytesReceived) {
+  if (bytesReceived > 0 && !firstMediaByPC.has(pc)) {
+    firstMediaByPC.set(pc, Date.now());
+  }
+  return firstMediaByPC.get(pc) ?? null;
+}
+
+// setupLine composes the one-time setup story from the event marks
+// (gather duration, ICE connect) and the first-media timestamp, all
+// measured from gathering start — the moment media setup began. On the
+// answering side that is effectively accept→speak.
+function setupLine(pc, firstMediaAt) {
+  const setup = setupSummary(pc);
+  if (!setup) return null;
+  const secondsFrom = (ts) =>
+    `${((ts - setup.gatheringStartedAt) / 1000).toFixed(1)} s`;
+  const parts = [];
+  if (setup.gatherMs != null) parts.push(`gather ${setup.gatherMs} ms`);
+  else if (setup.gatherCapped)
+    parts.push("gather capped (>1 s, partial candidates)");
+  if (setup.iceConnectedAt) parts.push(`ice +${secondsFrom(setup.iceConnectedAt)}`);
+  if (firstMediaAt) parts.push(`first media +${secondsFrom(firstMediaAt)}`);
+  return parts.length ? `setup: ${parts.join("  ·  ")}` : null;
+}
 
 function candidateTypeOf(stats, candidateId) {
   const candidate = stats.get(candidateId);
@@ -95,11 +126,14 @@ async function updateIcePanel() {
       break;
     }
   }
+  const firstMediaAt = noteFirstMedia(pc, summary.bytesReceived);
+  const setup = setupLine(pc, firstMediaAt);
   const lines = [
     `ice: ${summary.iceState}  path: ${summary.localType || "?"} → ${summary.remoteType || "?"}`,
     `codec: ${summary.codec || "?"}  rtt: ${summary.rtt != null ? `${Math.round(summary.rtt * 1000)} ms` : "—"}`,
     `received: ${summary.bytesReceived} B  lost: ${summary.packetsLost}  jitter: ${summary.jitter != null ? `${Math.round(summary.jitter * 1000)} ms` : "—"}`,
   ];
+  if (setup) lines.push(setup);
   const hints = iceHints(summary).map((hint) => `· ${hint}`);
   els.icePanel.replaceChildren(
     ...[...lines, ...hints].map((line) => {

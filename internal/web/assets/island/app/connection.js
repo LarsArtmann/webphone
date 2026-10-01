@@ -13,6 +13,7 @@ import { setCredentials, clearCredentials, getCredentials } from "./auth.js";
 import { iceServers, sipDomain, websocketUrl } from "./config.js";
 import { ringbackStop, ringToneStart, ringToneStop } from "./audio.js";
 import { micMediaStreamFactory, releaseWarmMic, warmMic } from "./mic.js";
+import { instrumentSessionDescriptionHandler } from "./pcsetup.js";
 import { recordHistory } from "./panels.js";
 import { titleFlashStart, titleFlashStop, notifyIncoming } from "./notify.js";
 import { t } from "./i18n.js";
@@ -219,8 +220,18 @@ async function buildConnection() {
     authorizationUsername: extension,
     authorizationPassword: password,
     transportOptions: { server: websocketUrl },
-    sessionDescriptionHandlerFactory:
-      SIP.Web.defaultSessionDescriptionHandlerFactory(micMediaStreamFactory),
+    // The base factory hands the warm mic to the session; this thin
+    // wrap additionally instruments the fresh handler's peer connection
+    // so ICE setup timings are captured from construction (pcsetup.js)
+    // — sip.js invokes the factory as a plain function, so an arrow
+    // wrapper is safe.
+    sessionDescriptionHandlerFactory: (session, options) => {
+      const handler = SIP.Web.defaultSessionDescriptionHandlerFactory(
+        micMediaStreamFactory,
+      )(session, options);
+      instrumentSessionDescriptionHandler(handler);
+      return handler;
+    },
     sessionDescriptionHandlerFactoryOptions: {
       iceGatheringTimeout: 1000,
       peerConnectionConfiguration: { iceServers },

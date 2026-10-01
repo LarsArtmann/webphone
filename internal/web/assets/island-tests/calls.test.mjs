@@ -19,7 +19,7 @@ globalThis.SIP = {
 };
 
 const { sessions } = await import("../island/app/state.js");
-const { renderCalls } = await import("../island/app/calls.js");
+const { initDialWarm, renderCalls } = await import("../island/app/calls.js");
 const { t } = await import("../island/app/i18n.js");
 
 const stateText = { textContent: "" };
@@ -284,4 +284,36 @@ test("a failed hold announces the hold direction", async () => {
   entry.session.state = globalThis.SIP.SessionState.Terminated;
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   state.userAgent = null;
+});
+
+test("dial focus starts a bounded mic warm (the outgoing pre-warm)", async () => {
+  const acquisitions = [];
+  Object.defineProperty(globalThis, "navigator", {
+    value: {
+      mediaDevices: {
+        getUserMedia(constraints) {
+          acquisitions.push(constraints);
+          return new Promise(() => {});
+        },
+      },
+    },
+    configurable: true,
+  });
+
+  initDialWarm();
+  const dest = doc.getElementById("dest");
+  dest.listeners.focus[0]();
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.equal(acquisitions.length, 1, "one acquisition at dial focus");
+  assert.deepEqual(
+    acquisitions[0],
+    { audio: true, video: false },
+    "the warm asks for the mic only",
+  );
+
+  // Refocusing while the acquisition is pending must not stack requests.
+  dest.listeners.focus[0]();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(acquisitions.length, 1, "idempotent while pending");
 });

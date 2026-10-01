@@ -251,3 +251,62 @@ test("warm is a silent no-op without media devices", async () => {
   await flushes();
   assert.equal(mic.takeWarmMic(), null);
 });
+
+test("a timed warm expires and returns the device", async () => {
+  const mic = await loadMic("ttl-expires");
+  const gum = recorder();
+  setMediaDevices(gum.fn);
+
+  mic.warmMic(20);
+  await flushes();
+  assert.equal(gum.length, 1, "the dial warm acquired the mic");
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(
+    gum.streams[0].tracks.every((track) => track.stopped),
+    true,
+    "an expired dial warm releases the mic (abandoned dial intent decays)",
+  );
+  assert.equal(mic.takeWarmMic(), null);
+});
+
+test("consuming a timed warm before expiry keeps the stream alive", async () => {
+  const mic = await loadMic("ttl-consumed");
+  const gum = recorder();
+  setMediaDevices(gum.fn);
+
+  mic.warmMic(25);
+  await flushes();
+  const stream = mic.takeWarmMic();
+  await new Promise((resolve) => setTimeout(resolve, 60));
+  assert.equal(
+    stream.tracks.every((track) => !track.stopped),
+    true,
+    "a consumed warm is never expired — sip.js owns the tracks",
+  );
+  assert.equal(mic.takeWarmMic(), null);
+});
+
+test("a stale dial-warm timer never kills a later warm", async () => {
+  const mic = await loadMic("ttl-stale-timer");
+  const gum = recorder();
+  setMediaDevices(gum.fn);
+
+  mic.warmMic(25);
+  await flushes();
+  // The warm device dies on its own (unplug): the cache invalidates but
+  // the expiry timer stays armed — then an UNTIMED incoming warm lands.
+  gum.streams[0].tracks.forEach((track) => {
+    (track.listeners.ended ?? []).forEach((fn) => fn());
+  });
+  assert.equal(mic.takeWarmMic(), null);
+  mic.warmMic();
+  await flushes();
+  await new Promise((resolve) => setTimeout(resolve, 70));
+  const later = mic.takeWarmMic();
+  assert.equal(later, gum.streams[1], "the later warm survives the stale timer");
+  assert.equal(
+    later.tracks.every((track) => !track.stopped),
+    true,
+    "the identity guard held",
+  );
+});
