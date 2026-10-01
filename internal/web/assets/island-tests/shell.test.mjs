@@ -442,7 +442,15 @@ test("the new-conversation composer and non-compose forms never get a bubble", (
 // 5. Command palette: Ctrl/Cmd-K opens the overlay over collected
 // commands, filtering narrows it, Enter runs the selection, Escape
 // closes; "?" opens the shortcut help without touching the island.
+// The overlay wires its input listeners on the ELEMENT (not document),
+// so element events are fired through the stub's listener registry.
 const realQuerySelectorAll = doc.querySelectorAll.bind(doc);
+const fireOn = (el, type, props = {}) =>
+  (el.listeners[type] ?? []).forEach((fn) =>
+    fn({ target: el, preventDefault: () => {}, ...props }),
+  );
+const findOverlay = () =>
+  doc.body.children.find((el) => el.id === "wp-palette");
 
 test("Ctrl+K opens the palette, filters, runs, and closes", () => {
   const clicked = [];
@@ -463,7 +471,7 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
       ctrlKey: true,
       preventDefault: () => {},
     });
-    const overlay = doc.getElementById("wp-palette");
+    const overlay = findOverlay();
     assert.ok(overlay, "overlay created");
     assert.equal(overlay.hidden, false);
     const input = overlay.children[0];
@@ -472,17 +480,13 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
     assert.match(list.children[0].textContent, /Go to Messages/);
 
     input.value = "theme";
-    doc.dispatch("input", { target: input });
+    fireOn(input, "input");
     assert.equal(list.children.length, 1);
     assert.match(list.children[0].textContent, /theme/i);
 
     input.value = "";
-    doc.dispatch("input", { target: input });
-    doc.dispatch("keydown", {
-      key: "Enter",
-      target: input,
-      preventDefault: () => {},
-    });
+    fireOn(input, "input");
+    fireOn(input, "keydown", { key: "Enter" });
     assert.deepEqual(clicked, ["messages"], "Enter runs the selected row");
     assert.equal(overlay.hidden, true, "overlay closes after running");
   } finally {
@@ -498,14 +502,10 @@ test("Escape closes the palette without running anything", () => {
       metaKey: true,
       preventDefault: () => {},
     });
-    const overlay = doc.getElementById("wp-palette");
+    const overlay = findOverlay();
     assert.equal(overlay.hidden, false);
     const input = overlay.children[0];
-    doc.dispatch("keydown", {
-      key: "Escape",
-      target: input,
-      preventDefault: () => {},
-    });
+    fireOn(input, "keydown", { key: "Escape" });
     assert.equal(overlay.hidden, true);
   } finally {
     doc.querySelectorAll = realQuerySelectorAll;
@@ -518,24 +518,25 @@ test("? opens the shortcut help outside typing fields", () => {
     target: { closest: () => null },
     preventDefault: () => {},
   });
-  const overlay = doc.getElementById("wp-palette");
+  const overlay = findOverlay();
   assert.equal(overlay.hidden, false);
   const list = overlay.children[1];
   assert.ok(list.children.length >= 8, "every real binding is listed");
   assert.match(list.children[0].textContent, /Answer/);
 
   const input = overlay.children[0];
-  doc.dispatch("keydown", {
-    key: "Escape",
-    target: input,
-    preventDefault: () => {},
-  });
+  fireOn(input, "keydown", { key: "Escape" });
   assert.equal(overlay.hidden, true);
 
   // Typing "?" inside a field must not hijack the key.
   doc.dispatch("keydown", {
     key: "?",
-    target: { closest: (sel) => (sel === "input" ? {} : null) },
+    target: {
+      closest: (sel) =>
+        sel === "input, textarea, select, [contenteditable='true']"
+          ? {}
+          : null,
+    },
     preventDefault: () => {
       throw new Error("preventDefault should not fire while typing");
     },
