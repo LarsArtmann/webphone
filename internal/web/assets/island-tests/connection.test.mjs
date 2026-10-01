@@ -93,10 +93,17 @@ class StubUserAgent {
   }
 }
 
+let capturedMediaStreamFactory;
+
 globalThis.SIP = {
   UserAgent: StubUserAgent,
   Registerer: StubRegisterer,
-  Web: { defaultSessionDescriptionHandlerFactory: () => () => ({}) },
+  Web: {
+    defaultSessionDescriptionHandlerFactory: (mediaStreamFactory) => {
+      capturedMediaStreamFactory = mediaStreamFactory;
+      return () => ({});
+    },
+  },
   RegistererState: {
     Initial: "Initial",
     Registered: "Registered",
@@ -104,6 +111,21 @@ globalThis.SIP = {
     Terminated: "Terminated",
   },
   SessionState: { Terminated: "Terminated" },
+};
+
+// Silent audio contexts: onInvite starts the ring tone.
+const silentNode = () => ({ connect: () => silentNode(), start() {}, stop() {} });
+globalThis.AudioContext = class {
+  constructor() {
+    this.currentTime = 0;
+    this.destination = {};
+  }
+  createOscillator() {
+    return { frequency: {}, connect: silentNode, start() {}, stop() {} };
+  }
+  createGain() {
+    return { gain: {}, connect: silentNode };
+  }
 };
 
 // Each case loads a FRESH module instance (module-level registerer and
@@ -360,4 +382,109 @@ test("networkOnline nudges recovery only for a down, idle transport", async (tc)
   await flushes();
   assert.equal(agents.length, before, "no double recovery");
   assert.equal(pill(), t("registered"));
+});
+
+// --- mic pre-warm wiring --------------------------------------------------
+// The factory handed to sip.js is the island's mic module (warm handoff
+// at accept time), the ice gathering wait is capped below the sip.js 5 s
+// default, an incoming call acquires the mic while it rings, and a
+// missed call releases the device.
+
+const micModule = await import("../island/app/mic.js");
+const { state } = await import("../island/app/state.js");
+const micTrack = () => ({
+  stopped: false,
+  stop() {
+    this.stopped = true;
+  },
+  addEventListener() {},
+});
+const micStream = () => {
+  const tracks = [micTrack(), micTrack()];
+  return { tracks, getTracks: () => tracks };
+};
+
+const stubMic = () => {
+  const gumCalls = [];
+  const streams = [];
+  Object.defineProperty(globalThis, "navigator", {
+    value: {
+      language: "en-US",
+      mediaDevices: {
+        getUserMedia: (constraints) => {
+          gumCalls.push(constraints);
+          const stream = micStream();
+          streams.push(stream);
+          return Promise.resolve(stream);
+        },
+      },
+    },
+    configurable: true,
+  });
+  return { gumCalls, streams };
+};
+
+const sdhOptions = () => agents.at(-1).options.sessionDescriptionHandlerFactoryOptions;
+
+const incomingInvitation = () => {
+  const listeners = [];
+  return {
+    remoteIdentity: { uri: { user: "+493012345678" } },
+    stateChange: {
+      addListener: (fn) => listeners.push(fn),
+      fire: (value) => {
+        for (const fn of listeners) fn(value);
+      },
+    },
+    reject() {},
+  };
+};
+
+test("connect wires the mic factory and caps ice gathering", async () => {
+  resetStubs();
+  capturedMediaStreamFactory = undefined;
+  const connection = await loadConnection("mic-wiring");
+  await connection.connect("1001", "pw");
+  assert.equal(sdhOptions().iceGatheringTimeout, 1000);
+  assert.equal(
+    capturedMediaStreamFactory,
+    micModule.micMediaStreamFactory,
+    "sip.js receives the island's mic factory",
+  );
+});
+
+test("an incoming call starts acquiring the mic while it rings", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  const { gumCalls } = stubMic();
+  const connection = await loadConnection("mic-warm");
+  await connection.connect("1001", "pw");
+
+  agents.at(-1).delegate.onInvite(incomingInvitation());
+  await flushes();
+  assert.equal(doc.getElementById("incoming-call").hidden, false);
+  assert.equal(gumCalls.length, 1, "the mic is acquired during the ring");
+  assert.deepEqual(gumCalls[0], { audio: true, video: false });
+});
+
+test("a missed call releases the warm mic", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  const { gumCalls, streams } = stubMic();
+  const connection = await loadConnection("mic-missed");
+  await connection.connect("1001", "pw");
+
+  const invitation = incomingInvitation();
+  agents.at(-1).delegate.onInvite(invitation);
+  await flushes();
+  assert.equal(gumCalls.length, 1);
+
+  invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
+  assert.equal(
+    streams[0].tracks.every((track) => track.stopped),
+    true,
+    "the device is released when the caller gives up",
+  );
 });

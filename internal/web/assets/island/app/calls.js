@@ -10,6 +10,7 @@
 import { ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
 import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
+import { releaseWarmMic } from "./mic.js";
 import {
   recordCrmCall,
   recordHistory,
@@ -400,6 +401,7 @@ export function bindSession(newSession, target) {
           new CustomEvent("wp:call-missed", { detail: { target } }),
         );
       }
+      if (!(newSession instanceof SIP.Inviter)) releaseWarmMic();
       recordHistory({
         dir: newSession instanceof SIP.Inviter ? "out" : "in",
         target,
@@ -573,4 +575,5 @@ export function rejectIncoming() {
   state.incomingSession = null;
   ringToneStop();
   titleFlashStop();
+  releaseWarmMic();
 }

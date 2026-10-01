@@ -69,13 +69,13 @@ override flagged, same as the 02:14 report).
 
 ## b) PARTIALLY DONE
 
-| Item | What remains |
-|---|---|
-| AGENTS net-neutrality | The compaction rule says content adds pay for themselves. I compressed the tool-bug note (~2 lines) but the paperless bullet is ~12 → **net +~10 lines on a file already 573+ against the 377 cap**. Payment was symbolic. |
+| Item                       | What remains                                                                                                                                                                                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AGENTS net-neutrality      | The compaction rule says content adds pay for themselves. I compressed the tool-bug note (~2 lines) but the paperless bullet is ~12 → **net +~10 lines on a file already 573+ against the 377 cap**. Payment was symbolic.                                                                 |
 | Archive completeness gates | I verified the 12:58 report carries strikethroughs (9) and trusted the closing session's verdict for the 13:14 plan (0 strikethroughs — resolution lives in the T21 harvest pointer, not inline). The docs-health `check-rows`/`grep -rLn '~~'` gates were NOT run over the archived dirs. |
-| TODO row 1 freshness | The "stack `3afcf57`" ref rots per the 02:14 review (`f24`); still untouched — needs the deploy to land first, then a reword. I left it because the deploy is owner-side. |
-| Daemon push lag | At ~03:05 local main was 11 commits ahead of origin/main (origin at `301c47c`). The daemon owns pushes; I did not push (no permission). If its push loop is stalled, the relock ritual's "verify ls-remote" step will catch it — but nobody has. |
-| Pipe-rc discipline | I swept `scripts/` and documented the lesson, but there is no STANDING guard — the habit still lives only in prose (`f11`-shaped idea below). |
+| TODO row 1 freshness       | The "stack `3afcf57`" ref rots per the 02:14 review (`f24`); still untouched — needs the deploy to land first, then a reword. I left it because the deploy is owner-side.                                                                                                                  |
+| Daemon push lag            | At ~03:05 local main was 11 commits ahead of origin/main (origin at `301c47c`). The daemon owns pushes; I did not push (no permission). If its push loop is stalled, the relock ritual's "verify ls-remote" step will catch it — but nobody has.                                           |
+| Pipe-rc discipline         | I swept `scripts/` and documented the lesson, but there is no STANDING guard — the habit still lives only in prose (`f11`-shaped idea below).                                                                                                                                              |
 
 ## c) NOT STARTED (deliberately, with reasons)
 
@@ -224,8 +224,8 @@ override flagged, same as the 02:14 report).
    shape warnings, ~30 min, quiet window).
 8. [S] Run the docs-health completeness gates over the newly archived
    dirs: `grep -rLn '~~' docs/status/archived/ docs/planning/archived/`
-   + check-rows.py — prove the 13:14 plan's out-of-band resolution
-   didn't bury unresolved items.
+   - check-rows.py — prove the 13:14 plan's out-of-band resolution
+     didn't bury unresolved items.
 9. [S] PIPESTATUS/pipe-`$?` standing guard (grep gate in buildflow or
    `scripts/check-rc-masking.sh` + an AGENTS rule) — materialize the
    lesson (carried 02:14 `f10`).
@@ -280,8 +280,8 @@ override flagged, same as the 02:14 report).
     with `gateway.webhook_secret_file`) — my g2 below; answer routes
     to either config code or a documented "environmentFile covers it".
 
-*(25 items — under the 50 ceiling by choice; the rest would be filler
-from the standing watches row, which is already accurate.)*
+_(25 items — under the 50 ceiling by choice; the rest would be filler
+from the standing watches row, which is already accurate.)_
 
 ## g) Questions I can NOT figure out myself
 
