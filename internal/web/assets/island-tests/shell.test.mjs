@@ -355,6 +355,10 @@ const makeComposeForm = () => {
     selector: "form.wp-compose",
     className: "wp-compose",
     dataset: {},
+    matches: (sel) => sel === "form.wp-compose",
+    classList: {
+      contains: (name) => form.className.split(" ").includes(name),
+    },
     querySelector(sel) {
       if (sel === "textarea.wp-compose-body") return area;
       if (sel === 'input[type="file"]') return files;
@@ -394,7 +398,11 @@ test("attachment-only sends render the optimistic attachment chips", () => {
   doc.dispatch("htmx:beforeRequest", { target: form });
   assert.equal(transcript.children.length, before + 1);
   const bubble = transcript.children.at(-1);
-  assert.equal(bubble.querySelectorAll(".wp-attachment").length, 2);
+  const chips = bubble.children.filter((kid) =>
+    String(kid.className).split(" ").includes("wp-attachment"),
+  );
+  assert.equal(chips.length, 2);
+  assert.match(chips[0].textContent, /cat\.png/);
   assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
 });
 
