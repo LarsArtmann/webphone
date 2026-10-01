@@ -14,6 +14,7 @@ require (
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/go-health v0.4.1
 	github.com/larsartmann/go-health-dashboard v0.10.1
+	github.com/larsartmann/go-paperless v0.4.2
 	github.com/larsartmann/go-sse v0.6.1
 	github.com/larsartmann/go-sse/ssetest v0.4.0
 	github.com/larsartmann/httputil v1.4.0
@@ -55,7 +56,6 @@ require (
 	github.com/larsartmann/go-etag/entitytag v0.6.0 // indirect
 	github.com/larsartmann/go-etag/server v0.6.0 // indirect
 	github.com/larsartmann/go-idempotency v0.3.0 // indirect
-	github.com/larsartmann/go-paperless v0.4.2 // indirect
 	github.com/larsartmann/go-retry v0.7.0 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.1.0 // indirect
 	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
