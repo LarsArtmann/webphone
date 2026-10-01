@@ -220,11 +220,12 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
 
   // Terminated while a toggle is still in flight: the pending state
   // must not outlive the session (the re-INVITE answer never arrives;
-  // the watchdog-rebuild teardown lands here too).
+  // the watchdog-rebuild teardown lands here too). The session is still
+  // HELD, so this toggle is a resume — either direction must settle.
   holdMode = "gate";
   holdBtn.listeners.click[0]();
   await settle();
-  assert.equal(card.dataset.state, "holding");
+  assert.equal(entry.holdPending, "resuming", "the toggle is in flight");
   entry.session.state = globalThis.SIP.SessionState.Terminated;
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   assert.equal(entry.holdPending, null, "Terminated settles the pending toggle");
