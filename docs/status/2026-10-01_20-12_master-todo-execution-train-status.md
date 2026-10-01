@@ -205,3 +205,44 @@ markdownlint posture, announcements, watches), T27 (docs-health continuation).
 
 _Point-in-time snapshot. `TODO_LIST.md` remains the living source; (f) is
 harvest material for `docs-health` HARVEST when the session continues._
+
+---
+
+## Session 2 addendum (2026-10-01 continued)
+
+Answers received: (Q1) T06 ring fix **KEEP**; (Q2) AGENTS.md compaction **go**;
+(Q3) stack E2E status **"i do not know"** → T04 stays BLOCKED (handover only).
+
+Completed + verified this session:
+
+- **Suite confirmation**: island `node:test` green (120/120) and full
+  `go test -count=1 ./...` green. The earlier hang was an authoring bug in
+  `calls.test.mjs` (a gated `invite()` that the initial `placeCall` awaited) —
+  fixed; also corrected the "failed hold" toast assertion (the settled state
+  re-announces "connected", so the failure toast is not last).
+- **T08 pins**: shell spec for the swap-time `aria-current` mirror + the tab
+  skeleton reveal/hide + the "settled send is never rolled back" morph edge;
+  server `TestServedPageHoldsTheDomContract` now asserts `aria-current="page"`
+  and `"false"`; the over-promising `#wp-live` comment was corrected; the
+  release runbook gained the "served-markup changes owe the stack E2E" rule.
+- **T05 owed pin**: `TestShellHtmlLangFollowsSessionLang` (4 cases: cookie wins,
+  Accept-Language fallback, EN default).
+- **T20 hygiene**: `chmod +x scripts/render-diff.py`; 3 errcheck `defer
+  Close()` findings fixed (fax/service.go, paperless_test.go, version_test.go);
+  8 oxlint warnings fixed across theme-preload.js + island tests; 2
+  samber-linter HW-4 infos suppressed with a reason at the ProvideNamed sites.
+  (The `docs/status/dedup-registry.md` link finding was already gone.)
+- **T10 perf**: `/assets/*` now serves a strong content ETag (sha256) and
+  answers `If-None-Match` with a bodyless 304, plus scoped gzip (never
+  `/events`); the stale "caching buys nothing" comment rewritten. New tests
+  `TestAssetsCarryContentETag` + `TestAssetsGzipWhenAccepted`.
+- **T26**: AGENTS.md compacted 705 → 364 lines (≤377); the moved train
+  chronology/evidence appended to `docs/lessons.md` under "Provenance moved out
+  of AGENTS.md".
+
+Verification: fresh-binary smoke 47+4 green with the new asset caching; full
+`go test` green; golangci-lint 0 issues; full buildflow run logged separately.
+**Not started (still on `TODO_LIST.md`)**: T11, T12–T19 (the UI/UX M9–M26
+train), T20 remainder, T21–T23, T25. Owner legs T01/T02/T04/T09/T24/T27 remain
+handover-only.
+
