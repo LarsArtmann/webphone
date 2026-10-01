@@ -572,6 +572,18 @@ ports of already-pinned paths.
   `window.location.reload()`); stubs that lack DOM methods (e.g.
   `replaceChildren`) make renders THROW silently — assertions must
   cover render OUTCOMES, not just absence of errors.
+- **Island honesty contract (2026-10-01)**: the UI never shows a state
+  the network hasn't confirmed. Hold is a pending-state machine —
+  `entry.holdPending` ("holding"/"resuming") renders the pulsing chip +
+  disabled button until the re-INVITE settles; a failed toggle returns
+  the card to the SETTLED state (no optimistic flip); a toggle arriving
+  mid-flight queues (`holdQueued`, focus preemption keeps its intent).
+  Offline truth: `#offline-banner` (DOM-contract id, role=status,
+  data-i18n) flips exactly with the registration pill — ON at
+  `connect()` until the REGISTER lands, ON for transport loss /
+  rejected registration, ON for the browser `offline` event; `online`
+  only nudges `connection.networkOnline()` (down + no pending retry)
+  and never claims registered.
 - Stack browser E2E: budget 445s (2026-09-22 baseline, two
   forced-rebuild runs 384s/373s); a ~90s transfer-step death after
   green registration+DTMF+ICE is a known flake mode (re-run once
