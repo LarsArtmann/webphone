@@ -212,7 +212,6 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
 	protected.HandleFunc("POST /contacts/import", h.importContacts)
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
-	protected.HandleFunc("GET /contacts/{id}/export", h.exportContact)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only

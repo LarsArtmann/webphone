@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -223,33 +222,7 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
-	// Alphabetical order is a rendering contract (the letter-head
-	// sections assume it), and the search filter is the q param — the
-	// same shape as the thread search. Shared contacts filter too.
-	query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
-	filtered := make([]domain.Contact, 0, len(personal))
-	for _, contact := range personal {
-		if query == "" ||
-			strings.Contains(strings.ToLower(contact.Name), query) ||
-			strings.Contains(strings.ToLower(contact.Phone.String()), query) {
-			filtered = append(filtered, contact)
-		}
-	}
-	sort.Slice(filtered, func(i, j int) bool {
-		return filtered[i].Name < filtered[j].Name
-	})
-	shared := h.deps.Shared
-	if query != "" {
-		matchShared := make([]domain.SharedContact, 0, len(shared))
-		for _, contact := range shared {
-			if strings.Contains(strings.ToLower(contact.Name), query) ||
-				strings.Contains(strings.ToLower(contact.Number), query) {
-				matchShared = append(matchShared, contact)
-			}
-		}
-		shared = matchShared
-	}
-	return views.ContactsPanel(views.ContactsPanelProps{Personal: filtered, Shared: shared, Query: r.URL.Query().Get("q"), Lang: h.lang(r)}), nil
+	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared, Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) settingsPanel(r *http.Request) templ.Component {

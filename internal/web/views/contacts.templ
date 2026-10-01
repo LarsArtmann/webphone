@@ -1,8 +1,6 @@
 package views
 
 import (
-	"strings"
-
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -14,10 +12,7 @@ import (
 type ContactsPanelProps struct {
 	Personal []domain.Contact
 	Shared   []domain.SharedContact
-	// Query is the active contact-search filter ("" = unfiltered); the
-	// search input echoes it so a morph swap keeps the typed text.
-	Query string
-	Lang  Lang
+	Lang     Lang
 }
 
 templ ContactsPanel(props ContactsPanelProps) {
@@ -30,29 +25,6 @@ templ ContactsPanel(props ContactsPanelProps) {
 		hx-swap="morph:innerHTML show:window:top"
 	>
 		@panelHead(props.Lang, "tab.contacts", "contacts.subtitle")
-		// The search form filters server-side; htmx morph keeps the
-		// input's focus across debounced re-fetches (stable id below),
-		// and the shell.js SSE guard cancels live nudges while a query
-		// is set (same contract as the thread search).
-		<form
-			class="wp-compose wp-compose-search"
-			role="search"
-			aria-label={ T(props.Lang, "contacts.search") }
-			hx-get="/partials/contacts"
-			hx-target="#tab-content"
-			hx-swap="morph:innerHTML"
-			hx-trigger="input changed delay:300ms, submit"
-			hx-sync="this:replace"
-		>
-			<input
-				type="search"
-				name="q"
-				id="contact-search-input"
-				value={ props.Query }
-				placeholder={ T(props.Lang, "contacts.search.ph") }
-				aria-label={ T(props.Lang, "contacts.search") }
-			></input>
-		</form>
 		<form
 			class="wp-compose wp-compose-new"
 			hx-post="/contacts/save"
@@ -79,19 +51,8 @@ templ ContactsPanel(props ContactsPanelProps) {
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users})
 		}
-		if props.Query != "" && len(props.Personal) == 0 && len(props.Shared) > 0 {
-			// A filtered view that matches only shared contacts says so
-			// instead of looking like the personal list vanished.
-			<p class="wp-muted">{ T(props.Lang, "contacts.noPersonalMatch") }</p>
-		}
-		for i, contact := range props.Personal {
-			if i == 0 || letterOf(props.Personal[i-1].Name) != letterOf(contact.Name) {
-				<div class="wp-letter-head" aria-hidden="true">{ letterOf(contact.Name) }</div>
-			}
+		for _, contact := range props.Personal {
 			@ContactRow(contact, props.Lang)
-		}
-		if len(props.Shared) > 0 {
-			<div class="wp-letter-head">{ T(props.Lang, "contacts.sharedHead") }</div>
 		}
 		for _, contact := range props.Shared {
 			<article class="wp-row">
@@ -118,22 +79,6 @@ templ ContactRow(contact domain.Contact, lang Lang) {
 		</span>
 		<span class="wp-row-actions">
 			<button class="wp-mini" data-dial={ contact.Phone.String() }>{ T(lang, "contacts.call") }</button>
-			// Edit prefills the save form (the store upserts by number
-			// and keeps the id on rename, so saving IS editing).
-			<button
-				class="wp-mini"
-				data-edit-name={ contact.Name }
-				data-edit-number={ contact.Phone.String() }
-				aria-label={ T(lang, "contacts.edit") }
-				title={ T(lang, "contacts.edit") }
-			>✎</button>
-			<a
-				class="wp-mini"
-				href={ "/contacts/" + contact.ID.String() + "/export" }
-				download
-				aria-label={ T(lang, "contacts.vcard") }
-				title={ T(lang, "contacts.vcard") }
-			>vCard</a>
 			<button
 				class="wp-mini wp-danger"
 				hx-post={ "/contacts/delete?id=" + contact.ID.String() }
@@ -143,14 +88,4 @@ templ ContactRow(contact domain.Contact, lang Lang) {
 			>{ T(lang, "contacts.remove") }</button>
 		</span>
 	</article>
-}
-
-// letterOf buckets a contact by the uppercase first rune of its name for
-// the alphabetical section heads; a blank name lands under "#".
-func letterOf(name string) string {
-	trimmed := strings.TrimSpace(name)
-	if trimmed == "" {
-		return "#"
-	}
-	return strings.ToUpper(string([]rune(trimmed)[0]))
 }

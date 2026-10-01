@@ -61,21 +61,6 @@ func (s *Contacts) List(ctx context.Context, owner domain.Extension) ([]domain.C
 	`, []any{owner.String()}, scanContact)
 }
 
-// ByID returns one contact scoped to its owner. A foreign or unknown id
-// is ErrNotFound — the same owner-scoping contract Delete has, so the
-// row-level vCard export can never leak another extension's contact.
-func (s *Contacts) ByID(ctx context.Context, owner domain.Extension, id domain.ContactID) (domain.Contact, error) {
-	row := s.db.QueryRowContext(ctx, `
-		SELECT id, owner, name, phone, created_at
-		FROM contacts WHERE id = ? AND owner = ?
-	`, id.String(), owner.String())
-	contact, err := scanContact(row)
-	if errors.Is(err, sql.ErrNoRows) { //nolint:erraudit // reclassify the driver sentinel into the store's not-found family
-		return domain.Contact{}, ErrNotFound
-	}
-	return contact, err
-}
-
 func scanContact(row rowScanner) (domain.Contact, error) {
 	var (
 		id, owner, name, phone string
