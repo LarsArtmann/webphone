@@ -581,8 +581,7 @@ test("a partial swap moves aria-current to the clicked nav link", () => {
   const other = doc.createElement();
   other.className = "wp-nav-link";
   const nav = doc.createElement();
-  nav.querySelectorAll = (selector) =>
-    selector === ".wp-nav-link" ? [clicked, other] : [];
+  nav.querySelectorAll = (selector) => (selector === ".wp-nav-link" ? [clicked, other] : []);
   clicked.closest = (selector) => (selector === ".wp-nav" ? nav : null);
 
   doc.dispatch("htmx:afterRequest", { target: clicked });

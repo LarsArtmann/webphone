@@ -382,22 +382,23 @@ green (`--enforce-go-error-family` — 132 stdlib_constructor findings on
 constructors with stable dot-notation codes; `--enforce-coded-errors`
 also 0). Rules: constructors classify at ORIGIN (P1); propagation over
 polymorphic inner errors wraps family-NEUTRALLY — `fmt.Errorf("…: %w")`
-+ reasoned nolint, a fixed-family Wrap would clobber the inner
-classification (P2; homes: `cmd/webphone.propagatef`, the `"gateway: %w"`
-service wraps, LogErrorContext log-context wraps, gateway form-builder
-inner wraps); sentinels stay `errors.New` vars (P3) and classify via
-`init()` registration in the owning package (store.ErrNotFound/
-ErrListFull, pbx.ErrDisabled/ErrUnauthorized, crm.ErrDisabled/
-ErrUnauthorized/ErrNotFound); functions keep the bare `error` return —
-typed structs only where callers branch (ErrInvalidSend pattern, P6);
-defer-close ignores are standard practice (P7). Tier 3 owner-only full
-audit (never gates; `--no-suppress --enforce-samber-oops
+
+- reasoned nolint, a fixed-family Wrap would clobber the inner
+  classification (P2; homes: `cmd/webphone.propagatef`, the `"gateway: %w"`
+  service wraps, LogErrorContext log-context wraps, gateway form-builder
+  inner wraps); sentinels stay `errors.New` vars (P3) and classify via
+  `init()` registration in the owning package (store.ErrNotFound/
+  ErrListFull, pbx.ErrDisabled/ErrUnauthorized, crm.ErrDisabled/
+  ErrUnauthorized/ErrNotFound); functions keep the bare `error` return —
+  typed structs only where callers branch (ErrInvalidSend pattern, P6);
+  defer-close ignores are standard practice (P7). Tier 3 owner-only full
+  audit (never gates; `--no-suppress --enforce-samber-oops
 --enforce-generic-return` shows the residue: generic_return decisions,
-40 defer-close ignores, 2 counted-skip swallows, the nolint'd neutral
-wraps). Re-measure tiers 1+2 monthly (next: 2026-10-22). `erraudit
+  40 defer-close ignores, 2 counted-skip swallows, the nolint'd neutral
+  wraps). Re-measure tiers 1+2 monthly (next: 2026-10-22). `erraudit
 tree` draws hierarchy edges ONLY from package-level declarations and
-dedupes same-named sentinels — the 7 package-level sentinels across
-crm/pbx/store show as 4 rows at max depth 0 BY DESIGN.
+  dedupes same-named sentinels — the 7 package-level sentinels across
+  crm/pbx/store show as 4 rows at max depth 0 BY DESIGN.
 
 ### Health-dashboard seam (go-health-dashboard v0.10.1, 2026-10-01)
 

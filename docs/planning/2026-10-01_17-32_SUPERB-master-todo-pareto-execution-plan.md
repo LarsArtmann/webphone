@@ -82,35 +82,35 @@ Everything above, plus:
 
 Sorted by importance / impact / effort / customer-value. `Effort`: S <30 m, M 30–100 m, L >100 m. `Owner` = a human must act (no assistant ssh/deploy).
 
-| # | Task | Tier | Impact | Effort | Customer value | Owner? | Depends |
-|---|------|------|--------|--------|----------------|--------|---------|
-| T01 | v2.8.0 deploy tail (stack bump → gates/E2E → aarch64 → relock #5 → deploy → post-deploy smoke) | 1% | High | S-M | **Critical** (ships value to prod) | YES | T03 |
-| T02 | Prod SMS bridge root cause (journal → grep → restart/creds → test SMS → record) | 1% | High | S | **Critical** (broken feature) | YES | — |
-| T03 | Run repo gates on the UI/UX batch (`buildflow` full + `nix flake check` + smoke boot) | 1% | High | S | High | no | — |
-| T04 | Stack browser E2E re-run (markup changed; 445 s budget) | 4% | High | M | High | XREPO | T03 |
-| T05 | Island boot language split-brain fix (cookie → localStorage → navigator) + 2 pins | 4% | High | S | High (a11y/correctness) | no | — |
-| T06 | Ring-silence `AudioContext` gesture fix + ctx-order pin | 4% | High | S | High (silent ring) | go | — |
-| T07 | Mic pre-warm live verification + 3 pins (real call / buildflow / E2E / smoke) | 4% | High | S | High (speak ASAP) | part | T03,T04 |
-| T08 | UI/UX owed test pins (aria-current, skeleton reveal, optimistic-morph) + `#wp-live` comment fix | 4% | High | S | Medium | no | T03 |
-| T09 | Owner-calls sitting (28-row briefing) + backport decisions | 4% | High | S | High (unblocks cycle) | YES | — |
-| T10 | Perf: ETag+304 for `/assets/*` (reconcile `server.go` first) + scoped gzip (never `/events`) | 20% | High | M | High (first-load) | no | T03 |
-| T11 | Perf extras: `modulepreload` + outgoing mic warm + ICE gather timing + `iceServers` eval + curl baseline | 20% | High | M | Medium | no | T10 |
-| T12 | UI/UX M9 dial affordances (A4/A5/A8/A9/K5) + M12 over-limit countdown | 20% | High | S-M | Medium | no | T03 |
-| T13 | UI/UX M11 history filters (D8–D10) + M16 URL state (E2/E3/E7/E8) | 20% | Medium | S-M | Medium | no | T03 |
-| T14 | UI/UX M13 voicemail playback (C1–C3/C9/C10) + M14 fax depth (C4–C6) | 20% | Medium | M | Medium | no | T03 |
-| T15 | UI/UX M17 feedback/trust (J2/J3/J4/J7/J8/J9) | 20% | Medium | M | Medium | no | T03 |
-| T16 | UI/UX M15 visual tokens (F3/F4/F7/F9) + M20 theming depth + M26 shell sizing (E5/E6) | 20% | Medium | S-M | Low-Med | no | T03 |
-| T17 | UI/UX M18 onboarding/demo (K1–K4) + M19 mobile extras (I3/I6/I7/I9) | 20% | Medium | M | Medium | no | T03 |
-| T18 | UI/UX M21 messaging richness (SEAM) + M22 pin/archive/mute (SEAM) — server design first | 20% | Medium | M | Medium | no | T03 |
-| T19 | UI/UX M24 i18n locale/RTL/status dots + M25 call depth (A6/A10) | 20% | Medium | M | Medium | no | T03 |
-| T20 | Island-honesty follow-ups (hold copy split, pending clear, VM timeout, vulnix, aarch64, errcheck) | 20% | Medium | S-M | Medium | no | T03 |
-| T21 | Nix-review batch 2 (module golden, tag guard, VM/drill, actionlint, devshell dedupe, exceptions) | 20% | Medium | S-M | Low | no | — |
-| T22 | samber/do + dashboard follow-ups (health.css commit+CI, family pins, divergence, `/health` policy) | 20% | Medium | S-M | Low | part | — |
-| T23 | Visual verification gate harness (persist `scripts/ui-capture.py`, 12-shot matrix, AGENTS note) | 20% | Medium | M | Medium | no | T03 |
-| T24 | Cross-repo obligations (mod_enum repair → E2E → relock; paperless module; WebTransport doc; deploy.md; ops-runbook; recordings) | 20% | Medium | S-M | Medium | XREPO | T01,T04 |
-| T25 | internal/server carve (trigger) + schema_version gate + gateway stack-side bits | other | Medium | M | Low | no | — |
-| T26 | Docs/owner: AGENTS compaction, markdownlint posture, announcements, watches re-check | other | Medium | S-M | Low | YES | T09 |
-| T27 | docs-health continuation: annotate/archive recent reports, check-rows fix-or-migrate, 4-plan `g1` | other | Low | M | Low | YES | T09 |
+| #   | Task                                                                                                                            | Tier  | Impact | Effort | Customer value                     | Owner? | Depends |
+| --- | ------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ | ------ | ---------------------------------- | ------ | ------- |
+| T01 | v2.8.0 deploy tail (stack bump → gates/E2E → aarch64 → relock #5 → deploy → post-deploy smoke)                                  | 1%    | High   | S-M    | **Critical** (ships value to prod) | YES    | T03     |
+| T02 | Prod SMS bridge root cause (journal → grep → restart/creds → test SMS → record)                                                 | 1%    | High   | S      | **Critical** (broken feature)      | YES    | —       |
+| T03 | Run repo gates on the UI/UX batch (`buildflow` full + `nix flake check` + smoke boot)                                           | 1%    | High   | S      | High                               | no     | —       |
+| T04 | Stack browser E2E re-run (markup changed; 445 s budget)                                                                         | 4%    | High   | M      | High                               | XREPO  | T03     |
+| T05 | Island boot language split-brain fix (cookie → localStorage → navigator) + 2 pins                                               | 4%    | High   | S      | High (a11y/correctness)            | no     | —       |
+| T06 | Ring-silence `AudioContext` gesture fix + ctx-order pin                                                                         | 4%    | High   | S      | High (silent ring)                 | go     | —       |
+| T07 | Mic pre-warm live verification + 3 pins (real call / buildflow / E2E / smoke)                                                   | 4%    | High   | S      | High (speak ASAP)                  | part   | T03,T04 |
+| T08 | UI/UX owed test pins (aria-current, skeleton reveal, optimistic-morph) + `#wp-live` comment fix                                 | 4%    | High   | S      | Medium                             | no     | T03     |
+| T09 | Owner-calls sitting (28-row briefing) + backport decisions                                                                      | 4%    | High   | S      | High (unblocks cycle)              | YES    | —       |
+| T10 | Perf: ETag+304 for `/assets/*` (reconcile `server.go` first) + scoped gzip (never `/events`)                                    | 20%   | High   | M      | High (first-load)                  | no     | T03     |
+| T11 | Perf extras: `modulepreload` + outgoing mic warm + ICE gather timing + `iceServers` eval + curl baseline                        | 20%   | High   | M      | Medium                             | no     | T10     |
+| T12 | UI/UX M9 dial affordances (A4/A5/A8/A9/K5) + M12 over-limit countdown                                                           | 20%   | High   | S-M    | Medium                             | no     | T03     |
+| T13 | UI/UX M11 history filters (D8–D10) + M16 URL state (E2/E3/E7/E8)                                                                | 20%   | Medium | S-M    | Medium                             | no     | T03     |
+| T14 | UI/UX M13 voicemail playback (C1–C3/C9/C10) + M14 fax depth (C4–C6)                                                             | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T15 | UI/UX M17 feedback/trust (J2/J3/J4/J7/J8/J9)                                                                                    | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T16 | UI/UX M15 visual tokens (F3/F4/F7/F9) + M20 theming depth + M26 shell sizing (E5/E6)                                            | 20%   | Medium | S-M    | Low-Med                            | no     | T03     |
+| T17 | UI/UX M18 onboarding/demo (K1–K4) + M19 mobile extras (I3/I6/I7/I9)                                                             | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T18 | UI/UX M21 messaging richness (SEAM) + M22 pin/archive/mute (SEAM) — server design first                                         | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T19 | UI/UX M24 i18n locale/RTL/status dots + M25 call depth (A6/A10)                                                                 | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T20 | Island-honesty follow-ups (hold copy split, pending clear, VM timeout, vulnix, aarch64, errcheck)                               | 20%   | Medium | S-M    | Medium                             | no     | T03     |
+| T21 | Nix-review batch 2 (module golden, tag guard, VM/drill, actionlint, devshell dedupe, exceptions)                                | 20%   | Medium | S-M    | Low                                | no     | —       |
+| T22 | samber/do + dashboard follow-ups (health.css commit+CI, family pins, divergence, `/health` policy)                              | 20%   | Medium | S-M    | Low                                | part   | —       |
+| T23 | Visual verification gate harness (persist `scripts/ui-capture.py`, 12-shot matrix, AGENTS note)                                 | 20%   | Medium | M      | Medium                             | no     | T03     |
+| T24 | Cross-repo obligations (mod_enum repair → E2E → relock; paperless module; WebTransport doc; deploy.md; ops-runbook; recordings) | 20%   | Medium | S-M    | Medium                             | XREPO  | T01,T04 |
+| T25 | internal/server carve (trigger) + schema_version gate + gateway stack-side bits                                                 | other | Medium | M      | Low                                | no     | —       |
+| T26 | Docs/owner: AGENTS compaction, markdownlint posture, announcements, watches re-check                                            | other | Medium | S-M    | Low                                | YES    | T09     |
+| T27 | docs-health continuation: annotate/archive recent reports, check-rows fix-or-migrate, 4-plan `g1`                               | other | Low    | M      | Low                                | YES    | T09     |
 
 **Time estimate:** assistant legs ≈ 2–3 focused days; owner legs (T01/T02/T09/T24/T26) gate the 1% tier.
 
@@ -120,134 +120,134 @@ Sorted by importance / impact / effort / customer-value. `Effort`: S <30 m, M 30
 
 Sorted by parent priority then execution order. `Gate` = how the micro-task is verified.
 
-| # | Parent | Micro-task | Gate |
-|---|--------|-----------|------|
-| 1.1 | T01 | Confirm release number 2.8.0 (ratify at sitting) | OWNER |
-| 1.2 | T01 | Stack: lock bump to v2.8.0 tag + vendorHash roundtrip SAME breath | stack build |
-| 1.3 | T01 | Stack: `nginx.enable`→`caddy.enable` in `web.nix` + `default.nix` assertion | eval |
-| 1.4 | T01 | Stack gates incl. browser E2E (retry once on transfer flake) | E2E green |
-| 1.5 | T01 | aarch64 cross-build + ELF `e_machine=183` verify | ELF bytes |
-| 1.6 | T01 | OWNER: `nixos-rebuild test` → smoke → `switch` on pbx.artmann.tech | prod up |
-| 1.7 | T01 | Post-deploy `smoke --base https://pbx.artmann.tech --expect-version <V>` | smoke 41+4 |
-| 1.8 | T01 | pbx-artmann relock #5 + re-pin (stack tree clean first) | lock-drift-probe |
-| 1.9 | T01 | Record prod evidence in TODO/CHANGELOG | read-back |
-| 2.1 | T02 | OWNER: `systemctl status` telnyx-webhooks unit | journal |
-| 2.2 | T02 | OWNER: grep journal for sms/422/error lines | findings |
-| 2.3 | T02 | OWNER: restart unit or fix creds per findings | unit active |
-| 2.4 | T02 | OWNER: send test SMS; confirm delivered | delivered |
-| 2.5 | T02 | Record root cause in stack runbook + TODO row | read-back |
-| 2.6 | T02 | Close self-send rejection-banner browser check (journal-only if SMS worked) | note |
-| 3.1 | T03 | Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` full | exit 0 |
-| 3.2 | T03 | Run `nix flake check` (incl. KVM backup VM) | all pass |
-| 3.3 | T03 | Boot fresh binary + `scripts/webphone-smoke.py` | smoke 41+4 |
-| 3.4 | T03 | Triage/fix findings; attribute concurrent-session breakage | green |
-| 4.1 | T04 | Trigger stack browser E2E at the stack rev (no webphone edit) | E2E green |
-| 4.2 | T04 | Read run; update E2E budget watch line | note |
-| 4.3 | T04 | Record obligation in `docs/release-runbook.md` | read-back |
-| 5.1 | T05 | Read `i18n.js` boot + `pages.go` cookie logic | source |
-| 5.2 | T05 | Boot order → cookie → localStorage → navigator | edit |
-| 5.3 | T05 | Fix runtime `documentElement.lang` override | edit |
-| 5.4 | T05 | Island i18n test (cookie=de + empty localStorage → German) | node:test |
-| 5.5 | T05 | `TestShellHtmlLangFollowsSessionLang` (server) | go test |
-| 5.6 | T05 | Run island + views suites | green |
-| 6.1 | T06 | Confirm owner go (was the ring actually silent?) | OWNER |
-| 6.2 | T06 | Create/resume `AudioContext` inside the gesture handler (`audio.js`) | edit |
-| 6.3 | T06 | Island test pinning ctx-creation order | node:test |
-| 6.4 | T06 | Consider ONE shared context (ringback + ring) | decision |
-| 6.5 | T06 | Run island suite | green |
-| 7.1 | T07 | Hard-refresh; place one real incoming call | manual |
-| 7.2 | T07 | Observe accept→speak latency + mic indicator at ring | manual |
-| 7.3 | T07 | Reuse T03/T04 gates (buildflow + E2E + smoke) | green |
-| 7.4 | T07 | Pins: warm survives rebuild, dial-after-missed, second-onInvite | node:test |
-| 8.1 | T08 | Pin `aria-current="page"/"false"` in nav partial test | go test |
-| 8.2 | T08 | Island test: skeleton reveal/hide on nav swaps | node:test |
-| 8.3 | T08 | Island test: optimistic-bubble-morph edge | node:test |
-| 8.4 | T08 | Fix `#wp-live` "connection recovery" comment in `layout.templ` | read-back |
-| 8.5 | T08 | Re-run views + island tests | green |
-| 9.1 | T09 | Verify briefing doc current (28 rows) | read-back |
-| 9.2 | T09 | OWNER: the sitting | decisions |
-| 9.3 | T09 | Backport decisions to TODO/ROADMAP | edit |
-| 9.4 | T09 | Update `dedup-registry.md` if baseline ratified | edit |
-| 10.1 | T10 | Read `server.go` composite-ETag context | source |
-| 10.2 | T10 | ETag+304 for `/assets/*` (sha over embedded bytes; keep no-cache revalidation) | go test |
-| 10.3 | T10 | Rewrite stale "caching buys nothing" comment | read-back |
-| 10.4 | T10 | Scoped gzip for static handlers (never `/events`) | go test |
-| 10.5 | T10 | Unit tests for 10.2–10.4 | go test |
-| 10.6 | T10 | curl timing baseline before/after | numbers |
-| 11.1 | T11 | `modulepreload` for the island ESM graph | served page |
-| 11.2 | T11 | Outgoing-call mic warm (mirror incoming `mic.js`) | node:test |
-| 11.3 | T11 | ICE panel: gathering duration + time-to-first-media | node:test |
-| 11.4 | T11 | `iceServers` trimming evaluation | note |
-| 11.5 | T11 | Tests + stack E2E for markup changes | green |
-| 12.1 | T12 | Domain-ownership + "already exists?" audit | note |
-| 12.2 | T12 | A4 name-on-type + A5 normalization hint | node:test |
-| 12.3 | T12 | A8 DTMF animation/tones, A9 re-dial, K5 disclosure | node:test |
-| 12.4 | T12 | M12 over-limit segment countdown | node:test |
-| 12.5 | T12 | Tests (+ i18n en/de keys) | green |
-| 13.1 | T13 | M11 D8–D10 history filters | go test |
-| 13.2 | T13 | M16 E2/E3 URL state (deep-linkable filters) | go test |
-| 13.3 | T13 | E7/E8 filter chips | go test |
-| 13.4 | T13 | Tests | green |
-| 14.1 | T14 | M13 C1–C3 voicemail playback | node:test |
-| 14.2 | T14 | M13 C9/C10 | node:test |
-| 14.3 | T14 | M14 C4–C6 fax depth | go test |
-| 14.4 | T14 | Tests | green |
-| 15.1 | T15 | J2 reconnect banner | node:test |
-| 15.2 | T15 | J3 undo + J4 retry-in-banner | node:test |
-| 15.3 | T15 | J7 confirm consistency + J8 spinner + J9 success pulse | node:test |
-| 15.4 | T15 | Tests | green |
-| 16.1 | T16 | F3/F4/F7/F9 visual tokens | served asset |
-| 16.2 | T16 | M20 theming depth | served asset |
-| 16.3 | T16 | M26 shell sizing E5/E6 | served asset |
-| 16.4 | T16 | Tests | green |
-| 17.1 | T17 | M18 K1–K4 onboarding/demo | node:test |
-| 17.2 | T17 | M19 I3/I6/I7/I9 mobile extras | node:test |
-| 17.3 | T17 | Tests | green |
-| 18.1 | T18 | Server design pass: M21 snippets/schedule | design note |
-| 18.2 | T18 | Server design pass: M22 pin/archive/mute | design note |
-| 18.3 | T18 | Implement per design + tests | green |
-| 19.1 | T19 | M24 locale switch UI + RTL + status dots | node:test |
-| 19.2 | T19 | M25 A6 focus mode + A10 media test | node:test |
-| 19.3 | T19 | Tests | green |
-| 20.1 | T20 | Split `holdFailed`/`resumeFailed` copy | node:test |
-| 20.2 | T20 | Clear `holdPending` on Terminated + watchdog | node:test |
-| 20.3 | T20 | Visual screenshot pass | shots |
-| 20.4 | T20 | Root-cause VM-test timeout | note |
-| 20.5 | T20 | `nix run .#vulnix` + aarch64 ELF verify | ELF bytes |
-| 20.6 | T20 | Dispatch the 3 errcheck findings | green |
-| 21.1 | T21 | Golden module-output fixture (vhost + backup scripts) + check entry | check |
-| 21.2 | T21 | release.sh `webphoneVersion`↔`git describe` guard | dry-run |
-| 21.3 | T21 | KVM `webphone-backup` VM + drill post-split runs | green |
-| 21.4 | T21 | `actionlint` over `.github/workflows/ci.yml` | clean |
-| 21.5 | T21 | Dedupe `devShells.ci`/`default` Go env | build |
-| 21.6 | T21 | Record accepted exceptions + declined `go-standard` | read-back |
-| 22.1 | T22 | Commit `health.css` + build script (dark recipe) | build |
-| 22.2 | T22 | Wire CI rebuild of `health.css` | CI |
-| 22.3 | T22 | `family_test.go` pins for new error codes | go test |
-| 22.4 | T22 | Investigate local-main-behind-remote divergence | note |
-| 22.5 | T22 | aarch64 + `nix run .#vulnix` | green |
-| 22.6 | T22 | v2.9.0 fold decision | decision |
-| 23.1 | T23 | Persist `scripts/ui-capture.py` | script |
-| 23.2 | T23 | Finish the 12-shot matrix | shots |
-| 23.3 | T23 | Review + fixes the shots surface | fixes |
-| 23.4 | T23 | AGENTS "visual gate" note | read-back |
-| 23.5 | T23 | vision-CLI provider/key decision | decision |
-| 24.1 | T24 | Repair stack FreeSWITCH `mod_enum` build | XREPO |
-| 24.2 | T24 | Stack E2E → relock to `cc98c2e`+ + pbx re-pin | XREPO |
-| 24.3 | T24 | Stack `services.webphone.paperless` module option + smoke arm | XREPO |
-| 24.4 | T24 | WebTransport-not-adopted verdict doc | read-back |
-| 24.5 | T24 | telephony `deploy.md` secret PATH column | XREPO |
-| 24.6 | T24 | ops-runbook demo recipe + `/recordings/` + MOH check | XREPO |
-| 25.1 | T25 | `schema_version` table (gated on first ALTER — document trigger) | go test |
-| 25.2 | T25 | `internal/server` carve (trigger: next file added) | arch test |
-| 25.3 | T25 | Gateway stack-side (`ftypqt` sniff, MMS-outbound, pbx FEATURES:87) | XREPO |
-| 26.1 | T26 | AGENTS compaction ≤377 lines (owner permission) | buildflow |
-| 26.2 | T26 | markdownlint posture decision | OWNER |
-| 26.3 | T26 | Post announcements (owner picks channel) | OWNER |
-| 26.4 | T26 | Standing watches re-check (quarterly, next 2026-12-20) | note |
-| 27.1 | T27 | ANNOTATE the recent reports as their trains close | grep gate |
-| 27.2 | T27 | Archive fully-resolved; 4-plan `g1` decision | OWNER |
-| 27.3 | T27 | check-rows fix-or-migrate decision | OWNER |
+| #    | Parent | Micro-task                                                                     | Gate             |
+| ---- | ------ | ------------------------------------------------------------------------------ | ---------------- |
+| 1.1  | T01    | Confirm release number 2.8.0 (ratify at sitting)                               | OWNER            |
+| 1.2  | T01    | Stack: lock bump to v2.8.0 tag + vendorHash roundtrip SAME breath              | stack build      |
+| 1.3  | T01    | Stack: `nginx.enable`→`caddy.enable` in `web.nix` + `default.nix` assertion    | eval             |
+| 1.4  | T01    | Stack gates incl. browser E2E (retry once on transfer flake)                   | E2E green        |
+| 1.5  | T01    | aarch64 cross-build + ELF `e_machine=183` verify                               | ELF bytes        |
+| 1.6  | T01    | OWNER: `nixos-rebuild test` → smoke → `switch` on pbx.artmann.tech             | prod up          |
+| 1.7  | T01    | Post-deploy `smoke --base https://pbx.artmann.tech --expect-version <V>`       | smoke 41+4       |
+| 1.8  | T01    | pbx-artmann relock #5 + re-pin (stack tree clean first)                        | lock-drift-probe |
+| 1.9  | T01    | Record prod evidence in TODO/CHANGELOG                                         | read-back        |
+| 2.1  | T02    | OWNER: `systemctl status` telnyx-webhooks unit                                 | journal          |
+| 2.2  | T02    | OWNER: grep journal for sms/422/error lines                                    | findings         |
+| 2.3  | T02    | OWNER: restart unit or fix creds per findings                                  | unit active      |
+| 2.4  | T02    | OWNER: send test SMS; confirm delivered                                        | delivered        |
+| 2.5  | T02    | Record root cause in stack runbook + TODO row                                  | read-back        |
+| 2.6  | T02    | Close self-send rejection-banner browser check (journal-only if SMS worked)    | note             |
+| 3.1  | T03    | Run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` full                               | exit 0           |
+| 3.2  | T03    | Run `nix flake check` (incl. KVM backup VM)                                    | all pass         |
+| 3.3  | T03    | Boot fresh binary + `scripts/webphone-smoke.py`                                | smoke 41+4       |
+| 3.4  | T03    | Triage/fix findings; attribute concurrent-session breakage                     | green            |
+| 4.1  | T04    | Trigger stack browser E2E at the stack rev (no webphone edit)                  | E2E green        |
+| 4.2  | T04    | Read run; update E2E budget watch line                                         | note             |
+| 4.3  | T04    | Record obligation in `docs/release-runbook.md`                                 | read-back        |
+| 5.1  | T05    | Read `i18n.js` boot + `pages.go` cookie logic                                  | source           |
+| 5.2  | T05    | Boot order → cookie → localStorage → navigator                                 | edit             |
+| 5.3  | T05    | Fix runtime `documentElement.lang` override                                    | edit             |
+| 5.4  | T05    | Island i18n test (cookie=de + empty localStorage → German)                     | node:test        |
+| 5.5  | T05    | `TestShellHtmlLangFollowsSessionLang` (server)                                 | go test          |
+| 5.6  | T05    | Run island + views suites                                                      | green            |
+| 6.1  | T06    | Confirm owner go (was the ring actually silent?)                               | OWNER            |
+| 6.2  | T06    | Create/resume `AudioContext` inside the gesture handler (`audio.js`)           | edit             |
+| 6.3  | T06    | Island test pinning ctx-creation order                                         | node:test        |
+| 6.4  | T06    | Consider ONE shared context (ringback + ring)                                  | decision         |
+| 6.5  | T06    | Run island suite                                                               | green            |
+| 7.1  | T07    | Hard-refresh; place one real incoming call                                     | manual           |
+| 7.2  | T07    | Observe accept→speak latency + mic indicator at ring                           | manual           |
+| 7.3  | T07    | Reuse T03/T04 gates (buildflow + E2E + smoke)                                  | green            |
+| 7.4  | T07    | Pins: warm survives rebuild, dial-after-missed, second-onInvite                | node:test        |
+| 8.1  | T08    | Pin `aria-current="page"/"false"` in nav partial test                          | go test          |
+| 8.2  | T08    | Island test: skeleton reveal/hide on nav swaps                                 | node:test        |
+| 8.3  | T08    | Island test: optimistic-bubble-morph edge                                      | node:test        |
+| 8.4  | T08    | Fix `#wp-live` "connection recovery" comment in `layout.templ`                 | read-back        |
+| 8.5  | T08    | Re-run views + island tests                                                    | green            |
+| 9.1  | T09    | Verify briefing doc current (28 rows)                                          | read-back        |
+| 9.2  | T09    | OWNER: the sitting                                                             | decisions        |
+| 9.3  | T09    | Backport decisions to TODO/ROADMAP                                             | edit             |
+| 9.4  | T09    | Update `dedup-registry.md` if baseline ratified                                | edit             |
+| 10.1 | T10    | Read `server.go` composite-ETag context                                        | source           |
+| 10.2 | T10    | ETag+304 for `/assets/*` (sha over embedded bytes; keep no-cache revalidation) | go test          |
+| 10.3 | T10    | Rewrite stale "caching buys nothing" comment                                   | read-back        |
+| 10.4 | T10    | Scoped gzip for static handlers (never `/events`)                              | go test          |
+| 10.5 | T10    | Unit tests for 10.2–10.4                                                       | go test          |
+| 10.6 | T10    | curl timing baseline before/after                                              | numbers          |
+| 11.1 | T11    | `modulepreload` for the island ESM graph                                       | served page      |
+| 11.2 | T11    | Outgoing-call mic warm (mirror incoming `mic.js`)                              | node:test        |
+| 11.3 | T11    | ICE panel: gathering duration + time-to-first-media                            | node:test        |
+| 11.4 | T11    | `iceServers` trimming evaluation                                               | note             |
+| 11.5 | T11    | Tests + stack E2E for markup changes                                           | green            |
+| 12.1 | T12    | Domain-ownership + "already exists?" audit                                     | note             |
+| 12.2 | T12    | A4 name-on-type + A5 normalization hint                                        | node:test        |
+| 12.3 | T12    | A8 DTMF animation/tones, A9 re-dial, K5 disclosure                             | node:test        |
+| 12.4 | T12    | M12 over-limit segment countdown                                               | node:test        |
+| 12.5 | T12    | Tests (+ i18n en/de keys)                                                      | green            |
+| 13.1 | T13    | M11 D8–D10 history filters                                                     | go test          |
+| 13.2 | T13    | M16 E2/E3 URL state (deep-linkable filters)                                    | go test          |
+| 13.3 | T13    | E7/E8 filter chips                                                             | go test          |
+| 13.4 | T13    | Tests                                                                          | green            |
+| 14.1 | T14    | M13 C1–C3 voicemail playback                                                   | node:test        |
+| 14.2 | T14    | M13 C9/C10                                                                     | node:test        |
+| 14.3 | T14    | M14 C4–C6 fax depth                                                            | go test          |
+| 14.4 | T14    | Tests                                                                          | green            |
+| 15.1 | T15    | J2 reconnect banner                                                            | node:test        |
+| 15.2 | T15    | J3 undo + J4 retry-in-banner                                                   | node:test        |
+| 15.3 | T15    | J7 confirm consistency + J8 spinner + J9 success pulse                         | node:test        |
+| 15.4 | T15    | Tests                                                                          | green            |
+| 16.1 | T16    | F3/F4/F7/F9 visual tokens                                                      | served asset     |
+| 16.2 | T16    | M20 theming depth                                                              | served asset     |
+| 16.3 | T16    | M26 shell sizing E5/E6                                                         | served asset     |
+| 16.4 | T16    | Tests                                                                          | green            |
+| 17.1 | T17    | M18 K1–K4 onboarding/demo                                                      | node:test        |
+| 17.2 | T17    | M19 I3/I6/I7/I9 mobile extras                                                  | node:test        |
+| 17.3 | T17    | Tests                                                                          | green            |
+| 18.1 | T18    | Server design pass: M21 snippets/schedule                                      | design note      |
+| 18.2 | T18    | Server design pass: M22 pin/archive/mute                                       | design note      |
+| 18.3 | T18    | Implement per design + tests                                                   | green            |
+| 19.1 | T19    | M24 locale switch UI + RTL + status dots                                       | node:test        |
+| 19.2 | T19    | M25 A6 focus mode + A10 media test                                             | node:test        |
+| 19.3 | T19    | Tests                                                                          | green            |
+| 20.1 | T20    | Split `holdFailed`/`resumeFailed` copy                                         | node:test        |
+| 20.2 | T20    | Clear `holdPending` on Terminated + watchdog                                   | node:test        |
+| 20.3 | T20    | Visual screenshot pass                                                         | shots            |
+| 20.4 | T20    | Root-cause VM-test timeout                                                     | note             |
+| 20.5 | T20    | `nix run .#vulnix` + aarch64 ELF verify                                        | ELF bytes        |
+| 20.6 | T20    | Dispatch the 3 errcheck findings                                               | green            |
+| 21.1 | T21    | Golden module-output fixture (vhost + backup scripts) + check entry            | check            |
+| 21.2 | T21    | release.sh `webphoneVersion`↔`git describe` guard                              | dry-run          |
+| 21.3 | T21    | KVM `webphone-backup` VM + drill post-split runs                               | green            |
+| 21.4 | T21    | `actionlint` over `.github/workflows/ci.yml`                                   | clean            |
+| 21.5 | T21    | Dedupe `devShells.ci`/`default` Go env                                         | build            |
+| 21.6 | T21    | Record accepted exceptions + declined `go-standard`                            | read-back        |
+| 22.1 | T22    | Commit `health.css` + build script (dark recipe)                               | build            |
+| 22.2 | T22    | Wire CI rebuild of `health.css`                                                | CI               |
+| 22.3 | T22    | `family_test.go` pins for new error codes                                      | go test          |
+| 22.4 | T22    | Investigate local-main-behind-remote divergence                                | note             |
+| 22.5 | T22    | aarch64 + `nix run .#vulnix`                                                   | green            |
+| 22.6 | T22    | v2.9.0 fold decision                                                           | decision         |
+| 23.1 | T23    | Persist `scripts/ui-capture.py`                                                | script           |
+| 23.2 | T23    | Finish the 12-shot matrix                                                      | shots            |
+| 23.3 | T23    | Review + fixes the shots surface                                               | fixes            |
+| 23.4 | T23    | AGENTS "visual gate" note                                                      | read-back        |
+| 23.5 | T23    | vision-CLI provider/key decision                                               | decision         |
+| 24.1 | T24    | Repair stack FreeSWITCH `mod_enum` build                                       | XREPO            |
+| 24.2 | T24    | Stack E2E → relock to `cc98c2e`+ + pbx re-pin                                  | XREPO            |
+| 24.3 | T24    | Stack `services.webphone.paperless` module option + smoke arm                  | XREPO            |
+| 24.4 | T24    | WebTransport-not-adopted verdict doc                                           | read-back        |
+| 24.5 | T24    | telephony `deploy.md` secret PATH column                                       | XREPO            |
+| 24.6 | T24    | ops-runbook demo recipe + `/recordings/` + MOH check                           | XREPO            |
+| 25.1 | T25    | `schema_version` table (gated on first ALTER — document trigger)               | go test          |
+| 25.2 | T25    | `internal/server` carve (trigger: next file added)                             | arch test        |
+| 25.3 | T25    | Gateway stack-side (`ftypqt` sniff, MMS-outbound, pbx FEATURES:87)             | XREPO            |
+| 26.1 | T26    | AGENTS compaction ≤377 lines (owner permission)                                | buildflow        |
+| 26.2 | T26    | markdownlint posture decision                                                  | OWNER            |
+| 26.3 | T26    | Post announcements (owner picks channel)                                       | OWNER            |
+| 26.4 | T26    | Standing watches re-check (quarterly, next 2026-12-20)                         | note             |
+| 27.1 | T27    | ANNOTATE the recent reports as their trains close                              | grep gate        |
+| 27.2 | T27    | Archive fully-resolved; 4-plan `g1` decision                                   | OWNER            |
+| 27.3 | T27    | check-rows fix-or-migrate decision                                             | OWNER            |
 
 **Fine-task count:** 139 micro-tasks across 27 parents.
 
