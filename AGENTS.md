@@ -14,7 +14,7 @@ Voicemail, History, Contacts, Settings) on one page. Built on
 cqrs-htmx (root library only) + templ-components `layout.Base` +
 SQLite (modernc), wired through a samber/do v2 composition root
 (`internal/app`) with go-health probes and an optional
- go-health-dashboard at `/health`. The consuming stack
+go-health-dashboard at `/health`. The consuming stack
 ([nix-international-telephony](https://github.com/LarsArtmann/nix-international-telephony))
 imports this repo's `nixosModules.default`, fronts the binary with
 TLS + the WSS `/sip` proxy, and RIDES webphone `main` (per-train lock

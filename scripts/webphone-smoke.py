@@ -535,7 +535,9 @@ def run_checks(
     c.ok(
         "shell has zero inline scripts",
         inline is None,
-        f"inline <script> without src found: {inline.group(0)[:140]!r}" if inline else "",
+        f"inline <script> without src found: {inline.group(0)[:140]!r}"
+        if inline
+        else "",
     )
 
     # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels

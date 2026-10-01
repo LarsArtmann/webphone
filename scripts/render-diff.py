@@ -50,7 +50,9 @@ PARTIALS = [
     "/partials/nav",
 ]
 
-THREAD_ID = re.compile(rb"\b(?:t-|Thread:)[A-Za-z0-9_-]{16,}\b")  # branded ids: t-… / Thread:…
+THREAD_ID = re.compile(
+    rb"\b(?:t-|Thread:)[A-Za-z0-9_-]{16,}\b"
+)  # branded ids: t-… / Thread:…
 # Wall-clock stamps in failed-row/thread rendering (same length, different
 # digits across boots — the second sanctioned non-determinism; the fixed
 # probe content contains no clock-like text).
