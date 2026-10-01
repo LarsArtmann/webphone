@@ -612,3 +612,77 @@ test("a settled send is never rolled back by a later error", () => {
   assert.doesNotMatch(bubble.className, /wp-opt-failed/, "no rollback after success");
   assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
 });
+
+test("a tab navigation stores the last-active tab (E3)", () => {
+  localStorage.removeItem("wp-last-tab");
+  const nav = doc.createElement();
+  nav.className = "wp-nav";
+  const link = doc.createElement();
+  link.dataset.tab = "voicemail";
+  link.className = "wp-nav-link";
+  nav.append(link);
+  doc.dispatch("htmx:afterRequest", { target: link });
+  assert.equal(localStorage.getItem("wp-last-tab"), "voicemail");
+  localStorage.removeItem("wp-last-tab");
+});
+
+test("a plain / load restores the remembered tab (E3)", async () => {
+  const calls = [];
+  globalThis.window.htmx = {
+    ajax: (verb, url) => calls.push(url),
+  };
+  globalThis.window.location = { pathname: "/" };
+
+  // Signed-in shell: real tab content (no welcome hint), a stored tab,
+  // and a rendered nav link for it.
+  const content = doc.getElementById("tab-content");
+  const panel = doc.createElement();
+  panel.className = "wp-panel";
+  content.append(panel);
+  const nav = doc.getElementById("wp-nav");
+  const link = doc.createElement();
+  link.dataset.tab = "history";
+  link.className = "wp-nav-link";
+  nav.append(link);
+  localStorage.setItem("wp-last-tab", "history");
+  const realReplace = globalThis.history.replaceState;
+  const replaced = [];
+  globalThis.history = {
+    replaceState: (...args) => replaced.push(args[2]),
+  };
+
+  await import("../shell.js?case=restore-tab");
+
+  assert.deepEqual(
+    calls,
+    ["/partials/history", "/partials/nav?active=history"],
+    "the stored tab is fetched, content + nav",
+  );
+  assert.deepEqual(replaced, ["/history"], "the address follows the content");
+
+  localStorage.removeItem("wp-last-tab");
+  globalThis.history = { replaceState: realReplace };
+  delete globalThis.window.htmx;
+});
+
+test("restore never overrides a deep link or the sign-in hint (E3)", async () => {
+  const calls = [];
+  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  globalThis.window.location = { pathname: "/messages" };
+  localStorage.setItem("wp-last-tab", "history");
+
+  await import("../shell.js?case=restore-deeplink");
+  assert.deepEqual(calls, [], "a deep link keeps its own tab");
+
+  globalThis.window.location = { pathname: "/" };
+  const content = doc.getElementById("tab-content");
+  const welcome = doc.createElement();
+  welcome.className = "wp-welcome";
+  content.append(welcome);
+  await import("../shell.js?case=restore-signedout");
+  assert.deepEqual(calls, [], "the sign-in hint is never replaced");
+
+  welcome.remove();
+  localStorage.removeItem("wp-last-tab");
+  delete globalThis.window.htmx;
+});

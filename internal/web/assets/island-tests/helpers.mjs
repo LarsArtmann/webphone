@@ -178,10 +178,13 @@ export function installBrowserGlobals() {
   globalThis.location = {
     hostname: "pbx.example.org",
     host: "pbx.example.org",
+    pathname: "/",
     reload() {
       throw new Error("location.reload is banned in tests; assert the toast instead");
     },
   };
+  // The shell reads window.location/history like a browser provides them.
+  globalThis.window.location = globalThis.location;
   // node >= 21 ships a getter-only global navigator — defineProperty, not
   // assignment.
   Object.defineProperty(globalThis, "navigator", {

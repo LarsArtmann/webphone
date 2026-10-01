@@ -188,11 +188,23 @@ function restoreTabsAfterSignIn() {
   const content = document.querySelector("#tab-content");
   if (!content || !content.querySelector(".wp-welcome")) return;
   if (!window.htmx) return;
-  window.htmx.ajax("GET", "/partials/messages", {
+  // E3: the shell remembers the last-active tab; a fresh sign-in lands
+  // where the user left off (messages when nothing is stored).
+  const stored = localStorage.getItem("wp-last-tab");
+  const known = [
+    "messages",
+    "fax",
+    "voicemail",
+    "history",
+    "contacts",
+    "settings",
+  ];
+  const tab = known.includes(stored) ? stored : "messages";
+  window.htmx.ajax("GET", `/partials/${tab}`, {
     target: "#tab-content",
     swap: "innerHTML",
   });
-  window.htmx.ajax("GET", "/partials/nav?active=messages", {
+  window.htmx.ajax("GET", `/partials/nav?active=${tab}`, {
     target: "#wp-nav",
     swap: "morph:innerHTML",
   });

@@ -23,7 +23,51 @@
         // the active-tab announcement in step with the visual state.
         link.setAttribute("aria-current", link === element ? "page" : "false");
       });
+      // 1a. Remember the last-active tab (E3): a plain "/" reload can
+      //     restore it. Deep links never touch this path — only real
+      //     tab navigations do.
+      var tab = element.getAttribute("data-tab");
+      if (tab) {
+        try {
+          localStorage.setItem("wp-last-tab", tab);
+        } catch (err) {}
+      }
     });
+
+    // 1b. Restore the remembered tab on a plain "/" load (E3): only
+    //     when the shell renders real tab content — never over a deep
+    //     link, the sign-in hint, or a stored value that is not one of
+    //     the rendered tabs (garbage must not 404 the boot). The
+    //     address bar follows the content via replaceState.
+    (function restoreLastTab() {
+      var path = window.location && window.location.pathname;
+      if (path !== "/") return;
+      var stored;
+      try {
+        stored = localStorage.getItem("wp-last-tab");
+      } catch (err) {
+        return;
+      }
+      if (!stored || stored === "messages") return;
+      var link = document.querySelector(
+        '#wp-nav .wp-nav-link[data-tab="' + stored + '"]',
+      );
+      var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
+      if (!link || (active && active === link)) return;
+      var content = document.getElementById("tab-content");
+      if (!content || !window.htmx || content.querySelector(".wp-welcome")) return;
+      window.htmx.ajax("GET", "/partials/" + stored, {
+        target: "#tab-content",
+        swap: "innerHTML",
+      });
+      window.htmx.ajax("GET", "/partials/nav?active=" + stored, {
+        target: "#wp-nav",
+        swap: "morph:innerHTML",
+      });
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", "/" + stored);
+      }
+    })();
 
     // 2. data-dial buttons (contacts, history, voicemail, threads): push
     //    the number into the island's dial form and submit it — the same
@@ -230,6 +274,12 @@
         target: "#wp-nav",
         swap: "morph:innerHTML",
       });
+      // E8: a morph re-render can leave the ACTIVE tab outside the
+      // strip's scroll window on narrow screens; "nearest" scrolls
+      // only when it is genuinely out of view.
+      if (active && active.scrollIntoView) {
+        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
     };
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
       var transcript = event.target;
