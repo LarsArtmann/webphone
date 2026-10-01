@@ -434,7 +434,20 @@ ports of already-pinned paths.
   on registration loss). JsSIP 3.13.8 is the NAMED fallback — swap
   only on named triggers, never speculatively. All Go-side telephony
   REJECTED. sip.js fires NO stateChange on re-register — recovery
-  paths set UI state explicitly.
+  paths set UI state explicitly. The mic pre-warm seam (`mic.js`,
+  2026-10-01): `onInvite` starts `getUserMedia` while the phone rings
+  (mic indicator lights at ring — owner decision: speak ASAP after
+  accept), and a custom media stream factory passed to
+  `SIP.Web.defaultSessionDescriptionHandlerFactory` (0.21.2 accepts
+  the factory argument, verified in the vendored bundle) hands the
+  warm stream to the session one-shot; every non-answer exit (reject,
+  caller gave up, logout) releases the device, and a take/release
+  during a PENDING acquisition stops the late stream (otherwise the
+  indicator stays lit with no owner). `iceGatheringTimeout: 1000` in
+  the factory options caps the pre-200 wait (the 0.21.2 default is
+  5000, verified in the bundle; gathering with one STUN completes
+  well under it). Pinned by `mic.test.mjs` + the connection
+  mic-wiring tests.
 - Env config nests with `__`: `WEBPHONE_GATEWAY__MODE` →
   `gateway.mode`; single underscores stay literal. Scalars via env;
   lists (`ice_servers`, `contacts`) + the `identities` map via the

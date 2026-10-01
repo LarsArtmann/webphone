@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Speak ASAP after accepting a call: the island now pre-warms the
+  microphone while a call RINGS (new `mic.js` seam) and hands the warm
+  stream to sip.js at accept time through a custom session-description
+  media factory, so mic acquisition (up to seconds on Bluetooth
+  headsets) no longer sits inside the answer path. The ICE gathering
+  wait before the 200 OK is capped at 1 s (sip.js 0.21.2 default: 5 s).
+  The mic indicator lights while ringing (deliberate tradeoff), and
+  the device is released on reject, missed calls, and logout.
 - Honest hold UI + loud offline banner in the call island: the hold
   button no longer flips to the settled state optimistically — a
   pending re-INVITE shows the WORK ("holding…" / "resuming…", pulsing
