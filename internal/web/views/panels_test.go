@@ -3,6 +3,7 @@ package views
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -161,7 +162,7 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 	if !strings.Contains(open, "Today") || !strings.Contains(open, "Yesterday") {
 		t.Errorf("open transcript: missing en day labels; rendered:\n%s", open)
 	}
-	for _, count := range []string{"· 2", "· 3"} {
+	for _, count := range []string{"\u00b7 2", "\u00b7 3"} {
 		if !strings.Contains(open, count) {
 			t.Errorf("open transcript: missing day count %q; rendered:\n%s", count, open)
 		}
@@ -170,7 +171,37 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 	if dividerAt < 0 {
 		t.Fatalf("open transcript: unread divider missing; rendered:\n%s", open)
 	}
-	if !strings.Contains(open, "— 2 unread —") {
+	if !strings.Contains(open, "\u2014 2 unread \u2014") {
 		t.Errorf("open transcript: divider text wrong; rendered:\n%s", open)
 	}
-	if first := strings.Index(open, "new in 1"); !open[dividerAt:first].Leading... {
+	if at := strings.Index(open, "new in 1"); at < dividerAt {
+		t.Errorf("open transcript: divider must sit ahead of the first unread bubble (divider %d, bubble %d)", dividerAt, at)
+	}
+	if at := strings.Index(open, "old in"); at > dividerAt {
+		t.Errorf("open transcript: divider must sit after the already-read bubbles (divider %d, bubble %d)", dividerAt, at)
+	}
+
+	// German keeps its labels and its ungelesen count.
+	de := renderComponent(t, TranscriptAt(msgs, LangDE, 2))
+	if !strings.Contains(de, "Heute") || !strings.Contains(de, "Gestern") || !strings.Contains(de, "\u2014 2 ungelesen \u2014") {
+		t.Errorf("de transcript: labels or divider wrong; rendered:\n%s", de)
+	}
+
+	// More unread than the window holds: the divider lands at the very
+	// top, ahead of the oldest bubble in the page.
+	flood := renderComponent(t, TranscriptAt(msgs, LangEN, 5))
+	floodAt := strings.Index(flood, "wp-unread-divider")
+	if oldest := strings.Index(flood, "old out"); oldest < floodAt {
+		t.Errorf("flooded transcript: divider must lead the window (divider %d, oldest %d)", floodAt, oldest)
+	}
+
+	// No unread (or the older-page render, which routes through
+	// Transcript) never renders the divider.
+	plain := renderComponent(t, Transcript(msgs, LangEN))
+	if strings.Contains(plain, "wp-unread-divider") {
+		t.Errorf("plain transcript: divider must be TranscriptAt-only; rendered:\n%s", plain)
+	}
+	if clean := renderComponent(t, TranscriptAt(msgs, LangEN, 0)); strings.Contains(clean, "wp-unread-divider") {
+		t.Errorf("zero-unread transcript: divider rendered; rendered:\n%s", clean)
+	}
+}
