@@ -7,7 +7,12 @@
 // Replaces) — the browser only sends REFER and waits for the NOTIFY
 // sipfrag verdict.
 
-import { resumeAudio, ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
+import {
+  resumeAudio,
+  ringbackStart,
+  ringbackStop,
+  ringToneStop,
+} from "./audio.js";
 import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { releaseWarmMic } from "./mic.js";
