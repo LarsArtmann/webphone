@@ -147,6 +147,17 @@ and the evidence. Newest last is NOT enforced — group by topic.
 
 ## Tooling traps
 
+- An ALWAYS-PENDING stub promise hangs `node:test` silently (60s cancel,
+  looks like a harness flake). Root cause 2026-10-01: a stubbed
+  collaborator (`HoldInviter.invite()`) returned an ungated promise that
+  production code AWAITS (`placeCall` awaits `inviter.invite()` on the
+  initial call) — the test never progresses and node:test cancels the
+  file. Read the production await graph BEFORE stubbing a collaborator;
+  every stubbed promise must settle in every path production can take.
+  Companion trap: asserting a toast is `lastToast()` is an ORDERING
+  claim — a failed hold re-renders the settled card and re-announces
+  "connected" after the failure toast. Scan all toasts, don't take the
+  last.
 - Dynamic awk/grep patterns must ESCAPE `[`/`]`: release.sh's notes
   extractor matched `^## [2.4.0]` as a dynamic awk regex, where
   `[2.4.0]` is a bracket expression (one char of {2,.,4,0}) — it never

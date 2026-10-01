@@ -24,6 +24,7 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/web/assets"
 )
 
 // domContractIDs loads the island DOM-contract id list from

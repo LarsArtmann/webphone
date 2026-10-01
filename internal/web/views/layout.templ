@@ -1,6 +1,7 @@
 package views
 
 import 	"github.com/larsartmann/templ-components/layout"
+import 	"github.com/larsartmann/webphone/internal/web/assets"
 
 // Tab is one switchable content region; navigation swaps them with HTMX
 // partial requests so the SIP island never unloads mid-call.
@@ -224,6 +225,15 @@ templ identityLine(lang Lang, identity string) {
 // across partial swaps.
 templ headExtras(csrfToken string) {
 	<script src="/assets/theme-preload.js"></script>
+	// Warm the island's script payloads from the head: the ESM graph
+	// (modulepreload — fetch AND compile while the body still parses; the
+	// entry tag sits at the end of body) and the one big classic script
+	// (sip.min.js, discovered just as late without this hint). The graph
+	// list is generated from the embedded files, so it can never drift.
+	for _, module := range assets.IslandModules() {
+		<link rel="modulepreload" href={ module }></link>
+	}
+	<link rel="preload" as="script" href="/assets/vendor/sip.min.js"></link>
 	<meta name="csrf-token" content={ csrfToken }></meta>
 	<meta
 		name="htmx-config"

@@ -278,7 +278,9 @@ clearer, island `node:test` specs; no Ginkgo ports of pinned paths.
   `shell.js` + `*.css`; oxfmt (BuildFlow) owns everything else Go AND
   `internal/web/assets/island-tests/*.mjs`. Markdown NOT in treefmt scope;
   `*_templ.go` and `vendor/` excluded everywhere; `.templ` SOURCES
-  deliberately formatter-unowned.
+  deliberately formatter-unowned. After ANY island/shell/css edit run
+  `nix fmt` BEFORE the gates — buildflow's formatter skips island files,
+  and drift has failed full gate runs before (2026-10-01).
 - Island no-undef gate: `nix flake check` runs `island-lint` (oxlint, all
   categories off, `no-undef` on, `SIP` readonly). New browser globals go in
   the config's `globals` block; fails closed and records the file list.
