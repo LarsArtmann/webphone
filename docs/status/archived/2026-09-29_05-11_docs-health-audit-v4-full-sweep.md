@@ -1,5 +1,12 @@
 # Status Report — docs-health AUDIT v4 (full sweep): living docs superb, annotate phase mid-flight, archive pending
 
+> ARCHIVED 2026-10-02 (docs-health v6 sweep): the archive leg v4 left
+> mid-flight was finished by the v5 sweep (2026-10-01); the four
+> owner-gated planning docs stay LIVE by standing decision (routed-as-
+> resolved ratification now an OWNER-calls row); every other item is done
+> or routed with a durable home. Per-item verdicts inline. Superseded as
+> the docs-health report of record by the 2026-10-02 v6 audit.
+
 Date: 2026-09-29 05:11 CEST · Session scope: the "View ALL `**/2026-0*`
 files; execute the docs-health skill PROPERLY; the six living docs
 SUPERB; archive FULLY done and UPDATED (inline strikethrough) .md
@@ -10,7 +17,7 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
 
 ## a) FULLY DONE (verified this session)
 
-1. **Skill + inventory**: docs-health SKILL.md loaded before any
+~~1. **Skill + inventory**: docs-health SKILL.md loaded before any~~ done — this session (report of record)
    action; ALL 140 `2026-0*` artifacts inventoried and classified;
    archived dirs' completeness gate verified green at start; all 18
    non-archived status `.md` files read IN FULL; 6 plan candidates
@@ -21,7 +28,7 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
    resolution or remain operative); HTML/D2/SVG = LEAVE (immutable —
    the accepted v3-sweep precedent; the two oldest HTML reports were
    content-sampled, not just name-triaged).
-2. **VERIFY findings, all fixed on sight**:
+~~2. **VERIFY findings, all fixed on sight**:~~ done — this session (report of record)
    - AGENTS "pre-2.8 binaries" claim → commit-pinned (`e6ea2c7`,
      2026-09-29, unreleased) + the never-write-version-claims rule.
    - AGENTS `.templ` formatter-ownership question (open since the
@@ -44,7 +51,7 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
      webphone-smoke.py existence-only); `checks.treefmt` proven
      pre-split (grep at `46ad1d3`); `createFilePart` proven the sole
      multipart file-part writer under internal/.
-3. **HARVEST landed**: TODO_LIST rebuilt — honest header (the
+~~3. **HARVEST landed**: TODO_LIST rebuilt — honest header (the~~ done — this session (report of record); superseded by the 2026-10-02 TODO_LIST
    "every claim checked" overclaim the 09-26 §d5 report flagged is
    GONE), fresh closure narrative (≤8 lines), 11 evidence-cited rows:
    kept release-tail / SMS-bridge / owner-calls (agenda extended to
@@ -63,14 +70,14 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
    chmod, destDir nesting + whitespace, stack verification timing) +
    a 2026-09-29 raw-ideas cluster (metrics scraper fencing, stack
    identity endpoint, sentinel `errors.New` micro-check).
-4. **Living-doc fixes on sight**: docs/lessons.md +3 (the gawk-5.4.1
+~~4. **Living-doc fixes on sight**: docs/lessons.md +3 (the gawk-5.4.1~~ done — this session (report of record)
    escape-drop awk variant + comments-claim-fixes trap; the
    `--no-link`/stale-`result` artifact trap; silent daemon push
    stalls); docs/dedup-registry.md protocol upgraded (attribute
    against YOUR re-run never the paste; re-read EVERY occurrence;
    sweep-log lines carry status-doc links) — resolving the 09-27
    report's §e1/e.4/e.6/§f5/§f26 on the spot.
-5. **ANNOTATE: 832 inline verdicts across 16 status reports**
+~~5. **ANNOTATE: 832 inline verdicts across 16 status reports**~~ inline verdicts	done — this session (report of record)
    (banner + per-item strikes via annotate-status-items.py,
    `--verify` before EVERY write, zero failed-writes): 09-29
    04-32/03-05/02-26, 09-27 23-43, 09-26 19-24, 09-25 05-10/05-08/
@@ -80,7 +87,7 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
    `NOT-DO` / `resolved by events`. Plus superseded-by-registry
    banners added to the three already-archived art-dupl reports
    (22-55, 01-12, 03-01); 16-56/15-58/18-05 carry theirs in-banner.
-6. **On-the-spot closes that shrank the harvest**: the 09-27 §f12
+~~6. **On-the-spot closes that shrank the harvest**: the 09-27 §f12~~ done — this session (report of record)
    "helper micro-test remainder" was a STALE carry (every named
    helper already had its micro-test at `7bf32a3` + crm_test.go
    subtests — struck DONE with that evidence); the `.templ` ownership
@@ -88,10 +95,10 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
 
 ## b) PARTIALLY DONE
 
-1. **02-47 + 04-26 status reports**: unstruck-remainder keys EMITTED
+~~1. **02-47 + 04-26 status reports**: unstruck-remainder keys EMITTED~~ done — v5 (2026-10-01) completed the annotation leg for 02-47; the 04-26 v3 audit fully annotated + archived by the 2026-10-02 v6 sweep
    (02-47: §a1-7, §b1-2, §c1-3, §d1-3, §f8; 04-26: §a1-15, §b1-4,
    §d1-4, §e1-6, §f1/3/13-17) — specs not yet written/applied.
-2. **6 planning docs** (04-29 pareto — verdict CLOSED, 13-33 stack
+~~2. **6 planning docs** (04-29 pareto — verdict CLOSED, 13-33 stack~~ routed — v5 archived 2 (send-failure-ux, composer-ux); the 4 owner-gated plans stay LIVE (OWNER-calls row: routed-as-resolved ratification, 2026-10-02)
    adoption M1-M22, send-failure-ux A-F, composer-ux T1-T4,
    error-excellence T01-T18, 20-year-durability T1-T27): read,
    classified FULLY-RESOLVED-or-routed, banners + table strikes NOT
@@ -108,16 +115,16 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
   dirs; check-rows.py uniformity over every annotated file; stale
   reference sweep (TODO_LIST already cites the post-move archived
   paths — they resolve only AFTER the move); markdown link check.
-- Scoped quality gate (docs-only-delta precedent: scoped go test +
+~~- Scoped quality gate (docs-only-delta precedent: scoped go test +~~ done — superseded by the 2026-10-02 close-out full battery
   codespell) — not run.
-- `git ls-remote` end-state verify (push lag observed at session
+~~- `git ls-remote` end-state verify (push lag observed at session~~ done — standing close-out ritual since
   start: remote trailed local).
-- The inline health report (Accuracy/Fitness, visible math) — the
+~~- The inline health report (Accuracy/Fitness, visible math) — the~~ done — delivered by the v5 + v6 sweeps
   health-report-format reference has not been loaded yet.
 
 ## d) TOTALLY FUCKED UP (all caught by --verify or immediate re-read; zero wrong writes landed)
 
-1. **Hand-typed spec keys despite the tool's own warning.** The
+~~1. **Hand-typed spec keys despite the tool's own warning.** The~~ process record — caught by --verify pre-write; e1 rule adopted
    annotate tool documents "specs are generated mechanically via
    --emit-keys … never hand-typed from memory"; I pasted emit output
    but hand-typed verdict LINES with substrings copied by eye — five
@@ -125,14 +132,14 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
    pipe typed instead of @, "unflagged" vs the file's "non-flagged",
    a missing tab, a trailing-hyphen mismatch). Every failure was
    caught pre-write; the round-trips were pure waste.
-2. **One accidental CHANGELOG mutation**: a multiedit changed
+~~2. **One accidental CHANGELOG mutation**: a multiedit changed~~ process record — caught + reverted in-session
    "NixOS module:" to "Nix:" on an existing Fixed bullet while
    inserting a sibling — caught on the next read, reverted in the
    following edit.
-3. **Two premature archive-path references** in the rebuilt
+~~3. **Two premature archive-path references** in the rebuilt~~ process record — self-caught, repointed
    TODO_LIST (verdict doc + command sheet cited as archived before
    any move) — self-caught within minutes, repointed to live paths.
-4. **Skill-reference loading was partial**: SKILL.md + tool
+~~4. **Skill-reference loading was partial**: SKILL.md + tool~~ process record — e4 rule adopted
    docstrings fully read; the 7 reference files were NOT all loaded
    before starting (annotate placement rules were followed from
    SKILL.md, but the health-report format + verify checklist
@@ -140,73 +147,73 @@ the STOP-AND-WAIT instruction — the archive leg has NOT run.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. Spec verdict lines get composed by EDITING the --emit-keys output
+~~1. Spec verdict lines get composed by EDITING the --emit-keys output~~ rule adopted (annotate tooling used since)
    in place (append `\t<verdict>` to the pasted key) — never retyped.
-2. Inserting a sibling bullet must re-read the anchor block after the
+~~2. Inserting a sibling bullet must re-read the anchor block after the~~ rule adopted
    edit (the CHANGELOG prefix mutation class).
-3. Paths referenced in living docs must be written LAST, after the
+~~3. Paths referenced in living docs must be written LAST, after the~~ rule adopted (v5 executed the moves + repoint)
    moves they cite (or written as post-move paths with the move in
    the same breath — my TODO rows now depend on the archive leg
    landing before any gate run).
-4. Load the format reference BEFORE the phase that needs it, not at
+~~4. Load the format reference BEFORE the phase that needs it, not at~~ before the phase — adopted
    the phase.
 
 ## f) NEXT — the honest remainder (execution order)
 
-1. Annotate 02-47 remainder (keys already emitted).
-2. Annotate 04-26 remainder (keys already emitted).
-3. Annotate 04-29 pareto plan (banner cites the filled Verdict; strike
+~~1. Annotate 02-47 remainder (keys already emitted).~~ done — v5 sweep (2026-10-01)
+~~2. Annotate 04-26 remainder (keys already emitted).~~ done — v6 sweep (2026-10-02, file archived)
+~~3. Annotate 04-29 pareto plan (banner cites the filled Verdict; strike~~ routed — plan stays LIVE owner-gated (OWNER-calls row)
    the 24 C-rows + 84 F-rows as done/routed per the Outcomes section).
-4. Annotate 13-33 stack-adoption plan (22 M-rows + 77 F-rows: done at
+~~4. Annotate 13-33 stack-adoption plan (22 M-rows + 77 F-rows: done at~~ routed — plan stays LIVE owner-gated (OWNER-calls row)
    their commits; M18 parked; M19 tail = release-tail row).
-5. Annotate send-failure-ux plan (coarse 1-8: A/B executed; C
+~~5. Annotate send-failure-ux plan (coarse 1-8: A/B executed; C~~ done — v5 (annotated + git mv to archived/)
    `37ffc53`; D shipped earlier; E `6ac8962`; F found-already-shipped
    — TODO_LIST records it).
-6. Annotate composer-ux plan (T1-T4 executed; the "planned next
+~~6. Annotate composer-ux plan (T1-T4 executed; the "planned next~~ done — v5 (annotated + git mv to archived/)
    trains" all shipped in v2.6.0 — FEATURES rows).
-7. Annotate error-excellence plan (T02-T10, T13-T14, T16-T17 done
+~~7. Annotate error-excellence plan (T02-T10, T13-T14, T16-T17 done~~ routed — plan stays LIVE owner-gated (OWNER-calls row)
    with hashes; T01/T11/T12/T15/T18 routed — owner-calls/release rows).
-8. Annotate 20-year-durability plan (execution log already carries
+~~8. Annotate 20-year-durability plan (execution log already carries~~ routed — plan stays LIVE owner-gated (OWNER-calls row)
    CLOSED markers; strike the 27-row coarse + fine tables to match,
    routing T16 → the AGENTS-compaction row).
-9. `git mv` all 22 files to their `archived/` dirs.
-10. Stale-reference sweep: grep living docs + AGENTS for the moved
+~~9. `git mv` all 22 files to their `archived/` dirs.~~ done — v5 moved 18 (16 status + 2 plans); the 4 plans stay live by owner decision (OWNER-calls row)
+~~10. Stale-reference sweep: grep living docs + AGENTS for the moved~~ done — v5 §a11 (every pointer repointed; verified again at v6)
     filenames; fix every pointer.
-11. Completeness gate: `grep -rLn '~~' docs/status/archived/
+~~11. Completeness gate: `grep -rLn '~~' docs/status/archived/~~ done — green at v5 and again at the 2026-10-02 v6 sweep
     docs/planning/archived/` must print NOTHING.
-12. check-rows.py over every annotated file (uniform rows).
-13. Link check over every touched markdown file.
-14. Scoped quality gate: `nix develop -c go test -count=1
+~~12. check-rows.py over every annotated file (uniform rows).~~ done on every file v5+v6 annotated; the 37 old marker-cell files = OWNER-calls baseline question
+~~13. Link check over every touched markdown file.~~ done — v5 link sweep; lychee 0 errors at the v2.8.0 close (2026-10-01)
+~~14. Scoped quality gate: `nix develop -c go test -count=1~~ done — superseded: full battery green at the 2026-10-02 close-out (buildflow no-cache, flake check incl. KVM, smoke 48+4+8)
     ./cmd/webphone ./internal/server` + codespell over touched files
     (docs-only-delta precedent; full gates already green on main at
     `0230ead`+).
-15. `git ls-remote` end-state verify (daemon push lag).
-16. Load health-report-format.md, deliver the inline health report
+~~15. `git ls-remote` end-state verify (daemon push lag).~~ done — standing close-out ritual since (AGENTS rule; asserted at every train close)
+~~16. Load health-report-format.md, deliver the inline health report~~ done — v5 delivered its inline health report; v6 (2026-10-02) delivers the current one
     (Accuracy/Fitness, per-doc findings, visible math).
-17. Confirm the daemon-swept tree is clean at close (it already swept
+~~17. Confirm the daemon-swept tree is clean at close (it already swept~~ done — standing (daemon owns the sweep; verified at close)
     this session's work to `46bd326` mid-flight — expected).
-18. If ratifying "routed-as-resolved" for the two plans with
+~~18. If ratifying "routed-as-resolved" for the two plans with~~ routed — OWNER-calls TODO row (2026-10-02 addition)
     owner-open remainder (g1 below): nothing extra; if NOT: keep
     error-excellence + 20-year plans LIVE with partial annotation.
-19. ROADMAP hygiene check: verify no double-listing between the new
+~~19. ROADMAP hygiene check: verify no double-listing between the new~~ done — owner-calls row deliberately mirrors the briefing; wording checked at the v6 sweep
     open questions and the owner-calls TODO row (they deliberately
     mirror; confirm wording does not drift).
-20. Sweep `/tmp/spec-*.tsv` + `/tmp/keys-*.txt` (session scratch).
+~~20. Sweep `/tmp/spec-*.tsv` + `/tmp/keys-*.txt` (session scratch).~~ housekeeping — /tmp scratch is ephemeral; no repo trace
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Routed-as-resolved for ARCHIVE?** The error-excellence and
+~~1. **Routed-as-resolved for ARCHIVE?** The error-excellence and~~ routed — OWNER-calls TODO row (2026-10-02 addition)
    20-year-durability plans still carry owner-open items (carrier-MMS
    isolation test, oops ratification, recordings intent, AGENTS
    compaction) that now live in the owner-calls/TODO rows. Ratify
    routed-as-resolved (archive both) or keep those two plans LIVE
    until the owner-calls sitting lands? (The other 20 files are
    unambiguous.)
-2. **Home for the routed owner questions**: is ROADMAP "Open
+~~2. **Home for the routed owner questions**: is ROADMAP "Open~~ done — the briefing doc IS the home (updated to 28 rows 2026-10-01); ROADMAP mirrors deliberately
    questions" the standing home for the 2026-09-25→29 g-questions,
    or should the 2026-09-22 owner-calls briefing doc get a refresh
    pass (it predates ~15 of the ~30 queued decisions)?
-3. **AGENTS.md compaction timing**: 500+ lines now against the 377
+~~3. **AGENTS.md compaction timing**: 500+ lines now against the 377~~ done — compacted 705→364 (2026-10-01 session-2 T26), re-held at 377 (2026-10-02 session-8); the doctor cap enforces it
    buildflow cap; the compaction row is owner-permission-gated (asked
    02:26 §g3, unanswered). Ratify a follow-up session for it, or
    leave the cap warning standing indefinitely?
