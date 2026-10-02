@@ -251,6 +251,6 @@ func reportBootPanic(panicValue any) {
 	cause := fmt.Sprint(panicValue)
 	slog.Error("webphone boot panicked", "panic", cause)
 	_, _ = fmt.Fprintf(bootOut, "%s", renderBootFailure(bootFailure{class: bootPanicMiswire, cause: cause}, bootVersion())) //nolint:erraudit // terminal panic report: the process exits in this call; a failed write is unactionable
-	_, _ = fmt.Fprintf(bootOut, "\n%s\n%s", traceMarker, debug.Stack()) //nolint:erraudit // trace tail of the same terminal report
+	_, _ = fmt.Fprintf(bootOut, "\n%s\n%s", traceMarker, debug.Stack())                                                     //nolint:erraudit // trace tail of the same terminal report
 	bootExit(exitPanicBootFailure)
 }
