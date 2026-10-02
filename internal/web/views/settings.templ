@@ -12,6 +12,7 @@ type SettingsPanelProps struct {
 	WebsocketURL   string
 	GatewayMode    string
 	PhoneAPI       bool
+	CRM            bool
 	ICEServers     int
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
@@ -32,8 +33,16 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dt>{ T(props.Lang, "settings.gateway") }</dt>
 			<dd>{ props.GatewayMode }</dd>
 			<dt>{ T(props.Lang, "settings.phoneAPI") }</dt>
-			<dd>
+			<dd class={ "wp-service", templ.KV("wp-service-on", props.PhoneAPI), templ.KV("wp-service-off", !props.PhoneAPI) }>
 				if props.PhoneAPI {
+					{ T(props.Lang, "settings.connected") }
+				} else {
+					{ T(props.Lang, "settings.unset") }
+				}
+			</dd>
+			<dt>{ T(props.Lang, "settings.crm") }</dt>
+			<dd class={ "wp-service", templ.KV("wp-service-on", props.CRM), templ.KV("wp-service-off", !props.CRM) }>
+				if props.CRM {
 					{ T(props.Lang, "settings.connected") }
 				} else {
 					{ T(props.Lang, "settings.unset") }
