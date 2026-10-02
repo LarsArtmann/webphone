@@ -68,6 +68,48 @@ func TestFormatVerbsMatchAcrossLanguages(t *testing.T) {
 	}
 }
 
+// TestNoUnusedDictionaryKeys is the dictionary's dead-key guard (plan
+// T19/M24): every key must be referenced from the view sources (templ
+// or Go) or the server's h.T call sites — i18n.go itself is excluded,
+// it is where the keys are DEFINED. A key nothing reads is drift from
+// a removed surface: it makes the dictionaries lie about the copy
+// surface and slows every future audit.
+func TestNoUnusedDictionaryKeys(t *testing.T) {
+	keyRe := regexp.MustCompile(`"([a-z][a-zA-Z0-9]*\.[a-zA-Z0-9.]+)"`)
+	var scans []string
+	templ, err := filepath.Glob("*.templ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	scans = append(scans, templ...)
+	for _, name := range []string{"*.go", filepath.Join("..", "server", "*.go")} {
+		matches, err := filepath.Glob(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, match := range matches {
+			if !strings.HasSuffix(match, "_test.go") && !strings.HasSuffix(match, "i18n.go") {
+				scans = append(scans, match)
+			}
+		}
+	}
+	used := map[string]bool{}
+	for _, name := range scans {
+		raw, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatalf("read %s: %v", name, err)
+		}
+		for _, m := range keyRe.FindAllStringSubmatch(string(raw), -1) {
+			used[m[1]] = true
+		}
+	}
+	for key := range dictionaries[LangEN] {
+		if !used[key] {
+			t.Errorf("dictionary key %q is referenced nowhere (views or server) — remove it or wire it", key)
+		}
+	}
+}
+
 func countFormatVerbs(s string) int {
 	count := 0
 	for i := 0; i < len(s); i++ {

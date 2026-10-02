@@ -119,7 +119,7 @@
 }
 
 #lang {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 0.8rem;
   padding: 4px 8px;
   border: 1px solid var(--border);
@@ -308,7 +308,7 @@ button.ghost:hover {
 button.small {
   padding: 4px 10px;
   font-size: 0.78rem;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   border-radius: 8px;
 }
 
@@ -484,7 +484,7 @@ button.small {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-right: 7px;
+  margin-inline-end: 7px;
   background: var(--muted);
 }
 
@@ -647,7 +647,7 @@ button.small {
 }
 
 .log-wrap summary .badge {
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .badge {
@@ -713,7 +713,7 @@ button.small {
 .history .when {
   color: var(--muted);
   font-size: 0.72rem;
-  margin-left: auto;
+  margin-inline-start: auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -749,7 +749,7 @@ button.small {
 }
 
 .contacts .call {
-  margin-left: auto;
+  margin-inline-start: auto;
   padding: 0 8px;
 }
 
@@ -788,7 +788,7 @@ button.small {
 }
 
 .vm .when {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-variant-numeric: tabular-nums;
 }
 
@@ -823,7 +823,7 @@ button.small {
 .toast {
   padding: 10px 14px;
   border: 1px solid var(--border);
-  border-left-width: 3px;
+  border-inline-start-width: 3px;
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
@@ -833,15 +833,15 @@ button.small {
 }
 
 .toast-ok {
-  border-left-color: var(--ok);
+  border-inline-start-color: var(--ok);
 }
 
 .toast-warn {
-  border-left-color: var(--warn);
+  border-inline-start-color: var(--warn);
 }
 
 .toast-error {
-  border-left-color: var(--danger);
+  border-inline-start-color: var(--danger);
 }
 
 /* --- reduced motion ------------------------------------------------------------ */

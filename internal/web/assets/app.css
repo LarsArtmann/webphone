@@ -228,7 +228,7 @@ h3 {
 }
 
 .wp-header-actions {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -593,7 +593,7 @@ h3 {
   height: 7px;
   border-radius: 50%;
   background: var(--accent);
-  margin-right: 10px;
+  margin-inline-end: 10px;
   vertical-align: 2px;
 }
 
@@ -849,7 +849,7 @@ input[type="file"]::file-selector-button {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 6px 12px;
-  margin-right: 12px;
+  margin-inline-end: 12px;
   cursor: pointer;
 }
 
@@ -1118,7 +1118,7 @@ select:focus-visible {
   align-items: center;
   padding: 10px 12px;
   border: 1px solid transparent;
-  border-left: 3px solid transparent;
+  border-inline-start: 3px solid transparent;
   border-radius: var(--radius);
   background: var(--surface-2);
   transition:
@@ -1170,15 +1170,15 @@ select:focus-visible {
 }
 
 .wp-row.wp-row-missed {
-  border-left-color: var(--danger);
+  border-inline-start-color: var(--danger);
 }
 
 .wp-row.wp-unread {
-  border-left-color: var(--warn);
+  border-inline-start-color: var(--warn);
 }
 
 .wp-fax-in {
-  border-left-color: var(--accent);
+  border-inline-start-color: var(--accent);
 }
 
 .wp-fax-dir {
@@ -1244,7 +1244,7 @@ select:focus-visible {
 /* C3: the playing row keeps a definite visual state that survives panel
  * morphs (shell.js re-asserts it from the audio element, the truth). */
 .wp-row.wp-playing {
-  border-left-color: var(--accent-strong);
+  border-inline-start-color: var(--accent-strong);
   background: var(--accent-soft);
 }
 
@@ -1829,7 +1829,7 @@ a.wp-thread-row.wp-pinned {
 .wp-snippet-list {
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 0;
+  inset-inline-start: 0;
   z-index: 30;
   display: flex;
   flex-direction: column;
@@ -1854,7 +1854,7 @@ a.wp-thread-row.wp-pinned {
   background: transparent;
   color: var(--text);
   font: inherit;
-  text-align: left;
+  text-align: start;
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
@@ -1955,6 +1955,6 @@ dialog.wp-lightbox img {
 .wp-lightbox-close {
   position: absolute;
   top: 10px;
-  right: 10px;
+  inset-inline-end: 10px;
   background: var(--surface-2);
 }
