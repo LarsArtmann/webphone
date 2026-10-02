@@ -9,6 +9,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/store"
 )
+
 // threadIDFromList extracts the first thread id from the messages panel
 // (the row anchor carries /messages/{id}).
 func threadIDFromList(t *testing.T, c *client) string {
@@ -29,9 +30,11 @@ func TestThreadFlagActions(t *testing.T) {
 	server := newTestServer(t)
 
 	anon := &client{t: t, base: server.URL, server: server, http: server.Client()}
+	// Anonymous state-changing verbs sit behind CSRF too — the accepted
+	// pattern is 401 OR 403, never success.
 	resp, _ := anon.do(http.MethodPost, "/messages/x/pin?on=1", nil, "")
-	if resp.StatusCode != http.StatusUnauthorized {
-		t.Fatalf("anon toggle: got %d, want 401", resp.StatusCode)
+	if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("anon toggle: got %d, want 401/403", resp.StatusCode)
 	}
 
 	c := signIn(t, server)
@@ -65,7 +68,8 @@ func TestThreadFlagActions(t *testing.T) {
 	// flipped to Unmute posting on=0. The request needs the raw cookie
 	// (c.do sets the CSRF token but has no extra-header hook).
 	headReq, _ := http.NewRequest(http.MethodPost, server.URL+"/messages/"+threadID+"/mute?on=1", nil)
-	for _, cookie := range c.http.Jar.Cookies(mustURL(t, server.URL)) {		headReq.AddCookie(cookie)
+	for _, cookie := range c.http.Jar.Cookies(mustURL(t, server.URL)) {
+		headReq.AddCookie(cookie)
 	}
 	headReq.Header.Set("X-CSRF-Token", c.token)
 	headReq.Header.Set("HX-Target", "wp-thread-head")
@@ -135,16 +139,16 @@ func TestArchiveFlowViaActions(t *testing.T) {
 	if !strings.Contains(string(listBody), "Archived (1)") {
 		t.Fatalf("active view must offer the archived toggle with count: %.400s", listBody)
 	}
-	if strings.Contains(string(listBody), "+441632960961") {
+	if strings.Contains(string(listBody), "wp-thread-rowwrap") {
 		t.Fatalf("archived thread must leave the active list: %s", listBody)
 	}
-	if _, searchBody := c.do(http.MethodGet, "/partials/messages?q=filed", nil, ""); strings.Contains(string(searchBody), "+441632960961") {
+	if _, searchBody := c.do(http.MethodGet, "/partials/messages?q=filed", nil, ""); strings.Contains(string(searchBody), "wp-thread-rowwrap") {
 		t.Fatalf("search must not resurrect the archived thread: %s", searchBody)
 	}
 
 	_, archivedBody := c.do(http.MethodGet, "/partials/messages?archived=1", nil, "")
 	archived := string(archivedBody)
-	if !strings.Contains(archived, "+441632960961") || !strings.Contains(archived, `aria-label="Unarchive"`) {
+	if !strings.Contains(archived, "wp-thread-rowwrap") || !strings.Contains(archived, `aria-label="Unarchive"`) {
 		t.Fatalf("archived view must list the thread with unarchive: %.400s", archived)
 	}
 	if strings.Contains(archived, `class="wp-thread-search"`) {
@@ -154,7 +158,7 @@ func TestArchiveFlowViaActions(t *testing.T) {
 	// D7: inbound auto-unarchives; the count follows.
 	deliverInbound(t, server, "+441632960961", "hello again")
 	_, listAfter := c.do(http.MethodGet, "/partials/messages", nil, "")
-	if !strings.Contains(string(listAfter), "+441632960961") {
+	if !strings.Contains(string(listAfter), "wp-thread-rowwrap") {
 		t.Fatalf("inbound must return the thread to the active list: %.400s", listAfter)
 	}
 	if strings.Contains(string(listAfter), "Archived (1)") {

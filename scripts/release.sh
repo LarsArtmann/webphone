@@ -119,6 +119,23 @@ if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
 fi
 echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
 
+# Version-binding guard (2026-10-01 nix-review batch): flake.nix
+# webphoneVersion is a manual single point of failure — nothing else
+# checks it against git tag history. Before the step-3 bump the binding
+# MUST equal the newest tag's version, or the previous release's flake
+# bump was never tagged (drift the eval can never see). False-positive
+# edge: a deliberate bump-before-tag commit trips this by design
+# (that IS the drift being surfaced); override with
+# WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1.
+flake_version="$(sed -n 's/.*webphoneVersion = "\([^"]*\)".*/\1/p' flake.nix | head -1)"
+tag_version="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+tag_version="${tag_version#v}"
+if [ "${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
+	echo "flake.nix webphoneVersion='$flake_version' but the newest tag is 'v$tag_version': a flake bump was never tagged, or this is a bump-before-tag commit. Reconcile before releasing (override: WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1)." >&2
+	exit 1
+fi
+echo "ok: flake.nix webphoneVersion=$flake_version matches newest tag v$tag_version"
+
 step "2/9 fold-check: CHANGELOG has a dated $VERSION section"
 grep -q "^## \[$VERSION\] " CHANGELOG.md || {
 	echo "CHANGELOG has no '## [$VERSION] - date' section; fold [Unreleased] first (runbook step 1)" >&2

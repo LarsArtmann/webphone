@@ -272,9 +272,7 @@
           : null;
       if (!snippet) return;
       var form = snippet.closest("form.wp-compose");
-      var body = form
-        ? form.querySelector("textarea.wp-compose-body")
-        : null;
+      var body = form ? form.querySelector("textarea.wp-compose-body") : null;
       if (!body) return;
       body.value = snippet.getAttribute("data-snippet");
       body.focus();

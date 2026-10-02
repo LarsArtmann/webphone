@@ -23,9 +23,10 @@ import (
 )
 
 // Boot exit codes (taxonomy D5, docs/error-contract.md "Boot surface"):
-//   1 designed boot failure (config, storage, timezone, paperless,
-//     listen, or an unclassified step)
-//   2 a panic escaped run() (Go's default panic code, now deliberate)
+//
+//	1 designed boot failure (config, storage, timezone, paperless,
+//	  listen, or an unclassified step)
+//	2 a panic escaped run() (Go's default panic code, now deliberate)
 //
 // systemd restarts either way (Restart=on-failure, RetrySec 5) — the
 // module ships that policy; each attempt renders exactly once.

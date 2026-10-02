@@ -346,7 +346,7 @@ func TestSnippetChipsAndPicker(t *testing.T) {
 			snippets := testSnippets(7, 6)
 			snippets[6] = domain.Snippet{
 				ID: domain.GenerateSnippetID(), Owner: domain.MustParseExtension("1001"),
-				Body: "a deliberately long snippet body that must be shortened for the chip lane",
+				Body:      "a deliberately long snippet body that must be shortened for the chip lane",
 				CreatedAt: time.Now(),
 			}
 			return snippets

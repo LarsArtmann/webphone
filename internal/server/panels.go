@@ -31,9 +31,9 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	archived := r.URL.Query().Get("archived") == "1"
 	var (
-		threads      []store.ThreadSummary
+		threads       []store.ThreadSummary
 		archivedCount int
-		err          error
+		err           error
 	)
 	if archived {
 		threads, err = h.deps.Messaging.ArchivedThreads(r.Context(), sess.Extension)
