@@ -171,22 +171,20 @@ func TestPinnedOrdering(t *testing.T) {
 	oldID := seedThread(t, messages, owner, remoteOld)
 	seedThread(t, messages, owner, remoteNew)
 
-	// Fresh activity order: newer thread first.
-	threads, _ := messages.ListThreads(ctx, owner)
-	if threads[0].Thread.Remote != remoteNew {
-		t.Fatalf("activity order wrong: %+v", threads)
-	}
-
-	// Pin the OLDER thread: pins jump the queue (D5, sort-first).
+	// Pin the OLDER thread: pins jump the queue (D5, sort-first) — the
+	// pre-pin order is deliberately unasserted (two seeds in the same
+	// second tie on last_activity_at; only the pin flip is this test's
+	// subject).
 	if err := messages.SetThreadFlag(ctx, owner, oldID, FlagPinned, true); err != nil {
 		t.Fatal(err)
 	}
-	threads, _ = messages.ListThreads(ctx, owner)
+	threads, _ := messages.ListThreads(ctx, owner)
 	if threads[0].Thread.Remote != remoteOld || !threads[0].Thread.Pinned {
 		t.Fatalf("pinned thread must sort first: %+v", threads)
 	}
 	// Search follows the same order.
-	hits, _ := messages.SearchThreads(ctx, owner, "seed")	if hits[0].Thread.Remote != remoteOld {
+	hits, _ := messages.SearchThreads(ctx, owner, "seed")
+	if hits[0].Thread.Remote != remoteOld {
 		t.Fatalf("search must keep pinned first: %+v", hits)
 	}
 	// And the summary row carries the pin for the row's rendering.
