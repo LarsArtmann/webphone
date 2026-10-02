@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ var bootReportMarkers = []string{"WHAT:", "REASSURE:", "WHY:", "FIX:", "ESCAPE:"
 // (class + phase + version), the cause line, and all five parts
 // non-empty.
 func TestRenderBootFailureCoversEveryClass(t *testing.T) {
-	for i := 0; i < int(bootClassCount); i++ {
+	for i := range bootClassCount {
 		class := bootClass(i)
 		if copyRows[class].name == "" {
 			t.Errorf("bootClass(%d) has no copy row: fill copyRows in bootreport.go", i)
@@ -78,7 +79,7 @@ ESCAPE:   Exit code 1; systemd retries every 5s. ` + "`systemctl stop webphone`"
 // TestBootCopyIsEnglishOnly pins ruling D2 for the boot journal: the
 // copy carries no German script and no leftover template braces.
 func TestBootCopyIsEnglishOnly(t *testing.T) {
-	for i := 0; i < int(bootClassCount); i++ {
+	for i := range bootClassCount {
 		row := copyRows[bootClass(i)]
 		for _, field := range []string{row.what, row.reassure, row.why, row.fix, row.escape} {
 			if strings.ContainsAny(field, "äöüßÄÖÜ") {
@@ -107,6 +108,7 @@ func TestClassifyBootError(t *testing.T) {
 		{"timezone prefix", errors.New("load timezone: unknown time zone Nowhere/Nowhere"), bootTimezone},
 		{"paperless prefix", errors.New("paperless: both-or-neither violated"), bootPaperless},
 		{"unclassified New wrap stays generic", errors.New("wire server: store exploded"), bootGeneric},
+		{"New wrap under cmd's build-app wrap", fmt.Errorf("build app: %w", errors.New("create data dir: mkdir /var/lib/webphone: not a directory")), bootDataDir},
 		{"tagged inside a join wins", errors.Join(bootErr(bootListen, errors.New("serve: bind: busy")), errors.New("shutdown hiccup")), bootListen},
 		{"wrapped tagged error unwraps", bootErr(bootConfigInvalid, errors.New("load config: x")), bootConfigInvalid},
 	}

@@ -15,6 +15,14 @@ table into readable task entries. Prior sweep 2026-09-29 ran a full
 
 ## Open tasks
 
+### Boot-contract tail: D3 retry-loop owner call + stack runbook patch
+
+**Status:** 🟡 `PLANNED` (owner call + stack dispatch) · **Priority:** Medium · **Effort:** S
+
+The boot-error contract SHIPPED 2026-10-02 (5-part render on every boot failure, exit 1 designed / 2 panic, EN-only, class-tagged; `App.Start` de-panicked; arch test confines samber/do; smoke `boot failure scenario` green). Remaining: (1) OWNER CALL (D3 follow-up) — cap systemd's boot-failure retry loop (`StartLimitBurst`/`StartLimitIntervalSec`) or ratify the 5s `Restart=on-failure` retry as desirable liveness (module deliberately unchanged this train); (2) apply the prepared patch text in `docs/planning/2026-10-02_11-05_boot-contract-stack-runbook-patch.md` to the stack ops-runbook § "Webphone error contract" under the tri-repo ritual (webphone first, clean stack tree, relock); (3) re-grade the boot surfaces at the 2026-10-22 erraudit re-measure
+
+**Evidence:** plan `docs/planning/2026-10-02_10-23_SUPERB-operator-boot-contract.md`; ruling `docs/error-contract.md` § "Boot surface"; pins `cmd/webphone/bootreport_test.go`
+
 ### v2.8.0 deploy tail
 
 **Status:** 🟡 `PARTIALLY DONE` (owner terminal remains) · **Priority:** High · **Effort:** S-M

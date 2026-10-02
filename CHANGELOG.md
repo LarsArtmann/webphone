@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Operator boot-error contract: the operator is a user. Every boot
+  failure (config, data dir, timezone, paperless, bind/listen, panic,
+  or unclassified) now renders the five-part error contract (WHAT /
+  REASSURE / WHY / FIX / ESCAPE) plus the underlying error to the
+  journal, version-stamped and class-tagged, English-only, with a
+  documented exit taxonomy (1 = designed failure, 2 = panic). The
+  fail-fast panic mechanism at the composition root is unchanged;
+  `App.Start`'s three panics became returned errors; guards: golden +
+  enum-coverage + classification + EN-only pins (`bootreport_test.go`),
+  an arch test confining samber/do to the composition root, and a new
+  smoke `boot failure scenario`.
 - Speak ASAP after accepting a call: the island now pre-warms the
   microphone while a call RINGS (new `mic.js` seam) and hands the warm
   stream to sip.js at accept time through a custom session-description

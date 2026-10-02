@@ -457,7 +457,11 @@ write both first-pass, then latched 200), and a systemd watchdog
 restart would kill live calls on a transient stall. Consumers that
 need ordered startup should poll `/startupz` (or front it with a
 one-shot `ExecStart=curl --retry` wait unit and `After=` ordering);
-ongoing health belongs to `/healthz`, liveness to `/livez`.
+ongoing health belongs to `/healthz`, liveness to `/livez`. When the
+boot itself fails, the binary prints a five-part operator report
+(WHAT / REASSURE / WHY / FIX / ESCAPE, exit 1; a panic exits 2) —
+the class table and fix hints live in
+`docs/error-contract.md` § "Boot surface".
 
 ## Development
 

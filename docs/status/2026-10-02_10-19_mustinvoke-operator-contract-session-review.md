@@ -5,6 +5,17 @@
 - **Format note**: `.md` at explicit path per operator demand — overrides the status-report skill's HTML-canonical default (flagged per skill contract, not propagated as a new default). brutal-self-review findings folded into (d)/(e) instead of a separate HTML report, per the same single-file instruction.
 - **Tree state**: ~19 files modified by OTHER concurrent sessions (AGENTS.md, internal/**, island tests). I authored ZERO changes this session. Those in-flight files are not mine to judge, revert, or commit here.
 
+> **HARVESTED 2026-10-02 11:15** (ANNOTATE, in place): the operator
+> ordered execution ("fix!"). The boot-error contract SHIPPED the same
+> morning — renderer + wiring + `App.Start` de-panic + pins live in
+> `cmd/webphone/bootreport{,_test}.go` and `cmd/webphone/main.go`; the
+> ruling lives in `docs/error-contract.md` § "Boot surface"; the D3
+> owner call + stack runbook patch are harvested into `TODO_LIST.md`
+> and `docs/planning/2026-10-02_11-05_boot-contract-stack-runbook-patch.md`
+> (which also carries the records: InvokeAs rejected, ~33-call count
+> correction, E2E-not-owed, 2026-10-22 re-audit tie-in). Section (f)
+> items below are therefore DONE or ROUTED — do not re-harvest.
+
 ---
 
 ## Session chronology (what actually happened)

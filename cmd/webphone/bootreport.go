@@ -197,23 +197,25 @@ func bootErr(class bootClass, err error) error {
 }
 
 // classifyBootError maps a run() error to its class: tagged sites win,
-// then app.New's stable wrap prefixes, then the generic fallback.
+// then app.New's stable wrap prefixes matched ALONG THE UNWRAP CHAIN
+// (cmd wraps New's error with "build app: …", so the app-local prefix
+// sits one layer down), then the generic fallback.
 func classifyBootError(err error) bootClass {
-	var tagged *bootError
-	if errors.As(err, &tagged) {
+	if tagged, ok := errors.AsType[*bootError](err); ok {
 		return tagged.class
 	}
-	msg := err.Error()
-	switch {
-	case strings.HasPrefix(msg, appWrapDataDir):
-		return bootDataDir
-	case strings.HasPrefix(msg, appWrapTimezone):
-		return bootTimezone
-	case strings.HasPrefix(msg, appWrapPaperless):
-		return bootPaperless
-	default:
-		return bootGeneric
+	for e := err; e != nil; e = errors.Unwrap(e) {
+		msg := e.Error()
+		switch {
+		case strings.HasPrefix(msg, appWrapDataDir):
+			return bootDataDir
+		case strings.HasPrefix(msg, appWrapTimezone):
+			return bootTimezone
+		case strings.HasPrefix(msg, appWrapPaperless):
+			return bootPaperless
+		}
 	}
+	return bootGeneric
 }
 
 // The report shells' side effects are injectable so tests intercept the

@@ -1,8 +1,16 @@
 /* Input for the scoped health-dashboard stylesheet
-   (internal/web/assets/health.css). Rebuild with scripts/build-health-css.sh,
-   which appends the @source lines pointing at the go-health-dashboard module
-   cache; this file holds the parts that must NEVER drift. tailwindcss v4
-   ONLY (v3 emits a different layer model and breaks the dark variant). */
+   (internal/web/assets/health.css). Rebuild with:
+     nix run nixpkgs#tailwindcss_4 -- \
+       -i internal/web/assets/health.css.input \
+       -o internal/web/assets/health.css
+   (or scripts/build-health-css.sh). tailwindcss v4 ONLY — v3 emits a
+   different layer model and breaks the dark variant.
+
+   The output is a scoped build: it must cover the go-health-dashboard
+   subtree's classes and NOTHING from the app (health.css never merges with
+   tw.css). The @source roots below are the vendored scan sets; review the
+   diff after any rebuild (Tailwind may reorder rules run-to-run — verify the
+   dark-selector set is preserved, which the health.css canary check greps). */
 
 @import "tailwindcss";
 
@@ -13,3 +21,10 @@
    health.css canary check greps the built output for `:where(.dark`, this
    variant's fingerprint, so the regression cannot ship silently again. */
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Scan sets, relative to this file (internal/web/assets/). The dashboard's
+   classes live in its templ sources AND its generated *_templ.go; its
+   templ-components dependency carries the component classes it renders. */
+@source "../../../vendor/github.com/larsartmann/go-health-dashboard";
+@source "../../../vendor/github.com/larsartmann/templ-components";
+@source "../../../internal/app/dashboard.go";
