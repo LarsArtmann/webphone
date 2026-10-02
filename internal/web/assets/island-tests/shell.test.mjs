@@ -758,10 +758,15 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
 
 // --- voicemail player (M13 C1–C3/C9) ------------------------------------
 
-const makeAudioStub = (id, src) => {
-  const audio = doc.createElement();
-  audio.id = id;
-  audio.setAttribute("src", src);
+// Builds one player row from REGISTRY instances: the shell looks every
+// node up by getElementById, and only registry hits resolve to the same
+// object the test holds.
+const makePlayerRow = (uuid, { unread = true } = {}) => {
+  const row = doc.createElement();
+  row.id = "vm-" + uuid;
+  row.className = "wp-row wp-vm-row" + (unread ? " wp-unread" : "");
+  const audio = doc.getElementById("vm-audio-" + uuid);
+  audio.setAttribute("src", "/phone-api/x");
   audio.paused = true;
   audio.controls = false;
   const played = [];
@@ -775,23 +780,16 @@ const makeAudioStub = (id, src) => {
     audio.paused = true;
   };
   audio.playCalls = played;
-  return audio;
-};
-
-const makePlayerRow = (uuid, { unread = true } = {}) => {
-  const row = doc.createElement();
-  row.id = "vm-" + uuid;
-  row.className = "wp-row wp-vm-row" + (unread ? " wp-unread" : "");
-  const audio = makeAudioStub("vm-audio-" + uuid, "/phone-api/x");
-  const play = doc.createElement();
-  play.id = "vm-play-" + uuid;
+  const play = doc.getElementById("vm-play-" + uuid);
   play.className = "wp-mini wp-vm-play";
+  play.textContent = "▶";
+  play.hidden = false;
   play.setAttribute("data-vm-play", uuid);
   play.setAttribute("data-label-play", "Play");
   play.setAttribute("data-label-pause", "Pause");
-  const speed = doc.createElement();
-  speed.id = "vm-speed-" + uuid;
+  const speed = doc.getElementById("vm-speed-" + uuid);
   speed.className = "wp-mini wp-vm-speed";
+  speed.textContent = "1×";
   speed.setAttribute("data-vm-speed", uuid);
   row.append(audio, play, speed);
   return { row, audio, play, speed };
@@ -817,11 +815,13 @@ test("vmClock renders the server's m:ss shape", () => {
   assert.equal(shellApi.vmClock(NaN), "0:00");
 });
 
-test("the play button drives the audio and falls back honestly", () => {
+test("the play button drives the audio and falls back honestly", async () => {
   const { row, audio, play } = makePlayerRow("u1");
   // No fetch in node: the waveform build must fail → native controls.
   doc.dispatch("click", { target: play });
   assert.deepEqual(audio.playCalls, ["play"], "the click starts the audio");
+  // The fallback rides vmBuildWave's rejection — a microtask later.
+  await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(audio.controls, true, "without WebAudio the native UI takes over");
   assert.equal(play.hidden, true, "the custom play button hides in the fallback");
   const toast = toasts().children.at(-1);

@@ -1181,7 +1181,13 @@ select:focus-visible {
 }
 
 .wp-vm-time {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    Liberation Mono,
+    monospace;
   font-size: 0.8em;
   color: var(--muted);
   white-space: nowrap;

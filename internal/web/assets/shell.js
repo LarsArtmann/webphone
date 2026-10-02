@@ -684,25 +684,37 @@
 
     // vmPeaks reduces decoded PCM (−1..1) to one normalized max-abs peak
     // per bar. Pure and unit-tested: empty input renders silence, and a
-    // bar whose sample slice is empty (more bars than samples) carries
-    // its neighbor's value so short messages still fill the width.
+    // bar whose sample slice is empty (more bars than samples) inherits
+    // the nearest valued bar so the wave starts where the audio does.
     var vmPeaks = function (samples, bars) {
       var peaks = new Array(bars).fill(0);
       if (!samples || samples.length === 0) return peaks;
       var step = samples.length / bars;
+      var filled = new Array(bars).fill(null);
       for (var b = 0; b < bars; b++) {
         var start = Math.floor(b * step);
         var end = Math.min(samples.length, Math.floor((b + 1) * step));
-        if (end <= start) {
-          peaks[b] = b > 0 ? peaks[b - 1] : 0;
-          continue;
-        }
+        if (end <= start) continue;
         var max = 0;
         for (var i = start; i < end; i++) {
           var v = Math.abs(samples[i]);
           if (v > max) max = v;
         }
-        peaks[b] = max;
+        filled[b] = max;
+      }
+      // stretch empty bars outward from their nearest valued neighbor
+      var last = null;
+      for (var k = 0; k < bars; k++) {
+        if (filled[k] !== null) last = filled[k];
+        else if (last !== null) filled[k] = last;
+      }
+      var next = null;
+      for (var k2 = bars - 1; k2 >= 0; k2--) {
+        if (filled[k2] !== null) next = filled[k2];
+        else if (next !== null) filled[k2] = next;
+      }
+      for (var m = 0; m < bars; m++) {
+        if (filled[m] !== null) peaks[m] = filled[m];
       }
       return peaks;
     };
@@ -858,17 +870,16 @@
       }
       return fetch(src)
         .then(function (response) {
-          if (!response.ok) throw new Error("audio fetch HTTP " + response.status);
+          if (!response.ok)
+            throw new Error("audio fetch HTTP " + response.status);
           return response.arrayBuffer();
         })
-        .then(
-          function (buffer) {
-            return new Promise(function (resolve, reject) {
-              // callback form: the oldest widest-compatible signature
-              vmAudioContext.decodeAudioData(buffer, resolve, reject);
-            });
-          },
-        )
+        .then(function (buffer) {
+          return new Promise(function (resolve, reject) {
+            // callback form: the oldest widest-compatible signature
+            vmAudioContext.decodeAudioData(buffer, resolve, reject);
+          });
+        })
         .then(function (decoded) {
           var peaks = vmPeaks(decoded.getChannelData(0), VM_BARS);
           vmPeaksCache.set(uuid, peaks);
