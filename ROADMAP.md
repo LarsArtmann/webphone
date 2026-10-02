@@ -350,8 +350,10 @@ unmarked here is committed work — refine into TODO_LIST on demand.
   gesture-less getUserMedia check (04:07 report items 10/23–26).
 - Typography extras: `--font-sans`/`--font-mono` consolidation (the mirrored
   font stacks are still comment-enforced), `hyphens: auto` on bubbles,
-  tabular-nums audit, `#log` readability bump, `#wp-sse-live` light-mode
-  visibility, `prefers-contrast` pass (12:08 report f 8/11–14).
+  `#log` readability bump, `#wp-sse-live` light-mode visibility,
+  `prefers-contrast` pass, focus-visible normalization (12:08 report
+  f 4/8/11/12/14/30/35; the tabular-nums audit shipped with the T16
+  sweep — 19 sites across both sheets).
 - Guard ideas from the closed trains: caddy `validate`/`adapt` pass over the
   rendered module extraConfig; a caddy-equipped VM test (TLS + `/events`
   streaming + sip bridge); `scripts/binary-size-gate.sh` (nix build vs a

@@ -9,6 +9,15 @@ their work is mentioned only where it collided with this run.)
 dashboard; the owner explicitly requested Markdown at this path — owner
 instruction wins, divergence flagged here per the skill's rule.
 
+> ARCHIVED 2026-10-03 (docs-health v6 sweep): the train's debt closed across
+> the 2026-10-01/02 trains — the lang pin and token-parity test shipped
+> (server_test.go, tokens_test.go), the T23 visual harness answered the
+> eyes question, `nix flake check` closed green at the 12:57 close-out,
+> and the missing CHANGELOG entry landed as a retro [2.8.0] bullet; the
+> durable leftovers (font consolidation, hyphens, contrast, #log,
+> focus-visible, prefers-contrast, sse-live visibility) live in the
+> ROADMAP 2026-10-02 stragglers cluster. Per-item verdicts inline.
+
 ---
 
 ## Self-Review (the three hard questions, answered first)
