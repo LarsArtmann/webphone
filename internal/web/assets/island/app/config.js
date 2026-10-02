@@ -6,7 +6,11 @@ const config = window.PBX_CONFIG || {};
 
 export const sipDomain = config.sipDomain || location.hostname;
 
-export const websocketUrl = `wss://${
+// The SIP WebSocket scheme follows the page protocol: the stack serves
+// https (caddy terminates TLS, /sip rides wss), while a bare-HTTP dev
+// boot (the loopback quickstart, scripts/ui-capture.py) serves ws —
+// hardcoding wss left the island unable to connect outside the stack.
+export const websocketUrl = `${location.protocol === "https:" ? "wss" : "ws"}://${
   location.host
 }${config.websocketPath || "/sip"}`;
 

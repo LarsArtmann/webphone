@@ -158,24 +158,23 @@ re-run it after any markup change (release-runbook obligation).
   The `threads` nudge is also LIST-ONLY by design: `MessagesChanged`
   with a zero thread id skips the transcript push (notifier.go guard —
   an empty `thread` payload would wipe the open conversation).
-- **Thread organization + snippets seam (T18 M21/M22, 2026-10-02)**:
+- **Thread organization + snippets seam (T18 M21/M22)**:
   `pinned/archived/muted` are three 0/1 thread columns (schema_version
   v2; migrations are VERSIONED in `store/db.go` — a new schema change
   is a new migration step, never an ad-hoc ALTER). Toggles ride
-  `POST /messages/{id}/{flag}?on=N` posting the DESIRED state: row
-  buttons answer 204 + the list-only `threads` nudge; head buttons
-  target `#wp-thread-head` outerHTML and get the freshly rendered head
-  back (setThreadFlag branches on the `HX-Target` header). Inbound
-  messages AUTO-UNARCHIVE (AppendMessage upsert CASE); mute is
-  presentation-only (`countUnread` skips muted rows — unread truth
-  stays in the store). Thread rows carry stable `thread-<id>` wrapper
-  ids (idiomorph). Reply snippets: per-extension store (cap 100,
-  replace-by-id upsert), Settings CRUD actions, quick snippets (cap 5)
-  render as chips + every snippet behind a `<details>` picker in the
-  REPLY composer only; shell.js `data-snippet` fill REPLACES the
-  textarea (data-sms precedent). Image attachments carry
-  `data-lightbox`; shell.js opens the singleton `#wp-lightbox` dialog
-  (native ESC/backdrop close). Design decisions D1–D14:
+  `POST /messages/{id}/{flag}?on=N` (DESIRED state): row buttons
+  answer 204 + the list-only `threads` nudge; head buttons target
+  `#wp-thread-head` outerHTML and get the fresh head back
+  (`setThreadFlag` branches on `HX-Target`). Inbound messages
+  AUTO-UNARCHIVE; mute is presentation-only (unread truth stays in the
+  store); rows keep stable `thread-<id>` wrapper ids (idiomorph).
+  Thread deep links (`GET /messages/{id}`) render the OPEN thread —
+  the URL the rows push must round-trip; unresolvable ids fall back to
+  the list + gone-notice (`threadGone`). Snippets: per-extension store
+  (cap 100), quick subset (cap 5) as chips + `<details>` picker in the
+  REPLY composer only; `data-snippet` fill REPLACES the textarea.
+  Images carry `data-lightbox` → singleton `#wp-lightbox` dialog.
+  Design decisions D1–D14:
   `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md`.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt). File

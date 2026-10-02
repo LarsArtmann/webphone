@@ -49,12 +49,26 @@ TABS = [
     ("contacts", "/contacts"),
     ("settings", "/settings"),
 ]
+# Capture-time DOM assertion per surface: a screenshot is only evidence
+# when the DOM beneath it is the real surface (this check would have
+# caught the thread deep link rendering the messages list — the shots
+# were byte-identical until the fix).
+SURFACE_MARKERS = {
+    "messages": ".wp-thread-row",  # seeded threads render rows
+    "thread": "#wp-thread-head",  # the open conversation head
+    "fax": ".wp-compose-fax",  # the compose form is always present
+    "voicemail": "#voicemail-panel",
+    "history": "#history-panel",
+    "contacts": ".wp-export-link",  # unconditional in the panel
+    "settings": "#settings-panel",
+}
 
 
-def seed(base: str) -> str | None:
-    """Deterministic content via the loopback gateway; returns thread path."""
+def seed(base: str) -> tuple[str | None, str]:
+    """Deterministic content over HTTP; returns (thread path, session cookie)."""
     csrf = ""
-    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
+    cookie_processor = urllib.request.HTTPCookieProcessor()
+    opener = urllib.request.build_opener(cookie_processor)
 
     def post(path: str, fields: dict[str, str], multipart: bool = False) -> None:
         if multipart:
@@ -98,13 +112,22 @@ def seed(base: str) -> str | None:
     html = opener.open(base + "/messages").read().decode()
     marker = 'hx-get="/partials/messages/'
     idx = html.find(marker)
-    if idx < 0:
-        return None
-    start = idx + len('hx-get="/partials')
-    return html[start : html.find('"', start)]
+    thread_path = None
+    if idx >= 0:
+        start = idx + len('hx-get="/partials')
+        thread_path = html[start : html.find('"', start)]
+    # The minted session cookie rides back to the caller: the browser
+    # gets it INJECTED (driver.add_cookie) instead of replaying the
+    # island's login — the island gates its panel on the SIP WebSocket,
+    # which a bare boot cannot serve (caddy bridges /sip on the stack).
+    session = ""
+    for cookie in cookie_processor.cookiejar:
+        if cookie.name == "webphone_session":
+            session = cookie.value
+    return thread_path, session
 
 
-def capture(base: str, out_dir: str, thread_path: str | None) -> int:
+def capture(base: str, out_dir: str, thread_path: str | None, session: str) -> int:
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.support.ui import WebDriverWait
@@ -134,20 +157,9 @@ def capture(base: str, out_dir: str, thread_path: str | None) -> int:
         driver.get(base + "/")
         WebDriverWait(driver, 10).until(lambda d: d.execute_script(
             "return document.readyState") == "complete")
-        # Session via the island's own login flow (the API + cookie mint,
-        # then the shell reveals the tabs).
-        driver.find_element("id", "ext").send_keys("1001")
-        driver.find_element("id", "pass").send_keys("pw")
-        # Click the form's OWN submit button: a programmatic
-        # form.submit() skips the submit EVENT, and the island's handler
-        # IS the submit listener — the click runs the real login path.
-        driver.find_element(
-            "css selector", "#login-form button[type=submit]"
-        ).click()
-        WebDriverWait(driver, 10).until(
-            lambda d: d.execute_script(
-                "return document.getElementById('phone-view') && "
-                "!document.getElementById('phone-view').hidden"))
+        # The seed's session cookie, injected (see seed()): the
+        # server-rendered tabs ride it directly.
+        driver.add_cookie({"name": "webphone_session", "value": session})
         for theme in ("light", "dark"):
             # Theme pinned via the persisted key (theme-preload.js applies
             # it pre-paint — no cycling the 3-state toggle from "auto").
@@ -160,6 +172,11 @@ def capture(base: str, out_dir: str, thread_path: str | None) -> int:
                     path = thread_path
                 driver.get(base + path)
                 time.sleep(0.4)  # settle: relative times, panels
+                marker = SURFACE_MARKERS[name]
+                if not driver.find_elements("css selector", marker):
+                    raise AssertionError(
+                        f"surface {name!r} at {path} is missing {marker!r} — "
+                        "the shot would not be evidence; aborting")
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)
                 print(f"captured {target}")
@@ -180,12 +197,23 @@ def main() -> int:
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(args.out_dir, exist_ok=True)
     base = f"http://127.0.0.1:{args.port}"
-    env = dict(
-        os.environ,
-        WEBPHONE_ADDR=f"127.0.0.1:{args.port}",
-        WEBPHONE_DATA_DIR=data_dir,
-        WEBPHONE_GATEWAY__WEBHOOK_SECRET="devsecret",
-    )
+    # A CONFIG FILE, not env: the browser posts carry Origin/Referer, and
+    # the CSRF middleware only trusts them with the fronted shape
+    # (csrf.trusted_*) — the same configuration the NixOS module ships
+    # behind caddy and the smoke's boot_configured exercises.
+    config = {
+        "addr": f"127.0.0.1:{args.port}",
+        "data_dir": data_dir,
+        "gateway": {"webhook_secret": "devsecret"},
+        "csrf": {
+            "trusted_proxies": ["127.0.0.1"],
+            "trusted_origins": [base],
+        },
+    }
+    config_path = os.path.join(data_dir, "ui-capture-config.json")
+    with open(config_path, "w", encoding="utf-8") as fh:
+        json.dump(config, fh)
+    env = dict(os.environ, WEBPHONE_CONFIG=config_path)
     server = subprocess.Popen([args.binary], env=env)
     try:
         for _ in range(50):
@@ -197,8 +225,11 @@ def main() -> int:
         else:
             print("server did not come up", file=sys.stderr)
             return 1
-        thread_path = seed(base)
-        shots = capture(base, args.out_dir, thread_path)
+        thread_path, session = seed(base)
+        if not session:
+            print("seed did not mint a session cookie", file=sys.stderr)
+            return 1
+        shots = capture(base, args.out_dir, thread_path, session)
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
         return 0 if shots >= 14 else 1
     finally:

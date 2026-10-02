@@ -116,6 +116,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   options, the Caddy vhost body, and the backup shell in their own
   files — output proven byte-identical by an eval diff of the generated
   vhost and both backup scripts.
+- Nix-review batch 2 (2026-10-02). The generated module output (Caddy
+  vhost body + the retention=7 backup script + the settings JSON) is now
+  pinned by a full-text golden (`nix/module-output.golden`, rendered by
+  `nix/module-output.nix`) so the reordering/whitespace drift the
+  substring checks miss fails `checks.webphone-module`. `release.sh`
+  gained a release-time guard that the flake's `webphoneVersion` matches
+  the newest tag — drift the eval can never see; override with
+  `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1`. The two devShells now share
+  one `goTools`/`goEnv` binding so the CI and interactive Go pins cannot
+  drift. `deadnix` excludes vendored third-party `flake.nix` files. The
+  scoped `/health` stylesheet gained a committed Tailwind input
+  (`health.css.input`) recording the class-based dark variant (the
+  missing line that silently dropped every `dark:` utility), a rebuild
+  script, and a `checks.health-css` canary. Reply-snippet persistence
+  gained error-family pins. The `go-standard` migration stays declined
+  (this repo's bespoke flake checks are not modelled by it); the
+  hardcoded `webphoneVersion` and the module-check stand-in's
+  permissiveness remain accepted exceptions.
 
 ## [2.8.0] - 2026-09-30
 

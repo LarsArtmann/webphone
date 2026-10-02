@@ -228,3 +228,38 @@ func TestSnippetActions(t *testing.T) {
 		t.Fatalf("bad id delete: got %d, want 404", resp.StatusCode)
 	}
 }
+
+// TestThreadDeepLinkOpensConversation pins the round trip the row
+// anchors' hx-push-url promises: a full-page GET of /messages/{id}
+// renders the open conversation (head + transcript), not the list —
+// refreshes and shared links must land where the URL says.
+func TestThreadDeepLinkOpensConversation(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "deep link me"}, nil)
+	if resp, body := c.do(http.MethodPost, "/messages/send", form, contentType); resp.StatusCode != http.StatusOK {
+		t.Fatalf("send: %d %s", resp.StatusCode, body)
+	}
+	threadID := threadIDFromList(t, c)
+
+	resp, body := c.do(http.MethodGet, "/messages/"+threadID, nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("deep link: got %d", resp.StatusCode)
+	}
+	page := string(body)
+	if !strings.Contains(page, `id="wp-thread-head"`) {
+		t.Fatalf("deep link must render the thread head, got the list: %.300s", page)
+	}
+	if !strings.Contains(page, "deep link me") {
+		t.Fatalf("deep link must render the transcript: %.300s", page)
+	}
+
+	// Bogus and missing ids degrade to the list with the gone-notice:
+	// the shell survives, no bare 404 for a refreshable URL shape.
+	for _, bad := range []string{"bogus", "Thread:does-not-exist"} {
+		resp, body = c.do(http.MethodGet, "/messages/"+bad, nil, "")
+		if resp.StatusCode != http.StatusOK || !strings.Contains(string(body), "no longer exists") {
+			t.Fatalf("deep link %q: got %d, want the gone-notice list", bad, resp.StatusCode)
+		}
+	}
+}

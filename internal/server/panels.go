@@ -43,11 +43,11 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 		threads, err = h.deps.Messaging.ThreadSearch(r.Context(), sess.Extension, query)
 	}
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:erraudit // context_loss FP: threads is the OUT param, garbage exactly when the fetch failed
 	}
 	if !archived {
 		if archivedCount, err = h.deps.Messaging.ArchivedCount(r.Context(), sess.Extension); err != nil {
-			return nil, err
+			return nil, err //nolint:erraudit // context_loss FP: archivedCount is an OUT param, garbage exactly when the count failed
 		}
 	}
 	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
@@ -60,7 +60,7 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
 	thread, msgs, hasMore, err := h.deps.Messaging.ThreadWindow(r.Context(), sess.Extension, id, page)
 	if errors.Is(err, store.ErrNotFound) {
-		return views.ThreadsPanel(views.ThreadsPanelProps{Error: "That conversation no longer exists.", Lang: h.lang(r)}), nil
+		return threadGone(h.lang(r)), nil
 	}
 	if err != nil {
 		return nil, err
@@ -85,6 +85,24 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	}), nil
 }
 
+// threadGone is the graceful fallback when a linked conversation cannot
+// be resolved (deleted, foreign, or unparseable id): the list plus a
+// notice. The deep link keeps the full shell instead of a bare 404.
+func threadGone(lang views.Lang) templ.Component {
+	return views.ThreadsPanel(views.ThreadsPanelProps{Error: "That conversation no longer exists.", Lang: lang})
+}
+
+// threadPageFromQuery reads the transcript paging cursor (?older=N);
+// absent or out-of-range values mean page 0 (the newest window).
+func threadPageFromQuery(r *http.Request) int {
+	if raw := r.URL.Query().Get("older"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 10000 {
+			return parsed
+		}
+	}
+	return 0
+}
+
 func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(w, r)
 	if !ok {
@@ -95,13 +113,7 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	page := 0
-	if raw := r.URL.Query().Get("older"); raw != "" {
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 10000 {
-			page = parsed
-		}
-	}
-	component, err := h.threadPanel(r, sess, id, page)
+	component, err := h.threadPanel(r, sess, id, threadPageFromQuery(r))
 	if err != nil {
 		h.internalError(w, r, "load conversation", err)
 		return
@@ -289,6 +301,16 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Session) (templ.Component, error) {
 	switch tab {
 	case views.TabMessages:
+		// A thread deep link (GET /messages/{id} — the URL the row
+		// anchors push) opens the conversation, not the list: the
+		// pushed URL must round-trip through a refresh or a share.
+		if raw := r.PathValue("id"); raw != "" {
+			id, err := domain.ParseThreadID(raw)
+			if err != nil {
+				return threadGone(h.lang(r)), nil
+			}
+			return h.threadPanel(r, sess, id, threadPageFromQuery(r))
+		}
 		return h.messagesPanel(r, sess)
 	case views.TabFax:
 		return h.faxPanel(r, sess)
