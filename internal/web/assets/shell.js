@@ -39,7 +39,11 @@
     //     link, the sign-in hint, or a stored value that is not one of
     //     the rendered tabs (garbage must not 404 the boot). The
     //     address bar follows the content via replaceState.
-    (function restoreLastTab() {
+    // Named + called immediately so the node:test specs can drive the
+    // same code path directly (shell.js is CommonJS under node — a
+    // query-string re-import returns the cached module, never a fresh
+    // evaluation).
+    var restoreLastTab = function () {
       var path = window.location && window.location.pathname;
       if (path !== "/") return;
       var stored;
@@ -68,7 +72,8 @@
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, "", "/" + stored);
       }
-    })();
+    };
+    restoreLastTab();
 
     // 2. data-dial buttons (contacts, history, voicemail, threads): push
     //    the number into the island's dial form and submit it — the same
@@ -1048,5 +1053,12 @@
     }
     if (window.console && console.error)
       console.error("webphone: shell load failed", err);
+  }
+
+  // Test seam only: on the wire this file is a classic script where
+  // `module` does not exist, so the guard is a no-op in the browser.
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports.restoreLastTab = restoreLastTab;
+    module.exports.refreshNav = refreshNav;
   }
 })();

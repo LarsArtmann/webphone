@@ -17,6 +17,7 @@
     "no-undef": "error"
   },
   "globals": {
-    "SIP": "readonly"
+    "SIP": "readonly",
+    "module": "readonly"
   }
 }

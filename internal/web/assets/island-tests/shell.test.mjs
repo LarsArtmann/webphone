@@ -11,6 +11,10 @@ import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
 await import("../shell.js");
+// shell.js is CommonJS under node (query-string re-imports return the
+// cached module, never a fresh evaluation), so the specs below drive
+// the exported seam directly.
+const shellApi = (await import("../shell.js")).default;
 
 const toasts = () => doc.getElementById("toasts");
 const fakeXhr = (status, headers = {}) => ({
@@ -627,7 +631,7 @@ test("a tab navigation stores the last-active tab (E3)", () => {
   localStorage.removeItem("wp-last-tab");
 });
 
-test("a plain / load restores the remembered tab (E3)", async () => {
+test("a plain / load restores the remembered tab (E3)", () => {
   const calls = [];
   globalThis.window.htmx = {
     ajax: (verb, url) => calls.push(url),
@@ -646,7 +650,7 @@ test("a plain / load restores the remembered tab (E3)", async () => {
   link.className = "wp-nav-link";
   nav.append(link);
   // The stub document's querySelector is a null sink; the restore path
-  // reads the nav through it, so route the two selectors it asks for.
+  // reads the nav through it, so route the selector it asks for.
   const realQuerySelector = doc.querySelector;
   doc.querySelector = (selector) =>
     selector === '#wp-nav .wp-nav-link[data-tab="history"]'
@@ -658,7 +662,7 @@ test("a plain / load restores the remembered tab (E3)", async () => {
     replaceState: (...args) => replaced.push(args[2]),
   };
 
-  await import("../shell.js?case=restore-tab");
+  shellApi.restoreLastTab();
 
   assert.deepEqual(
     calls,
@@ -673,24 +677,81 @@ test("a plain / load restores the remembered tab (E3)", async () => {
   delete globalThis.window.htmx;
 });
 
-test("restore never overrides a deep link or the sign-in hint (E3)", async () => {
+test("restore never overrides a deep link, garbage, or the sign-in hint (E3)", () => {
   const calls = [];
   globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
   globalThis.window.location = { pathname: "/messages" };
   localStorage.setItem("wp-last-tab", "history");
 
-  await import("../shell.js?case=restore-deeplink");
+  shellApi.restoreLastTab();
   assert.deepEqual(calls, [], "a deep link keeps its own tab");
 
   globalThis.window.location = { pathname: "/" };
+  localStorage.setItem("wp-last-tab", "not-a-tab");
+  shellApi.restoreLastTab();
+  assert.deepEqual(calls, [], "a stored value no tab renders is ignored");
+
+  // With the link rendered again, the welcome hint is the guard that
+  // must refuse the swap (not a missing link).
+  localStorage.setItem("wp-last-tab", "history");
+  const nav = doc.getElementById("wp-nav");
+  const link = doc.createElement();
+  link.setAttribute("data-tab", "history");
+  link.className = "wp-nav-link";
+  nav.append(link);
+  const realQuerySelector = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === '#wp-nav .wp-nav-link[data-tab="history"]'
+      ? link
+      : realQuerySelector.call(doc, selector);
   const content = doc.getElementById("tab-content");
   const welcome = doc.createElement();
   welcome.className = "wp-welcome";
   content.append(welcome);
-  await import("../shell.js?case=restore-signedout");
+  shellApi.restoreLastTab();
   assert.deepEqual(calls, [], "the sign-in hint is never replaced");
 
   welcome.remove();
+  doc.querySelector = realQuerySelector;
   localStorage.removeItem("wp-last-tab");
+  delete globalThis.window.htmx;
+});
+
+test("refreshNav scrolls the active tab back into view (E8)", () => {
+  const calls = [];
+  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  const link = doc.createElement();
+  link.className = "wp-nav-link wp-active";
+  // refreshNav reads the tab from dataset (disconnected from
+  // attributes in the stub), so seed it there.
+  link.dataset.tab = "history";
+  const scrolled = [];
+  link.scrollIntoView = (opts) => scrolled.push(opts);
+  const realQuerySelector = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === "#wp-nav .wp-nav-link.wp-active"
+      ? link
+      : realQuerySelector.call(doc, selector);
+
+  shellApi.refreshNav();
+
+  assert.deepEqual(
+    calls,
+    ["/partials/nav?active=history"],
+    "the active tab survives the nav re-fetch",
+  );
+  assert.deepEqual(
+    scrolled,
+    [{ block: "nearest", inline: "nearest" }],
+    "nearest keeps in-view tabs untouched",
+  );
+
+  // No scrollIntoView on the node (old browsers): the guard skips the
+  // scroll without breaking the re-fetch.
+  delete link.scrollIntoView;
+  shellApi.refreshNav();
+  assert.equal(calls.length, 2, "the re-fetch itself is unaffected");
+
+  doc.querySelector = realQuerySelector;
   delete globalThis.window.htmx;
 });
