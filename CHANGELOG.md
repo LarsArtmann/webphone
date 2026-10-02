@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Thread organization (M21/M22, T18): conversations can be pinned,
+  muted, and archived — three 0/1 columns behind a VERSIONED migration
+  (schema_version v2; migrations now run as ordered steps, never ad-hoc
+  ALTERs). Row toggles answer 204 + a list-only SSE nudge; the open
+  thread's head buttons re-render in place (one handler branches on the
+  HX-Target header, so the transcript, scroll position, and draft stay
+  untouched while the buttons flip to the network-confirmed state).
+  Inbound messages auto-unarchive their thread; mute hides the unread
+  badge without touching stored truth. Thread rows carry stable wrapper
+  ids so live morph updates never rebuild a row mid-click. Design
+  decisions D1–D14: docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md.
+- Reply snippets (M21, T18): a per-extension snippet store (cap 100)
+  managed from Settings; up to five "quick" snippets render as chips
+  above the reply composer with every snippet also behind a picker.
+  Inserting replaces the draft and focuses it. Image attachments open
+  in a lightbox dialog. Scheduled sends were cut (NO-GO on a gateway
+  seam with no deferred-send concept — a scheduled UI would promise a
+  state the transport cannot honor).
+- Call island feedback and trust (M17, T15): aria-live politeness
+  everywhere except the assertive incoming-call announce; a failed
+  optimistic send grows Retry/Dismiss buttons inside the failed bubble
+  with draft restore; SSE recovery announces once, only after an
+  announced drop; history's empty state is filter-aware.
+- Incoming-call focus mode + device self-test (A6/A10, T19): an
+  incoming call dims the chrome and focuses Accept (typing in an input
+  never loses focus); the advanced panel gains a pre-call device check
+  (mic label, immediate release, speaker count, honest degradation).
+- Voicemail playback (M13, T14): inline player with scrubber, speed
+  control, and elapsed-time readout. Fax depth (M14, T14): per-job
+  status timeline and resend.
+- Island performance (T11): modulepreload for the island module graph,
+  mic pre-warm timing baseline (scripts/perf-baseline.py), and an ICE
+  gathering-time panel in the advanced area.
+- Dial affordances (M9, T12) + SMS segment countdown (M12, T12):
+  number-bearing rows offer one-tap dial into the island; the composer
+  counts billable GSM-7/UCS-2 segments past the first.
+- Visual tokens, theming, and shell sizing (M15/M20/M26, T16): mirrored
+  light/dark token blocks across app and island styles, a three-state
+  theme toggle persisted pre-paint (theme-preload.js), calmer shell
+  sizing.
+- Onboarding and mobile (M18/M19, T17): a dismissible welcome note for
+  fresh sessions; fixed bottom tab bar and touch sizing on small
+  screens.
+- i18n/RTL groundwork (M24, T19): stylesheets swept to CSS logical
+  properties (a guard test pins it); dead dictionary keys are now a
+  test failure (the guard found and removed two on day one).
+- Visual capture harness (T23): scripts/ui-capture.py boots a fresh
+  binary, seeds deterministic content over HTTP, injects the session
+  cookie into headless chromium, asserts each surface's DOM markers,
+  and captures the 14-shot light/dark matrix into ui-shots/. Local-only
+  by budget decision (see AGENTS § Commands).
 - Operator boot-error contract: the operator is a user. Every boot
   failure (config, data dir, timezone, paperless, bind/listen, panic,
   or unclassified) now renders the five-part error contract (WHAT /
@@ -134,6 +185,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (this repo's bespoke flake checks are not modelled by it); the
   hardcoded `webphoneVersion` and the module-check stand-in's
   permissiveness remain accepted exceptions.
+
+### Fixed
+
+- Thread deep links rendered the wrong surface: `GET /messages/{id}` —
+  the URL every thread row pushes to the address bar — always rendered
+  the conversation LIST, so a refresh or shared link lost the open
+  thread (caught by the T23 harness: the thread shots were byte-
+  identical to the messages shots). The deep link now renders the open
+  conversation; unresolvable ids degrade to the list with a
+  gone-notice. Pinned by TestThreadDeepLinkOpensConversation.
+- `config.js` hardcoded `wss://` for the SIP WebSocket, so a bare-HTTP
+  dev boot could never connect the island; the scheme now follows the
+  page protocol (HTTPS deployments unchanged).
+- The committed `/assets/health.css` was stale: it carried zombie
+  classes from earlier builds and missed the `--blur-xs` token. Rebuilt
+  via the new staged, locked-nixpkgs script; a canary check now guards
+  the dark-variant fingerprint.
+- `deadnix` no longer fails on vendored third-party `flake.nix` files
+  (excluded) — a latent red final gate.
 
 ## [2.8.0] - 2026-09-30
 
