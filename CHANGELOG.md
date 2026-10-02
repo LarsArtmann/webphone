@@ -188,6 +188,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A resumed session was silently deleted whenever the SIP WebSocket was
+  unreachable at page load: the boot-resume path treated ANY connect
+  failure as "stored credentials are stale" and dropped the server
+  session — kicking the user out of every tab (messages, fax, all of
+  it) because the phone transport was briefly down. The island now
+  distinguishes a refused REGISTER (stale credentials → drop + login)
+  from a transport failure (keep the session, show the honest offline
+  phone, let the reconnect backoff own recovery; tabs stay usable).
+  Found by the T23 harness: the bare-boot island deleted its session
+  within a second of every page load.
 - Thread deep links rendered the wrong surface: `GET /messages/{id}` —
   the URL every thread row pushes to the address bar — always rendered
   the conversation LIST, so a refresh or shared link lost the open
