@@ -134,6 +134,25 @@ export function setOfflineBanner(visible) {
   els.offlineBanner.hidden = !visible;
 }
 
+// Incoming-call focus mode (M25 A6): while a call rings, the shell dims
+// (app.css rides the root class — the island owns the ringing state)
+// and every banner path funnels through these helpers so the class can
+// never outlive the banner. The dim is visual only: nothing is
+// pointer-blocked, a user mid-task keeps full control.
+export function setIncomingFocusMode(active) {
+  document.documentElement.classList.toggle("wp-incoming-focus", active);
+}
+
+export function showIncomingBanner() {
+  els.incoming.hidden = false;
+  setIncomingFocusMode(true);
+}
+
+export function hideIncomingBanner() {
+  els.incoming.hidden = true;
+  setIncomingFocusMode(false);
+}
+
 export function dialFromUi(number) {
   els.dest.value = number;
   els.dialForm.requestSubmit();

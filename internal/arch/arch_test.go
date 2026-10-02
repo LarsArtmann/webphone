@@ -4,6 +4,7 @@
 package arch
 
 import (
+	"bytes"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"os"
@@ -81,6 +82,49 @@ func TestServicesNeverImportServerOrWeb(t *testing.T) {
 				t.Errorf("internal/%s imports %s — services must never import the server or web layers", suffix, imp)
 			}
 		}
+	}
+}
+
+// TestMustInvokeStaysInTheCompositionRoot pins the DO-1 rule: samber/do
+// (the import and any MustInvoke*/Invoke* resolution) appears ONLY
+// inside internal/app — service packages stay framework-free and
+// cmd/webphone receives a fully built *app.App (AGENTS.md invariant).
+func TestMustInvokeStaysInTheCompositionRoot(t *testing.T) {
+	root := ".."
+	const compositionRoot = "../internal/app/"
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			switch d.Name() {
+			case ".git", "vendor", "node_modules", ".direnv", "result":
+				return filepath.SkipAll
+			}
+			return nil
+		}
+		if !strings.HasSuffix(d.Name(), ".go") {
+			return nil
+		}
+		if path == "../internal/arch/arch_test.go" {
+			return nil // this file quotes the markers themselves
+		}
+		if strings.HasPrefix(filepath.ToSlash(path), compositionRoot) {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		for _, marker := range []string{`"github.com/samber/do/v2"`, "do.MustInvoke"} {
+			if bytes.Contains(data, []byte(marker)) {
+				t.Errorf("%s contains %s — samber/do resolution must stay inside internal/app", path, marker)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

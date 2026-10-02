@@ -18,7 +18,15 @@ import { recordHistory } from "./panels.js";
 import { titleFlashStart, titleFlashStop, notifyIncoming } from "./notify.js";
 import { t } from "./i18n.js";
 import { sessions, state } from "./state.js";
-import { announce, els, log, setOfflineBanner, setRegStatus } from "./ui.js";
+import {
+  announce,
+  els,
+  hideIncomingBanner,
+  log,
+  setOfflineBanner,
+  setRegStatus,
+  showIncomingBanner,
+} from "./ui.js";
 
 let registerer = null;
 let reconnectAttempts = 0;
@@ -268,7 +276,18 @@ async function buildConnection() {
           user: "unknown",
         };
         els.incomingFrom.textContent = from.user || "unknown";
-        els.incoming.hidden = false;
+        showIncomingBanner();
+        // A6 incoming focus: a ringing phone moves focus to Accept —
+        // unless the user is mid-type somewhere (the assertive
+        // announcement already reached them; stealing keystrokes would
+        // be hostile).
+        const active = document.activeElement;
+        const midType =
+          active &&
+          (active.tagName === "INPUT" ||
+            active.tagName === "TEXTAREA" ||
+            active.isContentEditable);
+        if (!midType) els.accept.focus();
         // Assertive announcement (M17 J9): a hidden→visible swap of the
         // banner is invisible to screen readers — the ringing call is
         // the one message allowed to interrupt (role=alert).
@@ -281,7 +300,7 @@ async function buildConnection() {
         titleFlashStart();
         invitation.stateChange.addListener((state2) => {
           if (state2 === SIP.SessionState.Terminated && !els.incoming.hidden) {
-            els.incoming.hidden = true;
+            hideIncomingBanner();
             state.incomingSession = null;
             ringToneStop();
             titleFlashStop();

@@ -1958,3 +1958,23 @@ dialog.wp-lightbox img {
   inset-inline-end: 10px;
   background: var(--surface-2);
 }
+
+/* Service status dots (M24 J10): the boolean Settings rows (phone API,
+ * CRM) carry a glance dot — ok green when wired, muted when not. This
+ * is CONFIG truth, not a live probe: probing upstreams on every panel
+ * render would hammer them for a page users open once. */
+.wp-service-on::before,
+.wp-service-off::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-inline-end: 6px;
+  vertical-align: 1px;
+  background: var(--muted);
+}
+
+.wp-service-on::before {
+  background: var(--ok);
+}

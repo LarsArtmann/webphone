@@ -53,6 +53,7 @@ vm-refresh
 vm-status
 wp-adv-toggle
 wp-advanced
+wp-devtest-btn
 ice-wrap
 ice-panel
 log
