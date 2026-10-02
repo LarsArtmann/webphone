@@ -5,13 +5,14 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-01 (AUDIT). HARVESTED the 2026-10-01 UI/UX, mic-prewarm,
-performance-inventory, verification-plan and nix-review reports into fresh
-rows; REMOVED six DONE rows (setup-bundle adoption, erraudit family adoption,
-the 09-29 nix-review batch, `/version` ldflags, fax→Paperless,
-templ-components) — each now lives in CHANGELOG / FEATURES; un-padded the
-table into readable task entries. Prior sweep 2026-09-29 ran a full
-`**/2026-0*` AUDIT against code/git.
+Last sweep: 2026-10-02 (HARVEST, T18–T23 train close-out). Flipped DONE
+and removed: nix-review batch 2 (golden + version guard + devshell dedupe +
+actionlint + deadnix exclusion), the schema_version gate (T18 migration
+runner landed v2), the AGENTS.md compaction row (file back AT the 377 cap;
+the cap itself is the standing rule), the island boot-language split brain
+(T05) and the ring-silence AudioContext bug (T06), and the persist-the-
+harness row (replaced by the ownership row below). Added: scheduled-sends
+NO-GO, visual-harness ownership. Prior sweep 2026-10-01 (AUDIT).
 
 ## Open tasks
 
@@ -39,6 +40,14 @@ Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway
 
 **Evidence:** 2026-09-19 probe; webphone-side fix `1d53f44`; refusal-422 `6ac8962`; OWNER TRIAGE PACK ready 2026-10-01: command sheet §4 decision tree (unit status → journal grep → the bridge's own actionable cred strings → restart → test SMS; self-send 422 = expected, not a failure)
 
+### Scheduled sends (M21.6): NO-GO on the current gateway seam
+
+**Status:** ⛔ `DECIDED-AGAINST` (gateway-seam dependency; revisit only with a deferred-send seam) · **Priority:** Low · **Effort:** M
+
+Deferred/scheduled message sending was cut from T18 (M21.6): the gateway seam has NO deferred-send concept (loopback sends immediately; the webhook bridge is fire-and-forget to the provider), so a scheduled-send UI would show a state the transport cannot honor — violating the island-honesty contract. Revisit only if the provider/stack grows a deferred-send lane; the snippets seam (M21) already covers the "reply faster" problem it was meant to solve.
+
+**Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g).
+
 ### Gateway honest-Content-Type follow-ups
 
 **Status:** 🟡 `PLANNED` (stack/pbx side only now) · **Priority:** Medium · **Effort:** S
@@ -46,14 +55,6 @@ Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway
 Gateway honest-Content-Type follow-ups (webphone side of `docs/status/archived/2026-09-29_04-32_*` §f): byte-exact part-HEADER-block golden (current golden greps fields individually; a full header-block pin catches reordering) · document the webphone×bridge compat matrix next to the AGENTS gateway-seam bullet (old binary → sniff lane; new → declared lane) · consider a webhook-mode smoke probe (loopback-only today; the webhook lane has zero black-box coverage in this repo). Stack/pbx side (NOT this repo): `ftypqt`→`video/quicktime` sniff fix, stack E2E MMS-outbound coverage, pbx-artmann FEATURES:87 stale sniff text — route via the next stack session/relock
 
 **Evidence:** webphone side DONE `0aab677`: full-body golden `TestProviderFormPartHeaderBlockGolden` (field order, header order, CRLF framing), AGENTS compat matrix, webhook smoke probe DECIDED-AGAINST (golden + bridge contract tests own the shape). Still routed via next stack session: `ftypqt` sniff fix, E2E MMS-outbound, pbx-artmann FEATURES:87 text
-
-### AGENTS.md compaction 498 → ≤377 lines (buildflow cap): move war-story prose to
-
-**Status:** 🟡 `PLANNED` (owner permission gate) · **Priority:** Medium · **Effort:** M
-
-AGENTS.md compaction 498 → ≤377 lines (buildflow cap): move war-story prose to docs/lessons.md, keep rules only — restructures the file every concurrent session depends on, so it needs explicit owner permission + a quiet window (asked 2026-09-29 02:26 §g3, unanswered). Content rule: the next content add pays for itself by removing a line
-
-**Evidence:** 20y-plan T16 carry; buildflow preflight warning; current 498 lines
 
 ### Tooling hygiene batch: markdown-lint posture decision
 
@@ -87,14 +88,6 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 
 **Evidence:** AGENTS erraudit bar + templ-components bullet; re-checked 2026-09-23/24 during the pareto cycle (C22/M22)
 
-### 2026-09-30 review-series deltas (arch 4.4 + data-model, both green-verified):
-
-**Status:** 🟡 `PLANNED` (schema_version gate only remains) · **Priority:** Medium · **Effort:** S-M
-
-2026-09-30 review-series deltas (arch 4.4 + data-model, both green-verified): `gateway.Receipt` gains a `Resolution` enum (immediate/deferred) and `fax.Service` drops the `*gateway.Loopback` type-assert (service.go:136 — carried since the 09-19 review, now filed twice; the assert is the symptom, the missing receipt field is the cause) · `config.Load()` fail-closed typing: `ParseExtension` over every `identities` key + `ParsePhone` over every shared contact (today a typoed key boots green and the lookup silently misses — the config doc comment itself warns; contrast timezone typos which DO fail the boot) · `schema_version` table in store before the first ALTER migration (no altering migration exists yet — gate on its arrival)
-
-**Evidence:** code deltas DONE `0aab677`: Resolution enum + fax receipt branch (Loopback assert dropped, resolution_test.go pins), contacts fail-closed (identities validation pre-existed); schema_version table stays gated on the first ALTER migration. Source: `docs/reviews/2026-09-30_data-model-review.html` + `docs/architecture-understanding/2026-09-30_11-45_architecture-review.html`; 3 of 4 09-19 roadmap items verified resolved (liveness, readiness bounds, sanitizer alignment)
-
 ### internal/server god-package carve
 
 **Status:** 🟡 `PLANNED` (trigger-based, not date-based) · **Priority:** Medium · **Effort:** M
@@ -127,61 +120,37 @@ The 2026-10-01 UI/UX batch changed served markup (skeleton, `#wp-live`, command 
 
 **Evidence:** plan doc (verdict appendix all pending); fed by the 02:54 / 04:07 / 05:26 / 05:27 status reports.
 
-### Ring-silence AudioContext bug
-
-**Status:** 🔴 `TODO` (owner decision) · **Priority:** High · **Effort:** S
-
-Both island `AudioContext`s (`audio.js`) are created outside a user gesture → Chrome leaves them `suspended` → an incoming ring tone can be silent (title flash + notification still fire). Fix: create/resume the context inside the accept/gesture handler; pin ctx-creation order with a node:test; consider sharing ONE context for ringback + ring tone. Diagnosis is done; implementation awaits the owner's go (tied to "was your ring actually silent?").
-
-**Evidence:** `docs/status/2026-10-01_02-54_*` b3 + 04:07 §f 4; `audio.js`.
-
-### Island boot language split-brain fix
-
-**Status:** 🔴 `TODO` · **Priority:** High · **Effort:** S
-
-The island boots language as `localStorage → navigator.language` and never reads the `wp-lang` cookie the server uses (`i18n.js`), then overwrites `document.documentElement.lang` at runtime — so a cookie≠navigator user gets German tabs under an English phone and screen readers announce with the wrong phonemes. Fix boot order to cookie → localStorage → navigator; pin with an island i18n test (cookie=de + empty localStorage → German) + `TestShellHtmlLangFollowsSessionLang` (owed from the typography train).
-
-**Evidence:** `docs/status/2026-10-01_01-21_visual-verification-loop.md` headline + §f 1–2; `i18n.js` vs `pages.go`.
-
 ### Mic pre-warm live verification + gates
 
-**Status:** 🟡 `PARTIALLY DONE` (code green, reality-unverified) · **Priority:** High · **Effort:** S
+**Status:** 🟡 `PARTIALLY DONE` (code + gates green; live ritual owner) · **Priority:** Medium · **Effort:** S
 
-`mic.js` pre-warm (speak ASAP after accept) is code-complete and unit-pinned (island suite green) but no real call has exercised it, buildflow never ran, no stack E2E, no smoke boot. Retire in one live-call ritual (accept→speak sub-second, mic indicator lights at ring, warm release on reject/missed), then buildflow + stack E2E + smoke. Add pins: warm survives rebuild, dial-after-missed consumes the stale stream, second-onInvite guard.
+`mic.js` pre-warm (speak ASAP after accept) shipped with T07 (2026-10-01, code + island pins) and the T11 perf train added the mic-indicator timing baseline; suite/smoke green. Remaining: ONE live-call ritual on the stack (accept→speak sub-second, indicator at ring, warm release on reject/missed) — owner terminal.
 
-**Evidence:** `docs/status/2026-10-01_04-07_mic-prewarm-accept-latency-train-status.md` §b/§f; commits `c349950`/`4266b8d`/`e26d1aa`.
+**Evidence:** `docs/status/2026-10-01_04-07_mic-prewarm-accept-latency-train-status.md` §b/§f; T11 timing baseline `scripts/perf-baseline.py`.
 
 ### Island-honesty train follow-ups
 
-**Status:** 🟡 `PARTIALLY DONE` · **Priority:** Medium · **Effort:** S-M
+**Status:** 🟡 `PARTIALLY DONE` (webphone side done; stack lane remains) · **Priority:** Medium · **Effort:** S
 
-The hold-state machine + `#offline-banner` shipped (`cc98c2e`, pushed). Left: split `holdFailed`/`resumeFailed` copy per direction; clear `holdPending` on Terminated + the watchdog; a visual screenshot pass; root-cause the VM-test timeout; `nix run .#vulnix`; aarch64 ELF verify; dispatch the 3 errcheck findings; the browser E2E is blocked by a stack-side FreeSWITCH `mod_enum` build break (repair that first, then run).
+Hold machine + `#offline-banner` shipped (`cc98c2e`); T15 landed the pending-copy split, Terminated/watchdog `holdPending` clearing, and the T23 visual pass covers the screenshot leg; vulnix (zero real advisories) + aarch64 exit-green done at the T22 close-out (ELF-byte verify owed at each final-gate cross-build). Remaining: the stack browser E2E the T11–T19 served-markup delta owes (blocked by the stack FreeSWITCH `mod_enum` build break — repair that first), then the runbook obligation closes.
 
-**Evidence:** `docs/status/2026-10-01_05-26_island-honesty-hold-offline-banner-train-status.md` §b/§f; commit `cc98c2e`.
-
-### Nix-review follow-ups batch 2
-
-**Status:** 🟡 `PLANNED` · **Priority:** Medium · **Effort:** S-M
-
-From the 05:56 + 05:26 nix-review reports: commit the module-output golden (Caddy vhost + both backup scripts, full-text — catches reordering/whitespace the substring checks miss) driving a new check entry; a release-time `webphoneVersion`↔`git describe` guard in release.sh (document the bump-before-tag false-positive edge); run the KVM backup VM test + backup-drill once post-split (the eval diff proved text equality, not that the VM boots it); `actionlint` over `.github/workflows/ci.yml`; dedupe the `devShells.ci`/`default` Go env; record the accepted exceptions (hardcoded version, module-check stand-in permissiveness) + the declined `go-standard` migration decision.
-
-**Evidence:** `docs/status/2026-10-01_05-56_nix-review-fixes-train-status.md` §b/§f; `docs/status/2026-10-01_05-26_nix-file-review-session-status.md` §f.
+**Evidence:** `docs/status/2026-10-01_05-26_island-honesty-hold-offline-banner-train-status.md` §b/§f; T15/T22/T23 session reports 2026-10-02.
 
 ### samber/do composition-root + dashboard train follow-ups
 
-**Status:** 🟡 `PARTIALLY DONE` · **Priority:** Medium · **Effort:** S-M
+**Status:** 🟡 `PARTIALLY DONE` (webphone side done; two owner calls) · **Priority:** Medium · **Effort:** S
 
-From the 02:12 train: commit the staged `health.css` + its input.css/build script (dark-variant recipe currently /tmp-only) and wire the CI rebuild; add `family_test.go` pins for the new error codes; investigate the local-main-behind-remote divergence (`17684fc` vs `241b908`); decide the stack `/health` exposure policy (remote_ip vs PublicMode vs basic auth); aarch64 ELF verify; `nix run .#vulnix`; consider folding v2.9.0.
+health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked-nixpkgs + staged build — the artifact sat inside its own @source root) + `checks.health-css` canary landed; the 2026-10-02 rebuild fixed a genuinely stale artifact (zombie classes, missing `--blur-xs`). Family pins landed (T22: `store.thread_flag`, `store.count_archived`, snippets). The local-behind-remote divergence is LIVE daemon behavior (observed twice: named commit rewritten 2026-10-02, same content new hashes — never verify via push logs, only `git ls-remote`). Remaining: stack `/health` exposure policy (remote_ip vs PublicMode vs basic auth) + the v2.9.0 fold decision (default: one release, owner §g2) — both owner.
 
-**Evidence:** `docs/status/2026-10-01_02-12_samber-do-composition-root-health-dashboard-train.md` §b/§f; commit `0816f15`.
+**Evidence:** `docs/status/2026-10-01_02-12_samber-do-composition-root-health-dashboard-train.md`; T21/T22 session report 2026-10-02 11:43 §a; T18–T23 session report 2026-10-02 11:41 §d.
 
-### Visual verification gate — persist the harness
+### Visual harness: shot disposition + optional vision cross-check
 
-**Status:** 🟡 `PLANNED` · **Priority:** Medium · **Effort:** M
+**Status:** 🟡 `PARTIALLY DONE` (harness shipped; disposition is owner) · **Priority:** Low · **Effort:** S
 
-The chromedriver capture harness found the language split brain in 4 shots but lives in /tmp. Persist it as `scripts/ui-capture.py`, finish the 12-shot matrix (messages, bubbles, keypad/log mono, settings, history, 2× mobile), review, and make "capture + look" a required step of every CSS/markup train (AGENTS note). The optional vision-CLI cross-check needs a provider/key decision.
+`scripts/ui-capture.py` is the persisted harness (T23): config-file boot with the fronted CSRF shape, HTTP seeding (multipart sends, meta-CSRF → `/api/session` → rotated token), session-cookie INJECTION into chromium (the island's login gates on the SIP WS a bare boot cannot serve), per-surface DOM assertions before every shot, and the 14-shot matrix (7 surfaces × light/dark) into `ui-shots/`. LOCAL-ONLY by budget decision — see the AGENTS command entry. Remaining (owner §g1): eyeball the current matrix; decide per-release vs per-train persistence (default: per release); the optional vision-CLI cross-check needs a provider/key decision.
 
-**Evidence:** `docs/status/2026-10-01_01-21_visual-verification-loop.md` §e/§f 3–8.
+**Evidence:** T23 in `docs/status/2026-10-02_11-41_t18-t23-train-session7-status.md` §a/§b; run recipe in AGENTS § Commands.
 
 ### Cross-repo obligations (stack / pbx-artmann)
 
