@@ -24,7 +24,7 @@ import {
 } from "./panels.js";
 import { titleFlashStop } from "./notify.js";
 import { sessions, state } from "./state.js";
-import { announce, els, log, showDialError } from "./ui.js";
+import { announce, els, hideIncomingBanner, log, showDialError } from "./ui.js";
 
 function outgoingCount() {
   let n = 0;
@@ -644,7 +644,7 @@ export function answerIncoming() {
   // The accept click is a user gesture — bring the shared AudioContext
   // out of Chrome's suspended state so call audio starts immediately.
   resumeAudio().catch(() => {});
-  els.incoming.hidden = true;
+  hideIncomingBanner();
   state.incomingSession = null;
   ringToneStop();
   titleFlashStop();
@@ -668,7 +668,7 @@ export function rejectIncoming() {
   // Gesture: unlock the shared context for every later tone.
   resumeAudio().catch(() => {});
   state.incomingSession.reject();
-  els.incoming.hidden = true;
+  hideIncomingBanner();
   state.incomingSession = null;
   ringToneStop();
   titleFlashStop();

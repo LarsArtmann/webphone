@@ -388,6 +388,51 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
     return 1 if c.failures else 0
 
 
+def boot_failure_scenario(binary: str, workdir: str, port: int) -> int:
+    """A designed boot failure renders the five-part operator contract.
+
+    The operator is a user (ruling 2026-10-02): every boot failure owes
+    WHAT/REASSURE/WHY/FIX/ESCAPE on the journal surface, version-stamped
+    and class-tagged, with a documented exit code (1 = designed). The
+    scenario parks the data dir under a REGULAR FILE, so MkdirAll fails
+    with ENOTDIR in the storage phase (app.New's first failure).
+    """
+    c = Check()
+    blocker = pathlib.Path(workdir) / "not-a-dir"
+    blocker.write_text("blocks mkdir")
+    env = dict(os.environ)
+    env["WEBPHONE_ADDR"] = f"127.0.0.1:{port}"
+    env["WEBPHONE_DATA_DIR"] = str(blocker / "data")
+    try:
+        proc = subprocess.run(
+            [binary], env=env, capture_output=True, text=True, timeout=TIMEOUT
+        )
+        code, out = proc.returncode, proc.stdout + proc.stderr
+    except subprocess.TimeoutExpired:
+        code, out = -1, "boot-failure probe timed out: binary did not exit"
+    c.ok(
+        "boot failure: designed error exits 1",
+        code == 1,
+        f"exit {code} (taxonomy: 1 designed, 2 panic)",
+    )
+    for marker in ("WHAT:", "REASSURE:", "WHY:", "FIX:", "ESCAPE:"):
+        c.ok(f"boot failure: contract marker {marker}", marker in out, "missing")
+    c.ok(
+        "boot failure: storage class named",
+        "class=data-dir" in out,
+        "header missing class=data-dir",
+    )
+    c.ok(
+        "boot failure: version stamped",
+        re.search(r"version=\S+", out) is not None,
+        "no version= in the report header",
+    )
+    print(f"boot failure scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -947,6 +992,7 @@ def main() -> int:
             Smoke(base), boot_configured, expect_version=args.expect_version
         )
         rc = max(rc, restart_scenario(binary, workdir, port, env))
+        rc = max(rc, boot_failure_scenario(binary, workdir, free_port()))
         return rc
     finally:
         server.terminate()

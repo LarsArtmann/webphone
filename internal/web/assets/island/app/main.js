@@ -46,6 +46,7 @@ import {
   toastKindFor,
 } from "./ui.js";
 import { initAudioOutput } from "./audioout.js";
+import { initDeviceCheck } from "./selftest.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -257,6 +258,7 @@ initDialTypeahead();
 initDialHint();
 initDialWarm();
 initAdvancedToggle();
+initDeviceCheck();
 relabelTypeahead(t("typeaheadLabel"));
 initAudioOutput();
 

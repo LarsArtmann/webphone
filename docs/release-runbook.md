@@ -88,7 +88,9 @@ re-run the formatter if it moved styled files.
     the open-thread head toggles behind `#wp-thread-head`, the snippet
     chips/picker in the reply composer, the Settings snippets section,
     and the `data-lightbox` image-attachment trigger + shell.js
-    `#wp-lightbox` dialog). The
+    `#wp-lightbox` dialog), and the T19 M24/M25 surfaces (Settings CRM
+    row + service dots, the `wp-devtest-btn` pre-call device check in
+    phone.templ). The
     next release tag
     MUST run step 7's browser E2E against the new lock; no exemption.
 - **Load precondition**: `release.sh` step 7 refuses to start the

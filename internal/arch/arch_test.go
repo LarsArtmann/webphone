@@ -91,7 +91,7 @@ func TestServicesNeverImportServerOrWeb(t *testing.T) {
 // cmd/webphone receives a fully built *app.App (AGENTS.md invariant).
 func TestMustInvokeStaysInTheCompositionRoot(t *testing.T) {
 	root := ".."
-	const compositionRoot = "../internal/app/"
+	const compositionRoot = "../app/"
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -106,7 +106,7 @@ func TestMustInvokeStaysInTheCompositionRoot(t *testing.T) {
 		if !strings.HasSuffix(d.Name(), ".go") {
 			return nil
 		}
-		if path == "../internal/arch/arch_test.go" {
+		if path == "../arch/arch_test.go" {
 			return nil // this file quotes the markers themselves
 		}
 		if strings.HasPrefix(filepath.ToSlash(path), compositionRoot) {

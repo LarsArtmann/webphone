@@ -113,6 +113,10 @@ templ PhoneIsland() {
 					<button id="wp-adv-toggle" class="ghost small" type="button" aria-expanded="true" aria-controls="wp-advanced" data-i18n-title="advancedSection">⚙</button>
 				</div>
 				<div id="wp-advanced">
+					// Pre-call device check (M25 A10): proves the mic and
+					// counts the speakers before the first call; verdicts
+					// land in the event log below.
+					<button id="wp-devtest-btn" class="ghost small" type="button" data-i18n="deviceTest">Test audio devices</button>
 					<details class="log-wrap" id="ice-wrap" hidden>
 						<summary data-i18n="connectionQuality">Connection quality</summary>
 						<div id="ice-panel" class="ice">—</div>

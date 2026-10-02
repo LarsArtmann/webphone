@@ -558,3 +558,58 @@ test("a watchdog rebuild keeps the warm mic", async () => {
   invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
   state.incomingSession = null;
 });
+
+// M25 A6 incoming focus mode: the ring dims the shell (root class) and
+// moves focus to Accept; a user mid-type keeps their keystrokes; every
+// banner end (caller gave up) clears the dim.
+test("a ringing call dims the shell and focuses Accept", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  stubMic();
+  const connection = await loadConnection("focus-mode");
+  doc.activeElement = null;
+  await connection.connect("1001", "pw");
+
+  const invitation = incomingInvitation();
+  doc.getElementById("accept-btn").focused = false;
+  agents.at(-1).delegate.onInvite(invitation);
+  await flushes();
+  assert.ok(
+    doc.documentElement.classList.contains("wp-incoming-focus"),
+    "the root focus-mode class is set while ringing",
+  );
+  assert.equal(
+    doc.getElementById("accept-btn").focused,
+    true,
+    "focus moves to Accept when the user was not typing",
+  );
+
+  invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
+  assert.ok(
+    !doc.documentElement.classList.contains("wp-incoming-focus"),
+    "the caller giving up clears the dim",
+  );
+  doc.activeElement = null;
+});
+
+test("a user mid-type keeps their focus when a call rings", async () => {
+  resetStubs();
+  micModule.releaseWarmMic();
+  state.incomingSession = null;
+  stubMic();
+  const connection = await loadConnection("focus-typing");
+  doc.activeElement = { tagName: "INPUT" };
+  doc.getElementById("accept-btn").focused = false;
+  await connection.connect("1001", "pw");
+
+  agents.at(-1).delegate.onInvite(incomingInvitation());
+  await flushes();
+  assert.ok(doc.documentElement.classList.contains("wp-incoming-focus"));
+  assert.equal(
+    doc.getElementById("accept-btn").focused,
+    false,
+    "Accept does not steal focus from a typing user",
+  );
+  doc.activeElement = null;
+});
