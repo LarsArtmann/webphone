@@ -76,8 +76,19 @@ templ FaxRow(job domain.FaxJob, names map[string]string, lang Lang) {
 					<span class="wp-error" role="alert">{ job.Error }</span>
 				}
 			</span>
+			if job.Direction == domain.FaxOutbound {
+				@FaxSteps(job, lang)
+			}
 		</span>
 		<span class="wp-row-actions">
+			if job.Direction == domain.FaxOutbound && job.Status == domain.FaxFailed {
+				<button
+					class="wp-mini"
+					hx-post={ "/fax/" + job.ID.String() + "/resend" }
+					hx-target="#tab-content"
+					hx-swap="innerHTML"
+				>{ T(lang, "fax.resend") }</button>
+			}
 			if job.DocumentPath != "" {
 				<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(lang, "fax.pdf") }</a>
 			}
@@ -100,18 +111,69 @@ func faxDirLabel(job domain.FaxJob, lang Lang) string {
 }
 
 templ FaxStatusBadge(job domain.FaxJob, lang Lang) {
-	switch job.Status {
+	<span class={ "wp-status", faxStatusClass(job.Status) }>{ faxStatusText(job.Status, lang) }</span>
+}
+
+// FaxSteps renders the outbound progress timeline (queued → sending →
+// delivered, or the failed stop). Decoration only (aria-hidden): the
+// status badge beside it carries the textual truth in the session's
+// language; the title adds the last transition time for pointer users.
+templ FaxSteps(job domain.FaxJob, lang Lang) {
+	<span
+		class={ "wp-fax-steps", "wp-steps-" + faxStepState(job.Status) }
+		aria-hidden="true"
+		title={ faxStatusText(job.Status, lang) + " · " + formatStamp(lang, job.UpdatedAt) }
+	>
+		<span class="wp-step"></span>
+		<span class="wp-step"></span>
+		<span class="wp-step"></span>
+	</span>
+}
+
+// faxStatusText is the one home of the status→copy mapping (badge and
+// steps title share it).
+func faxStatusText(status domain.FaxStatus, lang Lang) string {
+	switch status {
 	case domain.FaxQueued:
-		<span class="wp-status wp-status-queued">{ T(lang, "status.queued") }</span>
+		return T(lang, "status.queued")
 	case domain.FaxSending:
-		<span class="wp-status wp-status-queued">{ T(lang, "status.sending") }</span>
+		return T(lang, "status.sending")
 	case domain.FaxTransmitted:
-		<span class="wp-status wp-status-sent">{ T(lang, "status.transmitted") }</span>
+		return T(lang, "status.transmitted")
 	case domain.FaxReceived:
-		<span class="wp-status wp-status-sent">{ T(lang, "status.received") }</span>
+		return T(lang, "status.received")
 	case domain.FaxFailed:
-		<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
+		return T(lang, "status.failed")
 	default:
-		<span class="wp-status">{ string(job.Status) }</span>
+		return string(status)
+	}
+}
+
+func faxStatusClass(status domain.FaxStatus) string {
+	switch status {
+	case domain.FaxQueued, domain.FaxSending:
+		return "wp-status-queued"
+	case domain.FaxTransmitted, domain.FaxReceived:
+		return "wp-status-sent"
+	case domain.FaxFailed:
+		return "wp-status-failed"
+	default:
+		return ""
+	}
+}
+
+// faxStepState maps a status onto the timeline position: 1 = queued,
+// 2 = sending or failed (failure strikes in flight), done = delivered.
+// Inbound rows never render steps.
+func faxStepState(status domain.FaxStatus) string {
+	switch status {
+	case domain.FaxQueued:
+		return "1"
+	case domain.FaxSending, domain.FaxFailed:
+		return "2"
+	case domain.FaxTransmitted:
+		return "done"
+	default:
+		return "1"
 	}
 }

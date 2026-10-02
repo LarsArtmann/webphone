@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -61,13 +62,19 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 	// Stable ids are the idiomorph persistence contract: the panel re-fetch
 	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
 	// any element whose id exists in BOTH trees morphing it in place — so a
-	// row that moves (new voicemail lands on top) and an <audio> element
+	// row that moves (new voicemail lands on top) and its <audio> element
 	// mid-playback survive the swap instead of being re-created. This is
 	// the im-preserve audit's one stateful node across all morph surfaces
 	// (thread/fax rows and transcript bubbles are static content — a
 	// re-created row there costs nothing; focus is covered by idiomorph's
 	// restoreFocus, which equally needs an id to restore to).
-	<article class={ "wp-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
+	//
+	// The player chrome (shell.js §4) drives the audio element without
+	// native controls: play/pause button, waveform scrubber, speed toggle.
+	// When waveform decoding is unavailable (no WebAudio/fetch/canvas) the
+	// shell falls back to the native controls — the audio element itself is
+	// the fallback surface, which is why it stays in the DOM either way.
+	<article class={ "wp-row wp-vm-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
 		<span class="wp-thread-text">
 			<strong class="wp-thread-remote">{ vmCaller(msg, names, lang) }</strong>
 			<span class="wp-muted">{ vmWhen(msg.Created, lang) } · { fmtInt(msg.Seconds) }s</span>
@@ -83,9 +90,6 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 					title={ T(lang, "contacts.saveAs") }
 				>☆</button>
 			}
-			if msg.AudioURL != "" {
-				<audio class="wp-audio" controls preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
-			}
 			<button
 				class="wp-mini wp-danger"
 				hx-post={ "/voicemail/delete?uuid=" + msg.UUID }
@@ -94,6 +98,31 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 				hx-confirm={ T(lang, "vm.deleteConfirm") }
 			>{ T(lang, "vm.delete") }</button>
 		</span>
+		if msg.AudioURL != "" {
+			<span class="wp-vm-player">
+				<button
+					class="wp-mini wp-vm-play"
+					type="button"
+					data-vm-play={ msg.UUID }
+					aria-label={ T(lang, "vm.play") }
+					data-label-play={ T(lang, "vm.play") }
+					data-label-pause={ T(lang, "vm.pause") }
+				>▶</button>
+				<canvas
+					class="wp-vm-wave"
+					id={ "vm-wave-" + msg.UUID }
+					role="slider"
+					tabindex="0"
+					aria-label={ T(lang, "vm.scrub") }
+					aria-valuemin="0"
+					aria-valuemax={ fmtInt(msg.Seconds) }
+					aria-valuenow="0"
+				></canvas>
+				<button class="wp-mini wp-vm-speed" type="button" data-vm-speed={ msg.UUID } title={ T(lang, "vm.speed") }>1×</button>
+				<span class="wp-vm-time" id={ "vm-time-" + msg.UUID }>0:00 / { vmClock(msg.Seconds) }</span>
+				<audio class="wp-audio" preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
+			</span>
+		}
 	</article>
 }
 
@@ -114,4 +143,14 @@ func vmCaller(msg pbx.VoicemailMessage, names map[string]string, lang Lang) stri
 
 func vmWhen(createdUnix int64, lang Lang) string {
 	return formatStamp(lang, time.Unix(createdUnix, 0))
+}
+
+// vmClock renders a duration as m:ss — the same shape shell.js renders
+// client-side for the running position, so the two halves of the player
+// line never disagree.
+func vmClock(seconds int) string {
+	if seconds < 0 {
+		seconds = 0
+	}
+	return fmt.Sprintf("%d:%02d", seconds/60, seconds%60)
 }
