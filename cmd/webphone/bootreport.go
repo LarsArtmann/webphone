@@ -232,7 +232,7 @@ var (
 func reportBootFailure(err error) {
 	class := classifyBootError(err)
 	slog.Error("webphone boot failed", "class", class.String(), "error", err.Error())
-	fmt.Fprintf(bootOut, "%s", renderBootFailure(bootFailure{class: class, cause: err.Error()}, bootVersion()))
+	_, _ = fmt.Fprintf(bootOut, "%s", renderBootFailure(bootFailure{class: class, cause: err.Error()}, bootVersion()))
 	bootExit(exitDesignedBootFailure)
 }
 
@@ -250,7 +250,7 @@ func recoverBootPanic() {
 func reportBootPanic(panicValue any) {
 	cause := fmt.Sprint(panicValue)
 	slog.Error("webphone boot panicked", "panic", cause)
-	fmt.Fprintf(bootOut, "%s", renderBootFailure(bootFailure{class: bootPanicMiswire, cause: cause}, bootVersion()))
-	fmt.Fprintf(bootOut, "\n%s\n%s", traceMarker, debug.Stack())
+	_, _ = fmt.Fprintf(bootOut, "%s", renderBootFailure(bootFailure{class: bootPanicMiswire, cause: cause}, bootVersion()))
+	_, _ = fmt.Fprintf(bootOut, "\n%s\n%s", traceMarker, debug.Stack())
 	bootExit(exitPanicBootFailure)
 }
