@@ -113,4 +113,20 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 		errorfamilytest.AssertCode(t, err, "store.snippet_delete")
 	}
+
+	// Thread organization (M22, T18): the flag toggle + archived count
+	// joined later than the file's original pins; same closed-db posture.
+	if err := messages.SetThreadFlag(ctx, owner, domain.GenerateThreadID(), store.FlagPinned, true); err == nil {
+		t.Fatal("SetThreadFlag on closed db: want error")
+	} else {
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "store.thread_flag")
+	}
+
+	if _, err := messages.CountArchived(ctx, owner); err == nil {
+		t.Fatal("CountArchived on closed db: want error")
+	} else {
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "store.count_archived")
+	}
 }

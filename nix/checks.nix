@@ -127,6 +127,36 @@
               cd ${self}
               statix check -o errfmt . 2>&1 | tee $out
             '';
+
+        # The scoped dashboard stylesheet is a COMMITTED artifact: this
+        # check rebuilds it with the pinned tailwindcss v4 (same recipe
+        # as scripts/build-health-css.sh) and fails on drift — a stale
+        # artifact ships styles that no longer match the dashboard's
+        # markup. The canary half: the dark custom variant must survive
+        # (v3 or a mis-scanned build silently drops `:where(.dark`).
+        health-css =
+          pkgs.runCommand "health-css-check"
+            {
+              nativeBuildInputs = [ pkgs.tailwindcss_4 ];
+              meta.description = "dashboard stylesheet rebuilds byte-identically";
+            }
+            ''
+              cd ${self}
+              tailwindcss \
+                -i internal/web/assets/health.css.input \
+                -o $out.css >/dev/null
+              if ! grep -q ":where(.dark" "$out.css"; then
+                echo "health-css canary FAILED: the dark custom variant is gone" >&2
+                exit 1
+              fi
+              if ! cmp -s "$out.css" internal/web/assets/health.css; then
+                echo "health-css DRIFT: internal/web/assets/health.css does not match a fresh build." >&2
+                echo "Rebuild with scripts/build-health-css.sh and commit the diff." >&2
+                diff <(head -c 2000 internal/web/assets/health.css) <(head -c 2000 "$out.css") >&2 || true
+                exit 1
+              fi
+              echo "health-css: rebuild matches the committed artifact" > $out
+            '';
         deadnix =
           pkgs.runCommand "deadnix-check"
             {
@@ -135,7 +165,11 @@
             }
             ''
               cd ${self}
-              deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
+              # --exclude vendor: the vendored dependencies ship upstream
+              # flake.nix files (templ, tailwind-merge-go) whose unused
+              # overlay params we neither own nor fix — they are frozen
+              # third-party sources (nix-review batch 2, 2026-10-02).
+              deadnix --fail --no-lambda-pattern-names --exclude ./vendor . 2>&1 | tee $out
             '';
 
         # no-undef over the SIP island modules: a call to an undefined

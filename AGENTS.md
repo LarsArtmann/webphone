@@ -105,7 +105,10 @@ re-run it after any markup change (release-runbook obligation).
 - **Composition root `internal/app`** (samber/do v2): ONE container owns
   object lifetime; `cmd/webphone` owns process concerns. The injector lives
   ONLY in `internal/app` (service packages stay framework-free; lifecycle
-  conformance asserted adapter-side in app.go). Critical pair registers
+  conformance asserted adapter-side in app.go). `MustInvoke*` stays
+  composition-root-ONLY by doctrine (fail-fast miswires, DO-1; arch-test
+  enforced); `App.Start` resolves via `InvokeNamed`+`wrapf` (de-panicked
+  2026-10-02). Critical pair registers
   NAMED (`sqlite`, `blob-dir` — the probe's critical-service contract);
   both + the handler are EAGERLY invoked in `New`; the probe is built ONCE
   and threaded to server.Deps + the dashboard (never registered in the
@@ -240,7 +243,10 @@ re-run it after any markup change (release-runbook obligation).
 Full table: [docs/error-contract.md](docs/error-contract.md)
 (cross-documented with the stack runbook § "Webphone error contract" — keep
 both in sync). Every error path lands in at least one VISIBLE surface;
-shell copy stays ENGLISH (D3, 2026-09-20), island copy en/de. BDD posture:
+shell copy stays ENGLISH (D3, 2026-09-20), island copy en/de. Boot
+failures render the 5-part operator contract on the journal
+(`cmd/webphone/bootreport.go`; exit 1 designed / 2 panic, 2026-10-02):
+copy + pins in error-contract.md § "Boot surface". BDD posture:
 Ginkgo for state machines (session suites), table-driven Go tests where
 clearer, island `node:test` specs; no Ginkgo ports of pinned paths.
 
