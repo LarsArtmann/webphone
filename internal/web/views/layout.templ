@@ -155,7 +155,7 @@ templ NavLinks(props ShellProps) {
 				<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
 			}
 			if tab == TabVoicemail && props.NewVoicemail > 0 {
-				<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
+				<span class="wp-nav-badge" id="wp-nav-vm-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
 			}
 		</a>
 	}

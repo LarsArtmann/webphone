@@ -663,6 +663,323 @@
     document.addEventListener("htmx:responseError", hideSkeleton);
     document.addEventListener("htmx:sendError", hideSkeleton);
 
+    // 3i. Voicemail player chrome (M13 C1–C3/C9/C10): each voicemail row
+    //     ships a controls-free <audio> plus custom chrome (play button,
+    //     waveform canvas, speed toggle, time readout). This section is
+    //     the chrome's engine — delegated at document level so tab swaps
+    //     never need re-wiring; per-audio listeners attach lazily on
+    //     first interaction. The audio element is the single source of
+    //     truth (idiomorph keeps it alive across panel morphs by id), and
+    //     when waveform decoding is impossible (no WebAudio/fetch) the
+    //     honest fallback hands playback back to the browser's native
+    //     controls instead of a dead scrubber.
+    var vmPeaksCache = new Map(); // uuid -> peak array (48 bars)
+    var vmWired = new WeakSet(); // audio elements with listeners attached
+    var vmActiveAudio = null; // single-active-player invariant
+    var vmAudioContext = null; // browsers cap contexts — one per page, lazy
+    var vmFallbackToasted = false;
+
+    var VM_BARS = 48;
+    var VM_SPEED_LADDER = [1, 1.5, 2, 0.5];
+
+    // vmPeaks reduces decoded PCM (−1..1) to one normalized max-abs peak
+    // per bar. Pure and unit-tested: empty input renders silence, and a
+    // bar whose sample slice is empty (more bars than samples) carries
+    // its neighbor's value so short messages still fill the width.
+    var vmPeaks = function (samples, bars) {
+      var peaks = new Array(bars).fill(0);
+      if (!samples || samples.length === 0) return peaks;
+      var step = samples.length / bars;
+      for (var b = 0; b < bars; b++) {
+        var start = Math.floor(b * step);
+        var end = Math.min(samples.length, Math.floor((b + 1) * step));
+        if (end <= start) {
+          peaks[b] = b > 0 ? peaks[b - 1] : 0;
+          continue;
+        }
+        var max = 0;
+        for (var i = start; i < end; i++) {
+          var v = Math.abs(samples[i]);
+          if (v > max) max = v;
+        }
+        peaks[b] = max;
+      }
+      return peaks;
+    };
+
+    // vmClock mirrors the server's m:ss shape (vmClock in voicemail.templ)
+    // so the running readout never disagrees with the initial render.
+    var vmClock = function (seconds) {
+      if (!isFinite(seconds) || seconds < 0) seconds = 0;
+      var s = Math.floor(seconds);
+      var mm = Math.floor(s / 60);
+      var ss = s % 60;
+      return mm + ":" + (ss < 10 ? "0" : "") + ss;
+    };
+
+    var vmRowOf = function (el) {
+      return el && el.closest ? el.closest(".wp-vm-row") : null;
+    };
+
+    var vmToken = function (canvas, name, fallback) {
+      if (typeof getComputedStyle !== "function") return fallback;
+      var value = getComputedStyle(canvas).getPropertyValue(name);
+      return value && value.trim() ? value.trim() : fallback;
+    };
+
+    var vmDraw = function (canvas, peaks, progress) {
+      if (!canvas || !canvas.getContext) return;
+      var ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      var w = canvas.width || 300;
+      var h = canvas.height || 28;
+      ctx.clearRect(0, 0, w, h);
+      var bars = peaks.length;
+      if (!bars) return;
+      var gap = 1;
+      var bw = Math.max(1, Math.floor((w - gap * (bars - 1)) / bars));
+      var playedColor = vmToken(canvas, "--accent-strong", "#43c79f");
+      var restColor = vmToken(canvas, "--muted", "#8fa1aa");
+      for (var i = 0; i < bars; i++) {
+        var bh = Math.max(2, Math.round(peaks[i] * (h - 2)));
+        var x = i * (bw + gap);
+        var y = (h - bh) / 2;
+        ctx.fillStyle = i / bars <= progress ? playedColor : restColor;
+        ctx.fillRect(x, y, bw, bh);
+      }
+    };
+
+    // vmClearUnread (C9): the row's unread styling drops on first play,
+    // and the nav badge count follows (the server re-renders the real
+    // counts on the next nudge — this is the same optimistic shape the
+    // mark-read path uses, grounded in the user's own play action).
+    var vmClearUnread = function (row) {
+      if (!row || !row.classList || !row.classList.contains("wp-unread")) {
+        return;
+      }
+      row.classList.remove("wp-unread");
+      var badge = document.getElementById("wp-nav-vm-badge");
+      if (!badge) return;
+      var count = parseInt(badge.textContent, 10);
+      if (isNaN(count) || count <= 1) {
+        badge.hidden = true;
+      } else {
+        badge.textContent = String(count - 1);
+      }
+    };
+
+    var vmSetPlaying = function (uuid, audio, playing) {
+      var row = vmRowOf(audio);
+      if (row && row.classList) {
+        if (playing) row.classList.add("wp-playing");
+        else row.classList.remove("wp-playing");
+      }
+      var btn = document.getElementById("vm-play-" + uuid);
+      if (btn) {
+        btn.textContent = playing ? "⏸" : "▶";
+        var label = btn.getAttribute(
+          playing ? "data-label-pause" : "data-label-play",
+        );
+        if (label) btn.setAttribute("aria-label", label);
+      }
+      if (playing) vmClearUnread(row);
+    };
+
+    var vmPaint = function (uuid, audio) {
+      var duration = isFinite(audio.duration) ? audio.duration : 0;
+      var current = isFinite(audio.currentTime) ? audio.currentTime : 0;
+      var progress = duration > 0 ? current / duration : 0;
+      var time = document.getElementById("vm-time-" + uuid);
+      if (time) {
+        time.textContent = vmClock(current) + " / " + vmClock(duration);
+      }
+      var canvas = document.getElementById("vm-wave-" + uuid);
+      if (canvas) {
+        canvas.setAttribute("aria-valuenow", String(Math.floor(current)));
+        var peaks = vmPeaksCache.get(uuid);
+        if (peaks) vmDraw(canvas, peaks, progress);
+      }
+    };
+
+    var vmWire = function (audio, uuid) {
+      if (vmWired.has(audio)) return;
+      vmWired.add(audio);
+      audio.addEventListener("play", function () {
+        vmSetPlaying(uuid, audio, true);
+      });
+      audio.addEventListener("pause", function () {
+        vmSetPlaying(uuid, audio, false);
+      });
+      audio.addEventListener("ended", function () {
+        vmSetPlaying(uuid, audio, false);
+        vmPaint(uuid, audio);
+      });
+      audio.addEventListener("timeupdate", function () {
+        vmPaint(uuid, audio);
+        // Self-heal (C3): a panel morph re-renders the row from server
+        // truth and can wipe the playing class mid-playback; the audio
+        // still playing IS the truth, so the ~4 Hz repaint re-asserts it.
+        if (!audio.paused) vmSetPlaying(uuid, audio, true);
+      });
+    };
+
+    var vmFallback = function (uuid, audio) {
+      // Honest degradation (C1): without WebAudio there is no waveform;
+      // the browser's native controls take over so playback still works.
+      if (audio) audio.controls = true;
+      ["vm-play-", "vm-speed-", "vm-wave-"].forEach(function (prefix) {
+        var el = document.getElementById(prefix + uuid);
+        if (el) el.hidden = true;
+      });
+      if (!vmFallbackToasted) {
+        vmFallbackToasted = true;
+        shellToast(
+          "voicemail waveform unavailable — using built-in player controls",
+          "warn",
+        );
+      }
+    };
+
+    var vmBuildWave = function (uuid, audio) {
+      if (vmPeaksCache.has(uuid)) {
+        return Promise.resolve(vmPeaksCache.get(uuid));
+      }
+      var src = audio.getAttribute ? audio.getAttribute("src") : null;
+      if (
+        typeof fetch !== "function" ||
+        !src ||
+        !(window.AudioContext || window.webkitAudioContext)
+      ) {
+        return Promise.reject(new Error("webaudio unavailable"));
+      }
+      if (!vmAudioContext) {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        vmAudioContext = new Ctor();
+      }
+      return fetch(src)
+        .then(function (response) {
+          if (!response.ok) throw new Error("audio fetch HTTP " + response.status);
+          return response.arrayBuffer();
+        })
+        .then(
+          function (buffer) {
+            return new Promise(function (resolve, reject) {
+              // callback form: the oldest widest-compatible signature
+              vmAudioContext.decodeAudioData(buffer, resolve, reject);
+            });
+          },
+        )
+        .then(function (decoded) {
+          var peaks = vmPeaks(decoded.getChannelData(0), VM_BARS);
+          vmPeaksCache.set(uuid, peaks);
+          return peaks;
+        });
+    };
+
+    var vmTogglePlay = function (btn) {
+      var uuid = btn.getAttribute("data-vm-play");
+      var audio = document.getElementById("vm-audio-" + uuid);
+      if (!audio || typeof audio.play !== "function") return;
+      vmWire(audio, uuid);
+      if (audio.paused === false) {
+        audio.pause();
+        return;
+      }
+      // single active player: starting one pauses the previous row
+      if (
+        vmActiveAudio &&
+        vmActiveAudio !== audio &&
+        typeof vmActiveAudio.pause === "function"
+      ) {
+        vmActiveAudio.pause();
+      }
+      vmActiveAudio = audio;
+      var started = audio.play();
+      if (started && typeof started.catch === "function") {
+        started.catch(function () {});
+      }
+      vmBuildWave(uuid, audio)
+        .then(function (peaks) {
+          vmPaint(uuid, audio);
+          vmDraw(document.getElementById("vm-wave-" + uuid), peaks, 0);
+        })
+        .catch(function () {
+          vmFallback(uuid, audio);
+        });
+    };
+
+    var vmCycleSpeed = function (btn) {
+      var uuid = btn.getAttribute("data-vm-speed");
+      var audio = document.getElementById("vm-audio-" + uuid);
+      if (!audio) return;
+      var current = Number(audio.playbackRate) || 1;
+      var idx = VM_SPEED_LADDER.indexOf(current);
+      var next =
+        idx >= 0 ? VM_SPEED_LADDER[(idx + 1) % VM_SPEED_LADDER.length] : 1;
+      audio.playbackRate = next;
+      btn.textContent = next + "×";
+    };
+
+    document.addEventListener("click", function (event) {
+      if (!event.target || !event.target.closest) return;
+      var play = event.target.closest(".wp-vm-play");
+      if (play) {
+        vmTogglePlay(play);
+        return;
+      }
+      var speed = event.target.closest(".wp-vm-speed");
+      if (speed) vmCycleSpeed(speed);
+    });
+
+    var vmSeek = function (canvas, audio, clientX) {
+      if (!canvas.getBoundingClientRect) return;
+      var rect = canvas.getBoundingClientRect();
+      if (!rect || !rect.width) return;
+      var ratio = (clientX - rect.left) / rect.width;
+      if (ratio < 0) ratio = 0;
+      if (ratio > 1) ratio = 1;
+      if (isFinite(audio.duration) && audio.duration > 0) {
+        audio.currentTime = ratio * audio.duration;
+        vmPaint(canvas.id.slice("vm-wave-".length), audio);
+      }
+    };
+
+    document.addEventListener("pointerdown", function (event) {
+      if (!event.target || !event.target.closest) return;
+      var canvas = event.target.closest(".wp-vm-wave");
+      if (!canvas) return;
+      var uuid = canvas.id.slice("vm-wave-".length);
+      var audio = document.getElementById("vm-audio-" + uuid);
+      if (!audio) return;
+      vmWire(audio, uuid);
+      vmSeek(canvas, audio, event.clientX);
+      // drag-to-scrub continues while the pointer is down
+      var move = function (moveEvent) {
+        vmSeek(canvas, audio, moveEvent.clientX);
+      };
+      var up = function () {
+        document.removeEventListener("pointermove", move);
+        document.removeEventListener("pointerup", up);
+      };
+      document.addEventListener("pointermove", move);
+      document.addEventListener("pointerup", up);
+    });
+
+    // keyboard seek on the scrubber (it carries role=slider + tabindex)
+    document.addEventListener("keydown", function (event) {
+      if (!event.target || !event.target.closest) return;
+      var canvas = event.target.closest(".wp-vm-wave");
+      if (!canvas) return;
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      var uuid = canvas.id.slice("vm-wave-".length);
+      var audio = document.getElementById("vm-audio-" + uuid);
+      if (!audio) return;
+      var delta = event.key === "ArrowRight" ? 5 : -5;
+      audio.currentTime = Math.max(0, (audio.currentTime || 0) + delta);
+      vmPaint(uuid, audio);
+      event.preventDefault();
+    });
+
     // 4. Manual theme override: cycles auto (prefers-color-scheme) →
     //    light → dark, persisted in localStorage. data-theme on <html>
     //    beats both stylesheets' media queries via attribute specificity.
@@ -1060,5 +1377,7 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports.restoreLastTab = restoreLastTab;
     module.exports.refreshNav = refreshNav;
+    module.exports.vmPeaks = vmPeaks;
+    module.exports.vmClock = vmClock;
   }
 })();

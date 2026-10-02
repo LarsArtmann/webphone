@@ -163,14 +163,16 @@ func faxStatusClass(status domain.FaxStatus) string {
 }
 
 // faxStepState maps a status onto the timeline position: 1 = queued,
-// 2 = sending or failed (failure strikes in flight), done = delivered.
-// Inbound rows never render steps.
+// 2 = sending, failed = struck in flight (danger styling), done =
+// delivered. Inbound rows never render steps.
 func faxStepState(status domain.FaxStatus) string {
 	switch status {
 	case domain.FaxQueued:
 		return "1"
-	case domain.FaxSending, domain.FaxFailed:
+	case domain.FaxSending:
 		return "2"
+	case domain.FaxFailed:
+		return "failed"
 	case domain.FaxTransmitted:
 		return "done"
 	default:

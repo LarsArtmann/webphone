@@ -103,6 +103,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 				<button
 					class="wp-mini wp-vm-play"
 					type="button"
+					id={ "vm-play-" + msg.UUID }
 					data-vm-play={ msg.UUID }
 					aria-label={ T(lang, "vm.play") }
 					data-label-play={ T(lang, "vm.play") }
@@ -118,7 +119,13 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 					aria-valuemax={ fmtInt(msg.Seconds) }
 					aria-valuenow="0"
 				></canvas>
-				<button class="wp-mini wp-vm-speed" type="button" data-vm-speed={ msg.UUID } title={ T(lang, "vm.speed") }>1×</button>
+				<button
+					class="wp-mini wp-vm-speed"
+					type="button"
+					id={ "vm-speed-" + msg.UUID }
+					data-vm-speed={ msg.UUID }
+					title={ T(lang, "vm.speed") }
+				>1×</button>
 				<span class="wp-vm-time" id={ "vm-time-" + msg.UUID }>0:00 / { vmClock(msg.Seconds) }</span>
 				<audio class="wp-audio" preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
 			</span>

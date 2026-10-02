@@ -1152,6 +1152,82 @@ select:focus-visible {
   width: min(240px, 100%);
 }
 
+/* --- voicemail player (M13): custom chrome over a controls-free audio --- */
+
+.wp-vm-row {
+  row-gap: 8px;
+}
+
+.wp-vm-player {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.wp-vm-wave {
+  flex: 1 1 auto;
+  min-width: 80px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.wp-vm-wave:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+.wp-vm-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.8em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* C3: the playing row keeps a definite visual state that survives panel
+ * morphs (shell.js re-asserts it from the audio element, the truth). */
+.wp-row.wp-playing {
+  border-left-color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+/* --- fax timeline (M14 C5): 3-step progress under the status line --- */
+
+.wp-fax-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.wp-fax-steps .wp-step {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+
+.wp-fax-steps.wp-steps-1 .wp-step:nth-child(1),
+.wp-fax-steps.wp-steps-2 .wp-step:nth-child(-n + 2) {
+  background: var(--accent);
+}
+
+.wp-fax-steps.wp-steps-2 .wp-step:nth-child(2) {
+  background: var(--accent-strong);
+}
+
+.wp-fax-steps.wp-steps-done .wp-step {
+  background: var(--ok);
+}
+
+/* failure strikes in flight: the two reached steps turn danger-red */
+.wp-fax-steps.wp-steps-failed .wp-step:nth-child(-n + 2) {
+  background: var(--danger);
+}
+
 /* --- thread view & bubbles ------------------------------------------------ */
 
 .wp-thread-head {
