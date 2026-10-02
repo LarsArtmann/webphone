@@ -107,8 +107,7 @@ globalThis.fetch = async (url, opts = {}) => {
 const phoneHidden = () => doc.getElementById("phone-view").hidden;
 const loginHidden = () => doc.getElementById("login-view").hidden;
 const bannerHidden = () => doc.getElementById("offline-banner").hidden;
-const logTexts = () =>
-  doc.getElementById("log").children.map((li) => li.textContent);
+const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
 const flushes = async (rounds = 12) => {
   while (rounds--) await new Promise((resolve) => setImmediate(resolve));
 };

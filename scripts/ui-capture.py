@@ -75,10 +75,13 @@ def seed(base: str) -> tuple[str | None, str]:
             # /messages/send rides the multipart prologue (the composer
             # uploads attachments; plain fields travel as bare parts).
             boundary = "wp-visual-seed"
-            body = "".join(
-                f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'
-                for k, v in fields.items()
-            ) + f"--{boundary}--\r\n"
+            body = (
+                "".join(
+                    f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'
+                    for k, v in fields.items()
+                )
+                + f"--{boundary}--\r\n"
+            )
             data = body.encode()
             ctype = f"multipart/form-data; boundary={boundary}"
         else:
@@ -155,8 +158,9 @@ def capture(base: str, out_dir: str, thread_path: str | None, session: str) -> i
     shots = 0
     try:
         driver.get(base + "/")
-        WebDriverWait(driver, 10).until(lambda d: d.execute_script(
-            "return document.readyState") == "complete")
+        WebDriverWait(driver, 10).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
         # The seed's session cookie, injected (see seed()): the
         # server-rendered tabs ride it directly.
         driver.add_cookie({"name": "webphone_session", "value": session})
@@ -178,7 +182,8 @@ def capture(base: str, out_dir: str, thread_path: str | None, session: str) -> i
                         f"surface {name!r} at {path} is missing {marker!r} — "
                         f"url={driver.current_url} anonymous_shell="
                         f"{bool(driver.find_elements('id', 'login-form'))} — "
-                        "the shot would not be evidence; aborting")
+                        "the shot would not be evidence; aborting"
+                    )
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)
                 print(f"captured {target}")

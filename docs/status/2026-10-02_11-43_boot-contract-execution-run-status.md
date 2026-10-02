@@ -323,6 +323,6 @@ material), the tail is ROADMAP fuel. Owner calls marked (OC).
 
 ---
 
-*Point-in-time snapshot; (f) items route via docs-health HARVEST
+_Point-in-time snapshot; (f) items route via docs-health HARVEST
 (TODO_LIST/ROADMAP), not this file. Foreign trains in the tree were
-neither judged nor touched.*
+neither judged nor touched._

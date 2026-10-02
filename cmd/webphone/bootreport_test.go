@@ -38,12 +38,12 @@ func TestRenderBootFailureCoversEveryClass(t *testing.T) {
 			t.Errorf("class %s: cause line malformed\n%s", class, out)
 		}
 		for _, marker := range bootReportMarkers {
-			idx := strings.Index(out, marker)
-			if idx < 0 {
+			_, after, ok := strings.Cut(out, marker)
+			if !ok {
 				t.Errorf("class %s: contract part %s missing\n%s", class, marker, out)
 				continue
 			}
-			body := out[idx+len(marker):]
+			body := after
 			if nl := strings.IndexByte(body, '\n'); nl >= 0 {
 				body = body[:nl]
 			}

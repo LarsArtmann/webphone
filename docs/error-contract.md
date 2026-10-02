@@ -44,15 +44,15 @@ MECHANISM at the composition root stays fail-fast (DO-1) — only the
 PRESENTATION was added, plus removing `App.Start`'s three gratuitous
 panics (`InvokeNamed` + `wrapf`, the method already returned error).
 
-| Boot failure class | Operator sees | Classification | Test home |
-| --- | --- | --- | --- |
-| Panic escaping `run()` | 5-part block + `panic trace` marker + raw stack below, exit 2 | recover arm (`bootPanicMiswire`) | `TestReportBootPanicRendersBlockTraceAndExitsTwo` |
-| Config rejected (env / `WEBPHONE_CONFIG` JSON) | class=config, exit 1 | tagged at the `config.Load` site | `TestClassifyBootError` + smoke |
-| Data dir inaccessible | class=data-dir, exit 1 | app.New wrap prefix `create data dir:` (drift-pinned) | `TestAppWrapPrefixesStillExistInAppSource` + smoke scenario |
-| IANA zone unloadable | class=timezone, exit 1 | app.New wrap prefix `load timezone:` | same |
-| Paperless pair unusable | class=paperless, exit 1 | app.New wrap prefix `paperless:` | same |
-| Bind/serve failure (the most common real one) | class=listen, exit 1 | tagged at the NewServer/serve sites | golden pin `TestRenderBootFailureGoldenListen` |
-| Anything else (incl. shutdown-phase errors) | class=generic, exit 1 | fallback | `TestRenderBootFailureCoversEveryClass` |
+| Boot failure class                             | Operator sees                                                 | Classification                                        | Test home                                                   |
+| ---------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------- |
+| Panic escaping `run()`                         | 5-part block + `panic trace` marker + raw stack below, exit 2 | recover arm (`bootPanicMiswire`)                      | `TestReportBootPanicRendersBlockTraceAndExitsTwo`           |
+| Config rejected (env / `WEBPHONE_CONFIG` JSON) | class=config, exit 1                                          | tagged at the `config.Load` site                      | `TestClassifyBootError` + smoke                             |
+| Data dir inaccessible                          | class=data-dir, exit 1                                        | app.New wrap prefix `create data dir:` (drift-pinned) | `TestAppWrapPrefixesStillExistInAppSource` + smoke scenario |
+| IANA zone unloadable                           | class=timezone, exit 1                                        | app.New wrap prefix `load timezone:`                  | same                                                        |
+| Paperless pair unusable                        | class=paperless, exit 1                                       | app.New wrap prefix `paperless:`                      | same                                                        |
+| Bind/serve failure (the most common real one)  | class=listen, exit 1                                          | tagged at the NewServer/serve sites                   | golden pin `TestRenderBootFailureGoldenListen`              |
+| Anything else (incl. shutdown-phase errors)    | class=generic, exit 1                                         | fallback                                              | `TestRenderBootFailureCoversEveryClass`                     |
 
 Exit taxonomy (deliberate, previously de-facto): **1** designed boot
 failure, **2** panic (Go's default code, now contract). The NixOS

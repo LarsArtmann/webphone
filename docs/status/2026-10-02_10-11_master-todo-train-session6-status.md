@@ -7,6 +7,7 @@ directive: report now, then WAIT.
 ## a) FULLY DONE (this session)
 
 ### Housekeeping / verification
+
 - Todo list recreated (16 items) per briefing; tree confirmed: session-5
   T15/T16 changes uncommitted, remote lagging (`ffaa03f` vs `f3b87d1`);
   daemon owns commits/pushes — end-of-train `git ls-remote` assert
@@ -16,10 +17,12 @@ directive: report now, then WAIT.
   schema_version same train as M22).
 
 ### Gap closure (session-5's queued item #1)
+
 - oxlint island gate re-run after T15/T16 JS edits: exit 0. Island
   suite 152/152. Lint-after-JS-edits habit restored.
 
 ### T17 M18 — welcome dismissal (COMPLETE, all suites green)
+
 - **Flash-free design**: `wp-welcome-dismissed` class lives on `<html>`,
   set by **theme-preload.js BEFORE first paint** (extended: reads the
   flag in the same try/catch), toggled by shell.js §1c on the dismiss
@@ -40,6 +43,7 @@ directive: report now, then WAIT.
   **Island count now 155** (152 + 3).
 
 ### T17 M19 — mobile/keyboard (COMPLETE, all suites green)
+
 - **Viewport**: templ-components `layout.Base` hardcodes the viewport
   meta (base.templ:228, no PageProps field); HeadContent renders AFTER
   it → a SECOND viewport meta merges per the CSS Viewport spec. Added
@@ -59,6 +63,7 @@ directive: report now, then WAIT.
   `go test ./...` green, island 155/155, oxlint 0.
 
 ### T18 — scope resolution + design note (COMPLETE)
+
 - **Briefing scope error RESOLVED**: sessions 4/5 called T18 "M21
   settings + M22 store ALTER" — wrong. Master plan, UX pareto plan and
   TODO_LIST all say **M21 messaging richness + M22 pin/archive/mute**;
@@ -86,6 +91,7 @@ directive: report now, then WAIT.
     exist); D14 stable row ids BEFORE stateful buttons (folded in).
 
 ### T18 — store + service + server seams (COMPLETE, green at checkpoint)
+
 - **Versioned migration runner** (store/db.go): `schemaVersion = 2`,
   ordered `migrations` chain — v1 duplicate-tolerant baseline (today's
   CREATEs + the ad-hoc failure-column ALTERs; converges legacy DBs),
@@ -126,6 +132,7 @@ directive: report now, then WAIT.
 ## b) PARTIALLY DONE
 
 ### T18 — views layer (messages.templ edits 1–3 of ~6 applied)
+
 - LANDED: ThreadsPanelProps += Archived/ArchivedCount; ThreadsPanel
   archived-toggle links (deep-link safe: full renders read the same
   query param); ThreadRow stable wrapper id (`thread-<id>`, D14),
@@ -152,6 +159,7 @@ directive: report now, then WAIT.
   entries for the three new routes; templ generate + suites.
 
 ## c) NOT STARTED (train remainder)
+
 T19 (M24 i18n/RTL + M25 call depth), T21 (nix-review batch 2), T22
 (samber/do + dashboard follow-ups), T23 (visual harness — research the
 stack's browser-e2e.py first), T25 (schema_version LANDED with T18 —
@@ -162,6 +170,7 @@ check, fresh-binary smoke with T14–T17 eyeballs, `git ls-remote`
 end-state assert).
 
 ## d) TOTALLY FUCKED UP (all self-caught, all fixed except the two flagged view bugs)
+
 1. **defer paren loss** in applyMigration: the edit landed as
    `defer func(){ _ = tx.Rollback() }` (no invocation) — build error,
    fixed immediately. Lesson: build after EVERY edit batch.
@@ -178,6 +187,7 @@ end-state assert).
    templ generate simply has not run since.
 
 ## e) WHAT WE SHOULD IMPROVE
+
 - **Run `templ generate` immediately after every .templ edit batch** —
   it is the only fast check for templ-syntax slips like `@if`; the Go
   build does NOT see .templ sources.
@@ -194,6 +204,7 @@ end-state assert).
   spread across call sites.
 
 ## f) Next up to ~50 (execution order)
+
 1. Fix the two flagged messages.templ bugs: `@if` → bare `if`;
    pickLabel → state-selecting helper (single expression for value +
    label), threadFlagButton takes the resolved key.
@@ -268,6 +279,7 @@ end-state assert).
 37. Owner handover notes for T01/T02/T04/T09/T24/T27 (standing).
 
 ## g) Questions for the owner (cannot figure these out myself)
+
 1. **Archive semantics (D7)**: I made an INBOUND message auto-unarchive
    its thread (a live conversation must not stay hidden). Alternative:
    archived stays archived until manually unarchived, even with new

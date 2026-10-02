@@ -31,9 +31,9 @@ flagged as "the whole served surface is unverified" (T03).
    - `nix/module-output.golden` is the committed fixture (1865 B).
    - `nix/module-check.nix` gained a `module-output-golden` case that `diff`s
      the rendered text against the fixture and fails on drift.
-   Verified: `nix build .#checks.x86_64-linux.webphone-module` green (the
-   linkFarm now carries **16** entries incl. `module-output-golden`, which
-   prints *"module output matches the committed golden"*).
+     Verified: `nix build .#checks.x86_64-linux.webphone-module` green (the
+     linkFarm now carries **16** entries incl. `module-output-golden`, which
+     prints _"module output matches the committed golden"_).
 
 2. **T21b — release-time version guard (`scripts/release.sh`).**
    The flake's `webphoneVersion` is a manual single point of failure; nothing
@@ -82,15 +82,15 @@ flagged as "the whole served surface is unverified" (T03).
 
 **Verification ledger (all green unless noted):**
 
-| Gate                                            | Result                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------- |
-| `go test -count=1 ./...`                         | **all packages `ok`** (cmd, app, arch, blob, config, crm, domain, fax, gateway, messaging, paperless, pbx, server, session, store, vcard, assets, views) |
-| island `node:test` (all `*.test.mjs`)            | **164 pass / 0 fail**                                                |
-| `checks.{format,island-js,island-lint,statix,deadnix,vulnix-triage,webphone-module,health-css}` | **all build green**                          |
-| `nix build .#webphone`                           | green (2.8.0)                                                        |
-| live smoke (`scripts/webphone-smoke.py`)         | **47 passed + 4 restart + 8 boot-failure, 0 failed**                 |
-| `actionlint .github/workflows/ci.yml`            | exit 0                                                               |
-| `buildflow` full (no result cache)               | ran; findings gate tripped by **gomod-check (54, known FP)** + **erraudit (3 remaining)** |
+| Gate                                                                                            | Result                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `go test -count=1 ./...`                                                                        | **all packages `ok`** (cmd, app, arch, blob, config, crm, domain, fax, gateway, messaging, paperless, pbx, server, session, store, vcard, assets, views) |
+| island `node:test` (all `*.test.mjs`)                                                           | **164 pass / 0 fail**                                                                                                                                    |
+| `checks.{format,island-js,island-lint,statix,deadnix,vulnix-triage,webphone-module,health-css}` | **all build green**                                                                                                                                      |
+| `nix build .#webphone`                                                                          | green (2.8.0)                                                                                                                                            |
+| live smoke (`scripts/webphone-smoke.py`)                                                        | **47 passed + 4 restart + 8 boot-failure, 0 failed**                                                                                                     |
+| `actionlint .github/workflows/ci.yml`                                                           | exit 0                                                                                                                                                   |
+| `buildflow` full (no result cache)                                                              | ran; findings gate tripped by **gomod-check (54, known FP)** + **erraudit (3 remaining)**                                                                |
 
 ---
 
@@ -104,8 +104,8 @@ flagged as "the whole served surface is unverified" (T03).
    release script enforces.
 
 2. **erraudit — 3 of 5 findings remain.** `cmd/webphone/bootreport.go:235,253,254`
-   flag `_, _ = fmt.Fprintf(...)` as *"Error may be ignored using blank
-   identifier"*. These are the concurrent session's boot-contract code; the
+   flag `_, _ = fmt.Fprintf(...)` as _"Error may be ignored using blank
+   identifier"_. These are the concurrent session's boot-contract code; the
    intentional-ignore (writing the contract block immediately before `exit`) is
    legitimate and needs a reasoned `//nolint:erraudit // …`, but I left them to
    the session that owns the file (see `g)`).
@@ -155,9 +155,9 @@ time:
    window. Correct outcome — I did not force it.
 
 3. **A first full `go test ./...` failed** on `internal/server/messages_test.go`
-   + `views/i18n_test.go`. I attributed it correctly: those were the concurrent
-   session's **in-flight, uncommitted** `messages.templ` edits (mtimes
-   advancing live). I did not "fix" their files; the later full run was green.
+   - `views/i18n_test.go`. I attributed it correctly: those were the concurrent
+     session's **in-flight, uncommitted** `messages.templ` edits (mtimes
+     advancing live). I did not "fix" their files; the later full run was green.
 
 ---
 
@@ -201,7 +201,7 @@ Ordered by value/effort; `[owner]` = human-only; `[session]` = concurrent agent.
 9. Fix `golangci-lint`: `internal/store/db_test.go:268` unchecked `rows.Close`.
 10. Fix `oxfmt`: `internal/web/assets/island-tests/selftest.test.mjs` unformatted.
 11. Fix `ruff-format`/`ruff-check`/`mypy`/`vulture` on `scripts/perf-baseline.py`
-    + `scripts/ui-capture.py` (38 + 42 + 16 + 1 findings). `[session]`
+    - `scripts/ui-capture.py` (38 + 42 + 16 + 1 findings). `[session]`
 12. Address `jscpd` duplication in `calls.test.mjs` (2 clones). `[session]`
 13. `nix-checker`: consider extracting `vendorHash` to `nix/vendorHash.nix`.
 14. `nix-flake-check`: add `meta.description` to `apps.x86_64-linux.vulnix`.
@@ -224,7 +224,7 @@ Ordered by value/effort; `[owner]` = human-only; `[session]` = concurrent agent.
 
 ---
 
-*Evidence: `nix/module-output.{nix,golden}`, `nix/module-check.nix`,
+_Evidence: `nix/module-output.{nix,golden}`, `nix/module-check.nix`,
 `nix/devshell.nix`, `scripts/release.sh`, `internal/store/family_test.go`,
 `internal/server/panels.go`, `internal/web/assets/health.css`, `CHANGELOG.md`.
 Verification commands: `nix develop -c go test -count=1 ./...`,
@@ -232,4 +232,4 @@ Verification commands: `nix develop -c go test -count=1 ./...`,
 internal/web/assets/island-tests/*.test.mjs`,
 `nix build .#checks.x86_64-linux.{format,island-js,island-lint,statix,deadnix,vulnix-triage,webphone-module,health-css}`,
 `python3 scripts/webphone-smoke.py`, `BUILDFLOW_NO_RESULT_CACHE=1
-scripts/buildflow.sh`, `nix run nixpkgs#actionlint`.*
+scripts/buildflow.sh`, `nix run nixpkgs#actionlint`._

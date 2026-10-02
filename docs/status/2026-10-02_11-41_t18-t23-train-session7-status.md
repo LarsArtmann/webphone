@@ -42,16 +42,16 @@ harvest + final gates (items below).
     incl. owner-scope + unknown-flag rejection, archive exclusion
     list+search+count, D7 inbound-unarchives/outbound-stays, pinned
     ordering list+search, snippets CRUD/cap/replace-by-id, summary flags
-    + LastAttachment), server `threads_flags_test.go` (anon 401/403,
-    unknown flag/bad id/missing thread 404s, 204, HX-Target head
-    re-render with CONFIRMED labels, mute drops+restores the nav badge,
-    archive loop through HTTP incl. `Archived (N)` + auto-unarchive,
-    snippet save/delete/422s/cap/partial re-render), views (row controls
-    both langs + stable `thread-<id>` ids, archived toggle + search
-    hiding, chips cap + picker-holds-all + no-lane-when-empty, settings
-    section + empty state, `data-lightbox` on images only), shell
-    (snippet fill + stranger no-op + orphan no-op, lightbox singleton +
-    reuse + close). Runbook E2E obligation → T18; AGENTS.md seam bullet.
+    - LastAttachment), server `threads_flags_test.go` (anon 401/403,
+      unknown flag/bad id/missing thread 404s, 204, HX-Target head
+      re-render with CONFIRMED labels, mute drops+restores the nav badge,
+      archive loop through HTTP incl. `Archived (N)` + auto-unarchive,
+      snippet save/delete/422s/cap/partial re-render), views (row controls
+      both langs + stable `thread-<id>` ids, archived toggle + search
+      hiding, chips cap + picker-holds-all + no-lane-when-empty, settings
+      section + empty state, `data-lightbox` on images only), shell
+      (snippet fill + stranger no-op + orphan no-op, lightbox singleton +
+      reuse + close). Runbook E2E obligation → T18; AGENTS.md seam bullet.
 - **T19 COMPLETE** (M24 + M25, plan-faithful; §f16–18, A6/A10):
   - `TestNoUnusedDictionaryKeys` (dead-key guard; found and removed
     `vm.from` and `lightbox.close` — the latter was mine, dead on
@@ -60,8 +60,8 @@ harvest + final gates (items below).
     text-align, my two new offsets → inset-inline) across app.css +
     island/style.css + `TestStylesUseLogicalProperties` guard test.
   - Settings status dots (J10): `.wp-service-on/off` dots on the phoneAPI
-    + new CRM row (`settings.crm`; `CRM.Enabled()` is nil-safe). Config
-    truth, not live probes — documented in the CSS.
+    - new CRM row (`settings.crm`; `CRM.Enabled()` is nil-safe). Config
+      truth, not live probes — documented in the CSS.
   - **A6 incoming focus mode**: `setIncomingFocusMode`/`showIncomingBanner`/
     `hideIncomingBanner` in ui.js (one home; all four banner transitions
     funnel through them), connection.js focuses Accept with a typing

@@ -20,12 +20,12 @@
 
 ## Session chronology (what actually happened)
 
-| Round | Prompt | What I did | Outcome |
-|---|---|---|---|
-| 1 | "Why do we use MustInvoke*?" | Grepped all usage (37 matches), read `internal/app/app.go:100-246`, explained fail-fast boot semantics, DO-1 sanction, HW-4 suppression, framework-free service packages | Answered with evidence; loaded `samber-do-best-practices` skill |
-| 2 | "What would our skills say?" | Loaded `go-error-modernization` + `how-to-golang`; verified every call site (incl. `App.Start`, app.go:281-295) against DO-1 | Verdict table: "all compliant" — **later shown to grade the wrong axis** |
-| 3 | "Operator is a valid user too" | Read `cmd/webphone/main.go` (operator-visibility lines 44-67), grepped `docs/error-contract.md` (line 27 RecoveryMiddleware precedent, line 82 operator semantics) | Conceded: boot panic = 1/5 contract parts, designed boot errors = 2/5; sketched boot renderer; said "say the word" |
-| 4 | Status report (this file) | Wrote this report | Waiting |
+| Round | Prompt                         | What I did                                                                                                                                                               | Outcome                                                                                                            |
+| ----- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 1     | "Why do we use MustInvoke*?"   | Grepped all usage (37 matches), read `internal/app/app.go:100-246`, explained fail-fast boot semantics, DO-1 sanction, HW-4 suppression, framework-free service packages | Answered with evidence; loaded `samber-do-best-practices` skill                                                    |
+| 2     | "What would our skills say?"   | Loaded `go-error-modernization` + `how-to-golang`; verified every call site (incl. `App.Start`, app.go:281-295) against DO-1                                             | Verdict table: "all compliant" — **later shown to grade the wrong axis**                                           |
+| 3     | "Operator is a valid user too" | Read `cmd/webphone/main.go` (operator-visibility lines 44-67), grepped `docs/error-contract.md` (line 27 RecoveryMiddleware precedent, line 82 operator semantics)       | Conceded: boot panic = 1/5 contract parts, designed boot errors = 2/5; sketched boot renderer; said "say the word" |
+| 4     | Status report (this file)      | Wrote this report                                                                                                                                                        | Waiting                                                                                                            |
 
 ---
 
@@ -57,10 +57,10 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. **Round-2 verdict graded the wrong axis.** I declared "compliant across the board" using the DI skills' lens (where panics are *created*) while the project's OWN `docs/error-contract.md` governs how failures are *presented* — and I even cited it (line 27) without connecting it. The global AGENTS.md error doctrine (what/reassure/why/fix/escape) was in context the entire time. The operator had to supply the counterexample ("an operator is a valid user"). Root cause: I answered the lens I was asked instead of stepping up to the governing contract. **A top-tier engineer audits against the repo's named contract doc first.**
-2. **Memory-protocol violation.** Global AGENTS.md mandates recording durable discoveries *at the moment of discovery*. Two qualify (MustInvoke rationale; the boot-surface contract gap + operator ruling) and neither is written anywhere — the knowledge lives only in this chat and evaporates with it. This report partially mops up, but AGENTS.md/error-contract.md edits remain owed.
+1. **Round-2 verdict graded the wrong axis.** I declared "compliant across the board" using the DI skills' lens (where panics are _created_) while the project's OWN `docs/error-contract.md` governs how failures are _presented_ — and I even cited it (line 27) without connecting it. The global AGENTS.md error doctrine (what/reassure/why/fix/escape) was in context the entire time. The operator had to supply the counterexample ("an operator is a valid user"). Root cause: I answered the lens I was asked instead of stepping up to the governing contract. **A top-tier engineer audits against the repo's named contract doc first.**
+2. **Memory-protocol violation.** Global AGENTS.md mandates recording durable discoveries _at the moment of discovery_. Two qualify (MustInvoke rationale; the boot-surface contract gap + operator ruling) and neither is written anywhere — the knowledge lives only in this chat and evaporates with it. This report partially mops up, but AGENTS.md/error-contract.md edits remain owed.
 3. **Precision slips I must own:**
-   - "All 37 call sites" — the grep returned 37 *matches*, ~4 of which are comment lines (app.go:14, 129, 131, 135). Real calls ≈ 33. Wrong number stated confidently.
+   - "All 37 call sites" — the grep returned 37 _matches_, ~4 of which are comment lines (app.go:14, 129, 131, 135). Real calls ≈ 33. Wrong number stated confidently.
    - "systemd captures the panic and the unit fails" — asserted in round 2 BEFORE reading `cmd/webphone/main.go`. It happened to be true (stdlib semantics), but it was unverified in-repo at claim time. Same for the exit-code-2 claim.
    - HW-4 rationale ("the linter can't see transitive resolution") repeated from the code comment unverified against the samber-linter's actual rule text.
 4. **"Say the word" instead of deciding.** A reversible, well-scoped improvement sat at the decision point and I asked permission — the engineering-mode protocol says recommend-and-execute for reversible changes. Cost: implementation is at 0% while the design was 90% done.
@@ -78,7 +78,7 @@
 
 ## f) Up to 50 things we should get done next
 
-*Brainstorm, not commitment list (status-report skill note). Impact-ordered within priority tiers. Items 1-12 are this session's direct debt; the rest are adjacent value spotted along the way.*
+_Brainstorm, not commitment list (status-report skill note). Impact-ordered within priority tiers. Items 1-12 are this session's direct debt; the rest are adjacent value spotted along the way._
 
 **P0 — this session's direct debt**
 

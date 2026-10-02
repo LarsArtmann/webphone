@@ -9,21 +9,17 @@ import { installBrowserGlobals } from "./helpers.mjs";
 const doc = installBrowserGlobals();
 const { runDeviceCheck, initDeviceCheck } = await import("../island/app/selftest.js");
 
-const logTexts = () =>
-  doc.getElementById("log").children.map((li) => li.textContent);
+const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
 
 const stubMedia = ({ gum, devices } = {}) => {
   const stopped = [];
-  const tracks = [
-    { label: "USB Mic", stop: () => stopped.push("USB Mic") },
-  ];
+  const tracks = [{ label: "USB Mic", stop: () => stopped.push("USB Mic") }];
   const stream = { getTracks: () => tracks };
   Object.defineProperty(globalThis, "navigator", {
     value: {
       language: "en-US",
       mediaDevices: {
-        getUserMedia: () =>
-          gum ? Promise.reject(gum) : Promise.resolve(stream),
+        getUserMedia: () => (gum ? Promise.reject(gum) : Promise.resolve(stream)),
         enumerateDevices: () =>
           Promise.resolve(
             devices || [

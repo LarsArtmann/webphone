@@ -71,10 +71,10 @@ cookie injection) were kept and verified as part of this train.
    - CHANGELOG Unreleased: Added block for T11–T19 (claims
      spot-verified in code first: vm speed, fax resend, modulepreload,
      welcome, shell.js segment counter, theme-preload, perf-baseline)
-     + the T23 harness; NEW ### Fixed section (resume fix, deep-link
-     fix, config.js ws:// fix, health.css stale artifact, deadnix
-     vendor exclusion). The nix-review batch-2 entry (from the 11:43
-     session) kept.
+     - the T23 harness; NEW ### Fixed section (resume fix, deep-link
+       fix, config.js ws:// fix, health.css stale artifact, deadnix
+       vendor exclusion). The nix-review batch-2 entry (from the 11:43
+       session) kept.
    - FEATURES.md: 10 new rows (thread organization, reply snippets,
      thread deep links, lightbox, fax timeline+resend, inline
      voicemail player, incoming focus mode, device self-test,
@@ -88,10 +88,10 @@ cookie injection) were kept and verified as part of this train.
      oxlint exit 0; `templ generate` 0 updates (no drift).
    - `BUILDFLOW_NO_RESULT_CACHE=1` full run: findings gate tripped
      ONLY on gomod-check 54 (documented FALSE POSITIVE, do-not-fix)
-     + erraudit 3 → **fixed** (reasoned nolints on bootreport.go's
-     terminal-exit Fprintfes — the 11:43 session's owed §f2);
-     re-run ✔ 0. Promoted scans: gitleaks 0; codespell 4 doc-SVG
-     warnings (detect-only, geometry false positives — left).
+     - erraudit 3 → **fixed** (reasoned nolints on bootreport.go's
+       terminal-exit Fprintfes — the 11:43 session's owed §f2);
+       re-run ✔ 0. Promoted scans: gitleaks 0; codespell 4 doc-SVG
+       warnings (detect-only, geometry false positives — left).
    - Full `nix flake check` **exit 0** (KVM backup VM included).
    - Fresh-binary smoke: **48 + 4 + 8 checks green,
      `--expect-version 2.8.0`** asserted (the report's eyeball list
