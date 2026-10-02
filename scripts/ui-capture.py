@@ -3,7 +3,7 @@
 gateway — the whole product, zero PBX), seeds deterministic content over
 HTTP, then drives headless chromium (selenium — the SAME driver family
 the consuming stack's browser E2E uses) through the six server tabs and
-screenshots each in light and dark: the 12-shot matrix.
+screenshots each in light and dark: the 14-shot matrix (7 surfaces x 2 themes).
 
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
@@ -17,7 +17,7 @@ Run (from the repo root):
   nix shell nixpkgs#chromium nixpkgs#python312.withPackages(ps: [ ps.selenium ]) \\
     --command python3 scripts/ui-capture.py --binary /tmp/wp-visual-bin/bin/webphone
 
-Output: ui-shots/<n>-<name>-<light|dark>.png (12 files).
+Output: ui-shots/<n>-<name>-<light|dark>.png (14 files).
 """
 
 from __future__ import annotations
@@ -110,13 +110,25 @@ def capture(base: str, out_dir: str, thread_path: str | None) -> int:
     from selenium.webdriver.support.ui import WebDriverWait
 
     options = Options()
+    # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
+    # is a generic binary that cannot exec on nix). Both come from the
+    # documented nix shell; fall back to PATH discovery.
+    import shutil
+
+    chrome = shutil.which("chromium")
+    if chrome:
+        options.binary_location = chrome
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--use-fake-device-for-media-stream")
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--window-size=1280,900")
-    driver = webdriver.Chrome(options=options)
+    driver_path = shutil.which("chromedriver")
+    from selenium.webdriver.chrome.service import Service
+
+    service = Service(executable_path=driver_path) if driver_path else None
+    driver = webdriver.Chrome(service=service, options=options)
     shots = 0
     try:
         driver.get(base + "/")
@@ -126,8 +138,16 @@ def capture(base: str, out_dir: str, thread_path: str | None) -> int:
         # then the shell reveals the tabs).
         driver.find_element("id", "ext").send_keys("1001")
         driver.find_element("id", "pass").send_keys("pw")
-        driver.find_element("id", "login-form").submit()
-        time.sleep(1.0)  # the island mints the session cookie async
+        # Click the form's OWN submit button: a programmatic
+        # form.submit() skips the submit EVENT, and the island's handler
+        # IS the submit listener — the click runs the real login path.
+        driver.find_element(
+            "css selector", "#login-form button[type=submit]"
+        ).click()
+        WebDriverWait(driver, 10).until(
+            lambda d: d.execute_script(
+                "return document.getElementById('phone-view') && "
+                "!document.getElementById('phone-view').hidden"))
         for theme in ("light", "dark"):
             # Theme pinned via the persisted key (theme-preload.js applies
             # it pre-paint — no cycling the 3-state toggle from "auto").
@@ -180,7 +200,7 @@ def main() -> int:
         thread_path = seed(base)
         shots = capture(base, args.out_dir, thread_path)
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
-        return 0 if shots >= 12 else 1
+        return 0 if shots >= 14 else 1
     finally:
         server.terminate()
         server.wait(timeout=10)
