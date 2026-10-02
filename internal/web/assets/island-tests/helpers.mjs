@@ -54,6 +54,17 @@ export function installBrowserGlobals() {
         };
         return walk(this);
       },
+      querySelectorAll(selector) {
+        const found = [];
+        const walk = (node) => {
+          for (const kid of node.children) {
+            if (matchesSelector(kid, selector)) found.push(kid);
+            walk(kid);
+          }
+        };
+        walk(this);
+        return found;
+      },
       get firstChild() {
         return this.children[0] ?? null;
       },
