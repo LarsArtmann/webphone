@@ -5,14 +5,16 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-02 (HARVEST, T18–T23 train close-out). Flipped DONE
-and removed: nix-review batch 2 (golden + version guard + devshell dedupe +
-actionlint + deadnix exclusion), the schema_version gate (T18 migration
-runner landed v2), the AGENTS.md compaction row (file back AT the 377 cap;
-the cap itself is the standing rule), the island boot-language split brain
-(T05) and the ring-silence AudioContext bug (T06), and the persist-the-
-harness row (replaced by the ownership row below). Added: scheduled-sends
-NO-GO, visual-harness ownership. Prior sweep 2026-10-01 (AUDIT).
+Last sweep: 2026-10-02 (docs-health AUDIT v6). Flipped DONE and removed:
+the UI/UX M9–M26 remainder row (T12–T19 executed 2026-10-02; only
+stragglers remain — routed to ROADMAP), the UI/UX gates row (buildflow,
+flake check, smoke, owed pins ALL green at the 12:57 close-out; the stack
+E2E obligation lives in the island-honesty + cross-repo rows), and the
+verification/perf plan row (T02/T04/T05–T08/T09/T18 executed; T01/T03/T20
+owner/stack legs live in the mic, island-honesty, cross-repo rows).
+Added: tooling stragglers (build-health-css fmt, smoke mypy, error-code
+registry), docs-health owner calls. Prior sweep 2026-10-02 (T18–T23
+harvest).
 
 ## Open tasks
 
@@ -60,7 +62,7 @@ Gateway honest-Content-Type follow-ups (webphone side of `docs/status/archived/2
 
 **Status:** 🟡 `PARTIALLY DONE` 2026-10-01 · **Priority:** Low · **Effort:** S
 
-Tooling hygiene batch: markdown-lint posture decision (5092 detect-only corpus findings — configure markdownlint to house style or record the detect-only posture in AGENTS so nobody "fixes" the corpus by reflowing) · codespell policy for the 2 `pre-emptive` warnings in archived status snapshots (exclude `docs/status/**` like the stack, or fix the words) · reconcile AGENTS buildflow-full claim vs observed skips (gitleaks/codespell/markdown-lint "skipped by build mode 'full'" on 2026-09-26 — AGENTS or `.buildflow.yml` is wrong) · BuildFlow binary freshness advisory (stale binary skews verdicts — rebuild in the BuildFlow repo) · commit the reusable render-diff script (partials-only, webhook-502 error instrument — mechanics in the archived 16:56 report §b) + park its recipe in AGENTS/lessons (carried since the 09-24 18:05 report)
+Tooling hygiene batch: markdown-lint posture decision (5092 detect-only corpus findings — configure markdownlint to house style or record the detect-only posture in AGENTS so nobody "fixes" the corpus by reflowing) · codespell policy for the 2 `pre-emptive` warnings in archived status snapshots (exclude `docs/status/**` like the stack, or fix the words) · reconcile AGENTS buildflow-full claim vs observed skips (gitleaks/codespell/markdown-lint "skipped by build mode 'full'" on 2026-09-26 — AGENTS or `.buildflow.yml` is wrong) · BuildFlow binary freshness advisory (stale binary skews verdicts — rebuild in the BuildFlow repo) · commit the reusable render-diff script (partials-only, webhook-502 error instrument — mechanics in the archived 16:56 report §b) + park its recipe in AGENTS/lessons (carried since the 09-24 18:05 report). ADDED 2026-10-02 (v6 sweep): append a trailing `nix fmt` to `scripts/build-health-css.sh` (a rebuild re-breaks the `format` gate otherwise — t21-t22 report f1); triage the 8 mypy warnings in `webphone-smoke.py` (02:14 f7, twice-carried); tell the "error families are total" story in `docs/error-contract.md` + publish a grep-generated error-code registry table (family-adoption report f7/f24)
 
 **Evidence:** DONE: codespell real-binary + `.codespellrc` (vendor/go.sum skipped, pre-emptive ignored), AGENTS buildflow-claim reconcile, render-diff script committed (`scripts/render-diff.py`; LIVE-VERIFIED 2026-10-01: 7/7 partials byte-identical + 7/7 error arm), BuildFlow freshness noted via doctor. REMAINING (owner): markdownlint posture (briefing row 18). Was: 09-26 §d3/§f11-12; 09-24 12:41 §f19-20; 04:32 §f14-15
 
@@ -68,7 +70,7 @@ Tooling hygiene batch: markdown-lint posture decision (5092 detect-only corpus f
 
 **Status:** 🟡 `PLANNED` (briefing ready, sitting owed) · **Priority:** High · **Effort:** S
 
-OWNER-calls batch session (decisions, one sitting — briefing at `docs/planning/2026-09-22_13-50_owner-calls-briefing.md`): the original ~15 + CRM policy trio + self-send train-C semantics + templ-components history-blemish + tail items g1 force-push ratification / release.sh load-gate default / g2 KVM-timeout / art-dupl `-t 3` baseline (FIFTH surfacing) + registry ratification (`docs/dedup-registry.md` as THE home) + `settingsRow` build-or-retire (FOURTH surfacing) + suppression-bucket doc + webhook 400 body-text dependents + `msg/`→`message/` idem-key rename + helper micro-test bar + missed-call REJECT semantics + search `?q=` URL semantics + store `Must*` panic-on-corrupt policy. NEW since 2026-09-26: push-lag threshold policy (when is a silent daemon push stall BROKEN — 10 min? 1 h) + session push ratification (phase-boundary hand-pushes) · is the next webphone release 2.8.0 (making the bridge's ">= 2.8" claims true) or reword them · `gateway.attachment_limit` knob vs bridge-422-teaches design as final · sniff-fallback lifespan (keep forever vs delete-after-deploy-confirmed) · tier-2 family-adoption intent (dep swept-but-unused?) · report erraudit `tree` same-name-dedupe upstream? (owner's own tool) · AGENTS restructure permission · existing-prod-data chmod/re-backup for the UMask tightening · destDir nesting legality · stack verification now-vs-train-close
+OWNER-calls batch session (decisions, one sitting — briefing at `docs/planning/2026-09-22_13-50_owner-calls-briefing.md`): the original ~15 + CRM policy trio + self-send train-C semantics + templ-components history-blemish + tail items g1 force-push ratification / release.sh load-gate default / g2 KVM-timeout / art-dupl `-t 3` baseline (FIFTH surfacing) + registry ratification (`docs/dedup-registry.md` as THE home) + `settingsRow` build-or-retire (FOURTH surfacing) + suppression-bucket doc + webhook 400 body-text dependents + `msg/`→`message/` idem-key rename + helper micro-test bar + missed-call REJECT semantics + search `?q=` URL semantics + store `Must*` panic-on-corrupt policy. NEW since 2026-10-02 (docs-health v6 sweep): ratify "routed-as-resolved → archive" for the four live owner-gated plans (error-excellence, 20-year-durability, 04-29 pareto, 13-33 stack-adoption — v4's g1); ratify train-level `v` verdict markers as the standing annotation hash bar (v3's g3, six sweeps running); the check-rows marker-cell baseline for the 37 pre-2026-09-18 archived files (restyle or accept). NEW since 2026-09-26: push-lag threshold policy (when is a silent daemon push stall BROKEN — 10 min? 1 h) + session push ratification (phase-boundary hand-pushes) · is the next webphone release 2.8.0 (making the bridge's ">= 2.8" claims true) or reword them · `gateway.attachment_limit` knob vs bridge-422-teaches design as final · sniff-fallback lifespan (keep forever vs delete-after-deploy-confirmed) · tier-2 family-adoption intent (dep swept-but-unused?) · report erraudit `tree` same-name-dedupe upstream? (owner's own tool) · AGENTS restructure permission · existing-prod-data chmod/re-backup for the UMask tightening · destDir nesting legality · stack verification now-vs-train-close
 
 **Evidence:** briefing updated 2026-10-01 to 28 rows (15–28: v2.8.0 + setup NO-GO ratifications, compaction permission, tooling postures, push-lag, QMD, dedup baseline, gateway micro-decisions) + a closed-since section (go-cqrs-lite wontfix etc.)
 
@@ -95,30 +97,6 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 internal/server god-package carve — TRIGGER: the next file added to internal/server (today 19 files / 3268 LOC + 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold). Carve `server/api` (JSON endpoints: contacts, calls, session, csrf) + `server/hooks` (webhook ingest + idempotency) out of the wiring (Deps, chain, mount stay); tests move with their files; the contract_test three-401-writer allowlist (actions/webhooks/session_api) + DOM-contract pins update mechanically; render-diff harness proves byte parity if wanted
 
 **Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer)
-
-### UI/UX Pareto train — remaining workstreams (M9–M26)
-
-**Status:** 🟡 `PLANNED` · **Priority:** High · **Effort:** L
-
-M1–M8 shipped 2026-10-01 (optimistic bubble, day separators + unread divider, morph a11y, tab skeleton, skip link, mobile bottom bar, command palette + help); M10 (contacts manager) was reverted — contacts depth is Ledger's domain. What remains, in tier order (`docs/planning/2026-10-01_03-53_SUPERB-ui-ux-pareto-plan.md`): M9 dial affordances (A4 name-on-type, A5 normalization hint, A8 DTMF animation/tones, A9 re-dial, K5 disclosure) · M11 history filters (D8–D10) · M12 B8 over-limit segment countdown · M13 voicemail playback (C1–C3, C9, C10) · M14 fax depth (C4–C6) · M15 visual tokens (F3/F4/F7/F9) · M16 URL state (E2/E3/E7/E8) · M17 feedback/trust (J2 reconnect banner, J3 undo, J4 retry-in-banner, J7 confirm consistency, J8 button spinner, J9 success pulse) · M18 onboarding/demo · M19 mobile extras · M20 theming depth · M21 messaging richness · M22 pin/archive/mute · M24 i18n locale/RTL/status dots · M25 call depth (A6 focus mode, A10 media test) · M26 shell sizing. Execute in tier order; per workstream run the domain-ownership + "already exists?" audit FIRST (M10's lesson).
-
-**Evidence:** `docs/status/2026-10-01_06-59_ui-ux-pareto-train-boundary-lesson-status.md` §c/§f; plan execution log; catalogue `docs/planning/2026-10-01_03-49_ui-ux-idea-catalogue.md`.
-
-### UI/UX train gates + stack-E2E obligation + test pins
-
-**Status:** 🔴 `TODO` · **Priority:** High · **Effort:** S-M
-
-The 2026-10-01 UI/UX batch changed served markup (skeleton, `#wp-live`, command palette, mobile bar, day separators) but ran NO repo gate and NO stack E2E. Do first: `buildflow` (full), `nix flake check`, smoke against a fresh binary, and the stack browser E2E (budget 445 s). Add the owed pins: `aria-current="page"/"false"` in the nav partial, skeleton reveal/hide on nav swaps, optimistic-bubble-morph-removed edge. Fix the overpromising `#wp-live` comment in layout.templ (it claims connection-recovery announcements — that is M17/J2, unbuilt). Note the obligation in `docs/release-runbook.md`.
-
-**Evidence:** `docs/status/2026-10-01_06-59_*` §b/§c/§f 1–7.
-
-### Verification & performance execution plan
-
-**Status:** 🟡 `PLANNED` · **Priority:** High · **Effort:** M-L
-
-`docs/planning/2026-10-01_05-35_SUPERB-verification-and-performance-execution-plan.md` (26 tasks / 64 micro-tasks, G0–G7, none executed). G0 first, in parallel: T01 live-call ritual (accept→speak + ICE panel path/rtt + MOH audibility — retires ~5 open items at once), T02 buildflow gate, T03 stack E2E, T04 smoke boot. Then T05 ETag+304 for `/assets/*` (reconcile with the `server.go` composite-ETag comment first), T06 scoped gzip for static handlers (never `/events`), T07 outgoing-call mic warm (mirror of the shipped incoming fix), T08 curl timing baseline, T09 ring-silence fix (below), T18 `iceServers` trimming eval, T20 prod hygiene. Non-negotiables: verbatim island serving, strict CSP, `no-store` pins, DOM contract, `/events` never compressed.
-
-**Evidence:** plan doc (verdict appendix all pending); fed by the 02:54 / 04:07 / 05:26 / 05:27 status reports.
 
 ### Mic pre-warm live verification + gates
 

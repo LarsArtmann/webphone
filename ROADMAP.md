@@ -315,23 +315,49 @@ the stack browser E2E passed on the bumped tree. What remains:
   `6989b99`). Webphone keeps only its per-extension store + `/api/contacts`.
   No longer an owner call; recorded here as the boundary.
 
-## Raw ideas (2026-10-01 harvest)
+## Raw ideas (2026-10-01 harvest; shipped bits marked 2026-10-02)
 
 From the UI/UX catalogue/plan and the verification+performance plan; nothing
-here is committed work — refine into TODO_LIST on demand.
+unmarked here is committed work — refine into TODO_LIST on demand.
 
 - M23 contacts depth → route to Ledger's ROADMAP (search-everywhere,
   sections, single-vCard export are its core, not this app's).
-- Messaging richness (M21: snippets, scheduled send) and pin/archive/mute
-  (M22) — `SEAM` features that need a server-side design pass first.
-- M24 i18n depth (locale switch UI, RTL, message status dots) and M25 call
-  depth (A6 speaker/focus mode, A10 mic/media test) — catalogue fuel.
+- ~~M21 snippets / M22 pin-archive-mute — SEAM design pass first~~ SHIPPED
+  2026-10-02 (T18; M21.6 scheduled sends NO-GO on the gateway seam).
+- ~~M24 RTL/logical properties + dead-key guard, M25 A6 focus mode + A10
+  device self-test~~ SHIPPED 2026-10-02 (T19).
 - WebTransport long-shot: revisit ONLY if sip.js ever ships a WebTransport
   transport (SIP-over-WebTransport is not standardized; the adopted rationale
-  is chat-only and wants a short verdict doc).
-- Perf ideas now tracked in the verification+performance plan: ETag+304 for
-  `/assets/*`, scoped gzip for static handlers, `modulepreload` for the island
-  ESM graph — all deferred to that plan, not ad-hoc work.
+  is chat-only and wants a short verdict doc — still owed, stack-side).
+- ~~ETag+304, scoped gzip, modulepreload, perf baseline~~ SHIPPED
+  2026-10-02 (T10/T11).
+
+## Raw ideas (2026-10-02 harvest — stragglers of the closed T11–T19 trains)
+
+- M9 remainder: A9 re-dial affordance (last-dialled number one-tap).
+- M19 descoped extras: I3 row action bar, I6 swipe, I7 pull-to-refresh,
+  I9 header collapse (the T17 analysis reduced M19 to viewport + composer —
+  revisit on a real mobile demand signal).
+- Island feedback polish micro-train (batched): SR announcements for
+  hold/resume transitions; banner subtitle distinguishing "calls down" vs
+  "tabs stale"; reconnect-attempt count in the banner body (05:26 report
+  items 22/26/29).
+- Mic-prewarm extras: `devicechange` re-warm, warm-on-login option,
+  permission-denied announce at ring, `pagehide` release, cross-browser
+  gesture-less getUserMedia check (04:07 report items 10/23–26).
+- Typography extras: `--font-sans`/`--font-mono` consolidation (the mirrored
+  font stacks are still comment-enforced), `hyphens: auto` on bubbles,
+  tabular-nums audit, `#log` readability bump, `#wp-sse-live` light-mode
+  visibility, `prefers-contrast` pass (12:08 report f 8/11–14).
+- Guard ideas from the closed trains: caddy `validate`/`adapt` pass over the
+  rendered module extraConfig; a caddy-equipped VM test (TLS + `/events`
+  streaming + sip bridge); `scripts/binary-size-gate.sh` (nix build vs a
+  committed baseline — makes the ≤+8 MB/≤+20% footprint gate mechanical);
+  smoke timeout-budget assertion (SIGTERM drains within the 30 s budget);
+  `go version -m` module-count tripwire in the smoke.
+- `DeliveryReceipt` non-verdict unit pin (`messaging.verdict` Rejection
+  branch is reachable only by direct callers — one table case; 13:35
+  report f1).
 
 ## Raw ideas (2026-09-29 harvest)
 
