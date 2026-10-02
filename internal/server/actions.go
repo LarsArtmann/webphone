@@ -514,9 +514,13 @@ var threadFlagActions = map[string]store.ThreadFlag{
 // (the row's button posts the DESIRED state: a pinned row renders the
 // unpin button). The messaging service persists and fires the list-only
 // SSE nudge, so every open Messages tab re-renders its list; the unread
-// cache drops because mute changes what the nav badge counts. English
-// error copy per the service policy; every miss is a plain 404 (owner
-// scoping).
+// cache drops because mute changes what the nav badge counts. A toggle
+// from the OPEN thread's head targets #wp-thread-head (outerHTML swap):
+// the response is the freshly rendered head, so its buttons flip to the
+// confirmed state without disturbing the transcript or a reply draft;
+// row buttons swap nothing and answer 204 (the nudge owns their
+// refresh). English error copy per the service policy; every miss is a
+// plain 404 (owner scoping).
 func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(w, r)
 	if !ok {
@@ -542,6 +546,21 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.unread.drop(sess.Extension)
+	if r.Header.Get("HX-Target") == "wp-thread-head" {
+		thread, _, threadErr := h.deps.Messaging.Thread(r.Context(), sess.Extension, threadID)
+		if threadErr != nil {
+			http.NotFound(w, r)
+			return
+		}
+		names := h.crmNames(r.Context(), []string{thread.Remote.String()})
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if renderErr := views.ThreadHead(views.ThreadViewProps{
+			Thread: thread, Names: names, Lang: h.lang(r),
+		}).Render(r.Context(), w); renderErr != nil {
+			http.Error(w, "render error", http.StatusInternalServerError)
+		}
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 

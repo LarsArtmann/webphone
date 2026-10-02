@@ -1,17 +1,22 @@
 package views
 
+import "github.com/larsartmann/webphone/internal/domain"
+
 // SettingsPanel is read-only runtime facts about this deployment: what the
 // server is wired to and which capabilities are live. Changes happen in the
 // server's config file, not in the browser — this page tells the truth
-// about what is configured.
+// about what is configured. The snippets section (M21) is the one
+// exception: reply snippets are the user's own data, managed here.
 type SettingsPanelProps struct {
-	SIPDomain    string
-	WebsocketURL string
-	GatewayMode  string
-	PhoneAPI     bool
-	ICEServers   int
+	SIPDomain      string
+	WebsocketURL   string
+	GatewayMode    string
+	PhoneAPI       bool
+	ICEServers     int
 	SharedContacts int
-	Lang           Lang
+	// Snippets are the owner's reply snippets (M21), oldest first.
+	Snippets []domain.Snippet
+	Lang     Lang
 }
 
 templ SettingsPanel(props SettingsPanelProps) {
@@ -38,8 +43,9 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dd>{ fmtInt(props.SharedContacts) }</dd>
 			<dt>{ T(props.Lang, "settings.export") }</dt>
 			<dd><a class="wp-mini" href="/api/export" download>{ T(props.Lang, "settings.exportLink") }</a></dd>
-		</dl>
-		<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
+			</dl>
+			@SnippetsSection(props.Snippets, props.Lang)
+			<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
 		<dl class="wp-settings wp-shortcuts">
 			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
 			<dt><kbd>H</kbd></dt><dd>{ T(props.Lang, "shortcuts.h") }</dd>
@@ -62,4 +68,57 @@ func orUnset(value string, lang Lang) string {
 		return T(lang, "err.requestHost")
 	}
 	return value
+}
+
+// SnippetsSection manages the reply snippets (M21): the list with a
+// quick marker and delete buttons, plus the add form (body + quick
+// checkbox). Save/delete answer toast + this whole settings partial
+// re-render, so the list always shows the store's truth (one home: the
+// snippets table). Delete buttons target the panel — they are type=button
+// inside no form, riding their own hx-post.
+templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
+	<h3 class="wp-settings-head">{ T(lang, "snippets.title") }</h3>
+	<p class="wp-empty">{ T(lang, "snippets.subtitle") }</p>
+	if len(snippets) == 0 {
+		<p class="wp-empty">{ T(lang, "snippets.empty") }</p>
+	} else {
+		<ul class="wp-snippet-manage">
+			for _, snippet := range snippets {
+				<li class="wp-snippet-row">
+					<span class="wp-snippet-body">{ snippet.Body }</span>
+					if snippet.Quick {
+						<span class="wp-snippet-quick" title={ T(lang, "snippets.quick") } aria-label={ T(lang, "snippets.quick") }>⚡</span>
+					}
+					<button
+						type="button"
+						class="wp-mini"
+						hx-post={ "/snippets/delete?id=" + snippet.ID.String() }
+						hx-target="#tab-content"
+						hx-swap="innerHTML"
+						aria-label={ T(lang, "snippets.delete") }
+						title={ T(lang, "snippets.delete") }
+					>✕</button>
+				</li>
+			}
+		</ul>
+	}
+	<form
+		class="wp-snippet-add"
+		hx-post="/snippets/save"
+		hx-target="#tab-content"
+		hx-swap="innerHTML"
+		hx-disabled-elt="find button[type=submit]"
+	>
+		<textarea
+			name="body"
+			rows="2"
+			placeholder={ T(lang, "snippets.body") }
+			aria-label={ T(lang, "snippets.body") }
+		></textarea>
+		<label class="wp-snippet-quick-label">
+			<input type="checkbox" name="quick" value="1"></input>
+			{ T(lang, "snippets.quick") }
+		</label>
+		<button type="submit" class="wp-primary">{ T(lang, "snippets.add") }</button>
+	</form>
 }

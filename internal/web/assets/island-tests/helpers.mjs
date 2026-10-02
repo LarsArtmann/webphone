@@ -83,6 +83,14 @@ export function installBrowserGlobals() {
       focus() {
         this.focused = true;
       },
+      // Native <dialog> surface (the lightbox singleton): showModal/close
+      // are observable as flags on the stub.
+      showModal() {
+        this.opened = true;
+      },
+      close() {
+        this.opened = false;
+      },
       style: {},
       dataset: {},
       attrs: {},

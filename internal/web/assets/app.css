@@ -1718,3 +1718,243 @@ select:focus-visible {
   visibility: visible;
   transition: opacity 200ms ease-in;
 }
+
+/* ==================================================================
+ * T18 M21/M22: thread organization toggles, snippet lane, lightbox.
+ * ================================================================== */
+
+/* Organization toggles (pin/mute/archive) ride the compact .wp-mini
+ * look, quieter than the dial button so a row of threads does not read
+ * as a wall of buttons; the row's hover or the button's own hover/focus
+ * brings them to full strength. */
+.wp-mini.wp-thread-flag {
+  padding: 5px 8px;
+  opacity: 0.55;
+}
+
+.wp-thread-rowwrap:hover .wp-thread-flag,
+.wp-thread-flag:hover,
+.wp-thread-flag:focus-visible {
+  opacity: 1;
+}
+
+/* In the open thread's head the toggles sit beside the call button and
+ * carry no quieting — the head is a single row, not a list. */
+.wp-thread-head .wp-thread-flag {
+  opacity: 1;
+}
+
+/* A pinned row reads at a glance: accent hairline over the tinted
+ * surface (D5 — pin is sort-first, so the tint is purely a glance cue). */
+a.wp-thread-row.wp-pinned {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Archived-view toggle link (D6) under the panel head. */
+.wp-archived-toggle {
+  display: inline-block;
+  margin: 4px 0 2px;
+  font-size: 0.9em;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.wp-archived-toggle:hover {
+  color: var(--accent-strong);
+}
+
+/* Snippet lane above the reply composer (M21): quick chips inline, the
+ * full library behind the picker disclosure. */
+.wp-snippet-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.wp-chip {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font: inherit;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
+}
+
+.wp-chip:hover {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.wp-snippet-picker {
+  position: relative;
+  font-size: 0.85em;
+}
+
+.wp-snippet-picker summary {
+  cursor: pointer;
+  color: var(--muted);
+  list-style: none;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.wp-snippet-picker summary::-webkit-details-marker {
+  display: none;
+}
+
+.wp-snippet-picker summary:hover,
+.wp-snippet-picker[open] summary {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+}
+
+/* The picker opens UP from the composer (the reply box sits at the
+ * page bottom; a downward list would open off-screen). */
+.wp-snippet-list {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 240px;
+  max-width: 380px;
+  max-height: 40vh;
+  overflow: auto;
+  padding: 6px;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.wp-snippet-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.wp-snippet-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.wp-snippet-quick {
+  color: var(--accent-strong);
+}
+
+/* Settings: snippet management (M21) — the list rows and the add form. */
+.wp-snippet-manage {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 560px;
+}
+
+.wp-snippet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.wp-snippet-row .wp-snippet-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.wp-snippet-add {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  max-width: 560px;
+}
+
+.wp-snippet-add textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font: inherit;
+  resize: vertical;
+}
+
+.wp-snippet-add textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.wp-snippet-quick-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* Attachment lightbox (M21.1): a native <dialog> over the scrim token —
+ * ESC and the backdrop are native behavior (CSP-clean, zero keyboard
+ * JS); the image caps to the viewport with a quiet close affordance. */
+dialog.wp-lightbox {
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: 94vw;
+}
+
+dialog.wp-lightbox::backdrop {
+  background: var(--scrim);
+}
+
+dialog.wp-lightbox img {
+  display: block;
+  max-width: 92vw;
+  max-height: 84vh;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.wp-lightbox-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--surface-2);
+}

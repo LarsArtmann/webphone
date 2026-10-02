@@ -258,6 +258,73 @@
       renderMissedBadge();
     });
 
+    // 2e. Reply snippets (M21): a chip or picker button carries the body
+    //     itself (data-snippet). The fill REPLACES the reply textarea's
+    //     content (the data-sms prefill precedent — a snippet is a whole
+    //     answer, not a fragment) and focuses the box for a quick edit
+    //     before send. The buttons live INSIDE the reply form, so
+    //     closest() finds the compose box; a fill from the picker also
+    //     closes the disclosure.
+    document.addEventListener("click", function (event) {
+      var snippet =
+        event.target && event.target.closest
+          ? event.target.closest("[data-snippet]")
+          : null;
+      if (!snippet) return;
+      var form = snippet.closest("form.wp-compose");
+      var body = form
+        ? form.querySelector("textarea.wp-compose-body")
+        : null;
+      if (!body) return;
+      body.value = snippet.getAttribute("data-snippet");
+      body.focus();
+      var details = snippet.closest("details");
+      if (details) details.open = false;
+    });
+
+    // 2f. Attachment lightbox (M21.1): an image attachment link carries
+    //     data-lightbox; clicking it opens the full-size blob in a
+    //     singleton native <dialog> instead of navigating away (the
+    //     download stays available via the browser's image context
+    //     menu). ESC and backdrop clicks close it natively — CSP-clean,
+    //     zero keyboard JS. English shell copy (D3).
+    var lightbox = null;
+    var lightboxImg = null;
+    document.addEventListener("click", function (event) {
+      var link =
+        event.target && event.target.closest
+          ? event.target.closest("a[data-lightbox]")
+          : null;
+      if (!link) return;
+      event.preventDefault();
+      if (!lightbox) {
+        lightbox = document.createElement("dialog");
+        lightbox.id = "wp-lightbox";
+        lightbox.className = "wp-lightbox";
+        lightboxImg = document.createElement("img");
+        lightbox.append(lightboxImg);
+        var close = document.createElement("button");
+        close.type = "button";
+        close.className = "wp-mini wp-lightbox-close";
+        close.textContent = "✕ Close";
+        close.setAttribute("aria-label", "Close");
+        close.addEventListener("click", function () {
+          lightbox.close();
+        });
+        lightbox.append(close);
+        // A click on the dialog itself (the padding around the image)
+        // reads as "backdrop" — close. The image and the button swallow
+        // their own clicks.
+        lightbox.addEventListener("click", function (e) {
+          if (e.target === lightbox) lightbox.close();
+        });
+        document.body.append(lightbox);
+      }
+      lightboxImg.src = link.getAttribute("href");
+      lightboxImg.alt = link.getAttribute("data-lightbox") || "";
+      lightbox.showModal();
+    });
+
     // 2b. data-reload buttons (error panel): full reload, same as the old
     //      inline onclick but CSP-safe via this delegated listener.
     document.addEventListener("click", function (event) {

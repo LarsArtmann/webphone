@@ -32,8 +32,14 @@ func TestMessageSendAndThreadFlow(t *testing.T) {
 	if !strings.Contains(page, `data-dial="+441632960961"`) || strings.Contains(page, `<a class="wp-thread-row"[^>]*>[^<]*<button`) {
 		t.Errorf("thread list row missing its dial button (or it nests inside the anchor)")
 	}
-	if !regexp.MustCompile(`<div class="wp-thread-rowwrap"><a[^>]*class="wp-thread-row`).MatchString(page) {
+	// D14: rows carry stable wrapper ids (idiomorph persists by id — the
+	// row holds stateful M22 toggles now) and the toggles post their
+	// desired state via /messages/{id}/{flag}.
+	if !regexp.MustCompile(`<div class="wp-thread-rowwrap" id="thread-[^"]+"><a[^>]*class="wp-thread-row`).MatchString(page) {
 		t.Errorf("row wrapper structure wrong: %.300s", page)
+	}
+	if !strings.Contains(page, `class="wp-mini wp-thread-flag"`) || !strings.Contains(page, `hx-post="/messages/`) {
+		t.Errorf("thread row missing its organization toggles")
 	}
 
 	match := regexp.MustCompile(`href="(/messages/[^"]+)"`).FindSubmatch(body)

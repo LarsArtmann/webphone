@@ -38,26 +38,30 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 		@panelError(props.Error)
 		// The search form lives OUTSIDE the sse-swap region so live list
 		// pushes never re-render it; htmx morph keeps the input's focus
-		// across debounced re-fetches (stable id below).
-		<form
-			class="wp-thread-search"
-			role="search"
-			aria-label={ T(props.Lang, "threads.search") }
-			hx-get="/partials/messages"
-			hx-target="#tab-content"
-			hx-swap="morph:innerHTML"
-			hx-trigger="input changed delay:300ms, submit"
-			hx-sync="this:replace"
-		>
-			<input
-				type="search"
-				name="q"
-				id="wp-thread-search-input"
-				value={ props.Query }
-				placeholder={ T(props.Lang, "threads.search.ph") }
-				aria-label={ T(props.Lang, "threads.search.label") }
-			></input>
-		</form>
+		// across debounced re-fetches (stable id below). The archived view
+		// hides it (design D6): search walks the ACTIVE list only, so a
+		// box there would look broken, not filtered.
+		if !props.Archived {
+			<form
+				class="wp-thread-search"
+				role="search"
+				aria-label={ T(props.Lang, "threads.search") }
+				hx-get="/partials/messages"
+				hx-target="#tab-content"
+				hx-swap="morph:innerHTML"
+				hx-trigger="input changed delay:300ms, submit"
+				hx-sync="this:replace"
+			>
+				<input
+					type="search"
+					name="q"
+					id="wp-thread-search-input"
+					value={ props.Query }
+					placeholder={ T(props.Lang, "threads.search.ph") }
+					aria-label={ T(props.Lang, "threads.search.label") }
+				></input>
+			</form>
+		}
 		// The archived toggle (design D6): only rendered when there is
 		// something archived — or when the archived view is open and the
 		// way back is needed. Deep links work: the panel route reads the
@@ -148,12 +152,12 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 		// Organization flags (M22): each button posts the DESIRED state
 		// (the row renders the flip of its current state). The archived
 		// view offers only the way back — the filing cabinet keeps no pins.
-		@if summary.Thread.Archived {
-			@threadFlagButton(summary.Thread.ID, "archive", pickLabel(lang, "threads.unarchive", "threads.archive"), "📥", 0)
+		if summary.Thread.Archived {
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), "📥", 0)
 		} else {
-			@threadFlagButton(summary.Thread.ID, "pin", pickLabel(lang, "threads.unpin", "threads.pin"), "📌", wantInt(!summary.Thread.Pinned))
-			@threadFlagButton(summary.Thread.ID, "mute", pickLabel(lang, "threads.unmute", "threads.mute"), muteGlyph(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
-			@threadFlagButton(summary.Thread.ID, "archive", "threads.archive", "📥", 1)
+			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), "📌", wantInt(!summary.Thread.Pinned))
+			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), muteGlyph(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), "📥", 1)
 		}
 	</div>
 }
@@ -170,6 +174,51 @@ templ threadFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int)
 		hx-post={ flagURL(id, flag, on) }
 		hx-swap="none"
 	>{ glyph }</button>
+}
+
+// headFlagButton is threadFlagButton aimed at the head itself (M22): a
+// head toggle swaps the header outerHTML — the response is the freshly
+// rendered head with the confirmed state — while the transcript, the
+// scroll place and any reply draft stay untouched. The row variant
+// (above) swaps nothing and rides the SSE list nudge instead.
+templ headFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int) {
+	<button
+		type="button"
+		class="wp-mini wp-thread-flag"
+		aria-label={ labelKey }
+		title={ labelKey }
+		hx-post={ flagURL(id, flag, on) }
+		hx-target="#wp-thread-head"
+		hx-swap="outerHTML"
+	>{ glyph }</button>
+}
+
+// ThreadHead is the open conversation's header: the way back, the
+// remote's name, the organization toggles (M22) and the dial affordance.
+// Its own component because a head toggle re-renders EXACTLY this
+// fragment — setThreadFlag answers an #wp-thread-head-targeted post
+// with the fresh head, so the buttons flip to the state the network
+// confirmed (island honesty contract) without disturbing anything else.
+templ ThreadHead(props ThreadViewProps) {
+	<header class="wp-panel-head wp-thread-head" id="wp-thread-head">
+		<a
+			class="wp-back"
+			href="/messages"
+			hx-get="/partials/messages"
+			hx-target="#tab-content"
+			hx-swap="innerHTML show:window:top"
+			hx-push-url="/messages"
+		>← All messages</a>
+		<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
+		if props.Thread.Archived {
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), "📥", 0)
+		} else {
+			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), "📌", wantInt(!props.Thread.Pinned))
+			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteGlyph(props.Thread.Muted), wantInt(!props.Thread.Muted))
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), "📥", 1)
+		}
+		<button class="wp-primary" data-dial={ props.Thread.Remote.String() }>{ T(props.Lang, "contacts.call") }</button>
+	</header>
 }
 
 func flagURL(id domain.ThreadID, flag string, on int) string {
@@ -190,9 +239,15 @@ func muteGlyph(muted bool) string {
 	return "🔔"
 }
 
-// pickLabel selects the labelled state's key (templ calls stay simple).
-func pickLabel(lang Lang, activeKey, inactiveKey string) string {
-	return T(lang, activeKey)
+// flagLabel resolves a toggle's action label: the SAME state expression
+// that feeds the posted value selects the key (action when the flip
+// applies, its reverse otherwise), so label and desired state can never
+// disagree. The glyph shows the CURRENT state; the label names the ACTION.
+func flagLabel(lang Lang, state bool, action, reverse string) string {
+	if state {
+		return T(lang, action)
+	}
+	return T(lang, reverse)
 }
 
 // threadPreview is the row's last-message preview: an attachment
@@ -236,6 +291,57 @@ templ NewMessageForm(prefillTo string, lang Lang) {
 	</form>
 }
 
+// SnippetChips renders the quick-reply chips (M21): up to five quick
+// snippets as one-tap fills for the reply composer. A chip carries the
+// body itself (data-snippet); shell.js fills the nearest compose box —
+// replace, the data-sms prefill precedent. The title holds the full
+// body; the chip is the glance surface.
+templ SnippetChips(snippets []domain.Snippet) {
+	for _, snippet := range quickSnippets(snippets) {
+		<button type="button" class="wp-chip" data-snippet={ snippet.Body } title={ snippet.Body }>{ chipLabel(snippet.Body) }</button>
+	}
+}
+
+// snippetPicker lists EVERY snippet behind a disclosure (M21): the
+// quick chips are the fast lane, the picker is the library.
+templ snippetPicker(snippets []domain.Snippet, lang Lang) {
+	<details class="wp-snippet-picker">
+		<summary>{ T(lang, "snippets.insert") }</summary>
+		<div class="wp-snippet-list">
+			for _, snippet := range snippets {
+				<button type="button" class="wp-snippet-item" data-snippet={ snippet.Body } title={ snippet.Body }>
+					{ chipLabel(snippet.Body) }
+					if snippet.Quick {
+						<span class="wp-snippet-quick" aria-hidden="true">⚡</span>
+					}
+				</button>
+			}
+		</div>
+	</details>
+}
+
+// quickSnippets picks the quick snippets, oldest first, capped at five
+// (the chip lane; the picker holds the whole list).
+func quickSnippets(snippets []domain.Snippet) []domain.Snippet {
+	quick := make([]domain.Snippet, 0, 5)
+	for _, snippet := range snippets {
+		if snippet.Quick && len(quick) < 5 {
+			quick = append(quick, snippet)
+		}
+	}
+	return quick
+}
+
+// chipLabel shortens a snippet for a chip or picker row: 28 runes, then
+// an ellipsis (the title and the compose fill carry the full body).
+func chipLabel(body string) string {
+	runes := []rune(body)
+	if len(runes) <= 28 {
+		return body
+	}
+	return string(runes[:27]) + "…"
+}
+
 // ThreadView is one open conversation: transcript and reply composer.
 type ThreadViewProps struct {
 	Thread   domain.Thread
@@ -245,6 +351,10 @@ type ThreadViewProps struct {
 	// reports older pages beyond the window.
 	Page    int
 	HasMore bool
+	// Snippets are the owner's reply snippets (M21): quick ones render
+	// as chips, all of them sit behind the picker — above the REPLY
+	// composer only (a new conversation never needs canned answers).
+	Snippets []domain.Snippet
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
 	// Names maps phone numbers to CRM contact names (optional integration).
@@ -254,18 +364,7 @@ type ThreadViewProps struct {
 
 templ ThreadView(props ThreadViewProps) {
 	<section class="wp-panel" id="messages-panel">
-		<header class="wp-panel-head wp-thread-head">
-			<a
-				class="wp-back"
-				href="/messages"
-				hx-get="/partials/messages"
-				hx-target="#tab-content"
-				hx-swap="innerHTML show:window:top"
-				hx-push-url="/messages"
-			>← All messages</a>
-			<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
-			<button class="wp-primary" data-dial={ props.Thread.Remote.String() }>{ T(props.Lang, "contacts.call") }</button>
-		</header>
+		@ThreadHead(props)
 		@panelError(props.Error)
 		if isSelfThread(props.Identity, props.Thread.Remote) {
 			<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
@@ -313,6 +412,16 @@ templ ThreadView(props ThreadViewProps) {
 			hx-disabled-elt="find button[type=submit]"
 		>
 			<input type="hidden" name="to" value={ props.Thread.Remote.String() }></input>
+			// The snippet lane (M21): quick chips plus the full picker, above
+			// the reply textarea and INSIDE the form so shell.js's delegated
+			// data-snippet fill finds the compose box via closest(). Buttons
+			// are type=button — they fill, never submit.
+			if len(props.Snippets) > 0 {
+				<div class="wp-snippet-bar">
+					@SnippetChips(props.Snippets)
+					@snippetPicker(props.Snippets, props.Lang)
+				</div>
+			}
 			<textarea
 				name="body"
 				class="wp-compose-body"
@@ -393,7 +502,7 @@ templ Bubble(msg domain.Message, lang Lang) {
 			// browser fetches the full blob; server-side thumbnails are
 			// deliberately deferred until payload sizes say otherwise).
 			if strings.HasPrefix(att.MimeType, "image/") {
-				<a class="wp-attachment wp-attachment-image" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
+				<a class="wp-attachment wp-attachment-image" data-lightbox={ att.Name } href={ "/attachments/" + att.ID.String() } download={ att.Name }>
 					<img
 						class="wp-thumb"
 						src={ "/attachments/" + att.ID.String() }

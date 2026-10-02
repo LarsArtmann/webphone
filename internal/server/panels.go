@@ -25,13 +25,19 @@ import (
 
 func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	// The search box's q rides the same panel route; empty/whitespace
-	// means "no filter" and renders the plain list.
+	// means "no filter" and renders the plain list. ?archived=1 flips to
+	// the filing cabinet (design D6): the archived list, no search box,
+	// a way back. ArchivedCount feeds the active view's toggle link.
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	archived := r.URL.Query().Get("archived") == "1"
 	var (
-		threads []store.ThreadSummary
-		err     error
+		threads      []store.ThreadSummary
+		archivedCount int
+		err          error
 	)
-	if query == "" {
+	if archived {
+		threads, err = h.deps.Messaging.ArchivedThreads(r.Context(), sess.Extension)
+	} else if query == "" {
 		threads, err = h.deps.Messaging.Threads(r.Context(), sess.Extension)
 	} else {
 		threads, err = h.deps.Messaging.ThreadSearch(r.Context(), sess.Extension, query)
@@ -39,8 +45,16 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 	if err != nil {
 		return nil, err
 	}
+	if !archived {
+		if archivedCount, err = h.deps.Messaging.ArchivedCount(r.Context(), sess.Extension); err != nil {
+			return nil, err
+		}
+	}
 	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
-	return views.ThreadsPanel(views.ThreadsPanelProps{Threads: threads, Query: query, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.ThreadsPanel(views.ThreadsPanelProps{
+		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
+		Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r),
+	}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
@@ -57,8 +71,16 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	}
 	h.unread.drop(sess.Extension)
 	names := h.crmNames(r.Context(), []string{thread.Remote.String()})
+	// Reply snippets feed the composer's chip lane + picker (M21);
+	// nil-safe: hand-composed test Deps may carry no snippet store.
+	var snippets []domain.Snippet
+	if h.deps.Snippets != nil {
+		if snippets, err = h.deps.Snippets.List(r.Context(), sess.Extension); err != nil {
+			return nil, err
+		}
+	}
 	return views.ThreadView(views.ThreadViewProps{
-		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore,
+		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets,
 		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
 	}), nil
 }
@@ -239,8 +261,17 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared, Lang: h.lang(r)}), nil
 }
 
-func (h *handlers) settingsPanel(r *http.Request) templ.Component {
+func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
+	// The snippets section is the tab's one managed list (M21); nil-safe
+	// for hand-composed test Deps without a snippet store.
+	var snippets []domain.Snippet
+	if h.deps.Snippets != nil {
+		var err error
+		if snippets, err = h.deps.Snippets.List(r.Context(), sess.Extension); err != nil {
+			return nil, err
+		}
+	}
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
@@ -248,8 +279,9 @@ func (h *handlers) settingsPanel(r *http.Request) templ.Component {
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
+		Snippets:       snippets,
 		Lang:           h.lang(r),
-	})
+	}), nil
 }
 
 // renderTab adapts the builder result for the shell.
@@ -266,7 +298,7 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 	case views.TabContacts:
 		return h.contactsPanel(r, sess)
 	default:
-		return h.settingsPanel(r), nil
+		return h.settingsPanel(r, sess)
 	}
 }
 

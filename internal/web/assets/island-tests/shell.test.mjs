@@ -973,3 +973,87 @@ test("the speed toggle walks the ladder and writes it back", () => {
   );
   assert.equal(audio.playbackRate, 1.5, "the rate lands on the audio element");
 });
+
+// 2e. Reply snippets (M21): a chip fills the compose box — REPLACE, the
+// data-sms prefill precedent — closes an open picker, and leaves
+// strangers untouched.
+test("a snippet chip replaces the reply text and focuses the composer", () => {
+  const composer = doc.createElement("");
+  composer.selector = "textarea.wp-compose-body";
+  composer.value = "half-typed answer";
+  const details = doc.createElement("");
+  details.selector = "details";
+  details.open = true;
+  const chip = doc.createElement("");
+  chip.selector = "[data-snippet]";
+  chip.attrs["data-snippet"] = "Thanks, on it!";
+  const form = doc.createElement("");
+  form.selector = "form.wp-compose";
+  form.append(composer, details);
+  details.append(chip);
+
+  doc.dispatch("click", { target: chip });
+  assert.equal(composer.value, "Thanks, on it!");
+  assert.ok(composer.focused, "the composer takes focus for a quick edit");
+  assert.equal(details.open, false, "the picker closes after the fill");
+
+  // A click with no snippet context changes nothing.
+  const stranger = doc.createElement("");
+  stranger.selector = "[data-dial]";
+  doc.dispatch("click", { target: stranger });
+  assert.equal(composer.value, "Thanks, on it!");
+});
+
+test("a snippet outside any compose form is a no-op", () => {
+  const orphan = doc.createElement("");
+  orphan.selector = "[data-snippet]";
+  orphan.attrs["data-snippet"] = "nowhere to land";
+  doc.dispatch("click", { target: orphan });
+});
+
+// 2f. Attachment lightbox (M21.1): the click opens the singleton dialog
+// instead of navigating; a second open reuses it; the close button shuts
+// it (ESC and the backdrop are native dialog behavior).
+test("an image attachment opens the singleton lightbox, not a navigation", () => {
+  const link = doc.createElement("");
+  link.selector = "a[data-lightbox]";
+  link.attrs.href = "/attachments/Att:first";
+  link.attrs["data-lightbox"] = "pic.png";
+  let prevented = false;
+  doc.dispatch("click", {
+    target: link,
+    preventDefault() {
+      prevented = true;
+    },
+  });
+  assert.ok(prevented, "the download/navigation default is suppressed");
+
+  const dialog = doc.body.children.find((child) => child.id === "wp-lightbox");
+  assert.ok(dialog, "the dialog exists");
+  assert.ok(dialog.opened, "showModal ran");
+  const image = dialog.children.find((child) => child.src === "/attachments/Att:first");
+  assert.ok(image, "the full-size blob src landed on the dialog image");
+  assert.equal(image.alt, "pic.png");
+
+  // The second open reuses the singleton and swaps the src.
+  const second = doc.createElement("");
+  second.selector = "a[data-lightbox]";
+  second.attrs.href = "/attachments/Att:second";
+  second.attrs["data-lightbox"] = "other.png";
+  doc.dispatch("click", { target: second, preventDefault() {} });
+  assert.equal(
+    doc.body.children.filter((child) => child.id === "wp-lightbox").length,
+    1,
+    "one dialog, not one per image",
+  );
+  const imageAfter = dialog.children.find((child) => child.src === "/attachments/Att:second");
+  assert.ok(imageAfter, "the singleton's image src follows the click");
+  assert.equal(imageAfter.alt, "other.png");
+
+  // The close button shuts it; a plain image click does not.
+  const closeButton = dialog.children.find(
+    (child) => child.type === "button" && child.textContent === "✕ Close",
+  );
+  closeButton.listeners.click.forEach((fn) => fn());
+  assert.equal(dialog.opened, false);
+});
