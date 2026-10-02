@@ -304,9 +304,12 @@ the stack browser E2E passed on the bumped tree. What remains:
   next train? (02:12 §g3, 03:52 §g1)
 - Stack `/health` exposure policy for the dashboard subtree: `remote_ip`
   fencing, go-health `PublicMode`, or basic auth? (02:12 §g1)
-- Ring-silence autoplay fix authorization: green-light the gesture-scoped
-  `AudioContext` fix + its pin, and confirm the original ring was actually
-  silent? (02:54 §g1)
+- ~~Ring-silence autoplay fix authorization~~ RESOLVED 2026-10-01 — owner
+  ruled KEEP; the gesture-scoped shared `AudioContext` shipped + pinned
+  (session-1 T06, `audio.test.mjs`).
+- Fax thumbnails (M14 C4): ratify the DECLINE (pdf.js +1.2 MB always-loaded
+  violates lean serving; no honest pure-Go rasterizer; rationale + re-open
+  trigger in `docs/planning/2026-10-02_09-05_fax-thumbnail-decline-note.md`)?
 - Token-hygiene parity: do the newer secrets (`paperless.token`,
   `crm.token`) need `*_file` variants like `gateway.webhook_secret_file`, or
   is `environmentFile`-only the standing answer? (03:52 §g2)
