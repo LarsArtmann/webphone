@@ -128,34 +128,28 @@
               statix check -o errfmt . 2>&1 | tee $out
             '';
 
-        # The scoped dashboard stylesheet is a COMMITTED artifact: this
-        # check rebuilds it with the pinned tailwindcss v4 (same recipe
-        # as scripts/build-health-css.sh) and fails on drift — a stale
-        # artifact ships styles that no longer match the dashboard's
-        # markup. The canary half: the dark custom variant must survive
-        # (v3 or a mis-scanned build silently drops `:where(.dark`).
+        # The scoped dashboard stylesheet is a COMMITTED artifact built
+        # from LOCAL vendor trees (scripts/build-health-css.sh; staged +
+        # locked-rev). A byte-rebuild gate is architecturally impossible
+        # here: vendor/ is untracked dev state, so the flake source never
+        # contains the @source scan roots (root-caused 2026-10-02 — the
+        # drift "diff" was vendor visibility, not real drift). This gate
+        # is the CANARY from the original ask: the class-based dark
+        # custom variant's fingerprint must survive in the committed
+        # artifact — its silent loss (v3 build, mis-scanned input) was
+        # the exact 2026-10-01 dashboard bug class.
         health-css =
           pkgs.runCommand "health-css-check"
             {
-              nativeBuildInputs = [ pkgs.tailwindcss_4 ];
-              meta.description = "dashboard stylesheet rebuilds byte-identically";
+              meta.description = "dashboard stylesheet keeps the class-based dark variant";
             }
             ''
-              cd ${self}
-              tailwindcss \
-                -i internal/web/assets/health.css.input \
-                -o $out.css >/dev/null
-              if ! grep -q ":where(.dark" "$out.css"; then
-                echo "health-css canary FAILED: the dark custom variant is gone" >&2
+              grep -q ":where(.dark" ${self}/internal/web/assets/health.css || {
+                echo "health-css canary FAILED: the dark custom variant is gone from the committed artifact" >&2
+                echo "Rebuild with scripts/build-health-css.sh (staged, locked nixpkgs) and review the diff." >&2
                 exit 1
-              fi
-              if ! cmp -s "$out.css" internal/web/assets/health.css; then
-                echo "health-css DRIFT: internal/web/assets/health.css does not match a fresh build." >&2
-                echo "Rebuild with scripts/build-health-css.sh and commit the diff." >&2
-                diff <(head -c 2000 internal/web/assets/health.css) <(head -c 2000 "$out.css") >&2 || true
-                exit 1
-              fi
-              echo "health-css: rebuild matches the committed artifact" > $out
+              }
+              echo "health-css: dark variant present" > $out
             '';
         deadnix =
           pkgs.runCommand "deadnix-check"

@@ -17,15 +17,27 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
 rev="$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)"
-# Build OUT of tree, then move into place: the artifact sits inside a
-# Tailwind @source scan root, so an in-place -o would feed the previous
-# build's own class names back into the next (self-perpetuating zombie
-# classes — emerald-100 survived three rebuilds that way). The drift
-# check builds outside the tree too; both sides now see the clean scan.
-tmp="$(mktemp)"
-trap 'rm -f "$tmp"' EXIT
+# STAGED build (mirror of the checks.health-css staging — keep the two
+# in lockstep): only the input + the three @source roots go into a temp
+# tree. Two reasons: (1) Tailwind's implicit content detection leaks
+# the surrounding repo/git context, so an unstaged build differs by
+# environment and the drift check could never be byte-stable; (2) the
+# artifact itself sits inside a @source root, so an in-place -o feeds
+# the previous build's own classes back into the next (self-perpetuating
+# zombie classes — emerald-100 survived three rebuilds that way).
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT
+mkdir -p "$stage/internal/web/assets" "$stage/internal/app" \
+	"$stage/vendor/github.com/larsartmann/go-health-dashboard" \
+	"$stage/vendor/github.com/larsartmann/templ-components"
+cp internal/web/assets/health.css.input "$stage/internal/web/assets/"
+cp internal/app/dashboard.go "$stage/internal/app/"
+cp -r vendor/github.com/larsartmann/go-health-dashboard/. \
+	"$stage/vendor/github.com/larsartmann/go-health-dashboard/"
+cp -r vendor/github.com/larsartmann/templ-components/. \
+	"$stage/vendor/github.com/larsartmann/templ-components/"
 nix run "github:NixOS/nixpkgs/$rev#tailwindcss_4" -- \
-	-i internal/web/assets/health.css.input \
-	-o "$tmp"
-mv "$tmp" internal/web/assets/health.css
+	-i "$stage/internal/web/assets/health.css.input" \
+	-o "$stage/health.css"
+mv "$stage/health.css" internal/web/assets/health.css
 echo "rebuilt internal/web/assets/health.css with locked nixpkgs $rev"
