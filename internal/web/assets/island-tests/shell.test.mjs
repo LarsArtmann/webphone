@@ -142,6 +142,51 @@ test("composer drafts persist per thread and restore after re-render", async () 
   delete transcript.dataset.thread;
 });
 
+// M17 J7: navigating between threads never cross-contaminates drafts —
+// each thread restores its own, and a thread without one starts empty.
+test("drafts survive thread navigation without cross-contamination", async () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const composer = {
+    value: "",
+    closest(selector) {
+      return selector === "textarea.wp-compose-body" ? this : null;
+    },
+    querySelector(selector) {
+      return selector === "textarea.wp-compose-body" ? this : null;
+    },
+  };
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === "textarea.wp-compose-body" ? composer : realQuerySelector(selector);
+
+  // Type in thread A, then navigate to thread B.
+  transcript.dataset.thread = "t-a";
+  composer.value = "draft for A";
+  doc.dispatch("input", { target: composer });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
+  transcript.dataset.thread = "t-b";
+  composer.value = "";
+  doc.dispatch("htmx:afterSwap", {});
+  assert.equal(composer.value, "", "thread B starts clean");
+
+  // Type in B, navigate back to A: A's draft returns, B's stays stored.
+  composer.value = "draft for B";
+  doc.dispatch("input", { target: composer });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+
+  transcript.dataset.thread = "t-a";
+  composer.value = "";
+  doc.dispatch("htmx:afterSwap", {});
+  assert.equal(composer.value, "draft for A");
+  assert.equal(localStorage.getItem("wp-draft:t-b"), "draft for B");
+
+  doc.querySelector = realQuerySelector;
+  delete transcript.dataset.thread;
+  localStorage.removeItem("wp-draft:t-a");
+  localStorage.removeItem("wp-draft:t-b");
+});
+
 // 2b2. data-sms opens the Messages tab and prefills the composer's
 // recipient once the partial swapped in; data-save-contact only
 // bridges the gesture to the island's wp:save-contact event.
@@ -424,6 +469,68 @@ test("a failed send flips the optimistic bubble to failed and restores the draft
     detail: { xhr: fakeXhr(422, { "HX-Trigger": '{"showMessage":{}}' }) },
   });
   assert.equal(area.value, "optimistic hello");
+});
+
+// M17 J3/J4: the failed bubble carries its own recovery — Retry
+// re-submits the reply composer, Dismiss drops the failed bubble while
+// the draft stays in the composer.
+test("the failed bubble offers Retry and Dismiss affordances", () => {
+  const transcript = doc.getElementById("thread-transcript");
+  const { form, area } = makeComposeForm();
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  area.value = "";
+  doc.dispatch("htmx:responseError", { target: form });
+  const bubble = transcript.children.at(-1);
+  const actions = bubble.querySelector(".wp-opt-actions");
+  assert.ok(actions, "the failed bubble grows an actions row");
+  const [retry, dismiss] = actions.children;
+  assert.equal(retry.textContent, "Retry");
+  assert.equal(dismiss.textContent, "Dismiss");
+
+  // Retry: the failed bubble goes away and the CURRENT reply composer
+  // (the draft was restored into it) submits again.
+  const realQuerySelector = doc.querySelector.bind(doc);
+  const submits = [];
+  doc.querySelector = (selector) =>
+    selector === "form.wp-compose:not(.wp-compose-new)"
+      ? { requestSubmit: () => submits.push(1) }
+      : realQuerySelector(selector);
+  for (const fn of retry.listeners.click ?? []) fn();
+  doc.querySelector = realQuerySelector;
+  assert.equal(submits.length, 1, "retry re-submits the composer");
+  assert.equal(bubble.parent, null, "the failed bubble is gone");
+
+  // Dismiss: same removal, no submit — the draft stays in the composer.
+  doc.dispatch("htmx:beforeRequest", { target: form });
+  area.value = "";
+  doc.dispatch("htmx:responseError", { target: form });
+  const second = transcript.children.at(-1);
+  const dismissAgain = second.querySelector(".wp-opt-actions").children[1];
+  for (const fn of dismissAgain.listeners.click ?? []) fn();
+  assert.equal(second.parent, null);
+  assert.equal(submits.length, 1, "dismiss never submits");
+  assert.equal(area.value, "optimistic hello", "the draft survives dismiss");
+});
+
+test("dismissing the welcome intro persists the choice and collapses now", () => {
+  localStorage.removeItem("wp-welcome-dismissed");
+  doc.documentElement.classList.remove("wp-welcome-dismissed");
+  const button = doc.getElementById("wp-welcome-dismiss");
+  button.className = "wp-mini wp-welcome-dismiss";
+  doc.dispatch("click", { target: button });
+  assert.equal(localStorage.getItem("wp-welcome-dismissed"), "1");
+  assert.ok(
+    doc.documentElement.classList.contains("wp-welcome-dismissed"),
+    "the collapse applies without a reload",
+  );
+
+  // Unrelated clicks never mint the flag.
+  localStorage.removeItem("wp-welcome-dismissed");
+  doc.documentElement.classList.remove("wp-welcome-dismissed");
+  const stranger = doc.getElementById("wp-welcome-stranger");
+  doc.dispatch("click", { target: stranger });
+  assert.equal(localStorage.getItem("wp-welcome-dismissed"), null);
+  assert.ok(!doc.documentElement.classList.contains("wp-welcome-dismissed"));
 });
 
 test("the new-conversation composer and non-compose forms never get a bubble", () => {
@@ -729,9 +836,7 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
   link.scrollIntoView = (opts) => scrolled.push(opts);
   const realQuerySelector = doc.querySelector;
   doc.querySelector = (selector) =>
-    selector === "#wp-nav .wp-nav-link.wp-active"
-      ? link
-      : realQuerySelector.call(doc, selector);
+    selector === "#wp-nav .wp-nav-link.wp-active" ? link : realQuerySelector.call(doc, selector);
 
   shellApi.refreshNav();
 

@@ -88,6 +88,7 @@ export const I18N = {
     callFailed: (detail) => `call failed: ${detail}`,
     callEnded: (dur) => `call ended · ${dur}`,
     missedCall: (from) => `missed call from ${from}`,
+    incomingCall: (from) => `Incoming call from ${from}`,
     noActiveCall: "no active call",
     notConnected: "not connected — sign in first",
     audioBlocked:
@@ -112,6 +113,7 @@ export const I18N = {
       "Could not reach the server for tab sign-in — calls keep working.",
     sseDropped:
       "Live tab updates lost — check the connection; calls keep working.",
+    sseRestored: "Live tab updates restored.",
     ssePillLive: "Live tab updates: connected",
     ssePillDown: "Live tab updates: not connected",
     resuming: "resuming session…",
@@ -203,6 +205,7 @@ export const I18N = {
     callFailed: (detail) => `Anruf fehlgeschlagen: ${detail}`,
     callEnded: (dur) => `Anruf beendet · ${dur}`,
     missedCall: (from) => `verpasster Anruf von ${from}`,
+    incomingCall: (from) => `Eingehender Anruf von ${from}`,
     noActiveCall: "kein aktives Gespräch",
     notConnected: "nicht verbunden — bitte zuerst anmelden",
     audioBlocked:
@@ -232,6 +235,7 @@ export const I18N = {
       "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
     sseDropped:
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
+    sseRestored: "Live-Aktualisierungen wiederhergestellt.",
     ssePillLive: "Live-Aktualisierungen: verbunden",
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
     resuming: "Sitzung wird fortgesetzt…",

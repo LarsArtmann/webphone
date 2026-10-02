@@ -75,6 +75,20 @@
     };
     restoreLastTab();
 
+    // 1c. Welcome dismissal (M18): collapsing the sign-in intro is a
+    //     per-browser choice. theme-preload.js applied the root class
+    //     before first paint at load; here we only own the click —
+    //     persist the flag and flip the class so the collapse takes
+    //     effect immediately, without a reload.
+    document.addEventListener("click", function (event) {
+      var button = event.target.closest(".wp-welcome-dismiss");
+      if (!button) return;
+      try {
+        localStorage.setItem("wp-welcome-dismissed", "1");
+      } catch (err) {}
+      document.documentElement.classList.add("wp-welcome-dismissed");
+    });
+
     // 2. data-dial buttons (contacts, history, voicemail, threads): push
     //    the number into the island's dial form and submit it — the same
     //    gesture as the island's redial. When the island is signed out
@@ -588,6 +602,34 @@
       record.bubble.classList.add("wp-opt-failed");
       var area = form.querySelector("textarea.wp-compose-body");
       if (area && area.value === "" && record.body) area.value = record.body;
+      // M17 J3/J4: the failure surface carries its own recovery. Retry
+      // re-submits the reply composer (the draft was restored above, so
+      // the exact text goes out again); Dismiss drops the failed bubble
+      // while the draft stays in the composer for manual editing. Both
+      // look in the CURRENT document for the form — a tab swap since the
+      // failure would have replaced this bubble along with the thread.
+      var actions = document.createElement("span");
+      actions.className = "wp-opt-actions";
+      var retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "wp-mini";
+      retry.textContent = "Retry";
+      retry.addEventListener("click", function () {
+        record.bubble.remove();
+        var current = document.querySelector(
+          "form.wp-compose:not(.wp-compose-new)",
+        );
+        if (current) current.requestSubmit();
+      });
+      var dismiss = document.createElement("button");
+      dismiss.type = "button";
+      dismiss.className = "wp-mini";
+      dismiss.textContent = "Dismiss";
+      dismiss.addEventListener("click", function () {
+        record.bubble.remove();
+      });
+      actions.append(retry, dismiss);
+      record.bubble.append(actions);
     };
     document.addEventListener("htmx:responseError", rollbackOptimistic);
     document.addEventListener("htmx:sendError", rollbackOptimistic);

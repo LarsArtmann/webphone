@@ -48,6 +48,24 @@ type Thread struct {
 	Remote         Phone
 	LastActivityAt time.Time
 	Unread         int //nolint:branching-flow // display counter, not identity
+	// Organization flags (M22): three independent axes, never an enum.
+	// Pinned sorts first; Archived leaves the default list (an inbound
+	// message clears it — the conversation is live again); Muted
+	// suppresses only the attention surfaces (row badge, nav unread
+	// total) — the unread count itself stays honest.
+	Pinned   bool
+	Archived bool
+	Muted    bool
+}
+
+// Snippet is a canned reply text owned by one extension. Quick snippets
+// additionally render as chips above the reply composer.
+type Snippet struct {
+	ID        SnippetID
+	Owner     Extension
+	Body      string
+	Quick     bool
+	CreatedAt time.Time
 }
 
 // Attachment is a stored MMS attachment. Content lives on disk at Path

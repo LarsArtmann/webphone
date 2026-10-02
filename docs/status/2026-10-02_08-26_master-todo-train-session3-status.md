@@ -290,6 +290,7 @@
 Ordered by the plan's tier order; [owner] = handover-only.
 
 **T13 finish (immediate)**
+
 1. Diagnose the restore-test failure (why restoreLastTab records no
    htmx.ajax calls under the stub world) and land it green — or split
    the restore into a testable named function if the IIFE-at-import
@@ -303,7 +304,9 @@ Ordered by the plan's tier order; [owner] = handover-only.
 
 **T14–T19 (the UI/UX train, in plan order)**
 5. T14.1 — M13 C1–C3: voicemail waveform from audio peaks + scrubber
-   + speed control.
+
+- speed control.
+
 6. T14.2 — M13 C9/C10: playing-row highlight (MORPH id) + unread
    clears on play mirroring the nav badge.
 7. T14.3 — M14 C4–C6: fax first-page thumbnail + status timeline +

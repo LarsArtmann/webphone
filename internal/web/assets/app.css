@@ -23,6 +23,8 @@
   --accent: #2aa884;
   --accent-strong: #43c79f;
   --accent-soft: rgb(42 168 132 / 14%);
+  --on-accent: #ffffff;
+  --scrim: rgb(3 10 12 / 45%);
   --danger: #e05252;
   --danger-soft: rgb(224 82 82 / 12%);
   --warn: #d9a53f;
@@ -165,7 +167,11 @@ h3 {
 /* --- shell layout -------------------------------------------------------- */
 
 .wp-root {
+  /* 100vh is the largest viewport — with the mobile URL bar showing it
+     leaves a gap below the fold; dvh (where supported) tracks the
+     dynamic viewport instead. M19. */
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -204,7 +210,7 @@ h3 {
 }
 
 .wp-mark-fg {
-  fill: #ffffff;
+  fill: var(--on-accent);
 }
 
 .wp-signed-in {
@@ -328,7 +334,7 @@ h3 {
 
 .wp-nav-badge {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 999px;
   font-size: 0.72em;
   padding: 1px 7px;
@@ -466,7 +472,10 @@ h3 {
 
 .wp-panel-head h2 {
   margin: 0;
-  font-size: 1.3rem;
+  /* Fluid display size (M26): tightens on phone widths, full size on
+   * desktop — without leaving the rem scale (root stays a percentage,
+   * so the user's browser font-size preference still wins). */
+  font-size: clamp(1.15rem, 0.95rem + 0.8vw, 1.3rem);
   font-weight: 700;
 }
 
@@ -595,6 +604,36 @@ h3 {
   background: var(--accent-soft);
   color: var(--accent-strong);
   font-weight: 550;
+}
+
+/* M18: once dismissed (per browser) the welcome collapses to a single
+   sign-in line. theme-preload.js sets the root class before first
+   paint so the full panel never flashes; shell.js owns the dismiss
+   click. */
+.wp-welcome-compact-line {
+  display: none;
+  margin: 0;
+  color: var(--muted);
+}
+
+.wp-welcome-dismiss {
+  align-self: flex-start;
+}
+
+:root.wp-welcome-dismissed .wp-welcome {
+  gap: 0;
+  padding: 18px 20px;
+}
+
+:root.wp-welcome-dismissed .wp-welcome-body,
+:root.wp-welcome-dismissed .wp-welcome-points,
+:root.wp-welcome-dismissed .wp-welcome-hint,
+:root.wp-welcome-dismissed .wp-welcome-dismiss {
+  display: none;
+}
+
+:root.wp-welcome-dismissed .wp-welcome-compact-line {
+  display: block;
 }
 
 /* --- forms ---------------------------------------------------------------- */
@@ -735,7 +774,7 @@ button.wp-danger {
 button.wp-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -751,7 +790,7 @@ button.wp-danger {
 button.wp-danger:hover {
   background: var(--danger);
   border-color: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* Compact row action (Call / Remove / PDF): quiet until hover, so lists
@@ -785,9 +824,18 @@ button.wp-danger:hover {
 }
 
 .wp-mini.wp-danger:hover {
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--danger);
   background: var(--danger);
+}
+
+/* Touch targets (M26): coarse pointers get 44px minis regardless of
+ * viewport width — the narrow-viewport bump alone misses tablets. */
+@media (pointer: coarse) {
+  .wp-mini {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* Native file pickers styled at the seam: the chooser button matches the
@@ -1446,6 +1494,14 @@ select:focus-visible {
   background: color-mix(in srgb, var(--danger) 14%, var(--surface-2));
 }
 
+/* Failed-send recovery (M17 J3/J4): Retry and Dismiss live inside the
+   failed bubble, right under the text that did not go out. */
+.wp-opt-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 /* --- settings -------------------------------------------------------------- */
 
 .wp-settings {
@@ -1583,7 +1639,7 @@ select:focus-visible {
   flex-direction: column;
   align-items: center;
   padding: 12vh 16px 16px;
-  background: rgb(3 10 12 / 45%);
+  background: var(--scrim);
 }
 
 .wp-overlay[hidden] {

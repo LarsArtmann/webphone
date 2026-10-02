@@ -465,6 +465,11 @@ test("an incoming call starts acquiring the mic while it rings", async () => {
   assert.equal(doc.getElementById("incoming-call").hidden, false);
   assert.equal(gumCalls.length, 1, "the mic is acquired during the ring");
   assert.deepEqual(gumCalls[0], { audio: true, video: false });
+  // M17 J9: the ringing call is announced assertively (role=alert) — the
+  // hidden→visible banner swap alone is invisible to screen readers.
+  const toast = doc.getElementById("toasts").children.at(-1);
+  assert.equal(toast.textContent, t("incomingCall")("+493012345678"));
+  assert.equal(toast.getAttribute("role"), "alert");
 });
 
 test("a missed call releases the warm mic", async () => {

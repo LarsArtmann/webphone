@@ -198,3 +198,34 @@ func TestHistoryOutcomeFilterAndDayGroups(t *testing.T) {
 		t.Errorf("the filter form must push its request URL: %.400s", page)
 	}
 }
+
+// TestHistoryEmptyStateIsFilterAware (M17 J8): an active outcome filter
+// with zero matches must not claim nothing was ever recorded — the
+// unfiltered copy would be a lie under a filter.
+func TestHistoryEmptyStateIsFilterAware(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if !strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"entries":[
+			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"2026-09-18 09:00","billsec":30}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+
+	server := newTestServerWithPhoneAPI(t, upstream.URL)
+	c := signIn(t, server)
+
+	_, body := c.do(http.MethodGet, "/partials/history?outcome=missed", nil, "")
+	page := string(body)
+	if !strings.Contains(page, "No calls match this filter.") || strings.Contains(page, "No calls recorded yet.") {
+		t.Errorf("a filter with no matches must say so, not claim an empty history: %.400s", page)
+	}
+}

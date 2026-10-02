@@ -88,9 +88,9 @@ bug:
   keyboard seek ±5s, speed ladder 1→1.5→2→0.5×, timeupdate repaint
   that SELF-HEALS the `wp-playing` row class after morph wipes, and
   the honest fallback: no WebAudio/fetch/canvas → native controls on
-  + chrome hidden + one English shell toast. Unread clears on play
-  and decrements the nav badge (optimistic, grounded in the play
-  action; next server render converges).
+  - chrome hidden + one English shell toast. Unread clears on play
+    and decrements the nav badge (optimistic, grounded in the play
+    action; next server render converges).
 - i18n: `fax.resend`, `vm.play/pause/speed/scrub` — en AND de.
 - CSS (app.css): `.wp-vm-player` (grid-column 1/-1), `.wp-vm-wave`,
   `.wp-vm-time`, `.wp-row.wp-playing`, `.wp-fax-steps` states.

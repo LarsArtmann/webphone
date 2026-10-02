@@ -5,6 +5,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -102,9 +103,34 @@ func (d *Database) Shutdown() error {
 	return nil
 }
 
-func migrate(ctx context.Context, db *sql.DB) error {
-	statements := []string{
-		`CREATE TABLE IF NOT EXISTS threads (
+// schemaVersion is the version migrate() brings a database to. Bump it
+// when appending a migration step; never renumber or edit shipped steps.
+const schemaVersion = 2
+
+// migration is one versioned schema step. Statements run inside a single
+// transaction: a failure aborts at this version and a retry resumes there
+// (SQLite DDL is transactional). Only the v1 baseline tolerates "duplicate
+// column name" — it must converge legacy databases that already carry
+// parts of the schema from the pre-versioning era (the ad-hoc
+// failure-column ALTERs of 2026-09-24). Later steps are strict: the
+// version row guarantees they run exactly once per database.
+type migration struct {
+	version  int
+	tolerant bool
+	stmts    []string
+}
+
+// migrations is the ordered chain from an empty database to
+// schemaVersion. Fresh and legacy databases walk the SAME chain — v1
+// recreates the historical shape, later steps evolve it — so there is
+// exactly one shape-history and no drift between fresh and migrated
+// databases.
+var migrations = []migration{
+	{
+		version:  1,
+		tolerant: true,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS threads (
 			id         TEXT PRIMARY KEY,
 			owner      TEXT NOT NULL,
 			remote     TEXT NOT NULL,
@@ -112,7 +138,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			unread     INTEGER NOT NULL DEFAULT 0,
 			UNIQUE(owner, remote)
 		)`,
-		`CREATE TABLE IF NOT EXISTS messages (
+			`CREATE TABLE IF NOT EXISTS messages (
 			id           TEXT PRIMARY KEY,
 			thread_id    TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
 			owner        TEXT NOT NULL,
@@ -126,12 +152,12 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			failure_detail TEXT NOT NULL DEFAULT '',
 			created_at   INTEGER NOT NULL
 		)`,
-		`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, created_at)`,
-		// Parity with idx_fax_provider_ref: a provider ref identifies
-		// exactly one outbound message, so replayed status webhooks can
-		// never double-apply. Empty refs (inbound, queued) are exempt.
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_provider_ref ON messages(provider_ref) WHERE provider_ref != ''`,
-		`CREATE TABLE IF NOT EXISTS attachments (
+			`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id, created_at)`,
+			// Parity with idx_fax_provider_ref: a provider ref identifies
+			// exactly one outbound message, so replayed status webhooks can
+			// never double-apply. Empty refs (inbound, queued) are exempt.
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_provider_ref ON messages(provider_ref) WHERE provider_ref != ''`,
+			`CREATE TABLE IF NOT EXISTS attachments (
 			id         TEXT PRIMARY KEY,
 			message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
 			name       TEXT NOT NULL,
@@ -139,7 +165,7 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			size_bytes INTEGER NOT NULL,
 			path       TEXT NOT NULL
 		)`,
-		`CREATE TABLE IF NOT EXISTS fax_jobs (
+			`CREATE TABLE IF NOT EXISTS fax_jobs (
 			id            TEXT PRIMARY KEY,
 			owner         TEXT NOT NULL,
 			remote        TEXT NOT NULL,
@@ -152,9 +178,9 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			created_at    INTEGER NOT NULL,
 			updated_at    INTEGER NOT NULL
 		)`,
-		`CREATE INDEX IF NOT EXISTS idx_fax_owner ON fax_jobs(owner, created_at)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_fax_provider_ref ON fax_jobs(provider_ref) WHERE provider_ref != ''`,
-		`CREATE TABLE IF NOT EXISTS contacts (
+			`CREATE INDEX IF NOT EXISTS idx_fax_owner ON fax_jobs(owner, created_at)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_fax_provider_ref ON fax_jobs(provider_ref) WHERE provider_ref != ''`,
+			`CREATE TABLE IF NOT EXISTS contacts (
 			id         TEXT PRIMARY KEY,
 			owner      TEXT NOT NULL,
 			name       TEXT NOT NULL,
@@ -162,27 +188,92 @@ func migrate(ctx context.Context, db *sql.DB) error {
 			created_at INTEGER NOT NULL,
 			UNIQUE(owner, phone)
 		)`,
+			// Additive column migrations (2026-09-24): CREATE IF NOT EXISTS
+			// never extends an EXISTING table, so each late-added column
+			// needs an ALTER — duplicate-tolerant here because legacy
+			// databases already applied them.
+			`ALTER TABLE messages ADD COLUMN failure_kind TEXT NOT NULL DEFAULT ''`,
+			`ALTER TABLE messages ADD COLUMN failure_detail TEXT NOT NULL DEFAULT ''`,
+		},
+	},
+	{
+		version: 2,
+		stmts: []string{
+			// Thread organization flags (M22): three independent axes,
+			// 0/1 like unread. Archived threads leave the default list,
+			// pinned sort first, muted suppress attention surfaces only.
+			`ALTER TABLE threads ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0`,
+			`ALTER TABLE threads ADD COLUMN archived INTEGER NOT NULL DEFAULT 0`,
+			`ALTER TABLE threads ADD COLUMN muted INTEGER NOT NULL DEFAULT 0`,
+			// Reply snippets (M21): per-extension canned texts, quick ones
+			// double as composer chips.
+			`CREATE TABLE IF NOT EXISTS snippets (
+			id         TEXT PRIMARY KEY,
+			owner      TEXT NOT NULL,
+			body       TEXT NOT NULL,
+			quick      INTEGER NOT NULL DEFAULT 0,
+			created_at INTEGER NOT NULL
+		)`,
+			`CREATE INDEX IF NOT EXISTS idx_snippets_owner ON snippets(owner, created_at)`,
+		},
+	},
+}
+
+// migrate brings the schema to schemaVersion through the ordered
+// migration chain. A database without a version row (legacy or fresh)
+// starts at 0 and walks every step; the single-row schema_version table
+// is itself created idempotently first so the runner can always read.
+func migrate(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)`); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.migrate", "create schema_version")
 	}
-	for _, stmt := range statements {
-		if _, err := db.ExecContext(ctx, stmt); err != nil {
-			return errorfamily.WrapInfrastructuref(err, "store.migrate", "apply %q", firstLine(stmt))
+	var current int
+	if err := db.QueryRowContext(ctx, `SELECT version FROM schema_version LIMIT 1`).Scan(&current); err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return errorfamily.WrapInfrastructuref(err, "store.migrate", "read schema_version")
+		}
+		// No row: a database from before versioning (or brand new) —
+		// the v1 baseline converges both.
+		current = 0
+	}
+	for _, m := range migrations {
+		if m.version <= current {
+			continue
+		}
+		if err := applyMigration(ctx, db, m); err != nil {
+			return err
 		}
 	}
-	// Additive column migrations: CREATE IF NOT EXISTS never extends an
-	// EXISTING table, so each late-added column needs an ALTER — which
-	// SQLite has no IF NOT EXISTS form for. "duplicate column name" is
-	// the already-applied signal; anything else is a real failure.
-	alters := []string{
-		`ALTER TABLE messages ADD COLUMN failure_kind TEXT NOT NULL DEFAULT ''`,
-		`ALTER TABLE messages ADD COLUMN failure_detail TEXT NOT NULL DEFAULT ''`,
+	return nil
+}
+
+// applyMigration runs one migration step atomically and stamps its
+// version. The stamp is delete-then-insert inside the same transaction:
+// the table is single-row by construction and has no key to upsert on.
+func applyMigration(ctx context.Context, db *sql.DB, m migration) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.migrate", "begin v%d", m.version)
 	}
-	for _, stmt := range alters {
-		if _, err := db.ExecContext(ctx, stmt); err != nil {
-			if !strings.Contains(err.Error(), "duplicate column name") {
-				return errorfamily.WrapInfrastructuref(err, "store.migrate", "apply %q", firstLine(stmt))
+	defer func() { _ = tx.Rollback() }() //nolint:erraudit // best-effort rollback; the commit path owns the outcome
+	for _, stmt := range m.stmts {
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
+			if m.tolerant && strings.Contains(err.Error(), "duplicate column name") {
+				continue // already applied pre-versioning
 			}
+			return errorfamily.WrapInfrastructuref(err, "store.migrate", "v%d: apply %q", m.version, firstLine(stmt))
 		}
 	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM schema_version`); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.migrate", "v%d: clear version", m.version)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO schema_version (version) VALUES (?)`, m.version); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.migrate", "v%d: stamp version", m.version)
+	}
+	if err := tx.Commit(); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.migrate", "v%d: commit", m.version)
+	}
+	slog.Info("store migrated", "version", m.version)
 	return nil
 }
 

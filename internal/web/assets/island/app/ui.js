@@ -78,7 +78,13 @@ export function toastKindFor(kind) {
   return TOAST_KINDS[kind] || "info";
 }
 
-export function announce(message, kind = "info") {
+// Politeness policy (M17 J9 audit): every announcement is POLITE by
+// default — toasts are status, never interruptions. The single
+// assertive exception is the incoming call: a ringing phone must break
+// through whatever the screen reader is reading, so that one toast
+// carries role="alert" (aria-live assertive) on the node itself while
+// the host region stays polite for everything else.
+export function announce(message, kind = "info", { assertive = false } = {}) {
   // Identical-consecutive dedup: a retry loop (or a repeated identical
   // failure) must not stack look-alike toasts; a different message or an
   // expired first toast passes freely.
@@ -87,6 +93,7 @@ export function announce(message, kind = "info") {
   if (last && last.textContent === message) return;
   const toast = document.createElement("div");
   toast.className = `toast toast-${kind}`;
+  if (assertive) toast.setAttribute("role", "alert");
   toast.textContent = message;
   // Focusable so keyboard users can dismiss (Enter/Space/Escape); the
   // container's role="status" aria-live="polite" already announced it to

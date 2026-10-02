@@ -40,7 +40,12 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 		VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(owner, remote) DO UPDATE SET
 			last_activity_at = excluded.last_activity_at,
-			unread = threads.unread + excluded.unread
+			unread = threads.unread + excluded.unread,
+			-- An inbound message un-archives its thread (M22 design D7): the
+			-- conversation is live again and hiding it from the list would be a
+			-- missed-message footgun. excluded.unread > 0 is exactly the inbound
+			-- increment, so outbound sends never touch the flag.
+			archived = CASE WHEN excluded.unread > 0 THEN 0 ELSE threads.archived END
 	`, threadID, msg.Owner.String(), msg.Remote.String(), msg.CreatedAt.Unix(),
 		incrementIf(domain.DirectionInbound, msg.Direction)); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.thread_upsert", "upsert thread %s for %s/%s", threadID, msg.Owner, msg.Remote)
@@ -122,46 +127,124 @@ func (s *Messages) MessageByProviderRef(ctx context.Context, ref string) (domain
 // ThreadSummary is a thread row as shown in the thread list: the thread
 // plus a preview of its last message.
 type ThreadSummary struct {
-	Thread        domain.Thread
-	LastBody      string
-	LastDirection domain.Direction
-	LastChannel   domain.Channel
+	Thread         domain.Thread
+	LastBody       string
+	LastDirection  domain.Direction
+	LastChannel    domain.Channel
+	LastAttachment bool // the last message carries at least one attachment
 }
 
-// ListThreads returns the owner's threads, most recently active first.
+// ThreadFlag names one organization axis of a thread (M22). It is the
+// persistence-layer spelling of the three bools on domain.Thread; the
+// handlers map their action path onto it.
+type ThreadFlag string
+
+const (
+	FlagPinned   ThreadFlag = "pinned"
+	FlagArchived ThreadFlag = "archived"
+	FlagMuted    ThreadFlag = "muted"
+)
+
+// threadFlagColumns maps each flag to its column; one home for the
+// toggle's UPDATE target.
+var threadFlagColumns = map[ThreadFlag]string{
+	FlagPinned:   "pinned",
+	FlagArchived: "archived",
+	FlagMuted:    "muted",
+}
+
+// SetThreadFlag sets or clears one organization flag on the owner's
+// thread. A missing thread (or another owner's) is ErrNotFound.
+func (s *Messages) SetThreadFlag(
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag ThreadFlag, on bool,
+) error {
+	column, ok := threadFlagColumns[flag]
+	if !ok {
+		return errorfamily.NewRejection("store.thread_flag", "unknown thread flag "+string(flag))
+	}
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE threads SET `+column+` = ? WHERE id = ? AND owner = ?
+	`, boolInt(on), id.String(), owner.String())
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.thread_flag", "set %s = %v on thread %s", flag, on, id)
+	}
+	return updatedOrNotFound(res)
+}
+
+func boolInt(on bool) int {
+	if on {
+		return 1
+	}
+	return 0
+}
+
+// ListThreads returns the owner's active threads: pinned first, then
+// most recently active. Archived threads are excluded (design D6) —
+// ListArchivedThreads serves the archived view.
 func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]ThreadSummary, error) {
-	return listRows(ctx, s.db, "list threads", `
+	return listRows(ctx, s.db, "list threads", threadSummaryQuery("t.archived = 0"),
+		[]any{owner.String()}, scanThreadSummary)
+}
+
+// ListArchivedThreads returns the owner's archived threads, most
+// recently active first (no pinned ordering — the archived view is a
+// filing cabinet, not a dashboard).
+func (s *Messages) ListArchivedThreads(ctx context.Context, owner domain.Extension) ([]ThreadSummary, error) {
+	return listRows(ctx, s.db, "list archived threads", threadSummaryQuery("t.archived = 1"),
+		[]any{owner.String()}, scanThreadSummary)
+}
+
+// CountArchived reports how many of the owner's threads are archived —
+// the toggle link only renders when there is something to show.
+func (s *Messages) CountArchived(ctx context.Context, owner domain.Extension) (int, error) {
+	var count int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM threads WHERE owner = ? AND archived = 1`, owner.String()).Scan(&count); err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "store.count_archived", "count archived threads of %s", owner)
+	}
+	return count, nil
+}
+
+// threadSummaryQuery builds the thread-list SELECT with the given
+// archived filter. Pinned threads lead (design D5); the last-message
+// join and the attachment preview EXISTS are shared by every variant.
+func threadSummaryQuery(archivedFilter string) string {
+	return `
 		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
-		       m.body, m.direction, m.channel
+		       t.pinned, t.archived, t.muted,
+		       m.body, m.direction, m.channel,
+		       EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)
 		FROM threads t
 		LEFT JOIN messages m ON m.id = (
 			SELECT id FROM messages WHERE thread_id = t.id ORDER BY created_at DESC, rowid DESC LIMIT 1
 		)
-		WHERE t.owner = ?
-		ORDER BY t.last_activity_at DESC
-	`, []any{owner.String()}, scanThreadSummary)
+		WHERE t.owner = ? AND ` + archivedFilter + `
+		ORDER BY t.pinned DESC, t.last_activity_at DESC
+	`
 }
 
-// SearchThreads returns the owner's threads whose remote number or ANY
-// message body matches the query (SQLite LIKE: ASCII case-insensitive),
-// most recently active first. LIKE metacharacters in the query are
-// escaped, so a search for "50%" finds "50%", not "50" followed by
-// anything.
+// SearchThreads returns the owner's active threads whose remote number
+// or ANY message body matches the query (SQLite LIKE: ASCII
+// case-insensitive), pinned first then most recently active. Archived
+// threads stay hidden (design D6 — search must not resurrect what
+// archive hid). LIKE metacharacters in the query are escaped, so a
+// search for "50%" finds "50%", not "50" followed by anything.
 func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, query string) ([]ThreadSummary, error) {
 	pattern := "%" + likeEscape(query) + "%"
 	return listRows(ctx, s.db, "search threads", `
 		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
-		       m.body, m.direction, m.channel
+		       t.pinned, t.archived, t.muted,
+		       m.body, m.direction, m.channel,
+		       EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)
 		FROM threads t
 		LEFT JOIN messages m ON m.id = (
 			SELECT id FROM messages WHERE thread_id = t.id ORDER BY created_at DESC, rowid DESC LIMIT 1
 		)
-		WHERE t.owner = ?
+		WHERE t.owner = ? AND t.archived = 0
 		  AND (t.remote LIKE ? ESCAPE '\' OR EXISTS (
 			SELECT 1 FROM messages sm
 			WHERE sm.thread_id = t.id AND sm.owner = t.owner AND sm.body LIKE ? ESCAPE '\'
 		  ))
-		ORDER BY t.last_activity_at DESC
+		ORDER BY t.pinned DESC, t.last_activity_at DESC
 	`, []any{owner.String(), pattern, pattern}, scanThreadSummary)
 }
 
@@ -176,9 +259,12 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 		id, owner, remote         string
 		lastActivity              int64
 		unread                    int
+		pinned, archived, muted   int
+		lastAttachment            int
 		lastBody, lastDir, lastCh sql.NullString
 	)
-	if err := row.Scan(&id, &owner, &remote, &lastActivity, &unread, &lastBody, &lastDir, &lastCh); err != nil {
+	if err := row.Scan(&id, &owner, &remote, &lastActivity, &unread,
+		&pinned, &archived, &muted, &lastBody, &lastDir, &lastCh, &lastAttachment); err != nil {
 		return ThreadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row") //nolint:erraudit // context_loss FP: lastDir is an OUT param, garbage exactly when the scan failed — no honest context to include
 	}
 
@@ -189,7 +275,11 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 			Remote:         domain.MustParsePhone(remote),
 			LastActivityAt: time.Unix(lastActivity, 0),
 			Unread:         unread,
+			Pinned:         pinned == 1,
+			Archived:       archived == 1,
+			Muted:          muted == 1,
 		},
+		LastAttachment: lastAttachment == 1,
 	}
 	if lastBody.Valid {
 		sum.LastBody = lastBody.String
@@ -333,13 +423,15 @@ func (s *Messages) GetThread(
 	ctx context.Context, owner domain.Extension, id domain.ThreadID,
 ) (domain.Thread, error) {
 	var (
-		ownerStr, remoteStr string
-		lastActivity        int64
-		unread              int
+		ownerStr, remoteStr     string
+		lastActivity            int64
+		unread                  int
+		pinned, archived, muted int
 	)
 	err := s.db.QueryRowContext(ctx, `
-		SELECT owner, remote, last_activity_at, unread FROM threads WHERE id = ? AND owner = ?
-	`, id.String(), owner.String()).Scan(&ownerStr, &remoteStr, &lastActivity, &unread)
+		SELECT owner, remote, last_activity_at, unread, pinned, archived, muted
+		FROM threads WHERE id = ? AND owner = ?
+	`, id.String(), owner.String()).Scan(&ownerStr, &remoteStr, &lastActivity, &unread, &pinned, &archived, &muted)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Thread{}, ErrNotFound
 	}
@@ -352,6 +444,9 @@ func (s *Messages) GetThread(
 		Remote:         domain.MustParsePhone(remoteStr),
 		LastActivityAt: time.Unix(lastActivity, 0),
 		Unread:         unread,
+		Pinned:         pinned == 1,
+		Archived:       archived == 1,
+		Muted:          muted == 1,
 	}, nil
 }
 

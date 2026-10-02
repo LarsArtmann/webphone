@@ -188,6 +188,26 @@ func ParseContactID(s string) (ContactID, error) { return parseID[ContactBrand](
 // MustContactID is ParseContactID for database rows; see MustThreadID.
 func MustContactID(s string) ContactID { return must(ParseContactID(s)) }
 
+// SnippetBrand brands snippet identifiers.
+type SnippetBrand struct{}
+
+// Name implements the id.Brand interface.
+func (SnippetBrand) Name() string { return "Snippet" }
+
+// SnippetID identifies a reply snippet.
+type SnippetID = id.ID[SnippetBrand, nanoid.ID]
+
+// GenerateSnippetID mints a new snippet identifier.
+func GenerateSnippetID() SnippetID { return id.NewID[SnippetBrand](nanoid.Must()) }
+
+// ParseSnippetID parses a stored snippet id; see ParseThreadID.
+func ParseSnippetID(s string) (SnippetID, error) {
+	return parseID[SnippetBrand](s, "snippet")
+}
+
+// MustSnippetID is ParseSnippetID for database rows; see MustThreadID.
+func MustSnippetID(s string) SnippetID { return must(ParseSnippetID(s)) }
+
 // parseID re-brands a stored nanoid-backed identifier. Both the branded
 // ("Thread:xxx") and raw ("xxx") forms parse; anything else is an error.
 //

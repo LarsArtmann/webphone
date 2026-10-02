@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/vcard"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -292,6 +293,62 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
+// saveSnippet adds (or, with a stale id, replaces) one reply snippet
+// from the Settings tab (M21). Empty bodies and the cap answer 422 with
+// operator copy; success re-renders the settings partial (toast +
+// partial, the saveContact epilogue).
+func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	body := strings.TrimSpace(r.FormValue("body"))
+	if body == "" {
+		http.Error(w, "the snippet text is empty", http.StatusUnprocessableEntity)
+		return
+	}
+	if len(body) > messaging.MaxBodyLength {
+		http.Error(w, "the snippet is too long", http.StatusUnprocessableEntity)
+		return
+	}
+	snippet := domain.Snippet{
+		ID:        domain.GenerateSnippetID(),
+		Owner:     sess.Extension,
+		Body:      body,
+		Quick:     r.FormValue("quick") == "1",
+		CreatedAt: time.Now(),
+	}
+	if err := h.deps.Snippets.Save(r.Context(), snippet); err != nil {
+		if errors.Is(err, store.ErrSnippetListFull) {
+			http.Error(w, "snippet list is full — delete one first", http.StatusUnprocessableEntity)
+			return
+		}
+		http.Error(w, "could not save the snippet", http.StatusInternalServerError)
+		return
+	}
+	notifyToast(w, "ok", h.T(r, "toast.snippetSaved"))
+	h.partial(w, r, tabFromPath("/settings"))
+}
+
+// deleteSnippet removes one reply snippet (owner-scoped; a miss is 404).
+func (h *handlers) deleteSnippet(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	snippetID, err := domain.ParseSnippetID(r.URL.Query().Get("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if err := h.deps.Snippets.Delete(r.Context(), sess.Extension, snippetID); err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	notifyToast(w, "ok", h.T(r, "toast.snippetDeleted"))
+	h.partial(w, r, tabFromPath("/settings"))
+}
+
 // countUnread sums unread messages across threads for the nav badge,
 // served from the short-TTL cache; every unread mutation drops its
 // extension's entry (send, inbound webhook, mark-read), so the badge is
@@ -306,6 +363,12 @@ func (h *handlers) countUnread(r *http.Request, sess session.Session) int {
 	}
 	total := 0
 	for _, summary := range threads {
+		// Mute suppresses the attention surface, never the truth (design
+		// D8): the unread counter in the thread view stays honest, the
+		// nav badge stops counting what the user asked not to hear about.
+		if summary.Thread.Muted {
+			continue
+		}
 		total += summary.Thread.Unread
 	}
 	h.unread.put(sess.Extension, total)
@@ -433,6 +496,49 @@ func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, threadID); err != nil {
 		http.Error(w, "could not mark read", http.StatusInternalServerError)
+		return
+	}
+	h.unread.drop(sess.Extension)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// threadFlagActions maps the action path segment onto the store flag
+// (M22): one handler, three spellings, routed by POST /messages/{id}/{flag}.
+var threadFlagActions = map[string]store.ThreadFlag{
+	"pin":     store.FlagPinned,
+	"archive": store.FlagArchived,
+	"mute":    store.FlagMuted,
+}
+
+// setThreadFlag pins, archives or mutes a thread — or clears the flag
+// (the row's button posts the DESIRED state: a pinned row renders the
+// unpin button). The messaging service persists and fires the list-only
+// SSE nudge, so every open Messages tab re-renders its list; the unread
+// cache drops because mute changes what the nav badge counts. English
+// error copy per the service policy; every miss is a plain 404 (owner
+// scoping).
+func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	flag, known := threadFlagActions[r.PathValue("flag")]
+	if !known {
+		http.NotFound(w, r)
+		return
+	}
+	threadID, err := domain.ParseThreadID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	on := r.FormValue("on") == "1"
+	if err := h.deps.Messaging.SetThreadFlag(r.Context(), sess.Extension, threadID, flag, on); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "could not update the thread", http.StatusInternalServerError)
 		return
 	}
 	h.unread.drop(sess.Extension)

@@ -308,6 +308,16 @@ clearer, island `node:test` specs; no Ginkgo ports of pinned paths.
   mid-flight toggle queues `holdQueued`). Offline truth: `#offline-banner`
   (DOM-contract id, role=status, data-i18n) flips exactly with the
   registration pill; `online` only nudges `connection.networkOnline()`.
+- **Feedback/trust (M17, 2026-10-02)**: aria-live politeness — everything
+  is POLITE (`#toasts` + `#wp-live` are role=status); the one assertive
+  exception is the incoming-call announce
+  (`announce(msg, kind, { assertive: true })` → role=alert on the toast
+  node). SSE recovery announces once, only after an ANNOUNCED drop
+  (3-failure threshold). A failed optimistic send grows Retry + Dismiss
+  buttons inside the failed bubble (shell.js §3e, English D3; retry
+  re-submits the reply composer, dismiss keeps the draft editable).
+  History's empty state is filter-aware (`history.empty` vs
+  `history.emptyFiltered`).
 - **Shell & accessibility contract**: the shell owns the command palette
   (Ctrl/Cmd-K), the "?" help + Settings cheat-sheet, the skip-to-content
   link, the `#wp-tab-skeleton` reveal + panel transition, the morph

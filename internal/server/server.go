@@ -127,6 +127,7 @@ type Deps struct {
 	Messages  *store.Messages
 	Faxes     *store.Faxes
 	Contacts  *store.Contacts
+	Snippets  *store.Snippets
 	Messaging *messaging.Service
 	Fax       *fax.Service
 	PhoneAPI  *pbx.Client
@@ -203,6 +204,12 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
 	protected.HandleFunc("GET /partials/nav", h.partialNav)
 	protected.HandleFunc("POST /messages/{id}/read", h.markThreadRead)
+	// M22: one pattern route covers pin|archive|mute — the handler's
+	// action map rejects anything else with 404, and the literal "read"
+	// pattern above still wins for that exact segment.
+	protected.HandleFunc("POST /messages/{id}/{flag}", h.setThreadFlag)
+	protected.HandleFunc("POST /snippets/save", h.saveSnippet)
+	protected.HandleFunc("POST /snippets/delete", h.deleteSnippet)
 	protected.HandleFunc("POST /messages/send", h.sendMessage)
 	protected.HandleFunc("POST /fax/send", h.sendFax)
 	protected.HandleFunc("POST /fax/{id}/resend", h.resendFax)

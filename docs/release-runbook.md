@@ -70,12 +70,21 @@ re-run the formatter if it moved styled files.
   cross-repo E2E proves the consuming stack still drives the island.
   A train that only touches server internals, docs, or Go logic the E2E
   never exercises is exempt — state the exemption explicitly.
-  Open obligation (2026-10-02, master-todo train T11–T13): the served
+  Open obligation (2026-10-02, master-todo train T11–T15, T17): the served
   markup DID move — head `modulepreload` links (layout.templ), the
   island diagnostics gear + dial hint + DTMF tone trail (phone.templ,
-  shell.js, island assets), and the history panel (outcome filter,
-  day groups, missed styling, `hx-push-url`). The next release tag
-  MUST run step 7's browser E2E against the new lock; no exemption.
+  shell.js, island assets), the history panel (outcome filter, day
+  groups, missed styling, `hx-push-url`, filter-aware empty copy), the
+  fax panel (transmit timeline `wp-fax-steps`, resend button on failed
+  outbound rows), the voicemail player chrome (play/speed buttons,
+  scrub canvas, time readout, controls-free `<audio>`), the
+  island's SSE-recovery + incoming-call announcements (session.js/
+  connection.js/ui.js strings), and the welcome panel's dismiss button
+  - compact sign-in line and the keyboard viewport meta
+    (`interactive-widget=resizes-content`, T17 M18/M19, layout.templ/
+    theme-preload.js). The
+    next release tag
+    MUST run step 7's browser E2E against the new lock; no exemption.
 - **Load precondition**: `release.sh` step 7 refuses to start the
   stack E2E/VM gates while `/proc/loadavg` (1-minute) is ≥ 8
   (`WEBPHONE_RELEASE_MAX_LOAD` overrides deliberately). Default

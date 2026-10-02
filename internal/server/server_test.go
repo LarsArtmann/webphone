@@ -506,6 +506,9 @@ func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	if !strings.Contains(page, `<script src="/assets/theme-preload.js"></script>`) {
 		t.Error("theme preload script tag missing: forced themes would flash the OS theme before shell.js runs")
 	}
+	if !strings.Contains(page, `interactive-widget=resizes-content`) {
+		t.Error("keyboard viewport meta missing: the on-screen keyboard would cover the sticky composer on Chromium")
+	}
 
 	for _, forbidden := range []string{" onclick=", " onload=", " javascript:"} {
 		if strings.Contains(page, forbidden) {

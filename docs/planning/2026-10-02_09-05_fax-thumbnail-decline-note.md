@@ -9,12 +9,12 @@ A first-page thumbnail of each fax PDF rendered inline in the fax list.
 
 ## Options measured
 
-| Option | Cost | Verdict |
-| --- | --- | --- |
-| pdf.js client-side render | vendor pdf.js (~1.2 MB js + worker) served same-origin; canvas rendering per row; CSP-compatible but heavy | REJECTED — the lean-serving posture is a recorded product stance (the setup-shell adoption was NO-GO'd at +10 MB binary; +1.2 MB of always-loaded JS for a list ornament is the same trade in smaller coins |
-| Server-side rasterize (poppler `pdftoppm` in the runtime closure) | new runtime dependency in the NixOS module + binary closure; PDF → PNG per fax (cache? where?) | REJECTED — deployment-shape change (module + closure growth) for a cosmetic; also needs a thumbnail cache to avoid re-rasterizing on every panel render |
-| Pure-Go rasterizer | no sane pure-Go PDF rasterizer exists (pdfium is cgo) | NOT AVAILABLE |
-| Styled placeholder card (doc glyph + page count) | trivial | REJECTED — cosmetics pretending to be a preview is dishonest UI |
+| Option                                                            | Cost                                                                                                       | Verdict                                                                                                                                                                                                     |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pdf.js client-side render                                         | vendor pdf.js (~1.2 MB js + worker) served same-origin; canvas rendering per row; CSP-compatible but heavy | REJECTED — the lean-serving posture is a recorded product stance (the setup-shell adoption was NO-GO'd at +10 MB binary; +1.2 MB of always-loaded JS for a list ornament is the same trade in smaller coins |
+| Server-side rasterize (poppler `pdftoppm` in the runtime closure) | new runtime dependency in the NixOS module + binary closure; PDF → PNG per fax (cache? where?)             | REJECTED — deployment-shape change (module + closure growth) for a cosmetic; also needs a thumbnail cache to avoid re-rasterizing on every panel render                                                     |
+| Pure-Go rasterizer                                                | no sane pure-Go PDF rasterizer exists (pdfium is cgo)                                                      | NOT AVAILABLE                                                                                                                                                                                               |
+| Styled placeholder card (doc glyph + page count)                  | trivial                                                                                                    | REJECTED — cosmetics pretending to be a preview is dishonest UI                                                                                                                                             |
 
 ## What shipped instead (M14)
 

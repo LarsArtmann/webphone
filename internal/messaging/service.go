@@ -222,6 +222,40 @@ func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.
 	return s.messages.ListThreads(ctx, owner)
 }
 
+// ArchivedThreads lists the owner's archived threads (the filing
+// cabinet view — ListThreads excludes them by design).
+func (s *Service) ArchivedThreads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
+	return s.messages.ListArchivedThreads(ctx, owner)
+}
+
+// ArchivedCount is the archived-thread count behind the toggle link.
+func (s *Service) ArchivedCount(ctx context.Context, owner domain.Extension) (int, error) {
+	return s.messages.CountArchived(ctx, owner)
+}
+
+// SetThreadFlag pins, archives, mutes or un-flags one thread (M22) and
+// notifies the owner's surfaces — the SSE "threads" push re-renders the
+// list with the new ordering/visibility.
+func (s *Service) SetThreadFlag(
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag store.ThreadFlag, on bool,
+) error {
+	if err := s.messages.SetThreadFlag(ctx, owner, id, flag, on); err != nil {
+		return err
+	}
+	s.notifyThreads(ctx, owner)
+	return nil
+}
+
+// notifyThreads nudges the thread list without a thread payload: the
+// "threads" SSE event is a re-render trigger, consumers re-fetch (or
+// morph) with their own credentials — the voicemail-nudge pattern.
+func (s *Service) notifyThreads(ctx context.Context, owner domain.Extension) {
+	if s.onChange == nil {
+		return
+	}
+	s.onChange(ctx, owner, domain.ThreadID{})
+}
+
 // ThreadSearch filters the owner's threads by a text query over the
 // remote number and every message body. Callers route empty queries to
 // Threads instead — the store treats them as a wildcard.

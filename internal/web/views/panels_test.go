@@ -205,3 +205,24 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 		t.Errorf("zero-unread transcript: divider rendered; rendered:\n%s", clean)
 	}
 }
+
+// SignInHint (the pre-login welcome tab) is dismissible per browser:
+// the compact line and the dismiss button must render in BOTH session
+// languages — the copy stays server-owned while shell.js only toggles
+// the collapse class (M18).
+func TestSignInHintRendersDismissAndCompactLineBothLanguages(t *testing.T) {
+	for _, lang := range []Lang{LangEN, LangDE} {
+		rendered := renderComponent(t, SignInHint(lang))
+		for _, want := range []string{
+			`type="button"`,
+			`class="wp-mini wp-welcome-dismiss"`,
+			`class="wp-welcome-compact-line"`,
+			T(lang, "welcome.compact"),
+			T(lang, "welcome.dismiss"),
+		} {
+			if !strings.Contains(rendered, want) {
+				t.Errorf("%s welcome: missing %q; rendered:\n%s", lang, want, rendered)
+			}
+		}
+	}
+}

@@ -37,7 +37,10 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 
 // MessagesChanged pushes a fresh thread list to the extension's tabs and,
 // for the affected thread, a fresh transcript so an open conversation
-// updates live. A failed or missing read is skipped: one lost push is
+// updates live. A zero threadID means a list-only nudge (thread
+// organization flags, M22): no transcript is pushed — an empty-thread
+// query would render an empty transcript and wipe whatever conversation
+// is open. A failed or missing read is skipped: one lost push is
 // cosmetic, the next change catches up.
 func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
@@ -46,6 +49,9 @@ func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, 
 		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, n.crm.Names(ctx, numbers), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
+	}
+	if threadID == (domain.ThreadID{}) {
+		return
 	}
 	if msgs, err := n.messages.ListMessages(ctx, owner, threadID, messaging.MessagePageSize); err == nil {
 		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs, lang))

@@ -269,6 +269,12 @@ async function buildConnection() {
         };
         els.incomingFrom.textContent = from.user || "unknown";
         els.incoming.hidden = false;
+        // Assertive announcement (M17 J9): a hidden→visible swap of the
+        // banner is invisible to screen readers — the ringing call is
+        // the one message allowed to interrupt (role=alert).
+        announce(t("incomingCall")(from.user || "unknown"), "info", {
+          assertive: true,
+        });
         // Incoming-call UX: system notification, audible ring, tab flash.
         notifyIncoming(from.user || "unknown");
         ringToneStart();

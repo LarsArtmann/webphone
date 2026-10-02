@@ -191,11 +191,19 @@ export function initSseLiveIndicator() {
   // silences the counter again.
   let sseFailures = 0;
   const SSE_FAILURES_BEFORE_TOAST = 3;
+  // Auto-recovery notice (M17 J2): "restored" is only told when the
+  // drop itself was told — a flap the user never heard about must not
+  // narrate its healing either.
+  let sseAnnouncedDrop = false;
   document.addEventListener("htmx:sseOpen", () => {
     pill.dataset.live = "1";
     setPillLabel(true);
     pill.title = t("ssePillLive");
     sseFailures = 0;
+    if (sseAnnouncedDrop) {
+      sseAnnouncedDrop = false;
+      announce(t("sseRestored"), "ok");
+    }
   });
   document.addEventListener("htmx:sseClose", () => {
     delete pill.dataset.live;
@@ -208,6 +216,7 @@ export function initSseLiveIndicator() {
     pill.title = t("ssePillDown");
     sseFailures += 1;
     if (sseFailures === SSE_FAILURES_BEFORE_TOAST) {
+      sseAnnouncedDrop = true;
       announce(t("sseDropped"), "warn");
     }
   });

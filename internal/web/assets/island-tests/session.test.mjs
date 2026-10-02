@@ -119,10 +119,42 @@ test("the SSE feed toasts once after three consecutive failures", () => {
     "a fourth failure must not stack another toast",
   );
 
+  // Recovery announces itself once (M17 J2), then the counter resets.
   doc.dispatch("htmx:sseOpen", {});
+  assert.equal(lastToast().text, t("sseRestored"));
   doc.dispatch("htmx:sseError", {});
   doc.dispatch("htmx:sseError", {});
-  assert.equal(toastsHost().children.length, count, "a recovered feed resets the counter");
+  assert.equal(toastsHost().children.length, count + 1, "a recovered feed resets the counter");
+});
+
+// M17 J2: the auto-recovery notice fires ONLY after an announced drop —
+// a flap the user never heard about must not narrate its healing.
+test("the SSE feed announces recovery only after an announced drop", () => {
+  resetToasts();
+  session.initSseLiveIndicator();
+  doc.dispatch("htmx:sseOpen", {}); // deterministic counter start
+
+  // Quiet flap: two failures (below the toast threshold), then recovery.
+  doc.dispatch("htmx:sseError", {});
+  doc.dispatch("htmx:sseError", {});
+  doc.dispatch("htmx:sseOpen", {});
+  assert.equal(lastToast(), null, "an unannounced drop must not announce recovery");
+
+  // Announced drop: third failure toasts, and the recovery says so.
+  doc.dispatch("htmx:sseError", {});
+  doc.dispatch("htmx:sseError", {});
+  doc.dispatch("htmx:sseError", {});
+  assert.equal(lastToast().text, t("sseDropped"));
+  doc.dispatch("htmx:sseOpen", {});
+  assert.equal(lastToast().text, t("sseRestored"));
+  assert.equal(lastToast().className, "toast toast-ok");
+
+  // Recovery is one-shot: a later quiet cycle stays quiet.
+  doc.dispatch("htmx:sseError", {});
+  doc.dispatch("htmx:sseOpen", {});
+  const count = toastsHost().children.length;
+  assert.equal(lastToast().text, t("sseRestored"), "no second recovery toast");
+  assert.equal(toastsHost().children.length, count);
 });
 
 // --- session resume ---------------------------------------------------------

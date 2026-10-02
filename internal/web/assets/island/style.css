@@ -17,6 +17,8 @@
   --accent: #2aa884;
   --accent-strong: #43c79f;
   --accent-soft: rgb(42 168 132 / 14%);
+  --on-accent: #ffffff;
+  --scrim: rgb(3 10 12 / 45%);
   --danger: #e05252;
   --danger-strong: #ea6a6a;
   --warn: #d9a53f;
@@ -113,7 +115,7 @@
 }
 
 .brand-mark .mark-fg {
-  fill: #f4fbf9;
+  fill: var(--on-accent);
 }
 
 #lang {
@@ -273,7 +275,7 @@ select:focus-visible {
 button.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #f4fbf9;
+  color: var(--on-accent);
   font-weight: 600;
   width: 100%;
 }
@@ -286,7 +288,7 @@ button.primary:hover {
 button.danger {
   background: var(--danger);
   border-color: var(--danger);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
@@ -877,7 +879,7 @@ button.small {
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 9999px;
-  background: var(--muted, #9ca3af);
+  background: var(--muted);
   opacity: 0.45;
   transition:
     opacity 0.3s ease,
@@ -887,6 +889,6 @@ button.small {
 }
 
 #wp-sse-live[data-live="1"] {
-  background: var(--ok, #22c55e);
+  background: var(--ok);
   opacity: 1;
 }

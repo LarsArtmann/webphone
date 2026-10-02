@@ -224,6 +224,14 @@ templ identityLine(lang Lang, identity string) {
 // rules win), and the tiny shell script that tracks the active nav item
 // across partial swaps.
 templ headExtras(csrfToken string) {
+	// M19: layout.Base hardcodes `width=device-width, initial-scale=1.0`
+	// and offers no viewport prop. A second viewport meta MERGES with the
+	// first per the CSS Viewport spec (keys are combined in document
+	// order), so this adds `interactive-widget=resizes-content` for
+	// Chromium — the on-screen keyboard resizes the LAYOUT viewport, so
+	// the sticky composer stays above the keyboard instead of hiding
+	// under it. Browsers without the key ignore it (no fork of Base).
+	<meta name="viewport" content="interactive-widget=resizes-content"></meta>
 	<script src="/assets/theme-preload.js"></script>
 	// Warm the island's script payloads from the head: the ESM graph
 	// (modulepreload — fetch AND compile while the body still parses; the
@@ -269,5 +277,7 @@ templ SignInHint(lang Lang) {
 			<li>{ T(lang, "welcome.point3") }</li>
 		</ul>
 		<p class="wp-welcome-hint">{ T(lang, "signin.hint") }</p>
+		<p class="wp-welcome-compact-line">{ T(lang, "welcome.compact") }</p>
+		<button type="button" class="wp-mini wp-welcome-dismiss">{ T(lang, "welcome.dismiss") }</button>
 	</section>
 }

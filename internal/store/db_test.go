@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"strings"
@@ -168,5 +169,128 @@ func TestDatabaseAdapterHealthAndShutdown(t *testing.T) {
 	var classified errorfamily.Classified
 	if !errors.As(err, &classified) || classified.ErrorFamily() != errorfamily.Infrastructure {
 		t.Errorf("closed-database HealthCheck family = %v, want Infrastructure (%v)", classified, err)
+	}
+}
+
+// The versioned migration chain (T18 design note): fresh and legacy
+// databases converge on the same shape-history, the version row is the
+// single apply-guard, and reruns never duplicate columns. v1 is the
+// duplicate-tolerant baseline (it must absorb pre-versioning databases);
+// v2+ are strict and run exactly once.
+func TestVersionedMigrations(t *testing.T) {
+	t.Run("fresh database walks the whole chain to latest", func(t *testing.T) {
+		db, err := Open(":memory:")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = db.Close() })
+		assertSchemaVersion(t, db, schemaVersion)
+		assertColumns(t, db, "threads", "pinned", "archived", "muted")
+		assertColumns(t, db, "messages", "failure_kind", "failure_detail")
+		assertTable(t, db, "snippets")
+	})
+
+	t.Run("legacy pre-versioning database converges and stamps", func(t *testing.T) {
+		db, err := sql.Open("sqlite", ":memory:")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = db.Close() })
+		// A database from before versioning: the v1-era shape INCLUDING
+		// the ad-hoc failure columns, but no schema_version row.
+		ctx := context.Background()
+		for _, stmt := range []string{
+			`CREATE TABLE threads (
+				id TEXT PRIMARY KEY, owner TEXT NOT NULL, remote TEXT NOT NULL,
+				last_activity_at INTEGER NOT NULL, unread INTEGER NOT NULL DEFAULT 0,
+				UNIQUE(owner, remote))`,
+			`CREATE TABLE messages (
+				id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, owner TEXT NOT NULL,
+				remote TEXT NOT NULL, direction TEXT NOT NULL, channel TEXT NOT NULL,
+				body TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT '',
+				provider_ref TEXT NOT NULL DEFAULT '',
+				failure_kind TEXT NOT NULL DEFAULT '', failure_detail TEXT NOT NULL DEFAULT '',
+				created_at INTEGER NOT NULL)`,
+		} {
+			if _, err := db.ExecContext(ctx, stmt); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := migrate(ctx, db); err != nil {
+			t.Fatalf("migrate legacy: %v", err)
+		}
+		assertSchemaVersion(t, db, schemaVersion)
+		assertColumns(t, db, "threads", "pinned", "archived", "muted")
+		assertTable(t, db, "snippets")
+	})
+
+	t.Run("already-latest database is a no-op rerun", func(t *testing.T) {
+		db, err := Open(":memory:")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = db.Close() })
+		if err := migrate(context.Background(), db); err != nil {
+			t.Fatalf("rerun: %v", err)
+		}
+		assertSchemaVersion(t, db, schemaVersion)
+	})
+
+	t.Run("the chain stays consistent with schemaVersion", func(t *testing.T) {
+		if len(migrations) == 0 || migrations[len(migrations)-1].version != schemaVersion {
+			t.Fatalf("last migration version %d != schemaVersion %d", migrations[len(migrations)-1].version, schemaVersion)
+		}
+		for i, m := range migrations {
+			if i > 0 && m.version != migrations[i-1].version+1 {
+				t.Fatalf("migration versions must be contiguous: %d after %d", m.version, migrations[i-1].version)
+			}
+		}
+	})
+}
+
+func assertSchemaVersion(t *testing.T, db *sql.DB, want int) {
+	t.Helper()
+	var got int
+	if err := db.QueryRow(`SELECT version FROM schema_version LIMIT 1`).Scan(&got); err != nil {
+		t.Fatalf("read schema_version: %v", err)
+	}
+	if got != want {
+		t.Fatalf("schema_version = %d, want %d", got, want)
+	}
+}
+
+func assertColumns(t *testing.T, db *sql.DB, table string, wants ...string) {
+	t.Helper()
+	rows, err := db.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		t.Fatalf("table_info %s: %v", table, err)
+	}
+	defer rows.Close() //nolint:erraudit // read-only probe; nothing to report on close
+	have := map[string]bool{}
+	for rows.Next() {
+		var cid int
+		var name, colType string
+		var notNull, pk int
+		var dflt any
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dflt, &pk); err != nil {
+			t.Fatalf("scan table_info: %v", err)
+		}
+		have[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("table_info iteration: %v", err)
+	}
+	for _, want := range wants {
+		if !have[want] {
+			t.Errorf("table %s lacks column %q (has %v)", table, want, have)
+		}
+	}
+}
+
+func assertTable(t *testing.T, db *sql.DB, table string) {
+	t.Helper()
+	var name string
+	if err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`, table).Scan(&name); err != nil {
+		t.Fatalf("table %s missing: %v", table, err)
 	}
 }
