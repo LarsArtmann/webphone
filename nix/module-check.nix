@@ -189,9 +189,7 @@
           # whitespace, or a dropped line; this pins the whole document.
           name = "module-output-golden";
           path = pkgs.runCommand "module-output-golden" { } ''
-            if diff -u ${./module-output.golden} ${
-              pkgs.writeText "module-output.actual" renderedModuleOutput
-            } > $out; then
+            if diff -u ${./module-output.golden} ${pkgs.writeText "module-output.actual" renderedModuleOutput} > $out; then
               echo "module output matches the committed golden (vhost + backup script + settings JSON)" >> $out
             else
               cat $out >&2

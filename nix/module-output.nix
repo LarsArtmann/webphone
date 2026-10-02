@@ -18,10 +18,12 @@
 let
   vhost = base.vhost.extraConfig;
   backupScript =
-    (lib.evalModules (base.moduleSet {
-      backup.enable = true;
-      backup.retentionDays = 7;
-    })).config.systemd.services.webphone-backup.script;
+    (lib.evalModules (
+      base.moduleSet {
+        backup.enable = true;
+        backup.retentionDays = 7;
+      }
+    )).config.systemd.services.webphone-backup.script;
 in
 ''
   == Caddy vhost extraConfig ==
