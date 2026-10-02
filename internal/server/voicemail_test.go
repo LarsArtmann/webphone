@@ -82,3 +82,58 @@ func TestVoicemailRowsCarryStableMorphIds(t *testing.T) {
 		}
 	}
 }
+
+// TestVoicemailRowsRenderPlayerChrome pins the M13 player contract: the
+// audio element ships WITHOUT native controls (the custom chrome drives
+// it), the play/speed buttons and waveform canvas carry the uuid ids the
+// shell wires, and both label variants ride the server-rendered data
+// attributes so the per-extension language survives the JS toggle.
+func TestVoicemailRowsRenderPlayerChrome(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		uri := r.URL.RequestURI()
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.HasPrefix(uri, "/phone-api/voicemail/") && strings.HasSuffix(uri, "/summary"):
+			_, _ = w.Write([]byte(`{"new":1,"old":0}`))
+		case strings.HasPrefix(uri, "/phone-api/voicemail/"):
+			_, _ = w.Write([]byte(`{"messages":[
+				{"uuid":"vm-1","cid_number":"+441632960961","cid_name":"Alice","seconds":12,"created":1758300000,"read":false,"audio_url":"/phone-api/voicemail/1001/messages/vm-1/audio"},
+				{"uuid":"vm-3","cid_number":"","cid_name":"","seconds":5,"created":1758300200,"read":true,"audio_url":""}
+			]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(upstream.Close)
+
+	server := newTestServerWithPhoneAPI(t, upstream.URL)
+	c := signIn(t, server)
+
+	_, body := c.do(http.MethodGet, "/partials/voicemail", nil, "")
+	page := string(body)
+	for _, want := range []string{
+		`id="vm-play-vm-1"`,
+		`data-vm-play="vm-1"`,
+		`data-label-play="Play"`,
+		`data-label-pause="Pause"`,
+		`id="vm-speed-vm-1"`,
+		`data-vm-speed="vm-1"`,
+		`id="vm-wave-vm-1"`,
+		`role="slider"`,
+		`aria-label="Position in message"`,
+		`id="vm-time-vm-1"`,
+		`0:00 / 0:12`,
+		`aria-valuemax="12"`,
+		`class="wp-vm-player"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("player chrome missing %s: %.600s", want, page)
+		}
+	}
+	if strings.Contains(page, `<audio class="wp-audio" controls`) {
+		t.Error("the audio element must ship controls-free; the native UI is only the fallback")
+	}
+	if strings.Contains(page, "vm-play-vm-3") || strings.Contains(page, "vm-audio-vm-3") {
+		t.Error("a row without audio_url must not render player chrome")
+	}
+}

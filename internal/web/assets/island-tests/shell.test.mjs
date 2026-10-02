@@ -755,3 +755,116 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
   doc.querySelector = realQuerySelector;
   delete globalThis.window.htmx;
 });
+
+// --- voicemail player (M13 C1–C3/C9) ------------------------------------
+
+const makeAudioStub = (id, src) => {
+  const audio = doc.createElement();
+  audio.id = id;
+  audio.setAttribute("src", src);
+  audio.paused = true;
+  audio.controls = false;
+  const played = [];
+  audio.play = () => {
+    played.push("play");
+    audio.paused = false;
+    return Promise.resolve();
+  };
+  audio.pause = () => {
+    played.push("pause");
+    audio.paused = true;
+  };
+  audio.playCalls = played;
+  return audio;
+};
+
+const makePlayerRow = (uuid, { unread = true } = {}) => {
+  const row = doc.createElement();
+  row.id = "vm-" + uuid;
+  row.className = "wp-row wp-vm-row" + (unread ? " wp-unread" : "");
+  const audio = makeAudioStub("vm-audio-" + uuid, "/phone-api/x");
+  const play = doc.createElement();
+  play.id = "vm-play-" + uuid;
+  play.className = "wp-mini wp-vm-play";
+  play.setAttribute("data-vm-play", uuid);
+  play.setAttribute("data-label-play", "Play");
+  play.setAttribute("data-label-pause", "Pause");
+  const speed = doc.createElement();
+  speed.id = "vm-speed-" + uuid;
+  speed.className = "wp-mini wp-vm-speed";
+  speed.setAttribute("data-vm-speed", uuid);
+  row.append(audio, play, speed);
+  return { row, audio, play, speed };
+};
+
+test("vmPeaks reduces PCM to max-abs bars", () => {
+  const empty = shellApi.vmPeaks([], 4);
+  assert.deepEqual(empty, [0, 0, 0, 0], "silence renders as flat bars");
+
+  const two = shellApi.vmPeaks([0, -1, 0.5, 0.25], 2);
+  assert.deepEqual(two, [1, 0.5], "each bar is the max abs of its slice");
+
+  const carried = shellApi.vmPeaks([0.5], 3);
+  assert.deepEqual(carried, [0.5, 0.5, 0.5], "bars beyond the samples carry the neighbor");
+});
+
+test("vmClock renders the server's m:ss shape", () => {
+  assert.equal(shellApi.vmClock(0), "0:00");
+  assert.equal(shellApi.vmClock(5.9), "0:05");
+  assert.equal(shellApi.vmClock(65), "1:05");
+  assert.equal(shellApi.vmClock(-3), "0:00");
+  assert.equal(shellApi.vmClock(undefined), "0:00");
+  assert.equal(shellApi.vmClock(NaN), "0:00");
+});
+
+test("the play button drives the audio and falls back honestly", () => {
+  const { row, audio, play } = makePlayerRow("u1");
+  // No fetch in node: the waveform build must fail → native controls.
+  doc.dispatch("click", { target: play });
+  assert.deepEqual(audio.playCalls, ["play"], "the click starts the audio");
+  assert.equal(audio.controls, true, "without WebAudio the native UI takes over");
+  assert.equal(play.hidden, true, "the custom play button hides in the fallback");
+  const toast = toasts().children.at(-1);
+  assert.match(toast.textContent, /built-in player controls/);
+});
+
+test("playing marks the row, swaps the label, and clears unread + badge", () => {
+  const badge = doc.getElementById("wp-nav-vm-badge");
+  badge.textContent = "2";
+  badge.hidden = false;
+  const { row, audio, play } = makePlayerRow("u2");
+
+  doc.dispatch("click", { target: play });
+  // The play listener was wired lazily on first interaction.
+  const onPlay = audio.listeners.play[0];
+  onPlay();
+  assert.ok(row.classList.contains("wp-playing"), "C3: the row is marked playing");
+  assert.equal(play.textContent, "⏸");
+  assert.equal(play.getAttribute("aria-label"), "Pause", "label swaps per the session language");
+  assert.ok(!row.classList.contains("wp-unread"), "C9: unread styling drops on play");
+  assert.equal(badge.textContent, "1", "C9: the nav badge mirrors the clear");
+
+  const onPause = audio.listeners.pause[0];
+  onPause();
+  assert.ok(!row.classList.contains("wp-playing"));
+  assert.equal(play.textContent, "▶");
+  assert.equal(play.getAttribute("aria-label"), "Play");
+
+  badge.hidden = true;
+  badge.textContent = "";
+});
+
+test("the speed toggle walks the ladder and writes it back", () => {
+  const { audio, speed } = makePlayerRow("u3");
+  const labels = [speed.textContent];
+  for (let i = 0; i < 5; i++) {
+    doc.dispatch("click", { target: speed });
+    labels.push(speed.textContent);
+  }
+  assert.deepEqual(
+    labels,
+    ["1×", "1.5×", "2×", "0.5×", "1×", "1.5×"],
+    "the ladder cycles 1 → 1.5 → 2 → 0.5 → 1",
+  );
+  assert.equal(audio.playbackRate, 1.5, "the rate lands on the audio element");
+});

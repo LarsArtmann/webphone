@@ -146,6 +146,12 @@ func (h *handlers) resendFax(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	// Owner-scoped pre-fetch: a missing or foreign id is a plain 404
+	// (same as faxDocument), never a send-failure family verdict.
+	if _, err := h.deps.Fax.Get(r.Context(), sess.Extension, faxID); err != nil {
+		http.NotFound(w, r)
+		return
+	}
 	if _, err := h.deps.Fax.Resend(r.Context(), sess.Extension, faxID); err != nil {
 		h.sendFailure(w, r, sess, views.TabFax, err, "fax", sendFailureKeys{
 			rejected:  "err.faxRejected",
