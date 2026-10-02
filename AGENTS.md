@@ -152,6 +152,28 @@ re-run it after any markup change (release-runbook obligation).
   Morph preserves focus/drafts/listeners; STATEFUL nodes need stable ids.
   Payloads are bare fragments. Events: `threads`, `thread`, `fax`,
   `voicemail`, `contacts` (the last two are payload-less NUDGES).
+  The `threads` nudge is also LIST-ONLY by design: `MessagesChanged`
+  with a zero thread id skips the transcript push (notifier.go guard —
+  an empty `thread` payload would wipe the open conversation).
+- **Thread organization + snippets seam (T18 M21/M22, 2026-10-02)**:
+  `pinned/archived/muted` are three 0/1 thread columns (schema_version
+  v2; migrations are VERSIONED in `store/db.go` — a new schema change
+  is a new migration step, never an ad-hoc ALTER). Toggles ride
+  `POST /messages/{id}/{flag}?on=N` posting the DESIRED state: row
+  buttons answer 204 + the list-only `threads` nudge; head buttons
+  target `#wp-thread-head` outerHTML and get the freshly rendered head
+  back (setThreadFlag branches on the `HX-Target` header). Inbound
+  messages AUTO-UNARCHIVE (AppendMessage upsert CASE); mute is
+  presentation-only (`countUnread` skips muted rows — unread truth
+  stays in the store). Thread rows carry stable `thread-<id>` wrapper
+  ids (idiomorph). Reply snippets: per-extension store (cap 100,
+  replace-by-id upsert), Settings CRUD actions, quick snippets (cap 5)
+  render as chips + every snippet behind a `<details>` picker in the
+  REPLY composer only; shell.js `data-snippet` fill REPLACES the
+  textarea (data-sms precedent). Image attachments carry
+  `data-lightbox`; shell.js opens the singleton `#wp-lightbox` dialog
+  (native ESC/backdrop close). Design decisions D1–D14:
+  `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md`.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt). File
   parts carry their HONEST Content-Type (`createFilePart`; fax parts

@@ -193,6 +193,51 @@ func TestPinnedOrdering(t *testing.T) {
 	}
 }
 
+// TestSummaryFlagsAndAttachmentPreview pins the summary-row surface
+// M21/M22 added: the flag columns flow into every ThreadSummary and the
+// last message's attachment flips LastAttachment (the 📎 preview).
+func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
+	messages, _, _ := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	remote := domain.MustParsePhone("+441632960961")
+	threadID := seedThread(t, messages, owner, remote)
+
+	if err := messages.SetThreadFlag(ctx, owner, threadID, FlagPinned, true); err != nil {
+		t.Fatal(err)
+	}
+	withAttachment := domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: owner, Remote: remote,
+		Direction: domain.DirectionInbound, Channel: domain.ChannelMMS,
+		CreatedAt: time.Now(),
+		Attachments: []domain.Attachment{{
+			ID: domain.GenerateAttachmentID(), Name: "pic.png",
+			MimeType: "image/png", SizeBytes: 2048, Path: t.TempDir() + "/pic.png",
+		}},
+	}
+	if err := messages.AppendMessage(ctx, withAttachment); err != nil {
+		t.Fatal(err)
+	}
+
+	threads, err := messages.ListThreads(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(threads) != 1 {
+		t.Fatalf("threads: %d", len(threads))
+	}
+	summary := threads[0]
+	if !summary.Thread.Pinned {
+		t.Error("summary must carry Pinned")
+	}
+	if !summary.LastAttachment {
+		t.Error("summary must carry LastAttachment for an MMS tail (the 📎 preview)")
+	}
+	if summary.LastDirection != domain.DirectionInbound {
+		t.Errorf("last direction: %s", summary.LastDirection)
+	}
+}
+
 func TestSnippetsCRUDAndCap(t *testing.T) {
 	db, err := Open(":memory:")
 	if err != nil {

@@ -70,7 +70,7 @@ re-run the formatter if it moved styled files.
   cross-repo E2E proves the consuming stack still drives the island.
   A train that only touches server internals, docs, or Go logic the E2E
   never exercises is exempt — state the exemption explicitly.
-  Open obligation (2026-10-02, master-todo train T11–T15, T17): the served
+  Open obligation (2026-10-02, master-todo train T11–T15, T17, T18): the served
   markup DID move — head `modulepreload` links (layout.templ), the
   island diagnostics gear + dial hint + DTMF tone trail (phone.templ,
   shell.js, island assets), the history panel (outcome filter, day
@@ -82,7 +82,13 @@ re-run the formatter if it moved styled files.
   connection.js/ui.js strings), and the welcome panel's dismiss button
   - compact sign-in line and the keyboard viewport meta
     (`interactive-widget=resizes-content`, T17 M18/M19, layout.templ/
-    theme-preload.js). The
+    theme-preload.js), plus the Messages organization surfaces (T18
+    M21/M22: thread-row pin/mute/archive buttons with stable
+    `thread-<id>` wrapper ids, the archived toggle + archived view,
+    the open-thread head toggles behind `#wp-thread-head`, the snippet
+    chips/picker in the reply composer, the Settings snippets section,
+    and the `data-lightbox` image-attachment trigger + shell.js
+    `#wp-lightbox` dialog). The
     next release tag
     MUST run step 7's browser E2E against the new lock; no exemption.
 - **Load precondition**: `release.sh` step 7 refuses to start the
