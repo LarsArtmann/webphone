@@ -280,7 +280,10 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 // bounded retention sweep. ctx bounds them all — cancel it and they end.
 func (a *App) Start(ctx context.Context) error {
 	if a.cfg.Dashboard.Enable {
-		dash := do.MustInvokeNamed[*dashboard.Dashboard](a.injector, "dashboard")
+		dash, err := do.InvokeNamed[*dashboard.Dashboard](a.injector, "dashboard")
+		if err != nil {
+			return wrapf("resolve dashboard: %w", err)
+		}
 		if err := dash.Start(ctx); err != nil {
 			return wrapf("start dashboard pusher: %w", err)
 		}
@@ -288,8 +291,14 @@ func (a *App) Start(ctx context.Context) error {
 	if err := a.Probe.Start(ctx); err != nil {
 		return wrapf("start health probe: %w", err)
 	}
-	db := do.MustInvokeNamed[*store.Database](a.injector, "sqlite")
-	blobs := do.MustInvokeNamed[*blob.Store](a.injector, "blob-dir")
+	db, err := do.InvokeNamed[*store.Database](a.injector, "sqlite")
+	if err != nil {
+		return wrapf("resolve store: %w", err)
+	}
+	blobs, err := do.InvokeNamed[*blob.Store](a.injector, "blob-dir")
+	if err != nil {
+		return wrapf("resolve blob store: %w", err)
+	}
 	retention.Start(ctx, db.SQL(), blobs, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	return nil
 }

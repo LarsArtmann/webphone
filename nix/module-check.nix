@@ -41,6 +41,14 @@
       missingExtras = lib.filter (frag: !lib.hasInfix frag vhost.extraConfig) requiredExtras;
       unitPresent = evaluated.config.systemd.services ? "webphone";
 
+      # Full-text rendering of the generated module output (Caddy vhost,
+      # the retention=7 backup script, and the settings JSON). The
+      # substring cases below catch missing pieces; the golden case
+      # catches reordering/whitespace drift they would miss (the same
+      # idea as the gateway part-header golden). The renderer lives in
+      # nix/module-output.nix; the fixture is nix/module-output.golden.
+      renderedModuleOutput = import ./module-output.nix { inherit lib base; };
+
       coreCases = [
         {
           name = "webphone-config.json";
@@ -174,6 +182,23 @@
             else
               throw "webphone-module check: caddy.hsts.enable did not produce an HSTS vhost header"
           );
+        }
+        {
+          # Full-text golden of the generated vhost + retention=7 backup
+          # script + settings JSON. Substring checks miss reordering,
+          # whitespace, or a dropped line; this pins the whole document.
+          name = "module-output-golden";
+          path = pkgs.runCommand "module-output-golden" { } ''
+            if diff -u ${./module-output.golden} ${
+              pkgs.writeText "module-output.actual" renderedModuleOutput
+            } > $out; then
+              echo "module output matches the committed golden (vhost + backup script + settings JSON)" >> $out
+            else
+              cat $out >&2
+              echo "webphone-module check: module output drifted from nix/module-output.golden" >&2
+              exit 1
+            fi
+          '';
         }
       ];
     in

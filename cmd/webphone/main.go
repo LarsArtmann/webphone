@@ -19,10 +19,13 @@ import (
 	"github.com/larsartmann/webphone/internal/config"
 )
 
+// main reports and exits: run()'s designed errors render the five-part
+// operator contract and exit 1 (bootreport.go); a panic escaping run()
+// renders the block plus the trace and exits 2. Taxonomy + copy:
+// docs/error-contract.md, "Boot surface".
 func main() {
 	if err := run(); err != nil {
-		slog.Error("webphone exited", "error", err)
-		os.Exit(1)
+		reportBootFailure(err)
 	}
 }
 
@@ -37,9 +40,12 @@ func propagatef(format string, args ...any) error {
 }
 
 func run() error {
+	// First-registered defer runs last: a panic from ANY boot step (or
+	// from the defers below) still lands in the operator report.
+	defer recoverBootPanic()
 	cfg, err := config.Load()
 	if err != nil {
-		return propagatef("load config: %w", err)
+		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
 	}
 	slog.Info("webphone starting",
 		"addr", cfg.Addr, "dataDir", cfg.DataDir, "gateway", string(cfg.Gateway.Mode))
@@ -77,7 +83,7 @@ func run() error {
 		return propagatef("build app: %w", err)
 	}
 	if err := application.Start(ctx); err != nil {
-		return propagatef("start app: %w", err)
+		return bootErr(bootGeneric, propagatef("start app: %w", err))
 	}
 
 	// httputil.Server owns the lifecycle — the same tested primitive the
@@ -95,7 +101,7 @@ func run() error {
 		ShutdownTimeout:   30 * time.Second,
 	}, application.Handler)
 	if err != nil {
-		return errors.Join(err, application.Shutdown())
+		return errors.Join(bootErr(bootListen, err), application.Shutdown())
 	}
 
 	slog.Info("listening", "addr", cfg.Addr)
@@ -103,7 +109,7 @@ func run() error {
 
 	select {
 	case err := <-errCh:
-		return errors.Join(propagatef("serve: %w", err), application.Shutdown())
+		return errors.Join(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown())
 	case <-ctx.Done():
 		slog.Info("shutting down")
 		// Order matters: the HTTP drain finishes in-flight responses

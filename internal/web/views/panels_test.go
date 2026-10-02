@@ -1,12 +1,14 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/store"
 )
 
 // hostile doubles as content and escaping probe: every panel must render
@@ -224,5 +226,206 @@ func TestSignInHintRendersDismissAndCompactLineBothLanguages(t *testing.T) {
 				t.Errorf("%s welcome: missing %q; rendered:\n%s", lang, want, rendered)
 			}
 		}
+	}
+}
+
+// TestThreadRowFlagControlsBothLanguages pins the M22 row controls: the
+// stable wrapper id (D14), action labels that track the row's state
+// (the same expression feeds label and posted value), the muted row's
+// suppressed badge with its state glyph, and the archived row's
+// unarchive-only shape — in both UI languages.
+func TestThreadRowFlagControlsBothLanguages(t *testing.T) {
+	newSummary := func(flags domain.Thread) store.ThreadSummary {
+		return store.ThreadSummary{Thread: flags}
+	}
+	plain := newSummary(domain.Thread{
+		ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961"), Unread: 2,
+	})
+	pinned := plain
+	pinned.Thread.Pinned = true
+	muted := plain
+	muted.Thread.Muted = true
+	archived := plain
+	archived.Thread.Archived = true
+
+	en := renderComponent(t, ThreadRow(plain, nil, LangEN))
+	if !strings.Contains(en, `id="thread-`+plain.Thread.ID.String()+`"`) {
+		t.Errorf("row wrapper id must be the stable thread-<id>: %s", en)
+	}
+	if !strings.Contains(en, `aria-label="Pin"`) || !strings.Contains(en, plain.Thread.ID.String()+`/pin?on=1`) {
+		t.Errorf("plain row must offer Pin posting on=1: %s", en)
+	}
+	if !strings.Contains(en, `aria-label="Mute"`) || !strings.Contains(en, plain.Thread.ID.String()+`/mute?on=1`) {
+		t.Errorf("plain row must offer Mute posting on=1: %s", en)
+	}
+	if !strings.Contains(en, `aria-label="Archive"`) || !strings.Contains(en, plain.Thread.ID.String()+`/archive?on=1`) {
+		t.Errorf("plain row must offer Archive posting on=1: %s", en)
+	}
+	if !strings.Contains(en, `class="wp-nav-badge"`) {
+		t.Errorf("unmuted unread row must show the badge: %s", en)
+	}
+
+	pinnedEN := renderComponent(t, ThreadRow(pinned, nil, LangEN))
+	if !strings.Contains(pinnedEN, `aria-label="Unpin"`) || !strings.Contains(pinnedEN, pinned.Thread.ID.String()+`/pin?on=0`) {
+		t.Errorf("pinned row must offer Unpin posting on=0: %s", pinnedEN)
+	}
+
+	mutedEN := renderComponent(t, ThreadRow(muted, nil, LangEN))
+	if strings.Contains(mutedEN, `class="wp-nav-badge"`) {
+		t.Errorf("muted row must suppress the badge (D8): %s", mutedEN)
+	}
+	if !strings.Contains(mutedEN, `aria-label="Unmute"`) || !strings.Contains(mutedEN, ">🔇</button>") {
+		t.Errorf("muted row must offer Unmute with the speaker-off glyph: %s", mutedEN)
+	}
+
+	archivedEN := renderComponent(t, ThreadRow(archived, nil, LangEN))
+	if !strings.Contains(archivedEN, `aria-label="Unarchive"`) || !strings.Contains(archivedEN, archived.Thread.ID.String()+`/archive?on=0`) {
+		t.Errorf("archived row must offer Unarchive posting on=0: %s", archivedEN)
+	}
+	if strings.Contains(archivedEN, `/pin?`) || strings.Contains(archivedEN, `/mute?`) {
+		t.Errorf("archived row keeps no pins or mutes: %s", archivedEN)
+	}
+
+	de := renderComponent(t, ThreadRow(plain, nil, LangDE))
+	for _, want := range []string{`aria-label="Anheften"`, `aria-label="Stummschalten"`, `aria-label="Archivieren"`} {
+		if !strings.Contains(de, want) {
+			t.Errorf("German row labels missing %s: %s", want, de)
+		}
+	}
+}
+
+// TestArchivedToggleAndSearchHiding pins the D6 panel shapes: the
+// active view links to the archived list only when something is filed,
+// and the archived view swaps the link for the way back and drops the
+// search box (search walks the active list only).
+func TestArchivedToggleAndSearchHiding(t *testing.T) {
+	active := renderComponent(t, ThreadsPanel(ThreadsPanelProps{ArchivedCount: 2, Lang: LangEN}))
+	if !strings.Contains(active, ">Archived (2)</a>") || !strings.Contains(active, `hx-get="/partials/messages?archived=1"`) {
+		t.Errorf("active view must link the archived list: %s", active)
+	}
+	if !strings.Contains(active, `class="wp-thread-search"`) {
+		t.Errorf("active view keeps the search box: %s", active)
+	}
+
+	empty := renderComponent(t, ThreadsPanel(ThreadsPanelProps{Lang: LangEN}))
+	if strings.Contains(empty, "wp-archived-toggle") {
+		t.Errorf("no archived link when nothing is filed: %s", empty)
+	}
+
+	archived := renderComponent(t, ThreadsPanel(ThreadsPanelProps{Archived: true, Lang: LangEN}))
+	if !strings.Contains(archived, ">← Back to messages</a>") || !strings.Contains(archived, `hx-push-url="/messages"`) {
+		t.Errorf("archived view must offer the way back: %s", archived)
+	}
+	if strings.Contains(archived, `class="wp-thread-search"`) {
+		t.Errorf("archived view must hide the search box: %s", archived)
+	}
+	archivedDE := renderComponent(t, ThreadsPanel(ThreadsPanelProps{Archived: true, Lang: LangDE}))
+	if !strings.Contains(archivedDE, "Zurück zu den Nachrichten") {
+		t.Errorf("German back link missing: %s", archivedDE)
+	}
+}
+
+func testSnippets(count, quick int) []domain.Snippet {
+	snippets := make([]domain.Snippet, 0, count)
+	for i := range count {
+		snippets = append(snippets, domain.Snippet{
+			ID: domain.GenerateSnippetID(), Owner: domain.MustParseExtension("1001"),
+			Body: fmt.Sprintf("snippet %02d", i), Quick: i < quick, CreatedAt: time.Now(),
+		})
+	}
+	return snippets
+}
+
+// TestSnippetChipsAndPicker pin the M21 composer lane: quick snippets
+// (capped at five) render as chips, every snippet sits behind the
+// picker disclosure, and an empty snippet list renders no lane at all.
+func TestSnippetChipsAndPicker(t *testing.T) {
+	view := renderComponent(t, ThreadView(ThreadViewProps{
+		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961")},
+		Snippets: func() []domain.Snippet {
+			snippets := testSnippets(7, 6)
+			snippets[6] = domain.Snippet{
+				ID: domain.GenerateSnippetID(), Owner: domain.MustParseExtension("1001"),
+				Body: "a deliberately long snippet body that must be shortened for the chip lane",
+				CreatedAt: time.Now(),
+			}
+			return snippets
+		}(),
+		Lang: LangEN,
+	}))
+	if got := strings.Count(view, `class="wp-chip"`); got != 5 {
+		t.Errorf("chip lane must cap at five quick snippets, got %d", got)
+	}
+	if !strings.Contains(view, `data-snippet="snippet 00"`) || strings.Count(view, `data-snippet="snippet 05"`) != 1 {
+		t.Errorf("chips carry the first five QUICK bodies; snippet 05 lives only in the picker: %s", view)
+	}
+	if !strings.Contains(view, "Insert snippet") || !strings.Contains(view, `class="wp-snippet-picker"`) {
+		t.Errorf("picker disclosure missing: %s", view)
+	}
+	if !strings.Contains(view, `data-snippet="a deliberately long snippet body that must be shortened for the chip lane"`) {
+		t.Errorf("picker holds every snippet, long ones included: %s", view)
+	}
+	if !strings.Contains(view, "…") {
+		t.Errorf("chip labels truncate with an ellipsis: %s", view)
+	}
+
+	bare := renderComponent(t, ThreadView(ThreadViewProps{
+		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961")},
+		Lang:   LangEN,
+	}))
+	if strings.Contains(bare, "wp-snippet-bar") {
+		t.Errorf("no snippet lane without snippets: %s", bare)
+	}
+}
+
+// TestSettingsSnippetsSection pins the Settings management surface: the
+// list rows with quick markers and delete buttons, the add form with
+// the quick checkbox — and the empty state when nothing exists.
+func TestSettingsSnippetsSection(t *testing.T) {
+	with := renderComponent(t, SettingsPanel(SettingsPanelProps{
+		SharedContacts: 1, Snippets: testSnippets(2, 1), Lang: LangEN,
+	}))
+	if !strings.Contains(with, "Reply snippets") || !strings.Contains(with, "Add snippet") {
+		t.Errorf("section head/add form missing: %s", with)
+	}
+	if !strings.Contains(with, `data-quick`) && !strings.Contains(with, `>⚡<`) {
+		t.Errorf("quick marker missing on the first snippet: %s", with)
+	}
+	if !strings.Contains(with, `hx-post="/snippets/delete?id=`) {
+		t.Errorf("delete buttons missing: %s", with)
+	}
+	if !strings.Contains(with, `name="quick"`) || !strings.Contains(with, `hx-post="/snippets/save"`) {
+		t.Errorf("add form missing its fields: %s", with)
+	}
+
+	empty := renderComponent(t, SettingsPanel(SettingsPanelProps{Lang: LangEN}))
+	if !strings.Contains(empty, "No snippets yet — add the first one below.") {
+		t.Errorf("empty state missing: %s", empty)
+	}
+}
+
+// TestImageAttachmentCarriesLightboxAttr: the inline image attachment
+// anchor carries data-lightbox (shell.js opens the dialog on it); a
+// non-image attachment never does.
+func TestImageAttachmentCarriesLightboxAttr(t *testing.T) {
+	image := domain.Message{
+		ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound,
+		Attachments: []domain.Attachment{{
+			ID: domain.GenerateAttachmentID(), Name: "pic.png", MimeType: "image/png", SizeBytes: 4096,
+		}},
+	}
+	file := domain.Message{
+		ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound,
+		Attachments: []domain.Attachment{{
+			ID: domain.GenerateAttachmentID(), Name: "doc.pdf", MimeType: "application/pdf", SizeBytes: 4096,
+		}},
+	}
+	imageHTML := renderComponent(t, Bubble(image, LangEN))
+	if !strings.Contains(imageHTML, "wp-attachment-image") || !strings.Contains(imageHTML, `data-lightbox="pic.png"`) {
+		t.Errorf("image attachment must carry data-lightbox: %s", imageHTML)
+	}
+	fileHTML := renderComponent(t, Bubble(file, LangEN))
+	if strings.Contains(fileHTML, "data-lightbox") {
+		t.Errorf("non-image attachment must not carry data-lightbox: %s", fileHTML)
 	}
 }
