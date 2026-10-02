@@ -23,6 +23,7 @@ Output: ui-shots/<n>-<name>-<light|dark>.png (12 files).
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -55,19 +56,40 @@ def seed(base: str) -> str | None:
     csrf = ""
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
 
-    def post(path: str, fields: dict[str, str]) -> None:
-        data = urllib.parse.urlencode(fields).encode()
+    def post(path: str, fields: dict[str, str], multipart: bool = False) -> None:
+        if multipart:
+            # /messages/send rides the multipart prologue (the composer
+            # uploads attachments; plain fields travel as bare parts).
+            boundary = "wp-visual-seed"
+            body = "".join(
+                f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'
+                for k, v in fields.items()
+            ) + f"--{boundary}--\r\n"
+            data = body.encode()
+            ctype = f"multipart/form-data; boundary={boundary}"
+        else:
+            data = urllib.parse.urlencode(fields).encode()
+            ctype = "application/x-www-form-urlencoded"
         req = urllib.request.Request(base + path, data=data, method="POST")
+        req.add_header("Content-Type", ctype)
         req.add_header("X-CSRF-Token", csrf)
         opener.open(req)
 
-    # Login (loopback mode accepts any extension + skips PBX verify).
-    body = urllib.parse.urlencode({"extension": "1001", "password": "pw"}).encode()
-    opener.open(urllib.request.Request(base + "/login", data=body, method="POST"))
-    resp = opener.open(base + "/api/csrf")
-    csrf = resp.read().decode().strip().strip('"')
+    # Session via the JSON API (the island's own flow): the anonymous
+    # page ships a meta CSRF token, /api/session consumes it, and
+    # GET /api/csrf adopts the rotated one (the session.js dance).
+    import re
+
+    page = opener.open(base + "/").read().decode()
+    csrf = re.search(r'name="csrf-token" content="([^"]+)"', page).group(1)
+    body = json.dumps({"extension": "1001", "password": "pw"}).encode()
+    req = urllib.request.Request(base + "/api/session", data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("X-CSRF-Token", csrf)
+    opener.open(req)
+    csrf = json.loads(opener.open(base + "/api/csrf").read()).get("token", "")
     for remote, _, message in SEED_THREADS:
-        post("/messages/send", {"to": remote, "body": message})
+        post("/messages/send", {"to": remote, "body": message}, multipart=True)
     for text, quick in SEED_SNIPPETS:
         post("/snippets/save", {"body": text, **({"quick": "1"} if quick else {})})
     for name, number in SEED_CONTACTS:
