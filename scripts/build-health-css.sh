@@ -17,14 +17,16 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
 rev="$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)"
-# STAGED build (mirror of the checks.health-css staging — keep the two
-# in lockstep): only the input + the three @source roots go into a temp
-# tree. Two reasons: (1) Tailwind's implicit content detection leaks
-# the surrounding repo/git context, so an unstaged build differs by
-# environment and the drift check could never be byte-stable; (2) the
-# artifact itself sits inside a @source root, so an in-place -o feeds
-# the previous build's own classes back into the next (self-perpetuating
-# zombie classes — emerald-100 survived three rebuilds that way).
+# STAGED build: only the input + the three @source roots go into a temp
+# tree. Two reasons: (1) Tailwind's implicit content detection leaks the
+# surrounding repo/git context (a build over a HEAD-only snapshot even
+# differs because vendor/ is untracked), so only a staged build is
+# reproducible; (2) the artifact itself sits inside a @source root, so
+# an in-place -o feeds the previous build's own classes back into the
+# next (self-perpetuating zombie classes — emerald-100 survived three
+# rebuilds that way). The committed artifact cannot be byte-verified by
+# a flake check (the flake source never sees untracked vendor/); the
+# checks.health-css CANARY pins the dark variant instead.
 stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 mkdir -p "$stage/internal/web/assets" "$stage/internal/app" \
