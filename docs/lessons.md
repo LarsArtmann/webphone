@@ -540,3 +540,18 @@ faxes only, fire-and-forget after persist+notify
 failure); metadata ids (tag `fax` / type `Fax` / field
 `webphone-fax-id`) lazily ensured per first SUCCESS; duplicate refusal =
 inert success; blob store stays the only storage truth.
+
+### Boot-contract presentation layer (2026-10-02)
+
+An audit graded the operator's boot failures against the repo's own
+error contract and found the MECHANISM (samber/do fail-fast panics)
+had been graded while the SURFACE was missed: a miswiring panic scored
+1/5 contract parts (`panic: do: service not found: …`, exit 2),
+designed boot errors 2/5 (`slog.Error("webphone exited", …)`).
+Lesson: when a contract doc exists (docs/error-contract.md), audit
+against IT first — library skills grade tool usage; only the named
+contract grades what the user actually sees. Fix shipped: the operator
+is a user; every boot failure renders the 5-part contract on the
+journal (`cmd/webphone/bootreport.go`, exit 1 designed / 2 panic),
+the fail-fast panic mechanism stays (DO-1), and `App.Start`'s three
+gratuitous `MustInvokeNamed` panics became `InvokeNamed` + `wrapf`.

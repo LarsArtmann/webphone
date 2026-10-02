@@ -31,6 +31,43 @@ D3 (2026-09-20): matches the `#log` operator-channel precedent; the
 island's user-facing copy is fully en/de. Localizing shell copy only
 if a tabs-style per-extension UX demand shows up.
 
+## Boot surface (operator as user, 2026-10-02)
+
+Ruling: the OPERATOR is a user of this contract. Every boot failure
+renders the five-part error contract (WHAT / REASSURE / WHY / FIX /
+ESCAPE) plus the underlying error, version-stamped and phase-tagged,
+ENGLISH-ONLY (same D3 precedent as the shell copy: the journal is the
+operator trail; no i18n entries). The renderer is pure copy data in
+`cmd/webphone/bootreport.go`; `run()` tags designed errors at their
+sites, a deferred recover catches everything else, and the panic
+MECHANISM at the composition root stays fail-fast (DO-1) — only the
+PRESENTATION was added, plus removing `App.Start`'s three gratuitous
+panics (`InvokeNamed` + `wrapf`, the method already returned error).
+
+| Boot failure class | Operator sees | Classification | Test home |
+| --- | --- | --- | --- |
+| Panic escaping `run()` | 5-part block + `panic trace` marker + raw stack below, exit 2 | recover arm (`bootPanicMiswire`) | `TestReportBootPanicRendersBlockTraceAndExitsTwo` |
+| Config rejected (env / `WEBPHONE_CONFIG` JSON) | class=config, exit 1 | tagged at the `config.Load` site | `TestClassifyBootError` + smoke |
+| Data dir inaccessible | class=data-dir, exit 1 | app.New wrap prefix `create data dir:` (drift-pinned) | `TestAppWrapPrefixesStillExistInAppSource` + smoke scenario |
+| IANA zone unloadable | class=timezone, exit 1 | app.New wrap prefix `load timezone:` | same |
+| Paperless pair unusable | class=paperless, exit 1 | app.New wrap prefix `paperless:` | same |
+| Bind/serve failure (the most common real one) | class=listen, exit 1 | tagged at the NewServer/serve sites | golden pin `TestRenderBootFailureGoldenListen` |
+| Anything else (incl. shutdown-phase errors) | class=generic, exit 1 | fallback | `TestRenderBootFailureCoversEveryClass` |
+
+Exit taxonomy (deliberate, previously de-facto): **1** designed boot
+failure, **2** panic (Go's default code, now contract). The NixOS
+module ships `Restart=on-failure` + `RestartSec=5`, so each attempt
+renders once per 5s until fixed; `systemctl stop webphone` ends the
+loop. Open owner call (D3 follow-up): cap the retry with
+`StartLimitBurst`/`StartLimitIntervalSec`, or keep the 5s retry as
+desirable liveness.
+
+Audit appendix (the gap this closes, graded 2026-10-02): before this
+train a miswiring panic scored 1/5 contract parts
+(`panic: do: service not found: …`, exit 2) and designed boot errors
+2/5 (`slog.Error("webphone exited", …)`, main.go). Both render 5/5
+now; the live proof is the smoke suite's `boot failure scenario`.
+
 ## Send-failure UX layering (2026-09-22)
 
 (plan `docs/planning/archived/2026-09-22_16-07_SUPERB-send-failure-ux.md`):
@@ -84,4 +121,9 @@ the gateway/bridge string contract (rendered verbatim in webhook
 mode), and the `family=` log vocabulary — are cross-documented in the
 stack runbook: `nix-international-telephony/docs/ops-runbook.md`
 § "Webphone error contract" (2026-09-22). Keep both sides in sync
-when error copy or families change.
+when error copy or families change. The boot-surface classes and exit
+taxonomy (2026-10-02) join the sync set; the stack-side patch text is
+prepared in
+`docs/planning/2026-10-02_11-05_boot-contract-stack-runbook-patch.md`
+and applies under the tri-repo ritual (webphone first, clean stack
+tree, then relock).
