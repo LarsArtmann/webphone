@@ -176,6 +176,8 @@ def capture(base: str, out_dir: str, thread_path: str | None, session: str) -> i
                 if not driver.find_elements("css selector", marker):
                     raise AssertionError(
                         f"surface {name!r} at {path} is missing {marker!r} — "
+                        f"url={driver.current_url} anonymous_shell="
+                        f"{bool(driver.find_elements('id', 'login-form'))} — "
                         "the shot would not be evidence; aborting")
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)

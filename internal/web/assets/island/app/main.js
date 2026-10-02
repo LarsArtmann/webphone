@@ -2,7 +2,12 @@
 // else lives in its feature module — this file is the composition root.
 
 import { ringToneStop } from "./audio.js";
-import { connect, disconnect, networkOnline } from "./connection.js";
+import {
+  connect,
+  disconnect,
+  networkOnline,
+  registerWasRejected,
+} from "./connection.js";
 import {
   answerIncoming,
   initDialHint,
@@ -100,25 +105,33 @@ async function resumeSession() {
   setRegStatus("status-offline", t("resuming"));
   try {
     await connect(session.extension, session.password);
+    log("session resumed; registered");
   } catch (err) {
-    // The row's credentials no longer register (the PBX password
-    // changed since sign-in): the server session is stale — drop it
-    // quietly and put the reason where the user is looking.
-    await signOutQuiet();
-    els.loginError.textContent = t("resumeRejected")(err.message);
-    els.loginError.hidden = false;
-    showLogin();
-    log(
-      `resumed credentials rejected; server session dropped (${err.message})`,
-      "error",
-    );
-    return;
+    if (registerWasRejected()) {
+      // The row's credentials no longer register (the PBX password
+      // changed since sign-in): the server session is stale — drop it
+      // quietly and put the reason where the user is looking.
+      await signOutQuiet();
+      els.loginError.textContent = t("resumeRejected")(err.message);
+      els.loginError.hidden = false;
+      showLogin();
+      log(
+        `resumed credentials rejected; server session dropped (${err.message})`,
+        "error",
+      );
+      return;
+    }
+    // A transport failure (PBX/WS down at load) is NOT a stale
+    // session: keep the cookie, show the phone in its honest offline
+    // state, and let the reconnect backoff own recovery. The tabs
+    // stay usable — the server session was never the problem.
+    networkOnline();
+    log(`session resumed; SIP unreachable (${err.message})`, "error");
   }
   els.whoami.textContent = `${session.extension}@${sipDomain}`;
   els.loginView.hidden = true;
   els.phoneView.hidden = false;
   connectLiveUpdates();
-  log("session resumed; registered");
   // The wp:session-opened listener appends the did and refreshes the
   // session-gated panels — the exact post-login wiring, reused.
   document.dispatchEvent(

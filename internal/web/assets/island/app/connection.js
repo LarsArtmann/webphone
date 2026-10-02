@@ -36,6 +36,17 @@ let stopping = false;
 // True while a wedged user agent is being torn down and rebuilt;
 // suppresses the teardown's own disconnect/unregistered events.
 let resetting = false;
+// The server rejected the REGISTER itself (bad credentials, account
+// disabled) — as opposed to a transport that never carried it. The
+// resume path keys on this: only a genuine rejection means the stored
+// session's credentials are stale; a dead network must NOT log the
+// user out of the whole app.
+let registerRejected = false;
+
+// Whether the last connect() ended in a REGISTER the server refused.
+export function registerWasRejected() {
+  return registerRejected;
+}
 
 const RECONNECT_ATTEMPT_TIMEOUT_MS = 5000;
 // Hard ceiling for one whole reconnect cycle, watched by an
@@ -65,6 +76,7 @@ export function networkOnline() {
 export async function connect(extension, password) {
   stopping = false;
   reconnectAttempts = 0;
+  registerRejected = false;
   setCredentials(extension, password);
   // Honest until proven otherwise: between login and the REGISTER's
   // 200-OK the phone cannot call — the banner says so.
@@ -361,6 +373,7 @@ async function buildConnection() {
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
       wasRegistered = true;
+      registerRejected = false;
       clearReconnectCycleDeadline();
       const wasReconnecting = reconnectAttempts > 0;
       reconnectAttempts = 0;
@@ -381,7 +394,10 @@ async function buildConnection() {
         return;
       }
       // The REGISTER never succeeded (wrong credentials, account
-      // disabled): say so instead of "offline".
+      // disabled): say so instead of "offline", and mark it so the
+      // resume path knows the session's credentials are the problem —
+      // not the network.
+      registerRejected = true;
       setOfflinePill(t("regRejected"));
       return;
     }
