@@ -6,9 +6,9 @@ a markdown table for the perf-plan appendix."""
 
 import gzip
 import io
-import urllib.error
 import sys
 import time
+import urllib.error
 import urllib.request
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:18123"

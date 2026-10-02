@@ -374,11 +374,11 @@ func TestServedPagePreloadsIslandGraph(t *testing.T) {
 		t.Fatalf("page status %d", resp.StatusCode)
 	}
 	page := string(body)
-	headEnd := strings.Index(page, "</head>")
-	if headEnd < 0 {
+	before, _, ok := strings.Cut(page, "</head>")
+	if !ok {
 		t.Fatal("no </head> in served page")
 	}
-	head := page[:headEnd]
+	head := before
 	for _, module := range assets.IslandModules() {
 		link := fmt.Sprintf(`<link rel="modulepreload" href=%q`, module)
 		if !strings.Contains(head, link) {

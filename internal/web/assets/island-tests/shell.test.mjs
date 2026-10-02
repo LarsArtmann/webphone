@@ -617,8 +617,9 @@ test("a tab navigation stores the last-active tab (E3)", () => {
   localStorage.removeItem("wp-last-tab");
   const nav = doc.createElement();
   nav.className = "wp-nav";
+  nav.querySelectorAll = (selector) => (selector === ".wp-nav-link" ? [link] : []);
   const link = doc.createElement();
-  link.dataset.tab = "voicemail";
+  link.setAttribute("data-tab", "voicemail");
   link.className = "wp-nav-link";
   nav.append(link);
   doc.dispatch("htmx:afterRequest", { target: link });
@@ -641,13 +642,19 @@ test("a plain / load restores the remembered tab (E3)", async () => {
   content.append(panel);
   const nav = doc.getElementById("wp-nav");
   const link = doc.createElement();
-  link.dataset.tab = "history";
+  link.setAttribute("data-tab", "history");
   link.className = "wp-nav-link";
   nav.append(link);
+  // The stub document's querySelector is a null sink; the restore path
+  // reads the nav through it, so route the two selectors it asks for.
+  const realQuerySelector = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === '#wp-nav .wp-nav-link[data-tab="history"]'
+      ? link
+      : realQuerySelector.call(doc, selector);
   localStorage.setItem("wp-last-tab", "history");
-  const realReplace = globalThis.history.replaceState;
   const replaced = [];
-  globalThis.history = {
+  globalThis.window.history = {
     replaceState: (...args) => replaced.push(args[2]),
   };
 
@@ -660,8 +667,9 @@ test("a plain / load restores the remembered tab (E3)", async () => {
   );
   assert.deepEqual(replaced, ["/history"], "the address follows the content");
 
+  doc.querySelector = realQuerySelector;
   localStorage.removeItem("wp-last-tab");
-  globalThis.history = { replaceState: realReplace };
+  delete globalThis.window.history;
   delete globalThis.window.htmx;
 });
 

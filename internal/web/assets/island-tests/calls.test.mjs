@@ -368,11 +368,7 @@ test("sent DTMF tones pulse the key and collect a transient trail", async () => 
   await sendDtmf("1");
   assert.equal(infos.length, 1);
   assert.match(infos[0], /Signal=1/);
-  assert.equal(
-    key.className.includes("wp-key-sent"),
-    true,
-    "the pressed key pulses",
-  );
+  assert.equal(key.className.includes("wp-key-sent"), true, "the pressed key pulses");
 
   const trail = doc.getElementById("wp-tones");
   assert.equal(trail.hidden, false);

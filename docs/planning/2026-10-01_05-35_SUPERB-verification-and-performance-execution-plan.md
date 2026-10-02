@@ -296,15 +296,15 @@ cheaper or better-targeted after G0's numbers exist.
 
 ## Appendix — verdicts & numbers (filled during execution)
 
-| When              | What                          | Result |
-| ----------------- | ----------------------------- | ------ |
-| _(pending G0)_    | T01 six observations          | —      |
-| _(pending G0)_    | T02 buildflow verdict         | —      |
-| _(pending G0)_    | T03 E2E timing/verdict        | —      |
-| _(pending G0)_    | T04 smoke verdict             | —      |
-| 2026-10-02        | T08 timing baseline (Python `urllib`; curl banned in the harness — `scripts/perf-baseline.py`) | table below |
-| 2026-10-02        | T18 iceServers evaluation     | [note](2026-10-01_23-50_iceservers-trimming-evaluation.md) — no change without the owner ritual's path numbers |
-| _(pending G6)_    | T24 vhost encode/h3 findings  | —      |
+| When           | What                                                                                           | Result                                                                                                         |
+| -------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| _(pending G0)_ | T01 six observations                                                                           | —                                                                                                              |
+| _(pending G0)_ | T02 buildflow verdict                                                                          | —                                                                                                              |
+| _(pending G0)_ | T03 E2E timing/verdict                                                                         | —                                                                                                              |
+| _(pending G0)_ | T04 smoke verdict                                                                              | —                                                                                                              |
+| 2026-10-02     | T08 timing baseline (Python `urllib`; curl banned in the harness — `scripts/perf-baseline.py`) | table below                                                                                                    |
+| 2026-10-02     | T18 iceServers evaluation                                                                      | [note](2026-10-01_23-50_iceservers-trimming-evaluation.md) — no change without the owner ritual's path numbers |
+| _(pending G6)_ | T24 vhost encode/h3 findings                                                                   | —                                                                                                              |
 
 ### T08 timing baseline (2026-10-02, loopback, fresh binary)
 
@@ -312,11 +312,11 @@ Measured with `scripts/perf-baseline.py` against `127.0.0.1` (loopback
 transfers are ~free, so the wall times isolate the SERVER's work; the
 bytes-on-wire columns are what a real network pays):
 
-| request for `/assets/vendor/sip.min.js` | bytes on wire | wall time |
-| --- | --- | --- |
-| cold GET (no gzip) | 273356 | 0.8 ms (median of 5) |
-| GET with `Accept-Encoding: gzip` | 62942 | 3.8 ms (median of 5) |
-| revalidate (`If-None-Match` → 304) | 0 | 0.4 ms (median of 5) |
+| request for `/assets/vendor/sip.min.js` | bytes on wire | wall time            |
+| --------------------------------------- | ------------- | -------------------- |
+| cold GET (no gzip)                      | 273356        | 0.8 ms (median of 5) |
+| GET with `Accept-Encoding: gzip`        | 62942         | 3.8 ms (median of 5) |
+| revalidate (`If-None-Match` → 304)      | 0             | 0.4 ms (median of 5) |
 
 - ETag strong (sha256 of content), `Cache-Control: no-cache`,
   `Vary: Accept-Encoding` — exactly the T05/T06 contract.

@@ -124,9 +124,7 @@ test("personal contacts join the suggestions and win number collisions", () => {
     { name: "Zahnarzt", number: "117" },
   ]);
   initDialTypeahead();
-  const list = [...els.dialForm.children].find(
-    (child) => child.id === "dial-suggest",
-  );
+  const list = [...els.dialForm.children].find((child) => child.id === "dial-suggest");
   const type = (value) => {
     els.dest.value = value;
     fire(els.dest, "input");
@@ -136,13 +134,8 @@ test("personal contacts join the suggestions and win number collisions", () => {
   assert.equal(list.children.length, 0, "empty query shows nothing");
 
   type("ann");
-  const names = [...list.children].map(
-    (option) => option.children[0].textContent,
-  );
-  assert.ok(
-    names.includes("Anna Privat"),
-    "the personal contact is suggested",
-  );
+  const names = [...list.children].map((option) => option.children[0].textContent);
+  assert.ok(names.includes("Anna Privat"), "the personal contact is suggested");
   assert.equal(
     names.filter((name) => name === "Anna Kellner").length,
     0,
@@ -166,9 +159,7 @@ test("the typeahead boots from personal contacts alone", () => {
   // the personal store loads — renderContacts re-attempts the boot.
   setExtraContacts([{ name: "Nur Persönlich", number: "1002" }]);
   initDialTypeahead();
-  const list = [...els.dialForm.children].find(
-    (child) => child.id === "dial-suggest",
-  );
+  const list = [...els.dialForm.children].find((child) => child.id === "dial-suggest");
   assert.ok(list, "the list booted without shared contacts");
   els.dest.value = "nur";
   fire(els.dest, "input");

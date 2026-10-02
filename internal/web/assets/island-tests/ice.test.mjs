@@ -10,9 +10,7 @@ const doc = installBrowserGlobals();
 
 const { sessions, state } = await import("../island/app/state.js");
 const { startIcePanel, stopIcePanel } = await import("../island/app/ice.js");
-const { instrumentSessionDescriptionHandler } = await import(
-  "../island/app/pcsetup.js"
-);
+const { instrumentSessionDescriptionHandler } = await import("../island/app/pcsetup.js");
 
 const flush = async (rounds = 12) => {
   while (rounds--) await new Promise((resolve) => setImmediate(resolve));

@@ -55,7 +55,8 @@
       var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
       if (!link || (active && active === link)) return;
       var content = document.getElementById("tab-content");
-      if (!content || !window.htmx || content.querySelector(".wp-welcome")) return;
+      if (!content || !window.htmx || content.querySelector(".wp-welcome"))
+        return;
       window.htmx.ajax("GET", "/partials/" + stored, {
         target: "#tab-content",
         swap: "innerHTML",

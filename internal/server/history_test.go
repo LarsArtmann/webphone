@@ -186,7 +186,7 @@ func TestHistoryOutcomeFilterAndDayGroups(t *testing.T) {
 	}
 	head1 := strings.Index(page, "wp-day-head")
 	head2 := strings.Index(page[head1+1:], "wp-day-head") + head1 + 1
-	if !(head1 < head2) {
+	if head1 >= head2 {
 		t.Errorf("day heads must render in record order")
 	}
 	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, "✖") {

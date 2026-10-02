@@ -48,11 +48,11 @@ Bluetooth, from the household network):
 
 ## Decision gate
 
-| Evidence over several calls                     | Decision                                  |
-| ----------------------------------------------- | ----------------------------------------- |
-| `path: srflx → host`, gather < 800 ms, no caps  | A single STUN suffices → trim the STACK list to 1 STUN + TURN |
-| Any routine `relay` path                        | Do NOT trim; investigate direct-path failure first |
-| `gather capped` seen more than once             | Do NOT trim; gathering is already at the budget — the list is too slow, consider fewer servers or a higher cap first |
+| Evidence over several calls                    | Decision                                                                                                             |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `path: srflx → host`, gather < 800 ms, no caps | A single STUN suffices → trim the STACK list to 1 STUN + TURN                                                        |
+| Any routine `relay` path                       | Do NOT trim; investigate direct-path failure first                                                                   |
+| `gather capped` seen more than once            | Do NOT trim; gathering is already at the budget — the list is too slow, consider fewer servers or a higher cap first |
 
 ## Revisit trigger
 
