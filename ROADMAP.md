@@ -360,7 +360,10 @@ unmarked here is committed work — refine into TODO_LIST on demand.
   `go version -m` module-count tripwire in the smoke.
 - `DeliveryReceipt` non-verdict unit pin (`messaging.verdict` Rejection
   branch is reachable only by direct callers — one table case; 13:35
-  report f1).
+  report f1); same pin class: `classifyForUser` × registered `ErrNotFound`
+  status pin, a real 500-save `ErrListFull` cap drive, and a debug log for
+  session `SQLiteStore.Get`'s swallowed scan error (family-adoption
+  report b4/f2/f3/f19).
 
 ## Raw ideas (2026-09-29 harvest)
 
