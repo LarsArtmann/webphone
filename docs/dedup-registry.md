@@ -78,3 +78,6 @@ file implements that proposal and records the supersession).
 1. Baseline ratification: `-t 3` as the ritual vs `-t 2` deep sweeps.
 2. `settingsRow`: build the component or accept the dt/dd rows permanently (surfaced in every sweep to date).
 3. Ratify this registry as the ONE acceptance home (proposed 03-01 f.16, re-raised 15-58 e.4 + 18-05 e.6).
+4. Suppression scope: is shown-only the ratified scope, or add a periodic
+   suppressed-set audit? (12:59 `-t 2` sweep g3; routed to the OWNER-calls
+   TODO row by the v6 docs-health sweep, 2026-10-03.)
