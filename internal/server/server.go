@@ -205,6 +205,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /messages/{id}/read", h.markThreadRead)
 	protected.HandleFunc("POST /messages/send", h.sendMessage)
 	protected.HandleFunc("POST /fax/send", h.sendFax)
+	protected.HandleFunc("POST /fax/{id}/resend", h.resendFax)
 	protected.HandleFunc("GET /fax/{id}/document", h.faxDocument)
 	protected.HandleFunc("GET /attachments/{id}", h.attachment)
 	protected.HandleFunc("POST /voicemail/delete", h.deleteVoicemail)

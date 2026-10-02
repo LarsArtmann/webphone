@@ -134,6 +134,29 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, tabFromPath("/fax"))
 }
 
+// resendFax re-submits a failed outbound fax's stored document as a new
+// job (the original row stays as evidence); the refreshed panel answers.
+func (h *handlers) resendFax(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	faxID, err := domain.ParseFaxID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if _, err := h.deps.Fax.Resend(r.Context(), sess.Extension, faxID); err != nil {
+		h.sendFailure(w, r, sess, views.TabFax, err, "fax", sendFailureKeys{
+			rejected:  "err.faxRejected",
+			transport: "err.faxTransport",
+		})
+		return
+	}
+	notifyToast(w, "ok", h.T(r, "toast.faxSent"))
+	h.partial(w, r, tabFromPath("/fax"))
+}
+
 // faxDocument streams a job's PDF (session-gated).
 func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(w, r)

@@ -147,6 +147,19 @@ and the evidence. Newest last is NOT enforced — group by topic.
 
 ## Tooling traps
 
+- A `?case=` query-string re-import gives a FRESH module only for ESM.
+  Node's module-detection parses `island/app/*.js` (they contain
+  `import`/`export`) as ESM, where the query is part of the cache key —
+  but `shell.js` (a classic script, no ESM syntax) is COMMONJS, and the
+  CJS cache keys on the resolved path WITHOUT the query: every
+  `import("../shell.js?case=…")` returned the cached module and
+  re-evaluated NOTHING (2026-10-02, the E3 restore tests — the guard
+  specs passed VACUOUSLY; a fresh-eval probe registered 0 listeners).
+  Symptom signature: the fresh import observably runs no code and never
+  throws. Fix: export the callable (`module.exports.restoreLastTab`)
+  behind a `typeof module` guard (browser no-op) and drive it directly.
+  Before trusting any `?case=` pattern, prove re-evaluation with a
+  listener/eval counter.
 - An ALWAYS-PENDING stub promise hangs `node:test` silently (60s cancel,
   looks like a harness flake). Root cause 2026-10-01: a stubbed
   collaborator (`HoldInviter.invite()`) returned an ungated promise that

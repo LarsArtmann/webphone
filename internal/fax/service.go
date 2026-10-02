@@ -120,15 +120,24 @@ func (s *Service) Send(
 	}
 	s.notify(ctx, owner, job.ID)
 
+	return s.drive(ctx, job)
+}
+
+// drive submits one persisted queued job to the gateway and records the
+// verdict on the job row. Shared by Send (fresh upload) and Resend
+// (re-submission of a stored document): the gateway path, the self-send
+// refusal, and the status transitions have exactly one home.
+func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, error) {
 	// Self-send fast path (train C): refuse locally instead of burning a
 	// provider roundtrip the provider would refuse anyway; the failed job
 	// below is the evidence-preserving half of the design.
 	var receipt gateway.Receipt
-	if rejection := gateway.SelfSendRejection(s.identities, owner, to, selfSendDetail); rejection != nil {
+	var err error
+	if rejection := gateway.SelfSendRejection(s.identities, job.Owner, job.Remote, selfSendDetail); rejection != nil {
 		err = rejection
 	} else {
 		receipt, err = s.gateway.SendFax(ctx, gateway.OutboundFax{
-			Owner: owner, To: to, PDFPath: s.blobs.Abs(path),
+			Owner: job.Owner, To: job.Remote, PDFPath: s.blobs.Abs(job.DocumentPath),
 		})
 	}
 	if err != nil {
@@ -137,7 +146,7 @@ func (s *Service) Send(
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", job.Error, 0); updateErr != nil {
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
-		s.notify(ctx, owner, job.ID)
+		s.notify(ctx, job.Owner, job.ID)
 		return job, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	}
 
@@ -156,9 +165,50 @@ func (s *Service) Send(
 			slog.Warn("fax: mark transmitted", "error", updateErr)
 		}
 	}
-	s.notify(ctx, owner, job.ID)
+	s.notify(ctx, job.Owner, job.ID)
 
 	return job, nil
+}
+
+// Resend re-submits a FAILED outbound job's stored document as a NEW
+// job: no re-upload — the spooled PDF is reused — and the original row
+// stays untouched as the failure evidence. Anything but a failed
+// outbound fax is refused (ErrInvalidFax: re-sending an in-flight,
+// delivered, or inbound row would duplicate or fabricate traffic).
+func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.FaxID) (domain.FaxJob, error) {
+	job, err := s.faxes.Get(ctx, owner, id)
+	if err != nil {
+		return domain.FaxJob{}, err
+	}
+	if job.Direction != domain.FaxOutbound || job.Status != domain.FaxFailed {
+		return domain.FaxJob{}, &ErrInvalidFax{Reason: "only failed outbound faxes can be resent"}
+	}
+	// The document must still exist before a new job references it: a
+	// loopback gateway would otherwise "transmit" a resend whose PDF is
+	// gone (the probe is the honesty guard, drive never opens the file).
+	probe, err := s.blobs.Open(job.DocumentPath)
+	if err != nil {
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "reopen fax document")
+	}
+	_ = probe.Close() //nolint:erraudit // existence probe: nothing to read
+
+	now := s.clock()
+	retry := domain.FaxJob{
+		ID:           domain.GenerateFaxID(),
+		Owner:        owner,
+		Remote:       job.Remote,
+		Direction:    domain.FaxOutbound,
+		Status:       domain.FaxQueued,
+		DocumentPath: job.DocumentPath,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+	if err := s.faxes.Create(ctx, retry); err != nil {
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax retry")
+	}
+	s.notify(ctx, owner, retry.ID)
+
+	return s.drive(ctx, retry)
 }
 
 // Receive ingests an inbound fax document from a webhook.
