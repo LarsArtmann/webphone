@@ -208,3 +208,51 @@ _Point-in-time snapshot — annotate, never rewrite. The auto-commit daemon
 owns the sweep (this report included). SWEEP PAUSED AT 4/22 FILES; resuming
 is safe — every remaining file is fully read with verdicts derived, only
 spec-building + gates remain._
+
+---
+
+## Archive manifest — v6 sweep completion addendum (2026-10-03)
+
+All 34 files below: classification **ANNOTATE → ARCHIVE** (every numbered item resolved inline;
+banner + per-item verdicts; `check-rows` complete; `git mv` to `docs/status/archived/`).
+Deciding reason per file:
+
+- `2026-09-30_11-43_templ-components-round12-session-status.md` — templ-components round-12: adoption verdicts shipped; remainders routed
+- `2026-09-30_11-45_family-adoption-train-status.md` — family-adoption train: tier-2 zero reached; re-measure watch stands
+- `2026-09-30_12-08_typography-font-design-train.md` — typography train: shipped in v2.8.0 (retro CHANGELOG bullet landed by this sweep)
+- `2026-09-30_12-46_review-series-status-and-self-review.md` — review series: process records; routed remainders
+- `2026-09-30_12-58_go-cqrs-lite-question-session-status.md` — go-cqrs-lite Q&A: decision REJECTED (root-library-only); record stands
+- `2026-09-30_12-59_dedup-sweep-t2-status.md` — dedup t2 sweep: rulings in the registry; suppression-scope routed to OWNER-calls
+- `2026-09-30_13-09_fax-paperless-plan-session-status.md` — fax-paperless plan: seam shipped + pinned; stack option routed cross-repo
+- `2026-09-30_13-17_dedup-sweep-t1-status.md` — dedup t1 sweep: rulings in the registry
+- `2026-09-30_13-35_dedup-sweep-t1-session-status.md` — dedup t1 session: rulings in the registry
+- `2026-09-30_15-49_caddy-front-diagram-rework-status.md` — caddy front diagram: rework shipped in v2.8.0
+- `2026-09-30_15-49_setup-adoption-train-verdict-status.md` — setup adoption: REJECTED verdict stands (split-brain + binary-size NO-GO)
+- `2026-10-01_01-21_visual-verification-loop.md` — visual verification loop: T23 harness superseded it
+- `2026-10-01_01-45_post-v2-8-0-full-execution-session-status.md` — post-v2-8-0 execution: trains verified; owner legs routed
+- `2026-10-01_02-12_samber-do-composition-root-health-dashboard-train.md` — samber-do dashboard train: shipped (probe triple + dashboard seam)
+- `2026-10-01_02-14_post-v2-8-0-execution-self-review-status.md` — execution self-review: lessons landed; AGENTS compaction resolved by events
+- `2026-10-01_02-54_prod-call-demo-webtransport-qa-and-island-latency-diagnosis.md` — demo/Q&A session: ring-silence fix = T06; demo legs ride the cross-repo row
+- `2026-10-01_03-52_post-v2-8-0-harvest-paperless-train-status.md` — paperless harvest: seam shipped + pinned; nix-hash-fix answers the enforcement ask
+- `2026-10-01_04-07_mic-prewarm-accept-latency-train-status.md` — mic pre-warm train: shipped + pinned; live-call ritual routed (owner terminal)
+- `2026-10-01_05-26_island-honesty-hold-offline-banner-train-status.md` — island honesty train: shipped (cc98c2e); T15/T22/T23 closed the follow-ups
+- `2026-10-01_05-26_nix-file-review-session-status.md` — nix review: polish executed wholesale by the 05:56 FIX-IT-ALL train
+- `2026-10-01_05-27_performance-inventory-train-status.md` — perf inventory: SHIPPED as T10/T11 + dial-focus warm
+- `2026-10-01_05-56_nix-review-fixes-train-status.md` — nix fixes train: splits byte-identical; golden + release guard closed later
+- `2026-10-01_06-59_ui-ux-pareto-train-boundary-lesson-status.md` — UI/UX pareto: M1–M8 stood; remainder executed by T12–T19; Ledger ruling = AGENTS doctrine
+- `2026-10-01_17-27_docs-health-audit-v5-living-docs-superb-archive-sweep.md` — docs-health v5: SUPERSEDED by this v6 sweep (its f-list fully closed)
+- `2026-10-01_20-12_master-todo-execution-train-status.md` — master-todo s1: trains stood; session-2 addendum closed the pins; T10+ shipped later
+- `2026-10-01_23-11_master-todo-train-session2-status.md` — master-todo s2: pins + T10 ETag/gzip stood; T11–T19/T21–T23 shipped later
+- `2026-10-02_08-26_master-todo-train-session3-status.md` — master-todo s3: T11/T12/T13 stood; T13 tail closed green; remainder shipped
+- `2026-10-02_09-03_master-todo-train-session4-status.md` — master-todo s4: T13 closed + T14 shipped whole; C4 decline recorded
+- `2026-10-02_09-34_master-todo-train-session5-status.md` — master-todo s5: T15 + T16 closed; T17 shipped next; defaults stood
+- `2026-10-02_10-11_master-todo-train-session6-status.md` — master-todo s6: T17 closed + T18 seams green; views finished by s7
+- `2026-10-02_10-19_mustinvoke-operator-contract-session-review.md` — mustinvoke review: boot contract shipped same morning; §f completed inline by this sweep
+- `2026-10-02_11-41_t18-t23-train-session7-status.md` — master-todo s7: T18 whole + T19/T21/T22 + T23 harness; tail closed at 12:57
+- `2026-10-02_11-43_boot-contract-execution-run-status.md` — boot-contract run: shipped whole (65b7f0d); D3 + stack patch ride the boot row
+- `2026-10-02_11-43_master-todo-t21-t22-verification-status.md` — T21/T22 verification: batch-2 wins + battery stand; nolints landed; KVM ran at 20:12
+
+Kept live by design: the 12:57 close-out + 13:50 session-8 reports (current), both v6
+session reports (00:35, 02:09), the four owner-gated planning docs (error-excellence,
+20-year-durability, 04-29 pareto, 13-33 stack-adoption — pending the owner sitting), the
+operative verdicts/briefings, and the immutable HTML snapshot.
