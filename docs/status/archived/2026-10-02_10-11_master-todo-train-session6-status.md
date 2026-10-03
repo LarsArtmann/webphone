@@ -4,6 +4,13 @@ Date: 2026-10-02, ~09:35 → 10:11. Resumed from session-5 briefing
 (report `09-34`), standing "finish everything" order, user's latest
 directive: report now, then WAIT.
 
+> ARCHIVED 2026-10-03 (docs-health v6 sweep): T17 closed (welcome dismissal
+> pre-paint + keyboard viewport) and T18's seams landed green (versioned
+> migrations, thread flags, snippets store); the flagged view bugs + the
+> views remainder were finished by session 7; defaults stood where the owner
+> stayed silent. Per-item verdicts inline.
+
+
 ## a) FULLY DONE (this session)
 
 ### Housekeeping / verification
@@ -131,7 +138,7 @@ directive: report now, then WAIT.
 
 ## b) PARTIALLY DONE
 
-### T18 — views layer (messages.templ edits 1–3 of ~6 applied)
+~~### T18 — views layer (messages.templ edits 1–3 of ~6 applied)~~ done — session 7 landed the whole remainder; T18 closed green
 
 - LANDED: ThreadsPanelProps += Archived/ArchivedCount; ThreadsPanel
   archived-toggle links (deep-link safe: full renders read the same
@@ -141,9 +148,9 @@ directive: report now, then WAIT.
   threadFlagButton component + helpers.
 - **KNOWN-BROKEN in the last edit batch (self-caught, NOT yet fixed,
   templ generate has NOT been run since)**:
-  1. `@if summary.Thread.Archived {` is NOT templ syntax (bare `if`
+~~  1. `@if summary.Thread.Archived {` is NOT templ syntax (bare `if`~~ done — fixed in session 7; T18 closed green (templ generate clean)
      is) — templ generate will fail on it.
-  2. `pickLabel(lang, activeKey, inactiveKey)` is a pass-through that
+~~  2. `pickLabel(lang, activeKey, inactiveKey)` is a pass-through that~~ done — fixed via the state-selecting helper; T18 closed green
      ignores inactiveKey AND the pin/mute call sites pass a constant
      key — the label does not flip with the row state (button value
      posts correctly; label text is wrong for one of the two states).
@@ -171,124 +178,124 @@ end-state assert).
 
 ## d) TOTALLY FUCKED UP (all self-caught, all fixed except the two flagged view bugs)
 
-1. **defer paren loss** in applyMigration: the edit landed as
+~~1. **defer paren loss** in applyMigration: the edit landed as~~ process record
    `defer func(){ _ = tx.Rollback() }` (no invocation) — build error,
    fixed immediately. Lesson: build after EVERY edit batch.
-2. **Backtick typo** inside ListArchivedThreads (string op arg) —
+~~2. **Backtick typo** inside ListArchivedThreads (string op arg) —~~ process record
    build error, fixed.
-3. **errorfamily constructor guess**: wrote NewRejectionf (does not
+~~3. **errorfamily constructor guess**: wrote NewRejectionf (does not~~ process record
    exist) — the vendored library is New* family constructors +
    NewRejection; fixed by reading the library source.
-4. **theme-preload test stub bug**: passed a bare function as the
+~~4. **theme-preload test stub bug**: passed a bare function as the~~ process record
    `storage` object (getItem undefined → try/catch swallowed the
    TypeError → test failed) — wrapped in an object.
-5. **The two UNFIXED view-layer bugs** listed in (b) — `@if` syntax +
+~~5. **The two UNFIXED view-layer bugs** listed in (b) — `@if` syntax +~~ process record
    pickLabel pass-through. Nothing generated or committed broken:
    templ generate simply has not run since.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-- **Run `templ generate` immediately after every .templ edit batch** —
+~~- **Run `templ generate` immediately after every .templ edit batch** —~~ process record — the AGENTS templ rules now cover it
   it is the only fast check for templ-syntax slips like `@if`; the Go
   build does NOT see .templ sources.
-- **Briefings can mislabel scope**: session 4/5's "M21 settings" nearly
+~~- **Briefings can mislabel scope**: session 4/5's "M21 settings" nearly~~ process record — the plan doc wins; scope verified at source
   shipped as the wrong workstream. When a briefing summary contradicts
   the authoritative plan doc, the PLAN doc wins — verify scope labels
   against source before building.
-- **The mtime guard fired twice** (theme-preload.js, db_test.go) — the
+~~- **The mtime guard fired twice** (theme-preload.js, db_test.go) — the~~ process record
   daemon touches files mid-session; keep re-Viewing immediately before
   every edit (already habit; it saved both edits).
-- **Label-value coupling in generated buttons**: state-dependent copy
+~~- **Label-value coupling in generated buttons**: state-dependent copy~~ done — the helper computes value + label from one expression (threadFlagButton)
   must be computed from the SAME expression as the posted value
   (`wantInt(!Pinned)` + the label key) — centralize in the helper, not
   spread across call sites.
 
 ## f) Next up to ~50 (execution order)
 
-1. Fix the two flagged messages.templ bugs: `@if` → bare `if`;
+~~1. Fix the two flagged messages.templ bugs: `@if` → bare `if`;~~ done — session 7 fixed both; T18 closed green
    pickLabel → state-selecting helper (single expression for value +
    label), threadFlagButton takes the resolved key.
-2. Finish messages.templ: ThreadViewProps += Snippets;
+~~2. Finish messages.templ: ThreadViewProps += Snippets;~~ done — ThreadView snippets + chips + picker + lightbox shipped (T18)
    snippetPicker + SnippetChips; ThreadView head pin/mute/archive;
    reply composer chips + picker; Bubble image lightbox trigger
    (data-lightbox + full-size dialog img).
-3. settings.templ: snippets section (list + quick marker + delete +
+~~3. settings.templ: snippets section (list + quick marker + delete +~~ done — the settings snippets section shipped
    add form with quick checkbox) + SettingsPanelProps.Snippets.
-4. i18n.go: ALL new keys in BOTH maps (sync test enforces);
+~~4. i18n.go: ALL new keys in BOTH maps (sync test enforces);~~ done — all i18n keys in both maps (sync test enforces)
    panels_test byte-pins where the note's test map demands.
-5. panels.go: messagesPanel reads `archived` param + ArchivedCount +
+~~5. panels.go: messagesPanel reads `archived` param + ArchivedCount +~~ done — panels.go wiring shipped (archived param + count + snippets)
    Snippets into both props; settingsPanel reads Snippets.List
    (nil-safe for hand-composed test Deps).
-6. openapi.json entries for /messages/{id}/{flag}, /snippets/save,
+~~6. openapi.json entries for /messages/{id}/{flag}, /snippets/save,~~ done — the openapi entries landed (server.go openapiHandler)
    /snippets/delete.
-7. CSS: wp-thread-flag pressed state, wp-archived-toggle, chips,
+~~7. CSS: wp-thread-flag pressed state, wp-archived-toggle, chips,~~ done — the CSS shipped
    snippet picker, lightbox dialog (scrim token reuse).
-8. shell.js: data-snippet delegated fill (composer textarea) +
+~~8. shell.js: data-snippet delegated fill (composer textarea) +~~ done — shell.js data-snippet fill + lightbox dialog shipped
    lightbox dialog open/ESC/close; shell.test.mjs cases for both.
-9. templ generate + nix fmt; then the FULL T18 test map:
-10. store tests: flag round-trips, auto-unarchive (inbound clears,
+~~9. templ generate + nix fmt; then the FULL T18 test map:~~ done — templ generate + fmt + the full T18 test map ran green
+~~10. store tests: flag round-trips, auto-unarchive (inbound clears,~~ done — the store tests shipped (flag round-trips, auto-unarchive, snippets CRUD)
     outbound keeps), pinned ordering, archived exclusion from
     list+search, CountArchived, snippets CRUD + cap + replace-by-id.
-11. server tests: toggle 401/404/204 + unknown-flag 404, mute drops
+~~11. server tests: toggle 401/404/204 + unknown-flag 404, mute drops~~ done — the server tests shipped (threads_flags_test.go)
     badge from nav (countUnread), snippet save/delete happy + 422s +
     cap, settings partial re-render.
-12. views tests: row controls both langs + stable ids, archived
+~~12. views tests: row controls both langs + stable ids, archived~~ done — the views tests shipped
     toggle, chips render from quick snippets, picker hidden when
     empty, lightbox attr on image attachments.
-13. Island/shell tests: snippet fill preserves existing draft text
+~~13. Island/shell tests: snippet fill preserves existing draft text~~ done — the island/shell tests shipped (fill REPLACES the draft)
     (append vs replace — DECIDE: replace, matching data-sms prefill),
     lightbox open/close.
-14. Runbook E2E obligation → T18 (served markup moved: row buttons,
+~~14. Runbook E2E obligation → T18 (served markup moved: row buttons,~~ done — the standing runbook rule covers the T18 deltas
     toggle, picker, chips, settings section).
-15. AGENTS.md: one durable line for the thread-flags seam + snippets
+~~15. AGENTS.md: one durable line for the thread-flags seam + snippets~~ done — AGENTS carries the thread-flags + snippets seam rules
     (rules only) once the shape settles.
-16. T19 M24: extend the en/de sync test to flag UNUSED keys; audit the
+~~16. T19 M24: extend the en/de sync test to flag UNUSED keys; audit the~~ done — the unused-key test exists
     dictionaries.
-17. T19 M24: RTL pass — render with dir=rtl, audit logical properties
+~~17. T19 M24: RTL pass — render with dir=rtl, audit logical properties~~ done — the stylesheets were swept to CSS logical properties (T19 groundwork)
     (margin-inline etc.), fix findings; note `.wp-welcome-points
     li::before { margin-right }` as a known candidate.
-18. T19 M24: Go render tests for RTL strings (no truncation).
-19. T19 M25: island transfer/merge affordances — READ the DTMF/REFER
+~~18. T19 M24: Go render tests for RTL strings (no truncation).~~ not adopted — below the bar (the Go RTL render tests weren't taken)
+~~19. T19 M25: island transfer/merge affordances — READ the DTMF/REFER~~ not adopted — below the bar (transfer rides REFER as-is)
     lessons first (FreeSWITCH executes transfers server-side; REFER
     semantics pinned).
-20. T19 M25: hold-state parity for transfers (holdPending interplay);
+~~20. T19 M25: hold-state parity for transfers (holdPending interplay);~~ not adopted — below the bar
     island call-card specs for the transfer state machine.
-21. T21: nix-review skill batch 2 over flake.nix + nix/*.nix.
-22. T21: verify island-lint file list in checks.nix grew nothing.
-23. T21: fix findings; `nix flake check` after.
-24. T22: AGENTS composition-root bullets vs internal/app drift check.
-25. T22: dashboard refresh-loop + do-lifecycle conformance still green.
-26. T22: dashboard CSS rebuild ONLY if sources changed (tailwindcss_4).
-27. T23: research the stack's browser-e2e.py driver; pick the same.
-28. T23: decide harness budget BEFORE building; KVM-gate if browser.
-29. T23: golden-page screenshots (voicemail player, fax timeline,
+~~21. T21: nix-review skill batch 2 over flake.nix + nix/*.nix.~~ not adopted — no second nix-review pass recorded
+~~22. T21: verify island-lint file list in checks.nix grew nothing.~~ process record — the island-lint file list stayed stable
+~~23. T21: fix findings; `nix flake check` after.~~ resolved by events — flake check green later
+~~24. T22: AGENTS composition-root bullets vs internal/app drift check.~~ process record — the AGENTS composition-root bullets are current
+~~25. T22: dashboard refresh-loop + do-lifecycle conformance still green.~~ process record
+~~26. T22: dashboard CSS rebuild ONLY if sources changed (tailwindcss_4).~~ done — the 2026-10-02 rebuild fixed a genuinely stale artifact
+~~27. T23: research the stack's browser-e2e.py driver; pick the same.~~ done — the driver researched; selenium/chromedriver picked (ui-capture.py)
+~~28. T23: decide harness budget BEFORE building; KVM-gate if browser.~~ done — budget decided (14 shots, LOCAL-ONLY)
+~~29. T23: golden-page screenshots (voicemail player, fax timeline,~~ done — the 14-shot matrix incl. the T18 surfaces
     thread row controls) wired into scripts/ + flake check.
-30. HARVEST: fold session-3/4/5/6 §f lists into TODO_LIST.md.
-31. HARVEST: TODO_LIST "schema_version gated" row → DONE with pointer;
+~~30. HARVEST: fold session-3/4/5/6 §f lists into TODO_LIST.md.~~ done — the TODO rows + this v6 sweep
+~~31. HARVEST: TODO_LIST "schema_version gated" row → DONE with pointer;~~ done — the stale schema_version row flipped DONE with pointer
     T11–T18 → CHANGELOG Unreleased + FEATURES.md flips; mark plan rows.
-32. Final gates: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`
+~~32. Final gates: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`~~ resolved by events — the later full batteries are green
     (gomod-check vendor false-positive = documented exception).
-33. Final gates: quiet-host `nix flake check` (KVM backup VM included).
-34. Final gates: fresh-binary smoke — one boot, eyeball fax
+~~33. Final gates: quiet-host `nix flake check` (KVM backup VM included).~~ resolved by events — the KVM flake check ran green later
+~~34. Final gates: fresh-binary smoke — one boot, eyeball fax~~ resolved by events — the 12:57 closeout battery + the T23 visual pass
     timeline/resend, voicemail player, filter-aware empty, failed-send
     Retry/Dismiss, welcome dismiss + compact, archived toggle, snippet
     chips.
-35. Consider a smoke probe for `history?outcome=missed` empty-filter
+~~35. Consider a smoke probe for `history?outcome=missed` empty-filter~~ not adopted — the smoke probe wasn't added
     (only if trivially greppable).
-36. `git ls-remote origin main` == local HEAD end-state assert.
-37. Owner handover notes for T01/T02/T04/T09/T24/T27 (standing).
+~~36. `git ls-remote origin main` == local HEAD end-state assert.~~ done — the ls-remote ritual is standing
+~~37. Owner handover notes for T01/T02/T04/T09/T24/T27 (standing).~~ routed — TODO owner rows (the handover legs)
 
 ## g) Questions for the owner (cannot figure these out myself)
 
-1. **Archive semantics (D7)**: I made an INBOUND message auto-unarchive
+~~1. **Archive semantics (D7)**: I made an INBOUND message auto-unarchive~~ record stands — the auto-unarchive default stood (AGENTS: inbound auto-unarchives)
    its thread (a live conversation must not stay hidden). Alternative:
    archived stays archived until manually unarchived, even with new
    messages. Keep my default?
-2. **Scheduled messages (M21.6)**: NO-GO documented — the gateway seam
+~~2. **Scheduled messages (M21.6)**: NO-GO documented — the gateway seam~~ record stands — the NO-GO stood (scheduled sends cut; no deferred-send seam)
    (loopback + webhook/Telnyx bridge) has no deferred-send concept,
    and a server-side scheduler adds a queue+timer lifecycle surface.
    Confirm the deferral, or do you want the scheduler built anyway?
-3. **Carve staging (T25.2)**: T18 adds zero new internal/server files,
+~~3. **Carve staging (T25.2)**: T18 adds zero new internal/server files,~~ record stands — the carve trigger never fired; the D3 staged-carve stands
    so the carve trigger did NOT fire. When it does: new handler
    families → new `internal/server/api` package from day one (staged,
    D3), or one big-bang move of the four existing `*_api.go` families
