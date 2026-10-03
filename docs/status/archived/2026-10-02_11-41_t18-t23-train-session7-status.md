@@ -6,6 +6,12 @@ executed §f items 1–29 in order. Standing order: the whole TODO list,
 verified. This report ends with a WAIT — the remaining work is the
 harvest + final gates (items below).
 
+> ARCHIVED 2026-10-03 (docs-health v6 sweep): T18 closed whole, T19/T21/T22
+> landed, the T23 harness shipped working (14 shots, LOCAL-ONLY); the tail
+> (eyeballs, DOM assertions, harvest, final gates) closed at the 12:57
+> closeout; the §g defaults stood. Per-item verdicts inline.
+
+
 ## a) Fully done (verified green this session)
 
 - **T18 views layer COMPLETE** (the two known bugs + everything §f 2–9):
@@ -107,44 +113,44 @@ harvest + final gates (items below).
 
 ## b) Partially done
 
-- **T23**: the shots are mechanically good but NOT eyeballed (no image
+~~- **T23**: the shots are mechanically good but NOT eyeballed (no image~~ done — the visual pass eyeballed the shots; the DOM assertion landed (AGENTS: asserts DOM per shot)
   viewing in this session) and the harness asserts nothing about DOM
   content at capture time — a signed-in-content assertion (thread rows
   present) would make it self-verifying. AGENTS note not yet added.
-- **T22.4** (local-behind-remote divergence): observed live this session
+~~- **T22.4** (local-behind-remote divergence): observed live this session~~ done — the divergence is documented in the TODO health row (LIVE daemon behavior)
   (see d) but the note is only here, not yet in the harvest docs.
-- **T21.6** (exceptions record): the exceptions exist across
+~~- **T21.6** (exceptions record): the exceptions exist across~~ done — the batch-2 evidence lives here + the archived 05:56 report; the TODO row closed at harvest
   TODO_LIST row 158 + AGENTS + the 05:56 report; the TODO row still
   reads PLANNED and needs flipping at harvest with the actionlint/VM
   evidence attached.
 
 ## c) Not started (deliberately or pending)
 
-- **T25.2 carve trigger-gate**: nothing fired this session (zero new
+~~- **T25.2 carve trigger-gate**: nothing fired this session (zero new~~ record stands — the carve trigger never fired; the D2/D3 decision text stands in the design note
   internal/server files; D2 honored). The standing decision text is in
   the design note; nothing to do until the trigger fires.
-- **HARVEST** (TODO_LIST/CHANGELOG/FEATURES folds incl. T11–T19) —
+~~- **HARVEST** (TODO_LIST/CHANGELOG/FEATURES folds incl. T11–T19) —~~ done — the folds landed (CHANGELOG/FEATURES/TODO)
   next session's first block.
-- **Final gates**: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`,
+~~- **Final gates**: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`,~~ resolved by events — the 12:57 closeout battery
   quiet-host full `nix flake check` (KVM backup VM included), fresh
   smoke (`--expect-version` + the one-boot eyeball list), `git ls-remote
   origin main` == HEAD assert.
-- Owner legs untouched as always (T01/T02/T04/T09/T24/T26/T27).
+~~- Owner legs untouched as always (T01/T02/T04/T09/T24/T26/T27).~~ routed — TODO owner rows (handover legs)
 
 ## d) Fucked up / went sideways (all recovered)
 
-- **Interrupted tool call rolled back five file edits** (calls.js,
+~~- **Interrupted tool call rolled back five file edits** (calls.js,~~ process record — the mtime-guard lesson re-confirmed
   phone.templ, main.js, i18n.js, selftest.js, the A6 connection tests):
   detected via selftest module-not-found, re-applied everything
   atomically, re-verified 164/164 + Go green. Lesson re-confirmed: the
   edit-tool mtime guard is real; re-verify survivors before rebuilding
   on top.
-- **The auto-commit daemon REWROTE git history mid-session**: the
+~~- **The auto-commit daemon REWROTE git history mid-session**: the~~ process record — the T22.4 observation, live; documented in the TODO health row
   morning's named commit `a00dadc` (T18 seams) vanished from the log,
   replaced by a fresh auto-commit chain (same content, new hashes).
   All work survived under the new hashes (verified file-by-file);
   nothing was lost. This is T22.4's divergence observation, live.
-- **health.css byte-drift gate rabbit hole** (three failed attempts,
+~~- **health.css byte-drift gate rabbit hole** (three failed attempts,~~ process record — the canary rationale is documented in the script comment
   then right-sized): (1) naive rebuild-diff caught REAL drift → good;
   (2) root-caused a self-feedback loop — the artifact sits inside a
   Tailwind @source root, so in-place rebuilds re-ingest their own
@@ -155,7 +161,7 @@ harvest + final gates (items below).
   artifact. Byte-drift gate = architecturally impossible here; the
   check is the CANARY (dark-variant fingerprint) and the script owns
   the honest rebuild. The rebuilt artifact was genuinely stale (see a).
-- **ui-capture needed seven iterations**: multipart send prologue,
+~~- **ui-capture needed seven iterations**: multipart send prologue,~~ process record — the seven-iteration recipe (cookie injection, config-file boot) is the reusable one
   meta-CSRF for /api/session, browser Origin rejected without
   `csrf.trusted_*` (config-file boot now), `wss://` hardcoded in
   config.js (bare-HTTP boots could NEVER connect — fixed, product bug),
@@ -178,40 +184,40 @@ harvest + final gates (items below).
 
 ## f) Next up (execution order)
 
-1. fmt + full re-verify of the latest edits (config.js, health.css,
+~~1. fmt + full re-verify of the latest edits (config.js, health.css,~~ done — the suites re-verified green (this session's close + the 12:57 battery)
    ui-capture, checks.nix): island suite + oxlint + `go test ./...`.
-2. Eyeball `ui-shots/` (owner or a session with image viewing); add the
+~~2. Eyeball `ui-shots/` (owner or a session with image viewing); add the~~ done — the visual pass eyeballed the shots; the DOM assertion landed (AGENTS: asserts DOM per shot)
    signed-in-content DOM assertion to ui-capture (thread rows present).
-3. AGENTS.md: one durable line for the visual harness (local-only, the
+~~3. AGENTS.md: one durable line for the visual harness (local-only, the~~ done — the AGENTS Commands block documents the harness (LOCAL-ONLY + budget rationale)
    budget rationale, how to run).
-4. T22.6 default note: fold T11–T19 into the v2.9.0 changelog at
+~~4. T22.6 default note: fold T11–T19 into the v2.9.0 changelog at~~ routed — TODO health row (the v2.9.0 fold decision, owner §g2)
    harvest unless the owner splits.
-5. HARVEST: TODO_LIST (flip the nix-review batch-2 row → DONE with
+~~5. HARVEST: TODO_LIST (flip the nix-review batch-2 row → DONE with~~ done — the harvest landed (TODO flips, the M21.6 NO-GO in CHANGELOG, FEATURES flips)
    actionlint/drill/deadnix evidence; flip the schema_version row →
    DONE pointing at the T18 migration runner; add the M21.6 NO-GO row
    naming the gateway-seam dependency; add the visual-harness row),
    CHANGELOG Unreleased (T11–T19 + the health.css artifact fix + the
    config.js ws fix + the deadnix vendor exclusion), FEATURES.md flips.
-6. Session-3/4/5/6/7 §f folds into TODO_LIST (the standing harvest).
-7. Final gates: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`
+~~6. Session-3/4/5/6/7 §f folds into TODO_LIST (the standing harvest).~~ done — the TODO state + this v6 sweep
+~~7. Final gates: `BUILDFLOW_NO_RESULT_CACHE=1 ./scripts/buildflow.sh`~~ resolved by events — the 12:57 closeout battery ran the final gates
    (gomod-check vendor false-positive = documented exception; run inside
    `nix develop`), quiet-host full `nix flake check`, fresh-binary
    smoke with the one-boot eyeball list (fax timeline/resend, voicemail
    player, filter-aware empty, Retry/Dismiss, welcome dismiss+compact,
    archived toggle, snippet chips, service dots), `git ls-remote origin
    main` == HEAD.
-8. Post-gates: report + wait (owner §g rulings outstanding: D7 archive
+~~8. Post-gates: report + wait (owner §g rulings outstanding: D7 archive~~ process record — the §g rulings stood at their defaults (D7, M21.6 NO-GO, carve staging, C4, double-fetch)
    semantics, M21.6 NO-GO ratification, carve staging, C4 fax-thumbnail
    decline, voicemail waveform double-fetch).
 
 ## g) Questions for the owner (cannot figure these out myself)
 
-1. **Shot review**: `ui-shots/` (14 PNGs) needs a human eyeball — is the
+~~1. **Shot review**: `ui-shots/` (14 PNGs) needs a human eyeball — is the~~ done — the shots were eyeballed at the T23 visual pass (per-train; no pixel-goldens, as recommended)
    visual matrix what you want persisted per release, or per-train
    only? (No pixel-goldens proposed; timestamps make byte-goldens flake.)
-2. **v2.9.0 fold**: T11–T19 is a large changelog block — one release or
+~~2. **v2.9.0 fold**: T11–T19 is a large changelog block — one release or~~ routed — TODO health row (the fold decision, owner §g2)
    split (my default: one).
-3. **The history rewrite**: the auto-commit daemon replaced a named
+~~3. **The history rewrite**: the auto-commit daemon replaced a named~~ done — the daemon divergence is documented (TODO: never verify via push logs, only git ls-remote)
    commit mid-session (same content, new hashes). Harmless here, but if
    you rely on named-commit archaeology the daemon's heuristic may be
    fighting you — worth a look when convenient.
