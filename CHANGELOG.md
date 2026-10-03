@@ -268,6 +268,16 @@ Ships together with the never-separately-tagged [2.7.0] content below
   construct via `errors.New` (matching crm/store) instead of
   directive-less `fmt.Errorf` — zero behavior change, identity
   preserved for `errors.Is`.
+- Typography accessibility + craft (retro bullet, added by the
+  docs-health v6 sweep 2026-10-03: the 2026-09-30 typography train
+  shipped in this release without an entry). The root `html` rule now
+  sizes text as a percentage (93.75%) so browser font-size preferences
+  are honored (px ignores them), carries the rendering baseline
+  (antialiasing), and sets a local mono stack for the event log and
+  ICE panel; headings get `text-wrap: balance` and message bubbles
+  `text-wrap: pretty`. One real defect fixed with it: `html lang` now
+  follows the session language instead of staying static
+  (`TestShellHtmlLangFollowsSessionLang` pins it).
 
 ### Fixed
 
