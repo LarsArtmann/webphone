@@ -17,7 +17,7 @@ require (
 	github.com/larsartmann/go-paperless v0.4.2
 	github.com/larsartmann/go-sse v0.6.2
 	github.com/larsartmann/go-sse/ssetest v0.4.0
-	github.com/larsartmann/httputil v1.4.0
+	github.com/larsartmann/httputil v1.4.1
 	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.19.4
 	github.com/larsartmann/templ-components/icons v1.19.4
@@ -43,7 +43,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/justinas/nosurf v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
-	github.com/larsartmann/go-codec v0.3.0 // indirect
+	github.com/larsartmann/go-codec v0.3.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.13.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/dispatcher/v4 v4.5.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/event/v4 v4.13.0 // indirect
@@ -55,7 +55,7 @@ require (
 	github.com/larsartmann/go-datastar/static v0.6.1 // indirect
 	github.com/larsartmann/go-etag/entitytag v0.6.1 // indirect
 	github.com/larsartmann/go-etag/server v0.6.1 // indirect
-	github.com/larsartmann/go-idempotency v0.3.0 // indirect
+	github.com/larsartmann/go-idempotency v0.3.1 // indirect
 	github.com/larsartmann/go-retry v0.7.1 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.2.0 // indirect
 	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
