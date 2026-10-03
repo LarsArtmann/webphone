@@ -106,111 +106,111 @@ markdownlint posture, announcements, watches), T27 (docs-health continuation).
 ## d) TOTALLY FUCKED UP!
 
 ~~1. **A test I authored failed on first run** (the hold-pending block in~~ process record — the fix landed and the suite went 120/120 green (session-2 addendum)
-   `calls.test.mjs`). Root cause: I asserted the post-failed-resume state was
-   _un-held_. Fixed in-place (assert `holdPending === "resuming"` instead of the
-   card's `data-state`), **but the fix is unverified**.
+`calls.test.mjs`). Root cause: I asserted the post-failed-resume state was
+_un-held_. Fixed in-place (assert `holdPending === "resuming"` instead of the
+card's `data-state`), **but the fix is unverified**.
 ~~2. **Two background `node --test` runs never returned** (shell IDs `001` and~~ process record — host node is the documented iteration path (AGENTS)
-   `007`). Possibly the `nix run nixpkgs#nodejs` fetch is slow, or a test leaves
-   an open handle (`ringToneStart`/`ringbackStart` install `setInterval`s;
-   `--test-force-exit` should reap them). **Verification latency is a real
-   process defect in this session** — I should have run host `node` (v24.20.0 is
-   on PATH) on the _changed files only_ first.
+`007`). Possibly the `nix run nixpkgs#nodejs` fetch is slow, or a test leaves
+an open handle (`ringToneStart`/`ringbackStart` install `setInterval`s;
+`--test-force-exit` should reap them). **Verification latency is a real
+process defect in this session** — I should have run host `node` (v24.20.0 is
+on PATH) on the _changed files only_ first.
 ~~3. **I wrote one new test on a guessed state model** instead of reading the~~ process record
-   existing test's own sequence to the end (it had already driven the session to
-   `held`). Process failure, not just a code bug.
+existing test's own sequence to the end (it had already driven the session to
+`held`). Process failure, not just a code bug.
 
 ---
 
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~- **Verification order:** run the _changed test files_ under host `node` after~~ process record
-  each edit, then the whole suite once at the end — never a full-suite run as the
-  first feedback.
+each edit, then the whole suite once at the end — never a full-suite run as the
+first feedback.
 ~~- **Stop using `nix run nixpkgs#nodejs` for iteration** — host node v24 is~~ process record — host node is the documented iteration path (AGENTS)
-  present; the nix path adds fetch latency and ambiguity.
+present; the nix path adds fetch latency and ambiguity.
 ~~- **Read a test to its last line before extending it** (the state it leaves the~~ process record
-  subject in is part of its contract).
+subject in is part of its contract).
 ~~- **Governance:** `AGENTS.md` is now **705 lines** (buildflow warns~~ done — compacted same session (705→364) and re-balanced 2026-10-02 (404→377)
-  `max 377, excess 328`) — materially worse than the 498 the TODO row cites.
+`max 377, excess 328`) — materially worse than the 498 the TODO row cites.
 ~~- **Stale duplicate doc:** `docs/status/dedup-registry.md` carries **4 broken~~ done — the stale copy was already gone (addendum)
-  file links** (lychee) — it is a stale copy of the live `docs/dedup-registry.md`.
+file links** (lychee) — it is a stale copy of the live `docs/dedup-registry.md`.
 ~~- **Small real findings left un-dispatched:** 3 `errcheck` (`fax/service.go:215`,~~ done — all dispatched in the addendum (errcheck, oxlint, HW-4); mypy routed to the TODO tooling row
-  `paperless_test.go:77`, `version_test.go:75`), 8 `mypy` findings in
-  `scripts/webphone-smoke.py`, `ruff` EXE001 (`scripts/render-diff.py` shebang not
-  executable), 7 `oxlint` unused-var warnings in island tests, 2 `samber-linter`
-  HW-4 infos on `internal/app/app.go` (the named services ARE eagerly invoked in
-  `New` — the linter cannot see it; a reasoned suppression is the honest fix).
+`paperless_test.go:77`, `version_test.go:75`), 8 `mypy` findings in
+`scripts/webphone-smoke.py`, `ruff` EXE001 (`scripts/render-diff.py` shebang not
+executable), 7 `oxlint` unused-var warnings in island tests, 2 `samber-linter`
+HW-4 infos on `internal/app/app.go` (the named services ARE eagerly invoked in
+`New` — the linter cannot see it; a reasoned suppression is the honest fix).
 
 ---
 
 ## f) Up to 50 things to get done next (priority-ordered)
 
-| #  | Task                                                                     | Parent  |
-| -- | ------------------------------------------------------------------------ | ------- |
-~~| 1  | Confirm island suite green (host node, changed files)                    | T03     |~~ done — session-2 addendum (island 120/120 + full go test green)
-~~| 2  | T08: `aria-current` nav-partial pin                                      | T08     |~~ done — addendum (shell spec mirror + the DOM-contract asserts page/false)
-~~| 3  | T08: skeleton reveal/hide island pin                                     | T08     |~~ done — addendum (shell.test skeleton spec)
-~~| 4  | T08: optimistic-bubble-morph-removed edge pin                            | T08     |~~ done — addendum ("settled send is never rolled back" morph edge)
-~~| 5  | T08: fix `#wp-live` over-promising comment (`layout.templ`)              | T08     |~~ done — addendum (the over-promising comment corrected)
-~~| 6  | T08: release-runbook stack-E2E obligation note                           | T08     |~~ done — addendum (the runbook gained the served-markup E2E rule)
-~~| 7  | T20: dispatch 3 errcheck findings                                        | T20     |~~ done — addendum (fax/paperless/version_test errcheck fixed)
-~~| 8  | T20: `nix run .#vulnix` verdict via `webphone-vulnix-triage`             | T20     |~~ done — T22 close-out (vulnix zero-real-advisories; TODO island row)
-~~| 9  | T20: aarch64 ELF `e_machine=183` verify                                  | T20     |~~ done — T22 close-out (aarch64 exit-green; ELF verify re-owed at each final gate)
-~~| 10 | T20: root-cause the KVM VM-test timeout                                  | T20     |~~ not adopted — below the bar; one clean re-run, no repeat observed
-~~| 11 | T10: ETag+304 for `/assets/*` (reconcile `server.go` comment)            | T10     |~~ done — T10 (this report's session-2 addendum: content ETag + 304)
-~~| 12 | T10: scoped gzip for static handlers (never `/events`)                   | T10     |~~ done — addendum (scoped gzip + TestAssetsGzipWhenAccepted)
-~~| 13 | T10: curls timing baseline before/after                                  | T10     |~~ done — T10.6 scripts/perf-baseline.py
-~~| 14 | T11: `modulepreload` for the island ESM graph                            | T11     |~~ done — T11 modulepreload (CHANGELOG Unreleased)
-~~| 15 | T11: outgoing-call mic warm (mirror incoming)                            | T11     |~~ done — the dial-focus mic warm shipped (calls.js:556)
-~~| 16 | T11: ICE panel gathering-duration + time-to-first-media                  | T11     |~~ done — ice.js setupLine (gather/ice/first media)
-~~| 17 | T11: `iceServers` trimming evaluation                                    | T11     |~~ not adopted — below the bar; no row taken
-~~| 18 | T12: M9 dial affordances (A4/A5/A8/A9/K5)                                | T12     |~~ done — T12 dial affordances (CHANGELOG Unreleased)
-~~| 19 | T12: M12 over-limit segment countdown                                    | T12     |~~ done — T12 segment countdown
-~~| 20 | T13: M11 history filters (D8–D10)                                        | T13     |~~ done in part — the history filter is URL-addressable with server filtering (history.templ)
-~~| 21 | T13: M16 URL state (E2/E3/E7/E8)                                         | T13     |~~ done in part — filter state URL-addressable; last-active-tab restore wasn't taken
-~~| 22 | T14: M13 voicemail playback (C1–C3/C9/C10)                               | T14     |~~ done — T14 voicemail player
-~~| 23 | T14: M14 fax depth (C4–C6)                                               | T14     |~~ done — T14 fax timeline + resend
-~~| 24 | T15: M17 feedback/trust (J2/J3/J4/J7/J8/J9)                              | T15     |~~ done — T15 feedback/trust
-~~| 25 | T16: M15 visual tokens + M20 theming + M26 sizing                        | T16     |~~ done — T16 tokens/theming/sizing
-~~| 26 | T17: M18 onboarding + M19 mobile extras                                  | T17     |~~ done — T17 onboarding + mobile
-~~| 27 | T18: M21 messaging richness + M22 pin/archive/mute (server design first) | T18     |~~ done — T18 snippets + thread flags
-~~| 28 | T19: M24 i18n/RTL/status dots + M25 call depth                           | T19     |~~ done in part — T19 (RTL groundwork + focus mode); status dots weren't taken
-~~| 29 | T21: module-output golden fixture + check entry                          | T21     |~~ done — nix/module-output.golden + the module-check golden case
-~~| 30 | T21: `release.sh` `webphoneVersion`↔`git describe` guard                 | T21     |~~ done — release.sh tag↔webphoneVersion guard (override documented)
-~~| 31 | T21: run KVM backup VM + drill post-split                                | T21     |~~ done — the 20:12 T03 battery ran flake check green post-split (incl. the KVM VM; all checks passed)
-~~| 32 | T21: `actionlint` over CI workflow                                       | T21     |~~ not adopted — below the bar (actionlint never run)
-~~| 33 | T21: dedupe `devShells.ci`/`default` Go env                              | T21     |~~ not adopted — below the bar (the shells stay separate)
-~~| 34 | T21: record accepted exceptions + declined `go-standard`                 | T21     |~~ not adopted — below the bar (the exceptions live in AGENTS only)
-~~| 35 | T22: commit `health.css` build script + CI rebuild wiring                | T22     |~~ done — TODO health-dashboard row (build-health-css.sh + checks.health-css canary)
-~~| 36 | T22: `family_test.go` pins for new error codes                           | T22     |~~ done — TODO row (T22 family pins: store.thread_flag, store.count_archived, snippets)
-~~| 37 | T22: investigate local-main-ahead-of-remote divergence                   | T22     |~~ done — TODO row (LIVE daemon behavior; verify only via git ls-remote)
-~~| 38 | T23: persist `scripts/ui-capture.py` + 12-shot matrix                    | T23     |~~ done — scripts/ui-capture.py + the 14-shot matrix (AGENTS T23 harness)
-~~| 39 | T23: AGENTS "visual gate" note                                           | T23     |~~ done — the AGENTS Commands block documents the visual harness
-~~| 40 | Fix `docs/status/dedup-registry.md` broken links (or remove duplicate)   | hygiene |~~ done — addendum (the stale copy was already gone)
-~~| 41 | `chmod +x scripts/render-diff.py` (ruff EXE001)                          | hygiene |~~ done — addendum (chmod +x)
-~~| 42 | Fix 8 `mypy` findings in `scripts/webphone-smoke.py`                     | hygiene |~~ routed — TODO tooling row (mypy, twice-carried)
-~~| 43 | Clear 7 `oxlint` unused-var warnings in island tests                     | hygiene |~~ done — addendum (8 oxlint warnings fixed)
-~~| 44 | Suppress 2 `samber-linter` HW-4 infos with reasoned comment              | hygiene |~~ done — addendum (2 HW-4 suppressed with a reason at the ProvideNamed sites)
-~~| 45 | T26: compact `AGENTS.md` 705 → ≤377 lines (war stories → lessons)        | T26     |~~ done — addendum (705→364) + the 2026-10-02 compaction (404→377)
-~~| 46 | T26: markdownlint posture ratification                                   | T26     |~~ routed — TODO tooling row (markdownlint posture decision)
-~~| 47 | T25: document `schema_version` trigger (gate on first ALTER)             | T25     |~~ resolved by events — T18 shipped versioned migrations (schema_version v2; the trigger fired)
-~~| 48 | T25: `internal/server` carve (trigger: next file added)                  | T25     |~~ record stands — the carve stays trigger-gated (next file added)
-~~| 49 | T27: annotate/archive recent status reports                              | T27     |~~ done — this v6 sweep
-~~| 50 | Final gates: buildflow full + flake check + smoke after all edits        | T03     |~~ resolved by events — the later full batteries are green (12:57 close-out)
+| #  | Task | Parent                                                                   |
+| -- | ---- | ------------------------------------------------------------------------ |
+| ~~ | 1    | Confirm island suite green (host node, changed files)                    |
+| ~~ | 2    | T08: `aria-current` nav-partial pin                                      |
+| ~~ | 3    | T08: skeleton reveal/hide island pin                                     |
+| ~~ | 4    | T08: optimistic-bubble-morph-removed edge pin                            |
+| ~~ | 5    | T08: fix `#wp-live` over-promising comment (`layout.templ`)              |
+| ~~ | 6    | T08: release-runbook stack-E2E obligation note                           |
+| ~~ | 7    | T20: dispatch 3 errcheck findings                                        |
+| ~~ | 8    | T20: `nix run .#vulnix` verdict via `webphone-vulnix-triage`             |
+| ~~ | 9    | T20: aarch64 ELF `e_machine=183` verify                                  |
+| ~~ | 10   | T20: root-cause the KVM VM-test timeout                                  |
+| ~~ | 11   | T10: ETag+304 for `/assets/*` (reconcile `server.go` comment)            |
+| ~~ | 12   | T10: scoped gzip for static handlers (never `/events`)                   |
+| ~~ | 13   | T10: curls timing baseline before/after                                  |
+| ~~ | 14   | T11: `modulepreload` for the island ESM graph                            |
+| ~~ | 15   | T11: outgoing-call mic warm (mirror incoming)                            |
+| ~~ | 16   | T11: ICE panel gathering-duration + time-to-first-media                  |
+| ~~ | 17   | T11: `iceServers` trimming evaluation                                    |
+| ~~ | 18   | T12: M9 dial affordances (A4/A5/A8/A9/K5)                                |
+| ~~ | 19   | T12: M12 over-limit segment countdown                                    |
+| ~~ | 20   | T13: M11 history filters (D8–D10)                                        |
+| ~~ | 21   | T13: M16 URL state (E2/E3/E7/E8)                                         |
+| ~~ | 22   | T14: M13 voicemail playback (C1–C3/C9/C10)                               |
+| ~~ | 23   | T14: M14 fax depth (C4–C6)                                               |
+| ~~ | 24   | T15: M17 feedback/trust (J2/J3/J4/J7/J8/J9)                              |
+| ~~ | 25   | T16: M15 visual tokens + M20 theming + M26 sizing                        |
+| ~~ | 26   | T17: M18 onboarding + M19 mobile extras                                  |
+| ~~ | 27   | T18: M21 messaging richness + M22 pin/archive/mute (server design first) |
+| ~~ | 28   | T19: M24 i18n/RTL/status dots + M25 call depth                           |
+| ~~ | 29   | T21: module-output golden fixture + check entry                          |
+| ~~ | 30   | T21: `release.sh` `webphoneVersion`↔`git describe` guard                 |
+| ~~ | 31   | T21: run KVM backup VM + drill post-split                                |
+| ~~ | 32   | T21: `actionlint` over CI workflow                                       |
+| ~~ | 33   | T21: dedupe `devShells.ci`/`default` Go env                              |
+| ~~ | 34   | T21: record accepted exceptions + declined `go-standard`                 |
+| ~~ | 35   | T22: commit `health.css` build script + CI rebuild wiring                |
+| ~~ | 36   | T22: `family_test.go` pins for new error codes                           |
+| ~~ | 37   | T22: investigate local-main-ahead-of-remote divergence                   |
+| ~~ | 38   | T23: persist `scripts/ui-capture.py` + 12-shot matrix                    |
+| ~~ | 39   | T23: AGENTS "visual gate" note                                           |
+| ~~ | 40   | Fix `docs/status/dedup-registry.md` broken links (or remove duplicate)   |
+| ~~ | 41   | `chmod +x scripts/render-diff.py` (ruff EXE001)                          |
+| ~~ | 42   | Fix 8 `mypy` findings in `scripts/webphone-smoke.py`                     |
+| ~~ | 43   | Clear 7 `oxlint` unused-var warnings in island tests                     |
+| ~~ | 44   | Suppress 2 `samber-linter` HW-4 infos with reasoned comment              |
+| ~~ | 45   | T26: compact `AGENTS.md` 705 → ≤377 lines (war stories → lessons)        |
+| ~~ | 46   | T26: markdownlint posture ratification                                   |
+| ~~ | 47   | T25: document `schema_version` trigger (gate on first ALTER)             |
+| ~~ | 48   | T25: `internal/server` carve (trigger: next file added)                  |
+| ~~ | 49   | T27: annotate/archive recent status reports                              |
+| ~~ | 50   | Final gates: buildflow full + flake check + smoke after all edits        |
 
 ---
 
 ## g) Questions I cannot answer myself (3)
 
 ~~1. **Ring-silence authorisation (T06).** The row says implementation "awaits the~~ resolved by events — the owner ruled KEEP (session-2 addendum)
-   owner's go (tied to 'was your ring actually silent?')". Your blanket "do the
-   whole list" read to me as the go, so I shipped it. Confirm, or revert?
+owner's go (tied to 'was your ring actually silent?')". Your blanket "do the
+whole list" read to me as the go, so I shipped it. Confirm, or revert?
 ~~2. **AGENTS.md compaction (T26).** It needs "explicit owner permission + a quiet~~ done — the owner said go; compacted same session (705→364)
-   window" and is now **705 lines** vs the 377 cap. May I compact it this
-   session, or keep waiting for a declared quiet window?
+window" and is now **705 lines** vs the 377 cap. May I compact it this
+session, or keep waiting for a declared quiet window?
 ~~3. **Stack E2E / T04.** The island-honesty row says the browser E2E is blocked by~~ routed — T04 stays blocked; the TODO cross-repo row owns the mod_enum repair-first chain
-   a **stack-side FreeSWITCH `mod_enum` build break**. Is that repaired yet — do
-   I defer T04 (and its dependents) or is a stack session taking it?
+a **stack-side FreeSWITCH `mod_enum` build break**. Is that repaired yet — do
+I defer T04 (and its dependents) or is a stack session taking it?
 
 ---
 

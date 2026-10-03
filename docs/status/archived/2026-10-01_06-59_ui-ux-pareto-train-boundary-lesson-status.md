@@ -80,35 +80,35 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 ## b) PARTIALLY DONE
 
 ~~- **M12 Compose ergonomics** — B11 (enter-send) and B12 (per-thread drafts) verified~~ done — T12 SMS segment countdown shipped (B8's missing half)
-  **pre-existing** in `shell.js`; **B8** (segment counter) exists as a bare "N SMS" count —
-  the _over-limit countdown_ half is still missing.
+**pre-existing** in `shell.js`; **B8** (segment counter) exists as a bare "N SMS" count —
+the _over-limit countdown_ half is still missing.
 ~~- **M17 Feedback/trust** — J5 (toast dismiss) and stacking exist pre-existing (click/Enter/Esc,~~ done — T15 + the honesty train closed the J-legs (reconnect banner, recovery announce, retry buttons)
-  max 4 in the shell; island `announce`); J2 reconnect banner, J3 undo, J4 retry-in-banner,
-  J7 confirm consistency, J8 button spinner, J9 success pulse **not started**.
+max 4 in the shell; island `announce`); J2 reconnect banner, J3 undo, J4 retry-in-banner,
+J7 confirm consistency, J8 button spinner, J9 success pulse **not started**.
 ~~- **M7** — core shipped; the M19 mobile _extras_ (I3 action bar, I6 swipe, I7 pull-to-refresh,~~ done in part — T17 shipped the mobile legs; swipe/pull-to-refresh weren't taken
-  I9 header collapse) not started.
+I9 header collapse) not started.
 ~~- **Cross-repo obligation** — `docs/dom-contract.md` gained `wp-live` + `wp-tab-skeleton`;~~ routed — TODO island-honesty row + the runbook rule now record the obligation
-  the consuming stack's browser E2E has **not** been re-run (and no obligation note was
-  written anywhere except this report).
+the consuming stack's browser E2E has **not** been re-run (and no obligation note was
+written anywhere except this report).
 ~~- **Plan open questions** — never answered by the owner before execution (mobile first-class,~~ process record — the owner ratified by events (the master-todo trains executed)
-  ROADMAP-vs-TODO promotion, SEAM ordering). I assumed answers by acting.
+ROADMAP-vs-TODO promotion, SEAM ordering). I assumed answers by acting.
 
 ---
 
 ## c) NOT STARTED
 
 ~~- **M9** dial affordances (A4 name-on-type, A5 normalization hint, A8 DTMF animation/tones,~~ done in part — T12 dial affordances; name-on-type + DTMF polish weren't taken
-  A9 re-dial, K5 disclosure).
+A9 re-dial, K5 disclosure).
 ~~- **M11** history filters (D8–D10) · **M13** voicemail playback (C1–C3, C9, C10) ·~~ done — T12/T14/T16 shipped them (M11 via the URL-addressable filter)
-  **M14** fax depth (C4–C6) · **M15** visual tokens (F3/F4/F7/F9) · **M16** URL state
-  (E2/E3/E7/E8).
+**M14** fax depth (C4–C6) · **M15** visual tokens (F3/F4/F7/F9) · **M16** URL state
+(E2/E3/E7/E8).
 ~~- **M18** onboarding/demo (K1–K4) · **M19** mobile extras · **M20** theming depth ·~~ done — T16/T17/T18/T19 shipped all but M23 (Ledger's domain, by ruling)
-  **M21** messaging richness (snippets/schedule SEAM) · **M22** pin/archive/mute (SEAM) ·
-  **M23** contacts depth — **reassigned to Ledger** · **M24** i18n locale/RTL/status dots ·
-  **M25** call depth (A6 focus mode, A10 media test; A7 missed badge pre-existing) ·
-  **M26** shell sizing (E5/E6).
+**M21** messaging richness (snippets/schedule SEAM) · **M22** pin/archive/mute (SEAM) ·
+**M23** contacts depth — **reassigned to Ledger** · **M24** i18n locale/RTL/status dots ·
+**M25** call depth (A6 focus mode, A10 media test; A7 missed badge pre-existing) ·
+**M26** shell sizing (E5/E6).
 ~~- **Gates never run this session**: `buildflow`, `nix flake check`, `nix run .#vulnix`,~~ resolved by events — later batteries green
-  `python3 scripts/webphone-smoke.py`.
+`python3 scripts/webphone-smoke.py`.
 ~~- **Docs**: `TODO_LIST.md` / `ROADMAP.md` not harvested from the plan or this report.~~ done — the master-todo TODO rows + this v6 sweep
 
 ---
@@ -116,48 +116,49 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 ## d) TOTALLY FUCKED UP
 
 ~~1. **Built an entire contacts-manager workstream in the wrong repo's domain.** M10~~ process record — the ruling is now AGENTS doctrine (contacts depth is Ledger's domain)
-   (search, sections, edit, single vCard) duplicated Ledger (~/projects/crm — event-sourced
-   on go-cqrs-lite; search-everywhere and export are its core). I had **read** the AGENTS.md
-   CRM-seam line earlier in the session and still never asked _"whose domain is this?"_
-   before writing CRUD. The owner had to stop the train. Cleanly reverted (`6989b99`), but
-   it was ~1.5h of avoidable work.
+(search, sections, edit, single vCard) duplicated Ledger (~/projects/crm — event-sourced
+on go-cqrs-lite; search-everywhere and export are its core). I had **read** the AGENTS.md
+CRM-seam line earlier in the session and still never asked _"whose domain is this?"_
+before writing CRUD. The owner had to stop the train. Cleanly reverted (`6989b99`), but
+it was ~1.5h of avoidable work.
 ~~2. **A red test was committed.** The M10 `contacts.templ` rewrite referenced six i18n keys~~ process record
-   that did not exist → `TestEveryReferencedKeyExists` red — and the auto-commit daemon
-   committed the broken state before I ran the views test. Violated "test immediately after
-   each modification."
+that did not exist → `TestEveryReferencedKeyExists` red — and the auto-commit daemon
+committed the broken state before I ran the views test. Violated "test immediately after
+each modification."
 ~~3. **Edit-race thrash with the auto-commit/treefmt daemon.** Files were reformatted between~~ process record — the re-View/atomic-write workaround is the AGENTS rule
-   View and Edit, silently discarding ~4 edits ("file modified since last read"); I retried
-   before switching to atomic whole-file writes. Should have adopted the atomic path after
-   the first rejection.
+View and Edit, silently discarding ~4 edits ("file modified since last read"); I retried
+before switching to atomic whole-file writes. Should have adopted the atomic path after
+the first rejection.
 ~~4. **Narrative commits mostly lost.** The daemon swept files within seconds; two explicit~~ process record — narrative commits stay best-effort under the daemon
-   narrative commits found "nothing to commit." The work is committed, but session history
-   reads as "chore: auto-commit N files" in places.
+narrative commits found "nothing to commit." The work is committed, but session history
+reads as "chore: auto-commit N files" in places.
 ~~5. **A UI train that changed served markup got no end-to-end verification.** No smoke run,~~ routed — the E2E obligation rides the TODO island-honesty row + the runbook rule
-   no `nix flake check`, no visual check, and two new DOM-contract ids with no stack E2E
-   re-run.
+no `nix flake check`, no visual check, and two new DOM-contract ids with no stack E2E
+re-run.
 
 ---
 
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~- **Domain-ownership check in the per-workstream protocol.** Before building any feature,~~ done — the ruling is AGENTS doctrine
-  name the data owner (this repo / Ledger / PBX stack / provider). M10 is the proof this is
-  load-bearing, not ceremony.
+name the data owner (this repo / Ledger / PBX stack / provider). M10 is the proof this is
+load-bearing, not ceremony.
 ~~- **Reconnaissance before execution per workstream.** The plan was written against partially~~ process record
-  stale knowledge (M1 server side, all of M3, plus B11/B12/A7 already shipped). A 2-minute
-  "does this already exist?" audit per workstream became my practice mid-train — make it the
-  protocol, not a late discovery.
+stale knowledge (M1 server side, all of M3, plus B11/B12/A7 already shipped). A 2-minute
+"does this already exist?" audit per workstream became my practice mid-train — make it the
+protocol, not a late discovery.
 ~~- **Run the real gate on markup changes** — `templ generate` + `go test` + island `node:test`~~ done — the runbook rule + AGENTS obligation line
-  **+ `nix flake check`**, and the live smoke before calling a UI batch done.
+**+ `nix flake check`**, and the live smoke before calling a UI batch done.
 ~~- **Commit each verified workstream before touching the next file** — it is the only way to~~ process record
-  beat the daemon blur.
+beat the daemon blur.
 ~~- **Treat the daemon as adversarial to in-flight edits** — re-View immediately before every~~ done — AGENTS rule
-  Edit, or write atomically.
+Edit, or write atomically.
 ~~- **Test the changed artifact before moving on** (the red-commit lesson).~~ process record
+
 - **Record cross-repo obligations the moment they arise** (stack E2E, vendor hashes, DOM ids).
-~~- **Fix the overpromising comment** in `layout.templ`: the `#wp-live` note claims~~ done — the runbook rule
+  ~~- **Fix the overpromising comment** in `layout.templ`: the `#wp-live` note claims~~ done — the runbook rule
   "connection recovery" announcements, but those are M17/J2 work, not implemented.
-~~- **Don't execute while open questions are unanswered** — surface them first.~~ done — the comment is gone from layout.templ
+  ~~- **Don't execute while open questions are unanswered** — surface them first.~~ done — the comment is gone from layout.templ
 
 ### What I forgot
 
@@ -179,9 +180,9 @@ Verification at every boundary: `go test` (server + views), `node:test` island s
 ~~- Land the remaining phone-domain workstreams with the ownership check + full gate per unit.~~ done — the master-todo trains landed the remainder under the ownership check
 ~~- Add the missing pins (aria-current values, skeleton reveal, optimistic-bubble morph edge).~~ done in part — aria-current + skeleton pins landed; the morph-edge pin wasn't taken
 ~~- Close the small M2 edges (year-boundary day labels; zero-inbound unread window; SR~~ not adopted — below the bar (the M2 edges weren't taken)
-  double-read on the divider).
+double-read on the divider).
 ~~- Promote the boundary ruling into `AGENTS.md` (enduring memory) and Ledger's roadmap~~ done — the ruling is in AGENTS; Ledger's roadmap is cross-repo; this v6 sweep harvested
-  (cross-repo), then HARVEST into `TODO_LIST.md`.
+(cross-repo), then HARVEST into `TODO_LIST.md`.
 
 ---
 

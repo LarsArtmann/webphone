@@ -29,33 +29,33 @@ skill's HTML default — one-off, not propagated into the skill.
 ## a) FULLY DONE
 
 ~~1. **#318 — `CopyButton.LabelClass`** — color-override hook for the label span;~~ done — this session (their repo); rides templ-components [Unreleased]
-   non-empty value replaces the fixed `text-gray-700 dark:text-gray-200`
-   (the `[data-tc-copy-text]` attribute hook stays). `display/copy_button.templ`.
+non-empty value replaces the fixed `text-gray-700 dark:text-gray-200`
+(the `[data-tc-copy-text]` attribute hook stays). `display/copy_button.templ`.
 ~~2. **#319 — `ListNote.ListNoteRange`** — "Showing X–Y of Z." cursor-paginated~~ done — this session (their repo); rides templ-components [Unreleased]
-   variant (`RangeFrom`/`RangeTo`/`Total`); always renders; non-positive range
-   degrades to the count message. `display/list_note.templ`.
+variant (`RangeFrom`/`RangeTo`/`Total`); always renders; non-positive range
+degrades to the count message. `display/list_note.templ`.
 ~~3. **#320 — `PageHeader.TitleComponent`/`SubtitleComponent`** — templ~~ done — this session (their repo); rides templ-components [Unreleased]
-   components inside the `<h1>`/`<p>` shells; component takes precedence over
-   the string fields; shells preserved so heading semantics never change.
-   `display/page_header.templ`.
+components inside the `<h1>`/`<p>` shells; component takes precedence over
+the string fields; shells preserved so heading semantics never change.
+`display/page_header.templ`.
 ~~4. **#321 — error-pages recipe** — `docs/recipes/error-pages.md`: status→family~~ done — this session (their repo); rides templ-components [Unreleased]
-   mapping, per-code copy table + family fallback, HTMX-swap-vs-navigation
-   branch, the noindex minimal error-shell. Both patterns verified at source in
-   cqrs-htmx (`adminui/errorpage.go`, `dashboardui/layout.templ`,
-   `dashboardui/render.go`) before writing. Registered in
-   `docs/recipes/recipe-index.md` and (post-report-fix, see e-1) the skill's
-   recipe table.
+mapping, per-code copy table + family fallback, HTMX-swap-vs-navigation
+branch, the noindex minimal error-shell. Both patterns verified at source in
+cqrs-htmx (`adminui/errorpage.go`, `dashboardui/layout.templ`,
+`dashboardui/render.go`) before writing. Registered in
+`docs/recipes/recipe-index.md` and (post-report-fix, see e-1) the skill's
+recipe table.
 ~~5. **Tests + docs parity** — behavior subtests for all three features, 3 new~~ done — this session (report of record)
-   goldens (`list_note_range`, `copy_button_label_class`,
-   `page_header_components`), `cmd/tc/_sources` mirrors re-synced (guard green),
-   FEATURES.md rows, CHANGELOG `[Unreleased]` (Added ×4 + Fixed ×1), TODO_LIST
-   rows removed per completed-work convention (next free ID: 322, header
-   version 1.19.1→1.19.4 — that header was stale against utils.Version before).
+goldens (`list_note_range`, `copy_button_label_class`,
+`page_header_components`), `cmd/tc/_sources` mirrors re-synced (guard green),
+FEATURES.md rows, CHANGELOG `[Unreleased]` (Added ×4 + Fixed ×1), TODO_LIST
+rows removed per completed-work convention (next free ID: 322, header
+version 1.19.1→1.19.4 — that header was stale against utils.Version before).
 ~~6. **webphone v1.19.4 ride verification** — the daemon's dep sweep had already~~ done — recorded in webphone TODO watches row (1.19.4 adopted, tw.css class-identical, no regen)
-   pinned v1.19.4; I proved the ride safe: EmptyState + layout.Base class sets
-   identical 1.19.2→1.19.4 (the "moved" title class had only been re-laid out
-   through `headingTag` — same rendered classes), so `/assets/tw.css` needs NO
-   regen (the standing watch assumed it would). Full webphone `go test -count=1
+pinned v1.19.4; I proved the ride safe: EmptyState + layout.Base class sets
+identical 1.19.2→1.19.4 (the "moved" title class had only been re-laid out
+through `headingTag` — same rendered classes), so `/assets/tw.css` needs NO
+regen (the standing watch assumed it would). Full webphone `go test -count=1
    ./...` green. Watch line updated in webphone TODO_LIST.md.
 
 ---
@@ -63,22 +63,22 @@ skill's HTML default — one-off, not propagated into the skill.
 ## b) PARTIALLY DONE
 
 ~~1. **#319 consumer fit is unproven.** cqrs-htmx's hand-rolled `paginationInfo`~~ other repo — templ-components/cqrs-htmx backlog (g1)
-   renders `TotalCount` as a STRING ("237+", "many" — their `pagination.go:31`);
-   my variant's Z is an `int`. cqrs-htmx may adopt and normalize to ints, keep
-   hand-rolling, or need a `TotalLabel`/component escape hatch — undecided. The
-   ask's letter is closed; its intent (kill the hand-roll) may not be. Also
-   decided unilaterally: always-render semantics, en-dash, trailing period
-   (library-consistent; differs from their no-period form), and the
-   empty-range→"Showing 0 items." degradation (arguably dishonest when
-   Total=237 and THIS page is empty — no test pins page-beyond-end either).
+renders `TotalCount` as a STRING ("237+", "many" — their `pagination.go:31`);
+my variant's Z is an `int`. cqrs-htmx may adopt and normalize to ints, keep
+hand-rolling, or need a `TotalLabel`/component escape hatch — undecided. The
+ask's letter is closed; its intent (kill the hand-roll) may not be. Also
+decided unilaterally: always-render semantics, en-dash, trailing period
+(library-consistent; differs from their no-period form), and the
+empty-range→"Showing 0 items." degradation (arguably dishonest when
+Total=237 and THIS page is empty — no test pins page-beyond-end either).
 ~~2. **Visual tier not run.** PageHeader's markup was restructured (multiline~~ other repo — templ-components
-   children). I proved via golden + assertion that rendered output keeps
-   `>Plain</h1>` (no whitespace churn), but `nix run .#visual` (demo + website
-   route pixel goldens) never ran. Risk is low — demo uses string titles — but
-   "low risk" was my judgment, not evidence.
+children). I proved via golden + assertion that rendered output keeps
+`>Plain</h1>` (no whitespace churn), but `nix run .#visual` (demo + website
+route pixel goldens) never ran. Risk is low — demo uses string titles — but
+"low risk" was my judgment, not evidence.
 ~~3. **Release gate** — everything sits warm in `[Unreleased]`; cutting the tag is~~ still open, other repo — v1.19.4 (adopted here) predates the four asks; they ride [Unreleased] (verified: no LabelClass in vendored copy_button)
-   owner-gated (#270: tags push awaits confirmation). Nothing released; the
-   four features are invisible to consumers until then.
+owner-gated (#270: tags push awaits confirmation). Nothing released; the
+four features are invisible to consumers until then.
 
 ---
 
@@ -88,13 +88,13 @@ skill's HTML default — one-off, not propagated into the skill.
 ~~2. `nix run .#visual` re-run (b-2).~~ other repo — templ-components
 ~~3. templ-components release cut + push (owner gate).~~ other repo — owner gate #270 (asks still in [Unreleased])
 ~~4. #282 HTMX-off option for `layout.PageProps` (skipped to keep the session on~~ other repo — templ-components TODO
-   the four demand-driven asks; site /sales TBT win still on the table).
+the four demand-driven asks; site /sales TBT win still on the table).
 ~~5. #271 `SITE_SKIP_STARS=1` default for non-prod dist entry points.~~ other repo — templ-components TODO
 ~~6. The concurrent webphone session's erraudit family-adoption train (landed~~ done — that train closed 2026-09-30 (its own report; tier-2 = 0)
-   today per TODO_LIST: "0 enforced findings, tier-1 green") — observed, NOT
-   touched, NOT verified by me.
+today per TODO_LIST: "0 enforced findings, tier-1 green") — observed, NOT
+touched, NOT verified by me.
 ~~7. /tmp litter from this session: `/tmp/demo-test-bin` (15 MB),~~ housekeeping — /tmp is ephemeral
-   `/tmp/es2.txt`/`/tmp/es4.txt` — trivial, unwritten cleanup.
+`/tmp/es2.txt`/`/tmp/es4.txt` — trivial, unwritten cleanup.
 
 ---
 
@@ -103,29 +103,29 @@ skill's HTML default — one-off, not propagated into the skill.
 No broken product state — every gate is green at close. The damage is process:
 
 ~~1. **History is a heuristic-noise pile.** ~10 daemon commits~~ process record (g2 commit-policy question)
-   ("chore: auto-commit N changed file(s)") swallowed this session: component
-   changes, generated files, tests, goldens, docs — all split across anonymous
-   chunks; the CHANGELOG entries landed in a DIFFERENT commit than the code
-   (violating the repo's "changelog entry in the same commit" rule in spirit).
-   I did not commit narrative messages because the harness forbids unsolicited
-   commits; I also did not ASK for permission upfront — that's the miss.
+("chore: auto-commit N changed file(s)") swallowed this session: component
+changes, generated files, tests, goldens, docs — all split across anonymous
+chunks; the CHANGELOG entries landed in a DIFFERENT commit than the code
+(violating the repo's "changelog entry in the same commit" rule in spirit).
+I did not commit narrative messages because the harness forbids unsolicited
+commits; I also did not ASK for permission upfront — that's the miss.
 ~~2. **Three wasted full-verify cycles on golines.** I wrote long single-line~~ process record — e3 rule
-   struct literals in `list_note_test.go` three times; the lint gate rejected
-   each; each retry re-ran the whole multi-module suite. After the FIRST hit I
-   should have run the formatter or written multi-line from then on.
+struct literals in `list_note_test.go` three times; the lint gate rejected
+each; each retry re-ran the whole multi-module suite. After the FIRST hit I
+should have run the formatter or written multi-line from then on.
 ~~3. **Misdiagnosed the go-directive failure twice.** First set go.work→`1.26`~~ process record — e4 rule
-   (tests passed, felt done); then `go mod tidy`/`-mod=mod` silently rewrote
-   `visualtest/go.mod` back to `1.26.0` and I chased the mechanism through two
-   confusing attempts (one `nix develop` invocation failed on a flake-path
-   error I didn't read carefully) before concluding: tidy ALWAYS normalizes to
-   the full form, so the only stable end-state is root+work at `1.26.0`. I
-   fixed the symptom and only later understood the cause.
+(tests passed, felt done); then `go mod tidy`/`-mod=mod` silently rewrote
+`visualtest/go.mod` back to `1.26.0` and I chased the mechanism through two
+confusing attempts (one `nix develop` invocation failed on a flake-path
+error I didn't read carefully) before concluding: tidy ALWAYS normalizes to
+the full form, so the only stable end-state is root+work at `1.26.0`. I
+fixed the symptom and only later understood the cause.
 ~~4. **The string-total gap (b-1) shipped anyway.** I SAW~~ process record — routed to g1
-   `state.TotalCount != ""` string handling in cqrs-htmx's `paginationInfoText`
-   while researching, recognized it meant richer-than-int totals, and still
-   shipped int-only without flagging it in the changelog entry or pausing on
-   it. The guard (`TestDocsCountDrift`-adjacent honesty) for asks is "closes
-   the consumer ask" — this one closes it only conditionally.
+`state.TotalCount != ""` string handling in cqrs-htmx's `paginationInfoText`
+while researching, recognized it meant richer-than-int totals, and still
+shipped int-only without flagging it in the changelog entry or pausing on
+it. The guard (`TestDocsCountDrift`-adjacent honesty) for asks is "closes
+the consumer ask" — this one closes it only conditionally.
 
 Also found, not caused by me: **`TestGoWorkDirectiveMatchesRootGoMod` was red
 on main before this session** (string mismatch root `go.mod` `1.26` vs
@@ -142,32 +142,32 @@ restructure in `list_note_test.go` (self-caught, reverted to plain
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Fix-on-sight discipline vs report batching** — I found the missing~~ rule recorded (row added in-session)
-   skill/SKILL.md recipe-table row only while writing THIS report. The
-   AGENTS.md rule is fix-on-sight; I should sweep the "docs that reference
-   recipes" surface (recipe-index, skill table, README) at feature time, not
-   report time. (Row now added.)
+skill/SKILL.md recipe-table row only while writing THIS report. The
+AGENTS.md rule is fix-on-sight; I should sweep the "docs that reference
+recipes" surface (recipe-index, skill table, README) at feature time, not
+report time. (Row now added.)
 ~~2. **Design review before code for consumer-closing asks** — read the~~ rule recorded
-   consumer's ACTUAL types first (I did read them, then ignored the
-   implication). For every "closes ask #N" claim: a one-line fit-check ("does
-   our shape actually replace their hand-roll?") written into the changelog
-   entry.
+consumer's ACTUAL types first (I did read them, then ignored the
+implication). For every "closes ask #N" claim: a one-line fit-check ("does
+our shape actually replace their hand-roll?") written into the changelog
+entry.
 ~~3. **Formatter-first for new test files** — golines/oxfmt rules differ per~~ rule recorded
-   repo; write struct literals multi-line by default in this repo.
+repo; write struct literals multi-line by default in this repo.
 ~~4. **Run the full verify BEFORE declaring the design done, and read failures~~ rule recorded
-   as questions, not noise** — the directive saga cost three cycles because I
-   acted on the first plausible fix instead of asking "what will tidy do to
-   this file?".
+as questions, not noise** — the directive saga cost three cycles because I
+acted on the first plausible fix instead of asking "what will tidy do to
+this file?".
 ~~5. **Commit policy needs an explicit ask** — when a repo's convention~~ owner — cross-repo commit policy (g2)
-   (narrative commits, same-commit changelog) conflicts with the harness
-   (no unsolicited commits), ask the user at session START, not silently
-   accept daemon noise.
+(narrative commits, same-commit changelog) conflicts with the harness
+(no unsolicited commits), ask the user at session START, not silently
+accept daemon noise.
 ~~6. **The daemon commit-noise problem (#93 family) keeps compounding** — every~~ other repo — BuildFlow/templ-components #93 family
-   session adds ~5-10 anonymous commits; bisectability of this repo is
-   degrading. The structural fix lives in buildflow (owner repo), but
-   narrative-squash discipline per feature train would mitigate locally.
+session adds ~5-10 anonymous commits; bisectability of this repo is
+degrading. The structural fix lives in buildflow (owner repo), but
+narrative-squash discipline per feature train would mitigate locally.
 ~~7. **Guard the guard**: convert `TestGoWorkDirectiveMatchesRootGoMod` to~~ other repo — templ-components TODO
-   semantic comparison (reuse `compareGoVersions` from `TestGoDirectiveSkew`)
-   so tidy's normalization can never re-red it.
+semantic comparison (reuse `compareGoVersions` from `TestGoDirectiveSkew`)
+so tidy's normalization can never re-red it.
 
 ---
 
@@ -241,23 +241,23 @@ re-route; most are already in the repo TODOs — IDs cited where they exist)._
 ## g) Questions I can NOT figure out myself
 
 ~~1. **ListNoteRange totals:** cqrs-htmx renders the pagination total as a string~~ owner — templ-components design line (their repo)
-   ("237+", "many") because cursor totals can be unknown/open-ended. Should
-   `ListNoteRange` grow a string/component override for the Z part so that
-   consumer can genuinely drop `paginationInfo` — or is int-only `Total`
-   the deliberate library line, with cqrs-htmx normalizing? This decides
-   whether #319 actually closed the ask.
+("237+", "many") because cursor totals can be unknown/open-ended. Should
+`ListNoteRange` grow a string/component override for the Z part so that
+consumer can genuinely drop `paginationInfo` — or is int-only `Total`
+the deliberate library line, with cqrs-htmx normalizing? This decides
+whether #319 actually closed the ask.
 ~~2. **Commit policy for feature trains:** the harness forbids me committing~~ owner — cross-repo policy question
-   without your say-so, but the repo convention wants narrative commits and
-   same-commit changelog entries; the daemon instead landed ~10 anonymous
-   "chore: auto-commit" chunks for this feature work. Going forward, do you
-   want me to (a) always ask for commit permission at feature-train boundaries,
-   (b) keep letting the daemon own history, or (c) get standing permission for
-   narrative squashes in templ-components?
+without your say-so, but the repo convention wants narrative commits and
+same-commit changelog entries; the daemon instead landed ~10 anonymous
+"chore: auto-commit" chunks for this feature work. Going forward, do you
+want me to (a) always ask for commit permission at feature-train boundaries,
+(b) keep letting the daemon own history, or (c) get standing permission for
+narrative squashes in templ-components?
 ~~3. **The go-directive pin:** I aligned root `go.mod` + `go.work` at `go 1.26.0`~~ other repo — settled in templ-components (their tree)
-   because `go mod tidy` always rewrites module directives to the full form
-   (so `1.26` in root re-red the string-equality guard on every tidy). Is
-   `1.26.0`-everywhere the pin you want, or do you prefer `go 1.26` + flipping
-   that one guard to semantic comparison?
+because `go mod tidy` always rewrites module directives to the full form
+(so `1.26` in root re-red the string-equality guard on every tidy). Is
+`1.26.0`-everywhere the pin you want, or do you prefer `go 1.26` + flipping
+that one guard to semantic comparison?
 
 ---
 

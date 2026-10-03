@@ -18,27 +18,27 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 
 ## What it does
 
-| Capability      | Notes                                                                                                                                               |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phone calls     | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad                                                                                 |
-| Resilience      | Bounded reconnect watchdog with re-registration; live calls survive                                                                                 |
-| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                   |
-| SMS & MMS       | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies; pin/mute/archive a conversation, quick reply snippets, optimistic send with retry           |
-| Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes  |
-| Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                    |
-| Call history    | Server-side CDR records through the same API; outcome filters (missed/answered), day grouping, shareable filter URLs                                 |
-| Contacts        | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                      |
-| Data export     | One session-gated download (Settings tab) zips every thread, fax job and personal contact of the signed-in extension                                |
-| TURN auth       | Optional short-lived coturn REST credentials derived per response (`turn_rest.secret`) — long-lived TURN passwords never ship                       |
-| Live updates    | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                                              |
-| Sign-in         | Credentials verified against the PBX directory server-side (401 on rejection, 502 if the PBX is down); the SIP island and the tabs share that login |
-| Diagnostics     | Live ICE/media panel with setup timings (gather, first media), pre-call mic/speaker self-test, English event log                                    |
-| i18n / themes   | Everything in English + German; dark + light themes with a manual toggle                                                                            |
-| Command palette | Ctrl/Cmd-K palette for tabs and actions (Call, New message, Cycle theme); `?` lists every keyboard shortcut                                         |
-| Accessibility   | Skip-to-content link, screen-reader live announcements, `aria-current` nav, labelled badges, focus moves to the new panel on swap                   |
-| Mobile          | Nav becomes a fixed bottom tab bar; a live call keeps the island front and center; 44px tap targets                                                 |
-| Deployment      | Single static binary, SQLite + content-addressed blob store, `/healthz`, five-part operator boot-error contract (exit 1 designed / 2 panic), NixOS module |
-| Recording       | Done PBX-side by the telephony stack (stereo WAV, `/recordings/` behind operator auth); this app shows CDR history rows only                        |
+| Capability      | Notes                                                                                                                                                                                                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phone calls     | Multi-line, hold/focus/mute, blind + attended transfer, DTMF keypad                                                                                                                                     |
+| Resilience      | Bounded reconnect watchdog with re-registration; live calls survive                                                                                                                                     |
+| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                                                                       |
+| SMS & MMS       | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies; pin/mute/archive a conversation, quick reply snippets, optimistic send with retry |
+| Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes                                                    |
+| Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                                                                        |
+| Call history    | Server-side CDR records through the same API; outcome filters (missed/answered), day grouping, shareable filter URLs                                                                                    |
+| Contacts        | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                                                                          |
+| Data export     | One session-gated download (Settings tab) zips every thread, fax job and personal contact of the signed-in extension                                                                                    |
+| TURN auth       | Optional short-lived coturn REST credentials derived per response (`turn_rest.secret`) — long-lived TURN passwords never ship                                                                           |
+| Live updates    | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                                                                                                  |
+| Sign-in         | Credentials verified against the PBX directory server-side (401 on rejection, 502 if the PBX is down); the SIP island and the tabs share that login                                                     |
+| Diagnostics     | Live ICE/media panel with setup timings (gather, first media), pre-call mic/speaker self-test, English event log                                                                                        |
+| i18n / themes   | Everything in English + German; dark + light themes with a manual toggle                                                                                                                                |
+| Command palette | Ctrl/Cmd-K palette for tabs and actions (Call, New message, Cycle theme); `?` lists every keyboard shortcut                                                                                             |
+| Accessibility   | Skip-to-content link, screen-reader live announcements, `aria-current` nav, labelled badges, focus moves to the new panel on swap                                                                       |
+| Mobile          | Nav becomes a fixed bottom tab bar; a live call keeps the island front and center; 44px tap targets                                                                                                     |
+| Deployment      | Single static binary, SQLite + content-addressed blob store, `/healthz`, five-part operator boot-error contract (exit 1 designed / 2 panic), NixOS module                                               |
+| Recording       | Done PBX-side by the telephony stack (stereo WAV, `/recordings/` behind operator auth); this app shows CDR history rows only                                                                            |
 
 ## Quick start
 

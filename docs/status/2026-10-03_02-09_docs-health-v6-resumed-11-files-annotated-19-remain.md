@@ -35,8 +35,8 @@ stay LIVE pending explicit ratification. Documentation-only: zero product code t
    - 2026-10-01 (4): visual-verification-loop 01:21 (70), post-v2-8-0-full-execution
      01:45 (33, incl. 2 `any:` keys for text-first b-table cells), samber-do 02:12 (91),
      02:14 self-review (53).
-   Every spec built mechanically (`--emit-keys`), `--verify` first with `rc=$?` capture
-   (no pipes), eyeballed match samples before every apply.
+     Every spec built mechanically (`--emit-keys`), `--verify` first with `rc=$?` capture
+     (no pipes), eyeballed match samples before every apply.
 4. **Living-doc re-routing done same-breath as the verdicts citing it:**
    - ROADMAP typography stragglers bullet corrected (tabular-nums struck SHIPPED with
      evidence; focus-visible added; citation now f 4/8/11/12/14/30/35).
@@ -112,21 +112,21 @@ stay LIVE pending explicit ratification. Documentation-only: zero product code t
 1. Land the retro typography bullet (CHANGELOG — shape per g1; clears the b2 debt).
 2. Annotate+archive 02-54 (verdicts derived; ring-tone=T06 shipped, recipe/verdict-doc
    = cross-repo legs).
-3.–12. Annotate+archive the other ten 2026-10-01 reports (03-52, 04-07, 05-26 island,
+   3.–12. Annotate+archive the other ten 2026-10-01 reports (03-52, 04-07, 05-26 island,
    05-26 nix, 05-27, 05-56, 06-59, 20-12, 23-11 — then 17-27 v5 LAST with its
    superseding v6 banner).
-13.–20. Annotate+archive the 8 closed 2026-10-02 chain files (sessions 3–6, mustinvoke
+   13.–20. Annotate+archive the 8 closed 2026-10-02 chain files (sessions 3–6, mustinvoke
    §f completion, session 7, boot-contract, t21-t22).
-21. Write the archive manifest (34 lines, classification + deciding reason) — appended
+3. Write the archive manifest (34 lines, classification + deciding reason) — appended
    as a completion addendum to the 00:35 v6 report or the archive-dir README.
-22. Gates: `grep -rLn '~~' docs/status/archived/ docs/planning/archived/` = empty;
+4. Gates: `grep -rLn '~~' docs/status/archived/ docs/planning/archived/` = empty;
    check-rows over every newly annotated file; link check; scoped
    `nix develop -c go test -count=1 ./cmd/webphone ./internal/server`.
-23. `git ls-remote origin main` end-state verify (daemon push lag).
-24. Load health-report-format.md, deliver the inline v6 health report (Accuracy/Fitness,
+5. `git ls-remote origin main` end-state verify (daemon push lag).
+6. Load health-report-format.md, deliver the inline v6 health report (Accuracy/Fitness,
    per-doc findings, visible math).
-25. Sweep `/tmp/spec-*.tsv` session scratch.
-26. Re-read TODO_LIST/ROADMAP once after the sweep closes (harvest-parity check: nothing
+7. Sweep `/tmp/spec-*.tsv` session scratch.
+8. Re-read TODO_LIST/ROADMAP once after the sweep closes (harvest-parity check: nothing
    the annotations routed is missing from its named home).
 
 ## g) Questions I can NOT figure out myself

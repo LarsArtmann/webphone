@@ -14,10 +14,10 @@ used as the bar. Documentation-only: zero product code touched.
 
 1. **Skill + inventory.** docs-health SKILL.md loaded first; ALL
    `2026-0*` artifacts enumerated (12 unarchived status files: 11 `.md`
-   + 1 immutable HTML; 77 already archived — archived-dir completeness
-   gate verified CLEAN at start); all 11 unarchived 2026-09 reports read
-   IN FULL; the entire 2026-10-01/02 train chain (24 reports, ~5800
-   lines) read in full as the annotation evidence base.
+   - 1 immutable HTML; 77 already archived — archived-dir completeness
+     gate verified CLEAN at start); all 11 unarchived 2026-09 reports read
+     IN FULL; the entire 2026-10-01/02 train chain (24 reports, ~5800
+     lines) read in full as the annotation evidence base.
 2. **VERIFY sweep against code** (every claim by grep/read, not trust):
    the shipped-test set confirmed present (`TestShellHtmlLangFollowsSessionLang`,
    `TestCSSTokenBlocksAreMirrored`, `TestAssetsCarryContentETag`,

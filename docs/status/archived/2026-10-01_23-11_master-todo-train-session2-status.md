@@ -22,52 +22,53 @@ T04 stays **BLOCKED / handover-only**.
 ## a) FULLY DONE (implemented AND verified this session)
 
 ~~1. **Baseline suite confirmation.** Island `node:test` **120/120**; full~~ done — this session (report of record)
-   `go test -count=1 ./...` green on every package. (The "suite red" state I
-   inherited was my own test bug — see §d.)
+`go test -count=1 ./...` green on every package. (The "suite red" state I
+inherited was my own test bug — see §d.)
 ~~2. **T08 owed pins.**~~ done — this session (report of record)
-   - Shell spec: the swap-time `aria-current` mirror (`page`/`false`), the tab
-     skeleton reveal on a navigating swap + hide after, and the "settled send
-     is never rolled back by a later error" morph edge (the genuinely-unpinned
-     edge; the append/failure/new-composer cases were already pinned).
-   - Server: `TestServedPageHoldsTheDomContract` now asserts
-     `aria-current="page"` on the active tab and `"false"` on the rest.
-   - Corrected the over-promising `#wp-live` comment (`layout.templ`): it
-     claimed "connection recovery" announcements that are unbuilt (M17/J2).
-   - `docs/release-runbook.md`: added the "served-markup changes owe the stack
-     browser E2E" rule (explicit, with the internals-only exemption).
-~~3. **T05 owed server pin.** `TestShellHtmlLangFollowsSessionLang` — 4 cases:~~ done — this session (report of record)
-   `wp-lang` cookie wins over `Accept-Language`, German `Accept-Language`
-   without a cookie, EN default.
-~~4. **T10 perf (the ETag/gzip half).**~~ done — this session (report of record)
-   - `/assets/*` now returns a strong content ETag (sha256 over the embedded
-     bytes) and answers `If-None-Match` with a **bodyless 304**.
-   - **Scoped gzip** over the whole static subtree only (never `/events`),
-     with `Vary: Accept-Encoding`, 304 short-circuit before any
-     `Content-Encoding`, and `Content-Length` stripping.
-   - Rewrote the stale "caching buys nothing" comment (now documents
-     revalidate-always + content ETag).
-   - New tests `TestAssetsCarryContentETag` (4 asset paths incl. a
-     `FileServerFS` path) and `TestAssetsGzipWhenAccepted`.
-~~5. **T20 hygiene (the actionable clusters).**~~ done — this session (report of record)
-   - `chmod +x scripts/render-diff.py` (ruff EXE001).
-   - 3 errcheck `defer Close()` findings fixed (`fax/service.go`,
-     `paperless/paperless_test.go`, `server/version_test.go`).
-   - 8 oxlint warnings cleared (`theme-preload.js` catch binding + 6 unused
-     test vars + a useless spread in `typeahead.test.mjs`).
-   - 2 samber-linter HW-4 infos on `internal/app/app.go` suppressed **with a
-     reason** at the `ProvideNamed` sites (the pair IS eagerly resolved via
-     `MustInvokeNamed`; the linter can't see transitive resolution).
-   - Fixed 4 broken `file://…dedup-registry.md` links in the archived art-dupl
-     report (path was `../` from `docs/status/archived/`; correct is `../../`).
-~~6. **T26 AGENTS.md compaction.** 705 → **364 lines** (≤377 BuildFlow cap).~~ done — this session (report of record)
-   All train chronology/evidence moved to `docs/lessons.md` under a new
-   "Provenance moved out of AGENTS.md (2026-10-01 compaction)" section; rules
-   kept, evidence relocated.
-~~7. **Formatting drift repair.** After the earlier T06 import edit,~~ done — this session (report of record)
-   `internal/web/assets/island/app/calls.js` was unformatted for the flake's
-   treefmt gate; ran `nix fmt` (the flake formatter owns island files;
-   BuildFlow's formatter excludes them) — `checks.x86_64-linux.format` now
-   green.
+
+- Shell spec: the swap-time `aria-current` mirror (`page`/`false`), the tab
+  skeleton reveal on a navigating swap + hide after, and the "settled send
+  is never rolled back by a later error" morph edge (the genuinely-unpinned
+  edge; the append/failure/new-composer cases were already pinned).
+- Server: `TestServedPageHoldsTheDomContract` now asserts
+  `aria-current="page"` on the active tab and `"false"` on the rest.
+- Corrected the over-promising `#wp-live` comment (`layout.templ`): it
+  claimed "connection recovery" announcements that are unbuilt (M17/J2).
+- `docs/release-runbook.md`: added the "served-markup changes owe the stack
+  browser E2E" rule (explicit, with the internals-only exemption).
+  ~~3. **T05 owed server pin.** `TestShellHtmlLangFollowsSessionLang` — 4 cases:~~ done — this session (report of record)
+  `wp-lang` cookie wins over `Accept-Language`, German `Accept-Language`
+  without a cookie, EN default.
+  ~~4. **T10 perf (the ETag/gzip half).**~~ done — this session (report of record)
+- `/assets/*` now returns a strong content ETag (sha256 over the embedded
+  bytes) and answers `If-None-Match` with a **bodyless 304**.
+- **Scoped gzip** over the whole static subtree only (never `/events`),
+  with `Vary: Accept-Encoding`, 304 short-circuit before any
+  `Content-Encoding`, and `Content-Length` stripping.
+- Rewrote the stale "caching buys nothing" comment (now documents
+  revalidate-always + content ETag).
+- New tests `TestAssetsCarryContentETag` (4 asset paths incl. a
+  `FileServerFS` path) and `TestAssetsGzipWhenAccepted`.
+  ~~5. **T20 hygiene (the actionable clusters).**~~ done — this session (report of record)
+- `chmod +x scripts/render-diff.py` (ruff EXE001).
+- 3 errcheck `defer Close()` findings fixed (`fax/service.go`,
+  `paperless/paperless_test.go`, `server/version_test.go`).
+- 8 oxlint warnings cleared (`theme-preload.js` catch binding + 6 unused
+  test vars + a useless spread in `typeahead.test.mjs`).
+- 2 samber-linter HW-4 infos on `internal/app/app.go` suppressed **with a
+  reason** at the `ProvideNamed` sites (the pair IS eagerly resolved via
+  `MustInvokeNamed`; the linter can't see transitive resolution).
+- Fixed 4 broken `file://…dedup-registry.md` links in the archived art-dupl
+  report (path was `../` from `docs/status/archived/`; correct is `../../`).
+  ~~6. **T26 AGENTS.md compaction.** 705 → **364 lines** (≤377 BuildFlow cap).~~ done — this session (report of record)
+  All train chronology/evidence moved to `docs/lessons.md` under a new
+  "Provenance moved out of AGENTS.md (2026-10-01 compaction)" section; rules
+  kept, evidence relocated.
+  ~~7. **Formatting drift repair.** After the earlier T06 import edit,~~ done — this session (report of record)
+  `internal/web/assets/island/app/calls.js` was unformatted for the flake's
+  treefmt gate; ran `nix fmt` (the flake formatter owns island files;
+  BuildFlow's formatter excludes them) — `checks.x86_64-linux.format` now
+  green.
 
 **Verification ledger:**
 
@@ -87,106 +88,106 @@ T04 stays **BLOCKED / handover-only**.
 ## b) PARTIALLY DONE
 
 ~~1. **T20** — the three actionable finding clusters are fixed, but the~~ process record — the advisories were left deliberately; the FP class is AGENTS-documented
-   _preflight_ advisories remain: `go-line-flipflop` (go.mod `go` line changed
-   10×/20 commits), `vendor/vendor-freshness` ("go.mod newer than
-   vendor/modules.txt"), and the low-disk warning on `/mnt/buildcache`. These
-   are advisory, not gate failures, and were deliberately left (touching vendor
-   risks the vendorHash roundtrip).
+_preflight_ advisories remain: `go-line-flipflop` (go.mod `go` line changed
+10×/20 commits), `vendor/vendor-freshness` ("go.mod newer than
+vendor/modules.txt"), and the low-disk warning on `/mnt/buildcache`. These
+are advisory, not gate failures, and were deliberately left (touching vendor
+risks the vendorHash roundtrip).
 ~~2. **T10** — code + tests done; **10.6 curl timing baseline was NOT produced**~~ done — the Python timing baseline landed later (scripts/perf-baseline.py, T10.6)
-   (`curl` is a banned tool in this harness; I did not substitute a
-   Python/`time` baseline). The perf _claim_ is currently backed by the
-   ETag/gzip tests, not a before/after number.
+(`curl` is a banned tool in this harness; I did not substitute a
+Python/`time` baseline). The perf _claim_ is currently backed by the
+ETag/gzip tests, not a before/after number.
 ~~3. **T05** — the island boot-language fix (earlier session) + the new server~~ routed — the owed stack E2E rides the TODO island row (T04 blocked cross-repo)
-   pin are done; a **stack browser E2E** to confirm the `html lang` change
-   cross-repo is still owed/blocked (T04).
+pin are done; a **stack browser E2E** to confirm the `html lang` change
+cross-repo is still owed/blocked (T04).
 ~~4. **T08** — pins done; but the **stack browser E2E obligation** for the~~ routed — same row (the markup delta's E2E obligation)
-   served-markup delta (the `#wp-live` comment is comment-only, but the nav
-   spec/tests touch served behavior) is not run (T04 blocked).
+served-markup delta (the `#wp-live` comment is comment-only, but the nav
+spec/tests touch served behavior) is not run (T04 blocked).
 
 ---
 
 ## c) NOT STARTED
 
 ~~- **T11** — perf extras: `modulepreload` for the island ESM graph, outgoing-call~~ done — T11 shipped (modulepreload, dial-focus warm, ICE setup line); the trim eval was not adopted
-  mic warm (mirror incoming `mic.js`), ICE gathering-time panel, `iceServers`
-  trim eval.
+mic warm (mirror incoming `mic.js`), ICE gathering-time panel, `iceServers`
+trim eval.
 ~~- **T12–T19** — the entire UI/UX M9–M26 train: T12 dial affordances + segment~~ done — the whole UI/UX train shipped (CHANGELOG Unreleased; per-module verdicts in the archived 06-59 report)
-  countdown; T13 history filters + URL state; T14 voicemail playback + fax
-  depth; T15 feedback/trust (reconnect banner, undo, retry-in-banner, confirm
-  consistency, spinner, success pulse); T16 visual tokens/theming/shell sizing;
-  T17 onboarding + mobile extras; T18 messaging richness + pin/archive/mute
-  (server design first); T19 i18n/RTL + call depth.
+countdown; T13 history filters + URL state; T14 voicemail playback + fax
+depth; T15 feedback/trust (reconnect banner, undo, retry-in-banner, confirm
+consistency, spinner, success pulse); T16 visual tokens/theming/shell sizing;
+T17 onboarding + mobile extras; T18 messaging richness + pin/archive/mute
+(server design first); T19 i18n/RTL + call depth.
 ~~- **T21** — nix-review batch 2 (module golden, tag guard, VM/drill, actionlint,~~ done — golden + tag guard + post-split VM; actionlint/dedupe/exception rows not adopted
-  devshell dedupe, exceptions).
+devshell dedupe, exceptions).
 ~~- **T22** — samber/do + dashboard follow-ups (health.css commit+CI, family~~ done — health.css script + canary, family pins, divergence documented; the /health policy rides the TODO health row (owner)
-  pins, divergence, `/health` policy).
+pins, divergence, `/health` policy).
 ~~- **T23** — visual verification gate harness (`scripts/ui-capture.py` + 12-shot~~ done — scripts/ui-capture.py + the 14-shot matrix + the AGENTS note
-  matrix + AGENTS note).
+matrix + AGENTS note).
 ~~- **T25** — `internal/server` carve (trigger-gated) + `schema_version` gate +~~ resolved by events — schema_version shipped with T18; the carve stays gated; the gateway bits ride the cross-repo row
-  gateway stack-side bits.
+gateway stack-side bits.
 ~~- Owner legs **T01/T02/T04/T09/T24/T27** — handover-only; no assistant ssh/E2E.~~ routed — TODO owner rows (handover legs stay owner-terminal)
 ~~- Docs-health HARVEST of new TODO items into `TODO_LIST.md`, and moving shipped~~ done — the one-home moves + this v6 sweep
-  rows to CHANGELOG/FEATURES.
+rows to CHANGELOG/FEATURES.
 
 ---
 
 ## d) TOTALLY FUCKED UP (and how)
 
 ~~1. **I shipped a broken test and called the suite "hung".** My~~ process record
-   `calls.test.mjs` "failed hold announces the hold direction" test's
-   `HoldInviter.invite()` returned an _ungated_ promise, but `placeCall` awaits
-   `inviter.invite()` on the **initial** call — so `await placeCall("1003")`
-   never resolved and node:test cancelled the file after 60s. Two background
-   shells were consumed chasing this before I read the code. **Lesson:** read
-   the production function's await graph before stubbing its collaborator.
+`calls.test.mjs` "failed hold announces the hold direction" test's
+`HoldInviter.invite()` returned an _ungated_ promise, but `placeCall` awaits
+`inviter.invite()` on the **initial** call — so `await placeCall("1003")`
+never resolved and node:test cancelled the file after 60s. Two background
+shells were consumed chasing this before I read the code. **Lesson:** read
+the production function's await graph before stubbing its collaborator.
 ~~2. **Then I got the toast assertion wrong.** I asserted the failure toast was~~ process record
-   `lastToast()`, but a failed HOLD re-renders the settled state and
-   re-announces "connected", so the failure toast is _not_ last. Fixed by
-   scanning all toasts. **Lesson:** an assertion about "last" is a claim about
-   ordering; verify nothing else appends.
+`lastToast()`, but a failed HOLD re-renders the settled state and
+re-announces "connected", so the failure toast is _not_ last. Fixed by
+scanning all toasts. **Lesson:** an assertion about "last" is a claim about
+ordering; verify nothing else appends.
 ~~3. **I never ran the formatter after the earlier T06 import edit.**~~ process record
-   `buildflow` full **failed on the treefmt check** for `calls.js` — formatting
-   drift had been sitting since the earlier session (the previous session's
-   "buildflow green" claim predated it). Cost a failed full gate run.
-   **Lesson:** after ANY island `.js` edit, `nix fmt` (BuildFlow's formatter
-   excludes island files — the flake treefmt owns them).
+`buildflow` full **failed on the treefmt check** for `calls.js` — formatting
+drift had been sitting since the earlier session (the previous session's
+"buildflow green" claim predated it). Cost a failed full gate run.
+**Lesson:** after ANY island `.js` edit, `nix fmt` (BuildFlow's formatter
+excludes island files — the flake treefmt owns them).
 ~~4. **I wrote a duplicate test block first.** My first optimistic-bubble tests~~ process record
-   re-covered already-pinned behavior; I only noticed by grepping after the
-   run, then replaced them with the one genuinely-missing edge. **Lesson:**
-   grep for existing coverage before adding a test with a similar name.
+re-covered already-pinned behavior; I only noticed by grepping after the
+run, then replaced them with the one genuinely-missing edge. **Lesson:**
+grep for existing coverage before adding a test with a similar name.
 ~~5. **My AGENTS.md compaction took three passes** (501 → 490 → 392 → 364) because~~ process record
-   I preserved too much elaboration on the first two. **Lesson:** compact by
-   _moving_ paragraphs wholesale, not by trimming words within them.
+I preserved too much elaboration on the first two. **Lesson:** compact by
+_moving_ paragraphs wholesale, not by trimming words within them.
 ~~6. **Wasted tool calls on stale LSP diagnostics.** `vtsls` and~~ process record
-   `golangci_lint_ls` kept reporting errors at old line numbers after edits
-   (missed-call syntax "errors", the 3 errcheck warnings) that `node --check`,
-   `go test`, and golangci-lint all proved false. I re-litigated them by
-   restarting the LSP twice. **Lesson:** after an LSP diagnostic contradicts a
-   real command result, trust the command; don't re-verify.
+`golangci_lint_ls` kept reporting errors at old line numbers after edits
+(missed-call syntax "errors", the 3 errcheck warnings) that `node --check`,
+`go test`, and golangci-lint all proved false. I re-litigated them by
+restarting the LSP twice. **Lesson:** after an LSP diagnostic contradicts a
+real command result, trust the command; don't re-verify.
 
 ---
 
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Formatter ownership is a trap.** BuildFlow's oxfmt _excludes_ island files~~ done — the AGENTS formatting rule exists (nix fmt BEFORE the gates after island edits)
-   but the flake's treefmt _owns_ them. Nothing in the loop reminded me, so
-   drift hid for a whole session. Add a memory line: "island `.js`/`shell.js`/
-   `*.css` → `nix fmt` after edits; BuildFlow does not format them."
+but the flake's treefmt _owns_ them. Nothing in the loop reminded me, so
+drift hid for a whole session. Add a memory line: "island `.js`/`shell.js`/
+`*.css` → `nix fmt` after edits; BuildFlow does not format them."
 ~~2. **The test harness's silent-hang failure mode** (`await` on an~~ done in part — AGENTS documents the island-test stub pitfalls (reload/DOM); the always-pending-hang line wasn't separately recorded
-   always-pending stub) should be a documented gotcha next to the existing
-   "reload must be stubbed" rule — it cost the most time this session.
+always-pending stub) should be a documented gotcha next to the existing
+"reload must be stubbed" rule — it cost the most time this session.
 ~~3. **`lastToast()` is a footgun** in `calls.test.mjs`; a helper that asserts a~~ not adopted — below the bar; the helper wasn't added
-   message is _present among_ toasts (not necessarily last) would prevent the
-   regression I wrote.
+message is _present among_ toasts (not necessarily last) would prevent the
+regression I wrote.
 ~~4. **Perf claims without numbers.** T10's value is a load-time improvement; the~~ done — perf-baseline.py (Python urllib + time) is the standing approach
-   plan asks for a curl baseline. Without it the change is contract-tested but
-   not measured. Find a non-curl timing approach (Python `urllib` + `time`) for
-   the next perf task.
+plan asks for a curl baseline. Without it the change is contract-tested but
+not measured. Find a non-curl timing approach (Python `urllib` + `time`) for
+the next perf task.
 ~~5. **LSP freshness.** Consider `BUILDFLOW_NO_RESULT_CACHE=1` in more Go loops,~~ process record
-   and treat stale LSP diagnostics as known-noisy rather than re-checking.
+and treat stale LSP diagnostics as known-noisy rather than re-checking.
 ~~6. **Gate honesty.** "buildflow green" must mean the _current_ tree; the~~ process record
-   inherited claim was stale. Always re-run the cheap format check after an
-   island edit before trusting a prior green.
+inherited claim was stale. Always re-run the cheap format check after an
+island edit before trusting a prior green.
 
 ---
 
@@ -260,18 +261,18 @@ Ordered roughly by the plan's Pareto ranking; [owner] = handover-only.
 ## g) Questions I CANNOT answer myself (max 3)
 
 ~~1. **T10 measurement.** `curl` is banned in my tool harness, so I skipped the~~ resolved by events — the Python baseline landed (perf-baseline.py)
-   curl timing baseline the plan asks for. Do you want me to produce a
-   `python3 urllib` + `time` before/after number instead, or is the ETag/gzip
-   test contract sufficient evidence for you?
+curl timing baseline the plan asks for. Do you want me to produce a
+`python3 urllib` + `time` before/after number instead, or is the ETag/gzip
+test contract sufficient evidence for you?
 ~~2. **Train scope for the next session.** T12–T19 is ~100 sub-tasks across the~~ resolved by events — the follow-on sessions drove the whole T12–T19 train
-   whole UI/UX surface. Do you want it driven strictly in the plan's tier order
-   (one module at a time, each with its own verification), or should I pick the
-   single highest-value module (e.g. T15 feedback/trust, which completes the
-   honesty-contract story) and land it fully first?
+whole UI/UX surface. Do you want it driven strictly in the plan's tier order
+(one module at a time, each with its own verification), or should I pick the
+single highest-value module (e.g. T15 feedback/trust, which completes the
+honesty-contract story) and land it fully first?
 ~~3. **The external lychee 502.** `https://pbx.artmann.tech/` resolves to a 502~~ process record — the 502 was the PBX down (external; lychee green at the release tail)
-   from this host. Is that expected (your PBX deliberately down / not reachable
-   here), so I should leave the finding as an accepted external condition, or do
-   you want it fenced out of the link check?
+from this host. Is that expected (your PBX deliberately down / not reachable
+here), so I should leave the finding as an accepted external condition, or do
+you want it fenced out of the link check?
 
 ---
 

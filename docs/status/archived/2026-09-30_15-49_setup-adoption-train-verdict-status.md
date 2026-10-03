@@ -13,7 +13,6 @@ pretended otherwise.
 > gate + smoke tripwires ride the ROADMAP stragglers. Per-item verdicts
 > inline.
 
-
 **One-paragraph verdict.** The two upstream gaps were closed and released
 (setup/v4.13.0 + v4.13.1), webphone composed the full shell in a sandbox worktree and
 passed every behavioral gate, and the recorded footprint gate then measured
@@ -30,96 +29,96 @@ next release fold. Meanwhile a concurrent session executed the v2.8.0 release ta
 Each item: what · evidence · scope.
 
 ~~1. **T01 — decision amendment + footprint gate recorded** in webphone `AGENTS.md`.~~ done — this session (report of record)
-   Evidence: AGENTS setup paragraph (rewritten twice: once at T01, corrected to the
-   measured verdict at close-out). Scope: docs-only, rides v2.8.0+.
+Evidence: AGENTS setup paragraph (rewritten twice: once at T01, corrected to the
+measured verdict at close-out). Scope: docs-only, rides v2.8.0+.
 ~~2. **T02 — ADR-0054 "Identity-External Shell Mode"** written, indexed, cross-linked in~~ done — this session (report of record)
-   `docs/adr/` + `docs/guides/setup-vs-hand-wiring.md` annotated, later annotated with
-   the measured verdict (commit `51a96899`). Scope: cqrs-htmx docs.
+`docs/adr/` + `docs/guides/setup-vs-hand-wiring.md` annotated, later annotated with
+the measured verdict (commit `51a96899`). Scope: cqrs-htmx docs.
 ~~3. **T03 — `Config.DisableAuth`** upstream: skips the auth handler entirely; rejects~~ done — this session (report of record)
-   dead-login (`DisableLogin=false`) and orphan `AuthHandlerConfig` at `New`.
-   Evidence: contract tests in `setup/setup_identity_external_test.go` (all green).
-   Scope: `setup/config.go`, `setup/setup.go`.
+dead-login (`DisableLogin=false`) and orphan `AuthHandlerConfig` at `New`.
+Evidence: contract tests in `setup/setup_identity_external_test.go` (all green).
+Scope: `setup/config.go`, `setup/setup.go`.
 ~~4. **T04 — `Config.DisableService` shell mode** upstream: no usermgmt.Service anywhere,~~ done — this session (report of record)
-   `Stores` from config (memory + watermill defaults), health = consumer checks only,
-   idempotent no-op `Close`. Evidence: shell bundle tests green.
+`Stores` from config (memory + watermill defaults), health = consumer checks only,
+idempotent no-op `Close`. Evidence: shell bundle tests green.
 ~~5. **T05 — session-gated surfaces rejected in shell mode** (feeds, machine endpoints,~~ done — this session (report of record)
-   panels, service fields): the nil-session-middleware panic class is structurally
-   prevented. Evidence: rejection-table tests green.
+panels, service fields): the nil-session-middleware panic class is structurally
+prevented. Evidence: rejection-table tests green.
 ~~6. **`NewShell(cfg)` constructor** (ADR-0054 addendum): functionally~~ done — this session (report of record)
-   `New(DisableService:true)`, service path unreachable to the linker. Evidence: 3
-   parity/forcing tests. (Footprint note: necessary but NOT sufficient — see (d)/(e).)
+`New(DisableService:true)`, service path unreachable to the linker. Evidence: 3
+parity/forcing tests. (Footprint note: necessary but NOT sufficient — see (d)/(e).)
 ~~7. **T06 — upstream docs**: `setup/doc.go` § Identity-external apps, README config~~ done — this session (report of record)
-   table rows, CHANGELOG entry, plus the dprint markdown corpus sweep (see (d) for the
-   sweep's caveat). Evidence: check-modules docs-freshness + docs-links green.
+table rows, CHANGELOG entry, plus the dprint markdown corpus sweep (see (d) for the
+sweep's caveat). Evidence: check-modules docs-freshness + docs-links green.
 ~~8. **T07 — upstream release train**: **setup/v4.13.0 and setup/v4.13.1** signed tags,~~ done — this session (report of record)
-   pushed, module-proxy verified via scratch `go get` (full graph resolves), gh
-   releases published (both URLs live), all consumers aligned (0 unpublished, 0 train
-   lag; pre-push CI-parity gates green). Evidence: `git ls-remote`, `gh release view`,
-   `nix run .#check-modules -- --report` 23/23, `nix run .#check-cqrs-lint` green.
+pushed, module-proxy verified via scratch `go get` (full graph resolves), gh
+releases published (both URLs live), all consumers aligned (0 unpublished, 0 train
+lag; pre-push CI-parity gates green). Evidence: `git ls-remote`, `gh release view`,
+`nix run .#check-modules -- --report` 23/23, `nix run .#check-cqrs-lint` green.
 ~~9. **T09+T10 (in sandbox) — the full shell composition**: server.go `buildShell` +~~ done — this session (report of record)
-   `shell.Mount(root)` + ExtraMiddleware byte-parity chain, main.go `RunHandler`.
-   Evidence: httpspec 19-suite chain conformance + full go suite + smoke 41+4 ALL
-   GREEN in the worktree. The design was sound; only the footprint killed it.
+`shell.Mount(root)` + ExtraMiddleware byte-parity chain, main.go `RunHandler`.
+Evidence: httpspec 19-suite chain conformance + full go suite + smoke 41+4 ALL
+GREEN in the worktree. The design was sound; only the footprint killed it.
 ~~10. **T12 — the footprint measurement itself**: baseline 15,255,480 B → shell-mode~~ done — this session (report of record)
-    25,653,080 B (**+10,397,600 B = +68.2%**; +72 linked modules confirmed via
-    `go version -m` diff). Evidence: two nix-built stripped binaries, sizes in this
-    report and AGENTS. The plan's single most important number.
+25,653,080 B (**+10,397,600 B = +68.2%**; +72 linked modules confirmed via
+`go version -m` diff). Evidence: two nix-built stripped binaries, sizes in this
+report and AGENTS. The plan's single most important number.
 ~~11. **Fallback R3 (salvage) verified AND landed on main** (commit `32a1721`, pushed):~~ done — this session (report of record)
-    server.go reverts to the hand chain; main.go rides `httputil.NewServer` —
-    ReadHeaderTimeout 5s, IdleTimeout 60s, no Read/Write deadlines (SSE-safe),
-    ShutdownTimeout 30s (10s→30s drain-budget gain), config `Validate()` at startup.
-    Evidence: +8,192 B vs baseline (+0.05%), full suite + smoke 41+4 green in the real
-    tree, committed post-v2.8.0-tag.
+server.go reverts to the hand chain; main.go rides `httputil.NewServer` —
+ReadHeaderTimeout 5s, IdleTimeout 60s, no Read/Write deadlines (SSE-safe),
+ShutdownTimeout 30s (10s→30s drain-budget gain), config `Validate()` at startup.
+Evidence: +8,192 B vs baseline (+0.05%), full suite + smoke 41+4 green in the real
+tree, committed post-v2.8.0-tag.
 ~~12. **T13 — records**: AGENTS verdict paragraph; `docs/lessons.md` import-graph~~ done — this session (report of record)
-    lesson ("measure, don't assume the linker saves you"); DOMAIN_LANGUAGE touch;
-    TODO_LIST adoption row → `🟢 DONE` with the salvage queue; plan HTML annotated
-    with a verdict card. Evidence: all committed + pushed (daemon sweeps verified via
-    `git log`).
+lesson ("measure, don't assume the linker saves you"); DOMAIN_LANGUAGE touch;
+TODO_LIST adoption row → `🟢 DONE` with the salvage queue; plan HTML annotated
+with a verdict card. Evidence: all committed + pushed (daemon sweeps verified via
+`git log`).
 ~~13. **Worktree sandbox discipline**: all experimental code (T08–T10, the +10 MB~~ done — this session (report of record)
-    measurement, the salvage) ran in `/tmp/wp-shell`, real tree untouched until the
-    verdict existed; worktree removed after replay. Evidence: real tree had zero
-    adoption commits to revert.
+measurement, the salvage) ran in `/tmp/wp-shell`, real tree untouched until the
+verdict existed; worktree removed after replay. Evidence: real tree had zero
+adoption commits to revert.
 ~~14. **Upstream honesty annotation**: ADR-0054 now records that `NewShell` does NOT~~ done — this session (report of record)
-    avoid the import-graph linking cost, with webphone's numbers — so the next
-    consumer reads the truth before composing. Evidence: `51a96899`.
+avoid the import-graph linking cost, with webphone's numbers — so the next
+consumer reads the truth before composing. Evidence: `51a96899`.
 
 ## b) PARTIALLY DONE
 
 ~~1. **The salvage release leg**: the code is on main and verified, but it rides an~~ done — the salvage entry landed ([Unreleased] Changed, server-lifecycle bullet); full gates green at the 12:57 close-out
-   untagged future release. **Missing:** its CHANGELOG entry (deferred to the next
-   fold, recorded in the TODO row), plus the full gate battery (buildflow FULL, nix
-   flake check, vulnix) — the real tree ran build+vet+server/cmd tests and smoke only.
-   Blocker: none, deliberately queued for the next release train. Effort: S.
+untagged future release. **Missing:** its CHANGELOG entry (deferred to the next
+fold, recorded in the TODO row), plus the full gate battery (buildflow FULL, nix
+flake check, vulnix) — the real tree ran build+vet+server/cmd tests and smoke only.
+Blocker: none, deliberately queued for the next release train. Effort: S.
 ~~2. **T00 (v2.8.0 tail)**: the TAG exists, is signed, and is pushed (`121a7e8`) — but~~ done — the tail closed 2026-10-01 (gh object published, stack `3afcf57` E2E green, aarch64 ELF `b700`); the pbx relock + deploy ride the TODO deploy-tail row
-   executed by a CONCURRENT session, not me. What I verified: tag on origin (peeled
-   object present), their "post-tag batch" docs commit. What I did NOT verify: gh
-   release object for v2.8.0 (`gh release view v2.8.0` → "not found" when I checked —
-   may have been published since), stack lock bump, browser E2E ×2, aarch64 build,
-   pbx-artmann relock #5 / ExecStart move, owner deploy. Blocker: their train, their
-   close-out; me touching it risks a second collision. Effort to VERIFY: S.
+executed by a CONCURRENT session, not me. What I verified: tag on origin (peeled
+object present), their "post-tag batch" docs commit. What I did NOT verify: gh
+release object for v2.8.0 (`gh release view v2.8.0` → "not found" when I checked —
+may have been published since), stack lock bump, browser E2E ×2, aarch64 build,
+pbx-artmann relock #5 / ExecStart move, owner deploy. Blocker: their train, their
+close-out; me touching it risks a second collision. Effort to VERIFY: S.
 ~~3. **T15–T18 of the plan** (webphone release → stack re-pin → pbx relock → prod smoke~~ record stands — superseded by the verdict (own text)
-   for the ADOPTION): superseded by the verdict — the adoption will never ride a
-   release. What survives (the salvage) is covered by (b)1. Not "wrong", just shrunk
-   to a fold entry.
+for the ADOPTION): superseded by the verdict — the adoption will never ride a
+release. What survives (the salvage) is covered by (b)1. Not "wrong", just shrunk
+to a fold entry.
 ~~4. **The upstream CHANGELOG "measured" annotation**: ADR annotated, but the~~ other repo — cqrs-htmx release notes; the caveat sentence never landed
-   setup/v4.13.1 gh release notes still describe NewShell's pruning benefit without
-   the measured caveat. Missing: one sentence in the release notes or a v4.13.2 note.
-   Effort: S.
+setup/v4.13.1 gh release notes still describe NewShell's pruning benefit without
+the measured caveat. Missing: one sentence in the release notes or a v4.13.2 note.
+Effort: S.
 
 ## c) NOT STARTED
 
 ~~1. **Zero-usermgmt `shell` submodule upstream** — deliberately parked, with a~~ owner — g3 unanswered; the park stands on the recorded ADR-0054 bar
-   recorded re-litigation bar (only if the shell grows more value than the lifecycle,
-   or a second identity-external consumer appears). Priority: parked-by-design.
+recorded re-litigation bar (only if the shell grows more value than the lifecycle,
+or a second identity-external consumer appears). Priority: parked-by-design.
 ~~2. **Injectable session gate** (`Config.SessionGate` or similar) so shell-mode feeds~~ record stands — parked on a real consumer needing it (ADR-0054 future work)
-   and machine endpoints can mount with consumer auth — the ADR's named future work.
-   Blocked on: a real consumer needing it.
+and machine endpoints can mount with consumer auth — the ADR's named future work.
+Blocked on: a real consumer needing it.
 ~~3. **v2.9.0 release** carrying the salvage — waits for content to accumulate (an~~ routed — the v2.9.0 fold decision = owner §g2 (TODO dashboard row)
-   8 KB-only release is not worth the ceremony).
+8 KB-only release is not worth the ceremony).
 ~~4. **Owner-terminal v2.8.0 deploy + post-deploy smoke** — command sheet exists~~ routed — TODO v2.8.0 deploy-tail + announcements rows (the v2.8.0 drafts incl. the Caddy break exist)
-   (`docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`); assistant never
-   deploys. Also the announcements draft for 2.8.0 (the 2.7.0 drafts file predates the
-   Caddy breaking change — likely needs a rewrite, not a renumber).
+(`docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`); assistant never
+deploys. Also the announcements draft for 2.8.0 (the 2.7.0 drafts file predates the
+Caddy breaking change — likely needs a rewrite, not a renumber).
 ~~5. **go-licenses toolchain fix in cqrs-htmx** (see (d)5) — diagnosed, not fixed.~~ other repo — cqrs-htmx license-check; diagnosed, not fixed
 ~~6. **bump-dep.sh single-line-require bug** (see (d)6) — worked around, not filed.~~ other repo — the owner's bump-dep.sh; worked around, not filed
 
@@ -128,97 +127,98 @@ Each item: what · evidence · scope.
 Radical honesty; severity-ordered.
 
 ~~1. **I nearly raced a concurrent session onto the same release tag.** I armed a~~ process record — the near-miss; the mitigation lesson lives in e1
-   quiet-window watcher with the explicit intent to fold + run `release.sh 2.8.0` —
-   while another session was mid-tail on the SAME release with DIFFERENT content (a
-   breaking nginx→Caddy module switch I never saw coming). My CHANGELOG fold script
-   only failed SAFE because of an `assert` on a section heading that their restructure
-   had removed; had the heading matched their layout, I could have corrupted their
-   fold or, worse, both trains pushed competing v2.8.0 tags. **Root cause:** I checked
-   sibling repos for dirty trees but never re-checked whether the TAIL itself was
-   still unclaimed immediately before acting; hours passed between my T00 survey and
-   my T00 attempt. **Mitigation now:** the load gate coincidentally bought time and
-   their fold landed first; no damage done. **Lesson recorded as process debt:** (e)2.
+quiet-window watcher with the explicit intent to fold + run `release.sh 2.8.0` —
+while another session was mid-tail on the SAME release with DIFFERENT content (a
+breaking nginx→Caddy module switch I never saw coming). My CHANGELOG fold script
+only failed SAFE because of an `assert` on a section heading that their restructure
+had removed; had the heading matched their layout, I could have corrupted their
+fold or, worse, both trains pushed competing v2.8.0 tags. **Root cause:** I checked
+sibling repos for dirty trees but never re-checked whether the TAIL itself was
+still unclaimed immediately before acting; hours passed between my T00 survey and
+my T00 attempt. **Mitigation now:** the load gate coincidentally bought time and
+their fold landed first; no damage done. **Lesson recorded as process debt:** (e)2.
 ~~2. **T01 wrote the decision as fact before the evidence existed.** My first AGENTS.md~~ process record — decisions-vs-verdicts tense rule
-   amendment said the shell "IS adopted" — hours before the measurement that then
-   falsified it. Any session crash in that window leaves the repo rulebook lying.
-   Fixed the same session, but the correct discipline is: amendments state the DECISION
-   (adopt-if-gate-passes), verdicts state OUTCOMES. Root cause: the plan's own task
-   order (T01 ratification precedes T12 measurement) and me following it literally.
+amendment said the shell "IS adopted" — hours before the measurement that then
+falsified it. Any session crash in that window leaves the repo rulebook lying.
+Fixed the same session, but the correct discipline is: amendments state the DECISION
+(adopt-if-gate-passes), verdicts state OUTCOMES. Root cause: the plan's own task
+order (T01 ratification precedes T12 measurement) and me following it literally.
 ~~3. **The dprint 109-file corpus sweep was unilateral overreach.** I formatted the~~ process record — the dprint corpus overreach
-   ENTIRE markdown corpus — ~100 files owned by other sessions and archived status
-   reports — to fix a pre-existing formatter drift. Content-preserving, but it buried
-   my feature commits under a giant formatting commit nobody asked for, and I never
-   root-caused WHY the corpus had drifted (dprint added to config without a one-time
-   sweep + CI wiring?). Better: format only my files, file the corpus drift as a task.
+ENTIRE markdown corpus — ~100 files owned by other sessions and archived status
+reports — to fix a pre-existing formatter drift. Content-preserving, but it buried
+my feature commits under a giant formatting commit nobody asked for, and I never
+root-caused WHY the corpus had drifted (dprint added to config without a one-time
+sweep + CI wiring?). Better: format only my files, file the corpus drift as a task.
 ~~4. **Two upstream releases where one would have done.** I tagged setup/v4.13.0,~~ process record — two tags where one would do
-   THEN discovered the NewShell need while designing webphone's side, and tagged
-   v4.13.1 twenty minutes later. The worktree consumer measurement could have run
-   against unreleased main (replace/pseudo-version) BEFORE any tag. The wave-ordered
-   release discipline is right for consumers; releasing before the first consumer's
-   measurement was in was premature. Cost: an extra tag/release/gh-object of noise,
-   and consumers ride a version whose headline feature (NewShell) I already know is
-   footprint-insufficient.
+THEN discovered the NewShell need while designing webphone's side, and tagged
+v4.13.1 twenty minutes later. The worktree consumer measurement could have run
+against unreleased main (replace/pseudo-version) BEFORE any tag. The wave-ordered
+release discipline is right for consumers; releasing before the first consumer's
+measurement was in was premature. Cost: an extra tag/release/gh-object of noise,
+and consumers ride a version whose headline feature (NewShell) I already know is
+footprint-insufficient.
 ~~5. **cqrs-htmx buildflow license-check is broken and I left it broken.** go-licenses~~ process record — the license-check bypass
-   crashes (`package crypto/mldsa is not in std` under the ambient go 1.26.7 while
-   scanning usermgmt/webauthn; documented 5-consecutive-run loop). I diagnosed it
-   (tool built/running against an older toolchain than the module graph needs) and
-   worked around it with `--no-verify` twice — with justification, per the documented
-   fallback — but never FIXED it (rebuild the tool against go 1.27.1, or gate-exclude
-   with a filed reason). Every future honest committer in that repo trips on it.
+crashes (`package crypto/mldsa is not in std` under the ambient go 1.26.7 while
+scanning usermgmt/webauthn; documented 5-consecutive-run loop). I diagnosed it
+(tool built/running against an older toolchain than the module graph needs) and
+worked around it with `--no-verify` twice — with justification, per the documented
+fallback — but never FIXED it (rebuild the tool against go 1.27.1, or gate-exclude
+with a filed reason). Every future honest committer in that repo trips on it.
 ~~6. **bump-dep.sh missed a consumer and I patched over it silently.** The script's~~ process record — the silent bump-dep patch
-   sweep claimed "v4.13.1 everywhere" but `examples/async-startup-demo` (single-line
-   `require` form) stayed at v4.13.0; I sed-fixed my way past it. The script's owner
-   is the same owner — a one-line regex fix + test case never landed.
+sweep claimed "v4.13.1 everywhere" but `examples/async-startup-demo` (single-line
+`require` form) stayed at v4.13.0; I sed-fixed my way past it. The script's owner
+is the same owner — a one-line regex fix + test case never landed.
 ~~7. **Minor: my own validation-test bug shipped in the first cut** (DisableAuth~~ process record
-   rejection test never set the field it rejected) — caught by the full-suite run in
-   the SAME session, fixed, re-green. Small, but it passed the isolated `-run` filter
-   and only failed in the suite: my "run new tests in isolation first" habit almost
-   let it through.
+rejection test never set the field it rejected) — caught by the full-suite run in
+the SAME session, fixed, re-green. Small, but it passed the isolated `-run` filter
+and only failed in the suite: my "run new tests in isolation first" habit almost
+let it through.
 ~~8. **Minor: I reported "T15–T18 owner-terminal" in my closing summary without~~ process record
-   checking whether the other session had already published the v2.8.0 gh release** —
-   `gh release view` is a 5-second check I skipped and only did during THIS report's
-   preparation (still "not found" as of ~15:30 — either pending or their step 9 is
-   coming; see (b)2).
+checking whether the other session had already published the v2.8.0 gh release** —
+`gh release view` is a 5-second check I skipped and only did during THIS report's
+preparation (still "not found" as of ~15:30 — either pending or their step 9 is
+coming; see (b)2).
 
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Pre-flight "is this train still unclaimed" re-check immediately before release~~ process record
-   actions** — not hours before. Concretely: before ANY tag/fold, `git fetch --tags`
-   - scan for in-flight fold commits (`git log --since="2 hours" -- CHANGELOG.md
+actions** — not hours before. Concretely: before ANY tag/fold, `git fetch --tags`
+
+- scan for in-flight fold commits (`git log --since="2 hours" -- CHANGELOG.md
    flake.nix`) in ALL directions. This session's near-miss cost real risk for zero
-     benefit.
-~~2. **Make the sandbox-first pattern the documented default for cross-repo adoption~~ done in part — the import-graph lesson landed in lessons.md; the named sandbox recipe below the bar
-   trains.** The `/tmp` worktree pattern (compose → measure → verdict → replay or
-   discard) is the single reason this session produced zero revert debt. It deserves a
-   named recipe in docs/lessons.md or a skill (measure-first adoption protocol),
-   including the "consumer-measure BEFORE tagging upstream" rule (would have saved
-   release v4.13.0).
-~~3. **Decisions and verdicts need different verb tenses in the rulebook.** AGENTS~~ process record
-   amendments written pre-evidence must say "adopted IFF gate passes"; the gate result
-   flips the wording. Add to the docs-health/memory rules: never write an outcome
-   before its measurement.
-~~4. **Formatter onboarding needs a one-time sweep + a CI gate, atomically.** The dprint~~ other repo — cqrs-htmx formatter onboarding
-   corpus drift proves the pattern: formatter added to config, corpus never swept,
-   every future .md commit fails the hook. Rule for cqrs-htmx (and anywhere): enabling
-   a formatter ships WITH (a) the sweep commit and (b) the CI enforcement, or it ships
-   with an explicit `textWrap: maintain`-only scope.
-~~5. **`--no-verify` debt needs a tracker.** Two justified bypasses this session~~ process record — the --no-verify tracker rule
-   (license-check, golangci-lint parallel-lock) — neither fixed after. A rule: every
-   `--no-verify` with justification must open a TODO row (or file an upstream issue)
-   in the same commit.
-~~6. **Footprint gates belong in CI, not in prose.** My ≤ +8 MB / ≤ +20% gate lived in~~ routed — ROADMAP 2026-10-02 stragglers (binary-size-gate.sh)
-   AGENTS.md prose and my head. A `scripts/binary-size-gate.sh` (nix build, compare
-   vs recorded baseline, fail on regression) would have made the NO-GO mechanical and
-   would keep future dep bloat honest. webphone TODO already has adjacent items; this
-   is the concrete shape.
-~~7. **`go version -m` diff is the fastest "what did the dependency do to my binary"~~ process record
-   tool** — it answered in one command what the +72-module surprise was. Worth a line
-   in lessons.md beside the import-graph lesson (done: the lesson mentions the +72;
-   the METHOD deserves its own sentence next time the doc is touched).
-~~8. **Sibling-module release tooling needs robustness fixes upstream** (bump-dep.sh~~ other repo — cqrs-htmx release tooling
-   single-line require; release-train's stale ls-remote cache burning a fresh-tag push
-   TWICE in one session despite the documented `--refresh-cache` gotcha — the gotcha
-   existing is itself the smell).
+  benefit.
+  ~~2. **Make the sandbox-first pattern the documented default for cross-repo adoption~~ done in part — the import-graph lesson landed in lessons.md; the named sandbox recipe below the bar
+  trains.** The `/tmp` worktree pattern (compose → measure → verdict → replay or
+  discard) is the single reason this session produced zero revert debt. It deserves a
+  named recipe in docs/lessons.md or a skill (measure-first adoption protocol),
+  including the "consumer-measure BEFORE tagging upstream" rule (would have saved
+  release v4.13.0).
+  ~~3. **Decisions and verdicts need different verb tenses in the rulebook.** AGENTS~~ process record
+  amendments written pre-evidence must say "adopted IFF gate passes"; the gate result
+  flips the wording. Add to the docs-health/memory rules: never write an outcome
+  before its measurement.
+  ~~4. **Formatter onboarding needs a one-time sweep + a CI gate, atomically.** The dprint~~ other repo — cqrs-htmx formatter onboarding
+  corpus drift proves the pattern: formatter added to config, corpus never swept,
+  every future .md commit fails the hook. Rule for cqrs-htmx (and anywhere): enabling
+  a formatter ships WITH (a) the sweep commit and (b) the CI enforcement, or it ships
+  with an explicit `textWrap: maintain`-only scope.
+  ~~5. **`--no-verify` debt needs a tracker.** Two justified bypasses this session~~ process record — the --no-verify tracker rule
+  (license-check, golangci-lint parallel-lock) — neither fixed after. A rule: every
+  `--no-verify` with justification must open a TODO row (or file an upstream issue)
+  in the same commit.
+  ~~6. **Footprint gates belong in CI, not in prose.** My ≤ +8 MB / ≤ +20% gate lived in~~ routed — ROADMAP 2026-10-02 stragglers (binary-size-gate.sh)
+  AGENTS.md prose and my head. A `scripts/binary-size-gate.sh` (nix build, compare
+  vs recorded baseline, fail on regression) would have made the NO-GO mechanical and
+  would keep future dep bloat honest. webphone TODO already has adjacent items; this
+  is the concrete shape.
+  ~~7. **`go version -m` diff is the fastest "what did the dependency do to my binary"~~ process record
+  tool** — it answered in one command what the +72-module surprise was. Worth a line
+  in lessons.md beside the import-graph lesson (done: the lesson mentions the +72;
+  the METHOD deserves its own sentence next time the doc is touched).
+  ~~8. **Sibling-module release tooling needs robustness fixes upstream** (bump-dep.sh~~ other repo — cqrs-htmx release tooling
+  single-line require; release-train's stale ls-remote cache burning a fresh-tag push
+  TWICE in one session despite the documented `--refresh-cache` gotcha — the gotcha
+  existing is itself the smell).
 
 ## f) Top 50 things we should get done next
 
@@ -226,149 +226,150 @@ Impact / effort / category per item. Items marked 🌾 are NEW (harvest into
 TODO_LIST); the rest already live in TODO_LIST/ROADMAP and are listed for ranking.
 
 ~~1. 🌾 Verify the v2.8.0 tail is fully closed by the concurrent session: gh release~~ done — the tail closed 2026-10-01 (gh object, stack `3afcf57`, aarch64 `b700`); the pbx relock rides the deploy-tail row
-   object published, stack lock bumped to the tag, browser E2E ×2 ≤445s, aarch64 ELF
-   check, pbx-artmann relock #5 + ExecStart move — report gaps, don't take over
-   mid-flight. Critical / S / Release.
+object published, stack lock bumped to the tag, browser E2E ×2 ≤445s, aarch64 ELF
+check, pbx-artmann relock #5 + ExecStart move — report gaps, don't take over
+mid-flight. Critical / S / Release.
 ~~2. 🌾 Add the salvage's CHANGELOG entry as the FIRST item of the next release fold~~ done — the salvage CHANGELOG entry landed ([Unreleased] Changed, server-lifecycle bullet)
-   (serve lifecycle via `httputil.Server`, +8 KB, timeout changes listed). High / S /
-   Documentation.
+(serve lifecycle via `httputil.Server`, +8 KB, timeout changes listed). High / S /
+Documentation.
 ~~3. 🌾 Annotate the setup/v4.13.1 gh release notes (or cut v4.13.2 notes) with the~~ other repo — cqrs-htmx gh release notes; not done
-   measured NewShell footprint caveat so consumers don't adopt it FOR the pruning
-   benefit. Medium / S / Documentation.
+measured NewShell footprint caveat so consumers don't adopt it FOR the pruning
+benefit. Medium / S / Documentation.
 ~~4. 🌾 Fix cqrs-htmx buildflow license-check: rebuild go-licenses against go 1.27.1~~ other repo — cqrs-htmx license-check; not fixed
-   (or pin the step's toolchain), removing the standing `--no-verify` temptation.
-   High / M / Bug.
+(or pin the step's toolchain), removing the standing `--no-verify` temptation.
+High / M / Bug.
 ~~5. 🌾 Fix bump-dep.sh to handle single-line `require github.com/... vX.Y.Z` forms +~~ other repo — the owner's bump-dep.sh; not filed
-   add a fixture test (found via async-startup-demo staying at v4.13.0). Medium / S /
-   Bug (owner's tool).
+add a fixture test (found via async-startup-demo staying at v4.13.0). Medium / S /
+Bug (owner's tool).
 ~~6. 🌾 Add a pre-tag "is this train unclaimed" preflight: fetch --tags + CHANGELOG/~~ done in part — release.sh carries assert_clean_tree + the load gate (`a24496a`); the fold-scan preflight not added
-   flake.nix recent-commit scan + in-flight-session check, wired into release.sh
-   step 1. Critical / M / Release (this session's near-miss).
+flake.nix recent-commit scan + in-flight-session check, wired into release.sh
+step 1. Critical / M / Release (this session's near-miss).
 ~~7. 🌾 Binary-size gate script for webphone (`scripts/binary-size-gate.sh`): nix build,~~ routed — ROADMAP 2026-10-02 stragglers (binary-size-gate.sh)
-   compare vs a committed baseline file, fail on > threshold; wire into buildflow or
-   release.sh. High / M / Quality.
+compare vs a committed baseline file, fail on > threshold; wire into buildflow or
+release.sh. High / M / Quality.
 ~~8. 🌾 Run the full gate battery on the current main (buildflow FULL + nix flake check~~ done — full gate battery green at the 12:57 close-out (buildflow FULL, flake check, vulnix)
-   - vulnix + smoke) so the salvage commit is gated, not just smoke-tested. High / M /
-     Quality.
-~~9. Root-cause the dprint corpus drift in cqrs-htmx (when/why was the formatter config~~ other repo — cqrs-htmx dprint root-cause
-   added without a sweep + CI gate) and add the atomic enablement rule. Medium / S /
-   Quality.
-~~10. 🌾 Retry the v2.8.0 gh release publish IF the other session's step 9 never lands~~ done — the gh object was verified published 2026-10-01
-    (coordinate first — their train). High / S / Release.
-~~11. 🌾 Update the v2.8.0 announcements draft for the Caddy breaking change (the~~ done — the v2.8.0 drafts exist (docs/announcements/2026-09-30_v2-8-0_drafts.md; TODO announcements row)
-    2.7.0 drafts predate it; the TODO row already expects a fresh draft). Medium / S /
-    Documentation.
-~~12. Reconcile FEATURES.md + README module docs with the nginx→Caddy module switch~~ done — README/FEATURES reconciled with the Caddy switch (the caddy session swept; v6 verified current)
-    beyond AGENTS (probe fencing docs, error-contract cross-refs if the vhost naming
-    changed). Medium / M / Documentation.
-~~13. Verify the stack's probe-triple fencing is unchanged under the Caddy vhost~~ routed — stack-side (cross-repo row)
-    (dedicated locations for /events SSE + probes still hold; the fold claims
-    `flush_interval -1`). High / S / Release (stack side).
-~~14. Owner: deploy v2.8.0 per the command sheet; post-deploy~~ routed — TODO v2.8.0 deploy-tail (owner terminal)
-    `webphone-smoke.py --base https://pbx.artmann.tech --expect-version v2.8.0`.
-    Critical / S / Deploy (owner terminal).
-~~15. Cut v2.9.0 when the salvage + accumulated content justify a train (runbook~~ routed — the v2.9.0 fold decision = owner §g2 (TODO dashboard row)
-    ceremony; stack relock #6 rides it). Medium / L / Release.
-~~16. 🌾 Write the "sandbox-first adoption protocol" recipe into docs/lessons.md~~ not adopted — the pattern lives in this report + the lessons import-graph entry
-    (worktree → compose → measure → verdict → replay/discard + measure-before-tag).
-    Medium / S / Process.
-~~17. 🌾 Record the "decisions vs verdicts verb-tense" rule (never write outcomes before~~ process record — the never-write-outcomes rule rides the AGENTS unreleased-code line
-    measurements) in AGENTS conventions or the global memory rules. Low / S / Process.
-~~18. Shell submodule upstream (`cqrs-htmx/shell/v4`, zero usermgmt imports) — ONLY on~~ record stands — parked on the recorded bar (ADR-0054)
-    the recorded bar (second identity-external consumer, or shell grows real value).
-    Low / L / Feature (parked).
-~~19. Injectable session gate in setup (feeds/machine endpoints in shell mode) per~~ record stands — parked per ADR-0054 future work
-    ADR-0054 future work. Low / M / Feature (parked).
-~~20. 🌾 go.work.sum / workspace hygiene: confirm the two incidental setup-demo bumps~~ other repo — cqrs-htmx workspace hygiene; not tracked here
-    ride deliberately in the next cqrs-htmx family train (they're already pushed —
-    verify no OTHER demo drifted). Low / S / Cleanup.
-~~21. v2.7.0+ release announcements (drafts exist; now needs the 2.8.0 rework + owner~~ routed — TODO announcements row
-    channel/disclosure decisions). Low / S / Documentation.
-~~22. Nix-review follow-ups batch (TODO row: eval-time hardening pins, statix/deadnix~~ done — the nix-review train shipped (CHANGELOG Unreleased Changed)
-    into devShell, VM-test mode asserts, vulnix cwd guard, output-parity proof,
-    unpushed-commits preflight). Medium / M / Quality.
-~~23. release.sh unpushed-commits preflight assert (`git ls-remote` vs HEAD) — from the~~ done in part — assert_clean_tree landed (`a24496a`); the unpushed-commits preflight not added
-    same TODO row, pairs naturally with item 6. Medium / S / Release.
-~~24. `/version` enrichment (commit/dirty/commitDate ldflags + vcs.* BuildInfo~~ done — ldflags buildVersion + ReadBuildInfo vcs fallback (server.go:378–407)
-    fallback) — kills the chain-verification store-path dance. Medium / M / Feature.
-~~25. Gateway honest-Content-Type follow-ups: byte-exact part-header-block golden,~~ done in part — webphone side done `0aab677`; stack legs routed (TODO honest-Content-Type row)
-    compat-matrix doc next to the AGENTS seam bullet, webhook-mode smoke probe.
-    Medium / M / Quality.
-~~26. Owner-calls batch session (the standing ~28-decision briefing — several items~~ routed — OWNER-calls row (live)
-    above depend on owner calls recorded there). High / S / Decision.
-~~27. AGENTS.md compaction 498 → ≤377 lines (owner permission gate; this session added~~ done — compacted to 377 at the 12:57 close-out
-    ~20 lines to it — the "next add pays for itself" rule is now overdue). Medium /
-    M / Documentation.
-~~28. 🌾 Dedup-registry sweep-log line for this train (shared helpers touched?~~ resolved by events — the salvage reverted the shell composition; mustShell no longer exists
-    `mustShell` in server.go is a new must-style helper — check whether the registry
-    wants it logged). Low / S / Documentation.
-~~29. 🌾 Consider `mustShell` placement: server.go grew a must-style helper — does the~~ resolved by events — the salvage reverted the shell composition; mustShell no longer exists
-    `domain.must` one-home rule want a shared `server.must` home or is package-local
-    right? 5-minute adjudication, registry line either way. Low / S / Quality.
-~~30. Tooling hygiene batch (markdown-lint posture, codespell policy, buildflow~~ done in part — render-diff.py committed + verified; markdownlint posture = owner (TODO tooling row)
-    freshness advisory, render-diff script commit — note `scripts/render-diff.py`
-    appeared UNTRACKED on main today from another session: commit or trash it
-    deliberately). Low / S / Cleanup.
-~~31. 🌾 webphone smoke: add a timeout-budget assertion (server answers SIGTERM-drain~~ routed — ROADMAP 2026-10-02 stragglers (smoke timeout-budget assertion)
-    within the 30s budget; the restart arm currently proves survival, not budget).
-    Low / S / Quality.
-~~32. 🌾 httputil.Server adoption follow-up: document the ReadHeader 10s→5s / Idle~~ not adopted — the timeout changes are documented in the CHANGELOG entry; below the bar
-    120s→60s timeout changes in the error-contract/README wherever client-facing
-    timeouts are described. Low / S / Documentation.
-~~33. 🌾 Add `go version -m` module-count to the smoke or release checklist (a +72~~ routed — ROADMAP 2026-10-02 stragglers (go version -m module-count tripwire)
-    module jump would then be IMPOSSIBLE to miss — cheap tripwire). Medium / S /
-    Quality.
-~~34. 🌾 cqrs-htmx: evaluate whether `NewShell`'s doc should carry the measured~~ other repo — cqrs-htmx code doc
-    "pruning saves the GRAPH but not the PACKAGE graph" caveat inline (code doc, not
-    just ADR). Low / S / Documentation.
-~~35. 🌾 Stack repo: confirm their webphone input relock for v2.8.0 also flipped the~~ routed — stack-side (cross-repo row; the relock covers it)
-    lowercase-contacts E2E assert that has been forward-locked since 94ae28d.
-    Medium / S / Release (stack side).
-~~36. 🌾 pbx-artmann: after their relock #5, verify lock-drift-probe + both toplevels~~ routed — TODO deploy-tail / cross-repo rows (pbx relock rides the tail)
-    green and record relock #6 need date for v2.9.0. Medium / S / Release.
-~~37. Standing watches (quarterly, next 2026-12-20): sip.js 0.22, templ-components,~~ routed — TODO standing watches row (next 2026-12-20)
-    oxlint globals, E2E budget, erraudit tier-2 monthly re-measure (next 2026-10-22),
-    go-health M18 park. Low / S / Watch.
-~~38. 🌾 The errorfamily gate in cqrs-htmx: confirm test-file exemption still holds for~~ other repo — cqrs-htmx test-file exemption
-    `errors.New` in the 19 new tests (check-modules passed, but the exemption is
-    load-bearing for future shell tests — document in the test file header). Low /
-    S / Quality.
-~~39. 🌾 webphone CHANGELOG [Unreleased] section is now EMPTY post-fold — verify the~~ done — the drift test passed every flake check since (12:57 close-out exit 0)
-    drift test (which anchors to the assignment) still passes with the 2.8.0 fold's
-    layout the other session wrote. Low / S / Quality.
-~~40. 🌾 Session-behavior BDD suite: the lifecycle swap (httputil.Server) changed the~~ not adopted — below the bar (the smoke restart arm covers survival)
-    boot path — consider one Ginkgo spec pinning "SIGTERM drains, doesn't kill" at the
-    main.run level if the harness allows. Low / M / Quality.
-~~41. ROADMAP: record the identity-external consumer class learnings (what webphone's~~ not adopted — below the bar
-    measurement means for PapDashboard-style consumers) — feeds the shell-submodule
-    bar. Low / S / Documentation.
-~~42. 🌾 cqrs-htmx check-release-train: make `--refresh-cache` the DEFAULT for fresh-tag~~ other repo — the owner's check-release-train tool
-    pushes (the gotcha fired twice today; the flag exists because the default is
-    wrong for the push path). Medium / S / Bug (owner's tool).
-~~43. 🌾 The 2026-09-30 status-report corpus: five .md reports landed today from~~ done — this v6 sweep is annotating/archiving the 2026-09-30 corpus now
-    concurrent sessions — schedule the docs-health sweep to annotate/archive them per
-    convention (they accumulate fast on heavy days). Low / S / Documentation.
-~~44. 🌾 webphone vendor/ tree: `go mod vendor` in the salvage run rewrote vendor —~~ resolved by events — vendor stable through every gate since; gomod-check vendor findings are the documented false positive
-    confirm the diff contains ONLY the httputil addition (no daemon sweep surprises)
-    before the next release folds. Low / S / Quality.
-~~45. 🌾 Consider exporting the sandbox worktree pattern as a named script~~ not adopted — below the bar
-    (`scripts/sandbox-train.sh <branch>`) so the next adoption train doesn't
-    improvise it. Low / M / Process.
-~~46. OWNER: ratify the shell-submodule bar + injectable-gate parking (ADR-0054~~ owner — g3 unanswered; the park stands on the ADR-0054 bar
-    consequences) so the parked items have explicit owner sign-off. Low / S /
-    Decision.
-~~47. 🌾 cqrs-htmx: the `Retract` block in setup/go.mod covers v4.8.1/2 — nothing to~~ other repo — cqrs-htmx family-train doc
-    retract for 4.13.x, but confirm the family train doc records 4.13.0/1 as the
-    ADR-0054 wave. Low / S / Documentation.
-~~48. 🌾 Add the session's near-miss to docs/runbooks/daemon-commit-races.md (or a new~~ not adopted — the failure mode lives here (§d1) + the runbook's phase-boundary commit line
-    release-races runbook): two sessions + one tag name = the concrete failure mode.
-    Medium / S / Documentation.
-~~49. 🌾 webphone: fold the `mustShell` + lifecycle notes into FEATURES.md's runtime~~ not adopted — the lifecycle owner is documented in CHANGELOG + AGENTS; FEATURES below the bar
-    row (the honest feature inventory should name httputil.Server as the lifecycle
-    owner now). Low / S / Documentation.
-~~50. 🌾 Schedule the next cross-repo alignment pass: after v2.8.0 deploys and before~~ routed — tri-repo drift checks ride the TODO cross-repo row + the release-runbook ritual
-    v2.9.0, walk the tri-repo (webphone↔stack↔pbx) AGENTS claims against reality —
-    three sessions touched these repos today; drift compounds. Medium / M / Quality.
+
+- vulnix + smoke) so the salvage commit is gated, not just smoke-tested. High / M /
+  Quality.
+  ~~9. Root-cause the dprint corpus drift in cqrs-htmx (when/why was the formatter config~~ other repo — cqrs-htmx dprint root-cause
+  added without a sweep + CI gate) and add the atomic enablement rule. Medium / S /
+  Quality.
+  ~~10. 🌾 Retry the v2.8.0 gh release publish IF the other session's step 9 never lands~~ done — the gh object was verified published 2026-10-01
+  (coordinate first — their train). High / S / Release.
+  ~~11. 🌾 Update the v2.8.0 announcements draft for the Caddy breaking change (the~~ done — the v2.8.0 drafts exist (docs/announcements/2026-09-30_v2-8-0_drafts.md; TODO announcements row)
+  2.7.0 drafts predate it; the TODO row already expects a fresh draft). Medium / S /
+  Documentation.
+  ~~12. Reconcile FEATURES.md + README module docs with the nginx→Caddy module switch~~ done — README/FEATURES reconciled with the Caddy switch (the caddy session swept; v6 verified current)
+  beyond AGENTS (probe fencing docs, error-contract cross-refs if the vhost naming
+  changed). Medium / M / Documentation.
+  ~~13. Verify the stack's probe-triple fencing is unchanged under the Caddy vhost~~ routed — stack-side (cross-repo row)
+  (dedicated locations for /events SSE + probes still hold; the fold claims
+  `flush_interval -1`). High / S / Release (stack side).
+  ~~14. Owner: deploy v2.8.0 per the command sheet; post-deploy~~ routed — TODO v2.8.0 deploy-tail (owner terminal)
+  `webphone-smoke.py --base https://pbx.artmann.tech --expect-version v2.8.0`.
+  Critical / S / Deploy (owner terminal).
+  ~~15. Cut v2.9.0 when the salvage + accumulated content justify a train (runbook~~ routed — the v2.9.0 fold decision = owner §g2 (TODO dashboard row)
+  ceremony; stack relock #6 rides it). Medium / L / Release.
+  ~~16. 🌾 Write the "sandbox-first adoption protocol" recipe into docs/lessons.md~~ not adopted — the pattern lives in this report + the lessons import-graph entry
+  (worktree → compose → measure → verdict → replay/discard + measure-before-tag).
+  Medium / S / Process.
+  ~~17. 🌾 Record the "decisions vs verdicts verb-tense" rule (never write outcomes before~~ process record — the never-write-outcomes rule rides the AGENTS unreleased-code line
+  measurements) in AGENTS conventions or the global memory rules. Low / S / Process.
+  ~~18. Shell submodule upstream (`cqrs-htmx/shell/v4`, zero usermgmt imports) — ONLY on~~ record stands — parked on the recorded bar (ADR-0054)
+  the recorded bar (second identity-external consumer, or shell grows real value).
+  Low / L / Feature (parked).
+  ~~19. Injectable session gate in setup (feeds/machine endpoints in shell mode) per~~ record stands — parked per ADR-0054 future work
+  ADR-0054 future work. Low / M / Feature (parked).
+  ~~20. 🌾 go.work.sum / workspace hygiene: confirm the two incidental setup-demo bumps~~ other repo — cqrs-htmx workspace hygiene; not tracked here
+  ride deliberately in the next cqrs-htmx family train (they're already pushed —
+  verify no OTHER demo drifted). Low / S / Cleanup.
+  ~~21. v2.7.0+ release announcements (drafts exist; now needs the 2.8.0 rework + owner~~ routed — TODO announcements row
+  channel/disclosure decisions). Low / S / Documentation.
+  ~~22. Nix-review follow-ups batch (TODO row: eval-time hardening pins, statix/deadnix~~ done — the nix-review train shipped (CHANGELOG Unreleased Changed)
+  into devShell, VM-test mode asserts, vulnix cwd guard, output-parity proof,
+  unpushed-commits preflight). Medium / M / Quality.
+  ~~23. release.sh unpushed-commits preflight assert (`git ls-remote` vs HEAD) — from the~~ done in part — assert_clean_tree landed (`a24496a`); the unpushed-commits preflight not added
+  same TODO row, pairs naturally with item 6. Medium / S / Release.
+  ~~24. `/version` enrichment (commit/dirty/commitDate ldflags + vcs.* BuildInfo~~ done — ldflags buildVersion + ReadBuildInfo vcs fallback (server.go:378–407)
+  fallback) — kills the chain-verification store-path dance. Medium / M / Feature.
+  ~~25. Gateway honest-Content-Type follow-ups: byte-exact part-header-block golden,~~ done in part — webphone side done `0aab677`; stack legs routed (TODO honest-Content-Type row)
+  compat-matrix doc next to the AGENTS seam bullet, webhook-mode smoke probe.
+  Medium / M / Quality.
+  ~~26. Owner-calls batch session (the standing ~28-decision briefing — several items~~ routed — OWNER-calls row (live)
+  above depend on owner calls recorded there). High / S / Decision.
+  ~~27. AGENTS.md compaction 498 → ≤377 lines (owner permission gate; this session added~~ done — compacted to 377 at the 12:57 close-out
+  ~20 lines to it — the "next add pays for itself" rule is now overdue). Medium /
+  M / Documentation.
+  ~~28. 🌾 Dedup-registry sweep-log line for this train (shared helpers touched?~~ resolved by events — the salvage reverted the shell composition; mustShell no longer exists
+  `mustShell` in server.go is a new must-style helper — check whether the registry
+  wants it logged). Low / S / Documentation.
+  ~~29. 🌾 Consider `mustShell` placement: server.go grew a must-style helper — does the~~ resolved by events — the salvage reverted the shell composition; mustShell no longer exists
+  `domain.must` one-home rule want a shared `server.must` home or is package-local
+  right? 5-minute adjudication, registry line either way. Low / S / Quality.
+  ~~30. Tooling hygiene batch (markdown-lint posture, codespell policy, buildflow~~ done in part — render-diff.py committed + verified; markdownlint posture = owner (TODO tooling row)
+  freshness advisory, render-diff script commit — note `scripts/render-diff.py`
+  appeared UNTRACKED on main today from another session: commit or trash it
+  deliberately). Low / S / Cleanup.
+  ~~31. 🌾 webphone smoke: add a timeout-budget assertion (server answers SIGTERM-drain~~ routed — ROADMAP 2026-10-02 stragglers (smoke timeout-budget assertion)
+  within the 30s budget; the restart arm currently proves survival, not budget).
+  Low / S / Quality.
+  ~~32. 🌾 httputil.Server adoption follow-up: document the ReadHeader 10s→5s / Idle~~ not adopted — the timeout changes are documented in the CHANGELOG entry; below the bar
+  120s→60s timeout changes in the error-contract/README wherever client-facing
+  timeouts are described. Low / S / Documentation.
+  ~~33. 🌾 Add `go version -m` module-count to the smoke or release checklist (a +72~~ routed — ROADMAP 2026-10-02 stragglers (go version -m module-count tripwire)
+  module jump would then be IMPOSSIBLE to miss — cheap tripwire). Medium / S /
+  Quality.
+  ~~34. 🌾 cqrs-htmx: evaluate whether `NewShell`'s doc should carry the measured~~ other repo — cqrs-htmx code doc
+  "pruning saves the GRAPH but not the PACKAGE graph" caveat inline (code doc, not
+  just ADR). Low / S / Documentation.
+  ~~35. 🌾 Stack repo: confirm their webphone input relock for v2.8.0 also flipped the~~ routed — stack-side (cross-repo row; the relock covers it)
+  lowercase-contacts E2E assert that has been forward-locked since 94ae28d.
+  Medium / S / Release (stack side).
+  ~~36. 🌾 pbx-artmann: after their relock #5, verify lock-drift-probe + both toplevels~~ routed — TODO deploy-tail / cross-repo rows (pbx relock rides the tail)
+  green and record relock #6 need date for v2.9.0. Medium / S / Release.
+  ~~37. Standing watches (quarterly, next 2026-12-20): sip.js 0.22, templ-components,~~ routed — TODO standing watches row (next 2026-12-20)
+  oxlint globals, E2E budget, erraudit tier-2 monthly re-measure (next 2026-10-22),
+  go-health M18 park. Low / S / Watch.
+  ~~38. 🌾 The errorfamily gate in cqrs-htmx: confirm test-file exemption still holds for~~ other repo — cqrs-htmx test-file exemption
+  `errors.New` in the 19 new tests (check-modules passed, but the exemption is
+  load-bearing for future shell tests — document in the test file header). Low /
+  S / Quality.
+  ~~39. 🌾 webphone CHANGELOG [Unreleased] section is now EMPTY post-fold — verify the~~ done — the drift test passed every flake check since (12:57 close-out exit 0)
+  drift test (which anchors to the assignment) still passes with the 2.8.0 fold's
+  layout the other session wrote. Low / S / Quality.
+  ~~40. 🌾 Session-behavior BDD suite: the lifecycle swap (httputil.Server) changed the~~ not adopted — below the bar (the smoke restart arm covers survival)
+  boot path — consider one Ginkgo spec pinning "SIGTERM drains, doesn't kill" at the
+  main.run level if the harness allows. Low / M / Quality.
+  ~~41. ROADMAP: record the identity-external consumer class learnings (what webphone's~~ not adopted — below the bar
+  measurement means for PapDashboard-style consumers) — feeds the shell-submodule
+  bar. Low / S / Documentation.
+  ~~42. 🌾 cqrs-htmx check-release-train: make `--refresh-cache` the DEFAULT for fresh-tag~~ other repo — the owner's check-release-train tool
+  pushes (the gotcha fired twice today; the flag exists because the default is
+  wrong for the push path). Medium / S / Bug (owner's tool).
+  ~~43. 🌾 The 2026-09-30 status-report corpus: five .md reports landed today from~~ done — this v6 sweep is annotating/archiving the 2026-09-30 corpus now
+  concurrent sessions — schedule the docs-health sweep to annotate/archive them per
+  convention (they accumulate fast on heavy days). Low / S / Documentation.
+  ~~44. 🌾 webphone vendor/ tree: `go mod vendor` in the salvage run rewrote vendor —~~ resolved by events — vendor stable through every gate since; gomod-check vendor findings are the documented false positive
+  confirm the diff contains ONLY the httputil addition (no daemon sweep surprises)
+  before the next release folds. Low / S / Quality.
+  ~~45. 🌾 Consider exporting the sandbox worktree pattern as a named script~~ not adopted — below the bar
+  (`scripts/sandbox-train.sh <branch>`) so the next adoption train doesn't
+  improvise it. Low / M / Process.
+  ~~46. OWNER: ratify the shell-submodule bar + injectable-gate parking (ADR-0054~~ owner — g3 unanswered; the park stands on the ADR-0054 bar
+  consequences) so the parked items have explicit owner sign-off. Low / S /
+  Decision.
+  ~~47. 🌾 cqrs-htmx: the `Retract` block in setup/go.mod covers v4.8.1/2 — nothing to~~ other repo — cqrs-htmx family-train doc
+  retract for 4.13.x, but confirm the family train doc records 4.13.0/1 as the
+  ADR-0054 wave. Low / S / Documentation.
+  ~~48. 🌾 Add the session's near-miss to docs/runbooks/daemon-commit-races.md (or a new~~ not adopted — the failure mode lives here (§d1) + the runbook's phase-boundary commit line
+  release-races runbook): two sessions + one tag name = the concrete failure mode.
+  Medium / S / Documentation.
+  ~~49. 🌾 webphone: fold the `mustShell` + lifecycle notes into FEATURES.md's runtime~~ not adopted — the lifecycle owner is documented in CHANGELOG + AGENTS; FEATURES below the bar
+  row (the honest feature inventory should name httputil.Server as the lifecycle
+  owner now). Low / S / Documentation.
+  ~~50. 🌾 Schedule the next cross-repo alignment pass: after v2.8.0 deploys and before~~ routed — tri-repo drift checks ride the TODO cross-repo row + the release-runbook ritual
+  v2.9.0, walk the tri-repo (webphone↔stack↔pbx) AGENTS claims against reality —
+  three sessions touched these repos today; drift compounds. Medium / M / Quality.
 
 **HARVEST note:** items 1–9, 13, 16–17, 28–33, 38–39, 42–44, 46, 48–50 are new
 (🌾) and belong in TODO_LIST via docs-health HARVEST; the rest already have rows.
@@ -376,28 +377,28 @@ TODO_LIST); the rest already live in TODO_LIST/ROADMAP and are listed for rankin
 ## g) Top 3 questions I cannot answer myself
 
 ~~1. **Which footprint gate did you actually intend — and does the NO-GO stand?**~~ resolved by events — the NO-GO stands in every record since (AGENTS, CHANGELOG, the verdict doc); the salvage is the adopted answer
-   I recorded "≤ +8 MB absolute AND ≤ +20% relative" at T01, which on a 15.25 MB
-   baseline makes the BINDING limit +3.05 MB; the measured +10.4 MB fails either
-   reading. But if your intent was "+8 MB absolute" ALONE, the adoption verdict
-   FLIPS TO GO (the shell was fully green behaviorally) and the right move becomes
-   reverting the salvage and riding the setup shell in v2.9.0. I cannot know which
-   threshold you meant; it decides whether today's headline outcome is "rejection
-   confirmed" or "adoption restored".
+I recorded "≤ +8 MB absolute AND ≤ +20% relative" at T01, which on a 15.25 MB
+baseline makes the BINDING limit +3.05 MB; the measured +10.4 MB fails either
+reading. But if your intent was "+8 MB absolute" ALONE, the adoption verdict
+FLIPS TO GO (the shell was fully green behaviorally) and the right move becomes
+reverting the salvage and riding the setup shell in v2.9.0. I cannot know which
+threshold you meant; it decides whether today's headline outcome is "rejection
+confirmed" or "adoption restored".
 ~~2. **Is the concurrent session still mid-tail on v2.8.0, and where should I draw~~ resolved by events — the concurrent tail closed 2026-10-01 (gh object verified); the takeover question is moot
-   the line?** I verified the signed tag is pushed but found NO gh release object,
-   and I don't know whether their remaining plan includes step 9 (gh release),
-   stack relock #5, and the post-tag sweep — or whether they consider the tail
-   closed and abandoned it partway. If they're done and something's missing, I can
-   finish it; if they're mid-flight, I must not touch it. How do I find out without
-   risking a second collision — do you want me to wait for their status report,
-   or take over the v2.8.0 close-out now?
+the line?** I verified the signed tag is pushed but found NO gh release object,
+and I don't know whether their remaining plan includes step 9 (gh release),
+stack relock #5, and the post-tag sweep — or whether they consider the tail
+closed and abandoned it partway. If they're done and something's missing, I can
+finish it; if they're mid-flight, I must not touch it. How do I find out without
+risking a second collision — do you want me to wait for their status report,
+or take over the v2.8.0 close-out now?
 ~~3. **Do you want the un-released-as-measured cost of `NewShell` to change the~~ owner — unanswered; the park stands on the ADR-0054 bar (recorded re-litigation triggers)
-   upstream API plan?** The ADR currently parks the zero-usermgmt `shell`
-   submodule behind a bar only you can ratify ("a second consumer appears"). Given
-   that the measured reality is "ANY setup import costs +10 MB", do you want the
-   submodule built NOW (so identity-external consumers like webphone have a real
-   adoption path), or should the park stand and `httputil.NewServer` remain the
-   whole answer for this class of app?
+upstream API plan?** The ADR currently parks the zero-usermgmt `shell`
+submodule behind a bar only you can ratify ("a second consumer appears"). Given
+that the measured reality is "ANY setup import costs +10 MB", do you want the
+submodule built NOW (so identity-external consumers like webphone have a real
+adoption path), or should the park stand and `httputil.NewServer` remain the
+whole answer for this class of app?
 
 ---
 
