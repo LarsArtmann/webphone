@@ -150,5 +150,7 @@ stay LIVE pending explicit ratification. Documentation-only: zero product code t
 ---
 
 _Point-in-time snapshot — annotate, never rewrite. The auto-commit daemon owns the
-commits (verified sweeping: 6-file heuristic commits through the session). SWEEP AT
-15/34; resuming is safe — remaining files read-or-scheduled, pipeline proven._
+commits (verified sweeping: 6-file heuristic commits through the session). SWEEP
+COMPLETED 2026-10-03 03:29: all 19 remaining files annotated + archived (34/34;
+manifest in the 00:35 report); gates clean — closure report:
+`2026-10-03_03-29_docs-health-v6-closed-19-files-34-of-34-complete.md`._
