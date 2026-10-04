@@ -188,7 +188,7 @@ class Smoke:
         self.csrf = token
         return True
 
-    def hook(self, path: str, payload: dict) -> tuple[int, bytes]:
+    def hook(self, path: str, payload: dict) -> tuple[int, bytes, dict[str, str]]:
         body = json.dumps(payload).encode()
         return self.request(
             "POST",
@@ -198,7 +198,7 @@ class Smoke:
             {"Authorization": "Bearer test-secret"},
         )
 
-    def sse_events(self, stop: threading.Event, sink: list[str]) -> None:
+    def sse_events(self, stop: threading.Event, sink: list[tuple[str, str]]) -> None:
         conn = http.client.HTTPConnection(self.host, self.port, timeout=TIMEOUT)
         cookie = "; ".join(f"{c.name}={c.value}" for c in self.jar)
         conn.request("GET", "/events", headers={"Cookie": cookie} if cookie else {})
@@ -220,7 +220,9 @@ class Smoke:
         finally:
             conn.close()
 
-    def wait_for(self, sink: list[str], event: str, deadline: float) -> str | None:
+    def wait_for(
+        self, sink: list[tuple[str, str]], event: str, deadline: float
+    ) -> str | None:
         while time.monotonic() < deadline:
             for name, data in sink:
                 if name == event:
@@ -405,7 +407,12 @@ def boot_failure_scenario(binary: str, workdir: str, port: int) -> int:
     env["WEBPHONE_DATA_DIR"] = str(blocker / "data")
     try:
         proc = subprocess.run(
-            [binary], env=env, capture_output=True, text=True, timeout=TIMEOUT
+            [binary],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT,
+            check=False,
         )
         code, out = proc.returncode, proc.stdout + proc.stderr
     except subprocess.TimeoutExpired:
@@ -857,8 +864,7 @@ def run_checks(
         finally:
             stop_configured()
 
-    stop_set = stop is not None and not stop.is_set()
-    if stop_set:
+    if stop is not None and not stop.is_set():
         stop.set()
     skipped = f", {c.skipped} skipped (foreign mode)" if c.skipped else ""
     print(f"smoke: {c.passed} passed, {len(c.failures)} failed{skipped}")

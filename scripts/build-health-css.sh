@@ -42,4 +42,9 @@ nix run "github:NixOS/nixpkgs/$rev#tailwindcss_4" -- \
 	-i "$stage/internal/web/assets/health.css.input" \
 	-o "$stage/health.css"
 mv "$stage/health.css" internal/web/assets/health.css
+# A raw rebuild re-breaks the treefmt format gate (prettier owns *.css —
+# t21-t22 report f1); hand the fresh artifact straight to the formatter.
+# SCOPED to the artifact on purpose: a repo-wide nix fmt would trample
+# concurrent in-flight edits.
+nix fmt internal/web/assets/health.css
 echo "rebuilt internal/web/assets/health.css with locked nixpkgs $rev"
