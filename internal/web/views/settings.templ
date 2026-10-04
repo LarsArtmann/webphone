@@ -1,6 +1,11 @@
 package views
 
-import "github.com/larsartmann/webphone/internal/domain"
+import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/forms"
+	"github.com/larsartmann/templ-components/utils"
+	"github.com/larsartmann/webphone/internal/domain"
+)
 
 // SettingsPanel is read-only runtime facts about this deployment: what the
 // server is wired to and which capabilities are live. Changes happen in the
@@ -118,16 +123,18 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 		hx-swap="innerHTML"
 		hx-disabled-elt="find button[type=submit]"
 	>
-		<textarea
-			name="body"
-			rows="2"
-			placeholder={ T(lang, "snippets.body") }
-			aria-label={ T(lang, "snippets.body") }
-		></textarea>
+		@forms.Textarea(forms.TextareaProps{
+			BaseProps: utils.BaseProps{
+				AriaLabel: T(lang, "snippets.body"),
+			},
+			Name:        "body",
+			Rows:        2,
+			Placeholder: T(lang, "snippets.body"),
+		})
 		<label class="wp-snippet-quick-label">
 			<input type="checkbox" name="quick" value="1"></input>
 			{ T(lang, "snippets.quick") }
 		</label>
-		<button type="submit" class="wp-primary">{ T(lang, "snippets.add") }</button>
+		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(lang, "snippets.add")})
 	</form>
-}
+	}
