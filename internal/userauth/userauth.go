@@ -91,12 +91,12 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 	}
 	db.SetMaxOpenConns(1)
 	if err := usermgmt.OptimizeSQLiteDB(ctx, db); err != nil {
-		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+		db.Close()                                                                                                //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.WrapInfrastructure(err, "userauth.db.optimize", "tune usermgmt database pragmas") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	eventStore, err := usermgmt.NewSQLEventStore(ctx, db, "sqlite")
 	if err != nil {
-		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+		db.Close()                                                                                                         //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.event_store", "create sqlite event store") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	displayName := cfg.RPDisplayName
@@ -114,7 +114,7 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 			RPOrigins:     cfg.RPOrigins,
 		})
 		if err != nil {
-			db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+			db.Close()                                                                                                              //nolint:errcheck // best-effort cleanup on a failed boot path
 			return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.webauthn_provider", "create webauthn provider") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 		}
 	}
@@ -126,12 +126,12 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 		Logger:           log,
 	})
 	if err != nil {
-		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+		db.Close()                                                                                                   //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	svc := &Service{users: users, db: db, cfg: cfg, log: log}
 	if err := svc.migrateEnrollTokens(ctx); err != nil {
-		svc.Shutdown() //nolint:errcheck // best-effort cleanup on a failed boot path
+		svc.Shutdown()  //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, err //nolint:erraudit // migrateEnrollTokens owns the classification
 	}
 	return svc, nil
