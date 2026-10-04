@@ -755,7 +755,6 @@ h3 {
   min-width: 0;
 }
 
-.wp-compose button,
 button.wp-primary,
 button.wp-danger {
   border: 1px solid var(--border);
@@ -771,6 +770,12 @@ button.wp-danger {
     border-color 120ms ease,
     color 120ms ease;
 }
+
+/* The composer's Send button (and the load-older button) are adopted
+ * templ-components Buttons: their Tailwind utilities must decide the
+ * look, so no descendant `button` rule may re-style the composer here —
+ * (0,1,1) beats any single utility class. The quick chips and snippet
+ * items style themselves (wp-chip / wp-snippet-item). */
 
 button.wp-primary {
   background: var(--accent);
@@ -1629,16 +1634,6 @@ a:focus-visible {
 .wp-older {
   text-align: center;
   margin-bottom: 8px;
-}
-
-.wp-older button {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: var(--radius-sm);
-  padding: 6px 14px;
-  cursor: pointer;
-  font: inherit;
 }
 
 /* --- responsive ------------------------------------------------------------- */
