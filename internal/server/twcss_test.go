@@ -42,7 +42,7 @@ func TestTwCssCoversAdoptedComponentClasses(t *testing.T) {
 		}),
 		"button with icon": display.Button(display.ButtonProps{
 			Text: "Fax", Variant: display.ButtonPrimary,
-			Icon: icons.Icon(icons.Fax, "h-4 w-4"),
+			Icon: icons.Icon(icons.Document, "h-4 w-4"),
 		}),
 		"input bare": forms.Input(forms.InputProps{
 			BaseProps: utils.BaseProps{ID: "x-input", AriaLabel: "X"},
@@ -68,7 +68,7 @@ func TestTwCssCoversAdoptedComponentClasses(t *testing.T) {
 			ActionHref: "/do",
 		}),
 		"layout base": layout.Base(layout.PageProps{
-			Title: "t", Locale: "en", NoThemeScript: true, HTMXNone: true,
+			Title: "t", Locale: "en", NoThemeScript: true, HTMXSrc: layout.HTMXNone,
 		}),
 	}
 
