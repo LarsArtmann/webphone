@@ -231,7 +231,7 @@ input {
   font-size: 1rem;
   font-family: inherit;
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: border-color 120ms ease;

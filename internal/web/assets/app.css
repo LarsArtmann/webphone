@@ -1445,6 +1445,43 @@ select:focus-visible {
   opacity: 0.72;
 }
 
+/* A failed send repaints the whole bubble in the danger voice — the
+ * strongest honest signal the transcript can give. Applies to both the
+ * server-rendered failure (:has) and the optimistic one (.wp-opt-failed). */
+.wp-bubble.wp-out:has(.wp-status-failed),
+.wp-bubble.wp-opt-failed {
+  background: var(--danger);
+  border-color: transparent;
+  color: var(--on-accent);
+}
+
+.wp-bubble.wp-out:has(.wp-status-failed) .wp-status,
+.wp-bubble.wp-out:has(.wp-status-failed) .wp-failed-detail,
+.wp-bubble.wp-opt-failed .wp-status,
+.wp-bubble.wp-opt-failed .wp-failed-detail {
+  color: inherit;
+}
+
+.wp-bubble.wp-out:has(.wp-status-failed) .wp-bubble-meta,
+.wp-bubble.wp-opt-failed .wp-bubble-meta {
+  color: color-mix(in srgb, var(--on-accent) 80%, transparent);
+}
+
+/* Retry/Dismiss keep their outline shape but invert to stay readable
+ * on the danger fill. */
+.wp-bubble.wp-out:has(.wp-status-failed) .wp-mini,
+.wp-bubble.wp-opt-failed .wp-mini {
+  color: var(--on-accent);
+  border-color: color-mix(in srgb, var(--on-accent) 55%, transparent);
+}
+
+.wp-bubble.wp-out:has(.wp-status-failed) .wp-mini:hover,
+.wp-bubble.wp-opt-failed .wp-mini:hover {
+  background: var(--on-accent);
+  color: var(--danger);
+  border-color: var(--on-accent);
+}
+
 .wp-bubble-body {
   margin: 0;
   overflow-wrap: anywhere;
@@ -1527,9 +1564,10 @@ select:focus-visible {
   opacity: 0.75;
 }
 
-.wp-bubble.wp-opt-failed {
-  border-color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 14%, var(--surface-2));
+/* Pending outbound: the dashed outline rides inverted ink, not the
+ * invisible transparent border-color of the filled bubble. */
+.wp-bubble.wp-out.wp-opt {
+  border-color: color-mix(in srgb, var(--on-accent) 55%, transparent);
 }
 
 /* Failed-send recovery (M17 J3/J4): Retry and Dismiss live inside the
