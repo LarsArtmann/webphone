@@ -875,6 +875,14 @@ textarea::placeholder {
   color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
+/* The adopted forms.Textarea tags auto-grow with the library's
+ * tc-auto-grow class but ships NO CSS for it (consumer-owned, like
+ * sr-only above) — without this rule the class renders and does
+ * nothing. */
+.tc-auto-grow {
+  field-sizing: content;
+}
+
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
