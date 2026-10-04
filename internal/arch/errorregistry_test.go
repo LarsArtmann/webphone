@@ -23,7 +23,7 @@ import (
 var updateRegistry = flag.Bool("update", false, "rewrite the generated error-code registry block in docs/error-contract.md")
 
 const (
-	registryDocPath = "../docs/error-contract.md"
+	registryDocPath = "../../docs/error-contract.md"
 	registryBegin   = "<!-- error-code-registry: BEGIN (generated block; do not edit by hand; go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update rewrites it) -->"
 	registryEnd     = "<!-- error-code-registry: END -->"
 )
@@ -39,7 +39,12 @@ var (
 	ctorRe = regexp.MustCompile(`errorfamily\.((?:WrapOnce|Wrap|New)((?:Rejection|Conflict|Transient|Corruption|Infrastructure|Orchestration))?f?)\(([^)"]*)\"([^"]+)\"`)
 	// Family argument inside group 3, e.g. `errorfamily.Rejection, `.
 	familyArgRe = regexp.MustCompile(`errorfamily\.([A-Z][A-Za-z]*)\s*,`)
-	familyRe    = regexp.MustCompile(`^(Rejection|Conflict|Transient|Corruption|Infrastructure|Orchestration)$`)
+	// A plain identifier family argument (`Newf(family, ...)`) — the site
+	// classifies at runtime; pbx.http/crm.http do the deliberate 4xx
+	// Rejection / 5xx Transient split.
+	identArgRe        = regexp.MustCompile(`^([a-z][A-Za-z0-9_]*)\s*,`)
+	runtimeSplitLabel = "runtime-split"
+	familyRe          = regexp.MustCompile(`^(Rejection|Conflict|Transient|Corruption|Infrastructure|Orchestration)$`)
 	// P5: codes are stable `<seam>.<op>` names, lowercase snake.
 	codeShapeRe = regexp.MustCompile(`^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$`)
 )
@@ -101,13 +106,18 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 	}
 }
 
-// scanErrorFamilyCodes walks every non-test Go file and extracts the
-// (code → families, first site) map, failing on literals that break the
-// code contract.
+// scanErrorFamilyCodes walks every non-test Go file in the repo and
+// extracts the (code → families, first site) map, failing on literals
+// that break the code contract.
 func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 	t.Helper()
 	entries := map[string]*codeEntry{}
-	err := filepath.WalkDir("..", func(path string, d os.DirEntry, err error) error {
+	seen := 0
+	err := filepath.WalkDir(filepath.Join("..", ".."), func(path string, d os.DirEntry, err error) error {
+		if seen < 8 {
+			t.Logf("DEBUG visit %q isDir=%v err=%v", path, d != nil && d.IsDir(), err)
+			seen++
+		}
 		if err != nil {
 			return err
 		}
@@ -126,7 +136,8 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 		if err != nil {
 			return err
 		}
-		rel := strings.TrimPrefix(filepath.ToSlash(path), "../")
+		rel := strings.TrimPrefix(filepath.ToSlash(path), "../../")
+		seen++
 		for _, m := range ctorRe.FindAllStringSubmatch(string(data), -1) {
 			code := m[4]
 			if !codeShapeRe.MatchString(code) {
@@ -135,14 +146,17 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 			}
 			family := m[2]
 			if family == "" {
-				fa := familyArgRe.FindStringSubmatch(m[3])
-				if fa == nil {
+				switch fa := familyArgRe.FindStringSubmatch(m[3]); {
+				case fa != nil:
+					family = fa[1]
+				case identArgRe.MatchString(strings.TrimSpace(m[3])):
+					family = runtimeSplitLabel
+				default:
 					t.Errorf("%s: cannot determine the family of code %q", rel, code)
 					continue
 				}
-				family = fa[1]
 			}
-			if !familyRe.MatchString(family) {
+			if family != runtimeSplitLabel && !familyRe.MatchString(family) {
 				t.Errorf("%s: unknown errorfamily %q for code %q", rel, family, code)
 				continue
 			}
@@ -159,6 +173,7 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 		t.Fatal(err)
 	}
 	if len(entries) == 0 {
+		t.Logf("DEBUG walked %d go files", seen)
 		t.Fatal("no errorfamily codes found — the extractor likely broke")
 	}
 	return entries

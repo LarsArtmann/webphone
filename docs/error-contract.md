@@ -137,12 +137,121 @@ cross-repo-visible vocabulary (the stack runbook § "Webphone error
 contract" syncs it). A rename would silently break journal greps, so
 the registry below is PINNED: `TestErrorCodeRegistryIsFresh`
 (internal/arch) generates it from the source and fails the suite on any
-code missing from, stale in, or family-drifted against this page. After
+code missing from, stale in, or family-drifted against this page. Two codes split their family at runtime — `pbx.http` and `crm.http`
+classify the HTTP answer 4xx → Rejection / 5xx → Transient, the same
+split the gateway seam pins; the table marks them `runtime-split` and
+each seam's `family_test.go` pins both arms. After
 a deliberate code change, regenerate:
 
     go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update
 
 <!-- error-code-registry: BEGIN (generated block; do not edit by hand; go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update rewrites it) -->
+| Code | Families | First site |
+| ---- | -------- | ---------- |
+| blob.escape | Rejection | blob/store.go |
+| blob.name | Infrastructure | blob/store.go |
+| blob.open | Infrastructure | blob/store.go |
+| blob.probe | Infrastructure | blob/store.go |
+| blob.remove | Infrastructure | blob/store.go |
+| blob.root | Infrastructure | blob/store.go |
+| blob.subdir | Infrastructure | blob/store.go |
+| blob.write | Infrastructure | blob/store.go |
+| config.addr | Rejection | config/config.go |
+| config.contacts | Rejection | config/config.go |
+| config.crm.token | Rejection | config/config.go |
+| config.crm.url | Rejection | config/config.go |
+| config.csrf.trusted_origins | Rejection | config/config.go |
+| config.csrf.trusted_proxies | Rejection | config/config.go |
+| config.data_dir | Rejection | config/config.go |
+| config.defaults | Orchestration | config/config.go |
+| config.env | Rejection | config/config.go |
+| config.file | Rejection | config/config.go |
+| config.gateway.mode | Rejection | config/config.go |
+| config.gateway.webhook_url | Rejection | config/config.go |
+| config.gateway_secret_sources | Rejection | config/config.go |
+| config.identities | Rejection | config/config.go |
+| config.paperless.token | Rejection | config/config.go |
+| config.paperless.url | Rejection | config/config.go |
+| config.session_max_ttl | Rejection | config/config.go |
+| config.session_ttl | Rejection | config/config.go |
+| config.timezone | Rejection | config/config.go |
+| config.turn_rest.dead_secret | Rejection | config/config.go |
+| config.turn_rest.ttl | Rejection | config/config.go |
+| config.unmarshal | Rejection | config/config.go |
+| config.webhook_secret_file | Rejection | config/config.go |
+| crm.call_log.failed | Transient | crm/client.go |
+| crm.call_log.rejected | Rejection | crm/client.go |
+| crm.decode | Transient | crm/client.go |
+| crm.encode | Infrastructure | crm/client.go |
+| crm.http | runtime-split | crm/client.go |
+| crm.read | Transient | crm/client.go |
+| crm.request | Infrastructure | crm/client.go |
+| crm.transport | Transient | crm/client.go |
+| crm.url | Rejection | crm/client.go |
+| domain.extension | Rejection | domain/ids.go |
+| domain.id | Corruption | domain/ids.go |
+| domain.phone | Rejection | domain/ids.go |
+| gateway.form | Infrastructure | gateway/webhook.go |
+| gateway.receipt | Transient | gateway/webhook.go |
+| gateway.request | Infrastructure | gateway/webhook.go |
+| gateway.transport | Transient | gateway/webhook.go |
+| messaging.verdict | Rejection | messaging/service.go |
+| pbx.decode | Transient | pbx/client.go |
+| pbx.encode | Infrastructure | pbx/client.go |
+| pbx.http | runtime-split | pbx/client.go |
+| pbx.request | Infrastructure | pbx/client.go |
+| pbx.transport | Transient | pbx/client.go |
+| pbx.url | Rejection | pbx/client.go |
+| session.insert | Infrastructure | session/sqlite.go |
+| session.migrate | Infrastructure | session/sqlite.go |
+| session.nil_db | Infrastructure | session/sqlite.go |
+| session.sweep | Infrastructure | session/sqlite.go |
+| session.token | Infrastructure | session/service.go |
+| session.ttl | Infrastructure | session/sqlite.go |
+| store.attachment_get | Infrastructure | store/messages.go |
+| store.attachment_insert | Infrastructure | store/messages.go |
+| store.attachment_save | Infrastructure | messaging/service.go |
+| store.attachment_scan | Infrastructure | store/messages.go |
+| store.attachments_list | Infrastructure | store/messages.go |
+| store.attachments_rows | Infrastructure | store/messages.go |
+| store.close | Infrastructure | store/db.go |
+| store.contact_delete | Infrastructure | store/contacts.go |
+| store.contact_list_full | Rejection | store/contacts.go |
+| store.contact_missing | Rejection | store/contacts.go |
+| store.contact_save | Infrastructure | store/contacts.go |
+| store.contact_scan | Infrastructure | store/contacts.go |
+| store.count_archived | Infrastructure | store/messages.go |
+| store.counts | Infrastructure | store/sweep.go |
+| store.exec | Infrastructure | store/sweep.go |
+| store.fax_create | Infrastructure | fax/service.go |
+| store.fax_insert | Infrastructure | store/faxes.go |
+| store.fax_scan | Infrastructure | store/faxes.go |
+| store.fax_spool | Infrastructure | fax/service.go |
+| store.fax_update | Infrastructure | store/faxes.go |
+| store.message_append | Infrastructure | messaging/service.go |
+| store.message_insert | Infrastructure | store/messages.go |
+| store.message_scan | Infrastructure | store/messages.go |
+| store.migrate | Infrastructure | store/db.go |
+| store.open | Infrastructure | store/db.go |
+| store.outbound_status | Infrastructure | messaging/service.go |
+| store.ping | Infrastructure | store/db.go |
+| store.query | Infrastructure | store/db.go |
+| store.snippet_delete | Infrastructure | store/snippets.go |
+| store.snippet_save | Infrastructure | store/snippets.go |
+| store.snippet_scan | Infrastructure | store/snippets.go |
+| store.sweep_scan | Infrastructure | store/sweep.go |
+| store.thread_find | Infrastructure | store/messages.go |
+| store.thread_flag | Infrastructure, Rejection | store/messages.go |
+| store.thread_get | Infrastructure | store/messages.go |
+| store.thread_insert | Infrastructure | store/messages.go |
+| store.thread_mark_read | Infrastructure | store/messages.go |
+| store.thread_reread | Infrastructure | store/messages.go |
+| store.thread_resolve | Infrastructure | messaging/service.go |
+| store.thread_scan | Infrastructure | store/messages.go |
+| store.thread_upsert | Infrastructure | store/messages.go |
+| store.tx_begin | Infrastructure | store/messages.go |
+| store.tx_commit | Infrastructure | store/messages.go |
+| webhook.fax_pages | Rejection | server/webhooks.go |
 
 <!-- error-code-registry: END -->
 
