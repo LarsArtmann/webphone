@@ -29,6 +29,9 @@ type handlers struct {
 	eventsLimiter   *httputil.KeyedRateLimiter
 	csrfLimiter     *httputil.KeyedRateLimiter
 	contactsLimiter *httputil.KeyedRateLimiter
+	// Passkey enrollment ceremonies (token-gated by design; the bucket
+	// only fences runaway clients, the one-time token is the real gate).
+	passkeyLimiter *httputil.KeyedRateLimiter
 	// Dedupe memory for replayed provider status callbacks (provider_ref).
 	hooksIdem *idemStore
 	// Dedupe memory for the island's post-call journal reports (key).

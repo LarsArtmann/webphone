@@ -173,6 +173,21 @@ func (s *Service) Resolve(email string) (MappedUser, bool) {
 	return mapped, ok
 }
 
+// MappedByExtension reverse-resolves: which mapped user (if any) a
+// session extension belongs to. Powers the display identity on the
+// extension login too — a mapped user gets their name and numbers in
+// the whoami line regardless of how they signed in.
+func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, bool) {
+	for _, mapped := range s.cfg.Users {
+		for _, ext := range mapped.Extensions {
+			if ext == extension {
+				return mapped, true
+			}
+		}
+	}
+	return MappedUser{}, false
+}
+
 // SIPPassword reads the extension's directory password from its
 // operator-managed file — at login time, never cached, so rotation via
 // the secrets pipeline takes effect on the next login. Empty or

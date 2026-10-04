@@ -173,6 +173,7 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
+		passkeyLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
 		unread:          newUnreadCache(5 * time.Second),
 		hooksIdem:       newIdemStore(hookIdempotencyTTL),
 		callsIdem:       newIdemStore(callsIdempotencyTTL),
@@ -226,6 +227,26 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/import", h.importContacts)
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
+	// The passkey (WebAuthn) login + enrollment surface: registered ONLY
+	// when the identity layer is wired (config-gated in the composition
+	// root) — a disabled deployment keeps answering the styled 404.
+	// Login ceremonies share the login flood budget (email probing is
+	// password-guessing class); enrollment rides its own bucket (the
+	// one-time token is the real gate, the bucket only fences runaway
+	// clients).
+	if deps.UserAuth != nil {
+		protected.Handle("POST /api/auth/passkey/begin",
+			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyBeginLogin)))
+		protected.Handle("POST /api/auth/passkey/finish",
+			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyFinishLogin)))
+		protected.Handle("POST /api/auth/passkey/enroll/verify",
+			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollVerify)))
+		protected.Handle("POST /api/auth/passkey/enroll/begin",
+			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollBegin)))
+		protected.Handle("POST /api/auth/passkey/enroll/finish",
+			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollFinish)))
+		protected.HandleFunc("GET /enroll", h.enrollPage)
+	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
 	// (no CSRF surface), self-gated through requireSession.

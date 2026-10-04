@@ -12,6 +12,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // verifyTimeout bounds the PBX round-trip at login: the island awaits
@@ -44,46 +45,104 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing password", http.StatusBadRequest)
 		return
 	}
-	if h.deps.PhoneAPI.Enabled() {
-		ctx, cancel := context.WithTimeout(r.Context(), verifyTimeout)
-		err := h.deps.PhoneAPI.VerifyCredentials(ctx, pbx.Credentials{
-			Extension: body.Extension,
-			Password:  body.Password,
-		})
-		cancel()
-		switch {
-		case err == nil:
-		case errors.Is(err, pbx.ErrUnauthorized):
-			http.Error(w, "invalid credentials", http.StatusUnauthorized)
-			return
-		default:
-			http.Error(w, "credential verification failed", http.StatusBadGateway)
-			return
-		}
+	if !h.verifyDirectoryCredentials(w, r, extension, body.Password) {
+		return
 	}
-
-	token, err := h.deps.Sessions.Create(extension, body.Password)
-	if err != nil {
+	if err := h.mintSession(w, r, extension, body.Password); err != nil {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
+	writeJSON(w, http.StatusCreated, h.sessionIdentityResponse(extension))
+}
+
+// verifyDirectoryCredentials is the ONE fail-closed PBX directory check
+// behind both login modes (extension and passkey): the submitted (or
+// file-sourced) credentials must directory-verify before any session is
+// minted — a forged POST must not mint a session scoped to another
+// extension, and a stale password file must not mint a dead one (the
+// passkey mode sources the password server-side, so this check is its
+// only directory proof). Deployments without a phone API (loopback dev)
+// skip verification, matching the mode where no PBX-backed panels exist.
+// It answers the client itself on failure; false means the response is
+// done.
+func (h *handlers) verifyDirectoryCredentials(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) bool {
+	if !h.deps.PhoneAPI.Enabled() {
+		return true
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), verifyTimeout)
+	err := h.deps.PhoneAPI.VerifyCredentials(ctx, pbx.Credentials{
+		Extension: extension.String(),
+		Password:  password,
+	})
+	cancel()
+	switch {
+	case err == nil:
+		return true
+	case errors.Is(err, pbx.ErrUnauthorized):
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+	case errors.Is(err, context.DeadlineExceeded):
+		http.Error(w, "credential verification timed out", http.StatusGatewayTimeout)
+	default:
+		http.Error(w, "credential verification failed", http.StatusBadGateway)
+	}
+	return false
+}
+
+// mintSession is the ONE birth path of a webphone session row + cookie:
+// create, set the cookie for the idle window, and rotate the CSRF token
+// (fixation defense, the nosurf documented pattern): the response
+// deletes the CSRF cookie, and the client immediately adopts the fresh
+// token via GET /api/csrf — the no-reload login needs that adoption
+// step because the served page carries the old masked token.
+func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) error {
+	token, err := h.deps.Sessions.Create(extension, password)
+	if err != nil {
+		return err //nolint:wrapcheck // classified by the store seam; the caller answers 500
+	}
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL)
-	// Rotate the CSRF token on login (fixation defense, the nosurf
-	// documented pattern): the response deletes the CSRF cookie, and the
-	// island immediately adopts the fresh token via GET /api/csrf,
-	// the no-reload login needs that adoption step because the served
-	// page carries the old masked token.
 	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	// did is the extension's presented PSTN number (config identities);
-	// the island appends it to the whoami line so users see their real
-	// number, not just extension@sip_domain.
-	response := map[string]string{"extension": extension.String()}
+	return nil
+}
+
+// sessionIdentityResponse shapes what a freshly minted (or resumed)
+// session tells the client about itself: the extension (the island's SIP
+// REGISTER needs it), its presented DID when configured (identities),
+// and — when the extension is passkey-mapped — the user's display name
+// and every number mapped to that user, so the whoami line can lead
+// with the human identity instead of a bare extension@sip_domain.
+func (h *handlers) sessionIdentityResponse(extension domain.Extension) map[string]any {
+	response := map[string]any{"extension": extension.String()}
 	if did := h.identityFor(extension); did != "" {
 		response["did"] = did
 	}
-	_ = json.MarshalWrite(w, response) //nolint:erraudit // best-effort write; the response is already committed
+	if h.deps.UserAuth != nil {
+		if mapped, ok := h.deps.UserAuth.MappedByExtension(extension); ok {
+			if mapped.DisplayName != "" {
+				response["display_name"] = mapped.DisplayName
+			}
+			if numbers := h.numbersFor(mapped); len(numbers) > 0 {
+				response["numbers"] = numbers
+			}
+		}
+	}
+	return response
+}
+
+// numbersFor lists the mapped user's presented numbers (identities of
+// every mapped extension), deduplicated in mapping order — the "numbers
+// available to this user" the whoami line leads with.
+func (h *handlers) numbersFor(mapped userauth.MappedUser) []string {
+	seen := make(map[string]bool, len(mapped.Extensions))
+	numbers := make([]string, 0, len(mapped.Extensions))
+	for _, ext := range mapped.Extensions {
+		did := h.identityFor(ext)
+		if did == "" || seen[did] {
+			continue
+		}
+		seen[did] = true
+		numbers = append(numbers, did)
+	}
+	return numbers
 }
 
 // getSession resumes a live session for an island page load: the
@@ -99,17 +158,14 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(http.StatusOK)
-	response := map[string]string{
-		"extension": sess.Extension.String(),
-		"password":  sess.Password,
-	}
-	if did := h.identityFor(sess.Extension); did != "" {
-		response["did"] = did
-	}
-	_ = json.MarshalWrite(w, response) //nolint:erraudit // best-effort write; the response is already committed
+	response := h.sessionIdentityResponse(sess.Extension)
+	// The password is the session's own payload (the row already carries
+	// it for the phone-api proxy; the browser REGISTER needs it by
+	// design) and it is served only to the cookie that proved itself at
+	// login. no-store keeps the credential out of every cache.
+	response["password"] = sess.Password
+	writeJSON(w, http.StatusOK, response)
 }
 
 // destroySession signs the tab session out (island logout).

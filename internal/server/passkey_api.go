@@ -7,8 +7,6 @@ import (
 
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/go-error-family"
-
-	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // The passkey (WebAuthn) login + enrollment surface. Routes are
