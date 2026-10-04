@@ -8,6 +8,8 @@ import (
 
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/go-error-family"
+
+	"github.com/larsartmann/webphone/internal/web/views"
 )
 
 // The passkey (WebAuthn) login + enrollment surface. Routes are
@@ -172,6 +174,26 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "registered"})
+}
+
+// enrollPage renders the standalone passkey-enrollment page: the
+// landing surface for a CLI-minted enrollment link. No session, no
+// island runtime — the one-time token is the gate, and the page's
+// module (assets/enroll/enroll.js) drives verify → begin → finish
+// against the three POST endpoints above.
+func (h *handlers) enrollPage(w http.ResponseWriter, r *http.Request) {
+	if h.deps.UserAuth == nil {
+		http.NotFound(w, r)
+		return
+	}
+	props := views.EnrollProps{
+		Lang:       h.lang(r),
+		CSRFToken:  csrfToken(r),
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := views.EnrollPage(props).Render(r.Context(), w); err != nil {
+		http.Error(w, "render error", http.StatusInternalServerError)
+	}
 }
 
 // passkeyServerError maps a userauth error to its HTTP shape. Rejections

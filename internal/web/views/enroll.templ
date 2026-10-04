@@ -1,0 +1,72 @@
+package views
+
+import 	"github.com/larsartmann/templ-components/layout"
+
+// EnrollProps carries the standalone passkey-enrollment page's needs.
+type EnrollProps struct {
+	// Lang drives the server-rendered strings.
+	Lang Lang
+	// CSRFToken rides the meta tag the enroll module reads for its
+	// ceremony POSTs (same contract as the shell's head extras).
+	CSRFToken string
+}
+
+// EnrollPage is the one-time passkey enrollment surface: the user opens
+// a CLI-minted enrollment link (/enroll?token=…), the token verifies
+// AND burns server-side, then the browser runs the WebAuthn
+// registration ceremony for the account the token named. The page
+// deliberately loads NO island runtime — no sip.js, no state, no
+// session surface — just the shared WebAuthn coercion helper and the
+// enroll flow module; the ids below (#enroll-*) are the wire contract
+// with assets/enroll/enroll.js (docs/dom-contract.md).
+templ EnrollPage(props EnrollProps) {
+	@layout.Base(layout.PageProps{
+		Title:          "WebPhone — Enroll passkey",
+		Description:    "One-time passkey enrollment for the WebPhone.",
+		ThemeColor:     "#0f766e",
+		DarkThemeColor: "#10161a",
+		CSSPath:        "/assets/app.css",
+		Favicon:        "/favicon.svg",
+		Locale:         string(props.Lang),
+		SEO:            layout.SEOMeta{NoIndex: true},
+		// Same CSP posture as the shell: no inline theme script, the
+		// same-origin preload applies the theme pre-paint instead.
+		NoThemeScript: true,
+		HeadContent:   enrollHead(props),
+	}) {
+		<div class="island">
+			<main class="app">
+				<section id="enroll-view" class="card">
+					<h1>{ T(props.Lang, "enroll.title") }</h1>
+					<p class="hint">{ T(props.Lang, "enroll.intro") }</p>
+					<form id="enroll-form" autocomplete="off" aria-describedby="enroll-error">
+						<label>
+							<span>{ T(props.Lang, "enroll.token.label") }</span>
+							<input id="enroll-token" name="token" autocomplete="one-time-code" required></input>
+						</label>
+						<label>
+							<span>{ T(props.Lang, "enroll.credential.label") }</span>
+							<input id="enroll-credential-name" name="credential_name" placeholder="laptop" inputmode="text"></input>
+						</label>
+						<button type="submit" class="primary">{ T(props.Lang, "enroll.submit") }</button>
+					</form>
+					<p class="hint" id="enroll-status" hidden></p>
+					<p class="hint" id="enroll-error" role="alert" hidden></p>
+				</section>
+			</main>
+		</div>
+		<script type="module" src="/assets/enroll/enroll.js"></script>
+	}
+}
+
+// enrollHead is the enroll page's minimal head payload: theme applied
+// pre-paint (same-origin, CSP-clean), the island stylesheet (the page
+// reuses its .island/.card/.hint element styles — it IS an island-shaped
+// page, just without the island runtime), and the CSRF meta the module
+// reads. No modulepreload list here: the page fetches exactly two small
+// modules, discovered at the single script tag at the end of body.
+templ enrollHead(props EnrollProps) {
+	<script src="/assets/theme-preload.js"></script>
+	<link rel="stylesheet" href="/assets/island/style.css"></link>
+	<meta name="csrf-token" content={ props.CSRFToken }></meta>
+}
