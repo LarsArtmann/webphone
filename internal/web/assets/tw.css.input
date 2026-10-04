@@ -1,0 +1,126 @@
+/* Input for the adopted templ-components stylesheet
+   (internal/web/assets/tw.css). Rebuild ONLY with
+   scripts/build-tw-css.sh — tailwindcss v4 ONLY (v3 emits a different
+   layer model and breaks the dark variant), staged build, locked nixpkgs
+   rev. The artifact never merges with health.css (the scoped dashboard
+   build); it styles exactly the adopted templ-components surfaces:
+   display.Button, forms.Input/Textarea, display.EmptyState, layout.Base
+   (skip link), icons — and nothing else.
+
+   Webphone does NOT use Tailwind for its own markup (app.css + island
+   stylesheet own every hand-styled surface). This build exists so the
+   adopted library components do not render naked. */
+
+@import "tailwindcss";
+
+/* Manual dark mode: webphone toggles data-theme="dark" on <html>
+   (theme-preload.js + shell.js). The media-query "auto" path (no
+   attribute) intentionally does NOT activate dark: utilities — the
+   @theme remap below already resolves every utility through the app
+   tokens, which follow prefers-color-scheme on their own. */
+
+@custom-variant dark (&:where(:root[data-theme="dark"], :root[data-theme="dark"] *));
+
+/* Remap Tailwind's palette onto the webphone design tokens ("Graphite
+   desk + signal green"). v1.19.4 components hardcode standard utilities
+   (bg-blue-600, ring-gray-300, dark:bg-gray-800, ...) with hardcoded
+   Tailwind ramp values; this remap makes every utility resolve to the
+   exact same runtime values the hand-styled surfaces use — so adopted
+   components switch themes with the app, including the auto path.
+
+   Ramp semantics kept: X-50/100 are the faint tints (hover wells),
+   X-300/700 the rings, X-400/500 the hover states, X-600 the fills,
+   X-800/900 the dark-mode ring/hover wells. Where the webphone token
+   set has no direct equivalent (danger/warn/ok faint tints) a
+   color-mix over the token stands in.
+
+   "inline" embeds the values straight into the utilities: NOTHING is
+   emitted to :root, so no Tailwind token can shadow an app.css token
+   of the same name (the artifact loads last — a plain @theme would
+   clobber app.css tokens like --radius-sm in the auto-dark cascade). */
+@theme inline {
+  /* accent family (signal green) */
+  --color-blue-50: color-mix(in oklab, var(--accent) 10%, transparent);
+  --color-blue-100: color-mix(in oklab, var(--accent) 15%, transparent);
+  --color-blue-300: var(--accent-strong);
+  --color-blue-400: var(--accent-strong);
+  --color-blue-500: var(--accent-strong);
+  --color-blue-600: var(--accent);
+  --color-blue-800: var(--accent);
+  --color-blue-900: var(--accent);
+
+  /* neutral family (graphite desk) */
+  --color-gray-50: var(--surface-2);
+  --color-gray-100: var(--surface-3);
+  --color-gray-200: var(--border-strong);
+  --color-gray-300: var(--border);
+  --color-gray-400: var(--muted);
+  --color-gray-500: var(--muted);
+  --color-gray-600: var(--muted);
+  --color-gray-700: var(--border-strong);
+  --color-gray-800: var(--surface-2);
+  --color-gray-900: var(--text);
+  --color-gray-950: var(--bg);
+
+  /* white is the on-accent ink for filled buttons; bg-white (secondary
+     button in light) resolves to the same #ffffff the light surface
+     uses, and dark:bg-gray-800 overrides it in dark. */
+  --color-white: var(--on-accent);
+
+  /* danger family */
+  --color-red-50: color-mix(in oklab, var(--danger) 10%, transparent);
+  --color-red-300: var(--danger);
+  --color-red-400: var(--danger);
+  --color-red-500: var(--danger);
+  --color-red-600: var(--danger);
+  --color-red-700: var(--danger);
+  --color-red-800: var(--danger);
+  --color-red-900: var(--danger);
+
+  /* warning family */
+  --color-amber-50: color-mix(in oklab, var(--warn) 10%, transparent);
+  --color-amber-300: var(--warn);
+  --color-amber-400: var(--warn);
+  --color-amber-600: var(--warn);
+  --color-amber-800: var(--warn);
+  --color-amber-900: var(--warn);
+
+  /* ok family */
+  --color-green-50: color-mix(in oklab, var(--ok) 10%, transparent);
+  --color-green-300: var(--ok);
+  --color-green-400: var(--ok);
+  --color-green-600: var(--ok);
+  --color-green-800: var(--ok);
+  --color-green-900: var(--ok);
+
+  /* webphone radii (theme-invariant). The literals duplicate app.css
+     tokens because Tailwind's own token names (--radius-md/--radius-lg)
+     collide with the app names they must follow; build-tw-css.sh
+     asserts the values stay in lockstep with app.css. */
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+/* Scan set, relative to this file (internal/web/assets/): the webphone
+   views (call sites pass no extra classes, but EmptyState props and
+   icon components render here) plus the exact adopted vendored sources
+   — deliberately NOT whole packages: every class string in a scanned
+   file ships in the artifact, and the library carries dozens of
+   components this app does not use. */
+@source "../../../internal/web/views";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/empty_state.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/empty_state_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button_go.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input_classes.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/label.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/label_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/textarea.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/textarea_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/layout/base.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/layout/base_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/icons/icon.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/icons/icon_templ.go";
