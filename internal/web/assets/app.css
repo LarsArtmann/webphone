@@ -858,7 +858,9 @@ input[type="file"]::file-selector-button:hover {
   border-color: var(--accent);
 }
 
-input {
+input,
+textarea,
+select {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
@@ -868,14 +870,16 @@ input {
   transition: border-color 120ms ease;
 }
 
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: color-mix(in srgb, var(--muted) 75%, transparent);
 }
 
 input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
 button:focus-visible,
-a:focus-visible,
-select:focus-visible {
+a:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -1298,6 +1302,12 @@ select:focus-visible {
   flex-direction: row;
   align-items: baseline;
   gap: 16px;
+}
+
+/* The name leads; the organization toggles and the call button dock to
+ * the far edge, so a long remote name cannot shove the actions around. */
+.wp-thread-head h2 {
+  margin-inline-end: auto;
 }
 
 .wp-back {
