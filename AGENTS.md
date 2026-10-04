@@ -13,15 +13,14 @@ The cqrs-htmx `setup` bundle stays REJECTED (split-brain identity + a measured +
 - PUSH webphone before the stack re-pins; the stack tree must be CLEAN
   before pbx-artmann re-locks (its narHash covers the whole tree). Ritual:
   [docs/release-runbook.md](docs/release-runbook.md).
-- NixOS module options: `enable`, `package`, `dataDir` (MUST be under `/var/lib/` — assertion), `settings` (freeform), `environmentFile`, `memoryMax`, `csrf.{trustedProxies,trustedOrigins}`, `serverTiming.enable`, `backup.{enable,destDir,calendar,retentionDays}` (null = single snapshot; set = dated history + prune), `caddy.{enable,hostName,sipUpstream}`, `caddy.hsts.{enable,maxAge}`. The front is CADDY (the old nginx generator was never used).
-  The vhost reverse-proxies the app, bridges the websocket path ONLY when `caddy.sipUpstream` is set (the Go app never terminates the SIP wss), flushes `/events` unbuffered; probes fence via `remote_ip` matchers. `backup.destDir` shares the `/var/lib/` assertion; both units set `UMask=0077` + `StateDirectoryMode=0750`; the backup oneshot orders after `webphone.service`.
+- NixOS module options: `enable`, `package`, `dataDir` (MUST be under `/var/lib/` — assertion), `settings` (freeform), `environmentFile`, `memoryMax`, `csrf.{trustedProxies,trustedOrigins}`, `serverTiming.enable`, `backup.{enable,destDir,calendar,retentionDays}` (null = single snapshot; set = dated history + prune), `caddy.{enable,hostName,sipUpstream}`, `caddy.hsts.{enable,maxAge}`. The front is CADDY. The vhost reverse-proxies the app, bridges the websocket path ONLY when `caddy.sipUpstream` is set (the Go app never terminates the SIP wss), flushes `/events` unbuffered; probes fence via `remote_ip` matchers. `backup.destDir` shares the `/var/lib/` assertion; both units set `UMask=0077` + `StateDirectoryMode=0750`; the backup oneshot orders after `webphone.service`.
 - The `webphone-module` flake check evaluates the module with stand-in
   options (new config keys the module writes need a stand-in there);
   `webphone-backup` (KVM-gated) + `webphone-backup-drill` cover snapshot
   AND restore.
 - flake.nix is a slim ENTRY; the meat lives in `nix/packages.nix`,
-  `nix/checks.nix`, `nix/module-check.nix` (+ case files),
-  `nix/vm-tests.nix`, `nix/apps.nix`, `nix/devshell.nix`, `nix/treefmt.nix`.
+  `nix/checks.nix`, `nix/module-check.nix`, `nix/vm-tests.nix`,
+  `nix/apps.nix`, `nix/devshell.nix`, `nix/treefmt.nix`.
   `webphoneVersion` MUST stay in flake.nix (`release.sh` greps/seds it),
   reaching `nix/packages.nix` via `{ _module.args.webphoneVersion = ...; }`.
   Gotcha: `self` is a TOP-level-only flake-parts module arg.
@@ -56,9 +55,8 @@ nix build .#webphone --system aarch64-linux   # cross-builds — verify by ELF b
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 nix shell nixpkgs#chromium nixpkgs#chromedriver 'nixpkgs#python312.withPackages(ps: [ ps.selenium ])' \
   --command python3 scripts/ui-capture.py --binary $(nix build --no-link --print-out-paths .#webphone)/bin/webphone
-                                     # T23 visual harness: 14 shots into ui-shots/; LOCAL-ONLY by budget decision
-                                     # (a KVM browser VM duplicates the stack's E2E lane); asserts DOM per shot
-                                     # and waits on the island call view (the resume reveal races short sleeps)
+                                     # T23 visual harness: 14 shots into ui-shots/; LOCAL-ONLY by budget decision;
+                                     # asserts DOM per shot, waits on the island call view (the resume reveal races short sleeps)
 ```
 
 Smoke a binary quickly (loopback gateway = whole product, zero PBX):
@@ -89,42 +87,42 @@ browser E2E drives the island through it — re-run after any markup change
   SIP island lives OUTSIDE that region. Deep links render the full shell.
 - Passkey ids (`passkey-login-form`, `passkey-email`,
   `passkey-login-error`) and the whole `/enroll` page render ONLY when
-  `auth.passkey.*` is enabled — they are documented as CONDITIONAL in
-  docs/dom-contract.md and the E2E must not assume them. Every island
-  module in island/app MUST stay inside main.js's import closure
-  (`TestIslandModulesMatchImportClosure`); standalone page entries go to
-  their own assets dir (see `assets/enroll/`).
+  `auth.passkey.*` is enabled — CONDITIONAL in docs/dom-contract.md; the
+  E2E must not assume them. Every island module in island/app MUST stay
+  inside main.js's import closure (`TestIslandModulesMatchImportClosure`);
+  standalone page entries go to their own assets dir (`assets/enroll/`).
 
 ## Architecture invariants
 
 - **Middleware chain** (server `New`, ORDER): `ContextEnrichmentMiddleware
   (nil)` → `RequestLoggingSlog` → `ServerTimingMiddlewareWhen` (env-gated)
-  → `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` → routes.
-  Enrichment stays OUTSIDE the request log (`request_id=` +
-  `X-Request-ID`); user extractor nil. `securityHeadersConfig()` is the
-  single header-config source; `Permissions-Policy` calibrated
-  (`microphone=(self)`; others denied). Limiters are `httputil.KeyedRateLimiter` with port-stripped
-  peer-host keys (`remoteHostKey`; flip to `KeyExtractorFromClientIP` only
-  once the stack proves XFF sanitization). `/healthz` = honest readiness
-  (sqlite ping + blob write via the ONE home `blob.ProbeWrite`; 503 names
-  the failing check); `/livez` = fetch-free; `/startupz` = latched
-  503-until-first-pass (`Deps.Probe` over `sqlite`/`blob-dir`; nil Probe =
-  NewChecks fallback). `/events` rides `Broadcaster.ServeSSE` (httputil
-  httpspec-pinned). The unit stays `Type=simple`.
+  → `SecurityHeaders` → `cqrshtmx.RecoveryMiddleware` → routes. User
+  extractor nil; `securityHeadersConfig()` is the single header-config
+  source (`Permissions-Policy`: `microphone=(self)`). Limiters:
+  `httputil.KeyedRateLimiter`, port-stripped peer-host keys
+  (`remoteHostKey`; `KeyExtractorFromClientIP` only once the stack proves
+  XFF sanitization). `/healthz` = honest readiness (sqlite ping + blob
+  write via the ONE home `blob.ProbeWrite`, plus a `userauth` leg probing
+  `usermgmt.db` ONLY when passkey is on; 503 names the failing check);
+  `/livez` fetch-free; `/startupz` latched 503-until-first-pass
+  (`Deps.Probe`; nil = NewChecks fallback, where userauth joins
+  NON-critical). `/events` rides `Broadcaster.ServeSSE`. Unit stays
+  `Type=simple`.
 - **Composition root `internal/app`** (samber/do v2): ONE container owns
-  object lifetime; `cmd/webphone` owns process concerns. The injector lives
-  ONLY in `internal/app` (service packages stay framework-free; lifecycle
-  conformance asserted adapter-side in app.go). `MustInvoke*` stays
-  composition-root-ONLY by doctrine (fail-fast miswires, DO-1; arch-test
-  enforced); `App.Start` resolves via `InvokeNamed`+`wrapf` (de-panicked
-  2026-10-02). Critical pair registers
-  NAMED (`sqlite`, `blob-dir` — the probe's critical-service contract);
-  both + the handler are EAGERLY invoked in `New`; the probe is built ONCE
-  and threaded to server.Deps + the dashboard (never registered in the
-  injector it reads); shutdown = HTTP drain → `Probe.Shutdown` →
-  `do.Shutdown` (idempotent). `Deps.Probe`/`Deps.Dashboard` nil-fallback
-  keeps test compositions working. `samber-linter` HW-4 on the pair is
-  suppressed (eagerly resolved; the linter can't see transitivity).
+  object lifetime; `cmd/webphone` owns process concerns. The injector
+  lives ONLY in `internal/app` (service packages stay framework-free;
+  lifecycle conformance asserted adapter-side in app.go). `MustInvoke*`
+  stays composition-root-ONLY by doctrine (fail-fast miswires, DO-1;
+  arch-test enforced); `App.Start` resolves via `InvokeNamed`+`wrapf`.
+  Critical pair registers NAMED (`sqlite`, `blob-dir` — the probe's
+  critical-service contract; `userauth` registers named too when passkey
+  is on); both + the handler are EAGERLY invoked in `New`; the probe is
+  built ONCE and threaded to server.Deps + the dashboard (never
+  registered in the injector it reads); shutdown = HTTP drain →
+  `Probe.Shutdown` → `do.Shutdown` (idempotent). `Deps.Probe`/
+  `Deps.Dashboard` nil-fallback keeps test compositions working.
+  `samber-linter` HW-4 on the pair is suppressed (eagerly resolved; the
+  linter can't see transitivity).
 - **Health dashboard seam** (go-health-dashboard): config-gated
   `dashboard.{enable,title}`, DEFAULT OFF (fence like the probe triple);
   Caddy proxies `/health/*` unbuffered. Mounted at `/health` (subtree
@@ -150,20 +148,15 @@ browser E2E drives the island through it — re-run after any markup change
   never cached; empty/missing = Rejection, the 2026-10-01 outage class),
   directory-verifies, mints the session and returns the password
   (no-store) — the island REGISTERs only afterwards. Enrollment is
-  CLI-minted one-time tokens (`webphone -enroll-passkey <email>`, 15-min
-  sha256-at-rest, burned at verify; `GET /enroll` + `/assets/enroll/`).
-  The provider seam: `PasskeyRuntime.WebAuthn` (nil = the real
-  go-webauthn provider; tests inject the deterministic stub — never
-  build browser signatures in tests). Island modules `webauthn.js` +
-  `passkey.js` live in island/app (in main.js's import closure — the
-  preload invariant test requires it); `enroll.js` deliberately lives in
-  `assets/enroll/` OUTSIDE the island (a standalone page entry would
-  waste a modulepreload on every shell render). `session.js`
-  `adoptServerSession` is the ONE post-session sequence (CSRF adoption
-  retry → SSE attach → `wp:session-opened`) shared by both login paths;
-  its event detail carries `{did, displayName, numbers}`. userauth
-  imports ONLY config-free types — the config→runtime adapter is
-  `app.PasskeyRuntime` (exported for the CLI too).
+  CLI-minted one-time tokens (`webphone -enroll-passkey <email>`;
+  `GET /enroll` + `/assets/enroll/`). The provider seam
+  `PasskeyRuntime.WebAuthn` (nil = the real go-webauthn provider; tests
+  inject the deterministic stub — never build browser signatures in
+  tests). `session.js` `adoptServerSession` is the ONE post-session
+  sequence shared by both login paths (detail `{did, displayName,
+  numbers}`). userauth imports ONLY config-free types — the adapter is
+  `app.PasskeyRuntime` (exported for the CLI). Token/enroll/wire detail:
+  README § Passkey.
 - **Sessions**: verify extension/password against the PBX directory before
   minting (fail-closed; loopback dev skips + WARNs). Store SEAM: prod
   `NewSQLiteStore` (row carries the extension + directory password the
@@ -174,8 +167,8 @@ browser E2E drives the island through it — re-run after any markup change
   per-IP rate limited. Handlers self-gate via `requireSession`;
   `Sessions.Require` also wires `/events` + `/phone-api/`; the contract
   test allowlists exactly FOUR 401 writers (actions, webhooks,
-  session_api, passkey_api — the last is the passkey login's uniform
-  anti-enumeration gate, same credential class as session_api's).
+  session_api, passkey_api — the passkey login's uniform
+  anti-enumeration gate).
 - **Language**: per extension — `wp-lang` cookie (samesite=strict) →
   `Accept-Language: de*` → English; `ExtensionHubs` remember it for SSE
   fragments. Service validation reasons stay English. i18n dictionaries
@@ -195,16 +188,14 @@ browser E2E drives the island through it — re-run after any markup change
   migration step, never ad-hoc ALTER). Toggles ride
   `POST /messages/{id}/{flag}?on=N` (DESIRED state): row buttons → 204 +
   the list-only `threads` nudge; head buttons target `#wp-thread-head`
-  outerHTML and get the fresh head (`setThreadFlag` branches on
-  `HX-Target`). Inbound messages AUTO-UNARCHIVE; mute is
-  presentation-only (unread truth stays in the store); rows keep stable
+  outerHTML (`setThreadFlag` branches on `HX-Target`). Inbound messages
+  AUTO-UNARCHIVE; mute is presentation-only; rows keep stable
   `thread-<id>` wrapper ids (idiomorph). Thread deep links
-  (`GET /messages/{id}`) render the OPEN thread (the pushed URL must
-  round-trip; unresolvable ids → list + gone-notice, `threadGone`).
-  Snippets: per-extension store (cap 100), quick (cap 5) chips +
-  `<details>` picker in the REPLY composer only; `data-snippet` fill
-  REPLACES the textarea. Images carry `data-lightbox` → singleton
-  `#wp-lightbox` dialog. D1–D14: docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md.
+  (`GET /messages/{id}`) render the OPEN thread; unresolvable ids → list
+  + gone-notice (`threadGone`). Snippets: per-extension store (cap 100),
+  quick (cap 5) chips + `<details>` picker in the REPLY composer only;
+  `data-snippet` fill REPLACES the textarea. Images carry `data-lightbox`
+  → singleton `#wp-lightbox` dialog. D1–D14: docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md.
 - **Gateway seam**: loopback (dev) vs webhook (multipart to
   `{url}/message|/fax`, Bearer secret, `{"provider_ref"}` receipt). File
   parts carry their HONEST Content-Type (`createFilePart`; fax parts
@@ -245,8 +236,8 @@ browser E2E drives the island through it — re-run after any markup change
   focus-to-heading move, swap-time `aria-current` mirror.
 - **CSP**: same-origin only, `connect-src wss:` for SIP; no CDN, no
   webfonts, no inline handlers, NO inline `style` (silently dead —
-  lessons.md) and NO inline scripts (`TestServedPageSatisfiesStrictCSP`
-  fails on any; theme preload is same-origin `/assets/theme-preload.js`;
+  lessons.md) and NO inline scripts (`TestServedPageSatisfiesStrictCSP`;
+  theme preload is same-origin `/assets/theme-preload.js`;
   templ-components Base told `NoThemeScript`).
 - **templ-components adoption**: `layout.Base` (with `NoThemeScript` +
   `CSSPath`/`HTMXVersion` suppressed); `display.EmptyState` with a
@@ -256,11 +247,10 @@ browser E2E drives the island through it — re-run after any markup change
   `@layer` only). **Cascade-layer contract**: ANY unlayered rule beats
   ANY layered utility at any specificity — island bare-element rules
   MUST stay scoped to `.island` (box-sizing + reduced-motion stay global
-  on purpose; app.css has no reduced-motion of its own); never un-scope.
-  DELIBERATE hand-rolls stay:
-  avatars, nav badges, informational `wp-empty`, error panel, timestamps,
-  brand SVG. `display.RelativeTime`, `display.CountBadge`, the errorpage
-  module are REJECTED (rationale in the coexistence verdict doc).
+  on purpose); never un-scope. DELIBERATE hand-rolls stay: avatars, nav
+  badges, informational `wp-empty`, error panel, timestamps, brand SVG.
+  `display.RelativeTime`, `display.CountBadge`, the errorpage module are
+  REJECTED (rationale in the coexistence verdict doc).
 - `window.PBX_CONFIG` (`/config.js`): `sipDomain`, `websocketPath`,
   `iceServers`, `phoneApi`, `contacts`, `crm`.
 
@@ -299,13 +289,12 @@ ports of pinned paths.
   `crm.url`+`crm.token` (both or neither) build `internal/crm.Resolver`
   (TTL cache: positive 6h, negative 5min, cap 1024; transport failures
   NOT cached) injected as `Deps.CRM`; nil-safe everywhere. Enrichment is
-  read-only (`crmNames` → `Names` → `displayName` falls back to the raw
-  number; matching lives in the CRM, numbers sent verbatim). Call
-  logging: island `recordCrmCall` (fire-and-forget) → `POST /api/calls`
-  → 204, idempotent (`callsIdem`, 1h TTL); outage 502 → island toast.
-  CRM side mounts `/api/*` only with `-api-token` (bearer,
-  constant-time, no CSRF). `crm.Client` shares `pbx.Client`'s `do()`
-  chokepoint; `Resolver` single-flights misses.
+  read-only (`displayName` falls back to the raw number; matching lives
+  in the CRM). Call logging: island `recordCrmCall` (fire-and-forget) →
+  `POST /api/calls` → 204, idempotent (`callsIdem`, 1h TTL); outage 502
+  → island toast. CRM side mounts `/api/*` only with `-api-token`
+  (bearer, constant-time, no CSRF). `crm.Client` shares `pbx.Client`'s
+  `do()` chokepoint; `Resolver` single-flights misses.
 - **Paperless seam**: optional, OFF — `paperless.url`+`paperless.token`
   both-or-neither build `internal/paperless.Archiver` as `fax.New`'s
   archiver; nil-safe. Inbound faxes only, fire-and-forget after
@@ -341,11 +330,16 @@ ports of pinned paths.
   rendering baseline on the html rule; `text-wrap: balance` on headings,
   `pretty` on `.wp-bubble-body`; local mono stack for `#log`/`.ice`.
   `html lang` follows the session (layout.templ passes
-  `Locale: string(props.Lang)`). Evidence: lessons.md.
+  `Locale: string(props.Lang)`).
 - CSRF: login/logout rotate the token; the island adopts the fresh one
   WITHOUT reload via `GET /api/csrf` (recover on retry 2, reload only after
-  3 failures). Tests that POST after login must use the client `login`
+  3 failures). `island/app/csrf.js` is the token reader's ONE exported
+  home (session/passkey/enroll import it; shell.js keeps its own classic
+  script copy). Tests that POST after login must use the client `login`
   helper. Behind TLS proxies: `csrf.trusted_*` (lessons.md).
+- Island identity display: `whoamiLine` lives in `ui.js` (neutral — the
+  resume path AND the passkey path render it); session-identity responses
+  are the typed `sessionIdentity` struct (server).
 - Island tests: `window.location.reload` must be stubbed as
   `globalThis.window.location = {...}`; stubs lacking DOM methods make
   renders THROW silently — assertions must cover render OUTCOMES.
@@ -357,18 +351,18 @@ ports of pinned paths.
   `connection.networkOnline()`.
 - **Feedback/trust (M17)**: aria-live politeness — everything is POLITE
   (`#toasts` + `#wp-live` are role=status); the one assertive exception
-  is the incoming-call announce (`announce(..., { assertive: true })` →
-  role=alert). SSE recovery announces once, only after an ANNOUNCED drop
-  (3-failure threshold). A failed optimistic send grows Retry + Dismiss
-  buttons in the failed bubble (English D3; retry re-submits, dismiss
-  keeps the draft). History's empty state is filter-aware.
+  is the incoming-call announce (`announce(..., { assertive: true })`).
+  SSE recovery announces once, only after an ANNOUNCED drop (3-failure
+  threshold). A failed optimistic send grows Retry + Dismiss buttons in
+  the failed bubble (English D3; retry re-submits, dismiss keeps the
+  draft). History's empty state is filter-aware.
 - **Shell & accessibility contract**: the shell owns the command palette
   (Ctrl/Cmd-K), the "?" help + Settings cheat-sheet, the skip-to-content
   link, the `#wp-tab-skeleton` reveal + panel transition, the morph
-  focus-to-heading move, `#wp-live` announcements, the fixed bottom tab bar
-  (mobile), `aria-current` on the nav, and the optimistic send bubble with
-  draft-restore-on-failure. OPERATOR RULING (2026-10-01): contacts depth is
-  LEDGER's domain — this app does NOT grow a contacts manager.
+  focus-to-heading move, `#wp-live` announcements, the fixed bottom tab
+  bar (mobile), `aria-current` on the nav, and the optimistic send bubble
+  with draft-restore-on-failure. OPERATOR RULING (2026-10-01): contacts
+  depth is LEDGER's domain — this app does NOT grow a contacts manager.
   Served-markup changes owe a fresh stack browser E2E.
 - Stack browser E2E: budget 445s; a ~90s transfer-step death after green
   registration+DTMF+ICE is a known flake mode (re-run once before digging).
@@ -388,7 +382,8 @@ on re-run). Never revert/"fix" their in-flight files; re-read shared files
 (i18n.go, pages.go, flake.nix) before editing; attribute full-suite
 failures before acting; leave their dev servers running. The daemon is
 adversarial to in-flight edits — re-View before each Edit or write
-atomically.
+atomically. Lock-file reads in this shell: use python/grep, NEVER jq (the
+tool shell misinvokes it and reports stale state).
 
 ## Buildflow health warning
 

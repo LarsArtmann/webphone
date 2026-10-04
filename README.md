@@ -212,6 +212,39 @@ Archiving is fire-and-forget after the fax is persisted: a slow or dead
 Paperless never delays or fails a fax, and failures only WARN in the
 log. Outbound faxes are not archived (v1 scope).
 
+### Passkey sign-in (optional)
+
+With `auth.passkey.*` configured (OFF by default — zero config keeps
+the login card byte-identical), the webphone embeds the
+cqrs-htmx/usermgmt identity layer in-process and offers email + passkey
+logins next to the extension form:
+
+- **Login order is inverted**: `POST /api/auth/passkey/finish` verifies
+  the ceremony, resolves the configured email→extension mapping
+  (`auth.passkey.users`), sources the extension's SIP directory
+  password from `auth.passkey.extension_password_files` (read per
+  login, never cached — empty/missing fails CLOSED), verifies it
+  against the PBX directory, and only then mints the session; the
+  browser REGISTERs afterwards. The response is the typed
+  session-identity shape (`extension`, `did`, `display_name`,
+  `numbers`, plus the `password`, served no-store) — the same struct
+  `GET /api/session` answers on resume.
+- **Enrollment is CLI-minted**: `webphone -enroll-passkey <email>`
+  prints a one-time link (`/enroll?token=…`; the token is stored
+  sha256-hashed, expires after 15 minutes, and burns at first verify —
+  unknown, expired and used tokens all answer the same 503, so the
+  page never leaks token state). The standalone `/enroll` page runs
+  verify → WebAuthn registration → finish without the island runtime.
+- **Health**: with the mode on, `/healthz` gains a `userauth` leg
+  probing the identity layer's own `usermgmt.db` (kept separate from
+  `webphone.db` on purpose); a 503 naming `userauth` means that
+  database is the broken leg.
+- **Anti-enumeration**: unknown emails and credential-less accounts
+  answer the same 401; the login flood bucket is shared with the
+  extension login; operator-fixable rejections answer 503 with the
+  honest `userauth.*` code in the journal (full table:
+  docs/error-contract.md).
+
 ### The page (`window.PBX_CONFIG`)
 
 The server renders `GET /config.js` from its own config — same contract
