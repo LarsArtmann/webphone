@@ -1,10 +1,13 @@
-# Parked: stack-runbook boot-contract patch (NOT applied here)
+# Parked: stack-runbook boot-contract patch (APPLIED 2026-10-04)
 
 **Date:** 2026-10-02
 **Applies to:** `nix-international-telephony/docs/ops-runbook.md` § "Webphone error contract"
-**Why parked:** the stack repo is a separate dispatch (tri-repo rules);
+~~**Why parked:** the stack repo is a separate dispatch (tri-repo rules);
 apply under the ritual, webphone first, CLEAN stack tree, then relock
-(`docs/release-runbook.md`). No stack edits from this train.
+(`docs/release-runbook.md`). No stack edits from this train.~~ Applied
+2026-10-04 as nix-international-telephony `9a21893` (clean tree verified,
+docs-only, no relock needed) together with the passkey error-contract
+rows from the 17-28 harvest §f item 17.
 
 ## Patch text (append to § "Webphone error contract")
 
