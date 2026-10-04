@@ -101,7 +101,14 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusCreated, h.sessionIdentityResponse(extension))
+	// The finish response carries the file-sourced SIP password back to
+	// the island (its REGISTER needs it; the extension login never sends
+	// one because the user just typed it). Same no-store posture as the
+	// resume endpoint — the credential stays out of every cache.
+	w.Header().Set("Cache-Control", "no-store")
+	response := h.sessionIdentityResponse(extension)
+	response["password"] = password
+	writeJSON(w, http.StatusCreated, response)
 }
 
 // passkeyEnrollVerify resolves AND burns a one-time enrollment token
