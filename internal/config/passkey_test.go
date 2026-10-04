@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 )
 

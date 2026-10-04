@@ -99,6 +99,23 @@ func TestRegisterIsIdempotent(t *testing.T) {
 	}
 }
 
+// TestShutdownClosesTheIdentityDatabase pins the lifecycle contract the
+// composition root rides (do.ShutdownerWithError): Shutdown answers nil
+// on the healthy path and actually closes usermgmt.db — the health
+// check must fail afterwards, never silently keep passing.
+func TestShutdownClosesTheIdentityDatabase(t *testing.T) {
+	svc, _, _ := newService(t)
+	if err := svc.HealthCheck(context.Background()); err != nil {
+		t.Fatalf("HealthCheck before Shutdown: %v", err)
+	}
+	if err := svc.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	if err := svc.HealthCheck(context.Background()); err == nil {
+		t.Error("HealthCheck after Shutdown: want the closed-database error")
+	}
+}
+
 func TestEnrollTokenLifecycle(t *testing.T) {
 	svc, _, _ := newService(t)
 	ctx := context.Background()

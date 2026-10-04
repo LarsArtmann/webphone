@@ -242,6 +242,68 @@ func TestPasskeyEnrollVerifyBurnsTheToken(t *testing.T) {
 	}
 }
 
+// TestPasskeyEnrollHandlersWalkTheCeremony covers the two thin enroll
+// handlers the service-level suite leaves unpinned: begin answers the
+// ceremony options for a token-verified user, finish persists the
+// attested credential — after which the account can passkey-log in.
+func TestPasskeyEnrollHandlersWalkTheCeremony(t *testing.T) {
+	server, svc := newPasskeyServer(t)
+	userID, err := svc.Register(context.Background(), pkEmail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := clientFor(t, server)
+
+	// begin: the registration options for the verified user
+	payload, _ := json.Marshal(map[string]string{"user_id": userID})
+	resp, body := c.do(http.MethodPost, "/api/auth/passkey/enroll/begin", payload, "application/json")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("enroll begin: %d %s", resp.StatusCode, body)
+	}
+	var begun struct {
+		Options    json.RawMessage `json:"options"`
+		SessionKey string          `json:"session_key"`
+	}
+	if err := json.Unmarshal(body, &begun); err != nil || len(begun.Options) == 0 || begun.SessionKey == "" {
+		t.Fatalf("enroll begin body %q: %v", body, err)
+	}
+
+	// finish: persist the attested credential (the stub provider accepts
+	// any ceremony body, exactly like the service-level suite)
+	finishURL := "/api/auth/passkey/enroll/finish?user_id=" + begun.SessionKey + "&credential_name=laptop"
+	resp, body = c.do(http.MethodPost, finishURL, []byte(`{}`), "application/json")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("enroll finish: %d %s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), `"registered"`) {
+		t.Errorf("enroll finish body %q, want the registered verdict", body)
+	}
+
+	// The account can now start a passkey LOGIN (the credential exists —
+	// begin no longer answers the uniform 401)
+	payload, _ = json.Marshal(map[string]string{"email": pkEmail})
+	resp, body = c.do(http.MethodPost, passkeyBegin, payload, "application/json")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("login begin after enrollment: %d %s", resp.StatusCode, body)
+	}
+}
+
+// TestPasskeyEnrollHandlersRejectMissingUserID pins the honest 400s: a
+// caller that lost the ceremony key is wrong, not the token.
+func TestPasskeyEnrollHandlersRejectMissingUserID(t *testing.T) {
+	server, _ := newPasskeyServer(t)
+	c := clientFor(t, server)
+
+	resp, _ := c.do(http.MethodPost, "/api/auth/passkey/enroll/begin", []byte(`{}`), "application/json")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("begin without user_id: %d, want 400", resp.StatusCode)
+	}
+	resp, _ = c.do(http.MethodPost, "/api/auth/passkey/enroll/finish", []byte(`{}`), "application/json")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("finish without user_id: %d, want 400", resp.StatusCode)
+	}
+}
+
 func TestPasskeySurfacesRequireCSRF(t *testing.T) {
 	server, svc := newPasskeyServer(t)
 	enrollCredential(t, svc, pkEmail)

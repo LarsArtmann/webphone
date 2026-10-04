@@ -61,59 +61,64 @@ process (sqlite-backed, zero new services), where:
 
 ## 4. Phase plan (tasks 10–30 min each, sorted by impact/effort/value)
 
+> Annotated 2026-10-04 (train-tail session): the code train shipped and the
+> 3-repo deploy train staged; owner-side rows carry their outstanding leg in
+> the marker. Plans are snapshots (docs-health) — this table records verdicts,
+> it no longer plans work.
+
 | # | Task | Impact | Effort | Deps |
 | --- | --- | --- | --- | --- |
-| P1 | `internal/userauth`: Service wrapper (usermgmt NewService, SQL event store + read models + webauthn provider, `<data_dir>/usermgmt.db`), Close/drain | HIGH | M | — |
-| P2 | Config: `Auth.Passkey` struct + koanf tags + fail-closed validation (normalized extensions, rp_id+origins+users+password files all-or-nothing, users' ext in identities not required) | HIGH | S | — |
-| P3 | Server: `POST /api/auth/passkey/begin|finish` (loginLimiter treatment, CSRF, JSON contract `{email}` → `{options,session_key}` → `{session_key, assertion}` → createSession response + display_name/numbers); refactor session minting out of createSession into one helper | HIGH | M | P1, P2 |
-| P4 | `cmd/webphone -enroll-passkey <email>`: load config, build service, Register user if missing, mint one-time token (sha256+expiry in `wp_enroll_tokens`), print enroll URL | HIGH | M | P1, P2 |
-| P5 | Enroll HTTP surface: `GET /enroll` page (token verify → email → passkey ceremony begin/finish) + POST endpoints, rate-limited | HIGH | M | P4 |
-| P6 | Island: `passkey.js` login module (email field + ceremony + adopt creds → SIP REGISTER → wp:session-opened), login view markup (conditional passkey section + break-glass form), configjs flag, whoami display name + numbers | HIGH | M | P3 |
-| P7 | Tests: userauth (sqlite tmp, stub WebAuthnProvider mirroring usermgmt's own stubs: register → enroll → login → session mint; token expiry/burn; file-sourced password read errors), server handler tests (401/429/404-off mapping), config family tests | HIGH | M | P3, P5 |
-| P8 | i18n en/de keys + dom-contract ids + views tests for login markup | MED | S | P6 |
-| P9 | Docs: FEATURES/CHANGELOG/TODO_LIST/README/AGENTS + error-contract rows + family pins (`webphone.auth.*` seam) | MED | S | P7 |
-| P10 | pbx-artmann: settings.auth.passkey values (users lars→1000, rp_id pbx.artmann.tech), secrets-perms telephony_ext_1000/1001 → root:webphone 640, enroll wrapper script, CHANGELOG/AGENTS/runbook notes | HIGH | S | P3 |
-| P11 | Nix: vendorHash (buildflow nix-hash-fix), templ generate, `nix fmt` (island/shell/css), buildflow full, smoke (`--base` mode) | HIGH | M | P6, P7 |
-| P12 | Train: push webphone main → stack `nix flake update webphone` + push (CI-green check) → pbx-artmann `nix flake update telephony` + lock-drift-probe + both-arch eval + toplevel build + deploy-freshness staging + docs gates; hand over switch command | HIGH | M | P10, P11 |
+| ~~P1~~ | ~~`internal/userauth`: Service wrapper (usermgmt NewService, SQL event store + read models + webauthn provider, `<data_dir>/usermgmt.db`), Close/drain~~ done | HIGH | M | — |
+| ~~P2~~ | ~~Config: `Auth.Passkey` struct + koanf tags + fail-closed validation (normalized extensions, rp_id+origins+users+password files all-or-nothing, users' ext in identities not required)~~ done | HIGH | S | — |
+| ~~P3~~ | ~~Server: `POST /api/auth/passkey/begin\|finish` (loginLimiter treatment, CSRF, JSON contract `{email}` → `{options,session_key}` → `{session_key, assertion}` → createSession response + display_name/numbers); refactor session minting out of createSession into one helper~~ done | HIGH | M | P1, P2 |
+| ~~P4~~ | ~~`cmd/webphone -enroll-passkey <email>`: load config, build service, Register user if missing, mint one-time token (sha256+expiry in `wp_enroll_tokens`), print enroll URL~~ done | HIGH | M | P1, P2 |
+| ~~P5~~ | ~~Enroll HTTP surface: `GET /enroll` page (token verify → email → passkey ceremony begin/finish) + POST endpoints, rate-limited~~ done | HIGH | M | P4 |
+| ~~P6~~ | ~~Island: `passkey.js` login module (email field + ceremony + adopt creds → SIP REGISTER → wp:session-opened), login view markup (conditional passkey section + break-glass form), configjs flag, whoami display name + numbers~~ done | HIGH | M | P3 |
+| ~~P7~~ | ~~Tests: userauth (sqlite tmp, stub WebAuthnProvider mirroring usermgmt's own stubs: register → enroll → login → session mint; token expiry/burn; file-sourced password read errors), server handler tests (401/429/404-off mapping), config family tests~~ done | HIGH | M | P3, P5 |
+| ~~P8~~ | ~~i18n en/de keys + dom-contract ids + views tests for login markup~~ done | MED | S | P6 |
+| ~~P9~~ | ~~Docs: FEATURES/CHANGELOG/TODO_LIST/README/AGENTS + error-contract rows + family pins (`webphone.auth.*` seam)~~ done | MED | S | P7 |
+| ~~P10~~ | ~~pbx-artmann: settings.auth.passkey values (users lars→1000, rp_id pbx.artmann.tech), secrets-perms telephony_ext_1000/1001 → root:webphone 640, enroll wrapper script, CHANGELOG/AGENTS/runbook notes~~ done — shipped (settings + secrets-perms; enroll stays runbook-only, wrapper cut pending owner ratification) | HIGH | S | P3 |
+| ~~P11~~ | ~~Nix: vendorHash (buildflow nix-hash-fix), templ generate, `nix fmt` (island/shell/css), buildflow full, smoke (`--base` mode)~~ done | HIGH | M | P6, P7 |
+| ~~P12~~ | ~~Train: push webphone main → stack `nix flake update webphone` + push (CI-green check) → pbx-artmann `nix flake update telephony` + lock-drift-probe + both-arch eval + toplevel build + deploy-freshness staging + docs gates; hand over switch command~~ done — staged + handed over (webphone 400eaff pushed, stack 890a526, pbx-artmann staged 0ngvm4q7; owner switch pending) | HIGH | M | P10, P11 |
 
 ## 5. Fine-grained tasks (max 12 min each)
 
 | # | Task (≤12 min) | Parent |
 | --- | --- | --- |
-| F1 | go.mod: add usermgmt + usermgmt/webauthn deps (`go get`, tidy) | P1 |
-| F2 | `internal/userauth/userauth.go`: Config→Service constructor (sqlite open at dataDir/usermgmt.db, OptimizeSQLiteDB, NewSQLEventStore, NewService with webauthn.New) | P1 |
-| F3 | `internal/userauth`: Resolve(email) → User{Extensions, DisplayName}; NumbersFor(user, identities) → []string | P1 |
-| F4 | `internal/userauth`: password file read (trim, empty→rejection; read-at-login, never cached) | P1 |
-| F5 | `internal/userauth`: enroll token mint/verify/burn (wp_enroll_tokens, sha256, 15 min TTL) | P4 |
-| F6 | `internal/userauth`: Close/Drain wiring + nil-safe disabled type | P1 |
-| F7 | config.go: Auth/Passkey structs + koanf tags | P2 |
-| F8 | config.go: validation (all-or-nothing set, normalized ext keys, non-empty origins, email keys contain "@") | P2 |
-| F9 | config family_test rows for the new rejections | P2 |
-| F10 | app.go: provide UserAuth (nil when disabled) + shutdown order | P1 |
-| F11 | server: extract `mintSession(w, r, extension, password)` from createSession | P3 |
-| F12 | server: POST /api/auth/passkey/begin handler (+rate limiter, +error mapping 401/429/503) | P3 |
-| F13 | server: POST /api/auth/passkey/finish handler (FinishLogin → resolve → file creds → VerifyCredentials → mint → response +display_name+numbers) | P3 |
-| F14 | server: Deps.UserAuth + route registration (guarded) | P3 |
-| F15 | server: enroll page GET /enroll + token verify endpoint | P5 |
-| F16 | server: enroll begin/finish endpoints (Register-if-missing, BeginRegistration/FinishRegistration) | P5 |
-| F17 | cmd/webphone: -enroll-passkey flag path | P4 |
-| F18 | phone.templ: passkey section (email input + button + divider + break-glass collapse) | P6 |
-| F19 | templ generate + views render test | P6 |
-| F20 | island passkey.js: begin→navigator.credentials.get→finish→creds into register path | P6 |
-| F21 | island session/whoami: display_name + numbers rendering; getSession/createSession response fields | P6 |
-| F22 | configjs.go: passkey flag; configjs test | P6 |
-| F23 | main.js: wire passkey module when flag set; arch_test pass (no new island import cycles) | P6 |
-| F24 | i18n keys en/de + parity test | P8 |
-| F25 | dom-contract: new ids + contract test update | P8 |
-| F26 | userauth service tests (stub provider, sqlite tmp): happy path | P7 |
-| F27 | userauth tests: token burn/expiry, file read failures, unknown email | P7 |
-| F28 | server handler tests: off=404, rate limit, CSRF, response shape | P7 |
-| F29 | family_test pins for webphone.auth.* codes | P7 |
-| F30 | docs sweep (FEATURES/CHANGELOG/README/AGENTS/error-contract) | P9 |
-| F31 | pbx-artmann: settings block + perms case + wrapper + docs | P10 |
-| F32 | pbx-artmann: both-arch eval + toplevel build + gates | P12 |
-| F33 | stack: webphone lock bump + push + CI check | P12 |
-| F34 | pbx-artmann: telephony relock + probe + deploy-freshness staging | P12 |
+| ~~F1~~ | ~~go.mod: add usermgmt + usermgmt/webauthn deps (`go get`, tidy)~~ done | P1 |
+| ~~F2~~ | ~~`internal/userauth/userauth.go`: Config→Service constructor (sqlite open at dataDir/usermgmt.db, OptimizeSQLiteDB, NewSQLEventStore, NewService with webauthn.New)~~ done | P1 |
+| ~~F3~~ | ~~`internal/userauth`: Resolve(email) → User{Extensions, DisplayName}; NumbersFor(user, identities) → []string~~ done | P1 |
+| ~~F4~~ | ~~`internal/userauth`: password file read (trim, empty→rejection; read-at-login, never cached)~~ done | P1 |
+| ~~F5~~ | ~~`internal/userauth`: enroll token mint/verify/burn (wp_enroll_tokens, sha256, 15 min TTL)~~ done | P4 |
+| ~~F6~~ | ~~`internal/userauth`: Close/Drain wiring + nil-safe disabled type~~ done | P1 |
+| ~~F7~~ | ~~config.go: Auth/Passkey structs + koanf tags~~ done | P2 |
+| ~~F8~~ | ~~config.go: validation (all-or-nothing set, normalized ext keys, non-empty origins, email keys contain "@")~~ done | P2 |
+| ~~F9~~ | ~~config family_test rows for the new rejections~~ done — pins landed with the 2026-10-04 tail (config.auth.passkey.* family rows) | P2 |
+| ~~F10~~ | ~~app.go: provide UserAuth (nil when disabled) + shutdown order~~ done | P1 |
+| ~~F11~~ | ~~server: extract `mintSession(w, r, extension, password)` from createSession~~ done | P3 |
+| ~~F12~~ | ~~server: POST /api/auth/passkey/begin handler (+rate limiter, +error mapping 401/429/503)~~ done | P3 |
+| ~~F13~~ | ~~server: POST /api/auth/passkey/finish handler (FinishLogin → resolve → file creds → VerifyCredentials → mint → response +display_name+numbers)~~ done | P3 |
+| ~~F14~~ | ~~server: Deps.UserAuth + route registration (guarded)~~ done | P3 |
+| ~~F15~~ | ~~server: enroll page GET /enroll + token verify endpoint~~ done | P5 |
+| ~~F16~~ | ~~server: enroll begin/finish endpoints (Register-if-missing, BeginRegistration/FinishRegistration)~~ done | P5 |
+| ~~F17~~ | ~~cmd/webphone: -enroll-passkey flag path~~ done | P4 |
+| ~~F18~~ | ~~phone.templ: passkey section (email input + button + divider + break-glass collapse)~~ done | P6 |
+| ~~F19~~ | ~~templ generate + views render test~~ done | P6 |
+| ~~F20~~ | ~~island passkey.js: begin→navigator.credentials.get→finish→creds into register path~~ done | P6 |
+| ~~F21~~ | ~~island session/whoami: display_name + numbers rendering; getSession/createSession response fields~~ done | P6 |
+| ~~F22~~ | ~~configjs.go: passkey flag; configjs test~~ done | P6 |
+| ~~F23~~ | ~~main.js: wire passkey module when flag set; arch_test pass (no new island import cycles)~~ done | P6 |
+| ~~F24~~ | ~~i18n keys en/de + parity test~~ done | P8 |
+| ~~F25~~ | ~~dom-contract: new ids + contract test update~~ done | P8 |
+| ~~F26~~ | ~~userauth service tests (stub provider, sqlite tmp): happy path~~ done | P7 |
+| ~~F27~~ | ~~userauth tests: token burn/expiry, file read failures, unknown email~~ done | P7 |
+| ~~F28~~ | ~~server handler tests: off=404, rate limit, CSRF, response shape~~ done — plus enroll begin/finish handler tests in the 2026-10-04 tail | P7 |
+| ~~F29~~ | ~~family_test pins for webphone.auth.* codes~~ done | P7 |
+| ~~F30~~ | ~~docs sweep (FEATURES/CHANGELOG/README/AGENTS/error-contract)~~ done | P9 |
+| ~~F31~~ | ~~pbx-artmann: settings block + perms case + wrapper + docs~~ done — wrapper cut: enroll rides the runbook CLI command (ratification pending) | P10 |
+| ~~F32~~ | ~~pbx-artmann: both-arch eval + toplevel build + gates~~ done | P12 |
+| ~~F33~~ | ~~stack: webphone lock bump + push + CI check~~ done — stack 890a526 pushed | P12 |
+| ~~F34~~ | ~~pbx-artmann: telephony relock + probe + deploy-freshness staging~~ done — staged, probe OK; owner switch pending | P12 |
 
 ## 6. Execution graph
 

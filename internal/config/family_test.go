@@ -22,6 +22,9 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		{"bad gateway mode", map[string]string{"WEBPHONE_GATEWAY__MODE": "carrier-pigeon"}, "config.gateway.mode"},
 		{"webhook without url", map[string]string{"WEBPHONE_GATEWAY__MODE": "webhook"}, "config.gateway.webhook_url"},
 		{"negative ttl", map[string]string{"WEBPHONE_SESSION_TTL": "-1s"}, "config.session_ttl"},
+		// The passkey mode is env-armable with one scalar (any set field
+		// enables it); the then-missing list fields reject fail-closed.
+		{"half a passkey config", map[string]string{"WEBPHONE_AUTH__PASSKEY__RP_ID": "pbx.example.org"}, "config.auth.passkey.rp_origins"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {
