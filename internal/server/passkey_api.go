@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json/v2"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
@@ -183,7 +184,8 @@ func (h *handlers) passkeyServerError(w http.ResponseWriter, r *http.Request, er
 	if errors.Is(err, usermgmt.ErrAccountLocked) {
 		status = http.StatusTooManyRequests
 	}
-	errorfamily.LogErrorContext(r.Context(), err, op)
+	slog.Warn("webphone: passkey ceremony failed", "op", op, "error", err,
+		"family", errorfamily.Classify(err).String(), "code", errorfamily.Code(err))
 	http.Error(w, "passkey authentication temporarily unavailable", status)
 }
 
