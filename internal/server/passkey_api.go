@@ -194,8 +194,8 @@ func (h *handlers) enrollPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	props := views.EnrollProps{
-		Lang:       h.lang(r),
-		CSRFToken:  csrfToken(r),
+		Lang:      h.lang(r),
+		CSRFToken: csrfToken(r),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.EnrollPage(props).Render(r.Context(), w); err != nil {

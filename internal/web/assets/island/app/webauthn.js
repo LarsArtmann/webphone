@@ -11,9 +11,14 @@ const base64url = {
   // re-encode) still decodes instead of hard-failing the ceremony.
   decode(value) {
     if (typeof value !== "string") {
-      throw new Error("webauthn: expected base64url string, got " + typeof value);
+      throw new Error(
+        "webauthn: expected base64url string, got " + typeof value,
+      );
     }
-    const normalized = value.replace(/=+$/, "").replace(/-/g, "+").replace(/_/g, "/");
+    const normalized = value
+      .replace(/=+$/, "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
     const binary = atob(normalized);
     const out = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
@@ -23,7 +28,10 @@ const base64url = {
     const view = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
     let binary = "";
     for (const byte of view) binary += String.fromCharCode(byte);
-    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return btoa(binary)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
   },
 };
 
@@ -82,11 +90,18 @@ export function prepareRegistrationOptions(options) {
 export function serializeCredential(credential, kind) {
   const response = {};
   const source = credential.response;
-  for (const key of ["clientDataJSON", "authenticatorData", "signature", "attestationObject"]) {
+  for (const key of [
+    "clientDataJSON",
+    "authenticatorData",
+    "signature",
+    "attestationObject",
+  ]) {
     if (source[key] != null) response[key] = base64url.encode(source[key]);
   }
-  if (source.userHandle != null) response.userHandle = base64url.encode(source.userHandle);
-  if (Array.isArray(source.transports)) response.transports = [...source.transports];
+  if (source.userHandle != null)
+    response.userHandle = base64url.encode(source.userHandle);
+  if (Array.isArray(source.transports))
+    response.transports = [...source.transports];
   return {
     id: credential.id,
     rawId: base64url.encode(credential.rawId),

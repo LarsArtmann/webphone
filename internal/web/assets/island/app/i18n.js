@@ -93,13 +93,14 @@ export const I18N = {
     passkeyUnknown:
       "No passkey matches this email — check the address or use extension and password below.",
     passkeyThrottled: "Too many attempts — wait a minute, then try again.",
-    passkeyBeginFailed: (status) => `Passkey sign-in unavailable (HTTP ${status}).`,
-    passkeyFinishFailed: (status) => `Passkey verification failed (HTTP ${status}).`,
+    passkeyBeginFailed: (status) =>
+      `Passkey sign-in unavailable (HTTP ${status}).`,
+    passkeyFinishFailed: (status) =>
+      `Passkey verification failed (HTTP ${status}).`,
     passkeyNetFailed: "Passkey sign-in failed — network error.",
     enrollVerified: (email) =>
       `Token verified for ${email}. Follow your device to create the passkey.`,
-    enrollSuccess:
-      "Passkey created. Go to the main page and sign in with it.",
+    enrollSuccess: "Passkey created. Go to the main page and sign in with it.",
     enrollFailed: (status) =>
       `Enrollment failed (HTTP ${status}) — the token may be invalid, expired or already used; ask for a new link if this repeats.`,
     enrollDismissed:
@@ -158,9 +159,12 @@ export const I18N = {
     passkeyBreakglass: "Stattdessen Nebenstelle und Passwort verwenden",
     passkeyUnknown:
       "Zu dieser E-Mail passt kein Passkey — Adresse prüfen oder unten Nebenstelle und Passwort verwenden.",
-    passkeyThrottled: "Zu viele Versuche — eine Minute warten, dann erneut versuchen.",
-    passkeyBeginFailed: (status) => `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
-    passkeyFinishFailed: (status) => `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
+    passkeyThrottled:
+      "Zu viele Versuche — eine Minute warten, dann erneut versuchen.",
+    passkeyBeginFailed: (status) =>
+      `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
+    passkeyFinishFailed: (status) =>
+      `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
     passkeyNetFailed: "Passkey-Anmeldung fehlgeschlagen — Netzwerkfehler.",
     enrollVerified: (email) =>
       `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
