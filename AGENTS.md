@@ -391,8 +391,9 @@ atomically.
 applicable") — run buildflow inside `nix develop` (or
 `scripts/buildflow.sh`); `-s gitleaks`/`-s codespell` need the REAL
 binary; markdown-lint is detect-only (never reflow the corpus). KNOWN
-TOOL BUG — gomod-check vendor-consistency (~54 findings) is a verified
-FALSE POSITIVE; do NOT hand-edit vendor markers.
+TOOL BUG — gomod-check vendor-consistency (grows with the vendor tree:
+~54 before, 99 after the passkey train's usermgmt/webauthn deps) is a
+verified FALSE POSITIVE; do NOT hand-edit vendor markers.
 
 ## Conventions
 
