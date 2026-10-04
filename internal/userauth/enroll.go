@@ -65,10 +65,11 @@ func (s *Service) MintEnrollToken(ctx context.Context, email, userID string) (st
 	return token, nil
 }
 
-// VerifyEnrollToken resolves AND burns a token. Unknown, expired, or
-// already-used tokens are indistinguishable Rejections — the enroll page
-// answers the same honest error for all three, so the surface leaks no
-// token-state oracle.
+// VerifyEnrollToken resolves AND burns a token. Unknown and
+// already-used tokens answer the SAME rejection; an expired one carries
+// its own code — the distinction is operator-log truth only, every
+// class answers the identical client shape (503 via the handler), so
+// the surface leaks no usable token-state oracle.
 func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollToken, error) {
 	if len(token) < 16 {
 		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.invalid", "invalid enrollment token")

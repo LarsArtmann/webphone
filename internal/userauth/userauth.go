@@ -24,6 +24,7 @@ import (
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	waprovider "github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4"
 	"github.com/larsartmann/go-error-family"
+	_ "modernc.org/sqlite" // registers the "sqlite" driver (the same one the store package registers)
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -50,6 +51,10 @@ type PasskeyRuntime struct {
 	RPOrigins              []string
 	Users                  map[string]MappedUser
 	ExtensionPasswordFiles map[string]string
+	// WebAuthn optionally overrides the go-webauthn provider built from
+	// RPID/RPOrigins. Tests inject the deterministic stub here; the
+	// production composition root leaves it nil.
+	WebAuthn usermgmt.WebAuthnProvider
 }
 
 // MappedUser is one email's resolved mapping.
@@ -98,14 +103,20 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 	if displayName == "" {
 		displayName = "webphone"
 	}
-	provider, err := waprovider.New(waprovider.Config{
-		RPID:          cfg.RPID,
-		RPDisplayName: displayName,
-		RPOrigins:     cfg.RPOrigins,
-	})
-	if err != nil {
-		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.webauthn_provider", "create webauthn provider")
+	// The provider seam: the composition root gets the real
+	// go-webauthn provider; an injected stub keeps the service logic
+	// testable without browser signatures.
+	provider := cfg.WebAuthn
+	if provider == nil {
+		provider, err = waprovider.New(waprovider.Config{
+			RPID:          cfg.RPID,
+			RPDisplayName: displayName,
+			RPOrigins:     cfg.RPOrigins,
+		})
+		if err != nil {
+			db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+			return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.webauthn_provider", "create webauthn provider")
+		}
 	}
 	users, err := usermgmt.NewService(usermgmt.ServiceConfig{
 		EventStore:       eventStore,
