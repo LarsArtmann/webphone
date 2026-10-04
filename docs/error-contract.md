@@ -114,6 +114,38 @@ one client dodge the limiter by rotating a header). If a deployment
 ever sees collective 429s on login, THIS is the first suspect —
 check the limiter's key, not the users.
 
+## Error families are total (2026-09-30 train)
+
+Every error this binary constructs or wraps carries two stable names: a
+FAMILY — Rejection (caller input, not retryable), Conflict, Transient
+(retryable), Corruption (damaged truth), Infrastructure (environment),
+Orchestration (our own wiring) — and a `<seam>.<op>` CODE (stable,
+non-empty, the grep target). New error paths use `errorfamily.New*` /
+`Wrap*` constructors; bare `fmt.Errorf` is banned by the AGENTS erraudit
+bar (tier 2 = `--enforce-go-error-family` + `--enforce-coded-errors`,
+both held at 0 since 2026-09-30), and equally banned is a family-FIXED
+wrap over a polymorphic cause: propagation stays family-neutral (P2),
+marked by reasoned nolints where deliberate. Sentinels stay sentinels
+and take their family from registration (P3); classification never
+changes rendered strings (P4); codes are stable (P5). The seven
+principles and the per-seam table live in the error-excellence plan
+appendix (`docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`).
+
+`Error()` renders `[family:code] message` and the handler logs add
+`error=`/`family=` fields, so these names are an operator- and
+cross-repo-visible vocabulary (the stack runbook § "Webphone error
+contract" syncs it). A rename would silently break journal greps, so
+the registry below is PINNED: `TestErrorCodeRegistryIsFresh`
+(internal/arch) generates it from the source and fails the suite on any
+code missing from, stale in, or family-drifted against this page. After
+a deliberate code change, regenerate:
+
+    go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update
+
+<!-- error-code-registry: BEGIN (generated block; do not edit by hand; go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update rewrites it) -->
+
+<!-- error-code-registry: END -->
+
 ## Cross-repo sync
 
 The operator-facing semantics of these surfaces — status meanings,
