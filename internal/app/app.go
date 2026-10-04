@@ -165,7 +165,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.ProvideNamed(injector, "userauth", func(i do.Injector) (*userauth.Service, error) {
 			bootCtx, cancel := context.WithTimeout(context.Background(), userauthBootTimeout)
 			defer cancel()
-			return userauth.New(bootCtx, passkeyRuntime(cfg.Auth.Passkey), cfg.DataDir, log)
+			return userauth.New(bootCtx, PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, log)
 		})
 	}
 
@@ -312,7 +312,11 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 // shape (extensions parsed once, at boot — config validation has already
 // rejected unparseable ones, so the parse failures here are impossible
 // by construction and panic honestly on a broken invariant).
-func passkeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
+// PasskeyRuntime is the config→runtime adapter for the embedded
+// identity layer (the arch invariant keeps userauth config-free, so
+// THIS package owns the translation). Exported for the CLI enrollment
+// path, which builds the same runtime the server boots with.
+func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
 	users := make(map[string]userauth.MappedUser, len(p.Users))
 	for email, user := range p.Users {
 		extensions := make([]domain.Extension, 0, len(user.Extensions))

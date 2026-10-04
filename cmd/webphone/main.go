@@ -17,6 +17,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/app"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // main reports and exits: run()'s designed errors render the five-part
@@ -39,10 +40,55 @@ func propagatef(format string, args ...any) error {
 	return fmt.Errorf(format, args...) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 }
 
+// enrollPasskey serves the `-enroll-passkey <email>` one-shot: it must
+// run under the SAME config and data dir as the server (the sqlite
+// identity store lives there — as the webphone service user on a
+// deployment), registers the account idempotently and mints the
+// one-time token. The printed URL names the first configured origin;
+// the token itself is single-use and expires after
+// userauth.EnrollTokenTTL.
+func enrollPasskey(email string) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
+	}
+	if !cfg.Auth.Passkey.Enabled() {
+		return bootErr(bootConfigInvalid, errors.New("passkey mode is not configured (auth.passkey.*) — enable and map the email before enrolling"))
+	}
+	if _, mapped := cfg.Auth.Passkey.Users[email]; !mapped {
+		return bootErr(bootConfigInvalid, fmt.Errorf("email %q is not mapped in auth.passkey.users — add it to the config first", email))
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, slog.Default())
+	if err != nil {
+		return propagatef("open identity store: %w", err)
+	}
+	defer func() { _ = svc.Shutdown() }()
+	userID, err := svc.Register(ctx, email)
+	if err != nil {
+		return propagatef("register %s: %w", email, err)
+	}
+	token, err := svc.MintEnrollToken(ctx, email, userID)
+	if err != nil {
+		return propagatef("mint enrollment token: %w", err)
+	}
+	fmt.Printf("Passkey enrollment link for %s (single use, expires after %s):\n\n  %s/enroll?token=%s\n\nOpen it in a browser on a device you carry, then follow the passkey prompt.\n", email, userauth.EnrollTokenTTL, cfg.Auth.Passkey.RPOrigins[0], token)
+	return nil
+}
+
 func run() error {
 	// First-registered defer runs last: a panic from ANY boot step (or
 	// from the defers below) still lands in the operator report.
 	defer recoverBootPanic()
+	// The one-shot enrollment surface runs BEFORE any server wiring:
+	// `webphone -enroll-passkey lars@example.com` opens the same
+	// identity store the server uses, registers the account if needed
+	// and prints a 15-minute one-time enrollment link (D5: the operator
+	// is the identity authority; no self-serve email round-trip).
+	if len(os.Args) >= 3 && os.Args[1] == "-enroll-passkey" {
+		return enrollPasskey(os.Args[2])
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
@@ -70,6 +116,14 @@ func run() error {
 	}
 	if cfg.Dashboard.Enable {
 		slog.Info("health dashboard", "mode", "enabled", "path", "/health")
+	}
+	// Passkey mode visibility: on means the login card's front door is
+	// the email + WebAuthn ceremony (extension login stays as
+	// break-glass); off is the default and logs nothing — the login
+	// card is byte-shaped like the pre-passkey one.
+	if cfg.Auth.Passkey.Enabled() {
+		slog.Info("passkey auth",
+			"mode", "enabled", "rpid", cfg.Auth.Passkey.RPID, "users", len(cfg.Auth.Passkey.Users))
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

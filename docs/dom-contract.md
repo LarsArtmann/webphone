@@ -64,3 +64,24 @@ wp-live
 wp-tab-skeleton
 
 <!-- dom-contract:end -->
+
+## Conditional ids (passkey mode)
+
+These ids render ONLY when the deployment enables the passkey
+(WebAuthn) login mode (`auth.passkey.*`); the always-on contract above
+stays complete without them, and the E2E must not assume them:
+
+- `passkey-login-form` — the email-first front door (island module
+  `passkey.js` binds it; absent markup means the mode is off and the
+  module no-ops)
+- `passkey-email` — the email input
+- `passkey-login-error` — the inline error slot
+
+With the mode on, the extension login moves INSIDE a
+`details.passkey-breakglass` disclosure (summary: "Use extension and
+password instead") but keeps its own ids and behavior unchanged.
+
+The standalone `/enroll` page (same gate) carries `enroll-view`,
+`enroll-form`, `enroll-token`, `enroll-credential-name`,
+`enroll-status`, `enroll-error` — a one-purpose surface with NO island
+runtime; its module is `/assets/enroll/enroll.js`.
