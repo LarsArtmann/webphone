@@ -120,15 +120,16 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 	}
 	svc := &Service{users: users, db: db, cfg: cfg, log: log}
 	if err := svc.migrateEnrollTokens(ctx); err != nil {
-		svc.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
+		svc.Shutdown() //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, err
 	}
 	return svc, nil
 }
 
-// Close drains usermgmt's projections and closes the database. Safe to
-// call once; part of the app's shutdown order.
-func (s *Service) Close() error {
+// Shutdown drains usermgmt's projections and closes the database (the
+// do.ShutdownerWithError lifecycle method; part of the app's shutdown
+// order). Safe to call once.
+func (s *Service) Shutdown() error {
 	var firstErr error
 	if err := s.users.Close(); err != nil && firstErr == nil {
 		firstErr = errorfamily.WrapInfrastructure(err, "userauth.close.users", "close usermgmt service")

@@ -39,6 +39,7 @@ import (
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
@@ -48,6 +49,7 @@ import (
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // Adapter-side lifecycle guards (the service packages stay free of
@@ -58,6 +60,7 @@ var (
 	_ do.HealthcheckerWithContext = (*store.Database)(nil)
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
+	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
 )
 
@@ -67,6 +70,12 @@ var (
 // Two local checks per second are noise. Disabled dashboard → interval
 // 0, exactly the pre-container live-mode behavior.
 const probeRefresh = time.Second
+
+// userauthBootTimeout bounds the usermgmt startup drain (projection
+// workers replaying the event journal into the SQL read models). The
+// journal of a phone-system user list is tiny; the bound exists so a
+// broken store fails the boot instead of hanging it.
+const userauthBootTimeout = 30 * time.Second
 
 // trendSamples bounds the dashboard's status-history ring (the trend
 // card + /health/trend export). One sample per probe tick: a bit over
@@ -145,6 +154,20 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), log), nil
 	})
+
+	// Optional passkey identity layer (embedded usermgmt): config-absent
+	// → the service is never registered and Deps.UserAuth stays nil
+	// (every passkey surface 404s). A present but UNUSABLE configuration
+	// fails the boot at the eager invoke below — a login mode must never
+	// half-exist (same doctrine as the Paperless archiver).
+	if cfg.Auth.Passkey.Enabled() {
+		//samber-linter:allow hw-4 eagerly resolved via InvokeNamed in New
+		do.ProvideNamed(injector, "userauth", func(i do.Injector) (*userauth.Service, error) {
+			bootCtx, cancel := context.WithTimeout(context.Background(), userauthBootTimeout)
+			defer cancel()
+			return userauth.New(bootCtx, passkeyRuntime(cfg.Auth.Passkey), cfg.DataDir, log)
+		})
+	}
 
 	// Optional Paperless-ngx archive for inbound faxes: config-absent →
 	// a nil fax.Archiver (fax.Service treats nil as off). A present but
@@ -226,6 +249,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		db := do.MustInvokeNamed[*store.Database](i, "sqlite")
 		blobs := do.MustInvokeNamed[*blob.Store](i, "blob-dir")
 
+		var auth *userauth.Service
+		if cfg.Auth.Passkey.Enabled() {
+			auth = do.MustInvokeNamed[*userauth.Service](i, "userauth")
+		}
 		return server.New(server.Deps{
 			Config:    cfg,
 			Sessions:  do.MustInvoke[*session.SQLiteStore](i),
@@ -243,6 +270,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			BlobRoot:  blobs.Root(),
 			Probe:     probe,
 			Dashboard: dashboardHandler,
+			UserAuth:  auth,
 		}), nil
 	})
 
@@ -256,6 +284,11 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 	if _, err := do.InvokeNamed[*blob.Store](injector, "blob-dir"); err != nil {
 		return nil, wrapf("open blob store: %w", err)
+	}
+	if cfg.Auth.Passkey.Enabled() {
+		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
+			return nil, wrapf("open passkey auth: %w", err)
+		}
 	}
 	handler, err := do.Invoke[http.Handler](injector)
 	if err != nil {
@@ -273,6 +306,32 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 		return probeRefresh
 	}
 	return 0
+}
+
+// passkeyRuntime adapts the validated config into the userauth runtime
+// shape (extensions parsed once, at boot — config validation has already
+// rejected unparseable ones, so the parse failures here are impossible
+// by construction and panic honestly on a broken invariant).
+func passkeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
+	users := make(map[string]userauth.MappedUser, len(p.Users))
+	for email, user := range p.Users {
+		extensions := make([]domain.Extension, 0, len(user.Extensions))
+		for _, raw := range user.Extensions {
+			ext, err := domain.ParseExtension(raw)
+			if err != nil {
+				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+			}
+			extensions = append(extensions, ext)
+		}
+		users[email] = userauth.MappedUser{Email: email, DisplayName: user.DisplayName, Extensions: extensions}
+	}
+	return userauth.PasskeyRuntime{
+		RPID:                   p.RPID,
+		RPDisplayName:          p.RPDisplayName,
+		RPOrigins:              p.RPOrigins,
+		Users:                  users,
+		ExtensionPasswordFiles: p.ExtensionPasswordFiles,
+	}
 }
 
 // Start launches the background loops: the dashboard pusher (when

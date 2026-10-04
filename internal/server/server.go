@@ -31,6 +31,7 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // contentSecurityPolicy mirrors the strict posture of the static-site
@@ -146,6 +147,10 @@ type Deps struct {
 	// non-nil (config-gated in the composition root). Nil: no /health
 	// surface exists, the styled 404 answers.
 	Dashboard http.Handler
+	// UserAuth is the OPTIONAL embedded passkey identity layer
+	// (config-gated). Nil: the passkey mode is off — every passkey
+	// surface 404s and the login page renders the extension form only.
+	UserAuth *userauth.Service
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
