@@ -99,7 +99,7 @@ func TestMustInvokeStaysInTheCompositionRoot(t *testing.T) {
 		if d.IsDir() {
 			switch d.Name() {
 			case ".git", "vendor", "node_modules", ".direnv", "result":
-				return filepath.SkipAll
+				return filepath.SkipDir
 			}
 			return nil
 		}

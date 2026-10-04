@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Error-code registry (error-contract.md): a 104-code table of every
+  `<seam>.<op>` error code, generated from the source and freshness-pinned
+  by `TestErrorCodeRegistryIsFresh` — a code rename now fails the suite
+  instead of silently breaking journal greps. The page also tells the
+  "error families are total" story (families, principles P1–P7, the
+  `[family:code]` log vocabulary, and the two runtime-split codes).
+- Tooling: the health.css rebuild script now runs the treefmt formatter on
+  its artifact (a raw rebuild used to re-break the `format` gate), and the
+  smoke suite is mypy- and ruff-clean (the 8 tuple-shape warnings were
+  lying annotations, now truthful).
 - Thread organization (M21/M22, T18): conversations can be pinned,
   muted, and archived — three 0/1 columns behind a VERSIONED migration
   (schema_version v2; migrations now run as ordered steps, never ad-hoc

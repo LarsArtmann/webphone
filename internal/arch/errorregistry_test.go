@@ -112,19 +112,14 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 	t.Helper()
 	entries := map[string]*codeEntry{}
-	seen := 0
 	err := filepath.WalkDir(filepath.Join("..", ".."), func(path string, d os.DirEntry, err error) error {
-		if seen < 8 {
-			t.Logf("DEBUG visit %q isDir=%v err=%v", path, d != nil && d.IsDir(), err)
-			seen++
-		}
 		if err != nil {
 			return err
 		}
 		if d.IsDir() {
 			switch d.Name() {
 			case ".git", "vendor", "node_modules", ".direnv", "result":
-				return filepath.SkipAll
+				return filepath.SkipDir
 			}
 			return nil
 		}
@@ -137,7 +132,6 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 			return err
 		}
 		rel := strings.TrimPrefix(filepath.ToSlash(path), "../../")
-		seen++
 		for _, m := range ctorRe.FindAllStringSubmatch(string(data), -1) {
 			code := m[4]
 			if !codeShapeRe.MatchString(code) {
@@ -173,7 +167,6 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 		t.Fatal(err)
 	}
 	if len(entries) == 0 {
-		t.Logf("DEBUG walked %d go files", seen)
 		t.Fatal("no errorfamily codes found — the extractor likely broke")
 	}
 	return entries
