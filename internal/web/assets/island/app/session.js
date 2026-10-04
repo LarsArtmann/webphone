@@ -47,51 +47,62 @@ export async function createSession(extension, password) {
       // A bodyless or non-JSON success is not fatal: identity is cosmetic.
     }
     // The login response invalidated the old CSRF token (fixation
-    // defense); adopt the fresh one before anything else POSTs. A failed
-    // adoption retries with backoff first (transient network/5xx), and
-    // the page reload is the last resort: it keeps the server session
-    // (cookie) but costs the SIP registration this tab just made.
-    let adoptionError = null;
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
-      try {
-        await adoptFreshCsrfToken();
-        adoptionError = null;
-        break;
-      } catch (err) {
-        adoptionError = err;
-        await new Promise((resolve) => setTimeout(resolve, attempt * 250));
-      }
-    }
-    if (adoptionError) {
-      log(
-        `csrf adoption failed (${adoptionError.message}); reloading page`,
-        "error",
-      );
-      console.warn(
-        "webphone: CSRF token adoption failed (" +
-          adoptionError.message +
-          "), reloading",
-      );
-      // The fresh server session survives a reload (cookie); the served
-      // page then carries a matching token again. No call is lost: no
-      // call can exist before the REGISTER that just succeeded.
-      window.location.reload();
-      return;
-    }
-    log("server session created; csrf token adopted");
-    connectLiveUpdates();
-    // Panels that need the session (the contacts home) load now — the
-    // cookie is minted and the fresh CSRF token adopted, so their POSTs
-    // ride a live token. Mirrors the wp:lang-changed seam: modules
-    // coordinate through document events, never imports.
-    document.dispatchEvent(
-      new CustomEvent("wp:session-opened", { detail: { did } }),
-    );
+    // defense); adopt the fresh one before anything else POSTs — the
+    // shared post-login sequence (adopt → SSE attach → announce) lives
+    // in adoptServerSession below.
+    await adoptServerSession({ did });
   } catch (err) {
     announce(t("sessionNetFailed"), "warn");
     log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");
   }
+}
+
+// adoptServerSession finishes every client-side step of a login whose
+// server session ALREADY exists (the extension path mints it in
+// createSession; the passkey path gets it minted by the finish
+// endpoint): adopt the rotated CSRF token (retries with backoff, the
+// page reload is the last resort — it keeps the server session cookie
+// but costs the SIP registration), attach the SSE feed, then announce
+// wp:session-opened with the caller's detail (did, displayName,
+// numbers — whatever the identity surface knows). Returns false when it
+// fell back to the reload; true otherwise.
+export async function adoptServerSession(detail = {}) {
+  let adoptionError = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      await adoptFreshCsrfToken();
+      adoptionError = null;
+      break;
+    } catch (err) {
+      adoptionError = err;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+    }
+  }
+  if (adoptionError) {
+    log(
+      `csrf adoption failed (${adoptionError.message}); reloading page`,
+      "error",
+    );
+    console.warn(
+      "webphone: CSRF token adoption failed (" +
+        adoptionError.message +
+        "), reloading",
+    );
+    // The fresh server session survives a reload (cookie); the served
+    // page then carries a matching token again. No call is lost: no
+    // call can exist before the REGISTER that just succeeded.
+    window.location.reload();
+    return false;
+  }
+  log("server session created; csrf token adopted");
+  connectLiveUpdates();
+  // Panels that need the session (the contacts home) load now — the
+  // cookie is minted and the fresh CSRF token adopted, so their POSTs
+  // ride a live token. Mirrors the wp:lang-changed seam: modules
+  // coordinate through document events, never imports.
+  document.dispatchEvent(new CustomEvent("wp:session-opened", { detail }));
+  return true;
 }
 
 export async function destroySession() {
