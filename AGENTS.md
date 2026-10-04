@@ -131,6 +131,31 @@ browser E2E drives the island through it — re-run after any markup change
   calls/ice/connection never import each other; ice syncs via
   `wp:calls-changed` — enforced by `internal/arch/arch_test.go` (also
   `domain` imports nothing internal; services never import `server`/`web`).
+- **Passkey (WebAuthn) login mode** (2026-10-04, config-gated, DEFAULT
+  OFF — zero config = byte-identical login card): the embedded
+  cqrs-htmx/usermgmt v4 identity layer runs IN-PROCESS (`internal/userauth`,
+  own `usermgmt.db` under the data dir — deliberately NOT webphone.db, so
+  versioned-migration regimes never split brains) behind `auth.passkey.*`.
+  Login INVERTS the extension order: `POST /api/auth/passkey/finish`
+  verifies the ceremony, resolves the config mapping, sources the SIP
+  directory password from `extension_password_files` (read per login,
+  never cached; empty/missing = Rejection, the 2026-10-01 outage class),
+  directory-verifies, mints the session and returns the password
+  (no-store) — the island REGISTERs only afterwards. Enrollment is
+  CLI-minted one-time tokens (`webphone -enroll-passkey <email>`, 15-min
+  sha256-at-rest, burned at verify; `GET /enroll` + `/assets/enroll/`).
+  The provider seam: `PasskeyRuntime.WebAuthn` (nil = the real
+  go-webauthn provider; tests inject the deterministic stub — never
+  build browser signatures in tests). Island modules `webauthn.js` +
+  `passkey.js` live in island/app (in main.js's import closure — the
+  preload invariant test requires it); `enroll.js` deliberately lives in
+  `assets/enroll/` OUTSIDE the island (a standalone page entry would
+  waste a modulepreload on every shell render). `session.js`
+  `adoptServerSession` is the ONE post-session sequence (CSRF adoption
+  retry → SSE attach → `wp:session-opened`) shared by both login paths;
+  its event detail carries `{did, displayName, numbers}`. userauth
+  imports ONLY config-free types — the config→runtime adapter is
+  `app.PasskeyRuntime` (exported for the CLI too).
 - **Sessions**: verify extension/password against the PBX directory before
   minting (fail-closed; loopback dev skips + WARNs). Store SEAM: prod
   `NewSQLiteStore` (row carries the extension + directory password the
@@ -140,7 +165,9 @@ browser E2E drives the island through it — re-run after any markup change
   (`session_ttl`=7d idle, `session_max_ttl`=30d absolute); login/hooks
   per-IP rate limited. Handlers self-gate via `requireSession`;
   `Sessions.Require` also wires `/events` + `/phone-api/`; the contract
-  test allowlists exactly three 401 writers (actions, webhooks, session_api).
+  test allowlists exactly FOUR 401 writers (actions, webhooks,
+  session_api, passkey_api — the last is the passkey login's uniform
+  anti-enumeration gate, same credential class as session_api's).
 - **Language**: per extension — `wp-lang` cookie (samesite=strict) →
   `Accept-Language: de*` → English; `ExtensionHubs` remember it for SSE
   fragments. Service validation reasons stay English. i18n dictionaries

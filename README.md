@@ -124,8 +124,13 @@ in the JSON file.
 | `csrf.trusted_origins`        | _empty_             | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                                                                                                                        |
 | `crm.url`                     | _empty_ = disabled  | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                                                                                                                      |
 | `crm.token`                   | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
-| `paperless.url`               | _empty_ = disabled  | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
-| `paperless.token`             | _empty_             | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
+| `paperless.url`                 | _empty_ = disabled  | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
+| `paperless.token`               | _empty_             | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
+| `auth.passkey.rp_id`            | _empty_ = disabled  | WebAuthn relying-party ID (the registrable domain, e.g. `pbx.example.com`); setting the passkey keys enables the email-first login — all-or-nothing per validation                                                     |
+| `auth.passkey.rp_display_name`  | `webphone`          | Name the browser shows in the passkey prompt                                                                                                                                                                          |
+| `auth.passkey.rp_origins`       | _required_          | Browser-facing origins (`https://…`); each origin's host must equal `rp_id`                                                                                                                                            |
+| `auth.passkey.users`            | _required_          | Email → `{extensions: ["1000"], display_name: "Lars"}`: the mapping a verified passkey resolves to (first extension binds the session; every mapped extension's `identities` number shows in the whoami line)        |
+| `auth.passkey.extension_password_files` | _required_  | Extension → runtime file carrying its SIP directory password (single line, read at login time, never cached; empty/missing fails closed)                                                                               |
 
 `csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
 then arrives with `Origin: https://host` while the listener sees plain
@@ -155,6 +160,16 @@ Example file:
   "csrf": {
     "trusted_proxies": ["127.0.0.1"],
     "trusted_origins": ["https://pbx.example.com"]
+  },
+  "auth": {
+    "passkey": {
+      "rp_id": "pbx.example.com",
+      "rp_origins": ["https://pbx.example.com"],
+      "users": {
+        "lars@example.com": { "extensions": ["1000"], "display_name": "Lars" }
+      },
+      "extension_password_files": { "1000": "/var/lib/telephony-secrets/ext_1000" }
+    }
   }
 }
 ```
