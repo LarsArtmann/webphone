@@ -58,6 +58,7 @@ nix shell nixpkgs#chromium nixpkgs#chromedriver 'nixpkgs#python312.withPackages(
   --command python3 scripts/ui-capture.py --binary $(nix build --no-link --print-out-paths .#webphone)/bin/webphone
                                      # T23 visual harness: 14 shots into ui-shots/; LOCAL-ONLY by budget decision
                                      # (a KVM browser VM duplicates the stack's E2E lane); asserts DOM per shot
+                                     # and waits on the island call view (the resume reveal races short sleeps)
 ```
 
 Smoke a binary quickly (loopback gateway = whole product, zero PBX):
@@ -252,7 +253,11 @@ browser E2E drives the island through it — re-run after any markup change
   PERMANENT scoped Tailwind v4 build at `/assets/tw.css` (`@source` of
   exactly the adopted components; rebuild with `nix run
   nixpkgs#tailwindcss_4`, NEVER v3; coexistence PROVEN — Tailwind emits
-  `@layer` only, unlayered app.css wins). DELIBERATE hand-rolls stay:
+  `@layer` only). **Cascade-layer contract**: ANY unlayered rule beats
+  ANY layered utility at any specificity — island bare-element rules
+  MUST stay scoped to `.island` (box-sizing + reduced-motion stay global
+  on purpose; app.css has no reduced-motion of its own); never un-scope.
+  DELIBERATE hand-rolls stay:
   avatars, nav badges, informational `wp-empty`, error panel, timestamps,
   brand SVG. `display.RelativeTime`, `display.CountBadge`, the errorpage
   module are REJECTED (rationale in the coexistence verdict doc).

@@ -219,6 +219,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The adopted templ-components layer was visually inert: the island
+  stylesheet's bare element rules (`button`, `input`, …) were unlayered,
+  and ANY unlayered rule beats ANY Tailwind `@layer utilities` rule at
+  any specificity — so Send/Call rendered as island-styled keys instead
+  of Primary green everywhere the components reached. The island
+  stylesheet now scopes its element rules to `.island` (box-sizing and
+  the reduced-motion block deliberately stay global), the history filter
+  button gets `wp-mini` (it would have gone UA-gray unclassed), and the
+  tab region's snippet-picker summary keeps its focus ring. The capture
+  harness waits on the island call view per shot instead of a fixed
+  sleep (the resume reveal raced the old 0.4s).
 - A resumed session was silently deleted whenever the SIP WebSocket was
   unreachable at page load: the boot-resume path treated ANY connect
   failure as "stored credentials are stale" and dropped the server
