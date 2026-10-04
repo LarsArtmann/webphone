@@ -8,6 +8,12 @@ below). Primary repo: **webphone** (this repo); deployment wiring lands in
 pbx-artmann; the stack (nix-international-telephony) needs only a lock bump
 (settings are freeform JSON — verified).
 
+> **RESOLVED 2026-10-04 ~17:00** — the whole §f table and the §g questions
+> are done/decided in the resumed session (webphone `52f4d21`, pushed;
+> sibling relock `890a526`, pushed; pbx-artmann wiring `82bbb3b` + staged
+closure `0ngvm4q7…`). Details struck inline below; the live browser proof
+> is the one open row (pbx-artmann TODO §1).
+
 ---
 
 ## a) FULLY DONE
@@ -152,48 +158,57 @@ pbx-artmann; the stack (nix-international-telephony) needs only a lock bump
 
 | # | Task | Why next |
 | --- | --- | --- |
-| 1 | F15 `views/enroll.templ` + `h.enrollPage` | THE compile blocker |
-| 2 | F14 island `webauthn.js` coercion + round-trip test | highest risk, unblocks all UI |
-| 3 | F14 island `enroll.js` (verify→begin→ceremony→finish) | makes enrollment usable |
-| 4 | F14 `phone.templ` passkey section + break-glass `<details>` | the visible feature |
-| 5 | F14 `passkey.js` + `main.js` wiring + whoami name/numbers | the "smart numbers" win |
-| 6 | F20 `configjs.go` passkey flag (+test) | island gates on it |
-| 7 | `templ generate` + views render tests | gates green |
-| 8 | F24 i18n en/de + parity tests | gate-pinned |
-| 9 | F25 dom-contract ids + contract test | gate-pinned |
-| 10 | F26 userauth service tests (stub provider) | proves register→enroll→login→map |
-| 11 | F27 token burn/expiry/uniformity + SIPPassword failure classes | security pins |
-| 12 | F28 server handler tests (off=404, 401 uniform, mint, 429, CSRF) | contract pins |
-| 13 | F29 family pins for the new seam codes | tier-2 green |
-| 14 | F17-CLI `-enroll-passkey` + main.go boot log line | operator onboarding |
-| 15 | P9 webphone docs sweep + TODO_LIST harvest | docs-health duty |
-| 16 | `nix fmt` (island/shell/css) BEFORE gates | known gate-killer |
-| 17 | buildflow full (expect the ~54 vendor-consistency false positive) | quality gate |
-| 18 | vendorHash via `buildflow -s nix-hash-fix --fix` | nix build unblocks |
-| 19 | `nix flake check` (module-output.golden should be untouched) | sandbox gates |
-| 20 | Loopback smoke: off-mode login page byte-shape + /enroll 404 | regression pin |
-| 21 | Narrative phase commits, then push webphone `main` | train step 1 |
-| 22 | P10 pbx settings.auth.passkey values | deployment truth |
-| 23 | P10 secrets-perms grant `telephony_ext_1000/1001` → root:webphone 640 | login path needs it |
-| 24 | P10 enroll operator surface (wrapper vs runbook — see g/1) | onboarding ergonomics |
-| 25 | P10 pbx docs (AGENTS/CHANGELOG/TODO §1/DOMAIN_LANGUAGE) + docs gates | repo ritual |
-| 26 | Stack: `nix flake update webphone` + push, CI-green-first check | train step 2 |
-| 27 | pbx: `nix flake update telephony` + `lock-drift-probe` (pin MATCH) | train step 3 |
-| 28 | pbx gates: both-arch eval + toplevel build + flake check --no-build | pre-staging |
-| 29 | pbx: staging root `-o /tmp/pbx-toplevel-root` + `deploy-freshness` FRESH | pre-handover |
-| 30 | `nix run .#deploy` composed guard + hand over switch command | owner runs it |
-| 31 | Post-deploy: CLI enroll + browser ceremony + verify-live.sh | proof |
-| 32 | Optional: per-train ui-capture login shots (LOCAL-ONLY budget) | polish |
+| ~~1~~ | ~~F15 `views/enroll.templ` + `h.enrollPage`~~ done (render-pinned by TestEnrollPageRendersStandalone) | ~~THE compile blocker~~ |
+| ~~2~~ | ~~F14 island `webauthn.js` coercion + round-trip test~~ done (webauthn.test.mjs, 9 specs) | ~~highest risk, unblocks all UI~~ |
+| ~~3~~ | ~~F14 island `enroll.js` (verify→begin→ceremony→finish)~~ done (assets/enroll/, 3 specs) | ~~makes enrollment usable~~ |
+| ~~4~~ | ~~F14 `phone.templ` passkey section + break-glass `<details>`~~ done (TestLoginCardAdaptsToPasskeyMode) | ~~the visible feature~~ |
+| ~~5~~ | ~~F14 `passkey.js` + `main.js` wiring + whoami name/numbers~~ done (passkey.test.mjs, 6 specs) | ~~the "smart numbers" win~~ |
+| ~~6~~ | ~~F20 `configjs.go` passkey flag~~ done as NOT-NEEDED: the island gates on the server-rendered form's presence (initPasskeyLogin no-ops without it) — one source of truth, no config drift | ~~island gates on it~~ |
+| ~~7~~ | ~~`templ generate` + views render tests~~ done | ~~gates green~~ |
+| ~~8~~ | ~~F24 i18n en/de + parity tests~~ done (island passkey+enroll keys, views enroll.* keys) | ~~gate-pinned~~ |
+| ~~9~~ | ~~F25 dom-contract ids + contract test~~ done (conditional-ids section + views pins) | ~~gate-pinned~~ |
+| ~~10~~ | ~~F26 userauth service tests (stub provider)~~ done (8 tests, PasskeyRuntime.WebAuthn seam) | ~~proves register→enroll→login→map~~ |
+| ~~11~~ | ~~F27 token burn/expiry/uniformity + SIPPassword failure classes~~ done | ~~security pins~~ |
+| ~~12~~ | ~~F28 server handler tests (off=404, 401 uniform, mint, 429, CSRF)~~ done (6 tests) | ~~contract pins~~ |
+| ~~13~~ | ~~F29 family pins for the new seam codes~~ done (inline AssertFamily/AssertCode in the userauth suite; the 17 `userauth.*` codes ride the regenerated error-code registry, freshness-gated) | ~~tier-2 green~~ |
+| ~~14~~ | ~~F17-CLI `-enroll-passkey` + main.go boot log line~~ done (loopback-proven live: mint → verify 200 → replay 503) | ~~operator onboarding~~ |
+| ~~15~~ | ~~P9 webphone docs sweep + TODO_LIST harvest~~ done | ~~docs-health duty~~ |
+| ~~16~~ | ~~`nix fmt` (island/shell/css) BEFORE gates~~ done | ~~known gate-killer~~ |
+| ~~17~~ | ~~buildflow full~~ done — erraudit greens fixed; gomod-check vendor-consistency count updated in AGENTS (the documented false positive, 54→99 with the new deps) | ~~quality gate~~ |
+| ~~18~~ | ~~vendorHash via `buildflow -s nix-hash-fix --fix`~~ done via the repo's documented placeholder→got: roundtrip (nix-hash-fix skipped by policy here) | ~~nix build unblocks~~ |
+| ~~19~~ | ~~`nix flake check`~~ done, all checks passed | ~~sandbox gates~~ |
+| ~~20~~ | ~~Loopback smoke: off-mode login page byte-shape + /enroll 404~~ done — plus on-mode: passkey card + break-glass, /enroll 200, asset 200, usermgmt.db split proven; found+fixed the rp_id host:port over-strictness on the way | ~~regression pin~~ |
+| ~~21~~ | ~~Narrative phase commits, then push webphone `main`~~ done: `52f4d21` on origin (ls-remote verified) | ~~train step 1~~ |
+| ~~22~~ | ~~P10 pbx settings.auth.passkey values~~ done (`82bbb3b`; merge proven by eval + staged-config byte-read) | ~~deployment truth~~ |
+| ~~23~~ | ~~P10 secrets-perms grant `telephony_ext_1000/1001` → root:webphone 640~~ done | ~~login path needs it~~ |
+| ~~24~~ | ~~P10 enroll operator surface (wrapper vs runbook — see g/1)~~ done: runbook-only (see g/1 verdict) | ~~onboarding ergonomics~~ |
+| ~~25~~ | ~~P10 pbx docs (AGENTS/CHANGELOG/TODO §1/DOMAIN_LANGUAGE) + docs gates~~ done — docs gates PASS | ~~repo ritual~~ |
+| ~~26~~ | ~~Stack: `nix flake update webphone` + push, CI-green-first check~~ done: sibling `890a526` pushed; CI runs keep hitting runner cancellations, so the ritual's fallback evidence ran locally (104 python tests + all-systems eval on the exact pin) | ~~train step 2~~ |
+| ~~27~~ | ~~pbx: `nix flake update telephony` + `lock-drift-probe` (pin MATCH)~~ done: probe ALL OK, webphone pins match `52f4d212` | ~~train step 3~~ |
+| ~~28~~ | ~~pbx gates: both-arch eval + toplevel build + flake check --no-build~~ done | ~~pre-staging~~ |
+| ~~29~~ | ~~pbx: staging root `-o /tmp/pbx-toplevel-root` + `deploy-freshness` FRESH~~ done staged `0ngvm4q7…` == flake eval (stage-1 proven); NOTE: the diff-story leg is blocked — `/tmp/pbx-toplevel-current`'s target was GC'd, so the baseline pair is unreconstructable pre-switch; rotate + record the fresh baseline post-switch (noted in the pbx commit) | ~~pre-handover~~ |
+| ~~30~~ | ~~`nix run .#deploy` composed guard + hand over switch command~~ done minus the composed run: secrets-preflight FAILS on the PRE-EXISTING stalwart_relay_password local-staging gap (mail train, unchanged by this one — every passkey secret is green); handover command delivered | ~~owner runs it~~ |
+| 31 | Post-deploy: CLI enroll + browser ceremony + verify-live.sh | proof — the ONE open row (pbx-artmann TODO §1) |
+| 32 | Optional: per-train ui-capture login shots (LOCAL-ONLY budget) | polish — not done, genuinely optional |
 
 ## g) Top questions I can NOT figure out myself
 
-1. **Enrollment operator surface**: a `webphone-enroll <email>` wrapper in
+1. ~~**Enrollment operator surface**: a `webphone-enroll <email>` wrapper in
    `environment.systemPackages` (systemd-run as User=webphone,
    `WEBPHONE_CONFIG` lifted from the unit) — or runbook-only sudo
    one-liner? Wrapper = better UX + one more moving part; runbook = zero
-   surface. Owner taste decides.
-2. **Alice too?** Should `1001` get a mapped passkey user in v1, or
-   Lars-only (Alice has no real person yet)?
-3. **Train depth this session**: full ride (push webphone → stack lock →
+   surface. Owner taste decides.~~ decided: runbook-only sudo one-liner
+   (zero new surface; the command lives in pbx-artmann AGENTS.md
+   "Webphone passkey login" — re-ratable anytime)
+2. ~~**Alice too?** Should `1001` get a mapped passkey user in v1, or
+   Lars-only (Alice has no real person yet)?~~ decided: Lars-only in v1;
+   the 1001 perms grant + push-secrets entry already exist, so mapping
+   Alice later is ONE config edit (documented in the runbook)
+3. ~~**Train depth this session**: full ride (push webphone → stack lock →
    pbx relock → staged + gates) or stop after webphone-repo green for
-   review? The paste says push; main is shared by the floating input.
+   review? The paste says push; main is shared by the floating input.~~
+   done: the FULL ride — webphone `52f4d21` pushed, sibling `890a526`
+   pushed (local gates: 104 python tests + all-systems eval; CI runs keep
+   hitting runner cancellations), pbx-artmann relocked + staged `0ngvm4q7…`
+   + probe OK + both-arch eval + docs gates green; the owner switch
+   command is handed over
