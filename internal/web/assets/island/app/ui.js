@@ -11,6 +11,12 @@ export const els = {
   loginView: $("login-view"),
   loginForm: $("login-form"),
   loginError: $("login-error"),
+  // The passkey front door (rendered ONLY when the identity mode is
+  // on): initPasskeyLogin no-ops when passkeyForm is null, so a
+  // disabled deployment never touches these.
+  passkeyForm: $("passkey-login-form"),
+  passkeyEmail: $("passkey-email"),
+  passkeyError: $("passkey-login-error"),
   ext: $("ext"),
   pass: $("pass"),
   remember: $("remember"),

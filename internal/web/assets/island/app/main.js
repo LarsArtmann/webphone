@@ -52,6 +52,7 @@ import {
 } from "./ui.js";
 import { initAudioOutput } from "./audioout.js";
 import { initDeviceCheck } from "./selftest.js";
+import { initPasskeyLogin, whoamiLine } from "./passkey.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -128,7 +129,10 @@ async function resumeSession() {
     networkOnline();
     log(`session resumed; SIP unreachable (${err.message})`, "error");
   }
-  els.whoami.textContent = `${session.extension}@${sipDomain}`;
+  // The whoami line honors the session's identity fields (a passkey
+  // session carries display_name/numbers; an extension session keeps
+  // the plain ext@sipDomain line) — one renderer for both.
+  els.whoami.textContent = whoamiLine(session);
   els.loginView.hidden = true;
   els.phoneView.hidden = false;
   connectLiveUpdates();
@@ -266,6 +270,9 @@ els.reject.addEventListener("click", () => {
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 
 initShortcuts();
+// The passkey front door binds only when the server rendered it — a
+// disabled deployment stays byte-identical in behavior.
+initPasskeyLogin();
 initSseLiveIndicator();
 initDialTypeahead();
 initDialHint();

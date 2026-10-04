@@ -28,6 +28,11 @@ func (h *handlers) assets() http.Handler {
 	mux.Handle("/assets/island/", http.StripPrefix("/assets/island/", fileServer))
 	// /assets/vendor/... → vendored sip.min.js + license notice
 	mux.Handle("/assets/vendor/", http.StripPrefix("/assets/", vendorServer))
+	// /assets/enroll/... → the standalone passkey-enrollment page module
+	// (NOT part of the island: the closure test pins island/app to
+	// main.js's import graph, and this entry would waste a preload on
+	// every shell render).
+	mux.Handle("/assets/enroll/", http.StripPrefix("/assets/", vendorServer))
 	// /assets/app.css, /assets/shell.js, /assets/theme-preload.js → shell files
 	mux.HandleFunc("GET /assets/app.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "app.css", "text/css; charset=utf-8")

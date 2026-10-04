@@ -96,6 +96,15 @@ export const I18N = {
     passkeyBeginFailed: (status) => `Passkey sign-in unavailable (HTTP ${status}).`,
     passkeyFinishFailed: (status) => `Passkey verification failed (HTTP ${status}).`,
     passkeyNetFailed: "Passkey sign-in failed — network error.",
+    enrollVerified: (email) =>
+      `Token verified for ${email}. Follow your device to create the passkey.`,
+    enrollSuccess:
+      "Passkey created. Go to the main page and sign in with it.",
+    enrollFailed: (status) =>
+      `Enrollment failed (HTTP ${status}) — the token may be invalid, expired or already used; ask for a new link if this repeats.`,
+    enrollDismissed:
+      "Passkey creation was cancelled — submit the token again to retry.",
+    enrollNetFailed: "Network error — try again.",
     callFailed: (detail) => `call failed: ${detail}`,
     callEnded: (dur) => `call ended · ${dur}`,
     missedCall: (from) => `missed call from ${from}`,
@@ -153,6 +162,15 @@ export const I18N = {
     passkeyBeginFailed: (status) => `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
     passkeyFinishFailed: (status) => `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
     passkeyNetFailed: "Passkey-Anmeldung fehlgeschlagen — Netzwerkfehler.",
+    enrollVerified: (email) =>
+      `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
+    enrollSuccess:
+      "Passkey erstellt. Gehen Sie zur Hauptseite und melden Sie sich damit an.",
+    enrollFailed: (status) =>
+      `Hinterlegung fehlgeschlagen (HTTP ${status}) — das Token ist möglicherweise ungültig, abgelaufen oder bereits benutzt; fordern Sie im Zweifel einen neuen Link an.`,
+    enrollDismissed:
+      "Passkey-Erstellung abgebrochen — Token erneut absenden, um es noch einmal zu versuchen.",
+    enrollNetFailed: "Netzwerkfehler — erneut versuchen.",
     signedInAs: "angemeldet als",
     signOut: "abmelden",
     signOutTitle: "Abmelden und Registrierung lösen",

@@ -1,8 +1,9 @@
 // Package assets embeds every static file the webphone serves: the SIP call
 // island (ES modules + stylesheet), the vendored sip.js browser bundle, the
-// shell stylesheet, and the shell glue + theme-preload scripts. Everything
-// ships same-origin from the binary — the strict CSP of the serving vhost
-// allows nothing else.
+// shell stylesheet, the shell glue + theme-preload scripts, and the
+// standalone passkey-enrollment page module. Everything ships same-origin
+// from the binary — the strict CSP of the serving vhost allows nothing
+// else.
 package assets
 
 import (
@@ -11,7 +12,7 @@ import (
 	"sort"
 )
 
-//go:embed all:island all:vendor app.css tw.css health.css shell.js theme-preload.js
+//go:embed all:island all:vendor all:enroll app.css tw.css health.css shell.js theme-preload.js
 var embedded embed.FS
 
 // islandModuleURLs is the island's ESM graph as serving URLs: every
