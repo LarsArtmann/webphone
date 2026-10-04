@@ -82,6 +82,11 @@ type Config struct {
 	// because the dashboard is an OPT-IN operator surface the deployment
 	// must deliberately expose (and fence) like the probe triple.
 	Dashboard Dashboard `json:"dashboard" koanf:"dashboard"`
+	// Auth configures the optional passkey (WebAuthn) login mode backed
+	// by the embedded cqrs-htmx/usermgmt identity layer. Zero value =
+	// disabled: extension + SIP directory password stays the only login
+	// and the login page renders exactly as before.
+	Auth Auth `json:"auth" koanf:"auth"`
 }
 
 // Dashboard configures the optional go-health-dashboard mount.
@@ -93,6 +98,54 @@ type Dashboard struct {
 	// Title names the deployment on the dashboard page (e.g. the PBX
 	// host). Empty keeps the library default.
 	Title string `json:"title,omitempty" koanf:"title"`
+}
+
+// Auth selects the login modes. The extension login is ALWAYS available
+// (lifeline property: signing into a phone must never depend on more
+// than FreeSWITCH and the webphone process itself); the passkey mode is
+// strictly additive on top of it.
+type Auth struct {
+	Passkey Passkey `json:"passkey" koanf:"passkey"`
+}
+
+// Passkey enables passkey logins via the embedded usermgmt service.
+// Enabled is DERIVED: any of RPID, RPOrigins or Users being set counts as
+// enabled, and validation fails closed on half a configuration — the
+// CRM/Paperless both-or-neither doctrine.
+type Passkey struct {
+	// RPID is the WebAuthn Relying Party ID: the registrable domain the
+	// passkeys are bound to (e.g. "pbx.example.org"). Must equal the
+	// host of every entry in RPOrigins.
+	RPID string `json:"rp_id" koanf:"rp_id"`
+	// RPDisplayName names the relying party in the browser's passkey
+	// prompt. Empty keeps "webphone".
+	RPDisplayName string `json:"rp_display_name,omitempty" koanf:"rp_display_name"`
+	// RPOrigins lists the absolute origins the ceremony accepts (e.g.
+	// "https://pbx.example.org") — the same operator-declared shape as
+	// csrf.trusted_origins, because the app behind a TLS proxy cannot
+	// derive its public origin itself.
+	RPOrigins []string `json:"rp_origins" koanf:"rp_origins"`
+	// Users maps a usermgmt account email to the extensions that account
+	// may sign in as. The FIRST extension is the one the session binds
+	// (all stores are extension-scoped); every listed extension's DID
+	// (config identities) renders in the whoami line. The map is the
+	// admin surface, exactly like identities — changing it is a config
+	// edit, never a UI flow.
+	Users map[string]PasskeyUser `json:"users" koanf:"users"`
+	// ExtensionPasswordFiles maps a normalized extension to a runtime
+	// file carrying its SIP directory password (single line). Passkey
+	// login never asks the user for the password, but the session row
+	// must carry it (the island REGISTER and the /phone-api proxy are
+	// password-based by design), so the server sources it the same way
+	// the bridge sources its secrets: an operator-managed file, read at
+	// login, never cached. Every extension listed in Users needs one.
+	ExtensionPasswordFiles map[string]string `json:"extension_password_files" koanf:"extension_password_files"`
+}
+
+// PasskeyUser is one email's extension mapping (see Passkey.Users).
+type PasskeyUser struct {
+	Extensions  []string `json:"extensions" koanf:"extensions"`
+	DisplayName string   `json:"display_name,omitempty" koanf:"display_name"`
 }
 
 // CRM configures the optional Ledger CRM integration. Both fields must be
@@ -340,6 +393,9 @@ func validate(cfg Config) error {
 			return errorfamily.Newf(errorfamily.Rejection, "config.paperless.url", "paperless.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:2280)", cfg.Paperless.URL)
 		}
 	}
+	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
+		return err
+	}
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
 		return nil
@@ -351,6 +407,54 @@ func validate(cfg Config) error {
 	u, err := url.Parse(cfg.CRM.URL)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
+	}
+	return nil
+}
+
+// validatePasskey fails closed on half a passkey configuration: a login
+// mode that is half-wired would either brick passkey logins at runtime or
+// silently fall back to extension logins — both worse than a failed boot.
+// The password-file existence is deliberately NOT checked here (files
+// rotate at runtime); it is enforced at login time, fail-closed.
+func validatePasskey(p Passkey) error {
+	if !p.Enabled() {
+		return nil
+	}
+	if p.RPID == "" {
+		return errorfamily.NewRejection("config.auth.passkey.rp_id", "auth.passkey: rp_id is required when the passkey mode is configured (the registrable domain the passkeys bind to, e.g. pbx.example.org)")
+	}
+	if len(p.RPOrigins) == 0 {
+		return errorfamily.NewRejection("config.auth.passkey.rp_origins", "auth.passkey: rp_origins is required (at least one absolute origin, e.g. https://pbx.example.org)")
+	}
+	for _, origin := range p.RPOrigins {
+		u, err := url.Parse(origin)
+		if err != nil || u.Scheme != "https" && u.Scheme != "http" || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.rp_origins", "auth.passkey.rp_origins: %q is not an absolute origin (want scheme://host, e.g. https://pbx.example.org)", origin)
+		}
+		if u.Host != p.RPID {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.rp_id", "auth.passkey: rp_id %q must equal the host of every rp_origins entry (got %q): a mismatch binds passkeys the browser then refuses to use", p.RPID, u.Host)
+		}
+	}
+	if len(p.Users) == 0 {
+		return errorfamily.NewRejection("config.auth.passkey.users", "auth.passkey: users is required — without an email→extension mapping no passkey login can mint a session")
+	}
+	for email, user := range p.Users {
+		if !strings.Contains(email, "@") || strings.HasPrefix(email, "@") || strings.HasSuffix(email, "@") {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.users", "auth.passkey.users: key %q is not an email address", email)
+		}
+		if len(user.Extensions) == 0 {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.users", "auth.passkey.users: %q has no extensions — a passkey login needs at least one extension to bind its session to", email)
+		}
+		for _, raw := range user.Extensions {
+			parsed, err := domain.ParseExtension(raw)
+			if err != nil || parsed.String() != raw {
+				return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.users", "auth.passkey.users: extension %q of %q is not a normalized extension (sanitize it exactly as it appears in the directory)", raw, email)
+			}
+			file, ok := p.ExtensionPasswordFiles[raw]
+			if !ok || file == "" {
+				return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.extension_password_files", "auth.passkey.extension_password_files: no password file for extension %q (mapped by %q) — passkey login must source the SIP directory password server-side", raw, email)
+			}
+		}
 	}
 	return nil
 }
