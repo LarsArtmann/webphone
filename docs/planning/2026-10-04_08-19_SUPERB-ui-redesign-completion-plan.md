@@ -116,8 +116,8 @@ independent of each other; both before T6 (docs describe the final state).
   BOTH themes, chips dark-correct, inputs single-edge. (Side-by-side vs
   `ui-shots-before/` was replaced by per-criterion verification; f.37.)
 - **T4 DONE** — fmt clean; island tests green (166 → 184 after the passkey
-  train's webauthn specs); buildflow green except the documented
-  gomod-check vendor FP.
+  train's webauthn specs); buildflow green — the gomod-check vendor FP is
+  suppressed via `skip_steps` (2026-10-04, rationale in .buildflow.yml).
 - **T5 BLOCKED on owner** — 5.1 is a NO-OP (both targets ALIVE, see row);
   5.2/5.3 wait on the palette sign-off (report §g.1).
 - **T6 DONE** — smoke 47/0 + restart 4/4 + boot-failure 8/8; AGENTS

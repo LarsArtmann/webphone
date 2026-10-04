@@ -163,3 +163,14 @@ health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked
 Owner/stack legs that block or derive from webphone work: repair the stack FreeSWITCH `mod_enum` build → run the stack browser E2E → relock to webphone `cc98c2e` (or newer) + pbx-artmann re-pin; **the cascade-fix train (2026-10-04, island style scoped to `.island` + history filter `wp-mini`) changed served markup/assets — the stack browser E2E re-run above covers this train's obligation**; stack `services.webphone.paperless` module option + smoke arm; the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column; ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` + CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified handovers only.
 
 **Evidence:** 02:54 / 04:07 / 05:26 reports §f; owner command sheet `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
+
+### AGENTS.md over its own line cap
+
+**Status:** 🟡 `PLANNED` · **Priority:** Low · **Effort:** S
+
+`docs/agents-md-size` preflight warns every buildflow run: AGENTS.md is
+~40 lines over the 377 cap (grew with the cascade-contract, passkey and
+smoke-label additions of 2026-10-04). Advisory only — buildflow still
+exits 0. Trim at train close: move evidence parentheticals to docs/,
+keep rules. Do NOT trim while the passkey train is mid-flight (shared
+file; they may still be editing).
