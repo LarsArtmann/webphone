@@ -106,6 +106,7 @@ export const I18N = {
     enrollDismissed:
       "Passkey creation was cancelled — submit the token again to retry.",
     enrollNetFailed: "Network error — try again.",
+    enrollTokenMissing: "Paste the token from your enrollment link first.",
     callFailed: (detail) => `call failed: ${detail}`,
     callEnded: (dur) => `call ended · ${dur}`,
     missedCall: (from) => `missed call from ${from}`,
@@ -175,6 +176,7 @@ export const I18N = {
     enrollDismissed:
       "Passkey-Erstellung abgebrochen — Token erneut absenden, um es noch einmal zu versuchen.",
     enrollNetFailed: "Netzwerkfehler — erneut versuchen.",
+    enrollTokenMissing: "Fügen Sie zuerst das Token aus Ihrem Link ein.",
     signedInAs: "angemeldet als",
     signOut: "abmelden",
     signOutTitle: "Abmelden und Registrierung lösen",

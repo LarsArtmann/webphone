@@ -7,6 +7,7 @@
 // a cancelled prompt keeps the token's fate honest: verify burned it,
 // so retry needs a fresh link — the copy says so.
 import { t } from "../island/app/i18n.js";
+import { csrfToken } from "../island/app/csrf.js";
 import {
   prepareRegistrationOptions,
   serializeCredential,
@@ -40,7 +41,7 @@ async function enroll() {
   try {
     const token = tokenInput.value.trim();
     if (!token) {
-      showError(t("enrollFailed")(0));
+      showError(t("enrollTokenMissing"));
       return;
     }
 
@@ -48,7 +49,7 @@ async function enroll() {
       token,
     });
     if (!verified.ok) {
-      showError(t("enrollFailed")(verified.status));
+      showError(enrollError(verified.status));
       return;
     }
     setStatus(t("enrollVerified")(verified.body.email));
@@ -57,7 +58,7 @@ async function enroll() {
       user_id: verified.body.user_id,
     });
     if (!begun.ok) {
-      showError(t("enrollFailed")(begun.status));
+      showError(enrollError(begun.status));
       return;
     }
 
@@ -80,7 +81,7 @@ async function enroll() {
       serializeCredential(credential, "registration"),
     );
     if (!finished.ok) {
-      showError(t("enrollFailed")(finished.status));
+      showError(enrollError(finished.status));
       return;
     }
     form.hidden = true;
@@ -89,6 +90,12 @@ async function enroll() {
     if (submit) submit.disabled = false;
   }
 }
+
+// Status 0 is postJSON's network-failure sentinel — the honest copy for
+// it is the network message, never "HTTP 0". Every other status rides
+// the one anti-oracle failure message.
+const enrollError = (status) =>
+  status === 0 ? t("enrollNetFailed") : t("enrollFailed")(status);
 
 // postJSON is the one fetch shape this page uses: JSON body, CSRF
 // header, parsed JSON answer. Never throws — network failures come back
@@ -127,9 +134,4 @@ function showError(text) {
 
 function hideError() {
   errorEl.hidden = true;
-}
-
-function csrfToken() {
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute("content") : "";
 }

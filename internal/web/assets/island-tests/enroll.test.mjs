@@ -26,6 +26,7 @@ const posted = [];
 let verifyStatus = 200;
 let finishStatus = 200;
 let createScript = null;
+let fetchThrows = false;
 
 globalThis.navigator.credentials = {
   create: async () => {
@@ -35,6 +36,7 @@ globalThis.navigator.credentials = {
 };
 
 globalThis.fetch = async (url, opts) => {
+  if (fetchThrows) throw new Error("network down");
   posted.push({ url, opts });
   if (url === "/api/auth/passkey/enroll/verify") {
     if (verifyStatus !== 200) {
@@ -95,6 +97,7 @@ function reset() {
   verifyStatus = 200;
   finishStatus = 200;
   createScript = attestationCredential;
+  fetchThrows = false;
   form.hidden = false;
   statusEl.hidden = true;
   errorEl.hidden = true;
@@ -131,6 +134,24 @@ test("a burned token answers the ONE failure message, ceremony never starts", as
   assert.equal(errorEl.hidden, false);
   assert.equal(errorEl.textContent, t("enrollFailed")(503));
   assert.equal(posted.filter((p) => p.url.includes("/begin")).length, 0);
+});
+
+test("a network failure says the network message, never 'HTTP 0'", async () => {
+  reset();
+  fetchThrows = true;
+  await submit();
+  assert.equal(errorEl.hidden, false);
+  assert.equal(errorEl.textContent, t("enrollNetFailed"));
+  assert.equal(posted.filter((p) => p.url.includes("/begin")).length, 0);
+});
+
+test("an empty token asks for the link's token, ceremony never starts", async () => {
+  reset();
+  tokenInput.value = "   ";
+  await submit();
+  assert.equal(errorEl.hidden, false);
+  assert.equal(errorEl.textContent, t("enrollTokenMissing"));
+  assert.equal(posted.length, 0, "nothing POSTs without a token");
 });
 
 test("a cancelled prompt says so — the token is spent, the copy is honest", async () => {

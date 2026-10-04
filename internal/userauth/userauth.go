@@ -137,6 +137,16 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 	return svc, nil
 }
 
+// HealthCheck pings the identity layer's own SQLite database (the
+// do.HealthcheckerWithContext contract): the go-health probe and /healthz
+// both ride it, so a broken usermgmt.db is visible on every health
+// surface instead of surfacing as unexplained passkey 503s. The
+// usermgmt service itself needs no separate probe — its failure mode
+// IS the database.
+func (s *Service) HealthCheck(ctx context.Context) error {
+	return s.db.PingContext(ctx)
+}
+
 // Shutdown drains usermgmt's projections and closes the database (the
 // do.ShutdownerWithError lifecycle method; part of the app's shutdown
 // order). Safe to call once.

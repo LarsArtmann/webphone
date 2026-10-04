@@ -87,3 +87,41 @@ func TestHealthzNamesTheFailingCheck(t *testing.T) {
 		}
 	})
 }
+
+// TestHealthzProbesThePasskeyIdentityLayer pins the conditional third
+// leg: a wired identity layer joins the readiness truth — a broken
+// usermgmt.db degrades healthz naming "userauth" instead of surfacing as
+// unexplained passkey 503s — while mode-off deployments (the tests
+// above) keep probing exactly the two resources they have.
+func TestHealthzProbesThePasskeyIdentityLayer(t *testing.T) {
+	t.Run("wired and healthy", func(t *testing.T) {
+		server, _ := newPasskeyServer(t)
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("healthz status %d, want 200 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"userauth"`) {
+			t.Errorf("healthz body does not carry the userauth check: %s", body)
+		}
+	})
+
+	t.Run("closed usermgmt db", func(t *testing.T) {
+		server, svc := newPasskeyServer(t)
+		// Shutdown closes usermgmt.db; the rest of the app stays healthy,
+		// so the 503 must come from the userauth leg alone.
+		if err := svc.Shutdown(); err != nil {
+			t.Fatal(err)
+		}
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusServiceUnavailable {
+			t.Fatalf("healthz status %d, want 503 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"userauth"`) {
+			t.Errorf("503 body does not name the userauth check: %s", body)
+		}
+	})
+}

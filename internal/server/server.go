@@ -303,7 +303,7 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /events",
 		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events), lifetime)))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
-	// tells the truth about the two backing resources the app needs. Each
+	// tells the truth about the backing resources the app needs. Each
 	// check is bounded (see boundedCheck) so a hung resource degrades the
 	// probe to 503 within the budget instead of hanging the prober.
 	// Per-check timeouts ride the library (v4.11.0's NamedCheck.Timeout):
@@ -311,10 +311,24 @@ func New(deps Deps) http.Handler {
 	// <n>" and the probe answers 503 instead of hanging the prober — the
 	// same contract the local boundedCheck guard used to provide (F1 of
 	// the DI/health review, now upstream).
-	readiness := cqrshtmx.ReadinessHandler(
-		cqrshtmx.NamedCheck{Name: "sqlite", Check: deps.DB.Ping, Timeout: checkTimeout},
-		cqrshtmx.NamedCheck{Name: "blob-dir", Check: func() error { return blob.ProbeWrite(deps.BlobRoot) }, Timeout: checkTimeout},
-	)
+	//
+	// The passkey identity layer joins ONLY when it is wired: a
+	// deployment that never enabled the mode keeps probing exactly the
+	// two resources it has, and one that did gets an honest 503 naming
+	// "userauth" when usermgmt.db breaks (instead of unexplained passkey
+	// 503s with a green healthz).
+	checks := []cqrshtmx.NamedCheck{
+		{Name: "sqlite", Check: deps.DB.Ping, Timeout: checkTimeout},
+		{Name: "blob-dir", Check: func() error { return blob.ProbeWrite(deps.BlobRoot) }, Timeout: checkTimeout},
+	}
+	if deps.UserAuth != nil {
+		checks = append(checks, cqrshtmx.NamedCheck{
+			Name:    "userauth",
+			Check:   func() error { return deps.UserAuth.HealthCheck(context.Background()) },
+			Timeout: checkTimeout,
+		})
+	}
+	readiness := cqrshtmx.ReadinessHandler(checks...)
 	open.Handle("GET /healthz", readiness)
 
 	// Liveness + startup complete the standard probe triple WITHOUT a second
@@ -329,12 +343,22 @@ func New(deps Deps) http.Handler {
 	// never secrets.
 	selfHealth := deps.Probe
 	if selfHealth == nil {
-		selfHealth = health.NewChecks(map[string]health.CheckFunc{
+		healthChecks := map[string]health.CheckFunc{
 			"sqlite": func(ctx context.Context) error { return deps.DB.PingContext(ctx) },
 			"blob-dir": func(_ context.Context) error {
 				return blob.ProbeWrite(deps.BlobRoot)
 			},
-		}, health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
+		}
+		if deps.UserAuth != nil {
+			// Same conditional as the readiness handler above: the
+			// identity layer probes only when it is wired. It stays
+			// NON-critical on this surface — a broken usermgmt.db degrades
+			// one login mode, it must not flap liveness or hold the
+			// startup latch.
+			healthChecks["userauth"] = deps.UserAuth.HealthCheck
+		}
+		selfHealth = health.NewChecks(healthChecks,
+			health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
 	}
 	open.Handle("GET /livez", selfHealth.LivenessHandler())
 	open.Handle("GET /startupz", selfHealth.StartupHandler())

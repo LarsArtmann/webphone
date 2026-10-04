@@ -166,6 +166,28 @@ export function dialFromUi(number) {
   els.dialForm.requestSubmit();
 }
 
+// whoamiLine renders the signed-in line for an identity-bearing session
+// payload: the display name plus the user's numbers when the deployment
+// knows them, the plain extension otherwise. It lives in this NEUTRAL
+// module (not the passkey feature module) because BOTH login paths
+// render it — the resume path and the passkey path carry the same
+// fields.
+export function whoamiLine(data) {
+  const numbers = Array.isArray(data.numbers)
+    ? data.numbers.filter(Boolean)
+    : [];
+  if (data.display_name) {
+    const tail = numbers.length
+      ? numbers.join(", ")
+      : `${data.extension}@${sipDomain}`;
+    return `${data.display_name} · ${tail}`;
+  }
+  if (numbers.length) {
+    return `${data.extension}@${sipDomain} · ${numbers.join(", ")}`;
+  }
+  return `${data.extension}@${sipDomain}`;
+}
+
 // The diagnostics gear (K5): collapses the ICE panel + event log on
 // request. Ships OPEN — the E2E and the operator runbook must never
 // meet a hidden diagnostics tree — and persists the choice, the same

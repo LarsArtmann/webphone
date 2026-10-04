@@ -59,6 +59,7 @@ import (
 var (
 	_ do.HealthcheckerWithContext = (*store.Database)(nil)
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
+	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)

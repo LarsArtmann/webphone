@@ -4,6 +4,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	errorfamily "github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 )
 
 // validPasskey builds the minimal complete passkey config pointing at a
@@ -65,5 +68,49 @@ func TestValidatePasskeyRejectsUnnormalizedExtensions(t *testing.T) {
 	cfg.Users = users
 	if err := validatePasskey(cfg); err == nil {
 		t.Fatal("unnormalized extension keys must reject (silently unmatchable lookups otherwise)")
+	}
+}
+
+// TestValidatePasskeyFailuresAreRejectionsWithCodes pins the family tier-2
+// contract for every auth.passkey rejection: operator input problems
+// classify Rejection and carry their stable config.auth.passkey.* code,
+// so the startup path (and the error-contract registry) can branch on
+// the code instead of parsing prose.
+func TestValidatePasskeyFailuresAreRejectionsWithCodes(t *testing.T) {
+	missingOrigins := validPasskey(t)
+	missingOrigins.RPOrigins = nil
+
+	mismatch := validPasskey(t)
+	mismatch.RPID = "pbx.example.org"
+
+	noUsers := validPasskey(t)
+	noUsers.Users = nil
+
+	badEmailKey := validPasskey(t)
+	badEmailKey.Users["not-an-email"] = PasskeyUser{Extensions: []string{"1000"}}
+
+	missingPasswordFile := validPasskey(t)
+	missingPasswordFile.ExtensionPasswordFiles = map[string]string{"1001": "/tmp/other"}
+
+	for _, tc := range []struct {
+		name string
+		cfg  Passkey
+		code string
+	}{
+		{"missing rp_id", Passkey{RPOrigins: []string{"https://localhost"}}, "config.auth.passkey.rp_id"},
+		{"missing rp_origins", missingOrigins, "config.auth.passkey.rp_origins"},
+		{"rp_id mismatch", mismatch, "config.auth.passkey.rp_id"},
+		{"missing users", noUsers, "config.auth.passkey.users"},
+		{"non-email users key", badEmailKey, "config.auth.passkey.users"},
+		{"missing password file", missingPasswordFile, "config.auth.passkey.extension_password_files"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validatePasskey(tc.cfg)
+			if err == nil {
+				t.Fatal("validatePasskey: want error")
+			}
+			errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
+			errorfamilytest.AssertCode(t, err, tc.code)
+		})
 	}
 }

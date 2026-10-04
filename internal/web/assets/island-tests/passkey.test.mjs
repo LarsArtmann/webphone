@@ -238,7 +238,7 @@ test("finish rejection surfaces the status, session stays unopened", async () =>
 });
 
 test("whoamiLine renders extension sessions identically to before", async () => {
-  const { whoamiLine } = await import("../island/app/passkey.js");
+  const { whoamiLine } = await import("../island/app/ui.js");
   assert.equal(
     whoamiLine({ extension: "1000" }),
     "1000@pbx.example.org",

@@ -104,25 +104,32 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 	return nil
 }
 
+// sessionIdentity is the typed wire shape of what a freshly minted
+// (or resumed) session tells the client about itself: the extension (the
+// island's SIP REGISTER needs it), its presented DID when configured
+// (identities), and — when the extension is passkey-mapped — the user's
+// display name and every number mapped to that user, so the whoami line
+// can lead with the human identity instead of a bare extension@sip_domain.
+// Password rides the same shape on the surfaces that must return the
+// credential (resume, passkey finish); the struct's omitempty tags keep
+// the wire identical to the historical map form.
+type sessionIdentity struct {
+	Extension   string   `json:"extension"`
+	DID         string   `json:"did,omitempty"`
+	DisplayName string   `json:"display_name,omitempty"`
+	Numbers     []string `json:"numbers,omitempty"`
+	Password    string   `json:"password,omitempty"`
+}
+
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
-// session tells the client about itself: the extension (the island's SIP
-// REGISTER needs it), its presented DID when configured (identities),
-// and — when the extension is passkey-mapped — the user's display name
-// and every number mapped to that user, so the whoami line can lead
-// with the human identity instead of a bare extension@sip_domain.
-func (h *handlers) sessionIdentityResponse(extension domain.Extension) map[string]any {
-	response := map[string]any{"extension": extension.String()}
-	if did := h.identityFor(extension); did != "" {
-		response["did"] = did
-	}
+// session tells the client about itself (see sessionIdentity).
+func (h *handlers) sessionIdentityResponse(extension domain.Extension) sessionIdentity {
+	response := sessionIdentity{Extension: extension.String()}
+	response.DID = h.identityFor(extension)
 	if h.deps.UserAuth != nil {
 		if mapped, ok := h.deps.UserAuth.MappedByExtension(extension); ok {
-			if mapped.DisplayName != "" {
-				response["display_name"] = mapped.DisplayName
-			}
-			if numbers := h.numbersFor(mapped); len(numbers) > 0 {
-				response["numbers"] = numbers
-			}
+			response.DisplayName = mapped.DisplayName
+			response.Numbers = h.numbersFor(mapped)
 		}
 	}
 	return response
@@ -164,7 +171,7 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 	// it for the phone-api proxy; the browser REGISTER needs it by
 	// design) and it is served only to the cookie that proved itself at
 	// login. no-store keeps the credential out of every cache.
-	response["password"] = sess.Password
+	response.Password = sess.Password
 	writeJSON(w, http.StatusOK, response)
 }
 

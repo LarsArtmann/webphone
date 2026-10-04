@@ -107,7 +107,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	// resume endpoint — the credential stays out of every cache.
 	w.Header().Set("Cache-Control", "no-store")
 	response := h.sessionIdentityResponse(extension)
-	response["password"] = password
+	response.Password = password
 	writeJSON(w, http.StatusCreated, response)
 }
 
