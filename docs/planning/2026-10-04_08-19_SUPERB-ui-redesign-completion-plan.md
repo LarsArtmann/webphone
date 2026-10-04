@@ -105,6 +105,31 @@ everything (a red tree poisons every later verification). T2 must precede
 T3 (unstyled components would fake "ugly design" findings). T4/T5 are
 independent of each other; both before T6 (docs describe the final state).
 
+### Execution status (2026-10-04 19:42) — evidence in
+[docs/status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md](../status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md)
+
+- **T1 DONE** — suite green; byte-pins fixed via the cascade scoping fix
+  (`a379976`, pushed).
+- **T2 DONE** — tw.css adoption layer landed; cascade-layer contract
+  recorded in AGENTS.md.
+- **T3 DONE** — round-2 14-shot capture verifies Send/Call Primary green in
+  BOTH themes, chips dark-correct, inputs single-edge. (Side-by-side vs
+  `ui-shots-before/` was replaced by per-criterion verification; f.37.)
+- **T4 DONE** — fmt clean; island tests green (166 → 184 after the passkey
+  train's webauthn specs); buildflow green except the documented
+  gomod-check vendor FP.
+- **T5 BLOCKED on owner** — 5.1 is a NO-OP (both targets ALIVE, see row);
+  5.2/5.3 wait on the palette sign-off (report §g.1).
+- **T6 DONE** — smoke 47/0 + restart 4/4 + boot-failure 8/8; AGENTS
+  cascade contract; CHANGELOG entry.
+- **T7 AUDIT DONE, fixes BLOCKED** — 5 real fails, ALL palette-gated
+  (report §g.1/g.3); no token changed.
+- **T8 DONE** — i18n 8/8, dedup sweep-log line, FEATURES/TODO_LIST rows,
+  stack-E2E obligation noted in TODO_LIST.
+
+Unblocks: owner §g rulings → T5.2/T5.3 → WCAG remediation → round-3
+capture → release prep (report §f.23-24).
+
 ## Table 2 — micro-tasks (≤12 min each)
 
 | #   | Task (≤12 min)                                                                                                                              | Parent | Command / file                          | Verify                                         |
@@ -124,7 +149,7 @@ independent of each other; both before T6 (docs describe the final state).
 | 4.1 | `nix fmt`                                                                                                                                   | T4     | flake                                   | clean diff                                     |
 | 4.2 | Island node tests                                                                                                                           | T4     | nodejs --test island-tests              | green                                          |
 | 4.3 | buildflow (background, long)                                                                                                                | T4     | `buildflow`                             | exit 0                                         |
-| 5.1 | Remove `button.wp-primary` + `.wp-older button` dead CSS                                                                                    | T5     | app.css                                 | grep zero refs                                 |
+| 5.1 | ~~Remove `button.wp-primary` + `.wp-older button` dead CSS~~ **STALE — NO-OP: both targets are ALIVE** (`.wp-older` is the messages pagination form, messages.templ; do NOT delete) | T5     | app.css                                 | grep zero refs                                 |
 | 5.2 | Update layout.templ ThemeColor hexes                                                                                                        | T5     | layout.templ                            | re-gen + tests                                 |
 | 5.3 | Check/re-tint island/favicon.svg                                                                                                            | T5     | favicon.svg                             | visual                                         |
 | 6.1 | webphone-smoke 48-check                                                                                                                     | T6     | smoke script                            | 48/48                                          |

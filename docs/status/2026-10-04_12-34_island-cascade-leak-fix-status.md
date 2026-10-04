@@ -1,5 +1,12 @@
 # Status — island cascade-leak fix (UI-redesign train, T3 continuation)
 
+> **SUPERSEDED (2026-10-04 19:42)** — the fix was then verified end-to-end
+> (island 166/166, go suite green, fresh 14-shot capture: Send/Call Primary
+> green in BOTH themes; chips + inputs correct). Read
+> [2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md](2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md)
+> for the verification evidence and final state; this report remains as the
+> fix-design record.
+
 _2026-10-04 12:34 · HEAD `a379976` (my fix, **pushed**, verified vs `origin/main`) · this report covers THIS session's run only._
 
 ## Context
