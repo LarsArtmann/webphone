@@ -217,58 +217,58 @@ sandbox lane; nothing was added unwired.
 
 ## f) Next things to get done (brainstorm, impact-sorted; most beyond the first block are ROUTING fuel for docs-health HARVEST, not commitments)
 
-| #  | Thing                                                                                                   | Effort | Route |
-| -- | ------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1  | Explain + fix the 47-vs-48 smoke count (verify the enrichment-conditional hypothesis; pin AGENTS to the suite's summary) | S | TODO tooling row |
-| 2  | go/ast-based registry extractor (replace regex; keep shape validation)                                   | S | TODO tooling row |
-| 3  | Registry re-gen into the release ritual (release.sh/runbook line) — close the `-update` loophole          | S | TODO tooling row |
-| 4  | Automated negative test for `parseRegistryRows` + synthetic drift                                         | S | TODO tooling row |
-| 5  | Sweep ALL repo WalkDir callers for the SkipAll-from-directory pattern (the two arch sites are fixed; are there others?) | S | TODO tooling row |
-| 6  | Commit `ruff.toml`/`mypy.ini` for scripts/ so local runs match gate rulesets                              | S | TODO tooling row |
-| 7  | Boot-contract stack runbook patch application (tri-repo ritual; patch text ready)                         | M | TODO boot-contract row (stack dispatch) |
-| 8  | v2.8.0 deploy tail (stack lock bump → stack gates incl. owed browser E2E → aarch64 → pbx relock → deploy → `--expect-version` smoke) | M | OWNER |
-| 9  | SMS-bridge journal leg (unit status → grep → creds → restart → test SMS); record root cause               | S | OWNER |
-| 10 | Stack FreeSWITCH `mod_enum` build repair → THEN the T11–T19-owed stack browser E2E → relock `cc98c2e`+     | M | OWNER/stack |
-| 11 | markdownlint posture decision (house-style config vs recorded detect-only)                                | S | OWNER (briefing 18) |
-| 12 | erraudit tier re-measure 2026-10-22 + boot-surface re-grade + context_loss scan-site sweep (three legs, one sitting) | S | TODO watches row |
-| 13 | OWNER-calls batch sitting (28-row briefing; now incl. registry-is-release-artifact question)              | S | OWNER |
-| 14 | Stack `/health` exposure policy + v2.9.0 fold decision                                                    | S | OWNER |
-| 15 | Render-diff recipe parking in AGENTS/lessons (row claims script committed+verified; recipe parking never verified) | S | TODO tooling row |
-| 16 | Quarterly standing-watch sweep 2026-12-20 (sip.js 0.22, templ-components 1.20.x, E2E wall-time budget)    | S | TODO watches row |
-| 17 | internal/server carve trigger check (next file added → carve `server/api` + `server/hooks`)               | M | TODO carve row (trigger-based) |
-| 18 | Mic pre-warm live ritual (accept→speak, indicator timing, warm release)                                   | S | OWNER |
-| 19 | Visual-harness shot disposition (per-release vs per-train) + vision-CLI cross-check decision              | S | OWNER |
-| 20 | Cross-repo: `services.webphone.paperless` module option + smoke arm                                       | M | TODO cross-repo row |
-| 21 | Cross-repo: WebTransport not-adopted verdict doc                                                          | S | TODO cross-repo row |
-| 22 | Cross-repo: telephony `deploy.md` secret PATH column                                                      | S | TODO cross-repo row |
-| 23 | Cross-repo: ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + password path) | S | TODO cross-repo row |
-| 24 | Cross-repo: MOH audibility + `/recordings/` + CDR check                                                   | S | TODO cross-repo row |
-| 25 | Cross-repo: `ftypqt`→`video/quicktime` sniff fix (stack bridge)                                           | S | TODO cross-repo row |
-| 26 | Cross-repo: stack E2E MMS-outbound coverage                                                               | M | TODO cross-repo row |
-| 27 | Cross-repo: pbx-artmann FEATURES:87 stale sniff text                                                      | S | TODO cross-repo row |
-| 28 | aarch64 ELF-byte verify at the next final gate (owed at each cross-build close-out)                       | S | rides next release |
-| 29 | Release announcements: owner picks channel + disclosure posture (drafts A/B/C ready since 2026-09-30)     | S | OWNER |
-| 30 | codespell policy for archived status snapshots (exclude `docs/status/**` or fix the words)                | S | OWNER |
-| 31 | Reconcile AGENTS buildflow-full claim vs observed skips (if the 2026-09-26 skips re-appear)               | S | TODO tooling row |
-| 32 | BuildFlow binary freshness re-check (doctor) at next gate run                                             | S | TODO tooling row |
-| 33 | Registry table: human-facing anchor links from AGENTS erraudit bullet to the registry section             | S | ROADMAP |
-| 34 | Consider `/metrics` error-code label now that the closed code set is published (f18 revisit)              | M | ROADMAP |
-| 35 | Consider `errorfamily` family column in the stack runbook's error-contract mirror (f7's cross-repo half)  | S | rides stack runbook patch |
-| 36 | Drop generated counts ("104-code") from CHANGELOG-style prose going forward (process note for docs-health)| S | process |
-| 37 | Smoke suite: make version-enrichment checks skip-counted when the binary lacks commit metadata (stable totals) | S | TODO tooling row |
-| 38 | Island oxlint globals watch: next new browser global → `island-lint` config (standing)                    | S | standing watch |
-| 39 | Push-lag threshold policy (when is a silent daemon push stall BROKEN)                                     | S | OWNER (briefing) |
-| 40 | AGENTS restructure permission (the 377-line cap pressure)                                                 | S | OWNER (briefing) |
-| 41 | Existing-prod-data chmod/re-backup for the UMask tightening                                               | S | OWNER |
-| 42 | `destDir` nesting legality ruling (backup module)                                                         | S | OWNER |
-| 43 | Registry: doc the "deliberate rename" checklist inline (regen command + journal-consumer notice)          | S | TODO tooling row |
-| 44 | Add registry freshness to `nix flake check` expectations explicitly (verify the sandbox lane runs it today)| S | TODO tooling row |
-| 45 | `scripts/*.sh` shellcheck posture (buildflow runs it? verify; wire or record skip)                        | S | TODO tooling row |
-| 46 | buildflow timing-regression verdicts: document "cold cache" as expected noise or add warm-up step         | S | process |
-| 47 | Self-send 422 sign-in banner browser check (live proof still open since 2.6.0)                            | S | OWNER (rides deploy) |
-| 48 | Sniff-fallback lifespan ruling (keep forever vs delete-after-deploy-confirmed)                            | S | OWNER (briefing) |
-| 49 | `gateway.attachment_limit` knob vs bridge-422-teaches design final call                                   | S | OWNER (briefing) |
-| 50 | Lesson to crush-config `references/lessons.md` (cross-project: SkipAll/SkipDir walk trap) — commit-only, other repo | S | crush-config repo |
+| #  | Thing                                                                                                                                | Effort | Route                                   |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------------------------------- |
+| 1  | Explain + fix the 47-vs-48 smoke count (verify the enrichment-conditional hypothesis; pin AGENTS to the suite's summary)             | S      | TODO tooling row                        |
+| 2  | go/ast-based registry extractor (replace regex; keep shape validation)                                                               | S      | TODO tooling row                        |
+| 3  | Registry re-gen into the release ritual (release.sh/runbook line) — close the `-update` loophole                                     | S      | TODO tooling row                        |
+| 4  | Automated negative test for `parseRegistryRows` + synthetic drift                                                                    | S      | TODO tooling row                        |
+| 5  | Sweep ALL repo WalkDir callers for the SkipAll-from-directory pattern (the two arch sites are fixed; are there others?)              | S      | TODO tooling row                        |
+| 6  | Commit `ruff.toml`/`mypy.ini` for scripts/ so local runs match gate rulesets                                                         | S      | TODO tooling row                        |
+| 7  | Boot-contract stack runbook patch application (tri-repo ritual; patch text ready)                                                    | M      | TODO boot-contract row (stack dispatch) |
+| 8  | v2.8.0 deploy tail (stack lock bump → stack gates incl. owed browser E2E → aarch64 → pbx relock → deploy → `--expect-version` smoke) | M      | OWNER                                   |
+| 9  | SMS-bridge journal leg (unit status → grep → creds → restart → test SMS); record root cause                                          | S      | OWNER                                   |
+| 10 | Stack FreeSWITCH `mod_enum` build repair → THEN the T11–T19-owed stack browser E2E → relock `cc98c2e`+                               | M      | OWNER/stack                             |
+| 11 | markdownlint posture decision (house-style config vs recorded detect-only)                                                           | S      | OWNER (briefing 18)                     |
+| 12 | erraudit tier re-measure 2026-10-22 + boot-surface re-grade + context_loss scan-site sweep (three legs, one sitting)                 | S      | TODO watches row                        |
+| 13 | OWNER-calls batch sitting (28-row briefing; now incl. registry-is-release-artifact question)                                         | S      | OWNER                                   |
+| 14 | Stack `/health` exposure policy + v2.9.0 fold decision                                                                               | S      | OWNER                                   |
+| 15 | Render-diff recipe parking in AGENTS/lessons (row claims script committed+verified; recipe parking never verified)                   | S      | TODO tooling row                        |
+| 16 | Quarterly standing-watch sweep 2026-12-20 (sip.js 0.22, templ-components 1.20.x, E2E wall-time budget)                               | S      | TODO watches row                        |
+| 17 | internal/server carve trigger check (next file added → carve `server/api` + `server/hooks`)                                          | M      | TODO carve row (trigger-based)          |
+| 18 | Mic pre-warm live ritual (accept→speak, indicator timing, warm release)                                                              | S      | OWNER                                   |
+| 19 | Visual-harness shot disposition (per-release vs per-train) + vision-CLI cross-check decision                                         | S      | OWNER                                   |
+| 20 | Cross-repo: `services.webphone.paperless` module option + smoke arm                                                                  | M      | TODO cross-repo row                     |
+| 21 | Cross-repo: WebTransport not-adopted verdict doc                                                                                     | S      | TODO cross-repo row                     |
+| 22 | Cross-repo: telephony `deploy.md` secret PATH column                                                                                 | S      | TODO cross-repo row                     |
+| 23 | Cross-repo: ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + password path)                       | S      | TODO cross-repo row                     |
+| 24 | Cross-repo: MOH audibility + `/recordings/` + CDR check                                                                              | S      | TODO cross-repo row                     |
+| 25 | Cross-repo: `ftypqt`→`video/quicktime` sniff fix (stack bridge)                                                                      | S      | TODO cross-repo row                     |
+| 26 | Cross-repo: stack E2E MMS-outbound coverage                                                                                          | M      | TODO cross-repo row                     |
+| 27 | Cross-repo: pbx-artmann FEATURES:87 stale sniff text                                                                                 | S      | TODO cross-repo row                     |
+| 28 | aarch64 ELF-byte verify at the next final gate (owed at each cross-build close-out)                                                  | S      | rides next release                      |
+| 29 | Release announcements: owner picks channel + disclosure posture (drafts A/B/C ready since 2026-09-30)                                | S      | OWNER                                   |
+| 30 | codespell policy for archived status snapshots (exclude `docs/status/**` or fix the words)                                           | S      | OWNER                                   |
+| 31 | Reconcile AGENTS buildflow-full claim vs observed skips (if the 2026-09-26 skips re-appear)                                          | S      | TODO tooling row                        |
+| 32 | BuildFlow binary freshness re-check (doctor) at next gate run                                                                        | S      | TODO tooling row                        |
+| 33 | Registry table: human-facing anchor links from AGENTS erraudit bullet to the registry section                                        | S      | ROADMAP                                 |
+| 34 | Consider `/metrics` error-code label now that the closed code set is published (f18 revisit)                                         | M      | ROADMAP                                 |
+| 35 | Consider `errorfamily` family column in the stack runbook's error-contract mirror (f7's cross-repo half)                             | S      | rides stack runbook patch               |
+| 36 | Drop generated counts ("104-code") from CHANGELOG-style prose going forward (process note for docs-health)                           | S      | process                                 |
+| 37 | Smoke suite: make version-enrichment checks skip-counted when the binary lacks commit metadata (stable totals)                       | S      | TODO tooling row                        |
+| 38 | Island oxlint globals watch: next new browser global → `island-lint` config (standing)                                               | S      | standing watch                          |
+| 39 | Push-lag threshold policy (when is a silent daemon push stall BROKEN)                                                                | S      | OWNER (briefing)                        |
+| 40 | AGENTS restructure permission (the 377-line cap pressure)                                                                            | S      | OWNER (briefing)                        |
+| 41 | Existing-prod-data chmod/re-backup for the UMask tightening                                                                          | S      | OWNER                                   |
+| 42 | `destDir` nesting legality ruling (backup module)                                                                                    | S      | OWNER                                   |
+| 43 | Registry: doc the "deliberate rename" checklist inline (regen command + journal-consumer notice)                                     | S      | TODO tooling row                        |
+| 44 | Add registry freshness to `nix flake check` expectations explicitly (verify the sandbox lane runs it today)                          | S      | TODO tooling row                        |
+| 45 | `scripts/*.sh` shellcheck posture (buildflow runs it? verify; wire or record skip)                                                   | S      | TODO tooling row                        |
+| 46 | buildflow timing-regression verdicts: document "cold cache" as expected noise or add warm-up step                                    | S      | process                                 |
+| 47 | Self-send 422 sign-in banner browser check (live proof still open since 2.6.0)                                                       | S      | OWNER (rides deploy)                    |
+| 48 | Sniff-fallback lifespan ruling (keep forever vs delete-after-deploy-confirmed)                                                       | S      | OWNER (briefing)                        |
+| 49 | `gateway.attachment_limit` knob vs bridge-422-teaches design final call                                                              | S      | OWNER (briefing)                        |
+| 50 | Lesson to crush-config `references/lessons.md` (cross-project: SkipAll/SkipDir walk trap) — commit-only, other repo                  | S      | crush-config repo                       |
 
 ## g) Questions I can NOT figure out myself
 
