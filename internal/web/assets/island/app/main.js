@@ -49,10 +49,11 @@ import {
   setOfflineBanner,
   setRegStatus,
   toastKindFor,
+  whoamiLine,
 } from "./ui.js";
 import { initAudioOutput } from "./audioout.js";
 import { initDeviceCheck } from "./selftest.js";
-import { initPasskeyLogin, whoamiLine } from "./passkey.js";
+import { initPasskeyLogin } from "./passkey.js";
 
 const REMEMBER_KEY = "pbx-extension";
 

@@ -10,6 +10,7 @@
 
 import { t } from "./i18n.js";
 import { announce, log } from "./ui.js";
+import { csrfToken } from "./csrf.js";
 
 export async function createSession(extension, password) {
   try {
@@ -234,12 +235,9 @@ export function initSseLiveIndicator() {
   document.body.append(pill);
 }
 
-// The server renders the CSRF token into <meta name="csrf-token">; the
-// nosurf double-submit cookie pairs with it.
-function csrfToken() {
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute("content") : "";
-}
+// The server renders the CSRF token into <meta name="csrf-token">
+// (csrf.js owns the reader); login rotates it — adoptFreshCsrfToken
+// below re-arms the meta and the body's hx-headers after a mint.
 
 // Login rotates the CSRF token (fixation defense): the login response
 // deletes the cookie, so this fetches the fresh masked token from the

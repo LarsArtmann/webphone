@@ -9,10 +9,10 @@
 // on; initPasskeyLogin no-ops without it, keeping a disabled deployment
 // byte-identical.
 import { connect, networkOnline, registerWasRejected } from "./connection.js";
-import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { adoptServerSession, signOutQuiet } from "./session.js";
-import { els, log } from "./ui.js";
+import { csrfToken } from "./csrf.js";
+import { els, log, whoamiLine } from "./ui.js";
 import { prepareLoginOptions, serializeCredential } from "./webauthn.js";
 
 export function initPasskeyLogin() {
@@ -129,7 +129,7 @@ async function runCeremony(email) {
 // and say why.
 async function registerIsland(data) {
   els.whoami.textContent = whoamiLine(data);
-  const adopted = await adoptServerSession({
+  await adoptServerSession({
     did: data.did || "",
     displayName: data.display_name || "",
     numbers: Array.isArray(data.numbers) ? data.numbers : [],
@@ -155,36 +155,7 @@ async function registerIsland(data) {
   els.phoneView.hidden = false;
 }
 
-// whoamiLine renders the signed-in line for an identity-bearing session
-// payload: the display name plus the user's numbers when the deployment
-// knows them, the plain extension otherwise. Exported for the resume
-// path (a passkey session resumed from its cookie carries the same
-// fields).
-export function whoamiLine(data) {
-  const numbers = Array.isArray(data.numbers)
-    ? data.numbers.filter(Boolean)
-    : [];
-  if (data.display_name) {
-    const tail = numbers.length
-      ? numbers.join(", ")
-      : `${data.extension}@${sipDomain}`;
-    return `${data.display_name} · ${tail}`;
-  }
-  if (numbers.length) {
-    return `${data.extension}@${sipDomain} · ${numbers.join(", ")}`;
-  }
-  return `${data.extension}@${sipDomain}`;
-}
-
 function showLoginError(message) {
   els.passkeyError.textContent = message;
   els.passkeyError.hidden = false;
-}
-
-// The server renders the CSRF token into <meta name="csrf-token">; the
-// nosurf double-submit cookie pairs with it (same contract as
-// session.js — the meta is shared state, not a private copy).
-function csrfToken() {
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute("content") : "";
 }

@@ -3,6 +3,8 @@
 // contract — external E2E harnesses drive this page through them (see
 // AGENTS.md before renaming anything).
 
+import { sipDomain } from "./config.js";
+
 export const $ = (id) => document.getElementById(id);
 
 export const els = {
