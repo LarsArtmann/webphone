@@ -82,22 +82,22 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 		log = slog.Default()
 	}
 	if cfg.RPID == "" || len(cfg.RPOrigins) == 0 || len(cfg.Users) == 0 {
-		return nil, errorfamily.NewRejection("userauth.config", "passkey runtime config is incomplete (rp_id, rp_origins and users are all required)")
+		return nil, errorfamily.NewRejection("userauth.config", "passkey runtime config is incomplete (rp_id, rp_origins and users are all required)") //nolint:erraudit // pure config verdict: nothing failed, no ctx to carry
 	}
 	db, err := sql.Open(dbDriver, filepath.Join(dataDir, "usermgmt.db")+
 		"?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(ON)")
 	if err != nil {
-		return nil, errorfamily.WrapInfrastructure(err, "userauth.db.open", "open usermgmt database")
+		return nil, errorfamily.WrapInfrastructure(err, "userauth.db.open", "open usermgmt database") //nolint:erraudit // the wrap owns classification + operator copy; sql.Open takes no ctx
 	}
 	db.SetMaxOpenConns(1)
 	if err := usermgmt.OptimizeSQLiteDB(ctx, db); err != nil {
 		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, errorfamily.WrapInfrastructure(err, "userauth.db.optimize", "tune usermgmt database pragmas")
+		return nil, errorfamily.WrapInfrastructure(err, "userauth.db.optimize", "tune usermgmt database pragmas") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	eventStore, err := usermgmt.NewSQLEventStore(ctx, db, "sqlite")
 	if err != nil {
 		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.event_store", "create sqlite event store")
+		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.event_store", "create sqlite event store") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	displayName := cfg.RPDisplayName
 	if displayName == "" {
@@ -115,7 +115,7 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 		})
 		if err != nil {
 			db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
-			return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.webauthn_provider", "create webauthn provider")
+			return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.webauthn_provider", "create webauthn provider") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 		}
 	}
 	users, err := usermgmt.NewService(usermgmt.ServiceConfig{
@@ -127,12 +127,12 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 	})
 	if err != nil {
 		db.Close() //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service")
+		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
 	svc := &Service{users: users, db: db, cfg: cfg, log: log}
 	if err := svc.migrateEnrollTokens(ctx); err != nil {
 		svc.Shutdown() //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, err
+		return nil, err //nolint:erraudit // migrateEnrollTokens owns the classification
 	}
 	return svc, nil
 }
@@ -166,7 +166,7 @@ func (s *Service) FinishLogin(ctx context.Context, userID string, r *http.Reques
 	empty := MappedUser{}
 	resp, err := s.users.FinishLogin(ctx, usermgmt.NewUserID(userID), r)
 	if err != nil {
-		return empty, err
+		return empty, err //nolint:erraudit // usermgmt owns the classification; this seam only resolves the mapping
 	}
 	mapped, ok := s.Resolve(resp.User.Email)
 	if !ok {

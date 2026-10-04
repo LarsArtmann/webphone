@@ -48,19 +48,19 @@ func (s *Service) migrateEnrollTokens(ctx context.Context) error {
 func (s *Service) MintEnrollToken(ctx context.Context, email, userID string) (string, error) {
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
-		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.entropy", "generate enrollment token entropy")
+		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.entropy", "generate enrollment token entropy") //nolint:erraudit // crypto/rand takes no ctx; the wrap owns the code
 	}
 	token := base64.RawURLEncoding.EncodeToString(raw)
 	sum := sha256.Sum256([]byte(token))
 	now := time.Now()
 	if _, err := s.db.ExecContext(ctx,
 		`DELETE FROM wp_enroll_tokens WHERE expires_at < ?`, now.Unix()); err != nil {
-		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.sweep", "sweep expired enrollment tokens")
+		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.sweep", "sweep expired enrollment tokens") //nolint:erraudit // ctx is bound to the exec; the wrap adds the code the journal greps
 	}
 	if _, err := s.db.ExecContext(ctx,
 		`INSERT INTO wp_enroll_tokens (token_hash, email, user_id, expires_at) VALUES (?, ?, ?, ?)`,
 		hex.EncodeToString(sum[:]), email, userID, now.Add(EnrollTokenTTL).Unix()); err != nil {
-		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.mint", "store enrollment token")
+		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.mint", "store enrollment token") //nolint:erraudit // ctx is bound to the exec; the wrap adds the code the journal greps
 	}
 	return token, nil
 }

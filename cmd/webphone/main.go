@@ -64,7 +64,11 @@ func enrollPasskey(email string) error {
 	if err != nil {
 		return propagatef("open identity store: %w", err)
 	}
-	defer func() { _ = svc.Shutdown() }()
+	defer func() {
+		if err := svc.Shutdown(); err != nil {
+			slog.Warn("identity store shutdown failed after enrollment", "error", err)
+		}
+	}()
 	userID, err := svc.Register(ctx, email)
 	if err != nil {
 		return propagatef("register %s: %w", email, err)
