@@ -2,7 +2,9 @@ package views
 
 import (
 	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/templ-components/utils"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -33,18 +35,33 @@ templ FaxPanel(props FaxPanelProps) {
 			enctype="multipart/form-data"
 			hx-disabled-elt="find button[type=submit]"
 		>
-			<input name="to" inputmode="tel" required placeholder={ T(props.Lang, "fax.number.ph") } aria-label={ T(props.Lang, "fax.number.ph") }></input>
+			@forms.Input(forms.InputProps{
+				BaseProps: utils.BaseProps{
+					AriaLabel: T(props.Lang, "fax.number.ph"),
+					Attrs:     templ.Attributes{"inputmode": "tel"},
+				},
+				Name:        "to",
+				Placeholder: T(props.Lang, "fax.number.ph"),
+				Required:    true,
+			})
 			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
-			<button type="submit" class="wp-primary">
-				<span class="htmx-indicator" aria-hidden="true">…</span>
-				{ T(props.Lang, "fax.send") }
-			</button>
+			@display.Button(display.ButtonProps{
+				Type:  display.ButtonHTMLSubmit,
+				Icon:  faxSendIndicator(),
+				Text:  T(props.Lang, "fax.send"),
+			})
 			<div class="wp-attach" hidden></div>
 		</form>
 		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
 			@FaxList(props.Jobs, props.Names, props.Lang)
 		</div>
 	</section>
+}
+
+// faxSendIndicator is the send button's htmx spinner (the request
+// in-flight marker); Button renders it ahead of the label.
+templ faxSendIndicator() {
+	<span class="htmx-indicator" aria-hidden="true">…</span>
 }
 
 // FaxList renders the fax rows (or the empty state). It is the payload of

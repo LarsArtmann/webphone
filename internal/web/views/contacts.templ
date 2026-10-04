@@ -2,7 +2,9 @@ package views
 
 import (
 	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/templ-components/utils"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -31,9 +33,26 @@ templ ContactsPanel(props ContactsPanelProps) {
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
 		>
-			<input id="contact-name-input" name="name" required placeholder={ T(props.Lang, "contacts.name.ph") } aria-label={ T(props.Lang, "contacts.name.label") }/>
-			<input id="contact-number-input" name="number" inputmode="tel" required placeholder={ T(props.Lang, "contacts.number.ph") } aria-label={ T(props.Lang, "contacts.number.label") }/>
-			<button type="submit" class="wp-primary">{ T(props.Lang, "contacts.save") }</button>
+			@forms.Input(forms.InputProps{
+				BaseProps: utils.BaseProps{
+					ID:        "contact-name-input",
+					AriaLabel: T(props.Lang, "contacts.name.label"),
+				},
+				Name:        "name",
+				Placeholder: T(props.Lang, "contacts.name.ph"),
+				Required:    true,
+			})
+			@forms.Input(forms.InputProps{
+				BaseProps: utils.BaseProps{
+					ID:        "contact-number-input",
+					AriaLabel: T(props.Lang, "contacts.number.label"),
+					Attrs:     templ.Attributes{"inputmode": "tel"},
+				},
+				Name:        "number",
+				Placeholder: T(props.Lang, "contacts.number.ph"),
+				Required:    true,
+			})
+			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "contacts.save")})
 		</form>
 		<div class="wp-compose">
 			<form
@@ -44,7 +63,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 				hx-encoding="multipart/form-data"
 			>
 				<input id="contact-import-file" type="file" name="vcard" accept=".vcf,text/vcard" required aria-label={ T(props.Lang, "contacts.importFile.label") }/>
-				<button type="submit">{ T(props.Lang, "contacts.import") }</button>
+				@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Variant: display.ButtonSecondary, Text: T(props.Lang, "contacts.import")})
 			</form>
 			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
 		</div>
