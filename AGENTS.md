@@ -46,7 +46,7 @@ nix develop                        # Go, templ, golangci-lint, esbuild, … — 
 nix develop .#ci                   # minimal CI shell (go + templ + golangci-lint only); what the `go-tests` CI job enters
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
-python3 scripts/webphone-smoke.py          # 48-check live smoke (+4-check restart scenario +8-check boot-failure scenario; boots a fresh binary; --base URL reuses a server; --expect-version X asserts /version)
+python3 scripts/webphone-smoke.py --bin /tmp/webphone-bin   # live smoke, self-boots a fresh binary (flag is --bin; --base URL reuses a server; --expect-version X asserts /version); grep verdict lines "smoke: N passed" / "restart scenario: N passed" / "boot failure scenario: N passed" — the script PRINTS the counts, never hardcode them
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
 nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test

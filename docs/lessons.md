@@ -572,3 +572,32 @@ negative test (bogus doc row → red) proved the guard bites in both
 directions. The 8 mypy "tuple shapes" in webphone-smoke.py were never
 code bugs — the ANNOTATIONS lied (`sink: list[str]` receiving tuples, a
 3-tuple return declared as 2); fixing the types beat silencing them.
+
+### Cascade + capture train (2026-10-04)
+
+**Unlayered beats layered, always.** The adopted templ-components Button
+carried the right utility classes yet rendered island-gray: Tailwind v4
+emits utilities inside `@layer utilities`, and ANY unlayered rule beats
+ANY layered rule at ANY specificity. island/style.css's bare `button {}`
+element rules were unlayered, so they silently won. The fix is scoping
+island element rules to `.island` (contract in AGENTS.md), not fighting
+specificity. Lesson: when a component "isn't styled", check the LAYER of
+every competing rule before blaming the component, the classes, or the
+build — cascade-layer arithmetic outranks specificity arithmetic.
+
+**`node --test` hangs green.** The island suite printed its full green
+summary and then sat for 190s+ because a pending promise (SIP timers,
+websocket) kept the event loop alive after the last test. `--test-force-exit`
+is mandatory for this suite (2.3s total with it). A CI lane without the
+flag will look broken while every assertion passes.
+
+**Fixed sleeps race the island's resume.** The island hides its login
+view at module load and reveals `#phone-view` only after the SIP resume
+probe settles — per-pass latency varies, so the capture harness's 0.4s
+pre-shot sleep fired mid-resume in the dark theme pass and produced an
+"island missing in dark" shot that looked exactly like a CSS regression.
+It was a harness artifact. Two rules: wait on the EVENT (WebDriverWait
+for `#phone-view` to lose `hidden`), never on a clock; and pick reveal
+markers that exist in STATIC markup (`.call-card` is JS-created only
+during live calls and never appears in this lane). Diagnose the boot
+sequence before re-fixing CSS.
