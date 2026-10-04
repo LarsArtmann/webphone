@@ -16,9 +16,9 @@ func validPasskey(t *testing.T) Passkey {
 		t.Fatal(err)
 	}
 	return Passkey{
-		RPID:          "localhost",
-		RPOrigins:     []string{"http://localhost:18099", "https://localhost"},
-		Users:         map[string]PasskeyUser{"lars@example.com": {Extensions: []string{"1000"}}},
+		RPID:                   "localhost",
+		RPOrigins:              []string{"http://localhost:18099", "https://localhost"},
+		Users:                  map[string]PasskeyUser{"lars@example.com": {Extensions: []string{"1000"}}},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 	}
 }
