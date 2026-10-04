@@ -398,7 +398,10 @@ applicable") — run buildflow inside `nix develop` (or
 binary; markdown-lint is detect-only (never reflow the corpus). KNOWN
 TOOL BUG — gomod-check vendor-consistency (grows with the vendor tree:
 ~54 before, 99 after the passkey train's usermgmt/webauthn deps) is a
-verified FALSE POSITIVE; do NOT hand-edit vendor markers.
+verified FALSE POSITIVE; SUPPRESSED via `skip_steps` (2026-10-04,
+rationale in .buildflow.yml) so the findings gate holds. Still: do NOT
+hand-edit vendor markers — `nix flake check`'s sandbox build is the
+real gate.
 
 ## Conventions
 

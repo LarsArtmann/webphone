@@ -76,9 +76,21 @@ exclude:
 #   AGENTS.md documents the manual deviation (placeholder hash →
 #   `nix build` → read `got:` → apply, only when go.mod/go.sum changed).
 #   The real gate still exists: `nix flake check` builds in the sandbox.
+# - gomod-check: triaged 2026-10-04. 99 error-severity findings, ALL the
+#   documented vendor-consistency FALSE POSITIVE ("marked as explicit in
+#   vendor/modules.txt, but not explicitly required in go.mod" — Go's
+#   vendoring marks test/transitive-only modules explicit without a
+#   direct require; `go build -mod=vendor`, the full test suite and the
+#   sandbox build all prove the tree consistent). AGENTS.md rule stands:
+#   do NOT hand-edit vendor markers. The one info-severity
+#   `ignore-needed` ("add ignore vendor directive") is the same family:
+#   this repo COMMITS vendor/ and builds -mod=vendor on purpose. The
+#   real gate still exists: `nix flake check` builds the vendored tree
+#   in the sandbox — a go.mod/modules.txt lie fails the build.
 skip_steps:
   - pytest-test
   - branching-flow
   - go-structure-linter
   - cqrs-lint
   - nix-hash-fix
+  - gomod-check
