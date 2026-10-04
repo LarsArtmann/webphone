@@ -180,10 +180,9 @@ h3 {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 24px;
+  padding: 12px 28px;
   border-bottom: var(--hairline);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--surface);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -193,8 +192,8 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-weight: 650;
-  font-size: 1.05rem;
+  font-weight: 700;
+  font-size: 1.02rem;
   letter-spacing: -0.02em;
   color: var(--text);
   text-decoration: none;
@@ -276,12 +275,12 @@ h3 {
 .wp-body {
   display: grid;
   grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
-  gap: 24px;
-  padding: 24px;
+  gap: 28px;
+  padding: 28px 32px;
   align-items: start;
   flex: 1;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -310,9 +309,9 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 14px;
+  padding: 10px 14px;
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 550;
   text-decoration: none;
   border-bottom: 2px solid transparent;
   border-radius: 8px 8px 0 0;
@@ -323,12 +322,12 @@ h3 {
 
 .wp-nav-link:hover {
   color: var(--text);
-  background: var(--accent-soft);
+  background: var(--surface-2);
 }
 
 .wp-nav-link.wp-active {
   color: var(--accent-strong);
-  font-weight: 600;
+  font-weight: 650;
   border-bottom-color: var(--accent);
 }
 
@@ -336,9 +335,9 @@ h3 {
   background: var(--accent);
   color: var(--on-accent);
   border-radius: 999px;
-  font-size: 0.72em;
+  font-size: 0.68em;
   padding: 1px 7px;
-  font-weight: 650;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -405,7 +404,7 @@ h3 {
   border: var(--hairline);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 22px 24px 24px;
+  padding: 24px 26px 26px;
   /* Panel entrance (F2): a short fade/slide when a fresh panel swaps
      in. Morph-driven updates reuse the existing nodes and never re-run
      the animation, so live pushes stay calm; reduced motion disables it
@@ -475,8 +474,9 @@ h3 {
   /* Fluid display size (M26): tightens on phone widths, full size on
    * desktop — without leaving the rem scale (root stays a percentage,
    * so the user's browser font-size preference still wins). */
-  font-size: clamp(1.15rem, 0.95rem + 0.8vw, 1.3rem);
+  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.4rem);
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .wp-panel-sub {
@@ -501,8 +501,9 @@ h3 {
   color: var(--muted);
   padding: 22px 18px;
   text-align: center;
-  border: 1px dashed var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: var(--surface-2);
   margin: 0;
 }
 
@@ -760,8 +761,8 @@ button.wp-danger {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: var(--radius-sm);
-  padding: 8px 16px;
+  border-radius: var(--radius);
+  padding: 9px 16px;
   cursor: pointer;
   font: inherit;
   font-weight: 550;
@@ -776,6 +777,7 @@ button.wp-primary {
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
+  padding: 9px 18px;
 }
 
 button.wp-primary:hover {
@@ -818,7 +820,6 @@ button.wp-danger:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-
 .wp-mini.wp-danger {
   color: var(--danger);
 }
@@ -898,7 +899,7 @@ select:focus-visible {
 .wp-fax-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .wp-thread-rowwrap {
@@ -922,15 +923,13 @@ select:focus-visible {
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--text);
-  background: var(--surface-2);
   transition:
     border-color 120ms ease,
     background 120ms ease;
 }
 
 .wp-thread-row:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-3);
+  background: var(--surface-2);
 }
 
 .wp-thread-text {
@@ -969,13 +968,13 @@ select:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Unread: the peer name carries the weight, an accent dot marks the row. */
+/* Unread: the peer name carries the weight, a washed accent row marks it. */
 .wp-thread-row.wp-unread .wp-thread-remote {
   font-weight: 750;
 }
 
 .wp-thread-row.wp-unread {
-  background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface-2));
+  background: var(--accent-soft);
 }
 
 /* Peer avatar: deterministic hue per number/name. The hue rides a
@@ -990,13 +989,26 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: oklch(0.42 0.07 var(--av-h, 160));
-  color: oklch(0.95 0.02 var(--av-h, 160));
+  background: oklch(0.55 0.09 var(--av-h, 160) / 0.16);
+  color: oklch(0.78 0.11 var(--av-h, 160));
   font-size: 0.78em;
   font-weight: 650;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
   user-select: none;
+}
+
+/* The ink must track the theme: the washed chip stays constant, but its
+ * label needs a darker tone on light surfaces and a luminous one on
+ * dark. Manual and OS-following light both get the override. */
+:root[data-theme="light"] .wp-avatar {
+  color: oklch(0.48 0.12 var(--av-h, 160));
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .wp-avatar {
+    color: oklch(0.48 0.12 var(--av-h, 160));
+  }
 }
 
 /* Hue buckets for every 10° step (0-350). Generated once; keep in sync
@@ -1120,15 +1132,13 @@ select:focus-visible {
   border: 1px solid transparent;
   border-inline-start: 3px solid transparent;
   border-radius: var(--radius);
-  background: var(--surface-2);
   transition:
     border-color 120ms ease,
     background 120ms ease;
 }
 
 .wp-row:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-3);
+  background: var(--surface-2);
 }
 
 .wp-row .wp-muted {
@@ -1374,7 +1384,7 @@ select:focus-visible {
   align-items: center;
   gap: 10px;
   margin: 8px 0;
-  color: var(--danger);
+  color: var(--accent-strong);
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1386,7 +1396,7 @@ select:focus-visible {
 .wp-unread-divider::after {
   content: "";
   flex: 1;
-  border-top: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .wp-bubble {
@@ -1399,12 +1409,40 @@ select:focus-visible {
   align-self: flex-start;
 }
 
+/* Outbound polarity is carried by FILL, not tint: the sent voice is a
+ * solid accent bubble with inverted ink, readable at arm's length. */
 .wp-bubble.wp-out {
   align-self: flex-end;
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--on-accent);
   border-bottom-left-radius: var(--radius);
   border-bottom-right-radius: 4px;
+}
+
+.wp-bubble.wp-out .wp-bubble-meta {
+  color: color-mix(in srgb, var(--on-accent) 78%, transparent);
+}
+
+.wp-bubble.wp-out .wp-attachment {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.wp-bubble.wp-out .wp-muted {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* Delivery states ride inverted ink inside the outbound bubble; on
+ * shared surfaces (fax list) the token colors below still apply. */
+.wp-bubble.wp-out .wp-status {
+  color: inherit;
+}
+
+.wp-bubble.wp-out .wp-status-queued {
+  opacity: 0.72;
 }
 
 .wp-bubble-body {
@@ -1728,8 +1766,9 @@ select:focus-visible {
  * as a wall of buttons; the row's hover or the button's own hover/focus
  * brings them to full strength. */
 .wp-mini.wp-thread-flag {
-  padding: 5px 8px;
-  opacity: 0.55;
+  border-color: transparent;
+  padding: 5px 7px;
+  opacity: 0.45;
 }
 
 .wp-thread-rowwrap:hover .wp-thread-flag,
