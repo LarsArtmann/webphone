@@ -57,7 +57,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 					<option value="answered" selected?={ props.Outcome == "answered" }>{ T(props.Lang, "history.outcome.answered") }</option>
 					<option value="missed" selected?={ props.Outcome == "missed" }>{ T(props.Lang, "history.outcome.missed") }</option>
 				</select>
-				<button type="submit">{ T(props.Lang, "history.filter") }</button>
+				<button type="submit" class="wp-mini">{ T(props.Lang, "history.filter") }</button>
 			</form>
 		}
 		@panelError(props.Error)

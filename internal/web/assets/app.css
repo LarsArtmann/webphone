@@ -772,10 +772,12 @@ button.wp-danger {
 }
 
 /* The composer's Send button (and the load-older button) are adopted
- * templ-components Buttons: their Tailwind utilities must decide the
- * look, so no descendant `button` rule may re-style the composer here —
- * (0,1,1) beats any single utility class. The quick chips and snippet
- * items style themselves (wp-chip / wp-snippet-item). */
+ * templ-components Buttons: their Tailwind utilities decide the look.
+ * That only works because the island stylesheet scopes its element
+ * rules to .island (cascade-layer contract in island/style.css): an
+ * unlayered bare `button` rule would beat every layered utility at any
+ * specificity. The quick chips and snippet items style themselves
+ * (wp-chip / wp-snippet-item). */
 
 button.wp-primary {
   background: var(--accent);
@@ -891,6 +893,7 @@ textarea::placeholder {
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
+summary:focus-visible,
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);

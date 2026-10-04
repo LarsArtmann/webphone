@@ -60,6 +60,15 @@
   box-sizing: border-box;
 }
 
+/* Cascade-layer contract: the island stylesheet must not leak into the
+ * tab region. Bare element rules (h1/label/input/button/focus) are
+ * scoped to .island — outside it, the shell's app.css and the adopted
+ * templ-components Tailwind utilities decide the look (unlayered rules
+ * would otherwise beat every layered utility at any specificity).
+ * The one deliberate global left is the prefers-reduced-motion block:
+ * killing motion page-wide under a user preference is correctness,
+ * not leakage. */
+
 .island {
   margin: 0;
   font-family:
@@ -208,7 +217,7 @@
   box-shadow: var(--shadow);
 }
 
-h1 {
+.island h1 {
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -216,14 +225,14 @@ h1 {
   margin: 0 0 18px;
 }
 
-label {
+.island label {
   display: block;
   font-size: 0.85rem;
   color: var(--muted);
   margin-bottom: 14px;
 }
 
-input {
+.island input {
   display: block;
   width: 100%;
   margin-top: 6px;
@@ -237,7 +246,7 @@ input {
   transition: border-color 120ms ease;
 }
 
-input:focus {
+.island input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
   border-color: transparent;
@@ -245,7 +254,7 @@ input:focus {
 
 /* --- buttons: keys that answer the hand --------------------------------- */
 
-button {
+.island button {
   padding: 11px 16px;
   font-size: 0.95rem;
   font-family: inherit;
@@ -260,14 +269,14 @@ button {
     transform 80ms ease;
 }
 
-button:active {
+.island button:active {
   transform: scale(0.98);
 }
 
-button:focus-visible,
-input:focus-visible,
-summary:focus-visible,
-select:focus-visible {
+.island button:focus-visible,
+.island input:focus-visible,
+.island summary:focus-visible,
+.island select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
