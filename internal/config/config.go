@@ -148,6 +148,13 @@ type PasskeyUser struct {
 	DisplayName string   `json:"display_name,omitempty" koanf:"display_name"`
 }
 
+// Enabled reports whether the passkey mode is configured. Any set field
+// counts: validation enforces the rest, so a half configuration fails
+// the boot instead of silently running half a login mode.
+func (p Passkey) Enabled() bool {
+	return p.RPID != "" || len(p.RPOrigins) > 0 || len(p.Users) > 0
+}
+
 // CRM configures the optional Ledger CRM integration. Both fields must be
 // set together (a URL without a token cannot authenticate; a token without
 // a URL has nowhere to go) — config validation fails closed on half a
