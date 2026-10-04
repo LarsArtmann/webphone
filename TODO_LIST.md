@@ -18,24 +18,31 @@ harvest).
 
 ## Open tasks
 
-### Passkey train tail: live proof + stack/pbx wiring
+### Passkey train tail: deploy proof + code polish
 
-**Status:** 🟡 `IN_PROGRESS` · **Priority:** High · **Effort:** M
+**Status:** 🟡 `IN_PROGRESS` · **Priority:** High · **Effort:** S–M
 
-Code side landed 2026-10-04 (see CHANGELOG Unreleased). Remaining: (1)
-the deploy train — push webphone main, stack `nix flake update webphone`
-+ CI-green-first, pbx-artmann `nix flake update telephony` + probe +
-gates + owner switch; (2) LIVE browser proof: owner enrolls a real
-passkey via the CLI link on the deployed pbx.artmann.tech and logs in
-(email → ceremony → whoami with display name + numbers), incl. a stale
-password-file drill (rotate the file, next login must fail closed);
-(3) OWNER CALLS: map a second user (alice → 1001) now or on demand
-(pure config edit either way); expose the enroll command as a host
-wrapper (runbook-only `sudo -u webphone` vs a small NixOS wrapper).
-Deliberately out of scope v1 (ROADMAP): extension switcher for
-multi-extension users, usermgmt identity endpoints beyond passkey.
+The code train AND the 3-repo deploy train are DONE (webphone `400eaff`
+pushed; sibling `890a526`; pbx-artmann staged `0ngvm4q7…`, probe OK,
+gates green — see CHANGELOG Unreleased + the 17-28 report). Remaining,
+impact-sorted: (1) the OWNER switch + post-switch ritual (rotate
+`/tmp/pbx-toplevel-current`, record the fresh diff-closures baseline)
+and the LIVE passkey proof with the fail-closed password-file drill
+(pbx-artmann TODO §1 row); (2) `enrollFailed(0)`: map the network-fail
+sentinel to the `enrollNetFailed` copy instead of "HTTP 0" (a shipped
+UX wart); (3) annotate the plan doc's P/F tables
+(`docs/planning/2026-10-04_12-17_*` — zero struck items); (4) ONE
+exported csrfToken home (currently three private copies: session.js,
+passkey.js, enroll.js); (5) a `userauth` health leg in `/healthz`
+(usermgmt.db is not probed); (6) tier-2 pins: config family_test for
+`config.auth.passkey.*`, enroll begin/finish handler tests,
+`Shutdown` test; (7) `whoamiLine` → neutral module + typed
+session-identity response; (8) `nix flake check --all-systems` (aarch64
+eval) + AGENTS size trim (411>377). OWNER CALLS outstanding: ratify
+runbook-only enroll + Lars-only v1 mapping; switch-now-vs-CI-first;
+installer release republish timing (stale since the relock).
 
-**Evidence:** plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`; status `docs/status/2026-10-04_12-39_passkey-users-train.md`
+**Evidence:** status `docs/status/2026-10-04_17-28_passkey-train-resumed-session-brutal-status.md` (§f harvest source); plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`
 
 ### Boot-contract tail: D3 retry-loop owner call + stack runbook patch
 
