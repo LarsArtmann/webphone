@@ -21,6 +21,7 @@ require (
 	github.com/larsartmann/httputil/server_timing v1.0.1
 	github.com/larsartmann/templ-components v1.19.4
 	github.com/larsartmann/templ-components/icons v1.19.4
+	github.com/larsartmann/templ-components/utils v1.19.4
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
@@ -60,7 +61,6 @@ require (
 	github.com/larsartmann/go-sse/sseparse v0.2.0 // indirect
 	github.com/larsartmann/templ-components/datastar v1.19.4 // indirect
 	github.com/larsartmann/templ-components/htmx v1.19.4 // indirect
-	github.com/larsartmann/templ-components/utils v1.19.4 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
