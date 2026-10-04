@@ -39,7 +39,17 @@
           pkgs.nil
           pkgs.oxlint
           pkgs.vulnix
-          pkgs.go-licenses
+          # go-licenses rebuilt on Go 1.27: the stock 2.0.1 rides go
+          # 1.26.8, and its nixpkgs wrapper BAKES that GOROOT into the
+          # binary — the package loader then dies (F1004, "crypto/mldsa
+          # is not in std") on any dependency importing Go 1.27 stdlib,
+          # which go-webauthn/webauthn (passkey train) does. Both args
+          # matter: go pins the wrapper's GOROOT, buildGoModule the
+          # compiler.
+          (pkgs.go-licenses.override {
+            go = pkgs.go_1_27;
+            buildGoModule = pkgs.buildGo127Module;
+          })
           # codespell in the shell so BuildFlow's on-demand step runs the
           # REAL binary (it honors .codespellrc; BuildFlow's built-in
           # fallback scanner does not — 3894 vendor/noise findings,
