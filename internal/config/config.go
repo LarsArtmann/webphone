@@ -438,8 +438,11 @@ func validatePasskey(p Passkey) error {
 		if err != nil || u.Scheme != "https" && u.Scheme != "http" || u.Host == "" {
 			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.rp_origins", "auth.passkey.rp_origins: %q is not an absolute origin (want scheme://host, e.g. https://pbx.example.org)", origin)
 		}
-		if u.Host != p.RPID {
-			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.rp_id", "auth.passkey: rp_id %q must equal the host of every rp_origins entry (got %q): a mismatch binds passkeys the browser then refuses to use", p.RPID, u.Host)
+		// WebAuthn binds the RP ID to the origin's DOMAIN — ports are
+		// irrelevant (a loopback dev origin carries one), so the honest
+		// mismatch test compares hostnames, not host:port.
+		if u.Hostname() != p.RPID {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.rp_id", "auth.passkey: rp_id %q must equal the host of every rp_origins entry (got %q): a mismatch binds passkeys the browser then refuses to use", p.RPID, u.Hostname())
 		}
 	}
 	if len(p.Users) == 0 {
