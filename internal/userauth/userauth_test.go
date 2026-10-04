@@ -7,6 +7,7 @@ package userauth_test
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	_ "modernc.org/sqlite" // registers the "sqlite" driver for the test's own connection
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
@@ -50,8 +53,9 @@ const (
 )
 
 // newService builds the service with the stub provider, one mapped user
-// (lars/1000) and a password file holding a fixed secret.
-func newService(t *testing.T) (*userauth.Service, string) {
+// (lars/1000) and a password file holding a fixed secret; returns the
+// service, its data dir and the password file path.
+func newService(t *testing.T) (*userauth.Service, string, string) {
 	t.Helper()
 	dir := t.TempDir()
 	passFile := filepath.Join(dir, "ext1000")
@@ -76,11 +80,11 @@ func newService(t *testing.T) (*userauth.Service, string) {
 		t.Fatalf("New: %v", err)
 	}
 	t.Cleanup(func() { _ = svc.Shutdown() })
-	return svc, passFile
+	return svc, dir, passFile
 }
 
 func TestRegisterIsIdempotent(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	ctx := context.Background()
 	first, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -96,7 +100,7 @@ func TestRegisterIsIdempotent(t *testing.T) {
 }
 
 func TestEnrollTokenLifecycle(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -133,7 +137,7 @@ func TestEnrollTokenLifecycle(t *testing.T) {
 }
 
 func TestEnrollTokenExpiryIsOperatorVisible(t *testing.T) {
-	svc, _ := newService(t)
+	svc, dir, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -143,17 +147,22 @@ func TestEnrollTokenExpiryIsOperatorVisible(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// A token already past its TTL is swept by the next mint; mint a
-	// fresh one to trigger the sweep, then verify the expired one.
-	if _, err := svc.MintEnrollToken(ctx, mappedEmail, userID); err != nil {
+	// Force the row into the past through the store's own file (WAL
+	// allows the test connection alongside the service's).
+	testDB, err := sql.Open("sqlite", filepath.Join(dir, "usermgmt.db")+"?_pragma=busy_timeout(5000)")
+	if err != nil {
 		t.Fatal(err)
+	}
+	defer testDB.Close()
+	if _, err := testDB.ExecContext(ctx, `UPDATE wp_enroll_tokens SET expires_at = 1`); err != nil {
+		t.Fatalf("age the token row: %v", err)
 	}
 	_, expiredErr := svc.VerifyEnrollToken(ctx, token)
 	if expiredErr == nil {
-		t.Fatal("swept (expired) token must reject")
+		t.Fatal("expired token must reject")
 	}
 	errorfamilytest.AssertFamily(t, expiredErr, errorfamily.Rejection)
-	errorfamilytest.AssertCode(t, expiredErr, "userauth.enroll.invalid")
+	errorfamilytest.AssertCode(t, expiredErr, "userauth.enroll.expired")
 }
 
 // finishLoginFor drives begin+finish for an email with the stub provider
@@ -170,7 +179,7 @@ func finishLoginFor(t *testing.T, svc *userauth.Service, email string) (userauth
 }
 
 func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -207,7 +216,7 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 }
 
 func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	ctx := context.Background()
 	// Register an account that is deliberately NOT in the users mapping.
 	userID, err := svc.Register(ctx, otherEmail)
@@ -232,7 +241,7 @@ func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
 }
 
 func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
-	svc, passFile := newService(t)
+	svc, _, passFile := newService(t)
 	ext := domain.MustParseExtension(ext1000)
 
 	got, err := svc.SIPPassword(ext)
@@ -253,10 +262,15 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 	}
 	errorfamilytest.AssertCode(t, err, "userauth.password_file.empty")
 
-	// Unreadable file: perms reject with the read code.
-	if err := os.WriteFile(passFile, []byte("x"), 0o000); err != nil {
+	// Unreadable file: perms reject with the read code. (WriteFile does
+	// not change an existing file's mode — Chmod is the honest lever.)
+	if err := os.WriteFile(passFile, []byte("x"), 0o640); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.Chmod(passFile, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(passFile, 0o640) })
 	_, err = svc.SIPPassword(ext)
 	if err == nil {
 		t.Fatal("unreadable password file must reject")
@@ -273,7 +287,7 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 }
 
 func TestResolveIsCaseAndWhitespaceInsensitive(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	mapped, ok := svc.Resolve("  LARS@Example.COM ")
 	if !ok {
 		t.Fatal("mapping lookup must normalize case and whitespace")
@@ -287,7 +301,7 @@ func TestResolveIsCaseAndWhitespaceInsensitive(t *testing.T) {
 }
 
 func TestMappedByExtensionCoversEveryMappedExtension(t *testing.T) {
-	svc, _ := newService(t)
+	svc, _, _ := newService(t)
 	mapped, ok := svc.MappedByExtension(domain.MustParseExtension(ext1000))
 	if !ok {
 		t.Fatal("1000 must reverse-resolve")
