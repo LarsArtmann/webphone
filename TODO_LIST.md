@@ -18,6 +18,25 @@ harvest).
 
 ## Open tasks
 
+### Passkey train tail: live proof + stack/pbx wiring
+
+**Status:** 🟡 `IN_PROGRESS` · **Priority:** High · **Effort:** M
+
+Code side landed 2026-10-04 (see CHANGELOG Unreleased). Remaining: (1)
+the deploy train — push webphone main, stack `nix flake update webphone`
++ CI-green-first, pbx-artmann `nix flake update telephony` + probe +
+gates + owner switch; (2) LIVE browser proof: owner enrolls a real
+passkey via the CLI link on the deployed pbx.artmann.tech and logs in
+(email → ceremony → whoami with display name + numbers), incl. a stale
+password-file drill (rotate the file, next login must fail closed);
+(3) OWNER CALLS: map a second user (alice → 1001) now or on demand
+(pure config edit either way); expose the enroll command as a host
+wrapper (runbook-only `sudo -u webphone` vs a small NixOS wrapper).
+Deliberately out of scope v1 (ROADMAP): extension switcher for
+multi-extension users, usermgmt identity endpoints beyond passkey.
+
+**Evidence:** plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`; status `docs/status/2026-10-04_12-39_passkey-users-train.md`
+
 ### Boot-contract tail: D3 retry-loop owner call + stack runbook patch
 
 **Status:** 🟡 `PLANNED` (owner call + stack dispatch) · **Priority:** Medium · **Effort:** S

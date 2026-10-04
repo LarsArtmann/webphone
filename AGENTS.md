@@ -86,6 +86,13 @@ browser E2E drives the island through it — re-run after any markup change
 - Unknown paths render the STYLED 404 (`notFoundPage`; status stays 404).
 - The island never unloads: tab nav swaps partials into `#tab-content`; the
   SIP island lives OUTSIDE that region. Deep links render the full shell.
+- Passkey ids (`passkey-login-form`, `passkey-email`,
+  `passkey-login-error`) and the whole `/enroll` page render ONLY when
+  `auth.passkey.*` is enabled — they are documented as CONDITIONAL in
+  docs/dom-contract.md and the E2E must not assume them. Every island
+  module in island/app MUST stay inside main.js's import closure
+  (`TestIslandModulesMatchImportClosure`); standalone page entries go to
+  their own assets dir (see `assets/enroll/`).
 
 ## Architecture invariants
 

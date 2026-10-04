@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Passkey (WebAuthn) login mode, config-gated and DEFAULT OFF (a
+  deployment without `auth.passkey.*` keeps the byte-identical
+  extension login card): an embedded cqrs-htmx/usermgmt v4 identity
+  layer (`internal/userauth`, own `usermgmt.db` under the data dir)
+  backs an email-first front door; the finish ceremony resolves the
+  configured email→extension mapping, sources the SIP directory
+  password from operator-managed runtime files (read per login, never
+  cached, fail-closed on empty/missing), directory-verifies it and
+  mints the webphone session (the password returns to the island
+  no-store so it can REGISTER; the whoami line leads with the display
+  name and the user's numbers). The extension login stays as a
+  break-glass `<details>`; sessions resume with the same identity
+  fields. Enrollment is CLI-minted one-time tokens
+  (`webphone -enroll-passkey <email>` — registers idempotently, prints
+  a 15-minute single-use link; `GET /enroll` runs the browser ceremony
+  on a standalone CSP-clean page). New island modules `webauthn.js`
+  (the one base64url↔ArrayBuffer wire coercion, node:test-pinned) and
+  `passkey.js`; `session.js` extracts `adoptServerSession` as the one
+  post-session sequence both login paths share. Uniform anti-enumeration
+  401 on begin/finish (no account oracle); userauth.* error codes ride
+  the error-family registry.
 - Error-code registry (error-contract.md): a 104-code table of every
   `<seam>.<op>` error code, generated from the source and freshness-pinned
   by `TestErrorCodeRegistryIsFresh` — a code rename now fails the suite
