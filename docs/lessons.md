@@ -555,3 +555,20 @@ is a user; every boot failure renders the 5-part contract on the
 journal (`cmd/webphone/bootreport.go`, exit 1 designed / 2 panic),
 the fail-fast panic mechanism stays (DO-1), and `App.Start`'s three
 gratuitous `MustInvokeNamed` panics became `InvokeNamed` + `wrapf`.
+
+### Error-code registry train (2026-10-04)
+
+The registry test taught two portable lessons. (1) `filepath.SkipAll`
+returned from a DIRECTORY callback terminates the ENTIRE WalkDir — and
+the error is swallowed at the top, so the walk ends NIL-ERROR after the
+first skipped dir (fail-open: the sibling arch test's `.git`/`vendor`
+skip list would have vacuously passed had those dirs ever appeared).
+Pruning a directory is `filepath.SkipDir`; `SkipAll` means "stop
+everything". (2) A doc registry that a TEST generates from source
+(`TestErrorCodeRegistryIsFresh`, `-update` regenerates) beats a
+hand-curated page: the table cannot rot, renames fail CI instead of
+silently breaking journal `grep '[family:code]'` recipes, and the
+negative test (bogus doc row → red) proved the guard bites in both
+directions. The 8 mypy "tuple shapes" in webphone-smoke.py were never
+code bugs — the ANNOTATIONS lied (`sink: list[str]` receiving tuples, a
+3-tuple return declared as 2); fixing the types beat silencing them.
