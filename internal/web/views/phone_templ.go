@@ -8,13 +8,21 @@ package views
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+// PhoneIslandProps carries the server-known login surface: whether the
+// deployment offers the passkey (WebAuthn) front door. Off (the default)
+// the island renders EXACTLY the pre-passkey markup — the break-glass
+// extension form is the only login.
+type PhoneIslandProps struct {
+	Passkey bool
+}
+
 // PhoneIsland is the SIP call island, ported verbatim from the static
 // site's index.html: every id, class and data-i18n attribute is part of the
 // published DOM contract driven by the upstream browser E2E suite (see
 // AGENTS.md). The scripts at the bottom boot it (config.js renders
 // window.PBX_CONFIG; sip.min.js is the vendored bundle; main.js is the ES
 // module entry).
-func PhoneIsland() templ.Component {
+func PhoneIsland(props PhoneIslandProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -35,7 +43,68 @@ func PhoneIsland() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"island\"><main class=\"app\"><header class=\"topbar\"><span class=\"brand\"></span> <select id=\"lang\" title=\"Language / Sprache\" aria-label=\"Language\"><option value=\"en\">EN</option> <option value=\"de\">DE</option></select> <span id=\"reg-status\" class=\"status status-offline\" data-i18n-title=\"regState\">offline</span></header><section id=\"login-view\" class=\"card\"><h1 data-i18n=\"signin\">Sign in to your extension</h1><form id=\"login-form\" autocomplete=\"off\" aria-describedby=\"login-error\"><label><span data-i18n=\"extension\">Extension</span> <input id=\"ext\" name=\"extension\" inputmode=\"numeric\" autocomplete=\"username\" placeholder=\"1000\" required></label> <label><span data-i18n=\"password\">Password</span> <input id=\"pass\" name=\"password\" type=\"password\" autocomplete=\"current-password\" placeholder=\"••••••••\" required></label> <label class=\"remember\"><input id=\"remember\" type=\"checkbox\"> <span data-i18n=\"remember\">remember extension on this device (never the password)</span></label> <button type=\"submit\" class=\"primary\" data-i18n=\"connect\">Connect</button></form><p class=\"hint\" id=\"login-error\" hidden></p></section><section id=\"phone-view\" class=\"card\" hidden><div id=\"offline-banner\" class=\"offline-banner\" role=\"status\" hidden data-i18n=\"offlineBanner\">You are offline — calls cannot be made or received.</div><div class=\"whoami\"><span data-i18n=\"signedInAs\">signed in as</span> <strong id=\"whoami-ext\"></strong> <button id=\"logout\" class=\"ghost small\" data-i18n=\"signOut\" data-i18n-title=\"signOutTitle\">sign out</button></div><form id=\"dial-form\" autocomplete=\"off\" aria-describedby=\"dial-error\"><input id=\"dest\" inputmode=\"tel\" data-i18n-placeholder=\"dialPlaceholder\" aria-label=\"Number to call\" required> <button type=\"submit\" class=\"primary\" id=\"call-btn\" data-i18n=\"call\">Call</button></form><p id=\"dial-error\" class=\"hint dial-error\" hidden></p><p id=\"wp-dial-hint\" class=\"hint wp-dial-hint\" hidden aria-hidden=\"true\"></p><div id=\"calls\"></div><div id=\"keypad\" hidden><button data-tone=\"1\">1</button> <button data-tone=\"2\">2<span>ABC</span></button> <button data-tone=\"3\">3<span>DEF</span></button> <button data-tone=\"4\">4<span>GHI</span></button> <button data-tone=\"5\">5<span>JKL</span></button> <button data-tone=\"6\">6<span>MNO</span></button> <button data-tone=\"7\">7<span>PQRS</span></button> <button data-tone=\"8\">8<span>TUV</span></button> <button data-tone=\"9\">9<span>WXYZ</span></button> <button data-tone=\"*\">✱</button> <button data-tone=\"0\">0<span>+</span></button> <button data-tone=\"#\">#</button></div><div id=\"incoming-call\" class=\"incoming\" hidden><span><span data-i18n=\"incoming\">Incoming call from</span> <strong id=\"incoming-from\"></strong></span><div class=\"controls\"><button id=\"accept-btn\" class=\"primary\" data-i18n=\"accept\">Accept</button> <button id=\"reject-btn\" class=\"danger\" data-i18n=\"reject\">Reject</button></div></div><div id=\"audio-out-wrap\" class=\"audio-out\" hidden><span data-i18n=\"audioOutput\">Speaker</span> <select id=\"audio-output\" aria-label=\"Speaker\"></select></div><details class=\"log-wrap\" id=\"contacts-wrap\" hidden><summary data-i18n=\"contacts\">Contacts</summary><ul id=\"contacts-list\" class=\"contacts\"></ul></details> <details class=\"log-wrap\" id=\"history-wrap\" hidden><summary data-i18n=\"recentCalls\">Recent calls</summary><ul id=\"history-list\" class=\"history\"></ul></details> <details class=\"log-wrap\" id=\"vm-wrap\" hidden><summary><span data-i18n=\"voicemail\">Voicemail</span> <span id=\"vm-badge\" class=\"badge\" hidden></span></summary><div class=\"vm-toolbar\"><button id=\"vm-refresh\" class=\"ghost small\" data-i18n=\"vmRefresh\">Refresh</button> <span id=\"vm-status\" class=\"hint\"></span></div><ul id=\"vm-list\" class=\"vm\"></ul></details><div class=\"wp-advanced-bar\"><button id=\"wp-adv-toggle\" class=\"ghost small\" type=\"button\" aria-expanded=\"true\" aria-controls=\"wp-advanced\" data-i18n-title=\"advancedSection\">⚙</button></div><div id=\"wp-advanced\"><button id=\"wp-devtest-btn\" class=\"ghost small\" type=\"button\" data-i18n=\"deviceTest\">Test audio devices</button> <details class=\"log-wrap\" id=\"ice-wrap\" hidden><summary data-i18n=\"connectionQuality\">Connection quality</summary><div id=\"ice-panel\" class=\"ice\">—</div></details> <details class=\"log-wrap\"><summary data-i18n=\"eventLog\">Event log</summary><ul id=\"log\"></ul></details></div></section></main><div id=\"toasts\" role=\"status\" aria-live=\"polite\"></div><audio id=\"remote-audio\" autoplay></audio></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"island\"><main class=\"app\"><header class=\"topbar\"><span class=\"brand\"></span> <select id=\"lang\" title=\"Language / Sprache\" aria-label=\"Language\"><option value=\"en\">EN</option> <option value=\"de\">DE</option></select> <span id=\"reg-status\" class=\"status status-offline\" data-i18n-title=\"regState\">offline</span></header><section id=\"login-view\" class=\"card\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Passkey {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1 data-i18n=\"passkeySection\">Sign in with a passkey</h1>    <form id=\"passkey-login-form\" autocomplete=\"off\" aria-describedby=\"passkey-login-error\"><label><span data-i18n=\"passkeyEmail\">Email</span> <input id=\"passkey-email\" name=\"email\" type=\"email\" autocomplete=\"username\" placeholder=\"you@example.com\" required></label> <button type=\"submit\" class=\"primary\" data-i18n=\"passkeySignin\">Sign in with passkey</button></form><p class=\"hint\" id=\"passkey-login-error\" hidden></p>   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ExtensionLoginForm().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</details>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h1 data-i18n=\"signin\">Sign in to your extension</h1>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ExtensionLoginForm().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</section><section id=\"phone-view\" class=\"card\" hidden><div id=\"offline-banner\" class=\"offline-banner\" role=\"status\" hidden data-i18n=\"offlineBanner\">You are offline — calls cannot be made or received.</div><div class=\"whoami\"><span data-i18n=\"signedInAs\">signed in as</span> <strong id=\"whoami-ext\"></strong> <button id=\"logout\" class=\"ghost small\" data-i18n=\"signOut\" data-i18n-title=\"signOutTitle\">sign out</button></div><form id=\"dial-form\" autocomplete=\"off\" aria-describedby=\"dial-error\"><input id=\"dest\" inputmode=\"tel\" data-i18n-placeholder=\"dialPlaceholder\" aria-label=\"Number to call\" required> <button type=\"submit\" class=\"primary\" id=\"call-btn\" data-i18n=\"call\">Call</button></form><p id=\"dial-error\" class=\"hint dial-error\" hidden></p><p id=\"wp-dial-hint\" class=\"hint wp-dial-hint\" hidden aria-hidden=\"true\"></p><div id=\"calls\"></div><div id=\"keypad\" hidden><button data-tone=\"1\">1</button> <button data-tone=\"2\">2<span>ABC</span></button> <button data-tone=\"3\">3<span>DEF</span></button> <button data-tone=\"4\">4<span>GHI</span></button> <button data-tone=\"5\">5<span>JKL</span></button> <button data-tone=\"6\">6<span>MNO</span></button> <button data-tone=\"7\">7<span>PQRS</span></button> <button data-tone=\"8\">8<span>TUV</span></button> <button data-tone=\"9\">9<span>WXYZ</span></button> <button data-tone=\"*\">✱</button> <button data-tone=\"0\">0<span>+</span></button> <button data-tone=\"#\">#</button></div><div id=\"incoming-call\" class=\"incoming\" hidden><span><span data-i18n=\"incoming\">Incoming call from</span> <strong id=\"incoming-from\"></strong></span><div class=\"controls\"><button id=\"accept-btn\" class=\"primary\" data-i18n=\"accept\">Accept</button> <button id=\"reject-btn\" class=\"danger\" data-i18n=\"reject\">Reject</button></div></div><div id=\"audio-out-wrap\" class=\"audio-out\" hidden><span data-i18n=\"audioOutput\">Speaker</span> <select id=\"audio-output\" aria-label=\"Speaker\"></select></div><details class=\"log-wrap\" id=\"contacts-wrap\" hidden><summary data-i18n=\"contacts\">Contacts</summary><ul id=\"contacts-list\" class=\"contacts\"></ul></details> <details class=\"log-wrap\" id=\"history-wrap\" hidden><summary data-i18n=\"recentCalls\">Recent calls</summary><ul id=\"history-list\" class=\"history\"></ul></details> <details class=\"log-wrap\" id=\"vm-wrap\" hidden><summary><span data-i18n=\"voicemail\">Voicemail</span> <span id=\"vm-badge\" class=\"badge\" hidden></span></summary><div class=\"vm-toolbar\"><button id=\"vm-refresh\" class=\"ghost small\" data-i18n=\"vmRefresh\">Refresh</button> <span id=\"vm-status\" class=\"hint\"></span></div><ul id=\"vm-list\" class=\"vm\"></ul></details><div class=\"wp-advanced-bar\"><button id=\"wp-adv-toggle\" class=\"ghost small\" type=\"button\" aria-expanded=\"true\" aria-controls=\"wp-advanced\" data-i18n-title=\"advancedSection\">⚙</button></div><div id=\"wp-advanced\"><button id=\"wp-devtest-btn\" class=\"ghost small\" type=\"button\" data-i18n=\"deviceTest\">Test audio devices</button> <details class=\"log-wrap\" id=\"ice-wrap\" hidden><summary data-i18n=\"connectionQuality\">Connection quality</summary><div id=\"ice-panel\" class=\"ice\">—</div></details> <details class=\"log-wrap\"><summary data-i18n=\"eventLog\">Event log</summary><ul id=\"log\"></ul></details></div></section></main><div id=\"toasts\" role=\"status\" aria-live=\"polite\"></div><audio id=\"remote-audio\" autoplay></audio></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ExtensionLoginForm is the verbatim pre-passkey login form + error
+// slot: the ONLY login when the identity mode is off, and the
+// break-glass recovery path (one disclosure away) when it is on. Its
+// ids (#login-form, #ext, #pass, #remember, #login-error) are core DOM
+// contract in both positions.
+func ExtensionLoginForm() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<form id=\"login-form\" autocomplete=\"off\" aria-describedby=\"login-error\"><label><span data-i18n=\"extension\">Extension</span> <input id=\"ext\" name=\"extension\" inputmode=\"numeric\" autocomplete=\"username\" placeholder=\"1000\" required></label> <label><span data-i18n=\"password\">Password</span> <input id=\"pass\" name=\"password\" type=\"password\" autocomplete=\"current-password\" placeholder=\"••••••••\" required></label> <label class=\"remember\"><input id=\"remember\" type=\"checkbox\"> <span data-i18n=\"remember\">remember extension on this device (never the password)</span></label> <button type=\"submit\" class=\"primary\" data-i18n=\"connect\">Connect</button></form><p class=\"hint\" id=\"login-error\" hidden></p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -62,12 +131,12 @@ func IslandScripts() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script src=\"/config.js\"></script><script src=\"/assets/vendor/sip.min.js\"></script><script type=\"module\" src=\"/assets/island/app/main.js\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<script src=\"/config.js\"></script><script src=\"/assets/vendor/sip.min.js\"></script><script type=\"module\" src=\"/assets/island/app/main.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

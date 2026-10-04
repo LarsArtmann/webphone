@@ -43,6 +43,10 @@ type ShellProps struct {
 	Unread int
 	// NewVoicemail counts badge the Voicemail nav item.
 	NewVoicemail int
+	// Passkey renders the island's passkey (WebAuthn) front door with
+	// the extension login demoted to break-glass. False keeps the served
+	// shell byte-equivalent to the pre-passkey login card.
+	Passkey bool
 	// Lang drives the server-rendered strings.
 	Lang Lang
 }
@@ -109,7 +113,7 @@ templ ShellBody(props ShellProps) {
 	</header>
 	<div class="wp-body">
 		<aside class="wp-island" aria-label="Phone">
-			@PhoneIsland()
+			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey})
 		</aside>
 		<div class="wp-main-col">
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">

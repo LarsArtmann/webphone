@@ -61,6 +61,9 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	// string map cannot fail.
 	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
 	props.Lang = lang
+	// The passkey front door renders only when the identity layer is
+	// wired; a disabled deployment keeps the extension-only login card.
+	props.Passkey = h.deps.Config.Auth.Passkey.Enabled()
 
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
