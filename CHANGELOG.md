@@ -73,6 +73,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Island performance (T11): modulepreload for the island module graph,
   mic pre-warm timing baseline (scripts/perf-baseline.py), and an ICE
   gathering-time panel in the advanced area.
+- Passkey health leg: with the mode on, `/healthz` gains a `userauth`
+  named check pinging the identity layer's own `usermgmt.db` (a 503
+  naming `userauth` replaces unexplained passkey 503s when that database
+  breaks); the go-health probe picks the service up NON-critical (a
+  broken identity DB degrades one login mode — it must not flap liveness
+  or hold the startup latch), so the dashboard shows it as warn-state.
+  Mode-off deployments keep probing exactly sqlite + blob-dir.
+- Tier-2 pins for the passkey train: config family pins for every
+  `config.auth.passkey.*` rejection code (in-package table + an
+  env-driven Load row), enroll begin/finish handler tests (ceremony walk
+  + honest 400s), and the `userauth.Shutdown` lifecycle test (closes
+  `usermgmt.db`; the health check fails afterwards, never silently
+  passes).
+- README § "Passkey sign-in (optional)": the one home for the
+  enrollment/token/wire/health detail (moved out of AGENTS.md), next to
+  the CRM and Paperless integration contracts.
 - Dial affordances (M9, T12) + SMS segment countdown (M12, T12):
   number-bearing rows offer one-tap dial into the island; the composer
   counts billable GSM-7/UCS-2 segments past the first.
@@ -198,6 +214,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   options, the Caddy vhost body, and the backup shell in their own
   files — output proven byte-identical by an eval diff of the generated
   vhost and both backup scripts.
+- Island module homes (2026-10-04 tail): `csrf.js` is the CSRF token
+  reader's ONE exported home (session.js, passkey.js and the standalone
+  enroll page import it — three private copies were drift bait);
+  `whoamiLine` moved from passkey.js to the neutral `ui.js` (both login
+  paths render it); the session-identity wire shape (`GET /api/session`,
+  login, passkey finish) is now the typed `sessionIdentity` struct
+  instead of a `map[string]any` — omitempty tags keep the wire
+  byte-compatible.
+- AGENTS.md compacted 419 → 129 lines (the `docs/agents-md-size`
+  preflight cap is 377): every rule kept, evidence parentheticals moved
+  to docs/ (passkey detail → README), the userauth health leg, the
+  csrf.js/whoamiLine homes and the python-not-jq lock-read guard folded
+  in.
 - Nix-review batch 2 (2026-10-02). The generated module output (Caddy
   vhost body + the retention=7 backup script + the settings JSON) is now
   pinned by a full-text golden (`nix/module-output.golden`, rendered by
@@ -219,6 +248,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Enrollment error copy (2026-10-04 tail): a network failure on the
+  standalone `/enroll` page rendered "Enrollment failed (HTTP 0)" — the
+  status-0 transport sentinel leaked to the user. It now maps to the
+  purpose-written network message, and the (browser-unreachable, but
+  honest) empty-token guard says to paste the token from the link
+  instead of masquerading as an HTTP status.
 - The adopted templ-components layer was visually inert: the island
   stylesheet's bare element rules (`button`, `input`, …) were unlayered,
   and ANY unlayered rule beats ANY Tailwind `@layer utilities` rule at

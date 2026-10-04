@@ -5,42 +5,36 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-02 (docs-health AUDIT v6). Flipped DONE and removed:
-the UI/UX M9–M26 remainder row (T12–T19 executed 2026-10-02; only
-stragglers remain — routed to ROADMAP), the UI/UX gates row (buildflow,
-flake check, smoke, owed pins ALL green at the 12:57 close-out; the stack
-E2E obligation lives in the island-honesty + cross-repo rows), and the
-verification/perf plan row (T02/T04/T05–T08/T09/T18 executed; T01/T03/T20
-owner/stack legs live in the mic, island-honesty, cross-repo rows).
-Added: tooling stragglers (build-health-css fmt, smoke mypy, error-code
-registry), docs-health owner calls. Prior sweep 2026-10-02 (T18–T23
-harvest).
+Last sweep: 2026-10-04 (passkey train-tail session). Removed: the
+AGENTS-over-cap row (trimmed 419→129 lines, dense-line style; passkey
+detail moved to README § Passkey sign-in; jq lock-read guard added);
+the passkey tail's code-polish items (2)–(8) (enrollFailed(0) copy,
+plan-doc P/F annotation, csrf.js single home, userauth /healthz leg,
+tier-2 pins, whoamiLine→ui.js + typed sessionIdentity, aarch64 eval —
+all executed, gates green); the boot-contract runbook patch (applied to
+the stack ops-runbook as `9a21893`, boot-surface + passkey rows; the
+cancelled sibling CI run for `890a526` re-dispatched). Prior sweep
+2026-10-02 (docs-health AUDIT v6).
 
 ## Open tasks
 
-### Passkey train tail: deploy proof + code polish
+### Passkey train tail: deploy proof (owner terminal)
 
-**Status:** 🟡 `IN_PROGRESS` · **Priority:** High · **Effort:** S–M
+**Status:** 🟡 `IN_PROGRESS` (code polish DONE 2026-10-04; owner legs remain) · **Priority:** High · **Effort:** S
 
 The code train AND the 3-repo deploy train are DONE (webphone `400eaff`
 pushed; sibling `890a526`; pbx-artmann staged `0ngvm4q7…`, probe OK,
-gates green — see CHANGELOG Unreleased + the 17-28 report). Remaining,
-impact-sorted: (1) the OWNER switch + post-switch ritual (rotate
+gates green — see CHANGELOG Unreleased + the 17-28 report); the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
+csrf.js single home, userauth /healthz leg, tier-2 pins, whoamiLine→ui.js,
+typed sessionIdentity, plan-doc annotation, AGENTS trim — see CHANGELOG).
+Remaining: the OWNER switch + post-switch ritual (rotate
 `/tmp/pbx-toplevel-current`, record the fresh diff-closures baseline)
 and the LIVE passkey proof with the fail-closed password-file drill
-(pbx-artmann TODO §1 row); (2) `enrollFailed(0)`: map the network-fail
-sentinel to the `enrollNetFailed` copy instead of "HTTP 0" (a shipped
-UX wart); (3) annotate the plan doc's P/F tables
-(`docs/planning/2026-10-04_12-17_*` — zero struck items); (4) ONE
-exported csrfToken home (currently three private copies: session.js,
-passkey.js, enroll.js); (5) a `userauth` health leg in `/healthz`
-(usermgmt.db is not probed); (6) tier-2 pins: config family_test for
-`config.auth.passkey.*`, enroll begin/finish handler tests,
-`Shutdown` test; (7) `whoamiLine` → neutral module + typed
-session-identity response; (8) `nix flake check --all-systems` (aarch64
-eval) + AGENTS size trim (411>377). OWNER CALLS outstanding: ratify
-runbook-only enroll + Lars-only v1 mapping; switch-now-vs-CI-first;
-installer release republish timing (stale since the relock).
+(pbx-artmann TODO §1 row). OWNER CALLS outstanding: ratify
+runbook-only enroll + Lars-only v1 mapping; switch-now-vs-CI-first
+(CI for `890a526` was re-dispatched 2026-10-04 after the ~1 h runner
+cancellation — check its verdict); installer release republish timing
+(stale since the relock).
 
 **Evidence:** status `docs/status/2026-10-04_17-28_passkey-train-resumed-session-brutal-status.md` (§f harvest source); plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`
 
@@ -48,9 +42,9 @@ installer release republish timing (stale since the relock).
 
 **Status:** 🟡 `PLANNED` (owner call + stack dispatch) · **Priority:** Medium · **Effort:** S
 
-The boot-error contract SHIPPED 2026-10-02 (5-part render on every boot failure, exit 1 designed / 2 panic, EN-only, class-tagged; `App.Start` de-panicked; arch test confines samber/do; smoke `boot failure scenario` green). Remaining: (1) OWNER CALL (D3 follow-up) — cap systemd's boot-failure retry loop (`StartLimitBurst`/`StartLimitIntervalSec`) or ratify the 5s `Restart=on-failure` retry as desirable liveness (module deliberately unchanged this train); (2) apply the prepared patch text in `docs/planning/2026-10-02_11-05_boot-contract-stack-runbook-patch.md` to the stack ops-runbook § "Webphone error contract" under the tri-repo ritual (webphone first, clean stack tree, relock); (3) re-grade the boot surfaces at the 2026-10-22 erraudit re-measure
+The boot-error contract SHIPPED 2026-10-02 (5-part render on every boot failure, exit 1 designed / 2 panic, EN-only, class-tagged; `App.Start` de-panicked; arch test confines samber/do; smoke `boot failure scenario` green). The stack runbook patch APPLIED 2026-10-04 (stack `9a21893`: boot-surface + passkey error-contract rows; the parked patch doc is spent). Remaining: (1) OWNER CALL (D3 follow-up) — cap systemd's boot-failure retry loop (`StartLimitBurst`/`StartLimitIntervalSec`) or ratify the 5s `Restart=on-failure` retry as desirable liveness (module deliberately unchanged this train); (2) re-grade the boot surfaces at the 2026-10-22 erraudit re-measure
 
-**Evidence:** plan `docs/planning/2026-10-02_10-23_SUPERB-operator-boot-contract.md`; ruling `docs/error-contract.md` § "Boot surface"; pins `cmd/webphone/bootreport_test.go`
+**Evidence:** plan `docs/planning/2026-10-02_10-23_SUPERB-operator-boot-contract.md`; ruling `docs/error-contract.md` § "Boot surface"; pins `cmd/webphone/bootreport_test.go`; runbook patch = stack `nix-international-telephony@9a21893`
 
 ### v2.8.0 deploy tail
 
@@ -160,17 +154,6 @@ health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked
 
 **Status:** 🟡 `PLANNED` · **Priority:** Medium · **Effort:** S-M
 
-Owner/stack legs that block or derive from webphone work: repair the stack FreeSWITCH `mod_enum` build → run the stack browser E2E → relock to webphone `cc98c2e` (or newer) + pbx-artmann re-pin; **the cascade-fix train (2026-10-04, island style scoped to `.island` + history filter `wp-mini`) changed served markup/assets — the stack browser E2E re-run above covers this train's obligation**; stack `services.webphone.paperless` module option + smoke arm; the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column; ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` + CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified handovers only.
+Owner/stack legs that block or derive from webphone work: repair the stack FreeSWITCH `mod_enum` build → run the stack browser E2E → relock to webphone `cc98c2e` (or newer) + pbx-artmann re-pin; **the cascade-fix train (2026-10-04, island style scoped to `.island` + history filter `wp-mini`) AND the passkey-tail session (same day: csrf.js module, whoamiLine move, enroll error copy) changed served markup/assets — the stack browser E2E re-run above covers both trains' obligation**; stack `services.webphone.paperless` module option + smoke arm; the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column; ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` + CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified handovers only.
 
 **Evidence:** 02:54 / 04:07 / 05:26 reports §f; owner command sheet `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
-
-### AGENTS.md over its own line cap
-
-**Status:** 🟡 `PLANNED` · **Priority:** Low · **Effort:** S
-
-`docs/agents-md-size` preflight warns every buildflow run: AGENTS.md is
-~40 lines over the 377 cap (grew with the cascade-contract, passkey and
-smoke-label additions of 2026-10-04). Advisory only — buildflow still
-exits 0. Trim at train close: move evidence parentheticals to docs/,
-keep rules. Do NOT trim while the passkey train is mid-flight (shared
-file; they may still be editing).
