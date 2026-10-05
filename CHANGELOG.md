@@ -245,6 +245,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (this repo's bespoke flake checks are not modelled by it); the
   hardcoded `webphoneVersion` and the module-check stand-in's
   permissiveness remain accepted exceptions.
+- Dependency sweep (2026-10-05, the 15:42 train): templ v0.3.1020 →
+  v0.3.1070, templ-components v1.19.4 → v1.20.0 (with its icons/utils/
+  datastar/htmx submodules), cqrs-htmx/usermgmt v4.13.1 → v4.14.0,
+  go-health v0.4.1 → v0.5.0, indirect go-webauthn v0.18.1 → v0.18.2 and
+  opentelemetry v1.46.0 → v1.47.0 (go-health-dashboard held at v0.10.2).
+  The templ-components ride moved the button outline-warning/success
+  variants from amber/green-600 text to -700, so the tw.css token remap
+  gained matching -700 entries and the artifact was rebuilt — its
+  utilities keep resolving through `--warn`/`--ok`, not the raw palette.
+  vendorHash re-pinned; full suite and `nix flake check` green post-sweep.
+- The error-code registry freshness pin (`TestErrorCodeRegistryIsFresh`)
+  now compares table cell content with padding collapsed: the auto-commit
+  daemon's markdown table re-alignment broke the byte-exact pin twice on
+  2026-10-05 (main CI-red twice); column re-padding is inert now, while
+  missing/stale/family-drifted codes still fail the suite by name.
 
 ### Fixed
 

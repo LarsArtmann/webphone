@@ -82,6 +82,7 @@
   --color-amber-300: var(--warn);
   --color-amber-400: var(--warn);
   --color-amber-600: var(--warn);
+  --color-amber-700: var(--warn);
   --color-amber-800: var(--warn);
   --color-amber-900: var(--warn);
 
@@ -90,6 +91,7 @@
   --color-green-300: var(--ok);
   --color-green-400: var(--ok);
   --color-green-600: var(--ok);
+  --color-green-700: var(--ok);
   --color-green-800: var(--ok);
   --color-green-900: var(--ok);
 

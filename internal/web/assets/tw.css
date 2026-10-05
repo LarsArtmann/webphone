@@ -34,7 +34,7 @@
     --color-amber-400: var(--warn);
     --color-amber-500: oklch(76.9% 0.188 70.08);
     --color-amber-600: var(--warn);
-    --color-amber-700: oklch(55.5% 0.163 48.998);
+    --color-amber-700: var(--warn);
     --color-amber-800: var(--warn);
     --color-amber-900: var(--warn);
     --color-yellow-50: oklch(98.7% 0.026 102.212);
@@ -56,7 +56,7 @@
     --color-green-400: var(--ok);
     --color-green-500: oklch(72.3% 0.219 149.579);
     --color-green-600: var(--ok);
-    --color-green-700: oklch(52.7% 0.154 150.069);
+    --color-green-700: var(--ok);
     --color-green-800: var(--ok);
     --color-green-900: var(--ok);
     --color-emerald-400: oklch(76.5% 0.177 163.223);
@@ -657,7 +657,7 @@
   .text-wrap {
     text-wrap: wrap;
   }
-  .text-amber-600 {
+  .text-amber-700 {
     color: var(--warn);
   }
   .text-blue-600 {
@@ -675,7 +675,7 @@
   .text-gray-900 {
     color: var(--text);
   }
-  .text-green-600 {
+  .text-green-700 {
     color: var(--ok);
   }
   .text-red-500 {
