@@ -11,9 +11,12 @@ import (
 )
 
 // TestErrorCodeRegistryIsFresh keeps docs/error-contract.md's error-code
-// registry byte-honest with the source: every errorfamily code literal in
+// registry honest with the source: every errorfamily code literal in
 // non-test Go files must be documented, every documented code must still
-// exist in source, and the family sets must match. The codes render as
+// exist in source, and the family sets must match. The pin compares cell
+// content with padding collapsed, so markdown formatters re-aligning the
+// table's columns cannot break it — the auto-commit daemon's table reflow
+// broke the byte-exact pin twice on 2026-10-05. The codes render as
 // `[family:code]` in error strings and are grepped by journal recipes and
 // the stack runbook, so a rename is a contract break — this test is the
 // guard the family-adoption follow-up (f35) asked for. Regenerate the
@@ -191,7 +194,18 @@ func registryRow(code string, entry *codeEntry) string {
 		families = append(families, family)
 	}
 	sort.Strings(families)
-	return "| " + code + " | " + strings.Join(families, ", ") + " | " + entry.site + " |"
+	return canonicalRow(code, strings.Join(families, ", "), entry.site)
+}
+
+// canonicalRow rebuilds a table row from raw cell texts with all padding
+// collapsed, making generated and documented rows comparable regardless of
+// how a markdown formatter aligns the columns.
+func canonicalRow(cells ...string) string {
+	normalized := make([]string, len(cells))
+	for i, cell := range cells {
+		normalized[i] = strings.Join(strings.Fields(cell), " ")
+	}
+	return "| " + strings.Join(normalized, " | ") + " |"
 }
 
 // parseRegistryRows reads the generated table back: code → full row text.
@@ -211,7 +225,29 @@ func parseRegistryRows(block string) map[string]string {
 		if code == "" || code == "Code" || strings.HasPrefix(families, "--") {
 			continue
 		}
-		rows[code] = line
+		rows[code] = canonicalRow(parts[1], parts[2], parts[3])
 	}
 	return rows
+}
+
+// The 2026-10-05 daemon-reflow breaks pinned this property: padding-only
+// re-alignment of the registry table must stay inert, while any real cell
+// change must still read as drift.
+func TestRegistryRowComparisonIgnoresPadding(t *testing.T) {
+	want := registryRow("blob.escape", &codeEntry{families: map[string]bool{"Rejection": true}, site: "internal/blob/store.go"})
+	blocks := map[string]string{
+		"generator-plain":      "| blob.escape | Rejection | internal/blob/store.go |\n",
+		"formatter-reflowed":   "| blob.escape                                  | Rejection                 | internal/blob/store.go        |\n",
+		"header-and-separator": "| Code | Families | First site |\n| ---- | -------- | ---------- |\n| blob.escape | Rejection | internal/blob/store.go |\n",
+	}
+	for name, block := range blocks {
+		rows := parseRegistryRows(block)
+		if got := rows["blob.escape"]; got != want {
+			t.Errorf("%s: canonical form mismatch: got %q, want %q", name, got, want)
+		}
+	}
+	drifted := parseRegistryRows("| blob.escape | Infrastructure | internal/blob/store.go |\n")
+	if got := drifted["blob.escape"]; got == want {
+		t.Errorf("a real family change must still read as drift (got the canonical form %q)", got)
+	}
 }

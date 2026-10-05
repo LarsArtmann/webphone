@@ -144,7 +144,10 @@ cross-repo-visible vocabulary (the stack runbook § "Webphone error
 contract" syncs it). A rename would silently break journal greps, so
 the registry below is PINNED: `TestErrorCodeRegistryIsFresh`
 (internal/arch) generates it from the source and fails the suite on any
-code missing from, stale in, or family-drifted against this page. Two codes split their family at runtime — `pbx.http` and `crm.http`
+code missing from, stale in, or family-drifted against this page. The pin
+compares cell CONTENT with padding collapsed, so markdown formatters
+re-aligning the table's columns (the auto-commit daemon does) cannot break
+the suite. Two codes split their family at runtime — `pbx.http` and `crm.http`
 classify the HTTP answer 4xx → Rejection / 5xx → Transient, the same
 split the gateway seam pins; the table marks them `runtime-split` and
 each seam's `family_test.go` pins both arms. After
