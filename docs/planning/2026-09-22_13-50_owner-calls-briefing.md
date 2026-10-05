@@ -73,3 +73,51 @@
 - Shell copy stays English (D3, 2026-09-20); island copy en/de.
 - No Go-side telephony, no speculative sip.js swap (named triggers
   only), no Playwright while the stack E2E suffices.
+
+## Addendum 2026-10-05 16:50 — pre-sitting sweep results + rows 29–32
+
+Verification sweep (P1 of the 15:25 Pareto plan, executed):
+
+- **Stack CI = RED**: every recent `main` run cancels at GitHub's 1h
+  ceiling inside `nix flake check` (aarch64 VM leg green in 6m16s;
+  browser E2E is on-demand and never fires; `890a526`'s re-dispatch
+  was superseded by later pushes). Confirms the deploy train's
+  mod_enum/timeout diagnosis (F4.2) must precede any lock bump.
+- webphone `main` end-state: `5a4f9db` on origin; all 2026-10-05
+  session docs landed (plan commit `32905ce`; daemon applied table
+  reflows only, content intact).
+- `passkey_api.go:211` gopls unused-`r` Info: still live at HEAD;
+  the passkey train last touched that file 2026-10-05 14:52 —
+  HANDED OFF to that session (multi-session rule), not fixed here.
+
+Assistant legs executed since the plan (evidence for the sitting):
+
+- **P8 erraudit re-measured early**: tier-1 = 0, tier-2a = 0,
+  tier-2b = 0 — after suppressing 7 post-09-30 passkey-train
+  findings (2 bare constructors at enroll-boot sites, 4 `errors.Join`
+  shutdown aggregates [errorfamily has no Join], 1 bool-blank false
+  positive where `Duplicate()` returns `(int64, bool, bool)`).
+  Boot-surface re-grade: contract table matches code, all drift pins
+  present. Next due 2026-11-05.
+- **P9 QMD `get` garbage output**: root cause is
+  **crush #3846** (open upstream, 0 comments): MCP results with
+  embedded-resource content render as a raw Go struct pointer
+  (`&{0x… map[] <nil>}`). qmd 2.8.3 (latest) is spec-compliant; the
+  bug is Crush's client. No local fix possible; workaround = `query`
+  (text results render fine) + disk reads. Unblock = next Crush
+  release. Status-report question 3 answered: not owner-known, not
+  qmd's bug.
+- **P14 detector noise floor**: `branching-flow compose` no longer
+  exists in the installed build (command drift); `stats`+`dupe`
+  baseline recorded in the registry sweep log — family total 178,
+  mixins 8 (the rejected set), dupe 2 actionable (both triaged, 0
+  refactors).
+
+New rows for the sitting:
+
+| #   | Decision                                                                                                                                                       | Gates          | Options                                                       | Recommendation                                                                                         |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 29  | Detector-policy home: mixin/dupe verdicts as registry sweep-log lines only, or promote a standing AGENTS hard-won rule?                                         | future runs    | (a) registry only (14:46 + 16:40 lines); (b) promote to AGENTS | **(a) registry only** — one-home doctrine + the 377-line cap; promote only on a third unhandled resurfacing |
+| 30  | `config.CRM`/`Paperless` URL+Token twin — standing ruling? (now resurfaced by TWO detectors: mixins 10-05 + dupe 16:40)                                         | dedup registry | (a) standing ACCEPT-similarity row; (b) sweep-log rejection only | **(a) standing row** — pre-empts every future resurfacing; the embed itself stays rejected                  |
+| 31  | `vcard.Card`/`domain.SharedContact`/`server.apiSharedContact` Name+Number triad — ratify the boundary-layer rejection?                                          | dedup registry | (a) ratify as standing; (b) sweep-log only                    | **(a) ratify** — parse/domain/wire layers are doctrine (same class as the InboundMessage reject)           |
+| 32  | `errorfamily.Join` gap — add a Join/Aggregate constructor to go-error-family, or keep the 4 `nolint:erraudit` shutdown-aggregate sites?                        | tier-2 posture | (a) upstream lib train now; (b) keep nolints                  | **(b) keep nolints** until a third aggregate site appears; then (a)                                        |
