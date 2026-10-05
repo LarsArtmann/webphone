@@ -125,7 +125,7 @@ func (a *Archiver) ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte
 	if err != nil {
 		return fmt.Errorf("paperless: task: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
 	}
-	if documentID, _, refused := outcome.Duplicate(); refused {
+	if documentID, _, refused := outcome.Duplicate(); refused { //nolint:erraudit // false positive: Duplicate() returns (int64, bool, bool) — the blank is a bool, not an error
 		a.log.Info("paperless: archived (duplicate already on file, inert)",
 			"fax_id", job.ID.String(), "document_id", documentID)
 		return nil

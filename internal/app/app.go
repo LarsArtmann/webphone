@@ -382,5 +382,5 @@ func (a *App) Shutdown() error {
 	for _, err := range report.Errors {
 		errs = append(errs, err)
 	}
-	return errors.Join(errs...)
+	return errors.Join(errs...) //nolint:erraudit // aggregate of container-shutdown errors; each carries its own family, errorfamily has no Join
 }

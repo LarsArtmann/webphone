@@ -53,10 +53,10 @@ func enrollPasskey(email string) error {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
 	}
 	if !cfg.Auth.Passkey.Enabled() {
-		return bootErr(bootConfigInvalid, errors.New("passkey mode is not configured (auth.passkey.*) — enable and map the email before enrolling"))
+		return bootErr(bootConfigInvalid, errors.New("passkey mode is not configured (auth.passkey.*) — enable and map the email before enrolling")) //nolint:erraudit // boot root cause: bootErr owns the 5-part operator surface; no inner family to propagate
 	}
 	if _, mapped := cfg.Auth.Passkey.Users[email]; !mapped {
-		return bootErr(bootConfigInvalid, fmt.Errorf("email %q is not mapped in auth.passkey.users — add it to the config first", email))
+		return bootErr(bootConfigInvalid, fmt.Errorf("email %q is not mapped in auth.passkey.users — add it to the config first", email)) //nolint:erraudit // boot root cause: bootErr owns the 5-part operator surface; no inner family to propagate
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -159,7 +159,7 @@ func run() error {
 		ShutdownTimeout:   30 * time.Second,
 	}, application.Handler)
 	if err != nil {
-		return errors.Join(bootErr(bootListen, err), application.Shutdown())
+		return errors.Join(bootErr(bootListen, err), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
 	}
 
 	slog.Info("listening", "addr", cfg.Addr)
@@ -167,14 +167,14 @@ func run() error {
 
 	select {
 	case err := <-errCh:
-		return errors.Join(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown())
+		return errors.Join(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
 	case <-ctx.Done():
 		slog.Info("shutting down")
 		// Order matters: the HTTP drain finishes in-flight responses
 		// (SSE hubs flush), THEN the container closes the dashboard
 		// pusher and the SQLite handle.
 		if err := httpServer.Shutdown(context.WithoutCancel(ctx)); err != nil {
-			return errors.Join(propagatef("http shutdown: %w", err), application.Shutdown())
+			return errors.Join(propagatef("http shutdown: %w", err), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
 		}
 		return application.Shutdown()
 	}
