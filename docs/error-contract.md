@@ -156,6 +156,7 @@ a deliberate code change, regenerate:
     go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update
 
 <!-- error-code-registry: BEGIN (generated block; do not edit by hand; go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update rewrites it) -->
+
 | Code                                         | Families                  | First site                    |
 | -------------------------------------------- | ------------------------- | ----------------------------- |
 | blob.escape                                  | Rejection                 | internal/blob/store.go        |

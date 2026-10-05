@@ -28,7 +28,7 @@ ceiling inside `nix flake check` — aarch64 VM leg green 6m16s, browser
 E2E on-demand never fires; the mod_enum/timeout diagnosis precedes any
 lock bump); installer release republish timing (stale since the
 relock). HANDOFF NOTE: the gopls unused-`r` Info at
-`internal/server/passkey_api.go:211` is still live at HEAD (file last
+`internal/server/passkey_api.go:236` is still live at HEAD (file last
 touched 2026-10-05 14:52 by this train) — the owning session resolves
 it; no cross-session fixes.
 
@@ -111,6 +111,11 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 **Status:** 🟡 `PLANNED` (trigger-based, not date-based) · **Priority:** Medium · **Effort:** M
 
 internal/server god-package carve — TRIGGER: the next file added to internal/server (today 19 files / 3268 LOC + 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold). Carve `server/api` (JSON endpoints: contacts, calls, session, csrf) + `server/hooks` (webhook ingest + idempotency) out of the wiring (Deps, chain, mount stay); tests move with their files; the contract_test three-401-writer allowlist (actions/webhooks/session_api) + DOM-contract pins update mechanically; render-diff harness proves byte parity if wanted
+ Trigger adjudication (2026-10-06 session): the 09-30 baseline reading
+fires on `passkey_api.go` (landed 10-04), but the round-2 plan
+(2026-10-05 20:30, §F15 "do NOT start") supersedes — the trigger is
+the NEXT file landing in `internal/server` AFTER that plan; stays
+gated until then.
 
 **Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer)
 

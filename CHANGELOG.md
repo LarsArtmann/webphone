@@ -260,6 +260,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   daemon's markdown table re-alignment broke the byte-exact pin twice on
   2026-10-05 (main CI-red twice); column re-padding is inert now, while
   missing/stale/family-drifted codes still fail the suite by name.
+- The same registry's `-update` WRITER now emits the daemon-aligned
+  table shape (columns at max content width, plus the blank line the
+  formatter keeps after the BEGIN marker), so regeneration is
+  byte-idempotent — the daemon has nothing left to re-pad, killing
+  the 2026-10-05 red-class churn outright rather than merely making
+  it inert.
 
 ### Fixed
 
