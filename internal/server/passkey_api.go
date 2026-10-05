@@ -28,6 +28,19 @@ import (
 // keeping a hostile POST out of the parser.
 const maxPasskeyBodySize = 64 << 10
 
+// parsePasskeyUserID is the strict door for browser-supplied ceremony
+// keys: usermgmt's SessionKey is always a minted ULID, so garbage is
+// malformed input (400) — never a silently hashed pseudo-user. Zero
+// UserID with ok=false means the 400 is already written.
+func parsePasskeyUserID(w http.ResponseWriter, raw string) (usermgmt.UserID, bool) {
+	userID, err := usermgmt.ParseUserID(raw)
+	if err != nil {
+		http.Error(w, "user_id must be the session_key the begin step returned", http.StatusBadRequest)
+		return usermgmt.UserID{}, false
+	}
+	return userID, true
+}
+
 // passkeyBeginLogin starts the passkey ceremony for an email. Unknown
 // emails and credential-less accounts answer the SAME 401 — the endpoint
 // must not double as an email-enumeration oracle (usermgmt's own handler
@@ -73,9 +86,13 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxPasskeyBodySize)
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
+	raw := r.URL.Query().Get("user_id")
+	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
+		return
+	}
+	userID, ok := parsePasskeyUserID(w, raw)
+	if !ok {
 		return
 	}
 	mapped, err := h.deps.UserAuth.FinishLogin(r.Context(), userID, r)
@@ -133,7 +150,7 @@ func (h *handlers) passkeyEnrollVerify(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"email":   enrolled.Email,
-		"user_id": enrolled.UserID,
+		"user_id": enrolled.UserID.Get().String(),
 	})
 }
 
@@ -151,7 +168,11 @@ func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "user_id is required", http.StatusBadRequest)
 		return
 	}
-	resp, err := h.deps.UserAuth.BeginRegistration(r.Context(), body.UserID)
+	userID, ok := parsePasskeyUserID(w, body.UserID)
+	if !ok {
+		return
+	}
+	resp, err := h.deps.UserAuth.BeginRegistration(r.Context(), userID)
 	if err != nil {
 		h.passkeyServerError(w, r, err, "begin passkey enrollment")
 		return
@@ -167,9 +188,13 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxPasskeyBodySize)
-	userID := r.URL.Query().Get("user_id")
-	if userID == "" {
+	raw := r.URL.Query().Get("user_id")
+	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
+		return
+	}
+	userID, ok := parsePasskeyUserID(w, raw)
+	if !ok {
 		return
 	}
 	credentialName := r.URL.Query().Get("credential_name")

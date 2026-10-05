@@ -18,6 +18,7 @@ import (
 
 	_ "modernc.org/sqlite" // registers the "sqlite" driver for the test's own connection
 
+	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 
@@ -192,7 +193,7 @@ func finishLoginFor(t *testing.T, svc *userauth.Service, email string) (userauth
 		return userauth.MappedUser{}, err
 	}
 	r := httptest.NewRequest(http.MethodPost, "/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	return svc.FinishLogin(ctx, begun.SessionKey, r)
+	return svc.FinishLogin(ctx, usermgmt.MustParseUserID(begun.SessionKey), r)
 }
 
 func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
@@ -216,7 +217,7 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 		t.Fatal("begin registration lost the session key")
 	}
 	r := httptest.NewRequest(http.MethodPost, "/enroll/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, begun.SessionKey, r, "laptop"); err != nil {
+	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
 		t.Fatalf("finish registration: %v", err)
 	}
 
@@ -245,7 +246,7 @@ func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := httptest.NewRequest(http.MethodPost, "/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, begun.SessionKey, r, "device"); err != nil {
+	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "device"); err != nil {
 		t.Fatal(err)
 	}
 	// The stub provider approves the ceremony; the MAPPING is the gate.

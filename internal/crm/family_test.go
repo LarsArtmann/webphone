@@ -87,7 +87,7 @@ func TestCallLogStatusSplit(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			err = client.LogCall(t.Context(), "contact-1", "out", "+441632960961", 60, "completed")
+			err = client.LogCall(t.Context(), crm.NewContactRef("contact-1"), "out", "+441632960961", 60, "completed")
 			if err == nil {
 				t.Fatal("non-204: want error")
 			}

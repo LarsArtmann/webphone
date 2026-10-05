@@ -204,6 +204,18 @@ func TestPasskeyFinishWithoutUserIDIsA400(t *testing.T) {
 	}
 }
 
+// TestPasskeyFinishRejectsAMalformedUserID pins the strict door: a
+// garbage ceremony key is malformed input (400) — never silently hashed
+// into a pseudo-user that then answers the unknown-account 401.
+func TestPasskeyFinishRejectsAMalformedUserID(t *testing.T) {
+	server, _ := newPasskeyServer(t)
+	c := clientFor(t, server)
+	resp, _ := c.do(http.MethodPost, "/api/auth/passkey/finish?user_id=not-a-ulid", []byte(`{}`), "application/json")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("garbage user_id: %d, want 400", resp.StatusCode)
+	}
+}
+
 func TestPasskeyEnrollVerifyBurnsTheToken(t *testing.T) {
 	server, svc := newPasskeyServer(t)
 	userID := enrollCredential(t, svc, pkEmail)
@@ -227,7 +239,7 @@ func TestPasskeyEnrollVerifyBurnsTheToken(t *testing.T) {
 		Email  string `json:"email"`
 		UserID string `json:"user_id"`
 	}
-	if err := json.Unmarshal(body, &resolved); err != nil || resolved.Email != pkEmail || resolved.UserID != userID {
+	if err := json.Unmarshal(body, &resolved); err != nil || resolved.Email != pkEmail || resolved.UserID != userID.Get().String() {
 		t.Fatalf("verify body %q: %v", body, err)
 	}
 
@@ -255,7 +267,7 @@ func TestPasskeyEnrollHandlersWalkTheCeremony(t *testing.T) {
 	c := clientFor(t, server)
 
 	// begin: the registration options for the verified user
-	payload, _ := json.Marshal(map[string]string{"user_id": userID})
+	payload, _ := json.Marshal(map[string]string{"user_id": userID.Get().String()})
 	resp, body := c.do(http.MethodPost, "/api/auth/passkey/enroll/begin", payload, "application/json")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("enroll begin: %d %s", resp.StatusCode, body)

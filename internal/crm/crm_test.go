@@ -66,7 +66,7 @@ func TestClientDisabledByDefault(t *testing.T) {
 	if _, ok := resolver.Resolve(context.Background(), "+493012345678"); ok {
 		t.Fatal("disabled resolver must never match")
 	}
-	if err := resolver.LogCall(context.Background(), "x", "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
+	if err := resolver.LogCall(context.Background(), NewContactRef("x"), "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
 		t.Fatalf("LogCall on disabled client: %v", err)
 	}
 
@@ -79,7 +79,7 @@ func TestClientDisabledByDefault(t *testing.T) {
 	if _, err := nilClient.LookupByPhone(context.Background(), "+493012345678"); !errors.Is(err, ErrDisabled) {
 		t.Fatalf("LookupByPhone on nil client: %v", err)
 	}
-	if err := nilClient.LogCall(context.Background(), "x", "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
+	if err := nilClient.LogCall(context.Background(), NewContactRef("x"), "in", "+493012345678", 1, "answered"); !errors.Is(err, ErrDisabled) {
 		t.Fatalf("LogCall on nil client: %v", err)
 	}
 }
@@ -130,7 +130,7 @@ func TestLogCall(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	if err := client.LogCall(context.Background(), "01M/contact", "in", "+49 30 12345678", 123, "answered"); err != nil {
+	if err := client.LogCall(context.Background(), NewContactRef("01M/contact"), "in", "+49 30 12345678", 123, "answered"); err != nil {
 		t.Fatalf("log call: %v", err)
 	}
 
@@ -144,7 +144,7 @@ func TestLogCall(t *testing.T) {
 	}
 
 	stub.logStatus = http.StatusInternalServerError
-	if err := client.LogCall(context.Background(), "01M/contact", "in", "+49 30 12345678", 0, ""); err == nil {
+	if err := client.LogCall(context.Background(), NewContactRef("01M/contact"), "in", "+49 30 12345678", 0, ""); err == nil {
 		t.Fatal("5xx must surface as an error")
 	}
 }

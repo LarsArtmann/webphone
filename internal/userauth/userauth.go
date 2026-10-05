@@ -170,11 +170,14 @@ func (s *Service) BeginLogin(ctx context.Context, email string) (*usermgmt.Begin
 
 // FinishLogin verifies the assertion for the userID the begin ceremony
 // returned and resolves the authenticated user's extension mapping. The
-// usermgmt session in the ceremony result is intentionally ignored (the
-// webphone session is the single session truth).
-func (s *Service) FinishLogin(ctx context.Context, userID string, r *http.Request) (MappedUser, error) {
+// userID arrives strictly parsed (a ULID-branded usermgmt.UserID): the
+// browser-provided session key is validated at the handler door, never
+// hashed into a pseudo-user here. The usermgmt session in the ceremony
+// result is intentionally ignored (the webphone session is the single
+// session truth).
+func (s *Service) FinishLogin(ctx context.Context, userID usermgmt.UserID, r *http.Request) (MappedUser, error) {
 	empty := MappedUser{}
-	resp, err := s.users.FinishLogin(ctx, usermgmt.NewUserID(userID), r)
+	resp, err := s.users.FinishLogin(ctx, userID, r)
 	if err != nil {
 		return empty, err //nolint:erraudit // usermgmt owns the classification; this seam only resolves the mapping
 	}
@@ -236,28 +239,29 @@ func (s *Service) SIPPassword(extension domain.Extension) (string, error) {
 // Register creates the usermgmt account if it does not exist yet and
 // returns its ID. An existing account is NOT an error — minting an
 // enrollment token for it is the normal add-a-device flow.
-func (s *Service) Register(ctx context.Context, email string) (string, error) {
+func (s *Service) Register(ctx context.Context, email string) (usermgmt.UserID, error) {
 	resp, err := s.users.Register(ctx, usermgmt.RegisterRequest{Email: email})
 	if err == nil {
-		return resp.User.ID.Get().String(), nil
+		return resp.User.ID, nil
 	}
 	if errors.Is(err, usermgmt.ErrEmailExists) {
 		existing, ok := s.users.ReadModel().FindByEmail(email)
 		if !ok {
-			return "", errorfamily.WrapInfrastructure(err, "userauth.register.exists_unreadable",
+			return usermgmt.UserID{}, errorfamily.WrapInfrastructure(err, "userauth.register.exists_unreadable",
 				"account exists but the read model cannot resolve it").WithContext("email", email)
 		}
-		return existing.ID.Get().String(), nil
+		return existing.ID, nil
 	}
-	return "", err
+	return usermgmt.UserID{}, err
 }
 
 // BeginRegistration / FinishRegistration drive the passkey enrollment
-// ceremony for an existing usermgmt account.
-func (s *Service) BeginRegistration(ctx context.Context, userID string) (*usermgmt.BeginRegistrationResponse, error) {
-	return s.users.BeginRegistration(ctx, usermgmt.NewUserID(userID))
+// ceremony for an existing usermgmt account (the userID strictly parsed
+// by the caller — a CLI literal or a token-resolved account).
+func (s *Service) BeginRegistration(ctx context.Context, userID usermgmt.UserID) (*usermgmt.BeginRegistrationResponse, error) {
+	return s.users.BeginRegistration(ctx, userID)
 }
 
-func (s *Service) FinishRegistration(ctx context.Context, userID string, r *http.Request, credentialName string) error {
-	return s.users.FinishRegistration(ctx, usermgmt.NewUserID(userID), r, credentialName)
+func (s *Service) FinishRegistration(ctx context.Context, userID usermgmt.UserID, r *http.Request, credentialName string) error {
+	return s.users.FinishRegistration(ctx, userID, r, credentialName)
 }

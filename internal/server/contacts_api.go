@@ -31,6 +31,7 @@ func (h *handlers) notifyContactsChanged(extension domain.Extension) {
 // (/contacts/save|delete|import|export) stay untouched.
 
 type apiContact struct {
+	//nolint:branching-flow // wire DTO projecting domain.ContactID at the JSON edge; the branded home is the domain type and the delete route re-parses client ids strictly
 	ID     string `json:"id"`
 	Name   string `json:"name"`
 	Number string `json:"number"`
