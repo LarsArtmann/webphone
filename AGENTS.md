@@ -125,5 +125,5 @@ More than one Crush session can work this repo at once (tell-tale: uncommitted f
 - One home per fact: README sells + documents contracts, FEATURES inventories status, TODO_LIST holds open work, CHANGELOG logs history, docs/lessons.md holds war stories, this file keeps the rules.
 - Cite stable names (ids, function names, option names), not `file:line`.
 - Behavior parity rules ports: port logic verbatim first, refactor in a second, separately-verified change.
-- The auto-commit daemon commits AND pushes; never revert changes you did not author; verify end states with `git ls-remote`, not push logs.
+- The auto-commit daemon commits AND pushes; never revert changes you did not author; verify end states with `git ls-remote` + the CI verdict (`gh run list`), not push logs — check CI after EVERY push (2026-10-05: main sat red ~4h because pushes went unverified; caught two daemon-reflow registry-pin breaks the same day).
 - Recording is two-level: the PBX stack records every dialled call server-side (stereo WAV, operator basic-auth; `*97<ext>` skips) — this repo has NO recording capability, only CDR history rows. Product-level questions get answered per level (island / server / stack).

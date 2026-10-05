@@ -121,3 +121,32 @@ New rows for the sitting:
 | 30 | `config.CRM`/`Paperless` URL+Token twin — standing ruling? (now resurfaced by TWO detectors: mixins 10-05 + dupe 16:40)                 | dedup registry | (a) standing ACCEPT-similarity row; (b) sweep-log rejection only | **(a) standing row** — pre-empts every future resurfacing; the embed itself stays rejected                  |
 | 31 | `vcard.Card`/`domain.SharedContact`/`server.apiSharedContact` Name+Number triad — ratify the boundary-layer rejection?                  | dedup registry | (a) ratify as standing; (b) sweep-log only                       | **(a) ratify** — parse/domain/wire layers are doctrine (same class as the InboundMessage reject)            |
 | 32 | `errorfamily.Join` gap — add a Join/Aggregate constructor to go-error-family, or keep the 4 `nolint:erraudit` shutdown-aggregate sites? | tier-2 posture | (a) upstream lib train now; (b) keep nolints                     | **(b) keep nolints** until a third aggregate site appears; then (a)                                         |
+| 33 | Daemon-docs-formatting policy: the auto-commit daemon reflows markdown tables (broke the registry pin's byte-exact form twice, and a third reflow landed in the 20:33 plan commit before the pin went content-based). Keep the behavior, or exclude `docs/**` from daemon formatting? | daemon config, doc churn | (a) keep reflowing (pins must be formatting-insensitive); (b) exclude docs/** | **(a) keep** — the pin is now content-based (2026-10-05 fix), reflows are content-inert, and (b) needs daemon-side config for zero remaining harm |
+| 34 | Proof-bar for "green": is CI-success on the pushed head the ratified bar for sittings/releases, or a local full gate (clean-cache buildflow + full `nix flake check`)? (Today's 4h-red window was caught by CI, not local gates.) | release ritual, sitting readiness | (a) CI verdict on the pushed head (release.sh keeps its own local full gate at release time); (b) local full gates before every sitting | **(a) CI on the pushed head** — it caught what local runs missed twice today; the release ritual keeps the heavyweight local proof |
+
+## Round-2 sweep-audit outcomes (2026-10-05 21:10, pre-sitting closure of the 15:42 train)
+
+- **Sweep train = FINISHED** (status-report question 1): `81ea689`
+  (15:42) is the last commit touching go.mod/go.sum/vendor; no dependency
+  commits since; tree clean apart from session docs. Nothing in-flight.
+- **CHANGELOG**: [Unreleased] ### Changed now carries the sweep entry —
+  all six bumps old→new (templ 0.3.1020→0.3.1070, templ-components
+  1.19.4→1.20.0 + submodules, usermgmt 4.13.1→4.14.0, go-health
+  0.4.1→0.5.0, webauthn 0.18.1→0.18.2 indirect, otel 1.46.0→1.47.0
+  indirect; go-health-dashboard held at 0.10.2) + the tw.css consequence.
+- **tw.css class-identity check (watches-row obligation): CLASSES
+  CHANGED** — templ-components 1.20.0 moved the button
+  outline-warning/success variants from amber/green-600 text to -700,
+  which fell outside the @theme token remap and resolved to RAW palette
+  colors. Fixed: remap gained `-700` entries (matching the red-family
+  precedent), artifact rebuilt via `scripts/build-tw-css.sh`; the
+  utilities resolve through `--warn`/`--ok` again.
+- **vulnix over the NEW runtime closure: CLEAN** — 8 derivations
+  scanned; only glibc 2.44-25 range-match noise; both CVEs
+  (2026-5435, 2026-6238) distro-patched in the locked nixpkgs rev;
+  triage CLI verdict "zero real advisories", exit 0.
+- **Registry pin made content-based** (incident note for row 33): a
+  THIRD daemon reflow had landed in the 20:33 plan commit and re-broke
+  the byte-exact pin (CI red again). `TestErrorCodeRegistryIsFresh` now
+  compares cell content with padding collapsed; a micro-test pins that
+  reflowed rows canonicalize while real drift still fails by name.
