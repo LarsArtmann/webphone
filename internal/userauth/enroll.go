@@ -92,7 +92,7 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 	userID, err := usermgmt.ParseUserID(rawUserID)
 	if err != nil {
 		return EnrollToken{}, errorfamily.Wrapf(err, errorfamily.Corruption, "userauth.enroll.userid",
-			"stored enrollment token names an invalid user id")
+			"stored enrollment token names an invalid user id %q", rawUserID)
 	}
 	out.UserID = userID
 	if time.Now().Unix() >= expiresAt {
