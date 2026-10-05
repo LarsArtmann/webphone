@@ -199,7 +199,7 @@ func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]strin
 
 // LogCall forwards one call activity to the CRM (no caching — a call is a
 // fact, not a lookup).
-func (r *Resolver) LogCall(ctx context.Context, contactID, direction, number string, seconds int, outcome string) error {
+func (r *Resolver) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error {
 	return r.client.LogCall(ctx, contactID, direction, number, seconds, outcome)
 }
 

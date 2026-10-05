@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	id "github.com/larsartmann/go-branded-id"
 	"github.com/larsartmann/go-error-family"
 )
 
@@ -75,9 +76,25 @@ func NewClient(baseURL, token string) (*Client, error) {
 // Enabled reports whether a CRM is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
+// ContactRefBrand brands Ledger CRM contact identifiers.
+type ContactRefBrand struct{}
+
+// Name implements the id.Brand interface.
+func (ContactRefBrand) Name() string { return "ContactRef" }
+
+// ContactRef is one Ledger CRM contact's OWN opaque id. The CRM owns the
+// format and validity — webphone only carries it from a lookup back into
+// LogCall, so a phone number or a webphone contact id cannot be mistaken
+// for one.
+type ContactRef = id.ID[ContactRefBrand, string]
+
+// NewContactRef wraps a CRM-provided contact id verbatim (no validation:
+// the wire shape is the CRM's contract).
+func NewContactRef(raw string) ContactRef { return id.NewID[ContactRefBrand](raw) }
+
 // Match is one contact hit for a phone number.
 type Match struct {
-	ID   string
+	ID   ContactRef
 	Name string
 }
 
@@ -170,11 +187,12 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 		name = first.Email
 	}
 
-	return Match{ID: first.ID, Name: name}, nil
+	return Match{ID: NewContactRef(first.ID), Name: name}, nil
 }
 
 // LogCall appends one call activity to the CRM contact (204 expected).
-func (c *Client) LogCall(ctx context.Context, contactID string, direction, number string, seconds int, outcome string) error {
+// The ref is the Match's own ID: only a real lookup can mint one.
+func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error {
 	payload := struct {
 		Direction string `json:"direction"`
 		Number    string `json:"number"`
@@ -187,7 +205,7 @@ func (c *Client) LogCall(ctx context.Context, contactID string, direction, numbe
 		return errorfamily.WrapInfrastructuref(err, "crm.encode", "crm: encode call log (contact %s)", contactID)
 	}
 
-	resp, err := c.do(ctx, http.MethodPost, "/api/contacts/"+contactID+"/calls", nil, encoded)
+	resp, err := c.do(ctx, http.MethodPost, "/api/contacts/"+contactID.Get()+"/calls", nil, encoded)
 	if err != nil {
 		return err
 	}
