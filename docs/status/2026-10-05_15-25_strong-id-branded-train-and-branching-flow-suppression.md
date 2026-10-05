@@ -64,9 +64,10 @@ Nothing in the END STATE is broken — both repos are green and committed. But t
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
-*Brainstorm, not commitment — HARVEST should route these (most are ROADMAP fuel). Ordered by impact within groups.*
+_Brainstorm, not commitment — HARVEST should route these (most are ROADMAP fuel). Ordered by impact within groups._
 
 **This train's loose ends**
+
 1. Release branching-flow (tag + flake `version`, its AGENTS checklist) so source and installed binary agree.
 2. Rebuild system profile; confirm PATH `branching-flow strong-id` shows 0 rows on webphone.
 3. Confirm webphone push landed (`git ls-remote`) — 7 commits were unpushed at session end.
@@ -136,4 +137,4 @@ Nothing in the END STATE is broken — both repos are green and committed. But t
 
 ---
 
-*Point-in-time snapshot. Section (f) is HARVEST input — not yet routed into TODO_LIST/ROADMAP (dispatch says wait for instructions).*
+_Point-in-time snapshot. Section (f) is HARVEST input — not yet routed into TODO_LIST/ROADMAP (dispatch says wait for instructions)._

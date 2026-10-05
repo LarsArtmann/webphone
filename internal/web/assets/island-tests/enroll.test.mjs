@@ -111,7 +111,11 @@ test("happy path: verify → begin → create → finish, success replaces the f
 
   const verify = posted.find((p) => p.url.endsWith("/verify"));
   assert.deepEqual(JSON.parse(verify.opts.body), { token: "tok" });
-  assert.equal(posted.filter((p) => p.url.includes("/begin")).length, 1, "ceremony began for the verified user");
+  assert.equal(
+    posted.filter((p) => p.url.includes("/begin")).length,
+    1,
+    "ceremony began for the verified user",
+  );
 
   const finish = posted.find((p) => p.url.startsWith("/api/auth/passkey/enroll/finish"));
   assert.ok(

@@ -143,38 +143,38 @@ touched; no project-wide research was performed.
 
 ## f) NEXT (impact-sorted; ids referenced nowhere else — this is the harvest source)
 
-| # | Task | Repo | Impact | Effort |
-| --- | --- | --- | --- | --- |
-| 1 | Owner: push-lag call NOW LIVE — 7 commits unpushed across two repos; ratify the threshold or push manually | both | High | 5min |
-| 2 | Owner: switch + post-switch ritual (rotate `/tmp/pbx-toplevel-current`, diff-closures baseline, verify-live) | pbx | High | 10min |
-| 3 | Owner: LIVE passkey proof + fail-closed password-file drill (`: > telephony_ext_1000` → honest failure → restore) | pbx | High | 10min |
-| 4 | Confirm CI verdict for 37211240327 (re-dispatched; also covers 9a21893 once pushed) | stack | High | 2min |
-| 5 | Owner: v2.8.0 deploy terminal (lock bump → E2E → aarch64 → pbx relock #5 → deploy → `--base` smoke) | all | High | owner |
-| 6 | Owner: installer release republish (stale since the relock) | pbx | High | 20min |
-| 7 | Stack: repair FreeSWITCH `mod_enum` build → browser E2E → relock (now owes: cascade train + THIS session's island assets + runbook) | stack | High | M |
-| 8 | Owner: ratify runbook-only enroll + Lars-only v1 mapping | webphone | Med | owner |
-| 9 | Owner: SMS bridge journal leg (telnyx-webhooks 422 root cause) | pbx | High | S |
-| 10 | Owner-calls batch sitting (28-row briefing; push-lag now has a live incident attached) | — | High | S |
-| 11 | Route + do harvest §f22: ui-capture login shots for the train record (DROPPED this session) | webphone | Low | S |
-| 12 | Verify `/openapi.json` covers the passkey endpoints + typed session-identity shape (never checked this session) | webphone | Med | S |
-| 13 | Decide /healthz userauth posture: 503-flipping (shipped) vs report-only (e6 above) | owner | Med | S |
-| 14 | AGENTS dense-style readback: 129 lines of one-line bullets — keep or re-flow to ~370 with headroom | owner | Low | S |
-| 15 | Check whether the 18099 stale server survived my pkill (concurrent-session hygiene) | webphone | Low | 1min |
-| 16 | Consider a `wp:session-opened` detail-parity test between the two login paths (event contract is prose-only today) | webphone | Low | S |
-| 17 | Consider porting pbx-artmann's docs-annotate gate (17-28 §e6, still open — this session annotated by hand again) | webphone | Low | M |
-| 18 | Commit-faster rule for narrated trains (daemon raced 6 of my batches into "chore:" commits) | process | Med | S |
-| 19 | Stack: `/health` exposure policy (remote_ip vs PublicMode vs basic auth) | stack | Med | owner |
-| 20 | Stack: `services.webphone.paperless` module option + smoke arm | stack | Med | S |
-| 21 | v2.9.0 fold decision (default: one release) | owner | Med | owner |
-| 22 | erraudit 2026-10-22 re-measure + boot-surface re-grade (date-gated) | webphone | Med | date |
-| 23 | Quarterly watches 2026-12-20 (sip.js, templ-components, oxlint globals, E2E budget) | webphone | Low | date |
-| 24 | internal/server carve — trigger still armed (no new files this session; next added file fires it) | webphone | Med | trigger |
-| 25 | Owner: mic pre-warm live ritual (accept→speak sub-second) | pbx | Med | owner |
-| 26 | Owner: visual-harness disposition (eyeball matrix, persistence cadence, vision-CLI provider) | webphone | Low | owner |
-| 27 | Owner: markdownlint posture (last open tooling item) | webphone | Low | owner |
-| 28 | Owner: post release announcements (drafts ready) | — | Low | owner |
-| 29 | Stack tail: WebTransport verdict doc, deploy.md PATH column, demo-call recipe, MOH/recordings/CDR checks, ftypqt sniff, E2E MMS-outbound, pbx FEATURES:87 | stack | Med | M |
-| 30 | Owner: 18099-class scratch-port policy (may assistants kill stale holders, or never?) | process | Low | owner |
+| #  | Task                                                                                                                                                      | Repo     | Impact | Effort  |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------- |
+| 1  | Owner: push-lag call NOW LIVE — 7 commits unpushed across two repos; ratify the threshold or push manually                                                | both     | High   | 5min    |
+| 2  | Owner: switch + post-switch ritual (rotate `/tmp/pbx-toplevel-current`, diff-closures baseline, verify-live)                                              | pbx      | High   | 10min   |
+| 3  | Owner: LIVE passkey proof + fail-closed password-file drill (`: > telephony_ext_1000` → honest failure → restore)                                         | pbx      | High   | 10min   |
+| 4  | Confirm CI verdict for 37211240327 (re-dispatched; also covers 9a21893 once pushed)                                                                       | stack    | High   | 2min    |
+| 5  | Owner: v2.8.0 deploy terminal (lock bump → E2E → aarch64 → pbx relock #5 → deploy → `--base` smoke)                                                       | all      | High   | owner   |
+| 6  | Owner: installer release republish (stale since the relock)                                                                                               | pbx      | High   | 20min   |
+| 7  | Stack: repair FreeSWITCH `mod_enum` build → browser E2E → relock (now owes: cascade train + THIS session's island assets + runbook)                       | stack    | High   | M       |
+| 8  | Owner: ratify runbook-only enroll + Lars-only v1 mapping                                                                                                  | webphone | Med    | owner   |
+| 9  | Owner: SMS bridge journal leg (telnyx-webhooks 422 root cause)                                                                                            | pbx      | High   | S       |
+| 10 | Owner-calls batch sitting (28-row briefing; push-lag now has a live incident attached)                                                                    | —        | High   | S       |
+| 11 | Route + do harvest §f22: ui-capture login shots for the train record (DROPPED this session)                                                               | webphone | Low    | S       |
+| 12 | Verify `/openapi.json` covers the passkey endpoints + typed session-identity shape (never checked this session)                                           | webphone | Med    | S       |
+| 13 | Decide /healthz userauth posture: 503-flipping (shipped) vs report-only (e6 above)                                                                        | owner    | Med    | S       |
+| 14 | AGENTS dense-style readback: 129 lines of one-line bullets — keep or re-flow to ~370 with headroom                                                        | owner    | Low    | S       |
+| 15 | Check whether the 18099 stale server survived my pkill (concurrent-session hygiene)                                                                       | webphone | Low    | 1min    |
+| 16 | Consider a `wp:session-opened` detail-parity test between the two login paths (event contract is prose-only today)                                        | webphone | Low    | S       |
+| 17 | Consider porting pbx-artmann's docs-annotate gate (17-28 §e6, still open — this session annotated by hand again)                                          | webphone | Low    | M       |
+| 18 | Commit-faster rule for narrated trains (daemon raced 6 of my batches into "chore:" commits)                                                               | process  | Med    | S       |
+| 19 | Stack: `/health` exposure policy (remote_ip vs PublicMode vs basic auth)                                                                                  | stack    | Med    | owner   |
+| 20 | Stack: `services.webphone.paperless` module option + smoke arm                                                                                            | stack    | Med    | S       |
+| 21 | v2.9.0 fold decision (default: one release)                                                                                                               | owner    | Med    | owner   |
+| 22 | erraudit 2026-10-22 re-measure + boot-surface re-grade (date-gated)                                                                                       | webphone | Med    | date    |
+| 23 | Quarterly watches 2026-12-20 (sip.js, templ-components, oxlint globals, E2E budget)                                                                       | webphone | Low    | date    |
+| 24 | internal/server carve — trigger still armed (no new files this session; next added file fires it)                                                         | webphone | Med    | trigger |
+| 25 | Owner: mic pre-warm live ritual (accept→speak sub-second)                                                                                                 | pbx      | Med    | owner   |
+| 26 | Owner: visual-harness disposition (eyeball matrix, persistence cadence, vision-CLI provider)                                                              | webphone | Low    | owner   |
+| 27 | Owner: markdownlint posture (last open tooling item)                                                                                                      | webphone | Low    | owner   |
+| 28 | Owner: post release announcements (drafts ready)                                                                                                          | —        | Low    | owner   |
+| 29 | Stack tail: WebTransport verdict doc, deploy.md PATH column, demo-call recipe, MOH/recordings/CDR checks, ftypqt sniff, E2E MMS-outbound, pbx FEATURES:87 | stack    | Med    | M       |
+| 30 | Owner: 18099-class scratch-port policy (may assistants kill stale holders, or never?)                                                                     | process  | Low    | owner   |
 
 (30 real items — padding to 50 would invent work.)
 

@@ -8,10 +8,7 @@
 // so retry needs a fresh link — the copy says so.
 import { t } from "../island/app/i18n.js";
 import { csrfToken } from "../island/app/csrf.js";
-import {
-  prepareRegistrationOptions,
-  serializeCredential,
-} from "../island/app/webauthn.js";
+import { prepareRegistrationOptions, serializeCredential } from "../island/app/webauthn.js";
 
 const $ = (id) => document.getElementById(id);
 const form = $("enroll-form");
@@ -94,8 +91,7 @@ async function enroll() {
 // Status 0 is postJSON's network-failure sentinel — the honest copy for
 // it is the network message, never "HTTP 0". Every other status rides
 // the one anti-oracle failure message.
-const enrollError = (status) =>
-  status === 0 ? t("enrollNetFailed") : t("enrollFailed")(status);
+const enrollError = (status) => (status === 0 ? t("enrollNetFailed") : t("enrollFailed")(status));
 
 // postJSON is the one fetch shape this page uses: JSON body, CSRF
 // header, parsed JSON answer. Never throws — network failures come back

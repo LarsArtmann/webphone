@@ -96,7 +96,11 @@ globalThis.fetch = async (url, opts) => {
       ok: true,
       status: 200,
       json: async () => ({
-        options: { challenge: "AAAAAQ", rpId: "pbx.example.org", allowCredentials: [{ id: "AAECAw", type: "public-key" }] },
+        options: {
+          challenge: "AAAAAQ",
+          rpId: "pbx.example.org",
+          allowCredentials: [{ id: "AAECAw", type: "public-key" }],
+        },
         session_key: "user-1",
       }),
     };
@@ -239,10 +243,7 @@ test("finish rejection surfaces the status, session stays unopened", async () =>
 
 test("whoamiLine renders extension sessions identically to before", async () => {
   const { whoamiLine } = await import("../island/app/ui.js");
-  assert.equal(
-    whoamiLine({ extension: "1000" }),
-    "1000@pbx.example.org",
-  );
+  assert.equal(whoamiLine({ extension: "1000" }), "1000@pbx.example.org");
   assert.equal(
     whoamiLine({ extension: "1000", numbers: ["+17287289311"] }),
     "1000@pbx.example.org · +17287289311",

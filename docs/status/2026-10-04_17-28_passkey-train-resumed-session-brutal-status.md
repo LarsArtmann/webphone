@@ -195,32 +195,32 @@ stale again (see d7).**
 
 ## f) Next (impact-sorted; ids referenced nowhere else — this list is the harvest source)
 
-| # | Task | Repo | Impact | Effort |
-| --- | --- | --- | --- | --- |
-| 1 | Owner switch (the handed-over `nixos-rebuild switch … --target-host root@pbx.artmann.tech`) + post-switch: rotate `-current`, record the diff-closures baseline, `verify-live.sh` | pbx | High (everything waits on it) | 10min |
-| 2 | LIVE passkey proof: enroll via CLI link, email+passkey login (whoami `Lars · +17287289311`), calls work; then the fail-closed drill (`: > telephony_ext_1000` → login fails honestly → restore) | pbx | High | 10min |
-| 3 | `nix run .#release-freshness` + `./installer/publish-release.sh` — the installer channel is STALE after this relock (d7) | pbx | High (recreate readiness) | 20min |
-| 4 | Confirm sibling CI verdict for `890a526` (re-dispatch if cancelled again) | stack | Med | 2min |
-| 5 | Fix `enrollFailed(0)` → `enrollNetFailed` mapping in enroll.js + spec | webphone | Med (UX wart) | S |
-| 6 | Annotate the plan doc's P/F task tables (docs-health: plans are snapshots) | webphone | Med | S |
-| 7 | Fix the stale TODO train-tail row (harvest; doing post-report) | webphone | Med | S |
-| 8 | csrfToken single exported home across island + enroll | webphone | Med | S |
-| 9 | `userauth` health check in `/healthz` (usermgmt.db ping) | webphone | Med | S |
-| 10 | config family_test pins for `config.auth.passkey.*` | webphone | Low | S |
-| 11 | Enroll begin/finish handler tests + `Shutdown` test | webphone | Low | S |
-| 12 | `whoamiLine` → neutral module (ui.js) | webphone | Low | S |
-| 13 | Typed session-identity response structs | webphone | Low | S |
-| 14 | `nix flake check --all-systems` on webphone (aarch64 eval) | webphone | Low | S |
-| 15 | verify-live.sh: `/enroll` + login-card passkey probes | pbx | Med | S |
-| 16 | AGENTS.md size warn (411>377): move passkey detail to README | webphone | Low | S |
-| 17 | Stack ops-runbook: webphone error-contract passkey rows (rides the pre-existing boot-contract patch row) | stack | Low | S |
-| 18 | Browser-E2E passkey scenario in the stack suite (post-deploy) | stack | Med | M |
-| 19 | Consider stack-level `services.telephony.webphone.passkey.*` typed options (nicer than raw settings JSON) | stack | Low | M |
-| 20 | Stage `stalwart_relay_password` locally (pre-existing mail gap; unblocks `#deploy`) | pbx | Med | S |
-| 21 | Ratify (or reject) the runbook-only enroll surface + Lars-only v1 mapping (see g) | pbx | Low | owner |
-| 22 | ui-capture login shots for the train record | webphone | Low | S |
-| 23 | Session-start lock-read guard: use python/grep, never jq (webphone AGENTS one-liner) | webphone | Low | S |
-| 24 | Commit-faster rule for narrated trains (daemon race) | process | Low | S |
+| #  | Task                                                                                                                                                                                            | Repo     | Impact                        | Effort |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ------ |
+| 1  | Owner switch (the handed-over `nixos-rebuild switch … --target-host root@pbx.artmann.tech`) + post-switch: rotate `-current`, record the diff-closures baseline, `verify-live.sh`               | pbx      | High (everything waits on it) | 10min  |
+| 2  | LIVE passkey proof: enroll via CLI link, email+passkey login (whoami `Lars · +17287289311`), calls work; then the fail-closed drill (`: > telephony_ext_1000` → login fails honestly → restore) | pbx      | High                          | 10min  |
+| 3  | `nix run .#release-freshness` + `./installer/publish-release.sh` — the installer channel is STALE after this relock (d7)                                                                        | pbx      | High (recreate readiness)     | 20min  |
+| 4  | Confirm sibling CI verdict for `890a526` (re-dispatch if cancelled again)                                                                                                                       | stack    | Med                           | 2min   |
+| 5  | Fix `enrollFailed(0)` → `enrollNetFailed` mapping in enroll.js + spec                                                                                                                           | webphone | Med (UX wart)                 | S      |
+| 6  | Annotate the plan doc's P/F task tables (docs-health: plans are snapshots)                                                                                                                      | webphone | Med                           | S      |
+| 7  | Fix the stale TODO train-tail row (harvest; doing post-report)                                                                                                                                  | webphone | Med                           | S      |
+| 8  | csrfToken single exported home across island + enroll                                                                                                                                           | webphone | Med                           | S      |
+| 9  | `userauth` health check in `/healthz` (usermgmt.db ping)                                                                                                                                        | webphone | Med                           | S      |
+| 10 | config family_test pins for `config.auth.passkey.*`                                                                                                                                             | webphone | Low                           | S      |
+| 11 | Enroll begin/finish handler tests + `Shutdown` test                                                                                                                                             | webphone | Low                           | S      |
+| 12 | `whoamiLine` → neutral module (ui.js)                                                                                                                                                           | webphone | Low                           | S      |
+| 13 | Typed session-identity response structs                                                                                                                                                         | webphone | Low                           | S      |
+| 14 | `nix flake check --all-systems` on webphone (aarch64 eval)                                                                                                                                      | webphone | Low                           | S      |
+| 15 | verify-live.sh: `/enroll` + login-card passkey probes                                                                                                                                           | pbx      | Med                           | S      |
+| 16 | AGENTS.md size warn (411>377): move passkey detail to README                                                                                                                                    | webphone | Low                           | S      |
+| 17 | Stack ops-runbook: webphone error-contract passkey rows (rides the pre-existing boot-contract patch row)                                                                                        | stack    | Low                           | S      |
+| 18 | Browser-E2E passkey scenario in the stack suite (post-deploy)                                                                                                                                   | stack    | Med                           | M      |
+| 19 | Consider stack-level `services.telephony.webphone.passkey.*` typed options (nicer than raw settings JSON)                                                                                       | stack    | Low                           | M      |
+| 20 | Stage `stalwart_relay_password` locally (pre-existing mail gap; unblocks `#deploy`)                                                                                                             | pbx      | Med                           | S      |
+| 21 | Ratify (or reject) the runbook-only enroll surface + Lars-only v1 mapping (see g)                                                                                                               | pbx      | Low                           | owner  |
+| 22 | ui-capture login shots for the train record                                                                                                                                                     | webphone | Low                           | S      |
+| 23 | Session-start lock-read guard: use python/grep, never jq (webphone AGENTS one-liner)                                                                                                            | webphone | Low                           | S      |
+| 24 | Commit-faster rule for narrated trains (daemon race)                                                                                                                                            | process  | Low                           | S      |
 
 (24 real items — padding to 50 would invent work; the ROADMAP-worthy
 extras: multi-extension switcher, usermgmt identity endpoints beyond
@@ -246,5 +246,5 @@ passkey, both already recorded there.)
 
 ---
 
-*Written by the resumed session immediately after close; the assistant
-now WAITS for instructions.*
+_Written by the resumed session immediately after close; the assistant
+now WAITS for instructions._

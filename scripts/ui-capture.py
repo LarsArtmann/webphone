@@ -180,9 +180,11 @@ def capture(base: str, out_dir: str, thread_path: str | None, session: str) -> i
                 # loopback SIP refusal latency varies by pass, so wait on
                 # the view itself instead of a fixed sleep.
                 WebDriverWait(driver, 8).until(
-                    lambda d: not d.find_element(
-                        "css selector", "#phone-view"
-                    ).get_attribute("hidden")
+                    lambda d: (
+                        not d.find_element("css selector", "#phone-view").get_attribute(
+                            "hidden"
+                        )
+                    )
                 )
                 time.sleep(0.4)  # settle: relative times, panels
                 marker = SURFACE_MARKERS[name]
