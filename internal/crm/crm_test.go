@@ -101,7 +101,7 @@ func TestLookupByPhone(t *testing.T) {
 	if err != nil {
 		t.Fatalf("lookup: %v", err)
 	}
-	if match.ID != "01M" || match.Name != "Ada Lovelace" {
+	if match.ID.Get() != "01M" || match.Name != "Ada Lovelace" {
 		t.Fatalf("match: %+v", match)
 	}
 

@@ -115,8 +115,7 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 // the wire identical to the historical map form.
 type sessionIdentity struct {
 	Extension string `json:"extension"`
-	//nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
-	DID         string   `json:"did,omitempty"`
+	DID       string `json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
 	DisplayName string   `json:"display_name,omitempty"`
 	Numbers     []string `json:"numbers,omitempty"`
 	Password    string   `json:"password,omitempty"`

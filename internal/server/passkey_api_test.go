@@ -17,6 +17,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/userauth"
@@ -86,7 +87,7 @@ func newPasskeyServer(t *testing.T) (*testServer, *userauth.Service) {
 
 // enrollCredential registers the account and walks the enrollment
 // ceremony so BeginLogin stops answering ErrNoCredentials.
-func enrollCredential(t *testing.T, svc *userauth.Service, email string) string {
+func enrollCredential(t *testing.T, svc *userauth.Service, email string) usermgmt.UserID {
 	t.Helper()
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, email)
@@ -98,7 +99,7 @@ func enrollCredential(t *testing.T, svc *userauth.Service, email string) string 
 		t.Fatal(err)
 	}
 	r := httptest.NewRequest(http.MethodPost, "/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, begun.SessionKey, r, "test-device"); err != nil {
+	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "test-device"); err != nil {
 		t.Fatal(err)
 	}
 	return userID
