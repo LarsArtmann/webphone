@@ -23,6 +23,10 @@ import (
 // documented block after a deliberate code change:
 //
 //	go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update
+//
+// The writer emits the table in the shape the auto-commit daemon's
+// markdown formatter leaves it (columns at max content width), so
+// regeneration is idempotent and no longer churns the doc.
 var updateRegistry = flag.Bool("update", false, "rewrite the generated error-code registry block in docs/error-contract.md")
 
 const (
@@ -91,7 +95,7 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 	}
 
 	if *updateRegistry {
-		rewritten := doc[:begin+len(registryBegin)] + "\n" +
+		rewritten := doc[:begin+len(registryBegin)] + "\n\n" +
 			strings.Join(generated, "\n") + "\n\n" + doc[end:]
 		if err := os.WriteFile(registryDocPath, []byte(rewritten), 0o644); err != nil {
 			t.Fatal(err)
@@ -175,26 +179,64 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 	return entries
 }
 
+// registryBlock renders the generated block the way the auto-commit
+// daemon's markdown formatter leaves it: every column as wide as its
+// widest cell (header included), cells left-aligned, the separator
+// filled to the same width. Emitting that shape directly makes -update
+// idempotent — the daemon has nothing left to re-pad, so regeneration
+// no longer churns the doc (the 2026-10-05 CI reds came from exactly
+// that churn in the byte-exact-pin era; the content-based pin made the
+// drift inert, and the aligned writer removes the churn itself).
 func registryBlock(entries map[string]*codeEntry) []string {
 	codes := make([]string, 0, len(entries))
 	for code := range entries {
 		codes = append(codes, code)
 	}
 	sort.Strings(codes)
-	rows := []string{"| Code | Families | First site |", "| ---- | -------- | ---------- |"}
+	cells := make([][]string, 0, len(entries)+1)
+	cells = append(cells, []string{"Code", "Families", "First site"})
 	for _, code := range codes {
-		rows = append(rows, registryRow(code, entries[code]))
+		cells = append(cells, []string{code, familyCell(entries[code]), entries[code].site})
+	}
+	widths := make([]int, len(cells[0]))
+	for _, row := range cells {
+		for i, cell := range row {
+			if len(cell) > widths[i] {
+				widths[i] = len(cell)
+			}
+		}
+	}
+	rows := make([]string, 0, len(cells)+1)
+	for i, row := range cells {
+		padded := make([]string, len(row))
+		for j, cell := range row {
+			padded[j] = cell + strings.Repeat(" ", widths[j]-len(cell))
+		}
+		rows = append(rows, "| "+strings.Join(padded, " | ")+" |")
+		if i == 0 {
+			sep := make([]string, len(row))
+			for j := range row {
+				sep[j] = strings.Repeat("-", widths[j])
+			}
+			rows = append(rows, "| "+strings.Join(sep, " | ")+" |")
+		}
 	}
 	return rows
 }
 
-func registryRow(code string, entry *codeEntry) string {
+// familyCell renders an entry's family set for both the comparison row
+// and the writer: sorted, comma-joined.
+func familyCell(entry *codeEntry) string {
 	families := make([]string, 0, len(entry.families))
 	for family := range entry.families {
 		families = append(families, family)
 	}
 	sort.Strings(families)
-	return canonicalRow(code, strings.Join(families, ", "), entry.site)
+	return strings.Join(families, ", ")
+}
+
+func registryRow(code string, entry *codeEntry) string {
+	return canonicalRow(code, familyCell(entry), entry.site)
 }
 
 // canonicalRow rebuilds a table row from raw cell texts with all padding
@@ -249,5 +291,37 @@ func TestRegistryRowComparisonIgnoresPadding(t *testing.T) {
 	drifted := parseRegistryRows("| blob.escape | Infrastructure | internal/blob/store.go |\n")
 	if got := drifted["blob.escape"]; got == want {
 		t.Errorf("a real family change must still read as drift (got the canonical form %q)", got)
+	}
+}
+
+// The 2026-10-05 daemon-reflow churn pinned this property: the writer
+// emits the formatter-aligned shape, so -update output is byte-stable
+// (the daemon has nothing to re-pad) while still parsing back to the
+// canonical comparison rows.
+func TestRegistryBlockEmitsDaemonAlignedRows(t *testing.T) {
+	entries := map[string]*codeEntry{
+		"blob.escape":           {families: map[string]bool{"Rejection": true}, site: "internal/blob/store.go"},
+		"messaging.send.failed": {families: map[string]bool{"Transient": true, "Rejection": true}, site: "internal/messaging/service.go"},
+	}
+	rows := registryBlock(entries)
+	want := []string{
+		"| Code                  | Families             | First site                    |",
+		"| --------------------- | -------------------- | ----------------------------- |",
+		"| blob.escape           | Rejection            | internal/blob/store.go        |",
+		"| messaging.send.failed | Rejection, Transient | internal/messaging/service.go |",
+	}
+	if len(rows) != len(want) {
+		t.Fatalf("registryBlock produced %d rows, want %d", len(rows), len(want))
+	}
+	for i := range want {
+		if rows[i] != want[i] {
+			t.Errorf("row %d aligned-shape mismatch:\n got %q\nwant %q", i, rows[i], want[i])
+		}
+	}
+	parsed := parseRegistryRows(strings.Join(rows, "\n") + "\n")
+	for code, entry := range entries {
+		if got := parsed[code]; got != registryRow(code, entry) {
+			t.Errorf("aligned block must parse back to the canonical row for %s: got %q", code, got)
+		}
 	}
 }
