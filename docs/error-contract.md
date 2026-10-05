@@ -276,6 +276,7 @@ a deliberate code change, regenerate:
 | userauth.enroll.migrate | Infrastructure | internal/userauth/enroll.go |
 | userauth.enroll.mint | Infrastructure | internal/userauth/enroll.go |
 | userauth.enroll.sweep | Infrastructure | internal/userauth/enroll.go |
+| userauth.enroll.userid | Corruption | internal/userauth/enroll.go |
 | userauth.password_file.empty | Rejection | internal/userauth/userauth.go |
 | userauth.password_file.missing | Rejection | internal/userauth/userauth.go |
 | userauth.password_file.read | Rejection | internal/userauth/userauth.go |
