@@ -367,6 +367,21 @@ unmarked here is committed work — refine into TODO_LIST on demand.
   session `SQLiteStore.Get`'s swallowed scan error (family-adoption
   report b4/f2/f3/f19).
 
+## Paperless archive follow-ups (from the executed 2026-09-30 plan)
+
+The v1 seam landed 2026-10-01 (inbound faxes only — see FEATURES § Fax);
+these named post-v1 follow-ups are unstarted fuel:
+
+- Outbound-fax archiving on `transmitted` (direction-flavored title/tag;
+  the `fax.Archiver` seam already supports the hook).
+- Archive visibility: an `archive_status` column plus a boot-time sweep
+  re-offering unarchived jobs — turns the accepted v1 limitation (an
+  in-flight upload dropped at SIGTERM is never retried) into a
+  self-healing queue.
+
+Source: `docs/planning/archived/2026-09-30_12-53_fax-paperless-integration-plan.md`
+§ Named follow-ups (routed here by the 2026-10-06 docs-health sweep).
+
 ## Raw ideas (2026-09-29 harvest)
 
 - `/metrics` scraper fencing helper: a module-level `allow`/`deny`

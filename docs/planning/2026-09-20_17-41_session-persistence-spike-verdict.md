@@ -7,6 +7,14 @@
   (explicitly approved: "GET SHIT DONE. The WHOLE TODO LIST.").
 - **Status:** EXECUTED (see [Execution notes](#execution-notes) at the bottom).
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): decision executed and
+> shipped — the SQLite session store + sliding TTL landed in v2.5.0
+> (the 24h design TTL below evolved to 7d idle / 30d absolute before
+> release); the at-rest posture was re-reviewed 2026-09-30 ("posture
+> stands") with the next periodic re-review due 2026-12-30 —
+> `docs/reviews/2026-09-30_sessions-credentials-at-rest-review.md`.
+> Per-item verdicts inline.
+
 ---
 
 ## 1. What a session IS (domain)
@@ -23,8 +31,9 @@ session carries exactly two payloads:
    server-side PBX session handle to hold instead: the phone-api is
    stateless basic-auth per request, so the password is the credential.
 
-Lifecycle: minted on login → live until TTL expiry (default 24h,
-`SessionTTL`) or logout delete → gone. The cookie (`webphone_session`,
+~~Lifecycle: minted on login → live until TTL expiry (default 24h,~~
+~~`SessionTTL`) or logout delete → gone.~~ superseded at release: v2.5.0
+shipped sliding TTL (7d idle / 30d absolute); logout delete unchanged. The cookie (`webphone_session`,
 HttpOnly, SameSite=Lax, Max-Age=TTL) and the store row share the same
 TTL by construction (`SetCookie(w, r, token, ttl)` is called with the
 same config value the store was built with).
@@ -118,12 +127,13 @@ The one REAL cost of persistence, stated plainly:
 
 ## 6. Verdict
 
-PERSIST. It deletes the #1 error-feedback failure class at the root
-instead of narrating it; the only real cost is bounded credential
-at-rest exposure, which the threat model above judges acceptable for
-this product (self-hosted PBX front, dataDir already 0700, TTL-bounded,
-fail-closed unchanged). D2 = **yes**, executed in T12 with the design
-above.
+~~PERSIST. It deletes the #1 error-feedback failure class at the root~~
+~~instead of narrating it; the only real cost is bounded credential~~
+~~at-rest exposure, which the threat model above judges acceptable for~~
+~~this product (self-hosted PBX front, dataDir already 0700, TTL-bounded,~~
+~~fail-closed unchanged). D2 = **yes**, executed in T12 with the design~~
+~~above.~~ done — shipped in v2.5.0 (sessions survive restarts, CHANGELOG
+§2.5.0; sliding TTL + CSRF-rotation NOT-DO verdict 2026-09-22).
 
 ## Execution notes (post-implementation)
 

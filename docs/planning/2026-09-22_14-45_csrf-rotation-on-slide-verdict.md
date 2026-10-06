@@ -8,6 +8,12 @@
 - **Kind:** decision record — NOT-DO, with the threat model that
   justifies staying put.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): the NOT-DO stands
+> unchanged (reconfirmed by the 2026-10-06 auth audit — no rotation
+> on slide); the sliding-renewal machinery it guards shipped in v2.5.0
+> and was re-pinned end-to-end 2026-10-06 (`62bc7dc`, incl. the
+> half-life throttle). Per-item verdicts inline.
+
 ## Threat model, honestly
 
 The CSRF defense is the double-submit pair: HttpOnly session cookie +
@@ -53,7 +59,8 @@ compromise scenario; the residual vector is empty under double-submit.
 Revisit only if the CSRF scheme ever changes shape (e.g. adopting
 per-request synchronizer tokens for a multi-tenant deployment).
 
-Ship status of the sibling item: the adoption RETRY ladder (x3 with
-backoff before the reload fallback) is implemented in session.js and
-now pinned by two island tests (recover-on-retry-2 without reload;
-reload only after three consecutive failures).
+~~Ship status of the sibling item: the adoption RETRY ladder (x3 with~~
+~~backoff before the reload fallback) is implemented in session.js and~~
+~~now pinned by two island tests (recover-on-retry-2 without reload;~~
+~~reload only after three consecutive failures).~~ done — shipped;
+the ladder is the standing csrf.js/session adoption path (AGENTS § CSRF).
