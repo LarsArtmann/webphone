@@ -228,6 +228,15 @@ and the evidence. Newest last is NOT enforced — group by topic.
   flakes across two releases is a pattern. Convention: touch
   /tmp/webphone-e2e-window before E2E/VM gates, have every session's
   nix/go launchers check it, remove after.
+- oxfmt-green is NOT treefmt-green for Go files (2026-10-06, the
+  `e62fe34` red): a helper-extraction edit landed with one over-indented
+  line; `buildflow -s oxfmt` passed it ("All matched files use the
+  correct format") and `go test` compiled it, but the flake check's
+  treefmt-check formats Go with gofmt-style alignment and failed CI
+  while the fix sat locally. `nix fmt` after ANY Go edit — the AGENTS
+  formatting bullet's "island/shell/css" scope read too narrow; the
+  edit-tool's whitespace-normalized match on indented code is the
+  recurring source (compare the diff hunk BEFORE committing).
 
 ## Telephony
 
