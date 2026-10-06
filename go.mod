@@ -21,9 +21,9 @@ require (
 	github.com/larsartmann/go-sse/ssetest v0.4.0
 	github.com/larsartmann/httputil v1.4.1
 	github.com/larsartmann/httputil/server_timing v1.0.1
-	github.com/larsartmann/templ-components v1.20.0
-	github.com/larsartmann/templ-components/icons v1.20.0
-	github.com/larsartmann/templ-components/utils v1.20.0
+	github.com/larsartmann/templ-components v1.20.1
+	github.com/larsartmann/templ-components/icons v1.20.1
+	github.com/larsartmann/templ-components/utils v1.20.1
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
@@ -92,8 +92,8 @@ require (
 	github.com/larsartmann/go-retry v0.7.1 // indirect
 	github.com/larsartmann/go-sqlitestore v0.1.0 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.2.0 // indirect
-	github.com/larsartmann/templ-components/datastar v1.20.0 // indirect
-	github.com/larsartmann/templ-components/htmx v1.20.0 // indirect
+	github.com/larsartmann/templ-components/datastar v1.20.1 // indirect
+	github.com/larsartmann/templ-components/htmx v1.20.1 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/maypok86/otter/v2 v2.3.0 // indirect
