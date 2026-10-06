@@ -69,32 +69,32 @@ def is_compact(cell: str) -> bool:
     return cell == f" {content} "
 
 
-def logical_rows(lines: list[str]) -> list[tuple[int, str]]:
-    """Join wrapped table rows: a line not ending in `|` continues the row above.
-
-    Returns (physical_line_index, joined_text) per logical row.
-    """
-    rows: list[tuple[int, str]] = []
-    for index, line in enumerate(lines):
-        if line.strip().startswith("|"):
-            rows.append((index, line.rstrip("\n")))
-        elif rows:
-            rows[-1] = (rows[-1][0], rows[-1][1] + " " + line.strip())
-    return rows
-
-
 def table_blocks(lines: list[str]):
-    """Yield (header_physical_index, [header, separator, *body]) per GFM table."""
-    rows = logical_rows(lines)
+    """Yield (header_physical_index, [header, separator, *body]) per GFM table.
+
+    Rows may wrap mid-cell (a physical line without a trailing `|` continues
+    the row until a line ends with one); blank lines never continue a row, so
+    prose after a table cannot glue onto it.
+    """
+    def read_row(index: int) -> tuple[str, int]:
+        parts = [lines[index]]
+        cursor = index
+        while not parts[-1].rstrip().endswith("|"):
+            if cursor + 1 >= len(lines) or not lines[cursor + 1].strip():
+                break
+            cursor += 1
+            parts.append(lines[cursor])
+        return " ".join(part.strip() for part in parts), cursor + 1
+
     index = 0
-    while index < len(rows):
-        if rows[index][1].strip().startswith("|") and index + 1 < len(rows) and is_separator(rows[index + 1][1]):
-            block = [rows[index][1], rows[index + 1][1]]
+    while index < len(lines):
+        if lines[index].strip().startswith("|") and index + 1 < len(lines) and is_separator(lines[index + 1]):
+            block = [lines[index], lines[index + 1]]
             cursor = index + 2
-            while cursor < len(rows) and rows[cursor][1].strip().startswith("|"):
-                block.append(rows[cursor][1])
-                cursor += 1
-            yield rows[index][0], block
+            while cursor < len(lines) and lines[cursor].strip().startswith("|"):
+                row, cursor = read_row(cursor)
+                block.append(row)
+            yield index, block
             index = cursor
         else:
             index += 1
@@ -112,7 +112,7 @@ def find_near_aligned(lines: list[str]) -> list[str]:
             padded = sum(1 for cell in cells if not is_compact(cell))
             if len(widths) > 1 and padded > 0:
                 findings.append(
-                    f"table at logical row {header_index + 1}: column {column + 1} near-aligned "
+                    f"line {header_index + 1}: column {column + 1} near-aligned "
                     f"(widths {sorted(widths)}, {padded} padded cell(s))"
                 )
     return findings
@@ -158,6 +158,18 @@ UNBALANCED_TABLE = """| name | note |
 | b | y |
 """
 
+WRAPPED_TABLE = """| name | ruling |
+| --- | --- |
+| anchor | FIRST UNPUSHED COMMIT's timestamp (`git log origin/main..HEAD \
+--format=%cI | tail -1`) — the observable anchor |
+| changelog | code-path changes log; tests and docs stay silent |
+"""
+
+WRAPPED_THEN_PROSE = WRAPPED_TABLE + """
+Prose after the table must not glue onto the last row: the empty line
+bounds the join, and this paragraph never becomes cell content.
+"""
+
 
 def self_test() -> int:
     cases = [
@@ -165,6 +177,8 @@ def self_test() -> int:
         ("compact is clean", COMPACT_TABLE, 0),
         ("fully aligned is clean (D1.4's question, not ours)", ALIGNED_TABLE, 0),
         ("unbalanced padding flags", UNBALANCED_TABLE, 1),
+        ("mid-cell wrapped rows stay clean", WRAPPED_TABLE, 0),
+        ("prose after a wrapped table never glues", WRAPPED_THEN_PROSE, 0),
     ]
     failures = 0
     for label, document, expected in cases:
