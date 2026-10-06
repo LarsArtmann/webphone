@@ -381,7 +381,7 @@ scenario added ~15s, no budget bump), gh release object published,
 smoke 41+4 with `/version` exactly v2.6.0 (use `--bin $(nix build
 .#webphone)` locally — a bare `go build` reports Go's pseudo-version),
 `nix flake check` green incl. the KVM backup VM, and pbx-artmann relock
-#4 + re-pin at `20b2a18` (webphone ExecStart moved 2.5.0→2.6.0;
+`#4` + re-pin at `20b2a18` (webphone ExecStart moved 2.5.0→2.6.0;
 lock-drift-probe + both toplevels green). The stack rode train
 `7197f1c` at that close, was forward-locked to `94ae28d` on 2026-09-24
 (upstream vendorHash repair; stack `dea945c` rides it + the flipped

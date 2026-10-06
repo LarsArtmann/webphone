@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Enduring context for AI sessions. Rules live here; war stories, evidence, and train chronology: [docs/lessons.md](docs/lessons.md). Error table: [docs/error-contract.md](docs/error-contract.md). DOM contract: [docs/dom-contract.md](docs/dom-contract.md). Dedup rulings: [docs/dedup-registry.md](docs/dedup-registry.md). Release dance: [docs/release-runbook.md](docs/release-runbook.md).
+Enduring context for AI sessions. Rules live here; war stories, evidence, and train chronology: [docs/lessons.md](docs/lessons.md). Error table: [docs/error-contract.md](docs/error-contract.md). DOM contract: [docs/dom-contract.md](docs/dom-contract.md). Dedup rulings: [docs/dedup-registry.md](docs/dedup-registry.md). CI-flake history: [docs/ci-flake-ledger.md](docs/ci-flake-ledger.md). Release dance: [docs/release-runbook.md](docs/release-runbook.md).
 Capped at 377 lines by BuildFlow's `docs/agents-md-size` preflight — move evidence to docs/, keep rules here.
 
 ## What this is
