@@ -42,18 +42,30 @@ inert theme-preload script (verified: internal/server/server.go security
 config) — relaxing it would undo the CSP posture pinned by
 `TestServedPageSatisfiesStrictCSP` for one optional view.
 
-**What would have to change to adopt it:** either (a) the owner relaxes the
+**RESOLVED 2026-10-02 — Option B SHIPPED, scoped:** the go-health
+dashboard now mounts at `/health` (config-gated `dashboard.enable`,
+DEFAULT OFF) with `unsafe-eval` scoped to the `/health` subtree ONLY via
+per-request nonces — not the whole-origin relaxation this memo ruled
+out; the strict CSP everywhere else stays test-pinned. The memo's
+framing above ("deliberately did NOT ship") describes the 2026-09-19
+state and is superseded for Option B; Option A (stack-side fleet
+federation) REMAINS an open owner call (ROADMAP § Health-surface long
+shots).
+
+~~**What would have to change to adopt it:** either (a) the owner relaxes the
 CSP stance explicitly (accept `unsafe-eval` on a dedicated path — CSP is
 response-header based, not per-path, so this means weakening the whole
 origin), or (b) go-health-dashboard ships a nonce/CSP-safe Datastar mode
 upstream, or (c) webphone renders the dashboard's JSON into its own
 server-rendered partial (HTMX polling, no Datastar) — cheap but re-implements
 the live face. Until one of those happens the JSON probes are the whole
-adopted surface, by decision.
+adopted surface, by decision.~~ superseded — path-scoped `unsafe-eval`
+(subtree CSP, per-request nonces) landed instead of any of (a)/(b)/(c);
+see AGENTS § Health dashboard seam.
 
 ## Related
 
 - Review: `2026-09-19_18-49_samber-do-di-health-service-orientation.md`
-  (F1/F2/F3 findings)
+  (F1/F2/F3 findings; archived 2026-10-06 by the docs-health v7 sweep)
 - Plan: `docs/planning/archived/2026-09-19_20-01_SUPERB-honest-self-health-upstream-first-plan.md`
 - ROADMAP long-shots reference this memo.

@@ -465,7 +465,7 @@ graph.
 - 2026-09-22 ~15:55 **T14 CLOSED**: two island tests pin the CSRF
   adoption retry ladder (recover on retry 2 / reload only after 3
   failures); rotation-on-slide recorded as NOT-DO
-  (`docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`,
+  (`docs/planning/archived/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`,
   ROADMAP RESOLVED). `43f544e`.
 - 2026-09-22 ~16:00 **T17 CLOSED**: island scenarios 10+11
   (re-entrancy collapse; transient `regRebuilding` pill en/de), smoke

@@ -454,7 +454,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
   assumed — a Chromium A/B spike found all existing surfaces
   byte-identical across 14 computed properties because Tailwind v4
   emits `@layer` only and unlayered CSS wins every collision (verdict
-  with data: docs/planning/2026-09-24_16-38).
+  with data: docs/planning/archived/2026-09-24_16-38).
 
 ### Changed
 
@@ -616,7 +616,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
   transient state, and the CSRF adoption retry ladder (recover on
   retry 2, reload only after 3 failures) is pinned by island tests
   (T14; rotation-on-slide itself stays a documented NOT-DO — verdict
-  in `docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`).
+  in `docs/planning/archived/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`).
 - `scripts/webphone-smoke.py --expect-version X.Y.Z`: asserts the
   running server's `/version` (verified positive and negative) — the
   deploy-verification companion.
@@ -867,7 +867,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
   is deleted at the root, not narrated). Same cookie, same TTL
   semantics, fail-closed gates unchanged; the in-memory store remains
   for tests and the design/threat review lives in
-  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`
+  `docs/planning/archived/2026-09-20_17-41_session-persistence-spike-verdict.md`
   (`TestSQLiteSessionStoreSurvivesRestart` + a kill -9 smoke scenario
   pin it).
 - Durable inline errors for failed tab actions: the shell ships an htmx

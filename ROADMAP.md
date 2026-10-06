@@ -14,7 +14,7 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   orchestrates. Fleet-wide value → belongs upstream.
 - sip.js: no 0.22 exists; upstream is dormant at 0.21.2 (an
   unreleased 0.21.3 tag adds only a SimpleUser option). Evaluation:
-  `docs/reviews/2026-09-18_sip-js-0.22-evaluation.md`. Revisit only on
+  `docs/reviews/archived/2026-09-18_sip-js-0.22-evaluation.md`. Revisit only on
   a reconnect-hang fix, a security advisory, or a needed capability —
   any future bump re-runs the upstream browser E2E. SDK sweep
   2026-09-19 (SUPERB integration plan): **JsSIP 3.13.8 is the named
@@ -51,13 +51,13 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 - Session persistence: RESOLVED — SQLite-backed store shipped (2.5.0:
   sessions survive restarts) plus sliding TTL (7d idle / 30d absolute);
   the spike verdict lives at
-  `docs/planning/2026-09-20_17-41_session-persistence-spike-verdict.md`.
+  `docs/planning/archived/2026-09-20_17-41_session-persistence-spike-verdict.md`.
 - Retention/cleanup job: SHIPPED — `retention_days` (T25) deletes
   messages+attachments, faxes+documents and emptied threads on a daily
   sweep; sessions were already covered by the store's own expiry sweep.
 - PWA: RESOLVED 2026-09-22 — the service worker is a NOT-DO (stale
   cached island = a bug class invisible to every gate; offline is
-  impossible for a phone: `docs/planning/2026-09-22_17-05_pwa-spike-verdict.md`).
+  impossible for a phone: `docs/planning/archived/2026-09-22_17-05_pwa-spike-verdict.md`).
   Parked behind an owner demand signal: manifest-LITE only (manifest
   - maskable PNG icons, NO fetch interception, zero staleness risk).
 - Video calls: SIP.js video negotiation + a `<video>` call card —
@@ -80,7 +80,7 @@ Drift gets caught by routine, not luck — each row names the trigger to
 re-check:
 
 - sip.js: revisit on a 0.22 release, a reconnect-hang fix, or a
-  security advisory (evaluation: `docs/reviews/2026-09-18_sip-js-0.22-evaluation.md`).
+  security advisory (evaluation: `docs/reviews/archived/2026-09-18_sip-js-0.22-evaluation.md`).
 - templ-components ThemeScript knob: DONE 2026-09-22 — shipped upstream
   as `PageProps.NoThemeScript` (v1.19.2); this repo consumes it and
   dropped the CSP hash pin plus the app.css `!important` color-scheme
@@ -118,7 +118,7 @@ re-ran clean (`docs/reviews/2026-09-18_hub-fanout-baseline.md`), and
 the stack browser E2E passed on the bumped tree. What remains:
 
 - OOB badge push (OO1-OO3 → M54/UB1): PARKED by verdict
-  `docs/reviews/2026-09-18_oob-badge-spike-verdict.md` — weak demand
+  `docs/reviews/archived/2026-09-18_oob-badge-spike-verdict.md` — weak demand
   (the badge already refreshes via TTL cache + drop-on-mutation
   invalidation), payload-contract risk, and the E2E-gate cost.
   Adoption only via that note's criteria: flag-gated prototype
@@ -459,7 +459,7 @@ unshipped fuel — refine into TODO_LIST only on demand.
 - Tailwind v4 scoped-layer coexistence: RESOLVED 2026-09-24 — spike
   GREEN, wave 1 (EmptyState ×6 + `/assets/tw.css`) shipped, waves 2+3
   rejected on product grounds (verdict:
-  `docs/planning/2026-09-24_16-38_tailwind-coexistence-verdict.md`).
+  `docs/planning/archived/2026-09-24_16-38_tailwind-coexistence-verdict.md`).
 - Unicode-insensitive thread search: SQLite `LIKE` folds ASCII only
   ("MÜNCHEN" does not match "münchen") — needs `lower()` collation
   or an FTS5 column; a real design decision, not a patch (small ADR;
@@ -513,6 +513,6 @@ rotation at each refresh point, riding the island's existing adoption path
 (`GET /api/csrf`). RESOLVED 2026-09-22: sliding sessions SHIPPED (2.5.0,
 7d idle + 30d absolute); CSRF-rotation-on-slide is a recorded NOT-DO —
 verdict with the threat model at
-`docs/planning/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`
+`docs/planning/archived/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`
 (double-submit makes token-only leaks inert; both-halves theft is bounded
 by the absolute cap, not by rotation).
