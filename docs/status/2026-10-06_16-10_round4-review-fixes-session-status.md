@@ -89,4 +89,7 @@ daemon's commits traverse the same hook and the live-cycle test has not run.
 
 ---
 
-_Exit state: see the final push + CI verdict below (filled at session close)._
+_Exit state (session close ~16:55): pushed manually at the bar — anchor
+stated per the interim ruling, first unpushed commit 15:26:54 → bar
+16:26:54, daemon push-leg silent throughout. Remote = local = `776f09b`;
+CI run 37480035135 **SUCCESS** (verdict fetched). Tree clean._
