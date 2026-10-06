@@ -99,8 +99,8 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 	if err != nil {
 		return err //nolint:wrapcheck // classified by the store seam; the caller answers 500
 	}
-	session.SetCookie(w, r, token, h.deps.Config.SessionTTL)
-	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
+	session.SetCookie(w, r, token, h.deps.Config.SessionTTL, h.cookies)
+	httputil.InvalidateCSRFCookie(w, h.csrfCfg)
 	return nil
 }
 
@@ -178,11 +178,11 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 // destroySession signs the tab session out (island logout).
 func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 	h.deps.Sessions.Delete(session.TokenFromRequest(r))
-	session.ClearCookie(w)
+	session.ClearCookie(w, h.cookies)
 	// Logout rotates too: the CSRF token must not outlive the session it
 	// was issued alongside. The island reloads right after (its contract),
 	// so the fresh page re-renders meta/hx-headers from the regenerated
 	// cookie.
-	httputil.InvalidateCSRFCookie(w, httputil.CSRFConfig{})
+	httputil.InvalidateCSRFCookie(w, h.csrfCfg)
 	w.WriteHeader(http.StatusNoContent)
 }

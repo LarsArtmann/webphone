@@ -32,6 +32,13 @@ type handlers struct {
 	// Passkey enrollment ceremonies (token-gated by design; the bucket
 	// only fences runaway clients, the one-time token is the real gate).
 	passkeyLimiter *httputil.KeyedRateLimiter
+	// cookies is the wired session-cookie policy (Secure mirrors the
+	// TLS-fronted deployment; r.TLS is nil behind the proxy).
+	cookies session.CookiePolicy
+	// csrfCfg is the REAL CSRF config — login/logout cookie invalidation
+	// must carry the same Secure/Path attributes as the cookie it deletes
+	// (strict browsers reject a non-Secure deletion of a Secure cookie).
+	csrfCfg httputil.CSRFConfig
 	// Dedupe memory for replayed provider status callbacks (provider_ref).
 	hooksIdem *idemStore
 	// Dedupe memory for the island's post-call journal reports (key).

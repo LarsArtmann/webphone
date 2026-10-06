@@ -70,6 +70,16 @@ type Lifetime struct {
 	Max  time.Duration
 }
 
+// CookiePolicy is how session cookies are written. Secure mirrors the
+// fronting deployment: a TLS-terminating proxy (the consuming stack's
+// Caddy) leaves r.TLS nil on every request, so the wiring derives the
+// flag once from the same https-origin signal the CSRF cookie uses —
+// SetCookie still upgrades to Secure on any directly-TLS request, so
+// both deployment shapes stay correct.
+type CookiePolicy struct {
+	Secure bool
+}
+
 // normalized guards the invariants the renewal math relies on. A
 // missing or mis-ordered Max degrades to Max = Idle (the pre-sliding
 // behavior: absolute lifetime equals one idle window) instead of
@@ -240,14 +250,14 @@ func TokenFromRequest(r *http.Request) string {
 // cookie with the server's remaining lifetime, keeping the Max-Age
 // parity the login SetCookie established — without it the browser
 // cookie would die mid-session while the row lives on.
-func lookup(store Store, w http.ResponseWriter, r *http.Request, lifetime Lifetime) (Session, bool) {
+func lookup(store Store, w http.ResponseWriter, r *http.Request, lifetime Lifetime, policy CookiePolicy) (Session, bool) {
 	token := TokenFromRequest(r)
 	sess, ok := store.Get(token)
 	if !ok || lifetime.Idle <= 0 {
 		return sess, ok
 	}
 	if renewed, did := store.Renew(token, lifetime.Idle, lifetime.Max); did {
-		SetCookie(w, r, token, time.Until(renewed.ExpiresAt))
+		SetCookie(w, r, token, time.Until(renewed.ExpiresAt), policy)
 		return renewed, true
 	}
 	return sess, ok
@@ -258,10 +268,10 @@ func lookup(store Store, w http.ResponseWriter, r *http.Request, lifetime Lifeti
 // Handlers that need a session call From and reject themselves. A positive
 // Lifetime.Idle slides the session forward on activity past the window's
 // halfway point.
-func Attach(store Store, next http.Handler, lifetime Lifetime) http.Handler {
+func Attach(store Store, next http.Handler, lifetime Lifetime, policy CookiePolicy) http.Handler {
 	lifetime = lifetime.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if sess, ok := lookup(store, w, r, lifetime); ok {
+		if sess, ok := lookup(store, w, r, lifetime, policy); ok {
 			r = r.WithContext(With(r.Context(), sess))
 		}
 		next.ServeHTTP(w, r)
@@ -271,10 +281,10 @@ func Attach(store Store, next http.Handler, lifetime Lifetime) http.Handler {
 // Require gates a handler behind a live session: anonymous requests get a
 // 401. Slides the session forward like Attach (an active SSE feed or
 // phone-api call is activity too).
-func Require(store Store, next http.Handler, lifetime Lifetime) http.Handler {
+func Require(store Store, next http.Handler, lifetime Lifetime, policy CookiePolicy) http.Handler {
 	lifetime = lifetime.normalized()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sess, ok := lookup(store, w, r, lifetime)
+		sess, ok := lookup(store, w, r, lifetime, policy)
 		if !ok {
 			http.Error(w, SignInFirst, http.StatusUnauthorized)
 			return
@@ -283,8 +293,10 @@ func Require(store Store, next http.Handler, lifetime Lifetime) http.Handler {
 	})
 }
 
-// SetCookie writes the session cookie.
-func SetCookie(w http.ResponseWriter, r *http.Request, token string, ttl time.Duration) {
+// SetCookie writes the session cookie. Secure comes from the wired
+// CookiePolicy (proxy-fronted deployments leave r.TLS nil) OR a
+// directly-TLS request, whichever says https.
+func SetCookie(w http.ResponseWriter, r *http.Request, token string, ttl time.Duration, policy CookiePolicy) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
 		Value:    token,
@@ -292,15 +304,18 @@ func SetCookie(w http.ResponseWriter, r *http.Request, token string, ttl time.Du
 		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		Secure:   r.TLS != nil,
+		Secure:   policy.Secure || r.TLS != nil,
 	})
 }
 
-// ClearCookie removes the session cookie.
-func ClearCookie(w http.ResponseWriter) {
+// ClearCookie removes the session cookie. Secure mirrors the policy so
+// the deletion cookie matches what strict browsers expect for a Secure
+// original (RFC 6265bis strict-secure matching rejects a non-Secure
+// deletion of a Secure cookie).
+func ClearCookie(w http.ResponseWriter, policy CookiePolicy) {
 	http.SetCookie(w, &http.Cookie{
 		Name: CookieName, Value: "", Path: "/", MaxAge: -1,
-		HttpOnly: true, SameSite: http.SameSiteLaxMode,
+		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: policy.Secure,
 	})
 	slog.Debug("session cookie cleared")
 }

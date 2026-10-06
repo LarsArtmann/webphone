@@ -166,6 +166,22 @@ func New(deps Deps) http.Handler {
 	// config skipped validation — they degrade to the pre-sliding
 	// behavior instead of renewing against a zero cap.
 	lifetime := session.Lifetime{Idle: deps.Config.SessionTTL, Max: deps.Config.SessionMaxTTL}
+	// The CSRF-protected surface: pages, partials, tab actions, the
+	// session API and the phone-api proxy. Assets, SSE, webhooks and
+	// health live outside it (GET-only or secret-authed). The CSRF
+	// config carries the fronting deployment shape: without it, a
+	// browser behind the TLS-terminating proxy sends Origin https://host,
+	// which the plain-HTTP listener reads as a forged same-origin
+	// attestation and rejects — every POST (logins included) would 403.
+	csrfCfg := httputil.CSRFConfig{
+		TrustedProxies: deps.Config.CSRF.TrustedProxies,
+		TrustedOrigins: deps.Config.CSRF.TrustedOrigins,
+		Secure:         csrfSecureFromOrigins(deps.Config.CSRF.TrustedOrigins),
+	}
+	// The session cookie rides the same TLS-deployment signal the CSRF
+	// cookie derives: behind the TLS-terminating proxy r.TLS is always
+	// nil, so Secure must come from the wired policy, not the request.
+	cookies := session.CookiePolicy{Secure: csrfCfg.Secure}
 	h := &handlers{
 		deps:            deps,
 		loginLimiter:    newKeyedRateLimiter(loginLimit, loginBurst),
@@ -174,23 +190,14 @@ func New(deps Deps) http.Handler {
 		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
 		passkeyLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
+		cookies:         cookies,
+		csrfCfg:         csrfCfg,
 		unread:          newUnreadCache(5 * time.Second),
 		hooksIdem:       newIdemStore(hookIdempotencyTTL),
 		callsIdem:       newIdemStore(callsIdempotencyTTL),
 	}
 
-	// The CSRF-protected surface: pages, partials, tab actions, the
-	// session API and the phone-api proxy. Assets, SSE, webhooks and
-	// health live outside it (GET-only or secret-authed). The CSRF
-	// config carries the fronting deployment shape: without it, a
-	// browser behind the TLS-terminating proxy sends Origin https://host,
-	// which the plain-HTTP listener reads as a forged same-origin
-	// attestation and rejects — every POST (logins included) would 403.
-	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{
-		TrustedProxies: deps.Config.CSRF.TrustedProxies,
-		TrustedOrigins: deps.Config.CSRF.TrustedOrigins,
-		Secure:         csrfSecureFromOrigins(deps.Config.CSRF.TrustedOrigins),
-	})
+	csrf := httputil.CSRFMiddleware(csrfCfg)
 
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /{$}", h.page)
@@ -273,7 +280,7 @@ func New(deps Deps) http.Handler {
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
-	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime))
+	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime, cookies))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
 	// response shape matches every other full page.
@@ -301,7 +308,7 @@ func New(deps Deps) http.Handler {
 	// unlimited streams. One bucket per peer host reuses the hook budget
 	// (60/min burst 60) — generous for real tabs, bounded for churn.
 	open.Handle("GET /events",
-		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events), lifetime)))
+		h.eventsLimiter.Middleware()(session.Require(h.deps.Sessions, http.HandlerFunc(h.events), lifetime, cookies)))
 	// readiness replaces the old constant-"ok" healthz: the endpoint now
 	// tells the truth about the backing resources the app needs. Each
 	// check is bounded (see boundedCheck) so a hung resource degrades the
@@ -377,7 +384,7 @@ func New(deps Deps) http.Handler {
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
 
 	root := http.NewServeMux()
-	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime))
+	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))
 	root.Handle("/htmx.min.js", open)
 	root.Handle("/htmx-ext.js", open)
 	root.Handle("/assets/", open)

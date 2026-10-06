@@ -83,6 +83,9 @@ const retryAfterHint = "1"
 
 // secretGate guards the /hooks/* surface with the configured shared
 // secret. Without a configured secret the hooks stay closed (fail closed).
+// The comparison is constant-time over SHA-256 digests: no early-exit on
+// the first mismatched byte and no secret-length leak, the same bar the
+// CRM seam holds its bearer token to.
 func (h *handlers) secretGate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		secret := h.deps.Config.Gateway.WebhookSecret
@@ -92,7 +95,9 @@ func (h *handlers) secretGate(next http.Handler) http.Handler {
 			return
 		}
 		provided := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if provided != secret {
+		wantHash := sha256.Sum256([]byte(secret))
+		gotHash := sha256.Sum256([]byte(provided))
+		if subtle.ConstantTimeCompare(wantHash[:], gotHash[:]) != 1 {
 			http.Error(w, "bad secret", http.StatusUnauthorized)
 			return
 		}
