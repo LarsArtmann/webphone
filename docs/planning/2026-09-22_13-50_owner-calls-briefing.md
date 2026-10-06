@@ -1,4 +1,4 @@
-# Owner-Calls Briefing — the 28 Decisions (SUPERB T11)
+# Owner-Calls Briefing — the Sitting Decisions (SUPERB T11)
 
 - **Date:** 2026-09-22 13:50 CEST, updated 2026-09-30 14:00 CEST (rows
   15–28 = everything accumulated since; rows 15/16 ratify autonomous
@@ -123,6 +123,7 @@ New rows for the sitting:
 | 32 | `errorfamily.Join` gap — add a Join/Aggregate constructor to go-error-family, or keep the 4 `nolint:erraudit` shutdown-aggregate sites? | tier-2 posture | (a) upstream lib train now; (b) keep nolints                     | **(b) keep nolints** until a third aggregate site appears; then (a)                                         |
 | 33 | Daemon-docs-formatting policy: the auto-commit daemon reflows markdown tables (broke the registry pin's byte-exact form twice, and a third reflow landed in the 20:33 plan commit before the pin went content-based). Keep the behavior, or exclude `docs/**` from daemon formatting? | daemon config, doc churn | (a) keep reflowing (pins must be formatting-insensitive); (b) exclude docs/** | **(a) keep** — the pin is now content-based (2026-10-05 fix), reflows are content-inert, and (b) needs daemon-side config for zero remaining harm |
 | 34 | Proof-bar for "green": is CI-success on the pushed head the ratified bar for sittings/releases, or a local full gate (clean-cache buildflow + full `nix flake check`)? (Today's 4h-red window was caught by CI, not local gates.) | release ritual, sitting readiness | (a) CI verdict on the pushed head (release.sh keeps its own local full gate at release time); (b) local full gates before every sitting | **(a) CI on the pushed head** — it caught what local runs missed twice today; the release ritual keeps the heavyweight local proof |
+| 35 | Passkey enroll ceremony carries the one-time key as a `?user_id=` query param on the email link (single-use, burned at finish, TLS-covered) — ratify the acceptance, or fold into row 1.6's token-binding verdict? Surfaced 2026-10-06 so the acceptance cannot die inside an unopened D30. | auth posture | (a) accept as-is (status quo); (b) revisit only if D1.6 picks binding and D30 opens anyway | **(a) accept** — single-use + burned-at-finish + TLS makes the query param a cheap option inside D30's decision space, not a standing exposure |
 
 ## Round-2 sweep-audit outcomes (2026-10-05 21:10, pre-sitting closure of the 15:42 train)
 

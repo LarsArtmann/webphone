@@ -6,7 +6,7 @@
 
 ## Pareto verdict
 
-**1% → 51%: D1 THE SITTING.** One 90-minute owner sitting flips 9/16 TODO rows, unblocks the paper-close train (D7), the release train (D8), and now carries SIX accumulated §g questions (CI-bar subset, push-lag threshold, daemon-format coupling home, `__Host-` cookie prefix, enroll token binding, auth audit cadence). Nothing else in the system moves without it.
+**1% → 51%: D1 THE SITTING.** One 90-minute owner sitting flips 9/16 TODO rows, unblocks the paper-close train (D7), the release train (D8), and now carries SEVEN accumulated §g questions (CI-bar subset, push-lag threshold + anchor definition, daemon-format coupling home, `__Host-` cookie prefix, enroll token binding, passkey `?user_id=` ceremony-key acceptance, auth audit cadence). Nothing else in the system moves without it.
 
 **4% → 64%: D1 + the deploy chain (D2→D3→D4→D5).** The sitting's verdicts plus one executed deploy train turn ~five sessions of shipped-and-green code (passkey mode, island honesty, cascade fixes, auth hardening `57cebe6`) into LIVE product value behind pbx.artmann.tech, close the E2E obligation two markup-changing trains owe, and prove passkey fail-closed on prod.
 
@@ -18,7 +18,7 @@
 
 | # | Task | Owner | Effort | Impact | Value | Depends |
 |---|------|-------|--------|--------|-------|---------|
-| D1 | THE SITTING v2 — 34 briefing rows in dependency order + SIX new §g verdicts: CI-bar subset for docs/test-only changes · push-lag threshold (5 datapoints: green/3h, red-fix/15m, green/25m, green/6m, green/>60m) · daemon-format coupling home · `__Host-webphone_session` prefix adopt-or-not · enroll-ceremony token binding vs ULID-secrecy posture · auth audit cadence (one-off vs quarterly-with-C21) | 👤 | 90m | 🔥🔥🔥 | flips 9/16 rows; unblocks D7/D8/D26/D29/D30 | briefing doc (ready) |
+| D1 | THE SITTING v2 — 35 briefing rows in dependency order + SEVEN new §g verdicts: CI-bar subset for docs/test-only changes · push-lag threshold + ANCHOR definition (6 datapoints: green/3h, red-fix/15m, green/25m, green/6m, green/>60m, green/60m-stall-manual-push; interim anchor = first-unpushed-commit timestamp, see AGENTS) · daemon-format coupling home (now with the md-table-shape 39-finding corpus evidence + armed 03-40 canary) · `__Host-webphone_session` prefix adopt-or-not · enroll-ceremony token binding vs ULID-secrecy posture · passkey `?user_id=` ceremony-key acceptance (briefing row 35) · auth audit cadence (one-off vs quarterly-with-C21) | 👤 | 90m | 🔥🔥🔥 | flips 9/16 rows; unblocks D7/D8/D26/D29/D30 | briefing doc (ready) |
 | D2 | Stack CI 1h-ceiling diagnosis inside `nix flake check` (mod_enum build log; read-only `gh run list` on the stack first) | 👤 | 100m | 🔥🔥🔥 | unblocks entire deploy train | — |
 | D3 | Stack lock bump to ≥`57cebe6` + stack gates + browser E2E (445s budget, one re-run on the transfer flake); nginx→caddy edits at relock per the TODO command sheet | 👤 | 100m | 🔥🔥🔥 | closes island-honesty + cascade + passkey E2E debt | D2 |
 | D4 | pbx-artmann clean-tree check → relock → re-pin | 👤 | 30m | 🔥🔥 | prod rides the pinned tree | D3 |
@@ -53,7 +53,7 @@
 
 | # | Fine task | Parent | Owner |
 |---|-----------|--------|-------|
-| 1.1 | Read the briefing doc end-to-end; confirm the 34 rows' order still holds | D1 | 👤 |
+| 1.1 | Read the briefing doc end-to-end; confirm the 35 rows' order still holds | D1 | 👤 |
 | 1.2 | Verdict: CI-bar subset policy for docs/test-only changes (fmt gate NEVER droppable) | D1 | 👤 |
 | 1.3 | Verdict: push-lag threshold number + session-push ratification | D1 | 👤 |
 | 1.4 | Verdict: daemon-format coupling note home | D1 | 👤 |
@@ -150,7 +150,7 @@
 
 ```mermaid
 graph TD
-    D1["D1 THE SITTING v2 (34 rows + 6 §g verdicts)"]
+    D1["D1 THE SITTING v2 (35 rows + 7 §g verdicts)"]
     D2["D2 stack CI 1h-ceiling diagnosis"]
     D3["D3 stack lock bump + gates + browser E2E"]
     D4["D4 pbx-artmann relock/re-pin"]
