@@ -55,7 +55,7 @@ def main():
     for _ in range(REPEATS):
         _, _, _, ms = timed_get(ASSET)
         plain_times.append(ms)
-        _, hdrs2, body2, ms2 = timed_get(ASSET, {"Accept-Encoding": "gzip"})
+        _, _hdrs2, body2, ms2 = timed_get(ASSET, {"Accept-Encoding": "gzip"})
         if gzip_body_len is None:
             gzip_body_len = len(body2)
             gunzip = gzip.GzipFile(fileobj=io.BytesIO(body2)).read()

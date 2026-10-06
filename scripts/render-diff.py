@@ -30,6 +30,7 @@ else prints the offending diff excerpt and exits 1.
 from __future__ import annotations
 
 import argparse
+import http.client
 import os
 import re
 import subprocess
@@ -94,7 +95,7 @@ def wait_up(port: int, deadline_s: float = 20.0) -> bool:
         try:
             urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1).read()
             return True
-        except Exception:
+        except (OSError, http.client.HTTPException):
             time.sleep(0.25)
     return False
 

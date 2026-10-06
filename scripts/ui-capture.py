@@ -23,6 +23,7 @@ Output: ui-shots/<n>-<name>-<light|dark>.png (14 files).
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import subprocess
@@ -238,7 +239,7 @@ def main() -> int:
             try:
                 urllib.request.urlopen(base + "/livez", timeout=1)
                 break
-            except Exception:
+            except (OSError, http.client.HTTPException):
                 time.sleep(0.2)
         else:
             print("server did not come up", file=sys.stderr)
