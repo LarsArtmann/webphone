@@ -35,8 +35,8 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
    joins open rows (bounded by blank lines so prose never glues), honors
    escaped pipes. v4 measures DISPLAY width (unicodedata W/F = 2): the
    daemon's aligner pads emoji columns to terminal cells, not codepoints,
-   so codepoint-length readings flag daemon-aligned tables (` 🔥🔥🔥 ` vs
-   ` 🔥🔥   ` are both display-width 8). Self-test is 8 cases including
+   so codepoint-length readings flag daemon-aligned tables (`🔥🔥🔥` vs
+   `🔥🔥` are both display-width 8). Self-test is 8 cases including
    every adversarial shape that actually fired tonight.
 4. **f.2 — CHANGELOG line** (`e684b99`): the authedFetch `csrf.js` one-home fix
    logged under [Unreleased] ### Changed, matching the 10-04 precedent's shape.

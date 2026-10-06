@@ -114,14 +114,14 @@ see Finding F2.
 
 ### Health-check scorecard vs. the samber/do best-practice shape
 
-| Best practice (samber/do shape)               | webphone realization                                                                                                              | Status |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Best practice (samber/do shape)               | webphone realization                                                                                                              | Status                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `Healthchecker` interface on resource holders | Named check **functions** wired at the single wiring site — simpler, no interface ceremony on `*sql.DB` (which we don't own)      | ✅ equivalent, better fit |
-| `Shutdowner` lifecycle, self-contained        | `defer db.Close()` + bounded `httpServer.Shutdown`; correct drain-then-close ordering                                             | ✅ |
-| Fail-closed readiness naming the failing part | Library `ReadinessHandler`, verified at tag: parallel, named, 503 + error strings                                                 | ✅ |
-| Health surfaced without auth friction         | GET-open by decision, body leaks check names only                                                                                 | ✅ |
-| Per-check timeout / context                   | `ReadinessCheck func() error` has neither — a hung check would hang the probe (server deliberately has no `WriteTimeout` for SSE) | ⚠️ F1 |
-| Liveness distinct from readiness              | Readiness only; hung-process detection is absent end-to-end                                                                       | ⚠️ F2 |
+| `Shutdowner` lifecycle, self-contained        | `defer db.Close()` + bounded `httpServer.Shutdown`; correct drain-then-close ordering                                             | ✅                        |
+| Fail-closed readiness naming the failing part | Library `ReadinessHandler`, verified at tag: parallel, named, 503 + error strings                                                 | ✅                        |
+| Health surfaced without auth friction         | GET-open by decision, body leaks check names only                                                                                 | ✅                        |
+| Per-check timeout / context                   | `ReadinessCheck func() error` has neither — a hung check would hang the probe (server deliberately has no `WriteTimeout` for SSE) | ⚠️ F1                      |
+| Liveness distinct from readiness              | Readiness only; hung-process detection is absent end-to-end                                                                       | ⚠️ F2                      |
 
 Residual risk for F1 is small — both probes are local (in-process SQLite ping; local-disk
 temp-file write under `dataDir`, which the NixOS module asserts lives under `/var/lib/`).
