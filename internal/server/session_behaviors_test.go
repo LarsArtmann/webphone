@@ -39,7 +39,7 @@ type webphone struct {
 
 // start boots a fresh instance; phoneAPIURL is the upstream the login
 // credential proof rides ("" = loopback dev mode, no verification).
-func start(t GinkgoTInterface, phoneAPIURL string) *webphone {
+func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config)) *webphone {
 	db, err := store.Open(":memory:")
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = db.Close() })
@@ -55,6 +55,9 @@ func start(t GinkgoTInterface, phoneAPIURL string) *webphone {
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
 		Gateway:    config.Gateway{Mode: config.GatewayLoopback, WebhookSecret: "test-secret"},
+	}
+	for _, m := range mutate {
+		m(&cfg)
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
@@ -163,6 +166,36 @@ var _ = Describe("A forged login without a reachable PBX", func() {
 		wp := start(GinkgoT(), "http://127.0.0.1:1")
 		wp.loginExpecting("1001", "anything", http.StatusBadGateway)
 		Expect(wp.sessionCookie()).To(BeNil())
+	})
+})
+
+var _ = Describe("A TLS-fronted deployment (https trusted origins)", func() {
+	It("mints the session cookie Secure and rotates CSRF with matching attributes", func() {
+		// Behind the consuming stack's TLS-terminating proxy r.TLS is nil
+		// on every request; the https trusted-origin signal must carry the
+		// Secure flag for BOTH cookies (the CSRF one always did — this pins
+		// the session cookie joining it, and the login-rotation deletion
+		// cookie matching what it deletes).
+		wp := start(GinkgoT(), "", func(c *config.Config) {
+			c.CSRF.TrustedOrigins = []string{"https://pbx.example.com"}
+		})
+		payload, err := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+		Expect(err).NotTo(HaveOccurred())
+		resp, _ := wp.postRaw("/api/session", payload)
+		Expect(resp.StatusCode).To(Equal(http.StatusCreated))
+
+		sess := wp.sessionCookie()
+		Expect(sess).NotTo(BeNil())
+		Expect(sess.Secure).To(BeTrue(), "proxy-fronted deployments derive Secure from the https trusted origins")
+
+		var csrfDeletion *http.Cookie
+		for _, cookie := range resp.Cookies() {
+			if cookie.Name == "csrf_token" && cookie.MaxAge < 0 {
+				csrfDeletion = cookie
+			}
+		}
+		Expect(csrfDeletion).NotTo(BeNil(), "login must rotate the CSRF cookie")
+		Expect(csrfDeletion.Secure).To(BeTrue(), "the deletion cookie must match the real CSRF cookie's Secure attribute")
 	})
 })
 

@@ -1,6 +1,7 @@
 package session
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -63,7 +64,7 @@ func TestCookieMaxAgeMirrorsTTL(t *testing.T) {
 	ttl := 7 * time.Minute
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/api/session", nil)
-	SetCookie(rec, req, "token-abc", ttl)
+	SetCookie(rec, req, "token-abc", ttl, CookiePolicy{})
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 1 {
@@ -78,6 +79,41 @@ func TestCookieMaxAgeMirrorsTTL(t *testing.T) {
 	}
 	if !got.HttpOnly {
 		t.Error("session cookie must stay HttpOnly")
+	}
+}
+
+// TestCookieSecurePolicy pins the TLS-fronted deployment shape: behind
+// the consuming stack's TLS-terminating proxy r.TLS is always nil, so a
+// proxy-fronted deployment must get its Secure flag from the wired
+// policy — and a directly-TLS request must upgrade even a zero policy.
+func TestCookieSecurePolicy(t *testing.T) {
+	write := func(policy CookiePolicy, directTLS bool) *http.Cookie {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/api/session", nil)
+		if directTLS {
+			req.TLS = &tls.ConnectionState{} //nolint:exhaustruct // only non-nil matters for the flag
+		}
+		SetCookie(rec, req, "token-abc", time.Minute, policy)
+		cookies := rec.Result().Cookies()
+		if len(cookies) != 1 {
+			t.Fatalf("expected 1 cookie, got %d", len(cookies))
+		}
+		return cookies[0]
+	}
+	if got := write(CookiePolicy{Secure: true}, false); !got.Secure {
+		t.Error("proxy-fronted deployment (policy Secure, r.TLS nil) must set the Secure flag")
+	}
+	if got := write(CookiePolicy{}, true); !got.Secure {
+		t.Error("directly-TLS request must set the Secure flag regardless of policy")
+	}
+	if got := write(CookiePolicy{}, false); got.Secure {
+		t.Error("loopback dev (no policy, no TLS) must keep the flag off")
+	}
+	rec := httptest.NewRecorder()
+	ClearCookie(rec, CookiePolicy{Secure: true})
+	cleared := rec.Result().Cookies()
+	if len(cleared) != 1 || !cleared[0].Secure || cleared[0].MaxAge >= 0 {
+		t.Errorf("ClearCookie must mirror the policy's Secure flag and expire the cookie, got %+v", cleared)
 	}
 }
 
@@ -228,7 +264,7 @@ func TestAttachSlidesAndReIssuesCookie(t *testing.T) {
 			if _, ok := From(r.Context()); !ok {
 				t.Error("live session not attached to the context")
 			}
-		}), lifetime).ServeHTTP(rec, req)
+		}), lifetime, CookiePolicy{}).ServeHTTP(rec, req)
 		return rec
 	}
 
@@ -267,7 +303,7 @@ func TestAttachWithoutLifetimeDisablesRenewal(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
 	req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
-	Attach(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{}).ServeHTTP(rec, req)
+	Attach(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{}, CookiePolicy{}).ServeHTTP(rec, req)
 
 	if cookies := rec.Result().Cookies(); len(cookies) != 0 {
 		t.Errorf("zero Lifetime re-issued %d cookie(s)", len(cookies))
@@ -293,7 +329,7 @@ func TestRequireSlides(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/events", nil)
 	req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
-	Require(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{Idle: time.Hour, Max: 30 * 24 * time.Hour}).ServeHTTP(rec, req)
+	Require(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{Idle: time.Hour, Max: 30 * 24 * time.Hour}, CookiePolicy{}).ServeHTTP(rec, req)
 
 	if sess, ok := store.Get(token); !ok || time.Until(sess.ExpiresAt) < 55*time.Minute {
 		t.Errorf("Require did not slide the session (ok=%v)", ok)
