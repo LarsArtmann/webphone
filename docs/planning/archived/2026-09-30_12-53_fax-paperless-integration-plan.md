@@ -15,7 +15,6 @@ erraudit 0. Named follow-ups below stay open as their own trains.
 > are ROUTED to ROADMAP "Paperless archive follow-ups". Per-item
 > verdicts inline.
 
-
 **Client SDK:** `github.com/larsartmann/go-paperless` (LarsArtmann,
 Go 1.27 + `encoding/json/v2` — webphone's 1.27.1 floor imports it
 cleanly). The SDK is deliberately CLIENT ONLY ("document sync pipelines
@@ -124,10 +123,11 @@ type Archiver interface {
 ## Named follow-ups (post-v1, own trains)
 
 ~~- Outbound archiving on `transmitted` (direction-flavored title/tag).
+
 - Archive visibility: `archive_status` column + a boot-time sweep that
   re-offers unarchived jobs (turns the SIGTERM limitation into a
   self-healing queue).~~ routed 2026-10-06 — both live in ROADMAP
-"Paperless archive follow-ups" (docs-health v7 harvest).
+  "Paperless archive follow-ups" (docs-health v7 harvest).
 
 ## Gates
 

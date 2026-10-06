@@ -13,7 +13,6 @@ E2E first).
 > budget); morph is now the standing swap mode on every live surface
 > (AGENTS § Live-update surfaces). Per-item verdicts inline.
 
-
 ## What was trialed
 
 Every live-update surface switched from innerHTML replacement to

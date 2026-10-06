@@ -59,6 +59,7 @@ console), not built speculatively.
 
 ~~- T23 contributes this verdict + the ROADMAP park. No code.~~ done —
 the ROADMAP park + FEATURES WORTH_CONSIDERING row carry it.
+
 - If a concrete offline requirement ever appears (e.g. read-only
   message history on the train), the design must START from the
   bypass lists (never cache: `/events`, `/api/*`, `/phone-api/*`,

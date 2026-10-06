@@ -9,7 +9,6 @@
 > quarterly watches cadence (next 2026-12-20). Per-item verdicts
 > inline.
 
-
 ## Idea
 
 Ride the unread-badge update on the existing `threads` SSE event: the

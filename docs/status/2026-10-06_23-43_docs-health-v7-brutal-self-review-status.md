@@ -1,7 +1,7 @@
 # Status — docs-health v7 session: brutal self-review + full state (2026-0* cohort closed, residuals owned)
 
 **Date:** 2026-10-06 23:43 CEST (session ran ~23:0x → 23:43) · **Mandate:**
-the owner's "View ALL **/2026-0* files — execute docs-health SUPERBLY —
+the owner's "View ALL *_/2026-0_ files — execute docs-health SUPERBLY —
 archive FULLY done and UPDATED files" order, then this self-review +
 status order. Documentation-only: zero product code touched (one scoped
 read-only test run).
@@ -124,7 +124,7 @@ read-only test run).
    recovery).
 4. Write lessons story r2b: `/go.mod` h1 ≠ sha256 oracle (22:08 f19/f20).
 5. Create the CI-flake ledger (file/test/date/run-id; runs 37496169265
-   + 37524833682 are its first entries; 23:22 r6).
+   - 37524833682 are its first entries; 23:22 r6).
 6. whitespace-drift.sh `.nix` gap: cover or document + self-test (r1).
 7. Rebuild + reinstall the stale BuildFlow binary (r10).
 8. Standing `buildflow doctor` gate in the release-runbook prelude

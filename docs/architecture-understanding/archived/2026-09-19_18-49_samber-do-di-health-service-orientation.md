@@ -13,7 +13,6 @@ treating claims as current truth.
 > `docs/status/archived/2026-10-01_02-12_*`). The roadmap items P1–P3
 > resolved or routed (see §9). Per-item verdicts inline.
 
-
 ---
 
 ## 1. Verdict (the two questions, answered)
@@ -242,15 +241,16 @@ brains, no global state, no cleanup-order hazards.
 ## 9. Action roadmap
 
 ~~- **P1 · F2 decision:** owner call on liveness/watchdog (document-only vs `WatchdogSec`
-  - sd_notify vs stack-side gating). If document-only: README + NixOS module comment,
-    effort S.~~ routed — lives on as the D3 boot-retry owner call (`StartLimitBurst`/
-    `StartLimitIntervalSec` vs ratify `Restart=on-failure`; TODO § Boot-contract tail).
-~~- **P2 · F1:** bounded-timeout wrapper for readiness checks at the wiring site, with a
+
+- sd_notify vs stack-side gating). If document-only: README + NixOS module comment,
+  effort S.~~ routed — lives on as the D3 boot-retry owner call (`StartLimitBurst`/
+  `StartLimitIntervalSec` vs ratify `Restart=on-failure`; TODO § Boot-contract tail).
+  ~~- **P2 · F1:** bounded-timeout wrapper for readiness checks at the wiring site, with a
   test that a hanging check yields `503` naming `"<check>: timed out"`. Effort S.
   Also consider proposing the timeout upstream to cqrs-htmx (both webphone and the stack
   would inherit it).~~ done — every named check carries `Timeout` at the wiring site
   (`internal/server/server.go` NewChecks; overdue check = failed, named).
-~~- **P3 · F3:** inline `sharedContacts`. Effort S.~~ done — dissolved by the
+  ~~- **P3 · F3:** inline `sharedContacts`. Effort S.~~ done — dissolved by the
   `internal/app` composition-root rewrite (no Go-side `sharedContacts` remains;
   island JS reads `PBX_CONFIG.contacts` directly).
 
