@@ -69,17 +69,32 @@ def is_compact(cell: str) -> bool:
     return cell == f" {content} "
 
 
+def logical_rows(lines: list[str]) -> list[tuple[int, str]]:
+    """Join wrapped table rows: a line not ending in `|` continues the row above.
+
+    Returns (physical_line_index, joined_text) per logical row.
+    """
+    rows: list[tuple[int, str]] = []
+    for index, line in enumerate(lines):
+        if line.strip().startswith("|"):
+            rows.append((index, line.rstrip("\n")))
+        elif rows:
+            rows[-1] = (rows[-1][0], rows[-1][1] + " " + line.strip())
+    return rows
+
+
 def table_blocks(lines: list[str]):
-    """Yield (header_index, [header, separator, *body]) for each GFM table."""
+    """Yield (header_physical_index, [header, separator, *body]) per GFM table."""
+    rows = logical_rows(lines)
     index = 0
-    while index < len(lines):
-        if lines[index].strip().startswith("|") and index + 1 < len(lines) and is_separator(lines[index + 1]):
-            block = [lines[index], lines[index + 1]]
+    while index < len(rows):
+        if rows[index][1].strip().startswith("|") and index + 1 < len(rows) and is_separator(rows[index + 1][1]):
+            block = [rows[index][1], rows[index + 1][1]]
             cursor = index + 2
-            while cursor < len(lines) and lines[cursor].strip().startswith("|"):
-                block.append(lines[cursor])
+            while cursor < len(rows) and rows[cursor][1].strip().startswith("|"):
+                block.append(rows[cursor][1])
                 cursor += 1
-            yield index, block
+            yield rows[index][0], block
             index = cursor
         else:
             index += 1
@@ -97,7 +112,7 @@ def find_near_aligned(lines: list[str]) -> list[str]:
             padded = sum(1 for cell in cells if not is_compact(cell))
             if len(widths) > 1 and padded > 0:
                 findings.append(
-                    f"line {header_index + 1}: column {column + 1} near-aligned "
+                    f"table at logical row {header_index + 1}: column {column + 1} near-aligned "
                     f"(widths {sorted(widths)}, {padded} padded cell(s))"
                 )
     return findings
