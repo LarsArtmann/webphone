@@ -1,6 +1,7 @@
 // Credentials for the per-extension phone API (voicemail, CDR history).
 // Kept in memory only; never persisted.
 
+import { csrfToken } from "./csrf.js";
 import { announce } from "./ui.js";
 
 let credentials = null;
@@ -27,8 +28,10 @@ export async function authedFetch(path, options = {}) {
   if (credentials) headers.set("Authorization", authHeaderValue());
   // The server's CSRF middleware protects state-changing phone-api calls
   // (e.g. voicemail delete); the token pairs with the nosurf cookie.
-  const meta = document.querySelector('meta[name="csrf-token"]');
-  if (meta) headers.set("X-CSRF-Token", meta.getAttribute("content") || "");
+  // csrf.js owns the meta reader — this is the island's ONE home rule,
+  // same as session/passkey/enroll.
+  const token = csrfToken();
+  if (token) headers.set("X-CSRF-Token", token);
   const res = await fetch(path, { ...options, headers });
   noteThrottled(res, path);
   return res;

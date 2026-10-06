@@ -29,8 +29,15 @@ throttle + same-token assertions; `62bc7dc`); slog secret-leak grep over server/
 CLEAN (attrs are errors/status/family/code/extension only; vendored usermgmt logs the cookie NAME
 and bot id, never values; enroll-token errors are static strings; gateway logs nothing); codespell
 over the CHANGELOG/lessons/status/planning delta EXIT 0 — the four `keep-alives` hits are the
-twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. Island-side (client)
-audit = D19, still open pre-release.
+twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. ISLAND AUDIT 2026-10-06 (D19): clean — adoption ladder correct
+(3 backoff retries, reload last resort); zero raw innerHTML sinks (whoami/snippet/lightbox/errors
+all textContent/value/src); zero credential persistence in localStorage; legacy pbx-contacts
+import deletes only after EVERY row is server-accepted, else retries next login; no
+password/token in any log line. FIXED: authedFetch now imports the csrf.js meta reader (ONE-home
+rule; it had drifted to an inline querySelector). ACCEPTED: passkey/enroll finish carry the
+one-time ceremony session_key as ?user_id= (burned at finish, worthless without the WebAuthn
+assertion + CSRF; exposure = proxy access logs only) — moving it into the POST body is a cheap
+option inside D30's decision space.
 the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
 csrf.js single home, userauth /healthz leg, tier-2 pins, whoamiLine→ui.js,
 typed sessionIdentity, plan-doc annotation, AGENTS trim — see CHANGELOG).
