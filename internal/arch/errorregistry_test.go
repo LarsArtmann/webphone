@@ -95,8 +95,7 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 	}
 
 	if *updateRegistry {
-		rewritten := doc[:begin+len(registryBegin)] + "\n\n" +
-			strings.Join(generated, "\n") + "\n\n" + doc[end:]
+			rewritten := rewriteRegistryBlock(doc, generated)
 		if err := os.WriteFile(registryDocPath, []byte(rewritten), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -224,6 +223,22 @@ func registryBlock(entries map[string]*codeEntry) []string {
 	return rows
 }
 
+// rewriteRegistryBlock re-splices the generated rows between the markers
+// with the daemon-stable framing: a blank line after BEGIN and before END.
+// The auto-commit daemon's markdown formatter preserves those blank lines
+// and the aligned rows leave nothing to re-pad, so -update output is
+// byte-stable. Panic on missing markers: the freshness test validates them
+// before the update branch runs.
+func rewriteRegistryBlock(doc string, generated []string) string {
+	begin := strings.Index(doc, registryBegin)
+	end := strings.Index(doc, registryEnd)
+	if begin < 0 || end < 0 || end < begin {
+		panic("registry markers missing or misordered")
+	}
+	return doc[:begin+len(registryBegin)] + "\n\n" +
+		strings.Join(generated, "\n") + "\n\n" + doc[end:]
+}
+
 // familyCell renders an entry's family set for both the comparison row
 // and the writer: sorted, comma-joined.
 func familyCell(entry *codeEntry) string {
@@ -323,5 +338,21 @@ func TestRegistryBlockEmitsDaemonAlignedRows(t *testing.T) {
 		if got := parsed[code]; got != registryRow(code, entry) {
 			t.Errorf("aligned block must parse back to the canonical row for %s: got %q", code, got)
 		}
+	}
+	// Uniform row length: equal-width columns equalize every row's byte
+	// length, separator included. If a future writer edit breaks this, the
+	// daemon regains something to re-pad and -update churn returns.
+	for i, row := range rows {
+		if len(row) != len(rows[0]) {
+			t.Errorf("row %d has length %d, want the uniform %d of row 0", i, len(row), len(rows[0]))
+		}
+	}
+	// Framing pin: the -update writer splices the block with blank lines
+	// after BEGIN and before END; the daemon formatter keeps them, so the
+	// surrounding bytes are as stable as the rows.
+	doc := "preamble\n\n" + registryBegin + "\n| stale | rows |\n" + registryEnd + "\ntail\n"
+	wantDoc := "preamble\n\n" + registryBegin + "\n\n" + strings.Join(rows, "\n") + "\n\n" + registryEnd + "\ntail\n"
+	if got := rewriteRegistryBlock(doc, rows); got != wantDoc {
+		t.Errorf("framing mismatch:\n got %q\nwant %q", got, wantDoc)
 	}
 }
