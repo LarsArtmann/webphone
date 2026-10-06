@@ -30,6 +30,7 @@ templ generate ./internal/web/views/   # after ANY .templ edit (committed *_temp
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
 python3 scripts/webphone-smoke.py --bin /tmp/webphone-bin   # live smoke, self-boots a fresh binary (flag is --bin; --base URL reuses a server; --expect-version X asserts /version); grep verdict lines "smoke: N passed" / "restart scenario: N passed" / "boot failure scenario: N passed" — the script PRINTS the counts, never hardcode them
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
+scripts/whitespace-drift.sh                # after `git add`, before commit: EXIT 1 when the staged diff is partially whitespace-only (the e62fe34 class — formatter-green ≠ CI-formatter-green; says "run nix fmt")
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
 nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test
 nix build .#checks.x86_64-linux.webphone-module   # ONE check without the whole flake check (also: webphone-backup-drill; webphone-backup is KVM-gated)
