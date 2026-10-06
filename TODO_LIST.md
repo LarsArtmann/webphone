@@ -15,7 +15,16 @@ Last sweep: 2026-10-05 (Pareto-plan execution session). Folded: the 14:50 mixin-
 
 The code train AND the 3-repo deploy train are DONE (webphone `400eaff`
 pushed; sibling `890a526`; pbx-artmann staged `0ngvm4q7…`, probe OK,
-gates green — see CHANGELOG Unreleased + the 17-28 report); the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
+gates green — see CHANGELOG Unreleased + the 17-28 report); AUTH AUDIT 2026-10-06 (13:10): the passkey HTTP surface was code-read audited; one accepted-risk
+observation needs an owner verdict — `POST /api/auth/passkey/enroll/begin` gates on the account
+ULID alone (any well-formed usermgmt UserID drives a registration ceremony; the enrollment TOKEN
+is only enforced one step earlier at /verify). Protection = ULID unguessability (128-bit, never
+exposed except to valid-token holders) + passkeyLimiter + mode default-OFF. Options: bind the
+ceremony to a token-verified server-side session (usermgmt upstream change) or ratify ULID-secrecy
+as the standing posture. Companion reconfirmation: session-row password stays plaintext at rest
+(spike-verdict ratified; 0700 DB + UMask 0077). Same session FIXED: session-cookie Secure behind
+the TLS proxy, real-config CSRF rotation, constant-time webhook secret (CHANGELOG § Security).
+the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
 csrf.js single home, userauth /healthz leg, tier-2 pins, whoamiLine→ui.js,
 typed sessionIdentity, plan-doc annotation, AGENTS trim — see CHANGELOG).
 Remaining: the OWNER switch + post-switch ritual (rotate
