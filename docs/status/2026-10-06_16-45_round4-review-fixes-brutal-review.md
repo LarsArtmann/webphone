@@ -9,16 +9,16 @@ just-committed md edits — content-inert, detector ZERO, left to ride.
 
 ## a) FULLY DONE
 
-| # | Item | Receipt |
-| - | ---- | ------- |
+| # | Item                                                                                                                                                                                                                                      | Receipt                                                                                            |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | 1 | Three §g questions ruled explicitly, each marked INTERIM + sitting-owned: push-bar anchor = first-unpushed-commit timestamp; CHANGELOG bar = code-path changes log, test/docs silent; accepted-risk readership = forced onto the briefing | AGENTS Conventions (2 bullets, `14aaec1`); CHANGELOG line (`e684b99`); briefing row 35 (`d355b91`) |
-| 2 | f.1: detector COMMITTED as `scripts/md-table-shape.py` — the d.1 "instrument only in transcript" fix; D25.1 claim reproduces from the repo (default + exact sweep set = ZERO) | `240ea98` + hardening commits ending `776f09b` |
-| 3 | Detector hardened through FOUR dogfood rounds: wrapped-row joins, escaped-pipe handling, no prose gluing, display-width measurement; 8-case self-test incl. every adversarial shape that actually fired | `2402010` (daemon-captured), `776f09b` |
-| 4 | f.7 canary FIRED (`2fbdfd7`, 16:18) with the D1.4 hypothesis INVERTED: the daemon is the ALIGNER; compact session appends are the mix source; corpus ZERO under v4 | TODO evidence; plan D1 row; report item 7 |
-| 5 | f.6: full-repo slog sweep CLEAN (app/pbx/fax/messaging/views — one timezone Info, zero log calls in pbx+views, ids/errors/CDR-class attrs only) — b.3 closed | TODO AUTH TAIL note (`fbd0c5e`) |
-| 6 | f.2 CHANGELOG line + f.3 briefing row 35 + plan re-count (35 rows, SEVEN §g verdicts, 6th push-lag datapoint, anchor refinement); briefing title's stale count dropped | `e684b99`, `d355b91` |
-| 7 | Gates: fmt 0 · suite rc=0 (19 ok) · island 186/186 · buildflow EXIT 0 · codespell delta CLEAN (one pre-existing briefing hit, first adjudication) | session report § Gates |
-| 8 | Pushed at the bar exactly as ruled (anchor stated: 15:26:54 → 16:26:54; heartbeat-visible wait); remote = local at push; CI verdict FETCHED | run 37480035135 SUCCESS |
+| 2 | f.1: detector COMMITTED as `scripts/md-table-shape.py` — the d.1 "instrument only in transcript" fix; D25.1 claim reproduces from the repo (default + exact sweep set = ZERO)                                                             | `240ea98` + hardening commits ending `776f09b`                                                     |
+| 3 | Detector hardened through FOUR dogfood rounds: wrapped-row joins, escaped-pipe handling, no prose gluing, display-width measurement; 8-case self-test incl. every adversarial shape that actually fired                                   | `2402010` (daemon-captured), `776f09b`                                                             |
+| 4 | f.7 canary FIRED (`2fbdfd7`, 16:18) with the D1.4 hypothesis INVERTED: the daemon is the ALIGNER; compact session appends are the mix source; corpus ZERO under v4                                                                        | TODO evidence; plan D1 row; report item 7                                                          |
+| 5 | f.6: full-repo slog sweep CLEAN (app/pbx/fax/messaging/views — one timezone Info, zero log calls in pbx+views, ids/errors/CDR-class attrs only) — b.3 closed                                                                              | TODO AUTH TAIL note (`fbd0c5e`)                                                                    |
+| 6 | f.2 CHANGELOG line + f.3 briefing row 35 + plan re-count (35 rows, SEVEN §g verdicts, 6th push-lag datapoint, anchor refinement); briefing title's stale count dropped                                                                    | `e684b99`, `d355b91`                                                                               |
+| 7 | Gates: fmt 0 · suite rc=0 (19 ok) · island 186/186 · buildflow EXIT 0 · codespell delta CLEAN (one pre-existing briefing hit, first adjudication)                                                                                         | session report § Gates                                                                             |
+| 8 | Pushed at the bar exactly as ruled (anchor stated: 15:26:54 → 16:26:54; heartbeat-visible wait); remote = local at push; CI verdict FETCHED                                                                                               | run 37480035135 SUCCESS                                                                            |
 
 ## b) PARTIALLY DONE
 
@@ -150,5 +150,6 @@ nearly writable), D29/D30, f.4/f.5/f.8–f.15. No local `nix flake check`
    somewhere it can be argued with?
 
 ---
-*Written 2026-10-06 16:45 CEST, immediately after the execution session; no
-post-hoc fixes applied during the review — everything actionable waits in f).*
+
+_Written 2026-10-06 16:45 CEST, immediately after the execution session; no
+post-hoc fixes applied during the review — everything actionable waits in f)._
