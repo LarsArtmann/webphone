@@ -9,6 +9,14 @@ Last sweep: 2026-10-05 (Pareto-plan execution session). Folded: the 14:50 mixin-
 
 ## Open tasks
 
+### Gate-recovery session tail (2026-10-06 22:08 report)
+
+**Status:** 🟡 `PARTIALLY DONE` (critical legs closed 2026-10-06 ~22:45; tails remain) · **Priority:** Medium · **Effort:** S-M
+
+CLOSED this session: the red CI (vendorHash `WYqTip91…` stale after the post-train tidy — re-pinned `5ekZFK2m…`, CI run 37526835020 green) · `TestSQLiteSessionTTLExpiryAndSweep` hardened with an injectable store clock (both session stores; race structurally impossible, suite + buildflow green) · fresh-binary smoke boot (47+4+8, 0 failed) · buildflow verdict rc=0 · AGENTS lessons (kill builtin trap, vendorHash `--rebuild` recipe + tidy-then-repin sequencing, templ-components v1.20.0 poisoned require). REMAINING from the report's (f) list: ui-capture 14-shot visual pass on the v1.20.1 tree (f6) · vulnix `0/5 deterministic-retry` warning investigation (f12) · GOPROXY fallback chain + BuildFlow retry-wrapper (f9/f10, BuildFlow-repo/crush-config side) · module-cache janitor + leftover zero-byte `.tmp` sweep (f11/f16) · upstream releases: templ-components errorpage tagging discipline (f27). Stack browser E2E for the dep train (f8) rides the next stack session.
+
+**Evidence:** report `docs/status/2026-10-06_22-08_buildflow-gate-recovery-go-module-train.md` (§f rows); CI `gh run list` 37526835020
+
 ### Passkey train tail: deploy proof (owner terminal)
 
 **Status:** 🟡 `IN_PROGRESS` (code polish DONE 2026-10-04; owner legs remain) · **Priority:** High · **Effort:** S
