@@ -6,6 +6,14 @@ green; merge is gated on the consuming stack's browser E2E** (deliberately
 NOT merged to main; the island DOM + bundle contract belongs to the stack
 E2E first).
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): merge gate satisfied and
+> the adoption shipped — morph swaps landed with cqrs-htmx v4.11.0
+> ("with the idiomorph adoption", CHANGELOG) and the v2.5.0 release
+> chain ran the stack browser E2E green twice (384s/373s vs the 445s
+> budget); morph is now the standing swap mode on every live surface
+> (AGENTS § Live-update surfaces). Per-item verdicts inline.
+
+
 ## What was trialed
 
 Every live-update surface switched from innerHTML replacement to
@@ -65,18 +73,20 @@ push; morphing patches in place. The user-visible wins:
 
 ## What is still unproven (the merge gate)
 
-The stack's browser E2E
+~~The stack's browser E2E
 (`nix build -L .#telephony-browser` in nix-international-telephony)
 exercises accept/reject, transfer, DTMF and the messages surface in a
 real chromium. The stack pins webphone **main**, so proving the branch
 requires either a temporary stack input override to the branch or
 merging first and reverting on any red. Until that run happens, the
-verdict is "all local evidence green, one browser-level gate open".
+verdict is "all local evidence green, one browser-level gate open".~~ done —
+merged + proven: v2.5.0 chain E2E green twice (ROADMAP § E2E wall-time).
 
 ## Recommendation
 
-Merge after one green stack browser-E2E run against the branch (the
-runbook's step 7 command with a temporary `webphone` input override).
+~~Merge after one green stack browser-E2E run against the branch (the
+runbook's step 7 command with a temporary `webphone` input override).~~ done —
+merged as released; see banner.
 If red: revert is one commit — the whole experiment is two server
 registrations, one script tag, four attributes, and one shell.js
 option. No island code changed, so nothing else needs unwinding.

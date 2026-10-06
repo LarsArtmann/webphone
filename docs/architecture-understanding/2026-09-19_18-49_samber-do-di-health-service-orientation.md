@@ -5,13 +5,25 @@ orientation, composability, resilience, self-health · **Method:** code-read + m
 verification + test execution (log at the end). Point-in-time snapshot; re-verify before
 treating claims as current truth.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): SUPERSEDED on the central
+> question — samber/do v2 WAS adopted 2026-10-01 as the `internal/app`
+> composition root (one container, named critical services, shutdown
+> cascade; FEATURES § Ops & API surface), and the DO-1..DO-6 re-audit
+> this doc demanded ran with that train (report archived
+> `docs/status/archived/2026-10-01_02-12_*`). The roadmap items P1–P3
+> resolved or routed (see §9). Per-item verdicts inline.
+
+
 ---
 
 ## 1. Verdict (the two questions, answered)
 
 **Q1 — "Are we using samber/do v2 in combination with Health Checks superbly?"**
 
-**We are not using samber/do v2 — at all — and that is the correct, deliberate decision.**
+~~**We are not using samber/do v2 — at all — and that is the correct, deliberate decision.**~~
+superseded 2026-10-01: samber/do v2 is now the composition root
+(`internal/app`) — the rejection above correctly described the
+pre-adoption state and the `setup`-bundle rejection itself still stands.
 Verified facts, not assumptions:
 
 - `github.com/samber/do` has **zero imports** in this repo (grep over all `.go` files).
@@ -229,18 +241,23 @@ brains, no global state, no cleanup-order hazards.
 
 ## 9. Action roadmap
 
-- **P1 · F2 decision:** owner call on liveness/watchdog (document-only vs `WatchdogSec`
+~~- **P1 · F2 decision:** owner call on liveness/watchdog (document-only vs `WatchdogSec`
   - sd_notify vs stack-side gating). If document-only: README + NixOS module comment,
-    effort S.
-- **P2 · F1:** bounded-timeout wrapper for readiness checks at the wiring site, with a
+    effort S.~~ routed — lives on as the D3 boot-retry owner call (`StartLimitBurst`/
+    `StartLimitIntervalSec` vs ratify `Restart=on-failure`; TODO § Boot-contract tail).
+~~- **P2 · F1:** bounded-timeout wrapper for readiness checks at the wiring site, with a
   test that a hanging check yields `503` naming `"<check>: timed out"`. Effort S.
   Also consider proposing the timeout upstream to cqrs-htmx (both webphone and the stack
-  would inherit it).
-- **P3 · F3:** inline `sharedContacts`. Effort S.
+  would inherit it).~~ done — every named check carries `Timeout` at the wiring site
+  (`internal/server/server.go` NewChecks; overdue check = failed, named).
+~~- **P3 · F3:** inline `sharedContacts`. Effort S.~~ done — dissolved by the
+  `internal/app` composition-root rewrite (no Go-side `sharedContacts` remains;
+  island JS reads `PBX_CONFIG.contacts` directly).
 
-F1+F3 are mechanical; F2 needs a decision before code. All three are harvested into
+~~F1+F3 are mechanical; F2 needs a decision before code. All three are harvested into
 `TODO_LIST.md` (entries "Readiness check timeout guard" and "Liveness/watchdog decision",
-plus the inline cleanup folded into this review's follow-ups).
+plus the inline cleanup folded into this review's follow-ups).~~ done/routed — the two
+TODO entries shipped and were deleted; the D3 residue stays open (P1 above).
 
 ---
 
@@ -260,6 +277,7 @@ plus the inline cleanup folded into this review's follow-ups).
      `internal/blob/store.go`, `internal/session/service.go`, `internal/pbx/client.go`,
      `package/nixos-module.nix` (Restart/MemoryMax), healthz/hub-reaper tests.
 
-_N/A-by-design note kept explicit: any future adoption of samber/do (e.g. if the
+_~~N/A-by-design note kept explicit: any future adoption of samber/do (e.g. if the
 rejected `setup` bundle's tradeoffs are ever revisited) must re-run this review's
-DO-1..DO-6 audit against the container surface._
+DO-1..DO-6 audit against the container surface.~~_ condition fired 2026-10-01 —
+samber/do adopted; the re-audit ran with the adoption train (see banner).

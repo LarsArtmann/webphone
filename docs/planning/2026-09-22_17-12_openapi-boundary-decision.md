@@ -6,6 +6,12 @@
   the machine-consumed, versioned-contract endpoints the island calls.
   It deliberately does NOT attempt to describe the whole HTTP surface.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): boundary shipped and
+> extended per its own rule — the spec now covers `/api/session`,
+> `/api/csrf`, `/api/contacts` AND `/api/calls` (each spec-vs-handler
+> pinned, `middleware_test.go`); fragment routes stay on the DOM
+> contract. Per-item verdicts inline.
+
 ## In scope (documented, spec-vs-handler tested)
 
 - `POST /api/session`, `GET /api/session` (island session mint /
@@ -13,9 +19,11 @@
 - `GET /api/csrf` (post-login token adoption)
 - `GET`/`POST`/`DELETE /api/contacts` (personal contacts store)
 
-The rule for additions: a JSON endpoint the ISLAND (or any scripted
+~~The rule for additions: a JSON endpoint the ISLAND (or any scripted
 client) consumes belongs in the spec, with its handler wired in the
-spec-vs-handler test (`internal/server/middleware_test.go`).
+spec-vs-handler test (`internal/server/middleware_test.go`).~~ done —
+rule applied: `/api/calls` joined the spec with
+`TestOpenAPICallLogMatchesHandler` when CRM call journaling landed.
 
 ## Out of scope (deliberately, with their homes)
 

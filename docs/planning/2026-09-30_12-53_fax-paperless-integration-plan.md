@@ -7,6 +7,15 @@ go-paperless v0.4.2 + vendorHash roundtrip). Gates: full Go suite, smoke
 47+4, flake checks incl. the KVM backup VM + drill, vulnix zero-real,
 erraudit 0. Named follow-ups below stay open as their own trains.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): v1 verified shipped —
+> FEATURES § Fax carries the Paperless-ngx archive row (both-or-neither
+> config, `fax`/`Fax`/`webphone-fax-id` metadata, fire-and-forget,
+> duplicate-refusal inert, nil-safe); the two named follow-ups
+> (outbound archiving on `transmitted`; `archive_status` + boot sweep)
+> are ROUTED to ROADMAP "Paperless archive follow-ups". Per-item
+> verdicts inline.
+
+
 **Client SDK:** `github.com/larsartmann/go-paperless` (LarsArtmann,
 Go 1.27 + `encoding/json/v2` — webphone's 1.27.1 floor imports it
 cleanly). The SDK is deliberately CLIENT ONLY ("document sync pipelines
@@ -114,10 +123,11 @@ type Archiver interface {
 
 ## Named follow-ups (post-v1, own trains)
 
-- Outbound archiving on `transmitted` (direction-flavored title/tag).
+~~- Outbound archiving on `transmitted` (direction-flavored title/tag).
 - Archive visibility: `archive_status` column + a boot-time sweep that
   re-offers unarchived jobs (turns the SIGTERM limitation into a
-  self-healing queue).
+  self-healing queue).~~ routed 2026-10-06 — both live in ROADMAP
+"Paperless archive follow-ups" (docs-health v7 harvest).
 
 ## Gates
 

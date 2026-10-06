@@ -7,6 +7,14 @@ either side?
 
 **Verdict: GREEN — the adoption lane (M9/M10/M11) is unblocked.**
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): fully executed — wave 1
+> (EmptyState ×6) shipped 2026-09-24 on the permanent scoped `/assets/tw.css`
+> build; waves 2+3 rejected on product grounds (dispositions recorded
+> below); the throwaway spike route + `assets/spike/*` cleanup landed;
+> the cascade-layer contract was re-asserted 2026-10-04 (island rules
+> scoped to `.island`). Per-item verdicts inline.
+
+
 ## Method (empirical, not theoretical)
 
 - Throwaway session-gated route `/dev/spike/tailwind` (spike.templ +
@@ -68,8 +76,10 @@ DOM-contract tests + smoke + stack browser E2E as the safety net.
   `nix run nixpkgs#tailwindcss_4 -- -i input.css -o out.css --minify`
   with `@source` pointing at the rendered HTML (exact version pin).
   nixpkgs `tailwindcss` (v3) does NOT work — v4 only.
-- **Cleanup**: the spike route + `assets/spike/*` are THROWAWAY — remove
-  before the next release fold (tracked in TODO_LIST / release checklist).
+~~- **Cleanup**: the spike route + `assets/spike/*` are THROWAWAY — remove
+  before the next release fold (tracked in TODO_LIST / release checklist).~~ done —
+removed; `internal/web/assets/spike/` no longer exists (verified
+2026-10-06).
 
 ## Raw evidence
 

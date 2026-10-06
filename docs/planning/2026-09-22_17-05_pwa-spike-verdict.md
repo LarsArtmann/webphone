@@ -6,6 +6,11 @@
 - **Verdict:** NOT-DO the service worker. A manifest-only "PWA-lite"
   is parked in ROADMAP behind a real mobile-install demand signal.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): verdict standing — the
+> service worker stays a NOT-DO; manifest-LITE remains parked in
+> ROADMAP behind the owner demand signal (no signal on record since).
+> Per-item verdicts inline.
+
 ## What a PWA would buy here
 
 1. Install-ability (homescreen icon, standalone window) — needs only a
@@ -52,7 +57,8 @@ console), not built speculatively.
 
 ## Consequences
 
-- T23 contributes this verdict + the ROADMAP park. No code.
+~~- T23 contributes this verdict + the ROADMAP park. No code.~~ done —
+the ROADMAP park + FEATURES WORTH_CONSIDERING row carry it.
 - If a concrete offline requirement ever appears (e.g. read-only
   message history on the train), the design must START from the
   bypass lists (never cache: `/events`, `/api/*`, `/phone-api/*`,

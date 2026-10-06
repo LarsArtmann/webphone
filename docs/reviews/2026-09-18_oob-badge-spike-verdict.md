@@ -2,6 +2,14 @@
 
 **Date:** 2026-09-18 · **Plan items:** OO1–OO3 (M29/M30), UB1 gated on this verdict.
 
+> ARCHIVED 2026-10-06 (docs-health v7 sweep): verdict standing (PARKED)
+> — the badge still refreshes via TTL cache + drop-on-mutation
+> invalidation; the adoption criteria below remain the ONLY revive
+> path, carried by ROADMAP § cqrs-htmx adoption long tail and the
+> quarterly watches cadence (next 2026-12-20). Per-item verdicts
+> inline.
+
+
 ## Idea
 
 Ride the unread-badge update on the existing `threads` SSE event: the
@@ -47,9 +55,11 @@ flag gates every byte of the behavior.
 - Re-check `cqrshtmx.OOBHTML` signature against the then-current tag —
   this verdict was written against v4.9.0.
 
-**Revisit trigger (added 2026-09-20):** quarterly-watches cadence, next
+~~**Revisit trigger (added 2026-09-20):** quarterly-watches cadence, next
 due 2026-12-20, OR immediately if the nav badge's TTL+invalidation
-refresh ever proves insufficient (a user-visible staleness report).
+refresh ever proves insufficient (a user-visible staleness report).~~ routed —
+the trigger lives in TODO_LIST § Standing watches + ROADMAP; criteria
+below unchanged.
 If revived: if the spike ever lands, the `WEBPHONE_SSE_OOB` env key
 needs a README config-reference row and nixos-module `settings`
 passthrough documentation in the same change.
