@@ -196,7 +196,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolution — vendor mode masked it), the go-cqrs-lite v4 submodule
   set to latest (storage v4.10.4, watermill v4.6.4, stack v4.4.3,
   snapshot v4.6.1, scheduling v4.6.1, …), go-flightrecorder v0.2.1,
-  go-sse/sseparse v0.2.1; `vendorHash` re-pinned to match.
+  go-sse/sseparse v0.2.1; `vendorHash` re-pinned to match (and again
+  after the post-train `go mod tidy` moved go.mod/go.sum — a tidy
+  landing after the pin red-ed CI with a hash mismatch).
+
+- Session stores (`internal/session`) take an injectable clock: the
+  SQLite and mem stores read time through an unexported `now` field
+  (default `time.Now`), so the TTL/sweep tests drive expiry with an
+  explicit `Advance` instead of real sleeps — the "young session not
+  live" CI flake (test lost a race against a loaded runner) is
+  structurally impossible now. No behavior change.
 
 - Server lifecycle: `cmd/webphone` now serves via `httputil.NewServer`
   (the primitive the rejected cqrs-htmx setup bundle's RunHandler
