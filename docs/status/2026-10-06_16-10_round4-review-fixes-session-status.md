@@ -23,26 +23,35 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
    explicit rerun over the exact D25.1 10-05/10-06 status+planning sweep set =
    ZERO — the committed claim now reproduces from the repo.
 2. **Full-corpus evidence for D1.4** (dogfood, deliberately NOT normalized):
-   39 findings across 10 files — 6 archived snapshots, FEATURES.md, and 4
-   pre-10-05 planning docs including the briefing's rows-29–32/appended-rows
-   mix. Rewriting archived snapshots trades hypothetical churn for real churn;
-   the live-doc residue joins D1.4's decision space with the detector now a
-   one-command check.
-3. **f.2 — CHANGELOG line** (`e684b99`): the authedFetch `csrf.js` one-home fix
+   25 findings across 9 files — 4 archived snapshots, FEATURES.md, and 4
+   live docs including the briefing's rows-29–32/appended-rows mix. Rewriting
+   archived snapshots trades hypothetical churn for real churn; the live-doc
+   residue joins D1.4's decision space with the detector now a one-command
+   check.
+3. **Detector hardening (dogfood-before-wire, enforced on myself):** v1
+   miscounted the corpus at 39 — 14 artifacts of two latent bug classes,
+   both caught by running the committed instrument against THIS report's own
+   tables: (a) wrapped table rows fragmented into ragged pseudo-rows
+   (false positives on wrap points, false negatives where whole tables
+   collapsed below the separator check), and (b) escaped pipes `\|` split
+   cells that contain shell snippets. v3 joins open rows (bounded by blank
+   lines so prose never glues), honors escaped pipes, and carries a 7-case
+   self-test including both adversarial shapes plus wrapped-then-prose.
+4. **f.2 — CHANGELOG line** (`e684b99`): the authedFetch `csrf.js` one-home fix
    logged under [Unreleased] ### Changed, matching the 10-04 precedent's shape.
-4. **f.3 — briefing row 35** (`d355b91`): the `?user_id=` acceptance question
+5. **f.3 — briefing row 35** (`d355b91`): the `?user_id=` acceptance question
    with options + recommendation (accept: single-use, burned at finish,
    TLS-covered). The plan's D1 row now counts 35 briefing rows, SEVEN §g
    verdicts, the 6th push-lag datapoint (green/60m-stall → manual push), the
    anchor refinement, and the detector's corpus evidence; the briefing title
    dropped its stale "28 Decisions" count.
-5. **f.6 — full-repo slog sweep: CLEAN** (b.3 closed; TODO evidence in
+6. **f.6 — full-repo slog sweep: CLEAN** (b.3 closed; TODO evidence in
    `fbd0c5e`): app = one `log.Info` ("timezone applied", zone attr); pbx +
    web/views = ZERO log calls; fax = 6 slog.Warn (error + fax_id); messaging =
    3 slog.Warn (error + message id + owner extension + remote number —
    CDR-class data, the accepted 18.2 bar); no print/os.Stderr paths in any of
    the five.
-6. **f.7 — canary ARMED** (TODO evidence in `240ea98`): no commit has touched
+7. **f.7 — canary ARMED** (TODO evidence in `240ea98`): no commit has touched
    the normalized 03-40 table since `455e26c`; the next daemon md commit
    touching it triggers a detector rerun — a re-introduced mix would prove the
    daemon formatter IS the near-aligned source for D1.4.
@@ -52,9 +61,9 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
 - `nix fmt`: 0 changed · full Go suite: rc=0, 19 ok packages, zero FAIL lines ·
   island JS: 186/186 pass, 0 fail.
 - codespell over the session docs delta: one PRE-EXISTING warning-level hit
-  (`pre-empts`, briefing line 121, introduced by daemon commit `1cb3445`
-  before this session) — first adjudication, noted per the 18.3 precedent
-  (durable ignore only on the second hit), not session debt.
+  (a hyphenated pre- word at briefing line 121, introduced by daemon commit
+  `1cb3445` before this session) — first adjudication, noted per the 18.3
+  precedent (durable ignore only on the second hit), not session debt.
 - Narrative-commit race: 4/5 won (`240ea98`, `e684b99`, `d355b91`,
   `14aaec1`); the f.6 TODO edit was captured by the daemon (`fbd0c5e`) with
   content verified in the diff — the documented lost-race class.

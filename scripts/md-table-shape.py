@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""md-table-shape: detect NEAR-ALIGNED markdown tables (the churn-bait class).
+r"""md-table-shape: detect NEAR-ALIGNED markdown tables (the churn-bait class).
 
 A table column is NEAR-ALIGNED when its cell widths vary across rows AND at
 least one cell in that column carries extra/unbalanced padding. Pure-compact
@@ -9,19 +9,22 @@ separate question (briefing row: daemon-format coupling home) and are NOT
 flagged here. Only the mixed state is churn bait: the next formatter pass
 rewrites it, so diffs lie about being substantive.
 
-Limitations: naive pipe split (no \\| escapes, no pipes inside code spans) —
-fine for this corpus, which contains none in table rows.
+Limitations: cells are compared as raw text (escaped `\|` inside a cell is
+kept as content and never splits a cell).
 
 Usage:
   md-table-shape.py [--self-test] [paths ...]   # default: docs/status/ (live,
-                                               # i.e. archived/ excluded — the
-                                               # D25.1 sweep scope)
+                                               # i.e. archived/ excluded — a
+                                               # subset of the D25.1 scope)
 
-The 2026-10-06 full-corpus run (all docs/ + root md) reported 39 findings
-across 10 files (6 archived, FEATURES.md, 4 live planning docs incl. the
+The 2026-10-06 full-corpus run (all docs/ + root md) reports 25 findings
+across 9 files (4 archived snapshots, FEATURES.md, and 4 live docs incl. the
 briefing's rows-29–32/appended-rows mix): recorded as evidence for the D1.4
 daemon-format coupling-home verdict, NOT normalized — rewriting archived
-snapshots trades hypothetical churn for real churn.
+snapshots trades hypothetical churn for real churn. v1 of this script
+reported 39: 14 were wrapped-row artifacts (fragmented tables and one
+escaped-pipe split), caught by dogfooding it against the session's own
+report — the e.3 dogfood-before-wire rule, enforced retroactively.
 
 Exit 0 = clean (or self-test pass), exit 1 = findings (or self-test failure).
 Committed 2026-10-06 as the d.1 fix: instruments cited in reports must be
@@ -30,6 +33,7 @@ committed instruments (round-4 brutal review e.2).
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -46,7 +50,7 @@ def split_cells(line: str) -> list[str]:
         stripped = stripped[1:]
     if stripped.endswith("|"):
         stripped = stripped[:-1]
-    return stripped.split("|")
+    return re.split(r"(?<!\\)\|", stripped)
 
 
 def is_separator(line: str) -> bool:
@@ -171,6 +175,13 @@ bounds the join, and this paragraph never becomes cell content.
 """
 
 
+ESCAPED_PIPE_TABLE = """| name | value |
+| --- | --- |
+| anchor | `git log origin/main..HEAD --format=%cI \\| tail -1` |
+| other | plain |
+"""
+
+
 def self_test() -> int:
     cases = [
         ("mixed widths flag", MIXED_TABLE, 1),
@@ -179,6 +190,7 @@ def self_test() -> int:
         ("unbalanced padding flags", UNBALANCED_TABLE, 1),
         ("mid-cell wrapped rows stay clean", WRAPPED_TABLE, 0),
         ("prose after a wrapped table never glues", WRAPPED_THEN_PROSE, 0),
+        ("escaped pipes never split a cell", ESCAPED_PIPE_TABLE, 0),
     ]
     failures = 0
     for label, document, expected in cases:
