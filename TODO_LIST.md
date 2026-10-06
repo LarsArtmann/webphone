@@ -111,7 +111,18 @@ staged-diff `-w` divergence check over formatter-OWNED files only (Go/JS/MJS/CSS
 deliberately excluded — unowned means no drift definition), self-tested in a scratch repo
 (whitespace-only Go edit EXIT 1 with the `nix fmt` fix, substantive EXIT 0, md-only "unowned"),
 wired as an AGENTS Commands habit line — kills the e62fe34 class at add-time. D18.3 durability:
-`keep-alives` joined `.codespellrc` ignore-words after its second adjudication. Was: 09-26 §d3/§f11-12; 09-24 12:41 §f19-20; 04:32 §f14-15
+`keep-alives` joined `.codespellrc` ignore-words after its second adjudication. d.1 fix 2026-10-06
+15:40: the detector is now a COMMITTED instrument — `scripts/md-table-shape.py` (self-test 4/4:
+mixed flags, compact clean, fully-aligned clean = D1.4's question, unbalanced-padding flags;
+default scope docs/status/ live = ZERO; explicit rerun over the exact 10-05/10-06 status+planning
+sweep set = ZERO, reproducing the claim from the repo). Full-corpus run (all docs/ + root md):
+39 findings across 10 files — 6 archived snapshots, FEATURES.md, and 4 pre-10-05 planning docs
+incl. the briefing's rows-29–32/appended-rows mix — banked as D1.4 coupling-home evidence and
+deliberately NOT normalized (rewriting archived snapshots trades hypothetical churn for real).
+f.7 canary ARMED 2026-10-06: no commit has touched the normalized 03-40 table since `455e26c`
+(`git log --follow` clean) — the next daemon md commit touching it gets a detector rerun; a
+re-introduced mix would prove the daemon formatter IS the near-aligned source for D1.4.
+Was: 09-26 §d3/§f11-12; 09-24 12:41 §f19-20; 04:32 §f14-15
 
 ### OWNER-calls batch session
 
