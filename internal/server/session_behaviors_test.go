@@ -63,7 +63,6 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	faxes := store.NewFaxes(db)
 	handler := server.New(server.Deps{
 		Config:    cfg,
-		Sessions:  session.NewMemStore(time.Hour),
 		Messages:  messages,
 		Faxes:     faxes,
 		Contacts:  store.NewContacts(db),
@@ -73,6 +72,11 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 		Hubs:      hubs,
 		DB:        db,
 		BlobRoot:  blobs.Root(),
+		// The store row must live and die by the configured idle window,
+		// exactly like the production SQLite wiring (app.go passes
+		// cfg.SessionTTL); renewal specs shrink the window through the
+		// mutate hook and would never see expiry with a hardcoded hour.
+		Sessions: session.NewMemStore(cfg.SessionTTL),
 	})
 
 	jars, err := cookiejar.New(nil)
@@ -202,6 +206,44 @@ var _ = Describe("A TLS-fronted deployment (https trusted origins)", func() {
 		Expect(csrfDeletion).NotTo(BeNil(), "login must rotate the CSRF cookie")
 		Expect(csrfDeletion.Secure).To(BeTrue(), "the deletion cookie must match the real CSRF cookie's Secure attribute")
 	})
+
+	It("re-issues the sliding-renewal cookie Secure", func() {
+		// Renewal (activity past the idle window's halfway point) re-issues
+		// the cookie through the same CookiePolicy login used. This drives
+		// one past-half-life request under TLS-fronted config — r.TLS stays
+		// nil behind the suite's plain-HTTP server, so a re-issue that
+		// forgot the policy would downgrade the browser cookie mid-session.
+		const idle = 1200 * time.Millisecond
+		wp := start(GinkgoT(), "", func(c *config.Config) {
+			c.CSRF.TrustedOrigins = []string{"https://pbx.example.com"}
+			c.SessionTTL = idle
+			c.SessionMaxTTL = 3 * idle
+		})
+		payload, err := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+		Expect(err).NotTo(HaveOccurred())
+		loginResp, _ := wp.postRaw("/api/session", payload)
+		Expect(loginResp.StatusCode).To(Equal(http.StatusCreated))
+		minted := setCookieNamed(loginResp, session.CookieName)
+		Expect(minted).NotTo(BeNil())
+		Expect(minted.Secure).To(BeTrue(), "login behind the proxy mints Secure; the renewal ride starts from this state")
+
+		// While more than half the idle window remains, the half-life
+		// throttle must re-issue nothing at all.
+		young := wp.probeSession(minted.Value)
+		Expect(young.StatusCode).To(Equal(http.StatusOK))
+		Expect(setCookieNamed(young, session.CookieName)).To(BeNil(), "young sessions re-issue nothing (the half-life throttle)")
+
+		// Past the halfway point the same activity re-issues the cookie —
+		// Secure, same token, with the server's remaining lifetime.
+		time.Sleep(idle/2 + 100*time.Millisecond)
+		renewedResp := wp.probeSession(minted.Value)
+		Expect(renewedResp.StatusCode).To(Equal(http.StatusOK))
+		renewed := setCookieNamed(renewedResp, session.CookieName)
+		Expect(renewed).NotTo(BeNil(), "past-half-life activity must re-issue the session cookie")
+		Expect(renewed.Secure).To(BeTrue(), "the re-issue must carry Secure exactly like the login Set-Cookie")
+		Expect(renewed.Value).To(Equal(minted.Value), "sliding renewal keeps the token; only the window moves")
+		Expect(renewed.MaxAge).To(BeNumerically(">", 0), "the re-issue carries the server's remaining lifetime")
+	})
 })
 
 // --- helpers -------------------------------------------------------------
@@ -261,6 +303,31 @@ func (wp *webphone) do(method, path string, body []byte) (*http.Response, []byte
 	resp, err := wp.client.Do(req)
 	Expect(err).NotTo(HaveOccurred())
 	return resp, readAllBody(resp)
+}
+
+// setCookieNamed picks one Set-Cookie by name from a raw response: the
+// specs assert attributes on the raw Set-Cookie bytes because cookie
+// jars refuse to store Secure cookies received over plain HTTP.
+func setCookieNamed(resp *http.Response, name string) *http.Cookie {
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	return nil
+}
+
+// probeSession GETs /api/session carrying the raw session token by hand:
+// the jar never stored the Secure cookie over the suite's plain HTTP, so
+// the spec drives the header itself.
+func (wp *webphone) probeSession(token string) *http.Response {
+	req, err := http.NewRequest(http.MethodGet, wp.base+"/api/session", nil)
+	Expect(err).NotTo(HaveOccurred())
+	req.Header.Set("Cookie", session.CookieName+"="+token)
+	resp, err := wp.client.Do(req)
+	Expect(err).NotTo(HaveOccurred())
+	_ = readAllBody(resp)
+	return resp
 }
 
 func (wp *webphone) sessionCookie() *http.Cookie {
