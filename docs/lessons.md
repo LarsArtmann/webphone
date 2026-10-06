@@ -228,6 +228,13 @@ and the evidence. Newest last is NOT enforced — group by topic.
   flakes across two releases is a pattern. Convention: touch
   /tmp/webphone-e2e-window before E2E/VM gates, have every session's
   nix/go launchers check it, remove after.
+- Cookie jars refuse to STORE Secure cookies received over plain
+  HTTP (RFC 6265bis strict-secure behavior, 2026-10-06): a test that
+  logs in against an httptest HTTP server and then reads the jar for
+  the cookie's Secure flag sees false even when the wire bytes carry
+  `Secure`. The jar is the wrong oracle for cookie ATTRIBUTES — assert
+  on the raw response's Set-Cookie headers (`resp.Cookies()`), keep
+  the jar for round-trip behavior only.
 - oxfmt-green is NOT treefmt-green for Go files (2026-10-06, the
   `e62fe34` red): a helper-extraction edit landed with one over-indented
   line; `buildflow -s oxfmt` passed it ("All matched files use the
