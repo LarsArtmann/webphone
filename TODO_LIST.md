@@ -29,7 +29,11 @@ throttle + same-token assertions; `62bc7dc`); slog secret-leak grep over server/
 CLEAN (attrs are errors/status/family/code/extension only; vendored usermgmt logs the cookie NAME
 and bot id, never values; enroll-token errors are static strings; gateway logs nothing); codespell
 over the CHANGELOG/lessons/status/planning delta EXIT 0 — the four `keep-alives` hits are the
-twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. ISLAND AUDIT 2026-10-06 (D19): clean — adoption ladder correct
+twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. Full-repo sweep close
+(b.3/f.6) 2026-10-06 15:50: the five unswept packages are CLEAN — app (one `log.Info` "timezone
+applied" zone attr), pbx + web/views (ZERO log calls), fax (6 slog.Warn: error + fax_id),
+messaging (3 slog.Warn: error + message id + owner extension + remote number — CDR-class data,
+the accepted 18.2 bar); no print/os.Stderr paths anywhere in the five. ISLAND AUDIT 2026-10-06 (D19): clean — adoption ladder correct
 (3 backoff retries, reload last resort); zero raw innerHTML sinks (whoami/snippet/lightbox/errors
 all textContent/value/src); zero credential persistence in localStorage; legacy pbx-contacts
 import deletes only after EVERY row is server-accepted, else retries next login; no
