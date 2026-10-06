@@ -46,10 +46,8 @@ def is_archived(path: Path) -> bool:
 
 def split_cells(line: str) -> list[str]:
     stripped = line.strip()
-    if stripped.startswith("|"):
-        stripped = stripped[1:]
-    if stripped.endswith("|"):
-        stripped = stripped[:-1]
+    stripped = stripped.removeprefix("|")
+    stripped = stripped.removesuffix("|")
     return re.split(r"(?<!\\)\|", stripped)
 
 
@@ -80,6 +78,7 @@ def table_blocks(lines: list[str]):
     the row until a line ends with one); blank lines never continue a row, so
     prose after a table cannot glue onto it.
     """
+
     def read_row(index: int) -> tuple[str, int]:
         parts = [lines[index]]
         cursor = index
@@ -92,7 +91,11 @@ def table_blocks(lines: list[str]):
 
     index = 0
     while index < len(lines):
-        if lines[index].strip().startswith("|") and index + 1 < len(lines) and is_separator(lines[index + 1]):
+        if (
+            lines[index].strip().startswith("|")
+            and index + 1 < len(lines)
+            and is_separator(lines[index + 1])
+        ):
             block = [lines[index], lines[index + 1]]
             cursor = index + 2
             while cursor < len(lines) and lines[cursor].strip().startswith("|"):
@@ -169,10 +172,13 @@ WRAPPED_TABLE = """| name | ruling |
 | changelog | code-path changes log; tests and docs stay silent |
 """
 
-WRAPPED_THEN_PROSE = WRAPPED_TABLE + """
+WRAPPED_THEN_PROSE = (
+    WRAPPED_TABLE
+    + """
 Prose after the table must not glue onto the last row: the empty line
 bounds the join, and this paragraph never becomes cell content.
 """
+)
 
 
 ESCAPED_PIPE_TABLE = """| name | value |

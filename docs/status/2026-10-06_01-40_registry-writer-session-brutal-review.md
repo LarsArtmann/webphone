@@ -14,6 +14,7 @@ clean, daemon quiescent since `1d3f23c`.
 ## Opening — the brutal questions, answered straight
 
 **1. What did you forget?**
+
 - **Buildflow never ran over my own commit.** I ran `nix flake check`
   (19/19) over `a5dd42f` — the PRE-change head — plus `go test ./...`,
   `nix fmt`, and CI for `2b52fbf`. AGENTS names buildflow THE quality gate;
@@ -34,6 +35,7 @@ clean, daemon quiescent since `1d3f23c`.
   "unconfirmed by an observed daemon pass" caveat.
 
 **2. What is stupid that we do anyway?**
+
 - **The daemon races keep winning.** Round-2 documented the protocol
   (atomic writes, read-immediately-then-edit); I still burned one round-trip
   on a grep-read → edit attempt, and the daemon committed my intermediate
@@ -47,6 +49,7 @@ clean, daemon quiescent since `1d3f23c`.
   unverified-push behavior AGENTS forbids.
 
 **3. What could I have done better?**
+
 - Run buildflow over `2b52fbf` before declaring done — or state the explicit
   gate subset and why it suffices for the change class.
 - Apply my own fresh knowledge to my own output: the 00-52 report contains a
@@ -57,6 +60,7 @@ clean, daemon quiescent since `1d3f23c`.
   batch window is what let the daemon mint the intermediate commit.
 
 **4. What could I still improve?**
+
 - Framing coverage in the micro-test: the `"\n\n"` blank-line framing is
   shell-verified only; `TestRegistryBlockEmitsDaemonAlignedRows` could pin
   it and assert uniform row lengths (property).
@@ -99,22 +103,22 @@ Missing: framing pin, uniform-length property (listed in §f).
 
 ## a) FULLY DONE (verified this session)
 
-| # | Item | Proof |
-|---|------|-------|
-| 1 | CI verdicts for the day's pushes: `90ca9d1`/`b2c16ce` RED = the known registry-reflow class, already fixed by `6a8eaac` (content pin); `a5dd42f` SUCCESS after 1h28m queue | `gh run list` receipts 37356784626 / 37358335379 / 37365583689 |
-| 2 | Full local gate over clean HEAD `a5dd42f` — round-2 §e.1 gap closed | `nix flake check`: all 19 checks incl. treefmt, island-js, island-lint, KVM backup VM |
-| 3 | Q15 carve trigger adjudicated → STAYS GATED (round-2 §F15 "do NOT start" supersedes the 09-30 baseline reading); recorded in TODO_LIST to stop re-litigation | TODO_LIST carve row note |
-| 4 | Handoff line-ref drift fixed: gopls `unused- r` lives at `passkey_api.go:236` now; still live, still not ours | lsp_diagnostics receipt |
-| 5 | §f.27: the `-update` writer emits the daemon-aligned shape (max-content columns, formatter blank line); golden + round-trip test; consecutive regens md5-identical (`d25d4a50…`) | `TestRegistryBlockEmitsDaemonAlignedRows`; regen-hash proof |
-| 6 | Docs: CHANGELOG Unreleased entry, TODO_LIST updates, session report 00-52; commit `2b52fbf` pushed, CI SUCCESS 2m14s | `gh run` 37385416565 |
+| # | Item                                                                                                                                                                             | Proof                                                                                 |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1 | CI verdicts for the day's pushes: `90ca9d1`/`b2c16ce` RED = the known registry-reflow class, already fixed by `6a8eaac` (content pin); `a5dd42f` SUCCESS after 1h28m queue       | `gh run list` receipts 37356784626 / 37358335379 / 37365583689                        |
+| 2 | Full local gate over clean HEAD `a5dd42f` — round-2 §e.1 gap closed                                                                                                              | `nix flake check`: all 19 checks incl. treefmt, island-js, island-lint, KVM backup VM |
+| 3 | Q15 carve trigger adjudicated → STAYS GATED (round-2 §F15 "do NOT start" supersedes the 09-30 baseline reading); recorded in TODO_LIST to stop re-litigation                     | TODO_LIST carve row note                                                              |
+| 4 | Handoff line-ref drift fixed: gopls `unused- r` lives at `passkey_api.go:236` now; still live, still not ours                                                                    | lsp_diagnostics receipt                                                               |
+| 5 | §f.27: the `-update` writer emits the daemon-aligned shape (max-content columns, formatter blank line); golden + round-trip test; consecutive regens md5-identical (`d25d4a50…`) | `TestRegistryBlockEmitsDaemonAlignedRows`; regen-hash proof                           |
+| 6 | Docs: CHANGELOG Unreleased entry, TODO_LIST updates, session report 00-52; commit `2b52fbf` pushed, CI SUCCESS 2m14s                                                             | `gh run` 37385416565                                                                  |
 
 ## b) PARTIALLY DONE
 
-| Item | State | Remaining |
-|------|-------|-----------|
-| "Churn is dead" claim | Byte-reconstruction + self-idempotence proven | One OBSERVED daemon pass over the final shape (inference → evidence) |
-| Gate coverage of `2b52fbf` | go test ./... + nix fmt + CI green | buildflow + island tests + codespell not run over it (change class argues low risk; the bar argues run them anyway) |
-| Writer test depth | Golden + canonical round-trip | Framing pin + uniform-row-length property |
+| Item                       | State                                         | Remaining                                                                                                           |
+| -------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| "Churn is dead" claim      | Byte-reconstruction + self-idempotence proven | One OBSERVED daemon pass over the final shape (inference → evidence)                                                |
+| Gate coverage of `2b52fbf` | go test ./... + nix fmt + CI green            | buildflow + island tests + codespell not run over it (change class argues low risk; the bar argues run them anyway) |
+| Writer test depth          | Golden + canonical round-trip                 | Framing pin + uniform-row-length property                                                                           |
 
 ## c) NOT STARTED (owner-terminal or gated — correctly untouched)
 
@@ -157,6 +161,7 @@ dead).
 ## f) Up to 50 things to get done next
 
 **Assistant — executable now:**
+
 1. Run buildflow over `2b52fbf` (closes d.3; BUILDFLOW_NO_RESULT_CACHE not
    needed for a delta this small).
 2. Run the island JS tests (closes d.1; expectation: unaffected, but say so
@@ -206,13 +211,13 @@ dead).
 **Gated/standing:**
 36. Q8: erraudit tier-1+2 re-measure (due 2026-11-05; must stay 0/0).
 37. Q16: quarterly watches 2026-12-20 (sip.js 0.22, templ-components, oxlint
-    globals, E2E budget).
+globals, E2E budget).
 38. Q15: carve micro-plan when the NEXT `internal/server` file lands
-    (post-round-2-plan, per the adjudication).
+(post-round-2-plan, per the adjudication).
 39. Q13: re-test `mcp_qmd_get` after the next Crush release.
 40. Q17: scheduled sends stay dead unless the sitting revives them.
 
-*(40 real items; padding to 50 would be inventory theater.)*
+_(40 real items; padding to 50 would be inventory theater.)_
 
 ## g) Questions I can NOT figure out myself (max 3)
 

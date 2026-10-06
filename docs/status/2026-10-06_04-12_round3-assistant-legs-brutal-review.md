@@ -45,6 +45,7 @@ C1 owner sitting (briefing ready) · C3–C6/C8 owner+ssh legs · C7 (gated on C
 ## f) Up to 50 things to get done next
 
 **Owner — the sitting and its legs (the plan's remaining mass):**
+
 1. C1 THE SITTING (34 briefing rows; flips 9/16 TODO rows; unblocks C7/C12–C15).
 2. §g-Q1 verdict: CI-bar subset policy for docs/test-only changes (tonight's red argues the fmt gate must NEVER be the dropped subset).
 3. §g-Q2 verdict: push-lag threshold — now with three datapoints plus my inconsistent 6m jump as a fourth (inconsistency IS the argument for a number).

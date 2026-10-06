@@ -86,6 +86,7 @@ SUPERB" — full server-side auth audit + three hardening fixes, gated and shipp
 ## f) Up to 50 things to get done next
 
 **Auth tail (from this session):**
+
 1. Codespell over the CHANGELOG/lessons delta (2 minutes, closes d.3).
 2. Renewal Secure re-issue end-to-end spec (b.2).
 3. Island-side auth audit (csrf.js/session.js/passkey.js, XSS surfaces) pre-release.
@@ -102,7 +103,7 @@ SUPERB" — full server-side auth audit + three hardening fixes, gated and shipp
 10. C1 THE SITTING (34 rows; flips 9/16; unblocks C7/C12–C15).
 11. §g-Q1 CI-bar subset policy (04-12).
 12. §g-Q2 push-lag threshold — datapoints: green/3h, red-fix/15m, green/25m, green/6m,
-    and this session's >60m manual push of `14154c5`+auth batch.
+and this session's >60m manual push of `14154c5`+auth batch.
 13. §g-Q3 daemon-format coupling home (04-12).
 14. C3 stack CI 1h-ceiling diagnosis.
 15. C4 stack lock bump + gates + browser E2E.

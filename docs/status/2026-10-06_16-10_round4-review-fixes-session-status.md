@@ -8,11 +8,11 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
 
 ## The three §g rulings (all INTERIM, all sitting-owned)
 
-| # | Question | Ruling | Receipt |
-| --- | -------- | ------ | ------- |
-| 1 | Push-bar anchor | FIRST UNPUSHED COMMIT's timestamp (`git log origin/main..HEAD --format=%cI \| tail -1`) — the daemon's own push state is unobservable while its push-leg is dead, so the conservative observable anchor wins; state the anchor whenever invoked | AGENTS Conventions bullet (`14aaec1`) + briefing-row-1.3 refinement in the plan |
-| 2 | CHANGELOG bar for refactor-class changes | committed code-path changes get an `[Unreleased]` line — polish/one-home trains included (10-04 precedent re-affirmed); test-only and docs-only deltas stay silent | AGENTS Conventions bullet (`14aaec1`) + the applied line itself (`e684b99`) |
-| 3 | Accepted-risk readership | FORCED onto the briefing: row 35 ratifies the passkey `?user_id=` ceremony-key acceptance — it can no longer die inside an unopened D30 | briefing row 35 + plan D1 row re-count (`d355b91`) |
+| # | Question                                 | Ruling                                                                                                                                                                                                                                          | Receipt                                                                         |
+| - | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1 | Push-bar anchor                          | FIRST UNPUSHED COMMIT's timestamp (`git log origin/main..HEAD --format=%cI \| tail -1`) — the daemon's own push state is unobservable while its push-leg is dead, so the conservative observable anchor wins; state the anchor whenever invoked | AGENTS Conventions bullet (`14aaec1`) + briefing-row-1.3 refinement in the plan |
+| 2 | CHANGELOG bar for refactor-class changes | committed code-path changes get an `[Unreleased]` line — polish/one-home trains included (10-04 precedent re-affirmed); test-only and docs-only deltas stay silent                                                                              | AGENTS Conventions bullet (`14aaec1`) + the applied line itself (`e684b99`)     |
+| 3 | Accepted-risk readership                 | FORCED onto the briefing: row 35 ratifies the passkey `?user_id=` ceremony-key acceptance — it can no longer die inside an unopened D30                                                                                                         | briefing row 35 + plan D1 row re-count (`d355b91`)                              |
 
 ## f) execution
 
@@ -76,4 +76,5 @@ post-sitting). The f.8 pre-commit-hook idea stays unwired deliberately: the
 daemon's commits traverse the same hook and the live-cycle test has not run.
 
 ---
-*Exit state: see the final push + CI verdict below (filled at session close).*
+
+_Exit state: see the final push + CI verdict below (filled at session close)._

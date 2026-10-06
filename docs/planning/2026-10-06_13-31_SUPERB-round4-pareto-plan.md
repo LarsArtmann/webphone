@@ -16,133 +16,133 @@
 
 ## Comprehensive plan (30–100 min tasks, ALL open TODOs, sorted by importance/impact/effort/customer-value)
 
-| # | Task | Owner | Effort | Impact | Value | Depends |
-|---|------|-------|--------|--------|-------|---------|
-| D1 | THE SITTING v2 — 35 briefing rows in dependency order + SEVEN new §g verdicts: CI-bar subset for docs/test-only changes · push-lag threshold + ANCHOR definition (6 datapoints: green/3h, red-fix/15m, green/25m, green/6m, green/>60m, green/60m-stall-manual-push; interim anchor = first-unpushed-commit timestamp, see AGENTS) · daemon-format coupling home (now with the md-table-shape 25-finding corpus evidence + armed 03-40 canary) · `__Host-webphone_session` prefix adopt-or-not · enroll-ceremony token binding vs ULID-secrecy posture · passkey `?user_id=` ceremony-key acceptance (briefing row 35) · auth audit cadence (one-off vs quarterly-with-C21) | 👤 | 90m | 🔥🔥🔥 | flips 9/16 rows; unblocks D7/D8/D26/D29/D30 | briefing doc (ready) |
-| D2 | Stack CI 1h-ceiling diagnosis inside `nix flake check` (mod_enum build log; read-only `gh run list` on the stack first) | 👤 | 100m | 🔥🔥🔥 | unblocks entire deploy train | — |
-| D3 | Stack lock bump to ≥`57cebe6` + stack gates + browser E2E (445s budget, one re-run on the transfer flake); nginx→caddy edits at relock per the TODO command sheet | 👤 | 100m | 🔥🔥🔥 | closes island-honesty + cascade + passkey E2E debt | D2 |
-| D4 | pbx-artmann clean-tree check → relock → re-pin | 👤 | 30m | 🔥🔥 | prod rides the pinned tree | D3 |
-| D5 | Deploy: `nixos-rebuild test` → passkey fail-closed password-file drill → `switch` → rotate `/tmp/pbx-toplevel-current` → fresh diff-closures baseline → smoke `--expect-version <V>` | 👤 | 60m | 🔥🔥🔥 | ships the day's work; live passkey proof | D4 |
-| D6 | Prod SMS 422 triage: journal `telnyx-webhooks` → §4 decision tree → test SMS → record root cause (runbook + TODO) | 👤 | 30m | 🔥🔥 | restores outbound SMS on prod | — |
-| D7 | Post-sitting paper closes (Q6-class): verdicts → briefing/TODO/ROADMAP; markdownlint posture implementation (row-18 verdict); AGENTS edits within the 377 cap; registry standing rows for ratified 29–32 + vcard triad; the three 13-12 §g verdicts land in TODO rows; TODO_LIST harvest of the auth-tail rows | 🤖 | 100m | 🔥🔥 | decisions become durable docs, no drift | D1 |
-| D8 | v2.9.0 release train: CHANGELOG cut (folds passkey + registry-writer + auth § Security), version decision, tag, gh release, stack re-pin dance per release-runbook | 👤+🤖 | 100m | 🔥🔥 | folds the trains into a version | D12 |
-| D18 | Auth tail batch A (assistant, executable NOW): renewal Secure re-issue end-to-end spec · slog secret-leak grep across server/userauth/gateway · codespell over the CHANGELOG/lessons delta (the twice-skipped subset) · auth-regression label convention row in AGENTS | 🤖 | 30m | 🔥🔥 | closes the audit's own unfinished 20% | — |
-| D19 | Island-side auth audit (client): csrf.js adoption ladder, session.js/passkey.js token handling, XSS-reachable DOM surfaces, localStorage legacy-contact import gate | 🤖 | 60m | 🔥🔥 | the unaudited half of the auth surface | — (pre-D8 preferred) |
-| D25 | Hygiene micro-batch: near-aligned-table sweep over 10-05+ reports (churn-minimization honesty) · whitespace-drift pre-commit self-check (`git diff --cached -w` divergence detector, the e62fe34 class) · aligner-vs-accept-churn convention note once D1 rules the coupling home | 🤖 | 30m | 🔢 | kills two documented near-miss classes | D1 (coupling-home verdict) |
-| D12 | samber/do verdicts: stack `/health` exposure policy + v2.9.0 fold decision (default: one release) | 👤 | 30m | 🔥 | closes dashboard row; gates D8 | D1 |
-| D10 | Passkey owner-call recording: runbook-only enroll + Lars-only v1 mapping ratification; installer release republish timing | 👤 | 30m | 🔥 | closes passkey row's non-deploy remainder | D1 |
-| D11 | Boot-contract D3 ruling: cap `StartLimitBurst`/`StartLimitIntervalSec` or ratify 5s `Restart=on-failure`; apply to module if capped | 👤 | 30m | 🔥 | closes boot-contract row | D1 |
-| D29 | `__Host-` session-cookie prefix implementation (loopback keeps the plain name; one-time re-login cost) — ONLY if D1 ratifies | 🤖 | 30m | 🔥 | browser-enforced attribute pinning | D1 |
-| D30 | usermgmt enroll-ceremony token binding (begin requires token-verified server-side handshake) — upstream library change; ONLY if D1 picks binding over ULID-secrecy | 👤+🤖 | 100m | 🔥 | removes ULID-secrecy dependence | D1 |
-| D13 | Mic pre-warm live ritual: accept→speak sub-second, indicator at ring, warm release on reject/missed | 👤 | 30m | 🔥 | closes T07/T11 verification leg | D5 (fresh prod) |
-| D14 | Visual-harness disposition: eyeball 14 shots; per-release vs per-train persistence ruling; optional vision-CLI provider decision | 👤 | 30m | 🔥 | closes T23 row | — |
-| D15 | Stack batch Q9: `services.webphone.paperless` module option + smoke arm; `ftypqt`→`video/quicktime` sniff fix; E2E MMS-outbound; pbx-artmann FEATURES:87 text | 🔀 stack | 100m | 🔥 | gateway-seam row remainder | D3 (deploy-gated) |
-| D16 | Stack docs batch Q10: WebTransport verdict doc; deploy.md secret PATH column; ops-runbook demo-call recipe + secrets path; MOH + `/recordings/` + CDR checks | 🔀 stack | 60m | 🔥 | cross-repo obligations row | — |
-| D17 | gh `notifications` scope refresh → `updateSubscription` mutation on crush #3846 (or web-Subscribe) | 👤 | 12m | 🔢 | unblinds the QMD watch | — |
-| D9 | Announcements: pick channels, approve v2.8.0 draft A/B/C, post (disclosure posture per draft) | 👤 | 30m | 🔥 | public release story | — |
-| D26 | Post-verdict tooling implementations: gosec adoption (if D1 says yes) · CI queue congestion review (concurrency/rerun settings — 1h28m + queue repeats) · daemon push-leg diagnosis (pma logs; two deaths 10-06) once the threshold verdict lands | 👤+🤖 | 60m | 🔢 | kills the recurring infra friction | D1 |
-| D20 | erraudit tier-1+2 re-measure (must stay 0/0) + boot-surface re-grade; bump next-due in AGENTS | 🤖 | 30m | 🔢 | date-gated | 2026-11-05 |
-| D21 | Quarterly watches: sip.js 0.22, templ-components upstream, oxlint globals, E2E budget ×2 rule — + auth-audit cadence slot if D1 wants it recurring | 🤖 | 30m | 🔢 | date-gated | 2026-12-20 |
-| D22 | internal/server carve: micro-plan then execution (`server/api` + `server/hooks`) | 🤖 | 3×100m | 🔥 | trigger-gated hygiene | next file in internal/server post-09-30-plan |
-| D23 | QMD `get` re-test after next Crush release (>v0.97.1) | 🤖 | 12m | 🔢 | release-gated | Crush release |
-| D24 | Scheduled sends — confirm-dead no-op: stays DECIDED-AGAINST unless the sitting revives it | — | 0m | — | zombie-row guard | D1 (if revived) |
+| #   | Task                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Owner    | Effort | Impact | Value                                              | Depends                                      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------ | -------------------------------------------------- | -------------------------------------------- |
+| D1  | THE SITTING v2 — 35 briefing rows in dependency order + SEVEN new §g verdicts: CI-bar subset for docs/test-only changes · push-lag threshold + ANCHOR definition (6 datapoints: green/3h, red-fix/15m, green/25m, green/6m, green/>60m, green/60m-stall-manual-push; interim anchor = first-unpushed-commit timestamp, see AGENTS) · daemon-format coupling home (now with the md-table-shape 25-finding corpus evidence + armed 03-40 canary) · `__Host-webphone_session` prefix adopt-or-not · enroll-ceremony token binding vs ULID-secrecy posture · passkey `?user_id=` ceremony-key acceptance (briefing row 35) · auth audit cadence (one-off vs quarterly-with-C21) | 👤       | 90m    | 🔥🔥🔥 | flips 9/16 rows; unblocks D7/D8/D26/D29/D30        | briefing doc (ready)                         |
+| D2  | Stack CI 1h-ceiling diagnosis inside `nix flake check` (mod_enum build log; read-only `gh run list` on the stack first)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | 👤       | 100m   | 🔥🔥🔥 | unblocks entire deploy train                       | —                                            |
+| D3  | Stack lock bump to ≥`57cebe6` + stack gates + browser E2E (445s budget, one re-run on the transfer flake); nginx→caddy edits at relock per the TODO command sheet                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 👤       | 100m   | 🔥🔥🔥 | closes island-honesty + cascade + passkey E2E debt | D2                                           |
+| D4  | pbx-artmann clean-tree check → relock → re-pin                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 👤       | 30m    | 🔥🔥   | prod rides the pinned tree                         | D3                                           |
+| D5  | Deploy: `nixos-rebuild test` → passkey fail-closed password-file drill → `switch` → rotate `/tmp/pbx-toplevel-current` → fresh diff-closures baseline → smoke `--expect-version <V>`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | 👤       | 60m    | 🔥🔥🔥 | ships the day's work; live passkey proof           | D4                                           |
+| D6  | Prod SMS 422 triage: journal `telnyx-webhooks` → §4 decision tree → test SMS → record root cause (runbook + TODO)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 👤       | 30m    | 🔥🔥   | restores outbound SMS on prod                      | —                                            |
+| D7  | Post-sitting paper closes (Q6-class): verdicts → briefing/TODO/ROADMAP; markdownlint posture implementation (row-18 verdict); AGENTS edits within the 377 cap; registry standing rows for ratified 29–32 + vcard triad; the three 13-12 §g verdicts land in TODO rows; TODO_LIST harvest of the auth-tail rows                                                                                                                                                                                                                                                                                                                                                              | 🤖       | 100m   | 🔥🔥   | decisions become durable docs, no drift            | D1                                           |
+| D8  | v2.9.0 release train: CHANGELOG cut (folds passkey + registry-writer + auth § Security), version decision, tag, gh release, stack re-pin dance per release-runbook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | 👤+🤖    | 100m   | 🔥🔥   | folds the trains into a version                    | D12                                          |
+| D18 | Auth tail batch A (assistant, executable NOW): renewal Secure re-issue end-to-end spec · slog secret-leak grep across server/userauth/gateway · codespell over the CHANGELOG/lessons delta (the twice-skipped subset) · auth-regression label convention row in AGENTS                                                                                                                                                                                                                                                                                                                                                                                                      | 🤖       | 30m    | 🔥🔥   | closes the audit's own unfinished 20%              | —                                            |
+| D19 | Island-side auth audit (client): csrf.js adoption ladder, session.js/passkey.js token handling, XSS-reachable DOM surfaces, localStorage legacy-contact import gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 🤖       | 60m    | 🔥🔥   | the unaudited half of the auth surface             | — (pre-D8 preferred)                         |
+| D25 | Hygiene micro-batch: near-aligned-table sweep over 10-05+ reports (churn-minimization honesty) · whitespace-drift pre-commit self-check (`git diff --cached -w` divergence detector, the e62fe34 class) · aligner-vs-accept-churn convention note once D1 rules the coupling home                                                                                                                                                                                                                                                                                                                                                                                           | 🤖       | 30m    | 🔢     | kills two documented near-miss classes             | D1 (coupling-home verdict)                   |
+| D12 | samber/do verdicts: stack `/health` exposure policy + v2.9.0 fold decision (default: one release)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 👤       | 30m    | 🔥     | closes dashboard row; gates D8                     | D1                                           |
+| D10 | Passkey owner-call recording: runbook-only enroll + Lars-only v1 mapping ratification; installer release republish timing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | 👤       | 30m    | 🔥     | closes passkey row's non-deploy remainder          | D1                                           |
+| D11 | Boot-contract D3 ruling: cap `StartLimitBurst`/`StartLimitIntervalSec` or ratify 5s `Restart=on-failure`; apply to module if capped                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 👤       | 30m    | 🔥     | closes boot-contract row                           | D1                                           |
+| D29 | `__Host-` session-cookie prefix implementation (loopback keeps the plain name; one-time re-login cost) — ONLY if D1 ratifies                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 🤖       | 30m    | 🔥     | browser-enforced attribute pinning                 | D1                                           |
+| D30 | usermgmt enroll-ceremony token binding (begin requires token-verified server-side handshake) — upstream library change; ONLY if D1 picks binding over ULID-secrecy                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | 👤+🤖    | 100m   | 🔥     | removes ULID-secrecy dependence                    | D1                                           |
+| D13 | Mic pre-warm live ritual: accept→speak sub-second, indicator at ring, warm release on reject/missed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | 👤       | 30m    | 🔥     | closes T07/T11 verification leg                    | D5 (fresh prod)                              |
+| D14 | Visual-harness disposition: eyeball 14 shots; per-release vs per-train persistence ruling; optional vision-CLI provider decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 👤       | 30m    | 🔥     | closes T23 row                                     | —                                            |
+| D15 | Stack batch Q9: `services.webphone.paperless` module option + smoke arm; `ftypqt`→`video/quicktime` sniff fix; E2E MMS-outbound; pbx-artmann FEATURES:87 text                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 🔀 stack | 100m   | 🔥     | gateway-seam row remainder                         | D3 (deploy-gated)                            |
+| D16 | Stack docs batch Q10: WebTransport verdict doc; deploy.md secret PATH column; ops-runbook demo-call recipe + secrets path; MOH + `/recordings/` + CDR checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 🔀 stack | 60m    | 🔥     | cross-repo obligations row                         | —                                            |
+| D17 | gh `notifications` scope refresh → `updateSubscription` mutation on crush #3846 (or web-Subscribe)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | 👤       | 12m    | 🔢     | unblinds the QMD watch                             | —                                            |
+| D9  | Announcements: pick channels, approve v2.8.0 draft A/B/C, post (disclosure posture per draft)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 👤       | 30m    | 🔥     | public release story                               | —                                            |
+| D26 | Post-verdict tooling implementations: gosec adoption (if D1 says yes) · CI queue congestion review (concurrency/rerun settings — 1h28m + queue repeats) · daemon push-leg diagnosis (pma logs; two deaths 10-06) once the threshold verdict lands                                                                                                                                                                                                                                                                                                                                                                                                                           | 👤+🤖    | 60m    | 🔢     | kills the recurring infra friction                 | D1                                           |
+| D20 | erraudit tier-1+2 re-measure (must stay 0/0) + boot-surface re-grade; bump next-due in AGENTS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | 🤖       | 30m    | 🔢     | date-gated                                         | 2026-11-05                                   |
+| D21 | Quarterly watches: sip.js 0.22, templ-components upstream, oxlint globals, E2E budget ×2 rule — + auth-audit cadence slot if D1 wants it recurring                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | 🤖       | 30m    | 🔢     | date-gated                                         | 2026-12-20                                   |
+| D22 | internal/server carve: micro-plan then execution (`server/api` + `server/hooks`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | 🤖       | 3×100m | 🔥     | trigger-gated hygiene                              | next file in internal/server post-09-30-plan |
+| D23 | QMD `get` re-test after next Crush release (>v0.97.1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | 🤖       | 12m    | 🔢     | release-gated                                      | Crush release                                |
+| D24 | Scheduled sends — confirm-dead no-op: stays DECIDED-AGAINST unless the sitting revives it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | —        | 0m     | —      | zombie-row guard                                   | D1 (if revived)                              |
 
 (26 tasks; every open item below maps.)
 
 ## Fine breakdown (≤12 min each, ALL TODOs, sorted by importance/impact/effort/customer-value)
 
-| # | Fine task | Parent | Owner |
-|---|-----------|--------|-------|
-| 1.1 | Read the briefing doc end-to-end; confirm the 35 rows' order still holds | D1 | 👤 |
-| 1.2 | Verdict: CI-bar subset policy for docs/test-only changes (fmt gate NEVER droppable) | D1 | 👤 |
-| 1.3 | Verdict: push-lag threshold number + session-push ratification | D1 | 👤 |
-| 1.4 | Verdict: daemon-format coupling note home | D1 | 👤 |
-| 1.5 | Verdict: `__Host-` cookie prefix yes/no | D1 | 👤 |
-| 1.6 | Verdict: enroll token binding vs ULID-secrecy posture | D1 | 👤 |
-| 1.7 | Verdict: auth audit cadence (one-off vs quarterly) | D1 | 👤 |
-| 1.8 | Rows 33–34 (release/deploy order) with fresh evidence | D1 | 👤 |
-| 1.9 | Remaining tooling/dedup/seam micro-decision rows | D1 | 👤 |
-| 1.10 | Write the sitting minutes into the briefing doc | D1 | 👤 |
-| 2.1 | Stack `gh run list` read-only: last 10 runs, failure signatures | D2 | 👤 |
-| 2.2 | Pull the mod_enum build log; identify the 1h-ceiling step | D2 | 👤 |
-| 2.3 | Classify: flake, real break, or timeout budget | D2 | 👤 |
-| 2.4 | Fix or fence the failing leg; re-run `nix flake check` | D2 | 👤 |
-| 3.1 | Bump the stack lock to webphone ≥`57cebe6` | D3 | 👤 |
-| 3.2 | Apply nginx→caddy edits at the relock (command sheet) | D3 | 👤 |
-| 3.3 | Stack gates: flake check + VM | D3 | 👤 |
-| 3.4 | Browser E2E run 1 (445s budget) | D3 | 👤 |
-| 3.5 | On transfer-flake death: ONE re-run before digging | D3 | 👤 |
-| 3.6 | Record E2E green receipt in the TODO row | D3 | 👤 |
-| 4.1 | pbx-artmann tree-clean check | D4 | 👤 |
-| 4.2 | Relock + re-pin + probe OK | D4 | 👤 |
-| 5.1 | `nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech` | D5 | 👤 |
-| 5.2 | Passkey fail-closed drill: break the password file → expect loud 503 Rejection | D5 | 👤 |
-| 5.3 | Restore file → login green | D5 | 👤 |
-| 5.4 | `nixos-rebuild switch` | D5 | 👤 |
-| 5.5 | Rotate `/tmp/pbx-toplevel-current` + fresh diff-closures baseline | D5 | 👤 |
-| 5.6 | Smoke `--base https://pbx.artmann.tech --expect-version <V>` | D5 | 👤 |
-| 5.7 | Session-cookie Secure sanity: browser devtools shows `Secure` on webphone_session over https | D5 | 👤 |
-| 6.1 | Journal telnyx-webhooks unit: status + recent error lines | D6 | 👤 |
-| 6.2 | Walk the §4 decision tree; fix creds/bridge per findings | D6 | 👤 |
-| 6.3 | Test SMS (self-send 422 = expected) | D6 | 👤 |
-| 6.4 | Record root cause in TODO + stack runbook | D6 | 👤 |
-| 7.1 | Harvest sitting verdicts into TODO_LIST rows (mechanical) | D7 | 🤖 |
-| 7.2 | markdownlint posture: implement or record detect-only (per row-18 verdict) | D7 | 🤖 |
-| 7.3 | Registry standing rows 29–32 + vcard triad ratifications | D7 | 🤖 |
-| 7.4 | AGENTS edits within the 377-line cap | D7 | 🤖 |
-| 7.5 | ROADMAP/FEATURES truthing for every flipped row | D7 | 🤖 |
-| 8.1 | CHANGELOG cut for v2.9.0 (incl. § Security fold) | D8 | 👤+🤖 |
-| 8.2 | Version decision + `webphoneVersion` bump in flake.nix | D8 | 👤 |
-| 8.3 | Full release gate: buildflow + vulnix + flake check | D8 | 🤖 |
-| 8.4 | Tag + push + gh release | D8 | 👤 |
-| 8.5 | Stack re-pin dance per release-runbook | D8 | 👤 |
-| 8.6 | Post-release TODO sweep (delete done rows) | D8 | 🤖 |
-| 18.1 | Renewal Secure re-issue spec (past-half-life request under https origins → Set-Cookie Secure) | D18 | 🤖 |
-| 18.2 | slog secret-leak grep (webhook secret, passwords, tokens) over server/userauth/gateway | D18 | 🤖 |
-| 18.3 | Codespell over the 10-06 docs delta | D18 | 🤖 |
-| 18.4 | Auth-regression label convention (AGENTS row) | D18 | 🤖 |
-| 19.1 | csrf.js adoption ladder review (retry-2 recover, reload-3) | D19 | 🤖 |
-| 19.2 | session.js + passkey.js token handling (no token in URLs/logs) | D19 | 🤖 |
-| 19.3 | XSS surface: innerHTML sinks, lightbox, snippet fill | D19 | 🤖 |
-| 19.4 | localStorage legacy-import gate re-check (post-accept delete) | D19 | 🤖 |
-| 19.5 | Findings → fixes or TODO rows; island tests green | D19 | 🤖 |
-| 25.1 | Sweep 10-05+ reports for near-aligned tables; daemon-shape or accept-churn per verdict | D25 | 🤖 |
-| 25.2 | Whitespace-drift staged-diff self-check recipe; wire into session habit | D25 | 🤖 |
-| 25.3 | Convention note (AGENTS or lessons) once D1.4 rules | D25 | 🤖 |
-| 12.1 | `/health` exposure verdict (remote_ip vs PublicMode vs basic auth) | D12 | 👤 |
-| 12.2 | v2.9.0 fold verdict (default: one release) | D12 | 👤 |
-| 10.1 | Record runbook-only-enroll + Lars-only v1 mapping verdicts | D10 | 👤 |
-| 10.2 | Installer republish timing decision | D10 | 👤 |
-| 11.1 | D3 retry-loop verdict; module edit if capped | D11 | 👤 |
-| 29.1 | Conditional: `__Host-` prefix in SetCookie + tests + docs | D29 | 🤖 |
-| 30.1 | Conditional: usermgmt handshake design note | D30 | 👤+🤖 |
-| 30.2 | Conditional: library change + webphone ride + tests | D30 | 👤+🤖 |
-| 13.1 | Live mic ritual (accept→speak, indicator timing, reject/missed release) | D13 | 👤 |
-| 14.1 | Eyeball the 14-shot matrix | D14 | 👤 |
-| 14.2 | Persistence ruling (per-release default) + vision-CLI provider decision | D14 | 👤 |
-| 15.1 | paperless module option + smoke arm | D15 | 🔀 |
-| 15.2 | ftypqt sniff fix | D15 | 🔀 |
-| 15.3 | E2E MMS-outbound coverage | D15 | 🔀 |
-| 15.4 | pbx-artmann FEATURES:87 text refresh | D15 | 🔀 |
-| 16.1 | WebTransport verdict doc | D16 | 🔀 |
-| 16.2 | deploy.md secret PATH column | D16 | 🔀 |
-| 16.3 | Ops-runbook demo-call recipe + secrets path | D16 | 🔀 |
-| 16.4 | MOH + `/recordings/` + CDR checks | D16 | 🔀 |
-| 17.1 | `gh auth refresh -s notifications` + subscribe to crush #3846 | D17 | 👤 |
-| 9.1 | Channel pick + wording approval (v2.8.0 drafts A/B/C) | D9 | 👤 |
-| 9.2 | Post + record links in TODO | D9 | 👤 |
-| 26.1 | gosec in-or-out verdict implementation | D26 | 🤖 |
-| 26.2 | CI workflow concurrency/rerun settings | D26 | 👤 |
-| 26.3 | Daemon push-leg diagnosis (pma logs; two 10-06 deaths) | D26 | 👤 |
-| 20.1 | erraudit tier-1+2 re-measure + suppression audit | D20 | 🤖 |
-| 20.2 | Boot-surface re-grade + AGENTS next-due bump | D20 | 🤖 |
-| 21.1 | sip.js 0.22 / templ-components / oxlint globals / E2E budget checks | D21 | 🤖 |
-| 21.2 | Auth-audit re-run slot (if D1.7 wants recurring) | D21 | 🤖 |
-| 22.1 | Trigger fires: micro-plan the carve | D22 | 🤖 |
-| 22.2 | Execute `server/api` split + tests move | D22 | 🤖 |
-| 22.3 | Execute `server/hooks` split + contract-test updates | D22 | 🤖 |
-| 23.1 | Crush >v0.97.1: re-test QMD `get`/`multi_get` | D23 | 🤖 |
-| 24.1 | Keep DECIDED-AGAINST; revive only by sitting verdict | D24 | — |
+| #    | Fine task                                                                                     | Parent | Owner |
+| ---- | --------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1.1  | Read the briefing doc end-to-end; confirm the 35 rows' order still holds                      | D1     | 👤    |
+| 1.2  | Verdict: CI-bar subset policy for docs/test-only changes (fmt gate NEVER droppable)           | D1     | 👤    |
+| 1.3  | Verdict: push-lag threshold number + session-push ratification                                | D1     | 👤    |
+| 1.4  | Verdict: daemon-format coupling note home                                                     | D1     | 👤    |
+| 1.5  | Verdict: `__Host-` cookie prefix yes/no                                                       | D1     | 👤    |
+| 1.6  | Verdict: enroll token binding vs ULID-secrecy posture                                         | D1     | 👤    |
+| 1.7  | Verdict: auth audit cadence (one-off vs quarterly)                                            | D1     | 👤    |
+| 1.8  | Rows 33–34 (release/deploy order) with fresh evidence                                         | D1     | 👤    |
+| 1.9  | Remaining tooling/dedup/seam micro-decision rows                                              | D1     | 👤    |
+| 1.10 | Write the sitting minutes into the briefing doc                                               | D1     | 👤    |
+| 2.1  | Stack `gh run list` read-only: last 10 runs, failure signatures                               | D2     | 👤    |
+| 2.2  | Pull the mod_enum build log; identify the 1h-ceiling step                                     | D2     | 👤    |
+| 2.3  | Classify: flake, real break, or timeout budget                                                | D2     | 👤    |
+| 2.4  | Fix or fence the failing leg; re-run `nix flake check`                                        | D2     | 👤    |
+| 3.1  | Bump the stack lock to webphone ≥`57cebe6`                                                    | D3     | 👤    |
+| 3.2  | Apply nginx→caddy edits at the relock (command sheet)                                         | D3     | 👤    |
+| 3.3  | Stack gates: flake check + VM                                                                 | D3     | 👤    |
+| 3.4  | Browser E2E run 1 (445s budget)                                                               | D3     | 👤    |
+| 3.5  | On transfer-flake death: ONE re-run before digging                                            | D3     | 👤    |
+| 3.6  | Record E2E green receipt in the TODO row                                                      | D3     | 👤    |
+| 4.1  | pbx-artmann tree-clean check                                                                  | D4     | 👤    |
+| 4.2  | Relock + re-pin + probe OK                                                                    | D4     | 👤    |
+| 5.1  | `nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech`                        | D5     | 👤    |
+| 5.2  | Passkey fail-closed drill: break the password file → expect loud 503 Rejection                | D5     | 👤    |
+| 5.3  | Restore file → login green                                                                    | D5     | 👤    |
+| 5.4  | `nixos-rebuild switch`                                                                        | D5     | 👤    |
+| 5.5  | Rotate `/tmp/pbx-toplevel-current` + fresh diff-closures baseline                             | D5     | 👤    |
+| 5.6  | Smoke `--base https://pbx.artmann.tech --expect-version <V>`                                  | D5     | 👤    |
+| 5.7  | Session-cookie Secure sanity: browser devtools shows `Secure` on webphone_session over https  | D5     | 👤    |
+| 6.1  | Journal telnyx-webhooks unit: status + recent error lines                                     | D6     | 👤    |
+| 6.2  | Walk the §4 decision tree; fix creds/bridge per findings                                      | D6     | 👤    |
+| 6.3  | Test SMS (self-send 422 = expected)                                                           | D6     | 👤    |
+| 6.4  | Record root cause in TODO + stack runbook                                                     | D6     | 👤    |
+| 7.1  | Harvest sitting verdicts into TODO_LIST rows (mechanical)                                     | D7     | 🤖    |
+| 7.2  | markdownlint posture: implement or record detect-only (per row-18 verdict)                    | D7     | 🤖    |
+| 7.3  | Registry standing rows 29–32 + vcard triad ratifications                                      | D7     | 🤖    |
+| 7.4  | AGENTS edits within the 377-line cap                                                          | D7     | 🤖    |
+| 7.5  | ROADMAP/FEATURES truthing for every flipped row                                               | D7     | 🤖    |
+| 8.1  | CHANGELOG cut for v2.9.0 (incl. § Security fold)                                              | D8     | 👤+🤖 |
+| 8.2  | Version decision + `webphoneVersion` bump in flake.nix                                        | D8     | 👤    |
+| 8.3  | Full release gate: buildflow + vulnix + flake check                                           | D8     | 🤖    |
+| 8.4  | Tag + push + gh release                                                                       | D8     | 👤    |
+| 8.5  | Stack re-pin dance per release-runbook                                                        | D8     | 👤    |
+| 8.6  | Post-release TODO sweep (delete done rows)                                                    | D8     | 🤖    |
+| 18.1 | Renewal Secure re-issue spec (past-half-life request under https origins → Set-Cookie Secure) | D18    | 🤖    |
+| 18.2 | slog secret-leak grep (webhook secret, passwords, tokens) over server/userauth/gateway        | D18    | 🤖    |
+| 18.3 | Codespell over the 10-06 docs delta                                                           | D18    | 🤖    |
+| 18.4 | Auth-regression label convention (AGENTS row)                                                 | D18    | 🤖    |
+| 19.1 | csrf.js adoption ladder review (retry-2 recover, reload-3)                                    | D19    | 🤖    |
+| 19.2 | session.js + passkey.js token handling (no token in URLs/logs)                                | D19    | 🤖    |
+| 19.3 | XSS surface: innerHTML sinks, lightbox, snippet fill                                          | D19    | 🤖    |
+| 19.4 | localStorage legacy-import gate re-check (post-accept delete)                                 | D19    | 🤖    |
+| 19.5 | Findings → fixes or TODO rows; island tests green                                             | D19    | 🤖    |
+| 25.1 | Sweep 10-05+ reports for near-aligned tables; daemon-shape or accept-churn per verdict        | D25    | 🤖    |
+| 25.2 | Whitespace-drift staged-diff self-check recipe; wire into session habit                       | D25    | 🤖    |
+| 25.3 | Convention note (AGENTS or lessons) once D1.4 rules                                           | D25    | 🤖    |
+| 12.1 | `/health` exposure verdict (remote_ip vs PublicMode vs basic auth)                            | D12    | 👤    |
+| 12.2 | v2.9.0 fold verdict (default: one release)                                                    | D12    | 👤    |
+| 10.1 | Record runbook-only-enroll + Lars-only v1 mapping verdicts                                    | D10    | 👤    |
+| 10.2 | Installer republish timing decision                                                           | D10    | 👤    |
+| 11.1 | D3 retry-loop verdict; module edit if capped                                                  | D11    | 👤    |
+| 29.1 | Conditional: `__Host-` prefix in SetCookie + tests + docs                                     | D29    | 🤖    |
+| 30.1 | Conditional: usermgmt handshake design note                                                   | D30    | 👤+🤖 |
+| 30.2 | Conditional: library change + webphone ride + tests                                           | D30    | 👤+🤖 |
+| 13.1 | Live mic ritual (accept→speak, indicator timing, reject/missed release)                       | D13    | 👤    |
+| 14.1 | Eyeball the 14-shot matrix                                                                    | D14    | 👤    |
+| 14.2 | Persistence ruling (per-release default) + vision-CLI provider decision                       | D14    | 👤    |
+| 15.1 | paperless module option + smoke arm                                                           | D15    | 🔀    |
+| 15.2 | ftypqt sniff fix                                                                              | D15    | 🔀    |
+| 15.3 | E2E MMS-outbound coverage                                                                     | D15    | 🔀    |
+| 15.4 | pbx-artmann FEATURES:87 text refresh                                                          | D15    | 🔀    |
+| 16.1 | WebTransport verdict doc                                                                      | D16    | 🔀    |
+| 16.2 | deploy.md secret PATH column                                                                  | D16    | 🔀    |
+| 16.3 | Ops-runbook demo-call recipe + secrets path                                                   | D16    | 🔀    |
+| 16.4 | MOH + `/recordings/` + CDR checks                                                             | D16    | 🔀    |
+| 17.1 | `gh auth refresh -s notifications` + subscribe to crush #3846                                 | D17    | 👤    |
+| 9.1  | Channel pick + wording approval (v2.8.0 drafts A/B/C)                                         | D9     | 👤    |
+| 9.2  | Post + record links in TODO                                                                   | D9     | 👤    |
+| 26.1 | gosec in-or-out verdict implementation                                                        | D26    | 🤖    |
+| 26.2 | CI workflow concurrency/rerun settings                                                        | D26    | 👤    |
+| 26.3 | Daemon push-leg diagnosis (pma logs; two 10-06 deaths)                                        | D26    | 👤    |
+| 20.1 | erraudit tier-1+2 re-measure + suppression audit                                              | D20    | 🤖    |
+| 20.2 | Boot-surface re-grade + AGENTS next-due bump                                                  | D20    | 🤖    |
+| 21.1 | sip.js 0.22 / templ-components / oxlint globals / E2E budget checks                           | D21    | 🤖    |
+| 21.2 | Auth-audit re-run slot (if D1.7 wants recurring)                                              | D21    | 🤖    |
+| 22.1 | Trigger fires: micro-plan the carve                                                           | D22    | 🤖    |
+| 22.2 | Execute `server/api` split + tests move                                                       | D22    | 🤖    |
+| 22.3 | Execute `server/hooks` split + contract-test updates                                          | D22    | 🤖    |
+| 23.1 | Crush >v0.97.1: re-test QMD `get`/`multi_get`                                                 | D23    | 🤖    |
+| 24.1 | Keep DECIDED-AGAINST; revive only by sitting verdict                                          | D24    | —     |
 
 (88 fine tasks.)
 

@@ -22,18 +22,18 @@
 set -euo pipefail
 
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
-  echo "whitespace-drift: not a git repository" >&2
-  exit 2
+	echo "whitespace-drift: not a git repository" >&2
+	exit 2
 fi
 
-owned=$(git diff --cached --name-only --diff-filter=ACMR \
-  | grep -E '\.(go|js|mjs|css|nix)$' \
-  | grep -v '_templ\.go$' \
-  | grep -v '^vendor/' || true)
+owned=$(git diff --cached --name-only --diff-filter=ACMR |
+	grep -E '\.(go|js|mjs|css|nix)$' |
+	grep -v '_templ\.go$' |
+	grep -v '^vendor/' || true)
 
 if [ -z "$owned" ]; then
-  echo "whitespace-drift: no formatter-owned files staged (md and friends are unowned — nothing to gate)"
-  exit 0
+	echo "whitespace-drift: no formatter-owned files staged (md and friends are unowned — nothing to gate)"
+	exit 0
 fi
 
 # shellcheck disable=SC2086
@@ -42,10 +42,10 @@ full=$(git diff --cached -- $owned | wc -l)
 ws=$(git diff --cached -w -- $owned | wc -l)
 
 if [ "$full" -ne "$ws" ]; then
-  echo "whitespace-drift: staged diff is $full lines but only $ws when whitespace is ignored" >&2
-  echo "  -> hand-edited whitespace survived your formatter; run: nix fmt" >&2
-  echo "  -> (oxfmt-green is NOT treefmt-green — the e62fe34 red)" >&2
-  exit 1
+	echo "whitespace-drift: staged diff is $full lines but only $ws when whitespace is ignored" >&2
+	echo "  -> hand-edited whitespace survived your formatter; run: nix fmt" >&2
+	echo "  -> (oxfmt-green is NOT treefmt-green — the e62fe34 red)" >&2
+	exit 1
 fi
 
 echo "whitespace-drift: clean ($full staged lines in formatter-owned files, none whitespace-only)"

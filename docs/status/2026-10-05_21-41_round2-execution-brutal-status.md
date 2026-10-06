@@ -49,30 +49,30 @@ evidence gathered this session.
 
 ## a) FULLY DONE (verified this session)
 
-| # | Item | Proof |
-|---|------|-------|
-| 1 | **Gate repair: registry pin made content-based.** Third daemon table-reflow (swept into `90ca9d1`) had re-broken the byte-exact pin; CI red. `TestErrorCodeRegistryIsFresh` now compares cell content with padding collapsed (`canonicalRow`); `-update` writer unchanged; `docs/error-contract.md` preamble documents the content-based pin | Commit `6a8eaac`; CI **SUCCESS** (3m39s); full `go test -count=1 ./...` green |
-| 2 | **Regression micro-test** `TestRegistryRowComparisonIgnoresPadding`: reflowed/header/separator rows canonicalize; real family change still reads as drift | In `6a8eaac`, passing in CI |
-| 3 | **Negative control:** corrupted `blob.escape` family in the live doc → test RED naming the code → restored byte-exact → green | Ran live 21:0x, output captured |
-| 4 | **Q1/F1.1 — briefing rows 33–34**: daemon-docs-format policy (reframed: pin now immune; recommendation keep-reflow) + proof-bar for green (recommendation: CI verdict on pushed head; release.sh keeps local full gate) | Briefing tail, commit `3b08058` |
-| 5 | **Q1/F1.5 — sweep-train attribution: FINISHED.** `81ea689` (15:42) = last commit touching go.mod/go.sum/vendor; nothing since | `git log` evidence; answers status-report question 1 |
-| 6 | **Q1/F1.2 — CHANGELOG sweep entry**: all six bumps old→new (templ 0.3.1020→0.3.1070, templ-components 1.19.4→1.20.0 + submodules, usermgmt 4.13.1→4.14.0, go-health 0.4.1→0.5.0, webauthn 0.18.1→0.18.2 indirect, otel 1.46.0→1.47.0 indirect; dashboard held 0.10.2) + tw.css consequence + registry-pin fix entry | `[Unreleased] ### Changed`, daemon commit `3c0c214` carried it verbatim (verified stat) |
-| 7 | **Q1/F1.3 — tw.css class-identity check: FIRED REAL.** 1.20.0 moved button outline-warning/success text from amber/green-600 to -700, escaping the @theme remap → raw palette colors. Remap extended with `-700` entries (red-family precedent); artifact rebuilt via the sanctioned script; utilities resolve through `--warn`/`--ok` again; scoped `nix fmt` clean | `tw.css` diff shows `var(--warn)`/`var(--ok)` on -700; script gates passed |
-| 8 | **Q1/F1.4 — vulnix over the NEW runtime closure: CLEAN.** 8 derivations; only glibc 2.44-25 range-match noise; both CVEs (2026-5435, 2026-6238) distro-patched in locked nixpkgs; verdict "zero real advisories", exit 0 | Full scan output in session log |
-| 9 | **Q2/F2.1 — AGENTS CI-check habit** (one line swapped, net-zero, 129/377 lines): verify end states with `ls-remote` **+ CI verdict**, check CI after EVERY push, receipts cited | `3b08058` |
-| 10 | **Q2/F2.2 — markdownlint invocation SETTLED**: `nix run nixpkgs#markdownlint-cli2 -- <docs>` (v0.23.3, library defaults); baseline over the three 10-05 docs = 172 findings (170 MD013 line-length + 2 MD026 heading-punct), all cosmetic; detect-only until row 18; recorded in the TODO row | TODO_LIST tooling-hygiene row updated |
-| 11 | **Q2/F2.3 — crush #3846 subscribe ATTEMPTED, honestly blocked**: `updateSubscription` needs the `notifications` scope; token has none; only one gh account. Owner one-liner recorded in the standing-watches row | TODO_LIST watches row; error captured verbatim |
-| 12 | **Q13 gate verified still shut**: latest crush release v0.97.1 (2026-09-29) predates the bug diagnosis; issue open, 0 comments — no fix release to re-test against | `gh api` both checks |
-| 13 | **Post-push CI habit exercised** on both pushes (`6a8eaac`, `3b08058` — SUCCESS at 3m39s / 5m35s); remote = local verified via `ls-remote` | `gh run list` receipts |
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                 | Proof                                                                                   |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 1  | **Gate repair: registry pin made content-based.** Third daemon table-reflow (swept into `90ca9d1`) had re-broken the byte-exact pin; CI red. `TestErrorCodeRegistryIsFresh` now compares cell content with padding collapsed (`canonicalRow`); `-update` writer unchanged; `docs/error-contract.md` preamble documents the content-based pin                         | Commit `6a8eaac`; CI **SUCCESS** (3m39s); full `go test -count=1 ./...` green           |
+| 2  | **Regression micro-test** `TestRegistryRowComparisonIgnoresPadding`: reflowed/header/separator rows canonicalize; real family change still reads as drift                                                                                                                                                                                                            | In `6a8eaac`, passing in CI                                                             |
+| 3  | **Negative control:** corrupted `blob.escape` family in the live doc → test RED naming the code → restored byte-exact → green                                                                                                                                                                                                                                        | Ran live 21:0x, output captured                                                         |
+| 4  | **Q1/F1.1 — briefing rows 33–34**: daemon-docs-format policy (reframed: pin now immune; recommendation keep-reflow) + proof-bar for green (recommendation: CI verdict on pushed head; release.sh keeps local full gate)                                                                                                                                              | Briefing tail, commit `3b08058`                                                         |
+| 5  | **Q1/F1.5 — sweep-train attribution: FINISHED.** `81ea689` (15:42) = last commit touching go.mod/go.sum/vendor; nothing since                                                                                                                                                                                                                                        | `git log` evidence; answers status-report question 1                                    |
+| 6  | **Q1/F1.2 — CHANGELOG sweep entry**: all six bumps old→new (templ 0.3.1020→0.3.1070, templ-components 1.19.4→1.20.0 + submodules, usermgmt 4.13.1→4.14.0, go-health 0.4.1→0.5.0, webauthn 0.18.1→0.18.2 indirect, otel 1.46.0→1.47.0 indirect; dashboard held 0.10.2) + tw.css consequence + registry-pin fix entry                                                  | `[Unreleased] ### Changed`, daemon commit `3c0c214` carried it verbatim (verified stat) |
+| 7  | **Q1/F1.3 — tw.css class-identity check: FIRED REAL.** 1.20.0 moved button outline-warning/success text from amber/green-600 to -700, escaping the @theme remap → raw palette colors. Remap extended with `-700` entries (red-family precedent); artifact rebuilt via the sanctioned script; utilities resolve through `--warn`/`--ok` again; scoped `nix fmt` clean | `tw.css` diff shows `var(--warn)`/`var(--ok)` on -700; script gates passed              |
+| 8  | **Q1/F1.4 — vulnix over the NEW runtime closure: CLEAN.** 8 derivations; only glibc 2.44-25 range-match noise; both CVEs (2026-5435, 2026-6238) distro-patched in locked nixpkgs; verdict "zero real advisories", exit 0                                                                                                                                             | Full scan output in session log                                                         |
+| 9  | **Q2/F2.1 — AGENTS CI-check habit** (one line swapped, net-zero, 129/377 lines): verify end states with `ls-remote` **+ CI verdict**, check CI after EVERY push, receipts cited                                                                                                                                                                                      | `3b08058`                                                                               |
+| 10 | **Q2/F2.2 — markdownlint invocation SETTLED**: `nix run nixpkgs#markdownlint-cli2 -- <docs>` (v0.23.3, library defaults); baseline over the three 10-05 docs = 172 findings (170 MD013 line-length + 2 MD026 heading-punct), all cosmetic; detect-only until row 18; recorded in the TODO row                                                                        | TODO_LIST tooling-hygiene row updated                                                   |
+| 11 | **Q2/F2.3 — crush #3846 subscribe ATTEMPTED, honestly blocked**: `updateSubscription` needs the `notifications` scope; token has none; only one gh account. Owner one-liner recorded in the standing-watches row                                                                                                                                                     | TODO_LIST watches row; error captured verbatim                                          |
+| 12 | **Q13 gate verified still shut**: latest crush release v0.97.1 (2026-09-29) predates the bug diagnosis; issue open, 0 comments — no fix release to re-test against                                                                                                                                                                                                   | `gh api` both checks                                                                    |
+| 13 | **Post-push CI habit exercised** on both pushes (`6a8eaac`, `3b08058` — SUCCESS at 3m39s / 5m35s); remote = local verified via `ls-remote`                                                                                                                                                                                                                           | `gh run list` receipts                                                                  |
 
 ## b) PARTIALLY DONE
 
-| Item | State | Remaining |
-|------|-------|-----------|
-| F2.3 #3846 subscription | Invocation proven, scope blocked | Owner: `gh auth refresh -s notifications` + mutation, or click Subscribe |
-| markdownlint lane | Invocation + baseline done | POSTURE (configure-to-house-style vs detect-only) = briefing row 18, owner sitting |
-| Local full-gate proof for this session's changes | go-test + scoped fmt + script gates + CI done | `buildflow` + full `nix flake check` NOT run locally (see §e.1) — subsumed by ruling 34 |
-| Sitting prep (Q1) | Rows 33–34 + sweep-audit closure block appended | THE SITTING itself (Q3) — owner, 34 rows |
+| Item                                             | State                                           | Remaining                                                                               |
+| ------------------------------------------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------- |
+| F2.3 #3846 subscription                          | Invocation proven, scope blocked                | Owner: `gh auth refresh -s notifications` + mutation, or click Subscribe                |
+| markdownlint lane                                | Invocation + baseline done                      | POSTURE (configure-to-house-style vs detect-only) = briefing row 18, owner sitting      |
+| Local full-gate proof for this session's changes | go-test + scoped fmt + script gates + CI done   | `buildflow` + full `nix flake check` NOT run locally (see §e.1) — subsumed by ruling 34 |
+| Sitting prep (Q1)                                | Rows 33–34 + sweep-audit closure block appended | THE SITTING itself (Q3) — owner, 34 rows                                                |
 
 ## c) NOT STARTED (all owner-terminal or gated — correctly untouched)
 
@@ -132,6 +132,7 @@ evidence gathered this session.
 ## f) Up to 50 things to get done next (owners marked; gates named)
 
 **Owner — the levers (do these first):**
+
 1. Q3: THE SITTING — 34 rows in dependency order (~90m; flips 9/16 TODO rows)
 2. Q4 deploy train, step 1: diagnose the stack CI 1h-ceiling failure inside `nix flake check` (mod_enum build log)
 3. Q4: stack lock bump to ≥`3b08058` once diagnosis lands
@@ -181,7 +182,7 @@ evidence gathered this session.
 41. Re-check stack CI recovery state before the deploy train (read-only `gh run list` on the stack)
 42. Verify the v2.9.0 fold question (sitting part 1) against the freshly-green webphone CI story
 
-*(42 real items; padding to 50 would be inventory theater.)*
+_(42 real items; padding to 50 would be inventory theater.)_
 
 ## g) Questions I can NOT figure out myself (max 3)
 
@@ -202,7 +203,7 @@ evidence gathered this session.
 
 ---
 
-*Snapshot report; goes stale. HARVEST note: §f items 18–28 are routing
+_Snapshot report; goes stale. HARVEST note: §f items 18–28 are routing
 candidates — TODO_LIST already carries the rows this session updated
 (markdownlint invocation, #3846 watch); items 2–13 are the round-2 plan's
-owner legs and live there already.*
+owner legs and live there already._

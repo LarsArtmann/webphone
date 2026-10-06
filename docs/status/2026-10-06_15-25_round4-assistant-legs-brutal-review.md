@@ -6,16 +6,16 @@ remote = local = `43b6889`, tree clean, CI SUCCESS (run 37469988657, verdict fet
 
 ## a) FULLY DONE
 
-| # | Item | Receipt |
-| --- | ---- | ----- |
-| 1 | D18.1 renewal Secure re-issue spec (past-half-life probe under https origins asserts Secure + same token + live MaxAge; half-life throttle pinned negative-side; boot helper now derives the store row TTL from `cfg.SessionTTL` like production app.go) | `62bc7dc`; suite ok; focused run PASS; CI green on `43b6889` |
-| 2 | D18.2 slog secret-leak grep over server/userauth/gateway (+ bonus cmd/webphone + vendored usermgmt spot-check): CLEAN — attrs are errors/status/family/code/extension only; usermgmt logs cookie NAME and bot id, never values; enroll errors static | verdict committed in TODO_LIST AUTH TAIL note |
-| 3 | D18.3 codespell over the 10-06 docs delta: EXIT 0; the four `keep-alives` hits twice-adjudicated, now durably in `.codespellrc` | `.codespellrc` diff; zero-output re-run |
-| 4 | D18.4 auth-regression convention in AGENTS Sessions bullet (`auth:` prefix + `TestServer` suite before push) | AGENTS diff (129/377 lines) |
-| 5 | D19 island audit: ladder correct, zero raw innerHTML sinks, zero credential localStorage, import gate deletes only post-accept, no secrets in logs; FIX: authedFetch imports the csrf.js reader (ONE-home); ACCEPTED: `?user_id=` ceremony key (burned at finish) | auth.js diff; TODO_LIST ISLAND AUDIT note; island 186/186 |
-| 6 | D25.1 near-aligned-table sweep: exactly one mixed-shape table (03-40 report) normalized to daemon-canonical compact shape | 03-40 diff |
-| 7 | D25.2 `scripts/whitespace-drift.sh`: staged-diff `-w` divergence over formatter-OWNED files, self-tested (Go drift EXIT 1 / substantive EXIT 0 / md unowned), AGENTS Commands habit line | script + AGENTS diff |
-| 8 | Exit gates, all green BEFORE push: `nix fmt` 0 changed · full suite rc=0 · `format`+`island-lint`+`island-js` single checks rc=0 · buildflow EXIT 0 · codespell delta EXIT 0; 14-35 session report + TODO tooling-row evidence committed | `43b6889` CI SUCCESS |
+| # | Item                                                                                                                                                                                                                                                              | Receipt                                                      |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1 | D18.1 renewal Secure re-issue spec (past-half-life probe under https origins asserts Secure + same token + live MaxAge; half-life throttle pinned negative-side; boot helper now derives the store row TTL from `cfg.SessionTTL` like production app.go)          | `62bc7dc`; suite ok; focused run PASS; CI green on `43b6889` |
+| 2 | D18.2 slog secret-leak grep over server/userauth/gateway (+ bonus cmd/webphone + vendored usermgmt spot-check): CLEAN — attrs are errors/status/family/code/extension only; usermgmt logs cookie NAME and bot id, never values; enroll errors static              | verdict committed in TODO_LIST AUTH TAIL note                |
+| 3 | D18.3 codespell over the 10-06 docs delta: EXIT 0; the four `keep-alives` hits twice-adjudicated, now durably in `.codespellrc`                                                                                                                                   | `.codespellrc` diff; zero-output re-run                      |
+| 4 | D18.4 auth-regression convention in AGENTS Sessions bullet (`auth:` prefix + `TestServer` suite before push)                                                                                                                                                      | AGENTS diff (129/377 lines)                                  |
+| 5 | D19 island audit: ladder correct, zero raw innerHTML sinks, zero credential localStorage, import gate deletes only post-accept, no secrets in logs; FIX: authedFetch imports the csrf.js reader (ONE-home); ACCEPTED: `?user_id=` ceremony key (burned at finish) | auth.js diff; TODO_LIST ISLAND AUDIT note; island 186/186    |
+| 6 | D25.1 near-aligned-table sweep: exactly one mixed-shape table (03-40 report) normalized to daemon-canonical compact shape                                                                                                                                         | 03-40 diff                                                   |
+| 7 | D25.2 `scripts/whitespace-drift.sh`: staged-diff `-w` divergence over formatter-OWNED files, self-tested (Go drift EXIT 1 / substantive EXIT 0 / md unowned), AGENTS Commands habit line                                                                          | script + AGENTS diff                                         |
+| 8 | Exit gates, all green BEFORE push: `nix fmt` 0 changed · full suite rc=0 · `format`+`island-lint`+`island-js` single checks rc=0 · buildflow EXIT 0 · codespell delta EXIT 0; 14-35 session report + TODO tooling-row evidence committed                          | `43b6889` CI SUCCESS                                         |
 
 ## b) PARTIALLY DONE
 
@@ -132,5 +132,6 @@ D29/D30 (D1-conditional), D25.3 (D1.4-gated by its dependency edge). Local full
    or is the TODO-row audit note + D30 adjacency the intended archive depth?
 
 ---
-*Written 2026-10-06 15:25 CEST, immediately after the execution session; no post-hoc fixes
-applied during the review — everything actionable above waits in f) for instructions.*
+
+_Written 2026-10-06 15:25 CEST, immediately after the execution session; no post-hoc fixes
+applied during the review — everything actionable above waits in f) for instructions._
