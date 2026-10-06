@@ -144,8 +144,46 @@ and the evidence. Newest last is NOT enforced — group by topic.
   slow push from a broken one without checking. End-state contract:
   `git ls-remote` vs HEAD at every phase boundary; the release ritual
   now depends on pushes, so treat an unpushed HEAD as unshipped work.
+- `/go.mod` h1 sums are NOT the plain sha256 of the file (2026-10-06,
+  the vendorHash-repin session). A vendorHash mismatch investigation
+  hashed the identical `/go.mod` bytes three ways — python `sha256`,
+  the go oracle `go mod download -json` (reproduces the sumdb entry
+  EXACTLY), and the flake's `got:` — and the python value matched
+  neither. Interim reading was "3-way hash mismatch, possible
+  tampering" and the tempting "fix" was disabling GOSUMDB; that was an
+  instrumentation error and the GOSUMDB-off escape was correctly NOT
+  taken. The h1 form is go's own content hash (dirhash, SHA256 over a
+  normalized file listing), not a single-file digest. Oracle trick for
+  future disputes: `go mod download -json` on the same bytes reproduces
+  sumdb exactly — if the oracle agrees, your hasher is wrong, not the
+  artifact. Companion rule already in AGENTS: vendorHash re-pin via
+  `nix build .#webphone.goModules --rebuild` → read `got:` → apply.
 
 ## Tooling traps
+
+- Proxy-outage wedge, 2026-10-06 (full timeline: the 22:08 status
+  report, row 3). A transient proxy.golang.org outage (~15:58–≈20:40)
+  left ~20 go processes on dead sockets holding the module-cache
+  `vcs/@v` flock FOREVER — go has no per-download timeout. Cascade:
+  two concurrent sessions' `go mod download all` + four orphaned gopls
+  tidies wedged first; ~58 queued/stalled processes piled behind the
+  flock; every `go` command on the host hung in
+  `locks_lock_inode_wait`. Timeline: 15:58 outage begins and the first
+  `go get -u` wedges in background unnoticed for 3 h 44 m (its output
+  was piped to `tail`, so there was output to read but no liveness
+  signal); ~19:40 wedging noticed; process forensics (wchan scan +
+  /proc fd audit) identify the flock holders; 6 original hangs killed
+  plus 58 queued; ~20:40 downloads flow again (234 zips / 5 min);
+  22:06 recovery declared. Kill-trap side-story: the Crush tool
+  shell's `kill` is an unsupported builtin that SILENTLY NO-OPS — the
+  wedge outlived the "cleanup"; the working kill is
+  `python3 -c 'import os,signal; os.kill(PID, signal.SIGKILL)'`.
+  Lessons: (1) long network go jobs need liveness probes (CPU/wchan),
+  not faith; (2) BuildFlow's "dead cache mount or hung toolchain"
+  diagnosis pointed at the wrong layer — the mount was fine, the
+  sockets were dead — so trust process forensics over tool
+  self-diagnosis; (3) the fix class is fleet-level: a GOPROXY fallback
+  chain plus a retry-or-kill wrapper (routed to the 23:47 plan T13).
 
 - A `?case=` query-string re-import gives a FRESH module only for ESM.
   Node's module-detection parses `island/app/*.js` (they contain

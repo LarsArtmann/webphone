@@ -85,3 +85,19 @@ The standalone `/enroll` page (same gate) carries `enroll-view`,
 `enroll-form`, `enroll-token`, `enroll-credential-name`,
 `enroll-status`, `enroll-error` — a one-purpose surface with NO island
 runtime; its module is `/assets/enroll/enroll.js`.
+
+## Notes
+
+### Greppable SSE row classes on the templ-components v1.20.1 tree (2026-10-06)
+
+`wp-thread-row` / `wp-bubble` (plus `wp-thread-rowwrap`, `wp-bubble-body`,
+`wp-bubble-meta`) are the greppable row/bubble classes the E2E and the
+AGENTS contract rely on for SSE fragments. They are authored in
+`internal/web/views/messages.templ` and land in the served bytes through
+the generated `messages_templ.go`. Verified on the v1.20.1 tree by
+booting a fresh loopback binary, logging in, sending an outbound
+message, and byte-grepping the SERVED payloads (not the source): the
+thread list fragment contains `wp-thread-row` and the transcript page
+contains `wp-bubble`. The templ-components v1.20.0 → v1.20.1 ride
+therefore does not disturb the fragment contract; this note records the
+coverage reasoning so future bumps can re-run the same probe.
