@@ -95,7 +95,7 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 	}
 
 	if *updateRegistry {
-			rewritten := rewriteRegistryBlock(doc, generated)
+		rewritten := rewriteRegistryBlock(doc, generated)
 		if err := os.WriteFile(registryDocPath, []byte(rewritten), 0o644); err != nil {
 			t.Fatal(err)
 		}
