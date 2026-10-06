@@ -88,17 +88,19 @@ func TestSQLiteSessionStoreSurvivesRestart(t *testing.T) {
 // boot), while a session minted after the sweep stays live.
 func TestSQLiteSessionTTLExpiryAndSweep(t *testing.T) {
 	ext := testExtension(t)
+	clk := &fakeClock{now: time.Now()}
 	store, err := NewSQLiteStore(openTestDB(t), 40*time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}
+	store.now = clk.Now
 
 	dying, err := store.Create(ext, "pw")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	time.Sleep(60 * time.Millisecond)
+	clk.Advance(60 * time.Millisecond)
 
 	if _, ok := store.Get(dying); ok {
 		t.Fatal("expired session still live — TTL not honored")
@@ -126,16 +128,18 @@ func TestSQLiteSessionTTLExpiryAndSweep(t *testing.T) {
 // the next mint.
 func TestSQLiteSessionSweepOnCreate(t *testing.T) {
 	ext := testExtension(t)
+	clk := &fakeClock{now: time.Now()}
 	store, err := NewSQLiteStore(openTestDB(t), 40*time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}
+	store.now = clk.Now
 
 	stale, err := store.Create(ext, "pw")
 	if err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(60 * time.Millisecond)
+	clk.Advance(60 * time.Millisecond)
 	if _, err := store.Create(ext, "pw"); err != nil {
 		t.Fatal(err)
 	}

@@ -20,6 +20,7 @@ import (
 type SQLiteStore struct {
 	db  *sql.DB
 	ttl time.Duration
+	now func() time.Time
 }
 
 const sessionsSchema = `CREATE TABLE IF NOT EXISTS sessions (
@@ -50,14 +51,14 @@ func NewSQLiteStore(db *sql.DB, ttl time.Duration) (*SQLiteStore, error) {
 			return nil, errorfamily.WrapInfrastructuref(err, "session.migrate", "migrate sessions")
 		}
 	}
-	return &SQLiteStore{db: db, ttl: ttl}, nil
+	return &SQLiteStore{db: db, ttl: ttl, now: time.Now}, nil
 }
 
 // Create mints a session row and returns its token. Expired rows are
 // swept alongside, so restarts across long downtimes cannot accumulate
 // corpses.
 func (s *SQLiteStore) Create(extension domain.Extension, password string) (string, error) {
-	token, sess, err := makeSession(extension, password, s.ttl)
+	token, sess, err := makeSession(extension, password, s.ttl, s.now)
 	if err != nil {
 		return "", err
 	}
@@ -99,7 +100,7 @@ func (s *SQLiteStore) Get(token string) (Session, bool) {
 		CreatedAt: time.UnixMilli(created),
 		ExpiresAt: time.UnixMilli(expires),
 	}
-	if !time.Now().Before(sess.ExpiresAt) {
+	if !s.now().Before(sess.ExpiresAt) {
 		_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token) //nolint:erraudit // best-effort hygiene; the read verdict above already returned dead
 		return Session{}, false
 	}
@@ -120,7 +121,7 @@ func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, 
 	if !ok {
 		return Session{}, false
 	}
-	extended, due := renewDue(sess, idle, maxAge, time.Now())
+	extended, due := renewDue(sess, idle, maxAge, s.now())
 	if !due {
 		return Session{}, false
 	}

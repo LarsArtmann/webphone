@@ -4,11 +4,32 @@ import (
 	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
+
+// fakeClock is a controllable time source for TTL tests: advancing it
+// replaces real sleeps, so expiry assertions cannot lose a race against
+// a loaded runner (the 2026-10-06 CI flake class).
+type fakeClock struct {
+	mu  sync.Mutex
+	now time.Time
+}
+
+func (c *fakeClock) Now() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.now
+}
+
+func (c *fakeClock) Advance(d time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.now = c.now.Add(d)
+}
 
 // TestSessionTTLExpiryAndSweep pins the TTL/sweeper interaction: a session
 // is live until its ExpiresAt and dead after; expiry alone hides the
@@ -19,7 +40,9 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	clk := &fakeClock{now: time.Now()}
 	store := NewMemStore(50 * time.Millisecond)
+	store.now = clk.Now
 
 	token, err := store.Create(ext, "pw")
 	if err != nil {
@@ -29,7 +52,7 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 		t.Fatal("fresh session not live")
 	}
 
-	time.Sleep(60 * time.Millisecond)
+	clk.Advance(60 * time.Millisecond)
 
 	if _, ok := store.Get(token); ok {
 		t.Fatal("expired session still live — TTL not honored")

@@ -126,11 +126,12 @@ type MemStore struct {
 	mu       sync.RWMutex
 	sessions map[string]Session
 	ttl      time.Duration
+	now      func() time.Time
 }
 
 // NewMemStore builds the in-memory session store (tests, loopback dev).
 func NewMemStore(ttl time.Duration) *MemStore {
-	return &MemStore{sessions: make(map[string]Session), ttl: ttl}
+	return &MemStore{sessions: make(map[string]Session), ttl: ttl, now: time.Now}
 }
 
 // mintToken returns a fresh 256-bit URL-safe token.
@@ -145,23 +146,23 @@ func mintToken() (string, error) {
 // makeSession mints a token and the Session around it; the birth
 // invariant (ExpiresAt = CreatedAt + ttl) has this single home, shared
 // by both store backends.
-func makeSession(extension domain.Extension, password string, ttl time.Duration) (string, Session, error) {
+func makeSession(extension domain.Extension, password string, ttl time.Duration, now func() time.Time) (string, Session, error) {
 	token, err := mintToken()
 	if err != nil {
 		return "", Session{}, err
 	}
-	now := time.Now()
+	at := now()
 	return token, Session{
 		Extension: extension,
 		Password:  password,
-		CreatedAt: now,
-		ExpiresAt: now.Add(ttl),
+		CreatedAt: at,
+		ExpiresAt: at.Add(ttl),
 	}, nil
 }
 
 // Create mints a session for the extension and returns its token.
 func (s *MemStore) Create(extension domain.Extension, password string) (string, error) {
-	token, sess, err := makeSession(extension, password, s.ttl)
+	token, sess, err := makeSession(extension, password, s.ttl, s.now)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +180,7 @@ func (s *MemStore) Get(token string) (Session, bool) {
 	s.mu.RLock()
 	sess, ok := s.sessions[token]
 	s.mu.RUnlock()
-	if !ok || time.Now().After(sess.ExpiresAt) {
+	if !ok || s.now().After(sess.ExpiresAt) {
 		return Session{}, false
 	}
 	return sess, true
@@ -200,7 +201,7 @@ func (s *MemStore) Renew(token string, idle, maxAge time.Duration) (Session, boo
 	if !ok {
 		return Session{}, false
 	}
-	now := time.Now()
+	now := s.now()
 	if !now.Before(sess.ExpiresAt) {
 		delete(s.sessions, token)
 		return Session{}, false
