@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 DEFAULT_PATHS = ["docs/status/"]
@@ -62,6 +63,12 @@ def is_separator(line: str) -> bool:
         if not content or content.strip(":") != "-" * len(content.strip(":")):
             return False
     return True
+
+
+def display_width(text: str) -> int:
+    """Terminal cells, not codepoints: the daemon pads emoji/wide glyphs to
+    DISPLAY width, so alignment must be compared on the same axis."""
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in text)
 
 
 def is_compact(cell: str) -> bool:
@@ -115,7 +122,7 @@ def find_near_aligned(lines: list[str]) -> list[str]:
         width = max(len(cells) for cells in data_rows) if data_rows else 0
         for column in range(width):
             cells = [row[column] if column < len(row) else "" for row in data_rows]
-            widths = {len(cell) for cell in cells}
+            widths = {display_width(cell) for cell in cells}
             padded = sum(1 for cell in cells if not is_compact(cell))
             if len(widths) > 1 and padded > 0:
                 findings.append(
@@ -187,6 +194,12 @@ ESCAPED_PIPE_TABLE = """| name | value |
 | other | plain |
 """
 
+EMOJI_ALIGNED_TABLE = """| Impact   | Owner |
+| -------- | ----- |
+| \U0001f525\U0001f525\U0001f525   | Lars |
+| \U0001f525\U0001f525     | Lars |
+"""
+
 
 def self_test() -> int:
     cases = [
@@ -197,6 +210,11 @@ def self_test() -> int:
         ("mid-cell wrapped rows stay clean", WRAPPED_TABLE, 0),
         ("prose after a wrapped table never glues", WRAPPED_THEN_PROSE, 0),
         ("escaped pipes never split a cell", ESCAPED_PIPE_TABLE, 0),
+        (
+            "display-width-aligned emoji columns are clean",
+            EMOJI_ALIGNED_TABLE,
+            0,
+        ),
     ]
     failures = 0
     for label, document, expected in cases:

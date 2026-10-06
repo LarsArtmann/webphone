@@ -114,7 +114,7 @@ see Finding F2.
 
 ### Health-check scorecard vs. the samber/do best-practice shape
 
-| Best practice (samber/do shape)               | webphone realization                                                                                                              | Status                    |
+| Best practice (samber/do shape)               | webphone realization                                                                                                              | Status |
 | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `Healthchecker` interface on resource holders | Named check **functions** wired at the single wiring site — simpler, no interface ceremony on `*sql.DB` (which we don't own)      | ✅ equivalent, better fit |
 | `Shutdowner` lifecycle, self-contained        | `defer db.Close()` + bounded `httpServer.Shutdown`; correct drain-then-close ordering                                             | ✅                        |
