@@ -266,6 +266,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   byte-idempotent — the daemon has nothing left to re-pad, killing
   the 2026-10-05 red-class churn outright rather than merely making
   it inert.
+- Island module homes (2026-10-06 auth tail): `auth.js`'s `authedFetch`
+  imports the `csrf.js` token reader instead of querying the meta tag
+  itself — the last private copy of the CSRF read, closing the one-home
+  rule the 10-04 tail established for session.js, passkey.js and the
+  enroll page.
 
 ### Fixed
 
