@@ -87,89 +87,88 @@ upstream asks, raw-idea triage, watch calendar pins.
 | # | Micro-task | Est | Task |
 | - | ---------- | --- | ---- |
 | M01 | Verify webphone `main` green (CI verdict) + `ls-remote` end-state + pick the target rev | 10m | T01 |
-| M02 | Stack: repair/verify the FreeSWITCH `mod_enum` build | 12m | (T01)
-| M03 | Stack: relock the webphone input to the target rev | 8m | (T01)
-| M04 | Stack: `nix flake check` + browser E2E ×1; record wall-time vs 445s budget | 12m | (T01)
-| M05 | aarch64 cross-build; verify by ELF machine bytes | 10m | (T01)
-| M06 | pbx-artmann: relock + gates + staged activation | 12m | (T01)
-| M07 | Owner deploy command run + journal watch | 12m | (T01)
-| M08 | Post-deploy smoke `--base https://pbx.artmann.tech --expect-version <V>` | 10m | (T01)
-| M09 | Record closure: TODO rows, CHANGELOG, E2E obligation checkbox | 10m | (T01)
-| M10 | Pre-sitting digest: one-page auth/release row summary for the owner | 12m | (T02)
-| M11 | Ratify the 4 gated plans → archive-or-keep decision per plan | 12m | (T02)
-| M12 | v2.9.0 fold decision + release numbering + bridge ">=2.8" claims | 10m | (T02)
-| M13 | Passkey postures: rows 1.6/35/36, enroll runbook-only, Lars-only v1 mapping | 12m | (T02)
-| M14 | Record verdicts → briefing closed-since + TODO deletions | 12m | (T02)
-| M15 | Conventions: rows 33/34/38 + push-lag threshold + session-phase pushes | 12m | (T03)
-| M16 | Tooling postures: markdownlint row 18 + devShells/lychee row 37 | 12m | (T03)
-| M17 | Dedup ratification: `-t 3` baseline + suppression scope + registry home | 12m | (T03)
-| M18 | Remaining semantics batch: D1–D5 autonomy, helper micro-test bar, missed-call/`?q=`/`Must*` | 12m | (T03)
-| M19 | Grep served thread/transcript payloads for `wp-thread-row`/`wp-bubble` on the v1.20.1 tree; record | 12m | (T04)
-| M20 | Write the DOM-contract v1.20.1 coverage-reasoning note (dom-contract.md § notes) | 10m | (T04)
-| M21 | Lessons r2a draft: the 15:58 wedge → recovery timeline | 12m | (T05)
-| M22 | Lessons r2a: verify every claim against the 22:08 report; finalize | 10m | (T05)
-| M23 | Lessons r2b draft: `/go.mod` h1 ≠ sha256 oracle story | 12m | (T05)
-| M24 | Lessons r2b: verify + cross-link the AGENTS vendorHash rule | 8m | (T05)
-| M25 | Design the CI-flake ledger shape (file/test/date/run-id/verdict) | 10m | (T06)
-| M26 | Create the ledger + seed runs 37496169265, 37524833682, tonight's session | 12m | (T06)
-| M27 | Wire references: TODO tooling row + AGENTS pointer | 8m | (T06)
-| M28 | Owner-switch prep checklist + rotate `/tmp/pbx-toplevel-current` | 10m | (T07)
-| M29 | Flip `auth.passkey.*` in the stack config (owner terminal) | 10m | (T07)
-| M30 | Live browser enroll + login ceremony on prod; record screenshots | 12m | (T07)
-| M31 | Fail-closed drill: empty password file → verify Rejection + event log | 12m | (T07)
-| M32 | Record the fresh diff-closures baseline + close the TODO row | 10m | (T07)
-| M33 | Live check: accept→speak sub-second + mic indicator at ring | 12m | (T08)
-| M34 | Live check: warm release on reject/missed paths | 10m | (T08)
-| M35 | Live check: MOH audibility + `/recordings/` listing + CDR rows | 12m | (T08)
-| M36 | Record ritual results; retire the routed mic/cross-repo items | 10m | (T08)
-| M37 | Stack: `services.webphone.paperless` module option + wiring | 12m | (T09)
-| M38 | Stack: paperless smoke arm | 12m | (T09)
-| M39 | WebTransport NOT-ADOPTED verdict doc (stack repo) | 12m | (T09)
-| M40 | `deploy.md` secret PATH column | 10m | (T09)
-| M41 | Ops-runbook demo-call recipe + `/var/lib/telephony-secrets/` path | 12m | (T09)
-| M42 | `ftypqt` sniff fix + E2E MMS-outbound + pbx FEATURES:87 text | 12m | (T09)
-| M43 | Stack relock/push ritual for the batch | 12m | (T09)
-| M44 | Rebuild the BuildFlow binary in its repo + reinstall | 12m | (T10)
-| M45 | Release-runbook prelude: standing `buildflow doctor` gate line | 10m | (T10)
-| M46 | `buildflow timings --regressions` rebaseline on the quiesced host | 12m | (T10)
-| M47 | Verify tool warnings shrank (4 devshell legs gone post-row-37) | 8m | (T10)
-| M48 | whitespace-drift.sh: cover `.nix` or document the exclusion | 12m | (T11)
-| M49 | Scratch-repo self-test: whitespace-only `.nix` edit exits 1 | 12m | (T11)
-| M50 | codespell over the v7 delta (both reports + edits) | 8m | (T12)
-| M51 | markdownlint baseline over the two new v7 docs; record posture | 12m | (T12)
-| M52 | Fix real typo hits (if any) | 10m | (T12)
-| M53 | crush-config: GOPROXY fallback chain config/PR | 12m | (T13)
-| M54 | BuildFlow: retry-or-kill wrapper issue/PR for network go steps | 12m | (T13)
-| M55 | `--fail-on`/retry policy note + fleet rollout record | 10m | (T13)
-| M56 | Fleet wedged-go audit (flock-waiter scan across machines) | 12m | (T14)
-| M57 | Prune stale /tmp probe artifacts (trash, not rm) | 8m | (T14)
-| M58 | Close stale gopls editor workspaces | 10m | (T14)
-| M59 | Characterize or close run 37496169265 (flake window note) | 12m | (T15)
-| M60 | kill-builtin empirical verify at the next natural kill (python one-liner) | 5m | (T15)
-| M61 | `git ls-remote` end-state verify + pin the habit in the runbook close | 8m | (T15)
-| M62 | Pre-check host quiescence + flock convention | 8m | (T16)
-| M63 | `nix flake check` run leg 1 (package + sandbox tests) | 12m | (T16)
-| M64 | `nix flake check` verdict + KVM backup-leg confirmation | 12m | (T16)
-| M65 | Announcements: owner picks channels + draft variant | 10m | (T17)
-| M66 | Approve wording + disclosure posture (fix-acknowledged, no exploit detail) | 10m | (T17)
-| M67 | Post + record links; close the TODO row | 10m | (T17)
-| M68 | Docs v8: read the 2026-10 status cohort (candidates) | 12m | (T18)
-| M69 | Docs v8: read the 2026-10 planning cohort | 12m | (T18)
-| M70 | Docs v8: annotate + archive the closed files (pipeline per house form) | 12m | (T18)
-| M71 | Docs v8: gates (completeness/link/check-rows) + manifest + report | 12m | (T18)
-| M72 | Split the gate-recovery TODO row into named sub-bullets | 12m | (T18)
-| M73 | Extend the link-existence loop to ALL living docs/*.md | 12m | (T19)
-| M74 | Add the pre-mv citation grep as a named gate step (runbook/skill-side note) | 10m | (T19)
-| M75 | templ-components: errorpage tagging-discipline upstream issue | 12m | (T20)
-| M76 | go-cqrs-lite: release-tooling audit (non-/v4 requires) | 12m | (T20)
-| M77 | Record upstream asks + watch entries | 10m | (T20)
-| M78 | Paperless follow-ups pick/park decision prep (one-page) | 10m | (T21)
-| M79 | Mic + typography extras triage (pick/park with dates) | 10m | (T21)
-| M80 | God-package carve trigger check (any NEW file in internal/server since 10-05?) | 10m | (T21)
-| M81 | Calendar pins: erraudit 11-05, quarterly 12-20, sessions re-review 12-30 | 8m | (T22)
-| M82 | QMD subscribe: owner `gh auth refresh -s notifications` + mutation | 10m | (T22)
-| M83 | Verify Standing-watches wording matches the pins | 6m | (T22)
-
+| M02 | Stack: repair/verify the FreeSWITCH `mod_enum` build | 12m | T01 |
+| M03 | Stack: relock the webphone input to the target rev | 8m | T01 |
+| M04 | Stack: `nix flake check` + browser E2E ×1; record wall-time vs 445s budget | 12m | T01 |
+| M05 | aarch64 cross-build; verify by ELF machine bytes | 10m | T01 |
+| M06 | pbx-artmann: relock + gates + staged activation | 12m | T01 |
+| M07 | Owner deploy command run + journal watch | 12m | T01 |
+| M08 | Post-deploy smoke `--base https://pbx.artmann.tech --expect-version <V>` | 10m | T01 |
+| M09 | Record closure: TODO rows, CHANGELOG, E2E obligation checkbox | 10m | T01 |
+| M10 | Pre-sitting digest: one-page auth/release row summary for the owner | 12m | T02 |
+| M11 | Ratify the 4 gated plans → archive-or-keep decision per plan | 12m | T02 |
+| M12 | v2.9.0 fold decision + release numbering + bridge ">=2.8" claims | 10m | T02 |
+| M13 | Passkey postures: rows 1.6/35/36, enroll runbook-only, Lars-only v1 mapping | 12m | T02 |
+| M14 | Record verdicts → briefing closed-since + TODO deletions | 12m | T02 |
+| M15 | Conventions: rows 33/34/38 + push-lag threshold + session-phase pushes | 12m | T03 |
+| M16 | Tooling postures: markdownlint row 18 + devShells/lychee row 37 | 12m | T03 |
+| M17 | Dedup ratification: `-t 3` baseline + suppression scope + registry home | 12m | T03 |
+| M18 | Remaining semantics batch: D1–D5 autonomy, helper micro-test bar, missed-call/`?q=`/`Must*` | 12m | T03 |
+| M19 | Grep served thread/transcript payloads for `wp-thread-row`/`wp-bubble` on the v1.20.1 tree; record | 12m | T04 |
+| M20 | Write the DOM-contract v1.20.1 coverage-reasoning note (dom-contract.md § notes) | 10m | T04 |
+| M21 | Lessons r2a draft: the 15:58 wedge → recovery timeline | 12m | T05 |
+| M22 | Lessons r2a: verify every claim against the 22:08 report; finalize | 10m | T05 |
+| M23 | Lessons r2b draft: `/go.mod` h1 ≠ sha256 oracle story | 12m | T05 |
+| M24 | Lessons r2b: verify + cross-link the AGENTS vendorHash rule | 8m | T05 |
+| M25 | Design the CI-flake ledger shape (file/test/date/run-id/verdict) | 10m | T06 |
+| M26 | Create the ledger + seed runs 37496169265, 37524833682, tonight's session | 12m | T06 |
+| M27 | Wire references: TODO tooling row + AGENTS pointer | 8m | T06 |
+| M28 | Owner-switch prep checklist + rotate `/tmp/pbx-toplevel-current` | 10m | T07 |
+| M29 | Flip `auth.passkey.*` in the stack config (owner terminal) | 10m | T07 |
+| M30 | Live browser enroll + login ceremony on prod; record screenshots | 12m | T07 |
+| M31 | Fail-closed drill: empty password file → verify Rejection + event log | 12m | T07 |
+| M32 | Record the fresh diff-closures baseline + close the TODO row | 10m | T07 |
+| M33 | Live check: accept→speak sub-second + mic indicator at ring | 12m | T08 |
+| M34 | Live check: warm release on reject/missed paths | 10m | T08 |
+| M35 | Live check: MOH audibility + `/recordings/` listing + CDR rows | 12m | T08 |
+| M36 | Record ritual results; retire the routed mic/cross-repo items | 10m | T08 |
+| M37 | Stack: `services.webphone.paperless` module option + wiring | 12m | T09 |
+| M38 | Stack: paperless smoke arm | 12m | T09 |
+| M39 | WebTransport NOT-ADOPTED verdict doc (stack repo) | 12m | T09 |
+| M40 | `deploy.md` secret PATH column | 10m | T09 |
+| M41 | Ops-runbook demo-call recipe + `/var/lib/telephony-secrets/` path | 12m | T09 |
+| M42 | `ftypqt` sniff fix + E2E MMS-outbound + pbx FEATURES:87 text | 12m | T09 |
+| M43 | Stack relock/push ritual for the batch | 12m | T09 |
+| M44 | Rebuild the BuildFlow binary in its repo + reinstall | 12m | T10 |
+| M45 | Release-runbook prelude: standing `buildflow doctor` gate line | 10m | T10 |
+| M46 | `buildflow timings --regressions` rebaseline on the quiesced host | 12m | T10 |
+| M47 | Verify tool warnings shrank (4 devshell legs gone post-row-37) | 8m | T10 |
+| M48 | whitespace-drift.sh: cover `.nix` or document the exclusion | 12m | T11 |
+| M49 | Scratch-repo self-test: whitespace-only `.nix` edit exits 1 | 12m | T11 |
+| M50 | codespell over the v7 delta (both reports + edits) | 8m | T12 |
+| M51 | markdownlint baseline over the two new v7 docs; record posture | 12m | T12 |
+| M52 | Fix real typo hits (if any) | 10m | T12 |
+| M53 | crush-config: GOPROXY fallback chain config/PR | 12m | T13 |
+| M54 | BuildFlow: retry-or-kill wrapper issue/PR for network go steps | 12m | T13 |
+| M55 | `--fail-on`/retry policy note + fleet rollout record | 10m | T13 |
+| M56 | Fleet wedged-go audit (flock-waiter scan across machines) | 12m | T14 |
+| M57 | Prune stale /tmp probe artifacts (trash, not rm) | 8m | T14 |
+| M58 | Close stale gopls editor workspaces | 10m | T14 |
+| M59 | Characterize or close run 37496169265 (flake window note) | 12m | T15 |
+| M60 | kill-builtin empirical verify at the next natural kill (python one-liner) | 5m | T15 |
+| M61 | `git ls-remote` end-state verify + pin the habit in the runbook close | 8m | T15 |
+| M62 | Pre-check host quiescence + flock convention | 8m | T16 |
+| M63 | `nix flake check` run leg 1 (package + sandbox tests) | 12m | T16 |
+| M64 | `nix flake check` verdict + KVM backup-leg confirmation | 12m | T16 |
+| M65 | Announcements: owner picks channels + draft variant | 10m | T17 |
+| M66 | Approve wording + disclosure posture (fix-acknowledged, no exploit detail) | 10m | T17 |
+| M67 | Post + record links; close the TODO row | 10m | T17 |
+| M68 | Docs v8: read the 2026-10 status cohort (candidates) | 12m | T18 |
+| M69 | Docs v8: read the 2026-10 planning cohort | 12m | T18 |
+| M70 | Docs v8: annotate + archive the closed files (pipeline per house form) | 12m | T18 |
+| M71 | Docs v8: gates (completeness/link/check-rows) + manifest + report | 12m | T18 |
+| M72 | Split the gate-recovery TODO row into named sub-bullets | 12m | T18 |
+| M73 | Extend the link-existence loop to ALL living docs/*.md | 12m | T19 |
+| M74 | Add the pre-mv citation grep as a named gate step (runbook/skill-side note) | 10m | T19 |
+| M75 | templ-components: errorpage tagging-discipline upstream issue | 12m | T20 |
+| M76 | go-cqrs-lite: release-tooling audit (non-/v4 requires) | 12m | T20 |
+| M77 | Record upstream asks + watch entries | 10m | T20 |
+| M78 | Paperless follow-ups pick/park decision prep (one-page) | 10m | T21 |
+| M79 | Mic + typography extras triage (pick/park with dates) | 10m | T21 |
+| M80 | God-package carve trigger check (any NEW file in internal/server since 10-05?) | 10m | T21 |
+| M81 | Calendar pins: erraudit 11-05, quarterly 12-20, sessions re-review 12-30 | 8m | T22 |
+| M82 | QMD subscribe: owner `gh auth refresh -s notifications` + mutation | 10m | T22 |
+| M83 | Verify Standing-watches wording matches the pins | 6m | T22 |
 **83 micro-tasks · every task covered · max 12 min each.**
 
 ## Execution graph
