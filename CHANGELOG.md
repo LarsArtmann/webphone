@@ -190,6 +190,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dependency train (buildflow `go-mod-update`): templ-components
+  v1.20.0 → v1.20.1 (v1.20.0 shipped an unresolvable
+  `errorpage@00010101…` require that fails every module-graph
+  resolution — vendor mode masked it), the go-cqrs-lite v4 submodule
+  set to latest (storage v4.10.4, watermill v4.6.4, stack v4.4.3,
+  snapshot v4.6.1, scheduling v4.6.1, …), go-flightrecorder v0.2.1,
+  go-sse/sseparse v0.2.1; `vendorHash` re-pinned to match.
+
 - Server lifecycle: `cmd/webphone` now serves via `httputil.NewServer`
   (the primitive the rejected cqrs-htmx setup bundle's RunHandler
   wraps) — SSE-safe timeouts (ReadHeaderTimeout 5s bounds slowloris,
