@@ -4,6 +4,9 @@
 # but intended (SSE cancelability, nix "statics", "unparseable").
 # "enourmous"/"theses": docs deliberately QUOTE the historical plan
 # typo ("enourmous") and use "theses" in its plain English sense.
+# "keep-alives": correct English plural of the noun (adjudicated
+# 2026-10-06 C2 + 2026-10-06 D18.3; three of the hits quote the
+# CHANGELOG line that coined it).
 [codespell]
-ignore-words-list = adresse,unter,oder,als,ot,alle,ist,sie,cancelability,statics,unparseable,refering,re-declares,re-declared,lokal,lokale,manuell,enourmous,theses,pre-emptive
+ignore-words-list = adresse,unter,oder,als,ot,alle,ist,sie,cancelability,statics,unparseable,refering,re-declares,re-declared,lokal,lokale,manuell,enourmous,theses,pre-emptive,keep-alives
 skip = internal/web/assets/vendor/*,*.min.js,package-lock.json,vendor,go.sum,flake.lock

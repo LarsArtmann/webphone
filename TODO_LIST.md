@@ -24,6 +24,13 @@ ceremony to a token-verified server-side session (usermgmt upstream change) or r
 as the standing posture. Companion reconfirmation: session-row password stays plaintext at rest
 (spike-verdict ratified; 0700 DB + UMask 0077). Same session FIXED: session-cookie Secure behind
 the TLS proxy, real-config CSRF rotation, constant-time webhook secret (CHANGELOG § Security).
+AUTH TAIL 2026-10-06 (D18): renewal Secure re-issue pinned end-to-end (incl. the half-life
+throttle + same-token assertions; `62bc7dc`); slog secret-leak grep over server/userauth/gateway
+CLEAN (attrs are errors/status/family/code/extension only; vendored usermgmt logs the cookie NAME
+and bot id, never values; enroll-token errors are static strings; gateway logs nothing); codespell
+over the CHANGELOG/lessons/status/planning delta EXIT 0 — the four `keep-alives` hits are the
+twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. Island-side (client)
+audit = D19, still open pre-release.
 the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
 csrf.js single home, userauth /healthz leg, tier-2 pins, whoamiLine→ui.js,
 typed sessionIdentity, plan-doc annotation, AGENTS trim — see CHANGELOG).
