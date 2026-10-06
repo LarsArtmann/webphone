@@ -231,3 +231,26 @@ dead).
    changing; the content pin keeps correctness independent). Is the test
    comment its one home, or do you want a line in
    `docs/error-contract.md`'s preamble / AGENTS noting the coupling?
+
+---
+
+## Addendum (2026-10-06 ~03:15, follow-up session): gate-debt close executed
+
+§d.1/d.3 and §f.1–3 are CLOSED with runs, not arguments (round-3 plan C2):
+
+- **buildflow** over HEAD `43091cc` (contains `2b52fbf`): EXIT 0 — all steps
+  green; remaining findings are warning-severity only (ruff-check 33 +
+  vulture 1 in `scripts/`, vulnix 20 toolchain advisories — pre-existing,
+  below the error-severity findings gate). `2b52fbf` changed
+  `internal/arch/errorregistry_test.go` + `docs/error-contract.md` + CHANGELOG
+  and TODO_LIST lines; all covered by the green go/oxfmt/treefmt legs.
+- **Island JS tests**: 186/186 pass, 0 fail (`node --test
+  internal/web/assets/island-tests/*.test.mjs`).
+- **codespell**: canonical on-demand step (`buildflow -s codespell`, real
+  binary): EXIT 0. Raw scan over the session docs delta: exactly one
+  warning-level hit — CHANGELOG:196 `keep-alives`, pre-existing prose (correct
+  English plural, 2026-09-30 server-lifecycle entry), NOT session debt.
+- gitleaks/markdown-lint stay on-demand/detect-only per `.buildflow.yml` and
+  are NOT part of the C2 bar (plan wording: buildflow + island + codespell).
+- §f.4 (00-52 table re-flow) and §f.5 (writer-test framing pin + uniform row
+  lengths) land in the C9 commit that follows this addendum.
