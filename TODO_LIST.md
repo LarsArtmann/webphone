@@ -116,19 +116,24 @@ deliberately excluded — unowned means no drift definition), self-tested in a s
 (whitespace-only Go edit EXIT 1 with the `nix fmt` fix, substantive EXIT 0, md-only "unowned"),
 wired as an AGENTS Commands habit line — kills the e62fe34 class at add-time. D18.3 durability:
 `keep-alives` joined `.codespellrc` ignore-words after its second adjudication. d.1 fix 2026-10-06
-15:40 (hardened 16:20): the detector is now a COMMITTED instrument — `scripts/md-table-shape.py`
-(self-test 7/7: mixed flags, compact clean, fully-aligned clean = D1.4's question,
-unbalanced-padding flags, mid-cell wrapped rows clean, prose-after-table never glues, escaped
-pipes never split a cell); default scope docs/status/ live = ZERO; explicit rerun over the exact
-10-05/10-06 status+planning sweep set = ZERO, reproducing the claim from the repo. v1 miscounted
-wrapped tables (fragmented rows) and escaped pipes — caught by dogfooding against the session's
-own report (e.3 rule). Full-corpus run (all docs/ + root md): 25 findings across 9 files —
-4 archived snapshots, FEATURES.md, and 4 live docs incl. the briefing's
-rows-29–32/appended-rows mix — banked as D1.4 coupling-home evidence and
-deliberately NOT normalized (rewriting archived snapshots trades hypothetical churn for real).
-f.7 canary ARMED 2026-10-06: no commit has touched the normalized 03-40 table since `455e26c`
-(`git log --follow` clean) — the next daemon md commit touching it gets a detector rerun; a
-re-introduced mix would prove the daemon formatter IS the near-aligned source for D1.4.
+15:40 (hardened twice by 16:45): the detector is now a COMMITTED instrument —
+`scripts/md-table-shape.py` (self-test 8/8: mixed flags, compact clean, fully-aligned clean =
+D1.4's question, unbalanced-padding flags, mid-cell wrapped rows clean, prose-after-table never
+glues, escaped pipes never split a cell, display-width-aligned emoji columns clean); default
+scope docs/status/ live = ZERO; explicit rerun over the exact 10-05/10-06 status+planning sweep
+set = ZERO, reproducing the claim from the repo. v1 miscounted wrapped tables (fragmented rows)
+and escaped pipes; v3/v4 were caught by dogfooding against the session's own report and the
+daemon's own output (e.3 rule) — v4 measures DISPLAY width because the daemon's aligner pads
+emoji to terminal cells, not codepoints. Full-corpus run 16:45: ZERO findings (v3's 25 shrank to
+1 real finding after the daemon's 16:18 aligning pass + display-width fix; the samber-do
+scorecard's Status column was normalized to compact on the spot).
+f.7 canary FIRED 2026-10-06 16:18 (`2fbdfd7`): the daemon's reflow pass touched the normalized
+03-40 table and REFLOWED it compact → fully-aligned (content-inert, no mix introduced; detector
+ZERO post-pass). VERDICT INVERTED for D1.4: the daemon IS the aligner — near-aligned mixes come
+from sessions appending compact rows onto daemon-aligned tables (the briefing rows-29–34
+pattern), and the daemon normalizes them on its next md pass. The same daemon pass reformatted
+`scripts/md-table-shape.py` (style-only; self-test still 8/8) and bumped `flake.lock` nixpkgs
+(494ce7fd → 151fa4e8 — rides the next push; CI judges).
 Was: 09-26 §d3/§f11-12; 09-24 12:41 §f19-20; 04:32 §f14-15
 
 ### OWNER-calls batch session

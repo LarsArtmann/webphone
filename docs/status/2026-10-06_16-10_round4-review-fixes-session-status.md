@@ -1,6 +1,6 @@
 # Round-4 review fixes — session status
 
-**Session:** 2026-10-06 ~15:30–16:10 CEST · scope: the brutal review's
+**Session:** 2026-10-06 ~15:30–16:50 CEST · scope: the brutal review's
 assistant-executable f) set (f.1/f.2/f.3/f.6/f.7) + explicit rulings on the three
 open §g questions (the user's "keep going" demand authorized deciding them; every
 ruling is interim and owned by the D1 sitting). Entry state verified: the 15-25
@@ -17,26 +17,27 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
 ## f) execution
 
 1. **f.1 — `scripts/md-table-shape.py` COMMITTED** (`240ea98`): the d.1
-   "instrument exists only in transcript" fix. Self-test 4/4 (mixed flags,
-   compact clean, fully-aligned clean = D1.4's question not ours,
-   unbalanced-padding flags); default scope `docs/status/` live = ZERO;
+   "instrument exists only in transcript" fix — then hardened three more
+   times tonight (item 3). Default scope `docs/status/` live = ZERO;
    explicit rerun over the exact D25.1 10-05/10-06 status+planning sweep set =
-   ZERO — the committed claim now reproduces from the repo.
-2. **Full-corpus evidence for D1.4** (dogfood, deliberately NOT normalized):
-   25 findings across 9 files — 4 archived snapshots, FEATURES.md, and 4
-   live docs including the briefing's rows-29–32/appended-rows mix. Rewriting
-   archived snapshots trades hypothetical churn for real churn; the live-doc
-   residue joins D1.4's decision space with the detector now a one-command
-   check.
-3. **Detector hardening (dogfood-before-wire, enforced on myself):** v1
-   miscounted the corpus at 39 — 14 artifacts of two latent bug classes,
-   both caught by running the committed instrument against THIS report's own
-   tables: (a) wrapped table rows fragmented into ragged pseudo-rows
-   (false positives on wrap points, false negatives where whole tables
-   collapsed below the separator check), and (b) escaped pipes `\|` split
-   cells that contain shell snippets. v3 joins open rows (bounded by blank
-   lines so prose never glues), honors escaped pipes, and carries a 7-case
-   self-test including both adversarial shapes plus wrapped-then-prose.
+   ZERO — the committed claim reproduces from the repo.
+2. **Full-corpus run → ZERO (after the events below):** v1 read 39
+   findings, v3 read 25; the honest final reading is ZERO — the delta
+   decomposes into three instrument lessons and one daemon event, all
+   verified below. Archived snapshots were never rewritten (hypothetical
+   churn vs real churn); D1.4 owns the convention.
+3. **Detector hardening (dogfood-before-wire, enforced on myself):** four
+   rounds tonight. v1 miscounted at 39 — (a) wrapped table rows fragmented
+   into ragged pseudo-rows (false positives on wrap points, false negatives
+   where whole tables collapsed below the separator check) and (b) escaped
+   pipes `\|` split cells that contain shell snippets — both caught by
+   running the committed instrument against THIS report's own tables. v3
+   joins open rows (bounded by blank lines so prose never glues), honors
+   escaped pipes. v4 measures DISPLAY width (unicodedata W/F = 2): the
+   daemon's aligner pads emoji columns to terminal cells, not codepoints,
+   so codepoint-length readings flag daemon-aligned tables (` 🔥🔥🔥 ` vs
+   ` 🔥🔥   ` are both display-width 8). Self-test is 8 cases including
+   every adversarial shape that actually fired tonight.
 4. **f.2 — CHANGELOG line** (`e684b99`): the authedFetch `csrf.js` one-home fix
    logged under [Unreleased] ### Changed, matching the 10-04 precedent's shape.
 5. **f.3 — briefing row 35** (`d355b91`): the `?user_id=` acceptance question
@@ -51,22 +52,33 @@ review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
    3 slog.Warn (error + message id + owner extension + remote number —
    CDR-class data, the accepted 18.2 bar); no print/os.Stderr paths in any of
    the five.
-7. **f.7 — canary ARMED** (TODO evidence in `240ea98`): no commit has touched
-   the normalized 03-40 table since `455e26c`; the next daemon md commit
-   touching it triggers a detector rerun — a re-introduced mix would prove the
-   daemon formatter IS the near-aligned source for D1.4.
+7. **f.7 — canary FIRED at 16:18 (`2fbdfd7`), verdict INVERTED for D1.4:**
+   the daemon's md reflow pass touched the normalized 03-40 table and
+   reflowed it compact → FULLY-ALIGNED — content-inert, no mix introduced
+   (detector ZERO post-pass). The daemon is the ALIGNER; near-aligned
+   mixes come from sessions appending compact rows onto daemon-aligned
+   tables (the briefing rows-29–34 pattern), and the daemon normalizes
+   them on its next md pass. The same pass reformatted
+   `scripts/md-table-shape.py` itself (style-only; self-test still green
+   post-hoc) and bumped `flake.lock` nixpkgs 494ce7fd → 151fa4e8 —
+   unauthored by this session, rides the push, CI judges it. The last
+   real corpus finding (samber-do scorecard Status column, an off-by-one
+   mix around a ⚠️ glyph) was normalized to compact on the spot: corpus
+   now ZERO.
 
 ## Gates
 
 - `nix fmt`: 0 changed · full Go suite: rc=0, 19 ok packages, zero FAIL lines ·
-  island JS: 186/186 pass, 0 fail.
+  island JS: 186/186 pass, 0 fail · buildflow: EXIT 0 · detector: 8/8
+  self-test, default/swept-set/corpus all ZERO.
 - codespell over the session docs delta: one PRE-EXISTING warning-level hit
   (a hyphenated pre- word at briefing line 121, introduced by daemon commit
   `1cb3445` before this session) — first adjudication, noted per the 18.3
   precedent (durable ignore only on the second hit), not session debt.
-- Narrative-commit race: 4/5 won (`240ea98`, `e684b99`, `d355b91`,
-  `14aaec1`); the f.6 TODO edit was captured by the daemon (`fbd0c5e`) with
-  content verified in the diff — the documented lost-race class.
+- Narrative-commit race: 4/6 won (`240ea98`, `e684b99`, `d355b91`,
+  `14aaec1`); the f.6 TODO edit and the v3-hardening batch were
+  captured by the daemon (`fbd0c5e`, `2402010`) with content verified in
+  the diffs — the documented lost-race class.
 
 ## Not done (correctly gated)
 

@@ -17,14 +17,17 @@ Usage:
                                                # i.e. archived/ excluded — a
                                                # subset of the D25.1 scope)
 
-The 2026-10-06 full-corpus run (all docs/ + root md) reports 25 findings
-across 9 files (4 archived snapshots, FEATURES.md, and 4 live docs incl. the
-briefing's rows-29–32/appended-rows mix): recorded as evidence for the D1.4
-daemon-format coupling-home verdict, NOT normalized — rewriting archived
-snapshots trades hypothetical churn for real churn. v1 of this script
-reported 39: 14 were wrapped-row artifacts (fragmented tables and one
-escaped-pipe split), caught by dogfooding it against the session's own
-report — the e.3 dogfood-before-wire rule, enforced retroactively.
+History (2026-10-06, one session, four dogfood rounds): v1 reported 39
+findings — wrapped-row fragments and escaped-pipe splits; v3 fixed both and
+reported 25; v4 measures DISPLAY width (unicodedata W/F = 2) because the
+daemon's aligner pads emoji columns to terminal cells, not codepoints — the
+daemon's own 16:18 aligning pass then left exactly ONE real finding
+(samber-do scorecard, normalized to compact on the spot). The corpus now
+reports ZERO. The 03-40 canary verdict from the same pass: the daemon
+REFLOWS compact tables to fully-aligned (content-inert) — the daemon is the
+ALIGNER; near-aligned mixes come from sessions appending compact rows onto
+aligned tables. Rewriting archived snapshots was declined (hypothetical
+churn vs real churn); D1.4 owns the convention.
 
 Exit 0 = clean (or self-test pass), exit 1 = findings (or self-test failure).
 Committed 2026-10-06 as the d.1 fix: instruments cited in reports must be
