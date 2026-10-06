@@ -84,9 +84,9 @@ upstream asks, raw-idea triage, watch calendar pins.
 
 ## Detailed breakdown (≤12 min micro-tasks; grouped by task, priority-ordered)
 
-| # | Micro-task | Est | #
-| - | ---------- | --- | -
-| M01 | Verify webphone `main` green (CI verdict) + `ls-remote` end-state + pick the target rev | 10m | (T01)
+| # | Micro-task | Est | Task |
+| - | ---------- | --- | ---- |
+| M01 | Verify webphone `main` green (CI verdict) + `ls-remote` end-state + pick the target rev | 10m | T01 |
 | M02 | Stack: repair/verify the FreeSWITCH `mod_enum` build | 12m | (T01)
 | M03 | Stack: relock the webphone input to the target rev | 8m | (T01)
 | M04 | Stack: `nix flake check` + browser E2E ×1; record wall-time vs 445s budget | 12m | (T01)
