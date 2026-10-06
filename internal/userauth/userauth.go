@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
@@ -203,10 +204,8 @@ func (s *Service) Resolve(email string) (MappedUser, bool) {
 // the whoami line regardless of how they signed in.
 func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, bool) {
 	for _, mapped := range s.cfg.Users {
-		for _, ext := range mapped.Extensions {
-			if ext == extension {
-				return mapped, true
-			}
+		if slices.Contains(mapped.Extensions, extension) {
+			return mapped, true
 		}
 	}
 	return MappedUser{}, false

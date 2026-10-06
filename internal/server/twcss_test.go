@@ -12,7 +12,6 @@ import (
 	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
-	"github.com/larsartmann/templ-components/utils"
 )
 
 // TestTwCssCoversAdoptedComponentClasses renders every adopted
@@ -45,21 +44,21 @@ func TestTwCssCoversAdoptedComponentClasses(t *testing.T) {
 			Icon: icons.Icon(icons.Document, "h-4 w-4"),
 		}),
 		"input bare": forms.Input(forms.InputProps{
-			BaseProps: utils.BaseProps{ID: "x-input", AriaLabel: "X"},
-			Name:      "x",
+			ID: "x-input", AriaLabel: "X",
+			Name: "x",
 		}),
 		"input labeled error": forms.Input(forms.InputProps{
-			BaseProps: utils.BaseProps{ID: "y-input"},
-			Name:      "y", Label: "Y", Required: true,
+			ID:   "y-input",
+			Name: "y", Label: "Y", Required: true,
 			Error: "bad", HelpText: "hint",
 		}),
 		"textarea bare": forms.Textarea(forms.TextareaProps{
-			BaseProps: utils.BaseProps{ID: "z-area", AriaLabel: "Z"},
-			Name:      "z", Rows: 2,
+			ID: "z-area", AriaLabel: "Z",
+			Name: "z", Rows: 2,
 		}),
 		"textarea labeled": forms.Textarea(forms.TextareaProps{
-			BaseProps: utils.BaseProps{ID: "w-area"},
-			Name:      "w", Label: "W",
+			ID:   "w-area",
+			Name: "w", Label: "W",
 		}),
 		"empty state with action": display.EmptyState(display.EmptyStateProps{
 			Title:      "Nothing",
@@ -79,7 +78,7 @@ func TestTwCssCoversAdoptedComponentClasses(t *testing.T) {
 			t.Fatalf("%s: render: %v", name, err)
 		}
 		for _, attr := range classAttr.FindAllStringSubmatch(sb.String(), -1) {
-			for _, tok := range strings.Fields(attr[1]) {
+			for tok := range strings.FieldsSeq(attr[1]) {
 				if !classesInArtifact(tok, artifact) {
 					t.Errorf("%s: class %q has no selector in tw.css (rebuild via scripts/build-tw-css.sh)", name, tok)
 				}
