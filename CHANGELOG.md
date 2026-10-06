@@ -313,6 +313,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deadnix` no longer fails on vendored third-party `flake.nix` files
   (excluded) — a latent red final gate.
 
+### Security
+
+- Auth-hardening pass over the login surfaces (2026-10-06): the session
+  cookie now carries `Secure` on TLS-fronted deployments — behind the
+  consuming stack's TLS-terminating proxy `r.TLS` is always nil, so the
+  flag is derived from the same https trusted-origin signal the CSRF
+  cookie uses (`session.CookiePolicy` wired once in `server.New`;
+  directly-TLS requests still upgrade on their own); login/logout CSRF
+  rotation deletes the cookie with the REAL config's attributes (a
+  non-Secure deletion of a Secure cookie is rejected by strict
+  browsers, silently degrading the rotation); and the `/hooks/*` shared
+  secret is compared constant-time over SHA-256 digests (no
+  early-exit/length leak — the same bar the CRM seam holds). Pinned by
+  TestCookieSecurePolicy and the TLS-fronted login spec.
+
 ## [2.8.0] - 2026-09-30
 
 Ships together with the never-separately-tagged [2.7.0] content below

@@ -184,16 +184,21 @@ var _ = Describe("A TLS-fronted deployment (https trusted origins)", func() {
 		resp, _ := wp.postRaw("/api/session", payload)
 		Expect(resp.StatusCode).To(Equal(http.StatusCreated))
 
-		sess := wp.sessionCookie()
-		Expect(sess).NotTo(BeNil())
-		Expect(sess.Secure).To(BeTrue(), "proxy-fronted deployments derive Secure from the https trusted origins")
-
-		var csrfDeletion *http.Cookie
+		// Assert on the raw Set-Cookie headers (not the client jar):
+		// cookie jars rightly refuse to store Secure cookies received over
+		// the suite's plain-HTTP test server, so the jar is the wrong oracle
+		// for the flag.
+		var sessionCookie, csrfDeletion *http.Cookie
 		for _, cookie := range resp.Cookies() {
-			if cookie.Name == "csrf_token" && cookie.MaxAge < 0 {
+			switch {
+			case cookie.Name == "webphone_session":
+				sessionCookie = cookie
+			case cookie.Name == "csrf_token" && cookie.MaxAge < 0:
 				csrfDeletion = cookie
 			}
 		}
+		Expect(sessionCookie).NotTo(BeNil())
+		Expect(sessionCookie.Secure).To(BeTrue(), "proxy-fronted deployments derive Secure from the https trusted origins")
 		Expect(csrfDeletion).NotTo(BeNil(), "login must rotate the CSRF cookie")
 		Expect(csrfDeletion.Secure).To(BeTrue(), "the deletion cookie must match the real CSRF cookie's Secure attribute")
 	})
