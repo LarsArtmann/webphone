@@ -114,7 +114,13 @@ templ TranscriptSection(props HistoryPanelProps) {
 		for _, group := range props.Transcripts {
 			<details class="wp-transcript-call">
 				<summary>
-					<span aria-hidden="true">{ group.Direction == "in" ? "↓" : "↑" }</span>
+					<span aria-hidden="true">
+						if group.Direction == "in" {
+							↓
+						} else {
+							↑
+						}
+					</span>
 					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.Names) }</strong>
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>

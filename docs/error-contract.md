@@ -273,6 +273,9 @@ a deliberate code change, regenerate:
 | store.thread_resolve                         | Infrastructure            | internal/messaging/service.go |
 | store.thread_scan                            | Infrastructure            | internal/store/messages.go    |
 | store.thread_upsert                          | Infrastructure            | internal/store/messages.go    |
+| store.transcript_append                      | Infrastructure            | internal/store/transcripts.go |
+| store.transcript_scan                        | Infrastructure            | internal/store/transcripts.go |
+| store.transcript_trim                        | Infrastructure            | internal/store/transcripts.go |
 | store.tx_begin                               | Infrastructure            | internal/store/messages.go    |
 | store.tx_commit                              | Infrastructure            | internal/store/messages.go    |
 | userauth.close.db                            | Infrastructure            | internal/userauth/userauth.go |

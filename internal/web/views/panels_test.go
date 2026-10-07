@@ -157,7 +157,7 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 		{ID: domain.GenerateMessageID(), Direction: domain.DirectionOutbound, Body: "new out", CreatedAt: now},
 	}
 
-	open := renderComponent(t, TranscriptAt(msgs, LangEN, 2))
+	open := renderComponent(t, TranscriptAt(msgs, LangEN, 2, false))
 	if got := strings.Count(open, `class="wp-day-head"`); got != 2 {
 		t.Errorf("open transcript: day heads = %d, want 2; rendered:\n%s", got, open)
 	}
@@ -184,14 +184,14 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 	}
 
 	// German keeps its labels and its ungelesen count.
-	de := renderComponent(t, TranscriptAt(msgs, LangDE, 2))
+	de := renderComponent(t, TranscriptAt(msgs, LangDE, 2, false))
 	if !strings.Contains(de, "Heute") || !strings.Contains(de, "Gestern") || !strings.Contains(de, "\u2014 2 ungelesen \u2014") {
 		t.Errorf("de transcript: labels or divider wrong; rendered:\n%s", de)
 	}
 
 	// More unread than the window holds: the divider lands at the very
 	// top, ahead of the oldest bubble in the page.
-	flood := renderComponent(t, TranscriptAt(msgs, LangEN, 5))
+	flood := renderComponent(t, TranscriptAt(msgs, LangEN, 5, false))
 	floodAt := strings.Index(flood, "wp-unread-divider")
 	if oldest := strings.Index(flood, "old out"); oldest < floodAt {
 		t.Errorf("flooded transcript: divider must lead the window (divider %d, oldest %d)", floodAt, oldest)
@@ -199,11 +199,11 @@ func TestTranscriptRendersDaySeparatorsAndTheUnreadDivider(t *testing.T) {
 
 	// No unread (or the older-page render, which routes through
 	// Transcript) never renders the divider.
-	plain := renderComponent(t, Transcript(msgs, LangEN))
+	plain := renderComponent(t, Transcript(msgs, LangEN, false))
 	if strings.Contains(plain, "wp-unread-divider") {
 		t.Errorf("plain transcript: divider must be TranscriptAt-only; rendered:\n%s", plain)
 	}
-	if clean := renderComponent(t, TranscriptAt(msgs, LangEN, 0)); strings.Contains(clean, "wp-unread-divider") {
+	if clean := renderComponent(t, TranscriptAt(msgs, LangEN, 0, false)); strings.Contains(clean, "wp-unread-divider") {
 		t.Errorf("zero-unread transcript: divider rendered; rendered:\n%s", clean)
 	}
 }
@@ -420,11 +420,11 @@ func TestImageAttachmentCarriesLightboxAttr(t *testing.T) {
 			ID: domain.GenerateAttachmentID(), Name: "doc.pdf", MimeType: "application/pdf", SizeBytes: 4096,
 		}},
 	}
-	imageHTML := renderComponent(t, Bubble(image, LangEN))
+	imageHTML := renderComponent(t, Bubble(image, LangEN, false))
 	if !strings.Contains(imageHTML, "wp-attachment-image") || !strings.Contains(imageHTML, `data-lightbox="pic.png"`) {
 		t.Errorf("image attachment must carry data-lightbox: %s", imageHTML)
 	}
-	fileHTML := renderComponent(t, Bubble(file, LangEN))
+	fileHTML := renderComponent(t, Bubble(file, LangEN, false))
 	if strings.Contains(fileHTML, "data-lightbox") {
 		t.Errorf("non-image attachment must not carry data-lightbox: %s", fileHTML)
 	}

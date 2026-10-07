@@ -485,7 +485,7 @@ templ transcriptBody(messages []domain.Message, lang Lang, unreadAt, unread int,
 		if i == unreadAt {
 			@unreadDivider(lang, unread)
 		}
-		@Bubble(msg, lang)
+		@Bubble(msg, lang, asr)
 	}
 }
 
@@ -504,7 +504,7 @@ templ unreadDivider(lang Lang, unread int) {
 	</div>
 }
 
-templ Bubble(msg domain.Message, lang Lang) {
+templ Bubble(msg domain.Message, lang Lang, asr bool) {
 	<div class={ "wp-bubble", templ.KV("wp-out", msg.Direction == domain.DirectionOutbound) }>
 		if msg.Body != "" {
 			<p class="wp-bubble-body">{ msg.Body }</p>

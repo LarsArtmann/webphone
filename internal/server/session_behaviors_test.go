@@ -50,7 +50,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	Expect(err).NotTo(HaveOccurred())
 
 	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil)
+	notifier := server.NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil, false)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,

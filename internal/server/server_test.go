@@ -107,7 +107,7 @@ func newTestServerWithConfig(
 	}
 
 	hubs := NewHubs()
-	notifier := NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil)
+	notifier := NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil, false)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
