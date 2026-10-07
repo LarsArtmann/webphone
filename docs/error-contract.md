@@ -159,6 +159,14 @@ a deliberate code change, regenerate:
 
 | Code                                         | Families                  | First site                    |
 | -------------------------------------------- | ------------------------- | ----------------------------- |
+| asr.decode                                   | Transient                 | internal/asr/asr.go           |
+| asr.empty                                    | Rejection                 | internal/asr/asr.go           |
+| asr.encode                                   | Infrastructure            | internal/asr/asr.go           |
+| asr.http                                     | runtime-split             | internal/asr/asr.go           |
+| asr.read                                     | Transient                 | internal/asr/asr.go           |
+| asr.request                                  | Infrastructure            | internal/asr/asr.go           |
+| asr.transport                                | Transient                 | internal/asr/asr.go           |
+| asr.url                                      | Rejection                 | internal/asr/asr.go           |
 | blob.escape                                  | Rejection                 | internal/blob/store.go        |
 | blob.name                                    | Infrastructure            | internal/blob/store.go        |
 | blob.open                                    | Infrastructure            | internal/blob/store.go        |
@@ -168,6 +176,7 @@ a deliberate code change, regenerate:
 | blob.subdir                                  | Infrastructure            | internal/blob/store.go        |
 | blob.write                                   | Infrastructure            | internal/blob/store.go        |
 | config.addr                                  | Rejection                 | internal/config/config.go     |
+| config.asr.url                               | Rejection                 | internal/config/config.go     |
 | config.auth.passkey.extension_password_files | Rejection                 | internal/config/config.go     |
 | config.auth.passkey.rp_id                    | Rejection                 | internal/config/config.go     |
 | config.auth.passkey.rp_origins               | Rejection                 | internal/config/config.go     |
