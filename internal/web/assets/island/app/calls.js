@@ -13,7 +13,7 @@ import {
   ringbackStop,
   ringToneStop,
 } from "./audio.js";
-import { sipDomain } from "./config.js";
+import { asrEnabled, sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
@@ -24,6 +24,11 @@ import {
 } from "./panels.js";
 import { titleFlashStop } from "./notify.js";
 import { sessions, state } from "./state.js";
+import {
+  isTranscribing,
+  startLiveTranscription,
+  stopLiveTranscription,
+} from "./transcribe.js";
 import { announce, els, hideIncomingBanner, log, showDialError } from "./ui.js";
 
 function outgoingCount() {
@@ -118,6 +123,7 @@ function focusSession(id) {
 export function teardownSession(id) {
   const entry = sessions.get(id);
   if (!entry) return;
+  stopLiveTranscription(id);
   if (entry.timer) clearInterval(entry.timer);
   if (entry.dom) entry.dom.remove();
   sessions.delete(id);
@@ -177,6 +183,11 @@ export function renderCalls() {
     if (focusBtn) focusBtn.textContent = t("focus");
     const endBtn = entry.dom.querySelector(".hangup-btn");
     if (endBtn) endBtn.textContent = t("end");
+    const transcribeBtn = entry.dom.querySelector(".transcribe-btn");
+    if (transcribeBtn)
+      transcribeBtn.textContent = isTranscribing(id)
+        ? t("transcribeStop")
+        : t("transcribe");
   });
   const established =
     state.focusedId &&
@@ -246,9 +257,45 @@ function addCallCard(id, target) {
     ),
     mkBtn(t("end"), "danger hangup-btn", () => hangup(id)),
   );
-  card.append(head, controls);
+  // Live transcription (only when the ASR seam is configured): a toggle
+  // that captures the call audio and appends each segment's text below.
+  const transcript = document.createElement("div");
+  transcript.className = "call-transcript";
+  transcript.id = `call-transcript-${id}`;
+  if (asrEnabled) {
+    controls.append(
+      mkBtn(t("transcribe"), "ghost transcribe-btn", () =>
+        toggleTranscription(id, transcript),
+      ),
+    );
+  }
+  card.append(head, controls, transcript);
   els.calls.append(card);
   return card;
+}
+
+// toggleTranscription starts or stops live-call transcription for one
+// call. Starting reports each segment's text through onText; when the
+// browser cannot capture (no MediaRecorder/AudioContext, or no media yet)
+// the transcript shows an honest "unsupported" notice instead of a silent
+// dead button.
+function toggleTranscription(id, target) {
+  const entry = sessions.get(id);
+  if (!entry) return;
+  if (isTranscribing(id)) {
+    stopLiveTranscription(id);
+  } else if (
+    !startLiveTranscription(id, entry, (text) => appendTranscript(target, text))
+  ) {
+    target.textContent = t("transcribeUnsupported");
+  }
+  renderCalls();
+}
+
+function appendTranscript(target, text) {
+  if (!text) return;
+  target.textContent = target.textContent ? `${target.textContent} ${text}` : text;
+  target.scrollTop = target.scrollHeight;
 }
 
 // Transfer row: inline destination input with blind/attended actions.

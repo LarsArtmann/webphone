@@ -146,6 +146,13 @@ export const I18N = {
     typeaheadLabel: "Contact suggestions",
     audioOutput: "Speaker",
     audioDefault: "System default",
+    transcribe: "Transcribe",
+    transcribeStop: "Stop transcription",
+    transcribeBusy: "Transcribing…",
+    transcribeEmpty: "No speech detected",
+    transcribeUnsupported:
+      "Live transcription is not supported in this browser",
+    transcribeFailed: (detail) => `transcription failed: ${detail}`,
   },
   de: {
     regState: "Registrierungsstatus",
@@ -292,6 +299,13 @@ export const I18N = {
     typeaheadLabel: "Kontaktvorschläge",
     audioOutput: "Ausgabe",
     audioDefault: "Systemstandard",
+    transcribe: "Transkribieren",
+    transcribeStop: "Transkription stoppen",
+    transcribeBusy: "Transkribiere…",
+    transcribeEmpty: "Keine Sprache erkannt",
+    transcribeUnsupported:
+      "Live-Transkription wird in diesem Browser nicht unterstützt",
+    transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
   },
 };
 

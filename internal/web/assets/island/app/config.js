@@ -26,6 +26,11 @@ export const phoneApiEnabled = config.phoneApi === true;
 // anyway.
 export const crmEnabled = config.crm === true;
 
+// Optional speech-to-text seam: when the server has a provider configured
+// it accepts audio on /api/transcribe and the island shows the transcribe
+// affordances (live calls, voicemail). Off by default.
+export const asrEnabled = config.asr === true;
+
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
   : [];

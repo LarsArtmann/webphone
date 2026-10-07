@@ -4,7 +4,12 @@
 // access rides the extension's session via authedFetch — there is no
 // second login.
 
-import { phoneApiEnabled, crmEnabled, sharedContacts } from "./config.js";
+import {
+  asrEnabled,
+  crmEnabled,
+  phoneApiEnabled,
+  sharedContacts,
+} from "./config.js";
 import {
   authedFetch,
   authHeaderValue,
@@ -12,6 +17,7 @@ import {
   noteThrottled,
 } from "./auth.js";
 import { t } from "./i18n.js";
+import { transcribeNow } from "./transcribe.js";
 import { initDialTypeahead, setExtraContacts } from "./typeahead.js";
 import { announce, dialFromUi, els, log } from "./ui.js";
 
@@ -440,6 +446,20 @@ export async function refreshVoicemail() {
           }
         });
         li.append(caller, len, when, play, del);
+        if (asrEnabled) {
+          const tr = document.createElement("button");
+          tr.className = "ghost small";
+          tr.textContent = t("transcribe");
+          tr.title = t("transcribe");
+          const transcript = document.createElement("div");
+          transcript.className = "vm-transcript";
+          tr.addEventListener("click", () =>
+            transcribeNow(msg.audio_url, transcript, {
+              filename: `${msg.uuid}.wav`,
+            }),
+          );
+          li.append(tr, transcript);
+        }
         return li;
       }),
     );
