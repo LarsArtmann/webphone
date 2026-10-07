@@ -21,7 +21,10 @@ type VoicemailPanelProps struct {
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
-	Lang  Lang
+	// ASR gates the per-row transcribe button on the speech-to-text seam:
+	// with no provider configured the affordance must not exist.
+	ASR  bool
+	Lang Lang
 }
 
 templ VoicemailPanel(props VoicemailPanelProps) {
@@ -50,7 +53,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 			</p>
 		}
 		for _, msg := range props.Messages {
-			@VoicemailRow(msg, props.Names, props.Lang)
+			@VoicemailRow(msg, props.Names, props.Lang, props.ASR)
 		}
 		if props.Enabled && len(props.Messages) == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "vm.empty"), Icon: icons.Phone})
@@ -58,7 +61,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 	</section>
 }
 
-templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang) {
+templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang, asr bool) {
 	// Stable ids are the idiomorph persistence contract: the panel re-fetch
 	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
 	// any element whose id exists in BOTH trees morphing it in place — so a
@@ -128,15 +131,19 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang)
 				>1×</button>
 				<span class="wp-vm-time" id={ "vm-time-" + msg.UUID }>0:00 / { vmClock(msg.Seconds) }</span>
 				<audio class="wp-audio" preload="none" src={ msg.AudioURL } id={ "vm-audio-" + msg.UUID }></audio>
-				<button
-					class="wp-mini wp-vm-transcribe"
-					type="button"
-					data-transcribe-src={ msg.AudioURL }
-					data-transcribe-target={ "vm-transcript-" + msg.UUID }
-					aria-label={ T(lang, "vm.transcribe") }
-				>{ T(lang, "vm.transcribe") }</button>
+				if asr {
+					<button
+						class="wp-mini wp-vm-transcribe"
+						type="button"
+						data-transcribe-src={ msg.AudioURL }
+						data-transcribe-target={ "vm-transcript-" + msg.UUID }
+						aria-label={ T(lang, "vm.transcribe") }
+					>{ T(lang, "vm.transcribe") }</button>
+				}
 			</span>
-			<div class="wp-vm-transcript" id={ "vm-transcript-" + msg.UUID } hidden></div>
+			if asr {
+				<div class="wp-vm-transcript" id={ "vm-transcript-" + msg.UUID } hidden></div>
+			}
 		}
 	</article>
 }

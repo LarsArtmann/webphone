@@ -27,12 +27,16 @@ type Notifier struct {
 	messages *store.Messages
 	faxes    *store.Faxes
 	crm      *crm.Resolver
+	asr      bool
 }
 
 // NewNotifier builds the change notifier. The resolver may be nil (CRM
 // integration off): fragments then render raw numbers, same as a miss.
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Faxes, crmResolver *crm.Resolver) *Notifier {
-	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver}
+// asrOn rides thread pushes so audio-attachment transcribe buttons
+// survive SSE re-renders exactly when the seam is configured (a
+// boot-time flag, not a per-request read).
+func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Faxes, crmResolver *crm.Resolver, asrOn bool) *Notifier {
+	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn}
 }
 
 // MessagesChanged pushes a fresh thread list to the extension's tabs and,
@@ -54,7 +58,7 @@ func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, 
 		return
 	}
 	if msgs, err := n.messages.ListMessages(ctx, owner, threadID, messaging.MessagePageSize); err == nil {
-		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs, lang))
+		n.publish(ctx, owner, sseEventThread, views.Transcript(msgs, lang, n.asr))
 	} else {
 		slog.Debug("sse: render transcript failed", "error", err)
 	}

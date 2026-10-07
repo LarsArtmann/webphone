@@ -214,6 +214,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvoke[*store.Messages](i),
 			do.MustInvoke[*store.Faxes](i),
 			do.MustInvoke[*crm.Resolver](i),
+			cfg.ASR.Enabled(),
 		), nil
 	})
 	do.Provide(injector, func(i do.Injector) (gateway.MessageGateway, error) {

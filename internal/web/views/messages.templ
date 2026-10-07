@@ -362,7 +362,11 @@ type ThreadViewProps struct {
 	Identity string
 	// Names maps phone numbers to CRM contact names (optional integration).
 	Names map[string]string
-	Lang  Lang
+	// ASR gates the audio-attachment transcribe buttons on the
+	// speech-to-text seam: with no provider configured the affordance
+	// must not exist.
+	ASR  bool
+	Lang Lang
 }
 
 templ ThreadView(props ThreadViewProps) {
@@ -402,9 +406,9 @@ templ ThreadView(props ThreadViewProps) {
 					// was captured before the handler marked it read); older
 					// pages hold no unread bubbles — a top divider there
 					// would lie about where they live.
-					@TranscriptAt(props.Messages, props.Lang, props.Thread.Unread)
+					@TranscriptAt(props.Messages, props.Lang, props.Thread.Unread, props.ASR)
 				} else {
-					@Transcript(props.Messages, props.Lang)
+					@Transcript(props.Messages, props.Lang, props.ASR)
 				}
 			</div>
 			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
@@ -462,18 +466,18 @@ templ ThreadView(props ThreadViewProps) {
 // client-side. The notifier renders this shape — the unread divider
 // lives only on TranscriptAt, because a push can never know the reader's
 // unread state.
-templ Transcript(messages []domain.Message, lang Lang) {
-	@transcriptBody(messages, lang, -1, 0)
+templ Transcript(messages []domain.Message, lang Lang, asr bool) {
+	@transcriptBody(messages, lang, -1, 0, asr)
 }
 
 // TranscriptAt is the page-0 open shape: the unread divider sits ahead
 // of the thread's trailing unread inbound bubbles (Unread was captured
 // before the open marked the thread read).
-templ TranscriptAt(messages []domain.Message, lang Lang, unread int) {
-	@transcriptBody(messages, lang, firstUnreadIndex(unread, messages), unread)
+templ TranscriptAt(messages []domain.Message, lang Lang, unread int, asr bool) {
+	@transcriptBody(messages, lang, firstUnreadIndex(unread, messages), unread, asr)
 }
 
-templ transcriptBody(messages []domain.Message, lang Lang, unreadAt, unread int) {
+templ transcriptBody(messages []domain.Message, lang Lang, unreadAt, unread int, asr bool) {
 	for i, msg := range messages {
 		if i == 0 || dayKey(messages[i-1].CreatedAt) != dayKey(msg.CreatedAt) {
 			@dayHead(lang, msg.CreatedAt, dayCount(messages, i))
@@ -523,7 +527,7 @@ templ Bubble(msg domain.Message, lang Lang) {
 				<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
 					📎 { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
 				</a>
-				if strings.HasPrefix(att.MimeType, "audio/") {
+				if strings.HasPrefix(att.MimeType, "audio/") && asr {
 					<button
 						class="wp-mini"
 						type="button"

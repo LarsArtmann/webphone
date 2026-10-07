@@ -1,6 +1,7 @@
 package views
 
 import (
+	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -22,7 +23,12 @@ type HistoryPanelProps struct {
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
-	Lang  Lang
+	// Transcripts are the extension's own live-call transcript groups
+	// (owner-scoped store, newest call first). They render as their own
+	// section — the CDR rows carry no call uuid, so joining the two lists
+	// would be guesswork, not correlation.
+	Transcripts []TranscriptGroup
+	Lang        Lang
 }
 
 templ HistoryPanel(props HistoryPanelProps) {
@@ -83,6 +89,37 @@ templ HistoryPanel(props HistoryPanelProps) {
 			for _, cdr := range group.Rows {
 				@CDRRow(cdr, props.Names, props.Lang)
 			}
+		}
+		if len(props.Transcripts) > 0 {
+			@TranscriptSection(props)
+		}
+	</section>
+}
+
+// TranscriptGroup is one reassembled call transcript for the History
+// tab: the call's remote party plus its segments in spoken order.
+type TranscriptGroup struct {
+	Remote    string
+	Direction string // "in" | "out"
+	StartedAt time.Time
+	Lines     []string
+	// Name is the CRM-resolved contact name (optional); empty renders
+	// the raw remote.
+	Name string
+}
+
+templ TranscriptSection(props HistoryPanelProps) {
+	<section class="wp-transcripts" aria-label={ T(props.Lang, "history.transcripts") }>
+		<h3>{ T(props.Lang, "history.transcripts") }</h3>
+		for _, group := range props.Transcripts {
+			<details class="wp-transcript-call">
+				<summary>
+					<span aria-hidden="true">{ group.Direction == "in" ? "↓" : "↑" }</span>
+					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.Names) }</strong>
+					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
+				</summary>
+				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+			</details>
 		}
 	</section>
 }
