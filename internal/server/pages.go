@@ -29,6 +29,9 @@ type handlers struct {
 	eventsLimiter   *httputil.KeyedRateLimiter
 	csrfLimiter     *httputil.KeyedRateLimiter
 	contactsLimiter *httputil.KeyedRateLimiter
+	// Transcription uploads (one island/shell POST per audio segment; live
+	// call chunks arrive every few seconds): the hook-grade bucket.
+	transcribeLimiter *httputil.KeyedRateLimiter
 	// Passkey enrollment ceremonies (token-gated by design; the bucket
 	// only fences runaway clients, the one-time token is the real gate).
 	passkeyLimiter *httputil.KeyedRateLimiter

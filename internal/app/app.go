@@ -36,6 +36,7 @@ import (
 	dashboard "github.com/larsartmann/go-health-dashboard"
 	"github.com/samber/do/v2"
 
+	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -155,6 +156,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), log), nil
 	})
+	// Optional speech-to-text seam (live transcription of every audio
+	// stream). Config-absent → a disabled *asr.Client (Enabled() false):
+	// /api/transcribe 404s and the island hides its affordances.
+	do.Provide(injector, func(i do.Injector) (*asr.Client, error) {
+		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+	})
 
 	// Optional passkey identity layer (embedded usermgmt): config-absent
 	// → the service is never registered and Deps.UserAuth stays nil
@@ -267,6 +274,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Hubs:      do.MustInvoke[*server.ExtensionHubs](i),
 			Shared:    cfg.Contacts,
 			CRM:       do.MustInvoke[*crm.Resolver](i),
+			ASR:       do.MustInvoke[*asr.Client](i),
 			DB:        db.SQL(),
 			BlobRoot:  blobs.Root(),
 			Probe:     probe,

@@ -22,6 +22,7 @@ import (
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
+	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -138,6 +139,10 @@ type Deps struct {
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.
 	CRM *crm.Resolver
+	// ASR is the OPTIONAL speech-to-text seam behind /api/transcribe.
+	// Nil or disabled: the route answers the styled 404 and the island
+	// hides every transcribe affordance.
+	ASR *asr.Client
 	// Probe is the go-health probe serving /livez and /startupz. When
 	// nil (tests composing Deps by hand), New falls back to building the
 	// equivalent NewChecks probe over the same backing checks — one
@@ -189,6 +194,7 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
+		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
 		cookies:         cookies,
 		csrfCfg:         csrfCfg,
@@ -275,6 +281,10 @@ func New(deps Deps) http.Handler {
 	// the island normally gates on PBX_CONFIG.crm, but a config change
 	// under a long-lived session must not error.
 	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiLogCall)))
+	// The transcription surface: session-gated, CSRF via authedFetch, and
+	// the ONE endpoint behind every audio stream's transcribe affordance
+	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
+	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiTranscribe)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above

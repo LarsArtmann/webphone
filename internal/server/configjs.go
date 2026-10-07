@@ -33,6 +33,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		ICEServers    []config.ICEServer     `json:"iceServers,omitempty"`
 		PhoneAPI      bool                   `json:"phoneApi"`
 		CRM           bool                   `json:"crm"`
+		ASR           bool                   `json:"asr"`
 		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
 		SIPDomain:     h.deps.Config.SIPDomain,
@@ -40,6 +41,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		ICEServers:    iceServers,
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
 		CRM:           h.deps.CRM.Enabled(),
+		ASR:           h.deps.ASR.Enabled(),
 		Contacts:      h.deps.Shared,
 	}
 
