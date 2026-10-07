@@ -53,7 +53,7 @@ func TestTranscribeHappyPath(t *testing.T) {
 		if err != nil {
 			t.Errorf("form file: %v", err)
 		} else {
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			gotFilename = header.Filename
 			gotContentType = header.Header.Get("Content-Type")
 			data, _ := io.ReadAll(file)

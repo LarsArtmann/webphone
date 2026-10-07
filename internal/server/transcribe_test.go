@@ -23,7 +23,7 @@ func fakeProvider(t *testing.T, status int, text string) (*httptest.Server, *str
 			t.Errorf("provider multipart: %v", err)
 		}
 		if f, _, err := r.FormFile("file"); err == nil {
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 			buf := make([]byte, 1024)
 			n, _ := f.Read(buf)
 			lastAudio = string(buf[:n])
