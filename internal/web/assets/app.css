@@ -2085,3 +2085,36 @@ dialog.wp-lightbox img {
 .wp-attachment-transcript[hidden] {
   display: none;
 }
+
+/* History tab: the extension's own persisted call transcripts (their own
+   section, never joined onto CDR rows). */
+.wp-transcripts {
+  margin-top: 1.5rem;
+}
+
+.wp-transcripts h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wp-transcript-call {
+  border-block: 1px solid var(--border);
+  padding: 0.4rem 0;
+}
+
+.wp-transcript-call summary {
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.wp-transcript-text {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  text-wrap: pretty;
+}

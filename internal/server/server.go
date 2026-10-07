@@ -124,21 +124,21 @@ func remoteHostKey(r *http.Request) string {
 
 // Deps are the wired services the handlers ride on.
 type Deps struct {
-	Config    config.Config
-	Sessions  session.Store
-	Messages  *store.Messages
-	Faxes     *store.Faxes
-	Contacts  *store.Contacts
-	Snippets  *store.Snippets
+	Config   config.Config
+	Sessions session.Store
+	Messages *store.Messages
+	Faxes    *store.Faxes
+	Contacts *store.Contacts
+	Snippets *store.Snippets
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
 	Transcripts *store.Transcripts
-	Messaging *messaging.Service
-	Fax       *fax.Service
-	PhoneAPI  *pbx.Client
-	Hubs      *ExtensionHubs
-	Shared    []domain.SharedContact
+	Messaging   *messaging.Service
+	Fax         *fax.Service
+	PhoneAPI    *pbx.Client
+	Hubs        *ExtensionHubs
+	Shared      []domain.SharedContact
 	// CRM is the OPTIONAL Ledger CRM integration (name enrichment + call
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.
