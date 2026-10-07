@@ -333,15 +333,48 @@ session-gated endpoint. `POST /api/transcribe` takes the raw audio bytes
 (any `audio/*` Content-Type) — optionally `?filename=` and `?lang=` — and
 forwards them as a multipart file to the provider's OpenAI-compatible
 `/v1/audio/transcriptions`, returning `{"text": "…"}`. The provider is any
-self-hosted whisper.cpp server (or an OpenAI-compatible API); a disabled
-seam answers 404 and the UI hides every affordance. Nothing is stored.
+OpenAI-compatible server; a disabled seam answers 404 and the UI hides
+every affordance.
 
 - **Live calls**: the island mixes the remote party and the operator's own
-  voice through a throwaway `AudioContext` and records 4-second segments,
-  appending each segment's text into the call card.
+  voice through an `AudioContext` (closed on stop) and records 4-second
+  segments, appending each segment's text into the call card. Capture
+  pauses while the call is on hold (no audio flows — no silence
+  hallucinations) and each segment carries the UI language as the
+  provider's `language` hint.
 - **Voicemail & MMS audio**: the Voicemail and Messages tabs render a
   transcribe button next to each playable clip (one delegated shell.js
   handler fetches the audio and posts it).
+- **Auto-start**: with the seam on, transcription begins by itself — live
+  capture starts when a call connects, and every rendered voicemail/MMS
+  clip transcribes once per page life (morph re-renders never re-POST).
+  The buttons stay as manual re-runs.
+- **Persistence**: each live-call segment is also appended (fire-and-forget,
+  `POST /api/transcripts`) to an owner-scoped SQLite table (schema v3,
+  capped at 5000 segments per extension). The History tab renders the
+  newest transcribed calls as their own "Call transcripts" section —
+  deliberately NOT joined onto the CDR rows, which carry no call uuid to
+  correlate with.
+
+**Choosing a provider (2026 recommendation):** run ASR LOCAL, not hosted.
+Call audio of real people is GDPR personal data; the US-inference APIs
+(OpenAI, Groq, AssemblyAI) offer no EU residency. The stack already keeps
+audio on your infrastructure — keep transcription there too.
+
+- **Primary**: [Speaches](https://github.com/speaches-ai/speaches) (ex
+  faster-whisper-server) with `large-v3-turbo` — first-class
+  OpenAI-compatible `/v1/audio/transcriptions`, ships a flake.nix, CPU-viable
+  for 4-second segments, MIT. Set `asr.url` to its base URL; no token
+  needed.
+- **Lightweight fallback**: whisper.cpp's `whisper-server` with a
+  quantized `large-v3-turbo` (single static binary; its endpoint is
+  `/inference`, so rewrite the path in the reverse proxy).
+- **If cloud is ever required**: Deepgram Nova-3 via the EU endpoint
+  (`api.eu.deepgram.com`, telephony-tuned models) behind a thin
+  OpenAI-compatible adapter.
+- Pass an explicit language where you can (`?lang=de` — auto-detect
+  misfires DE↔EN on short phone chunks); the island does this
+  automatically from the session language.
 
 ## Live updates (SSE)
 

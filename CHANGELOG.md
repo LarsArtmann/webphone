@@ -38,11 +38,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   self-hosted whisper.cpp / OpenAI-compatible provider (`internal/asr`,
   error-family pinned) and returns the text; a disabled seam answers 404.
   The island captures live-call segments (remote + operator audio mixed
-  through a throwaway AudioContext, `MediaRecorder` every 4 s) and streams
-  them into the call card; the Voicemail and Messages tabs gain
-  transcribe-on-demand buttons through one delegated shell.js handler. New
-  island module `transcribe.js`; `window.PBX_CONFIG.asr` gates every
-  affordance; the Settings tab reports the seam's state.
+  through an AudioContext that now CLOSES on stop, `MediaRecorder` every
+  4 s) and streams them into the call card; the Voicemail and Messages
+  tabs gain transcribe buttons through one delegated shell.js handler.
+  New island module `transcribe.js`; `window.PBX_CONFIG.asr` gates every
+  affordance (server-rendered buttons included); the Settings tab reports
+  the seam's state.
+- Transcription auto-start and persistence: with the seam on, live capture
+  begins when a call connects (pausing on hold, resuming after), voicemail
+  and MMS audio transcribe themselves once per page life (morph re-renders
+  never re-POST), and every live-call segment is appended to an
+  owner-scoped `call_transcripts` store (schema v3, 5000-segment cap per
+  extension) that the History tab renders as its own "Call transcripts"
+  section. Segments carry the UI language as the provider hint; transcript
+  deltas ride the polite live region; a failed save warns once per call
+  and never blocks the capture.
 - Error-code registry (error-contract.md): a 104-code table of every
   `<seam>.<op>` error code, generated from the source and freshness-pinned
   by `TestErrorCodeRegistryIsFresh` — a code rename now fails the suite

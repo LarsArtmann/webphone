@@ -121,3 +121,27 @@ func TestShellJSSurfacesHtmxErrors(t *testing.T) {
 		}
 	}
 }
+
+// TestShellJSHandlesTranscribeButtons pins the shell asset to the
+// server-rendered transcribe contract: voicemail.templ and messages.templ
+// render data-transcribe-src buttons, and shell.js owns BOTH the
+// delegated click handler and the auto-start pass behind them. Drop
+// either side and every server-rendered transcription surface dies
+// silently (the behavioral specs live island-side, shell.test.mjs).
+func TestShellJSHandlesTranscribeButtons(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/assets/shell.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("shell.js status %d", resp.StatusCode)
+	}
+	page := string(body)
+	for _, want := range []string{
+		`closest("[data-transcribe-src]")`, // the delegated click handler
+		"autoTranscribe",                   // the auto-start pass
+		"PBX_CONFIG.asr",                   // gated on the served seam flag
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("shell.js lost %q — server-rendered transcription would stop working", want)
+		}
+	}
+}
