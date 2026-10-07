@@ -153,6 +153,11 @@ export const I18N = {
     transcribeUnsupported:
       "Live transcription is not supported in this browser",
     transcribeFailed: (detail) => `transcription failed: ${detail}`,
+    transcribeStarted: "Live transcription started",
+    transcribeStopped: "Live transcription stopped",
+    transcriptDelta: (text) => `Transcript: ${text}`,
+    transcriptSaveFailed: (detail) =>
+      `transcript not saved (${detail}) — it stays on the call card only`,
   },
   de: {
     regState: "Registrierungsstatus",
@@ -306,6 +311,11 @@ export const I18N = {
     transcribeUnsupported:
       "Live-Transkription wird in diesem Browser nicht unterstützt",
     transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
+    transcribeStarted: "Live-Transkription gestartet",
+    transcribeStopped: "Live-Transkription gestoppt",
+    transcriptDelta: (text) => `Transkript: ${text}`,
+    transcriptSaveFailed: (detail) =>
+      `Transkript nicht gespeichert (${detail}) — es bleibt nur auf der Anrufkarte`,
   },
 };
 

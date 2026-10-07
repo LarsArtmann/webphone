@@ -14,7 +14,7 @@ import {
   ringToneStop,
 } from "./audio.js";
 import { asrEnabled, sipDomain } from "./config.js";
-import { t } from "./i18n.js";
+import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
   recordCrmCall,
@@ -26,6 +26,8 @@ import { titleFlashStop } from "./notify.js";
 import { sessions, state } from "./state.js";
 import {
   isTranscribing,
+  pauseLiveTranscription,
+  saveTranscriptSegment,
   startLiveTranscription,
   stopLiveTranscription,
 } from "./transcribe.js";
@@ -84,6 +86,9 @@ async function holdSession(id, hold) {
     await entry.session.invite();
     entry.held = hold;
     setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
+    // A held call carries no audio either way — pause the capture so
+    // the provider never receives (and hallucinates on) silence.
+    pauseLiveTranscription(id, hold);
   } catch (err) {
     log(`hold toggle failed: ${err.message}`, "error");
     announce(t(hold ? "holdFailed" : "resumeFailed")(err.message), "error");
@@ -275,21 +280,77 @@ function addCallCard(id, target) {
 }
 
 // toggleTranscription starts or stops live-call transcription for one
-// call. Starting reports each segment's text through onText; when the
-// browser cannot capture (no MediaRecorder/AudioContext, or no media yet)
-// the transcript shows an honest "unsupported" notice instead of a silent
-// dead button.
+// call. Starting reports each segment's text through onCallTranscript;
+// when the browser cannot capture (no MediaRecorder/AudioContext, or no
+// media yet) the transcript shows an honest "unsupported" notice instead
+// of a silent dead button.
 function toggleTranscription(id, target) {
   const entry = sessions.get(id);
   if (!entry) return;
   if (isTranscribing(id)) {
     stopLiveTranscription(id);
-  } else if (
-    !startLiveTranscription(id, entry, (text) => appendTranscript(target, text))
-  ) {
+    announce(t("transcribeStopped"), "info");
+  } else if (!startCallTranscription(id, entry, target)) {
     target.textContent = t("transcribeUnsupported");
   }
   renderCalls();
+}
+
+// startCallTranscription is the ONE start path (auto-start on connect
+// and the manual toggle both ride it): it wires segment text to
+// onCallTranscript and passes the UI language as the provider hint.
+function startCallTranscription(id, entry, target) {
+  return startLiveTranscription(
+    id,
+    entry,
+    (text) => onCallTranscript(id, entry, target, text),
+    { language: getLang() },
+  );
+}
+
+// ensureTranscription is the auto-start hook: transcription begins by
+// itself when the ASR seam is on (owner decision 2026-10-07) — the
+// button remains the honest manual override. An honest notice replaces
+// a silent failure to start.
+function ensureTranscription(id, entry) {
+  if (!asrEnabled) return;
+  const target = entry.dom && entry.dom.querySelector(".call-transcript");
+  if (!target || isTranscribing(id)) return;
+  if (startCallTranscription(id, entry, target)) {
+    announce(t("transcribeStarted"), "info");
+    renderCalls();
+  } else {
+    target.textContent = t("transcribeUnsupported");
+  }
+}
+
+// onCallTranscript is the per-segment sink: the card grows, screen
+// readers hear the delta (polite — this IS the product for them), and
+// the segment is persisted fire-and-forget so the History tab can show
+// it after the call.
+function onCallTranscript(id, entry, target, text) {
+  appendTranscript(target, text);
+  announce(clipForAnnounce(text), "info");
+  saveTranscriptSegment({
+    callId: id,
+    direction: entry.session instanceof SIP.Inviter ? "out" : "in",
+    remote: entry.target,
+    startedAt: entry.startedAt,
+    text,
+  }).catch((err) => {
+    log(`transcript save failed: ${err.message}`, "warn");
+    if (!entry.transcriptSaveWarned) {
+      entry.transcriptSaveWarned = true;
+      announce(t("transcriptSaveFailed")(err.message), "warn");
+    }
+  });
+}
+
+// clipForAnnounce bounds what the live region reads per segment: a
+// full paragraph would jam the SR queue at the ~15 segments/minute cadence.
+function clipForAnnounce(text) {
+  const clipped = text.length > 140 ? `${text.slice(0, 139)}…` : text;
+  return t("transcriptDelta")(clipped);
 }
 
 function appendTranscript(target, text) {
@@ -437,6 +498,10 @@ export function bindSession(newSession, target) {
       live.startedAt = Date.now();
       if (!live.timer) live.timer = setInterval(renderCalls, 1000);
       focusSession(id);
+      // Auto-start (owner decision 2026-10-07): with the ASR seam on,
+      // transcription begins with the call's media — the transcribe
+      // button stays as the manual stop/restart override.
+      ensureTranscription(id, live);
       // Call is no longer ringing: the incoming UX stops either way.
       titleFlashStop();
       ringToneStop();

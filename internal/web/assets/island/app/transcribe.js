@@ -19,6 +19,19 @@ import { log } from "./ui.js";
 
 export const transcribeEnabled = asrEnabled;
 
+// saveTranscriptSegment persists one live-call segment to the server's
+// owner-scoped transcript store (the History tab's durable source).
+// Fire-and-forget: a failed save costs the LATER re-read, not the live
+// card — the caller logs/toasts, never blocks the capture loop.
+export async function saveTranscriptSegment(segment) {
+  const res = await authedFetch("/api/transcripts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(segment),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+
 // Segment length: short enough to feel live, long enough that the provider
 // gets usable context and the request rate stays modest (~15/min).
 const CHUNK_MS = 4000;
@@ -69,9 +82,11 @@ export function isTranscribing(id) {
 
 // captureStream builds one audio MediaStream carrying both call legs: the
 // remote party (peer-connection receivers) and the operator's own voice
-// (the audio sender track), mixed through a throwaway AudioContext. Null
-// when the browser cannot mix (no AudioContext) or the call has no peer
-// connection yet — the caller renders an honest unsupported notice.
+// (the audio sender track), mixed through an AudioContext the CALLER now
+// owns — the context is close()d on stop (browsers cap live AudioContexts,
+// so a leaked one kills capture after ~6 calls in Chrome). Null when the
+// browser cannot mix (no AudioContext) or the call has no peer connection
+// yet — the caller renders an honest unsupported notice.
 export function captureStream(entry) {
   const sdh = entry && entry.session && entry.session.sessionDescriptionHandler;
   const pc = sdh && sdh.peerConnection;
@@ -96,7 +111,7 @@ export function captureStream(entry) {
     const local = new MediaStream([sender.track]);
     ctx.createMediaStreamSource(local).connect(dest);
   }
-  return dest.stream;
+  return { stream: dest.stream, ctx };
 }
 
 function recorderOptions() {
@@ -111,45 +126,87 @@ function recorderOptions() {
 }
 
 // startLiveTranscription begins capturing a live call and reports each
-// segment's text through onText. Idempotent per call id. Returns false
-// when the browser or the seam cannot support it (the caller shows the
-// notice).
-export function startLiveTranscription(id, entry, onText) {
+// segment's text through onText. Idempotent per call id. The language
+// hint rides every segment (auto-detect misfires DE↔EN on 4 s phone
+// chunks — the operator's UI language is the honest default). Returns
+// false when the browser or the seam cannot support it (the caller
+// shows the notice).
+export function startLiveTranscription(id, entry, onText, { language } = {}) {
   if (!transcribeEnabled || live.has(id)) return false;
   if (typeof MediaRecorder === "undefined") {
     log("live transcription unsupported: no MediaRecorder", "warn");
     return false;
   }
-  const stream = captureStream(entry);
-  if (!stream) {
+  const captured = captureStream(entry);
+  if (!captured) {
     log("live transcription unsupported: no call audio to capture", "warn");
     return false;
   }
+  const { stream, ctx } = captured;
 
   let recorder;
   try {
     recorder = new MediaRecorder(stream, recorderOptions());
   } catch (err) {
     log(`live transcription recorder failed: ${err.message}`, "warn");
+    releaseCapture(ctx, stream);
     return false;
   }
 
-  const controller = { recorder };
+  const controller = { recorder, ctx, stream };
   live.set(id, controller);
   recorder.addEventListener("dataavailable", async (event) => {
     if (!event.data || event.data.size === 0) return;
     try {
-      const text = await transcribeBlob(event.data, { filename: "live.webm" });
+      const text = await transcribeBlob(event.data, {
+        filename: "live.webm",
+        language,
+      });
       if (text) onText(text);
     } catch (err) {
       log(`live transcription segment failed: ${err.message}`, "warn");
     }
   });
   recorder.addEventListener("stop", () => {
+    releaseCapture(ctx, stream);
     live.delete(id);
   });
   recorder.start(CHUNK_MS);
   return true;
+}
+
+// releaseCapture tears the mixing graph down: the AudioContext is the
+// scarce resource (browsers cap concurrent instances), the mixed
+// stream's tracks die with it. Defensive typeof guards keep the node
+// test stubs honest.
+function releaseCapture(ctx, stream) {
+  if (ctx && typeof ctx.close === "function") {
+    ctx.close().catch(() => {});
+  }
+  if (stream && stream.getTracks) {
+    stream.getTracks().forEach((track) => {
+      if (typeof track.stop === "function") track.stop();
+    });
+  }
+}
+
+// pauseLiveTranscription reflects the call's hold state onto the
+// capture: a held call carries no audio in either direction (both
+// track directions are disabled), so recording on would ship silence
+// to the provider — the hallucination magnet. Pause/resume is a no-op
+// for a call that is not being transcribed (safe on every hold flip).
+export function pauseLiveTranscription(id, paused) {
+  const controller = live.get(id);
+  if (!controller || !controller.recorder) return;
+  try {
+    if (paused && controller.recorder.state === "recording") {
+      controller.recorder.pause();
+    } else if (!paused && controller.recorder.state === "paused") {
+      controller.recorder.resume();
+    }
+  } catch {
+    // A mid-teardown toggle: the recorder is gone either way.
+  }
 }
 
 // stopLiveTranscription ends capture for one call. A no-op when the call
@@ -158,6 +215,7 @@ export function stopLiveTranscription(id) {
   const controller = live.get(id);
   if (!controller) return;
   live.delete(id);
+  releaseCapture(controller.ctx, controller.stream);
   try {
     controller.recorder.stop();
   } catch {
