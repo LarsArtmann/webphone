@@ -179,8 +179,8 @@ func TestBridgeEnvelopeEmbeddedTelnyxStatusDrivesFamily(t *testing.T) {
 	// "gateway did not answer" copy instead of the actionable refusal.
 	rejection := post(t, http.StatusBadGateway,
 		`{"error":"telnyx rejected the send (HTTP 403, error 40306): The messaging profile doesn't have an associated alphanumeric sender ID"}`)
-	var rejected *ErrProviderRejected
-	if !errors.As(rejection, &rejected) {
+	rejected, ok := errors.AsType[*ErrProviderRejected](rejection)
+	if !ok {
 		t.Fatalf("expected ErrProviderRejected, got %T: %v", rejection, rejection)
 	}
 	if rejected.Status != http.StatusBadGateway {

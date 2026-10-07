@@ -166,8 +166,8 @@ func TestDatabaseAdapterHealthAndShutdown(t *testing.T) {
 	if err == nil {
 		t.Fatal("closed database must fail HealthCheck")
 	}
-	var classified errorfamily.Classified
-	if !errors.As(err, &classified) || classified.ErrorFamily() != errorfamily.Infrastructure {
+	classified, ok := errors.AsType[errorfamily.Classified](err)
+	if !ok || classified.ErrorFamily() != errorfamily.Infrastructure {
 		t.Errorf("closed-database HealthCheck family = %v, want Infrastructure (%v)", classified, err)
 	}
 }
