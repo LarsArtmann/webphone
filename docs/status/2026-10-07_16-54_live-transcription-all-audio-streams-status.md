@@ -255,3 +255,77 @@ All work is committed (auto-commit daemon); working tree clean.
 - Tests: `island-tests/transcribe.test.mjs` (new)
 - Docs: `CHANGELOG.md`, `README.md`, `FEATURES.md`, `AGENTS.md`,
   `docs/error-contract.md` (generated registry)
+
+---
+
+## UPDATE 2026-10-07 18:00 — follow-up train (all three questions answered)
+
+Owner decisions: **(1)** research 2026's best local-vs-API → done,
+recommendation LOCAL; **(2)** transcripts PERSIST to History; **(3)**
+auto-start EVERYWHERE. All follow-ups landed and every gate is green.
+
+### Landed
+
+- **Research verdict (README "Choosing a provider")**: LOCAL ASR — caller
+  audio is GDPR personal data and the US-inference APIs (OpenAI, Groq,
+  AssemblyAI) have no EU residency. Primary: Speaches (ex
+  faster-whisper-server) + `large-v3-turbo` (OpenAI-compatible endpoint,
+  own flake.nix, CPU-viable, MIT). Fallback: whisper.cpp `whisper-server`
+  (`/inference` path needs a proxy rewrite). Cloud-if-ever: Deepgram EU.
+  Also: always pass an explicit `language` (auto-detect misfires DE↔EN on
+  4 s chunks) — the island now sends the session language with every
+  live segment.
+- **Persistence**: schema v3 `call_transcripts` table (versioned
+  migration), `store.Transcripts` (Append + Recent grouped-by-call,
+  5000-segment cap with a scalar-bounded trim), `POST /api/transcripts`
+  (session-gated, validated, seam-gated), History tab renders the newest
+  transcribed calls as their OWN section — deliberately NOT joined onto
+  CDR rows (the phone API's CDRs carry no uuid; joining would be
+  guesswork).
+- **Auto-start everywhere**: calls auto-capture on Established
+  (`ensureTranscription`); voicemail + MMS audio self-transcribe once per
+  src+target per page life (shell.js `autoTranscribe`, PBX_CONFIG.asr
+  gated, morph-safe). Buttons remain as manual re-runs.
+- **AudioContext leak FIXED**: the mixing context is owned by the
+  controller and `close()`d on stop (plus mixed-track teardown) — pinned
+  by spec.
+- **Hold honesty**: capture pauses on hold, resumes on release (no
+  silence shipped to the provider). Mute stays honest by nature (the
+  disabled sender track simply leaves the mix).
+- **a11y**: start/stop announce politely; each segment delta rides the
+  polite live region (clipped to 140 chars).
+- **Gating gap FIXED**: the server-rendered voicemail/MMS transcribe
+  buttons rendered unconditionally (dead buttons with the seam off) —
+  now gated by `VoicemailPanelProps.ASR` / `ThreadViewProps.ASR`, and
+  the Notifier carries the boot-time flag so SSE pushes match full
+  renders.
+- **shell.js spec** (owed from the first pass): behavioral specs for the
+  delegated handler + auto-start + once-guard (island shell.test.mjs)
+  and a served-asset tripwire (TestShellJSHandlesTranscribeButtons).
+
+### Gates
+
+`go test ./...` (20 pkgs) · 200/200 island node:test · oxlint · `nix
+fmt` · `templ generate` · **buildflow** (findings gate passes) ·
+**`nix flake check`** (all checks incl. the KVM backup VM test) ·
+`nix build .#webphone`. CI green on the daemon's pushes.
+
+### Incidental fixes (not mine, fixed to unblock the gate)
+
+- `.buildflow.yml` had LOST its documented `skip_steps` section
+  (truncated in the 00:46 daemon commit; AGENTS.md still documents the
+  policy) — restored the 69 rationale lines + keys from git history.
+  The findings gate was failing on go-structure-linter noise that was
+  triaged 2026-09-18.
+- erraudit `legacy_as` x2 in `gateway/family_test.go` /
+  `store/db_test.go` (pre-existing): migrated `errors.As` →
+  `errors.AsType` per the go-error-modernization decision tree (both
+  were true type-extraction sites reading fields afterward).
+
+### Still open
+
+- No run against a REAL provider or browser (fake-provider tests only).
+  When a Speaches instance exists: boot with `asr.url`, smoke it.
+- The stack's browser E2E owes a re-run (served markup changed:
+  ASR-gated buttons are now ABSENT by default — the E2E must not assume
+  them; dom-contract ids unchanged).
