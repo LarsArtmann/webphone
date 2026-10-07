@@ -126,6 +126,9 @@ in the JSON file.
 | `crm.token`                             | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
 | `paperless.url`                         | _empty_ = disabled  | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
 | `paperless.token`                       | _empty_             | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
+| `asr.url`                               | _empty_ = disabled  | Base URL of the optional speech-to-text provider (e.g. `http://127.0.0.1:8081`); a URL alone enables — the OpenAI-compatible `/v1/audio/transcriptions` endpoint is assumed                                                       |
+| `asr.token`                             | _empty_             | Optional bearer credential for the ASR provider; a token WITHOUT a URL fails closed (nowhere to send it)                                                                                                             |
+| `asr.model`                             | `whisper-1`         | Model name the provider expects (e.g. `large-v3`); sent as the multipart `model` field                                                                                                                                |
 | `auth.passkey.rp_id`                    | _empty_ = disabled  | WebAuthn relying-party ID (the registrable domain, e.g. `pbx.example.com`); setting the passkey keys enables the email-first login — all-or-nothing per validation                                                   |
 | `auth.passkey.rp_display_name`          | `webphone`          | Name the browser shows in the passkey prompt                                                                                                                                                                         |
 | `auth.passkey.rp_origins`               | _required_          | Browser-facing origins (`https://…`); each origin's host must equal `rp_id`                                                                                                                                          |
@@ -322,6 +325,23 @@ POST http://webphone:8080/hooks/message
 # then answer {"provider_ref": "<id>"} and later call
 # /hooks/fax/status or /hooks/message/status with that id.
 ```
+
+### Live transcription (optional)
+
+With `asr.url` set, every audio surface can be transcribed through one
+session-gated endpoint. `POST /api/transcribe` takes the raw audio bytes
+(any `audio/*` Content-Type) — optionally `?filename=` and `?lang=` — and
+forwards them as a multipart file to the provider's OpenAI-compatible
+`/v1/audio/transcriptions`, returning `{"text": "…"}`. The provider is any
+self-hosted whisper.cpp server (or an OpenAI-compatible API); a disabled
+seam answers 404 and the UI hides every affordance. Nothing is stored.
+
+- **Live calls**: the island mixes the remote party and the operator's own
+  voice through a throwaway `AudioContext` and records 4-second segments,
+  appending each segment's text into the call card.
+- **Voicemail & MMS audio**: the Voicemail and Messages tabs render a
+  transcribe button next to each playable clip (one delegated shell.js
+  handler fetches the audio and posts it).
 
 ## Live updates (SSE)
 

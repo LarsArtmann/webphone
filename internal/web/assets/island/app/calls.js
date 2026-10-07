@@ -294,7 +294,9 @@ function toggleTranscription(id, target) {
 
 function appendTranscript(target, text) {
   if (!text) return;
-  target.textContent = target.textContent ? `${target.textContent} ${text}` : text;
+  target.textContent = target.textContent
+    ? `${target.textContent} ${text}`
+    : text;
   target.scrollTop = target.scrollHeight;
 }
 

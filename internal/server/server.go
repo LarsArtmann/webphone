@@ -188,19 +188,19 @@ func New(deps Deps) http.Handler {
 	// nil, so Secure must come from the wired policy, not the request.
 	cookies := session.CookiePolicy{Secure: csrfCfg.Secure}
 	h := &handlers{
-		deps:            deps,
-		loginLimiter:    newKeyedRateLimiter(loginLimit, loginBurst),
-		hookLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
-		eventsLimiter:   newKeyedRateLimiter(hookLimit, hookBurst),
-		csrfLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
-		contactsLimiter: newKeyedRateLimiter(contactsLimit, contactsBurst),
+		deps:              deps,
+		loginLimiter:      newKeyedRateLimiter(loginLimit, loginBurst),
+		hookLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
+		eventsLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
+		csrfLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
+		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
 		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
-		passkeyLimiter:  newKeyedRateLimiter(hookLimit, hookBurst),
-		cookies:         cookies,
-		csrfCfg:         csrfCfg,
-		unread:          newUnreadCache(5 * time.Second),
-		hooksIdem:       newIdemStore(hookIdempotencyTTL),
-		callsIdem:       newIdemStore(callsIdempotencyTTL),
+		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
+		cookies:           cookies,
+		csrfCfg:           csrfCfg,
+		unread:            newUnreadCache(5 * time.Second),
+		hooksIdem:         newIdemStore(hookIdempotencyTTL),
+		callsIdem:         newIdemStore(callsIdempotencyTTL),
 	}
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)

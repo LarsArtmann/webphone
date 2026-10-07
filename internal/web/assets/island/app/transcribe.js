@@ -25,7 +25,10 @@ const CHUNK_MS = 4000;
 
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
-export async function transcribeBlob(blob, { filename = "audio.webm", language } = {}) {
+export async function transcribeBlob(
+  blob,
+  { filename = "audio.webm", language } = {},
+) {
   const query = new URLSearchParams();
   if (filename) query.set("filename", filename);
   if (language) query.set("lang", language);
@@ -78,14 +81,17 @@ export function captureStream(entry) {
   const ctx = new AudioCtx();
   const dest = ctx.createMediaStreamDestination();
 
-  const receivers = pc.getReceivers ? pc.getReceivers().filter((r) => r.track) : [];
+  const receivers = pc.getReceivers
+    ? pc.getReceivers().filter((r) => r.track)
+    : [];
   if (receivers.length) {
     const remote = new MediaStream();
     receivers.forEach((r) => remote.addTrack(r.track));
     ctx.createMediaStreamSource(remote).connect(dest);
   }
   const sender =
-    pc.getSenders && pc.getSenders().find((s) => s.track && s.track.kind === "audio");
+    pc.getSenders &&
+    pc.getSenders().find((s) => s.track && s.track.kind === "audio");
   if (sender && sender.track) {
     const local = new MediaStream([sender.track]);
     ctx.createMediaStreamSource(local).connect(dest);

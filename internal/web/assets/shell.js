@@ -357,18 +357,15 @@
         })
         .then(function (blob) {
           var name = src.split("/").pop() || "audio";
-          return fetch(
-            "/api/transcribe?filename=" + encodeURIComponent(name),
-            {
-              method: "POST",
-              credentials: "same-origin",
-              headers: {
-                "X-CSRF-Token": csrfToken(),
-                "Content-Type": blob.type || "application/octet-stream",
-              },
-              body: blob,
+          return fetch("/api/transcribe?filename=" + encodeURIComponent(name), {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+              "X-CSRF-Token": csrfToken(),
+              "Content-Type": blob.type || "application/octet-stream",
             },
-          );
+            body: blob,
+          });
         })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
