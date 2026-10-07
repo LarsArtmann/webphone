@@ -198,6 +198,65 @@ func TestLoadWebhookSecretFile(t *testing.T) {
 	}
 }
 
+// TestASRSeam pins the asymmetric enable rule: a URL alone is a complete
+// (unauthenticated, loopback) provider, a token/model ride along, and a
+// token without a URL fails closed.
+func TestASRSeam(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.ASR.Enabled() {
+			t.Errorf("asr must be off with zero config")
+		}
+	})
+	t.Run("url alone enables", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__URL", "http://127.0.0.1:8081")
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cfg.ASR.Enabled() {
+			t.Errorf("asr.url alone must enable the seam")
+		}
+	})
+	t.Run("token and model ride along", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__URL", "https://asr.example.org")
+		t.Setenv("WEBPHONE_ASR__TOKEN", "secret")
+		t.Setenv("WEBPHONE_ASR__MODEL", "large-v3")
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.ASR.Token != "secret" || cfg.ASR.Model != "large-v3" {
+			t.Errorf("asr token/model: %+v", cfg.ASR)
+		}
+	})
+	t.Run("token without url fails closed", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__TOKEN", "secret")
+		if _, err := Load(); err == nil {
+			t.Fatal("asr.token without asr.url: want error")
+		}
+	})
+	t.Run("non-absolute url fails", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__URL", "not-a-url")
+		if _, err := Load(); err == nil {
+			t.Fatal("asr.url not absolute: want error")
+		}
+	})
+}
+
 func TestLoadWebhookSecretFileErrors(t *testing.T) {
 	scrubEnv(t)
 	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))

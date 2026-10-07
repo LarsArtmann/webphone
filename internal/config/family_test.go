@@ -25,6 +25,10 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		// The passkey mode is env-armable with one scalar (any set field
 		// enables it); the then-missing list fields reject fail-closed.
 		{"half a passkey config", map[string]string{"WEBPHONE_AUTH__PASSKEY__RP_ID": "pbx.example.org"}, "config.auth.passkey.rp_origins"},
+		// ASR: a token without a URL (nowhere to send it) rejects; so
+		// does a non-absolute URL.
+		{"asr token without url", map[string]string{"WEBPHONE_ASR__TOKEN": "secret"}, "config.asr.url"},
+		{"asr relative url", map[string]string{"WEBPHONE_ASR__URL": "not-a-url"}, "config.asr.url"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

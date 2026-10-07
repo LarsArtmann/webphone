@@ -9,8 +9,9 @@
 # `scripts/buildflow.sh` (self-healing wrapper) or `nix develop -c
 # buildflow`.
 #
-# build_mode: local default is fast; `nix flake check` (go build + tests in
-# the sandbox + treefmt + statix + deadnix) remains the heavyweight gate.
+# build_mode: fast (non-default; the default is full) — `nix flake check`
+# (go build + tests in the sandbox + treefmt + statix + deadnix) remains the
+# heavyweight gate, so the pipeline skips test steps for quick iteration.
 build_mode: fast
 #
 # exclude: the SIP island sources in internal/web/assets/island/ AND the

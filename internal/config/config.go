@@ -65,6 +65,11 @@ type Config struct {
 	// (Paperless-ngx via go-paperless). Zero value = disabled: faxes stay
 	// blob-store-only, which is and remains the storage truth.
 	Paperless Paperless `json:"paperless" koanf:"paperless"`
+	// ASR is the OPTIONAL speech-to-text seam behind live transcription
+	// of every audio stream (calls, voicemail, MMS audio). Zero value =
+	// disabled: no /api/transcribe route exists and the island hides
+	// every transcribe affordance.
+	ASR ASR `json:"asr" koanf:"asr"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -172,6 +177,29 @@ type Paperless struct {
 	URL   string `json:"url" koanf:"url"`
 	Token string `json:"token" koanf:"token"`
 }
+
+// ASR configures the optional speech-to-text provider. Unlike the
+// CRM/Paperless both-or-neither pairs, a token alone is MEANINGLESS (a
+// credential with nowhere to send it) but a URL alone is a COMPLETE,
+// legitimate configuration: a self-hosted whisper.cpp server on loopback
+// usually accepts anonymous requests. So the rule is asymmetric — URL
+// enables, token is optional, and token-without-URL fails closed.
+// The endpoint is the OpenAI-compatible /v1/audio/transcriptions shape
+// (which whisper.cpp's server implements), so any drop-in provider works.
+type ASR struct {
+	// URL is the provider base (e.g. http://127.0.0.1:8081). Empty =
+	// disabled.
+	URL string `json:"url" koanf:"url"`
+	// Token is the optional bearer credential; sent only when set.
+	Token string `json:"token,omitempty" koanf:"token"`
+	// Model names the transcription model the provider expects (e.g.
+	// "whisper-1" or "large-v3"). Empty keeps the client default.
+	Model string `json:"model,omitempty" koanf:"model"`
+}
+
+// Enabled reports whether an ASR provider is configured. A URL alone
+// enables; validation rejects a token without one.
+func (a ASR) Enabled() bool { return a.URL != "" }
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
 // The JSON tags ARE the window.PBX_CONFIG wire contract (see README).
@@ -402,6 +430,15 @@ func validate(cfg Config) error {
 	}
 	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
 		return err
+	}
+	if cfg.ASR.URL == "" && cfg.ASR.Token != "" {
+		return errorfamily.NewRejection("config.asr.url", "asr.token is set without asr.url: a credential with nowhere to send it (set asr.url, or clear the token for an unauthenticated provider)")
+	}
+	if cfg.ASR.URL != "" {
+		u, err := url.Parse(cfg.ASR.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.asr.url", "asr.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8081)", cfg.ASR.URL)
+		}
 	}
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
