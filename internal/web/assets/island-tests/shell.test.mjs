@@ -1057,3 +1057,89 @@ test("an image attachment opens the singleton lightbox, not a navigation", () =>
   closeButton.listeners.click.forEach((fn) => fn());
   assert.equal(dialog.opened, false);
 });
+
+// --- data-transcribe-src (server-rendered tabs) ------------------------------
+// The delegated handler + the auto-start pass behind every server-rendered
+// transcription surface (voicemail rows, MMS audio attachments).
+
+const settle = async (rounds = 10) => {
+  while (rounds--) await new Promise((resolve) => setImmediate(resolve));
+};
+
+test("a data-transcribe-src click fetches the audio, POSTs the seam, renders the text", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url, options });
+    if (String(url).startsWith("/vm-audio/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ text: "  hi from voicemail  " }) };
+  };
+  const btn = doc.getElementById("vm-btn-spec");
+  btn.selector = "[data-transcribe-src]";
+  btn.setAttribute("data-transcribe-src", "/vm-audio/1001/abc.wav");
+  btn.setAttribute("data-transcribe-target", "vm-transcript-spec");
+
+  doc.dispatch("click", { target: btn });
+  await settle();
+
+  assert.equal(calls.length, 2, "one audio fetch, one seam POST");
+  assert.equal(calls[0].url, "/vm-audio/1001/abc.wav");
+  assert.match(calls[1].url, /^\/api\/transcribe\?/);
+  assert.match(calls[1].url, /filename=abc\.wav/);
+  assert.equal(calls[1].options.method, "POST");
+  assert.equal(calls[1].options.headers["Content-Type"], "audio/wav");
+  const target = doc.getElementById("vm-transcript-spec");
+  assert.equal(target.textContent, "hi from voicemail");
+  assert.equal(target.hidden, false);
+});
+
+test("auto-start transcribes rendered audio once per src+target, only with the seam on", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url, options });
+    if (String(url).startsWith("/vm-audio/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ text: "auto text" }) };
+  };
+  const btn = doc.getElementById("vm-btn-auto");
+  btn.selector = "[data-transcribe-src]";
+  btn.setAttribute("data-transcribe-src", "/vm-audio/1001/auto.wav");
+  btn.setAttribute("data-transcribe-target", "vm-transcript-auto");
+  const target = doc.getElementById("vm-transcript-auto");
+  const originalQuerySelectorAll = doc.querySelectorAll;
+  doc.querySelectorAll = (selector) =>
+    selector === "[data-transcribe-src]" ? [btn] : originalQuerySelectorAll(selector);
+  const waitDebounce = () => new Promise((resolve) => setTimeout(resolve, 400));
+
+  // Seam off (no PBX_CONFIG.asr): renders never POST on their own.
+  doc.dispatch("htmx:afterSwap", {});
+  await waitDebounce();
+  assert.equal(calls.length, 0, "auto-start is gated on the ASR flag");
+
+  // Seam on: the swap alone drives one transcription.
+  globalThis.window.PBX_CONFIG = { asr: true };
+  doc.dispatch("htmx:afterSwap", {});
+  await waitDebounce();
+  const seamPosts = () => calls.filter((c) => String(c.url).startsWith("/api/transcribe"));
+  assert.equal(seamPosts().length, 1);
+  assert.equal(target.textContent, "auto text");
+
+  // A morph re-render of the SAME row never re-POSTs.
+  doc.dispatch("htmx:afterSwap", {});
+  await waitDebounce();
+  assert.equal(seamPosts().length, 1);
+
+  // A target that already carries text (a prior run preserved by the
+  // morph) is never re-run — simulate by resetting the seen key through
+  // a NEW src (a different message).
+  btn.setAttribute("data-transcribe-src", "/vm-audio/1001/other.wav");
+  target.textContent = "already transcribed";
+  doc.dispatch("htmx:afterSwap", {});
+  await waitDebounce();
+  assert.equal(seamPosts().length, 1, "filled targets are left alone");
+
+  delete globalThis.window.PBX_CONFIG;
+  doc.querySelectorAll = originalQuerySelectorAll;
+});

@@ -22,16 +22,27 @@ globalThis.fetch = async (url, options = {}) => {
 // --- MediaRecorder / AudioContext stubs ------------------------------------
 
 globalThis.__recorders = [];
+globalThis.__contexts = [];
 globalThis.MediaStream = class {
   constructor() {}
   addTrack() {}
 };
 globalThis.window.AudioContext = class {
+  constructor() {
+    this.closed = false;
+    globalThis.__contexts.push(this);
+  }
   createMediaStreamDestination() {
-    return { stream: { id: "mixed" } };
+    const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
+    this.mixedTracks = tracks;
+    return { stream: { id: "mixed", getTracks: () => tracks } };
   }
   createMediaStreamSource() {
     return { connect() {} };
+  }
+  close() {
+    this.closed = true;
+    return Promise.resolve();
   }
 };
 globalThis.MediaRecorder = class {
@@ -42,6 +53,7 @@ globalThis.MediaRecorder = class {
     this.stream = stream;
     this.options = options;
     this.listeners = {};
+    this.state = "inactive";
     globalThis.__recorders.push(this);
   }
   addEventListener(type, fn) {
@@ -49,6 +61,15 @@ globalThis.MediaRecorder = class {
   }
   start(ms) {
     this.startedWith = ms;
+    this.state = "recording";
+  }
+  pause() {
+    this.paused = true;
+    this.state = "paused";
+  }
+  resume() {
+    this.resumed = true;
+    this.state = "recording";
   }
   stop() {
     this.stopped = true;
@@ -149,4 +170,74 @@ test("startLiveTranscription is idempotent per call and refuses without media", 
 
 test("stopLiveTranscription on an unknown call is a no-op", () => {
   assert.doesNotThrow(() => transcribe.stopLiveTranscription("never-started"));
+});
+
+test("stopLiveTranscription closes the AudioContext and stops the mixed tracks", () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  transcribe.startLiveTranscription("leak-check", entry, () => {});
+  assert.equal(globalThis.__contexts.length, 1);
+  const [ctx] = globalThis.__contexts;
+  transcribe.stopLiveTranscription("leak-check");
+  assert.equal(ctx.closed, true, "the mixing AudioContext must be closed (browsers cap instances)");
+  assert.equal(ctx.mixedTracks[0].stopped, true, "the mixed stream tracks must be stopped");
+});
+
+test("pauseLiveTranscription mirrors the recorder's hold state", () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  transcribe.startLiveTranscription("hold-check", entry, () => {});
+  const [recorder] = globalThis.__recorders;
+  transcribe.pauseLiveTranscription("hold-check", true);
+  assert.equal(recorder.paused, true);
+  transcribe.pauseLiveTranscription("hold-check", false);
+  assert.equal(recorder.resumed, true);
+  transcribe.stopLiveTranscription("hold-check");
+  // Unknown call: safe on every hold flip.
+  assert.doesNotThrow(() => transcribe.pauseLiveTranscription("nope", true));
+});
+
+test("startLiveTranscription forwards the language hint on every segment", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  fetchImpl = async () => ({ ok: true, status: 200, json: async () => ({ text: "Guten Tag" }) });
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  transcribe.startLiveTranscription("lang-check", entry, () => {}, { language: "de" });
+  globalThis.__recorders[0].emit({ size: 5, type: "audio/webm" });
+  await flush();
+  assert.match(fetchCalls[0].url, /lang=de/);
+  transcribe.stopLiveTranscription("lang-check");
+});
+
+test("saveTranscriptSegment POSTs the segment to the store endpoint", async () => {
+  fetchCalls = [];
+  fetchImpl = async () => ({ ok: true, status: 204 });
+  await transcribe.saveTranscriptSegment({
+    callId: "abc",
+    direction: "out",
+    remote: "+4930123456",
+    startedAt: 1760000000000,
+    text: "hello",
+  });
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, "/api/transcripts");
+  assert.equal(fetchCalls[0].options.method, "POST");
+  assert.deepEqual(JSON.parse(fetchCalls[0].options.body), {
+    callId: "abc",
+    direction: "out",
+    remote: "+4930123456",
+    startedAt: 1760000000000,
+    text: "hello",
+  });
+  fetchImpl = async () => ({ ok: false, status: 500 });
+  await assert.rejects(
+    () => transcribe.saveTranscriptSegment({ callId: "x", text: "y" }),
+    /HTTP 500/,
+  );
 });

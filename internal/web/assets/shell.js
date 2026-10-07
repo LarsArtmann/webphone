@@ -336,11 +336,7 @@
     //     delegated handler covers every audio stream the tabs render —
     //     voicemail rows and MMS audio attachments alike. Shell copy stays
     //     English (D3); the button LABEL is localized by the server.
-    document.addEventListener("click", function (event) {
-      var btn = event.target.closest
-        ? event.target.closest("[data-transcribe-src]")
-        : null;
-      if (!btn) return;
+    var runTranscribe = function (btn) {
       var src = btn.getAttribute("data-transcribe-src");
       var targetId = btn.getAttribute("data-transcribe-target");
       var target = targetId ? document.getElementById(targetId) : null;
@@ -377,7 +373,49 @@
         .catch(function (err) {
           render("Transcription failed (" + err.message + ")");
         });
+    };
+    document.addEventListener("click", function (event) {
+      var btn = event.target.closest
+        ? event.target.closest("[data-transcribe-src]")
+        : null;
+      if (!btn) return;
+      runTranscribe(btn);
     });
+
+    // 2b-3. Auto-start (owner decision 2026-10-07): with the ASR seam on,
+    //     every rendered audio stream transcribes itself — the button
+    //     stays as the manual re-run. Once per src+target per page life:
+    //     morph re-renders of the same row never re-POST, and a target
+    //     that already carries text (a prior run preserved by the morph)
+    //     is left alone. Debounced so a burst of swaps coalesces.
+    var transcribeAutoSeen = new Set();
+    var autoTranscribe = function () {
+      if (!(window.PBX_CONFIG && window.PBX_CONFIG.asr)) return;
+      var buttons = document.querySelectorAll("[data-transcribe-src]");
+      Array.prototype.forEach.call(buttons, function (btn) {
+        var key =
+          btn.getAttribute("data-transcribe-src") +
+          "\u2192" +
+          btn.getAttribute("data-transcribe-target");
+        if (transcribeAutoSeen.has(key)) return;
+        transcribeAutoSeen.add(key);
+        var targetId = btn.getAttribute("data-transcribe-target");
+        var target = targetId ? document.getElementById(targetId) : null;
+        if (!target) return;
+        if (target.textContent && target.textContent.trim() !== "") return;
+        runTranscribe(btn);
+      });
+    };
+    var autoTranscribeTimer = null;
+    var scheduleAutoTranscribe = function () {
+      if (autoTranscribeTimer) clearTimeout(autoTranscribeTimer);
+      autoTranscribeTimer = setTimeout(function () {
+        autoTranscribeTimer = null;
+        autoTranscribe();
+      }, 300);
+    };
+    document.addEventListener("htmx:afterSwap", scheduleAutoTranscribe);
+    scheduleAutoTranscribe();
 
     // 3. Keep the transcript pinned to the newest message after renders.
     var scrollTranscript = function () {
