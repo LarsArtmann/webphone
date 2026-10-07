@@ -523,6 +523,16 @@ templ Bubble(msg domain.Message, lang Lang) {
 				<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
 					📎 { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
 				</a>
+				if strings.HasPrefix(att.MimeType, "audio/") {
+					<button
+						class="wp-mini"
+						type="button"
+						data-transcribe-src={ "/attachments/" + att.ID.String() }
+						data-transcribe-target={ "att-transcript-" + att.ID.String() }
+						aria-label={ T(lang, "media.transcribe") }
+					>{ T(lang, "media.transcribe") }</button>
+					<div class="wp-attachment-transcript" id={ "att-transcript-" + att.ID.String() } hidden></div>
+				}
 			}
 		}
 		<span class="wp-bubble-meta">

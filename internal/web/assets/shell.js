@@ -330,6 +330,58 @@
       location.reload();
     });
 
+    // 2b-2. data-transcribe-src buttons (Voicemail + Messages tabs): fetch
+    //     the audio at the given same-origin URL, POST it to the ASR seam
+    //     (/api/transcribe), and render the text into the target node. One
+    //     delegated handler covers every audio stream the tabs render —
+    //     voicemail rows and MMS audio attachments alike. Shell copy stays
+    //     English (D3); the button LABEL is localized by the server.
+    document.addEventListener("click", function (event) {
+      var btn = event.target.closest
+        ? event.target.closest("[data-transcribe-src]")
+        : null;
+      if (!btn) return;
+      var src = btn.getAttribute("data-transcribe-src");
+      var targetId = btn.getAttribute("data-transcribe-target");
+      var target = targetId ? document.getElementById(targetId) : null;
+      if (!src || !target) return;
+      var render = function (text) {
+        target.hidden = false;
+        target.textContent = text;
+      };
+      render("Transcribing…");
+      fetch(src, { credentials: "same-origin" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.blob();
+        })
+        .then(function (blob) {
+          var name = src.split("/").pop() || "audio";
+          return fetch(
+            "/api/transcribe?filename=" + encodeURIComponent(name),
+            {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                "X-CSRF-Token": csrfToken(),
+                "Content-Type": blob.type || "application/octet-stream",
+              },
+              body: blob,
+            },
+          );
+        })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          render((data.text || "").trim() || "No speech detected");
+        })
+        .catch(function (err) {
+          render("Transcription failed (" + err.message + ")");
+        });
+    });
+
     // 3. Keep the transcript pinned to the newest message after renders.
     var scrollTranscript = function () {
       var transcript = document.getElementById("thread-transcript");
