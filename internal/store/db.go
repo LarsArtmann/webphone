@@ -105,7 +105,7 @@ func (d *Database) Shutdown() error {
 
 // schemaVersion is the version migrate() brings a database to. Bump it
 // when appending a migration step; never renumber or edit shipped steps.
-const schemaVersion = 2
+const schemaVersion = 3
 
 // migration is one versioned schema step. Statements run inside a single
 // transaction: a failure aborts at this version and a retry resumes there
@@ -215,6 +215,27 @@ var migrations = []migration{
 			created_at INTEGER NOT NULL
 		)`,
 			`CREATE INDEX IF NOT EXISTS idx_snippets_owner ON snippets(owner, created_at)`,
+		},
+	},
+	{
+		version: 3,
+		stmts: []string{
+			// Live-call transcripts (2026-10-07): one row per transcribed
+			// segment. Append-only; the per-owner cap in the transcripts
+			// store bounds growth (the blob sweep never touches these —
+			// they are plain rows, not content).
+			`CREATE TABLE IF NOT EXISTS call_transcripts (
+			id         INTEGER PRIMARY KEY AUTOINCREMENT,
+			owner      TEXT NOT NULL,
+			call_id    TEXT NOT NULL,
+			direction  TEXT NOT NULL,
+			remote     TEXT NOT NULL,
+			started_at INTEGER NOT NULL,
+			text       TEXT NOT NULL,
+			created_at INTEGER NOT NULL
+		)`,
+			`CREATE INDEX IF NOT EXISTS idx_call_transcripts_owner ON call_transcripts(owner, started_at)`,
+			`CREATE INDEX IF NOT EXISTS idx_call_transcripts_call ON call_transcripts(owner, call_id)`,
 		},
 	},
 }

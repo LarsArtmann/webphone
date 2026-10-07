@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -82,6 +83,7 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets,
 		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
+		ASR: h.asrOn(),
 	}), nil
 }
 
@@ -135,18 +137,19 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	if !h.deps.PhoneAPI.Enabled() {
-		return views.VoicemailPanel(views.VoicemailPanelProps{Lang: h.lang(r)}), nil
+		return views.VoicemailPanel(views.VoicemailPanelProps{Lang: h.lang(r), ASR: h.asrOn()}), nil
 	}
 	creds := sess.PBXCredentials()
 	summary, messages, err := h.fetchVoicemail(r, creds)
 	if err != nil {
 		return views.VoicemailPanel(views.VoicemailPanelProps{
-			Enabled: true, Error: h.T(r, "vm.unreachable"), Lang: h.lang(r),
+			Enabled: true, Error: h.T(r, "vm.unreachable"), Lang: h.lang(r), ASR: h.asrOn(),
 		}), nil
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
 		Enabled: true, Summary: summary, Messages: messages,
 		Names: h.crmNames(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
+		ASR: h.asrOn(),
 	}), nil
 }
 
@@ -186,6 +189,13 @@ func (h *handlers) crmNames(ctx context.Context, numbers []string) map[string]st
 	return h.deps.CRM.Names(ctx, numbers)
 }
 
+// asrOn is the one gate every server-rendered transcribe affordance
+// reads: nil-safe over the optional seam, so a hand-composed test Deps
+// (no ASR) renders no dead buttons.
+func (h *handlers) asrOn() bool {
+	return h.deps.ASR != nil && h.deps.ASR.Enabled()
+}
+
 func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	lang := h.lang(r)
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -197,8 +207,13 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if outcome != "answered" && outcome != "missed" {
 		outcome = ""
 	}
+	// Transcripts are the extension's OWN records (no phone API needed):
+	// they render even when the CDR half of the tab is disabled or
+	// unreachable. A store failure degrades to no section — the CDR list
+	// must not die with it.
+	transcripts := h.recentTranscripts(r, sess)
 	if !h.deps.PhoneAPI.Enabled() {
-		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang}), nil
+		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang, Transcripts: transcripts}), nil
 	}
 	// A filter needs a wider window than the unfiltered top-30 view.
 	limit := historyPageSize
@@ -218,9 +233,39 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
-		Names: h.crmNames(r.Context(), numbers), Lang: lang,
+		Names: h.crmNames(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
 	}), nil
 }
+
+// recentTranscripts builds the History tab's transcript groups with CRM
+// name enrichment. Nil store (test compositions) and read failures both
+// yield nil — the section simply does not render.
+func (h *handlers) recentTranscripts(r *http.Request, sess session.Session) []views.TranscriptGroup {
+	if h.deps.Transcripts == nil {
+		return nil
+	}
+	recent, err := h.deps.Transcripts.Recent(r.Context(), sess.Extension, historyTranscriptGroups)
+	if err != nil || len(recent) == 0 {
+		if err != nil {
+			slog.Warn("history: transcript fetch failed", "error", err, "extension", sess.Extension.String())
+		}
+		return nil
+	}
+	numbers := crmNumbers(recent, func(tx domain.CallTranscript) string { return tx.Remote })
+	names := h.crmNames(r.Context(), numbers)
+	groups := make([]views.TranscriptGroup, 0, len(recent))
+	for _, tx := range recent {
+		groups = append(groups, views.TranscriptGroup{
+			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
+			Lines: tx.Lines, Name: names[tx.Remote],
+		})
+	}
+	return groups
+}
+
+// historyTranscriptGroups caps the History tab's transcript section: the
+// newest transcribed calls, whole conversations each.
+const historyTranscriptGroups = 10
 
 // History sizes: the unfiltered view and the upstream window a filter
 // may search before the display cap applies again.

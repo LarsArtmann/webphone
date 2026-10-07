@@ -199,6 +199,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*store.Snippets, error) {
 		return store.NewSnippets(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
+	do.Provide(injector, func(i do.Injector) (*store.Transcripts, error) {
+		return store.NewTranscripts(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
+	})
 	do.Provide(injector, func(i do.Injector) (*session.SQLiteStore, error) {
 		return session.NewSQLiteStore(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL(), cfg.SessionTTL)
 	})
@@ -268,6 +271,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Faxes:     do.MustInvoke[*store.Faxes](i),
 			Contacts:  do.MustInvoke[*store.Contacts](i),
 			Snippets:  do.MustInvoke[*store.Snippets](i),
+			Transcripts: do.MustInvoke[*store.Transcripts](i),
 			Messaging: do.MustInvoke[*messaging.Service](i),
 			Fax:       do.MustInvoke[*fax.Service](i),
 			PhoneAPI:  do.MustInvoke[*pbx.Client](i),

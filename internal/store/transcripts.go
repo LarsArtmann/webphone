@@ -1,0 +1,113 @@
+package store
+
+import (
+	"context"
+	"database/sql"
+	"time"
+
+	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/domain"
+)
+
+// Transcripts persists per-extension live-call transcript segments.
+type Transcripts struct {
+	db *sql.DB
+}
+
+// TranscriptSegmentsMaxPerExtension bounds one extension's transcript
+// history (≈5.5 h of continuous speech at the 4 s segment cadence).
+// The cap is the durability story like ContactsMaxPerExtension: Recent
+// renders the newest window, so trimming the oldest rows costs the
+// deep past, never the current view.
+const TranscriptSegmentsMaxPerExtension = 5000
+
+// NewTranscripts builds the transcript store.
+func NewTranscripts(db *sql.DB) *Transcripts { return &Transcripts{db: db} }
+
+// Append stores one segment and trims the owner's oldest rows past the
+// cap. The trim is best-effort by design: a failed DELETE must not fail
+// the write it accompanies (the cap re-arms on the next append).
+func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegment) error {
+	if _, err := s.db.ExecContext(ctx, `
+		INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, seg.Owner.String(), seg.CallID, string(seg.Direction), seg.Remote,
+		seg.StartedAt.Unix(), seg.Text, time.Now().Unix()); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.transcript_append", "append transcript")
+	}
+	if _, err := s.db.ExecContext(ctx, `
+		DELETE FROM call_transcripts WHERE owner = ? AND id NOT IN (
+			SELECT id FROM call_transcripts WHERE owner = ? ORDER BY id DESC LIMIT ?
+		)
+	`, seg.Owner.String(), seg.Owner.String(), TranscriptSegmentsMaxPerExtension); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.transcript_trim", "trim transcripts")
+	}
+	return nil
+}
+
+// Recent reassembles the owner's newest transcribed calls: segments are
+// fetched newest-first, grouped by call (newest call first, its lines
+// in spoken order), and the group list is capped at maxCalls.
+func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error) {
+	rows, err := listRows(ctx, s.db, "list transcripts", `
+		SELECT owner, call_id, direction, remote, started_at, text
+		FROM call_transcripts WHERE owner = ?
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?
+	`, []any{owner.String(), transcriptFetchWindow}, scanTranscriptRow)
+	if err != nil {
+		return nil, err
+	}
+	groups := make([]domain.CallTranscript, 0, maxCalls)
+	byCall := make(map[string]int, maxCalls)
+	for _, seg := range rows {
+		idx, seen := byCall[seg.CallID]
+		if !seen {
+			if len(groups) >= maxCalls {
+				// Segments of already-open calls keep landing (the
+				// oldest included call must reassemble whole); only NEW
+				// groups are refused.
+				continue
+			}
+			idx = len(groups)
+			byCall[seg.CallID] = idx
+			groups = append(groups, domain.CallTranscript{
+				Owner:     seg.Owner,
+				CallID:    seg.CallID,
+				Direction: seg.Direction,
+				Remote:    seg.Remote,
+				StartedAt: seg.StartedAt,
+			})
+		}
+		// Newest-first fetch, spoken-order lines: prepend within the group.
+		group := &groups[idx]
+		group.Lines = append([]string{seg.Text}, group.Lines...)
+		if group.StartedAt.Before(seg.StartedAt) {
+			group.StartedAt = seg.StartedAt
+		}
+	}
+	return groups, nil
+}
+
+// transcriptFetchWindow is the segment read window behind Recent: wide
+// enough that the maxCalls newest calls reassemble whole even when one
+// call alone produced hundreds of segments.
+const transcriptFetchWindow = 2000
+
+func scanTranscriptRow(row rowScanner) (domain.CallTranscriptSegment, error) {
+	var (
+		owner, callID, direction, remote, text string
+		started                                int64
+	)
+	if err := row.Scan(&owner, &callID, &direction, &remote, &started, &text); err != nil {
+		return domain.CallTranscriptSegment{}, errorfamily.WrapInfrastructuref(err, "store.transcript_scan", "scan transcript")
+	}
+	return domain.CallTranscriptSegment{
+		Owner:     domain.MustParseExtension(owner),
+		CallID:    callID,
+		Direction: domain.Direction(direction),
+		Remote:    remote,
+		StartedAt: time.Unix(started, 0),
+		Text:      text,
+	}, nil
+}

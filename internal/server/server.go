@@ -130,6 +130,10 @@ type Deps struct {
 	Faxes     *store.Faxes
 	Contacts  *store.Contacts
 	Snippets  *store.Snippets
+	// Transcripts persists live-call transcript segments (owner-scoped,
+	// rendered in the History tab). Nil (test compositions): the save
+	// endpoint answers 503 and the History section stays empty.
+	Transcripts *store.Transcripts
 	Messaging *messaging.Service
 	Fax       *fax.Service
 	PhoneAPI  *pbx.Client
@@ -285,6 +289,7 @@ func New(deps Deps) http.Handler {
 	// the ONE endpoint behind every audio stream's transcribe affordance
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
 	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiTranscribe)))
+	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiSaveTranscript)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
