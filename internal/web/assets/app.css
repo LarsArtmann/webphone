@@ -2071,3 +2071,17 @@ dialog.wp-lightbox img {
 .wp-service-on::before {
   background: var(--ok);
 }
+
+/* On-demand transcripts (Voicemail + Messages audio attachments): text
+   rendered by shell.js below the transcribe button. */
+.wp-vm-transcript,
+.wp-attachment-transcript {
+  margin: 0.4rem 0;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+}
+
+.wp-vm-transcript[hidden],
+.wp-attachment-transcript[hidden] {
+  display: none;
+}

@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   post-session sequence both login paths share. Uniform anti-enumeration
   401 on begin/finish (no account oracle); userauth.* error codes ride
   the error-family registry.
+- Live transcription of every audio stream (calls, voicemail, MMS audio),
+  config-gated and DEFAULT OFF via the new `asr.url`/`asr.token`/`asr.model`
+  seam (a URL alone enables; a token without a URL fails closed). One
+  OpenAI-compatible endpoint (`POST /api/transcribe`, session-gated,
+  CSRF-protected, flood-budgeted) forwards a whole audio segment to a
+  self-hosted whisper.cpp / OpenAI-compatible provider (`internal/asr`,
+  error-family pinned) and returns the text; a disabled seam answers 404.
+  The island captures live-call segments (remote + operator audio mixed
+  through a throwaway AudioContext, `MediaRecorder` every 4 s) and streams
+  them into the call card; the Voicemail and Messages tabs gain
+  transcribe-on-demand buttons through one delegated shell.js handler. New
+  island module `transcribe.js`; `window.PBX_CONFIG.asr` gates every
+  affordance; the Settings tab reports the seam's state.
 - Error-code registry (error-contract.md): a 104-code table of every
   `<seam>.<op>` error code, generated from the source and freshness-pinned
   by `TestErrorCodeRegistryIsFresh` — a code rename now fails the suite

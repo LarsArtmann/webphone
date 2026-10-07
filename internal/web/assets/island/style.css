@@ -901,3 +901,19 @@ button.small {
   background: var(--ok);
   opacity: 1;
 }
+
+/* Live-call transcript (calls.js): the streamed text under a call card.
+   Class-scoped, never a bare element rule (the cascade-layer contract). */
+.call-transcript {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+.vm-transcript {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}

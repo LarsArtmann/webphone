@@ -18,6 +18,8 @@ type SettingsPanelProps struct {
 	GatewayMode    string
 	PhoneAPI       bool
 	CRM            bool
+	// ASR reports the optional live-transcription seam.
+	ASR            bool
 	ICEServers     int
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
@@ -48,6 +50,14 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dt>{ T(props.Lang, "settings.crm") }</dt>
 			<dd class={ "wp-service", templ.KV("wp-service-on", props.CRM), templ.KV("wp-service-off", !props.CRM) }>
 				if props.CRM {
+					{ T(props.Lang, "settings.connected") }
+				} else {
+					{ T(props.Lang, "settings.unset") }
+				}
+			</dd>
+			<dt>{ T(props.Lang, "settings.asr") }</dt>
+			<dd class={ "wp-service", templ.KV("wp-service-on", props.ASR), templ.KV("wp-service-off", !props.ASR) }>
+				if props.ASR {
 					{ T(props.Lang, "settings.connected") }
 				} else {
 					{ T(props.Lang, "settings.unset") }
