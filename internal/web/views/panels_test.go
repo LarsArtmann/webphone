@@ -8,6 +8,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -427,5 +428,66 @@ func TestImageAttachmentCarriesLightboxAttr(t *testing.T) {
 	fileHTML := renderComponent(t, Bubble(file, LangEN, false))
 	if strings.Contains(fileHTML, "data-lightbox") {
 		t.Errorf("non-image attachment must not carry data-lightbox: %s", fileHTML)
+	}
+}
+
+// TestAudioAttachmentTranscribeButtonGatedOnASR: the attachment button
+// exists exactly when the seam is configured — a disabled seam must not
+// render dead affordances.
+func TestAudioAttachmentTranscribeButtonGatedOnASR(t *testing.T) {
+	msg := domain.Message{
+		ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound,
+		Attachments: []domain.Attachment{{
+			ID: domain.GenerateAttachmentID(), Name: "voice.amr", MimeType: "audio/amr", SizeBytes: 4096,
+		}},
+	}
+	on := renderComponent(t, Bubble(msg, LangEN, true))
+	if !strings.Contains(on, "data-transcribe-src") || !strings.Contains(on, "att-transcript-") {
+		t.Errorf("asr on: transcribe affordance missing: %s", on)
+	}
+	off := renderComponent(t, Bubble(msg, LangEN, false))
+	if strings.Contains(off, "data-transcribe-src") || strings.Contains(off, "att-transcript-") {
+		t.Errorf("asr off: dead transcribe affordance rendered: %s", off)
+	}
+}
+
+// TestVoicemailRowTranscribeButtonGatedOnASR mirrors the attachment gate
+// for the voicemail player row.
+func TestVoicemailRowTranscribeButtonGatedOnASR(t *testing.T) {
+	msg := pbx.VoicemailMessage{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
+	on := renderComponent(t, VoicemailRow(msg, nil, LangEN, true))
+	if !strings.Contains(on, "data-transcribe-src") || !strings.Contains(on, "vm-transcript-u1") {
+		t.Errorf("asr on: voicemail transcribe affordance missing: %s", on)
+	}
+	off := renderComponent(t, VoicemailRow(msg, nil, LangEN, false))
+	if strings.Contains(off, "data-transcribe-src") || strings.Contains(off, "vm-transcript-u1") {
+		t.Errorf("asr off: dead voicemail transcribe affordance rendered: %s", off)
+	}
+}
+
+// TestHistoryPanelRendersTranscriptGroups: the extension's own transcript
+// records render as their own section (newest call first, lines joined in
+// spoken order) — they are NOT joined onto CDR rows (no shared key).
+func TestHistoryPanelRendersTranscriptGroups(t *testing.T) {
+	props := HistoryPanelProps{
+		Enabled: true,
+		Transcripts: []TranscriptGroup{
+			{Remote: "+4930111", Direction: "out", StartedAt: time.Unix(1760000100, 0), Lines: []string{"second", "call"}},
+			{Remote: "+4989", Direction: "in", StartedAt: time.Unix(1760000000, 0), Lines: []string{"guten", "tag"}, Name: "Erika"},
+		},
+		Lang: LangEN,
+	}
+	page := renderComponent(t, HistoryPanel(props))
+	for _, want := range []string{"Call transcripts", "+4930111", "second call", "Erika", "guten tag"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("history transcript section missing %q; page:\n%s", want, page)
+		}
+	}
+	if strings.Index(page, "+4930111") > strings.Index(page, "Erika") {
+		t.Errorf("newest call must lead the transcript section")
+	}
+	empty := renderComponent(t, HistoryPanel(HistoryPanelProps{Enabled: true, Lang: LangEN}))
+	if strings.Contains(empty, "Call transcripts") {
+		t.Errorf("empty store must not render the section heading")
 	}
 }

@@ -116,7 +116,6 @@ func TestTranscriptsRecentCapsGroupCountButKeepsWholeCalls(t *testing.T) {
 func TestTranscriptsAppendTrimsPastTheCap(t *testing.T) {
 	s := newTranscripts(t)
 	ctx := context.Background()
-	owner := domain.MustParseExtension("1001")
 	base := time.Unix(1760000000, 0)
 	for i := range TranscriptSegmentsMaxPerExtension + 10 {
 		text := string(rune('a'+i%26)) + "-seg"
@@ -124,15 +123,21 @@ func TestTranscriptsAppendTrimsPastTheCap(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	got, err := s.Recent(ctx, owner, 10)
-	if err != nil {
+	// Count rows directly: Recent deliberately reads a narrower window
+	// than the cap, so it is the wrong lens for the trim.
+	var total int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM call_transcripts`).Scan(&total); err != nil {
 		t.Fatal(err)
-	}
-	total := 0
-	for _, group := range got {
-		total += len(group.Lines)
 	}
 	if total != TranscriptSegmentsMaxPerExtension {
 		t.Errorf("stored segments: %d (want the cap %d)", total, TranscriptSegmentsMaxPerExtension)
+	}
+	// The SURVIVORS are the newest: the oldest ten segments are gone.
+	got, err := s.Recent(ctx, domain.MustParseExtension("1001"), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || len(got[0].Lines) == 0 {
+		t.Fatalf("trimmed store still reassembles: %+v", got)
 	}
 }

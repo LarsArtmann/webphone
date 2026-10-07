@@ -25,8 +25,10 @@ const TranscriptSegmentsMaxPerExtension = 5000
 func NewTranscripts(db *sql.DB) *Transcripts { return &Transcripts{db: db} }
 
 // Append stores one segment and trims the owner's oldest rows past the
-// cap. The trim is best-effort by design: a failed DELETE must not fail
-// the write it accompanies (the cap re-arms on the next append).
+// cap. The trim is a scalar-bounded range delete (the keep-set's MIN id
+// via the owner-indexed top-N) — a NOT IN keep-list would materialize
+// the whole cap per append. Best-effort by design: a failed DELETE must
+// not fail the write it accompanies (the cap re-arms on the next append).
 func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegment) error {
 	if _, err := s.db.ExecContext(ctx, `
 		INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
@@ -36,8 +38,11 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 		return errorfamily.WrapInfrastructuref(err, "store.transcript_append", "append transcript")
 	}
 	if _, err := s.db.ExecContext(ctx, `
-		DELETE FROM call_transcripts WHERE owner = ? AND id NOT IN (
-			SELECT id FROM call_transcripts WHERE owner = ? ORDER BY id DESC LIMIT ?
+		DELETE FROM call_transcripts
+		WHERE owner = ? AND id < (
+			SELECT MIN(id) FROM (
+				SELECT id FROM call_transcripts WHERE owner = ? ORDER BY id DESC LIMIT ?
+			)
 		)
 	`, seg.Owner.String(), seg.Owner.String(), TranscriptSegmentsMaxPerExtension); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.transcript_trim", "trim transcripts")
