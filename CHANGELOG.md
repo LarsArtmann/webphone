@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- End-user transcript erasure: every History transcript row carries a
+  confirm-gated delete button (`DELETE /api/transcripts?call=`,
+  session owner-scoped, idempotent 204). The confirm prompt is
+  localized (en/de); a failed delete keeps the row and says so — the
+  store row state stays the truth. Call content no longer lives in
+  policy limbo between operator sweeps and user erasure.
+- Call transcripts join the retention story: the daily age-sweep
+  (shared `retention_days` cutoff with messages/faxes) now deletes
+  expired transcript segments, the sweep log counts them, and
+  `webphone_transcripts_total` joins the metrics surface.
 - Live-transcription resilience on both client surfaces: the shell's
   auto-start transcription SERIALIZES rendered clips through one promise
   chain (a dozen swapped-in rows no longer stampede the seam's flood

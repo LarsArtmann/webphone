@@ -1256,3 +1256,69 @@ test("a 429 is retried once after Retry-After; a second 429 fails honestly", asy
     "a second 429 surfaces as a failure, never a loop",
   );
 });
+
+// M11: the History transcript delete affordance. Confirm-gated (the
+// server's localized prompt), owner-scoped DELETE, honest removal — a
+// failed delete keeps the row and says so.
+test("data-delete-transcript confirms, DELETEs, and removes the row only on success", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    return { ok: true, status: 204 };
+  };
+  const confirmations = [];
+  globalThis.window.confirm = (text) => {
+    confirmations.push(text);
+    return confirmations.length === 1 ? false : true;
+  };
+
+  const section = doc.createElement();
+  section.className = "wp-transcripts";
+  const row = doc.createElement();
+  row.className = "wp-transcript-call";
+  const btn = doc.createElement();
+  btn.selector = "[data-delete-transcript]";
+  btn.setAttribute("data-delete-transcript", "call-x");
+  btn.setAttribute("data-confirm", "Wirklich löschen?");
+  row.append(btn);
+  section.append(row);
+
+  // A declined confirm never reaches the network.
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.deepEqual(confirmations, ["Wirklich löschen?"], "the server's prompt is what the user sees");
+  assert.equal(calls.length, 0, "declined confirm sends nothing");
+  assert.equal(section.children.length, 1, "the row stays");
+
+  // A failed delete keeps the row and toasts the truth.
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    return { ok: false, status: 500 };
+  };
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "/api/transcripts?call=call-x");
+  assert.equal(calls[0].options.method, "DELETE");
+  assert.equal(calls[0].options.headers["X-CSRF-Token"], "", "the CSRF header rides the delete");
+  assert.equal(section.children.length, 1, "a failed delete keeps the row");
+  assert.match(
+    toasts().children.at(-1).textContent,
+    /could not delete/i,
+    "the failure says so",
+  );
+
+  // Success: the row goes, and the emptied section goes with it.
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+    return { ok: true, status: 204 };
+  };
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(calls.length, 2);
+  assert.equal(section.children.length, 0, "the row is gone");
+  assert.equal(section.parent, null, "the emptied section removed itself");
+  assert.match(toasts().children.at(-1).textContent, /transcript deleted/i);
+
+  delete globalThis.window.confirm;
+});

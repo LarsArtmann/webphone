@@ -36,6 +36,12 @@ export async function saveTranscriptSegment(segment) {
 // gets usable context and the request rate stays modest (~15/min).
 const CHUNK_MS = 4000;
 
+// Near-silence floor for the segment gate (RMS over the analyser's
+// tail window, ≈ -48 dBFS): below any speech, above the codec noise
+// floor. Whisper-family models hallucinate confident text on pure
+// silence — the guard spends nothing on segments that carry no voice.
+const SILENCE_RMS = 0.004;
+
 // How long the live loop goes quiet after the seam answered 429 (a couple
 // of segment cycles — enough for the flood budget to recover).
 const COOLDOWN_MS = 10_000;
@@ -93,7 +99,8 @@ export function isTranscribing(id) {
 // owns — the context is close()d on stop (browsers cap live AudioContexts,
 // so a leaked one kills capture after ~6 calls in Chrome). Null when the
 // browser cannot mix (no AudioContext) or the call has no peer connection
-// yet — the caller renders an honest unsupported notice.
+// yet — the caller renders an honest unsupported notice. The destination
+// node rides along so the silence probe can tap the same mix.
 export function captureStream(entry) {
   const sdh = entry && entry.session && entry.session.sessionDescriptionHandler;
   const pc = sdh && sdh.peerConnection;
@@ -118,7 +125,33 @@ export function captureStream(entry) {
     const local = new MediaStream([sender.track]);
     ctx.createMediaStreamSource(local).connect(dest);
   }
-  return { stream: dest.stream, ctx };
+  return { stream: dest.stream, ctx, dest };
+}
+
+// attachSilenceProbe taps the mix destination with an AnalyserNode and
+// answers one question per segment boundary: "is the tail of the mix
+// near-silent?" (the analyser's rolling window, fftSize 32768 ≈ 0.74 s —
+// long enough that trailing pauses inside speech do not trip it). Null
+// when the browser or the test stub lacks the pieces — the guard then
+// FAILS OPEN (segments always POST); a mis-built probe must never
+// silently kill capture.
+function attachSilenceProbe(ctx, dest) {
+  if (!ctx || typeof ctx.createAnalyser !== "function") return null;
+  if (!dest || typeof dest.connect !== "function") return null;
+  try {
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 32768;
+    dest.connect(analyser);
+    const window = new Float32Array(analyser.fftSize);
+    return () => {
+      analyser.getFloatTimeDomainData(window);
+      let sum = 0;
+      for (let i = 0; i < window.length; i += 1) sum += window[i] * window[i];
+      return Math.sqrt(sum / window.length) < SILENCE_RMS;
+    };
+  } catch {
+    return null;
+  }
 }
 
 function recorderOptions() {
@@ -175,8 +208,9 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
     log("live transcription unsupported: no call audio to capture", "warn");
     return false;
   }
-  const { stream, ctx } = captured;
+  const { stream, ctx, dest } = captured;
   ensureRunning(ctx);
+  const isSilent = attachSilenceProbe(ctx, dest);
 
   let recorder;
   try {
@@ -196,6 +230,14 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
     // running; the budget recovers; no retry storm. One warn covers the
     // whole cooldown (the cadence is ~15 segments/min).
     if (Date.now() < cooldownUntil) return;
+    // Silence guard: a near-silent tail window means the segment carries
+    // no voice (mute, far-end hold without SIP hold, ringing) — posting
+    // it would buy hallucinated text at full price. Skips are logged so
+    // the operator can tell "nothing was said" from "capture broke".
+    if (isSilent && isSilent()) {
+      log("live transcription skipped a near-silent segment", "info");
+      return;
+    }
     try {
       const text = await transcribeBlob(event.data, {
         filename: "live.webm",
