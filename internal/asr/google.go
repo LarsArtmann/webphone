@@ -119,6 +119,9 @@ func NewGoogleClient(cfg GoogleConfig) (*GoogleClient, error) {
 // Enabled reports whether a provider is wired up.
 func (c *GoogleClient) Enabled() bool { return c != nil && c.base != nil }
 
+// Describe names the wire kind and the configured model.
+func (c *GoogleClient) Describe() string { return "google · " + c.model }
+
 // googleRecognizeRequest is the v2 recognize wire shape. The "_" in the
 // recognizer path is the ad-hoc implicit recognizer: no
 // recognizers.create round-trip, the inline config is the whole truth.

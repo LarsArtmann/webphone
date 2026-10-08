@@ -18,8 +18,10 @@ type SettingsPanelProps struct {
 	GatewayMode    string
 	PhoneAPI       bool
 	CRM            bool
-	// ASR reports the optional live-transcription seam.
+	// ASR reports the optional live-transcription seam; ASRDetail names
+	// the provider kind and model (asr.Provider.Describe) when it is on.
 	ASR            bool
+	ASRDetail      string
 	ICEServers     int
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
@@ -59,6 +61,9 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dd class={ "wp-service", templ.KV("wp-service-on", props.ASR), templ.KV("wp-service-off", !props.ASR) }>
 				if props.ASR {
 					{ T(props.Lang, "settings.connected") }
+					if props.ASRDetail != "" {
+						<span class="wp-muted"> · { props.ASRDetail }</span>
+					}
 				} else {
 					{ T(props.Lang, "settings.unset") }
 				}

@@ -48,6 +48,9 @@ func init() {
 type Provider interface {
 	// Enabled reports whether a provider is wired up.
 	Enabled() bool
+	// Describe names the provider kind and model for the Settings tab's
+	// display (raw service vocabulary, like the gateway-mode row).
+	Describe() string
 	// Transcribe sends one audio file to the provider and returns the text.
 	Transcribe(ctx context.Context, req Request) (string, error)
 }
@@ -110,6 +113,9 @@ func NewClient(baseURL, token, model string) (*Client, error) {
 
 // Enabled reports whether a provider is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
+
+// Describe names the wire kind and the configured model.
+func (c *Client) Describe() string { return "openai-compatible · " + c.model }
 
 // Request is one transcription job: a whole (segmented) audio file plus
 // the metadata the provider needs to decode and route it.

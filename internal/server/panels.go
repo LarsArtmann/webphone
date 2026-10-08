@@ -343,6 +343,12 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 			return nil, err
 		}
 	}
+	// The Settings row names the provider kind + model when the seam is
+	// on (raw service vocabulary, like the gateway-mode row).
+	asrDetail := ""
+	if h.asrOn() {
+		asrDetail = h.deps.ASR.Describe()
+	}
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
@@ -350,6 +356,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
 		CRM:            h.deps.CRM.Enabled(),
 		ASR:            h.asrOn(),
+		ASRDetail:      asrDetail,
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,

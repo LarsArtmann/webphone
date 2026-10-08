@@ -99,6 +99,17 @@ func TestTranscribeHappyPath(t *testing.T) {
 	}
 }
 
+func TestDescribeNamesKindAndModel(t *testing.T) {
+	client, _ := asr.NewClient("http://127.0.0.1:8081", "", "Systran/faster-whisper-large-v3-turbo")
+	if got := client.Describe(); got != "openai-compatible · Systran/faster-whisper-large-v3-turbo" {
+		t.Errorf("Describe: %q", got)
+	}
+	def, _ := asr.NewClient("http://127.0.0.1:8081", "", "")
+	if got := def.Describe(); got != "openai-compatible · whisper-1" {
+		t.Errorf("Describe with the default model: %q", got)
+	}
+}
+
 func TestDefaultModelAndFilename(t *testing.T) {
 	var gotModel, gotFilename string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

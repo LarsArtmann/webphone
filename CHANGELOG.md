@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The settings export zip gains a `transcripts.json` leg: the
+  extension's whole call-transcript history, reassembled per call
+  (newest first, lines in spoken order), owner-scoped like every other
+  leg — a neighboring extension's words can never ride along. A
+  transcript read failure fails the whole export rather than shipping
+  a silently incomplete archive.
 - Copy-to-clipboard on every transcript surface: History transcript
   rows carry a copy button (server-rendered, label localized en/de),
   the live call card gains a "Copy transcript" control (island,
