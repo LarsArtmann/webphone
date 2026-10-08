@@ -67,12 +67,12 @@ Nothing shipped broken — but three honest self-hits, all caught before landing
 14. M1: retention/autoplay policy ratification (owner).
 15. 429 cooldown: Retry-After vs fixed 10 s (owner product call).
 16. Ship `SILENCE_RMS` 0.004 as-is? (owner ratification.)
-17–30. The TODO_LIST harvest row's grouped items (provider hardening #17–21, client polish #22–27, test debt #28–33, docs/smoke #34–38 — full detail in TODO_LIST.md; not duplicated here).
-31. Daemon pre-push guard idea → route to the OWNER-calls briefing (go.sum-without-vendorHash push refusal).
-32. lessons.md: consider the nix-shell invocation trap entry (quoted applied-attrpath installables + cold registry + the capenv pattern) — generalizes beyond this repo → crush-config `references/lessons.md` candidate.
-33. vulture posture: the 3 selenium/http.server FPs vanished from the final run — confirm they're config-suppressed, not flaky, and note the posture.
-34. Re-check standing watches due dates (erraudit monthly 2026-11-05; quarterly 2026-12-20).
-35. Consider committing the `/tmp/run-capture.sh` shape into `scripts/` if the recipe stays two-step.
+    17–30. The TODO_LIST harvest row's grouped items (provider hardening #17–21, client polish #22–27, test debt #28–33, docs/smoke #34–38 — full detail in TODO_LIST.md; not duplicated here).
+17. Daemon pre-push guard idea → route to the OWNER-calls briefing (go.sum-without-vendorHash push refusal).
+18. lessons.md: consider the nix-shell invocation trap entry (quoted applied-attrpath installables + cold registry + the capenv pattern) — generalizes beyond this repo → crush-config `references/lessons.md` candidate.
+19. vulture posture: the 3 selenium/http.server FPs vanished from the final run — confirm they're config-suppressed, not flaky, and note the posture.
+20. Re-check standing watches due dates (erraudit monthly 2026-11-05; quarterly 2026-12-20).
+21. Consider committing the `/tmp/run-capture.sh` shape into `scripts/` if the recipe stays two-step.
 
 ## g) Questions for the owner (cannot self-answer)
 
@@ -82,4 +82,4 @@ Nothing shipped broken — but three honest self-hits, all caught before landing
 
 ---
 
-*Report basis: this session only (the 14:18→15:50 continuation). Everything above traces to commands run and files touched in this window; nothing re-researched beyond it.*
+_Report basis: this session only (the 14:18→15:50 continuation). Everything above traces to commands run and files touched in this window; nothing re-researched beyond it._
