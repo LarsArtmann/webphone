@@ -282,6 +282,18 @@ and the evidence. Newest last is NOT enforced — group by topic.
   formatting bullet's "island/shell/css" scope read too narrow; the
   edit-tool's whitespace-normalized match on indented code is the
   recurring source (compare the diff hunk BEFORE committing).
+- A daemon auto-commit TRUNCATED `.buildflow.yml`'s documented
+  `skip_steps` section (2026-10-07, committed 00:46): 69 lines of
+  rationale + keys silently gone, AGENTS.md still documented the
+  policy — pure drift, and the truncation sat undetected ~16 h until a
+  gate run went red and the restore happened incidentally (status
+  18-15 §a-11). Two rules out of this: (1) run buildflow at TRAIN
+  START, not just at the end — a baseline-green run makes any later
+  red immediately attributable to YOUR edits, and policy-file drift
+  surfaces in minutes instead of days; (2) the auto-commit daemon can
+  mangle POLICY files, not just code — after daemon activity near
+  `.buildflow.yml`/flake/AGENTS, re-read the file, never trust the
+  last thing you wrote.
 
 ## Telephony
 

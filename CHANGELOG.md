@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Transcript reassembly (`Recent`/`Search`/`Export`) is now single-pass:
+  lines append in fetch order with one finishing reverse per call
+  instead of a prepend-per-segment (quadratic on a 1500-segment
+  marathon call). Behavior identical; the store test suite drops from
+  ~6.7 s to ~0.1 s.
+
 ### Added
 
 - The Settings panel names the transcription provider when the seam is
