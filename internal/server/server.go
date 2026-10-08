@@ -145,8 +145,10 @@ type Deps struct {
 	CRM *crm.Resolver
 	// ASR is the OPTIONAL speech-to-text seam behind /api/transcribe.
 	// Nil or disabled: the route answers the styled 404 and the island
-	// hides every transcribe affordance.
-	ASR *asr.Client
+	// hides every transcribe affordance. The concrete kind (OpenAI-
+	// compatible or Google Cloud STT v2) is chosen in the composition
+	// root; the server only ever sees the seam.
+	ASR asr.Provider
 	// Probe is the go-health probe serving /livez and /startupz. When
 	// nil (tests composing Deps by hand), New falls back to building the
 	// equivalent NewChecks probe over the same backing checks — one

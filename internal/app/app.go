@@ -157,9 +157,21 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), log), nil
 	})
 	// Optional speech-to-text seam (live transcription of every audio
-	// stream). Config-absent → a disabled *asr.Client (Enabled() false):
-	// /api/transcribe 404s and the island hides its affordances.
-	do.Provide(injector, func(i do.Injector) (*asr.Client, error) {
+	// stream). Config-absent → a disabled provider (Enabled() false):
+	// /api/transcribe 404s and the island hides its affordances. The
+	// provider kind is a config decision: the OpenAI-compatible wire
+	// (Speaches, whisper.cpp, …) or Google Cloud Speech-to-Text V2.
+	do.Provide(injector, func(i do.Injector) (asr.Provider, error) {
+		if cfg.ASR.Google() {
+			return asr.NewGoogleClient(asr.GoogleConfig{
+				Endpoint: cfg.ASR.URL,
+				APIKey:   cfg.ASR.Token,
+				Project:  cfg.ASR.Project,
+				Location: cfg.ASR.Location,
+				Model:    cfg.ASR.Model,
+				Language: cfg.ASR.Language,
+			})
+		}
 		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
 	})
 
@@ -279,7 +291,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Hubs:        do.MustInvoke[*server.ExtensionHubs](i),
 			Shared:      cfg.Contacts,
 			CRM:         do.MustInvoke[*crm.Resolver](i),
-			ASR:         do.MustInvoke[*asr.Client](i),
+			ASR:         do.MustInvoke[asr.Provider](i),
 			DB:          db.SQL(),
 			BlobRoot:    blobs.Root(),
 			Probe:       probe,

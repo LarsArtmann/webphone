@@ -178,28 +178,59 @@ type Paperless struct {
 	Token string `json:"token" koanf:"token"`
 }
 
-// ASR configures the optional speech-to-text provider. Unlike the
-// CRM/Paperless both-or-neither pairs, a token alone is MEANINGLESS (a
-// credential with nowhere to send it) but a URL alone is a COMPLETE,
-// legitimate configuration: a self-hosted whisper.cpp server on loopback
-// usually accepts anonymous requests. So the rule is asymmetric — URL
-// enables, token is optional, and token-without-URL fails closed.
-// The endpoint is the OpenAI-compatible /v1/audio/transcriptions shape
-// (which whisper.cpp's server implements), so any drop-in provider works.
+// ASR configures the optional speech-to-text provider. Two provider
+// kinds share the seam: "openai" (default — any OpenAI-compatible
+// /v1/audio/transcriptions server, e.g. Speaches or whisper.cpp) and
+// "google" (Google Cloud Speech-to-Text V2, EU-resident regional
+// endpoint). Unlike the CRM/Paperless both-or-neither pairs, a token
+// alone is MEANINGLESS on the openai wire (a credential with nowhere to
+// send it) but a URL alone is a COMPLETE, legitimate configuration: a
+// self-hosted whisper.cpp server on loopback usually accepts anonymous
+// requests. So the rule is asymmetric — URL enables, token is optional,
+// and token-without-URL fails closed. The google kind shifts the
+// anchor: the project id is what the recognizer path needs, so project
+// enables and location/token stay optional overrides.
 type ASR struct {
-	// URL is the provider base (e.g. http://127.0.0.1:8081). Empty =
-	// disabled.
+	// Provider selects the wire: "" or "openai" = OpenAI-compatible
+	// multipart; "google" = Google Cloud Speech-to-Text V2 JSON.
+	Provider string `json:"provider,omitempty" koanf:"provider"`
+	// URL is the provider base (e.g. http://127.0.0.1:8081) on the
+	// openai wire; an optional endpoint override on the google wire.
+	// Empty = disabled on openai, derived regional endpoint on google.
 	URL string `json:"url" koanf:"url"`
-	// Token is the optional bearer credential; sent only when set.
+	// Token is the bearer credential on the openai wire, the
+	// x-goog-api-key on the google wire; sent only when set.
 	Token string `json:"token,omitempty" koanf:"token"`
-	// Model names the transcription model the provider expects (e.g.
-	// "whisper-1" or "large-v3"). Empty keeps the client default.
+	// Model names the transcription model: whisper-style model id on
+	// the openai wire (e.g. "Systran/faster-whisper-large-v3-turbo"),
+	// the V2 model variant on google (default "telephony"). Empty
+	// keeps the client default.
 	Model string `json:"model,omitempty" koanf:"model"`
+	// Project is the Google Cloud project id (google wire only, part
+	// of the recognizer resource path — required when provider is
+	// google).
+	Project string `json:"project,omitempty" koanf:"project"`
+	// Location is the Google region (google wire only). Empty keeps
+	// europe-west3: the regional endpoint is what keeps caller audio
+	// inside the EU.
+	Location string `json:"location,omitempty" koanf:"location"`
+	// Language is the fallback BCP-47 code for untagged requests
+	// (google wire only — V2 has no auto-detect). Empty keeps de-DE.
+	Language string `json:"language,omitempty" koanf:"language"`
 }
 
-// Enabled reports whether an ASR provider is configured. A URL alone
-// enables; validation rejects a token without one.
-func (a ASR) Enabled() bool { return a.URL != "" }
+// Google reports whether the google provider kind is selected.
+func (a ASR) Google() bool { return a.Provider == "google" }
+
+// Enabled reports whether an ASR provider is configured. The openai
+// wire enables on URL alone; the google wire on a project id.
+// Validation rejects half-configurations before this matters.
+func (a ASR) Enabled() bool {
+	if a.Google() {
+		return a.Project != ""
+	}
+	return a.URL != ""
+}
 
 // ICEServer is one STUN/TURN server entry handed to the browser island.
 // The JSON tags ARE the window.PBX_CONFIG wire contract (see README).
@@ -431,7 +462,14 @@ func validate(cfg Config) error {
 	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
 		return err
 	}
-	if cfg.ASR.URL == "" && cfg.ASR.Token != "" {
+	switch {
+	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google":
+		return errorfamily.Newf(errorfamily.Rejection, "config.asr.provider", "asr.provider %q is not one of \"openai\", \"google\"", cfg.ASR.Provider)
+	case cfg.ASR.Google() && cfg.ASR.Project == "":
+		return errorfamily.NewRejection("config.asr.project", "asr.provider is google without asr.project: the recognizer path needs the cloud project id")
+	case cfg.ASR.Google() && (strings.ContainsAny(cfg.ASR.Project, "/ ") || strings.ContainsAny(cfg.ASR.Location, "/ ")):
+		return errorfamily.NewRejection("config.asr.project", "asr.project/asr.location must be a bare id, not a path (no slashes or spaces)")
+	case !cfg.ASR.Google() && cfg.ASR.URL == "" && cfg.ASR.Token != "":
 		return errorfamily.NewRejection("config.asr.url", "asr.token is set without asr.url: a credential with nowhere to send it (set asr.url, or clear the token for an unauthenticated provider)")
 	}
 	if cfg.ASR.URL != "" {
