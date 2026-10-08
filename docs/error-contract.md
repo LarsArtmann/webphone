@@ -276,6 +276,7 @@ a deliberate code change, regenerate:
 | store.thread_scan                            | Infrastructure            | internal/store/messages.go    |
 | store.thread_upsert                          | Infrastructure            | internal/store/messages.go    |
 | store.transcript_append                      | Infrastructure            | internal/store/transcripts.go |
+| store.transcript_delete                      | Infrastructure            | internal/store/transcripts.go |
 | store.transcript_scan                        | Infrastructure            | internal/store/transcripts.go |
 | store.transcript_trim                        | Infrastructure            | internal/store/transcripts.go |
 | store.tx_begin                               | Infrastructure            | internal/store/messages.go    |

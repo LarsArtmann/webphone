@@ -190,6 +190,46 @@
       }
     });
 
+    // 2b4. data-delete-transcript (History's transcript section → the
+    //      end-user erasure affordance, the GDPR leg next to the
+    //      operator's age-sweep): confirm with the SERVER's localized
+    //      prompt (data-confirm), DELETE the call's segments
+    //      owner-scoped, then drop the row — an emptied section goes
+    //      with its last row. A failed delete keeps the row and says
+    //      so; erasure must never LOOK done when it is not.
+    document.addEventListener("click", function (event) {
+      var btn = event.target.closest("[data-delete-transcript]");
+      if (!btn) return;
+      var callId = btn.getAttribute("data-delete-transcript");
+      var confirmText =
+        btn.getAttribute("data-confirm") || "Delete this transcript?";
+      if (typeof window.confirm === "function" && !window.confirm(confirmText))
+        return;
+      fetch("/api/transcripts?call=" + encodeURIComponent(callId), {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "X-CSRF-Token": csrfToken() },
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          var row = btn.closest(".wp-transcript-call");
+          if (row) {
+            var section = row.closest(".wp-transcripts");
+            row.remove();
+            if (section && !section.querySelector(".wp-transcript-call")) {
+              section.remove();
+            }
+          }
+          shellToast("Transcript deleted.", "ok");
+        })
+        .catch(function () {
+          shellToast(
+            "Could not delete the transcript — nothing was removed.",
+            "warn",
+          );
+        });
+    });
+
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
     //     every call render; the shell mirrors the live call count into
     //     the header so every tab shows the phone is busy. Cards are

@@ -124,3 +124,70 @@ func TestSaveTranscriptNilStoreIs503(t *testing.T) {
 		t.Errorf("nil store: %d %s (want 503)", resp.StatusCode, body)
 	}
 }
+
+func TestDeleteTranscriptAbsentSeamIs404(t *testing.T) {
+	server := newTestServer(t) // Deps.ASR nil
+	c := signIn(t, server)
+	resp, _ := c.do(http.MethodDelete, "/api/transcripts?call=c1", nil, "")
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("disabled seam: %d (want 404)", resp.StatusCode)
+	}
+}
+
+func TestDeleteTranscriptRoundTripOwnerScopingAndIdempotency(t *testing.T) {
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+
+	for _, text := range []string{"guten tag", "wie gehts"} {
+		if resp, _ := postTranscript(t, c, "call-1", "in", "+4989123456", text); resp.StatusCode != http.StatusNoContent {
+			t.Fatalf("save call-1: %d", resp.StatusCode)
+		}
+	}
+	if resp, _ := postTranscript(t, c, "call-2", "out", "+4930111", "second call"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save call-2: %d", resp.StatusCode)
+	}
+
+	// The History partial renders the delete affordance per call.
+	resp, body := c.do(http.MethodGet, "/partials/history", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("history: %d", resp.StatusCode)
+	}
+	page := string(body)
+	if !strings.Contains(page, `data-delete-transcript="call-1"`) || !strings.Contains(page, `data-delete-transcript="call-2"`) {
+		t.Errorf("history transcript rows carry no delete affordance:\n%s", page)
+	}
+
+	// Owner scoping: another extension's DELETE of the same call id is a
+	// 204 NO-OP — it must not erase the owner's rows.
+	other := clientFor(t, server)
+	other.login("1002", "pw")
+	if resp, _ := other.do(http.MethodDelete, "/api/transcripts?call=call-1", nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("other's delete: %d (want 204)", resp.StatusCode)
+	}
+	resp, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	if !strings.Contains(string(body), "guten tag") {
+		t.Errorf("another extension's delete erased the owner's transcript")
+	}
+
+	// The owner's own delete erases exactly one call; idempotent on repeat.
+	if resp, _ := c.do(http.MethodDelete, "/api/transcripts?call=call-1", nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("delete: %d (want 204)", resp.StatusCode)
+	}
+	if resp, _ := c.do(http.MethodDelete, "/api/transcripts?call=call-1", nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("repeat delete: %d (want 204)", resp.StatusCode)
+	}
+	resp, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	page = string(body)
+	if strings.Contains(page, "guten tag") || strings.Contains(page, "+4989123456") {
+		t.Errorf("call-1 transcript survived its delete:\n%s", page)
+	}
+	if !strings.Contains(page, "second call") {
+		t.Errorf("call-2 transcript was collateral damage:\n%s", page)
+	}
+
+	// Validation: the call parameter is required.
+	if resp, _ := c.do(http.MethodDelete, "/api/transcripts", nil, ""); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("missing call param: %d (want 400)", resp.StatusCode)
+	}
+}
