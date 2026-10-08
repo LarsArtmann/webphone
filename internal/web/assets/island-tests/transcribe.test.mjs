@@ -27,10 +27,21 @@ globalThis.MediaStream = class {
   constructor() {}
   addTrack() {}
 };
-globalThis.window.AudioContext = class {
+const AudioContextStub = class {
+  // Tests flip this before startLiveTranscription to simulate the
+  // autoplay policy: a context built without a user gesture.
+  static suspendNext = false;
   constructor() {
     this.closed = false;
+    this.state = AudioContextStub.suspendNext ? "suspended" : "running";
+    AudioContextStub.suspendNext = false;
+    this.resumeCount = 0;
     globalThis.__contexts.push(this);
+  }
+  resume() {
+    this.resumeCount += 1;
+    this.state = "running";
+    return Promise.resolve();
   }
   createMediaStreamDestination() {
     const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
@@ -45,6 +56,7 @@ globalThis.window.AudioContext = class {
     return Promise.resolve();
   }
 };
+globalThis.window.AudioContext = AudioContextStub;
 globalThis.MediaRecorder = class {
   static isTypeSupported() {
     return false;
@@ -172,8 +184,7 @@ test("stopLiveTranscription on an unknown call is a no-op", () => {
   assert.doesNotThrow(() => transcribe.stopLiveTranscription("never-started"));
 });
 
-test("stopLiveTranscription closes the AudioContext and stops the mixed tracks", () => {
-  globalThis.__recorders = [];
+test("stopLiveTranscription closes the AudioContext and stops the mixed tracks", () => {  globalThis.__recorders = [];
   globalThis.__contexts = [];
   const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
   const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
@@ -240,4 +251,46 @@ test("saveTranscriptSegment POSTs the segment to the store endpoint", async () =
     () => transcribe.saveTranscriptSegment({ callId: "x", text: "y" }),
     /HTTP 500/,
   );
+});
+
+test("a suspended AudioContext is resumed and arms a first-gesture retry", () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  const window = globalThis.window;
+  const before = Object.keys(window.listeners).length;
+  globalThis.window.AudioContext.suspendNext = true;
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  transcribe.startLiveTranscription("autoplay-check", entry, () => {});
+
+  const [ctx] = globalThis.__contexts;
+  assert.equal(ctx.state, "running", "the immediate resume must lift the suspended state");
+  assert.ok(ctx.resumeCount >= 1, "resume() was called");
+  // The first-gesture retries are armed exactly once per gesture kind.
+  assert.equal((window.listeners.pointerdown ?? []).length, 1, "pointerdown retry armed");
+  assert.equal((window.listeners.keydown ?? []).length, 1, "keydown retry armed");
+  assert.ok(
+    Object.keys(window.listeners).length - before >= 2,
+    "listener surface grew by the two retry hooks",
+  );
+
+  // The armed retries are inert after the context is closed.
+  transcribe.stopLiveTranscription("autoplay-check");
+  ctx.state = "closed";
+  const gesture = (window.listeners.pointerdown ?? [])[0];
+  assert.doesNotThrow(() => gesture());
+  assert.equal(ctx.resumeCount, 1, "no resume attempt on a closed context");
+});
+
+test("a running AudioContext arms no gesture retries", () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  globalThis.window.listeners = {};
+  const window = globalThis.window;
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  transcribe.startLiveTranscription("running-check", entry, () => {});
+  assert.equal((window.listeners.pointerdown ?? []).length, 0, "no pointerdown listener");
+  assert.equal((window.listeners.keydown ?? []).length, 0, "no keydown listener");
+  transcribe.stopLiveTranscription("running-check");
 });

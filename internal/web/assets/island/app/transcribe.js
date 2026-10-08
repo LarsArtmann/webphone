@@ -36,6 +36,13 @@ export async function saveTranscriptSegment(segment) {
 // gets usable context and the request rate stays modest (~15/min).
 const CHUNK_MS = 4000;
 
+// How long the live loop goes quiet after the seam answered 429 (a couple
+// of segment cycles — enough for the flood budget to recover).
+const COOLDOWN_MS = 10_000;
+
+// Live-loop 429 cooldown deadline (see the dataavailable handler).
+let cooldownUntil = 0;
+
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
 export async function transcribeBlob(
@@ -181,6 +188,11 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
   live.set(id, controller);
   recorder.addEventListener("dataavailable", async (event) => {
     if (!event.data || event.data.size === 0) return;
+    // 429 cooldown: when the seam's flood budget pushes back, skip the
+    // next segment cycles until the window passes. Capture keeps
+    // running; the budget recovers; no retry storm. One warn covers the
+    // whole cooldown (the cadence is ~15 segments/min).
+    if (Date.now() < cooldownUntil) return;
     try {
       const text = await transcribeBlob(event.data, {
         filename: "live.webm",
@@ -188,7 +200,12 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       });
       if (text) onText(text);
     } catch (err) {
-      log(`live transcription segment failed: ${err.message}`, "warn");
+      if (/\b429\b/.test(err.message)) {
+        cooldownUntil = Date.now() + COOLDOWN_MS;
+        log("transcription rate-limited; pausing segments briefly", "warn");
+      } else {
+        log(`live transcription segment failed: ${err.message}`, "warn");
+      }
     }
   });
   recorder.addEventListener("stop", () => {

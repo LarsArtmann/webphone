@@ -336,32 +336,49 @@
     //     delegated handler covers every audio stream the tabs render —
     //     voicemail rows and MMS audio attachments alike. Shell copy stays
     //     English (D3); the button LABEL is localized by the server.
+    //     A 429 from the seam's flood budget is retried ONCE after the
+    //     Retry-After delay (bounded to 10 s — a hostile header must not
+    //     freeze the tab).
+    var postTranscribe = function (blob, name, retried429) {
+      return fetch("/api/transcribe?filename=" + encodeURIComponent(name), {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "X-CSRF-Token": csrfToken(),
+          "Content-Type": blob.type || "application/octet-stream",
+        },
+        body: blob,
+      }).then(function (res) {
+        if (res.status === 429 && !retried429) {
+          var seconds = parseInt(res.headers.get("Retry-After") || "", 10);
+          if (!(seconds > 0) || seconds > 10) seconds = 1;
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              resolve(postTranscribe(blob, name, true));
+            }, seconds * 1000);
+          });
+        }
+        return res;
+      });
+    };
     var runTranscribe = function (btn) {
       var src = btn.getAttribute("data-transcribe-src");
       var targetId = btn.getAttribute("data-transcribe-target");
       var target = targetId ? document.getElementById(targetId) : null;
-      if (!src || !target) return;
+      if (!src || !target) return Promise.resolve();
       var render = function (text) {
         target.hidden = false;
         target.textContent = text;
       };
       render("Transcribing…");
-      fetch(src, { credentials: "same-origin" })
+      return fetch(src, { credentials: "same-origin" })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.blob();
         })
         .then(function (blob) {
           var name = src.split("/").pop() || "audio";
-          return fetch("/api/transcribe?filename=" + encodeURIComponent(name), {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-              "X-CSRF-Token": csrfToken(),
-              "Content-Type": blob.type || "application/octet-stream",
-            },
-            body: blob,
-          });
+          return postTranscribe(blob, name, false);
         })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
@@ -387,8 +404,12 @@
     //     stays as the manual re-run. Once per src+target per page life:
     //     morph re-renders of the same row never re-POST, and a target
     //     that already carries text (a prior run preserved by the morph)
-    //     is left alone. Debounced so a burst of swaps coalesces.
+    //     is left alone. Debounced so a burst of swaps coalesces, and
+    //     SERIALIZED through one promise chain: a dozen rendered clips
+    //     fire one at a time instead of stampeding the flood budget into
+    //     429s (manual clicks stay immediate — a human paces themselves).
     var transcribeAutoSeen = new Set();
+    var transcribeAutoQueue = Promise.resolve();
     var autoTranscribe = function () {
       if (!(window.PBX_CONFIG && window.PBX_CONFIG.asr)) return;
       var buttons = document.querySelectorAll("[data-transcribe-src]");
@@ -403,7 +424,9 @@
         var target = targetId ? document.getElementById(targetId) : null;
         if (!target) return;
         if (target.textContent && target.textContent.trim() !== "") return;
-        runTranscribe(btn);
+        transcribeAutoQueue = transcribeAutoQueue.then(function () {
+          return runTranscribe(btn);
+        });
       });
     };
     var autoTranscribeTimer = null;

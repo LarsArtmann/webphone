@@ -326,24 +326,54 @@ function ensureTranscription(id, entry) {
 
 // onCallTranscript is the per-segment sink: the card grows, screen
 // readers hear the delta (polite — this IS the product for them), and
-// the segment is persisted fire-and-forget so the History tab can show
-// it after the call.
+// the segment goes through the per-call save queue (a failed save costs
+// the LATER re-read, never the live card).
 function onCallTranscript(id, entry, target, text) {
   appendTranscript(target, text);
   announce(clipForAnnounce(text), "info");
-  saveTranscriptSegment({
+  queueTranscriptSave(entry, {
     callId: id,
     direction: entry.session instanceof SIP.Inviter ? "out" : "in",
     remote: entry.target,
     startedAt: entry.startedAt,
     text,
-  }).catch((err) => {
-    log(`transcript save failed: ${err.message}`, "warn");
-    if (!entry.transcriptSaveWarned) {
-      entry.transcriptSaveWarned = true;
-      announce(t("transcriptSaveFailed")(err.message), "warn");
-    }
   });
+}
+
+// The save queue bounds what a flaky network can eat: failed segments
+// stay queued (order preserved, cap 50 per call, drop-oldest) and flush
+// one-at-a-time on the next successful save — and once more when the
+// call ends. No timer: the queue is honest about being best-effort, and
+// the once-per-call warn toast keeps the operator informed without
+// nagging at the ~15 segments/minute cadence.
+const TRANSCRIPT_SAVE_QUEUE_CAP = 50;
+
+function queueTranscriptSave(entry, segment) {
+  entry.transcriptSaveQueue ??= [];
+  entry.transcriptSaveQueue.push(segment);
+  if (entry.transcriptSaveQueue.length > TRANSCRIPT_SAVE_QUEUE_CAP) {
+    entry.transcriptSaveQueue.shift();
+  }
+  flushTranscriptSaves(entry);
+}
+
+function flushTranscriptSaves(entry) {
+  if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length) return;
+  entry.transcriptSaveFlushing = true;
+  saveTranscriptSegment(entry.transcriptSaveQueue[0])
+    .then(() => {
+      entry.transcriptSaveQueue.shift();
+      entry.transcriptSaveFlushing = false;
+      flushTranscriptSaves(entry);
+    })
+    .catch((err) => {
+      entry.transcriptSaveFlushing = false;
+      log(`transcript save failed: ${err.message}`, "warn");
+      if (!entry.transcriptSaveWarned) {
+        entry.transcriptSaveWarned = true;
+        announce(t("transcriptSaveFailed")(err.message), "warn");
+      }
+    });
 }
 
 // clipForAnnounce bounds what the live region reads per segment: a

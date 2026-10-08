@@ -184,7 +184,14 @@ export function installBrowserGlobals() {
       return this.cookieSet;
     },
   };
-  globalThis.window = {};
+  globalThis.window = {
+    // gesture-level listeners (transcribe.js arms one-shot pointerdown/
+    // keydown retries) ride here, mirroring the document pattern below.
+    listeners: {},
+    addEventListener(type, fn) {
+      (this.listeners[type] ??= []).push(fn);
+    },
+  };
   // Older node lacks CustomEvent; the island dispatches wp:* events with it.
   globalThis.CustomEvent =
     globalThis.CustomEvent ||
