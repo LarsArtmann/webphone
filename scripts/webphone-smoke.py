@@ -447,7 +447,7 @@ class _FakeASRHandler(http.server.BaseHTTPRequestHandler):
     wire = "openai"
     hits: list[dict[str, str]] = []
 
-    def do_POST(self) -> None:  # noqa: N802 - http.server API
+    def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length)
         _FakeASRHandler.hits.append(
@@ -611,7 +611,9 @@ def asr_scenario(binary: str, workdir: str) -> int:
         if m:
             s.csrf = m.group(1)
         c.ok("asr(g): login accepted", s.login(), "POST /api/session != 201")
-        status, body, _ = s.request("POST", "/api/transcribe", b"FAKEAUDIO", "audio/webm")
+        status, body, _ = s.request(
+            "POST", "/api/transcribe", b"FAKEAUDIO", "audio/webm"
+        )
         c.ok(
             "asr(g): google wire transcribes",
             status == 200 and b"smoke google" in body,

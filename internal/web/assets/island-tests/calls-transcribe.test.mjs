@@ -231,9 +231,7 @@ test("a failed save warns once per call and never blocks the capture", async () 
   await flush();
   assert.match(entry.dom.querySelector(".call-transcript").textContent, /still live/);
   assert.ok(
-    [...doc.getElementById("toasts").children].some((el) =>
-      /not saved/i.test(el.textContent),
-    ),
+    [...doc.getElementById("toasts").children].some((el) => /not saved/i.test(el.textContent)),
     "the failed persistence surfaces once",
   );
 
@@ -267,8 +265,11 @@ test("failed saves queue and flush in order on the next success", async () => {
   recorder.emit({ size: 8, type: "audio/webm" });
   recorder.emit({ size: 8, type: "audio/webm" });
   await flush(20);
-  assert.equal(fetchCalls.filter((c) => c.url === "/api/transcripts").length, 1,
-    "the queue tries one save at a time while failing");
+  assert.equal(
+    fetchCalls.filter((c) => c.url === "/api/transcripts").length,
+    1,
+    "the queue tries one save at a time while failing",
+  );
 
   // The network heals: the next segment flushes the whole queue, in order.
   savesOk = true;

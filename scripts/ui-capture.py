@@ -125,7 +125,7 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
             for field, filename, content, ctype in files or []:
                 parts.append(
                     (
-                        f'--{boundary}\r\nContent-Disposition: form-data; '
+                        f"--{boundary}\r\nContent-Disposition: form-data; "
                         f'name="{field}"; filename="{filename}"\r\n'
                         f"Content-Type: {ctype}\r\n\r\n"
                     ).encode()
@@ -294,9 +294,11 @@ def capture(
                         f"{bool(driver.find_elements('id', 'login-form'))} — "
                         "the shot would not be evidence; aborting"
                     )
-                if expected_text and expected_text not in driver.find_element(
-                    "css selector", "body"
-                ).text:
+                if (
+                    expected_text
+                    and expected_text
+                    not in driver.find_element("css selector", "body").text
+                ):
                     raise AssertionError(
                         f"surface {name!r} rendered without {expected_text!r} — "
                         "the marker matched but the copy is wrong; aborting"
@@ -363,9 +365,7 @@ def main() -> int:
         if not session:
             print("seed did not mint a session cookie", file=sys.stderr)
             return 1
-        shots = capture(
-            base, args.out_dir, thread_path, attach_thread_path, session
-        )
+        shots = capture(base, args.out_dir, thread_path, attach_thread_path, session)
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
         return 0 if shots >= 18 else 1
     finally:

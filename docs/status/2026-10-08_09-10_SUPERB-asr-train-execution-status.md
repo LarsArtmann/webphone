@@ -33,9 +33,9 @@ this report ~70 minutes in. Not a project-wide audit.
      OpenAI-compatible `Client` and `GoogleClient` both satisfy it
      (pinned by a compile-time spec).
    - Config: `asr.provider`/`asr.project`/`asr.location`/`asr.language`
-     + validation (unknown kind, google-without-project, path-shaped
-     ids rejected; google token-without-url now LEGITIMATE) +
-     `Enabled()` semantics per kind. 5 new config/family test cases.
+     - validation (unknown kind, google-without-project, path-shaped
+       ids rejected; google token-without-url now LEGITIMATE) +
+       `Enabled()` semantics per kind. 5 new config/family test cases.
    - Composition-root branch; `server.Deps.ASR` is now the interface.
    - **Found + fixed the nil-interface trap** the type swap created:
      `configjs.go`/`panels.go` called `.Enabled()` on a nil interface
@@ -105,13 +105,14 @@ M2 (Speaches stack service), M6 (stack browser E2E + dom-contract
 re-run), M7 (docs-health harvest), M10 (retention sweep — the
 `internal/retention` package + `store.Sweep` extension point already
 identified), M11 (DELETE endpoint + History button), M12 (per-call cap
-+ RMS silence guard), M13 (ui-capture ASR shots), M14 (lessons + AGENTS
-rule), M15 (History transcript search), M16 (copy buttons), M17 (export
-zip leg), M18 (Settings provider/model row), M19 (queued-hold spec),
-M20 (concurrency spec + cap-test speedup), M21 (Recent() single-pass),
-M22 (confidence decision), M23–M25 (spike notes), final gates
-(buildflow + `nix flake check` + CHANGELOG sweep + CI/ls-remote
-verify).
+
+- RMS silence guard), M13 (ui-capture ASR shots), M14 (lessons + AGENTS
+  rule), M15 (History transcript search), M16 (copy buttons), M17 (export
+  zip leg), M18 (Settings provider/model row), M19 (queued-hold spec),
+  M20 (concurrency spec + cap-test speedup), M21 (Recent() single-pass),
+  M22 (confidence decision), M23–M25 (spike notes), final gates
+  (buildflow + `nix flake check` + CHANGELOG sweep + CI/ls-remote
+  verify).
 
 ## d) TOTALLY FUCKED UP (this session's honest list)
 
@@ -163,7 +164,7 @@ verify).
 
 1. Triage + fix the M9 cap spec (red line in the tree — first action).
 2. Re-run the 429-cooldown spec green; finish F31 (shell serialization
-   + retry-once spec in `shell.test.mjs`).
+   - retry-once spec in `shell.test.mjs`).
 3. `nix fmt` over the train so far, then `go test ./...` + island suite
    full green checkpoint.
 4. M10: extend `store.Sweep` + `SweepResult` with `call_transcripts`
@@ -243,8 +244,8 @@ verify).
    code paths now exist and are fake-tested. Speaches = ~3–4 GB RAM on
    the PBX host, €0 marginal, needs the stack service (g)3); Google
    Frankfurt = $0.96/audio-hr, needs a GCP project + restricted API key
-   + DPA acceptance on your side. Which do I wire for the first
-   real-audio verification?
+   - DPA acceptance on your side. Which do I wire for the first
+     real-audio verification?
 2. **Retention detail**: transcripts riding the GLOBAL
    `retention_days` (same window as messages/faxes) — confirmed OK, or
    do you want a separate, SHORTER transcript cutoff (they are call

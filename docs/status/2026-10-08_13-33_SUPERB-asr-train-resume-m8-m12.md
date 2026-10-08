@@ -16,13 +16,13 @@ this session produced (no narrative commits made; expected per AGENTS).
 1. **M9 save-retry queue — the RED cap spec is FIXED.** Root cause was
    the TEST stub, not the implementation: `segment += 1` ran at
    fetch-invocation (all 52 synchronous) but the stub's
-   `json: async () => ({text: \`seg-${segment}\`})` read the counter
-   LAZILY at `.json()` time — every segment resolved to `seg-52`, making
+   `json: async () => ({text: \`seg-${segment}\`})`read the counter
+   LAZILY at`.json()`time — every segment resolved to`seg-52`, making
    the drop-oldest assertions meaningless. Fix: eager capture
-   (`const n = (segment += 1)`) inside `fetchImpl`. An instrumented
+   (`const n = (segment += 1)`) inside`fetchImpl`. An instrumented
    debug spec (written, run, trashed) proved the queue logic was already
    correct: cap 50, exactly 2 drops from 52 failing emits, order
-   preserved, full drain. `calls-transcribe.test.mjs` 4/4 green.
+   preserved, full drain.`calls-transcribe.test.mjs` 4/4 green.
 2. **M8 island cooldown spec verified green** (the `headers: new Headers()`
    fix from the prior session was correct; full island suite confirmed).
 3. **M8 F31 shell specs WRITTEN and green** (2 new specs in
@@ -225,7 +225,7 @@ no gate failures. Two near-misses, honestly noted:
     morph-swap of the History section (currently outerHTML re-render;
     harmless, note for D-contract hygiene).
 50. Close the train: mark todo items completed, final CI check,
-   status report.
+    status report.
 
 ## g) Questions for the owner (cannot self-answer)
 

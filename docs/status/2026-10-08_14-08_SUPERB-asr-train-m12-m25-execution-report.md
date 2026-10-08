@@ -191,8 +191,8 @@ said resume the whole plan). Scope executed: M12 completion through M14
    136/377 lines — room).
 7. M13 ui-capture ASR shots (chromium+selenium harness; 14 shots +
    ASR-on set: settings row w/ provider detail, call card w/ transcript
-   + copy, History transcripts w/ delete+copy+search hint; DOM asserts
-   per shot; regen baselines; LOCAL-ONLY).
+   - copy, History transcripts w/ delete+copy+search hint; DOM asserts
+     per shot; regen baselines; LOCAL-ONLY).
 8. M7 harvest: TODO_LIST.md (open items from 16-54/18-15 §f + SUPERB
    plan remainders) + ROADMAP.md (M22 revisit triggers, M23 realtime
    WS, M24 native packaging, M25 diarization watch) + prune done items.
@@ -220,7 +220,7 @@ said resume the whole plan). Scope executed: M12 completion through M14
     live-reality transcription (M4's remaining doubt).
 21. Status-report hygiene: this file's d-2 push state re-verified at
     resume.
-22–30. (buffer: triage whatever CI says after the push; ui-capture DOM
+    22–30. (buffer: triage whatever CI says after the push; ui-capture DOM
     asserts may surface layout drift from the new buttons; consider
     `historyTranscriptGroups` comment refresh already done; smoke
     re-run optional; vulnix only at release time.)
@@ -238,6 +238,6 @@ said resume the whole plan). Scope executed: M12 completion through M14
    today; ~10 min + flake-retry budget) or batch it into the next
    release run?
 
-*(Two older product questions also still open from 13-33 §g: island
+_(Two older product questions also still open from 13-33 §g: island
 429 cooldown Retry-After vs fixed 10 s; ship SILENCE_RMS 0.004 as-is.
-Neither blocks M13/M7/gates.)*
+Neither blocks M13/M7/gates.)_

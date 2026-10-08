@@ -8,10 +8,10 @@ require (
 	github.com/knadh/koanf/providers/confmap v1.0.1
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.7
-	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.14.1
+	github.com/knadh/koanf/v2 v2.3.8
+	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.14.2
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.12.0
-	github.com/larsartmann/cqrs-htmx/v4 v4.13.1
+	github.com/larsartmann/cqrs-htmx/v4 v4.13.2
 	github.com/larsartmann/go-branded-id v0.7.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/go-health v0.5.0

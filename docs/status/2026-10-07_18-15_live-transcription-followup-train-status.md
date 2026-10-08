@@ -181,6 +181,7 @@ fuckups and near-misses:
 ## f) Up to 50 things we should get done next
 
 **Verify what exists (highest value first):**
+
 1. Deploy a Speaches instance (nixosModules candidate in the consuming
    stack) with `large-v3-turbo`; point `asr.url` at it.
 2. Real-provider smoke: boot the binary with `asr.url`, place a
@@ -194,11 +195,13 @@ fuckups and near-misses:
 **Harden:**
 6. Defensive `ctx.resume()` in `captureStream`.
 7. Bounded retry for failed `/api/transcripts` saves (per-call queue,
-   flushed on stop).
+flushed on stop).
 8. 429-aware backoff in shell.js `autoTranscribe` (serialize + retry
-   once after Retry-After).
+once after Retry-After).
 9. Transcript delete affordance (per-call `DELETE /api/transcripts?…`
-   + History UI) — GDPR erasure.
+
+- History UI) — GDPR erasure.
+
 10. Age-based retention for `call_transcripts` (Sweep integration,
     config-gated cutoff like messages).
 11. Silence/VAD guard client-side: skip POSTing segments that are
@@ -210,37 +213,37 @@ fuckups and near-misses:
 
 **Docs/process debt:**
 14. docs-health HARVEST this report's section f into TODO_LIST.md/
-    ROADMAP.md.
+ROADMAP.md.
 15. Add the `.buildflow.yml` truncation incident + "gate first" lesson
-    to docs/lessons.md.
+to docs/lessons.md.
 16. AGENTS.md: consider a one-line "run buildflow before AND after big
-    trains" rule.
+trains" rule.
 17. Re-measure error-family tiers if the next monthly window lands
-    (due 2026-11-05).
+(due 2026-11-05).
 
 **Nice-to-have / polish:**
 18. Transcript search in History (query box already exists for CDRs —
-    extend to transcript text).
+extend to transcript text).
 19. Copy-to-clipboard on transcript sections.
 20. Diarization/speaker labels (upstream: Speaches + pyannote) — only
-    if the provider supports it cheaply.
+if the provider supports it cheaply.
 21. Streaming SSE transcription (Speaches supports it) instead of 4 s
-    chunks — bigger client change, defer.
+chunks — bigger client change, defer.
 22. Export transcripts with the settings zip.
 23. Settings panel: show asr model name alongside the on/off state.
 24. Island spec: pause/resume on the QUEUED hold path (holdQueued
-    mid-flight) — currently only the settled path is spec'd.
+mid-flight) — currently only the settled path is spec'd.
 25. Go spec: transcript store under CONCURRENT appends (the trim's
-    worst case).
+worst case).
 26. Reduce the cap-test runtime (stride var or smaller fixture).
 27. `Recent` line assembly without prepend.
 28. Consider `no_speech_prob`/confidence handling if the provider
-    returns verbose JSON (currently plain text only).
+returns verbose JSON (currently plain text only).
 29. `.buildflow.yml`: add a comment warning that skip_steps is
-    load-bearing policy (another silent truncation would quietly
-    re-fail the gate — or worse, quietly PASS noise).
+load-bearing policy (another silent truncation would quietly
+re-fail the gate — or worse, quietly PASS noise).
 30. ui-capture harness: add an ASR-on shot set (T23 extension) so the
-    visual regression covers the gated buttons.
+visual regression covers the gated buttons.
 
 ## g) Questions I cannot answer myself
 
@@ -261,5 +264,5 @@ fuckups and near-misses:
 
 ---
 
-*Report format note: written as `.md` per the explicit prompt instruction
-(canonical status-report format is styled HTML; override flagged).*
+_Report format note: written as `.md` per the explicit prompt instruction
+(canonical status-report format is styled HTML; override flagged)._

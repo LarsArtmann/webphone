@@ -1286,7 +1286,11 @@ test("data-delete-transcript confirms, DELETEs, and removes the row only on succ
   // A declined confirm never reaches the network.
   doc.dispatch("click", { target: btn });
   await settle();
-  assert.deepEqual(confirmations, ["Wirklich löschen?"], "the server's prompt is what the user sees");
+  assert.deepEqual(
+    confirmations,
+    ["Wirklich löschen?"],
+    "the server's prompt is what the user sees",
+  );
   assert.equal(calls.length, 0, "declined confirm sends nothing");
   assert.equal(section.children.length, 1, "the row stays");
 
@@ -1302,11 +1306,7 @@ test("data-delete-transcript confirms, DELETEs, and removes the row only on succ
   assert.equal(calls[0].options.method, "DELETE");
   assert.equal(calls[0].options.headers["X-CSRF-Token"], "", "the CSRF header rides the delete");
   assert.equal(section.children.length, 1, "a failed delete keeps the row");
-  assert.match(
-    toasts().children.at(-1).textContent,
-    /could not delete/i,
-    "the failure says so",
-  );
+  assert.match(toasts().children.at(-1).textContent, /could not delete/i, "the failure says so");
 
   // Success: the row goes, and the emptied section goes with it.
   globalThis.fetch = async (url, options = {}) => {

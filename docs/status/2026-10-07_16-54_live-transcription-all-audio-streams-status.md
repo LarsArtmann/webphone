@@ -14,6 +14,7 @@
 ## a) FULLY DONE
 
 ### Backend
+
 1. **Config seam** (`internal/config`): `asr.{url,token,model}`.
    Asymmetric enable rule (URL alone enables; token without URL fails
    closed). Absolute-http(s) URL validation. Positive + negative + family
@@ -27,9 +28,9 @@
    whisper-1`, 1 MiB response cap. Unit + family tests green.
 3. **Endpoint** (`internal/server/transcribe.go`): `POST /api/transcribe`,
    session-gated (`requireSession`), 25 MiB `MaxBytesReader`, `?filename=`
-   + `?lang=`, returns `{"text":…}`; disabled seam → 404; upstream failures
-   → 502 (never a 401). Tests: session gate, disabled-404, round-trip,
-   empty-400, provider-401→502, `config.js` flag.
+   - `?lang=`, returns `{"text":…}`; disabled seam → 404; upstream failures
+     → 502 (never a 401). Tests: session gate, disabled-404, round-trip,
+     empty-400, provider-401→502, `config.js` flag.
 4. **Composition root** (`internal/app/app.go`): `*asr.Client` provider,
    injected as `Deps.ASR`. `Deps.ASR` + `handlers.transcribeLimiter`
    (hook-grade bucket) + the route in `server.go`.
@@ -39,6 +40,7 @@
    codes; `TestErrorCodeRegistryIsFresh` green.
 
 ### Client
+
 7. **`island/app/transcribe.js`**: one home for the seam —
    `transcribeBlob`, `transcribeUrl`, `transcribeNow`, and the live-call
    controller (`startLiveTranscription`/`stopLiveTranscription`/
@@ -62,6 +64,7 @@
     transcription contract section), FEATURES row, AGENTS.md seam rule.
 
 ### Gates actually run
+
 - `go build ./...` ✅
 - `go test -count=1 ./...` ✅ (all packages, incl. arch/contract/CSP)
 - island `node:test` — 192 pass ✅

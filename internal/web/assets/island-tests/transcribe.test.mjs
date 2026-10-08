@@ -49,7 +49,14 @@ const AudioContextStub = class {
     return Promise.resolve();
   }
   createMediaStreamDestination() {
-    const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
+    const tracks = [
+      {
+        stopped: false,
+        stop() {
+          this.stopped = true;
+        },
+      },
+    ];
     this.mixedTracks = tracks;
     return { stream: { id: "mixed", getTracks: () => tracks }, connect() {} };
   }
@@ -183,13 +190,22 @@ test("startLiveTranscription is idempotent per call and refuses without media", 
   globalThis.__recorders = [];
   const pc = { getReceivers: () => [], getSenders: () => [] };
   const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
-  assert.equal(transcribe.startLiveTranscription("call-2", entry, () => {}), true);
-  assert.equal(transcribe.startLiveTranscription("call-2", entry, () => {}), false);
+  assert.equal(
+    transcribe.startLiveTranscription("call-2", entry, () => {}),
+    true,
+  );
+  assert.equal(
+    transcribe.startLiveTranscription("call-2", entry, () => {}),
+    false,
+  );
   transcribe.stopLiveTranscription("call-2");
 
   // No peer connection at all: honest refusal, no recorder created.
   globalThis.__recorders = [];
-  assert.equal(transcribe.startLiveTranscription("call-3", {}, () => {}), false);
+  assert.equal(
+    transcribe.startLiveTranscription("call-3", {}, () => {}),
+    false,
+  );
   assert.equal(globalThis.__recorders.length, 0);
 });
 
@@ -197,7 +213,8 @@ test("stopLiveTranscription on an unknown call is a no-op", () => {
   assert.doesNotThrow(() => transcribe.stopLiveTranscription("never-started"));
 });
 
-test("stopLiveTranscription closes the AudioContext and stops the mixed tracks", () => {  globalThis.__recorders = [];
+test("stopLiveTranscription closes the AudioContext and stops the mixed tracks", () => {
+  globalThis.__recorders = [];
   globalThis.__contexts = [];
   const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
   const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
