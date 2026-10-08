@@ -355,10 +355,18 @@ every affordance.
   The buttons stay as manual re-runs.
 - **Persistence**: each live-call segment is also appended (fire-and-forget,
   `POST /api/transcripts`) to an owner-scoped SQLite table (schema v3,
-  capped at 5000 segments per extension). The History tab renders the
-  newest transcribed calls as their own "Call transcripts" section —
-  deliberately NOT joined onto the CDR rows, which carry no call uuid to
-  correlate with.
+  capped at 5000 segments per extension AND 1500 per call — a long call
+  can never eat the whole budget). Near-silent segments are never sent
+  (a client-side RMS guard spares the provider hallucinations). The
+  History tab renders the newest transcribed calls as their own "Call
+  transcripts" section — deliberately NOT joined onto the CDR rows,
+  which carry no call uuid to correlate with.
+- **Findability & portability**: the History search box (`?q=`) also
+  searches transcript text (matching lines, owner-scoped, with a hint
+  saying so); every transcript section carries copy-to-clipboard (call
+  card and History); the Settings export zip includes a
+  `transcripts.json` leg; and Settings names the provider kind and
+  model next to the on/off state.
 
 **Choosing a provider (2026 recommendation):** run ASR LOCAL, not hosted.
 Call audio of real people is GDPR personal data; the US-inference APIs

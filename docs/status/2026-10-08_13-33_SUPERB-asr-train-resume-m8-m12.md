@@ -132,6 +132,12 @@ no gate failures. Two near-misses, honestly noted:
 
 ## f) NEXT — up to 50 items, in execution order
 
+> **CLOSED 2026-10-08 ~15:50** — the 14:08–15:50 continuation executed
+> this list to completion: M12 (items 1–7) plus M15–M25 landed and
+> verified (see the 14-08 report + the TODO_LIST "ASR/SUPERB train
+> follow-ups" harvest row for what remains — all of it owner-gated or
+> grouped polish). CI green at `7c87501`+; buildflow EXIT 0.
+
 1. Write the M12 silence-guard island spec (analyser stub: silent ⇒ no
    POST + log; loud ⇒ POST; fail-open already proven).
 2. Store: `TranscriptSegmentsMaxPerCall = 1500` + per-call bounded
