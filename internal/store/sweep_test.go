@@ -16,6 +16,7 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 	messages := NewMessages(db)
 	faxes := NewFaxes(db)
+	transcripts := NewTranscripts(db)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	now := time.Now()
@@ -66,11 +67,27 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Transcript segments: a fresh one through the store API, an aged
+	// one via raw SQL (Append stamps created_at = now; aging a row is a
+	// sweep-only concern, same style as the aged thread rows below).
+	if err := transcripts.Append(ctx, domain.CallTranscriptSegment{
+		Owner: owner, CallID: "call-live", Direction: domain.DirectionOutbound,
+		Remote: "+441632960977", StartedAt: now, Text: "keep me spoken",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
+		VALUES ('1001', 'call-old', 'out', '+441632960961', ?, 'old words', ?)
+	`, old.Unix(), old.Unix()); err != nil {
+		t.Fatal(err)
+	}
+
 	res, err := Sweep(ctx, db, now.Add(-24*time.Hour))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Messages != 1 || res.Faxes != 1 || res.Threads != 1 {
+	if res.Messages != 1 || res.Faxes != 1 || res.Threads != 1 || res.Transcripts != 1 {
 		t.Fatalf("sweep counts wrong: %+v", res)
 	}
 	if len(res.BlobPaths) != 2 {
@@ -82,10 +99,13 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	if msgs, err := messages.ListMessages(ctx, owner, liveThread, 10); err != nil || len(msgs) != 1 {
 		t.Fatalf("live message lost: %v %v", msgs, err)
 	}
+	if recent, err := transcripts.Recent(ctx, owner, 10); err != nil || len(recent) != 1 || recent[0].CallID != "call-live" {
+		t.Fatalf("fresh transcript lost: %+v %v", recent, err)
+	}
 	if _, err := messages.MessageByProviderRef(ctx, "old-ref"); err == nil {
 		t.Fatal("old provider ref must not resolve after the sweep")
 	}
-	if res2, err := Sweep(ctx, db, now.Add(-24*time.Hour)); err != nil || res2.Messages != 0 || res2.Threads != 0 {
+	if res2, err := Sweep(ctx, db, now.Add(-24*time.Hour)); err != nil || res2.Messages != 0 || res2.Threads != 0 || res2.Transcripts != 0 {
 		t.Fatalf("second sweep must be a no-op: %+v %v", res2, err)
 	}
 

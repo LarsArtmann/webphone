@@ -45,6 +45,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, window time.Durat
 			"messages", res.Messages,
 			"faxes", res.Faxes,
 			"threads", res.Threads,
+			"transcripts", res.Transcripts,
 			"blobs_removed", removedBlobs,
 		)
 	}

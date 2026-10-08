@@ -593,6 +593,7 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 		"webphone_uptime_seconds",
 		"webphone_threads_total 1",
 		"webphone_messages_total 1",
+		"webphone_transcripts_total 0",
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("metrics missing %s:\n%s", want, page)
