@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- History search now covers call transcripts: the tab's `q` filter
+  (shared with the CDR lane) also runs an owner-scoped `LIKE` search
+  over transcript text — matching calls render in the transcripts
+  section with a "Transcript matches for: `<q>`" hint (matching lines
+  only), non-matching transcripts hide under an active query, and a
+  no-hit query hides the section entirely. LIKE metacharacters are
+  escaped, so searching for `100%` matches the literal, never widens.
 - Provider and budget safety for live transcription: one call's
   transcript is now bounded (`TranscriptSegmentsMaxPerCall` = 1500
   segments ≈ 100 min — a marathon call can no longer eat the owner's

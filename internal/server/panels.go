@@ -213,7 +213,9 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	// must not die with it.
 	transcripts := h.recentTranscripts(r, sess, query)
 	if !h.deps.PhoneAPI.Enabled() {
-		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang, Transcripts: transcripts}), nil
+		return views.HistoryPanel(views.HistoryPanelProps{
+			Lang: lang, Query: query, Transcripts: transcripts,
+		}), nil
 	}
 	// A filter needs a wider window than the unfiltered top-30 view.
 	limit := historyPageSize

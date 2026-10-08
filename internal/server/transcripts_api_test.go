@@ -125,6 +125,83 @@ func TestSaveTranscriptNilStoreIs503(t *testing.T) {
 	}
 }
 
+func TestHistoryTranscriptSearchMatchesOwnerScopedAndHinted(t *testing.T) {
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+
+	for _, text := range []string{"guten tag", "wie gehts"} {
+		if resp, _ := postTranscript(t, c, "call-1", "in", "+4989123456", text); resp.StatusCode != http.StatusNoContent {
+			t.Fatalf("save call-1: %d", resp.StatusCode)
+		}
+	}
+	if resp, _ := postTranscript(t, c, "call-2", "out", "+4930111", "second call"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save call-2: %d", resp.StatusCode)
+	}
+	// Another extension owns the same words: search must never leak them.
+	other := clientFor(t, server)
+	other.login("1002", "pw")
+	if resp, _ := postTranscript(t, other, "call-x", "in", "+49130", "guten tag from the neighbor"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save neighbor: %d", resp.StatusCode)
+	}
+
+	// Unfiltered: both of the owner's calls render, and no hint.
+	_, body := c.do(http.MethodGet, "/partials/history", nil, "")
+	page := string(body)
+	for _, want := range []string{"guten tag", "second call"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("unfiltered history missing %q:\n%s", want, page)
+		}
+	}
+	if strings.Contains(page, "Transcript matches for:") {
+		t.Errorf("no search hint without an active query")
+	}
+
+	// q=geht: the matching line renders with the hint; the non-matching
+	// call's transcript hides under the active filter.
+	_, body = c.do(http.MethodGet, "/partials/history?q=geht", nil, "")
+	page = string(body)
+	if !strings.Contains(page, "wie gehts") {
+		t.Errorf("search must render the matching line:\n%s", page)
+	}
+	if !strings.Contains(page, "Transcript matches for:") || !strings.Contains(page, "<code>geht</code>") {
+		t.Errorf("search hint missing:\n%s", page)
+	}
+	if strings.Contains(page, "second call") {
+		t.Errorf("a non-matching transcript must hide under an active query:\n%s", page)
+	}
+	if strings.Contains(page, "from the neighbor") {
+		t.Errorf("another extension's transcript leaked into the search")
+	}
+
+	// The neighbor finds their own words — owner scoping cuts both ways.
+	_, body = other.do(http.MethodGet, "/partials/history?q=neighbor", nil, "")
+	if !strings.Contains(string(body), "from the neighbor") {
+		t.Errorf("the neighbor's own search must find their transcript")
+	}
+
+	// No hit at all: the transcript section disappears entirely.
+	_, body = c.do(http.MethodGet, "/partials/history?q=zzz-nothing", nil, "")
+	page = string(body)
+	if strings.Contains(page, "wp-transcripts") || strings.Contains(page, "guten tag") {
+		t.Errorf("a no-hit query must hide the transcript section:\n%s", page)
+	}
+
+	// LIKE metacharacters are literals: "100%" matches "100%", not
+	// "100" + anything (q pre-encoded as %25).
+	if resp, _ := postTranscript(t, c, "call-pct", "out", "+4930", "fifty 100% sure"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save pct: %d", resp.StatusCode)
+	}
+	_, body = c.do(http.MethodGet, "/partials/history?q=100%25", nil, "")
+	page = string(body)
+	if !strings.Contains(page, "fifty 100% sure") {
+		t.Errorf("an escaped-percent query must match its literal:\n%s", page)
+	}
+	if strings.Contains(page, "guten tag") || strings.Contains(page, "second call") {
+		t.Errorf("non-matching transcripts leaked past the literal-percent query:\n%s", page)
+	}
+}
+
 func TestDeleteTranscriptAbsentSeamIs404(t *testing.T) {
 	server := newTestServer(t) // Deps.ASR nil
 	c := signIn(t, server)
