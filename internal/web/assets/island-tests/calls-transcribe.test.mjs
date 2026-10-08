@@ -286,6 +286,59 @@ test("failed saves queue and flush in order on the next success", async () => {
   await flush();
 });
 
+test("the card's copy button copies the accumulated transcript honestly", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+49123998877"), true);
+  const entry = sessions.get("call-t1");
+  const transcriptEl = entry.dom.querySelector(".call-transcript");
+  const copyBtn = entry.dom.querySelector(".copy-transcript-btn");
+  assert.ok(copyBtn, "the ASR-gated card carries the copy affordance");
+  const click = () => (copyBtn.listeners.click ?? []).forEach((fn) => fn({}));
+  const toasts = () => [...doc.getElementById("toasts").children];
+
+  // Empty transcript: honest announce, nothing hits the clipboard.
+  const copied = [];
+  globalThis.navigator.clipboard = {
+    writeText: (text) => {
+      copied.push(text);
+      return Promise.resolve();
+    },
+  };
+  click();
+  await flush(2);
+  assert.equal(copied.length, 0);
+  assert.ok(
+    toasts().some((el) => /no speech detected/i.test(el.textContent)),
+    "an empty transcript announces that instead of copying nothing",
+  );
+
+  // With text: the whole joined transcript lands on the clipboard.
+  transcriptEl.textContent = "erste worte zweite worte";
+  click();
+  await flush(2);
+  assert.deepEqual(copied, ["erste worte zweite worte"]);
+  assert.ok(
+    toasts().some((el) => /copied to clipboard/i.test(el.textContent)),
+    "the copy confirms itself politely",
+  );
+
+  // A clipboard failure announces the manual fallback.
+  globalThis.navigator.clipboard = {
+    writeText: () => Promise.reject(new Error("denied")),
+  };
+  click();
+  await flush(2);
+  assert.ok(
+    toasts().some((el) => /could not copy/i.test(el.textContent)),
+    "the failure says what to do instead",
+  );
+
+  delete globalThis.navigator.clipboard;
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});
+
 test("the save queue is bounded: oldest segments drop past the cap", async () => {
   state.userAgent = {};
   assert.equal(await placeCall("+49800123456"), true);

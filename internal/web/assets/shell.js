@@ -237,9 +237,10 @@
     //      handler, clipboard API only (secure context — the stack
     //      fronts TLS), honest toasts either way. English (D3).
     document.addEventListener("click", function (event) {
-      var btn = event.target.closest
-        ? event.target.closest("[data-copy-transcript], [data-copy-target]")
-        : null;
+      if (!event.target.closest) return;
+      var btn =
+        event.target.closest("[data-copy-transcript]") ||
+        event.target.closest("[data-copy-target]");
       if (!btn) return;
       var text = "";
       if (btn.hasAttribute("data-copy-transcript")) {
@@ -459,15 +460,22 @@
       // next transcription re-plants). The chip only references the
       // target; the copy handler in 2b5 owns the clipboard write.
       var plantCopyChip = function () {
-        if (!target.id) return;
-        if (document.querySelector('[data-copy-target="' + target.id + '"]'))
-          return;
-        var chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "wp-mini";
-        chip.setAttribute("data-copy-target", target.id);
-        chip.textContent = "Copy";
-        target.insertAdjacentElement("afterend", chip);
+        // The chip is a convenience: a node that cannot take a sibling
+        // (detached stub, exotic parent) must never fail the render it
+        // accompanies.
+        try {
+          if (!target.id) return;
+          if (
+            document.querySelector('[data-copy-target="' + target.id + '"]')
+          )
+            return;
+          var chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "wp-mini";
+          chip.setAttribute("data-copy-target", target.id);
+          chip.textContent = "Copy";
+          target.insertAdjacentElement("afterend", chip);
+        } catch {}
       };
       render("Transcribing…");
       return fetch(src, { credentials: "same-origin" })

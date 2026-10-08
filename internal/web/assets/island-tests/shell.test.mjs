@@ -1322,3 +1322,117 @@ test("data-delete-transcript confirms, DELETEs, and removes the row only on succ
 
   delete globalThis.window.confirm;
 });
+
+// M16: copy affordances. History rows carry data-copy-transcript; the
+// on-demand chips (planted by the transcribe flow) carry data-copy-target.
+test("data-copy-transcript copies the row's transcript and toasts honestly", async () => {
+  const copied = [];
+  globalThis.navigator.clipboard = {
+    writeText: (text) => {
+      copied.push(text);
+      return Promise.resolve();
+    },
+  };
+  const row = doc.createElement();
+  row.className = "wp-transcript-call";
+  const text = doc.createElement();
+  text.className = "wp-transcript-text";
+  text.textContent = "guten tag wie gehts";
+  const btn = doc.createElement();
+  btn.selector = "[data-copy-transcript]";
+  btn.setAttribute("data-copy-transcript", "call-x");
+  row.append(text, btn);
+
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.deepEqual(copied, ["guten tag wie gehts"]);
+  assert.match(toasts().children.at(-1).textContent, /copied to clipboard/i);
+
+  // An empty row says so instead of copying nothing.
+  text.textContent = "";
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(copied.length, 1);
+  assert.match(toasts().children.at(-1).textContent, /nothing to copy yet/i);
+
+  // A clipboard failure keeps the text and says so.
+  globalThis.navigator.clipboard = {
+    writeText: () => Promise.reject(new Error("denied")),
+  };
+  text.textContent = "real words";
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.match(toasts().children.at(-1).textContent, /could not copy/i);
+
+  delete globalThis.navigator.clipboard;
+});
+
+test("a real transcription plants a copy chip; empty results plant nothing", async () => {
+  const copied = [];
+  globalThis.navigator.clipboard = {
+    writeText: (text) => {
+      copied.push(text);
+      return Promise.resolve();
+    },
+  };
+  let reply = { text: "" };
+  globalThis.fetch = async (url) => {
+    if (String(url).startsWith("/vm-audio/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    return { ok: true, status: 200, json: async () => reply };
+  };
+  const holder = doc.createElement();
+  const target = doc.getElementById("vm-transcript-chip-spec");
+  holder.append(target);
+  doc.body.append(holder);
+  const btn = doc.getElementById("vm-btn-chip-spec");
+  btn.selector = "[data-transcribe-src]";
+  btn.setAttribute("data-transcribe-src", "/vm-audio/1001/chip.wav");
+  btn.setAttribute("data-transcribe-target", "vm-transcript-chip-spec");
+  // The chip guard probes document level; route the attribute selector
+  // into the stub tree.
+  const realQS = doc.querySelector;
+  doc.querySelector = (selector) => {
+    const match = /^\[data-copy-target="(.+)"\]$/.exec(selector);
+    if (!match) return realQS(selector);
+    const walk = (node) => {
+      for (const kid of node.children) {
+        if (kid.getAttribute && kid.getAttribute("data-copy-target") === match[1]) {
+          return kid;
+        }
+        const found = walk(kid);
+        if (found) return found;
+      }
+      return null;
+    };
+    return walk(doc.body);
+  };
+  const chips = () => holder.children.filter((c) => c.hasAttribute("data-copy-target"));
+
+  // "No speech detected" is honest feedback, not text: no chip.
+  reply = { text: "" };
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(target.textContent, "No speech detected");
+  assert.equal(chips().length, 0, "empty result plants no copy chip");
+
+  // Real text plants exactly one chip, once per DOM lifetime.
+  reply = { text: "  hi from voicemail  " };
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(target.textContent, "hi from voicemail");
+  assert.equal(chips().length, 1, "a chip follows the text");
+  assert.equal(chips()[0].textContent, "Copy");
+
+  // Clicking the chip copies the target's text.
+  const chip = chips()[0];
+  chip.selector = "[data-copy-target]";
+  doc.dispatch("click", { target: chip });
+  await settle();
+  assert.deepEqual(copied, ["hi from voicemail"]);
+  assert.match(toasts().children.at(-1).textContent, /copied to clipboard/i);
+
+  doc.querySelector = realQS;
+  delete globalThis.navigator.clipboard;
+});

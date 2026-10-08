@@ -88,6 +88,18 @@ export function installBrowserGlobals() {
           this.parent = null;
         }
       },
+      // insertAdjacentElement covers the "afterend" position (the copy
+      // chip plants itself next to a filled transcript node); other
+      // positions throw like the real DOM would.
+      insertAdjacentElement(position, node) {
+        if (position !== "afterend" || !this.parent) {
+          throw new Error(`unsupported insertAdjacentElement(${position})`);
+        }
+        node.parent = this.parent;
+        const at = this.parent.children.indexOf(this);
+        this.parent.children.splice(at + 1, 0, node);
+        return node;
+      },
       addEventListener(type, fn) {
         (this.listeners[type] ??= []).push(fn);
       },

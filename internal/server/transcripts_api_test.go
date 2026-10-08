@@ -234,6 +234,9 @@ func TestDeleteTranscriptRoundTripOwnerScopingAndIdempotency(t *testing.T) {
 	if !strings.Contains(page, `data-delete-transcript="call-1"`) || !strings.Contains(page, `data-delete-transcript="call-2"`) {
 		t.Errorf("history transcript rows carry no delete affordance:\n%s", page)
 	}
+	if !strings.Contains(page, `data-copy-transcript`) {
+		t.Errorf("history transcript rows carry no copy affordance:\n%s", page)
+	}
 
 	// Owner scoping: another extension's DELETE of the same call id is a
 	// 204 NO-OP — it must not erase the owner's rows.
