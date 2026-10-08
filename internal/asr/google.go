@@ -132,8 +132,8 @@ type googleRecognizeRequest struct {
 }
 
 type googleRecognitionConfig struct {
-	Model             string     `json:"model,omitempty"`
-	LanguageCodes     []string   `json:"languageCodes"`
+	Model              string   `json:"model,omitempty"`
+	LanguageCodes      []string `json:"languageCodes"`
 	AutoDecodingConfig struct{} `json:"autoDecodingConfig"`
 }
 
@@ -164,8 +164,8 @@ func (c *GoogleClient) Transcribe(ctx context.Context, req Request) (string, err
 	}
 	payload := googleRecognizeRequest{
 		Config: googleRecognitionConfig{
-			Model:             c.model,
-			LanguageCodes:     []string{language},
+			Model:              c.model,
+			LanguageCodes:      []string{language},
 			AutoDecodingConfig: struct{}{},
 		},
 		Content: base64.StdEncoding.EncodeToString(req.Audio),

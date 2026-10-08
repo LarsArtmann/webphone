@@ -362,7 +362,8 @@ function queueTranscriptSave(entry, segment) {
 }
 
 function flushTranscriptSaves(entry) {
-  if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length) return;
+  if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length)
+    return;
   entry.transcriptSaveFlushing = true;
   saveTranscriptSegment(entry.transcriptSaveQueue[0])
     .then(() => {

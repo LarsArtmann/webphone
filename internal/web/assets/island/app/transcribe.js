@@ -148,7 +148,10 @@ function ensureRunning(ctx) {
     ctx.resume().catch(() => {});
   };
   if (ctx.state === "suspended") {
-    log("live transcription waiting for a click or keypress to unlock audio", "warn");
+    log(
+      "live transcription waiting for a click or keypress to unlock audio",
+      "warn",
+    );
     window.addEventListener("pointerdown", retry, { once: true });
     window.addEventListener("keydown", retry, { once: true });
   }

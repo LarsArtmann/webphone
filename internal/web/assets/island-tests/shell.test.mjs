@@ -1143,3 +1143,116 @@ test("auto-start transcribes rendered audio once per src+target, only with the s
   delete globalThis.window.PBX_CONFIG;
   doc.querySelectorAll = originalQuerySelectorAll;
 });
+
+// M8 F31: a dozen rendered clips must not stampede the seam's flood
+// budget — auto-runs ride ONE promise chain, so the second clip's first
+// fetch only happens after the first run fully settles.
+test("auto-runs serialize: the next clip starts only after the previous run settles", async () => {
+  const calls = [];
+  let releaseFirst;
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push(String(url));
+    if (String(url).startsWith("/vm-audio/2001/ser-a")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    if (String(url).startsWith("/vm-audio/2001/ser-b")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    if (String(url).includes("filename=ser-a.wav")) {
+      // Gated: the first run stays in flight until the test releases it.
+      return new Promise((resolve) => {
+        releaseFirst = () =>
+          resolve({ ok: true, status: 200, json: async () => ({ text: "first done" }) });
+      });
+    }
+    return { ok: true, status: 200, json: async () => ({ text: "second done" }) };
+  };
+
+  const btnA = doc.getElementById("vm-btn-ser-a");
+  const btnB = doc.getElementById("vm-btn-ser-b");
+  for (const [btn, name] of [
+    [btnA, "ser-a"],
+    [btnB, "ser-b"],
+  ]) {
+    btn.selector = "[data-transcribe-src]";
+    btn.setAttribute("data-transcribe-src", `/vm-audio/2001/${name}.wav`);
+    btn.setAttribute("data-transcribe-target", `vm-transcript-${name}`);
+  }
+  const originalQuerySelectorAll = doc.querySelectorAll;
+  doc.querySelectorAll = (selector) =>
+    selector === "[data-transcribe-src]" ? [btnA, btnB] : originalQuerySelectorAll(selector);
+  globalThis.window.PBX_CONFIG = { asr: true };
+
+  doc.dispatch("htmx:afterSwap", {});
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  const firstSeamAt = calls.findIndex((url) => url.includes("filename=ser-a.wav"));
+  assert.ok(firstSeamAt >= 0, "the first clip's seam POST started");
+  await settle();
+  assert.equal(
+    calls.filter((url) => url.startsWith("/vm-audio/2001/ser-b")).length,
+    0,
+    "the second clip has not even fetched its audio yet",
+  );
+
+  releaseFirst();
+  await settle(20);
+  const secondAudioAt = calls.findIndex((url) => url.startsWith("/vm-audio/2001/ser-b"));
+  assert.ok(secondAudioAt > firstSeamAt, "the second run starts only after the first settles");
+  assert.equal(doc.getElementById("vm-transcript-ser-a").textContent, "first done");
+  assert.equal(doc.getElementById("vm-transcript-ser-b").textContent, "second done");
+
+  delete globalThis.window.PBX_CONFIG;
+  doc.querySelectorAll = originalQuerySelectorAll;
+});
+
+// M8 F31: a 429 from the flood budget is retried ONCE after the
+// Retry-After delay — and a second 429 stops there (the bound keeps a
+// hostile header from freezing the tab in a retry loop).
+test("a 429 is retried once after Retry-After; a second 429 fails honestly", async () => {
+  const calls = [];
+  let ok429Attempts = 0;
+  let fail429Attempts = 0;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).startsWith("/vm-audio/2001/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    if (String(url).includes("filename=retry-ok.wav")) {
+      ok429Attempts += 1;
+      if (ok429Attempts === 1) {
+        return { ok: false, status: 429, headers: new Headers({ "Retry-After": "1" }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ text: "healed text" }) };
+    }
+    fail429Attempts += 1;
+    return { ok: false, status: 429, headers: new Headers({ "Retry-After": "1" }) };
+  };
+
+  const okBtn = doc.getElementById("vm-btn-retry-ok");
+  const failBtn = doc.getElementById("vm-btn-retry-fail");
+  for (const [btn, name] of [
+    [okBtn, "retry-ok"],
+    [failBtn, "retry-fail"],
+  ]) {
+    btn.selector = "[data-transcribe-src]";
+    btn.setAttribute("data-transcribe-src", `/vm-audio/2001/${name}.wav`);
+    btn.setAttribute("data-transcribe-target", `vm-transcript-${name}`);
+  }
+
+  doc.dispatch("click", { target: okBtn });
+  doc.dispatch("click", { target: failBtn });
+  await settle();
+  assert.equal(ok429Attempts, 1, "first attempt answered 429, retry still pending");
+  assert.equal(fail429Attempts, 1, "no retry before the Retry-After delay");
+
+  await new Promise((resolve) => setTimeout(resolve, 1300));
+  await settle();
+  assert.equal(ok429Attempts, 2, "exactly one retry after the delay");
+  assert.equal(doc.getElementById("vm-transcript-retry-ok").textContent, "healed text");
+  assert.equal(fail429Attempts, 2, "the second 429 also gets exactly one retry");
+  assert.match(
+    doc.getElementById("vm-transcript-retry-fail").textContent,
+    /HTTP 429/,
+    "a second 429 surfaces as a failure, never a loop",
+  );
+});

@@ -294,8 +294,12 @@ test("the save queue is bounded: oldest segments drop past the cap", async () =>
   let segment = 0;
   fetchImpl = async (url) => {
     if (String(url).startsWith("/api/transcribe")) {
-      segment += 1;
-      return { ok: true, status: 200, json: async () => ({ text: `seg-${segment}` }) };
+      // Capture eagerly: the lazy json() reads LATER (all 52 transcribe
+      // fetches are initiated before any .json() resolves), so closing
+      // over the live counter would stamp every segment with the LAST
+      // value and make the drop-oldest assertions meaningless.
+      const n = (segment += 1);
+      return { ok: true, status: 200, json: async () => ({ text: `seg-${n}` }) };
     }
     return savesOk ? { ok: true, status: 204 } : { ok: false, status: 500 };
   };

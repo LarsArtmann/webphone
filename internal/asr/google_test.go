@@ -147,9 +147,9 @@ func TestGoogleLanguageFallbackChain(t *testing.T) {
 
 func TestGoogleErrorFamilies(t *testing.T) {
 	cases := []struct {
-		name     string
-		status   int
-		family   errorfamily.Family
+		name         string
+		status       int
+		family       errorfamily.Family
 		unauthorized bool
 	}{
 		{"unauthorized", http.StatusUnauthorized, errorfamily.Rejection, true},

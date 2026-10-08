@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live-transcription resilience on both client surfaces: the shell's
+  auto-start transcription SERIALIZES rendered clips through one promise
+  chain (a dozen swapped-in rows no longer stampede the seam's flood
+  budget into 429s) and a 429 is retried exactly once after the
+  `Retry-After` delay (bounded to 10 s — a hostile header cannot freeze
+  the tab); the island's live capture loop honors a 429 with a 10 s
+  segment cooldown (capture keeps running, the budget recovers, no
+  retry storm).
+- Dropped `/api/transcripts` saves no longer lose segments: each call
+  carries an in-memory save queue (order-preserving, capped at 50
+  segments per call, drop-oldest) that flushes one-at-a-time on the
+  next successful save and once more when the call ends. A failed save
+  warns once per call and never blocks the live card.
 - Google Cloud Speech-to-Text V2 as a second ASR provider kind
   (`asr.provider: google` + `asr.project`/`asr.location`/`asr.language`;
   `asr.token` becomes the `x-goog-api-key`). The seam
