@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -110,6 +111,83 @@ func TestTranscriptsRecentCapsGroupCountButKeepsWholeCalls(t *testing.T) {
 	}
 	if len(got[0].Lines) != 2 || got[0].Lines[0] != "a" {
 		t.Errorf("the capped window must reassemble the newest call whole: %v", got[0].Lines)
+	}
+}
+
+func TestTranscriptsAppendTrimsPastThePerCallCap(t *testing.T) {
+	s := newTranscripts(t)
+	ctx := context.Background()
+	base := time.Unix(1760000000, 0)
+
+	// Bulk-seed past the per-call cap in ONE transaction: the cap math,
+	// not Append's per-segment cost, is under test here (the owner-cap
+	// test above already walks the Append path).
+	seed := func(callID string, n int) {
+		t.Helper()
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := range n {
+			if _, err := tx.ExecContext(ctx, `
+				INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
+				VALUES (?, ?, 'out', '+4930', ?, ?, 0)
+			`, "1001", callID, base.Unix(), fmt.Sprintf("%s-%05d", callID, i+1)); err != nil {
+				_ = tx.Rollback()
+				t.Fatal(err)
+			}
+		}
+		if err := tx.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	seed("marathon", TranscriptSegmentsMaxPerCall+2)
+	seed("other", 3)
+
+	// One more segment for the marathon call: 1503 rows for the call,
+	// the trim keeps the newest 1500 (seeded 4..1502 + the fresh append).
+	fresh := seg("1001", "marathon", "out", "+4930", "fresh", base.Add(time.Hour))
+	if err := s.Append(ctx, fresh); err != nil {
+		t.Fatal(err)
+	}
+
+	count := func(callID string) int {
+		t.Helper()
+		var n int
+		if err := s.db.QueryRowContext(ctx,
+			`SELECT COUNT(*) FROM call_transcripts WHERE owner = '1001' AND call_id = ?`, callID,
+		).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	if got := count("marathon"); got != TranscriptSegmentsMaxPerCall {
+		t.Errorf("marathon segments: %d (want the per-call cap %d)", got, TranscriptSegmentsMaxPerCall)
+	}
+	if got := count("other"); got != 3 {
+		t.Errorf("the OTHER call must stay untouched by a marathon trim: %d rows", got)
+	}
+	// The survivors are the newest: the three oldest seeded rows are gone,
+	// seed row #4 (the new oldest survivor) is present.
+	for _, gone := range []string{"marathon-00001", "marathon-00002", "marathon-00003"} {
+		var n int
+		if err := s.db.QueryRowContext(ctx,
+			`SELECT COUNT(*) FROM call_transcripts WHERE text = ?`, gone,
+		).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 0 {
+			t.Errorf("oldest row %q survived the per-call trim", gone)
+		}
+	}
+	var n int
+	if err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM call_transcripts WHERE text = 'marathon-00004'`,
+	).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Errorf("seed row #4 must survive as the oldest row: %d", n)
 	}
 }
 

@@ -21,14 +21,24 @@ type Transcripts struct {
 // deep past, never the current view.
 const TranscriptSegmentsMaxPerExtension = 5000
 
+// TranscriptSegmentsMaxPerCall bounds ONE call's transcript (≈100 min of
+// continuous speech at the 4 s cadence): a single marathon call must not
+// eat the owner's whole budget before the other calls' history. Same trim
+// shape as the owner cap — the interaction (3+ long calls trimming each
+// other's oldest rows) is intended, the per-call floor keeps every call
+// reassemblable.
+const TranscriptSegmentsMaxPerCall = 1500
+
 // NewTranscripts builds the transcript store.
 func NewTranscripts(db *sql.DB) *Transcripts { return &Transcripts{db: db} }
 
-// Append stores one segment and trims the owner's oldest rows past the
-// cap. The trim is a scalar-bounded range delete (the keep-set's MIN id
-// via the owner-indexed top-N) — a NOT IN keep-list would materialize
-// the whole cap per append. Best-effort by design: a failed DELETE must
-// not fail the write it accompanies (the cap re-arms on the next append).
+// Append stores one segment and trims past both caps: the owner's
+// oldest rows past the per-extension cap, then the call's oldest past
+// the per-call cap. The trims are scalar-bounded range deletes (the
+// keep-set's MIN id via the indexed top-N) — a NOT IN keep-list would
+// materialize the whole cap per append. Best-effort by design: a failed
+// DELETE must not fail the write it accompanies (the cap re-arms on the
+// next append).
 func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegment) error {
 	if _, err := s.db.ExecContext(ctx, `
 		INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
@@ -45,6 +55,17 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 			)
 		)
 	`, seg.Owner.String(), seg.Owner.String(), TranscriptSegmentsMaxPerExtension); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.transcript_trim", "trim transcripts")
+	}
+	if _, err := s.db.ExecContext(ctx, `
+		DELETE FROM call_transcripts
+		WHERE owner = ? AND call_id = ? AND id < (
+			SELECT MIN(id) FROM (
+				SELECT id FROM call_transcripts
+				WHERE owner = ? AND call_id = ? ORDER BY id DESC LIMIT ?
+			)
+		)
+	`, seg.Owner.String(), seg.CallID, seg.Owner.String(), seg.CallID, TranscriptSegmentsMaxPerCall); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.transcript_trim", "trim transcripts")
 	}
 	return nil
