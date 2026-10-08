@@ -195,9 +195,14 @@ func TestTranscriptsAppendTrimsPastTheCap(t *testing.T) {
 	s := newTranscripts(t)
 	ctx := context.Background()
 	base := time.Unix(1760000000, 0)
+	// The flood spreads over four calls so the OWNER cap binds (a
+	// single-call flood would stop at the per-call cap first — that
+	// interaction is the per-call test above).
+	calls := []string{"call-a", "call-b", "call-c", "call-d"}
 	for i := range TranscriptSegmentsMaxPerExtension + 10 {
 		text := string(rune('a'+i%26)) + "-seg"
-		if err := s.Append(ctx, seg("1001", "call-many", "out", "+4930", text, base.Add(time.Duration(i)*time.Second))); err != nil {
+		call := calls[i%len(calls)]
+		if err := s.Append(ctx, seg("1001", call, "out", "+4930", text, base.Add(time.Duration(i)*time.Second))); err != nil {
 			t.Fatal(err)
 		}
 	}

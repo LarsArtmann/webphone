@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provider and budget safety for live transcription: one call's
+  transcript is now bounded (`TranscriptSegmentsMaxPerCall` = 1500
+  segments ≈ 100 min — a marathon call can no longer eat the owner's
+  whole 5000-segment budget before the other calls' history), and the
+  island taps the call's audio mix with an AnalyserNode to skip
+  near-silent segments (RMS floor 0.004 ≈ −48 dBFS: mute, hold,
+  ringing) before they POST — Whisper-family models hallucinate
+  confident text on pure silence. The probe FAILS OPEN: a browser (or
+  stub) without the pieces always POSTs; skips are logged so
+  "nothing was said" stays distinguishable from "capture broke".
 - End-user transcript erasure: every History transcript row carries a
   confirm-gated delete button (`DELETE /api/transcripts?call=`,
   session owner-scoped, idempotent 204). The confirm prompt is

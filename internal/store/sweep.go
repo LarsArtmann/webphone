@@ -11,11 +11,11 @@ import (
 // SweepResult reports one retention pass: what was deleted and which
 // blob files the CALLER must unlink (the store layer only owns rows).
 type SweepResult struct {
-	Messages   int64
-	Faxes      int64
-	Threads    int64
+	Messages    int64
+	Faxes       int64
+	Threads     int64
 	Transcripts int64
-	BlobPaths  []string
+	BlobPaths   []string
 }
 
 // Sweep deletes stored content older than the cutoff: messages (their
@@ -103,11 +103,11 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 // Counts are the AGGREGATE table sizes the metrics surface reports
 // (plan T26a): totals across ALL extensions, never per-owner values.
 type Counts struct {
-	Threads    int64
-	Messages   int64
-	Faxes      int64
-	Contacts   int64
-	Sessions   int64
+	Threads     int64
+	Messages    int64
+	Faxes       int64
+	Contacts    int64
+	Sessions    int64
 	Transcripts int64
 }
 

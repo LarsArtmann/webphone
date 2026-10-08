@@ -31,6 +31,11 @@ const AudioContextStub = class {
   // Tests flip this before startLiveTranscription to simulate the
   // autoplay policy: a context built without a user gesture.
   static suspendNext = false;
+  // The silence probe's controllable mix level (RMS of the analyser
+  // window). Defaults LOUD so the guard stays inert for the specs that
+  // do not care about it; the silence spec flips it below/above the
+  // 0.004 floor.
+  static nextRms = 0.01;
   constructor() {
     this.closed = false;
     this.state = AudioContextStub.suspendNext ? "suspended" : "running";
@@ -46,7 +51,15 @@ const AudioContextStub = class {
   createMediaStreamDestination() {
     const tracks = [{ stopped: false, stop() { this.stopped = true; } }];
     this.mixedTracks = tracks;
-    return { stream: { id: "mixed", getTracks: () => tracks } };
+    return { stream: { id: "mixed", getTracks: () => tracks }, connect() {} };
+  }
+  createAnalyser() {
+    return {
+      fftSize: 32768,
+      getFloatTimeDomainData(buf) {
+        buf.fill(AudioContextStub.nextRms);
+      },
+    };
   }
   createMediaStreamSource() {
     return { connect() {} };
@@ -293,6 +306,34 @@ test("a running AudioContext arms no gesture retries", () => {
   assert.equal((window.listeners.pointerdown ?? []).length, 0, "no pointerdown listener");
   assert.equal((window.listeners.keydown ?? []).length, 0, "no keydown listener");
   transcribe.stopLiveTranscription("running-check");
+});
+
+test("a near-silent mix skips the segment POST; a loud mix posts", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  fetchImpl = async () => ({ ok: true, status: 200, json: async () => ({ text: "words" }) });
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  const texts = [];
+  transcribe.startLiveTranscription("silence-check", entry, (t) => texts.push(t));
+  const [recorder] = globalThis.__recorders;
+
+  // RMS 0.001 (≈ -60 dBFS) sits below the 0.004 floor: the segment is
+  // mute/hold/ringing — it must NOT reach the provider.
+  globalThis.window.AudioContext.nextRms = 0.001;
+  recorder.emit({ size: 10, type: "audio/webm" });
+  await flush();
+  assert.equal(fetchCalls.length, 0, "a near-silent segment must not POST");
+
+  // RMS 0.01 (≈ -40 dBFS) is speech-level: the segment POSTs normally.
+  globalThis.window.AudioContext.nextRms = 0.01;
+  recorder.emit({ size: 10, type: "audio/webm" });
+  await flush();
+  assert.equal(fetchCalls.length, 1, "a loud segment POSTs");
+  assert.deepEqual(texts, ["words"]);
+
+  transcribe.stopLiveTranscription("silence-check");
 });
 
 test("a 429 from the seam cools the live loop down (segments skipped, capture alive)", async () => {
