@@ -45,6 +45,23 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   release: the stack input rides the v2.1.0 tag commit `d815004`
   (stack commit `2289e89`), and the stack's FULL `nix flake check` is
   green with that lock (browser E2E, webphone VM test included).
+- ASR provider long shots (SUPERB spikes M23–M25, notes live-verified
+  2026-10-08 in
+  `docs/planning/2026-10-08_14-05_SUPERB-asr-decisions-and-spikes.md`):
+  (a) streaming SSE transcription via Speaches WS instead of 4 s chunks
+  — feasible server-side, but the island would need a duplex client
+  channel; revisit when live-call latency actually hurts; (b) native
+  Speaches NixOS packaging to replace the oci-container — blocked on
+  upstream packaging maturity (Python deps: faster-whisper/CTRANSLATE2,
+  no nix expressions upstream); (c) diarization (speaker labels via
+  pyannote) — Speaches exposes no diarization endpoint on the
+  OpenAI-compatible wire; revisit only if the provider grows it.
+- Transcript confidence markers: REJECTED 2026-10-08 (M22) on provider
+  evidence — Google V2 returns a 0.0 confidence sentinel documented as
+  "not guaranteed accurate", Speaches/whisper verbose JSON carries no
+  calibrated confidence; an uncalibrated badge would violate the island
+  honesty contract. Revisit triggers: a provider ships CALIBRATED
+  per-word confidence, or word-level timestamps become a product need.
 
 ## WORTH_CONSIDERING cluster (one-line specs, SUPERB plan P26 2026-09-19)
 

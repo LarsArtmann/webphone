@@ -88,6 +88,11 @@ exclude:
 #   this repo COMMITS vendor/ and builds -mod=vendor on purpose. The
 #   real gate still exists: `nix flake check` builds the vendored tree
 #   in the sandbox — a go.mod/modules.txt lie fails the build.
+# LOAD-BEARING POLICY (2026-10-08 incident): every skip below is a
+# reasoned suppression — a daemon commit once truncated 69 lines here
+# and the missing skips re-failed the gate silently for ~16 h. Re-read
+# this block after daemon activity near this file; run buildflow at
+# train start AND end (AGENTS rule). Rationale lives with each skip.
 skip_steps:
   - pytest-test
   - branching-flow
