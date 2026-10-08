@@ -219,15 +219,11 @@ def capture(
     attach_thread_path: str | None,
     session: str,
 ) -> int:
-    # Selenium lives only in the capture env (see the AGENTS run
-    # recipe) — never in the lint shell, hence the targeted ignores.
-    from selenium import webdriver  # type: ignore[import-not-found]
-    from selenium.webdriver.chrome.options import (
-        Options,  # type: ignore[import-not-found]
-    )
-    from selenium.webdriver.support.ui import (
-        WebDriverWait,  # type: ignore[import-not-found]
-    )
+    # Selenium lives only in the capture env (see the AGENTS run recipe
+    # and mypy.ini) — never in the lint shell.
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.support.ui import WebDriverWait
 
     options = Options()
     # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
@@ -245,9 +241,7 @@ def capture(
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--window-size=1280,900")
     driver_path = shutil.which("chromedriver")
-    from selenium.webdriver.chrome.service import (
-        Service,  # type: ignore[import-not-found]
-    )
+    from selenium.webdriver.chrome.service import Service
 
     service = Service(executable_path=driver_path) if driver_path else None
     driver = webdriver.Chrome(service=service, options=options)
