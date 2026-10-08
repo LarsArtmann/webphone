@@ -294,6 +294,19 @@ and the evidence. Newest last is NOT enforced — group by topic.
   mangle POLICY files, not just code — after daemon activity near
   `.buildflow.yml`/flake/AGENTS, re-read the file, never trust the
   last thing you wrote.
+- The edit tool's INSERT-BEFORE clobbers the header line it matches
+  (2026-10-08, SUPERB train — hit THREE times: transcripts_test.go,
+  calls-transcribe.test.mjs, asr_test.go's `var gotModel`): when the
+  plan is "insert new code before existing code", old_string must start
+  with the existing anchor and new_string must REPEAT that anchor
+  verbatim after the inserted block. Writing only the new block in
+  new_string deletes the anchor outright. Every hit was caught by an
+  immediate re-View — which is the rule: after ANY structural insert,
+  re-View the seam before moving on. Same-day confirmation: a failed
+  multiedit reports "N of M applied" — LISTEN to it; the surviving
+  half-edits (a new `def` signature with an old body, tuple returns
+  vs 2-tuple callers) are exactly the compile-red class the concurrent
+  session rule warns about.
 
 ## Telephony
 
