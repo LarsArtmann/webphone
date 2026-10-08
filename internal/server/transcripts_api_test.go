@@ -202,6 +202,24 @@ func TestHistoryTranscriptSearchMatchesOwnerScopedAndHinted(t *testing.T) {
 	}
 }
 
+func TestSettingsNamesTheASRProviderWhenSeamIsOn(t *testing.T) {
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+	_, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+	if page := string(body); !strings.Contains(page, "openai-compatible · whisper-1") {
+		t.Errorf("settings must name the provider kind and model:\n%s", page)
+	}
+
+	// Seam off: the row stays honest ("not configured"), no detail.
+	plain := newTestServer(t)
+	other := signIn(t, plain)
+	_, body = other.do(http.MethodGet, "/partials/settings", nil, "")
+	if page := string(body); strings.Contains(page, "openai-compatible") {
+		t.Errorf("no provider detail without the seam:\n%s", page)
+	}
+}
+
 func TestDeleteTranscriptAbsentSeamIs404(t *testing.T) {
 	server := newTestServer(t) // Deps.ASR nil
 	c := signIn(t, server)

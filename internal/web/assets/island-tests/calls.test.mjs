@@ -380,3 +380,86 @@ test("sent DTMF tones pulse the key and collect a transient trail", async () => 
   sessions.delete("dtmf1");
   state.focusedId = null;
 });
+
+// M19: the QUEUED hold path. The hold button is disabled while a toggle
+// is in flight, so an opposite-direction wish can only arrive from a
+// programmatic caller (focus preemption is the named future trigger) —
+// the queue is the defensive seam that must not lose that wish. Pinned
+// by injecting the queued wish directly into the mid-flight window.
+test("a wish queued mid-flight replays after the in-flight toggle settles", async () => {
+  const gates = [];
+  let holdMode = "resolve";
+  class HoldInviter {
+    constructor() {
+      this.id = "s-hold4";
+      this.state = globalThis.SIP.SessionState.Establishing;
+      this.stateChange = {
+        listeners: [],
+        addListener(fn) {
+          this.listeners.push(fn);
+        },
+      };
+    }
+    invite() {
+      if (holdMode === "resolve") return Promise.resolve();
+      return new Promise((resolve, reject) => gates.push({ resolve, reject }));
+    }
+    async bye() {}
+  }
+  globalThis.SIP.Inviter = HoldInviter;
+  globalThis.SIP.UserAgent = { makeURI: (raw) => ({ toString: () => raw }) };
+  const { placeCall } = await import("../island/app/calls.js");
+
+  state.userAgent = {};
+  assert.equal(await placeCall("1004"), true);
+  const entry = sessions.get("s-hold4");
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  const card = entry.dom;
+  const holdBtn = card.querySelector(".hold-btn");
+  const settle = async () => {
+    for (let i = 0; i < 12; i++) await new Promise((r) => setImmediate(r));
+  };
+
+  // A hold goes in flight (gated), and the mid-flight window queues the
+  // opposite wish (resume) — exactly what focus preemption would ask.
+  holdMode = "gate";
+  holdBtn.listeners.click[0]();
+  await settle();
+  assert.equal(entry.holdPending, "holding");
+  assert.equal(gates.length, 1, "one re-INVITE in flight");
+  entry.holdQueued = false;
+
+  // The hold settles: held becomes true, and the queued resume REPLAYS
+  // as a second re-INVITE (not silently dropped, not lost).
+  gates.shift().resolve();
+  await settle();
+  assert.equal(entry.held, true, "the in-flight hold settled first");
+  assert.equal(entry.holdPending, "resuming", "the queued wish took over");
+  assert.equal(gates.length, 1, "the replay issued its own re-INVITE");
+
+  gates.shift().resolve();
+  await settle();
+  assert.equal(entry.held, false, "the replayed resume settled");
+  assert.equal(entry.holdPending, null);
+  assert.equal(entry.holdQueued, undefined, "the queue is spent");
+  assert.equal(card.dataset.state, "established");
+
+  // A queued wish that MATCHES the settled state is a no-op, not a loop:
+  // hold again, queue another hold, settle — no third re-INVITE.
+  holdMode = "gate";
+  holdBtn.listeners.click[0]();
+  await settle();
+  assert.equal(entry.holdPending, "holding");
+  entry.holdQueued = true;
+  gates.shift().resolve();
+  await settle();
+  assert.equal(entry.held, true);
+  assert.equal(entry.holdPending, null, "a matching wish never replays");
+  assert.equal(gates.length, 0, "no third re-INVITE");
+  assert.equal(card.dataset.state, "held");
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  state.userAgent = null;
+});

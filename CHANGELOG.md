@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Settings panel names the transcription provider when the seam is
+  on: the ASR row now reads "connected · <provider kind> · <model>"
+  (e.g. `openai-compatible · whisper-1`, `google · telephony`) instead
+  of a bare on/off — the operator can see WHICH wire answers without
+  reading config files.
 - The settings export zip gains a `transcripts.json` leg: the
   extension's whole call-transcript history, reassembled per call
   (newest first, lines in spoken order), owner-scoped like every other

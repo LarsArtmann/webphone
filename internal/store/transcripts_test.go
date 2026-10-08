@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -197,17 +199,33 @@ func TestTranscriptsAppendTrimsPastTheCap(t *testing.T) {
 	base := time.Unix(1760000000, 0)
 	// The flood spreads over four calls so the OWNER cap binds (a
 	// single-call flood would stop at the per-call cap first — that
-	// interaction is the per-call test above).
+	// interaction is the per-call test above). The flood is bulk-seeded
+	// in ONE transaction: the trim math is under test, not Append's
+	// per-segment cost (the concurrency spec below exercises parallel
+	// Appends; this one drives the trim with a single extra Append).
 	calls := []string{"call-a", "call-b", "call-c", "call-d"}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for i := range TranscriptSegmentsMaxPerExtension + 10 {
-		text := string(rune('a'+i%26)) + "-seg"
-		call := calls[i%len(calls)]
-		if err := s.Append(ctx, seg("1001", call, "out", "+4930", text, base.Add(time.Duration(i)*time.Second))); err != nil {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO call_transcripts (owner, call_id, direction, remote, started_at, text, created_at)
+			VALUES ('1001', ?, 'out', '+4930', ?, ?, 0)
+		`, calls[i%len(calls)], base.Unix(), fmt.Sprintf("flood-%05d", i+1)); err != nil {
+			_ = tx.Rollback()
 			t.Fatal(err)
 		}
 	}
-	// Count rows directly: Recent deliberately reads a narrower window
-	// than the cap, so it is the wrong lens for the trim.
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	// One more Append past the flood: the owner trim keeps the newest
+	// 5000 rows — the oldest 11 seeded segments go.
+	if err := s.Append(ctx, seg("1001", "call-a", "out", "+4930", "fresh", base.Add(time.Hour))); err != nil {
+		t.Fatal(err)
+	}
 	var total int
 	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM call_transcripts`).Scan(&total); err != nil {
 		t.Fatal(err)
@@ -215,12 +233,73 @@ func TestTranscriptsAppendTrimsPastTheCap(t *testing.T) {
 	if total != TranscriptSegmentsMaxPerExtension {
 		t.Errorf("stored segments: %d (want the cap %d)", total, TranscriptSegmentsMaxPerExtension)
 	}
-	// The SURVIVORS are the newest: the oldest ten segments are gone.
+	var oldest int
+	if err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM call_transcripts WHERE text IN ('flood-00001', 'flood-00011')`,
+	).Scan(&oldest); err != nil {
+		t.Fatal(err)
+	}
+	if oldest != 0 {
+		t.Errorf("the oldest seeded segments survived the trim: %d", oldest)
+	}
+	// The SURVIVORS are the newest: Recent still reassembles whole calls.
 	got, err := s.Recent(ctx, domain.MustParseExtension("1001"), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(got) != 1 || len(got[0].Lines) == 0 {
 		t.Fatalf("trimmed store still reassembles: %+v", got)
+	}
+}
+
+// TestTranscriptsConcurrentAppendHoldsNoLocksNoLoss: live segments land
+// from many goroutines at once (one flush loop per live call, several
+// sessions per server). The single-connection pool serializes the
+// statements; the contract is NO errors, NO lost rows, and whole calls
+// after the dust settles.
+func TestTranscriptsConcurrentAppendHoldsNoLocksNoLoss(t *testing.T) {
+	s := newTranscripts(t)
+	ctx := context.Background()
+	base := time.Unix(1760000000, 0)
+	const writers, perWriter = 8, 25
+	var wg sync.WaitGroup
+	errs := make(chan error, writers*perWriter)
+	for w := range writers {
+		wg.Add(1)
+		go func(w int) {
+			defer wg.Done()
+			for i := range perWriter {
+				call := "call-" + strconv.Itoa(w%2)
+				err := s.Append(ctx, seg("1001", call, "out", "+4930",
+					fmt.Sprintf("w%d-s%02d", w, i), base.Add(time.Duration(w*perWriter+i)*time.Second)))
+				if err != nil {
+					errs <- err
+					return
+				}
+			}
+		}(w)
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatalf("concurrent append failed: %v", err)
+	}
+	var total int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM call_transcripts`).Scan(&total); err != nil {
+		t.Fatal(err)
+	}
+	if total != writers*perWriter {
+		t.Errorf("rows: %d (want %d — nothing lost)", total, writers*perWriter)
+	}
+	got, err := s.Recent(ctx, domain.MustParseExtension("1001"), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := 0
+	for _, group := range got {
+		lines += len(group.Lines)
+	}
+	if lines != writers*perWriter {
+		t.Errorf("reassembled lines: %d (want %d)", lines, writers*perWriter)
 	}
 }

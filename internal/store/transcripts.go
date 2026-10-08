@@ -128,7 +128,10 @@ func (s *Transcripts) fetchSegments(ctx context.Context, label, where string, ar
 // newest call first, each call's lines in spoken order, the group list
 // capped at maxCalls. Segments of already-included calls keep landing
 // (the oldest included call must reassemble whole); only NEW groups are
-// refused past the cap.
+// refused past the cap. Lines APPEND in fetch order (newest-first) and
+// one finishing reverse per group restores spoken order — the naive
+// prepend-per-segment was O(n²) on long calls (a 1500-segment marathon
+// rebuilt its line slice for every segment).
 func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []domain.CallTranscript {
 	groups := make([]domain.CallTranscript, 0, maxCalls)
 	byCall := make(map[string]int, maxCalls)
@@ -148,14 +151,22 @@ func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []
 				StartedAt: seg.StartedAt,
 			})
 		}
-		// Newest-first fetch, spoken-order lines: prepend within the group.
 		group := &groups[idx]
-		group.Lines = append([]string{seg.Text}, group.Lines...)
+		group.Lines = append(group.Lines, seg.Text)
 		if group.StartedAt.Before(seg.StartedAt) {
 			group.StartedAt = seg.StartedAt
 		}
 	}
+	for i := range groups {
+		reverseLines(groups[i].Lines)
+	}
 	return groups
+}
+
+func reverseLines(lines []string) {
+	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
+		lines[i], lines[j] = lines[j], lines[i]
+	}
 }
 
 // transcriptFetchWindow is the segment read window behind Recent: wide

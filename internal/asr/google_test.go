@@ -67,6 +67,23 @@ func googleServer(t *testing.T, capture *googleCapture, status int, response str
 	}))
 }
 
+func TestGoogleDescribeNamesKindAndModel(t *testing.T) {
+	client, err := asr.NewGoogleClient(asr.GoogleConfig{Project: "proj", APIKey: "k"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := client.Describe(); got != "google · telephony" {
+		t.Errorf("Describe with the default model: %q", got)
+	}
+	custom, err := asr.NewGoogleClient(asr.GoogleConfig{Project: "proj", APIKey: "k", Model: "long"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := custom.Describe(); got != "google · long" {
+		t.Errorf("Describe with a named model: %q", got)
+	}
+}
+
 func TestGoogleRequestShape(t *testing.T) {
 	var capture googleCapture
 	server := googleServer(t, &capture, http.StatusOK, `{"results":[{"alternatives":[{"transcript":"hallo"}]},{"alternatives":[{"transcript":"  welt  "}]}]}`)
