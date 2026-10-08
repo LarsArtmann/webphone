@@ -211,7 +211,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	// they render even when the CDR half of the tab is disabled or
 	// unreachable. A store failure degrades to no section — the CDR list
 	// must not die with it.
-	transcripts := h.recentTranscripts(r, sess)
+	transcripts := h.recentTranscripts(r, sess, query)
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{Lang: lang, Transcripts: transcripts}), nil
 	}
@@ -239,12 +239,23 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 
 // recentTranscripts builds the History tab's transcript groups with CRM
 // name enrichment. Nil store (test compositions) and read failures both
-// yield nil — the section simply does not render.
-func (h *handlers) recentTranscripts(r *http.Request, sess session.Session) []views.TranscriptGroup {
+// yield nil — the section simply does not render. An active query turns
+// the fetch into the owner-scoped LIKE search: the section then shows
+// only calls whose transcript text matched (matching lines only — the
+// hint in the view says so).
+func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, query string) []views.TranscriptGroup {
 	if h.deps.Transcripts == nil {
 		return nil
 	}
-	recent, err := h.deps.Transcripts.Recent(r.Context(), sess.Extension, historyTranscriptGroups)
+	var (
+		recent []domain.CallTranscript
+		err    error
+	)
+	if query != "" {
+		recent, err = h.deps.Transcripts.Search(r.Context(), sess.Extension, query, historyTranscriptGroups)
+	} else {
+		recent, err = h.deps.Transcripts.Recent(r.Context(), sess.Extension, historyTranscriptGroups)
+	}
 	if err != nil || len(recent) == 0 {
 		if err != nil {
 			slog.Warn("history: transcript fetch failed", "error", err, "extension", sess.Extension.String())

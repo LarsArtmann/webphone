@@ -84,15 +84,40 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 	if err != nil {
 		return nil, err
 	}
+	return reassembleTranscripts(rows, maxCalls), nil
+}
+
+// Search finds the owner's transcript segments whose text contains the
+// needle (SQLite LIKE: ASCII case-insensitive, metacharacters escaped)
+// and reassembles the matches into call groups — newest match first,
+// MATCHING lines only: the silent half of a hit call is not the
+// searcher's answer, and the History hint says what is shown.
+func (s *Transcripts) Search(ctx context.Context, owner domain.Extension, needle string, maxCalls int) ([]domain.CallTranscript, error) {
+	rows, err := listRows(ctx, s.db, "search transcripts", `
+		SELECT owner, call_id, direction, remote, started_at, text
+		FROM call_transcripts
+		WHERE owner = ? AND text LIKE ? ESCAPE '\'
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?
+	`, []any{owner.String(), "%" + likeEscape(needle) + "%", transcriptFetchWindow}, scanTranscriptRow)
+	if err != nil {
+		return nil, err
+	}
+	return reassembleTranscripts(rows, maxCalls), nil
+}
+
+// reassembleTranscripts groups newest-first segments into whole calls:
+// newest call first, each call's lines in spoken order, the group list
+// capped at maxCalls. Segments of already-included calls keep landing
+// (the oldest included call must reassemble whole); only NEW groups are
+// refused past the cap.
+func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []domain.CallTranscript {
 	groups := make([]domain.CallTranscript, 0, maxCalls)
 	byCall := make(map[string]int, maxCalls)
 	for _, seg := range rows {
 		idx, seen := byCall[seg.CallID]
 		if !seen {
 			if len(groups) >= maxCalls {
-				// Segments of already-open calls keep landing (the
-				// oldest included call must reassemble whole); only NEW
-				// groups are refused.
 				continue
 			}
 			idx = len(groups)
@@ -112,7 +137,7 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 			group.StartedAt = seg.StartedAt
 		}
 	}
-	return groups, nil
+	return groups
 }
 
 // transcriptFetchWindow is the segment read window behind Recent: wide

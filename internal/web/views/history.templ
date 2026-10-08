@@ -115,6 +115,12 @@ type TranscriptGroup struct {
 templ TranscriptSection(props HistoryPanelProps) {
 	<section class="wp-transcripts" aria-label={ T(props.Lang, "history.transcripts") }>
 		<h3>{ T(props.Lang, "history.transcripts") }</h3>
+		if props.Query != "" {
+			// The section is a filter participant: under an active query
+			// only MATCHING lines render (store-side LIKE), so the hint
+			// must say what the reader is looking at.
+			<p class="wp-muted">{ T(props.Lang, "history.transcripts.matches") } <code>{ props.Query }</code></p>
+		}
 		for _, group := range props.Transcripts {
 			<details class="wp-transcript-call">
 				<summary>
