@@ -3,12 +3,13 @@
 gateway — the whole product, zero PBX), seeds deterministic content over
 HTTP, then drives headless chromium (selenium — the SAME driver family
 the consuming stack's browser E2E uses) through the server tabs and
-screenshots each in light and dark: the 20-shot matrix (10 surfaces x 2
+screenshots each in light and dark: the 18-shot matrix (9 surfaces x 2
 themes).
 
 M13 extension (2026-10-08): the boot turns the ASR seam ON (a fake
-provider URL — nothing ever calls it at render time) and three surfaces
-join the matrix: the Settings ASR row with provider detail, a History
+provider BASE url — shell.js AUTO-transcribes seen audio, so the call
+DOES go out and fail fast against the refused port; the button and
+target div are the evidence) and three surfaces join the matrix: the Settings ASR row with provider detail, a History
 transcript search (seeded via POST /api/transcripts), and a thread with
 an AUDIO attachment whose transcribe button carries the same
 data-transcribe-src shape the voicemail rows use (a bare boot has no
@@ -28,7 +29,7 @@ Run (from the repo root):
   nix shell nixpkgs#chromium nixpkgs#python312.withPackages(ps: [ ps.selenium ]) \\
     --command python3 scripts/ui-capture.py --binary /tmp/wp-visual-bin/bin/webphone
 
-Output: ui-shots/<n>-<name>-<light|dark>.png (20 files).
+Output: ui-shots/<n>-<name>-<light|dark>.png (18 files).
 """
 
 from __future__ import annotations
@@ -329,11 +330,13 @@ def main() -> int:
         "data_dir": data_dir,
         "gateway": {"webhook_secret": "devsecret"},
         # ASR ON with an obviously-fake provider (M13): url alone turns
-        # the seam on (openai wire); nothing calls it at render time —
-        # the settings row shows Describe(), the buttons merely carry
+        # the seam on (openai wire, BASE url — the client appends the
+        # endpoint path). shell.js auto-transcribes seen audio, so the
+        # call goes out and fails fast against the refused port; the
+        # settings row shows Describe(), the buttons carry
         # data-transcribe-src.
         "asr": {
-            "url": "http://127.0.0.1:9/v1/audio/transcriptions",
+            "url": "http://127.0.0.1:9",
             "model": "ui-capture-whisper",
         },
         "csrf": {
@@ -364,7 +367,7 @@ def main() -> int:
             base, args.out_dir, thread_path, attach_thread_path, session
         )
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
-        return 0 if shots >= 20 else 1
+        return 0 if shots >= 18 else 1
     finally:
         server.terminate()
         server.wait(timeout=10)
