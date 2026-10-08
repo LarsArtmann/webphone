@@ -99,6 +99,10 @@ templ HistoryPanel(props HistoryPanelProps) {
 // TranscriptGroup is one reassembled call transcript for the History
 // tab: the call's remote party plus its segments in spoken order.
 type TranscriptGroup struct {
+	// CallID addresses the call for the delete affordance (the store's
+	// DeleteCall key — the CDR rows carry no call uuid, so this is the
+	// ONLY correlation handle the transcript section has).
+	CallID    string
 	Remote    string
 	Direction string // "in" | "out"
 	StartedAt time.Time
@@ -125,6 +129,17 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+				// End-user erasure (GDPR leg): confirm-gated delete of the
+				// whole call. The button only carries data — shell.js owns
+				// the confirm + DELETE + row removal (the shell works when
+				// island scripts fail).
+				<button
+					class="wp-mini"
+					data-delete-transcript={ group.CallID }
+					data-confirm={ T(props.Lang, "history.transcript.deleteConfirm") }
+					aria-label={ T(props.Lang, "history.transcript.delete") }
+					title={ T(props.Lang, "history.transcript.delete") }
+				>🗑</button>
 			</details>
 		}
 	</section>

@@ -99,6 +99,21 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 // call alone produced hundreds of segments.
 const transcriptFetchWindow = 2000
 
+// DeleteCall erases one call's transcript for one owner (the end-user
+// leg of the retention story): every segment of the call goes in one
+// statement. Idempotent — deleting an unknown call affects zero rows,
+// which is the same success as deleting an already-deleted one.
+func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, callID string) (int64, error) {
+	res, err := s.db.ExecContext(ctx, `
+		DELETE FROM call_transcripts WHERE owner = ? AND call_id = ?
+	`, owner.String(), callID)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "store.transcript_delete", "delete call transcript")
+	}
+	n, _ := res.RowsAffected() //nolint:erraudit // count is informational
+	return n, nil
+}
+
 func scanTranscriptRow(row rowScanner) (domain.CallTranscriptSegment, error) {
 	var (
 		owner, callID, direction, remote, text string

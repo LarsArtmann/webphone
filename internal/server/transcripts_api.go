@@ -96,3 +96,35 @@ func (h *handlers) apiSaveTranscript(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// apiDeleteTranscript erases one call's transcript (the end-user leg of
+// the retention story — the age-sweep is the operator leg). Owner-scoped
+// by the session; the call id rides the query so the confirm-gated
+// button needs no body. Idempotent: an unknown or already-deleted call
+// is the same 204 as a fresh erase — the store row state IS the truth,
+// and the History re-render follows on the next tab visit.
+func (h *handlers) apiDeleteTranscript(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.requireSession(w, r)
+	if !ok {
+		return
+	}
+	if h.deps.ASR == nil || !h.deps.ASR.Enabled() {
+		http.NotFound(w, r)
+		return
+	}
+	if h.deps.Transcripts == nil {
+		http.Error(w, "transcript storage is unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	callID := strings.TrimSpace(r.URL.Query().Get("call"))
+	if callID == "" || len(callID) > 128 {
+		http.Error(w, "call query parameter is required", http.StatusBadRequest)
+		return
+	}
+	if _, err := h.deps.Transcripts.DeleteCall(r.Context(), sess.Extension, callID); err != nil {
+		slog.Warn("transcript delete failed", "error", err, "extension", sess.Extension.String())
+		http.Error(w, "could not delete the transcript", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}

@@ -256,6 +256,7 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session) []vi
 	groups := make([]views.TranscriptGroup, 0, len(recent))
 	for _, tx := range recent {
 		groups = append(groups, views.TranscriptGroup{
+			CallID: tx.CallID,
 			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
 			Lines: tx.Lines, Name: names[tx.Remote],
 		})
