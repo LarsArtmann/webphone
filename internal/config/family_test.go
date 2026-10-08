@@ -26,9 +26,13 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		// enables it); the then-missing list fields reject fail-closed.
 		{"half a passkey config", map[string]string{"WEBPHONE_AUTH__PASSKEY__RP_ID": "pbx.example.org"}, "config.auth.passkey.rp_origins"},
 		// ASR: a token without a URL (nowhere to send it) rejects; so
-		// does a non-absolute URL.
+		// does a non-absolute URL. The google kind shifts the anchor to
+		// the project id and rejects unknown kinds outright.
 		{"asr token without url", map[string]string{"WEBPHONE_ASR__TOKEN": "secret"}, "config.asr.url"},
 		{"asr relative url", map[string]string{"WEBPHONE_ASR__URL": "not-a-url"}, "config.asr.url"},
+		{"asr unknown provider", map[string]string{"WEBPHONE_ASR__PROVIDER": "deepgram"}, "config.asr.provider"},
+		{"asr google without project", map[string]string{"WEBPHONE_ASR__PROVIDER": "google"}, "config.asr.project"},
+		{"asr google path-shaped project", map[string]string{"WEBPHONE_ASR__PROVIDER": "google", "WEBPHONE_ASR__PROJECT": "a/b"}, "config.asr.project"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

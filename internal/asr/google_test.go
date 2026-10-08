@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json/v2"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,12 +26,6 @@ func TestGoogleDisabledWithoutProject(t *testing.T) {
 	}
 	if _, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")}); !errors.Is(err, asr.ErrDisabled) {
 		t.Fatalf("got %v, want ErrDisabled", err)
-	}
-}
-
-func TestGoogleRegionalEndpointDerivation(t *testing.T) {
-	if got := asr.GoogleEndpointForTest("europe-west3"); got != "https://speech.europe-west3.rep.googleapis.com" {
-		t.Errorf("endpoint: got %q", got)
 	}
 }
 
@@ -57,7 +52,11 @@ func googleServer(t *testing.T, capture *googleCapture, status int, response str
 		capture.path = r.URL.Path
 		capture.apiKey = r.Header.Get("x-goog-api-key")
 		capture.auth = r.Header.Get("Authorization")
-		if err := json.Unmarshal(r.Body, &capture.body); err != nil {
+		raw, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read request body: %v", err)
+		}
+		if err := json.Unmarshal(raw, &capture.body); err != nil {
 			t.Errorf("decode request body: %v", err)
 		}
 		if status != http.StatusOK {

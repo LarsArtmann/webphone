@@ -255,6 +255,29 @@ func TestASRSeam(t *testing.T) {
 			t.Fatal("asr.url not absolute: want error")
 		}
 	})
+	t.Run("google project alone enables", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__PROVIDER", "google")
+		t.Setenv("WEBPHONE_ASR__PROJECT", "my-proj")
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cfg.ASR.Google() || !cfg.ASR.Enabled() {
+			t.Errorf("google provider with project must enable the seam: %+v", cfg.ASR)
+		}
+	})
+	t.Run("google token without url is legitimate", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_ASR__PROVIDER", "google")
+		t.Setenv("WEBPHONE_ASR__PROJECT", "my-proj")
+		t.Setenv("WEBPHONE_ASR__TOKEN", "gkey")
+		if _, err := Load(); err != nil {
+			t.Fatalf("google api key without endpoint override is fine: %v", err)
+		}
+	})
 }
 
 func TestLoadWebhookSecretFileErrors(t *testing.T) {
