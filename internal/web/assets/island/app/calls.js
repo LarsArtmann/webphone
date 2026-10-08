@@ -129,6 +129,10 @@ export function teardownSession(id) {
   const entry = sessions.get(id);
   if (!entry) return;
   stopLiveTranscription(id);
+  // The call's undelivered transcript segments get one last flush
+  // attempt before the entry goes away (the queue drains in the
+  // background; a still-failing save stays logged, never blocking).
+  flushTranscriptSaves(entry);
   if (entry.timer) clearInterval(entry.timer);
   if (entry.dom) entry.dom.remove();
   sessions.delete(id);

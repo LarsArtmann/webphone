@@ -294,3 +294,28 @@ test("a running AudioContext arms no gesture retries", () => {
   assert.equal((window.listeners.keydown ?? []).length, 0, "no keydown listener");
   transcribe.stopLiveTranscription("running-check");
 });
+
+test("a 429 from the seam cools the live loop down (segments skipped, capture alive)", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  fetchImpl = async () => ({ ok: false, status: 429, headers: new Headers() });
+  const pc = { getReceivers: () => [{ track: { kind: "audio" } }], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  const texts = [];
+  transcribe.startLiveTranscription("cooldown-check", entry, (t) => texts.push(t));
+
+  const [recorder] = globalThis.__recorders;
+  recorder.emit({ size: 10, type: "audio/webm" });
+  await flush();
+  assert.equal(fetchCalls.length, 1, "the first segment POSTs");
+
+  recorder.emit({ size: 10, type: "audio/webm" });
+  recorder.emit({ size: 10, type: "audio/webm" });
+  await flush();
+  assert.equal(fetchCalls.length, 1, "segments during the cooldown are skipped, not retried");
+  assert.equal(recorder.stopped, undefined, "capture keeps running through the cooldown");
+  assert.deepEqual(texts, [], "no text arrives from a rate-limited segment");
+
+  transcribe.stopLiveTranscription("cooldown-check");
+});

@@ -246,3 +246,81 @@ test("a failed save warns once per call and never blocks the capture", async () 
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   await flush();
 });
+
+test("failed saves queue and flush in order on the next success", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+49800123456"), true);
+  const entry = sessions.get("call-t1");
+  let savesOk = false;
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      return { ok: true, status: 200, json: async () => ({ text: "words" }) };
+    }
+    return savesOk ? { ok: true, status: 204 } : { ok: false, status: 503 };
+  };
+  fetchCalls = [];
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
+  const [recorder] = globalThis.__recorders.slice(-1);
+
+  recorder.emit({ size: 8, type: "audio/webm" });
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush(20);
+  assert.equal(fetchCalls.filter((c) => c.url === "/api/transcripts").length, 1,
+    "the queue tries one save at a time while failing");
+
+  // The network heals: the next segment flushes the whole queue, in order.
+  savesOk = true;
+  fetchCalls = [];
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush(30);
+  const bodies = fetchCalls
+    .filter((c) => c.url === "/api/transcripts")
+    .map((c) => JSON.parse(c.options.body).text);
+  assert.equal(bodies.length, 3, "queued + new segment all persisted");
+  assert.deepEqual(bodies, ["words", "words", "words"], "order preserved, none dropped");
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});
+
+test("the save queue is bounded: oldest segments drop past the cap", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+49800123456"), true);
+  const entry = sessions.get("call-t1");
+  let savesOk = false;
+  let segment = 0;
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      segment += 1;
+      return { ok: true, status: 200, json: async () => ({ text: `seg-${segment}` }) };
+    }
+    return savesOk ? { ok: true, status: 204 } : { ok: false, status: 500 };
+  };
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
+  const [recorder] = globalThis.__recorders.slice(-1);
+
+  // 52 failing segments: the queue keeps the newest 50 (the first flush
+  // attempt consumes #1, leaving 51 queued -> capped to 50).
+  for (let i = 0; i < 52; i++) recorder.emit({ size: 6, type: "audio/webm" });
+  await flush(20);
+
+  savesOk = true;
+  fetchCalls = [];
+  recorder.emit({ size: 6, type: "audio/webm" });
+  await flush(400);
+  const savedTexts = fetchCalls
+    .filter((c) => c.url === "/api/transcripts")
+    .map((c) => JSON.parse(c.options.body).text);
+  assert.equal(savedTexts.length, 50, "exactly the capped queue drains");
+  assert.equal(savedTexts[0], "seg-4", "the oldest beyond the cap were dropped (seg-1..3)");
+  assert.equal(savedTexts[49], "seg-53", "the newest segment is last");
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});
