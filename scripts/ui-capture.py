@@ -148,7 +148,10 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     import re
 
     page = opener.open(base + "/").read().decode()
-    csrf = re.search(r'name="csrf-token" content="([^"]+)"', page).group(1)
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page)
+    if token is None:
+        raise RuntimeError("anonymous page carries no csrf meta token")
+    csrf = token.group(1)
     body = json.dumps({"extension": "1001", "password": "pw"}).encode()
     req = urllib.request.Request(base + "/api/session", data=body, method="POST")
     req.add_header("Content-Type", "application/json")
@@ -157,10 +160,10 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     csrf = json.loads(opener.open(base + "/api/csrf").read()).get("token", "")
     # The attachment thread goes in FIRST (see SEED_ATTACHMENT_THREAD):
     # recency ordering keeps it at the list's tail.
-    remote, subject, body = SEED_ATTACHMENT_THREAD
+    remote, subject, note = SEED_ATTACHMENT_THREAD
     post(
         "/messages/send",
-        {"to": remote, "body": body},
+        {"to": remote, "body": note},
         files=[("attachment", f"{subject}.wav", SEED_WAV, "audio/wav")],
     )
     for remote, _, message in SEED_THREADS:
@@ -204,7 +207,7 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     # which a bare boot cannot serve (caddy bridges /sip on the stack).
     session = ""
     for cookie in cookie_processor.cookiejar:
-        if cookie.name == "webphone_session":
+        if cookie.name == "webphone_session" and cookie.value:
             session = cookie.value
     return thread_path, attach_thread_path, session
 
@@ -216,9 +219,15 @@ def capture(
     attach_thread_path: str | None,
     session: str,
 ) -> int:
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.support.ui import WebDriverWait
+    # Selenium lives only in the capture env (see the AGENTS run
+    # recipe) — never in the lint shell, hence the targeted ignores.
+    from selenium import webdriver  # type: ignore[import-not-found]
+    from selenium.webdriver.chrome.options import (
+        Options,  # type: ignore[import-not-found]
+    )
+    from selenium.webdriver.support.ui import (
+        WebDriverWait,  # type: ignore[import-not-found]
+    )
 
     options = Options()
     # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
@@ -236,7 +245,9 @@ def capture(
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--window-size=1280,900")
     driver_path = shutil.which("chromedriver")
-    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.chrome.service import (
+        Service,  # type: ignore[import-not-found]
+    )
 
     service = Service(executable_path=driver_path) if driver_path else None
     driver = webdriver.Chrome(service=service, options=options)
@@ -256,13 +267,13 @@ def capture(
             driver.execute_script(f"localStorage.setItem('wp-theme', '{theme}')")
             for name, path in TABS:
                 if name == "thread":
-                    if not thread_path:
-                        continue
                     path = thread_path
                 if name == "media-transcribe":
-                    if not attach_thread_path:
-                        continue
                     path = attach_thread_path
+                if path is None:
+                    # An unresolved deep link (seed came up empty) skips
+                    # the surface rather than shooting an error page.
+                    continue
                 driver.get(base + path)
                 # The island reveals its call view only after the resume
                 # probe settles (login view stays hidden meanwhile); the

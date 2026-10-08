@@ -35,6 +35,7 @@ import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
+from typing import ClassVar
 from urllib.parse import urlparse
 
 TIMEOUT = 10.0
@@ -445,7 +446,7 @@ class _FakeASRHandler(http.server.BaseHTTPRequestHandler):
     """In-process transcription provider standing in for both wires."""
 
     wire = "openai"
-    hits: list[dict[str, str]] = []
+    hits: ClassVar[list[dict[str, str]]] = []
 
     def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0"))
