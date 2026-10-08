@@ -65,11 +65,12 @@ func domContractIDs(t testing.TB) []string {
 // proxy tests need to reach (hubs for subscriptions, phone API wiring).
 type testServer struct {
 	*httptest.Server
-	handler  http.Handler
-	hubs     *ExtensionHubs
-	messages *store.Messages
-	faxes    *store.Faxes
-	phoneAPI *pbx.Client
+	handler    http.Handler
+	hubs      *ExtensionHubs
+	messages  *store.Messages
+	faxes     *store.Faxes
+	transcripts *store.Transcripts
+	phoneAPI  *pbx.Client
 }
 
 func newTestServer(t testing.TB) *testServer {
@@ -118,6 +119,7 @@ func newTestServerWithConfig(
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
+	transcripts := store.NewTranscripts(db)
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
 	// creates — TestMetricsServesAggregatesOnly pins that surface.
@@ -132,7 +134,7 @@ func newTestServerWithConfig(
 		Faxes:       faxes,
 		Contacts:    store.NewContacts(db),
 		Snippets:    store.NewSnippets(db),
-		Transcripts: store.NewTranscripts(db),
+		Transcripts: transcripts,
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.MessagesChanged, cfg.Identities),
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.FaxChanged, cfg.Identities, nil),
 		PhoneAPI:    phoneAPI,
@@ -148,7 +150,7 @@ func newTestServerWithConfig(
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-	return &testServer{Server: server, handler: handler, hubs: hubs, messages: messages, faxes: faxes, phoneAPI: phoneAPI}
+	return &testServer{Server: server, handler: handler, hubs: hubs, messages: messages, faxes: faxes, transcripts: transcripts, phoneAPI: phoneAPI}
 }
 
 type client struct {

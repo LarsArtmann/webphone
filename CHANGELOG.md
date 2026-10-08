@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Copy-to-clipboard on every transcript surface: History transcript
+  rows carry a copy button (server-rendered, label localized en/de),
+  the live call card gains a "Copy transcript" control (island,
+  en/de), and a real voicemail/attachment transcription plants a
+  small "Copy" chip next to its text (empty results plant nothing).
+  One delegated shell handler owns the clipboard write with honest
+  toasts both ways ("Nothing to copy yet.", "Could not copy — select
+  the text manually."); a chip that cannot attach never fails the
+  render it accompanies.
 - History search now covers call transcripts: the tab's `q` filter
   (shared with the CDR lane) also runs an owner-scoped `LIKE` search
   over transcript text — matching calls render in the transcripts

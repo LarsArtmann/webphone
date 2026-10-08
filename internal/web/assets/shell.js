@@ -263,16 +263,14 @@
         shellToast("Could not copy — select the text manually.", "warn");
         return;
       }
-      clip
-        .writeText(text)
-        .then(
-          function () {
-            shellToast("Copied to clipboard.", "ok");
-          },
-          function () {
-            shellToast("Could not copy — select the text manually.", "warn");
-          },
-        );
+      clip.writeText(text).then(
+        function () {
+          shellToast("Copied to clipboard.", "ok");
+        },
+        function () {
+          shellToast("Could not copy — select the text manually.", "warn");
+        },
+      );
     });
 
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
@@ -465,9 +463,7 @@
         // accompanies.
         try {
           if (!target.id) return;
-          if (
-            document.querySelector('[data-copy-target="' + target.id + '"]')
-          )
+          if (document.querySelector('[data-copy-target="' + target.id + '"]'))
             return;
           var chip = document.createElement("button");
           chip.type = "button";

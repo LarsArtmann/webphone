@@ -83,6 +83,23 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 	if resp, _ := c.do(http.MethodPost, "/contacts/import", form, contentType); resp.StatusCode != http.StatusOK {
 		t.Fatalf("contact import status %d", resp.StatusCode)
 	}
+	// Transcripts: the owner's call exports whole (spoken order); a
+	// neighbor extension's words must never ride along.
+	for _, text := range []string{"first export line", "second export line"} {
+		if err := server.transcripts.Append(ctx, domain.CallTranscriptSegment{
+			Owner: owner, CallID: "call-export", Direction: domain.DirectionInbound,
+			Remote: "+4989111222", StartedAt: time.Now(), Text: text,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := server.transcripts.Append(ctx, domain.CallTranscriptSegment{
+		Owner: domain.MustParseExtension("1002"), CallID: "call-neighbor",
+		Direction: domain.DirectionInbound, Remote: "+4989333444",
+		StartedAt: time.Now(), Text: "neighbor words stay out",
+	}); err != nil {
+		t.Fatal(err)
+	}
 
 	resp, body := c.do(http.MethodGet, "/api/export", nil, "")
 	if resp.StatusCode != http.StatusOK {
@@ -126,6 +143,30 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 
 	if vcfOut := string(readZipEntry(t, archive, "contacts.vcf")); !strings.Contains(vcfOut, "Carol") {
 		t.Errorf("contacts.vcf missing the imported contact: %s", vcfOut)
+	}
+
+	var transcripts []exportTranscript
+	if err := json.Unmarshal(readZipEntry(t, archive, "transcripts.json"), &transcripts); err != nil {
+		t.Fatalf("transcripts.json: %v", err)
+	}
+	found = false
+	for _, tx := range transcripts {
+		if tx.CallID != "call-export" {
+			continue
+		}
+		found = true
+		if len(tx.Lines) != 2 || tx.Lines[0] != "first export line" || tx.Lines[1] != "second export line" {
+			t.Errorf("transcripts.json lines not in spoken order: %v", tx.Lines)
+		}
+		if tx.Remote != "+4989111222" || tx.Direction != string(domain.DirectionInbound) {
+			t.Errorf("transcripts.json identity: %+v", tx)
+		}
+	}
+	if !found {
+		t.Errorf("transcripts.json missing the owner's call (got %+v)", transcripts)
+	}
+	if strings.Contains(string(readZipEntry(t, archive, "transcripts.json")), "neighbor words stay out") {
+		t.Errorf("transcripts.json leaked another extension's call")
 	}
 }
 

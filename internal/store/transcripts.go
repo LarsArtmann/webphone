@@ -75,12 +75,8 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 // fetched newest-first, grouped by call (newest call first, its lines
 // in spoken order), and the group list is capped at maxCalls.
 func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error) {
-	rows, err := listRows(ctx, s.db, "list transcripts", `
-		SELECT owner, call_id, direction, remote, started_at, text
-		FROM call_transcripts WHERE owner = ?
-		ORDER BY started_at DESC, rowid DESC
-		LIMIT ?
-	`, []any{owner.String(), transcriptFetchWindow}, scanTranscriptRow)
+	rows, err := s.fetchSegments(ctx, "list transcripts", "owner = ?",
+		[]any{owner.String()}, transcriptFetchWindow)
 	if err != nil {
 		return nil, err
 	}
@@ -93,17 +89,39 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 // MATCHING lines only: the silent half of a hit call is not the
 // searcher's answer, and the History hint says what is shown.
 func (s *Transcripts) Search(ctx context.Context, owner domain.Extension, needle string, maxCalls int) ([]domain.CallTranscript, error) {
-	rows, err := listRows(ctx, s.db, "search transcripts", `
-		SELECT owner, call_id, direction, remote, started_at, text
-		FROM call_transcripts
-		WHERE owner = ? AND text LIKE ? ESCAPE '\'
-		ORDER BY started_at DESC, rowid DESC
-		LIMIT ?
-	`, []any{owner.String(), "%" + likeEscape(needle) + "%", transcriptFetchWindow}, scanTranscriptRow)
+	rows, err := s.fetchSegments(ctx, "search transcripts",
+		"owner = ? AND text LIKE ? ESCAPE '\\'",
+		[]any{owner.String(), "%" + likeEscape(needle) + "%"}, transcriptFetchWindow)
 	if err != nil {
 		return nil, err
 	}
 	return reassembleTranscripts(rows, maxCalls), nil
+}
+
+// Export reassembles the owner's WHOLE transcript history for the
+// settings export zip: the read window is the owner cap (not the render
+// window), so every stored call arrives — newest first, lines in spoken
+// order, the group list capped at maxCalls.
+func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error) {
+	rows, err := s.fetchSegments(ctx, "export transcripts", "owner = ?",
+		[]any{owner.String()}, TranscriptSegmentsMaxPerExtension)
+	if err != nil {
+		return nil, err
+	}
+	return reassembleTranscripts(rows, maxCalls), nil
+}
+
+// fetchSegments reads segments newest-first behind a WHERE fragment —
+// the ONE home for the transcript SELECT so Recent, Search and Export
+// cannot drift apart.
+func (s *Transcripts) fetchSegments(ctx context.Context, label, where string, args []any, limit int) ([]domain.CallTranscriptSegment, error) {
+	return listRows(ctx, s.db, label, `
+		SELECT owner, call_id, direction, remote, started_at, text
+		FROM call_transcripts
+		WHERE `+where+`
+		ORDER BY started_at DESC, rowid DESC
+		LIMIT ?
+	`, append(args, limit), scanTranscriptRow)
 }
 
 // reassembleTranscripts groups newest-first segments into whole calls:

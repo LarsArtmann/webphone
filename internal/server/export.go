@@ -52,9 +52,18 @@ type exportFax struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type exportTranscript struct {
+	CallID    string    `json:"callId"`
+	Remote    string    `json:"remote"`
+	Direction string    `json:"direction"`
+	StartedAt time.Time `json:"startedAt"`
+	Lines     []string  `json:"lines"`
+}
+
 // exportData packages EVERYTHING the signed-in extension owns into one
 // zip: message threads with their messages (messages.json), fax jobs
-// (faxes.json) and personal contacts (contacts.vcf). A plain link
+// (faxes.json), personal contacts (contacts.vcf) and call transcripts
+// (transcripts.json, when the store is present). A plain link
 // download — GET, session-gated, owner-scoped by the store queries.
 // Attachment and fax DOCUMENT blobs stay out of the archive (names and
 // sizes are listed in the JSON): the zip is a portable manifest, and the
@@ -80,6 +89,24 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "could not list contacts", http.StatusInternalServerError)
 		return
+	}
+	// Transcripts join the archive when the store is present (nil only in
+	// hand-composed test compositions): the whole owner-scoped history,
+	// reassembled per call. A read failure fails the whole export — a
+	// zip that silently omits a leg is not an honest export.
+	outTranscripts := []exportTranscript{}
+	if h.deps.Transcripts != nil {
+		calls, err := h.deps.Transcripts.Export(r.Context(), sess.Extension, exportLimit)
+		if err != nil {
+			http.Error(w, "could not list transcripts", http.StatusInternalServerError)
+			return
+		}
+		for _, call := range calls {
+			outTranscripts = append(outTranscripts, exportTranscript{
+				CallID: call.CallID, Remote: call.Remote, Direction: string(call.Direction),
+				StartedAt: call.StartedAt, Lines: call.Lines,
+			})
+		}
 	}
 
 	outThreads := make([]exportThread, 0, len(threads))
@@ -130,6 +157,11 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not render faxes", http.StatusInternalServerError)
 		return
 	}
+	transcriptsJSON, err := json.Marshal(outTranscripts)
+	if err != nil {
+		http.Error(w, "could not render transcripts", http.StatusInternalServerError)
+		return
+	}
 	cards := make([]vcard.Card, 0, len(contacts))
 	for _, contact := range contacts {
 		cards = append(cards, vcard.Card{Name: contact.Name, Number: contact.Phone.String()})
@@ -145,6 +177,7 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 	}{
 		{"messages.json", messagesJSON},
 		{"faxes.json", faxesJSON},
+		{"transcripts.json", transcriptsJSON},
 		{"contacts.vcf", vcard.Encode(cards)},
 	} {
 		file, err := zw.Create(entry.name)
