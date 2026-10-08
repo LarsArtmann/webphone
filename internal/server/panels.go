@@ -335,7 +335,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		GatewayMode:    string(h.deps.Config.Gateway.Mode),
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
 		CRM:            h.deps.CRM.Enabled(),
-		ASR:            h.deps.ASR.Enabled(),
+		ASR:            h.asrOn(),
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,

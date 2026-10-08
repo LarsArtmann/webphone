@@ -41,7 +41,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		ICEServers:    iceServers,
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
 		CRM:           h.deps.CRM.Enabled(),
-		ASR:           h.deps.ASR.Enabled(),
+		ASR:           h.asrOn(),
 		Contacts:      h.deps.Shared,
 	}
 

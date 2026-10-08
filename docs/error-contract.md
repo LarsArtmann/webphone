@@ -162,7 +162,7 @@ a deliberate code change, regenerate:
 | asr.decode                                   | Transient                 | internal/asr/asr.go           |
 | asr.empty                                    | Rejection                 | internal/asr/asr.go           |
 | asr.encode                                   | Infrastructure            | internal/asr/asr.go           |
-| asr.http                                     | runtime-split             | internal/asr/asr.go           |
+| asr.http                                     | Transient, runtime-split  | internal/asr/asr.go           |
 | asr.read                                     | Transient                 | internal/asr/asr.go           |
 | asr.request                                  | Infrastructure            | internal/asr/asr.go           |
 | asr.transport                                | Transient                 | internal/asr/asr.go           |
@@ -176,6 +176,8 @@ a deliberate code change, regenerate:
 | blob.subdir                                  | Infrastructure            | internal/blob/store.go        |
 | blob.write                                   | Infrastructure            | internal/blob/store.go        |
 | config.addr                                  | Rejection                 | internal/config/config.go     |
+| config.asr.project                           | Rejection                 | internal/config/config.go     |
+| config.asr.provider                          | Rejection                 | internal/config/config.go     |
 | config.asr.url                               | Rejection                 | internal/config/config.go     |
 | config.auth.passkey.extension_password_files | Rejection                 | internal/config/config.go     |
 | config.auth.passkey.rp_id                    | Rejection                 | internal/config/config.go     |

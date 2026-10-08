@@ -126,9 +126,13 @@ in the JSON file.
 | `crm.token`                             | _empty_             | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
 | `paperless.url`                         | _empty_ = disabled  | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
 | `paperless.token`                       | _empty_             | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
-| `asr.url`                               | _empty_ = disabled  | Base URL of the optional speech-to-text provider (e.g. `http://127.0.0.1:8081`); a URL alone enables — the OpenAI-compatible `/v1/audio/transcriptions` endpoint is assumed                                                       |
-| `asr.token`                             | _empty_             | Optional bearer credential for the ASR provider; a token WITHOUT a URL fails closed (nowhere to send it)                                                                                                             |
-| `asr.model`                             | `whisper-1`         | Model name the provider expects (e.g. `large-v3`); sent as the multipart `model` field                                                                                                                                |
+| `asr.provider`                           | `openai`            | Provider kind: `openai` (any `/v1/audio/transcriptions` server) or `google` (Cloud Speech-to-Text V2)                                                                                                                   |
+| `asr.url`                               | _empty_ = disabled  | OpenAI wire: base URL of the provider (e.g. `http://127.0.0.1:8081`); a URL alone enables. Google wire: optional endpoint override (empty derives the `europe-west3` regional endpoint)                                 |
+| `asr.token`                             | _empty_             | OpenAI wire: optional bearer credential (a token WITHOUT a URL fails closed). Google wire: API key sent as `x-goog-api-key`                                                             |
+| `asr.model`                             | `whisper-1` / `telephony` | Model name the provider expects (OpenAI wire: e.g. `large-v3`; Google wire defaults to the 8 kHz-tuned `telephony`)                                                              |
+| `asr.project`                           | _empty_             | Google wire: cloud project id — required when `asr.provider=google`, part of the recognizer path                                                                                       |
+| `asr.location`                          | `europe-west3`      | Google wire: region for the endpoint and recognizer path (EU residency default)                                                                                                         |
+| `asr.language`                          | `de-DE`             | Google wire: fallback BCP-47 code for segments without a language hint (V2 has no auto-detect); the per-request island language always wins                                              |
 | `auth.passkey.rp_id`                    | _empty_ = disabled  | WebAuthn relying-party ID (the registrable domain, e.g. `pbx.example.com`); setting the passkey keys enables the email-first login — all-or-nothing per validation                                                   |
 | `auth.passkey.rp_display_name`          | `webphone`          | Name the browser shows in the passkey prompt                                                                                                                                                                         |
 | `auth.passkey.rp_origins`               | _required_          | Browser-facing origins (`https://…`); each origin's host must equal `rp_id`                                                                                                                                          |
@@ -369,12 +373,38 @@ audio on your infrastructure — keep transcription there too.
 - **Lightweight fallback**: whisper.cpp's `whisper-server` with a
   quantized `large-v3-turbo` (single static binary; its endpoint is
   `/inference`, so rewrite the path in the reverse proxy).
-- **If cloud is ever required**: Deepgram Nova-3 via the EU endpoint
-  (`api.eu.deepgram.com`, telephony-tuned models) behind a thin
-  OpenAI-compatible adapter.
+- **Hosted (cloud) option**: Google Cloud Speech-to-Text **V2** — the one
+  hosted API that clears the GDPR bar AND the cost bar. See the recipe
+  below.
 - Pass an explicit language where you can (`?lang=de` — auto-detect
   misfires DE↔EN on short phone chunks); the island does this
   automatically from the session language.
+
+**Google Cloud STT v2 recipe** (`asr.provider: google`): EU-resident by
+construction (regional endpoint `europe-west3` / Frankfurt — audio stays
+in continental Europe, and speech logging is off by default), and V2 has
+NO per-request minimum: billed per second rounded up to 1 s, so the
+interactive 4-second island segments cost their actual duration
+(`telephony` model: ~$0.96/audio-hour; standard recognition, not the
+24-hour-SLA Dynamic Batch tier — that one is for offline backfills only).
+
+```console
+# config: google kind needs a project id; token is an API key with the
+# Speech-to-Text API enabled; location defaults to europe-west3.
+WEBPHONE_ASR__PROVIDER=google
+WEBPHONE_ASR__PROJECT=my-gcp-project
+WEBPHONE_ASR__TOKEN=AIza…            # x-goog-api-key
+WEBPHONE_ASR__MODEL=telephony        # default; 8 kHz-tuned for phone audio
+WEBPHONE_ASR__LANGUAGE=de-DE         # fallback for untagged segments
+```
+
+One-time Google-side setup: create (or pick) a project, enable the
+**Cloud Speech-to-Text API**, create an **API key** (restrict it to the
+Speech-to-Text API), and accept the Data Processing Terms/DPA for that
+project. The wire is spoken directly (JSON recognize with base64 audio —
+no adapter process); `asr.url` stays empty and the regional endpoint is
+derived from the location. An explicit `asr.url` overrides the endpoint
+(tests, or a local proxy that injects the credential).
 
 ## Live updates (SSE)
 
