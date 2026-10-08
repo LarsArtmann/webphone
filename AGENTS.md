@@ -123,7 +123,7 @@ More than one Crush session can work this repo at once (tell-tale: uncommitted f
 
 ## Buildflow health warning
 
-"9 tools unavailable" is NOISE (all nine are JS/TS or Python "not applicable") — run buildflow inside `nix develop` (or `scripts/buildflow.sh`); `-s gitleaks`/`-s codespell` need the REAL binary; markdown-lint is detect-only (never reflow the corpus). KNOWN TOOL BUG — gomod-check vendor-consistency (grows with the vendor tree: ~54 before, 99 after the passkey train's usermgmt/webauthn deps) is a verified FALSE POSITIVE; SUPPRESSED via `skip_steps` (2026-10-04, rationale in .buildflow.yml) so the findings gate holds. Still: do NOT hand-edit vendor markers — `nix flake check`'s sandbox build is the real gate.
+"9 tools unavailable" is NOISE (all nine are JS/TS or Python "not applicable") — run buildflow inside `nix develop` (or `scripts/buildflow.sh`); `-s gitleaks`/`-s codespell` need the REAL binary; markdown-lint is detect-only (never reflow the corpus). KNOWN TOOL BUG — gomod-check vendor-consistency (grows with the vendor tree: ~54 before, 99 after the passkey train's usermgmt/webauthn deps) is a verified FALSE POSITIVE; SUPPRESSED via `skip_steps` (2026-10-04, rationale in .buildflow.yml) so the findings gate holds. Still: do NOT hand-edit vendor markers — `nix flake check`'s sandbox build is the real gate. Run a full `buildflow` at TRAIN START, not only at train end (2026-10-08: a daemon commit truncated 69 `skip_steps` lines from `.buildflow.yml` and sat undetected ~16 h; evidence in docs/lessons.md) — and re-read `.buildflow.yml` after daemon activity near it.
 
 ## Conventions
 
