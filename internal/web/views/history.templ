@@ -135,6 +135,15 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+				// Copy affordance: the button only marks the row — shell.js
+				// owns the clipboard write + toast (works when island scripts
+				// fail; label localized here, toast English by D3).
+				<button
+					class="wp-mini"
+					data-copy-transcript
+					aria-label={ T(props.Lang, "history.transcript.copy") }
+					title={ T(props.Lang, "history.transcript.copy") }
+				>⧉</button>
 				// End-user erasure (GDPR leg): confirm-gated delete of the
 				// whole call. The button only carries data — shell.js owns
 				// the confirm + DELETE + row removal (the shell works when

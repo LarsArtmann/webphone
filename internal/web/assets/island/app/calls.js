@@ -276,6 +276,9 @@ function addCallCard(id, target) {
       mkBtn(t("transcribe"), "ghost transcribe-btn", () =>
         toggleTranscription(id, transcript),
       ),
+      mkBtn(t("copyTranscript"), "ghost copy-transcript-btn", () =>
+        copyCardTranscript(transcript),
+      ),
     );
   }
   card.append(head, controls, transcript);
@@ -394,6 +397,27 @@ function appendTranscript(target, text) {
     ? `${target.textContent} ${text}`
     : text;
   target.scrollTop = target.scrollHeight;
+}
+
+// copyCardTranscript puts the card's accumulated transcript on the
+// clipboard (secure context — the stack fronts TLS). Honest feedback
+// either way: an empty transcript announces that instead of copying
+// nothing, a missing clipboard API announces the manual fallback.
+function copyCardTranscript(target) {
+  const text = (target.textContent || "").trim();
+  if (!text) {
+    announce(t("transcribeEmpty"), "warn");
+    return;
+  }
+  const clip = navigator.clipboard;
+  if (!clip || !clip.writeText) {
+    announce(t("copyFailed"), "warn");
+    return;
+  }
+  clip.writeText(text).then(
+    () => announce(t("copied"), "info"),
+    () => announce(t("copyFailed"), "warn"),
+  );
 }
 
 // Transfer row: inline destination input with blind/attended actions.

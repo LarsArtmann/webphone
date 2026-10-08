@@ -230,6 +230,50 @@
         });
     });
 
+    // 2b5. Copy affordances (M16): [data-copy-transcript] copies its
+    //      History row's transcript; [data-copy-target] copies the text
+    //      of a referenced node (the chip the transcribe flow plants
+    //      next to voicemail/attachment results). One delegated
+    //      handler, clipboard API only (secure context — the stack
+    //      fronts TLS), honest toasts either way. English (D3).
+    document.addEventListener("click", function (event) {
+      var btn = event.target.closest
+        ? event.target.closest("[data-copy-transcript], [data-copy-target]")
+        : null;
+      if (!btn) return;
+      var text = "";
+      if (btn.hasAttribute("data-copy-transcript")) {
+        var row = btn.closest(".wp-transcript-call");
+        var node = row && row.querySelector(".wp-transcript-text");
+        text = node ? (node.textContent || "").trim() : "";
+      } else {
+        var target = document.getElementById(
+          btn.getAttribute("data-copy-target") || "",
+        );
+        text =
+          target && !target.hidden ? (target.textContent || "").trim() : "";
+      }
+      if (!text) {
+        shellToast("Nothing to copy yet.", "warn");
+        return;
+      }
+      var clip = navigator.clipboard;
+      if (!clip || !clip.writeText) {
+        shellToast("Could not copy — select the text manually.", "warn");
+        return;
+      }
+      clip
+        .writeText(text)
+        .then(
+          function () {
+            shellToast("Copied to clipboard.", "ok");
+          },
+          function () {
+            shellToast("Could not copy — select the text manually.", "warn");
+          },
+        );
+    });
+
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
     //     every call render; the shell mirrors the live call count into
     //     the header so every tab shows the phone is busy. Cards are
@@ -410,6 +454,21 @@
         target.hidden = false;
         target.textContent = text;
       };
+      // A real result plants a copy chip next to the text (once per
+      // target per DOM lifetime — a morph swap rebuilds the row, the
+      // next transcription re-plants). The chip only references the
+      // target; the copy handler in 2b5 owns the clipboard write.
+      var plantCopyChip = function () {
+        if (!target.id) return;
+        if (document.querySelector('[data-copy-target="' + target.id + '"]'))
+          return;
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "wp-mini";
+        chip.setAttribute("data-copy-target", target.id);
+        chip.textContent = "Copy";
+        target.insertAdjacentElement("afterend", chip);
+      };
       render("Transcribing…");
       return fetch(src, { credentials: "same-origin" })
         .then(function (res) {
@@ -425,7 +484,9 @@
           return res.json();
         })
         .then(function (data) {
-          render((data.text || "").trim() || "No speech detected");
+          var text = (data.text || "").trim();
+          render(text || "No speech detected");
+          if (text) plantCopyChip();
         })
         .catch(function (err) {
           render("Transcription failed (" + err.message + ")");

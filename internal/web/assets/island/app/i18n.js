@@ -150,6 +150,9 @@ export const I18N = {
     transcribeStop: "Stop transcription",
     transcribeBusy: "Transcribing…",
     transcribeEmpty: "No speech detected",
+    copyTranscript: "Copy transcript",
+    copied: "Copied to clipboard.",
+    copyFailed: "Could not copy — select the text manually.",
     transcribeUnsupported:
       "Live transcription is not supported in this browser",
     transcribeFailed: (detail) => `transcription failed: ${detail}`,
@@ -308,6 +311,9 @@ export const I18N = {
     transcribeStop: "Transkription stoppen",
     transcribeBusy: "Transkribiere…",
     transcribeEmpty: "Keine Sprache erkannt",
+    copyTranscript: "Transkript kopieren",
+    copied: "In die Zwischenablage kopiert.",
+    copyFailed: "Kopieren fehlgeschlagen — Text manuell auswählen.",
     transcribeUnsupported:
       "Live-Transkription wird in diesem Browser nicht unterstützt",
     transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
