@@ -125,6 +125,29 @@ function recorderOptions() {
   return undefined;
 }
 
+// ensureRunning drives a capture AudioContext out of the suspended
+// state. Browsers gate audio behind a user gesture; a mid-call page
+// reload means capture starts WITHOUT one, and a suspended context
+// records silence — the "transcription silently produces nothing" trap.
+// One immediate resume covers the warm-gesture case; when the context
+// came up suspended, one-shot first-gesture retries are armed too
+// (Chrome holds resume() unresolved until the gesture fires). Never
+// silent: the wait is logged where the operator reads it (#log stays
+// English by contract).
+function ensureRunning(ctx) {
+  if (!ctx || typeof ctx.resume !== "function") return;
+  const retry = () => {
+    if (ctx.state === "closed") return;
+    ctx.resume().catch(() => {});
+  };
+  if (ctx.state === "suspended") {
+    log("live transcription waiting for a click or keypress to unlock audio", "warn");
+    window.addEventListener("pointerdown", retry, { once: true });
+    window.addEventListener("keydown", retry, { once: true });
+  }
+  retry();
+}
+
 // startLiveTranscription begins capturing a live call and reports each
 // segment's text through onText. Idempotent per call id. The language
 // hint rides every segment (auto-detect misfires DE↔EN on 4 s phone
@@ -143,6 +166,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
     return false;
   }
   const { stream, ctx } = captured;
+  ensureRunning(ctx);
 
   let recorder;
   try {

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Google Cloud Speech-to-Text V2 as a second ASR provider kind
+  (`asr.provider: google` + `asr.project`/`asr.location`/`asr.language`;
+  `asr.token` becomes the `x-goog-api-key`). The seam
+  (`internal/asr.Provider`) now has two implementations — the
+  OpenAI-compatible wire (Speaches/whisper.cpp) and the Google JSON
+  recognize wire (base64 audio, `telephony` model, regional
+  `europe-west3` endpoint so caller audio stays in the EU; V2 bills per
+  second with no per-request minimum). The composition root picks the
+  kind per config; `/api/transcribe`, `/config.js` and every UI gate are
+  provider-agnostic.
 - Passkey (WebAuthn) login mode, config-gated and DEFAULT OFF (a
   deployment without `auth.passkey.*` keeps the byte-identical
   extension login card): an embedded cqrs-htmx/usermgmt v4 identity

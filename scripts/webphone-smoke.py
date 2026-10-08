@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import http.client
 import http.cookiejar
+import http.server
 import json
 import os
 import pathlib
@@ -435,6 +436,204 @@ def boot_failure_scenario(binary: str, workdir: str, port: int) -> int:
         "no version= in the report header",
     )
     print(f"boot failure scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
+class _FakeASRHandler(http.server.BaseHTTPRequestHandler):
+    """In-process transcription provider standing in for both wires."""
+
+    wire = "openai"
+    hits: list[dict[str, str]] = []
+
+    def do_POST(self) -> None:  # noqa: N802 - http.server API
+        length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(length)
+        _FakeASRHandler.hits.append(
+            {
+                "path": self.path,
+                "auth": self.headers.get("Authorization", ""),
+                "gkey": self.headers.get("x-goog-api-key", ""),
+                "ctype": self.headers.get("Content-Type", ""),
+                "body": body.decode("utf-8", "replace"),
+            }
+        )
+        if _FakeASRHandler.wire == "google":
+            payload = json.dumps(
+                {"results": [{"alternatives": [{"transcript": "smoke google"}]}]}
+            ).encode()
+        else:
+            payload = json.dumps({"text": "smoke hello"}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def log_message(self, *_args: object) -> None:
+        pass
+
+
+def _start_fake_asr(wire: str) -> tuple[str, Callable[[], None]]:
+    _FakeASRHandler.wire = wire
+    _FakeASRHandler.hits = []
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FakeASRHandler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def stop() -> None:
+        httpd.shutdown()
+        httpd.server_close()
+
+    return f"http://127.0.0.1:{httpd.server_port}", stop
+
+
+def asr_scenario(binary: str, workdir: str) -> int:
+    """The transcription seam end-to-end against fake providers.
+
+    No real speech runs here — what this proves is the WIRING: webphone
+    booted with asr.* speaks both provider wires correctly (the
+    OpenAI-compatible multipart and the Google v2 JSON recognize), a
+    posted segment comes back as text, the island's save call persists
+    it, and the History tab renders the section. Real-browser audio is
+    the stack E2E's territory; this is the server-side half of M4.
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("asr scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    provider, stop_provider = _start_fake_asr("openai")
+    srv, base = boot({"WEBPHONE_ASR__URL": provider}, "data-asr-openai")
+    try:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "asr: /config.js advertises the seam",
+            b'"asr":true' in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        c.ok("asr: login accepted", s.login(), "POST /api/session != 201")
+        status, body, _ = s.request(
+            "POST",
+            "/api/transcribe?lang=de&filename=seg.webm",
+            b"FAKEAUDIO",
+            "audio/webm",
+        )
+        c.ok(
+            "asr: openai wire transcribes",
+            status == 200 and b"smoke hello" in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+        multipart_hits = [
+            h
+            for h in _FakeASRHandler.hits
+            if h["path"] == "/v1/audio/transcriptions"
+            and h["ctype"].startswith("multipart/form-data")
+        ]
+        c.ok(
+            "asr: openai wire saw honest multipart",
+            len(multipart_hits) == 1,
+            f"hits: {len(multipart_hits)}",
+        )
+        save = json.dumps(
+            {
+                "callId": "smoke-call-1",
+                "direction": "in",
+                "remote": "+49123456789",
+                "startedAt": int(time.time() * 1000),
+                "text": "smoke hello",
+            }
+        ).encode()
+        status, _, _ = s.request("POST", "/api/transcripts", save, "application/json")
+        c.ok("asr: transcript segment saved", status == 204, f"status {status}")
+        status, body, _ = s.request("GET", "/partials/history")
+        c.ok(
+            "asr: history renders the transcript",
+            status == 200 and b"smoke hello" in body,
+            f"status {status}",
+        )
+    finally:
+        stop_server(srv)
+        stop_provider()
+
+    provider, stop_provider = _start_fake_asr("google")
+    srv, base = boot(
+        {
+            "WEBPHONE_ASR__PROVIDER": "google",
+            "WEBPHONE_ASR__PROJECT": "smoke-proj",
+            "WEBPHONE_ASR__TOKEN": "gkey",
+            "WEBPHONE_ASR__URL": provider,
+        },
+        "data-asr-google",
+    )
+    try:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("asr(g): login accepted", s.login(), "POST /api/session != 201")
+        status, body, _ = s.request("POST", "/api/transcribe", b"FAKEAUDIO", "audio/webm")
+        c.ok(
+            "asr(g): google wire transcribes",
+            status == 200 and b"smoke google" in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+        recognize_hits = [
+            h
+            for h in _FakeASRHandler.hits
+            if "recognizers/_:recognize" in h["path"]
+            and "smoke-proj" in h["path"]
+            and h["gkey"] == "gkey"
+        ]
+        c.ok(
+            "asr(g): recognizer path + api key on the wire",
+            len(recognize_hits) == 1,
+            f"hits: {len(recognize_hits)}",
+        )
+    finally:
+        stop_server(srv)
+        stop_provider()
+
+    print(f"asr scenario: {c.passed} passed, {len(c.failures)} failed")
     for failure in c.failures:
         print(f"  FAILED: {failure}")
     return 1 if c.failures else 0
@@ -999,6 +1198,7 @@ def main() -> int:
         )
         rc = max(rc, restart_scenario(binary, workdir, port, env))
         rc = max(rc, boot_failure_scenario(binary, workdir, free_port()))
+        rc = max(rc, asr_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()
