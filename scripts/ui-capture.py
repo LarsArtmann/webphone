@@ -190,7 +190,9 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     starts = [m.start() for m in re.finditer(marker, html)]
 
     def link_at(idx: int) -> str | None:
-        start = starts[idx] + len('hx-get="/')
+        # Skips past 'hx-get="/partials' so the slice keeps the deep-link
+        # shape "/messages/<thread-id>" (a leading slash driver.get needs).
+        start = starts[idx] + len('hx-get="/partials')
         return html[start : html.find('"', start)]
 
     thread_path = link_at(0) if starts else None
