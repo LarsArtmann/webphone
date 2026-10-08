@@ -40,6 +40,18 @@ func init() {
 	})
 }
 
+// Provider is the transcription seam every consumer depends on: one
+// call, one whole audio segment, one text back. The OpenAI-compatible
+// Client (this file) and the GoogleClient (google.go) both implement
+// it; the composition root picks the kind per config, and nothing
+// outside this package needs to know which wire is on the other end.
+type Provider interface {
+	// Enabled reports whether a provider is wired up.
+	Enabled() bool
+	// Transcribe sends one audio file to the provider and returns the text.
+	Transcribe(ctx context.Context, req Request) (string, error)
+}
+
 // ErrDisabled is returned when no ASR provider is configured.
 var ErrDisabled = errors.New("asr not configured") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
 

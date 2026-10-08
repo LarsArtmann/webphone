@@ -235,3 +235,24 @@ flowchart TD
   green verified via `gh run list` + `git ls-remote`.
 - No verschlimmbessern: gates-first ordering (buildflow also at train
   START), no speculative rewrites, spike tasks produce NOTES not code.
+
+## 9. M1 decision record (2026-10-08, execution day)
+
+The owner's instruction for this train was an explicit blanket
+"execute the WHOLE list" — the gates below are therefore answered with
+documented defaults, each reversible:
+
+1. **First-live provider: BOTH paths.** The seam supports both provider
+   kinds simultaneously, so this is not exclusive: M3 (Google adapter,
+   zero infra, EU-resident, $0.96/audio-hr) is implemented and tested
+   in webphone now; M2 lands as a Speaches `oci-containers` recipe on
+   the consuming stack (real deployment stays an operator step — it
+   spends host RAM and needs the image-digest pin).
+2. **Retention: age-sweep tied to the existing `retention_days` window
+   (shared cutoff with messages/faxes), PLUS end-user delete.** Call
+   transcripts are call content of real people; the count-cap-only
+   status quo is policy limbo. History gains a per-call delete button
+   (session owner scope) with confirm.
+3. **Autoplay: never silent.** Defensive `ctx.resume()` on capture plus
+   a suspended-context fallback that retries on the first user gesture
+   and announces the state — instead of accepting a silent no-op.
