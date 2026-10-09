@@ -27,7 +27,7 @@ jobs:
   # provides Go at the go.mod floor; GOTOOLCHAIN=local (set in that
   # shell) forbids surprise toolchain downloads inside the hermetic shell.
   go-tests:
-    name: go test ./...
+    name: go test -race ./...
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,7 +36,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
       - name: Run the Go test suite
-        run: nix develop .#ci -c go test ./...
+        run: nix develop .#ci -c go test -race ./...
 
   # Fast flake checks without the VM suites (module-check/vm-tests stay
   # consumer-side; they need KVM and tens of minutes).
