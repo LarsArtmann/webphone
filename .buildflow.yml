@@ -49,15 +49,12 @@ exclude:
 #       opaque foreign identifiers passed through verbatim.
 #     * EXPLICIT_PANIC x1 — go:embed guarantees the subtree; the panic
 #       guards a compile-time impossibility (programmer-error invariant).
-# - go-structure-linter: triaged 2026-09-18. Actionable findings FIXED
-#   (CONTRIBUTING.md, .editorconfig, .gitattributes, README install
-#   section, /webphone gitignore). Remaining rules contradict design:
-#     * assets-directory — assets intentionally live under internal/web/
-#       for go:embed; a root assets/ would break the single-binary build.
-#     * go-version — the toolchain is deliberately pinned by flake.nix
-#       (nixpkgs go 1.26.7); the linter's auto-repair to 1.27.1 re-creates
-#       the toolchain skew templ-components documented (same trap).
-#     * golangci-config — BuildFlow's own golangci-lint step owns that
+# - go-structure-linter: UNSKIPPED 2026-10-09 (SUPERB plan A5). Triaged
+#   2026-09-18 with actionable findings FIXED (CONTRIBUTING.md,
+#   .editorconfig, .gitattributes, README install section, /webphone
+#   gitignore); the remaining rule conflicts are suppressions in
+#   .go-structure-linter.yaml now, and go-version is detect-only (warning)
+#   upstream — it reports and never rewrites the flake-owned pin.
 #       responsibility (see the buildflow skill); a hand-curated config
 #       would fight auto-configuration.
 # - cqrs-lint: triaged 2026-09-18. All findings contradict this repo's
@@ -96,7 +93,10 @@ exclude:
 skip_steps:
   - pytest-test
   - branching-flow
-  - go-structure-linter
   - cqrs-lint
   - nix-hash-fix
   - gomod-check
+  # go-structure-linter UNSKIPPED 2026-10-09 (SUPERB plan A5): the go-version
+  # rule is detect-only in v0.11.3 (flake-owned toolchain pins are no longer
+  # rewritten); assets-directory/golangci-config moved to rule-level
+  # suppressions in .go-structure-linter.yaml.

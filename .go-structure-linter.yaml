@@ -1,0 +1,8 @@
+# go-structure-linter config — unskipped 2026-10-09 (SUPERB plan A5).
+# Rule-level dispositions (triaged 2026-09-18) live here instead of a
+# whole-tool skip in .buildflow.yml.
+suppressions:
+  - rule: assets-directory
+    reason: "assets intentionally live under internal/web/ for go:embed; a root assets/ would break the single-binary build"
+  - rule: golangci-config
+    reason: "BuildFlow's own golangci-lint step owns that responsibility; a hand-curated config would fight auto-configuration"
