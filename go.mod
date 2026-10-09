@@ -14,7 +14,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/v4 v4.13.2
 	github.com/larsartmann/go-branded-id v0.7.0
 	github.com/larsartmann/go-error-family v0.11.0
-	github.com/larsartmann/go-health v0.5.0
+	github.com/larsartmann/go-health v0.5.1
 	github.com/larsartmann/go-health-dashboard v0.10.2
 	github.com/larsartmann/go-paperless v0.4.2
 	github.com/larsartmann/go-sse v0.6.2
