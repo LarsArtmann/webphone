@@ -14,6 +14,21 @@
 # heavyweight gate, so the pipeline skips test steps for quick iteration.
 build_mode: fast
 #
+# Findings baseline + rule elevation for branching-flow (see the
+# UNSKIPPED note below): the 19 type-node findings (mixin/dupe/
+# large-struct) cannot carry //nolint directives — branching-flow v0.6.4
+# ignores every nolint placement on TypeDecl nodes (verified 2026-10-11:
+# inline, standalone-above, first-field, bare, nolint:start block) — so
+# they live here as accepted noise, each with its ruling documented as a
+# `branching-flow ... (baselined)` comment at the site. error_rules
+# elevates exactly these rules (plus the panic-correctness pair) so the
+# gate fails on NEW findings of them while the baselined IDs stay
+# accepted; per-site findings that DO honor nolints (statements, fields,
+# signatures) are suppressed in-code with reasons instead of here.
+baseline: .buildflow-baseline.json
+error_rules:
+  branching-flow: [COMPOSITION_mixin, DUPLICATE_TYPE, ANTI_PATTERN_large-struct, NIL_POINTER_DEREF, INDEX_OUT_OF_RANGE]
+#
 # exclude: the SIP island sources in internal/web/assets/island/ AND the
 # shell glue (internal/web/assets/shell.js) are owned by the flake's
 # treefmt gate (prettier): BuildFlow's oxfmt would reformat them into a
@@ -30,25 +45,23 @@ exclude:
 # Whole-tool skips (skip_steps cannot be per-file or per-rule):
 # - pytest-test: no Python exists; the Go suite plus the upstream browser
 #   E2E (owned by the consuming telephony stack) cover this repo.
-# - branching-flow: triaged 2026-09-18. Every actionable finding was FIXED
-#   (3-way SharedContact split brain consolidated, ICEServer wire mirror
-#   removed, Upload/InboundAttachment unified, Webhook/FaxWebhook mixin
-#   extracted, shared rowScanner, slices.Reverse, value-typed sessions).
-#   The remaining 67 findings are policy opinions that contradict this
-#   repo's design, not defects (update 2026-09-22: branching-flow v0.6.2's
-#   SDK severity cap downgrades the error-severity ones to warnings, so the
-#   default error gate would hold — the skip stays as documented noise
-#   policy, not a gating necessity):
-#     * PHANTOM_TYPE x62 — wants phantom types for display fields
-#       (Body, MimeType, Pages, Unread, Credential…); maximalist churn
-#       with zero safety gain for non-identity data.
-#     * COMPOSITION_mixin x2 — InboundMessage vs OutboundMessage share
-#       fields BY DESIGN (different lifecycles, see internal/domain);
-#       fax.Service vs messaging.Service symmetry is intentional.
-#     * STRONG_ID x2 — pbx UUIDs are the upstream phone-api wire format,
-#       opaque foreign identifiers passed through verbatim.
-#     * EXPLICIT_PANIC x1 — go:embed guarantees the subtree; the panic
-#       guards a compile-time impossibility (programmer-error invariant).
+# - branching-flow: UNSKIPPED 2026-10-11 (re-triage completed — the
+#   "stays until re-triaged into targeted nolints + a baseline" condition
+#   from the 2026-10-11 ratification sitting). History: triaged 2026-09-18
+#   (every actionable finding FIXED then: 3-way SharedContact split brain
+#   consolidated, ICEServer wire mirror removed, Upload/InboundAttachment
+#   unified, Webhook/FaxWebhook mixin extracted, shared rowScanner,
+#   slices.Reverse, value-typed sessions), re-triaged 2026-10-11 02:19
+#   (72-row paste: server.EventName fixed, rest attributed). The 03:40
+#   40-row run was PARTIAL (an ENOSPC package-load error dropped cmd/ and
+#   some panic rows); the post-edit full run stands at 19 type-node
+#   findings — all baselined with site comments — while every
+#   statement-level finding is fixed or nolint-suppressed with a reason.
+#   Suppression mechanics discovered 2026-10-11: //nolint:branching-flow
+#   WORKS for statement/field/signature findings; it does NOT for
+#   mixin/dupe/large-struct (TypeDecl) findings in v0.6.4 — routed
+#   upstream. The old PHANTOM/STRONG_ID policy opinions stand as in-code
+#   nolints (registry rulings cited per site).
 # - go-structure-linter: UNSKIPPED 2026-10-09 (SUPERB plan A5). Triaged
 #   2026-09-18 with actionable findings FIXED (CONTRIBUTING.md,
 #   .editorconfig, .gitattributes, README install section, /webphone
@@ -92,7 +105,6 @@ exclude:
 # train start AND end (AGENTS rule). Rationale lives with each skip.
 skip_steps:
   - pytest-test
-  - branching-flow
   - cqrs-lint
   - nix-hash-fix
   - gomod-check

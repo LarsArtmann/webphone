@@ -1,0 +1,290 @@
+{
+  "tool": {
+    "name": "buildflow-baseline"
+  },
+  "findings": [
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/asr/google.go:46:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/asr/google.go",
+        "line": 46,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:ANTI_PATTERN_large-struct:internal/config/config.go:38:6",
+      "rule": "ANTI_PATTERN_large-struct",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"ANTI_PATTERN_large-struct\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 38,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:126:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 126,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:159:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 159,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:internal/config/config.go:179:0",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 179,
+        "column": 0,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:179:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 179,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:internal/config/config.go:190:0",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/config/config.go",
+        "line": 190,
+        "column": 0,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/crm/client.go:54:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/crm/client.go",
+        "line": 54,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:internal/domain/contact.go:23:0",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/domain/contact.go",
+        "line": 23,
+        "column": 0,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/domain/message.go:114:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/domain/message.go",
+        "line": 114,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/domain/transcript.go:12:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/domain/transcript.go",
+        "line": 12,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/domain/transcript.go:25:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/domain/transcript.go",
+        "line": 25,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/fax/service.go:58:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/fax/service.go",
+        "line": 58,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:internal/server/contacts_api.go:42:0",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/server/contacts_api.go",
+        "line": 42,
+        "column": 0,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/server/idempotency.go:20:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/server/idempotency.go",
+        "line": 20,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:ANTI_PATTERN_large-struct:internal/server/server.go:129:6",
+      "rule": "ANTI_PATTERN_large-struct",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"ANTI_PATTERN_large-struct\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/server/server.go",
+        "line": 129,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/store/sweep.go:15:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/store/sweep.go",
+        "line": 15,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:internal/vcard/vcard.go:16:0",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/vcard/vcard.go",
+        "line": 16,
+        "column": 0,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
+    }
+  ],
+  "summary": {
+    "total": 18,
+    "bySeverity": {
+      "warning": 18
+    },
+    "byFixStrategy": {
+      "none": 18
+    },
+    "filesAffected": 12,
+    "filesScanned": 0,
+    "suppressed": 0
+  },
+  "schema_version": 1
+}
