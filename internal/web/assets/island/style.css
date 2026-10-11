@@ -50,7 +50,8 @@
     --warn: #9a5b0a;
     --ok: #0e8752;
     --led: #a6b2bd;
-    --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
+    --shadow:
+      0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
     --key: #ffffff;
     --key-down: #e7ecf1;
   }

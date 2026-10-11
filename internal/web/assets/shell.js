@@ -11,7 +11,9 @@
   var svgIconHtml = function (path) {
     return (
       '<svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
-      '<path d="' + path + '"></path></svg>'
+      '<path d="' +
+      path +
+      '"></path></svg>'
     );
   };
   var WP_PLAY_SVG = svgIconHtml("M8 5.14v13.72L19 12 8 5.14z");
