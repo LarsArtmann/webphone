@@ -50,22 +50,30 @@ pbx-UUID class; wire DTOs stay raw).
 ## The gate
 
 - `.buildflow.yml`: `branching-flow` REMOVED from `skip_steps`;
-  `strict: true` + `baseline: .buildflow-baseline.json` added.
-- Semantics achieved: strict promotes the findings gate to warning
-  severity for every tool; the baseline accepts the 19 reviewed
-  type-node findings → the gate fails on NEW findings only, fleet-wide
-  (not just branching-flow).
-- `error_rules` (finer per-rule elevation, exists in unreleased
-  BuildFlow source) is UNKNOWN to the installed binary (25b07c4) and
-  warns at every load — left OUT until the installed binary knows it.
-- Verified: focused step exit 0 with 19 accepted findings; negative
-  test — removing one baseline entry trips the gate (restored);
-  full pipeline 64/64 steps green under `--strict`.
-- Brittleness (accepted): baseline IDs embed host-absolute paths. Every
-  buildflow consumer on this repo runs from the canonical checkout on
-  this host (CI's go-tests job does not run buildflow; release.sh and
-  the dev loop are host-local). A moved checkout re-baselines with one
-  command (AGENTS.md documents it).
+  `baseline: .buildflow-baseline.json` added. The tool now runs in
+  every pipeline and its findings are visible in every summary.
+- `strict: true` (global warning-severity gate) was MEASURED and
+  REJECTED: the full run carries 604 pre-existing warning findings
+  from other tools (bandit 335, govulncheck 94 — mostly the
+  go1.26-vs-1.27 loader mismatch — art-dupl 74, and 10 more), and
+  strict is fleet-wide, not per-tool.
+- The designed completion is `error_rules` (per-rule severity
+  elevation: baselined IDs stay accepted, NEW findings of the elevated
+  rules trip the gate). It exists in BuildFlow source (≥899077a,
+  dogfooded in the BuildFlow repo) but NOT in the installed binary
+  (25b07c4 — the key warns as unknown at every load). The exact
+  ready-to-paste block waits in `.buildflow.yml`; add it when the
+  installed binary knows the key.
+- Verified end-to-end on the installed binary: focused step exit 0
+  with the 19 accepted findings; exact-ID matching proven in both
+  directions — the CLI-shaped baseline (zero ID matches) tripped the
+  gate under `--strict` with all 7 warning-severity rows named, the
+  SDK-shaped baseline passes.
+- Brittleness (accepted, upstream #13): baseline IDs embed
+  host-absolute paths. Every buildflow consumer on this repo runs from
+  the canonical checkout on this host (CI's go-tests job does not run
+  buildflow; release.sh and the dev loop are host-local). A moved
+  checkout re-baselines with one command (AGENTS.md documents it).
 
 ## Rulings consumed (no re-litigation)
 
