@@ -224,31 +224,31 @@ recovered, all with root causes named:
 
 ## f) Next tasks (ranked; feeds HARVEST)
 
-| # | Task | Impact | Effort | Cat |
-|---|------|--------|--------|-----|
-| 1 | TODO_LIST: apply the `error_rules` block (in `.buildflow.yml`) the day the installed BuildFlow knows the key | High | S | Quality |
-| 2 | Owner: review + tick banners on branching-flow #12/#13 | High | S | Documentation |
-| 3 | Decide 604-warning disposition: per-tool `warnings_budget` markers vs triage train vs skips | High | S/M | Quality |
-| 4 | Build the ratified `art-dupl baseline` file + CI `art-dupl check` (new-only) from the registry's intentional groups | High | M | Quality |
-| 5 | Pin govulncheck to a go1.27-built binary via `tool_paths` (94 loader-mismatch findings) | High | S | Quality |
-| 6 | Run full `nix flake check` for `da24a12`'s delta (comments + rename + config) | Medium | M | Quality |
-| 7 | HARVEST this report's section (f) into TODO_LIST/ROADMAP | High | S | Documentation |
-| 8 | Add a drift alarm: CI/test asserting branching-flow findings == 19 (or the baseline count) | Medium | S | Quality |
-| 9 | Dedup the `.buildflow.yml` UNSKIPPED-note/baseline-block narrative overlap | Low | S | Cleanup |
-| 10 | Fix the 02-19 status doc's broken list formatting | Low | S | Documentation |
-| 11 | Decide `-body.md` drafts artifacts: keep as provenance or gitignore | Low | S | Cleanup |
-| 12 | Exercise the pre-commit hook once under the new baseline config | Medium | S | Quality |
-| 13 | When #12 lands upstream: convert the 19 `(baselined)` comments to real directives, collapse baseline to zero | Medium | S | Quality |
-| 14 | When #13 lands upstream: drop the host-absolute-path AGENTS caveat; re-baseline once IDs normalize | Medium | S | Quality |
-| 15 | Push the remaining 8 unsuppressed analyzers upstream as one sweep-extension comment on #12 (boolblind, splitbrain, contextguard, nakedreturn, flagparam, ifacecomplete, …) | Medium | S | Quality |
-| 16 | CHANGELOG decision for this delta (see g/2) and, if yes, the line | Low | S | Documentation |
-| 17 | Re-run `scripts/webphone-smoke.py` once against a fresh binary (post-rename confidence) | Low | S | Quality |
-| 18 | Consider `warnings_budget` render-level markers for bandit/govulncheck pending the g/1 decision (drift tripwire without gating) | Medium | S | Quality |
-| 19 | Update the 02-19 status doc's verdict table with a pointer to the 06-00 doc (cross-session continuity) | Low | S | Documentation |
-| 20 | Registry: next quarterly baseline/suppressed-set audit is calendared 2027-01-11 — add to TODO_LIST so it survives memory | Medium | S | Documentation |
-| 21 | If the daemon push-stall recurs: consider a cron/watchdog that applies the 60-min manual-push bar automatically | Medium | M | Quality |
-| 22 | settingsRow adoption train (DefinitionList) — IN PROGRESS per the registry, predates this session; keep visible | Medium | M | Feature |
-| 23 | Add the branching-flow nolint mechanics (statement vs TypeDecl) to the lessons doc if it recurs in a second session | Low | S | Documentation |
+| #  | Task                                                                                                                                                                       | Impact | Effort | Cat           |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | TODO_LIST: apply the `error_rules` block (in `.buildflow.yml`) the day the installed BuildFlow knows the key                                                               | High   | S      | Quality       |
+| 2  | Owner: review + tick banners on branching-flow #12/#13                                                                                                                     | High   | S      | Documentation |
+| 3  | Decide 604-warning disposition: per-tool `warnings_budget` markers vs triage train vs skips                                                                                | High   | S/M    | Quality       |
+| 4  | Build the ratified `art-dupl baseline` file + CI `art-dupl check` (new-only) from the registry's intentional groups                                                        | High   | M      | Quality       |
+| 5  | Pin govulncheck to a go1.27-built binary via `tool_paths` (94 loader-mismatch findings)                                                                                    | High   | S      | Quality       |
+| 6  | Run full `nix flake check` for `da24a12`'s delta (comments + rename + config)                                                                                              | Medium | M      | Quality       |
+| 7  | HARVEST this report's section (f) into TODO_LIST/ROADMAP                                                                                                                   | High   | S      | Documentation |
+| 8  | Add a drift alarm: CI/test asserting branching-flow findings == 19 (or the baseline count)                                                                                 | Medium | S      | Quality       |
+| 9  | Dedup the `.buildflow.yml` UNSKIPPED-note/baseline-block narrative overlap                                                                                                 | Low    | S      | Cleanup       |
+| 10 | Fix the 02-19 status doc's broken list formatting                                                                                                                          | Low    | S      | Documentation |
+| 11 | Decide `-body.md` drafts artifacts: keep as provenance or gitignore                                                                                                        | Low    | S      | Cleanup       |
+| 12 | Exercise the pre-commit hook once under the new baseline config                                                                                                            | Medium | S      | Quality       |
+| 13 | When #12 lands upstream: convert the 19 `(baselined)` comments to real directives, collapse baseline to zero                                                               | Medium | S      | Quality       |
+| 14 | When #13 lands upstream: drop the host-absolute-path AGENTS caveat; re-baseline once IDs normalize                                                                         | Medium | S      | Quality       |
+| 15 | Push the remaining 8 unsuppressed analyzers upstream as one sweep-extension comment on #12 (boolblind, splitbrain, contextguard, nakedreturn, flagparam, ifacecomplete, …) | Medium | S      | Quality       |
+| 16 | CHANGELOG decision for this delta (see g/2) and, if yes, the line                                                                                                          | Low    | S      | Documentation |
+| 17 | Re-run `scripts/webphone-smoke.py` once against a fresh binary (post-rename confidence)                                                                                    | Low    | S      | Quality       |
+| 18 | Consider `warnings_budget` render-level markers for bandit/govulncheck pending the g/1 decision (drift tripwire without gating)                                            | Medium | S      | Quality       |
+| 19 | Update the 02-19 status doc's verdict table with a pointer to the 06-00 doc (cross-session continuity)                                                                     | Low    | S      | Documentation |
+| 20 | Registry: next quarterly baseline/suppressed-set audit is calendared 2027-01-11 — add to TODO_LIST so it survives memory                                                   | Medium | S      | Documentation |
+| 21 | If the daemon push-stall recurs: consider a cron/watchdog that applies the 60-min manual-push bar automatically                                                            | Medium | M      | Quality       |
+| 22 | settingsRow adoption train (DefinitionList) — IN PROGRESS per the registry, predates this session; keep visible                                                            | Medium | M      | Feature       |
+| 23 | Add the branching-flow nolint mechanics (statement vs TypeDecl) to the lessons doc if it recurs in a second session                                                        | Low    | S      | Documentation |
 
 ## g) Questions I cannot answer myself
 

@@ -15,25 +15,25 @@ explicit-format exception.
 
 ## a) FULLY DONE
 
-| # | Work | Verification |
-| - | ---- | ------------ |
-| 1 | All 4 matching skills loaded before acting (deduplicate-code, data-model-review, how-to-golang, buildflow; + status-report & brutal-self-review for this report) | — |
-| 2 | Dedup registry + `.buildflow.yml` triage classes read BEFORE adjudicating; no standing ruling re-litigated or overturned | registry consulted at HEAD |
-| 3 | Every one of the 72 report rows adjudicated; every flagged site re-read at HEAD (not one site per group — all occurrences) | status doc 02-19 tables |
-| 4 | `server.EventName` fix: defined type over the 5 SSE event constants; `Publish`/`Notifier.publish` signatures typed; transpose now a compile error | build clean; server+app suites green; full `go test -count=1 ./...` green |
-| 5 | Two accepted embed-panic sites carry one-line rationale comments (assets glob, fs.Sub) | in source |
-| 6 | Triage record: status doc (02-19) + registry sweep-log line + CHANGELOG `[Unreleased]` entry | committed by daemon, pushed |
-| 7 | `nix fmt` clean (193 files formatted, 0 changed after edits) | exit 0 |
-| 8 | **vendorHash re-pin** — the daemon's 10-09 go-health v0.5.1 bump landed without re-pinning; `got:` hash applied to `nix/packages.nix` | `nix build .#webphone.goModules` green; CI sandbox build green |
-| 9 | **securitymd gate findings fixed** in SECURITY.md (concrete advisory URL, honest best-effort response-time statement, "Security practices" heading alias) | `buildflow -s securitymd`: total 0 |
-| 10 | **Manual-push bar correctly invoked and documented**: origin/main red since 10-09 17:36 + verified fix in hand → pushed 85de30c → watched to GREEN (`gh run watch` exit 0) | `git ls-remote` = HEAD; CI run 38099051305 success |
-| 11 | branching-flow re-run post-fix: phantom 14 → 13 (the fixed row gone), all other families unchanged — zero new findings | `/tmp/bf-now.md` per-family counts |
-| 12 | buildflow full gate exit 0 at session end (with the documented "9 tools unavailable" noise + on-demand skips intact) | exit code captured |
+| #  | Work                                                                                                                                                                       | Verification                                                              |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1  | All 4 matching skills loaded before acting (deduplicate-code, data-model-review, how-to-golang, buildflow; + status-report & brutal-self-review for this report)           | —                                                                         |
+| 2  | Dedup registry + `.buildflow.yml` triage classes read BEFORE adjudicating; no standing ruling re-litigated or overturned                                                   | registry consulted at HEAD                                                |
+| 3  | Every one of the 72 report rows adjudicated; every flagged site re-read at HEAD (not one site per group — all occurrences)                                                 | status doc 02-19 tables                                                   |
+| 4  | `server.EventName` fix: defined type over the 5 SSE event constants; `Publish`/`Notifier.publish` signatures typed; transpose now a compile error                          | build clean; server+app suites green; full `go test -count=1 ./...` green |
+| 5  | Two accepted embed-panic sites carry one-line rationale comments (assets glob, fs.Sub)                                                                                     | in source                                                                 |
+| 6  | Triage record: status doc (02-19) + registry sweep-log line + CHANGELOG `[Unreleased]` entry                                                                               | committed by daemon, pushed                                               |
+| 7  | `nix fmt` clean (193 files formatted, 0 changed after edits)                                                                                                               | exit 0                                                                    |
+| 8  | **vendorHash re-pin** — the daemon's 10-09 go-health v0.5.1 bump landed without re-pinning; `got:` hash applied to `nix/packages.nix`                                      | `nix build .#webphone.goModules` green; CI sandbox build green            |
+| 9  | **securitymd gate findings fixed** in SECURITY.md (concrete advisory URL, honest best-effort response-time statement, "Security practices" heading alias)                  | `buildflow -s securitymd`: total 0                                        |
+| 10 | **Manual-push bar correctly invoked and documented**: origin/main red since 10-09 17:36 + verified fix in hand → pushed 85de30c → watched to GREEN (`gh run watch` exit 0) | `git ls-remote` = HEAD; CI run 38099051305 success                        |
+| 11 | branching-flow re-run post-fix: phantom 14 → 13 (the fixed row gone), all other families unchanged — zero new findings                                                     | `/tmp/bf-now.md` per-family counts                                        |
+| 12 | buildflow full gate exit 0 at session end (with the documented "9 tools unavailable" noise + on-demand skips intact)                                                       | exit code captured                                                        |
 
 ## b) PARTIALLY DONE
 
 1. **Registry protocol step 1 (order inverted).** The protocol says run
-   the detector yourself at HEAD *before* attributing a paste ("a paste
+   the detector yourself at HEAD _before_ attributing a paste ("a paste
    is evidence of ITS run, not of HEAD"). I triaged the paste by reading
    every site at HEAD (substance covered) and re-ran branching-flow only
    at the END to verify the delta. Right result, wrong order — the order
@@ -257,8 +257,8 @@ already):**
 
 ---
 
-*Snapshot only — stale the moment a train lands. Section (f) is
-HARVEST fuel, not a commitment list.*
+_Snapshot only — stale the moment a train lands. Section (f) is
+HARVEST fuel, not a commitment list._
 
 ---
 

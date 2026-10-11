@@ -12,11 +12,11 @@ edit; the full set is 46 rows.
 
 ## What landed
 
-| Disposition | Rows | Mechanism |
-| ----------- | ---- | --------- |
-| Fixed honestly | 2 | `likeEscape`/`SearchThreads` unified on `needle` (the transcripts.go:94 collision died by vocabulary unification, not types); `server.EventName` was the earlier 02:19 fix |
-| nolint-suppressed | 26 | statement/field/signature-line `//nolint:branching-flow // reason` directives, each citing its registry/ruling source |
-| Baselined | 19 | type-node findings (12 COMPOSITION_mixin + 5 DUPLICATE_TYPE + 2 ANTI_PATTERN_large-struct) in `.buildflow-baseline.json`, each with a plain `branching-flow ... (baselined)` rationale comment at the site |
+| Disposition       | Rows | Mechanism                                                                                                                                                                                                  |
+| ----------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed honestly    | 2    | `likeEscape`/`SearchThreads` unified on `needle` (the transcripts.go:94 collision died by vocabulary unification, not types); `server.EventName` was the earlier 02:19 fix                                 |
+| nolint-suppressed | 26   | statement/field/signature-line `//nolint:branching-flow // reason` directives, each citing its registry/ruling source                                                                                      |
+| Baselined         | 19   | type-node findings (12 COMPOSITION_mixin + 5 DUPLICATE_TYPE + 2 ANTI_PATTERN_large-struct) in `.buildflow-baseline.json`, each with a plain `branching-flow ... (baselined)` rationale comment at the site |
 
 The 26 nolints cover: the vcard nil-guard FP, bootreport/transcripts
 index FPs (bounds conditions and the map-to-slice invariant), the two

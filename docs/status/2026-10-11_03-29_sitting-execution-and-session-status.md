@@ -17,18 +17,18 @@ daemon activity (the 10-08 truncation class did not recur).
 
 ## a) FULLY DONE
 
-| # | Work | Verification |
-| - | ---- | ------------ |
-| 1 | Original triage train (report #1 items): 72-row adjudication, `server.EventName` fix, vendorHash re-pin, SECURITY.md gate fixes, main un-redened | CI green on `85de30c`; branching-flow delta verified (phantom 14→13) |
-| 2 | **All 10 open owner calls asked** (two structured question batches: 5 registry calls + CRM/Paperless; 5 session-spawned) | answers recorded in registry/AGENTS/TODO |
-| 3 | **Registry: all five open calls resolved** — new "Ratified rulings" section; Protocol rewritten to `-t 1` + zero-target + upstream-FP-filing + quarterly baseline/suppressed-set audits; CRM/Paperless routed upstream; two sweep-log lines appended | docs/dedup-registry.md @ HEAD |
-| 4 | **AGENTS.md: 4 corrections** — ratified `-t 1` baseline line; STALE "branching-flow honors NO nolint" claim corrected; both INTERIM bars → RATIFIED; dep-lane decision row | 137 lines, under the 377 cap |
-| 5 | **Live capability verification before filing**: `//nolint:branching-flow` works (panic row suppressed 9→8, then restored); `branching-flow all --baseline` exists; art-dupl has `baseline`/`check`/`--disable-pattern` → **no art-dupl issue needed** (the zero-target workflow is already supportable locally) | command transcripts in session |
-| 6 | **branching-flow#8 + #9 filed** (phantom class scoping; panic FP shapes), voice-checked (0 FAIL / 0 WARN each), verified landed, non-duplicate of #7 confirmed; drafts preserved in `docs/drafts/` | gh issue list; issue URLs in final message |
-| 7 | **settingsRow resolved to ADOPT**: templ-components already ships `display.DefinitionList` whose `DefinitionItem.DetailComponent` override covers all 7 divergent shapes — no new component anywhere; adoption train queued | source-read of definition_list.templ; registry + TODO updated |
-| 8 | **TODO_LIST harvested**: sitting section (6 items) + last-sweep line + evidence citations | TODO_LIST @ HEAD |
-| 9 | `.buildflow.yml` load-bearing skip re-read after daemon activity — intact | rg + sed check |
-| 10 | 02-48 status doc addendum: which §f items the sitting superseded | appended |
+| #  | Work                                                                                                                                                                                                                                                                                                            | Verification                                                         |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1  | Original triage train (report #1 items): 72-row adjudication, `server.EventName` fix, vendorHash re-pin, SECURITY.md gate fixes, main un-redened                                                                                                                                                                | CI green on `85de30c`; branching-flow delta verified (phantom 14→13) |
+| 2  | **All 10 open owner calls asked** (two structured question batches: 5 registry calls + CRM/Paperless; 5 session-spawned)                                                                                                                                                                                        | answers recorded in registry/AGENTS/TODO                             |
+| 3  | **Registry: all five open calls resolved** — new "Ratified rulings" section; Protocol rewritten to `-t 1` + zero-target + upstream-FP-filing + quarterly baseline/suppressed-set audits; CRM/Paperless routed upstream; two sweep-log lines appended                                                            | docs/dedup-registry.md @ HEAD                                        |
+| 4  | **AGENTS.md: 4 corrections** — ratified `-t 1` baseline line; STALE "branching-flow honors NO nolint" claim corrected; both INTERIM bars → RATIFIED; dep-lane decision row                                                                                                                                      | 137 lines, under the 377 cap                                         |
+| 5  | **Live capability verification before filing**: `//nolint:branching-flow` works (panic row suppressed 9→8, then restored); `branching-flow all --baseline` exists; art-dupl has `baseline`/`check`/`--disable-pattern` → **no art-dupl issue needed** (the zero-target workflow is already supportable locally) | command transcripts in session                                       |
+| 6  | **branching-flow#8 + #9 filed** (phantom class scoping; panic FP shapes), voice-checked (0 FAIL / 0 WARN each), verified landed, non-duplicate of #7 confirmed; drafts preserved in `docs/drafts/`                                                                                                              | gh issue list; issue URLs in final message                           |
+| 7  | **settingsRow resolved to ADOPT**: templ-components already ships `display.DefinitionList` whose `DefinitionItem.DetailComponent` override covers all 7 divergent shapes — no new component anywhere; adoption train queued                                                                                     | source-read of definition_list.templ; registry + TODO updated        |
+| 8  | **TODO_LIST harvested**: sitting section (6 items) + last-sweep line + evidence citations                                                                                                                                                                                                                       | TODO_LIST @ HEAD                                                     |
+| 9  | `.buildflow.yml` load-bearing skip re-read after daemon activity — intact                                                                                                                                                                                                                                       | rg + sed check                                                       |
+| 10 | 02-48 status doc addendum: which §f items the sitting superseded                                                                                                                                                                                                                                                | appended                                                             |
 
 ## b) PARTIALLY DONE
 
@@ -225,5 +225,5 @@ daemon activity (the 10-08 truncation class did not recur).
 
 ---
 
-*Snapshot; stale on next train. Section (f) rows 1-15 are the executed
-list's queue; TODO_LIST.md remains the one actionable home.*
+_Snapshot; stale on next train. Section (f) rows 1-15 are the executed
+list's queue; TODO_LIST.md remains the one actionable home._

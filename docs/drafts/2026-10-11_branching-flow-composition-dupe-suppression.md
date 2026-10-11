@@ -19,14 +19,14 @@ branching-flow 0.6.4, run against LarsArtmann/webphone during the 2026-10-11 re-
 
 `COMPOSITION_mixin` on `internal/asr/asr.go` (`asr.Client`), six placements, finding stays in all six:
 
-| Placement | Result |
-| --- | --- |
+| Placement                                                                | Result         |
+| ------------------------------------------------------------------------ | -------------- |
 | `//nolint:branching-flow // reason` inline on the `type X struct {` line | still reported |
-| same form, standalone comment line directly above | still reported |
-| same form, on the first field line | still reported |
-| bare `//nolint:branching-flow` (no reason) | still reported |
-| `//nolint:start:branching-flow` block wrapping the decl | still reported |
-| native `//branching-flow:ignore composition <reason>` above the decl | still reported |
+| same form, standalone comment line directly above                        | still reported |
+| same form, on the first field line                                       | still reported |
+| bare `//nolint:branching-flow` (no reason)                               | still reported |
+| `//nolint:start:branching-flow` block wrapping the decl                  | still reported |
+| native `//branching-flow:ignore composition <reason>` above the decl     | still reported |
 
 ## Why (source)
 

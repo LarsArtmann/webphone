@@ -87,21 +87,21 @@ Verdict classes: **REAL** (fix code) · **FP/RULE** (per-site
 suppression with reason) · **NOISE-TOOL** (tool/config defect — fix
 config or upstream) · **POLICY** (owner-shaped disposition).
 
-| Tool | Count | Verdict | Substance |
-|---|---|---|---|
-| bandit-check | 335 | **NOISE-TOOL + FP/RULE** | ~329 = BuildFlow provider swallowing bandit's stdout (banner/progress lines counted as findings) → upstream BuildFlow issue; ~6 real rows (B101 asserts, B105/B107 dev secrets, B108 tmp, B306 mktemp, B310 urlopen, B404/B603/B607 subprocess) in scripts/tests — nosec-with-reason class |
-| govulncheck | 94 | **NOISE-TOOL** | 87 "requires newer Go version go1.27" (binary built go1.26, cannot load the module — zero real scans) + 3 parse crumbs → `tool_paths` pin to a go1.27-built binary |
-| art-dupl | 90 | **POLICY→REAL** | the clone groups; registry-ratified `-t 1` sweep + `art-dupl baseline` file + CI `art-dupl check` (TODO_LIST sitting item 4 — never built) |
-| file-size-check | 28 | **POLICY** | real list (i18n.go 424, webhooks_test 418, middleware_test 351, …) — is 350 a real limit here? i18n is the one-home dictionary |
-| vulnix | 21 | **POLICY** | real advisories, but the release gate (`nix run .#vulnix` + `webphone-vulnix-triage`) owns verdicts — buildflow step redundancy question |
-| go-auto-upgrade | 19 | **POLICY** | 11 lo.Map/Reduce advisories (3 note lo is not even a dependency), ~5 jsonv1-boundary advisories (the deliberate mixed-jsonv2 state) → budget/skip-with-rationale class |
-| golangci-lint | 18 | **REAL + QUESTION** | errcheck (rows.Close, testDB.Close — real) + SA1019 usermgmt deprecations; `identity-model/v4` exists in vendor, usermgmt/v4 used in exactly 5 files → bounded migration, but the 2026-10-05 ruling says "userauth rides usermgmt.UserID" → owner gate (g/2) |
-| jscpd | 6 | **FP/RULE** | island-tests helper similarity (stub wiring) — intentional test-fixture class, attribute against registry |
-| lychee | 5→0 | **INVESTIGATE** | full-run said 5, isolated drill says 0 — unexplained, reconcile |
-| nix-checker | 2 | **POLICY (minor)** | vendorHash-to-dedicated-file style advice |
-| nix-flake-check | 2 | **REAL (trivial)** | `apps.*.vulnix` lacks `meta.description`; aarch64-omitted warning |
-| vulture | 3 | **FP/RULE + REAL (1)** | `do_POST`/`log_message` are http.server overrides (FP); `binary_location` unused attr likely real |
-| branching-flow | 19 | DONE | baselined (earlier this session) |
+| Tool            | Count | Verdict                  | Substance                                                                                                                                                                                                                                                                                  |
+| --------------- | ----- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| bandit-check    | 335   | **NOISE-TOOL + FP/RULE** | ~329 = BuildFlow provider swallowing bandit's stdout (banner/progress lines counted as findings) → upstream BuildFlow issue; ~6 real rows (B101 asserts, B105/B107 dev secrets, B108 tmp, B306 mktemp, B310 urlopen, B404/B603/B607 subprocess) in scripts/tests — nosec-with-reason class |
+| govulncheck     | 94    | **NOISE-TOOL**           | 87 "requires newer Go version go1.27" (binary built go1.26, cannot load the module — zero real scans) + 3 parse crumbs → `tool_paths` pin to a go1.27-built binary                                                                                                                         |
+| art-dupl        | 90    | **POLICY→REAL**          | the clone groups; registry-ratified `-t 1` sweep + `art-dupl baseline` file + CI `art-dupl check` (TODO_LIST sitting item 4 — never built)                                                                                                                                                 |
+| file-size-check | 28    | **POLICY**               | real list (i18n.go 424, webhooks_test 418, middleware_test 351, …) — is 350 a real limit here? i18n is the one-home dictionary                                                                                                                                                             |
+| vulnix          | 21    | **POLICY**               | real advisories, but the release gate (`nix run .#vulnix` + `webphone-vulnix-triage`) owns verdicts — buildflow step redundancy question                                                                                                                                                   |
+| go-auto-upgrade | 19    | **POLICY**               | 11 lo.Map/Reduce advisories (3 note lo is not even a dependency), ~5 jsonv1-boundary advisories (the deliberate mixed-jsonv2 state) → budget/skip-with-rationale class                                                                                                                     |
+| golangci-lint   | 18    | **REAL + QUESTION**      | errcheck (rows.Close, testDB.Close — real) + SA1019 usermgmt deprecations; `identity-model/v4` exists in vendor, usermgmt/v4 used in exactly 5 files → bounded migration, but the 2026-10-05 ruling says "userauth rides usermgmt.UserID" → owner gate (g/2)                               |
+| jscpd           | 6     | **FP/RULE**              | island-tests helper similarity (stub wiring) — intentional test-fixture class, attribute against registry                                                                                                                                                                                  |
+| lychee          | 5→0   | **INVESTIGATE**          | full-run said 5, isolated drill says 0 — unexplained, reconcile                                                                                                                                                                                                                            |
+| nix-checker     | 2     | **POLICY (minor)**       | vendorHash-to-dedicated-file style advice                                                                                                                                                                                                                                                  |
+| nix-flake-check | 2     | **REAL (trivial)**       | `apps.*.vulnix` lacks `meta.description`; aarch64-omitted warning                                                                                                                                                                                                                          |
+| vulture         | 3     | **FP/RULE + REAL (1)**   | `do_POST`/`log_message` are http.server overrides (FP); `binary_location` unused attr likely real                                                                                                                                                                                          |
+| branching-flow  | 19    | DONE                     | baselined (earlier this session)                                                                                                                                                                                                                                                           |
 
 Net: **~42 genuinely actionable rows** hiding inside 642 displayed
 findings; three config/tool defects (bandit provider, govulncheck pin,
@@ -172,40 +172,40 @@ Nothing broke this window. Honest failures, all process-class:
 
 ## f) Next tasks (ranked; feeds HARVEST — supersedes the 06-34 list where overlapping)
 
-| # | Task | Impact | Effort | Cat |
-|---|------|--------|--------|-----|
-| 1 | Write the SUPERB plan doc (Pareto tiers, both tables, mermaid graph) at docs/planning/ | High | S | Documentation |
-| 2 | CHANGELOG `[Unreleased]`: needle rename + gate rewiring + this window's fixes | High | S | Documentation |
-| 3 | TODO_LIST sync: strike done items 2b/3, add tool-disposition tasks | High | S | Documentation |
-| 4 | govulncheck: pin a go1.27-built binary via `tool_paths` (kills 94 noise rows, restores real scanning) | High | S | Quality |
-| 5 | bandit: nosec-with-reason the ~6 real rows (dev secrets/asserts/subprocess in scripts) | High | S | Quality |
-| 6 | File BuildFlow issue: bandit provider parses stdout as findings (banner/progress included); should run `-f json` | High | S | Quality |
-| 7 | golangci errcheck: fix rows.Close/testDB.Close per repo idiom | High | S | Bug |
-| 8 | art-dupl ratified ritual: `-t 1` sweep, attribute vs registry, `art-dupl baseline` file, CI `art-dupl check` | High | M | Quality |
-| 9 | SA1019: migrate usermgmt→identity-model in 5 files IF g/2 approves (auth: prefix + session suite per convention) | High | M | Quality |
-| 10 | vulnix: resolve gate ownership (g/3) then skip-or-wire the buildflow step with rationale | High | S | Quality |
-| 11 | file-size: apply g/1 decision (enforce-and-split vs tuned limit/excludes-with-reasons) | Medium | S/M | Quality |
-| 12 | go-auto-upgrade: disposition (budget marker or skip-with-rationale; lo-adoption contradicts root-library doctrine) | Medium | S | Quality |
-| 13 | vulture: remove `binary_location` if dead; nosec/attribute the http.server override FPs | Medium | S | Cleanup |
-| 14 | jscpd: attribute the 6 island-test clones against the registry's test-fixture class | Medium | S | Quality |
-| 15 | lychee: reconcile 5-vs-0 (rerun with -v; network dependence?) | Medium | S | Quality |
-| 16 | nix-flake-check: add `meta.description` to the vulnix app; assess aarch64 warning | Medium | S | Cleanup |
-| 17 | nix-checker: vendorHash-to-file advice — adopt or decline with reason | Low | S | Cleanup |
-| 18 | Drift alarm: assert branching-flow findings == baseline count in CI | Medium | S | Quality |
-| 19 | Full `nix flake check` (owed since the re-triage delta) | Medium | M | Quality |
-| 20 | Pre-commit hook exercise under the new baseline config | Medium | S | Quality |
-| 21 | 02-19 status doc formatting fix (third notice) | Low | S | Documentation |
-| 22 | `.buildflow.yml` UNSKIPPED-note/baseline-block narrative dedup | Low | S | Cleanup |
-| 23 | drafts `-body.md` artifacts: keep-or-gitignore decision | Low | S | Cleanup |
-| 24 | smoke re-run post-rename | Low | S | Quality |
-| 25 | go-error-family peek: confirm nothing actionable for the error_rules wait-state; note result | Low | S | Quality |
-| 26 | Upstream sweep-extension comment on branching-flow#12 for the 8 unsuppressed analyzers | Medium | S | Quality |
-| 27 | Owner: review + tick banners on #12/#13 | High | S | Documentation |
-| 28 | When error_rules ships: apply the parked block | Medium | S | Quality |
-| 29 | Quarterly audit 2027-01-11 → TODO_LIST standing row | Medium | S | Documentation |
-| 30 | Daemon push-stall watchdog (the 60-min bar applied automatically) | Medium | M | Quality |
-| 31 | CI verdict for `f3bf706` (docs-only push) | Low | S | Quality |
-| 32 | settingsRow adoption train (carried, pre-existing) | Medium | M | Feature |
+| #  | Task                                                                                                               | Impact | Effort | Cat           |
+| -- | ------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |
+| 1  | Write the SUPERB plan doc (Pareto tiers, both tables, mermaid graph) at docs/planning/                             | High   | S      | Documentation |
+| 2  | CHANGELOG `[Unreleased]`: needle rename + gate rewiring + this window's fixes                                      | High   | S      | Documentation |
+| 3  | TODO_LIST sync: strike done items 2b/3, add tool-disposition tasks                                                 | High   | S      | Documentation |
+| 4  | govulncheck: pin a go1.27-built binary via `tool_paths` (kills 94 noise rows, restores real scanning)              | High   | S      | Quality       |
+| 5  | bandit: nosec-with-reason the ~6 real rows (dev secrets/asserts/subprocess in scripts)                             | High   | S      | Quality       |
+| 6  | File BuildFlow issue: bandit provider parses stdout as findings (banner/progress included); should run `-f json`   | High   | S      | Quality       |
+| 7  | golangci errcheck: fix rows.Close/testDB.Close per repo idiom                                                      | High   | S      | Bug           |
+| 8  | art-dupl ratified ritual: `-t 1` sweep, attribute vs registry, `art-dupl baseline` file, CI `art-dupl check`       | High   | M      | Quality       |
+| 9  | SA1019: migrate usermgmt→identity-model in 5 files IF g/2 approves (auth: prefix + session suite per convention)   | High   | M      | Quality       |
+| 10 | vulnix: resolve gate ownership (g/3) then skip-or-wire the buildflow step with rationale                           | High   | S      | Quality       |
+| 11 | file-size: apply g/1 decision (enforce-and-split vs tuned limit/excludes-with-reasons)                             | Medium | S/M    | Quality       |
+| 12 | go-auto-upgrade: disposition (budget marker or skip-with-rationale; lo-adoption contradicts root-library doctrine) | Medium | S      | Quality       |
+| 13 | vulture: remove `binary_location` if dead; nosec/attribute the http.server override FPs                            | Medium | S      | Cleanup       |
+| 14 | jscpd: attribute the 6 island-test clones against the registry's test-fixture class                                | Medium | S      | Quality       |
+| 15 | lychee: reconcile 5-vs-0 (rerun with -v; network dependence?)                                                      | Medium | S      | Quality       |
+| 16 | nix-flake-check: add `meta.description` to the vulnix app; assess aarch64 warning                                  | Medium | S      | Cleanup       |
+| 17 | nix-checker: vendorHash-to-file advice — adopt or decline with reason                                              | Low    | S      | Cleanup       |
+| 18 | Drift alarm: assert branching-flow findings == baseline count in CI                                                | Medium | S      | Quality       |
+| 19 | Full `nix flake check` (owed since the re-triage delta)                                                            | Medium | M      | Quality       |
+| 20 | Pre-commit hook exercise under the new baseline config                                                             | Medium | S      | Quality       |
+| 21 | 02-19 status doc formatting fix (third notice)                                                                     | Low    | S      | Documentation |
+| 22 | `.buildflow.yml` UNSKIPPED-note/baseline-block narrative dedup                                                     | Low    | S      | Cleanup       |
+| 23 | drafts `-body.md` artifacts: keep-or-gitignore decision                                                            | Low    | S      | Cleanup       |
+| 24 | smoke re-run post-rename                                                                                           | Low    | S      | Quality       |
+| 25 | go-error-family peek: confirm nothing actionable for the error_rules wait-state; note result                       | Low    | S      | Quality       |
+| 26 | Upstream sweep-extension comment on branching-flow#12 for the 8 unsuppressed analyzers                             | Medium | S      | Quality       |
+| 27 | Owner: review + tick banners on #12/#13                                                                            | High   | S      | Documentation |
+| 28 | When error_rules ships: apply the parked block                                                                     | Medium | S      | Quality       |
+| 29 | Quarterly audit 2027-01-11 → TODO_LIST standing row                                                                | Medium | S      | Documentation |
+| 30 | Daemon push-stall watchdog (the 60-min bar applied automatically)                                                  | Medium | M      | Quality       |
+| 31 | CI verdict for `f3bf706` (docs-only push)                                                                          | Low    | S      | Quality       |
+| 32 | settingsRow adoption train (carried, pre-existing)                                                                 | Medium | M      | Feature       |
 
 ## g) Questions I cannot answer myself
 
@@ -223,9 +223,9 @@ Nothing broke this window. Honest failures, all process-class:
    seam, so I won't move without your read.
 3. **vulnix gate ownership**: the buildflow-embedded vulnix reports 21
    advisories ungated, while the release runbook's `nix run .#vulnix`
-   + `webphone-vulnix-triage` CLI is the fixture-checked verdict path.
-   Should the buildflow step be skipped as documented redundancy (the
-   release gate owns it), or should its output be wired through the
-   same triage verdict? Which gate is canonical is a runbook call.
+   - `webphone-vulnix-triage` CLI is the fixture-checked verdict path.
+     Should the buildflow step be skipped as documented redundancy (the
+     release gate owns it), or should its output be wired through the
+     same triage verdict? Which gate is canonical is a runbook call.
 
 — End of report. Waiting for instructions.
