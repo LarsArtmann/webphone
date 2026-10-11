@@ -151,7 +151,7 @@ func TestSSEStreamCarriesConnectedThenEvents(t *testing.T) {
 	server.hubs.Publish(ext, sseEventThreads, "<div class=\"wp-thread-row\">wire</div>")
 
 	threads := ssetest.MustReadNextEvent(t, reader)
-	ssetest.RequireEventType(t, threads, sseEventThreads)
+	ssetest.RequireEventType(t, threads, string(sseEventThreads))
 	if !strings.Contains(threads.Data(), "wp-thread-row") {
 		t.Errorf("threads payload missing the fragment: %q", threads.Data())
 	}

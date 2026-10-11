@@ -12,13 +12,19 @@ import (
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
+// EventName is one SSE event kind the shell's tab listeners swap on.
+// A defined type over the closed vocabulary makes the classic
+// Publish(extension, event, html) transpose a compile error instead of
+// a silent cross-tab breakage.
+type EventName string
+
 // SSE event names the tabs listen for (sse-swap="..." in the views).
 const (
-	sseEventThreads   = "threads"
-	sseEventThread    = "thread"
-	sseEventFax       = "fax"
-	sseEventVoicemail = "voicemail"
-	sseEventContacts  = "contacts"
+	sseEventThreads   EventName = "threads"
+	sseEventThread    EventName = "thread"
+	sseEventFax       EventName = "fax"
+	sseEventVoicemail EventName = "voicemail"
+	sseEventContacts  EventName = "contacts"
 )
 
 // ExtensionHubs gives every signed-in extension its own broadcast hub, so
@@ -121,7 +127,7 @@ func (h *ExtensionHubs) sweep(now time.Time) {
 // Publish renders a tab partial for one extension and pushes it to her
 // tabs. The sse-swap mechanism replaces the element's innerHTML with the
 // event data, so the data IS the rendered HTML.
-func (h *ExtensionHubs) Publish(extension domain.Extension, eventName string, html string) {
+func (h *ExtensionHubs) Publish(extension domain.Extension, eventName EventName, html string) {
 	key := extension.String()
 	hub := h.get(extension)
 
@@ -129,7 +135,7 @@ func (h *ExtensionHubs) Publish(extension domain.Extension, eventName string, ht
 	h.seen[key] = time.Now()
 	h.mu.Unlock()
 
-	hub.Broadcast(sse.Event{Event: eventName, Data: html})
+	hub.Broadcast(sse.Event{Event: string(eventName), Data: html})
 }
 
 // events is the session-gated SSE feed for the signed-in extension.

@@ -75,10 +75,10 @@ func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ dom
 	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.crm.Names(ctx, numbers), n.hubs.Lang(owner)))
 }
 
-func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event string, component templ.Component) {
+func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event EventName, component templ.Component) {
 	var buf bytes.Buffer
 	if err := component.Render(ctx, &buf); err != nil {
-		slog.Debug("sse: render push failed", "event", event, "error", err)
+		slog.Debug("sse: render push failed", "event", string(event), "error", err)
 		return
 	}
 	n.hubs.Publish(owner, event, buf.String())

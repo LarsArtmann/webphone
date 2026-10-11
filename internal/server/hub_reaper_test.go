@@ -51,7 +51,7 @@ func TestHubReaperDeletesOnlyIdleHubs(t *testing.T) {
 	hubs.Publish(ext, sseEventThreads, "<div>after-reap</div>")
 	select {
 	case ev := <-events:
-		if ev.Event != sseEventThreads {
+		if ev.Event != string(sseEventThreads) {
 			t.Errorf("post-reap broadcast event %q", ev.Event)
 		}
 	case <-time.After(2 * time.Second):

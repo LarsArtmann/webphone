@@ -24,6 +24,9 @@ var embedded embed.FS
 var islandModuleURLs = func() []string {
 	matches, err := fs.Glob(embedded, "island/app/*.js")
 	if err != nil {
+		// Boot-time programmer-error contract (branching-flow triage
+		// 2026-10-11): the embed directive owns this tree, so a glob
+		// failure is a compile-time impossibility, not a runtime path.
 		panic("assets: island module glob: " + err.Error())
 	}
 	sort.Strings(matches)
