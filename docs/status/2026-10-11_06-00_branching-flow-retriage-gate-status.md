@@ -8,7 +8,7 @@ turned out to be PARTIAL: its package load hit
 `/mnt/buildcache … no space left on device` and dropped cmd/ plus the
 panic rows (61 files scanned either way; the panic family reappeared on
 the post-edit full run). Every site was re-read at HEAD before any
-edit; the full set is 45 rows.
+edit; the full set is 46 rows.
 
 ## What landed
 
