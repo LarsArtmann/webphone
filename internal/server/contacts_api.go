@@ -36,7 +36,7 @@ type apiContact struct {
 	Number string `json:"number"`
 }
 
-type apiSharedContact struct {
+type apiSharedContact struct { //nolint:branching-flow // wire-DTO layer of the boundary trio (vcard.Card, domain.SharedContact); mirrors the json tags on purpose (registry 2026-10-05)
 	Name   string `json:"name"`
 	Number string `json:"number"`
 }

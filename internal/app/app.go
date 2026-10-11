@@ -369,7 +369,7 @@ func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
 // bounded retention sweep. ctx bounds them all — cancel it and they end.
 func (a *App) Start(ctx context.Context) error {
 	if a.cfg.Dashboard.Enable {
-		dash, err := do.InvokeNamed[*dashboard.Dashboard](a.injector, "dashboard")
+		dash, err := do.InvokeNamed[*dashboard.Dashboard](a.injector, "dashboard") //nolint:branching-flow // composition-root resolution (AGENTS.md): Start fail-fast resolves the named dashboard; no business logic touches the container
 		if err != nil {
 			return wrapf("resolve dashboard: %w", err)
 		}
@@ -380,11 +380,11 @@ func (a *App) Start(ctx context.Context) error {
 	if err := a.Probe.Start(ctx); err != nil {
 		return wrapf("start health probe: %w", err)
 	}
-	db, err := do.InvokeNamed[*store.Database](a.injector, "sqlite")
+	db, err := do.InvokeNamed[*store.Database](a.injector, "sqlite") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named critical pair's sqlite leg
 	if err != nil {
 		return wrapf("resolve store: %w", err)
 	}
-	blobs, err := do.InvokeNamed[*blob.Store](a.injector, "blob-dir")
+	blobs, err := do.InvokeNamed[*blob.Store](a.injector, "blob-dir") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named critical pair's blob-dir leg
 	if err != nil {
 		return wrapf("resolve blob store: %w", err)
 	}

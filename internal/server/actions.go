@@ -445,7 +445,7 @@ func (h *handlers) sendFailure(
 		// transport copy and the transient family are the honest story.
 		slog.WarnContext(r.Context(), lane+" send rejected by provider", "status", rejected.Status,
 			"family", errorfamily.Classify(err).String())
-		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, fmt.Sprintf(h.T(r, k.rejected), rejected.Detail))
+		h.renderPanelError(w, r, sess, tab, http.StatusUnprocessableEntity, fmt.Sprintf(h.T(r, k.rejected), rejected.Detail)) //nolint:branching-flow // i18n key plumbing: sendFailureKeys lanes carry copy keys by design
 		return
 	}
 	// System-side failure: the send is safe in the thread as failed; the
@@ -455,7 +455,7 @@ func (h *handlers) sendFailure(
 	// so an unclassified error (defaults to transient) is visible
 	// without changing what the user sees.
 	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s send gateway failure: %w", lane, err), nil) //nolint:erraudit // log-context wrap: the inner error owns the family
-	h.renderPanelError(w, r, sess, tab, classifyForUser(err), h.T(r, k.transport))
+	h.renderPanelError(w, r, sess, tab, classifyForUser(err), h.T(r, k.transport)) //nolint:branching-flow // i18n key plumbing (see k.rejected above)
 }
 
 // renderPanelError re-renders a tab with an error banner appended — the

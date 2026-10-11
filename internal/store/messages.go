@@ -89,7 +89,7 @@ func incrementIf(want, got domain.Direction) int {
 // earlier failure (kind and detail revert to empty); a failed verdict
 // records kind + detail for the bubble's disclosure and retry decision.
 func (s *Messages) UpdateOutboundStatus(
-	ctx context.Context, id domain.MessageID, status domain.OutboundStatus, providerRef string,
+	ctx context.Context, id domain.MessageID, status domain.OutboundStatus, providerRef string, //nolint:branching-flow // provider correlation id + failure vocabulary (documented at FailureKind); a ProviderRef type would ripple into webhook DTOs, the partial unique index and the golden-pinned rows
 	failureKind, failureDetail string,
 ) error {
 	res, err := s.db.ExecContext(ctx, `
@@ -223,13 +223,13 @@ func threadSummaryQuery(archivedFilter string) string {
 }
 
 // SearchThreads returns the owner's active threads whose remote number
-// or ANY message body matches the query (SQLite LIKE: ASCII
+// or ANY message body matches the needle (SQLite LIKE: ASCII
 // case-insensitive), pinned first then most recently active. Archived
 // threads stay hidden (design D6 — search must not resurrect what
-// archive hid). LIKE metacharacters in the query are escaped, so a
+// archive hid). LIKE metacharacters in the needle are escaped, so a
 // search for "50%" finds "50%", not "50" followed by anything.
-func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, query string) ([]ThreadSummary, error) {
-	pattern := "%" + likeEscape(query) + "%"
+func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, needle string) ([]ThreadSummary, error) {
+	pattern := "%" + likeEscape(needle) + "%"
 	return listRows(ctx, s.db, "search threads", `
 		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
 		       t.pinned, t.archived, t.muted,
@@ -248,10 +248,10 @@ func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, qu
 	`, []any{owner.String(), pattern, pattern}, scanThreadSummary)
 }
 
-// likeEscape escapes SQL LIKE metacharacters so the query matches them
+// likeEscape escapes SQL LIKE metacharacters so the needle matches them
 // literally (paired with ESCAPE '\' in the statement).
-func likeEscape(query string) string {
-	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(query)
+func likeEscape(needle string) string {
+	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(needle)
 }
 
 func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
@@ -496,7 +496,7 @@ func (s *Messages) AttachmentByID(
 // first. Page 0 is the newest window; hasMore reports whether older
 // pages exist beyond it.
 func (s *Messages) ListMessagesPage(
-	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, page, limit int,
+	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, page, limit int, //nolint:branching-flow // mis-order degrades visibly (a short window) and page < 0 is guarded; two callers
 ) ([]domain.Message, bool, error) {
 	if page < 0 {
 		page = 0

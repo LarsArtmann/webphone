@@ -53,7 +53,7 @@ type exportFax struct {
 }
 
 type exportTranscript struct {
-	CallID    string    `json:"callId"`
+	CallID    string    `json:"callId"` //nolint:branching-flow // JSON wire DTO stays raw (strong-id ruling 2026-10-05): callId round-trips stored rows and the DOM delete affordance verbatim
 	Remote    string    `json:"remote"`
 	Direction string    `json:"direction"`
 	StartedAt time.Time `json:"startedAt"`

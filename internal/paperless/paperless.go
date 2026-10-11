@@ -84,7 +84,7 @@ type Archiver struct {
 // Config validation (both-or-neither) rejects half a configuration
 // before this runs; the SDK constructor classifies an unusable URL as a
 // Rejection at origin.
-func NewArchiver(baseURL, token string, log *slog.Logger) (fax.Archiver, error) {
+func NewArchiver(baseURL, token string, log *slog.Logger) (fax.Archiver, error) { //nolint:branching-flow // single composition-root caller; both-or-neither validated at boot
 	if baseURL == "" && token == "" {
 		return nil, nil
 	}

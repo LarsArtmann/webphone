@@ -48,7 +48,7 @@ var ErrNotFound = errors.New("crm has no contact for this number") //nolint:erra
 const requestTimeout = 3 * time.Second
 
 // Client talks to one Ledger CRM machine API (mounted with -api-token).
-type Client struct {
+type Client struct { //nolint:branching-flow // the client-chokepoint idiom (same shape as pbx/asr on purpose — the do() chokepoint doctrine)
 	base   *url.URL
 	token  string
 	client *http.Client
@@ -56,7 +56,7 @@ type Client struct {
 
 // NewClient builds the client; baseURL like "http://127.0.0.1:8080". An
 // empty baseURL means "disabled": every call returns ErrDisabled.
-func NewClient(baseURL, token string) (*Client, error) {
+func NewClient(baseURL, token string) (*Client, error) { //nolint:branching-flow // single composition-root caller; both-or-neither validated at boot
 	if baseURL == "" {
 		return &Client{}, nil
 	}
@@ -192,7 +192,7 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 
 // LogCall appends one call activity to the CRM contact (204 expected).
 // The ref is the Match's own ID: only a real lookup can mint one.
-func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error {
+func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error { //nolint:branching-flow // the number travels VERBATIM by domain intent (the CRM owns matching); direction is the CRM's wire vocabulary
 	payload := struct {
 		Direction string `json:"direction"`
 		Number    string `json:"number"`

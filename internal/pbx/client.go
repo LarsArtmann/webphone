@@ -66,7 +66,7 @@ func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
 // ResolvePath builds the absolute upstream URL for a /phone-api-relative
 // path (without the "/phone-api" prefix), used by the proxy.
-func (c *Client) ResolvePath(rest, rawQuery string) string {
+func (c *Client) ResolvePath(rest, rawQuery string) string { //nolint:branching-flow // the documented join-path-and-query-separately home (url.JoinPath percent-encodes '?'); the names carry the contract
 	target := c.base.JoinPath(rest).String()
 	if rawQuery != "" {
 		target += "?" + rawQuery

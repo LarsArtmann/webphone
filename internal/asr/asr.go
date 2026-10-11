@@ -79,7 +79,7 @@ const (
 )
 
 // Client talks to one OpenAI-compatible transcription provider.
-type Client struct {
+type Client struct { //nolint:branching-flow // the client-chokepoint idiom shared with crm/pbx by design; a mixin would weld independent seams (registry 2026-10-05)
 	base   *url.URL
 	token  string
 	model  string
@@ -90,7 +90,7 @@ type Client struct {
 // empty baseURL means "disabled": every call returns ErrDisabled and the
 // server treats the whole seam as off. Config validation rejects a token
 // without a URL before this runs.
-func NewClient(baseURL, token, model string) (*Client, error) {
+func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // single composition-root caller; boot validation rejects token-without-URL before this runs (triage 2026-10-11)
 	if baseURL == "" {
 		return &Client{}, nil
 	}

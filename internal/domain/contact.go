@@ -17,7 +17,7 @@ type Contact struct {
 // window.PBX_CONFIG wire contract: the island's dial typeahead reads
 // lowercase name/number, and the config-file contacts list uses the
 // same keys.
-type SharedContact struct {
+type SharedContact struct { //nolint:branching-flow // domain layer of the boundary trio (vcard.Card, apiSharedContact); the json tags ARE the island/config wire contract (registry 2026-10-05)
 	Name   string `json:"name"`
 	Number string `json:"number"`
 }

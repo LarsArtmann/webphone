@@ -9,7 +9,7 @@ import (
 )
 
 // Card is one imported/exported contact.
-type Card struct {
+type Card struct { //nolint:branching-flow // parse layer of the boundary trio (domain.SharedContact, apiSharedContact): consolidating welds an external-format parser to the domain and the wire DTO (registry 2026-10-05)
 	Name   string
 	Number string
 }
@@ -31,7 +31,7 @@ func Decode(data []byte) []Card {
 		}
 		if current.Number != "" {
 			current.Name = firstNonEmpty(name, displayNameFromN(nField), current.Number)
-			cards = append(cards, *current)
+			cards = append(cards, *current) //nolint:branching-flow // guarded: the current == nil early return at the top of this closure (FP: the detector misses closure-local guards)
 		}
 		current = nil
 		name, nField = "", ""

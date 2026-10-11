@@ -32,7 +32,7 @@ func New(root string) (*Store, error) {
 // Save writes content under subDir with a generated name and the given
 // extension (".pdf", ".jpg", ...). It returns the path relative to the
 // store root — what the database persists.
-func (s *Store) Save(subDir, ext string, content []byte) (string, error) {
+func (s *Store) Save(subDir, ext string, content []byte) (string, error) { //nolint:branching-flow // literal args at both call sites; a swap fails immediately and visibly (triage 2026-10-11)
 	if subDir != "" {
 		if err := os.MkdirAll(filepath.Join(s.root, subDir), 0o750); err != nil {
 			return "", errorfamily.WrapInfrastructuref(err, "blob.subdir", "create %s", subDir)
