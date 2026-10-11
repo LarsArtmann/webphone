@@ -7,14 +7,15 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-func TestAvatarForCountrySignum(t *testing.T) {
+func TestAvatarForNumberTailDigits(t *testing.T) {
 	cases := map[string]string{
-		"+14155550132":  "+1",
-		"+441632960961": "+4",
-		"+491512345678": "+4",
+		"+14155550132":  "32",
+		"+441632960961": "61",
+		"+491512345678": "78",
 		"+":             "+",
-		"030 1234567":   "0",
-		"1555123":       "1",
+		"030 1234567":   "67",
+		"1555123":       "23",
+		"5":             "5",
 	}
 	for in, want := range cases {
 		if got := avatarFor(in); got != want {

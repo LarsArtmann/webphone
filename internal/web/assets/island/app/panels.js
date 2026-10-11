@@ -21,6 +21,17 @@ import { transcribeNow } from "./transcribe.js";
 import { initDialTypeahead, setExtraContacts } from "./typeahead.js";
 import { announce, dialFromUi, els, log } from "./ui.js";
 
+// Inline SVG icons for JS-created buttons (the island twins of the
+// server's templ-components icons) — platform emoji rendered
+// differently per OS and read as decoration.
+const iconSvg = (path) =>
+  `<svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${path}"></path></svg>`;
+const playIcon = () => iconSvg("M8 5.14v13.72L19 12 8 5.14z");
+const trashIcon = () =>
+  iconSvg(
+    "M9 3a1 1 0 0 0-1 1H5.5a1 1 0 0 0 0 2H6l.8 12.1A2 2 0 0 0 8.8 20h6.4a2 2 0 0 0 2-1.9L18 6h.5a1 1 0 1 0 0-2H16a1 1 0 0 0-1-1H9zm0 5a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0V8zm4 0a1 1 0 1 1 2 0v7a1 1 0 1 1-2 0V8z",
+  );
+
 // --- call history ----------------------------------------------------------
 
 const HISTORY_KEY = "pbx-history";
@@ -417,7 +428,7 @@ export async function refreshVoicemail() {
         when.textContent = new Date(msg.created * 1000).toLocaleString();
         const play = document.createElement("button");
         play.className = "ghost small";
-        play.textContent = "▶";
+        play.innerHTML = playIcon();
         play.addEventListener("click", () => {
           new Audio(msg.audio_url).play().catch((err) => {
             log(`playback: ${err.message}`, "warn");
@@ -426,7 +437,7 @@ export async function refreshVoicemail() {
         });
         const del = document.createElement("button");
         del.className = "ghost small";
-        del.textContent = "🗑";
+        del.innerHTML = trashIcon();
         del.title = t("vmDelete");
         del.addEventListener("click", async () => {
           try {

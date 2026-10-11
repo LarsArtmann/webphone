@@ -13,9 +13,12 @@ import (
 func fmtInt(n int) string { return strconv.Itoa(n) }
 
 // avatarFor derives the two-glyph avatar label for a contact name or
-// phone number: the country signum of a number ("+1", "+4", "0"), the
-// first letters of a name's words ("AK"), or "?" for blanks.
-// Deterministic, so the same peer renders the same mark everywhere.
+// phone number: the LAST TWO DIGITS of a number ("61"), the first
+// letters of a name's words ("AK"), or "?" for blanks. The tail — not
+// the country signum the label once showed — because every peer on a
+// single-country deployment shared one meaningless "+4"; the digits
+// differ per peer at a glance. Deterministic, so the same peer renders
+// the same mark everywhere.
 func avatarFor(nameOrNumber string) string {
 	trimmed := strings.TrimSpace(nameOrNumber)
 	runes := []rune(trimmed)
@@ -23,15 +26,20 @@ func avatarFor(nameOrNumber string) string {
 		return "?"
 	}
 	if runes[0] == '+' || (runes[0] >= '0' && runes[0] <= '9') {
-		if runes[0] == '+' {
-			for _, r := range runes[1:] {
-				if r >= '0' && r <= '9' {
-					return "+" + string(r)
-				}
+		digits := make([]rune, 0, len(runes))
+		for _, r := range runes {
+			if r >= '0' && r <= '9' {
+				digits = append(digits, r)
 			}
-			return "+"
 		}
-		return string(runes[0])
+		switch len(digits) {
+		case 0:
+			return "+"
+		case 1:
+			return string(digits)
+		default:
+			return string(digits[len(digits)-2:])
+		}
 	}
 	letters := make([]rune, 0, 2)
 	wantLetter := true
