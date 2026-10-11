@@ -272,17 +272,32 @@
       },
       "fixStrategy": "none",
       "confidence": 0
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:internal/asr/asr.go:85:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
+      "severity": "warning",
+      "position": {
+        "file": "internal/asr/asr.go",
+        "line": 85,
+        "column": 6,
+        "offset": -1
+      },
+      "fixStrategy": "none",
+      "confidence": 0
     }
   ],
   "summary": {
-    "total": 18,
+    "total": 19,
     "bySeverity": {
-      "warning": 18
+      "warning": 19
     },
     "byFixStrategy": {
-      "none": 18
+      "none": 19
     },
-    "filesAffected": 12,
+    "filesAffected": 13,
     "filesScanned": 0,
     "suppressed": 0
   },
