@@ -77,10 +77,15 @@ noise routed upstream), the 09-18/09-22 phantom policy class, the
 
 ## Upstream (routed, per ruling 5 and the FP policy)
 
-branching-flow (private) gets the three findings: TypeDecl nolint
-blindness (five-placement evidence), the CLI↔SDK ID-shape divergence,
-and the closure-local nil-guard FP class. Filed the same session; link
-in the repo's issue tracker.
+branching-flow (private) gets the three findings of this session:
+**#12** TypeDecl nolint blindness — composition + dupe analyzers never
+consult the ignore-comment system (five-placement evidence + source grep;
+the enum also lacks a dupe rule name), **#13** the CLI↔SDK finding-ID
+divergence (absolute vs relative paths; baselines must be saved from the
+SDK side), both filed with provenance banners. The panic-FP shapes were
+ALREADY routed as **#9** by the earlier session (covers the vcard
+closure guard, the map-to-slice invariant, and the two-pointer swap).
+Drafts: docs/drafts/2026-10-11_branching-flow-{composition-dupe-suppression,id-shape-cli-vs-sdk}.md.
 
 ## CHANGELOG
 
