@@ -39,6 +39,17 @@ build_mode: fast
 # 74, …) trip it — strict is fleet-wide, not per-tool.
 baseline: .buildflow-baseline.json
 #
+# tool_paths: govulncheck must be built with the module's Go (1.27).
+# BuildFlow resolved a stale go1.26-built nix store copy whose
+# source-processing packages cannot load the go1.27 module — 94
+# "requires newer Go version" noise rows and ZERO real scans
+# (2026-10-11). The ~/go/bin copy is go1.27.2-built (the provider's
+# own `go install` InstallHint destination); revisit if it drifts.
+# (Value is the DIRECTORY; a binary path is a broken entry that
+# silently falls back to PATH — preflight warns.)
+tool_paths:
+  govulncheck: /home/lars/go/bin
+#
 # exclude: the SIP island sources in internal/web/assets/island/ AND the
 # shell glue (internal/web/assets/shell.js) are owned by the flake's
 # treefmt gate (prettier): BuildFlow's oxfmt would reformat them into a

@@ -20,7 +20,7 @@ def timed_get(path, headers=None):
     req = urllib.request.Request(BASE + path, headers=headers or {})
     start = time.perf_counter()
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310 - dev perf harness fetching the local server under test
             body = resp.read()
             status = resp.status
             hdrs = resp.headers
@@ -46,7 +46,7 @@ def main():
     rows = []
 
     status, hdrs, body, _ = timed_get(ASSET)
-    assert status == 200, status
+    assert status == 200, status  # nosec B101 - dev harness: the assert IS the check
     etag = hdrs["ETag"]
     cold_bytes = len(body)
 
@@ -59,7 +59,7 @@ def main():
         if gzip_body_len is None:
             gzip_body_len = len(body2)
             gunzip = gzip.GzipFile(fileobj=io.BytesIO(body2)).read()
-            assert gunzip == body, "gzip roundtrip must reproduce the bytes"
+            assert gunzip == body, "gzip roundtrip must reproduce the bytes"  # nosec B101 - dev harness: the assert IS the check
         gzip_times.append(ms2)
 
     reval_times, reval_bytes = [], None

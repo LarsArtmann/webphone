@@ -38,7 +38,7 @@ import argparse
 import http.client
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
 import time
 import urllib.parse
@@ -152,7 +152,7 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     if token is None:
         raise RuntimeError("anonymous page carries no csrf meta token")
     csrf = token.group(1)
-    body = json.dumps({"extension": "1001", "password": "pw"}).encode()
+    body = json.dumps({"extension": "1001", "password": "pw"}).encode()  # nosec B105 - fixture credential for the local harness server
     req = urllib.request.Request(base + "/api/session", data=body, method="POST")
     req.add_header("Content-Type", "application/json")
     req.add_header("X-CSRF-Token", csrf)
@@ -319,12 +319,12 @@ def capture(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--binary", default="/tmp/webphone-bin")
+    parser.add_argument("--binary", default="/tmp/webphone-bin")  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
     parser.add_argument("--port", type=int, default=18097)
     parser.add_argument("--out-dir", default="ui-shots")
     args = parser.parse_args()
 
-    data_dir = "/tmp/wp-visual-data"
+    data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(args.out_dir, exist_ok=True)
     base = f"http://127.0.0.1:{args.port}"
@@ -335,7 +335,7 @@ def main() -> int:
     config = {
         "addr": f"127.0.0.1:{args.port}",
         "data_dir": data_dir,
-        "gateway": {"webhook_secret": "devsecret"},
+        "gateway": {"webhook_secret": "devsecret"},  # nosec B105 - the documented dev-only secret (AGENTS smoke recipe uses the same value)
         # ASR ON with an obviously-fake provider (M13): url alone turns
         # the seam on (openai wire, BASE url — the client appends the
         # endpoint path). shell.js auto-transcribes seen audio, so the
@@ -355,7 +355,7 @@ def main() -> int:
     with open(config_path, "w", encoding="utf-8") as fh:
         json.dump(config, fh)
     env = dict(os.environ, WEBPHONE_CONFIG=config_path)
-    server = subprocess.Popen([args.binary], env=env)
+    server = subprocess.Popen([args.binary], env=env)  # nosec B603 - argv-list (no shell) launch of the local binary under test
     try:
         for _ in range(50):
             try:

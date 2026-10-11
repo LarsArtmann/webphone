@@ -26,7 +26,7 @@ import time
 import urllib.request
 
 BIN = os.environ["WP_BIN"]
-SECRET = "drill-secret"
+SECRET = "drill-secret"  # nosec B105 - fixture secret for the local KVM backup drill
 PORT = 18099
 PAYLOAD = b"webphone backup drill payload \xf0\x9f\x93\x9e " + bytes(range(256))
 
@@ -87,7 +87,7 @@ def boot(data_dir):
     # probed (absent in the nix sandbox, where no prior drill process
     # can exist) so the drill also runs as a flake check.
     if shutil.which("pkill"):
-        subprocess.run(["pkill", "-f", BIN], capture_output=True, check=False)
+        subprocess.run(["pkill", "-f", BIN], capture_output=True, check=False)  # nosec B607 - which-guarded argv-list call inside the VM test env
         time.sleep(0.5)
     env = dict(
         os.environ,
@@ -121,8 +121,8 @@ def attachment_row(data_dir):
 
 def main():
     src = tempfile.mkdtemp(prefix="wp-src-")
-    archive = tempfile.mktemp(prefix="wp-backup-", suffix=".tar.gz")
-    dst = tempfile.mktemp(prefix="wp-restore-")
+    archive = tempfile.mktemp(prefix="wp-backup-", suffix=".tar.gz")  # nosec B306 - name-only path (tar creates it); single-user drill, and rewriting temp handling risks the KVM-gated flake check
+    dst = tempfile.mktemp(prefix="wp-restore-")  # nosec B306 - drill fixture target path, same reasoning
 
     # 1. load the source store through the real webhook surface
     proc = boot(src)

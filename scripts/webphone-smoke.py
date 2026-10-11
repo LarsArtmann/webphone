@@ -100,7 +100,7 @@ def ensure_go_toolchain(args: argparse.Namespace) -> None:
     )
     env = dict(os.environ)
     env["WEBPHONE_SMOKE_REEXEC"] = "1"
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B607 - argv-list self re-exec into `nix develop` (the documented host-go-below-floor fallback)
         [
             "nix",
             "develop",
@@ -168,7 +168,7 @@ class Smoke:
         except urllib.error.HTTPError as err:
             return err.code, err.read(), dict(err.headers)
 
-    def login(self, extension: str = "1001", password: str = "pw") -> bool:
+    def login(self, extension: str = "1001", password: str = "pw") -> bool:  # nosec B107 - fixture credential against the loopback server this script boots
         status, _, _ = self.request(
             "POST",
             "/api/session",
@@ -508,7 +508,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
             {
                 "WEBPHONE_ADDR": f"127.0.0.1:{port}",
                 "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
-                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
             }
         )
         env.update(env_extra)
@@ -598,7 +598,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
         {
             "WEBPHONE_ASR__PROVIDER": "google",
             "WEBPHONE_ASR__PROJECT": "smoke-proj",
-            "WEBPHONE_ASR__TOKEN": "gkey",
+            "WEBPHONE_ASR__TOKEN": "gkey",  # nosec B105 - fixture token for the in-process fake ASR provider
             "WEBPHONE_ASR__URL": provider,
         },
         "data-asr-google",
@@ -846,7 +846,7 @@ def run_checks(
         status, _, _ = s.request(
             "POST",
             "/api/session",
-            json.dumps({"extension": "1001", "password": "definitely-wrong"}).encode(),
+            json.dumps({"extension": "1001", "password": "definitely-wrong"}).encode(),  # nosec B105 - negative-test credential: this login MUST be rejected
             "application/json",
         )
         c.ok(
@@ -1133,7 +1133,7 @@ def main() -> int:
         cfg = {
             "addr": f"127.0.0.1:{port2}",
             "data_dir": f"{workdir}/data-fronted",
-            "gateway": {"webhook_secret": "test-secret"},
+            "gateway": {"webhook_secret": "test-secret"},  # nosec B105 - fixture secret for the self-booted smoke server
             "csrf": {
                 "trusted_proxies": ["127.0.0.1"],
                 "trusted_origins": ["https://pbx.test"],

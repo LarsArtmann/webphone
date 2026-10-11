@@ -33,7 +33,7 @@ import argparse
 import http.client
 import os
 import re
-import subprocess
+import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
 import tempfile
 import time
@@ -75,13 +75,13 @@ def boot(binary: str, port: int, data_dir: str, webhook_dead: bool) -> subproces
         {
             "WEBPHONE_ADDR": f"127.0.0.1:{port}",
             "WEBPHONE_DATA_DIR": data_dir,
-            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "devsecret",
+            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "devsecret",  # nosec B105 - the documented dev-only secret (AGENTS smoke recipe uses the same value)
         }
     )
     if webhook_dead:
         env["WEBPHONE_GATEWAY__MODE"] = "webhook"
         env["WEBPHONE_GATEWAY__WEBHOOK_URL"] = "http://127.0.0.1:9"
-    return subprocess.Popen(
+    return subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
         [binary],
         env=env,
         stdout=subprocess.DEVNULL,
@@ -93,7 +93,7 @@ def wait_up(port: int, deadline_s: float = 20.0) -> bool:
     end = time.time() + deadline_s
     while time.time() < end:
         try:
-            urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1).read()
+            urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
             return True
         except (OSError, http.client.HTTPException):
             time.sleep(0.25)
@@ -143,7 +143,7 @@ def login_session(opener, port: int) -> dict:
     if not token:
         raise SystemExit("initial csrf adopt: empty token")
 
-    form = json.dumps({"extension": "1001", "password": "pw"}).encode()
+    form = json.dumps({"extension": "1001", "password": "pw"}).encode()  # nosec B105 - fixture credential for the local test server
     status, body = request(
         opener,
         port,
