@@ -2,10 +2,15 @@
 
 ## Reporting a vulnerability
 
-**Preferred (sensitive):** GitHub private vulnerability reporting — open
-this repository, then **Security → Report a vulnerability**. It reaches
-the maintainer privately, supports back-and-forth discussion, and can
+**Preferred (sensitive):** GitHub private vulnerability reporting —
+[github.com/LarsArtmann/webphone/security/advisories](https://github.com/LarsArtmann/webphone/security/advisories)
+(Repository → **Security → Report a vulnerability**). It reaches the
+maintainer privately, supports back-and-forth discussion, and can
 publish a security advisory with the fix. No email or GPG setup needed.
+
+**Response time:** best-effort — a solo maintainer aims to acknowledge
+new reports within a week. There is no guaranteed SLA; a fix lands on
+the next train that carries it.
 
 **Only for non-sensitive, already-public problems:** open a regular
 GitHub issue.
@@ -18,7 +23,7 @@ in your deployment (nginx TLS + WSS proxy in the reference stack,
 something else, or nothing): transport misconfigurations usually live
 in the fronting proxy, not this service.
 
-## Threat model and security posture
+## Security practices (threat model and posture)
 
 Facts live with their code; this section points, it does not duplicate:
 
