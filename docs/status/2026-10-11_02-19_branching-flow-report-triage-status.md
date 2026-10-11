@@ -4,22 +4,23 @@ Owner pasted the full `branching-flow all . --format markdown` output
 (72 rows across 9 non-empty families). Per the dedup-registry protocol,
 every flagged site was re-read at HEAD and attributed against the
 standing rulings before anything was touched: the registry (10-05 dupe
-+ mixin entries), the `.buildflow.yml` branching-flow skip rationale
-(2026-09-18/09-22 triage classes), and the AGENTS.md composition /
-strong-id / wire-DTO doctrine. One finding was fixed; the other 71 are
-attributed. No re-litigated ruling was overturned.
+
+- mixin entries), the `.buildflow.yml` branching-flow skip rationale
+  (2026-09-18/09-22 triage classes), and the AGENTS.md composition /
+  strong-id / wire-DTO doctrine. One finding was fixed; the other 71 are
+  attributed. No re-litigated ruling was overturned.
 
 ## Verdict summary
 
-| Family            | Rows | Fixed | Attributed | Notes                                                       |
-| ----------------- | ---- | ----- | ---------- | ----------------------------------------------------------- |
-| Duplicate types   | 29   | 0     | 29         | 2 `actionable` groups both carry standing rulings            |
+| Family            | Rows | Fixed | Attributed | Notes                                                          |
+| ----------------- | ---- | ----- | ---------- | -------------------------------------------------------------- |
+| Duplicate types   | 29   | 0     | 29         | 2 `actionable` groups both carry standing rulings              |
 | Phantom types     | 14   | 1     | 13         | `server.EventName` introduced; rest are the non-identity class |
-| Panic conditions  | 8    | 0     | 8          | 6 verified false positives, 2 standing EXPLICIT_PANIC class  |
-| Strong ID         | 4    | 0     | 4          | CallID = opaque island token, pass-through class             |
-| Composition anti  | 2    | 0     | 2          | Both are documented contracts (koanf config, Deps DI surface) |
-| Composition mixin | 12   | 0     | 12         | Standing 10-05 doctrine + `.buildflow.yml` BY-DESIGN class    |
-| samber/do         | 3    | 0     | 3          | `App.Start` InvokeNamed is the AGENTS-documented pattern      |
+| Panic conditions  | 8    | 0     | 8          | 6 verified false positives, 2 standing EXPLICIT_PANIC class    |
+| Strong ID         | 4    | 0     | 4          | CallID = opaque island token, pass-through class               |
+| Composition anti  | 2    | 0     | 2          | Both are documented contracts (koanf config, Deps DI surface)  |
+| Composition mixin | 12   | 0     | 12         | Standing 10-05 doctrine + `.buildflow.yml` BY-DESIGN class     |
+| samber/do         | 3    | 0     | 3          | `App.Start` InvokeNamed is the AGENTS-documented pattern       |
 
 ## The one fix: `server.EventName`
 
