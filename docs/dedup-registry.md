@@ -8,10 +8,15 @@ those reports remain as historical provenance — annotate, never rewrite.
 
 ## Protocol (every dedup session)
 
-1. Run art-dupl YOURSELF (working baseline `-t 3`; `-t 2` deep sweeps
-   by owner request — baseline ratification is an open owner call).
-   Attribute against YOUR re-run, never against a pasted report — a
-   paste is evidence of ITS run, not of HEAD.
+1. Run art-dupl YOURSELF at the RATIFIED baseline `-t 1` (2026-10-11 —
+   was "`-t 3` pending ratification"); target ZERO harmful clones.
+   Intentional groups are recorded in an `art-dupl baseline` file and
+   CI-gated with `art-dupl check` (new-only). Genuinely unfixable
+   detector false positives get FILED UPSTREAM (LarsArtmann/art-dupl),
+   never silently accepted. Attribute against YOUR re-run, never
+   against a pasted report — a paste is evidence of ITS run, not of
+   HEAD. Quarterly (next 2027-01-11): audit the baseline + suppressed
+   set for stale entries (suppression-scope ruling, same day).
 2. Read THIS table before judging anything. A group that matches a
    standing ruling below is ACCEPTED — do not re-litigate it. Re-read
    EVERY occurrence of a group at HEAD, not one site per group.
@@ -77,12 +82,29 @@ file implements that proposal and records the supersession).
 - 2026-10-05 16:40 — NO art-dupl run; `branching-flow stats` + `dupe` noise-floor baseline instead (the plan's `compose` subcommand no longer exists in the installed build — command drift). Family total 178: phantom 161 advisory, mixins 8 (the 14:46-rejected set), dupe 7 rows / 2 actionable, do 3, anti-patterns 2, strong-id 2. Dupe triage: `vcard.Card`/`domain.SharedContact`/`server.apiSharedContact` REJECTED (parse/domain/wire boundary layers sharing a Name+Number coincidence; consolidating welds an external-format parser type to the domain and the JSON DTO — same doctrine class as the InboundMessage reject); `config.CRM`/`config.Paperless` twin = the OPEN owner call, now resurfaced by a SECOND detector. Zero refactors, zero extractions.
 - 2026-10-08 — NO art-dupl run; SUPERB ASR train (M12–M25) instead: transcript search/export each landed behind the EXISTING one-home seams, and the store's three near-identical segment queries were CONSOLIDATED into `fetchSegments` (dedup-forward refactor, registry consulted first per the standing rule); copy affordances reused the shell.js delegated-handler idiom and the island i18n homes. New logic is additive tests + one seam per concern; no repeated-pattern candidates surfaced during review.
 - 2026-10-11 02:19 — NO art-dupl run; owner-pasted `branching-flow all .` report triaged instead (72 rows, 9 non-empty families, every site re-read at HEAD): 1 fixed (`server.EventName` defined type over the SSE event vocabulary — the one phantom row where a closed constant set already existed; the Publish transpose no longer compiles), 71 attributed to standing rulings (10-05 dupe + mixin entries, `.buildflow.yml` branching-flow skip classes, AGENTS composition/strong-id/wire-DTO doctrine; 6 panic rows verified FALSE POSITIVE — guarded indices, map-to-slice invariant, nil check). `config.CRM`/`config.Paperless` twin resurfaced by a THIRD detector — the OPEN owner call stands, unresolved. Status: docs/status/2026-10-11_02-19_branching-flow-report-triage-status.md.
+- 2026-10-11 ~03:00 — RATIFICATION sitting (owner answered all five open calls via structured questions; no art-dupl run): `-t 1` + zero-target + upstream FP filing RATIFIED; settingsRow = BUILD (templ-components home review first); registry = ratified ONE home; suppression scope = quarterly baseline/suppressed-set audit; CRM/Paperless = stays two seams, noise routed upstream to BuildFlow. Discovery while verifying the filing premise: `//nolint:branching-flow` WORKS on the installed build (live-verified: a panic row disappeared with the directive) and `branching-flow all` has a `--baseline` Sarif mode — the AGENTS.md "honors NO nolint" note was STALE and is corrected there; `.buildflow.yml`'s whole-tool skip survives until the finding set is re-triaged into targeted nolints + a baseline.
+
+## Ratified rulings (2026-10-11 sitting — previously open calls)
+
+1. Baseline: `-t 1`, target zero, upstream-filing for detector FPs
+   (see Protocol step 1). RESOLVED.
+2. `settingsRow`: BUILD the component. Home decision FIRST: review
+   `~/projects/templ-components/**` — it belongs there if it
+   generalizes (definition-list row, `display.*`), here (views) if it
+   is webphone-settings-specific. Prove with an old-vs-new render
+   diff per the protocol. IN PROGRESS.
+3. Registry ratification: THIS registry is the ONE acceptance home
+   for clone rulings. RESOLVED (ratified).
+4. Suppression scope: shown-only + a QUARTERLY audit of the baseline
+   and suppressed set (first audit 2027-01-11). RESOLVED.
+5. `config.CRM`/`config.Paperless` twin: the repo KEEPS the two
+   separate seam configs (owner: "it should ALL be managed by
+   BuildFlow, but it's not perfect yet") — the resurfacing noise is
+   routed UPSTREAM to BuildFlow/branching-flow (class-level
+   suppression/pattern config), not consolidated here. Re-open only
+   if BuildFlow declines and the twin keeps costing sessions.
 
 ## Open owner calls (do not resolve unilaterally)
 
-1. Baseline ratification: `-t 3` as the ritual vs `-t 2` deep sweeps.
-2. `settingsRow`: build the component or accept the dt/dd rows permanently (surfaced in every sweep to date).
-3. Ratify this registry as the ONE acceptance home (proposed 03-01 f.16, re-raised 15-58 e.4 + 18-05 e.6).
-4. Suppression scope: is shown-only the ratified scope, or add a periodic
-   suppressed-set audit? (12:59 `-t 2` sweep g3; routed to the OWNER-calls
-   TODO row by the v6 docs-health sweep, 2026-10-03.)
+None currently — all five standing calls were answered 2026-10-11.
+New calls append here with date + ask.
