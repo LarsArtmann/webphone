@@ -40,7 +40,10 @@ const (
 // GoogleConfig carries everything the Google provider needs. The zero
 // value is the disabled provider (no project); validation upstream
 // rejects a half-configured kind before it reaches the constructor.
-type GoogleConfig struct { //nolint:branching-flow // koanf surface vs runtime mirror (the Passkey/PasskeyRuntime class); a shared type would drag koanf tags into the provider package
+// branching-flow COMPOSITION_mixin (baselined): koanf surface vs runtime
+// mirror (the Passkey/PasskeyRuntime class); a shared type would drag
+// koanf tags into the provider package.
+type GoogleConfig struct {
 	// Endpoint overrides the regional API base for tests and
 	// key-injecting proxies; empty derives it from Location.
 	Endpoint string

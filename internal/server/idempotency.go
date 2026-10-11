@@ -15,7 +15,9 @@ import (
 // multi-instance deployment), the session store already makes the same
 // process-local trade, and a restart merely re-arms dedupe — the worst
 // case is one harmless re-apply of an already-terminal status.
-type idemStore struct { //nolint:branching-flow // coincidental mu+ttl shape; hook dedupe and the unread cache are different domains
+// branching-flow COMPOSITION_mixin (baselined): coincidental mu+ttl
+// shape; hook dedupe and the unread cache are different domains.
+type idemStore struct {
 	mu      sync.Mutex
 	ttl     time.Duration
 	entries map[string]time.Time

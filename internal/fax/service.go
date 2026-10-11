@@ -52,7 +52,10 @@ type Archiver interface {
 }
 
 // Service wires the fax store, blob store, and outbound gateway.
-type Service struct { //nolint:branching-flow // intentional symmetry with messaging.Service (the documented seam parallel); a mixin would couple the two lanes
+// branching-flow COMPOSITION_mixin (baselined): intentional symmetry
+// with messaging.Service (the documented seam parallel); a mixin would
+// couple the two lanes.
+type Service struct {
 	faxes      *store.Faxes
 	blobs      *blob.Store
 	gateway    gateway.FaxGateway

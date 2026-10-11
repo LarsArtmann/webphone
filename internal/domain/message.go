@@ -108,7 +108,10 @@ func ChannelOf(attachmentCount int) Channel {
 // InboundMessage is an inbound message as it crosses the gateway boundary
 // (webhook or dev loopback). It carries no status: inbound delivery is a
 // fact, not a lifecycle.
-type InboundMessage struct { //nolint:branching-flow // gateway-boundary type; OutboundMessage shares fields by ROLE, not duplication — inbound is a fact, outbound is a lifecycle (registry 2026-10-05)
+// branching-flow COMPOSITION_mixin (baselined): OutboundMessage shares
+// fields by ROLE, not duplication — inbound is a fact, outbound is a
+// lifecycle (registry 2026-10-05).
+type InboundMessage struct {
 	Owner       Extension
 	From        Phone
 	Body        string

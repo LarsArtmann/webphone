@@ -79,7 +79,10 @@ const (
 )
 
 // Client talks to one OpenAI-compatible transcription provider.
-type Client struct { //nolint:branching-flow // the client-chokepoint idiom shared with crm/pbx by design; a mixin would weld independent seams (registry 2026-10-05)
+// branching-flow COMPOSITION_mixin (baselined): the client-chokepoint
+// idiom shared with crm/pbx by design; a mixin would weld independent
+// seams (registry 2026-10-05).
+type Client struct {
 	base   *url.URL
 	token  string
 	model  string

@@ -32,7 +32,10 @@ const (
 )
 
 // Config is the fully-resolved runtime configuration.
-type Config struct { //nolint:branching-flow // THE runtime-config aggregate: one field per koanf/__-env section; splitting shatters the documented config surface (AGENTS.md)
+// branching-flow large-struct (baselined): THE runtime-config aggregate
+// — one field per koanf/__-env section; splitting shatters the
+// documented config surface (AGENTS.md).
+type Config struct {
 	Addr          string `json:"addr" koanf:"addr"`
 	DataDir       string `json:"data_dir" koanf:"data_dir"`
 	SIPDomain     string `json:"sip_domain" koanf:"sip_domain"`
@@ -117,7 +120,10 @@ type Auth struct {
 // Enabled is DERIVED: any of RPID, RPOrigins or Users being set counts as
 // enabled, and validation fails closed on half a configuration — the
 // CRM/Paperless both-or-neither doctrine.
-type Passkey struct { //nolint:branching-flow // config mirror of userauth.PasskeyRuntime; a mixin would make userauth import config — forbidden (userauth imports ONLY config-free types)
+// branching-flow COMPOSITION_mixin (baselined): config mirror of
+// userauth.PasskeyRuntime; a mixin would make userauth import config —
+// forbidden (userauth imports ONLY config-free types).
+type Passkey struct {
 	// RPID is the WebAuthn Relying Party ID: the registrable domain the
 	// passkeys are bound to (e.g. "pbx.example.org"). Must equal the
 	// host of every entry in RPOrigins.
@@ -148,7 +154,9 @@ type Passkey struct { //nolint:branching-flow // config mirror of userauth.Passk
 }
 
 // PasskeyUser is one email's extension mapping (see Passkey.Users).
-type PasskeyUser struct { //nolint:branching-flow // config mirror of userauth.MappedUser (the Passkey-mirror class; see Passkey above)
+// branching-flow COMPOSITION_mixin (baselined): config mirror of
+// userauth.MappedUser (the Passkey-mirror class; see Passkey).
+type PasskeyUser struct {
 	Extensions  []string `json:"extensions" koanf:"extensions"`
 	DisplayName string   `json:"display_name,omitempty" koanf:"display_name"`
 }
@@ -164,7 +172,11 @@ func (p Passkey) Enabled() bool {
 // set together (a URL without a token cannot authenticate; a token without
 // a URL has nowhere to go) — config validation fails closed on half a
 // configuration so a typo can never silently disable or enable the client.
-type CRM struct { //nolint:branching-flow // independent seam twin of Paperless by owner ruling 2026-10-11: URL+Token stays per-seam both-or-neither; detector noise routed upstream (registry)
+// branching-flow DUPLICATE_TYPE+COMPOSITION_mixin (baselined):
+// independent seam twin of Paperless by owner ruling 2026-10-11 —
+// URL+Token stays per-seam both-or-neither; detector noise routed
+// upstream.
+type CRM struct {
 	URL   string `json:"url" koanf:"url"`
 	Token string `json:"token" koanf:"token"`
 }
@@ -173,7 +185,9 @@ type CRM struct { //nolint:branching-flow // independent seam twin of Paperless 
 // faxes. Both fields must be set together, exactly like the CRM seam —
 // half a configuration would mint a client that cannot authenticate (or
 // one with nowhere to go), and config validation fails closed on that.
-type Paperless struct { //nolint:branching-flow // independent seam twin of CRM by owner ruling 2026-10-11 (see CRM)
+// branching-flow DUPLICATE_TYPE (baselined): independent seam twin of
+// CRM by owner ruling 2026-10-11 (see CRM).
+type Paperless struct {
 	URL   string `json:"url" koanf:"url"`
 	Token string `json:"token" koanf:"token"`
 }

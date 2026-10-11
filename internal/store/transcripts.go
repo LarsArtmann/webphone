@@ -178,7 +178,7 @@ const transcriptFetchWindow = 2000
 // leg of the retention story): every segment of the call goes in one
 // statement. Idempotent — deleting an unknown call affects zero rows,
 // which is the same success as deleting an already-deleted one.
-func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, callID string) (int64, error) {
+func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, callID string) (int64, error) { //nolint:branching-flow // the opaque island Call-ID, verbatim passthrough (see domain.CallTranscriptSegment.CallID)
 	res, err := s.db.ExecContext(ctx, `
 		DELETE FROM call_transcripts WHERE owner = ? AND call_id = ?
 	`, owner.String(), callID)

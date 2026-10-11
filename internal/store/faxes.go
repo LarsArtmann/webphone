@@ -35,7 +35,7 @@ func (s *Faxes) Create(ctx context.Context, job domain.FaxJob) error {
 // UpdateStatus advances a job's status; providerRef updates the correlation
 // id when non-empty. errorText is stored verbatim on failure.
 func (s *Faxes) UpdateStatus(
-	ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int,
+	ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int, //nolint:branching-flow // provider correlation id + verbatim refusal text; a ProviderRef type would ripple into webhook DTOs and golden-pinned rows (triage 2026-10-11)
 ) error {
 	res, err := s.db.ExecContext(ctx, `
 		UPDATE fax_jobs

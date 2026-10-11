@@ -48,7 +48,10 @@ var ErrNotFound = errors.New("crm has no contact for this number") //nolint:erra
 const requestTimeout = 3 * time.Second
 
 // Client talks to one Ledger CRM machine API (mounted with -api-token).
-type Client struct { //nolint:branching-flow // the client-chokepoint idiom (same shape as pbx/asr on purpose — the do() chokepoint doctrine)
+// branching-flow COMPOSITION_mixin (baselined): the client-chokepoint
+// idiom (same shape as pbx/asr on purpose — the do() chokepoint
+// doctrine).
+type Client struct {
 	base   *url.URL
 	token  string
 	client *http.Client
