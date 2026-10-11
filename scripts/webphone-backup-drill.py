@@ -148,12 +148,12 @@ def main():
             "application/json",
             {"Authorization": f"Bearer {SECRET}"},
         )
-        assert status == 202, f"hook expected 202, got {status}"
+        assert status == 202, f"hook expected 202, got {status}"  # nosec B101 - drill script: the assert IS the check
         time.sleep(0.5)
         att = attachment_row(src)
-        assert att, "no attachment row landed in the source store"
+        assert att, "no attachment row landed in the source store"  # nosec B101 - drill script: the assert IS the check
         att_id, att_path = att
-        assert os.path.exists(os.path.join(src, "files", att_path)), (
+        assert os.path.exists(os.path.join(src, "files", att_path)), (  # nosec B101 - drill script: the assert IS the check
             "blob missing on disk"
         )
         print(f"[1] source loaded: attachment {att_id} at {att_path}")
@@ -175,11 +175,11 @@ def main():
         client = Client()
         client.login()
         status, body = client.request("GET", f"/attachments/{att_id}")
-        assert status == 200, f"attachment download failed: {status} {body[:200]}"
-        assert body == PAYLOAD, "restored attachment bytes differ"
+        assert status == 200, f"attachment download failed: {status} {body[:200]}"  # nosec B101 - drill script: the assert IS the check
+        assert body == PAYLOAD, "restored attachment bytes differ"  # nosec B101 - drill script: the assert IS the check
         print("[3] restored store serves the attachment byte-identical")
         status, _ = client.request("GET", "/partials/messages")
-        assert status == 200, "restored messages panel failed to render"
+        assert status == 200, "restored messages panel failed to render"  # nosec B101 - drill script: the assert IS the check
         # Restored artifacts keep the private-data posture: files at
         # most group-readable (0640); directories at most 0755 —
         # tarfile's "data" filter keeps file modes but forces the
@@ -188,7 +188,7 @@ def main():
         for name in ("webphone.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
             limit = 0o755 if name == "files" else 0o640
-            assert mode <= limit, (
+            assert mode <= limit, (  # nosec B101 - drill script: the assert IS the check
                 f"restored {name} mode {oct(mode)} exceeds {oct(limit)}"
             )
         print("[5] restored artifacts keep private modes (files <=0640, dirs <=0755)")

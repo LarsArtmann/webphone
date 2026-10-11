@@ -84,7 +84,7 @@ def ensure_go_toolchain(args: argparse.Namespace) -> None:
             break
     if floor is None:
         return
-    probe = subprocess.run(
+    probe = subprocess.run(  # nosec B603 - argv-list (no shell) probe of the local go toolchain
         [args.go, "version"], capture_output=True, text=True, check=False
     )
     m = re.search(r"go version go(\d[0-9.]*)", probe.stdout)
@@ -100,7 +100,7 @@ def ensure_go_toolchain(args: argparse.Namespace) -> None:
     )
     env = dict(os.environ)
     env["WEBPHONE_SMOKE_REEXEC"] = "1"
-    result = subprocess.run(  # nosec B607 - argv-list self re-exec into `nix develop` (the documented host-go-below-floor fallback)
+    result = subprocess.run(  # nosec - argv-list self re-exec into `nix develop` (the documented host-go-below-floor fallback; B603 no shell/untrusted input, B607 PATH by design)
         [
             "nix",
             "develop",
@@ -345,7 +345,7 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
     c.ok("restart: session cookie captured", bool(cookie), "jar empty")
 
     def boot() -> subprocess.Popen:
-        srv = subprocess.Popen(
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
             [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         deadline = time.monotonic() + TIMEOUT
@@ -408,8 +408,8 @@ def boot_failure_scenario(binary: str, workdir: str, port: int) -> int:
     env["WEBPHONE_ADDR"] = f"127.0.0.1:{port}"
     env["WEBPHONE_DATA_DIR"] = str(blocker / "data")
     try:
-        proc = subprocess.run(
-            [binary],
+        proc = subprocess.run(  # nosec B603 - argv-list (no shell) launch of the local binary (the boot-failure scenario)
+        [binary],
             env=env,
             capture_output=True,
             text=True,
@@ -512,7 +512,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
             }
         )
         env.update(env_extra)
-        srv = subprocess.Popen(
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
             [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         base = f"http://127.0.0.1:{port}"
@@ -1115,7 +1115,7 @@ def main() -> int:
         binary = f"{workdir}/webphone-bin"
         print(f"building {binary} …", flush=True)
         env = dict(os.environ)
-        build = subprocess.run(
+        build = subprocess.run(  # nosec B603 - argv-list (no shell) build of the binary under test
             [args.go, "build", "-o", binary, "./cmd/webphone"],
             env=env,
             capture_output=True,
@@ -1144,7 +1144,7 @@ def main() -> int:
             json.dump(cfg, fh)
         env2 = dict(os.environ)
         env2["WEBPHONE_CONFIG"] = cfg_path
-        srv2 = subprocess.Popen(
+        srv2 = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
             [binary], env=env2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
         base2 = f"http://127.0.0.1:{port2}"
@@ -1181,7 +1181,7 @@ def main() -> int:
             "WEBPHONE_DASHBOARD__ENABLE": "true",
         }
     )
-    server = subprocess.Popen(
+    server = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
         [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
     try:
@@ -1189,7 +1189,7 @@ def main() -> int:
         deadline = time.monotonic() + TIMEOUT
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(base + "/healthz", timeout=1).read()
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
                 break
             except OSError:
                 time.sleep(0.1)
@@ -1209,7 +1209,7 @@ def main() -> int:
             server.wait(timeout=5)
         except subprocess.TimeoutExpired:
             server.kill()
-        subprocess.run(["trash", workdir], capture_output=True, check=False)  # nosec B607 - argv-list cleanup via the mandated trash tool
+        subprocess.run(["trash", workdir], capture_output=True, check=False)  # nosec - argv-list cleanup via the mandated trash tool (B603 no shell/untrusted input, B607 PATH by design)
 
 
 if __name__ == "__main__":

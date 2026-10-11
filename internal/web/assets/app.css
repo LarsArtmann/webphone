@@ -29,11 +29,11 @@
   --danger-soft: rgb(239 106 95 / 14%);
   --warn: #e0a63e;
   --ok: #3fd694;
-  --radius-sm: 7px;
-  --radius: 10px;
-  --radius-lg: 14px;
   --shadow: 0 1px 2px rgb(0 0 0 / 44%), 0 10px 30px rgb(0 0 0 / 32%);
   --hairline: 1px solid var(--border);
+  --radius-sm: 6px;
+  --radius: 9px;
+  --radius-lg: 12px;
 }
 
 :root[data-theme="dark"] {
@@ -42,12 +42,12 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --bg: #f2f4f7;
+    --bg: #eef1f5;
     --surface: #ffffff;
-    --surface-2: #f5f7f9;
-    --surface-3: #eaeef2;
-    --border: #e2e7ed;
-    --border-strong: #c9d2dc;
+    --surface-2: #f4f6f9;
+    --surface-3: #e9edf2;
+    --border: #dee4eb;
+    --border-strong: #c6cfd9;
     --text: #121820;
     --muted: #5a6674;
     --accent: #0e8752;
@@ -57,7 +57,7 @@
     --danger-soft: rgb(211 56 44 / 10%);
     --warn: #9a5b0a;
     --ok: #0e8752;
-    --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 10px 28px rgb(16 24 32 / 8%);
+    --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
   }
 }
 
@@ -67,12 +67,12 @@
  * nothing inline ever fights it, so no !important is needed. */
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f2f4f7;
+  --bg: #eef1f5;
   --surface: #ffffff;
-  --surface-2: #f5f7f9;
-  --surface-3: #eaeef2;
-  --border: #e2e7ed;
-  --border-strong: #c9d2dc;
+  --surface-2: #f4f6f9;
+  --surface-3: #e9edf2;
+  --border: #dee4eb;
+  --border-strong: #c6cfd9;
   --text: #121820;
   --muted: #5a6674;
   --accent: #0e8752;
@@ -82,7 +82,7 @@
   --danger-soft: rgb(211 56 44 / 10%);
   --warn: #9a5b0a;
   --ok: #0e8752;
-  --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 10px 28px rgb(16 24 32 / 8%);
+  --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
 }
 
 * {
