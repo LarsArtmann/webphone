@@ -177,20 +177,23 @@
 
 /* Offline banner: the loud honest "you cannot call right now" surface
  * (connection.js flips it with the registration truth; the pill keeps
- * the precise reason). The [hidden] guard matters: the UA's hidden
- * rule must always win over the display below. */
+ * the precise reason). A danger rail carries the alarm; the wash stays
+ * faint so the card's other content keeps its voice. The [hidden]
+ * guard matters: the UA's hidden rule must always win over the display
+ * below. */
 .offline-banner {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  padding: 9px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-inline-start: 3px solid var(--danger);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--danger) 9%, transparent);
+  background: color-mix(in srgb, var(--danger) 7%, transparent);
   color: var(--text);
-  font-size: 0.88rem;
-  font-weight: 550;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .offline-banner::before {
@@ -900,6 +903,9 @@ button.small {
 #wp-sse-live[data-live="1"] {
   background: var(--ok);
   opacity: 1;
+  /* Line-light echo: the live dot glows with the same halo the
+   * registered pill's LED carries — one motif, three places. */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 18%, transparent);
 }
 
 /* Live-call transcript (calls.js): the streamed text under a call card.

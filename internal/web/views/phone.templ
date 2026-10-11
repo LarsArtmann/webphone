@@ -1,5 +1,9 @@
 package views
 
+import (
+	"github.com/larsartmann/templ-components/icons"
+)
+
 // PhoneIslandProps carries the server-known login surface: whether the
 // deployment offers the passkey (WebAuthn) front door. Off (the default)
 // the island renders EXACTLY the pre-passkey markup — the break-glass
@@ -126,7 +130,7 @@ templ PhoneIsland(props PhoneIslandProps) {
 				// default — the operator runbook greps the served #log, and
 				// the stack E2E must never meet a hidden diagnostics tree.
 				<div class="wp-advanced-bar">
-					<button id="wp-adv-toggle" class="ghost small" type="button" aria-expanded="true" aria-controls="wp-advanced" data-i18n-title="advancedSection">⚙</button>
+					<button id="wp-adv-toggle" class="ghost small" type="button" aria-expanded="true" aria-controls="wp-advanced" data-i18n-title="advancedSection">@icons.Icon(icons.Settings, "wp-icon")</button>
 				</div>
 				<div id="wp-advanced">
 					// Pre-call device check (M25 A10): proves the mic and

@@ -845,6 +845,31 @@ button.wp-danger:hover {
   background: var(--danger);
 }
 
+/* Icon-only action (the row's Call button): square-ish hit area so a
+ * lone glyph does not rattle in a pill-sized padding. */
+.wp-icon-btn {
+  padding: 6px 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Inline SVG icons (rendered by the templ-components icons package —
+ * plain stroke markup, no CSS framework): one sizing home here. Icons
+ * inherit currentColor, so a quiet button tints its own icon. */
+.wp-icon {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  display: inline-block;
+  vertical-align: -0.125em;
+}
+
+button .wp-icon {
+  width: 15px;
+  height: 15px;
+}
+
 /* Touch targets (M26): coarse pointers get 44px minis regardless of
  * viewport width — the narrow-viewport bump alone misses tablets. */
 @media (pointer: coarse) {
@@ -1657,6 +1682,32 @@ a:focus-visible {
 
 /* --- responsive ------------------------------------------------------------- */
 
+/* Desktop presence: panels are desk SURFACES, not floating cards — each
+ * fills the viewport height, so short lists do not strand dead gray
+ * space below the card and the composer lands at its bottom edge. The
+ * welcome panel stays content-sized. (Design pass 2026-10-12.) */
+@media (min-width: 901px) {
+  .wp-main-col > .wp-panel:not(.wp-welcome) {
+    min-height: clamp(430px, calc(100dvh - 240px), 980px);
+  }
+
+  .wp-panel:has(> .wp-transcript-wrap) > .wp-transcript-wrap {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .wp-panel:has(> .wp-transcript-wrap) > .wp-transcript-wrap > .wp-transcript {
+    flex: 1 1 auto;
+    max-height: none;
+  }
+
+  .wp-panel:has(> .wp-compose) > .wp-compose {
+    margin-top: auto;
+  }
+}
+
 @media (max-width: 900px) {
   .wp-body {
     grid-template-columns: 1fr;
@@ -1808,8 +1859,12 @@ a:focus-visible {
 }
 
 .wp-settings-head {
-  margin: 18px 0 0;
-  font-size: 1.05rem;
+  margin: 20px 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 /* htmx indicator parity: the library's own <style> injection is disabled
@@ -2110,9 +2165,11 @@ dialog.wp-lightbox img {
 
 .wp-transcripts h3 {
   margin: 0 0 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  color: var(--muted);
 }
 
 .wp-transcript-call {

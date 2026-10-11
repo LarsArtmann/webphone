@@ -128,7 +128,12 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 			<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
 			<span class="wp-thread-text">
 				<span class="wp-thread-remote">{ displayName(summary.Thread.Remote.String(), names) }</span>
-				<span class="wp-thread-preview">{ threadPreview(summary, lang) }</span>
+				<span class="wp-thread-preview">
+				if summary.LastAttachment {
+					@icons.Icon(icons.Document, "wp-icon wp-icon-text")
+				}
+				{ threadPreview(summary, lang) }
+			</span>
 			</span>
 			<span class="wp-thread-side">
 				<span
@@ -144,20 +149,20 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 			</span>
 		</a>
 		<button
-			class="wp-mini"
+			class="wp-mini wp-icon-btn"
 			data-dial={ summary.Thread.Remote.String() }
 			aria-label={ T(lang, "contacts.call") }
 			title={ T(lang, "contacts.call") }
-		>📞</button>
+		>@icons.Icon(icons.Phone, "wp-icon")</button>
 		// Organization flags (M22): each button posts the DESIRED state
 		// (the row renders the flip of its current state). The archived
 		// view offers only the way back — the filing cabinet keeps no pins.
 		if summary.Thread.Archived {
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), "📥", 0)
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), icons.ArchiveBox, 0)
 		} else {
-			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), "📌", wantInt(!summary.Thread.Pinned))
-			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), muteGlyph(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), "📥", 1)
+			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!summary.Thread.Pinned))
+			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), icons.ArchiveBox, 1)
 		}
 	</div>
 }
@@ -165,7 +170,9 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 // threadFlagButton posts one organization toggle (M22). on is the
 // DESIRED state; the SSE threads nudge re-renders the list, so the
 // button itself swaps nothing (hx-swap none, 204 by responseHandling).
-templ threadFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int) {
+// Icons are inline SVG strokes (templ-components icons) — platform
+// emoji rendered differently on every OS and read as decoration.
+templ threadFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
 	<button
 		type="button"
 		class="wp-mini wp-thread-flag"
@@ -173,7 +180,7 @@ templ threadFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int)
 		title={ labelKey }
 		hx-post={ flagURL(id, flag, on) }
 		hx-swap="none"
-	>{ glyph }</button>
+	>@icons.Icon(icon, "wp-icon")</button>
 }
 
 // headFlagButton is threadFlagButton aimed at the head itself (M22): a
@@ -181,7 +188,7 @@ templ threadFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int)
 // rendered head with the confirmed state — while the transcript, the
 // scroll place and any reply draft stay untouched. The row variant
 // (above) swaps nothing and rides the SSE list nudge instead.
-templ headFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int) {
+templ headFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
 	<button
 		type="button"
 		class="wp-mini wp-thread-flag"
@@ -190,7 +197,7 @@ templ headFlagButton(id domain.ThreadID, flag, labelKey, glyph string, on int) {
 		hx-post={ flagURL(id, flag, on) }
 		hx-target="#wp-thread-head"
 		hx-swap="outerHTML"
-	>{ glyph }</button>
+	>@icons.Icon(icon, "wp-icon")</button>
 }
 
 // ThreadHead is the open conversation's header: the way back, the
@@ -211,11 +218,11 @@ templ ThreadHead(props ThreadViewProps) {
 		>← All messages</a>
 		<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
 		if props.Thread.Archived {
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), "📥", 0)
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
 		} else {
-			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), "📌", wantInt(!props.Thread.Pinned))
-			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteGlyph(props.Thread.Muted), wantInt(!props.Thread.Muted))
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), "📥", 1)
+			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!props.Thread.Pinned))
+			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), icons.ArchiveBox, 1)
 		}
 		@display.Button(display.ButtonProps{
 			Text:  T(props.Lang, "contacts.call"),
@@ -235,11 +242,11 @@ func wantInt(on bool) int {
 	return 0
 }
 
-func muteGlyph(muted bool) string {
+func muteIcon(muted bool) icons.Name {
 	if muted {
-		return "🔇"
+		return icons.BellSlash
 	}
-	return "🔔"
+	return icons.Bell
 }
 
 // flagLabel resolves a toggle's action label: the SAME state expression
@@ -255,12 +262,10 @@ func flagLabel(lang Lang, state bool, action, reverse string) string {
 
 // threadPreview is the row's last-message preview: an attachment
 // prefixes the text (M21.2) so a photo thread reads as one at a glance.
+// The prefix is a small inline SVG (not the paperclip emoji it replaced)
+// and renders in the row, not here — this stays a pure text one-liner.
 func threadPreview(summary store.ThreadSummary, lang Lang) string {
-	text := preview(summary.LastBody, summary.LastChannel, lang)
-	if summary.LastAttachment {
-		return "📎 " + text
-	}
-	return text
+	return preview(summary.LastBody, summary.LastChannel, lang)
 }
 
 // NewMessageForm starts a conversation with a typed number.
@@ -521,11 +526,11 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 						alt={ att.Name }
 						loading="lazy"
 					/>
-					<span class="wp-muted">📎 { att.Name } ({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
+					<span class="wp-muted">{ att.Name } ({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
 				</a>
 			} else {
 				<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
-					📎 { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
+					@icons.Icon(icons.Document, "wp-icon wp-icon-text") { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
 				</a>
 				if strings.HasPrefix(att.MimeType, "audio/") && asr {
 					<button

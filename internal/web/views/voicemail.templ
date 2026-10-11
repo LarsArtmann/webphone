@@ -111,7 +111,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang,
 					aria-label={ T(lang, "vm.play") }
 					data-label-play={ T(lang, "vm.play") }
 					data-label-pause={ T(lang, "vm.pause") }
-				>▶</button>
+				><svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72L19 12 8 5.14z"></path></svg></button>
 				<canvas
 					class="wp-vm-wave"
 					id={ "vm-wave-" + msg.UUID }
