@@ -19,7 +19,7 @@ import shutil
 import socket
 import sqlite3
 import stat as stat_module
-import subprocess
+import subprocess  # nosec B404 - deliberately spawns the local drill binary under test
 import tarfile
 import tempfile
 import time
@@ -67,17 +67,17 @@ class Client:
 
     def login(self):
         status, body = self.request("GET", "/api/csrf")
-        assert status == 200, "csrf fetch failed"
+        assert status == 200, "csrf fetch failed"  # nosec B101 - drill script: the assert IS the check
         self.csrf = json.loads(body)["token"]
         status, _ = self.request(
             "POST",
             "/api/session",
-            json.dumps({"extension": "1000", "password": "pw"}).encode(),
+            json.dumps({"extension": "1000", "password": "pw"}).encode(),  # nosec B105 - fixture credential for the local drill server
             "application/json",
         )
-        assert status == 201, f"loopback login expected 201, got {status}"
+        assert status == 201, f"loopback login expected 201, got {status}"  # nosec B101 - drill script: the assert IS the check
         status, body = self.request("GET", "/api/csrf")
-        assert status == 200, "csrf adoption failed"
+        assert status == 200, "csrf adoption failed"  # nosec B101 - drill script: the assert IS the check
         self.csrf = json.loads(body)["token"]
 
 
@@ -87,7 +87,7 @@ def boot(data_dir):
     # probed (absent in the nix sandbox, where no prior drill process
     # can exist) so the drill also runs as a flake check.
     if shutil.which("pkill"):
-        subprocess.run(["pkill", "-f", BIN], capture_output=True, check=False)  # nosec B607 - which-guarded argv-list call inside the VM test env
+        subprocess.run(["pkill", "-f", BIN], capture_output=True, check=False)  # nosec - which-guarded argv-list call (B603 no shell/untrusted input, B607 VM PATH) inside the VM test env
         time.sleep(0.5)
     env = dict(
         os.environ,
@@ -103,7 +103,7 @@ def boot(data_dir):
     old_umask = os.umask(0o077)
     try:
         with open(data_dir + ".log", "wb") as log:
-            proc = subprocess.Popen(
+            proc = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local drill binary
                 [BIN], env=env, stdout=log, stderr=subprocess.STDOUT
             )
     finally:

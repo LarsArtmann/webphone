@@ -359,7 +359,7 @@ def main() -> int:
     try:
         for _ in range(50):
             try:
-                urllib.request.urlopen(base + "/livez", timeout=1)
+                urllib.request.urlopen(base + "/livez", timeout=1)  # nosec B310 - readiness probe of the local server under test
                 break
             except (OSError, http.client.HTTPException):
                 time.sleep(0.2)

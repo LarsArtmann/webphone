@@ -66,7 +66,7 @@ def main():
     for _ in range(REPEATS):
         status3, _, body3, ms3 = timed_get(ASSET, {"If-None-Match": etag})
         if reval_bytes is None:
-            assert status3 == 304, f"expected 304, got {status3}"
+            assert status3 == 304, f"expected 304, got {status3}"  # nosec B101 - dev harness: the assert IS the check
             reval_bytes = len(body3)
         reval_times.append(ms3)
 

@@ -27,7 +27,7 @@ import os
 import pathlib
 import re
 import socket
-import subprocess
+import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
 import tempfile
 import threading
@@ -306,7 +306,7 @@ def fronted_login(s: Smoke, csrf_cookie: str = "") -> tuple[int, bytes, dict[str
     return s.request(
         "POST",
         "/api/session",
-        json.dumps({"extension": "1001", "password": "pw"}).encode(),
+        json.dumps({"extension": "1001", "password": "pw"}).encode(),  # nosec B105 - fixture credential for the self-booted smoke server
         "application/json",
         headers=headers,
     )
@@ -351,7 +351,7 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
         deadline = time.monotonic() + TIMEOUT
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(base + "/healthz", timeout=1).read()
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
                 return srv
             except OSError:
                 time.sleep(0.1)
@@ -519,7 +519,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
         deadline = time.monotonic() + TIMEOUT
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(base + "/healthz", timeout=1).read()
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
                 return srv, base
             except OSError:
                 time.sleep(0.1)
@@ -827,7 +827,7 @@ def run_checks(
     status, _, _ = plain.request(
         "POST",
         "/api/session",
-        json.dumps({"extension": "1001", "password": "pw"}).encode(),
+        json.dumps({"extension": "1001", "password": "pw"}).encode(),  # nosec B105 - fixture credential (this CSRF-gate test EXPECTS the rejection)
         "application/json",
     )
     c.ok("session CSRF-gated", status in (403, 401), f"got {status}")
@@ -1151,7 +1151,7 @@ def main() -> int:
         deadline = time.monotonic() + TIMEOUT
         while time.monotonic() < deadline:
             try:
-                urllib.request.urlopen(base2 + "/healthz", timeout=1).read()
+                urllib.request.urlopen(base2 + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
                 break
             except OSError:
                 time.sleep(0.1)
@@ -1175,7 +1175,7 @@ def main() -> int:
             "WEBPHONE_DATA_DIR": f"{workdir}/data",
             # Without a configured secret the hooks fail CLOSED (503) — the
             # suite exercises the open path, so it configures one.
-            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",
+            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
             # The dashboard is part of the product surface now: boot it
             # enabled so its checks are standing smoke coverage.
             "WEBPHONE_DASHBOARD__ENABLE": "true",
@@ -1209,7 +1209,7 @@ def main() -> int:
             server.wait(timeout=5)
         except subprocess.TimeoutExpired:
             server.kill()
-        subprocess.run(["trash", workdir], capture_output=True, check=False)
+        subprocess.run(["trash", workdir], capture_output=True, check=False)  # nosec B607 - argv-list cleanup via the mandated trash tool
 
 
 if __name__ == "__main__":
