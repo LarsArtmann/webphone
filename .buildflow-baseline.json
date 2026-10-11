@@ -1,305 +1,666 @@
 {
-  "tool": {
-    "name": "buildflow-baseline"
-  },
-  "findings": [
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/asr/google.go:46:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/asr/google.go",
-        "line": 46,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:ANTI_PATTERN_large-struct:internal/config/config.go:38:6",
-      "rule": "ANTI_PATTERN_large-struct",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"ANTI_PATTERN_large-struct\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 38,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:126:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 126,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:159:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 159,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:DUPLICATE_TYPE:internal/config/config.go:179:0",
-      "rule": "DUPLICATE_TYPE",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 179,
-        "column": 0,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/config/config.go:179:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 179,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:DUPLICATE_TYPE:internal/config/config.go:190:0",
-      "rule": "DUPLICATE_TYPE",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/config/config.go",
-        "line": 190,
-        "column": 0,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/crm/client.go:54:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/crm/client.go",
-        "line": 54,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:DUPLICATE_TYPE:internal/domain/contact.go:23:0",
-      "rule": "DUPLICATE_TYPE",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/domain/contact.go",
-        "line": 23,
-        "column": 0,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/domain/message.go:114:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/domain/message.go",
-        "line": 114,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/domain/transcript.go:12:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/domain/transcript.go",
-        "line": 12,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/domain/transcript.go:25:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/domain/transcript.go",
-        "line": 25,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/fax/service.go:58:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/fax/service.go",
-        "line": 58,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:DUPLICATE_TYPE:internal/server/contacts_api.go:42:0",
-      "rule": "DUPLICATE_TYPE",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/server/contacts_api.go",
-        "line": 42,
-        "column": 0,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/server/idempotency.go:20:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/server/idempotency.go",
-        "line": 20,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:ANTI_PATTERN_large-struct:internal/server/server.go:129:6",
-      "rule": "ANTI_PATTERN_large-struct",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"ANTI_PATTERN_large-struct\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/server/server.go",
-        "line": 129,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/store/sweep.go:15:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/store/sweep.go",
-        "line": 15,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:DUPLICATE_TYPE:internal/vcard/vcard.go:16:0",
-      "rule": "DUPLICATE_TYPE",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"DUPLICATE_TYPE\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/vcard/vcard.go",
-        "line": 16,
-        "column": 0,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:internal/asr/asr.go:85:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "accepted noise for rule \"COMPOSITION_mixin\" (added via buildflow baseline add)",
-      "severity": "warning",
-      "position": {
-        "file": "internal/asr/asr.go",
-        "line": 85,
-        "column": 6,
-        "offset": -1
-      },
-      "fixStrategy": "none",
-      "confidence": 0
-    }
-  ],
   "summary": {
     "total": 19,
     "bySeverity": {
-      "warning": 19
+      "info": 12,
+      "warning": 7
+    },
+    "byCategory": {
+      "duplication": 5,
+      "structure": 14
     },
     "byFixStrategy": {
-      "none": 19
+      "suggest": 19
     },
     "filesAffected": 13,
     "filesScanned": 0,
     "suppressed": 0
   },
-  "schema_version": 1
+  "schema_version": 1,
+  "tool": {
+    "name": "buildflow",
+    "version": "workflow"
+  },
+  "findings": [
+    {
+      "id": "branching-flow:ANTI_PATTERN_large-struct:/home/lars/projects/webphone/internal/config/config.go:38:6",
+      "rule": "ANTI_PATTERN_large-struct",
+      "toolName": "branching-flow",
+      "message": "Struct has 20 fields (threshold: 15)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 38,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "warning"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Split into smaller structs with focused responsibilities",
+      "confidence": 0.95,
+      "metadata": {
+        "antiPattern": "large-struct",
+        "category": "warning",
+        "confidence": "low",
+        "message": "Struct has 20 fields (threshold: 15)",
+        "pattern": "large-struct",
+        "severity": "medium",
+        "struct": "config.Config"
+      }
+    },
+    {
+      "id": "branching-flow:ANTI_PATTERN_large-struct:/home/lars/projects/webphone/internal/server/server.go:129:6",
+      "rule": "ANTI_PATTERN_large-struct",
+      "toolName": "branching-flow",
+      "message": "Struct has 19 fields (threshold: 15)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/server/server.go",
+        "line": 129,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "warning"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Split into smaller structs with focused responsibilities",
+      "confidence": 0.95,
+      "metadata": {
+        "antiPattern": "large-struct",
+        "category": "warning",
+        "confidence": "low",
+        "message": "Struct has 19 fields (threshold: 15)",
+        "pattern": "large-struct",
+        "severity": "medium",
+        "struct": "server.Deps"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/asr.go:85:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "asr.Client and asr.GoogleClient share 3 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/asr/asr.go",
+        "line": 85,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, asr.Client shares fields with 3 struct(s): asr.GoogleClient, crm.Client, pbx.Client",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype ClientMixin struct {\n\tbase *url.URL\n\tclient *http.Client\n\tmodel string\n}\n\n// Client embeds the mixin for field reuse\ntype Client struct {\n\tClientMixin\n\ttoken string\n}\n\n// GoogleClient also embeds the mixin\ntype GoogleClient struct {\n\tClientMixin\n\tapiKey string\n\trecognizer string\n\tlanguage string\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:asr.Client",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "asr.Client and asr.GoogleClient share 3 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "3",
+        "struct": "asr.Client"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/google.go:46:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "asr.GoogleConfig and config.ASR share 4 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/asr/google.go",
+        "line": 46,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, asr.GoogleConfig shares fields with 1 struct(s): config.ASR",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype GoogleMixin struct {\n\tLanguage string\n\tLocation string\n\tModel string\n\tProject string\n}\n\n// GoogleConfig embeds the mixin for field reuse\ntype GoogleConfig struct {\n\tGoogleMixin\n\tEndpoint string\n\tAPIKey string\n}\n\n// ASR also embeds the mixin\ntype ASR struct {\n\tGoogleMixin\n\tProvider string `json:\"provider,omitempty\" koanf:\"provider\"`\n\tURL string `json:\"url\" koanf:\"url\"`\n\tToken string `json:\"token,omitempty\" koanf:\"token\"`\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:asr.GoogleConfig",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "asr.GoogleConfig and config.ASR share 4 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "asr.GoogleConfig"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/config/config.go:126:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "config.Passkey and userauth.PasskeyRuntime share 5 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 126,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, config.Passkey shares fields with 1 struct(s): userauth.PasskeyRuntime",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype PasskeyMixin struct {\n\tExtensionPasswordFiles map[string]string `json:\"extension_password_files\" koanf:\"extension_password_files\"`\n\tRPDisplayName string `json:\"rp_display_name,omitempty\" koanf:\"rp_display_name\"`\n\tRPID string `json:\"rp_id\" koanf:\"rp_id\"`\n\tRPOrigins []string `json:\"rp_origins\" koanf:\"rp_origins\"`\n\tUsers map[string]PasskeyUser `json:\"users\" koanf:\"users\"`\n}\n\n// Passkey embeds the mixin for field reuse\ntype Passkey struct {\n\tPasskeyMixin\n}\n\n// PasskeyRuntime also embeds the mixin\ntype PasskeyRuntime struct {\n\tPasskeyMixin\n\tWebAuthn usermgmt.WebAuthnProvider\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:config.Passkey",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "config.Passkey and userauth.PasskeyRuntime share 5 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "config.Passkey"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/config/config.go:159:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "config.PasskeyUser and userauth.MappedUser share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 159,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, config.PasskeyUser shares fields with 1 struct(s): userauth.MappedUser",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype PasskeyUserMixin struct {\n\tDisplayName string `json:\"display_name,omitempty\" koanf:\"display_name\"`\n\tExtensions []string `json:\"extensions\" koanf:\"extensions\"`\n}\n\n// PasskeyUser embeds the mixin for field reuse\ntype PasskeyUser struct {\n\tPasskeyUserMixin\n}\n\n// MappedUser also embeds the mixin\ntype MappedUser struct {\n\tPasskeyUserMixin\n\tEmail string\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:config.PasskeyUser",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "config.PasskeyUser and userauth.MappedUser share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "config.PasskeyUser"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/config/config.go:179:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "config.CRM and config.Paperless share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 179,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, config.CRM shares fields with 1 struct(s): config.Paperless",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype CRMMixin struct {\n\tToken string `json:\"token\" koanf:\"token\"`\n\tURL string `json:\"url\" koanf:\"url\"`\n}\n\n// CRM embeds the mixin for field reuse\ntype CRM struct {\n\tCRMMixin\n}\n\n// Paperless also embeds the mixin\ntype Paperless struct {\n\tCRMMixin\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:config.CRM",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "config.CRM and config.Paperless share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "config.CRM"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/crm/client.go:54:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "crm.Client and pbx.Client share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/crm/client.go",
+        "line": 54,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, crm.Client shares fields with 1 struct(s): pbx.Client",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype ClientMixin struct {\n\tbase *url.URL\n\tclient *http.Client\n}\n\n// Client embeds the mixin for field reuse\ntype Client struct {\n\tClientMixin\n\ttoken string\n}\n\n// Client also embeds the mixin\ntype Client struct {\n\tClientMixin\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:crm.Client",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "crm.Client and pbx.Client share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "crm.Client"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/message.go:114:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/message.go",
+        "line": 114,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, domain.InboundMessage shares fields with 1 struct(s): gateway.OutboundMessage",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype InboundMessageMixin struct {\n\tAttachments []AttachmentContent\n\tBody string\n}\n\n// InboundMessage embeds the mixin for field reuse\ntype InboundMessage struct {\n\tInboundMessageMixin\n\tOwner Extension\n\tFrom Phone\n\tReceivedAt time.Time\n}\n\n// OutboundMessage also embeds the mixin\ntype OutboundMessage struct {\n\tInboundMessageMixin\n\tOwner domain.Extension\n\tTo domain.Phone\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:domain.InboundMessage",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "domain.InboundMessage"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:12:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "domain.CallTranscriptSegment and domain.CallTranscript share 5 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/transcript.go",
+        "line": 12,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, domain.CallTranscriptSegment shares fields with 2 struct(s): domain.CallTranscript, server.exportTranscript",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype CallTranscriptMixin struct {\n\tCallID string\n\tDirection Direction\n\tOwner Extension\n\tRemote string\n\tStartedAt time.Time\n}\n\n// CallTranscriptSegment embeds the mixin for field reuse\ntype CallTranscriptSegment struct {\n\tCallTranscriptMixin\n\tText string\n}\n\n// CallTranscript also embeds the mixin\ntype CallTranscript struct {\n\tCallTranscriptMixin\n\tLines []string\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:domain.CallTranscriptSegment",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "medium",
+        "message": "domain.CallTranscriptSegment and domain.CallTranscript share 5 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "2",
+        "struct": "domain.CallTranscriptSegment"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:25:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "domain.CallTranscript and server.exportTranscript share 4 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/transcript.go",
+        "line": 25,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, domain.CallTranscript shares fields with 1 struct(s): server.exportTranscript",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype CallTranscriptMixin struct {\n\tCallID string\n\tLines []string\n\tRemote string\n\tStartedAt time.Time\n}\n\n// CallTranscript embeds the mixin for field reuse\ntype CallTranscript struct {\n\tCallTranscriptMixin\n\tOwner Extension\n\tDirection Direction\n}\n\n// exportTranscript also embeds the mixin\ntype exportTranscript struct {\n\tCallTranscriptMixin\n\tDirection string `json:\"direction\"`\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:domain.CallTranscript",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "domain.CallTranscript and server.exportTranscript share 4 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "domain.CallTranscript"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/fax/service.go:58:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "fax.Service and messaging.Service share 4 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/fax/service.go",
+        "line": 58,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, fax.Service shares fields with 1 struct(s): messaging.Service",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype SharedMixin struct {\n\tblobs *blob.Store\n\tclock func() time.Time\n\tidentities map[string]string\n\tonChange ChangeFunc\n}\n\n// Service embeds the mixin for field reuse\ntype Service struct {\n\tSharedMixin\n\tfaxes *store.Faxes\n\tgateway gateway.FaxGateway\n\tarchiver Archiver\n}\n\n// Service also embeds the mixin\ntype Service struct {\n\tSharedMixin\n\tmessages *store.Messages\n\tgateway gateway.MessageGateway\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:fax.Service",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "medium",
+        "message": "fax.Service and messaging.Service share 4 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "fax.Service"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/idempotency.go:20:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "server.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/server/idempotency.go",
+        "line": 20,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, server.idemStore shares fields with 1 struct(s): server.unreadCache",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype idemStoreMixin struct {\n\tmu sync.Mutex\n\tttl time.Duration\n}\n\n// idemStore embeds the mixin for field reuse\ntype idemStore struct {\n\tidemStoreMixin\n\tentries map[string]time.Time\n}\n\n// unreadCache also embeds the mixin\ntype unreadCache struct {\n\tidemStoreMixin\n\titems map[domain.Extension]unreadEntry\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:server.idemStore",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "server.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "server.idemStore"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/store/sweep.go:15:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "store.SweepResult and store.Counts share 4 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/store/sweep.go",
+        "line": 15,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, store.SweepResult shares fields with 1 struct(s): store.Counts",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype SweepResultMixin struct {\n\tFaxes int64\n\tMessages int64\n\tThreads int64\n\tTranscripts int64\n}\n\n// SweepResult embeds the mixin for field reuse\ntype SweepResult struct {\n\tSweepResultMixin\n\tBlobPaths []string\n}\n\n// Counts also embeds the mixin\ntype Counts struct {\n\tSweepResultMixin\n\tContacts int64\n\tSessions int64\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:store.SweepResult",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "store.SweepResult and store.Counts share 4 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "store.SweepResult"
+      }
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/config/config.go:179",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "Duplicate struct 'CRM' with same signature as 1 other type(s)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 179,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "duplication",
+      "tags": [
+        "dupe"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Consider consolidating into shared type",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/config/config.go",
+          "line": 179,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/config/config.go",
+          "line": 182,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "confidence": 0.95,
+      "groupId": "552dc7010d9d4f16",
+      "metadata": {
+        "groupCount": "2",
+        "package": "config",
+        "typeKind": "struct",
+        "typeName": "CRM",
+        "verdict": "actionable"
+      }
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/config/config.go:190",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "Duplicate struct 'Paperless' with same signature as 1 other type(s)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/config/config.go",
+        "line": 190,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "duplication",
+      "tags": [
+        "dupe"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Consider consolidating into shared type",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/config/config.go",
+          "line": 190,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/config/config.go",
+          "line": 193,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "confidence": 0.95,
+      "groupId": "552dc7010d9d4f16",
+      "metadata": {
+        "groupCount": "2",
+        "package": "config",
+        "typeKind": "struct",
+        "typeName": "Paperless",
+        "verdict": "actionable"
+      }
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/domain/contact.go:23",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "Duplicate struct 'SharedContact' with same signature as 2 other type(s)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/contact.go",
+        "line": 23,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "duplication",
+      "tags": [
+        "dupe"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Consider consolidating into shared type",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/domain/contact.go",
+          "line": 23,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/domain/contact.go",
+          "line": 26,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "confidence": 0.95,
+      "groupId": "dbf338e87ee834ab",
+      "metadata": {
+        "groupCount": "3",
+        "package": "domain",
+        "typeKind": "struct",
+        "typeName": "SharedContact",
+        "verdict": "actionable"
+      }
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/server/contacts_api.go:42",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "Duplicate struct 'apiSharedContact' with same signature as 2 other type(s)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
+        "line": 42,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "duplication",
+      "tags": [
+        "dupe"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Consider consolidating into shared type",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
+          "line": 42,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
+          "line": 45,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "confidence": 0.95,
+      "groupId": "dbf338e87ee834ab",
+      "metadata": {
+        "groupCount": "3",
+        "package": "server",
+        "typeKind": "struct",
+        "typeName": "apiSharedContact",
+        "verdict": "actionable"
+      }
+    },
+    {
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/vcard/vcard.go:16",
+      "rule": "DUPLICATE_TYPE",
+      "toolName": "branching-flow",
+      "message": "Duplicate struct 'Card' with same signature as 2 other type(s)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/vcard/vcard.go",
+        "line": 16,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "duplication",
+      "tags": [
+        "dupe"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Consider consolidating into shared type",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/vcard/vcard.go",
+          "line": 16,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/vcard/vcard.go",
+          "line": 19,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "confidence": 0.95,
+      "groupId": "dbf338e87ee834ab",
+      "metadata": {
+        "groupCount": "3",
+        "package": "vcard",
+        "typeKind": "struct",
+        "typeName": "Card",
+        "verdict": "actionable"
+      }
+    }
+  ]
 }

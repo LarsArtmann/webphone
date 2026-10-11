@@ -14,20 +14,23 @@
 # heavyweight gate, so the pipeline skips test steps for quick iteration.
 build_mode: fast
 #
-# Findings baseline + rule elevation for branching-flow (see the
-# UNSKIPPED note below): the 19 type-node findings (mixin/dupe/
-# large-struct) cannot carry //nolint directives — branching-flow v0.6.4
-# ignores every nolint placement on TypeDecl nodes (verified 2026-10-11:
-# inline, standalone-above, first-field, bare, nolint:start block) — so
-# they live here as accepted noise, each with its ruling documented as a
-# `branching-flow ... (baselined)` comment at the site. error_rules
-# elevates exactly these rules (plus the panic-correctness pair) so the
-# gate fails on NEW findings of them while the baselined IDs stay
-# accepted; per-site findings that DO honor nolints (statements, fields,
-# signatures) are suppressed in-code with reasons instead of here.
+# strict + baseline = "fail on NEW findings only" (the 2026-10-11
+# ratification's gate condition): strict promotes the findings gate to
+# warning severity for EVERY tool, and .buildflow-baseline.json accepts
+# the reviewed noise. The baseline holds the 19 branching-flow type-node
+# findings (mixin/dupe/large-struct) that cannot carry //nolint
+# directives — v0.6.4 ignores every nolint placement on TypeDecl nodes
+# (verified 2026-10-11: inline, standalone-above, first-field, bare,
+# nolint:start block; routed upstream) — each with its ruling documented
+# as a `branching-flow ... (baselined)` comment at the site. Findings
+# that DO honor nolints (statements, fields, signatures) are suppressed
+# in-code with reasons instead of here. Verified green at 64/64 steps
+# with --strict + this baseline (2026-10-11). NOTE: error_rules (the
+# finer per-rule elevation) exists only in unreleased BuildFlow source —
+# unknown keys warn at every load, so it stays OUT until the installed
+# binary knows it.
+strict: true
 baseline: .buildflow-baseline.json
-error_rules:
-  branching-flow: [COMPOSITION_mixin, DUPLICATE_TYPE, ANTI_PATTERN_large-struct, NIL_POINTER_DEREF, INDEX_OUT_OF_RANGE]
 #
 # exclude: the SIP island sources in internal/web/assets/island/ AND the
 # shell glue (internal/web/assets/shell.js) are owned by the flake's
