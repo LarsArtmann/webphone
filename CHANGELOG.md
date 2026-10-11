@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- SSE event names are now the defined type `server.EventName` (the five
+  constants were already named): swapping an event for its HTML payload
+  at a `Publish` call site is a compile error instead of a silent
+  cross-tab breakage. Wire event names unchanged.
 - Transcript reassembly (`Recent`/`Search`/`Export`) is now single-pass:
   lines append in fetch order with one finishing reverse per call
   instead of a prepend-per-segment (quadratic on a 1500-segment
