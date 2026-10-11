@@ -70,6 +70,13 @@ export function installBrowserGlobals() {
       },
       append(...kids) {
         for (const kid of kids) {
+          // Text nodes (shell.js attachment chips) have no element tree
+          // under this stub: their text merges into the parent, which is
+          // what textContent assertions observe.
+          if (kid && kid.textNode) {
+            this.textContent = String(this.textContent) + kid.textContent;
+            continue;
+          }
           kid.parent = this;
           this.children.push(kid);
         }
@@ -161,6 +168,9 @@ export function installBrowserGlobals() {
       return registry.get(id);
     },
     createElement: () => makeEl(""),
+    // Minimal text node: only append() consumes it (merging the text into
+    // the target element's textContent).
+    createTextNode: (text) => ({ textNode: true, textContent: String(text) }),
     querySelectorAll: () => [],
     querySelector: () => null,
     documentElement: makeEl("html"),
