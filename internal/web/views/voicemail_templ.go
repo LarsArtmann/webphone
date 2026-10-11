@@ -494,7 +494,7 @@ func VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang, 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\">▶</button><canvas class=\"wp-vm-wave\" id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"><svg class=\"wp-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M8 5.14v13.72L19 12 8 5.14z\"></path></svg></button><canvas class=\"wp-vm-wave\" id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

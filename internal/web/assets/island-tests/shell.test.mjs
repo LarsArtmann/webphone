@@ -887,7 +887,7 @@ const makePlayerRow = (uuid, { unread = true } = {}) => {
   audio.playCalls = played;
   const play = doc.getElementById("vm-play-" + uuid);
   play.className = "wp-mini wp-vm-play";
-  play.textContent = "▶";
+  play.innerHTML = "";
   play.hidden = false;
   play.setAttribute("data-vm-play", uuid);
   play.setAttribute("data-label-play", "Play");
@@ -944,7 +944,7 @@ test("playing marks the row, swaps the label, and clears unread + badge", () => 
   const onPlay = audio.listeners.play[0];
   onPlay();
   assert.ok(row.classList.contains("wp-playing"), "C3: the row is marked playing");
-  assert.equal(play.textContent, "⏸");
+  assert.match(String(play.innerHTML), /<svg/, "the pause control is an inline SVG icon");
   assert.equal(play.getAttribute("aria-label"), "Pause", "label swaps per the session language");
   assert.ok(!row.classList.contains("wp-unread"), "C9: unread styling drops on play");
   assert.equal(badge.textContent, "1", "C9: the nav badge mirrors the clear");
@@ -952,7 +952,7 @@ test("playing marks the row, swaps the label, and clears unread + badge", () => 
   const onPause = audio.listeners.pause[0];
   onPause();
   assert.ok(!row.classList.contains("wp-playing"));
-  assert.equal(play.textContent, "▶");
+  assert.match(String(play.innerHTML), /<svg/, "the play control is an inline SVG icon");
   assert.equal(play.getAttribute("aria-label"), "Play");
 
   badge.hidden = true;

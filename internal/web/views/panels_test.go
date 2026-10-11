@@ -275,8 +275,8 @@ func TestThreadRowFlagControlsBothLanguages(t *testing.T) {
 	if strings.Contains(mutedEN, `class="wp-nav-badge"`) {
 		t.Errorf("muted row must suppress the badge (D8): %s", mutedEN)
 	}
-	if !strings.Contains(mutedEN, `aria-label="Unmute"`) || !strings.Contains(mutedEN, ">🔇</button>") {
-		t.Errorf("muted row must offer Unmute with the speaker-off glyph: %s", mutedEN)
+	if !strings.Contains(mutedEN, `aria-label="Unmute"`) || !strings.Contains(mutedEN, `class="wp-icon"`) {
+		t.Errorf("muted row must offer Unmute with the bell-slash SVG icon: %s", mutedEN)
 	}
 
 	archivedEN := renderComponent(t, ThreadRow(archived, nil, LangEN))

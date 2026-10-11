@@ -4,28 +4,21 @@
 (function () {
   "use strict";
 
-  // Inline SVG icon builders (the JS-created twins of the server's
-  // templ-components icons): same 24-box stroke-less glyphs, sized by
-  // the shared .wp-icon CSS class, tinted by currentColor. Platform
-  // emoji rendered differently per OS and read as decoration.
-  var svgIcon = function (path) {
-    var span = document.createElement("span");
-    span.innerHTML =
+  // Inline SVG icon markup (the JS-created twins of the server's
+  // templ-components icons): plain strings assigned via innerHTML —
+  // sized by the shared .wp-icon CSS class, tinted by currentColor.
+  // Platform emoji rendered differently per OS and read as decoration.
+  var svgIconHtml = function (path) {
+    return (
       '<svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
-      '<path d="' + path + '"></path></svg>';
-    return span.firstChild;
-  };
-  var wpPlayIcon = function () {
-    return svgIcon("M8 5.14v13.72L19 12 8 5.14z");
-  };
-  var wpPauseIcon = function () {
-    return svgIcon("M7 5h4v14H7zM13 5h4v14h-4z");
-  };
-  var wpAttachmentIcon = function () {
-    return svgIcon(
-      "M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z",
+      '<path d="' + path + '"></path></svg>'
     );
   };
+  var WP_PLAY_SVG = svgIconHtml("M8 5.14v13.72L19 12 8 5.14z");
+  var WP_PAUSE_SVG = svgIconHtml("M7 5h4v14H7zM13 5h4v14h-4z");
+  var WP_ATTACH_SVG = svgIconHtml(
+    "M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z",
+  );
   // Load-error boundary (plan T19): if ANY shell wiring throws at load,
   // leave a breadcrumb in the island's event log (it may still exist
   // even when the island itself failed) and rethrow to the console —
@@ -870,10 +863,8 @@
       names.forEach(function (name) {
         var chip = document.createElement("span");
         chip.className = "wp-attachment";
-        chip.append(
-          wpAttachmentIcon(),
-          document.createTextNode(" " + name),
-        );
+        chip.innerHTML = WP_ATTACH_SVG;
+        chip.append(document.createTextNode(" " + name));
         bubble.append(chip);
       });
       var meta = document.createElement("span");
@@ -1136,7 +1127,7 @@
       }
       var btn = document.getElementById("vm-play-" + uuid);
       if (btn) {
-        btn.innerHTML = playing ? wpPauseIcon() : wpPlayIcon();
+        btn.innerHTML = playing ? WP_PAUSE_SVG : WP_PLAY_SVG;
         var label = btn.getAttribute(
           playing ? "data-label-pause" : "data-label-play",
         );
