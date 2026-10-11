@@ -88,11 +88,16 @@ file implements that proposal and records the supersession).
 
 1. Baseline: `-t 1`, target zero, upstream-filing for detector FPs
    (see Protocol step 1). RESOLVED.
-2. `settingsRow`: BUILD the component. Home decision FIRST: review
-   `~/projects/templ-components/**` — it belongs there if it
-   generalizes (definition-list row, `display.*`), here (views) if it
-   is webphone-settings-specific. Prove with an old-vs-new render
-   diff per the protocol. IN PROGRESS.
+2. `settingsRow`: BUILD the component. RESOLVED into an ADOPTION
+   (2026-10-11 review): templ-components ALREADY ships
+   `display.DefinitionList` (+ `DefinitionGrid`) whose
+   `DefinitionItem.DetailComponent` override covers ALL 7 divergent
+   shapes (orUnset/plain/fmtInt → `Detail` strings; conditional/link →
+   `DetailComponent`). No new component anywhere — the execution is a
+   webphone adoption train: settings.templ → DefinitionList, tw.css
+   `@source` rebuild (adopted-components rule), CSP-safe (utility
+   classes only), old-vs-new binary render diff per protocol. IN
+   PROGRESS (adoption train pending).
 3. Registry ratification: THIS registry is the ONE acceptance home
    for clone rulings. RESOLVED (ratified).
 4. Suppression scope: shown-only + a QUARTERLY audit of the baseline

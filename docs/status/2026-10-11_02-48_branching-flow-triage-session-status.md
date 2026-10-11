@@ -259,3 +259,33 @@ already):**
 
 *Snapshot only — stale the moment a train lands. Section (f) is
 HARVEST fuel, not a commitment list.*
+
+---
+
+## Addendum (same session, ~03:10 CEST): the sitting executed
+
+All ten owner calls were answered via structured questions and the
+outcomes are executed:
+
+- Registry: all five open calls resolved (ratified-rulings section);
+  Protocol updated to `-t 1` + zero-target + upstream FP filing +
+  quarterly baseline/suppressed-set audits.
+- AGENTS.md: dedup baseline line, INTERIM→RATIFIED on both bars
+  (manual-push, CHANGELOG), dep-lane decision row, and the STALE
+  "branching-flow honors NO nolint" note corrected — live-verified the
+  directive works (panic row suppressed, 9→8) and `--baseline` exists.
+- Upstream: branching-flow#8 (phantom class scoping) + #9 (panic FP
+  shapes) filed, voice-checked, verified landed. art-dupl needs NO
+  issue: `baseline`/`check`/`--disable-pattern` already cover the
+  zero-target workflow.
+- settingsRow: resolved to ADOPT the existing `display.DefinitionList`
+  (DetailComponent covers all 7 shapes) — adoption train on
+  TODO_LIST; no new component anywhere.
+- TODO_LIST harvested (sitting section + last-sweep line).
+
+Section (f) items superseded by the sitting: 8, 9 (→#8/#9 filed), 10
+(baseline→ratified -t 1), 12 (registry ratified), 13 (audits added),
+14 (bump wanted), 15 (phantom→upstream), 16 (this harvest), 17
+(registry promoted), 19 (covered by the files above being lint-clean
+by convention — markdown out of formatter scope; detect-only pass
+still open), 22 (AGENTS note corrected beyond the ask).
