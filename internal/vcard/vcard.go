@@ -9,7 +9,11 @@ import (
 )
 
 // Card is one imported/exported contact.
-type Card struct { //nolint:branching-flow // parse layer of the boundary trio (domain.SharedContact, apiSharedContact): consolidating welds an external-format parser to the domain and the wire DTO (registry 2026-10-05)
+// branching-flow DUPLICATE_TYPE (baselined): parse layer of the boundary
+// trio (domain.SharedContact, apiSharedContact) — consolidating welds an
+// external-format parser to the domain and the wire DTO (registry
+// 2026-10-05).
+type Card struct {
 	Name   string
 	Number string
 }

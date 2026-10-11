@@ -10,7 +10,9 @@ import (
 
 // SweepResult reports one retention pass: what was deleted and which
 // blob files the CALLER must unlink (the store layer only owns rows).
-type SweepResult struct { //nolint:branching-flow // retention tallies vs store Counts: coincidental int64 field shape, different domains
+// branching-flow COMPOSITION_mixin (baselined): retention tallies vs
+// store Counts — coincidental int64 field shape, different domains.
+type SweepResult struct {
 	Messages    int64
 	Faxes       int64
 	Threads     int64

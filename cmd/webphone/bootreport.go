@@ -146,8 +146,8 @@ var copyRows = [bootClassCount]bootCopy{
 
 // String names a class for the journal attr and the report header.
 func (c bootClass) String() string {
-	if c >= 0 && int(c) < len(copyRows) && copyRows[c].name != "" {
-		return copyRows[c].name
+	if c >= 0 && int(c) < len(copyRows) && copyRows[c].name != "" { //nolint:branching-flow // both index reads sit behind this same bounds condition
+		return copyRows[c].name //nolint:branching-flow // guarded by the bounds condition on the line above
 	}
 	return fmt.Sprintf("bootClass(%d)", int(c))
 }

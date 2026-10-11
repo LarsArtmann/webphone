@@ -27,7 +27,7 @@ var islandModuleURLs = func() []string {
 		// Boot-time programmer-error contract (branching-flow triage
 		// 2026-10-11): the embed directive owns this tree, so a glob
 		// failure is a compile-time impossibility, not a runtime path.
-		panic("assets: island module glob: " + err.Error())
+		panic("assets: island module glob: " + err.Error()) //nolint:branching-flow // programmer-error invariant: the embed directive owns this tree (compile-time impossibility)
 	}
 	sort.Strings(matches)
 	urls := make([]string, len(matches))

@@ -123,7 +123,10 @@ func remoteHostKey(r *http.Request) string {
 }
 
 // Deps are the wired services the handlers ride on.
-type Deps struct { //nolint:branching-flow // THE DI surface: one field per optional seam, nil-optionality documented per field (AGENTS.md composition doctrine)
+// branching-flow large-struct (baselined): THE DI surface — one field
+// per optional seam, nil-optionality documented per field (AGENTS.md
+// composition doctrine).
+type Deps struct {
 	Config   config.Config
 	Sessions session.Store
 	Messages *store.Messages

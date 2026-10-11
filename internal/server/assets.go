@@ -21,7 +21,7 @@ func (h *handlers) assets() http.Handler {
 		// Boot-time programmer-error contract (branching-flow triage
 		// 2026-10-11): the embed directive guarantees the subtree, so
 		// this guards a compile-time impossibility, not a runtime path.
-		panic("assets: island subtree missing: " + err.Error())
+		panic("assets: island subtree missing: " + err.Error()) //nolint:branching-flow // programmer-error invariant: go:embed guarantees the subtree (compile-time impossibility)
 	}
 	fileServer := http.FileServerFS(sub)
 	vendorServer := http.FileServerFS(assets.FS())

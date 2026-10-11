@@ -151,7 +151,7 @@ func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []
 				StartedAt: seg.StartedAt,
 			})
 		}
-		group := &groups[idx]
+		group := &groups[idx] //nolint:branching-flow // idx comes only from byCall entries written as len(groups) at append time, or freshly the same way — an invariant the analyzer cannot see through the map
 		group.Lines = append(group.Lines, seg.Text)
 		if group.StartedAt.Before(seg.StartedAt) {
 			group.StartedAt = seg.StartedAt
@@ -165,7 +165,7 @@ func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []
 
 func reverseLines(lines []string) {
 	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
-		lines[i], lines[j] = lines[j], lines[i]
+		lines[i], lines[j] = lines[j], lines[i] //nolint:branching-flow // two-pointer swap under i < j: bounds-safe by construction
 	}
 }
 
