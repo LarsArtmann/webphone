@@ -50,6 +50,7 @@ import (
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -198,6 +199,18 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("paperless: %w", err)
 	}
 
+	// Optional supervised text-agent review seam: config-absent → a nil
+	// client (no surface renders). A present but UNUSABLE configuration
+	// (missing/empty secret file) fails the boot here — the seam must
+	// never half-exist (same doctrine as the archiver above).
+	var agent *textagent.Client
+	if cfg.TextAgent.Enabled() {
+		agent, err = textagent.New(cfg.TextAgent.URL, cfg.TextAgent.SecretFile)
+		if err != nil {
+			return nil, wrapf("textagent: %w", err)
+		}
+	}
+
 	// --- services --------------------------------------------------------
 	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
 		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
@@ -292,6 +305,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Shared:      cfg.Contacts,
 			CRM:         do.MustInvoke[*crm.Resolver](i),
 			ASR:         do.MustInvoke[asr.Provider](i),
+			TextAgent:   agent,
 			DB:          db.SQL(),
 			BlobRoot:    blobs.Root(),
 			Probe:       probe,

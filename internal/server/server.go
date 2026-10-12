@@ -23,6 +23,7 @@ import (
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
 	"github.com/larsartmann/webphone/internal/asr"
+	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -152,6 +153,11 @@ type Deps struct {
 	// compatible or Google Cloud STT v2) is chosen in the composition
 	// root; the server only ever sees the seam.
 	ASR asr.Provider
+	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
+	// services.telephony.textagent review API on loopback). Nil: the
+	// drafts routes answer the styled 404 and the Messages tab renders
+	// neither the drafts panel nor the AI compose buttons.
+	TextAgent *textagent.Client
 	// Probe is the go-health probe serving /livez and /startupz. When
 	// nil (tests composing Deps by hand), New falls back to building the
 	// equivalent NewChecks probe over the same backing checks — one
@@ -239,6 +245,10 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /snippets/save", h.saveSnippet)
 	protected.HandleFunc("POST /snippets/delete", h.deleteSnippet)
 	protected.HandleFunc("POST /messages/send", h.sendMessage)
+	protected.HandleFunc("GET /partials/messages/drafts", h.partialDrafts)
+	protected.HandleFunc("POST /messages/drafts/{id}/approve", h.approveDraft)
+	protected.HandleFunc("POST /messages/drafts/{id}/discard", h.discardDraft)
+	protected.HandleFunc("POST /messages/ai-draft", h.aiDraft)
 	protected.HandleFunc("POST /fax/send", h.sendFax)
 	protected.HandleFunc("POST /fax/{id}/resend", h.resendFax)
 	protected.HandleFunc("GET /fax/{id}/document", h.faxDocument)

@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -25,6 +26,13 @@ import (
 // ready-to-render component so pages and SSE pushes share one renderer.
 
 func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.Component, error) {
+	return h.messagesPanelPrefilled(r, sess, "")
+}
+
+// messagesPanelPrefilled renders the Messages tab with an AI-drafted
+// body pre-seeded into the new-conversation composer (the ai-draft
+// round trip); the plain panel passes "".
+func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session, prefillBody string) (templ.Component, error) {
 	// The search box's q rides the same panel route; empty/whitespace
 	// means "no filter" and renders the plain list. ?archived=1 flips to
 	// the filing cabinet (design D6): the archived list, no search box,
@@ -52,13 +60,28 @@ func (h *handlers) messagesPanel(r *http.Request, sess session.Session) (templ.C
 		}
 	}
 	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
+	reviews, draftsErr := h.textAgentReviews(r)
+	// The drafts panel shares the thread rows' name feed: every pending
+	// draft's contact resolves through the same CRM map.
+	if reviews != nil {
+		numbers = append(numbers, crmNumbers(reviews.Drafts, func(draft textagent.Draft) string { return draft.Contact })...)
+	}
+	names := h.crmNames(r.Context(), numbers)
 	return views.ThreadsPanel(views.ThreadsPanelProps{
 		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
-		Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r),
+		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
+		TextAgent: h.textAgentOn(), Drafts: reviews, DraftsError: draftsErr, PrefillBody: prefillBody,
 	}), nil
 }
 
 func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.ThreadID, page int) (templ.Component, error) {
+	return h.threadPanelPrefilled(r, sess, id, page, "")
+}
+
+// threadPanelPrefilled renders an open conversation with an AI-drafted
+// reply pre-seeded into the composer (the ai-draft round trip); the
+// plain panel passes "".
+func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, id domain.ThreadID, page int, prefillDraft string) (templ.Component, error) {
 	thread, msgs, hasMore, err := h.deps.Messaging.ThreadWindow(r.Context(), sess.Extension, id, page)
 	if errors.Is(err, store.ErrNotFound) {
 		return threadGone(h.lang(r)), nil
@@ -83,7 +106,7 @@ func (h *handlers) threadPanel(r *http.Request, sess session.Session, id domain.
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets,
 		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
-		ASR: h.asrOn(),
+		ASR: h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
 	}), nil
 }
 

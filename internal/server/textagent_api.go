@@ -56,8 +56,7 @@ func agentDetail(err error) string {
 // <section> for an outerHTML swap, so the review loop refreshes without
 // re-rendering the whole Messages tab (a half-typed composer survives).
 func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
-	if !ok {
+	if _, ok := h.requireSession(w, r); !ok {
 		return
 	}
 	if !h.textAgentOn() {
@@ -65,7 +64,6 @@ func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reviews, fetchErr := h.textAgentReviews(r)
-	_ = sess // the seam is owner-wide by construction; the session gate is the auth
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.DraftsPanel(views.DraftsPanelProps{
 		Drafts: reviews, Error: fetchErr, Names: h.draftContactNames(r, reviews), Lang: h.lang(r),
