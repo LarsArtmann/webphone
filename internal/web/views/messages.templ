@@ -774,7 +774,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 			}
 		</h2>
 		if props.Error != "" {
-			<p class="wp-error" role="alert">{ T(props.Lang, "drafts.unavailable") }</p>
+			@panelError(props.Error)
 		} else if props.Drafts == nil || len(props.Drafts.Drafts) == 0 {
 			<p class="wp-drafts-empty">{ T(props.Lang, "drafts.empty") }</p>
 		} else {
@@ -830,7 +830,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 				<footer class="wp-drafts-foot">
 					for _, frozen := range props.Drafts.Frozen {
 						<p class="wp-drafts-note">
-							⚠ { contactLabel(props.Names, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } — { frozen.Reason }
+							⚠ { contactLabel(props.Names, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
 						</p>
 					}
 					for _, suppressed := range props.Drafts.Suppressed {
