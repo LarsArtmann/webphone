@@ -200,6 +200,8 @@ a deliberate code change, regenerate:
 | config.paperless.url                         | Rejection                 | internal/config/config.go     |
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go     |
 | config.session_ttl                           | Rejection                 | internal/config/config.go     |
+| config.sip.credential_secret_file            | Rejection                 | internal/config/config.go     |
+| config.sip.credential_secret_sources         | Rejection                 | internal/config/config.go     |
 | config.timezone                              | Rejection                 | internal/config/config.go     |
 | config.turn_rest.dead_secret                 | Rejection                 | internal/config/config.go     |
 | config.turn_rest.ttl                         | Rejection                 | internal/config/config.go     |
@@ -296,6 +298,8 @@ a deliberate code change, regenerate:
 | userauth.enroll.mint                         | Infrastructure            | internal/userauth/enroll.go   |
 | userauth.enroll.sweep                        | Infrastructure            | internal/userauth/enroll.go   |
 | userauth.enroll.userid                       | Corruption                | internal/userauth/enroll.go   |
+| userauth.passkey.bad_id                      | Rejection                 | internal/userauth/userauth.go |
+| userauth.passkey.unmapped                    | Rejection                 | internal/userauth/userauth.go |
 | userauth.password_file.empty                 | Rejection                 | internal/userauth/userauth.go |
 | userauth.password_file.missing               | Rejection                 | internal/userauth/userauth.go |
 | userauth.password_file.read                  | Rejection                 | internal/userauth/userauth.go |
