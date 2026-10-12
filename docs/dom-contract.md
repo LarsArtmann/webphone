@@ -92,6 +92,21 @@ The standalone `/enroll` page (same gate) carries `enroll-view`,
 `enroll-status`, `enroll-error` — a one-purpose surface with NO island
 runtime; its module is `/assets/enroll/enroll.js`.
 
+## Conditional ids (textagent seam)
+
+These ids render ONLY when the deployment configures the supervised
+text-agent seam (`textagent.url` + `textagent.secret_file`, auto-wired
+by the stack's `services.telephony.textagent`); the always-on contract
+above stays complete without them, and the E2E must not assume them:
+
+- `wp-drafts` — the review panel section (its own 30 s poll at
+  `GET /partials/messages/drafts` swaps it outerHTML)
+- `wp-draft-count` — the pending-count badge
+- `wp-draft-<id>` — one article per pending AI draft (Approve / Edit /
+  Discard ride `POST /messages/drafts/<id>/…`)
+- `wp-ai-draft` — the composer's on-demand-draft button class (both
+  the new-conversation form and the reply composer)
+
 ## Notes
 
 ### Greppable SSE row classes on the templ-components v1.20.1 tree (2026-10-06)

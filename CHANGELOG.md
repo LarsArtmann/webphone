@@ -62,6 +62,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Optional supervised text-agent seam (`textagent.url` +
+  `textagent.secret_file`, both or neither; auto-wired by the stack's
+  `services.telephony.textagent`): the Messages tab gains an AI-drafts
+  review panel (`wp-drafts`, its own 30 s poll at
+  `GET /partials/messages/drafts`) listing every pending draft with its
+  language, confidence, missed-call flag and English gloss behind a
+  disclosure, plus Approve (verbatim or as a human edit — the agent
+  records the correction), Discard, and per-conversation freeze/opt-out
+  footers; both composers gain an on-demand Draft-with-AI button whose
+  answer round-trips into the textarea as a prefill (nothing sends
+  until Send is pressed). All four routes are session-gated,
+  CSRF-protected, answer 404 with the seam off, and degrade honestly
+  through the panel-error contract when the agent is unreachable or
+  fail-closed (a 5 s bound per call so a dead agent never stalls the
+  tab). New i18n keys in both maps; conditional ids documented in
+  docs/dom-contract.md; errorfamily codes `textagent.*`.
 - A `commit-msg` git hook (`.githooks/`) refuses daemon-pattern (`.githooks/`) refuses daemon-pattern
   auto-commits that touch `go.mod`, `go.sum`, `go.work*`,
   `flake.lock`, or `.buildflow.yml` — the dependency files whose

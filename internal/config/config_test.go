@@ -280,6 +280,61 @@ func TestASRSeam(t *testing.T) {
 	})
 }
 
+// TestTextAgentSeam pins the both-or-neither rule: the review API is
+// bearer-authed, so one half of the pair is a Rejection, and a
+// non-absolute URL never reaches the client.
+func TestTextAgentSeam(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.TextAgent.Enabled() {
+			t.Error("textagent must be off with zero config")
+		}
+	})
+	t.Run("the pair enables", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_TEXTAGENT__URL", "http://127.0.0.1:8071")
+		t.Setenv("WEBPHONE_TEXTAGENT__SECRET_FILE", "/run/secrets/textagent")
+		cfg, err := Load()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !cfg.TextAgent.Enabled() || cfg.TextAgent.SecretFile != "/run/secrets/textagent" {
+			t.Errorf("textagent pair must enable the seam: %+v", cfg.TextAgent)
+		}
+	})
+	t.Run("secret without url fails closed", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_TEXTAGENT__SECRET_FILE", "/run/secrets/textagent")
+		if _, err := Load(); err == nil {
+			t.Fatal("textagent.secret_file without textagent.url: want error")
+		}
+	})
+	t.Run("url without secret fails closed", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_TEXTAGENT__URL", "http://127.0.0.1:8071")
+		if _, err := Load(); err == nil {
+			t.Fatal("textagent.url without textagent.secret_file: want error")
+		}
+	})
+	t.Run("non-absolute url fails", func(t *testing.T) {
+		scrubEnv(t)
+		t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+		t.Setenv("WEBPHONE_TEXTAGENT__URL", "127.0.0.1:8071")
+		t.Setenv("WEBPHONE_TEXTAGENT__SECRET_FILE", "/run/secrets/textagent")
+		if _, err := Load(); err == nil {
+			t.Fatal("textagent.url not absolute http(s): want error")
+		}
+	})
+}
+
 func TestLoadWebhookSecretFileErrors(t *testing.T) {
 	scrubEnv(t)
 	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
