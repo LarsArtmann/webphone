@@ -409,7 +409,7 @@ def boot_failure_scenario(binary: str, workdir: str, port: int) -> int:
     env["WEBPHONE_DATA_DIR"] = str(blocker / "data")
     try:
         proc = subprocess.run(  # nosec B603 - argv-list (no shell) launch of the local binary (the boot-failure scenario)
-        [binary],
+            [binary],
             env=env,
             capture_output=True,
             text=True,
