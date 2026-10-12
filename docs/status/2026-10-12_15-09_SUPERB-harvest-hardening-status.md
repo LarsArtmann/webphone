@@ -233,6 +233,7 @@ Supersedes: [2026-10-12_10-52_SUPERB-train-completion-status.md](2026-10-12_10-5
 ## (f) Up to 50 next items (impact-sorted; owner-gated marked)
 
 **Stack main is red (upstream) — unblock first:**
+
 1. ☐ **pbx-lens vendorHash**: the `149e9f2` input's go-modules hash is
    wrong INSIDE the pbx-lens repo (re-pin there: `nix build
    .#pbx-lens.goModules --rebuild` → `got:` → apply → bump the stack
@@ -246,13 +247,13 @@ Supersedes: [2026-10-12_10-52_SUPERB-train-completion-status.md](2026-10-12_10-5
 
 **Owner-gated cutover cluster (T13/T15 — do not self-answer):**
 5. ☐ **T13**: pbx-artmann relock to stack HEAD (clean tree; narHash
-   covers all; release-runbook dance).
+covers all; release-runbook dance).
 6. ☐ T13: stage prod with `telephony.directory.mode = "xml_curl"` +
-   explicit `staticFallbackExtensions` (operator + ring groups; members
-   that cannot webphone-login MUST be listed).
+explicit `staticFallbackExtensions` (operator + ring groups; members
+that cannot webphone-login MUST be listed).
 7. ☐ T13: verify the derivation secret file lands with correct
-   owner/mode for BOTH webphone (DynamicUser) and the bridge
-   LoadCredential.
+owner/mode for BOTH webphone (DynamicUser) and the bridge
+LoadCredential.
 8. ☐ T13: pre-cutover backup + the <2-min rollback drill rehearsed.
 9. ☐ T15: prod derived-credential REGISTER (browser + one softphone).
 10. ☐ T15: prod logout → next REGISTER denied (live revocation proof).
@@ -260,42 +261,44 @@ Supersedes: [2026-10-12_10-52_SUPERB-train-completion-status.md](2026-10-12_10-5
 12. ☐ T15: rollback drill executed ONCE on prod and reverted.
 13. ☐ T13: pbx-artmann CHANGELOG entry written IN the cutover commit.
 14. ☐ T13: post-cutover journal watch (`auth logout`, `directory query`
-    lines prove the seam live).
+lines prove the seam live).
 
 **Owner questions (block items above / shape work):**
 15. ☐ Cutover timing + staging shape (g1).
 16. ☐ F49 scope: eval-golden enough or in-VM flip drill (g2).
 17. ☐ Baseline-regrowth ruling (g3).
 18. ☐ nixpkgs upstream items: xml_int.curl default-set + auth-scheme
-    silent-ignore warn — pursue or keep stack-local (14/37).
+silent-ignore warn — pursue or keep stack-local (14/37).
 
 **Stack hardening tail (TODO_LIST row):**
 19. ☐ Port the answer-count journal + seam-assert pattern into the other
-    webphone suites (shared helper in tests/common.nix).
+webphone suites (shared helper in tests/common.nix).
 20. ☐ Shared `secretFile` fixture helper (`user = <service>`) in
-    tests/common.nix.
+tests/common.nix.
 21. ☐ Wire `fs-directory.service` into `operatorWatchedUnits` under
-    xml_curl (verified open: pbx.nix `operatorWatchedUnits` lacks it).
+xml_curl (verified open: pbx.nix `operatorWatchedUnits` lacks it).
 22. ☐ Consider fs-directory health joining the telephony-health view.
 23. ☐ Pin the sipcred wire vector into the stack fixture (behavior is
-    proven; the cross-repo HMAC vector is not asserted there).
+proven; the cross-repo HMAC vector is not asserted there).
 24. ☐ xml_curl × fail2ban interplay check (digest-failure bans still
-    apply?).
+apply?).
 25. ☐ fs-directory journal noise under REGISTER storms (proxy-side rate
-    limit?).
+limit?).
 26. ☐ Merge dynamic-directory suite INTO telephony-webphone (halve CI
-    cost; keep assertions readable) — pairs with item 6 in (e).
+cost; keep assertions readable) — pairs with item 6 in (e).
 27. ☐ CI workflow split: fast checks vs VM suites (ends the 1h-ceiling
-    masking class).
+masking class).
 28. ☐ check-vm `--jobs N` flag + runbook guidance.
 29. ☐ Nix 2.34 semantics lesson (stack docs/lessons/) — tryEval,
-    deepSeq, pristine-vs-overlaid pkgs.
+deepSeq, pristine-vs-overlaid pkgs.
 30. ☐ whitespace-drift.sh: formatter-bump class exemption.
 31. ☐ Push-time formatter-drift gate (catch prettier bumps pre-push).
 
 **Webphone/infra tail:**
 32. ☐ Daemon push-stall watchdog (alert when origin/main lags HEAD
-    >60 min — fired twice today).
+
+> 60 min — fired twice today).
+
 33. ☐ Daemon-enforcement pre-commit hook (block go.mod/go.sum/flake.lock
     in daemon commits).
 34. ☐ Recreate the curl-level passkey+brokering smoke under `scripts/`
@@ -316,11 +319,11 @@ Supersedes: [2026-10-12_10-52_SUPERB-train-completion-status.md](2026-10-12_10-5
 44. ☐ `webphone -check-config` preflight flag.
 45. ☐ Island registration-failure hint when `sipCredential` is on.
 46. ☐ wsprobe: `--assert` legs fully parameterized (user still hardcoded
-    in the unauthenticated probes; only `--auth-register` takes it).
+in the unauthenticated probes; only `--auth-register` takes it).
 47. ☐ Stack: dedicated ci-flake ledger file vs ci-posture rows (one home
-    ruling).
+ruling).
 48. ☐ Annotate-then-archive the two 2026-10-12 reports once the owner
-    cluster (items 5-18) resolves.
+cluster (items 5-18) resolves.
 49. ☐ Quarterly art-dupl baseline audit (due 2027-01-11; standing).
 50. ☐ erraudit tier re-measure (due 2026-11-05; standing).
 
@@ -361,8 +364,8 @@ Supersedes: [2026-10-12_10-52_SUPERB-train-completion-status.md](2026-10-12_10-5
   sibling's lane, their notify fired, unpushed commits don't fix it.
 - **pbx-artmann**: untouched (owner-gated T13).
 - **Key gates at report time:** webphone CI success (fast checks + build
-  + go test -race) at `cd35b31`; stack local gates green / CI red
-  upstream; both remotes verified with `ls-remote`; the sibling lane
-  active throughout (their files untouched: rendering_audit.py,
-  test_markers_check.py, forward-auth.nix, FEATURES.md, their CHANGELOG
-  rows).
+  - go test -race) at `cd35b31`; stack local gates green / CI red
+    upstream; both remotes verified with `ls-remote`; the sibling lane
+    active throughout (their files untouched: rendering_audit.py,
+    test_markers_check.py, forward-auth.nix, FEATURES.md, their CHANGELOG
+    rows).

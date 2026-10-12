@@ -82,20 +82,20 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
 ## (b) PARTIALLY DONE
 
 ~~1. **`configjs_check.py` type-checks `sipCredential` but does not~~ done — value-pin landed in the dynamic-directory VM suite (config.js answers true under xml_curl)
-   value-pin it** — an xml_curl-mode E2E fixture asserting `true` would
-   pin the module wiring end-to-end; current fixture answers `false`
-   (passkey mode off there).
+value-pin it** — an xml_curl-mode E2E fixture asserting `true` would
+pin the module wiring end-to-end; current fixture answers `false`
+(passkey mode off there).
 ~~2. **VM concurrency flake hardening** — the messaging broken-pipe was~~ done — apps.check-vm runs the VM suites sequentially (dogfooded green 2026-10-12)
-   attributed and cleared, but `nix flake check` still runs ~10 VM suites
-   concurrently on one host; no jobs-cap/serial-VM-phase added.
+attributed and cleared, but `nix flake check` still runs ~10 VM suites
+concurrently on one host; no jobs-cap/serial-VM-phase added.
 ~~3. **HARVEST from section (f) into `TODO_LIST.md`** not run — the owner's~~ done — TODO_LIST + ROADMAP 2026-10-12 harvest (same day)
-   "THEN WAIT FOR INSTRUCTIONS" gates it; the report holds the list.
+"THEN WAIT FOR INSTRUCTIONS" gates it; the report holds the list.
 ~~4. **The 06:55 report is not annotated** with what this session closed~~ done — 06-55 report annotated same day (41 items, docs-health status-items)
-   (docs-health ANNOTATE pass pending — old items there are stale now).
+(docs-health ANNOTATE pass pending — old items there are stale now).
 ~~5. **Stack CI history** — the two failing runs before HEAD's are~~ done — ci-posture.md 2026-10-12 red-run ledger + the item-21 investigation
-   explained (one = the configjs drift, fixed; the rest predate this
-   session), but no post-mortem note was left in the stack's
-   ci-flake-ledger equivalent.
+explained (one = the configjs drift, fixed; the rest predate this
+session), but no post-mortem note was left in the stack's
+ci-flake-ledger equivalent.
 
 ## (c) NOT STARTED
 
@@ -272,15 +272,15 @@ line; the pbx-artmann consumer inherits the FS package change).
 ## (g) 3 questions for the owner (unchanged from 06:55 — still blocking)
 
 ~~1. **Prod cutover (T13):** T08/T11/T12 are green and pushed — do you want~~ **→ still open — ROADMAP Open questions + TODO_LIST cutover cluster**
-   the pbx-artmann relock + staged cutover queued as the NEXT session,
-   and should prod's `staticFallbackExtensions` list your operator/ring-
-   group extensions explicitly before the flip? (Items 1–4 above.)
+the pbx-artmann relock + staged cutover queued as the NEXT session,
+and should prod's `staticFallbackExtensions` list your operator/ring-
+group extensions explicitly before the flip? (Items 1–4 above.)
 ~~2. **F49 scope:** is the eval-level rollback proof (F41 golden,~~ **→ still open — ROADMAP Open questions**
-   byte-identical static rendering) acceptable, or do you want the full
-   in-VM static↔xml_curl flip drill (adds ~10 min CI + a second toplevel)?
+byte-identical static rendering) acceptable, or do you want the full
+in-VM static↔xml_curl flip drill (adds ~10 min CI + a second toplevel)?
 ~~3. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines in~~ **→ still open — ROADMAP Open questions**
-   a concurrent session (after a staleness warning said 19 entries
-   matched nothing). Audit/trim, or deliberate SDK-side re-save?
+a concurrent session (after a staleness warning said 19 entries
+matched nothing). Audit/trim, or deliberate SDK-side re-save?
 
 ## Session inventory (what changed where, this session)
 

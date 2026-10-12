@@ -173,13 +173,9 @@ export function dialFromUi(number) {
 // render it — the resume path and the passkey path carry the same
 // fields.
 export function whoamiLine(data) {
-  const numbers = Array.isArray(data.numbers)
-    ? data.numbers.filter(Boolean)
-    : [];
+  const numbers = Array.isArray(data.numbers) ? data.numbers.filter(Boolean) : [];
   if (data.display_name) {
-    const tail = numbers.length
-      ? numbers.join(", ")
-      : `${data.extension}@${sipDomain}`;
+    const tail = numbers.length ? numbers.join(", ") : `${data.extension}@${sipDomain}`;
     return `${data.display_name} · ${tail}`;
   }
   if (numbers.length) {

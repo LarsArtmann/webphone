@@ -61,21 +61,21 @@ Auth/credential train:
 - [x] Dynamic-directory VM test file + wsprobe auth mode (T08)
 - [x] Stack webphone input re-pin (T12 part)
 - [x] README credential-brokering sections (T14 part)
-~~- [ ] T08 rerun green (in flight)~~ done — T08 run 10 green — 10-52 report a1
-~~- [ ] T11 full webphone gates + narrative `auth:` commit + CI watch~~ done — 10-52 report a2 — webphone CI green at 6fc1d79
-~~- [ ] T12 stack browser E2E + stack flake check + stack push~~ done — 10-52 report a3 — stack CI success at 3b63222
-~~- [ ] T14 remainder: error-contract rows, AGENTS owner-decisions, stack/pbx CHANGELOGs, bridge docs (F37/F45)~~ done — 10-52 report a4
+      ~~- [ ] T08 rerun green (in flight)~~ done — T08 run 10 green — 10-52 report a1
+      ~~- [ ] T11 full webphone gates + narrative `auth:` commit + CI watch~~ done — 10-52 report a2 — webphone CI green at 6fc1d79
+      ~~- [ ] T12 stack browser E2E + stack flake check + stack push~~ done — 10-52 report a3 — stack CI success at 3b63222
+      ~~- [ ] T14 remainder: error-contract rows, AGENTS owner-decisions, stack/pbx CHANGELOGs, bridge docs (F37/F45)~~ done — 10-52 report a4
 - [ ] T13 pbx-artmann relock (owner)
 - [ ] T13 prod cutover with xml_curl (owner)
 - [ ] T15 prod verify: derived registration, logout revocation, static extensions unaffected, rollback drill (owner)
-~~- [ ] Fill T08's result into the plan execution record (done if rerun lands)~~ done — plan execution record T08 row (2026-10-12)
-~~- [ ] Rollback drill F49 as a real in-VM flip (optional hardening, currently eval-level)~~ **→ owner question — ROADMAP Open questions (10-52 g2)**
-~~- [ ] `directory.mode` row in the stack's options docs/README (F44 remainder)~~ done — verified 2026-10-12 — options.nix declares directory.mode + stack runbook section Dynamic SIP directory
-~~- [ ] Bridge unit monitoring hook (`operatorWatchedUnits` += fs-directory when xml_curl)~~ **→ verified open 2026-10-12 — TODO_LIST stack tail row**
-~~- [ ] Consider `fs-directory` health joining the telephony-health view~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
-~~- [ ] Bridge: consider accepting Basic auth as well if FS < 1.10 proves bearer-incapable in T08/T12 (currently bearer-only)~~ done — T08 run 4 proved FS v1.11.1 has no bearer; Basic is the wire (freeswitch.nix binding + fs-directory.py `authorized`)
-~~- [ ] Plan-deviation note: daemon rode the T02 bump (record an enforcement idea)~~ **→ TODO_LIST infra tail — daemon-enforcement hook**
-~~- [ ] Re-measure branching-flow tiers 1+2 (due 2026-11-05; 19 baselined entries went stale-warning)~~ **→ standing watch — TODO_LIST Standing watches (due 2026-11-05)**
+      ~~- [ ] Fill T08's result into the plan execution record (done if rerun lands)~~ done — plan execution record T08 row (2026-10-12)
+      ~~- [ ] Rollback drill F49 as a real in-VM flip (optional hardening, currently eval-level)~~ **→ owner question — ROADMAP Open questions (10-52 g2)**
+      ~~- [ ] `directory.mode` row in the stack's options docs/README (F44 remainder)~~ done — verified 2026-10-12 — options.nix declares directory.mode + stack runbook section Dynamic SIP directory
+      ~~- [ ] Bridge unit monitoring hook (`operatorWatchedUnits` += fs-directory when xml_curl)~~ **→ verified open 2026-10-12 — TODO_LIST stack tail row**
+      ~~- [ ] Consider `fs-directory` health joining the telephony-health view~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+      ~~- [ ] Bridge: consider accepting Basic auth as well if FS < 1.10 proves bearer-incapable in T08/T12 (currently bearer-only)~~ done — T08 run 4 proved FS v1.11.1 has no bearer; Basic is the wire (freeswitch.nix binding + fs-directory.py `authorized`)
+      ~~- [ ] Plan-deviation note: daemon rode the T02 bump (record an enforcement idea)~~ **→ TODO_LIST infra tail — daemon-enforcement hook**
+      ~~- [ ] Re-measure branching-flow tiers 1+2 (due 2026-11-05; 19 baselined entries went stale-warning)~~ **→ standing watch — TODO_LIST Standing watches (due 2026-11-05)**
 
 Webphone backlog (from the plan's deferred list):
 
