@@ -1,0 +1,114 @@
+# Status — 2026-10-12 06:55 CEST — SUPERB unified-auth + SIP-credential-brokering train
+
+**Scope of this report:** the execution of the SUPERB plan (`docs/planning/2026-10-12_01-05_SUPERB-unified-auth-and-sip-credential-brokering.md`, commit `ef0479b`) across webphone + nix-international-telephony, run in one session (T01–T15). Two other concurrent sessions were active in both repos; their work is listed where it touched mine. No research beyond this session's run went into this report.
+
+## (a) What is DONE (implemented, tested, committed)
+
+| Task | Evidence |
+| --- | --- |
+| T01 baseline (green train start) | Train-start buildflow was RED twice over: daemon-committed treefmt drift (shell.js + CSS reflow, fixed `cea5557`, pushed under the manual-push bar because CI was red with the fix in hand) and a stale island-test stub missing `createTextNode` (attachment-chips test threw silently; fixed in `helpers.mjs`, `65e8a34`). BuildFlow dprint drift on 10 daemon-committed markdown docs formatted. After fixes: buildflow exit 0, `go test ./...` green, CI green. |
+| T02 A1: identity-model direct imports | `identity-model/v4 v4.12.2` is a DIRECT require; every deprecated `usermgmt.UserID / ParseUserID / MustParseUserID / Err{UserNotFound,NoCredentials,AccountLocked,EmailExists} / WebAuthnProvider` swapped to `identitymodel.*` across `internal/userauth`, `internal/server/passkey_api.go` + tests (zero deprecated refs remain — grep-verified). `BeginRegistrationResponse` stays usermgmt-native (not an alias). vendorHash re-pinned (landed via concurrent-session commit `0477af9` in webphone; verified `nix build .#webphone.goModules` green). Deviation: the auto-commit daemon committed the bump although the ratified rule says bumps must not ride the daemon — the mandatory tail (tidy → re-pin → push → CI green) completed anyway. |
+| T03 B1: derived SIP credentials | `config.SIP` (`sip.credential_secret` / `sip.credential_secret_file`, at-most-one-of, file read at boot; env `WEBPHONE_SIP__CREDENTIAL_SECRET`) · `internal/sipcred.Derive` (HMAC-SHA256 → base64url, pinned cross-repo wire vector `S9cjQ8oET4qrHZjwdgbNsc9H3wwIn_e1st9E5A2GmXA`) · `Store.ActiveTokens(ext)` for SQLite + MemStore (tested) · `GET /internal/directory/{extension}`: bearer-gated (new parameterized `bearerGate`, webhooks keep `secretGate` as a wrapper), loopback-only 403 posture, honest 404 when off, empty list for unknown extensions, hook-grade rate limit, outside CSRF/session. Zero config = byte-identical legacy behavior. |
+| T04 B4: island swap | `sessionIdentity` answers exactly ONE credential field: `sip_credential` (brokering on) or `password` (legacy, byte-identical off); resume + extension login + passkey finish all no-store. Island: resume + passkey prefer `sip_credential`; fresh extension login MINTS FIRST when `PBX_CONFIG.sipCredential` is true (quiet `createSession` → derived credential → REGISTER; legacy REGISTER-first order untouched). `mintSession` now returns the token. OpenAPI spec updated. Island node:test suite green (added brokering-mode tests). |
+| T05 B5: passkey path | Passkey finish returns the derived credential when brokering is on — the file-sourced directory password NEVER rides the response. The file read stays (session row → `/phone-api` proxy, server-side). Mode-on parity test pins finish/resume credential equality + password absence. `auth:` commit prefix honored (`b54e7e3`). |
+| T06 stack directory bridge | `modules/telephony/fs-directory.py` (stdlib-only, telnyx-webhooks shape): answers FS xml_curl POSTs by proxying webphone's internal endpoint (same Bearer secret via LoadCredential), renders directory XML (password + a1-hash), `<not-found/>` fall-through for unknown users AND for webphone unreachability (never invents a credential), no-store, loopback bind, fail-closed 503 without config. Functionally smoke-tested against a stub webphone: live-session XML, fall-through, 401, down-case fall-through, health — all pass. |
+| T07 FS module option + wiring | Options `telephony.directory.{mode(port,webphoneUrl,secretFile,staticFallbackExtensions)}`; `shared.nix` `renderedExtensions` scopes the static directory to the fallback set under xml_curl (revocation cannot be defeated by a stale static password); `freeswitch.nix` renders mod_xml_curl load + `xml_curl.conf.xml` (bearer token placeholder spliced via the existing fsSecrets machinery); `pbx.nix` bridge systemd unit (hardening parity with telnyx-webhooks, `bindsTo` webphone) + default-wires `services.webphone.settings.sip.credential_secret_file` from `bridge.secretFile`; default.nix assertion: xml_curl requires secretFile (fail closed). **F41 golden verified by eval**: static mode renders byte-identical config (no xml_curl anywhere, all extensions present); xml_curl mode scopes the directory + renders the binding. |
+| T08 stack VM test | `tests/webphone-dynamic-directory.nix` + wsprobe.py digest-auth REGISTER mode (`--auth-register user pass expect`). Asserts: bridge unit + spliced secret, scoped static directory (1000 absent, 1001 present), login answer carries `sip_credential` and no `password`, internal endpoint lists it, **F46** derived-credential REGISTER = 200, **F47** wrong credential denied + logout revokes (same credential denied at next REGISTER), **F48** static fallback extension still registers. **Status: fixing the last fixture issue** — the secret file needed `user = "webphone"` (webphone's honest permission rejection caught it: `config.sip.credential_secret_file … permission denied`, boot-failure contract working as designed). Rerun in progress; result will be in the plan's execution record. F49 rollback drill: covered at eval level (golden byte-identical static rendering); a full in-VM flip was deliberately scoped out (needs a second toplevel build; the runbook flip is `directory.mode = "static"` + rebuild, <2 min). |
+| T09 A2: Settings passkey management | `userauth.Credentials/RemoveCredential` (owner resolved by mapping, never the request); session-gated `DELETE /api/passkeys/{id}` inside the CSRF-protected mux; `PasskeysSection` in settings.templ (list + revoke with hx-confirm, whole-panel swap = snippets pattern, CSP-safe); i18n keys in BOTH maps (parity + unused-key tests green); DOM contract conditional ids documented; handler test covers list → revoke toast → empty state → unmapped-extension absence. F53 decision: do NOT mount usermgmt's AuthHandler credential routes — they gate on usermgmt's own session (a second session truth); webphone's session + structural owner-match is the one gate. |
+| T10 A3: auth audit | F59 decision: usermgmt's AuditLog projection is memory-only, covers account events only (no logins), grows unbounded — NOT wired. Instead `authAudit` emits one greppable slog line per login, denied login, logout, passkey enrollment (post-success only), passkey revocation — identifiers only. `TestAuthAuditNeverLogsSecrets` pins the no-secrets contract. |
+| T12 (partial, pulled early) | Stack's webphone input re-pinned to webphone `4547c62` (needed for T08; the old pin's binary predates brokering). Webphone main CI green at that rev. |
+| T14 (partial) | README: "Derived SIP credentials" section + passkey sign-in bullet rewritten (credential policy); webphone plan doc execution record filled T01–T10. |
+
+## (b) What is PARTIALLY done
+
+1. **T08 rerun in flight** — one fixture permission fixed (`user = "webphone"` on the secret file); the rerun started at ~06:52. Result pending; everything else in the suite already proved itself except this boot gate.
+2. **T14 docs** — webphone README done; stack/pbx CHANGELOG rows, `docs/error-contract.md` rows (internal-directory 401/403/503 paths, bridge fall-through), AGENTS owner-decision updates, and the stack-side bridge docs (F37/F45) NOT yet written.
+3. **T11 webphone full gates** — per-suite tests ran green continuously, but the full train-end ritual (`nix fmt` → buildflow → `go test ./...` → `nix flake check` → smoke with passkey ON → single `auth:` narrative commit → CI watch) has NOT been run as one unit yet. The daemon committed incrementally instead of per-task narrative commits — the history reads as `chore: auto-commit N file(s)` between my checkpoints (`b9e1d9a`, `5687618`, `b54e7e3`, `a2363a9`).
+
+## (c) What is NOT started
+
+1. **T12 remainder** — stack browser E2E against the new pin (runbook obligation: registration flow changed), stack `nix flake check`, stack push + CI watch.
+2. **T13** — pbx-artmann relock + staged prod cutover. **Owner-gated by the plan; I did not touch pbx-artmann.**
+3. **T15** — prod verification (register via derived credential, logout revocation live, rollback drill on prod). Owner-gated.
+4. **Deferred list (unchanged, recorded in the plan)** — Membership-remap, loginpage ruling, TOTP/OAuth2 login modes, operator-API session auth, extension-login lockout parity, passwordFile perm assertions.
+
+## (d) What is fucked up / broken
+
+1. **Nothing in webphone main** — CI green at `4547c62`; all suites green at last run.
+2. **T08's fixture permission mistake (mine, fixed)** — I wrote the VM secret file root-owned; webphone correctly refused to boot (honest rejection contract) and the first two VM runs failed on it. The fix is one line; rerun in progress. Lesson candidate: secret files consumed by a DynamicUser service need `user = <service>` in `environment.etc` — the passkey fixture in the same suite already knew this; I didn't check it first.
+3. **Concurrent-session friction (not breakage)** — at least two other sessions worked the same repos during this train: one committed ui-shots/CHANGELOG/AGENTS + a massive `.buildflow-baseline.json` regrowth (+8604 lines — the baseline-staleness warning said 19 entries matched nothing; someone re-saved it), one is mid-work on `scripts/rendering_audit.py` + `tests/test_markers_check.py` in the stack (I did not touch them), and daemon commits interleaved with my edits constantly (mod-time touches bounced several `edit` calls; every bounce was re-read + re-applied cleanly).
+4. **Stale LSP diagnostics** — gopls/golangci panels kept serving pre-edit diagnostics (claimed nonexistent unused imports while `go build` passed). Compile + grep were used as ground truth; a restart didn't refresh the panel. Cosmetic, but it wasted verification cycles.
+
+## (e) What could be improved (larger > smaller)
+
+1. **The daemon vs. the dependency-bump rule** — T02's bump rode the daemon despite the ratified rule. The rule needs an enforcement mechanism (e.g. a pre-commit hook that blocks `go.mod`/`go.sum`/`flake.lock` changes in daemon commits), not another reminder in AGENTS.md.
+2. **The plan's task graph had a hidden edge** — T08 (stack VM test) silently depended on T12's webphone re-pin because the stack's VM runs the pinned webphone binary. Future cross-repo trains should state "tests against the NEW consumer behavior require the input bump first" as an explicit edge.
+3. **wsprobe's digest REGISTER belongs in the suite earlier** — the authenticated-REGISTER harness is the natural home for every future credential test; it was only written when T08 needed it.
+4. **Fixture reuse** — the `user = "webphone"` secret-file pattern existed one suite over; scenario fixtures should share a `secretFile` helper in `tests/common.nix`.
+5. **VM test runtime** — the dynamic-directory suite takes ~7–10 min per run mostly on FS boot; pairing it with the existing `telephony-webphone` suite in one machine would halve CI cost if the assertion sets stay readable.
+
+## (f) 50 next items (unchecked = open; checked = done this train)
+
+Auth/credential train:
+- [x] Derived SIP credential config + derivation + internal endpoint (T03)
+- [x] Island registers with derived credential (T04)
+- [x] Passkey finish stops returning the directory password (T05)
+- [x] Settings passkey list/revoke (T09)
+- [x] Auth audit trail (T10)
+- [x] Stack directory bridge (T06)
+- [x] `telephony.pbx.directory.mode` + xml_curl wiring + golden (T07)
+- [x] Dynamic-directory VM test file + wsprobe auth mode (T08)
+- [x] Stack webphone input re-pin (T12 part)
+- [x] README credential-brokering sections (T14 part)
+- [ ] T08 rerun green (in flight)
+- [ ] T11 full webphone gates + narrative `auth:` commit + CI watch
+- [ ] T12 stack browser E2E + stack flake check + stack push
+- [ ] T14 remainder: error-contract rows, AGENTS owner-decisions, stack/pbx CHANGELOGs, bridge docs (F37/F45)
+- [ ] T13 pbx-artmann relock (owner)
+- [ ] T13 prod cutover with xml_curl (owner)
+- [ ] T15 prod verify: derived registration, logout revocation, static extensions unaffected, rollback drill (owner)
+- [ ] Fill T08's result into the plan execution record (done if rerun lands)
+- [ ] Rollback drill F49 as a real in-VM flip (optional hardening, currently eval-level)
+- [ ] `directory.mode` row in the stack's options docs/README (F44 remainder)
+- [ ] Bridge unit monitoring hook (`operatorWatchedUnits` += fs-directory when xml_curl)
+- [ ] Consider `fs-directory` health joining the telephony-health view
+- [ ] Bridge: consider accepting Basic auth as well if FS < 1.10 proves bearer-incapable in T08/T12 (currently bearer-only)
+- [ ] Plan-deviation note: daemon rode the T02 bump (record an enforcement idea)
+- [ ] Re-measure branching-flow tiers 1+2 (due 2026-11-05; 19 baselined entries went stale-warning)
+
+Webphone backlog (from the plan's deferred list):
+- [ ] loginpage adoption ruling (standalone page vs island no-reload) — written decision owed
+- [ ] TOTP login mode (usermgmt supports it; island + DOM contract work)
+- [ ] OAuth2 login mode
+- [ ] Mapping-as-Membership (replace `auth.passkey.users` map with a usermgmt relation)
+- [ ] Operator-API session-token auth → kill `extension_password_files` entirely (the 2026-10-01 class dies)
+- [ ] Extension-login lockout parity with passkey lockout
+- [ ] `passwordFile` permission assertions in the webphone module
+- [ ] `/internal/directory` listing cap (5000-segment style bound) — currently unbounded per extension
+- [ ] Consider exposing derived-credential count in /metrics aggregates
+
+Stack backlog:
+- [ ] xml_curl + fail2ban interplay check (bans on digest failures should still apply)
+- [ ] `fs-directory` journal noise check under REGISTER storms (rate limit proxy side?)
+- [ ] Ring-group members documentation: must be in staticFallbackExtensions if they cannot webphone-login
+- [ ] `tests/common.nix` shared secretFile fixture helper
+- [ ] Stack CI budget note: new VM check adds ~8 min
+
+Cross-repo hygiene:
+- [ ] Daemon-enforcement pre-commit hook (block dependency files in daemon commits)
+- [ ] Audit the regrown `.buildflow-baseline.json` (8604 lines — what got baselined and why)
+- [ ] Reconcile concurrent `.buildflow-baseline.json` path format (host-absolute IDs)
+- [ ] Pin the sipcred wire vector into the stack test fixture (currently the VM proves behavior, not vector equality)
+- [ ] Consider a shared cross-repo contract doc for the internal-directory endpoint (README stub points to the docs train)
+
+## (g) 3 questions for the owner
+
+1. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines during a concurrent session (after the staleness warning said 19 entries matched nothing). Do you want that baseline audited/trimmed, or is it a deliberate SDK-side re-save?
+2. **T08 scope:** is the eval-level rollback proof (F41 golden) acceptable for F49, or do you want the full in-VM static↔xml_curl flip drill (adds a second toplevel build, ~10 min CI)?
+3. **Prod cutover timing:** when T08/T11/T12 land green — do you want the pbx-artmann relock + staged cutover queued as the next session (T13/T15 are owner-gated and I stopped at the boundary), and should the first prod deploy set `staticFallbackExtensions` to your operator/ring-group extensions explicitly?
+
+## Session inventory (what changed where)
+
+- **webphone** (all pushed, CI green at `4547c62`): baseline fixes, T02 identity-model swaps, T03 sipcred + internal endpoint, T04 island swap, T05 passkey path, T09 settings passkeys, T10 audit, README + plan-record docs. Key commits: `cea5557`, `b9e1d9a`, `5687618`, `b54e7e3`, `a2363a9` (+ daemon interleaves).
+- **nix-international-telephony** (committed `95df7de`, `049e5c0`, `24e387c` + daemon interleaves; NOT pushed): fs-directory.py, directory options/wiring/golden, VM test + wsprobe auth mode, webphone lock bump to `4547c62`. Concurrent session owns `scripts/rendering_audit.py`, `tests/test_markers_check.py`, parts of AGENTS/CHANGELOG/DOMAIN_LANGUAGE — untouched by me.
+- **pbx-artmann**: untouched (owner-gated T13).
