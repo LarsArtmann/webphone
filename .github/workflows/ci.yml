@@ -78,7 +78,7 @@ jobs:
           go-version: stable
 
       - name: Install art-dupl at the baseline's tool version
-        run: go install github.com/LarsArtmann/art-dupl@v0.7.2
+        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.7.2
 
       - name: Fail on clone groups new since the baseline
         run: "$(go env GOPATH)/bin/art-dupl check . -t 1 --baseline-path .art-dupl-baseline.json"
