@@ -18,7 +18,8 @@ export function requestNotifications() {
 }
 
 export function notifyIncoming(from) {
-  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  if (!("Notification" in window) || Notification.permission !== "granted")
+    return;
   try {
     const n = new Notification(`☎ ${from}`, {
       body: `Incoming call on ${sipDomain}`,
