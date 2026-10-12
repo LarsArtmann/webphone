@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Blocks auto-commit-daemon commits that carry dependency or BuildFlow files.
+#
+# A go.mod/go.sum/flake.lock delta riding a "chore: auto-commit" commit is
+# the recurring red-main defect class (2026-10-06 vendorHash, 2026-10-09
+# go-health, 2026-10-12 go.sum — and the same-day 05:12 commit that deleted
+# .buildflow.yml outright). Owner decision 2026-10-11: dependency bumps never
+# ride the daemon; they land via `buildflow update`/Dependabot with the
+# tidy -> vendorHash re-pin -> CI-watch tail. Daemon churn on
+# .buildflow.yml is blocked for the same reason: the daemon has truncated
+# (2026-10-08) and deleted (2026-10-12) it before.
+#
+# Human and session commits (any other first line) pass untouched. A
+# deliberate bypass is always available with `git commit --no-verify`.
+# Requires core.hooksPath=.githooks (see AGENTS.md Conventions).
+
+set -eu
+msg_file="$1"
+first_line="$(head -n 1 "$msg_file")"
+case "$first_line" in
+	"chore: auto-commit"*) ;;
+	*) exit 0 ;;
+esac
+
+protected=(go.mod go.sum go.work go.work.sum flake.lock .buildflow.yml)
+staged="$(git diff --cached --name-only -- "${protected[@]}")"
+if [ -z "$staged" ]; then
+	exit 0
+fi
+
+{
+	echo "daemon dep-guard: auto-commit carries protected files:"
+	while IFS= read -r f; do
+		echo "  $f"
+	done <<<"$staged"
+	echo "  Dependency bumps and BuildFlow config never ride the daemon"
+	echo "  (owner decision 2026-10-11; red-main incidents 10-06, 10-09, 10-12)."
+	echo "  Land them manually with the tidy -> re-pin -> CI-watch tail, or"
+	echo "  bypass deliberately: git commit --no-verify."
+} >&2
+exit 1
