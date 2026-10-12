@@ -270,8 +270,12 @@ the stack's directory bridge, which reads
 `GET /internal/directory/{extension}` (loopback + Bearer — the same
 secret; the derived credentials of every LIVE session; logout kills the
 credential at the next REGISTER). Zero config keeps the historical
-password-wire behavior byte-identical. Full contract: filled in the
-docs train.
+password-wire behavior byte-identical. Full contract: the error table in
+[docs/error-contract.md](docs/error-contract.md) (the internal-directory
+seam rows + the passkey revoke rows); the consuming stack side — the
+bridge, the fail-closed posture, and the <2-minute rollback drill — is
+documented in nix-international-telephony's `docs/ops-runbook.md`
+§ "Dynamic SIP directory".
 
 ### The page (`window.PBX_CONFIG`)
 
