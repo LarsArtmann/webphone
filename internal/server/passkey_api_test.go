@@ -55,6 +55,12 @@ func (pkStub) FinishLogin(_ context.Context, _, _, _ []byte) error {
 // service alongside, so tests can register accounts and mint tokens
 // the way the CLI does.
 func newPasskeyServer(t *testing.T) (*testServer, *userauth.Service) {
+	return newPasskeyServerWithConfig(t, nil)
+}
+
+// newPasskeyServerWithConfig builds the passkey fixture with an optional
+// config tweak (e.g. the SIP credential-brokering secret).
+func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config)) (*testServer, *userauth.Service) {
 	t.Helper()
 	dir := t.TempDir()
 	passFile := filepath.Join(dir, "ext1000")
@@ -79,6 +85,9 @@ func newPasskeyServer(t *testing.T) (*testServer, *userauth.Service) {
 
 	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
 		cfg.Identities = map[string]string{"1000": "+17287289311"}
+		if tweak != nil {
+			tweak(cfg)
+		}
 	}, func(deps *Deps) {
 		deps.UserAuth = svc
 	})
