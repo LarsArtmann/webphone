@@ -14,6 +14,7 @@ package userauth
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
@@ -264,4 +266,54 @@ func (s *Service) BeginRegistration(ctx context.Context, userID identitymodel.Us
 
 func (s *Service) FinishRegistration(ctx context.Context, userID identitymodel.UserID, r *http.Request, credentialName string) error {
 	return s.users.FinishRegistration(ctx, userID, r, credentialName)
+}
+
+// PasskeyCredential is one enrolled passkey as the settings surface sees
+// it: the base64url ID (the revoke handle), the operator/device name and
+// the enrollment time. No key material ever leaves the store.
+type PasskeyCredential struct {
+	ID        string
+	Name      string
+	CreatedAt time.Time
+}
+
+// Credentials lists the mapped account's enrolled passkeys (owner-match:
+// the caller resolves the email from the session's extension mapping, so
+// an extension can only ever see its own account). ok=false when the
+// email has no usermgmt account (nothing enrolled — the settings section
+// renders its empty state).
+func (s *Service) Credentials(email string) ([]PasskeyCredential, bool) {
+	user, ok := s.users.ReadModel().FindByEmail(strings.ToLower(strings.TrimSpace(email)))
+	if !ok {
+		return nil, false
+	}
+	out := make([]PasskeyCredential, 0, len(user.Credentials))
+	for _, cred := range user.Credentials {
+		out = append(out, PasskeyCredential{
+			ID:        base64.RawURLEncoding.EncodeToString(cred.ID),
+			Name:      cred.Name,
+			CreatedAt: cred.CreatedAt,
+		})
+	}
+	return out, true
+}
+
+// RemoveCredential revokes one passkey of the mapped account by its
+// base64url ID. The email comes from the session's extension mapping
+// (owner-match by construction); an unmapped account or an unknown id is
+// a Rejection.
+func (s *Service) RemoveCredential(ctx context.Context, email, credentialID string) error {
+	user, ok := s.users.ReadModel().FindByEmail(strings.ToLower(strings.TrimSpace(email)))
+	if !ok {
+		return errorfamily.NewRejection("userauth.passkey.unmapped",
+			"no identity account for %q — nothing to revoke").WithContext("email", email)
+	}
+	credID, err := base64.RawURLEncoding.DecodeString(credentialID)
+	if err != nil {
+		return errorfamily.NewRejection("userauth.passkey.bad_id", "credential id is not base64url")
+	}
+	if err := s.users.RemoveCredential(ctx, user.ID, credID); err != nil {
+		return err //nolint:wrapcheck // usermgmt owns the classification; the handler maps families to statuses
+	}
+	return nil
 }

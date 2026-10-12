@@ -360,6 +360,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
+		Passkeys:       h.passkeySectionProps(sess.Extension),
 		Lang:           h.lang(r),
 	}), nil
 }

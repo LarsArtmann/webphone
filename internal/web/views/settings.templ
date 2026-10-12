@@ -1,6 +1,8 @@
 package views
 
 import (
+	"time"
+
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/utils"
@@ -26,6 +28,10 @@ type SettingsPanelProps struct {
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
 	Snippets []domain.Snippet
+	// Passkeys shapes the passkey management section (A2): Available
+	// only when the identity layer is wired AND the extension has a
+	// mapped account.
+	Passkeys PasskeysSectionProps
 	Lang     Lang
 }
 
@@ -74,6 +80,9 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dd><a class="wp-mini" href="/api/export" download>{ T(props.Lang, "settings.exportLink") }</a></dd>
 			</dl>
 			@SnippetsSection(props.Snippets, props.Lang)
+			if props.Passkeys.Available {
+				@PasskeysSection(props.Passkeys)
+			}
 			<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
 		<dl class="wp-settings wp-shortcuts">
 			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
@@ -90,6 +99,59 @@ templ SettingsPanel(props SettingsPanelProps) {
 			{ T(props.Lang, "settings.themeNote") }
 		</p>
 	</section>
+}
+
+// PasskeysSection manages the mapped account's passkeys (A2): the
+// enrolled keys with their device names and enrollment dates, each with
+// a revoke button. Revoke answers a toast + the whole settings partial
+// re-render (the snippets pattern), so the list always shows store
+// truth. The id is the base64url credential id — a revoke handle only,
+// never key material.
+type PasskeyCredentialView struct {
+	ID        string
+	Name      string
+	CreatedAt time.Time
+}
+
+type PasskeysSectionProps struct {
+	Available   bool
+	Empty       bool
+	Credentials []PasskeyCredentialView
+	Lang        Lang
+}
+
+templ PasskeysSection(props PasskeysSectionProps) {
+	<h3 class="wp-settings-head" id="wp-passkeys-head">{ T(props.Lang, "passkeys.title") }</h3>
+	<p class="wp-empty">{ T(props.Lang, "passkeys.subtitle") }</p>
+	if props.Empty {
+		<p class="wp-empty" id="wp-passkeys-empty">{ T(props.Lang, "passkeys.empty") }</p>
+	} else {
+		<ul class="wp-snippet-manage" id="wp-passkeys-list">
+			for _, cred := range props.Credentials {
+				<li class="wp-snippet-row">
+					<span class="wp-snippet-body">{ cred.displayName() }</span>
+					<span class="wp-muted">{ cred.CreatedAt.Format("2006-01-02") }</span>
+					<button
+						type="button"
+						class="wp-mini"
+						hx-delete={ "/api/passkeys/" + cred.ID }
+						hx-target="#tab-content"
+						hx-swap="innerHTML"
+						hx-confirm={ T(props.Lang, "passkeys.confirm") }
+						aria-label={ T(props.Lang, "passkeys.revoke") }
+						title={ T(props.Lang, "passkeys.revoke") }
+					>✕</button>
+				</li>
+			}
+		</ul>
+	}
+}
+
+func (c PasskeyCredentialView) displayName() string {
+	if c.Name == "" {
+		return "passkey"
+	}
+	return c.Name
 }
 
 func orUnset(value string, lang Lang) string {
