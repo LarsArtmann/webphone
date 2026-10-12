@@ -39,9 +39,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every deprecated `usermgmt` re-export (user ids, sentinel errors,
   the WebAuthn provider seam) is gone from webphone code, so a future
   usermgmt release can drop them without breaking this app.
+- The Settings identity/service facts render through the
+  templ-components `display.DefinitionList` instead of a hand-rolled
+  `<dl>`, and the remaining unicode glyphs in that panel (`✕` on
+  removable chips, `⚡` before the ASR detail) come from the icons
+  package like every other surface. Markup diff vs the previous
+  render is intentional-only (6 of 7 panels byte-identical; the
+  shortcuts `<dl>` stays hand-rolled for its `kbd` semantics), and
+  the scoped Tailwind build's `@source` now covers the adopted
+  component. A served-markup change: the stack browser E2E re-run
+  is owed at the next release train.
 
 ### Added
 
+- A `commit-msg` git hook (`.githooks/`) refuses daemon-pattern (`.githooks/`) refuses daemon-pattern
+  auto-commits that touch `go.mod`, `go.sum`, `go.work*`,
+  `flake.lock`, or `.buildflow.yml` — the dependency files whose
+  silent daemon edits have twice landed a red main; `--no-verify`
+  bypasses it for legitimate tool-driven bumps.
+- `scripts/push-stall-watch.sh` exits non-zero when the oldest
+  unpushed commit is older than the threshold (default 60 minutes,
+  the ratified manual-push anchor), so the stall is detectable by
+  script instead of by noticing a quiet daemon.
+- CI gains a `dup-gate` job: `art-dupl check` against the ratified
+  `-t 1` deep-sweep baseline (`.art-dupl-baseline.json`, 58 accepted
+  intentional-similarity groups, zero harmful clones), failing only
+  on NEW clone groups so accepted similarity stays recorded while
+  fresh duplication is caught at the gate.
 - SIP credential brokering (opt-in; zero config = byte-identical
   behavior): with `sip.credential_secret`/`sip.credential_secret_file`
   set, the directory password never reaches the browser again.
