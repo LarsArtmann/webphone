@@ -35,9 +35,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of a prepend-per-segment (quadratic on a 1500-segment
   marathon call). Behavior identical; the store test suite drops from
   ~6.7 s to ~0.1 s.
+- The identity layer imports `cqrs-htmx/identity-model/v4` directly:
+  every deprecated `usermgmt` re-export (user ids, sentinel errors,
+  the WebAuthn provider seam) is gone from webphone code, so a future
+  usermgmt release can drop them without breaking this app.
 
 ### Added
 
+- SIP credential brokering (opt-in; zero config = byte-identical
+  behavior): with `sip.credential_secret`/`sip.credential_secret_file`
+  set, the directory password never reaches the browser again.
+  Sessions REGISTER with a per-session derived credential
+  (`base64url(HMAC-SHA256(secret, session token))`), the new
+  machine-facing `GET /internal/directory/{extension}` (loopback +
+  Bearer secret) answers each live session's derived credentials to
+  the stack's FreeSWITCH directory bridge, and logout revokes the
+  credential at the next REGISTER. The session wire answers exactly
+  one credential field (`sip_credential` when brokering, the legacy
+  `password` otherwise), and a fresh extension login mints its session
+  BEFORE registering while brokering is on.
+- Settings passkey management: the signed-in extension sees its
+  enrolled passkeys in Settings and can revoke them one by one
+  (confirm-gated, session + CSRF protected; the owner is resolved from
+  the session's mapping, never from the request). Revoking re-renders
+  the panel from store truth.
+- Semantic auth audit trail: one greppable journal line per login,
+  denied login, logout, passkey enrollment (post-success only), and
+  passkey revocation — identifiers only, never secrets (pinned by
+  test).
 - The Settings panel names the transcription provider when the seam is
   on: the ASR row now reads "connected · <provider kind> · <model>"
   (e.g. `openai-compatible · whisper-1`, `google · telephony`) instead

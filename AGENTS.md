@@ -21,6 +21,11 @@ The cqrs-htmx `setup` bundle stays REJECTED (split-brain identity + a measured +
 - Sanitization: the island keeps letters (`[^\d+*#a-zA-Z]`), matching `sanitizeDialable`; pinned on the served asset.
 - Own-number feed: static config map (`identities`); a stack `/phone-api` identity endpoint is the upgrade path. CDR-derive REJECTED (outbound `caller_id_number` is dialplan-dependent and absent before the first call).
 
+## Owner decisions (2026-10-12)
+
+- SIP credential brokering (SUPERB train): with `sip.credential_secret*` set, the directory password NEVER reaches the browser — sessions REGISTER with a per-session derived credential (`sipcred.Derive`, HMAC-SHA256→base64url over the session token), FreeSWITCH validates it dynamically via the stack's xml_curl bridge reading `GET /internal/directory/{extension}` (loopback + Bearer, machine-facing), and logout revokes at the next REGISTER. OFF (zero config) = byte-identical legacy behavior; half config refuses boot. The `extension_password_files` read STAYS for the session row (`/phone-api` proxy needs it) — B removes the browser exposure, not the server-side secret.
+- Passkey management + audit shipped in the same train: Settings lists/revokes the session's own mapped passkeys (owner structural, never request-sourced); `authAudit` emits one greppable line per login/denied-logout/enroll/revoke. usermgmt's AuditLog projection stays UNWIRED (memory-only, no login events, unbounded).
+
 ## Commands
 
 ```console
