@@ -5,6 +5,7 @@ import (
 
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/forms"
+	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/utils"
 	"github.com/larsartmann/webphone/internal/domain"
 )
@@ -38,47 +39,26 @@ type SettingsPanelProps struct {
 templ SettingsPanel(props SettingsPanelProps) {
 	<section class="wp-panel" id="settings-panel">
 		@panelHead(props.Lang, "tab.settings", "settings.subtitle")
-		<dl class="wp-settings">
-			<dt>{ T(props.Lang, "settings.sipDomain") }</dt>
-			<dd>{ orUnset(props.SIPDomain, props.Lang) }</dd>
-			<dt>{ T(props.Lang, "settings.sipWS") }</dt>
-			<dd>{ props.WebsocketURL }</dd>
-			<dt>{ T(props.Lang, "settings.ice") }</dt>
-			<dd>{ fmtInt(props.ICEServers) }</dd>
-			<dt>{ T(props.Lang, "settings.gateway") }</dt>
-			<dd>{ props.GatewayMode }</dd>
-			<dt>{ T(props.Lang, "settings.phoneAPI") }</dt>
-			<dd class={ "wp-service", templ.KV("wp-service-on", props.PhoneAPI), templ.KV("wp-service-off", !props.PhoneAPI) }>
-				if props.PhoneAPI {
-					{ T(props.Lang, "settings.connected") }
-				} else {
-					{ T(props.Lang, "settings.unset") }
-				}
-			</dd>
-			<dt>{ T(props.Lang, "settings.crm") }</dt>
-			<dd class={ "wp-service", templ.KV("wp-service-on", props.CRM), templ.KV("wp-service-off", !props.CRM) }>
-				if props.CRM {
-					{ T(props.Lang, "settings.connected") }
-				} else {
-					{ T(props.Lang, "settings.unset") }
-				}
-			</dd>
-			<dt>{ T(props.Lang, "settings.asr") }</dt>
-			<dd class={ "wp-service", templ.KV("wp-service-on", props.ASR), templ.KV("wp-service-off", !props.ASR) }>
-				if props.ASR {
-					{ T(props.Lang, "settings.connected") }
-					if props.ASRDetail != "" {
-						<span class="wp-muted"> · { props.ASRDetail }</span>
-					}
-				} else {
-					{ T(props.Lang, "settings.unset") }
-				}
-			</dd>
-			<dt>{ T(props.Lang, "settings.shared") }</dt>
-			<dd>{ fmtInt(props.SharedContacts) }</dd>
-			<dt>{ T(props.Lang, "settings.export") }</dt>
-			<dd><a class="wp-mini" href="/api/export" download>{ T(props.Lang, "settings.exportLink") }</a></dd>
-			</dl>
+		@display.DefinitionList(display.DefinitionListProps{
+			Class: "wp-settings",
+			Items: settingsItems(props),
+		})
+		@SnippetsSection(props.Snippets, props.Lang)
+		if props.Passkeys.Available {
+			@PasskeysSection(props.Passkeys)
+		}
+		<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
+		<dl class="wp-settings wp-shortcuts">
+			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
+			<dt><kbd>H</kbd></dt><dd>{ T(props.Lang, "shortcuts.h") }</dd>
+			<dt><kbd>M</kbd></dt><dd>{ T(props.Lang, "shortcuts.m") }</dd>
+			<dt><kbd>P</kbd></dt><dd>{ T(props.Lang, "shortcuts.p") }</dd>
+			<dt><kbd>Esc</kbd></dt><dd>{ T(props.Lang, "shortcuts.esc") }</dd>
+			<dt><kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.enter") }</dd>
+			<dt><kbd>Shift</kbd>+<kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.shiftEnter") }</dd>
+			<dt><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd></dt><dd>{ T(props.Lang, "shortcuts.palette") }</dd>
+			<dt><kbd>?</kbd></dt><dd>{ T(props.Lang, "shortcuts.help") }</dd>
+		</dl>
 			@SnippetsSection(props.Snippets, props.Lang)
 			if props.Passkeys.Available {
 				@PasskeysSection(props.Passkeys)
@@ -140,7 +120,7 @@ templ PasskeysSection(props PasskeysSectionProps) {
 						hx-confirm={ T(props.Lang, "passkeys.confirm") }
 						aria-label={ T(props.Lang, "passkeys.revoke") }
 						title={ T(props.Lang, "passkeys.revoke") }
-					>✕</button>
+					>@icons.Icon(icons.Close, "wp-icon")</button>
 				</li>
 			}
 		</ul>
@@ -161,6 +141,51 @@ func orUnset(value string, lang Lang) string {
 	return value
 }
 
+// settingsItems builds the deployment-facts rows for the DefinitionList
+// (the settingsRow adoption, dedup registry 2026-10-11 ruling #2): plain
+// Detail strings for text values, DetailComponent where the value is
+// conditional or rich (service state, ASR detail, the export link).
+func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
+	return []display.DefinitionItem{
+		{Term: T(props.Lang, "settings.sipDomain"), Detail: orUnset(props.SIPDomain, props.Lang)},
+		{Term: T(props.Lang, "settings.sipWS"), Detail: props.WebsocketURL},
+		{Term: T(props.Lang, "settings.ice"), Detail: fmtInt(props.ICEServers)},
+		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
+		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.crm"), DetailComponent: serviceDetail(props.CRM, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.asr"), DetailComponent: asrDetail(props.ASR, props.ASRDetail, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
+		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
+	}
+}
+
+templ serviceDetail(on bool, connected, unset string) {
+	<span class={ "wp-service", templ.KV("wp-service-on", on), templ.KV("wp-service-off", !on) }>
+		if on {
+			{ connected }
+		} else {
+			{ unset }
+		}
+	</span>
+}
+
+templ asrDetail(on bool, detail, connected, unset string) {
+	<span class={ "wp-service", templ.KV("wp-service-on", on), templ.KV("wp-service-off", !on) }>
+		if on {
+			{ connected }
+			if detail != "" {
+				<span class="wp-muted"> · { detail }</span>
+			}
+		} else {
+			{ unset }
+		}
+	</span>
+}
+
+templ exportLink(label string) {
+	<a class="wp-mini" href="/api/export" download>{ label }</a>
+}
+
 // SnippetsSection manages the reply snippets (M21): the list with a
 // quick marker and delete buttons, plus the add form (body + quick
 // checkbox). Save/delete answer toast + this whole settings partial
@@ -178,7 +203,7 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 				<li class="wp-snippet-row">
 					<span class="wp-snippet-body">{ snippet.Body }</span>
 					if snippet.Quick {
-						<span class="wp-snippet-quick" title={ T(lang, "snippets.quick") } aria-label={ T(lang, "snippets.quick") }>⚡</span>
+						<span class="wp-snippet-quick" title={ T(lang, "snippets.quick") } aria-label={ T(lang, "snippets.quick") }>@icons.Icon(icons.Bolt, "wp-icon")</span>
 					}
 					<button
 						type="button"
@@ -188,7 +213,7 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 						hx-swap="innerHTML"
 						aria-label={ T(lang, "snippets.delete") }
 						title={ T(lang, "snippets.delete") }
-					>✕</button>
+					>@icons.Icon(icons.Close, "wp-icon")</button>
 				</li>
 			}
 		</ul>
