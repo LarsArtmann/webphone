@@ -163,20 +163,12 @@ async function rebuildConnection(reason) {
   state.userAgent = null;
   registerer = null;
   try {
-    await withTimeout(
-      old ? old.stop() : Promise.resolve(),
-      3000,
-      "stop timed out",
-    );
+    await withTimeout(old ? old.stop() : Promise.resolve(), 3000, "stop timed out");
   } catch (err) {
     log(`old agent stop: ${err.message}`);
   }
   try {
-    await withTimeout(
-      buildConnection(),
-      RECONNECT_ATTEMPT_TIMEOUT_MS,
-      "rebuild timed out",
-    );
+    await withTimeout(buildConnection(), RECONNECT_ATTEMPT_TIMEOUT_MS, "rebuild timed out");
   } finally {
     resetting = false;
   }
@@ -213,8 +205,7 @@ async function attemptReconnect() {
     // unusable (retrying register() on a Terminated registerer throws
     // forever); rebuild it.
     const unusable =
-      err.message.includes("timed out") ||
-      registerer?.state === SIP.RegistererState.Terminated;
+      err.message.includes("timed out") || registerer?.state === SIP.RegistererState.Terminated;
     if (unusable) {
       try {
         await rebuildConnection(err.message);
@@ -268,9 +259,7 @@ async function buildConnection() {
         // Surface WHY the transport died — the pill is the first place
         // a user looks when audio goes quiet; "offline" alone hides
         // certificate/TLS vs network failures.
-        const reason = error
-          ? `offline: ${error.message || error}`
-          : t("offline");
+        const reason = error ? `offline: ${error.message || error}` : t("offline");
         setOfflinePill(reason);
         if (error) scheduleReconnect();
       },
@@ -283,8 +272,7 @@ async function buildConnection() {
         }
         state.incomingSession = invitation;
         warmMic();
-        const from = (invitation.remoteIdentity &&
-          invitation.remoteIdentity.uri) || {
+        const from = (invitation.remoteIdentity && invitation.remoteIdentity.uri) || {
           user: "unknown",
         };
         els.incomingFrom.textContent = from.user || "unknown";
@@ -296,9 +284,7 @@ async function buildConnection() {
         const active = document.activeElement;
         const midType =
           active &&
-          (active.tagName === "INPUT" ||
-            active.tagName === "TEXTAREA" ||
-            active.isContentEditable);
+          (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
         if (!midType) els.accept.focus();
         // Assertive announcement (M17 J9): a hidden→visible swap of the
         // banner is invisible to screen readers — the ringing call is
@@ -362,12 +348,10 @@ async function buildConnection() {
       log("registration lost during transport outage; backoff owns it");
       return;
     }
-    rebuildConnection("registration lost after it was established").catch(
-      (err) => {
-        log(`rebuild failed: ${err.message}`);
-        scheduleReconnect();
-      },
-    );
+    rebuildConnection("registration lost after it was established").catch((err) => {
+      log(`rebuild failed: ${err.message}`);
+      scheduleReconnect();
+    });
   };
   registerer.stateChange.addListener((regState) => {
     log(`registration ${regState}`);

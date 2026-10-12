@@ -44,10 +44,7 @@ export function instrumentSessionDescriptionHandler(sdh) {
   });
   pc.addEventListener("iceconnectionstatechange", () => {
     const state = pc.iceConnectionState;
-    if (
-      (state === "connected" || state === "completed") &&
-      marks.iceConnectedAt == null
-    ) {
+    if ((state === "connected" || state === "completed") && marks.iceConnectedAt == null) {
       marks.iceConnectedAt = Date.now();
     }
   });
