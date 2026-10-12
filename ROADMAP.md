@@ -183,6 +183,16 @@ the stack browser E2E passed on the bumped tree. What remains:
   access.
 - Stack-side: keep or revert the TEMP-DIAG answer-phase dump in the
   stack's browser E2E (commit `b96d4c2` there).
+- SUPERB prod cutover (T13) timing + staging shape: queue the
+  pbx-artmann relock + staged cutover as the next session, and should
+  prod's first `staticFallbackExtensions` list operator/ring-group
+  extensions explicitly? (10-52 report §g1; cluster in TODO_LIST).
+- F49 scope: is the eval-level rollback proof (byte-identical static
+  golden) acceptable, or the full in-VM static↔xml_curl flip drill
+  (~10 min CI + a second toplevel)? (10-52 §g2.)
+- `.buildflow-baseline.json` +8604-line regrowth: audit/trim, or a
+  deliberate SDK-side re-save? (10-52 §g3; grew during a concurrent
+  session after a 19-stale-entries warning.)
 - HSTS on prod (owner call): the `caddy.hsts` option ships opt-in —
   decide for `pbx.artmann.tech` once https-only is proven
   (01:04 report §f/21).
@@ -334,6 +344,35 @@ the stack browser E2E passed on the bumped tree. What remains:
   Ledger's domain (M23 reassigned; an in-train workstream reverted
   `6989b99`). Webphone keeps only its per-extension store + `/api/contacts`.
   No longer an owner call; recorded here as the boundary.
+
+## Raw ideas (2026-10-12 harvest — SUPERB brokering train tails)
+
+Product/deferred items from the 10-52 report's (f) product cluster plus
+the 06-55 webphone-backlog residuals, routed here as ROADMAP fuel
+(none has a code home yet):
+
+- Operator-API session auth (shrinks the file-outage class; the plan's
+  residual-risk item) — eventually kills `extension_password_files`.
+- Extension-login lockout parity (password flood buckets vs passkey's).
+- TOTP/OAuth2 login modes (usermgmt supports TOTP; island + DOM
+  contract work).
+- Membership-remap: replace `auth.passkey.users` with a usermgmt
+  relation; loginpage adoption ruling (standalone page vs island
+  no-reload) — written decision owed.
+- `passwordFile` permission assertions in the webphone NixOS module
+  (dataDir-style).
+- `/internal/directory` listing cap (5000-segment-style bound; currently
+  unbounded per extension) · expose derived-credential count in /metrics
+  aggregates (both 06-55 backlog residuals).
+- nixpkgs upstream: assert-or-warn on unknown auth-scheme values in
+  mod_xml_curl (the silent-ignore trap, stack lessons/freeswitch.md) —
+  and the `xml_int.curl` default-set proposal; both owner calls
+  (10-52 items 37/14).
+- Bridge allowlist of proxied extensions (defense-in-depth vs webphone
+  compromise; needs a threat-model pass) · `webphone -check-config`
+  preflight (validates the brokering pair: secret file readable +
+  directory self-probe) · island registration-failure hint when
+  `sipCredential` is on.
 
 ## Raw ideas (2026-10-01 harvest; shipped bits marked 2026-10-02)
 
