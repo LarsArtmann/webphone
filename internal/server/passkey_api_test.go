@@ -418,3 +418,53 @@ func TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn(t *testing.T)
 		t.Errorf("resume password = %q: legacy wire must stay silent when brokering is on", resumed.Password)
 	}
 }
+
+// TestPasskeySettingsListsAndRevokes covers the A2 slice end to end: the
+// settings partial lists the mapped account's enrolled passkeys, the
+// session-gated revoke removes the named credential (owner-matched via
+// the session extension's mapping), and an unmapped extension's settings
+// carry no passkeys section at all.
+func TestPasskeySettingsListsAndRevokes(t *testing.T) {
+	server, svc := newPasskeyServer(t)
+	enrollCredential(t, svc, pkEmail)
+	c := clientFor(t, server)
+	c.login("1000", pkPassword)
+
+	creds, ok := svc.Credentials(pkEmail)
+	if !ok || len(creds) != 1 {
+		t.Fatalf("Credentials(%q) = %v, %v; want one enrolled key", pkEmail, creds, ok)
+	}
+	resp, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("settings partial: %d %s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), "wp-passkeys-list") || !strings.Contains(string(body), "test-device") {
+		t.Errorf("settings partial must list the enrolled passkey with its name:\n%s", body)
+	}
+
+	resp, body = c.do(http.MethodDelete, "/api/passkeys/"+creds[0].ID, nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("revoke: %d %s", resp.StatusCode, body)
+	}
+	for _, want := range []string{"showMessage", "Passkey revoked."} {
+		if !strings.Contains(resp.Header.Get("HX-Trigger"), want) {
+			t.Errorf("revoke response HX-Trigger must carry %q, got %q", want, resp.Header.Get("HX-Trigger"))
+		}
+	}
+	creds, _ = svc.Credentials(pkEmail)
+	if len(creds) != 0 {
+		t.Fatalf("after revoke Credentials = %v, want none", creds)
+	}
+	resp, body = c.do(http.MethodGet, "/partials/settings", nil, "")
+	if !strings.Contains(string(body), "wp-passkeys-empty") {
+		t.Errorf("settings partial must render the empty state after revoke:\n%s", body)
+	}
+
+	// An extension without a mapped account gets no passkeys section.
+	c2 := clientFor(t, server)
+	c2.login("2001", pkPassword)
+	_, body = c2.do(http.MethodGet, "/partials/settings", nil, "")
+	if strings.Contains(string(body), "wp-passkeys-head") {
+		t.Errorf("unmapped extension must not render the passkeys section:\n%s", body)
+	}
+}

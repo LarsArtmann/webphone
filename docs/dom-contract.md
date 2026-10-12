@@ -77,6 +77,12 @@ stays complete without them, and the E2E must not assume them:
 - `passkey-email` — the email input
 - `passkey-login-error` — the inline error slot
 
+Settings passkey management (passkey mode on AND the signed-in
+extension has a mapped account) renders `wp-passkeys-head`,
+`wp-passkeys-empty` (mapped account, zero enrolled keys) and
+`wp-passkeys-list` (the enrolled list with revoke buttons); absent
+markup means the mode is off or the extension has no mapped account.
+
 With the mode on, the extension login moves INSIDE a
 `details.passkey-breakglass` disclosure (summary: "Use extension and
 password instead") but keeps its own ids and behavior unchanged.

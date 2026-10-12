@@ -268,6 +268,10 @@ func New(deps Deps) http.Handler {
 		protected.Handle("POST /api/auth/passkey/enroll/finish",
 			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollFinish)))
 		protected.HandleFunc("GET /enroll", h.enrollPage)
+		// Settings-tab passkey management (A2): list lives in the
+		// settings partial; revoke is session-gated + CSRF-protected and
+		// owner-matched against the session extension's mapping.
+		protected.HandleFunc("DELETE /api/passkeys/{id}", h.revokePasskey)
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
