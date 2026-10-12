@@ -4,18 +4,8 @@
 // access rides the extension's session via authedFetch — there is no
 // second login.
 
-import {
-  asrEnabled,
-  crmEnabled,
-  phoneApiEnabled,
-  sharedContacts,
-} from "./config.js";
-import {
-  authedFetch,
-  authHeaderValue,
-  getCredentials,
-  noteThrottled,
-} from "./auth.js";
+import { asrEnabled, crmEnabled, phoneApiEnabled, sharedContacts } from "./config.js";
+import { authedFetch, authHeaderValue, getCredentials, noteThrottled } from "./auth.js";
 import { t } from "./i18n.js";
 import { transcribeNow } from "./transcribe.js";
 import { initDialTypeahead, setExtraContacts } from "./typeahead.js";
@@ -153,19 +143,13 @@ export function renderHistory() {
   const serverRows = serverHistory.map((row) =>
     makeHistoryRow({
       dir: row.context === "public" ? "←" : "→",
-      target:
-        row.context === "public"
-          ? row.caller_id_number
-          : row.destination_number,
+      target: row.context === "public" ? row.caller_id_number : row.destination_number,
       whenText: row.start || "—",
       durText:
         row.billsec > 0
           ? `${Math.floor(row.billsec / 60)}:${String(row.billsec % 60).padStart(2, "0")}`
           : "—",
-      number:
-        row.context === "public"
-          ? row.caller_id_number
-          : row.destination_number,
+      number: row.context === "public" ? row.caller_id_number : row.destination_number,
     }),
   );
   els.history.replaceChildren(...localRows, ...serverRows);
@@ -237,9 +221,7 @@ async function migrateLegacyContacts() {
   if (legacyContacts.length === 0) return;
   // Numbers already on the server keep their server-side names.
   const known = new Set(personalContacts.map((c) => c.number));
-  const missing = legacyContacts.filter(
-    (c) => c.number && !known.has(c.number),
-  );
+  const missing = legacyContacts.filter((c) => c.number && !known.has(c.number));
   try {
     for (const contact of missing) {
       const res = await authedFetch("/api/contacts", {
@@ -260,10 +242,7 @@ async function migrateLegacyContacts() {
     announce(t("contactsMigrated")(missing.length), "ok");
     if (missing.length > 0) await loadContacts();
   } catch (err) {
-    log(
-      `local contact import failed (${err.message}); retrying next login`,
-      "error",
-    );
+    log(`local contact import failed (${err.message}); retrying next login`, "error");
   }
 }
 
@@ -313,12 +292,9 @@ function removeLegacyContact(number) {
 
 async function removeServerContact(contact) {
   try {
-    const res = await authedFetch(
-      `/api/contacts?id=${encodeURIComponent(contact.id)}`,
-      {
-        method: "DELETE",
-      },
-    );
+    const res = await authedFetch(`/api/contacts?id=${encodeURIComponent(contact.id)}`, {
+      method: "DELETE",
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     personalContacts = personalContacts.filter((c) => c.id !== contact.id);
     renderContacts();
