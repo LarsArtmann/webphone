@@ -14,6 +14,7 @@ The cqrs-htmx `setup` bundle stays REJECTED (split-brain identity + a measured +
 - NixOS module options: `enable`, `package`, `dataDir` (MUST be under `/var/lib/` — assertion), `settings` (freeform), `environmentFile`, `memoryMax`, `csrf.{trustedProxies,trustedOrigins}`, `serverTiming.enable`, `backup.{enable,destDir,calendar,retentionDays}` (null = single snapshot; set = dated history + prune), `caddy.{enable,hostName,sipUpstream}`, `caddy.hsts.{enable,maxAge}`. The front is CADDY. The vhost reverse-proxies the app, bridges the websocket path ONLY when `caddy.sipUpstream` is set (the Go app never terminates the SIP wss), flushes `/events` unbuffered; probes fence via `remote_ip` matchers. `backup.destDir` shares the `/var/lib/` assertion; both units set `UMask=0077` + `StateDirectoryMode=0750`; the backup oneshot orders after `webphone.service`.
 - The `webphone-module` flake check evaluates the module with stand-in options (new config keys the module writes need a stand-in there); `webphone-backup` (KVM-gated) + `webphone-backup-drill` cover snapshot AND restore. flake.nix is a slim ENTRY; the meat lives in `nix/{packages,checks,module-check,vm-tests,apps,devshell,treefmt}.nix`. `webphoneVersion` MUST stay in flake.nix (`release.sh` greps/seds it), reaching `nix/packages.nix` via `{ _module.args.webphoneVersion = ...; }`. Gotcha: `self` is a TOP-level-only flake-parts module arg.
 - webphone's gateway seam (loopback vs webhook) is consumed by pbx-artmann's `telnyx-webhooks.py` bridge — contracts in the plan docs under `docs/planning/archived/2026-09-19_11-51_SUPERB-*`.
+- The stack OVERRIDES nixpkgs' freeswitch with a mirrored module set (+`xml_int.curl` for the credential-brokering bridge) — ONE home `modules/telephony/freeswitch-modules.nix` there, resolved against nixpkgs' module universe by the stack's `telephony-eval` check: a nixpkgs bump that renames/removes a module fails eval, not a VM run. pbx-artmann inherits the FS package change at its relock.
 
 ## Owner decisions (2026-09-20)
 
@@ -54,6 +55,8 @@ Smoke a binary quickly (loopback gateway = whole product, zero PBX):
 nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone
 WEBPHONE_ADDR=127.0.0.1:18099 WEBPHONE_DATA_DIR=/tmp/wp-data WEBPHONE_GATEWAY__WEBHOOK_SECRET=devsecret /tmp/webphone-bin
 ```
+
+Passkey smoke boots need a HOSTNAME rp_id (WebAuthn rejects IP rp_id — "must be a domain"): bind 127.0.0.1 as usual and `curl --resolve webphone.test:18099:127.0.0.1 https://webphone.test:18099/...` (with `-k` for the self-signed cert).
 
 Host-nix-down fallback: run gates with STORE toolchains directly — `GOTOOLCHAIN=local /nix/store/*-go-1.27*/bin/go test -count=1 ./...`, the store nodejs for island tests, and `-ldflags "-X .../internal/server.buildVersion=vX.Y.Z"` for a version-stamped smoke binary (NOT `main.displayVersion`).
 
