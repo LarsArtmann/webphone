@@ -205,6 +205,8 @@ a deliberate code change, regenerate:
 | config.session_ttl                           | Rejection                 | internal/config/config.go     |
 | config.sip.credential_secret_file            | Rejection                 | internal/config/config.go     |
 | config.sip.credential_secret_sources         | Rejection                 | internal/config/config.go     |
+| config.textagent.secret_file                 | Rejection                 | internal/config/config.go     |
+| config.textagent.url                         | Rejection                 | internal/config/config.go     |
 | config.timezone                              | Rejection                 | internal/config/config.go     |
 | config.turn_rest.dead_secret                 | Rejection                 | internal/config/config.go     |
 | config.turn_rest.ttl                         | Rejection                 | internal/config/config.go     |
@@ -286,6 +288,13 @@ a deliberate code change, regenerate:
 | store.transcript_trim                        | Infrastructure            | internal/store/transcripts.go |
 | store.tx_begin                               | Infrastructure            | internal/store/messages.go    |
 | store.tx_commit                              | Infrastructure            | internal/store/messages.go    |
+| textagent.badid                              | Rejection                 | internal/textagent/client.go  |
+| textagent.decode                             | Infrastructure            | internal/textagent/client.go  |
+| textagent.encode                             | Infrastructure            | internal/textagent/client.go  |
+| textagent.reach                              | Transient                 | internal/textagent/client.go  |
+| textagent.read                               | Transient                 | internal/textagent/client.go  |
+| textagent.request                            | Infrastructure            | internal/textagent/client.go  |
+| textagent.secret                             | Rejection                 | internal/textagent/client.go  |
 | userauth.close.db                            | Infrastructure            | internal/userauth/userauth.go |
 | userauth.close.users                         | Infrastructure            | internal/userauth/userauth.go |
 | userauth.config                              | Rejection                 | internal/userauth/userauth.go |
