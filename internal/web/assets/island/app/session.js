@@ -3,6 +3,11 @@
 // proxy can act for this extension. The session lives in an HttpOnly
 // cookie server-side; the password is never persisted in the browser.
 //
+// With credential brokering on (sipCredentialMode), createSession also
+// RETURNS the session-derived REGISTER credential from the 201 answer —
+// the login-first call site registers with it and the typed password
+// never leaves island memory.
+//
 // Failures are deliberately non-fatal: the call UI does not depend on the
 // server session — if it cannot be created, tabs stay gated and the island
 // keeps calling. Every outcome lands in #log (English, operator-facing)
@@ -12,7 +17,11 @@ import { t } from "./i18n.js";
 import { announce, log } from "./ui.js";
 import { csrfToken } from "./csrf.js";
 
-export async function createSession(extension, password) {
+export async function createSession(
+  extension,
+  password,
+  { quiet = false } = {},
+) {
   try {
     const res = await fetch("/api/session", {
       method: "POST",
@@ -25,25 +34,32 @@ export async function createSession(extension, password) {
     if (!res.ok) {
       // The tab session is deliberately non-fatal (calls keep working),
       // but "non-fatal" must not mean "invisible": every rejection class
-      // gets a toast in the user's language, alongside the #log line.
-      if (res.status === 401) {
-        announce(t("sessionFailed401"), "warn");
-      } else if (res.status === 429) {
-        announce(t("sessionThrottled"), "warn");
-      } else {
-        announce(t("sessionFailed")(res.status), "warn");
+      // gets a toast in the user's language, alongside the #log line —
+      // unless the caller surfaces the failure inline (quiet).
+      if (!quiet) {
+        if (res.status === 401) {
+          announce(t("sessionFailed401"), "warn");
+        } else if (res.status === 429) {
+          announce(t("sessionThrottled"), "warn");
+        } else {
+          announce(t("sessionFailed")(res.status), "warn");
+        }
       }
       log(`server session failed (HTTP ${res.status})`, "error");
       console.warn(
         "webphone: server session not created (HTTP " + res.status + ")",
       );
-      return;
+      return null;
     }
     // did is the extension's presented number (server config); it rides
     // the event detail so the whoami line can show the real number too.
+    // sip_credential is the derived REGISTER credential (brokering on).
     let did = "";
+    let sipCredential = null;
     try {
-      did = (await res.json()).did || "";
+      const data = await res.json();
+      did = data.did || "";
+      sipCredential = data.sip_credential || null;
     } catch {
       // A bodyless or non-JSON success is not fatal: identity is cosmetic.
     }
@@ -52,10 +68,12 @@ export async function createSession(extension, password) {
     // shared post-login sequence (adopt → SSE attach → announce) lives
     // in adoptServerSession below.
     await adoptServerSession({ did });
+    return sipCredential;
   } catch (err) {
-    announce(t("sessionNetFailed"), "warn");
+    if (!quiet) announce(t("sessionNetFailed"), "warn");
     log(`server session failed (${err.message})`, "error");
     console.warn("webphone: server session not created (" + err.message + ")");
+    return null;
   }
 }
 

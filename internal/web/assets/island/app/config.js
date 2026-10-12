@@ -20,6 +20,11 @@ export const iceServers = Array.isArray(config.iceServers)
 
 export const phoneApiEnabled = config.phoneApi === true;
 
+// Derived SIP credentials (credential brokering): the server mints the
+// session BEFORE the REGISTER and answers a session-derived credential;
+// the directory password never reaches the browser. Off by default.
+export const sipCredentialMode = config.sipCredential === true;
+
 // Optional Ledger CRM integration: when the server has one configured it
 // also accepts post-call reports on /api/calls (session-scoped). Off by
 // default; the server still answers 204 for a stale island that reports
