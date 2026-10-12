@@ -9,6 +9,7 @@ import (
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/go-error-family"
 
+	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -114,17 +115,24 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	if !h.verifyDirectoryCredentials(w, r, extension, password) {
 		return
 	}
-	if err := h.mintSession(w, r, extension, password); err != nil {
+	token, err := h.mintSession(w, r, extension, password)
+	if err != nil {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	// The finish response carries the file-sourced SIP password back to
-	// the island (its REGISTER needs it; the extension login never sends
-	// one because the user just typed it). Same no-store posture as the
-	// resume endpoint — the credential stays out of every cache.
+	// The finish response carries the REGISTER credential back to the
+	// island: the session-derived credential when brokering is on (the
+	// directory password NEVER reaches the browser), else the
+	// file-sourced password (legacy wire, byte-identical). Same no-store
+	// posture as the resume endpoint — the credential stays out of every
+	// cache.
 	w.Header().Set("Cache-Control", "no-store")
 	response := h.sessionIdentityResponse(extension)
-	response.Password = password
+	if h.deps.Config.SIP.DerivedCredentials() {
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token)
+	} else {
+		response.Password = password
+	}
 	writeJSON(w, http.StatusCreated, response)
 }
 

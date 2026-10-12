@@ -12,6 +12,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -102,15 +103,16 @@ func (h *handlers) verifyDirectoryCredentials(w http.ResponseWriter, r *http.Req
 // (fixation defense, the nosurf documented pattern): the response
 // deletes the CSRF cookie, and the client immediately adopts the fresh
 // token via GET /api/csrf — the no-reload login needs that adoption
-// step because the served page carries the old masked token.
-func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) error {
+// step because the served page carries the old masked token. Returns
+// the minted token (the derived-credential input).
+func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) (string, error) {
 	token, err := h.deps.Sessions.Create(extension, password)
 	if err != nil {
-		return err //nolint:wrapcheck // classified by the store seam; the caller answers 500
+		return "", err //nolint:wrapcheck // classified by the store seam; the caller answers 500
 	}
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL, h.cookies)
 	httputil.InvalidateCSRFCookie(w, h.csrfCfg)
-	return nil
+	return token, nil
 }
 
 // sessionIdentity is the typed wire shape of what a freshly minted
@@ -119,15 +121,19 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 // (identities), and — when the extension is passkey-mapped — the user's
 // display name and every number mapped to that user, so the whoami line
 // can lead with the human identity instead of a bare extension@sip_domain.
-// Password rides the same shape on the surfaces that must return the
-// credential (resume, passkey finish); the struct's omitempty tags keep
-// the wire identical to the historical map form.
+// Exactly ONE credential field rides an answer: `sip_credential` (the
+// session-derived REGISTER credential) when credential brokering is on —
+// the directory password never reaches the browser — and `password` (the
+// legacy wire, the session's own payload) only when it is off, keeping
+// unconfigured deployments byte-identical. The omitempty tags keep the
+// wire identical to the historical map form.
 type sessionIdentity struct {
-	Extension   string   `json:"extension"`
-	DID         string   `json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
-	DisplayName string   `json:"display_name,omitempty"`
-	Numbers     []string `json:"numbers,omitempty"`
-	Password    string   `json:"password,omitempty"`
+	Extension     string   `json:"extension"`
+	DID           string   `json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
+	DisplayName   string   `json:"display_name,omitempty"`
+	Numbers       []string `json:"numbers,omitempty"`
+	Password      string   `json:"password,omitempty"`
+	SIPCredential string   `json:"sip_credential,omitempty"`
 }
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
@@ -176,11 +182,15 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	response := h.sessionIdentityResponse(sess.Extension)
-	// The password is the session's own payload (the row already carries
-	// it for the phone-api proxy; the browser REGISTER needs it by
-	// design) and it is served only to the cookie that proved itself at
-	// login. no-store keeps the credential out of every cache.
-	response.Password = sess.Password
+	// Credential policy (see sessionIdentity): derived mode answers the
+	// session-derived REGISTER credential — the directory password never
+	// reaches the browser — while legacy mode keeps the historical
+	// password wire byte-identical. no-store keeps either out of caches.
+	if h.deps.Config.SIP.DerivedCredentials() {
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, session.TokenFromRequest(r))
+	} else {
+		response.Password = sess.Password
+	}
 	writeJSON(w, http.StatusOK, response)
 }
 

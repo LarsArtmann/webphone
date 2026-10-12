@@ -619,15 +619,16 @@ const openapiSpec = `{
         "summary": "Resume a live session (island boot: returns the SIP credentials for the silent re-register)",
         "responses": {
           "200": {
-            "description": "The cookie's live session; the browser re-registers without the login form",
+            "description": "The cookie's live session; the browser re-registers without the login form. Exactly one credential field rides: sip_credential (session-derived, credential brokering on) or password (legacy wire).",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["extension", "password"],
+                  "required": ["extension"],
                   "properties": {
                     "extension": {"type": "string", "examples": ["1001"]},
-                    "password": {"type": "string", "format": "password"},
+                    "password": {"type": "string", "format": "password", "description": "Legacy wire only (credential brokering off)"},
+                    "sip_credential": {"type": "string", "format": "password", "description": "Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)"},
                     "did": {"type": "string", "description": "Presented PSTN number (config identities), when known"}
                   }
                 }
