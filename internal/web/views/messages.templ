@@ -284,6 +284,45 @@ func threadPreview(summary store.ThreadSummary, lang Lang) string {
 	return preview(summary.LastBody, summary.LastChannel, lang)
 }
 
+// aiDraftPost builds the compose button's target: the open thread
+// scopes the ask to that conversation, no thread asks for a fresh one.
+func aiDraftPost(thread string) string {
+	if thread == "" {
+		return "/messages/ai-draft"
+	}
+	return "/messages/ai-draft?thread=" + thread
+}
+
+// aiDraftButton is the ONE home of the composers' on-demand-draft
+// affordance: both the new-conversation form and the reply composer
+// render it (nil-seam deployments render neither — the caller gates on
+// the seam). The swap mode mirrors the composer's own send behavior.
+templ aiDraftButton(lang Lang, thread string, swap string) {
+	<button
+		type="button"
+		class="wp-ai-draft"
+		hx-post={ aiDraftPost(thread) }
+		hx-include="closest form"
+		hx-target="#tab-content"
+		hx-swap={ swap }
+		hx-disabled-elt="this"
+	>{ T(lang, "compose.ai") }</button>
+}
+
+// composeBody is the ONE home of the composer's body box: the reply
+// placeholder key and the prefill (AI draft or empty) vary per surface.
+templ composeBody(lang Lang, placeholderKey string, prefill string) {
+	<textarea
+		name="body"
+		class="wp-compose-body"
+		rows="1"
+		placeholder={ T(lang, placeholderKey) }
+		aria-label={ T(lang, "compose.body.label") }
+	>
+		{ prefill }
+	</textarea>
+}
+
 // NewMessageForm starts a conversation with a typed number. The AI
 // button (textAgent seam) posts the typed number + any half-written
 // hint to the agent and re-renders this panel with the draft prefilled
@@ -307,26 +346,10 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 			aria-label={ T(lang, "compose.to.label") }
 			value={ prefillTo }
 		></input>
-		<textarea
-			name="body"
-			class="wp-compose-body"
-			rows="1"
-			placeholder={ T(lang, "compose.body.ph") }
-			aria-label={ T(lang, "compose.body.label") }
-		>
-			{ prefillBody }
-		</textarea>
+		@composeBody(lang, "compose.body.ph", prefillBody)
 		<span class="wp-segcount" hidden aria-live="polite"></span>
 		if textAgent {
-			<button
-				type="button"
-				class="wp-ai-draft"
-				hx-post="/messages/ai-draft"
-				hx-include="closest form"
-				hx-target="#tab-content"
-				hx-swap="innerHTML"
-				hx-disabled-elt="this"
-			>{ T(lang, "compose.ai") }</button>
+			@aiDraftButton(lang, "", "innerHTML")
 		}
 		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(lang, "compose.send")})
 	</form>
@@ -478,15 +501,7 @@ templ ThreadView(props ThreadViewProps) {
 					@snippetPicker(props.Snippets, props.Lang)
 				</div>
 			}
-			<textarea
-				name="body"
-				class="wp-compose-body"
-				rows="1"
-				placeholder={ T(props.Lang, "compose.reply.ph") }
-				aria-label={ T(props.Lang, "compose.body.label") }
-			>
-				{ props.PrefillDraft }
-			</textarea>
+			@composeBody(props.Lang, "compose.reply.ph", props.PrefillDraft)
 			<input
 				type="file"
 				name="attachment"
@@ -496,15 +511,7 @@ templ ThreadView(props ThreadViewProps) {
 			></input>
 			<span class="wp-segcount" hidden aria-live="polite"></span>
 			if props.TextAgent {
-				<button
-					type="button"
-					class="wp-ai-draft"
-					hx-post={ "/messages/ai-draft?thread=" + props.Thread.ID.String() }
-					hx-include="closest form"
-					hx-target="#tab-content"
-					hx-swap="innerHTML show:window:bottom"
-					hx-disabled-elt="this"
-				>{ T(props.Lang, "compose.ai") }</button>
+				@aiDraftButton(props.Lang, props.Thread.ID.String(), "innerHTML show:window:bottom")
 			}
 			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "compose.send")})
 			<div class="wp-attach" hidden></div>

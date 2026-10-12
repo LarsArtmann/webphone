@@ -63,13 +63,7 @@ func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	reviews, fetchErr := h.textAgentReviews(r)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := views.DraftsPanel(views.DraftsPanelProps{
-		Drafts: reviews, Error: fetchErr, Names: h.draftContactNames(r, reviews), Lang: h.lang(r),
-	}).Render(r.Context(), w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
-	}
+	h.draftPanel(w, r)
 }
 
 // draftContactNames resolves the drafts' contact numbers against the
