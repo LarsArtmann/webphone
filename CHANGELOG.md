@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fail-closed (a 5 s bound per call so a dead agent never stalls the
   tab). New i18n keys in both maps; conditional ids documented in
   docs/dom-contract.md; errorfamily codes `textagent.*`.
-- A `commit-msg` git hook (`.githooks/`) refuses daemon-pattern (`.githooks/`) refuses daemon-pattern
+- A `commit-msg` git hook (`.githooks/`) refuses daemon-pattern
   auto-commits that touch `go.mod`, `go.sum`, `go.work*`,
   `flake.lock`, or `.buildflow.yml` — the dependency files whose
   silent daemon edits have twice landed a red main; `--no-verify`
