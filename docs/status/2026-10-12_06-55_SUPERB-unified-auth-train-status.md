@@ -21,16 +21,16 @@
 
 ## (b) What is PARTIALLY done
 
-1. **T08 rerun in flight** — one fixture permission fixed (`user = "webphone"` on the secret file); the rerun started at ~06:52. Result pending; everything else in the suite already proved itself except this boot gate.
-2. **T14 docs** — webphone README done; stack/pbx CHANGELOG rows, `docs/error-contract.md` rows (internal-directory 401/403/503 paths, bridge fall-through), AGENTS owner-decision updates, and the stack-side bridge docs (F37/F45) NOT yet written.
-3. **T11 webphone full gates** — per-suite tests ran green continuously, but the full train-end ritual (`nix fmt` → buildflow → `go test ./...` → `nix flake check` → smoke with passkey ON → single `auth:` narrative commit → CI watch) has NOT been run as one unit yet. The daemon committed incrementally instead of per-task narrative commits — the history reads as `chore: auto-commit N file(s)` between my checkpoints (`b9e1d9a`, `5687618`, `b54e7e3`, `a2363a9`).
+~~1. **T08 rerun in flight** — one fixture permission fixed (`user = "webphone"` on the secret file); the rerun started at ~06:52. Result pending; everything else in the suite already proved itself except this boot gate.~~ done — 10-52 report a1 — T08 run 10 green (fixture cookie save + CSRF re-adoption)
+~~2. **T14 docs** — webphone README done; stack/pbx CHANGELOG rows, `docs/error-contract.md` rows (internal-directory 401/403/503 paths, bridge fall-through), AGENTS owner-decision updates, and the stack-side bridge docs (F37/F45) NOT yet written.~~ done — 10-52 report a4
+~~3. **T11 webphone full gates** — per-suite tests ran green continuously, but the full train-end ritual (`nix fmt` → buildflow → `go test ./...` → `nix flake check` → smoke with passkey ON → single `auth:` narrative commit → CI watch) has NOT been run as one unit yet. The daemon committed incrementally instead of per-task narrative commits — the history reads as `chore: auto-commit N file(s)` between my checkpoints (`b9e1d9a`, `5687618`, `b54e7e3`, `a2363a9`).~~ done — 10-52 report a2
 
 ## (c) What is NOT started
 
-1. **T12 remainder** — stack browser E2E against the new pin (runbook obligation: registration flow changed), stack `nix flake check`, stack push + CI watch.
-2. **T13** — pbx-artmann relock + staged prod cutover. **Owner-gated by the plan; I did not touch pbx-artmann.**
-3. **T15** — prod verification (register via derived credential, logout revocation live, rollback drill on prod). Owner-gated.
-4. **Deferred list (unchanged, recorded in the plan)** — Membership-remap, loginpage ruling, TOTP/OAuth2 login modes, operator-API session auth, extension-login lockout parity, passwordFile perm assertions.
+~~1. **T12 remainder** — stack browser E2E against the new pin (runbook obligation: registration flow changed), stack `nix flake check`, stack push + CI watch.~~ done — 10-52 report a3 — stack CI success at 3b63222
+~~2. **T13** — pbx-artmann relock + staged prod cutover. **Owner-gated by the plan; I did not touch pbx-artmann.**~~ **→ still open — TODO_LIST T13/T15 cutover cluster (2026-10-12 harvest)**
+~~3. **T15** — prod verification (register via derived credential, logout revocation live, rollback drill on prod). Owner-gated.~~ **→ still open — TODO_LIST T13/T15 cutover cluster (2026-10-12 harvest)**
+~~4. **Deferred list (unchanged, recorded in the plan)** — Membership-remap, loginpage ruling, TOTP/OAuth2 login modes, operator-API session auth, extension-login lockout parity, passwordFile perm assertions.~~ **→ still deferred — ROADMAP Raw ideas 2026-10-12 harvest**
 
 ## (d) What is fucked up / broken
 
@@ -61,55 +61,55 @@ Auth/credential train:
 - [x] Dynamic-directory VM test file + wsprobe auth mode (T08)
 - [x] Stack webphone input re-pin (T12 part)
 - [x] README credential-brokering sections (T14 part)
-- [ ] T08 rerun green (in flight)
-- [ ] T11 full webphone gates + narrative `auth:` commit + CI watch
-- [ ] T12 stack browser E2E + stack flake check + stack push
-- [ ] T14 remainder: error-contract rows, AGENTS owner-decisions, stack/pbx CHANGELOGs, bridge docs (F37/F45)
+~~- [ ] T08 rerun green (in flight)~~ done — T08 run 10 green — 10-52 report a1
+~~- [ ] T11 full webphone gates + narrative `auth:` commit + CI watch~~ done — 10-52 report a2 — webphone CI green at 6fc1d79
+~~- [ ] T12 stack browser E2E + stack flake check + stack push~~ done — 10-52 report a3 — stack CI success at 3b63222
+~~- [ ] T14 remainder: error-contract rows, AGENTS owner-decisions, stack/pbx CHANGELOGs, bridge docs (F37/F45)~~ done — 10-52 report a4
 - [ ] T13 pbx-artmann relock (owner)
 - [ ] T13 prod cutover with xml_curl (owner)
 - [ ] T15 prod verify: derived registration, logout revocation, static extensions unaffected, rollback drill (owner)
-- [ ] Fill T08's result into the plan execution record (done if rerun lands)
-- [ ] Rollback drill F49 as a real in-VM flip (optional hardening, currently eval-level)
-- [ ] `directory.mode` row in the stack's options docs/README (F44 remainder)
-- [ ] Bridge unit monitoring hook (`operatorWatchedUnits` += fs-directory when xml_curl)
-- [ ] Consider `fs-directory` health joining the telephony-health view
-- [ ] Bridge: consider accepting Basic auth as well if FS < 1.10 proves bearer-incapable in T08/T12 (currently bearer-only)
-- [ ] Plan-deviation note: daemon rode the T02 bump (record an enforcement idea)
-- [ ] Re-measure branching-flow tiers 1+2 (due 2026-11-05; 19 baselined entries went stale-warning)
+~~- [ ] Fill T08's result into the plan execution record (done if rerun lands)~~ done — plan execution record T08 row (2026-10-12)
+~~- [ ] Rollback drill F49 as a real in-VM flip (optional hardening, currently eval-level)~~ **→ owner question — ROADMAP Open questions (10-52 g2)**
+~~- [ ] `directory.mode` row in the stack's options docs/README (F44 remainder)~~ done — verified 2026-10-12 — options.nix declares directory.mode + stack runbook section Dynamic SIP directory
+~~- [ ] Bridge unit monitoring hook (`operatorWatchedUnits` += fs-directory when xml_curl)~~ **→ verified open 2026-10-12 — TODO_LIST stack tail row**
+~~- [ ] Consider `fs-directory` health joining the telephony-health view~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+~~- [ ] Bridge: consider accepting Basic auth as well if FS < 1.10 proves bearer-incapable in T08/T12 (currently bearer-only)~~ done — T08 run 4 proved FS v1.11.1 has no bearer; Basic is the wire (freeswitch.nix binding + fs-directory.py `authorized`)
+~~- [ ] Plan-deviation note: daemon rode the T02 bump (record an enforcement idea)~~ **→ TODO_LIST infra tail — daemon-enforcement hook**
+~~- [ ] Re-measure branching-flow tiers 1+2 (due 2026-11-05; 19 baselined entries went stale-warning)~~ **→ standing watch — TODO_LIST Standing watches (due 2026-11-05)**
 
 Webphone backlog (from the plan's deferred list):
 
-- [ ] loginpage adoption ruling (standalone page vs island no-reload) — written decision owed
-- [ ] TOTP login mode (usermgmt supports it; island + DOM contract work)
-- [ ] OAuth2 login mode
-- [ ] Mapping-as-Membership (replace `auth.passkey.users` map with a usermgmt relation)
-- [ ] Operator-API session-token auth → kill `extension_password_files` entirely (the 2026-10-01 class dies)
-- [ ] Extension-login lockout parity with passkey lockout
-- [ ] `passwordFile` permission assertions in the webphone module
-- [ ] `/internal/directory` listing cap (5000-segment style bound) — currently unbounded per extension
-- [ ] Consider exposing derived-credential count in /metrics aggregates
+~~- [ ] loginpage adoption ruling (standalone page vs island no-reload) — written decision owed~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] TOTP login mode (usermgmt supports it; island + DOM contract work)~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] OAuth2 login mode~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] Mapping-as-Membership (replace `auth.passkey.users` map with a usermgmt relation)~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] Operator-API session-token auth → kill `extension_password_files` entirely (the 2026-10-01 class dies)~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] Extension-login lockout parity with passkey lockout~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] `passwordFile` permission assertions in the webphone module~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] `/internal/directory` listing cap (5000-segment style bound) — currently unbounded per extension~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~- [ ] Consider exposing derived-credential count in /metrics aggregates~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
 
 Stack backlog:
 
-- [ ] xml_curl + fail2ban interplay check (bans on digest failures should still apply)
-- [ ] `fs-directory` journal noise check under REGISTER storms (rate limit proxy side?)
-- [ ] Ring-group members documentation: must be in staticFallbackExtensions if they cannot webphone-login
-- [ ] `tests/common.nix` shared secretFile fixture helper
-- [ ] Stack CI budget note: new VM check adds ~8 min
+~~- [ ] xml_curl + fail2ban interplay check (bans on digest failures should still apply)~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+~~- [ ] `fs-directory` journal noise check under REGISTER storms (rate limit proxy side?)~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+~~- [ ] Ring-group members documentation: must be in staticFallbackExtensions if they cannot webphone-login~~ done — folded into the T13 cutover staging row — staticFallbackExtensions MUST list non-webphone ring-group members (TODO_LIST)
+~~- [ ] `tests/common.nix` shared secretFile fixture helper~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+~~- [ ] Stack CI budget note: new VM check adds ~8 min~~ done — covered 2026-10-12 — apps.check-vm sequential driver + ci-posture ledger
 
 Cross-repo hygiene:
 
-- [ ] Daemon-enforcement pre-commit hook (block dependency files in daemon commits)
-- [ ] Audit the regrown `.buildflow-baseline.json` (8604 lines — what got baselined and why)
-- [ ] Reconcile concurrent `.buildflow-baseline.json` path format (host-absolute IDs)
-- [ ] Pin the sipcred wire vector into the stack test fixture (currently the VM proves behavior, not vector equality)
-- [ ] Consider a shared cross-repo contract doc for the internal-directory endpoint (README stub points to the docs train)
+~~- [ ] Daemon-enforcement pre-commit hook (block dependency files in daemon commits)~~ **→ TODO_LIST infra tail — daemon-enforcement hook**
+~~- [ ] Audit the regrown `.buildflow-baseline.json` (8604 lines — what got baselined and why)~~ **→ owner question — ROADMAP Open questions (10-52 g3)**
+~~- [ ] Reconcile concurrent `.buildflow-baseline.json` path format (host-absolute IDs)~~ **→ same ruling as the baseline-audit question (one verdict)**
+~~- [ ] Pin the sipcred wire vector into the stack test fixture (currently the VM proves behavior, not vector equality)~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
+~~- [ ] Consider a shared cross-repo contract doc for the internal-directory endpoint (README stub points to the docs train)~~ done — done 2026-10-12 — README stub now points at error-contract rows + stack runbook section
 
 ## (g) 3 questions for the owner
 
-1. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines during a concurrent session (after the staleness warning said 19 entries matched nothing). Do you want that baseline audited/trimmed, or is it a deliberate SDK-side re-save?
-2. **T08 scope:** is the eval-level rollback proof (F41 golden) acceptable for F49, or do you want the full in-VM static↔xml_curl flip drill (adds a second toplevel build, ~10 min CI)?
-3. **Prod cutover timing:** when T08/T11/T12 land green — do you want the pbx-artmann relock + staged cutover queued as the next session (T13/T15 are owner-gated and I stopped at the boundary), and should the first prod deploy set `staticFallbackExtensions` to your operator/ring-group extensions explicitly?
+~~1. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines during a concurrent session (after the staleness warning said 19 entries matched nothing). Do you want that baseline audited/trimmed, or is it a deliberate SDK-side re-save?~~ **→ still open — re-asked in the 10-52 report §g + ROADMAP Open questions**
+~~2. **T08 scope:** is the eval-level rollback proof (F41 golden) acceptable for F49, or do you want the full in-VM static↔xml_curl flip drill (adds a second toplevel build, ~10 min CI)?~~ **→ still open — re-asked in the 10-52 report §g + ROADMAP Open questions**
+~~3. **Prod cutover timing:** when T08/T11/T12 land green — do you want the pbx-artmann relock + staged cutover queued as the next session (T13/T15 are owner-gated and I stopped at the boundary), and should the first prod deploy set `staticFallbackExtensions` to your operator/ring-group extensions explicitly?~~ **→ still open — re-asked in the 10-52 report §g + ROADMAP Open questions**
 
 ## Session inventory (what changed where)
 
