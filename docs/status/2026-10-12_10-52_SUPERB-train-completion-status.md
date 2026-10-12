@@ -81,18 +81,18 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
 
 ## (b) PARTIALLY DONE
 
-1. **`configjs_check.py` type-checks `sipCredential` but does not
+~~1. **`configjs_check.py` type-checks `sipCredential` but does not~~ done — value-pin landed in the dynamic-directory VM suite (config.js answers true under xml_curl)
    value-pin it** — an xml_curl-mode E2E fixture asserting `true` would
    pin the module wiring end-to-end; current fixture answers `false`
    (passkey mode off there).
-2. **VM concurrency flake hardening** — the messaging broken-pipe was
+~~2. **VM concurrency flake hardening** — the messaging broken-pipe was~~ done — apps.check-vm runs the VM suites sequentially (dogfooded green 2026-10-12)
    attributed and cleared, but `nix flake check` still runs ~10 VM suites
    concurrently on one host; no jobs-cap/serial-VM-phase added.
-3. **HARVEST from section (f) into `TODO_LIST.md`** not run — the owner's
+~~3. **HARVEST from section (f) into `TODO_LIST.md`** not run — the owner's~~ done — TODO_LIST + ROADMAP 2026-10-12 harvest (same day)
    "THEN WAIT FOR INSTRUCTIONS" gates it; the report holds the list.
-4. **The 06:55 report is not annotated** with what this session closed
+~~4. **The 06:55 report is not annotated** with what this session closed~~ done — 06-55 report annotated same day (41 items, docs-health status-items)
    (docs-health ANNOTATE pass pending — old items there are stale now).
-5. **Stack CI history** — the two failing runs before HEAD's are
+~~5. **Stack CI history** — the two failing runs before HEAD's are~~ done — ci-posture.md 2026-10-12 red-run ledger + the item-21 investigation
    explained (one = the configjs drift, fixed; the rest predate this
    session), but no post-mortem note was left in the stack's
    ci-flake-ledger equivalent.
@@ -196,89 +196,89 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
     query` lines prove the seam is live).
 
 **Answer the owner's open questions (blocking items 1–4):**
-11. ☐ Owner: cutover timing + staging shape (question g1).
-12. ☐ Owner: F49 scope ruling — eval-golden enough or in-VM flip drill?
-13. ☐ Owner: baseline-regrowth ruling from the 06:55 report (still open).
-14. ☐ Owner: pursue the nixpkgs `xml_int.curl` upstream PR or keep
+~~11. ☐ Owner: cutover timing + staging shape (question g1).~~ **→ owner question — ROADMAP Open questions**
+~~12. ☐ Owner: F49 scope ruling — eval-golden enough or in-VM flip drill?~~ **→ owner question — ROADMAP Open questions**
+~~13. ☐ Owner: baseline-regrowth ruling from the 06:55 report (still open).~~ **→ owner question — ROADMAP Open questions**
+~~14. ☐ Owner: pursue the nixpkgs `xml_int.curl` upstream PR or keep~~ **→ owner call — ROADMAP Raw ideas 2026-10-12 harvest**
 stack-local (with the silent-ignore trap documented upstream either way)?
 
 **Test/infra hardening:**
-15. ☐ VM jobs cap / serial VM phase for `nix flake check` (local + CI).
-16. ☐ Value-pin `sipCredential: true` in an xml_curl-mode E2E fixture.
-17. ☐ Port the bridge answer-count journal + seam assert pattern into the
+~~15. ☐ VM jobs cap / serial VM phase for `nix flake check` (local + CI).~~ done — apps.check-vm sequential VM driver in the stack flake
+~~16. ☐ Value-pin `sipCredential: true` in an xml_curl-mode E2E fixture.~~ done — dynamic-directory suite pins config.js true end to end
+~~17. ☐ Port the bridge answer-count journal + seam assert pattern into the~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
 OTHER webphone suites (shared helper in tests/common.nix).
-18. ☐ Shared `secretFile` fixture helper (`user = <service>` pattern) in
+~~18. ☐ Shared `secretFile` fixture helper (`user = <service>` pattern) in~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
 tests/common.nix (the run-2 lesson, still copy-pasted).
-19. ☐ Stack ci-flake ledger rows: messaging broken-pipe (host load), the
+~~19. ☐ Stack ci-flake ledger rows: messaging broken-pipe (host load), the~~ done — ci-posture.md 2026-10-12 ledger (broken-pipe, configjs drift, lock-guard pointer)
 configjs drift, the pre-fix CI failures.
-20. ☐ Daemon push-stall watchdog (alert when origin/main lags HEAD >60 min).
-21. ☐ CI run registration for every push (or explicit skip verdict) —
+~~20. ☐ Daemon push-stall watchdog (alert when origin/main lags HEAD >60 min).~~ **→ TODO_LIST infra tail row**
+~~21. ☐ CI run registration for every push (or explicit skip verdict) —~~ done — investigated: 25cf08d HAS run 38211100788 (success); c2caead had none because it was never pushed — no pipeline gap
 investigate why 25cf08d has no run.
-22. ☐ wsprobe: keep the parameterized user as the template default and
+~~22. ☐ wsprobe: keep the parameterized user as the template default and~~ done — static auth-register leg (1001 proxied) green in telephony-webphone
 add a `--assert user=1001 static` leg to the main webphone suite.
-23. ☐ Consider merging the dynamic-directory suite INTO telephony-webphone
+~~23. ☐ Consider merging the dynamic-directory suite INTO telephony-webphone~~ **→ TODO_LIST stack tail row (2026-10-12 harvest)**
 (one machine, halved CI cost) if assertions stay readable (06:55 e5).
-24. ☐ Add the `auth logout` audit line to the dynamic-directory suite's
+~~24. ☐ Add the `auth logout` audit line to the dynamic-directory suite's~~ done — load-bearing journalctl assert green in the dynamic-directory suite
 asserts (it silently proved the no-op logout bug — make it load-bearing).
-25. ☐ Smoke-harness guard pattern (non-empty before compare) upstreamed
+~~25. ☐ Smoke-harness guard pattern (non-empty before compare) upstreamed~~ done — verified clean: bool() guards at every wire compare; no double-extraction compares shipped (rule noted in TODO_LIST)
 into webphone-smoke.py's helper style.
 
 **Docs continuity:**
-26. ☐ docs-health HARVEST: move (f) items into TODO_LIST.md/ROADMAP.md.
-27. ☐ docs-health ANNOTATE: mark the 06:55 report's resolved items inline.
-28. ☐ Stack runbook: cross-link § Dynamic SIP directory from the webphone
+~~26. ☐ docs-health HARVEST: move (f) items into TODO_LIST.md/ROADMAP.md.~~ done — TODO_LIST/ROADMAP 2026-10-12 harvest
+~~27. ☐ docs-health ANNOTATE: mark the 06:55 report's resolved items inline.~~ done — 06-55 report annotated (41 items)
+~~28. ☐ Stack runbook: cross-link § Dynamic SIP directory from the webphone~~ done — webphone error-contract internal-directory row links the runbook section
 failure playbook's index.
-29. ☐ Webphone README § Derived SIP credentials: fill the "full contract:
+~~29. ☐ Webphone README § Derived SIP credentials: fill the "full contract:~~ done — README stub filled (error-contract + stack runbook pointers)
 filled in the docs train" stub with the error-contract link.
-30. ☐ Add the mod_xml_curl silent-bearer trap to the stack's
+~~30. ☐ Add the mod_xml_curl silent-bearer trap to the stack's~~ done — stack docs/lessons/freeswitch.md section (long form)
 docs/lessons/freeswitch.md (long-form home for the AGENTS bullet).
 
 **Product/deferred-plan items (ROADMAP fuel):**
-31. ☐ Operator-API session auth (shrinks the file-outage class the plan
+~~31. ☐ Operator-API session auth (shrinks the file-outage class the plan~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
 names as the residual risk).
-32. ☐ Extension-login lockout parity (passkey vs password flood buckets).
-33. ☐ TOTP/OAuth2 login modes (explicitly deferred this train).
-34. ☐ Membership-remap ruling.
-35. ☐ loginpage ruling.
-36. ☐ passwordFile permission assertions in the module (dataDir-style).
-37. ☐ Upstreamable nixpkgs improvement: assert-or-warn on unknown
+~~32. ☐ Extension-login lockout parity (passkey vs password flood buckets).~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~33. ☐ TOTP/OAuth2 login modes (explicitly deferred this train).~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~34. ☐ Membership-remap ruling.~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~35. ☐ loginpage ruling.~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~36. ☐ passwordFile permission assertions in the module (dataDir-style).~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
+~~37. ☐ Upstreamable nixpkgs improvement: assert-or-warn on unknown~~ **→ ROADMAP Raw ideas 2026-10-12 harvest (owner call)**
 auth-scheme values in mod_xml_curl (silent-ignore is the trap).
-38. ☐ Bridge: consider an optional allowlist of extensions it will proxy
+~~38. ☐ Bridge: consider an optional allowlist of extensions it will proxy~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
 (defense-in-depth vs. webphone compromise; needs a threat-model pass).
-39. ☐ `webphone -check-config` flag that validates the brokering pair
+~~39. ☐ `webphone -check-config` flag that validates the brokering pair~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
 (secret file readable + directory endpoint self-probe) for preflight.
-40. ☐ Island: show a registration-state hint when `sipCredential` is on
+~~40. ☐ Island: show a registration-state hint when `sipCredential` is on~~ **→ ROADMAP Raw ideas 2026-10-12 harvest**
 and REGISTER fails (today the island retries; operator sees journal).
 
 **Small cleanups:**
-41. ☐ Delete the run-by-run scratch files (/tmp/t08-*) or archive the
+~~41. ☐ Delete the run-by-run scratch files (/tmp/t08-*) or archive the~~ done — /tmp scratch already gone (tmp cleaner); nothing to archive
 final green log next to the suite.
-42. ☐ Name the smoke harness: promote /tmp/wp-passkey-smoke.sh into
+~~42. ☐ Name the smoke harness: promote /tmp/wp-passkey-smoke.sh into~~ done — source lost with /tmp; its arms live in the VM suite + go tests now (recreate only on demand)
 scripts/ (it is the only curl-level passkey+brokering E2E).
-43. ☐ `.buildflow-baseline.json` audit (the +8604-line regrowth, still
+~~43. ☐ `.buildflow-baseline.json` audit (the +8604-line regrowth, still~~ **→ owner question — ROADMAP Open questions**
 unruled — 06:55 question 1).
-44. ☐ Re-measure error-family tiers 1+2 (due 2026-11-05 per AGENTS).
-45. ☐ Quarterly art-dupl baseline audit (due per the 2026-10-11 ruling).
-46. ☐ Stack: consider `Cache-Control` on the bridge's not-found (already
+~~44. ☐ Re-measure error-family tiers 1+2 (due 2026-11-05 per AGENTS).~~ **→ standing watch — Standing watches (due 2026-11-05)**
+~~45. ☐ Quarterly art-dupl baseline audit (due per the 2026-10-11 ruling).~~ **→ standing watch — the 2026-10-11 quarterly ruling**
+~~46. ☐ Stack: consider `Cache-Control` on the bridge's not-found (already~~ done — verified: not-found rides the SAME 200 response + no-store (comment pinned in fs-directory.py)
 no-store on answers; verify not-found answers carry it too).
-47. ☐ freeswitch.nix: assert at eval time that the mirrored module list
+~~47. ☐ freeswitch.nix: assert at eval time that the mirrored module list~~ done — telephony-eval resolves the ONE-home list against nixpkgs' module universe (stale entry fails eval at file:line)
 matches nixpkgs' default set (diff the two lists, fail on drift).
-48. ☐ Document the `--resolve webphone.test` smoke trick (IP rp_id is
+~~48. ☐ Document the `--resolve webphone.test` smoke trick (IP rp_id is~~ done — AGENTS Commands line
 rejected by WebAuthn — hostname + resolve is the pattern).
-49. ☐ wsprobe: exit-code documentation block (ok/denied/drop semantics).
-50. ☐ Update AGENTS.md Tri-repo rules with the FS-module-mirror fact (one
+~~49. ☐ wsprobe: exit-code documentation block (ok/denied/drop semantics).~~ done — wsprobe.py header block
+~~50. ☐ Update AGENTS.md Tri-repo rules with the FS-module-mirror fact (one~~ done — AGENTS tri-repo bullet
 line; the pbx-artmann consumer inherits the FS package change).
 
 ## (g) 3 questions for the owner (unchanged from 06:55 — still blocking)
 
-1. **Prod cutover (T13):** T08/T11/T12 are green and pushed — do you want
+~~1. **Prod cutover (T13):** T08/T11/T12 are green and pushed — do you want~~ **→ still open — ROADMAP Open questions + TODO_LIST cutover cluster**
    the pbx-artmann relock + staged cutover queued as the NEXT session,
    and should prod's `staticFallbackExtensions` list your operator/ring-
    group extensions explicitly before the flip? (Items 1–4 above.)
-2. **F49 scope:** is the eval-level rollback proof (F41 golden,
+~~2. **F49 scope:** is the eval-level rollback proof (F41 golden,~~ **→ still open — ROADMAP Open questions**
    byte-identical static rendering) acceptable, or do you want the full
    in-VM static↔xml_curl flip drill (adds ~10 min CI + a second toplevel)?
-3. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines in
+~~3. **Baseline regrowth:** `.buildflow-baseline.json` grew +8604 lines in~~ **→ still open — ROADMAP Open questions**
    a concurrent session (after a staleness warning said 19 entries
    matched nothing). Audit/trim, or deliberate SDK-side re-save?
 
