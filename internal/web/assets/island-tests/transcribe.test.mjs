@@ -412,3 +412,120 @@ test("transcribeNow renders busy, text, empty and failure states into its target
   await transcribe.transcribeNow("/phone-api/vm/c/audio", failedTarget);
   assert.equal(failedTarget.textContent, "transcription failed: HTTP 502");
 });
+
+const { els } = await import("../island/app/ui.js");
+const transcribePosts = () =>
+  fetchCalls.filter((u) => String(u).includes("/api/transcribe")).length;
+const liveEntry = () => ({
+  session: {
+    sessionDescriptionHandler: {
+      peerConnection: {
+        getReceivers: () => [{ track: { kind: "audio" } }],
+        getSenders: () => [],
+      },
+    },
+  },
+});
+
+test("a 429 on the on-demand path arms the shared live-loop cooldown (#5)", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  const realNow = Date.now;
+  try {
+    // Start past any deadline earlier tests armed: the shift makes the
+    // only active gate the one THIS test's 429 arms.
+    Date.now = () => realNow() + 60_000;
+    fetchImpl = async (url) => {
+      if (String(url).startsWith("/phone-api/")) {
+        return { ok: true, status: 200, blob: async () => ({ type: "audio/wav", size: 5 }) };
+      }
+      return { ok: false, status: 429, headers: new Headers() };
+    };
+    // The MMS auto leg rides transcribeUrl like the voicemail button;
+    // its 429 must quiet the live loop too (shared per-IP budget).
+    await assert.rejects(
+      transcribe.transcribeUrl("/phone-api/vm/x/audio"),
+      /429/,
+    );
+    assert.equal(transcribePosts(), 1, "the on-demand attempt POSTed once");
+
+    transcribe.startLiveTranscription("shared-cooldown", liveEntry(), () => {});
+    const [recorder] = globalThis.__recorders;
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(
+      transcribePosts(),
+      1,
+      "the live segment was skipped by the on-demand 429's shared cooldown",
+    );
+  } finally {
+    Date.now = realNow;
+    transcribe.stopLiveTranscription("shared-cooldown");
+  }
+});
+
+test("three consecutive live failures toast once, back off, and reset on success (#43/#44)", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  const realNow = Date.now;
+  let shift = 120_000;
+  try {
+    Date.now = () => realNow() + shift;
+    fetchImpl = async () => ({ ok: false, status: 500, headers: new Headers() });
+    const texts = [];
+    transcribe.startLiveTranscription("fail-streak", liveEntry(), (t) => texts.push(t));
+    const [recorder] = globalThis.__recorders;
+
+    const toastsWithText = () =>
+      els.toasts.children.filter(
+        (c) =>
+          c.textContent ===
+          "Live transcription keeps failing — the provider may be unreachable.",
+      ).length;
+
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(transcribePosts(), 3, "each failing segment POSTed once");
+    assert.equal(toastsWithText(), 1, "the repeated-failure toast fired exactly once");
+
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(
+      transcribePosts(),
+      3,
+      "the segment after the failures was skipped by the backoff window",
+    );
+
+    shift += 10_000;
+    fetchImpl = async () => ({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      json: async () => ({ text: "words" }),
+    });
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.deepEqual(texts, ["words"], "the post-backoff segment succeeded");
+    assert.equal(transcribePosts(), 4);
+
+    fetchImpl = async () => ({ ok: false, status: 500, headers: new Headers() });
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(
+      toastsWithText(),
+      1,
+      "the success reset the streak: two fresh failures do not re-toast",
+    );
+  } finally {
+    Date.now = realNow;
+    transcribe.stopLiveTranscription("fail-streak");
+  }
+});

@@ -156,6 +156,8 @@ export const I18N = {
     transcribeUnsupported:
       "Live transcription is not supported in this browser",
     transcribeFailed: (detail) => `transcription failed: ${detail}`,
+    transcribeUnavailable:
+      "Live transcription keeps failing — the provider may be unreachable.",
     transcribeStarted: "Live transcription started",
     transcribeStopped: "Live transcription stopped",
     transcriptDelta: (text) => `Transcript: ${text}`,
@@ -317,6 +319,8 @@ export const I18N = {
     transcribeUnsupported:
       "Live-Transkription wird in diesem Browser nicht unterstützt",
     transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
+    transcribeUnavailable:
+      "Live-Transkription schlägt wiederholt fehl — der Anbieter ist womöglich nicht erreichbar.",
     transcribeStarted: "Live-Transkription gestartet",
     transcribeStopped: "Live-Transkription gestoppt",
     transcriptDelta: (text) => `Transkript: ${text}`,

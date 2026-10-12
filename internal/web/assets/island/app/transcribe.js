@@ -15,7 +15,7 @@
 import { authedFetch } from "./auth.js";
 import { asrEnabled } from "./config.js";
 import { t } from "./i18n.js";
-import { log } from "./ui.js";
+import { announce, log } from "./ui.js";
 
 export const transcribeEnabled = asrEnabled;
 
@@ -42,12 +42,29 @@ const CHUNK_MS = 4000;
 // silence — the guard spends nothing on segments that carry no voice.
 const SILENCE_RMS = 0.004;
 
-// How long the live loop goes quiet after the seam answered 429 (a couple
-// of segment cycles — enough for the flood budget to recover).
+// How long EVERY surface goes quiet after the seam answered 429 (a couple
+// of segment cycles — enough for the flood budget to recover). The deadline
+// is shared: a 429 on any surface (live segment, voicemail click, MMS
+// auto-transcribe) arms it, and the live loop — the only perpetual source
+// of POSTs — honors it no matter which surface tripped it (#5).
 const COOLDOWN_MS = 10_000;
 
-// Live-loop 429 cooldown deadline (see the dataavailable handler).
+// Live-loop 429 cooldown deadline (armed on any surface's 429).
 let cooldownUntil = 0;
+
+// Transient-failure backoff (#43): after a failed segment the loop skips
+// the next ones for a doubling window (2s → 60s cap) instead of retrying
+// at full cadence against a provider that is clearly struggling.
+const BACKOFF_BASE_MS = 2000;
+const BACKOFF_CAP_MS = 60_000;
+// Repeated-failure visibility (#44): after this many consecutive
+// non-429 failures, tell the operator ONCE per failure streak that the
+// transcription is effectively down — the per-segment log lines are too
+// quiet for a call the operator is actively on.
+const FAILURE_TOAST_AT = 3;
+let liveFailures = 0;
+let backoffUntil = 0;
+let failureToasted = false;
 
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
@@ -64,6 +81,9 @@ export async function transcribeBlob(
     body: blob,
   });
   if (!res.ok) {
+    // A 429 arms the SHARED cooldown (#5): the server's flood budget is
+    // per-IP, so a limit hit from any surface limits every surface.
+    if (res.status === 429) cooldownUntil = Date.now() + COOLDOWN_MS;
     throw new Error(`HTTP ${res.status}`);
   }
   const data = await res.json();
@@ -225,11 +245,12 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
   live.set(id, controller);
   recorder.addEventListener("dataavailable", async (event) => {
     if (!event.data || event.data.size === 0) return;
-    // 429 cooldown: when the seam's flood budget pushes back, skip the
-    // next segment cycles until the window passes. Capture keeps
-    // running; the budget recovers; no retry storm. One warn covers the
-    // whole cooldown (the cadence is ~15 segments/min).
+    // 429 cooldown (any surface can arm it) and transient-failure backoff
+    // share this gate: skip the segment cycles until the window passes.
+    // Capture keeps running; the budget recovers; no retry storm. One warn
+    // covers the whole window (the cadence is ~15 segments/min).
     if (Date.now() < cooldownUntil) return;
+    if (Date.now() < backoffUntil) return;
     // Silence guard: a near-silent tail window means the segment carries
     // no voice (mute, far-end hold without SIP hold, ringing) — posting
     // it would buy hallucinated text at full price. Skips are logged so
@@ -243,13 +264,24 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         filename: "live.webm",
         language,
       });
+      // A success is proof the seam recovered: clear the streak, the
+      // backoff, and the once-per-streak toast flag together.
+      liveFailures = 0;
+      backoffUntil = 0;
+      failureToasted = false;
       if (text) onText(text);
     } catch (err) {
       if (/\b429\b/.test(err.message)) {
         cooldownUntil = Date.now() + COOLDOWN_MS;
         log("transcription rate-limited; pausing segments briefly", "warn");
       } else {
+        liveFailures += 1;
+        backoffUntil = Date.now() + Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
         log(`live transcription segment failed: ${err.message}`, "warn");
+        if (liveFailures >= FAILURE_TOAST_AT && !failureToasted) {
+          failureToasted = true;
+          announce(t("transcribeUnavailable"), "warn");
+        }
       }
     }
   });
