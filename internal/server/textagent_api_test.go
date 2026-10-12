@@ -39,6 +39,8 @@ func newStubReviewAPI(t *testing.T) *stubReviewAPI {
 			_, _ = w.Write([]byte(`{"id":"d-7","status":"sent","provider_ref":"stub-1"}`))
 		case strings.HasSuffix(r.URL.Path, "/discard"):
 			_, _ = w.Write([]byte(`{"ok":true}`))
+		case strings.HasSuffix(r.URL.Path, "/draft"):
+			_, _ = w.Write([]byte(`{"id":"d-ond","text":"Guten Morgen","language":"de","confidence":90}`))
 		default:
 			_, _ = w.Write([]byte(stub.payload))
 		}
@@ -76,7 +78,7 @@ func clientWithAgent(t *testing.T, stub *stubReviewAPI) *client {
 func TestTextAgentSeamOffIsInvisible(t *testing.T) {
 	c := newClient(t)
 	c.login("1001", "pw")
-	for path := range map[string]struct{} {
+	for path := range map[string]struct{}{
 		"/partials/messages/drafts": {},
 	} {
 		if resp, _ := c.do(http.MethodGet, path, nil, ""); resp.StatusCode != http.StatusNotFound {
@@ -84,7 +86,7 @@ func TestTextAgentSeamOffIsInvisible(t *testing.T) {
 		}
 	}
 	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "x"}, nil)
-	for path := range map[string]struct{} {
+	for path := range map[string]struct{}{
 		"/messages/drafts/d-7/approve": {},
 		"/messages/drafts/d-7/discard": {},
 		"/messages/ai-draft":           {},
@@ -109,7 +111,7 @@ func TestDraftsPanelRidesTheList(t *testing.T) {
 
 	_, body := c.do(http.MethodGet, "/partials/messages", nil, "")
 	page := string(body)
-	for _, marker := range []string{`id="wp-drafts"`, "Guten Morgen", `id="wp-draft-7"`, `id="wp-draft-count"`, "93%", "Good morning", `class="wp-ai-draft"`, `hx-post="/messages/drafts/d-7/approve"`} {
+	for _, marker := range []string{`id="wp-drafts"`, "Guten Morgen", `id="wp-draft-d-7"`, `id="wp-draft-count"`, "93%", "Good morning", `class="wp-ai-draft"`, `hx-post="/messages/drafts/d-7/approve"`} {
 		if !strings.Contains(page, marker) {
 			t.Errorf("messages tab missing %q", marker)
 		}

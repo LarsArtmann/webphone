@@ -23,7 +23,6 @@ import (
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
 	"github.com/larsartmann/webphone/internal/asr"
-	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -33,6 +32,7 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
