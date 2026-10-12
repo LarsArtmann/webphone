@@ -73,6 +73,11 @@ type Config struct {
 	// disabled: no /api/transcribe route exists and the island hides
 	// every transcribe affordance.
 	ASR ASR `json:"asr" koanf:"asr"`
+	// TextAgent is the OPTIONAL seam to the stack's supervised
+	// text-message agent (services.telephony.textagent review API):
+	// the Messages-tab draft panel and the compose "draft with AI"
+	// affordance. Zero value = disabled: neither surface renders.
+	TextAgent TextAgent `json:"textagent" koanf:"textagent"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -263,6 +268,27 @@ type ASR struct {
 
 // Google reports whether the google provider kind is selected.
 func (a ASR) Google() bool { return a.Provider == "google" }
+
+// TextAgent configures the optional supervised text-agent seam (the
+// stack's services.telephony.textagent review API on loopback). URL
+// and SecretFile are a both-or-neither pair, exactly like the CRM and
+// Paperless seams: half a configuration would mint a client that
+// cannot authenticate (or one with nowhere to go), and validation
+// fails closed on that. The stack's telephony module auto-wires both
+// from its own options, so a deployment never sets them by hand.
+type TextAgent struct {
+	// URL is the review-API base (e.g. http://127.0.0.1:8071).
+	URL string `json:"url,omitempty" koanf:"url"`
+	// SecretFile reads the bearer secret from a runtime file (single
+	// line, trimmed) — the SAME file the review API authenticates
+	// against; one secret, two consumers, like the gateway pair.
+	SecretFile string `json:"secret_file,omitempty" koanf:"secret_file"`
+}
+
+// Enabled reports whether the text-agent seam is configured. The
+// composition root builds the client only when this is true; nil
+// client = no surface renders.
+func (t TextAgent) Enabled() bool { return t.URL != "" }
 
 // Enabled reports whether an ASR provider is configured. The openai
 // wire enables on URL alone; the google wire on a project id.
@@ -528,6 +554,19 @@ func validate(cfg Config) error {
 	}
 	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
 		return err
+	}
+	switch {
+	case cfg.TextAgent.URL == "" && cfg.TextAgent.SecretFile == "":
+	case cfg.TextAgent.URL == "":
+		return errorfamily.NewRejection("config.textagent.url", "textagent.secret_file is set without textagent.url: the seam needs both (or neither)")
+	case cfg.TextAgent.SecretFile == "":
+		return errorfamily.NewRejection("config.textagent.secret_file", "textagent.url is set without textagent.secret_file: the review API rejects anonymous callers")
+	}
+	if cfg.TextAgent.URL != "" {
+		u, err := url.Parse(cfg.TextAgent.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.textagent.url", "textagent.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8071)", cfg.TextAgent.URL)
+		}
 	}
 	switch {
 	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google":

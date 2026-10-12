@@ -8,6 +8,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // ThreadsPanel is the Messages tab's landing view: the thread list plus a
@@ -29,7 +30,19 @@ type ThreadsPanelProps struct {
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
-	Lang  Lang
+	// TextAgent gates every AI affordance on the seam: with no client
+	// wired (nil Deps.TextAgent) the drafts panel and the compose
+	// button must not exist.
+	TextAgent bool
+	// Drafts is the review-list payload rendered into the drafts panel;
+	// nil with DraftsError empty means the seam is off, nil with a
+	// non-empty DraftsError is an unreachable agent (honest degrade).
+	Drafts      *textagent.Reviews
+	DraftsError string
+	// PrefillBody carries an AI-drafted reply into the new-conversation
+	// composer (the ai-draft round trip re-renders this panel).
+	PrefillBody string
+	Lang        Lang
 }
 
 templ ThreadsPanel(props ThreadsPanelProps) {
@@ -96,7 +109,10 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 			}
 		</div>
 		@identityLine(props.Lang, props.Identity)
-		@NewMessageForm("", props.Lang)
+		if props.TextAgent {
+			@DraftsPanel(DraftsPanelProps{Drafts: props.Drafts, Error: props.DraftsError, Names: props.Names, Lang: props.Lang})
+		}
+		@NewMessageForm("", props.PrefillBody, props.Lang, props.TextAgent)
 	</section>
 }
 
@@ -268,8 +284,12 @@ func threadPreview(summary store.ThreadSummary, lang Lang) string {
 	return preview(summary.LastBody, summary.LastChannel, lang)
 }
 
-// NewMessageForm starts a conversation with a typed number.
-templ NewMessageForm(prefillTo string, lang Lang) {
+// NewMessageForm starts a conversation with a typed number. The AI
+// button (textAgent seam) posts the typed number + any half-written
+// hint to the agent and re-renders this panel with the draft prefilled
+// — a pure htmx round trip, no script (the shell works when island
+// scripts fail).
+templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent bool) {
 	<form
 		class="wp-compose wp-compose-new"
 		hx-post="/messages/send"
@@ -293,8 +313,21 @@ templ NewMessageForm(prefillTo string, lang Lang) {
 			rows="1"
 			placeholder={ T(lang, "compose.body.ph") }
 			aria-label={ T(lang, "compose.body.label") }
-		></textarea>
+		>
+			{ prefillBody }
+		</textarea>
 		<span class="wp-segcount" hidden aria-live="polite"></span>
+		if textAgent {
+			<button
+				type="button"
+				class="wp-ai-draft"
+				hx-post="/messages/ai-draft"
+				hx-include="closest form"
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-disabled-elt="this"
+			>{ T(lang, "compose.ai") }</button>
+		}
 		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(lang, "compose.send")})
 	</form>
 }
@@ -370,8 +403,14 @@ type ThreadViewProps struct {
 	// ASR gates the audio-attachment transcribe buttons on the
 	// speech-to-text seam: with no provider configured the affordance
 	// must not exist.
-	ASR  bool
-	Lang Lang
+	ASR bool
+	// TextAgent gates the reply composer's AI-draft button on the
+	// supervised-agent seam (same rule as ASR: no client, no button).
+	TextAgent bool
+	// PrefillDraft carries an AI-drafted reply into the composer (the
+	// ai-draft round trip re-renders the thread panel).
+	PrefillDraft string
+	Lang         Lang
 }
 
 templ ThreadView(props ThreadViewProps) {
@@ -445,7 +484,9 @@ templ ThreadView(props ThreadViewProps) {
 				rows="1"
 				placeholder={ T(props.Lang, "compose.reply.ph") }
 				aria-label={ T(props.Lang, "compose.body.label") }
-			></textarea>
+			>
+				{ props.PrefillDraft }
+			</textarea>
 			<input
 				type="file"
 				name="attachment"
@@ -454,6 +495,17 @@ templ ThreadView(props ThreadViewProps) {
 				aria-label="Attachments"
 			></input>
 			<span class="wp-segcount" hidden aria-live="polite"></span>
+			if props.TextAgent {
+				<button
+					type="button"
+					class="wp-ai-draft"
+					hx-post={ "/messages/ai-draft?thread=" + props.Thread.ID.String() }
+					hx-include="closest form"
+					hx-target="#tab-content"
+					hx-swap="innerHTML show:window:bottom"
+					hx-disabled-elt="this"
+				>{ T(props.Lang, "compose.ai") }</button>
+			}
 			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "compose.send")})
 			<div class="wp-attach" hidden></div>
 		</form>
@@ -673,4 +725,121 @@ func dayHeadLabel(lang Lang, t time.Time) string {
 	default:
 		return weekdayLabel(lang, local.Weekday()) + ", " + formatFor(lang, local, "02.01.", "Jan 2")
 	}
+}
+
+// DraftsPanelProps carries the review-list payload for the drafts
+// panel: pending AI drafts with their bilingual story, frozen
+// conversations and opt-outs (compact, honest), or the unreachable
+// state.
+type DraftsPanelProps struct {
+	Drafts *textagent.Reviews
+	Error  string
+	// Names maps phone numbers to CRM contact names (same feed as the
+	// thread rows); unresolved numbers render verbatim.
+	Names map[string]string
+	Lang  Lang
+}
+
+// contactLabel renders a draft's contact with the CRM name when known.
+func contactLabel(names map[string]string, contact string) string {
+	if name, ok := names[contact]; ok && name != "" {
+		return name + " · +" + contact
+	}
+	return "+" + contact
+}
+
+// DraftsPanel is the supervised-agent review list: every pending AI
+// draft with Approve / Edit / Discard, its English gloss behind a
+// disclosure (the owner reads PL/DE, the gloss proves understanding),
+// and the confidence the autopilot gates on. The panel polls its own
+// partial every 30s and every action re-renders it — the review loop
+// is designed for seconds-per-decision at the desk.
+templ DraftsPanel(props DraftsPanelProps) {
+	<section
+		class="wp-panel wp-drafts"
+		id="wp-drafts"
+		aria-label={ T(props.Lang, "drafts.title") }
+		hx-get="/partials/messages/drafts"
+		hx-trigger="every 30s"
+		hx-target="this"
+		hx-swap="outerHTML"
+	>
+		<h2 class="wp-drafts-head">
+			{ T(props.Lang, "drafts.title") }
+			if props.Drafts != nil && len(props.Drafts.Drafts) > 0 {
+				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ T(props.Lang, "drafts.title") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
+			}
+			if props.Drafts != nil && props.Drafts.Mode != "" {
+				<span class="wp-drafts-mode">{ props.Drafts.Mode }</span>
+			}
+		</h2>
+		if props.Error != "" {
+			<p class="wp-error" role="alert">{ T(props.Lang, "drafts.unavailable") }</p>
+		} else if props.Drafts == nil || len(props.Drafts.Drafts) == 0 {
+			<p class="wp-drafts-empty">{ T(props.Lang, "drafts.empty") }</p>
+		} else {
+			for _, draft := range props.Drafts.Drafts {
+				<article class="wp-draft" id={ "wp-draft-" + draft.ID }>
+					<header class="wp-draft-head">
+						<span class="wp-draft-contact">{ contactLabel(props.Names, draft.Contact) }</span>
+						<span class="wp-draft-meta">
+							{ draft.Language } · { fmtInt(draft.Confidence) }%
+							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
+								<span class="wp-draft-flag">☎</span>
+							}
+						</span>
+					</header>
+					<p class="wp-draft-text">{ draft.Text }</p>
+					if draft.EnGloss != "" && draft.EnGloss != draft.Text {
+						<details class="wp-draft-gloss">
+							<summary>{ T(props.Lang, "drafts.gloss") }</summary>
+							<p>{ draft.EnGloss }</p>
+						</details>
+					}
+					<div class="wp-draft-actions">
+						<button
+							type="button"
+							class="wp-draft-approve"
+							hx-post={ "/messages/drafts/" + draft.ID + "/approve" }
+							hx-target="#wp-drafts"
+							hx-swap="outerHTML"
+							hx-confirm={ T(props.Lang, "drafts.confirm") }
+						>{ T(props.Lang, "drafts.approve") }</button>
+						<button
+							type="button"
+							class="wp-draft-discard"
+							hx-post={ "/messages/drafts/" + draft.ID + "/discard" }
+							hx-target="#wp-drafts"
+							hx-swap="outerHTML"
+						>{ T(props.Lang, "drafts.discard") }</button>
+						<details class="wp-draft-edit">
+							<summary>{ T(props.Lang, "drafts.edit") }</summary>
+							<form
+								hx-post={ "/messages/drafts/" + draft.ID + "/approve" }
+								hx-target="#wp-drafts"
+								hx-swap="outerHTML"
+							>
+								<textarea name="text" rows="3" aria-label={ T(props.Lang, "drafts.edit") }>{ draft.Text }</textarea>
+								<button type="submit">{ T(props.Lang, "drafts.sendEdit") }</button>
+							</form>
+						</details>
+					</div>
+				</article>
+			}
+			if len(props.Drafts.Frozen) > 0 || len(props.Drafts.Suppressed) > 0 {
+				<footer class="wp-drafts-foot">
+					for _, frozen := range props.Drafts.Frozen {
+						<p class="wp-drafts-note">
+							⚠ { contactLabel(props.Names, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } — { frozen.Reason }
+						</p>
+					}
+					for _, suppressed := range props.Drafts.Suppressed {
+						<p class="wp-drafts-note">
+							⊗ { contactLabel(props.Names, suppressed.Contact) }: { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
+						</p>
+					}
+				</footer>
+			}
+		}
+	</section>
 }
