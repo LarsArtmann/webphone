@@ -307,6 +307,33 @@ and the evidence. Newest last is NOT enforced — group by topic.
   half-edits (a new `def` signature with an old body, tuple returns
   vs 2-tuple callers) are exactly the compile-red class the concurrent
   session rule warns about.
+- Daemon policy-file mangling, second species (2026-10-12): a daemon
+  commit DELETED `.buildflow.yml` outright (restored same session from
+  git). The deletion sat unnoticed until a routine check — "config
+  file exists" is never re-verified once a train is running.
+  Corollary discovered the same day: `git config core.hooksPath` was
+  set to `.githooks/` since repo birth, but the directory DID NOT
+  EXIST — every hook the repo thought it had was a silent no-op for
+  the repo's whole life. Audit BOTH ends of an indirection once: the
+  config key AND the target it names. The dep-guard `commit-msg` hook
+  now lives there, guarding exactly the daemon-defect class that
+  deletes policy files.
+- Stale templ codegen masks the real bug (2026-10-12, TODO-execution
+  session): after editing `settings.templ`, the first test run failed
+  pointing at the WRONG seam — the checked-in `settings_templ.go` was
+  stale, so render pins judged the OLD markup while the diff was read
+  against the NEW. Rule: after ANY `.templ` edit, `templ generate
+  ./internal/web/views/` is part of the EDIT, not part of the test
+  loop — run it before the first test; if pins and source disagree,
+  suspect codegen staleness before suspecting the pin.
+- Island `placeCall` tests MUST tear the session down (2026-10-12): a
+  test that leaves the SIP session non-Terminated keeps a
+  timer/listener alive, and plain `node --test <file>` HANGS forever
+  after "all tests passed" (the runner waits on the open handle;
+  `--test-force-exit` masks it in the suite command). Convention:
+  every placeCall test fires the Terminated teardown explicitly — set
+  state, fire the listener, flush, then ASSERT the session left the
+  map — the assertion doubles as the hang-proof.
 
 ## Telephony
 
