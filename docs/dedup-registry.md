@@ -89,6 +89,17 @@ file implements that proposal and records the supersession).
   no art-dupl run at this entry — the ratified `-t 1` deep sweep runs
   as its own step today and gets its own line.
 
+- 2026-10-12 ~15:50 — FIRST ratified `-t 1` deep sweep EXECUTED
+  (ruling #1): 867 raw groups → 58 actionable shown (597 non-actionable,
+  212 filtered suppressed); triage found ZERO harmful clones — the
+  Go-side rows are call sites of existing one-home helpers
+  (`newTestServer` ×16, `contactSaveFailed`, `pbx.do` idiom), the templ
+  rows are short markup fragments with divergent classes/props
+  (boundary-layer similarity, the vcard doctrine class). All 58 recorded
+  in `.art-dupl-baseline.json` (tool v0.7.2) and gated new-only by the
+  `dup-gate` CI job (`.github/workflows/ci.yml`); re-baselining is a
+  deliberate registry act, quarterly audit first due 2027-01-11.
+
 ## Ratified rulings (2026-10-11 sitting — previously open calls)
 
 1. Baseline: `-t 1`, target zero, upstream-filing for detector FPs
