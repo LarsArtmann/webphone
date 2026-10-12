@@ -18,7 +18,7 @@ import {
   sendDtmf,
   teardownAll,
 } from "./calls.js";
-import { sipDomain, websocketUrl } from "./config.js";
+import { sipCredentialMode, sipDomain, websocketUrl } from "./config.js";
 import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
@@ -106,7 +106,10 @@ async function resumeSession() {
   }
   setRegStatus("status-offline", t("resuming"));
   try {
-    await connect(session.extension, session.password);
+    await connect(
+      session.extension,
+      session.sip_credential || session.password,
+    );
     log("session resumed; registered");
   } catch (err) {
     if (registerWasRejected()) {
@@ -160,11 +163,25 @@ els.loginForm.addEventListener("submit", async (event) => {
   requestNotifications();
   try {
     const extension = els.ext.value.trim();
-    await connect(extension, els.pass.value);
-    // The PBX accepted the REGISTER — these credentials are good. Hand
-    // them to the server so the tabs and the /phone-api proxy share the
-    // same login (see session.js).
-    createSession(extension, els.pass.value);
+    if (sipCredentialMode) {
+      // Credential brokering: the session (and its derived REGISTER
+      // credential) comes FIRST — the directory password the user just
+      // typed stays in this closure and never reaches the SIP wire.
+      // Quiet: the inline login error is where the user is looking.
+      const credential = await createSession(extension, els.pass.value, {
+        quiet: true,
+      });
+      if (!credential) {
+        throw new Error(t("sessionFailed401"));
+      }
+      await connect(extension, credential);
+    } else {
+      await connect(extension, els.pass.value);
+      // The PBX accepted the REGISTER — these credentials are good. Hand
+      // them to the server so the tabs and the /phone-api proxy share
+      // the same login (see session.js).
+      createSession(extension, els.pass.value);
+    }
     if (els.remember.checked) localStorage.setItem(REMEMBER_KEY, extension);
     else localStorage.removeItem(REMEMBER_KEY);
     els.whoami.textContent = `${extension}@${sipDomain}`;

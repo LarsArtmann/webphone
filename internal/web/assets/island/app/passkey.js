@@ -43,9 +43,9 @@ async function passkeyLogin() {
 }
 
 // runCeremony drives begin → navigator.credentials.get → finish and
-// returns the finish payload ({extension, password, did, display_name,
-// numbers}) on success, null on every handled failure (the message is
-// already rendered in #passkey-login-error).
+// returns the finish payload ({extension, sip_credential|password, did,
+// display_name, numbers}) on success, null on every handled failure (the
+// message is already rendered in #passkey-login-error).
 async function runCeremony(email) {
   let data;
   try {
@@ -135,7 +135,7 @@ async function registerIsland(data) {
     numbers: Array.isArray(data.numbers) ? data.numbers : [],
   });
   try {
-    await connect(data.extension, data.password);
+    await connect(data.extension, data.sip_credential || data.password);
     log("connected via passkey login");
   } catch (err) {
     if (registerWasRejected()) {

@@ -28,12 +28,12 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		iceServers = turnRESTCredentials(iceServers, h.deps.Config.TURN.Secret, expiry)
 	}
 	pbxConfig := struct {
-		SIPDomain     string                 `json:"sipDomain"`
-		WebsocketPath string                 `json:"websocketPath"`
-		ICEServers    []config.ICEServer     `json:"iceServers,omitempty"`
-		PhoneAPI      bool                   `json:"phoneApi"`
-		CRM           bool                   `json:"crm"`
-		ASR           bool                   `json:"asr"`
+		SIPDomain     string             `json:"sipDomain"`
+		WebsocketPath string             `json:"websocketPath"`
+		ICEServers    []config.ICEServer `json:"iceServers,omitempty"`
+		PhoneAPI      bool               `json:"phoneApi"`
+		CRM           bool               `json:"crm"`
+		ASR           bool               `json:"asr"`
 		// SIPCredential tells the island the login ORDER changes: the
 		// session must be minted BEFORE the REGISTER (the derived
 		// credential comes back in the login/resume answers).

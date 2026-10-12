@@ -145,18 +145,18 @@ export async function destroySession() {
 // --- session resume ---------------------------------------------------------
 
 // Ask the server whether this browser still holds a live session. The
-// answer carries the session's SIP credentials so the island can
-// re-register without the login form (the credential is the session's
-// own payload — the same one the /phone-api proxy rides). Returns null
-// when there is nothing to resume: no cookie, an expired one, or a
-// server that did not answer — in every one of those cases the login
-// form is the right next screen.
+// answer carries the session's REGISTER credential — the derived one
+// when brokering is on, else the row's own payload (the same one the
+// /phone-api proxy rides). Returns null when there is nothing to
+// resume: no cookie, an expired one, or a server that did not answer —
+// in every one of those cases the login form is the right next screen.
 export async function fetchLiveSession() {
   try {
     const res = await fetch("/api/session");
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data || !data.extension || !data.password) return null;
+    if (!data || !data.extension || (!data.password && !data.sip_credential))
+      return null;
     return data;
   } catch {
     return null;

@@ -172,6 +172,45 @@ test("fetchLiveSession hands the resumed credentials back on 200", async () => {
   });
 });
 
+test("fetchLiveSession resumes on a sip_credential-only answer", async () => {
+  useFetch(() => ({
+    status: 200,
+    body: { extension: "1001", sip_credential: "derived-cred" },
+  }));
+  const data = await session.fetchLiveSession();
+  assert.deepEqual(data, { extension: "1001", sip_credential: "derived-cred" });
+  useFetch(() => ({ status: 200, body: { extension: "1001" } }));
+  assert.equal(
+    await session.fetchLiveSession(),
+    null,
+    "a 200 with NEITHER credential field must resume nothing",
+  );
+});
+
+test("createSession returns the derived credential from the 201 answer", async () => {
+  useFetch((url) => {
+    if (String(url).includes("/api/session")) {
+      return {
+        status: 201,
+        body: { extension: "1001", sip_credential: "derived-cred", did: "+44" },
+      };
+    }
+    return { status: 200, body: { token: "fresh-token" } };
+  });
+  const credential = await session.createSession("1001", "typed-password");
+  assert.equal(credential, "derived-cred");
+});
+
+test("createSession returns null on failure and quiet suppresses the toast", async () => {
+  resetToasts();
+  useFetch(() => ({ status: 401 }));
+  assert.equal(await session.createSession("1001", "pw", { quiet: true }), null);
+  assert.equal(toastsHost().children.length, 0, "quiet mode must not toast");
+  useFetch(() => ({ status: 401 }));
+  await session.createSession("1001", "pw");
+  assert.equal(toastsHost().children.length, 1, "loud mode toasts the 401");
+});
+
 test("fetchLiveSession maps every no-resume case to null", async () => {
   for (const status of [401, 429, 500]) {
     useFetch(() => ({ status }));
