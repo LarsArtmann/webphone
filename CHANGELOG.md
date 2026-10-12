@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Visual redesign of the shell and island around the desk-phone vernacular:
+  all platform-emoji icons (call/pin/mute/archive, attachment, voicemail
+  play/delete, diagnostics gear) are replaced by consistent inline SVG
+  strokes — the server side renders them from the templ-components icons
+  package, the JS-created buttons carry matching inline markup; thread
+  avatars for unknown numbers show the number's last two digits instead of
+  a country signum every same-country peer shared; desktop panels stretch
+  to viewport height so lists read as desk surfaces and the reply composer
+  pins to the panel's bottom edge; radii tighten, the light theme gains
+  separation (deeper background, stronger card shadow), the header blurs
+  over scrolled content, empty states go dashed-quiet, section headings
+  become uppercase eyebrows, file-picker buttons stop shouting green, the
+  offline banner carries a danger rail instead of a pink box, and the
+  active tab's underline gains the line-light glow. All ids, row classes,
+  and the DOM contract are unchanged; the 18-shot matrix re-captured.
 - SSE event names are now the defined type `server.EventName` (the five
   constants were already named): swapping an event for its HTML payload
   at a `Publish` call site is a compile error instead of a silent
