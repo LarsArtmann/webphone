@@ -100,6 +100,26 @@ file implements that proposal and records the supersession).
   `dup-gate` CI job (`.github/workflows/ci.yml`); re-baselining is a
   deliberate registry act, quarterly audit first due 2027-01-11.
 
+- 2026-10-12 ~20:30 — textagent-seam train swept (dup-gate caught 9 NEW
+  groups at CI's `-t 1` on the heal push, run 38289040556): 2 EXTRACTED
+  as genuine one-homes (`aiDraftButton` + `composeBody` in
+  messages.templ — the AI affordance and the composer body box each
+  rendered twice), 1 COLLAPSED (`partialDrafts` now delegates to the
+  `draftPanel` helper), the remaining large shapes died with those
+  refactors; 6 groups BASELINED (58→64, deliberate recorded act): the
+  approve/discard handler prologue (`requireSession` + seam gate +
+  bounded ctx + action + panel-error mapping ×2 — deliberate
+  review-action parallelism, the flagged-handler family idiom) plus
+  five sub-threshold-at-defaults markup/guard fragments (three
+  `<summary>` disclosure lines, badge span, frozen/suppressed footer
+  loops, payload guard pair — boundary-layer similarity, the vcard
+  doctrine class). TOOL TRAP learned: `art-dupl baseline` WITHOUT `-t
+  1` writes a default-threshold baseline (1 group) that silently
+  cripples the CI gate (63 "new" groups, run 38289824094) — baseline
+  regeneration MUST carry the gate's exact flags
+  (`check . -t 1 --baseline-path .art-dupl-baseline.json`); `art-dupl
+  check . -t 1 --baseline-path …` green at HEAD after the re-record.
+
 ## Ratified rulings (2026-10-11 sitting — previously open calls)
 
 1. Baseline: `-t 1`, target zero, upstream-filing for detector FPs
