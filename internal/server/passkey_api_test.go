@@ -20,6 +20,7 @@ import (
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -344,5 +345,76 @@ func TestPasskeySurfacesRequireCSRF(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusForbidden {
 		t.Errorf("headerless POST: %d, want 403", resp.StatusCode)
+	}
+}
+
+// TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn pins the
+// B contract on the passkey path: with the credential-brokering secret
+// set, the finish answer carries the session-derived REGISTER credential
+// (never the file-sourced directory password) and the resume endpoint
+// answers the SAME credential for the minted cookie — one shape, both
+// login surfaces.
+func TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn(t *testing.T) {
+	server, svc := newPasskeyServerWithConfig(t, func(cfg *config.Config) {
+		cfg.SIP = config.SIP{CredentialSecret: dirSecret}
+	})
+	enrollCredential(t, svc, pkEmail)
+	c := clientFor(t, server)
+
+	begun, err := svc.BeginLogin(context.Background(), pkEmail)
+	if err != nil {
+		t.Fatalf("begin login: %v", err)
+	}
+	resp, body := c.do(http.MethodPost,
+		"/api/auth/passkey/finish?user_id="+begun.SessionKey,
+		[]byte(`{"id":"x","rawId":"eA","type":"public-key","response":{"clientDataJSON":"eA"}}`),
+		"application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("finish: %d %s", resp.StatusCode, body)
+	}
+	var token string
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "webphone_session" {
+			token = cookie.Value
+		}
+	}
+	if token == "" {
+		t.Fatal("finish minted no session cookie")
+	}
+	var identity struct {
+		Extension     string `json:"extension"`
+		Password      string `json:"password"`
+		SIPCredential string `json:"sip_credential"`
+	}
+	if err := json.Unmarshal(body, &identity); err != nil {
+		t.Fatalf("finish body %q: %v", body, err)
+	}
+	want := sipcred.Derive(dirSecret, token)
+	if identity.SIPCredential != want {
+		t.Errorf("sip_credential = %q, want the derived credential", identity.SIPCredential)
+	}
+	if identity.Password != "" {
+		t.Errorf("password = %q: the directory password must NEVER ride the finish answer when brokering is on", identity.Password)
+	}
+
+	// Parity: the resume endpoint answers the same derived credential for
+	// the minted cookie, and never the directory password either.
+	resp, body = c.do(http.MethodGet, "/api/session", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("resume: %d %s", resp.StatusCode, body)
+	}
+	var resumed struct {
+		Extension     string `json:"extension"`
+		Password      string `json:"password"`
+		SIPCredential string `json:"sip_credential"`
+	}
+	if err := json.Unmarshal(body, &resumed); err != nil {
+		t.Fatalf("resume body %q: %v", body, err)
+	}
+	if resumed.SIPCredential != want {
+		t.Errorf("resume sip_credential = %q, want %q (finish/resume parity)", resumed.SIPCredential, want)
+	}
+	if resumed.Password != "" {
+		t.Errorf("resume password = %q: legacy wire must stay silent when brokering is on", resumed.Password)
 	}
 }

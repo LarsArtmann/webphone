@@ -236,8 +236,13 @@ logins next to the extension form:
   against the PBX directory, and only then mints the session; the
   browser REGISTERs afterwards. The response is the typed
   session-identity shape (`extension`, `did`, `display_name`,
-  `numbers`, plus the `password`, served no-store) — the same struct
-  `GET /api/session` answers on resume.
+  `numbers`, plus exactly one credential field, served no-store) — the
+  same struct `GET /api/session` answers on resume. With SIP
+  credential brokering on (`sip.credential_secret`), that field is the
+  session-derived REGISTER credential: the directory password never
+  reaches the browser (the file read stays, feeding the `/phone-api`
+  proxy server-side). Without brokering, the legacy wire keeps the
+  file-sourced password byte-identical.
 - **Enrollment is CLI-minted**: `webphone -enroll-passkey <email>`
   prints a one-time link (`/enroll?token=…`; the token is stored
   sha256-hashed, expires after 15 minutes, and burns at first verify —
