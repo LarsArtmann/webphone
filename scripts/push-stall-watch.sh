@@ -30,8 +30,8 @@ while [ $# -gt 0 ]; do
 done
 
 up="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
-if [ -z "$up" ]; then
-	echo "push-stall-watch: no upstream configured for branch $(git branch --show-current)" >&2
+if [ -z "$up" ] || ! git rev-parse --verify -q "$up" >/dev/null 2>&1; then
+	echo "push-stall-watch: no usable upstream for branch $(git branch --show-current)" >&2
 	exit 2
 fi
 if [ "$do_fetch" = 1 ]; then
