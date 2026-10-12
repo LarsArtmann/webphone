@@ -208,7 +208,7 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 
 ### internal/server god-package carve
 
-**Status:** 🟡 `PLANNED` (trigger-based, not date-based) · **Priority:** Medium · **Effort:** M
+**Status:** 🔴 `TRIGGERED — carve due, dependency-mapped 2026-10-12, execution = its own train` · **Priority:** Medium (raised by the trigger) · **Effort:** M
 
 internal/server god-package carve — TRIGGER: the next file added to internal/server (today 19 files / 3268 LOC + 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold). Carve `server/api` (JSON endpoints: contacts, calls, session, csrf) + `server/hooks` (webhook ingest + idempotency) out of the wiring (Deps, chain, mount stay); tests move with their files; the contract_test three-401-writer allowlist (actions/webhooks/session_api) + DOM-contract pins update mechanically; render-diff harness proves byte parity if wanted
 Trigger adjudication (2026-10-06 session): the 09-30 baseline reading
@@ -216,6 +216,31 @@ fires on `passkey_api.go` (landed 10-04), but the round-2 plan
 (2026-10-05 20:30, §F15 "do NOT start") supersedes — the trigger is
 the NEXT file landing in `internal/server` AFTER that plan; stays
 gated until then.
+**TRIGGER FIRED — adjudicated 2026-10-12 (TODO-execution session):** SEVEN files
+landed after the 2026-10-05 20:30 plan: `transcribe.go`+test (10-07 16:32),
+`transcripts_api.go`+test (10-07 17:31/43), `internal_directory.go`+test
+(10-12 05:28), `passkey_settings.go` (10-12 06:11), `auth_audit.go`+test
+(10-12 06:16). The package is now 25 non-test files, ~13k LOC incl. tests.
+Dependency map (done, so the executing train skips the research): every API
+file hangs methods off the `handlers` hub (pages.go) — session_api alone
+calls 5 shared server methods (`sessionIdentityResponse`, `identityFor`,
+`verifyDirectoryCredentials`, `mintSession`, `numbersFor`); contacts calls
+`notifyContactsChanged`; calls uses `callsIdem` + `recordCallIdem`; webhooks
+uses `hooksIdem` + `applyStatusWebhook` + `unread`. Carve design that falls
+out: the new packages get their OWN deps structs built at construction from
+`handlers` (limiters, idem stores, cookie policy, csrfCfg), with the shared
+methods either passed as a narrow interface server implements or moved into
+the carving package where they have exactly one consumer. Phase order for
+the train: (1) `server/hooks` (webhooks+idempotency, smaller, no session
+surface), (2) `server/api` (csrf_api is a zero-dependency leaf — carve it
+first inside the package, then calls, contacts, session LAST with an
+`auth:` prefix + the TestServer session-behavior suite), (3) newer JSON
+files (transcribe, transcripts, passkey_*, internal_directory, auth_audit)
+are a SEPARATE adjudication — the row names four endpoints; do not gold-plate
+the first carve. Deliberately NOT started inside the 2026-10-12 TODO session:
+an auth-surface structural move stacked on a day with two self-inflicted
+reds and 13 unpushed commits is the fastest-over-best trap; the map above is
+the session's honest contribution.
 
 **Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer)
 
