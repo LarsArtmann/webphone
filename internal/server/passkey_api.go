@@ -68,7 +68,7 @@ func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "account temporarily locked", http.StatusTooManyRequests)
 		return
 	default:
-		h.passkeyServerError(w, r, err, "begin passkey login")
+		h.passkeyServerError(w, err, "begin passkey login")
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -103,13 +103,13 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown email or no passkey enrolled", http.StatusUnauthorized)
 		return
 	default:
-		h.passkeyServerError(w, r, err, "finish passkey login")
+		h.passkeyServerError(w, err, "finish passkey login")
 		return
 	}
 	extension := mapped.SessionExtension()
 	password, err := h.deps.UserAuth.SIPPassword(extension)
 	if err != nil {
-		h.passkeyServerError(w, r, err, "source extension credentials")
+		h.passkeyServerError(w, err, "source extension credentials")
 		return
 	}
 	if !h.verifyDirectoryCredentials(w, r, extension, password) {
@@ -154,7 +154,7 @@ func (h *handlers) passkeyEnrollVerify(w http.ResponseWriter, r *http.Request) {
 	}
 	enrolled, err := h.deps.UserAuth.VerifyEnrollToken(r.Context(), body.Token)
 	if err != nil {
-		h.passkeyServerError(w, r, err, "verify enrollment token")
+		h.passkeyServerError(w, err, "verify enrollment token")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{
@@ -183,7 +183,7 @@ func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := h.deps.UserAuth.BeginRegistration(r.Context(), userID)
 	if err != nil {
-		h.passkeyServerError(w, r, err, "begin passkey enrollment")
+		h.passkeyServerError(w, err, "begin passkey enrollment")
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -211,7 +211,7 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 		credentialName = "passkey"
 	}
 	if err := h.deps.UserAuth.FinishRegistration(r.Context(), userID, r, credentialName); err != nil {
-		h.passkeyServerError(w, r, err, "finish passkey enrollment")
+		h.passkeyServerError(w, err, "finish passkey enrollment")
 		return
 	}
 	authAudit("passkey_enroll", "credential", credentialName, "ceremony accepted")
@@ -243,7 +243,7 @@ func (h *handlers) enrollPage(w http.ResponseWriter, r *http.Request) {
 // token, unmapped account); transient is infrastructure — both answer
 // 503, the honest "try again later, the operator must fix something"
 // verdict, while the family log line carries the code and context.
-func (h *handlers) passkeyServerError(w http.ResponseWriter, r *http.Request, err error, op string) {
+func (h *handlers) passkeyServerError(w http.ResponseWriter, err error, op string) {
 	status := http.StatusServiceUnavailable
 	if errors.Is(err, identitymodel.ErrAccountLocked) {
 		status = http.StatusTooManyRequests
