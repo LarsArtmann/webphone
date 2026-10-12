@@ -275,4 +275,8 @@ graph TD
 
 ## Execution record
 
-_(filled as trains land; keep the table checkmarks honest)_
+| Task | Status | Evidence / deviations |
+| ---- | ------ | --------------------- |
+| T01  | DONE   | Baseline was RED twice over (daemon-committed treefmt drift + a stale island test stub missing `createTextNode`, plus BuildFlow dprint drift on daemon-committed drafts). Fixed first (`nix fmt`, dprint fmt, helpers.mjs text-node stub), buildflow exit 0, `go test ./...` green, CI green on the fixed HEAD. |
+| T02  | DONE   | identity-model/v4 v4.12.2 now a DIRECT require; all `usermgmt.UserID/ParseUserID/MustParseUserID/Err{UserNotFound,NoCredentials,AccountLocked,EmailExists}/WebAuthnProvider` swapped to `identitymodel.*` in userauth + server (+ tests); `BeginRegistrationResponse` stays usermgmt-native. Deviation: the daemon committed the bump (rule said manual) — the mandatory tail (tidy → vendorHash re-pin [landed via concurrent-session commit 0477af9, verified `nix build .#webphone.goModules` green] → push → CI green) completed. |
+| T03  | DONE   | `config.SIP` (`sip.credential_secret`/`_file`, at-most-one-of, file read at boot; `WEBPHONE_SIP__CREDENTIAL_SECRET` env) + `internal/sipcred.Derive` (HMAC-SHA256 → base64url, pinned cross-repo wire vector) + `Store.ActiveTokens` (SQLite + Mem, tested) + `GET /internal/directory/{extension}` (bearer-gated via the new parameterized `bearerGate`, loopback-only 403 posture, honest 404 when off, empty list for unknown extensions, hook-grade limiter, outside CSRF/session). F15 deviation: no `sipcred.*` errorfamily codes exist (the seam answers bare statuses like every gate), so no family_test was added; error-contract rows land in T14. |

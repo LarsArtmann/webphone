@@ -254,6 +254,20 @@ logins next to the extension form:
   honest `userauth.*` code in the journal (full table:
   docs/error-contract.md).
 
+### Derived SIP credentials (optional, credential brokering)
+
+With `sip.credential_secret` (or `sip.credential_secret_file`) set, the
+island no longer receives the directory password: `GET /api/session` and
+the passkey finish answer a **session-derived credential**
+(`base64url(HMAC-SHA256(secret, session_token))`, served no-store), the
+island REGISTERs with it, and FreeSWITCH validates it dynamically via
+the stack's directory bridge, which reads
+`GET /internal/directory/{extension}` (loopback + Bearer — the same
+secret; the derived credentials of every LIVE session; logout kills the
+credential at the next REGISTER). Zero config keeps the historical
+password-wire behavior byte-identical. Full contract: filled in the
+docs train.
+
 ### The page (`window.PBX_CONFIG`)
 
 The server renders `GET /config.js` from its own config — same contract

@@ -117,7 +117,9 @@ func TestInternalDirectoryUnknownExtensionAnswersEmpty(t *testing.T) {
 
 func TestInternalDirectoryInvalidExtensionIs400(t *testing.T) {
 	ts := newDirectoryServer(t, config.SIP{CredentialSecret: dirSecret})
-	req, err := http.NewRequest(http.MethodGet, ts.URL+"/internal/directory/not-an-ext", nil)
+	// %20 sanitizes to an empty extension (no dialable characters) — the
+	// one class ParseExtension rejects.
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/internal/directory/%20", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
