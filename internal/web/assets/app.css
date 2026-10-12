@@ -872,6 +872,13 @@ button .wp-icon {
   height: 15px;
 }
 
+/* An icon leading a text run (thread preview, attachment link): templ
+ * emits no whitespace between the nodes, so the gap lives here. */
+.wp-icon-text {
+  margin-inline-end: 4px;
+  opacity: 0.85;
+}
+
 /* Touch targets (M26): coarse pointers get 44px minis regardless of
  * viewport width — the narrow-viewport bump alone misses tablets. */
 @media (pointer: coarse) {
@@ -1689,8 +1696,10 @@ a:focus-visible {
  * space below the card and the composer lands at its bottom edge. The
  * welcome panel stays content-sized. (Design pass 2026-10-12.) */
 @media (min-width: 901px) {
-  .wp-main-col > .wp-panel:not(.wp-welcome) {
-    min-height: clamp(430px, calc(100dvh - 240px), 980px);
+  /* Descendant, not child: #tab-content (main.wp-content) sits between
+   * the column and the panel. */
+  .wp-main-col .wp-panel:not(.wp-welcome) {
+    min-height: clamp(430px, calc(100dvh - 190px), 1020px);
   }
 
   .wp-panel:has(> .wp-transcript-wrap) > .wp-transcript-wrap {

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/go-error-family"
 )
@@ -21,7 +22,7 @@ const EnrollTokenTTL = 15 * time.Minute
 // EnrollToken is what a verified enrollment token resolves to.
 type EnrollToken struct {
 	Email  string
-	UserID usermgmt.UserID
+	UserID identitymodel.UserID
 }
 
 // migrateEnrollTokens owns the ONE webphone-side table in the usermgmt
@@ -46,7 +47,7 @@ func (s *Service) migrateEnrollTokens(ctx context.Context) error {
 // usermgmt account and returns the URL-safe secret exactly once. Only its
 // SHA-256 is stored; the row is burned on first use and expired rows are
 // swept opportunistically on every mint.
-func (s *Service) MintEnrollToken(ctx context.Context, email string, userID usermgmt.UserID) (string, error) {
+func (s *Service) MintEnrollToken(ctx context.Context, email string, userID identitymodel.UserID) (string, error) {
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
 		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.entropy", "generate enrollment token entropy") //nolint:erraudit // crypto/rand takes no ctx; the wrap owns the code
@@ -89,7 +90,7 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 		}
 		return EnrollToken{}, errorfamily.WrapInfrastructure(err, "userauth.enroll.lookup", "look up enrollment token")
 	}
-	userID, err := usermgmt.ParseUserID(rawUserID)
+	userID, err := identitymodel.ParseUserID(rawUserID)
 	if err != nil {
 		return EnrollToken{}, errorfamily.Wrapf(err, errorfamily.Corruption, "userauth.enroll.userid",
 			"stored enrollment token names an invalid user id %q", rawUserID)

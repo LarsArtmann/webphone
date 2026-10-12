@@ -22,6 +22,7 @@ import (
 	"slices"
 	"strings"
 
+	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	waprovider "github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4"
 	"github.com/larsartmann/go-error-family"
@@ -55,7 +56,7 @@ type PasskeyRuntime struct {
 	// WebAuthn optionally overrides the go-webauthn provider built from
 	// RPID/RPOrigins. Tests inject the deterministic stub here; the
 	// production composition root leaves it nil.
-	WebAuthn usermgmt.WebAuthnProvider
+	WebAuthn identitymodel.WebAuthnProvider
 }
 
 // MappedUser is one email's resolved mapping.
@@ -171,12 +172,12 @@ func (s *Service) BeginLogin(ctx context.Context, email string) (*usermgmt.Begin
 
 // FinishLogin verifies the assertion for the userID the begin ceremony
 // returned and resolves the authenticated user's extension mapping. The
-// userID arrives strictly parsed (a ULID-branded usermgmt.UserID): the
+// userID arrives strictly parsed (a ULID-branded identitymodel.UserID): the
 // browser-provided session key is validated at the handler door, never
 // hashed into a pseudo-user here. The usermgmt session in the ceremony
 // result is intentionally ignored (the webphone session is the single
 // session truth).
-func (s *Service) FinishLogin(ctx context.Context, userID usermgmt.UserID, r *http.Request) (MappedUser, error) {
+func (s *Service) FinishLogin(ctx context.Context, userID identitymodel.UserID, r *http.Request) (MappedUser, error) {
 	empty := MappedUser{}
 	resp, err := s.users.FinishLogin(ctx, userID, r)
 	if err != nil {
@@ -238,29 +239,29 @@ func (s *Service) SIPPassword(extension domain.Extension) (string, error) {
 // Register creates the usermgmt account if it does not exist yet and
 // returns its ID. An existing account is NOT an error — minting an
 // enrollment token for it is the normal add-a-device flow.
-func (s *Service) Register(ctx context.Context, email string) (usermgmt.UserID, error) {
+func (s *Service) Register(ctx context.Context, email string) (identitymodel.UserID, error) {
 	resp, err := s.users.Register(ctx, usermgmt.RegisterRequest{Email: email})
 	if err == nil {
 		return resp.User.ID, nil
 	}
-	if errors.Is(err, usermgmt.ErrEmailExists) {
+	if errors.Is(err, identitymodel.ErrEmailExists) {
 		existing, ok := s.users.ReadModel().FindByEmail(email)
 		if !ok {
-			return usermgmt.UserID{}, errorfamily.WrapInfrastructure(err, "userauth.register.exists_unreadable",
+			return identitymodel.UserID{}, errorfamily.WrapInfrastructure(err, "userauth.register.exists_unreadable",
 				"account exists but the read model cannot resolve it").WithContext("email", email)
 		}
 		return existing.ID, nil
 	}
-	return usermgmt.UserID{}, err
+	return identitymodel.UserID{}, err
 }
 
 // BeginRegistration / FinishRegistration drive the passkey enrollment
 // ceremony for an existing usermgmt account (the userID strictly parsed
 // by the caller — a CLI literal or a token-resolved account).
-func (s *Service) BeginRegistration(ctx context.Context, userID usermgmt.UserID) (*usermgmt.BeginRegistrationResponse, error) {
+func (s *Service) BeginRegistration(ctx context.Context, userID identitymodel.UserID) (*usermgmt.BeginRegistrationResponse, error) {
 	return s.users.BeginRegistration(ctx, userID)
 }
 
-func (s *Service) FinishRegistration(ctx context.Context, userID usermgmt.UserID, r *http.Request, credentialName string) error {
+func (s *Service) FinishRegistration(ctx context.Context, userID identitymodel.UserID, r *http.Request, credentialName string) error {
 	return s.users.FinishRegistration(ctx, userID, r, credentialName)
 }
