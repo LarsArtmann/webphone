@@ -17,7 +17,11 @@ import { t } from "./i18n.js";
 import { announce, log } from "./ui.js";
 import { csrfToken } from "./csrf.js";
 
-export async function createSession(extension, password, { quiet = false } = {}) {
+export async function createSession(
+  extension,
+  password,
+  { quiet = false } = {},
+) {
   try {
     const res = await fetch("/api/session", {
       method: "POST",
@@ -42,7 +46,9 @@ export async function createSession(extension, password, { quiet = false } = {})
         }
       }
       log(`server session failed (HTTP ${res.status})`, "error");
-      console.warn("webphone: server session not created (HTTP " + res.status + ")");
+      console.warn(
+        "webphone: server session not created (HTTP " + res.status + ")",
+      );
       return null;
     }
     // did is the extension's presented number (server config); it rides
@@ -93,8 +99,15 @@ export async function adoptServerSession(detail = {}) {
     }
   }
   if (adoptionError) {
-    log(`csrf adoption failed (${adoptionError.message}); reloading page`, "error");
-    console.warn("webphone: CSRF token adoption failed (" + adoptionError.message + "), reloading");
+    log(
+      `csrf adoption failed (${adoptionError.message}); reloading page`,
+      "error",
+    );
+    console.warn(
+      "webphone: CSRF token adoption failed (" +
+        adoptionError.message +
+        "), reloading",
+    );
     // The fresh server session survives a reload (cookie); the served
     // page then carries a matching token again. No call is lost: no
     // call can exist before the REGISTER that just succeeded.
@@ -142,7 +155,8 @@ export async function fetchLiveSession() {
     const res = await fetch("/api/session");
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data || !data.extension || (!data.password && !data.sip_credential)) return null;
+    if (!data || !data.extension || (!data.password && !data.sip_credential))
+      return null;
     return data;
   } catch {
     return null;
@@ -257,6 +271,9 @@ async function adoptFreshCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   if (meta) meta.setAttribute("content", data.token);
   if (document.body.hasAttribute("hx-headers")) {
-    document.body.setAttribute("hx-headers", JSON.stringify({ "X-CSRF-Token": data.token }));
+    document.body.setAttribute(
+      "hx-headers",
+      JSON.stringify({ "X-CSRF-Token": data.token }),
+    );
   }
 }

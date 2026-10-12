@@ -7,7 +7,12 @@
 // Replaces) — the browser only sends REFER and waits for the NOTIFY
 // sipfrag verdict.
 
-import { resumeAudio, ringbackStart, ringbackStop, ringToneStop } from "./audio.js";
+import {
+  resumeAudio,
+  ringbackStart,
+  ringbackStop,
+  ringToneStop,
+} from "./audio.js";
 import { asrEnabled, sipDomain } from "./config.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
@@ -31,7 +36,11 @@ import { announce, els, hideIncomingBanner, log, showDialError } from "./ui.js";
 function outgoingCount() {
   let n = 0;
   sessions.forEach(({ session }) => {
-    if (session instanceof SIP.Inviter && session.state === SIP.SessionState.Establishing) n++;
+    if (
+      session instanceof SIP.Inviter &&
+      session.state === SIP.SessionState.Establishing
+    )
+      n++;
   });
   return n;
 }
@@ -54,8 +63,10 @@ function attachRemoteAudio(id) {
 function setTracks(entry, { recv, send }) {
   const sdh = entry.session.sessionDescriptionHandler;
   if (!sdh) return;
-  if (recv !== undefined && sdh.enableReceiverTracks) sdh.enableReceiverTracks(recv);
-  if (send !== undefined && sdh.enableSenderTracks) sdh.enableSenderTracks(send);
+  if (recv !== undefined && sdh.enableReceiverTracks)
+    sdh.enableReceiverTracks(recv);
+  if (send !== undefined && sdh.enableSenderTracks)
+    sdh.enableSenderTracks(send);
 }
 
 async function holdSession(id, hold) {
@@ -103,7 +114,10 @@ function focusSession(id) {
   sessions.forEach((entry, otherId) => {
     if (otherId === id) {
       if (entry.held) holdSession(otherId, false);
-    } else if (entry.session.state === SIP.SessionState.Established && !entry.held) {
+    } else if (
+      entry.session.state === SIP.SessionState.Established &&
+      !entry.held
+    ) {
       holdSession(otherId, true);
     }
   });
@@ -180,12 +194,15 @@ export function renderCalls() {
     if (endBtn) endBtn.textContent = t("end");
     const transcribeBtn = entry.dom.querySelector(".transcribe-btn");
     if (transcribeBtn)
-      transcribeBtn.textContent = isTranscribing(id) ? t("transcribeStop") : t("transcribe");
+      transcribeBtn.textContent = isTranscribing(id)
+        ? t("transcribeStop")
+        : t("transcribe");
   });
   const established =
     state.focusedId &&
     sessions.get(state.focusedId) &&
-    sessions.get(state.focusedId).session.state === SIP.SessionState.Established;
+    sessions.get(state.focusedId).session.state ===
+      SIP.SessionState.Established;
   els.keypad.hidden = !established;
   // ice.js listens for this (calls and ice never import each other —
   // the module-graph invariant the arch test enforces).
@@ -244,7 +261,9 @@ function addCallCard(id, target) {
       const entry = sessions.get(id);
       if (entry) holdSession(id, !entry.held);
     }),
-    mkBtn(t("transfer"), "ghost transfer-btn", () => toggleTransferRow(card, id)),
+    mkBtn(t("transfer"), "ghost transfer-btn", () =>
+      toggleTransferRow(card, id),
+    ),
     mkBtn(t("end"), "danger hangup-btn", () => hangup(id)),
   );
   // Live transcription (only when the ASR seam is configured): a toggle
@@ -254,8 +273,12 @@ function addCallCard(id, target) {
   transcript.id = `call-transcript-${id}`;
   if (asrEnabled) {
     controls.append(
-      mkBtn(t("transcribe"), "ghost transcribe-btn", () => toggleTranscription(id, transcript)),
-      mkBtn(t("copyTranscript"), "ghost copy-transcript-btn", () => copyCardTranscript(transcript)),
+      mkBtn(t("transcribe"), "ghost transcribe-btn", () =>
+        toggleTranscription(id, transcript),
+      ),
+      mkBtn(t("copyTranscript"), "ghost copy-transcript-btn", () =>
+        copyCardTranscript(transcript),
+      ),
     );
   }
   card.append(head, controls, transcript);
@@ -284,9 +307,14 @@ function toggleTranscription(id, target) {
 // and the manual toggle both ride it): it wires segment text to
 // onCallTranscript and passes the UI language as the provider hint.
 function startCallTranscription(id, entry, target) {
-  return startLiveTranscription(id, entry, (text) => onCallTranscript(id, entry, target, text), {
-    language: getLang(),
-  });
+  return startLiveTranscription(
+    id,
+    entry,
+    (text) => onCallTranscript(id, entry, target, text),
+    {
+      language: getLang(),
+    },
+  );
 }
 
 // ensureTranscription is the auto-start hook: transcription begins by
@@ -339,7 +367,8 @@ function queueTranscriptSave(entry, segment) {
 }
 
 function flushTranscriptSaves(entry) {
-  if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length) return;
+  if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length)
+    return;
   entry.transcriptSaveFlushing = true;
   saveTranscriptSegment(entry.transcriptSaveQueue[0])
     .then(() => {
@@ -366,7 +395,9 @@ function clipForAnnounce(text) {
 
 function appendTranscript(target, text) {
   if (!text) return;
-  target.textContent = target.textContent ? `${target.textContent} ${text}` : text;
+  target.textContent = target.textContent
+    ? `${target.textContent} ${text}`
+    : text;
   target.scrollTop = target.scrollHeight;
 }
 
@@ -497,7 +528,8 @@ export function bindSession(newSession, target) {
   newSession.stateChange.addListener((sessionState) => {
     if (sessionState === SIP.SessionState.Established) {
       const pc =
-        newSession.sessionDescriptionHandler && newSession.sessionDescriptionHandler.peerConnection;
+        newSession.sessionDescriptionHandler &&
+        newSession.sessionDescriptionHandler.peerConnection;
       if (pc) window.__pcs.set(newSession.id, pc);
     }
   });
@@ -550,7 +582,9 @@ export function bindSession(newSession, target) {
         // shell.js mirrors this into the missed-call header badge; a
         // user REJECT never reaches this path (rejected calls are seen
         // calls).
-        document.dispatchEvent(new CustomEvent("wp:call-missed", { detail: { target } }));
+        document.dispatchEvent(
+          new CustomEvent("wp:call-missed", { detail: { target } }),
+        );
       }
       if (!(newSession instanceof SIP.Inviter)) releaseWarmMic();
       recordHistory({
@@ -582,7 +616,10 @@ export async function hangup(id) {
   if (!entry) return;
   const current = entry.session;
   try {
-    if (current instanceof SIP.Inviter && current.state === SIP.SessionState.Initial) {
+    if (
+      current instanceof SIP.Inviter &&
+      current.state === SIP.SessionState.Initial
+    ) {
       await current.cancel();
     } else if (current.state === SIP.SessionState.Established) {
       await current.bye();
@@ -724,7 +761,10 @@ export async function placeCall(raw) {
 
   const target = sanitizeDialable(raw);
   if (!target) {
-    log(`nothing dialable in "${raw}" — enter digits or letters, or + * #`, "warn");
+    log(
+      `nothing dialable in "${raw}" — enter digits or letters, or + * #`,
+      "warn",
+    );
     showDialError(t("nothingDialable"));
     return false;
   }
