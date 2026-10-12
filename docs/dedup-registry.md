@@ -85,6 +85,10 @@ file implements that proposal and records the supersession).
 - 2026-10-11 ~03:00 — RATIFICATION sitting (owner answered all five open calls via structured questions; no art-dupl run): `-t 1` + zero-target + upstream FP filing RATIFIED; settingsRow = BUILD (templ-components home review first); registry = ratified ONE home; suppression scope = quarterly baseline/suppressed-set audit; CRM/Paperless = stays two seams, noise routed upstream to BuildFlow. Discovery while verifying the filing premise: `//nolint:branching-flow` WORKS on the installed build (live-verified: a panic row disappeared with the directive) and `branching-flow all` has a `--baseline` Sarif mode — the AGENTS.md "honors NO nolint" note was STALE and is corrected there; `.buildflow.yml`'s whole-tool skip survives until the finding set is re-triaged into targeted nolints + a baseline.
 - 2026-10-11 ~06:00 — NO art-dupl run; the ratification's re-triage EXECUTED (the 03:40 owner-pasted 40-row report was PARTIAL — an ENOSPC package-load error dropped cmd/ + the panic rows; full re-run at HEAD: 46 rows, every site re-read). 2 fixed honestly: likeEscape/SearchThreads unified on `needle` (the transcripts collision died by vocabulary, not types; EventName was the 02:19 fix). 26 statement-level `//nolint:branching-flow` directives landed with ruling citations (nil/index FPs, the DO composition-root doctrine, the transpose policy class, the CallID verbatim class, i18n key plumbing). 19 type-node findings (mixin/dupe/large-struct) → plain `branching-flow ... (baselined)` site comments + `.buildflow-baseline.json`: v0.6.4 ignores nolints on TypeDecl nodes (five placements verified: inline, standalone-above, first-field, bare, nolint:start) — routed upstream. `.buildflow.yml` UNSKIPPED the tool with the 19-row `.buildflow-baseline.json` (CLI↔SDK finding-ID shape divergence discovered: absolute vs relative paths — baseline must be saved from the SDK side via `buildflow -s branching-flow --save-baseline`, upstream #13); the fail-on-NEW elevation (`error_rules`) exists only in unreleased BuildFlow source — the ready-to-paste key waits in `.buildflow.yml` (global `strict` was measured and REJECTED: 604 pre-existing warnings from other tools). Status: docs/status/2026-10-11_06-00_branching-flow-retriage-gate-status.md.
 
+- 2026-10-12 ~15:40 — settingsRow ADOPTION executed (ruling #2 above);
+  no art-dupl run at this entry — the ratified `-t 1` deep sweep runs
+  as its own step today and gets its own line.
+
 ## Ratified rulings (2026-10-11 sitting — previously open calls)
 
 1. Baseline: `-t 1`, target zero, upstream-filing for detector FPs
@@ -97,8 +101,18 @@ file implements that proposal and records the supersession).
    `DetailComponent`). No new component anywhere — the execution is a
    webphone adoption train: settings.templ → DefinitionList, tw.css
    `@source` rebuild (adopted-components rule), CSP-safe (utility
-   classes only), old-vs-new binary render diff per protocol. IN
-   PROGRESS (adoption train pending).
+   classes only), old-vs-new binary render diff per protocol. EXECUTED 2026-10-12: the
+   settings facts `dl` renders via `display.DefinitionList` (Class
+   `wp-settings` kept so app.css keeps the visual identity; rows built
+   in `settingsItems`, conditional/link shapes as `DetailComponent`s);
+   the shortcuts `dl` STAYS hand-rolled (`Term` is a plain string —
+   `<kbd>` semantics are not expressible). Render diff (protocol): 6/7
+   partials byte-identical, `/partials/settings` intentionally differs
+   (component markup + the on-sight icons fix: ✕/⚡ →
+   `icons.Close`/`icons.Bolt`; the JS-created ✕ in shell.js/panels.js
+   left for their owning surfaces). tw.css `@source` + build-script
+   staging extended; radius literals re-synced to the tightened app
+   tokens (9/12px) the redesign train had drifted.
 3. Registry ratification: THIS registry is the ONE acceptance home
    for clone rulings. RESOLVED (ratified).
 4. Suppression scope: shown-only + a QUARTERLY audit of the baseline
