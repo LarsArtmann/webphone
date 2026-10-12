@@ -1714,7 +1714,10 @@ a:focus-visible {
     max-height: none;
   }
 
-  .wp-panel:has(> .wp-compose) > .wp-compose {
+  /* The pinned composer belongs to the messages surfaces ONLY (list +
+   * open thread share the panel id): the contacts add/import forms are
+   * also .wp-compose and must flow normally after the panel head. */
+  #messages-panel > .wp-compose {
     margin-top: auto;
   }
 }
