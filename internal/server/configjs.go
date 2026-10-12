@@ -34,6 +34,10 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI      bool                   `json:"phoneApi"`
 		CRM           bool                   `json:"crm"`
 		ASR           bool                   `json:"asr"`
+		// SIPCredential tells the island the login ORDER changes: the
+		// session must be minted BEFORE the REGISTER (the derived
+		// credential comes back in the login/resume answers).
+		SIPCredential bool                   `json:"sipCredential"`
 		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
 		SIPDomain:     h.deps.Config.SIPDomain,
@@ -42,6 +46,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
 		CRM:           h.deps.CRM.Enabled(),
 		ASR:           h.asrOn(),
+		SIPCredential: h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:      h.deps.Shared,
 	}
 

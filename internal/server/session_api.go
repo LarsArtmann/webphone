@@ -48,11 +48,20 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	if !h.verifyDirectoryCredentials(w, r, extension, body.Password) {
 		return
 	}
-	if err := h.mintSession(w, r, extension, body.Password); err != nil {
+	token, err := h.mintSession(w, r, extension, body.Password)
+	if err != nil {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusCreated, h.sessionIdentityResponse(extension))
+	response := h.sessionIdentityResponse(extension)
+	// Derived mode: the 201 answer carries the session-derived REGISTER
+	// credential (never the typed password); the browser registers with
+	// it. no-store keeps it out of every cache.
+	if h.deps.Config.SIP.DerivedCredentials() {
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token)
+		w.Header().Set("Cache-Control", "no-store")
+	}
+	writeJSON(w, http.StatusCreated, response)
 }
 
 // verifyDirectoryCredentials is the ONE fail-closed PBX directory check
