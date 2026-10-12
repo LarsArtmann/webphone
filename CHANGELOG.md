@@ -49,6 +49,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the scoped Tailwind build's `@source` now covers the adopted
   component. A served-markup change: the stack browser E2E re-run
   is owed at the next release train.
+- Live transcription degrades gracefully under a struggling provider:
+  transient segment failures back off on a doubling window (2 s to a
+  60 s cap, below the ~4 s segment cadence until the streak deepens),
+  three consecutive failures raise ONE polite "keeps failing" toast
+  per streak (en/de), and a success clears the streak together with
+  the backoff. The 429 cooldown deadline is now shared across the
+  island's surfaces: a rate-limit hit by the voicemail button or any
+  on-demand POST quiets the live capture loop too (the server's
+  per-IP bucket is shared; the shell's classic-script auto path keeps
+  its own serialized queue by design).
 
 ### Added
 
