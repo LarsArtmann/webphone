@@ -62,6 +62,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token)
 		w.Header().Set("Cache-Control", "no-store")
 	}
+	authAudit("login", "extension", extension.String(), "ok")
 	writeJSON(w, http.StatusCreated, response)
 }
 
@@ -89,6 +90,7 @@ func (h *handlers) verifyDirectoryCredentials(w http.ResponseWriter, r *http.Req
 	case err == nil:
 		return true
 	case errors.Is(err, pbx.ErrUnauthorized):
+		authAudit("login_denied", "extension", extension.String(), "directory rejected the credentials")
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	case errors.Is(err, context.DeadlineExceeded):
 		http.Error(w, "credential verification timed out", http.StatusGatewayTimeout)
@@ -196,6 +198,9 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 
 // destroySession signs the tab session out (island logout).
 func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
+	if sess, ok := h.deps.Sessions.Get(session.TokenFromRequest(r)); ok {
+		authAudit("logout", "extension", sess.Extension.String(), "ok")
+	}
 	h.deps.Sessions.Delete(session.TokenFromRequest(r))
 	session.ClearCookie(w, h.cookies)
 	// Logout rotates too: the CSRF token must not outlive the session it

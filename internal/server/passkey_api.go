@@ -133,6 +133,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	} else {
 		response.Password = password
 	}
+	authAudit("login", "email", mapped.Email, "passkey verified; session minted")
 	writeJSON(w, http.StatusCreated, response)
 }
 
@@ -213,6 +214,7 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 		h.passkeyServerError(w, r, err, "finish passkey enrollment")
 		return
 	}
+	authAudit("passkey_enroll", "credential", credentialName, "ceremony accepted")
 	writeJSON(w, http.StatusOK, map[string]string{"status": "registered"})
 }
 

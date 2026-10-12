@@ -56,6 +56,7 @@ func (h *handlers) revokePasskey(w http.ResponseWriter, r *http.Request) {
 		h.safeDetail(r, "revoke passkey", err)
 		notifyToast(w, "error", views.T(h.lang(r), "passkeys.revokeFailed"))
 	} else {
+		authAudit("passkey_revoked", "email", mapped.Email, "credential "+r.PathValue("id"))
 		notifyToast(w, "ok", views.T(h.lang(r), "passkeys.revoked"))
 	}
 	h.partial(w, r, views.TabSettings)
