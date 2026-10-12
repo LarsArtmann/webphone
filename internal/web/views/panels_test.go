@@ -392,10 +392,10 @@ func TestSettingsSnippetsSection(t *testing.T) {
 	if !strings.Contains(with, `class="wp-snippet-quick"`) || !strings.Contains(with, `<svg class="wp-icon"`) {
 		t.Errorf("quick marker missing on the first snippet: %s", with)
 	}
-	if got := strings.Count(with, `class="wp-settings`); got != 2 {
-		t.Errorf("settings dl must render exactly once (facts + shortcuts), got %d: %s", got, with)
+	if got := strings.Count(with, "<dl"); got != 2 {
+		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d: %s", got, with)
 	}
-	if got := strings.Count(with, "Keyboard shortcuts"); got != 1 {
+	if got := strings.Count(with, ">Keyboard shortcuts</h3>"); got != 1 {
 		t.Errorf("shortcuts head must render exactly once, got %d", got)
 	}
 	if !strings.Contains(with, `hx-post="/snippets/delete?id=`) {

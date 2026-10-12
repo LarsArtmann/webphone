@@ -46,6 +46,7 @@ mkdir -p "$stage/internal/web/assets" "$stage/$COMP/display" \
 cp internal/web/assets/tw.css.input "$stage/internal/web/assets/"
 cp -r internal/web/views "$stage/internal/web/views"
 for f in \
+	display/definition_list.templ display/definition_list_templ.go \
 	display/empty_state.templ display/empty_state_templ.go \
 	display/button_go.go display/button.templ display/button_templ.go \
 	forms/input.templ forms/input_templ.go forms/input_classes.go \
