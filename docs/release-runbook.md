@@ -16,14 +16,21 @@ re-run the formatter if it moved styled files.
 2. **Bump `webphoneVersion`** in flake.nix (package version AND the
    `/version` ldflags injection — one let-binding; keep it equal to
    the new tag).
-3. **Gates**: `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
+3. **Gates**: prelude `nix develop -c buildflow doctor` — the
+   toolchain/policy verdict BEFORE the gate runs, so a stale binary or a
+   mangled `.buildflow.yml` fails the prelude instead of the middle of a
+   train (2026-10-08: a daemon commit truncated 69 `skip_steps` lines and
+   sat undetected ~16 h); then `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
    `nix develop -c go test -count=1 ./...`, `nix flake check`,
    `python3 scripts/webphone-smoke.py`. If the train bumped
    cqrs-htmx or go-sse: also re-run `BenchmarkHubFanOut` and append a
    dated table to
    `docs/reviews/2026-09-18_hub-fanout-baseline.md` (MD1 rule; next
    re-run should use `-benchtime=1s -count=5` instead of
-   `-benchtime 2000x` for tighter numbers).
+   `-benchtime 2000x` for tighter numbers). Gate-close duty:
+   `nix develop -c buildflow timings --regressions` — spot a slowed step
+   before tagging; the timing DB lives in `~/.local/state/buildflow/`
+   (never the tree), so rebaseline only deliberately.
 4. **Tag + push**: annotated `git tag -a vX.Y.Z -m ...`, push main +
    tag (verify with `git ls-remote` — the daemon may have pushed
    already).
