@@ -124,7 +124,7 @@ self-inflicted hang**, briefly **weakened the findings baseline**, and pushed a
    registry drift + vendor bump half-landed — so main went red for ~10
    minutes. A finer-grained `git push origin 0477af9:main` (last known-good,
    fast-forward) would have kept main green while their tail landed. The bar
-   sanctioned *a* push; it didn't force pushing *the tip*.
+   sanctioned _a_ push; it didn't force pushing _the tip_.
 4. **A false closing claim.** My handoff said the `--test-force-exit` lesson
    is "in AGENTS.md now" — it was ALWAYS in AGENTS.md; I simply hadn't read
    it. The honest statement is "I didn't read the documented command", not
@@ -152,7 +152,7 @@ self-inflicted hang**, briefly **weakened the findings baseline**, and pushed a
    (ephemeral). Git history preserved them via daemon commits, but by luck of
    timing, not plan.
 7. **Self-review with the artifact, always**: the three real design bugs were
-   all caught by re-capturing and *looking* — that loop is the reason the
+   all caught by re-capturing and _looking_ — that loop is the reason the
    shipped state is clean. Make the re-capture loop non-negotiable for any
    visual change.
 

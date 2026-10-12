@@ -32,20 +32,20 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
       values (verified in FS source) → the bridge accepts HTTP Basic
       (`webphone:<secret>`, constant-time compare of the password half)
       plus Bearer for probes; the binding renders `basic`.
-   5–7. post-logout register still 200'd → **instrumentation bisected it**:
+      5–7. post-logout register still 200'd → **instrumentation bisected it**:
       webphone was INNOCENT — the TEST fixture logged in without
       `curl -c` (session cookie never saved → DELETE was a silent no-op
       204 with no audit line) and held the PRE-login CSRF token (login
       rotates the pair) → fixture fixed (cookie save + post-login
       `/api/csrf` re-adoption, the island's own flow).
-   8. **wsprobe's REGISTER template hardcoded user 1000** in
+   5. **wsprobe's REGISTER template hardcoded user 1000** in
       From/To/Contact (the `user` arg only fed the digest) → parameterized
       across all six call sites.
-   9. GREEN.
-   Kept as defense-in-depth: sofia `accept-blind-reg=false` +
-   `accept-blind-auth=false` rendered under xml_curl only (static mode
-   stays byte-identical golden) — an unknown user must be DENIED, never
-   blind-accepted, or logout revocation would be a lie.
+   6. GREEN.
+      Kept as defense-in-depth: sofia `accept-blind-reg=false` +
+      `accept-blind-auth=false` rendered under xml_curl only (static mode
+      stays byte-identical golden) — an unknown user must be DENIED, never
+      blind-accepted, or logout revocation would be a lie.
 2. **T11 — webphone train-end gates as ONE unit, all green:** `nix fmt` →
    buildflow (**67 success / 0 failed / 0 skipped**) → `go test -count=1
    ./...` → `nix flake check` (**all checks passed**) → new curl-level
@@ -177,10 +177,11 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
 ## (f) 50 next items (impact-sorted; ☐ open; owner-gated marked)
 
 **Cutover + prod (owner-gated cluster):**
+
 1. ☐ **T13**: pbx-artmann relock to stack `3b63222` (ritual: clean tree,
    narHash covers all; release-runbook dance) — OWNER-GATED.
 2. ☐ T13: stage the prod deploy with `telephony.directory.mode = "xml_curl"`
-   + explicit `staticFallbackExtensions` (operator, ring groups) — OWNER-GATED.
+   - explicit `staticFallbackExtensions` (operator, ring groups) — OWNER-GATED.
 3. ☐ T13: verify the derivation secret file lands on prod with correct
    owner/mode for BOTH webphone (DynamicUser read) and the bridge
    LoadCredential — OWNER-GATED.
@@ -199,74 +200,74 @@ Supersedes: [2026-10-12_06-55_SUPERB-unified-auth-train-status.md](2026-10-12_06
 12. ☐ Owner: F49 scope ruling — eval-golden enough or in-VM flip drill?
 13. ☐ Owner: baseline-regrowth ruling from the 06:55 report (still open).
 14. ☐ Owner: pursue the nixpkgs `xml_int.curl` upstream PR or keep
-    stack-local (with the silent-ignore trap documented upstream either way)?
+stack-local (with the silent-ignore trap documented upstream either way)?
 
 **Test/infra hardening:**
 15. ☐ VM jobs cap / serial VM phase for `nix flake check` (local + CI).
 16. ☐ Value-pin `sipCredential: true` in an xml_curl-mode E2E fixture.
 17. ☐ Port the bridge answer-count journal + seam assert pattern into the
-    OTHER webphone suites (shared helper in tests/common.nix).
+OTHER webphone suites (shared helper in tests/common.nix).
 18. ☐ Shared `secretFile` fixture helper (`user = <service>` pattern) in
-    tests/common.nix (the run-2 lesson, still copy-pasted).
+tests/common.nix (the run-2 lesson, still copy-pasted).
 19. ☐ Stack ci-flake ledger rows: messaging broken-pipe (host load), the
-    configjs drift, the pre-fix CI failures.
+configjs drift, the pre-fix CI failures.
 20. ☐ Daemon push-stall watchdog (alert when origin/main lags HEAD >60 min).
 21. ☐ CI run registration for every push (or explicit skip verdict) —
-    investigate why 25cf08d has no run.
+investigate why 25cf08d has no run.
 22. ☐ wsprobe: keep the parameterized user as the template default and
-    add a `--assert user=1001 static` leg to the main webphone suite.
+add a `--assert user=1001 static` leg to the main webphone suite.
 23. ☐ Consider merging the dynamic-directory suite INTO telephony-webphone
-    (one machine, halved CI cost) if assertions stay readable (06:55 e5).
+(one machine, halved CI cost) if assertions stay readable (06:55 e5).
 24. ☐ Add the `auth logout` audit line to the dynamic-directory suite's
-    asserts (it silently proved the no-op logout bug — make it load-bearing).
+asserts (it silently proved the no-op logout bug — make it load-bearing).
 25. ☐ Smoke-harness guard pattern (non-empty before compare) upstreamed
-    into webphone-smoke.py's helper style.
+into webphone-smoke.py's helper style.
 
 **Docs continuity:**
 26. ☐ docs-health HARVEST: move (f) items into TODO_LIST.md/ROADMAP.md.
 27. ☐ docs-health ANNOTATE: mark the 06:55 report's resolved items inline.
 28. ☐ Stack runbook: cross-link § Dynamic SIP directory from the webphone
-    failure playbook's index.
+failure playbook's index.
 29. ☐ Webphone README § Derived SIP credentials: fill the "full contract:
-    filled in the docs train" stub with the error-contract link.
+filled in the docs train" stub with the error-contract link.
 30. ☐ Add the mod_xml_curl silent-bearer trap to the stack's
-    docs/lessons/freeswitch.md (long-form home for the AGENTS bullet).
+docs/lessons/freeswitch.md (long-form home for the AGENTS bullet).
 
 **Product/deferred-plan items (ROADMAP fuel):**
 31. ☐ Operator-API session auth (shrinks the file-outage class the plan
-    names as the residual risk).
+names as the residual risk).
 32. ☐ Extension-login lockout parity (passkey vs password flood buckets).
 33. ☐ TOTP/OAuth2 login modes (explicitly deferred this train).
 34. ☐ Membership-remap ruling.
 35. ☐ loginpage ruling.
 36. ☐ passwordFile permission assertions in the module (dataDir-style).
 37. ☐ Upstreamable nixpkgs improvement: assert-or-warn on unknown
-    auth-scheme values in mod_xml_curl (silent-ignore is the trap).
+auth-scheme values in mod_xml_curl (silent-ignore is the trap).
 38. ☐ Bridge: consider an optional allowlist of extensions it will proxy
-    (defense-in-depth vs. webphone compromise; needs a threat-model pass).
+(defense-in-depth vs. webphone compromise; needs a threat-model pass).
 39. ☐ `webphone -check-config` flag that validates the brokering pair
-    (secret file readable + directory endpoint self-probe) for preflight.
+(secret file readable + directory endpoint self-probe) for preflight.
 40. ☐ Island: show a registration-state hint when `sipCredential` is on
-    and REGISTER fails (today the island retries; operator sees journal).
+and REGISTER fails (today the island retries; operator sees journal).
 
 **Small cleanups:**
 41. ☐ Delete the run-by-run scratch files (/tmp/t08-*) or archive the
-    final green log next to the suite.
+final green log next to the suite.
 42. ☐ Name the smoke harness: promote /tmp/wp-passkey-smoke.sh into
-    scripts/ (it is the only curl-level passkey+brokering E2E).
+scripts/ (it is the only curl-level passkey+brokering E2E).
 43. ☐ `.buildflow-baseline.json` audit (the +8604-line regrowth, still
-    unruled — 06:55 question 1).
+unruled — 06:55 question 1).
 44. ☐ Re-measure error-family tiers 1+2 (due 2026-11-05 per AGENTS).
 45. ☐ Quarterly art-dupl baseline audit (due per the 2026-10-11 ruling).
 46. ☐ Stack: consider `Cache-Control` on the bridge's not-found (already
-    no-store on answers; verify not-found answers carry it too).
+no-store on answers; verify not-found answers carry it too).
 47. ☐ freeswitch.nix: assert at eval time that the mirrored module list
-    matches nixpkgs' default set (diff the two lists, fail on drift).
+matches nixpkgs' default set (diff the two lists, fail on drift).
 48. ☐ Document the `--resolve webphone.test` smoke trick (IP rp_id is
-    rejected by WebAuthn — hostname + resolve is the pattern).
+rejected by WebAuthn — hostname + resolve is the pattern).
 49. ☐ wsprobe: exit-code documentation block (ok/denied/drop semantics).
 50. ☐ Update AGENTS.md Tri-repo rules with the FS-module-mirror fact (one
-    line; the pbx-artmann consumer inherits the FS package change).
+line; the pbx-artmann consumer inherits the FS package change).
 
 ## (g) 3 questions for the owner (unchanged from 06:55 — still blocking)
 
