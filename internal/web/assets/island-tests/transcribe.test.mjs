@@ -415,7 +415,7 @@ test("transcribeNow renders busy, text, empty and failure states into its target
 
 const { els } = await import("../island/app/ui.js");
 const transcribePosts = () =>
-  fetchCalls.filter((u) => String(u).includes("/api/transcribe")).length;
+  fetchCalls.filter((c) => String(c.url).includes("/api/transcribe")).length;
 const liveEntry = () => ({
   session: {
     sessionDescriptionHandler: {
@@ -487,11 +487,18 @@ test("three consecutive live failures toast once, back off, and reset on success
 
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
+    assert.equal(transcribePosts(), 1, "each failing segment POSTed once");
+    // The production cadence is one segment per ~4 s; the backoff window
+    // starts BELOW that (2 s) and grows past it. Advance the fake clock
+    // between failures so each emit lands past the previous window.
+    shift += 3_000;
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
+    assert.equal(transcribePosts(), 2, "the second failure POSTed past the 2 s window");
+    shift += 5_000;
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
-    assert.equal(transcribePosts(), 3, "each failing segment POSTed once");
+    assert.equal(transcribePosts(), 3, "the third failure POSTed past the 4 s window");
     assert.equal(toastsWithText(), 1, "the repeated-failure toast fired exactly once");
 
     recorder.emit({ size: 10, type: "audio/webm" });
@@ -499,7 +506,7 @@ test("three consecutive live failures toast once, back off, and reset on success
     assert.equal(
       transcribePosts(),
       3,
-      "the segment after the failures was skipped by the backoff window",
+      "the segment after the failures was skipped by the 8 s backoff window",
     );
 
     shift += 10_000;
@@ -517,6 +524,8 @@ test("three consecutive live failures toast once, back off, and reset on success
     fetchImpl = async () => ({ ok: false, status: 500, headers: new Headers() });
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
+    assert.equal(transcribePosts(), 5, "the success cleared the backoff: the next failure POSTs");
+    shift += 3_000;
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
     assert.equal(

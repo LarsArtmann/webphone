@@ -44,9 +44,12 @@ const SILENCE_RMS = 0.004;
 
 // How long EVERY surface goes quiet after the seam answered 429 (a couple
 // of segment cycles — enough for the flood budget to recover). The deadline
-// is shared: a 429 on any surface (live segment, voicemail click, MMS
-// auto-transcribe) arms it, and the live loop — the only perpetual source
-// of POSTs — honors it no matter which surface tripped it (#5).
+// is shared across the island's surfaces (#5): a 429 on any island POST
+// (live segment, voicemail button, any transcribeUrl caller) arms it, and
+// the live loop — the only perpetual source of POSTs — honors it no matter
+// which surface tripped it. The shell's classic-script auto path keeps its
+// own serialized queue by design (the shell must work when island scripts
+// fail); the server's per-IP bucket remains the cross-script guard.
 const COOLDOWN_MS = 10_000;
 
 // Live-loop 429 cooldown deadline (armed on any surface's 429).
