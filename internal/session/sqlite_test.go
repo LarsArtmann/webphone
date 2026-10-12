@@ -277,3 +277,43 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 		t.Error("unknown token renewed")
 	}
 }
+
+// TestSQLiteActiveTokensListsLiveOnly pins the directory-endpoint
+// contract: only unexpired rows of the named extension are listed, and a
+// deleted (logged-out) session vanishes from the answer.
+func TestSQLiteActiveTokensListsLiveOnly(t *testing.T) {
+	ext := testExtension(t)
+	other, err := domain.ParseExtension("2002")
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewSQLiteStore(openTestDB(t), time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token, err := store.Create(ext, "pw")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Create(ext, "pw"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Create(other, "pw"); err != nil {
+		t.Fatal(err)
+	}
+	got := store.ActiveTokens(ext)
+	if len(got) != 2 {
+		t.Fatalf("ActiveTokens(ext) listed %d tokens, want 2", len(got))
+	}
+	store.Delete(token)
+	got = store.ActiveTokens(ext)
+	if len(got) != 1 {
+		t.Fatalf("after logout ActiveTokens(ext) listed %d tokens, want 1", len(got))
+	}
+	if got[0] == token {
+		t.Fatal("deleted token still listed")
+	}
+	if n := len(store.ActiveTokens(domain.Extension{})); n != 0 {
+		t.Fatalf("unknown extension listed %d tokens, want 0", n)
+	}
+}

@@ -134,3 +134,28 @@ func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, 
 	sess.ExpiresAt = extended
 	return sess, true
 }
+
+// ActiveTokens lists the live tokens of one extension; expired rows are
+// dead on sight (the Get contract) and never listed.
+func (s *SQLiteStore) ActiveTokens(extension domain.Extension) []string {
+	rows, err := s.db.Query(
+		`SELECT token FROM sessions WHERE extension = ? AND expires_at > ?`,
+		extension.String(), s.now().UnixMilli(),
+	)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close() //nolint:errcheck // read-side close on defer; rows.Err owns the verdict
+	var out []string
+	for rows.Next() {
+		var token string
+		if err := rows.Scan(&token); err != nil {
+			return nil
+		}
+		out = append(out, token)
+	}
+	if err := rows.Err(); err != nil {
+		return nil
+	}
+	return out
+}

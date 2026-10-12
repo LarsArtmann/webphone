@@ -83,17 +83,17 @@ const retryAfterHint = "1"
 //	  "error":    "invalid number"
 //	}
 
-// secretGate guards the /hooks/* surface with the configured shared
-// secret. Without a configured secret the hooks stay closed (fail closed).
-// The comparison is constant-time over SHA-256 digests: no early-exit on
-// the first mismatched byte and no secret-length leak, the same bar the
-// CRM seam holds its bearer token to.
-func (h *handlers) secretGate(next http.Handler) http.Handler {
+// bearerGate guards a secret-authenticated surface with the configured
+// shared secret. Without a configured secret the surface stays closed
+// (fail closed). The comparison is constant-time over SHA-256 digests:
+// no early-exit on the first mismatched byte and no secret-length leak,
+// the same bar the CRM seam holds its bearer token to. `unavailable` is
+// the 503 body when the deployment has no secret configured.
+func bearerGate(secret, unavailable string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		secret := h.deps.Config.Gateway.WebhookSecret
 		if secret == "" {
 			w.Header().Set("Retry-After", retryAfterHint)
-			http.Error(w, "webhooks not configured", http.StatusServiceUnavailable)
+			http.Error(w, unavailable, http.StatusServiceUnavailable)
 			return
 		}
 		provided := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -105,6 +105,19 @@ func (h *handlers) secretGate(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// secretGate guards the /hooks/* surface with the configured shared
+// secret (see bearerGate).
+func (h *handlers) secretGate(next http.Handler) http.Handler {
+	return bearerGate(h.deps.Config.Gateway.WebhookSecret, "webhooks not configured", next)
+}
+
+// sipDirectoryGate guards the internal directory endpoint with the
+// derivation secret (the bridge authenticates with the same secret the
+// server derives under — one secret, two sides of one seam).
+func (h *handlers) sipDirectoryGate(next http.Handler) http.Handler {
+	return bearerGate(h.deps.Config.SIP.CredentialSecret, "sip credentials not configured", next)
 }
 
 func (h *handlers) webhooks(w http.ResponseWriter, r *http.Request) {

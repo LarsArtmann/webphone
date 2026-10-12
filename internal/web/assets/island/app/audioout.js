@@ -21,7 +21,9 @@ let initialized = false;
 export function physicalOutputs(devices) {
   return devices.filter(
     (device) =>
-      device.kind === "audiooutput" && device.deviceId && !SINK_ALIASES.includes(device.deviceId),
+      device.kind === "audiooutput" &&
+      device.deviceId &&
+      !SINK_ALIASES.includes(device.deviceId),
   );
 }
 
@@ -50,7 +52,10 @@ export function initAudioOutput() {
   const select = document.getElementById("audio-output");
   if (!audio || !wrap || !select) return;
   if (typeof audio.setSinkId !== "function") return;
-  if (!navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== "function") {
+  if (
+    !navigator.mediaDevices ||
+    typeof navigator.mediaDevices.enumerateDevices !== "function"
+  ) {
     return;
   }
 
@@ -58,7 +63,9 @@ export function initAudioOutput() {
     if (!deviceId) return;
     const verdict = audio.setSinkId(deviceId);
     if (verdict && typeof verdict.then === "function") {
-      verdict.catch((err) => log(`audio output switch failed: ${err.message}`, "error"));
+      verdict.catch((err) =>
+        log(`audio output switch failed: ${err.message}`, "error"),
+      );
     }
   };
 
@@ -88,7 +95,9 @@ export function initAudioOutput() {
         const chosen = outputs.some((device) => device.deviceId === previous)
           ? previous
           : storedSink();
-        select.value = outputs.some((device) => device.deviceId === chosen) ? chosen : "";
+        select.value = outputs.some((device) => device.deviceId === chosen)
+          ? chosen
+          : "";
         wrap.hidden = false;
         if (select.value) apply(select.value);
       })

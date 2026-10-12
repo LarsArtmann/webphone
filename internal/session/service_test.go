@@ -358,3 +358,32 @@ func TestRequireSlides(t *testing.T) {
 		t.Errorf("Require did not slide the session (ok=%v)", ok)
 	}
 }
+
+// TestMemStoreActiveTokensListsLiveOnly: the directory-endpoint contract
+// on the in-memory store — live tokens of the named extension only.
+func TestMemStoreActiveTokensListsLiveOnly(t *testing.T) {
+	ext, err := domain.ParseExtension("1001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := domain.ParseExtension("2002")
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := NewMemStore(time.Hour)
+	token, err := store.Create(ext, "pw")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Create(other, "pw"); err != nil {
+		t.Fatal(err)
+	}
+	got := store.ActiveTokens(ext)
+	if len(got) != 1 || got[0] != token {
+		t.Fatalf("ActiveTokens(ext) = %v, want [%s]", got, token)
+	}
+	store.Delete(token)
+	if got := store.ActiveTokens(ext); len(got) != 0 {
+		t.Fatalf("after logout ActiveTokens(ext) = %v, want none", got)
+	}
+}

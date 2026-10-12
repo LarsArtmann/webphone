@@ -95,7 +95,35 @@ type Config struct {
 	// disabled: extension + SIP directory password stays the only login
 	// and the login page renders exactly as before.
 	Auth Auth `json:"auth" koanf:"auth"`
+	// SIP configures the derived SIP-credential seam (credential
+	// brokering). Zero value = disabled: the island keeps receiving the
+	// directory password exactly as before — every surface stays
+	// byte-identical until the operator sets a secret.
+	SIP SIP `json:"sip" koanf:"sip"`
 }
+
+// SIP configures the derived SIP credentials: while CredentialSecret is
+// set, the island's REGISTER uses a session-derived credential
+// (HMAC-SHA256 over the session token) and FreeSWITCH validates it
+// dynamically via the internal directory endpoint — the directory
+// password never reaches the browser. Zero value = the historical
+// password-wire behavior.
+type SIP struct {
+	// CredentialSecret is the dedicated derivation secret (env
+	// WEBPHONE_SIP__CREDENTIAL_SECRET or config sip.credential_secret).
+	// Never reuse the gateway webhook secret: two consumers of one
+	// secret cannot rotate independently.
+	CredentialSecret string `json:"credential_secret,omitempty" koanf:"credential_secret"`
+	// CredentialSecretFile reads the secret from a runtime file (single
+	// line, trimmed) instead — the deployment shape the module's
+	// secrets pipeline prefers. At most one of the two sources.
+	CredentialSecretFile string `json:"credential_secret_file,omitempty" koanf:"credential_secret_file"`
+}
+
+// DerivedCredentials reports whether the sip-credential seam is on: a
+// non-empty secret (after file resolution) enables derivation, the
+// internal directory endpoint, and the island's credential swap.
+func (s SIP) DerivedCredentials() bool { return s.CredentialSecret != "" }
 
 // Dashboard configures the optional go-health-dashboard mount.
 // Enabled serves /health (HTML by default, JSON via Accept), /health/sse
@@ -274,6 +302,12 @@ type Gateway struct {
 // the deployment's config before the service can start.
 var errGatewaySecretBothSources error = errorfamily.NewRejection("config.gateway_secret_sources", "gateway: set at most one of webhook_secret / webhook_secret_file")
 
+// errSIPSecretBothSources: exactly-one-of sip.credential_secret /
+// sip.credential_secret_file — two sources for one secret invite drift.
+// Classified Rejection: the operator must fix
+// the deployment's config before the service can start.
+var errSIPSecretBothSources error = errorfamily.NewRejection("config.sip.credential_secret_sources", "sip: set at most one of credential_secret / credential_secret_file")
+
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
 // empty, ice_servers entries ship verbatim; once set, /config.js derives a
@@ -369,6 +403,25 @@ func Load() (Config, error) {
 			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.webhook_secret_file", "gateway.webhook_secret_file %s is empty", cfg.Gateway.WebhookSecretFile)
 		}
 		cfg.Gateway.WebhookSecret = secret
+	}
+
+	// sip.credential_secret / sip.credential_secret_file: at-most-one-of,
+	// same drift argument as the gateway secret pair.
+	if cfg.SIP.CredentialSecretFile != "" && cfg.SIP.CredentialSecret != "" {
+		// Shape check BEFORE the file read: both sources set is a config
+		// drift bug regardless of whether the file is readable.
+		return Config{}, fmt.Errorf("config invalid: %w", errSIPSecretBothSources) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	}
+	if cfg.SIP.CredentialSecretFile != "" {
+		data, err := os.ReadFile(cfg.SIP.CredentialSecretFile)
+		if err != nil {
+			return Config{}, errorfamily.WrapRejectionf(err, "config.sip.credential_secret_file", "sip.credential_secret_file %s", cfg.SIP.CredentialSecretFile)
+		}
+		secret := strings.TrimSpace(string(data))
+		if secret == "" {
+			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.sip.credential_secret_file", "sip.credential_secret_file %s is empty", cfg.SIP.CredentialSecretFile)
+		}
+		cfg.SIP.CredentialSecret = secret
 	}
 
 	if err := validate(cfg); err != nil {

@@ -1,0 +1,52 @@
+package server
+
+import (
+	"net"
+	"net/http"
+
+	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/sipcred"
+)
+
+// The internal directory endpoint: GET /internal/directory/{extension}
+// answers the derived REGISTER credentials of every LIVE session of that
+// extension. Consumer: the stack's FreeSWITCH directory bridge
+// (mod_xml_curl) — loopback + Bearer secret, never the browser. The
+// directory password itself never appears here; the credentials are
+// session-scoped derivations (sipcred), so logout/revocation is
+// inherent: a dead session's credential dies at the next REGISTER.
+
+// internalDirectoryRequiredPeer is the loopback-only posture: the bridge
+// runs on the same host (the module wires it as a local systemd service
+// talking to the loopback webphone listener). A non-loopback peer is a
+// misdeployment — fail closed before the secret even matters.
+func internalDirectoryRequiredPeer(r *http.Request) bool {
+	ip := net.ParseIP(remoteHostKey(r))
+	return ip != nil && ip.IsLoopback()
+}
+
+func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
+	if !h.deps.Config.SIP.DerivedCredentials() {
+		// Honest 404: the seam is off, no surface exists (the ASR-seam
+		// convention — a disabled feature answers like a missing one).
+		http.NotFound(w, r)
+		return
+	}
+	if !internalDirectoryRequiredPeer(r) {
+		http.Error(w, "internal", http.StatusForbidden)
+		return
+	}
+	extension, err := domain.ParseExtension(r.PathValue("extension"))
+	if err != nil {
+		http.Error(w, "invalid extension", http.StatusBadRequest)
+		return
+	}
+	credentials := []string{}
+	for _, token := range h.deps.Sessions.ActiveTokens(extension) {
+		credentials = append(credentials, sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token))
+	}
+	// Unknown or session-less extensions answer an EMPTY list (200): the
+	// bridge's static-password fallback owns the decision for anyone the
+	// webphone has no live session for.
+	writeJSON(w, http.StatusOK, map[string]any{"credentials": credentials})
+}

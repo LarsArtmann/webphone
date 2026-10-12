@@ -58,6 +58,11 @@ type Store interface {
 	// expired, or its expiry is already where the policy wants it.
 	Renew(token string, idle, maxAge time.Duration) (Session, bool)
 	Delete(token string)
+	// ActiveTokens lists the LIVE session tokens of one extension —
+	// the internal directory endpoint's source of derived REGISTER
+	// credentials (sipcred). Ordering is unspecified; only unexpired
+	// sessions qualify.
+	ActiveTokens(extension domain.Extension) []string
 }
 
 // Lifetime is the session-expiry policy. Idle is the sliding idle
@@ -213,6 +218,21 @@ func (s *MemStore) Renew(token string, idle, maxAge time.Duration) (Session, boo
 	sess.ExpiresAt = extended
 	s.sessions[token] = sess
 	return sess, true
+}
+
+// ActiveTokens lists the live tokens of one extension (map scan under
+// the read lock; expiry checked with the store's injectable clock).
+func (s *MemStore) ActiveTokens(extension domain.Extension) []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	now := s.now()
+	var out []string
+	for token, sess := range s.sessions {
+		if sess.Extension == extension && now.Before(sess.ExpiresAt) {
+			out = append(out, token)
+		}
+	}
+	return out
 }
 
 // gcLocked removes expired sessions; caller holds the write lock.

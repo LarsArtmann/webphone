@@ -403,6 +403,11 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
+	// The internal directory endpoint (the stack's FS directory bridge is
+	// the only consumer): outside CSRF/session (webhooks-class — secret
+	// gated), hook-grade flood budget, loopback-only posture in-handler.
+	open.Handle("GET /internal/directory/{extension}",
+		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(h.internalDirectory))))
 
 	root := http.NewServeMux()
 	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))
@@ -419,6 +424,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
+	root.Handle("/internal/directory/", open)
 	root.Handle("/favicon.svg", open)
 	root.Handle("/favicon.ico", open)
 	root.Handle("/metrics", open)

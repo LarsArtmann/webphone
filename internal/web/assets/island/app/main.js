@@ -2,7 +2,12 @@
 // else lives in its feature module — this file is the composition root.
 
 import { ringToneStop } from "./audio.js";
-import { connect, disconnect, networkOnline, registerWasRejected } from "./connection.js";
+import {
+  connect,
+  disconnect,
+  networkOnline,
+  registerWasRejected,
+} from "./connection.js";
 import {
   answerIncoming,
   initDialHint,
@@ -112,7 +117,10 @@ async function resumeSession() {
       els.loginError.textContent = t("resumeRejected")(err.message);
       els.loginError.hidden = false;
       showLogin();
-      log(`resumed credentials rejected; server session dropped (${err.message})`, "error");
+      log(
+        `resumed credentials rejected; server session dropped (${err.message})`,
+        "error",
+      );
       return;
     }
     // A transport failure (PBX/WS down at load) is NOT a stale
@@ -202,7 +210,14 @@ function restoreTabsAfterSignIn() {
   // E3: the shell remembers the last-active tab; a fresh sign-in lands
   // where the user left off (messages when nothing is stored).
   const stored = localStorage.getItem("wp-last-tab");
-  const known = ["messages", "fax", "voicemail", "history", "contacts", "settings"];
+  const known = [
+    "messages",
+    "fax",
+    "voicemail",
+    "history",
+    "contacts",
+    "settings",
+  ];
   const tab = known.includes(stored) ? stored : "messages";
   window.htmx.ajax("GET", `/partials/${tab}`, {
     target: "#tab-content",
