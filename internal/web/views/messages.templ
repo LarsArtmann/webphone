@@ -530,7 +530,8 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 				</a>
 			} else {
 				<a class="wp-attachment" href={ "/attachments/" + att.ID.String() } download={ att.Name }>
-					@icons.Icon(icons.Document, "wp-icon wp-icon-text") { att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
+					@icons.Icon(icons.Document, "wp-icon wp-icon-text")
+					{ att.Name } <span class="wp-muted">({ fmtInt(int(att.SizeBytes>>10)) } KiB)</span>
 				</a>
 				if strings.HasPrefix(att.MimeType, "audio/") && asr {
 					<button

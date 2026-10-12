@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   become uppercase eyebrows, file-picker buttons stop shouting green, the
   offline banner carries a danger rail instead of a pink box, and the
   active tab's underline gains the line-light glow. All ids, row classes,
-  and the DOM contract are unchanged; the 18-shot matrix re-captured.
+  and the DOM contract are unchanged; the 18-shot matrix re-captured. A
+  served-markup change, so the stack browser E2E re-run is owed at the
+  next release train.
 - SSE event names are now the defined type `server.EventName` (the five
   constants were already named): swapping an event for its HTML payload
   at a `Publish` call site is a compile error instead of a silent

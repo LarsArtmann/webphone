@@ -1558,6 +1558,19 @@ a:focus-visible {
   border-color: var(--on-accent);
 }
 
+/* ANY quiet mini on a filled outbound bubble (the transcribe button)
+ * rides inverted ink too — muted-on-accent fails contrast. */
+.wp-bubble.wp-out .wp-mini {
+  color: var(--on-accent);
+  border-color: color-mix(in srgb, var(--on-accent) 55%, transparent);
+}
+
+.wp-bubble.wp-out .wp-mini:hover {
+  background: var(--on-accent);
+  color: var(--accent);
+  border-color: var(--on-accent);
+}
+
 .wp-bubble-body {
   margin: 0;
   overflow-wrap: anywhere;
