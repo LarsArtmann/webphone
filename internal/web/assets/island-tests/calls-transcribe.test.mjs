@@ -382,3 +382,52 @@ test("the save queue is bounded: oldest segments drop past the cap", async () =>
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   await flush();
 });
+
+test("the transcribe button label follows the capture state across renders", async () => {
+  const { renderCalls } = await import("../island/app/calls.js");
+  const { t } = await import("../island/app/i18n.js");
+  const { startLiveTranscription, stopLiveTranscription } = await import("../island/app/transcribe.js");
+
+  globalThis.SIP.Inviter = class {
+    constructor() {
+      this.id = "call-label";
+      this.state = globalThis.SIP.SessionState.Establishing;
+      this.stateChange = {
+        listeners: [],
+        addListener(fn) {
+          this.listeners.push(fn);
+        },
+      };
+      this.sessionDescriptionHandler = {
+        peerConnection: {
+          getReceivers: () => [{ track: { kind: "audio" } }],
+          getSenders: () => [{ track: { kind: "audio" } }],
+        },
+      };
+    }
+    invite() {
+      return Promise.resolve();
+    }
+    async bye() {}
+  };
+  fetchImpl = async () => ({ ok: true, status: 204 });
+  state.userAgent = {};
+  assert.equal(await placeCall("+4930887766"), true);
+  const entry = sessions.get("call-label");
+  assert.ok(entry, "the call entry exists");
+
+  const btn = { textContent: "" };
+  entry.dom.querySelector = (selector) =>
+    selector === ".transcribe-btn" ? btn : { textContent: "" };
+
+  renderCalls();
+  assert.equal(btn.textContent, t("transcribe"), "idle capture renders the start label");
+
+  startLiveTranscription("call-label", entry, () => {});
+  renderCalls();
+  assert.equal(btn.textContent, t("transcribeStop"), "live capture flips the label to stop");
+
+  stopLiveTranscription("call-label");
+  renderCalls();
+  assert.equal(btn.textContent, t("transcribe"), "torn-down capture returns the start label");
+});

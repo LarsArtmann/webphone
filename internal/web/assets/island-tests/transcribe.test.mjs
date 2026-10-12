@@ -377,3 +377,38 @@ test("a 429 from the seam cools the live loop down (segments skipped, capture al
 
   transcribe.stopLiveTranscription("cooldown-check");
 });
+
+test("transcribeNow renders busy, text, empty and failure states into its target", async () => {
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  fetchCalls = [];
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/phone-api/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav", size: 5 }) };
+    }
+    return gate.then(() => ({ ok: true, status: 200, json: async () => ({ text: "words" }) }));
+  };
+  const target = { textContent: "" };
+  const pending = transcribe.transcribeNow("/phone-api/vm/a/audio", target);
+  assert.equal(target.textContent, "Transcribing…", "the busy copy lands before the seam answers");
+  release();
+  await pending;
+  assert.equal(target.textContent, "words");
+
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/phone-api/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav", size: 5 }) };
+    }
+    return { ok: true, status: 200, json: async () => ({ text: "   " }) };
+  };
+  const emptyTarget = { textContent: "" };
+  await transcribe.transcribeNow("/phone-api/vm/b/audio", emptyTarget);
+  assert.equal(emptyTarget.textContent, "No speech detected", "blank text renders the empty copy");
+
+  fetchImpl = async () => ({ ok: false, status: 502 });
+  const failedTarget = { textContent: "" };
+  await transcribe.transcribeNow("/phone-api/vm/c/audio", failedTarget);
+  assert.equal(failedTarget.textContent, "transcription failed: HTTP 502");
+});
