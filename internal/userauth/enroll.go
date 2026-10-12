@@ -10,7 +10,6 @@ import (
 	"time"
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
-	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/go-error-family"
 )
 

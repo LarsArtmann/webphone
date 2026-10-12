@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
+	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/go-error-family"
 
 	"github.com/larsartmann/webphone/internal/web/views"
@@ -32,11 +32,11 @@ const maxPasskeyBodySize = 64 << 10
 // keys: usermgmt's SessionKey is always a minted ULID, so garbage is
 // malformed input (400) — never a silently hashed pseudo-user. Zero
 // UserID with ok=false means the 400 is already written.
-func parsePasskeyUserID(w http.ResponseWriter, raw string) (usermgmt.UserID, bool) {
-	userID, err := usermgmt.ParseUserID(raw)
+func parsePasskeyUserID(w http.ResponseWriter, raw string) (identitymodel.UserID, bool) {
+	userID, err := identitymodel.ParseUserID(raw)
 	if err != nil {
 		http.Error(w, "user_id must be the session_key the begin step returned", http.StatusBadRequest)
-		return usermgmt.UserID{}, false
+		return identitymodel.UserID{}, false
 	}
 	return userID, true
 }
@@ -60,10 +60,10 @@ func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.deps.UserAuth.BeginLogin(r.Context(), body.Email)
 	switch {
 	case err == nil:
-	case errors.Is(err, usermgmt.ErrUserNotFound), errors.Is(err, usermgmt.ErrNoCredentials):
+	case errors.Is(err, identitymodel.ErrUserNotFound), errors.Is(err, identitymodel.ErrNoCredentials):
 		http.Error(w, "unknown email or no passkey enrolled", http.StatusUnauthorized)
 		return
-	case errors.Is(err, usermgmt.ErrAccountLocked):
+	case errors.Is(err, identitymodel.ErrAccountLocked):
 		http.Error(w, "account temporarily locked", http.StatusTooManyRequests)
 		return
 	default:
@@ -98,7 +98,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	mapped, err := h.deps.UserAuth.FinishLogin(r.Context(), userID, r)
 	switch {
 	case err == nil:
-	case errors.Is(err, usermgmt.ErrUserNotFound):
+	case errors.Is(err, identitymodel.ErrUserNotFound):
 		http.Error(w, "unknown email or no passkey enrolled", http.StatusUnauthorized)
 		return
 	default:
@@ -235,7 +235,7 @@ func (h *handlers) enrollPage(w http.ResponseWriter, r *http.Request) {
 // verdict, while the family log line carries the code and context.
 func (h *handlers) passkeyServerError(w http.ResponseWriter, r *http.Request, err error, op string) {
 	status := http.StatusServiceUnavailable
-	if errors.Is(err, usermgmt.ErrAccountLocked) {
+	if errors.Is(err, identitymodel.ErrAccountLocked) {
 		status = http.StatusTooManyRequests
 	}
 	slog.Warn("webphone: passkey ceremony failed", "op", op, "error", err,
