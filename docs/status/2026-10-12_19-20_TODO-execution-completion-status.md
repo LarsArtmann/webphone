@@ -77,7 +77,7 @@ session.
    discipline), so the executing train skips the research entirely.
 10. **passkey_api.go:236 verdict resolved.** The unused `r` parameter dropped
     from `passkeyServerError`, six call sites updated, `auth:` prefix, passkey
-    + session-behavior suites green. The gopls Info class is gone.
+    - session-behavior suites green. The gopls Info class is gone.
 11. **P4 harvest.** CHANGELOG `[Unreleased]`: DefinitionList adoption + icon
     swap, the dep-guard hook, push-stall watchdog, dup-gate CI job, and the
     live-transcription degradation behavior. TODO_LIST: the settingsRow row,
@@ -133,9 +133,9 @@ session.
    panic-analysis FP precision).
 3. BuildFlow-repo/upstream/local-hygiene legs: f9/f10 (GOPROXY fallback +
    retry wrapper), r10 (stale BuildFlow binary), f11/f16 (module-cache janitor
-   + `.tmp` sweep), f27 (templ-components errorpage tagging), r13 (go-cqrs-lite
-   release tooling), r14 (kill-builtin empirical verify), r19/r20/r21 (wedged-go
-   audit, /tmp prune, gopls workspace).
+   - `.tmp` sweep), f27 (templ-components errorpage tagging), r13 (go-cqrs-lite
+     release tooling), r14 (kill-builtin empirical verify), r19/r20/r21 (wedged-go
+     audit, /tmp prune, gopls workspace).
 4. Owner legs (never mine to start): T13/T15 cutover cluster, the 17-45 §g
    trio, cooldown-duration policy, markdownlint posture (briefing row 18),
    passkey live proof + fail-closed drill, D3 retry-loop call, v2.x deploy
@@ -215,6 +215,7 @@ session.
 ## f) NEXT (up to 50, ordered by impact)
 
 **Immediate (this repo, unblocked):**
+
 1. Watch the TextAgent session's heal of main (registry `-update`, `drafts.*`/
    `compose.ai` i18n keys, dup adjudication of its templ clones); if their
    session goes quiet with main still red >30 min, repair it yourself and
@@ -249,9 +250,9 @@ session.
 19. ASR 18-15 #13 "saved to History" discoverability.
 20. ASR #48 remote-leg-only default (privacy — route near the owner question).
 21. Island `Retry-After`-aware cooldown — BLOCKED on the owner's duration
-    policy answer; do not self-answer.
+policy answer; do not self-answer.
 22. Branching-flow unskip re-triage (targeted nolints + baseline, then
-    UNSKIP in `.buildflow.yml`).
+UNSKIP in `.buildflow.yml`).
 23. Branching-flow upstream filing (a): phantom-analysis class knob.
 24. Branching-flow upstream filing (b): panic-analysis FP precision.
 25. f11/f16 module-cache janitor + zero-byte `.tmp` sweep (quiet host).
@@ -259,10 +260,10 @@ session.
 27. r14 kill-builtin empirical verify at the next natural kill.
 28. Calendar: erraudit tier-2 re-measure 2026-11-05.
 29. Calendar: quarterly standing-watches re-check 2026-12-20 (sip.js 0.22,
-    oxlint globals, E2E budget, QMD `get`, go-health park, branded-id Valuer).
+oxlint globals, E2E budget, QMD `get`, go-health park, branded-id Valuer).
 30. Calendar: sessions credentials-at-rest re-review 2026-12-30.
 31. Calendar: first quarterly art-dupl baseline/suppressed-set audit
-    2027-01-11.
+2027-01-11.
 
 **BuildFlow-repo / upstream sides:**
 32. r10 rebuild the stale BuildFlow binary.
@@ -272,32 +273,32 @@ session.
 
 **Stack / pbx-artmann (next stack session, no ssh):**
 36. Stack browser E2E re-run — the DefinitionList adoption is a served-markup
-    change; the obligation is now twice-deep.
+change; the obligation is now twice-deep.
 37. T13/T15 cutover cluster (OWNER-GATED commands, from the unified-auth row).
 38. Stack hardening tail: shared `secretFile` fixture helper; bridge
-    answer-count pattern port; merge dynamic-directory machine; fs-directory
-    into `operatorWatchedUnits` + health leg; sipcred wire-vector fixture;
-    fail2ban interplay; journal-noise under REGISTER storms.
+answer-count pattern port; merge dynamic-directory machine; fs-directory
+into `operatorWatchedUnits` + health leg; sipcred wire-vector fixture;
+fail2ban interplay; journal-noise under REGISTER storms.
 39. `ftypqt`→`video/quicktime` sniff, E2E MMS-outbound coverage,
-    pbx-artmann FEATURES:87 text.
+pbx-artmann FEATURES:87 text.
 40. Stack `services.webphone.paperless` option + smoke arm; deploy.md secret
-    PATH column; ops-runbook demo-call recipe; MOH audibility check.
+PATH column; ops-runbook demo-call recipe; MOH audibility check.
 41. WebTransport-not-adopted verdict doc.
 42. Repair the stack FreeSWITCH `mod_enum` build (blocks 36).
 
 **Owner decisions awaiting (do not self-answer):**
 43. The 17-45 §g trio (dep-guard scope + daemon lane; ci-flake-ledger policy
-    for self-healed reds; ASR failure-UX policy).
+for self-healed reds; ASR failure-UX policy).
 44. 429 cooldown duration: Retry-After vs fixed 10 s (18-15 line) — now also
-    gates item 21.
+gates item 21.
 45. Carve timing: start now vs after the TextAgent train (see g-2).
 46. Red-main bystander protocol (see g-3).
 47. Passkey owner legs: live proof + fail-closed drill; D3 retry-loop call;
-    runbook-only enroll ratification.
+runbook-only enroll ratification.
 48. v2.x deploy tail + `/health` exposure policy + v2.9.0 fold decision.
 49. SMS-bridge prod journal leg; announcement postings.
 50. Briefing rows 18/36/37 (markdownlint posture; devShells additions; lychee
-    auth-vs-exclude).
+auth-vs-exclude).
 
 ## g) QUESTIONS FOR THE OWNER (I cannot answer these myself)
 

@@ -386,7 +386,8 @@ test("the save queue is bounded: oldest segments drop past the cap", async () =>
 test("the transcribe button label follows the capture state across renders", async () => {
   const { renderCalls } = await import("../island/app/calls.js");
   const { t } = await import("../island/app/i18n.js");
-  const { startLiveTranscription, stopLiveTranscription } = await import("../island/app/transcribe.js");
+  const { startLiveTranscription, stopLiveTranscription } =
+    await import("../island/app/transcribe.js");
 
   globalThis.SIP.Inviter = class {
     constructor() {

@@ -57,8 +57,7 @@ test("asr off: voicemail rows carry no transcribe affordance", async () => {
     "no transcript node without the seam",
   );
   assert.equal(
-    row.children.filter((c) => c.textContent && c.className.includes("ghost"))
-      .length,
+    row.children.filter((c) => c.textContent && c.className.includes("ghost")).length,
     0,
     "no labeled ghost button without the seam",
   );

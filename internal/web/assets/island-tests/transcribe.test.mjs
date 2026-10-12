@@ -447,10 +447,7 @@ test("a 429 on the on-demand path arms the shared live-loop cooldown (#5)", asyn
     // shell's classic-script auto path is island-independent by design
     // and keeps its own serialized queue — the server bucket is the
     // cross-script guard.
-    await assert.rejects(
-      transcribe.transcribeUrl("/phone-api/vm/x/audio"),
-      /429/,
-    );
+    await assert.rejects(transcribe.transcribeUrl("/phone-api/vm/x/audio"), /429/);
     assert.equal(transcribePosts(), 1, "the on-demand attempt POSTed once");
 
     transcribe.startLiveTranscription("shared-cooldown", liveEntry(), () => {});
@@ -484,8 +481,7 @@ test("three consecutive live failures toast once, back off, and reset on success
     const toastsWithText = () =>
       els.toasts.children.filter(
         (c) =>
-          c.textContent ===
-          "Live transcription keeps failing — the provider may be unreachable.",
+          c.textContent === "Live transcription keeps failing — the provider may be unreachable.",
       ).length;
 
     recorder.emit({ size: 10, type: "audio/webm" });

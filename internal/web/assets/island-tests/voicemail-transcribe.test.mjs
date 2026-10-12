@@ -78,15 +78,9 @@ test("asr on: voicemail rows carry a transcribe button wired to the seam", async
   const transcript = row.children.find((c) => c.className === "vm-transcript");
   assert.ok(transcript, "row carries the transcript target node");
   const button = row.children.find(
-    (c) =>
-      c.className.includes("ghost") &&
-      typeof c.listeners.click === "object" &&
-      c.textContent,
+    (c) => c.className.includes("ghost") && typeof c.listeners.click === "object" && c.textContent,
   );
-  assert.ok(
-    button,
-    "row carries the transcribe button (labeled, click-wired)",
-  );
+  assert.ok(button, "row carries the transcribe button (labeled, click-wired)");
 
   fetchCalls = [];
   button.listeners.click[0]();
@@ -103,10 +97,7 @@ test("asr on: voicemail rows carry a transcribe button wired to the seam", async
   );
   const post = fetchCalls.find((u) => u.includes("/api/transcribe"));
   assert.ok(post, "the transcription POST rode /api/transcribe");
-  assert.ok(
-    post.includes("filename=u-1.wav"),
-    `expected the voicemail filename hint, got ${post}`,
-  );
+  assert.ok(post.includes("filename=u-1.wav"), `expected the voicemail filename hint, got ${post}`);
 });
 
 test("asr on: a second render rebuilds the affordance (nudge-safe)", async () => {
@@ -114,10 +105,7 @@ test("asr on: a second render rebuilds the affordance (nudge-safe)", async () =>
   await panels.refreshVoicemail();
   const row = doc.getElementById("vm-list").children[0];
   const button = row.children.find(
-    (c) =>
-      c.className.includes("ghost") &&
-      typeof c.listeners.click === "object" &&
-      c.textContent,
+    (c) => c.className.includes("ghost") && typeof c.listeners.click === "object" && c.textContent,
   );
   assert.ok(button, "re-render keeps the transcribe button");
 });
