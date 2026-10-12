@@ -442,8 +442,11 @@ test("a 429 on the on-demand path arms the shared live-loop cooldown (#5)", asyn
       }
       return { ok: false, status: 429, headers: new Headers() };
     };
-    // The MMS auto leg rides transcribeUrl like the voicemail button;
-    // its 429 must quiet the live loop too (shared per-IP budget).
+    // The on-demand leg (voicemail button) rides transcribeUrl; its
+    // 429 must quiet the live loop too (shared per-IP budget). The
+    // shell's classic-script auto path is island-independent by design
+    // and keeps its own serialized queue — the server bucket is the
+    // cross-script guard.
     await assert.rejects(
       transcribe.transcribeUrl("/phone-api/vm/x/audio"),
       /429/,

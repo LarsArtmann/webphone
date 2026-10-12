@@ -279,7 +279,9 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         log("transcription rate-limited; pausing segments briefly", "warn");
       } else {
         liveFailures += 1;
-        backoffUntil = Date.now() + Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
+        backoffUntil =
+          Date.now() +
+          Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
         log(`live transcription segment failed: ${err.message}`, "warn");
         if (liveFailures >= FAILURE_TOAST_AT && !failureToasted) {
           failureToasted = true;
