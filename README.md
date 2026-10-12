@@ -363,12 +363,22 @@ forwards them as a multipart file to the provider's OpenAI-compatible
 OpenAI-compatible server; a disabled seam answers 404 and the UI hides
 every affordance.
 
+**Where the audio goes:** transcription POSTs raw caller audio to the
+configured provider — a loopback/self-hosted one keeps caller audio on
+your infrastructure; a hosted provider means caller audio leaves the
+box on every segment and every clip transcribed (see the provider
+choice below before enabling this on a production PBX).
+
 - **Live calls**: the island mixes the remote party and the operator's own
   voice through an `AudioContext` (closed on stop) and records 4-second
   segments, appending each segment's text into the call card. Capture
   pauses while the call is on hold (no audio flows — no silence
   hallucinations) and each segment carries the UI language as the
-  provider's `language` hint.
+  provider's `language` hint. Text arrives in ~4-second steps —
+  segmented near-live by design, not word-by-word streaming: the
+  OpenAI-compatible wire takes whole files, and streaming one long
+  file would need a stateful protocol the self-hosted providers do
+  not share.
 - **Voicemail & MMS audio**: the Voicemail and Messages tabs render a
   transcribe button next to each playable clip (one delegated shell.js
   handler fetches the audio and posts it).
