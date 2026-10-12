@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -456,6 +457,28 @@ func TestAudioAttachmentTranscribeButtonGatedOnASR(t *testing.T) {
 		t.Errorf("asr off: dead transcribe affordance rendered: %s", off)
 	}
 }
+
+// TestAudioAttachmentTranscribeIdsPairUp pins the #34 shape: the button's
+// data-transcribe-target and the transcript div's id are the EXACT same
+// string, "att-transcript-" + the raw attachment id, with no extra
+// prefix — shell.js pairs them via getElementById, so any drift between
+// the two attributes silently kills the render.
+func TestAudioAttachmentTranscribeIdsPairUp(t *testing.T) {
+	att := domain.Attachment{ID: domain.GenerateAttachmentID(), Name: "voice.amr", MimeType: "audio/amr", SizeBytes: 4096}
+	msg := domain.Message{ID: domain.GenerateMessageID(), Direction: domain.DirectionInbound, Attachments: []domain.Attachment{att}}
+	html := renderComponent(t, Bubble(msg, LangEN, true))
+
+	want := "att-transcript-" + att.ID.String()
+	matches := idAttrRe.FindAllStringSubmatch(html, -1)
+	if len(matches) != 1 || matches[0][1] != want {
+		t.Errorf("transcript div id must be exactly %q, got %v", want, matches)
+	}
+	if !strings.Contains(html, `data-transcribe-target="`+want+`"`) {
+		t.Errorf("button target must reference %q: %s", want, html)
+	}
+}
+
+var idAttrRe = regexp.MustCompile(`id="(att-transcript-[^"]+)"`)
 
 // TestVoicemailRowTranscribeButtonGatedOnASR mirrors the attachment gate
 // for the voicemail player row.
