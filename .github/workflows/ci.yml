@@ -60,3 +60,25 @@ jobs:
           .#checks.x86_64-linux.deadnix
           .#checks.x86_64-linux.vulnix-triage
           .#checks.x86_64-linux.webphone-module
+
+  # Ratified dedup ritual (2026-10-11): the -t 1 deep sweep's accepted
+  # clones live in .art-dupl-baseline.json (58 groups, recorded 2026-10-12
+  # with tool v0.7.2). This gate fails only on clone groups NEW since the
+  # baseline; re-baselining is a deliberate registry-protocol act, never a
+  # way to silence a red.
+  dup-gate:
+    name: art-dupl check (new clones only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version: stable
+
+      - name: Install art-dupl at the baseline's tool version
+        run: go install github.com/LarsArtmann/art-dupl@v0.7.2
+
+      - name: Fail on clone groups new since the baseline
+        run: "$(go env GOPATH)/bin/art-dupl check . -t 1 --baseline-path .art-dupl-baseline.json"
