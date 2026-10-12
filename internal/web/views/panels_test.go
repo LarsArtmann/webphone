@@ -389,8 +389,14 @@ func TestSettingsSnippetsSection(t *testing.T) {
 	if !strings.Contains(with, "Reply snippets") || !strings.Contains(with, "Add snippet") {
 		t.Errorf("section head/add form missing: %s", with)
 	}
-	if !strings.Contains(with, `data-quick`) && !strings.Contains(with, `>⚡<`) {
+	if !strings.Contains(with, `class="wp-snippet-quick"`) || !strings.Contains(with, `<svg class="wp-icon"`) {
 		t.Errorf("quick marker missing on the first snippet: %s", with)
+	}
+	if got := strings.Count(with, `class="wp-settings`); got != 2 {
+		t.Errorf("settings dl must render exactly once (facts + shortcuts), got %d: %s", got, with)
+	}
+	if got := strings.Count(with, "Keyboard shortcuts"); got != 1 {
+		t.Errorf("shortcuts head must render exactly once, got %d", got)
 	}
 	if !strings.Contains(with, `hx-post="/snippets/delete?id=`) {
 		t.Errorf("delete buttons missing: %s", with)

@@ -59,22 +59,6 @@ templ SettingsPanel(props SettingsPanelProps) {
 			<dt><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd></dt><dd>{ T(props.Lang, "shortcuts.palette") }</dd>
 			<dt><kbd>?</kbd></dt><dd>{ T(props.Lang, "shortcuts.help") }</dd>
 		</dl>
-			@SnippetsSection(props.Snippets, props.Lang)
-			if props.Passkeys.Available {
-				@PasskeysSection(props.Passkeys)
-			}
-			<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
-		<dl class="wp-settings wp-shortcuts">
-			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
-			<dt><kbd>H</kbd></dt><dd>{ T(props.Lang, "shortcuts.h") }</dd>
-			<dt><kbd>M</kbd></dt><dd>{ T(props.Lang, "shortcuts.m") }</dd>
-			<dt><kbd>P</kbd></dt><dd>{ T(props.Lang, "shortcuts.p") }</dd>
-			<dt><kbd>Esc</kbd></dt><dd>{ T(props.Lang, "shortcuts.esc") }</dd>
-			<dt><kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.enter") }</dd>
-			<dt><kbd>Shift</kbd>+<kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.shiftEnter") }</dd>
-			<dt><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd></dt><dd>{ T(props.Lang, "shortcuts.palette") }</dd>
-			<dt><kbd>?</kbd></dt><dd>{ T(props.Lang, "shortcuts.help") }</dd>
-		</dl>
 		<p class="wp-empty">
 			{ T(props.Lang, "settings.themeNote") }
 		</p>
