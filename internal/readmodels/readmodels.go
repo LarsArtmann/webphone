@@ -104,13 +104,18 @@ func (e *Engine) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Shutdown closes the engine (its in-memory state) and then the sqlite
-// handle it owns. Idempotent; the second call is inert.
+// Shutdown closes the model store, the engine (its in-memory state),
+// and the sqlite handle it owns. Idempotent; the second call is inert.
 func (e *Engine) Shutdown() error {
 	if e.closed {
 		return nil
 	}
 	e.closed = true
+	if err := e.models.Close(); err != nil {
+		_ = e.eng.Close()
+		_ = e.db.Close()
+		return errorfamily.WrapInfrastructuref(err, "readmodels.close", "close read-model store")
+	}
 	if err := e.eng.Close(); err != nil {
 		_ = e.db.Close()
 		return errorfamily.WrapInfrastructuref(err, "readmodels.close", "close read-model engine")

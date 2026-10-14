@@ -146,9 +146,14 @@ func (s *Contacts) List(ctx context.Context, owner domain.Extension) ([]domain.C
 }
 
 func (s *Contacts) ownerViews(ctx context.Context, owner domain.Extension) ([]ContactView, error) {
+	// WithLimit is load-bearing: an unlimited engine scan silently
+	// ceilings at the planner's default (100 rows), and both the
+	// user-facing list (the whole list renders) and the cap check need
+	// every row the owner owns — the per-owner cap bounds this at 500.
 	views, err := s.reader.Scan(ctx,
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
 		metaengine.WithSort("created_at", true),
+		metaengine.WithLimit(ContactsMaxPerExtension+1),
 	)
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.contact_list", "list contacts for %s", owner.String())
