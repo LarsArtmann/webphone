@@ -123,7 +123,7 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 				Channel:       string(msg.Channel),
 				Body:          msg.Body,
 				Status:        string(msg.Status),
-				FailureKind:   msg.FailureKind,
+				FailureKind:   string(msg.FailureKind), // wire DTO stays raw (strong-id JSON ruling)
 				FailureDetail: msg.FailureDetail,
 				CreatedAt:     msg.CreatedAt,
 			}

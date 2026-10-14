@@ -614,7 +614,7 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 			if msg.FailureDetail != "" {
 				<p class="wp-failed-detail">{ msg.FailureDetail }</p>
 			}
-			if msg.FailureKind == "transient" {
+			if msg.FailureKind.IsRetryable() {
 				<form
 					class="wp-retry"
 					hx-post="/messages/send"

@@ -56,7 +56,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, msg.ID.String(), threadID, msg.Owner.String(), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
-		string(msg.Status), msg.ProviderRef, msg.FailureKind, msg.FailureDetail,
+		string(msg.Status), msg.ProviderRef, string(msg.FailureKind), msg.FailureDetail,
 		msg.CreatedAt.Unix()); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.message_insert", "insert message %s (thread %s)", msg.ID, threadID)
 	}
@@ -337,7 +337,7 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 		Body:          body,
 		Status:        domain.OutboundStatus(status),
 		ProviderRef:   providerRef,
-		FailureKind:   failureKind,
+		FailureKind:   domain.FailureKind(failureKind),
 		FailureDetail: failureDetail,
 		CreatedAt:     time.Unix(createdAt, 0),
 	}, nil

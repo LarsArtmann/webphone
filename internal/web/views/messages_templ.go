@@ -2190,7 +2190,7 @@ func Bubble(msg domain.Message, lang Lang, asr bool) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if msg.FailureKind == "transient" {
+			if msg.FailureKind.IsRetryable() {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "<form class=\"wp-retry\" hx-post=\"/messages/send\" hx-target=\"#tab-content\" hx-swap=\"innerHTML show:window:bottom\" hx-encoding=\"multipart/form-data\" hx-disabled-elt=\"find button[type=submit]\"><input type=\"hidden\" name=\"to\" value=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

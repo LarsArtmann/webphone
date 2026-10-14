@@ -154,20 +154,23 @@ func (s *Service) Send(
 	}
 	switch {
 	case err != nil:
-		msg.Status = domain.StatusFailed
-		msg.FailureKind = failureKindOf(err)
-		msg.FailureDetail = err.Error()
-		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusFailed, "",
-			msg.FailureKind, msg.FailureDetail)
+		// Send refused from queued — the delivery machine records the
+		// failure story; signatures and persisted bytes stay exactly as
+		// before the machine existed.
+		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendRefused(failureKindOf(err), err.Error()))
+		msg = msg.WithDelivery(next)
+		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
+			string(next.FailureKind), next.FailureDetail)
 		s.notify(ctx, owner, threadID)
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
 		}
 		return msg, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	default:
-		msg.Status = domain.StatusSent
-		msg.ProviderRef = receipt.ProviderRef
-		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, domain.StatusSent, receipt.ProviderRef, "", ""); err != nil {
+		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendAccepted(receipt.ProviderRef))
+		msg = msg.WithDelivery(next)
+		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
+			string(next.FailureKind), next.FailureDetail); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
 		s.notify(ctx, owner, threadID)
@@ -299,32 +302,33 @@ func (s *Service) MarkRead(ctx context.Context, owner domain.Extension, id domai
 // so an open conversation flips its status badge live. errMsg is the
 // provider's failure detail; messages persist the status only, so it is
 // logged for the operator instead.
+//
+// Verdict legality lives in domain.deliveryMoves: every verdict is a
+// legal move from every state — out-of-order verdicts overwrite exactly
+// as they did before the machine (owner call A1.7 owns any tightening).
 func (s *Service) DeliveryReceipt(
 	ctx context.Context, providerRef string, status domain.OutboundStatus, errMsg string,
 ) (domain.Message, error) {
-	switch status {
-	case domain.StatusDelivered, domain.StatusFailed:
-	default:
+	verdict, ok := domain.VerdictOf(status)
+	if !ok {
 		return domain.Message{}, errorfamily.Newf(errorfamily.Rejection, "messaging.verdict", "%q is not a delivery verdict", status)
 	}
 	msg, err := s.messages.MessageByProviderRef(ctx, providerRef)
 	if err != nil {
 		return domain.Message{}, err
 	}
-	failureKind, failureDetail := "", ""
-	if status == domain.StatusFailed {
-		failureKind, failureDetail = "provider", errMsg
-		if errMsg != "" {
-			slog.Warn("messaging: delivery failed", "message", msg.ID.String(),
-				"owner", msg.Owner.String(), "remote", msg.Remote.String(), "error", errMsg)
-		}
+	if verdict == domain.VerdictFailed && errMsg != "" {
+		slog.Warn("messaging: delivery failed", "message", msg.ID.String(),
+			"owner", msg.Owner.String(), "remote", msg.Remote.String(), "error", errMsg)
 	}
-	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, status, msg.ProviderRef,
-		failureKind, failureDetail); err != nil {
+	// Every verdict is a legal move from every state (deliveryMoves),
+	// so advance cannot refuse; the table is the single home of that rule.
+	next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.ProviderVerdict(verdict, errMsg))
+	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
+		string(next.FailureKind), next.FailureDetail); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.outbound_status", "record delivery status")
 	}
-	msg.Status = status
-	msg.FailureKind, msg.FailureDetail = failureKind, failureDetail
+	msg = msg.WithDelivery(next)
 	s.notify(ctx, msg.Owner, msg.ThreadID)
 	return msg, nil
 }
@@ -333,11 +337,11 @@ func (s *Service) DeliveryReceipt(
 // REJECTION (invalid number, provider policy) will fail identically on
 // retry, so the bubble offers none; transport and infrastructure
 // failures are worth another attempt later.
-func failureKindOf(err error) string {
+func failureKindOf(err error) domain.FailureKind {
 	if errorfamily.Classify(err) == errorfamily.Rejection {
-		return "rejected"
+		return domain.FailureRejected
 	}
-	return "transient"
+	return domain.FailureTransient
 }
 
 // AttachmentByID returns one attachment scoped to the owner's messages.
