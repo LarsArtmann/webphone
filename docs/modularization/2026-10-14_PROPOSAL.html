@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>Module Boundary Assessment 2026-10-14 - webphone</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -861,10 +861,11 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
-          <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#series">Series</a>
+          <a href="#evidence">Evidence</a>
+          <a href="#candidates">Candidates</a>
+          <a href="#retrigger">Re-trigger</a>
+          <a href="#worthdoing">Worth doing</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -873,43 +874,45 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">MODULE BOUNDARY ASSESSMENT &middot; 2026-10-14</div>
+          <h1>Single go.mod, ratified a third time</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            The go-modularize seven-phase workflow re-run against today&rsquo;s
+            tree: 23 packages, a 150-commit co-change window, and a GitHub-wide
+            consumer search. The verdict is unchanged, and the new evidence
+            strengthens it. The boundary that earns its keep is the package DAG,
+            already arch-test-enforced. No go.mod split.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Scope: go.mod boundaries</span>
+            <span class="tag">Series: 3rd entry (09-19, 09-30, 10-14)</span>
+            <span class="tag teal">Status: ratified</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
+          <div class="score-card">
+            <div class="score">23</div>
+            <div class="label">Packages reviewed</div>
+          </div>
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">0</div>
+            <div class="label">External Go consumers (verified)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Seams with composability payoff</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
-          </div>
-          <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
-          </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">2%</div>
+            <div class="label">Commits touching &ge;5 packages</div>
           </div>
         </section>
 
@@ -917,154 +920,367 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            Do not split webphone into multiple go.mod modules. This is the
+            third consecutive assessment to reach that verdict (2026-09-19,
+            2026-09-30, today), and today&rsquo;s evidence is the strongest
+            yet: a GitHub code search plus a local-tree grep confirm that
+            nothing anywhere imports <code>github.com/larsartmann/webphone/...</code>
+            as a Go module. Every benefit a module boundary could pay out
+            (compile-time fences, independent versioning, consumer-scoped
+            imports) requires a consumer. There are none. The one deliverable
+            is a single binary that the consuming stack rides via Nix pins.
           </p>
-          <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
-          </div>
-        </section>
-
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Meanwhile the cost side is not hypothetical in this repo: the
+            vendorHash red-main incidents of 10-06 and 10-09 came from plain
+            dependency bumps, and a split multiplies exactly that fragility
+            class. The compile-time-boundary benefit the split would buy is
+            already realized at package granularity and enforced by
+            <code>internal/arch</code> tests that run in every gate.
           </p>
-
-          <div class="strengths">
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
-              </div>
-            </div>
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Findings -->
-        <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
-          <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>The bottom line</strong>
+            Keep the single module. The named revisit trigger stands: a second
+            Go consumer importing <code>internal/domain</code> or
+            <code>internal/gateway</code> reopens this question. The refinement
+            that IS worth doing operates below module level: the
+            <code>internal/server</code> carve, already TRIGGERED in
+            TODO_LIST.md as its own train.
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Series continuity -->
+        <section id="series">
+          <h2><span class="num">01</span>Series continuity</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            This report cross-references its predecessors instead of
+            re-deriving them (series discipline).
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Entry</th>
+                <th>State assessed</th>
+                <th>Verdict</th>
+                <th>What carried forward</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>2026-09-19 architecture review</td>
+                <td>13 packages</td>
+                <td class="yes">No split</td>
+                <td>
+                  &ldquo;Deliberately small, sharply layered single binary,
+                  dependency direction enforced by test.&rdquo;
+                </td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>2026-09-30 architecture review &sect;05</td>
+                <td>16 packages</td>
+                <td class="yes">No split, with evidence</td>
+                <td>
+                  Named the revisit trigger (second Go consumer importing
+                  internal/domain or internal/gateway); set the server-carve
+                  trigger (next file added to internal/server).
+                </td>
+              </tr>
+              <tr>
+                <td><strong>This assessment (10-14)</strong></td>
+                <td><strong>23 packages</strong></td>
+                <td class="yes"><strong>No split, ratified</strong></td>
+                <td>
+                  Consumer absence verified GitHub-wide; FM#6 internal/
+                  structural blocker documented; co-change quantified over 150
+                  commits.
+                </td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Evidence -->
+        <section id="evidence">
+          <h2><span class="num">02</span>Today&rsquo;s evidence</h2>
+          <p>Four facts, each re-verified against the tree today.</p>
+
+          <div class="issue issue-critical" id="ev-consumers">
+            <span class="severity severity-critical">Decisive</span>
+            <h3>Zero external Go consumers</h3>
+            <div class="where">
+              <code>gh search code larsartmann/webphone</code> + local grep
+              across ~/projects
+            </div>
+            <p>
+              The only references outside this repo are the consuming
+              stack&rsquo;s README and go-health&rsquo;s fleet-repos list,
+              neither of which imports a Go package. The composability test
+              every proposed boundary must pass (&ldquo;does it let consumers
+              import only what they need?&rdquo;) has no consumers to serve.
+              With one consumer (the binary) needing everything, every seam
+              earns nothing.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="ev-internal">
+            <span class="severity severity-important"
+              >Structural blocker &middot; FM#6</span
+            >
+            <h3>Every package lives under internal/</h3>
+            <div class="where">all 23 packages, by design</div>
+            <p>
+              A sub-module&rsquo;s <code>internal/</code> tree is invisible to
+              every other module. Any go.mod split therefore forces one of two
+              strictly worse outcomes: move packages out of
+              <code>internal/</code>, publishing app internals as public API
+              against the app&rsquo;s own design, or duplicate shared types
+              across modules (split brain, a declared defect class in this
+              repo). This alone disqualifies the split regardless of the other
+              evidence.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="ev-boundaries">
+            <span class="severity severity-important"
+              >Benefit already realized</span
+            >
+            <h3>The module DAG already exists at package granularity</h3>
+            <div class="where">
+              <code>internal/arch/arch_test.go</code>, green at assessment
+              time
+            </div>
+            <p>
+              The package graph is the exact DAG a module split would draw:
+              <code>domain</code> is the zero-internal-dependency core; seven
+              leaves (<code>asr, blob, crm, pbx, sipcred, textagent,
+              vcard</code>) import nothing internal; services form the mid
+              layer; <code>server</code> and the <code>app</code> composition
+              root sit on top. The arch test suite enforces domain purity,
+              services-never-import-server/web, and DI staying inside the
+              composition root, failing every gate rather than just review.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="ev-cochange">
+            <span class="severity severity-nice">Corroborating</span>
+            <h3>Co-change validates the package boundaries</h3>
+            <div class="where">git log, last 150 commits</div>
+            <p>
+              Only 3 of 150 commits (2%) touch five or more packages. Churn
+              concentrates where the product work is: <code>server</code> (59
+              file-events) and <code>web/views</code> (26), while
+              <code>domain</code> (6) and the leaves are nearly stable. The
+              &ldquo;all packages change together&rdquo; failure signal is
+              absent; the existing boundaries already match the change
+              patterns.
+            </p>
+          </div>
+        </section>
+
+        <!-- Candidates -->
+        <section id="candidates">
+          <h2><span class="num">03</span>Split candidates, evaluated and dismissed</h2>
+          <p>
+            Direction neutrality demands the split case gets its day in court.
+            Each candidate seam, scored against the two questions that replace
+            &ldquo;merge or split?&rdquo;: right decomposition depth, and
+            composability payoff.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Candidate module</th>
+                <th>Would own</th>
+                <th>Composability payoff</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>domain</code></td>
+                <td>Core types, branded ids</td>
+                <td class="no">Zero consumers today</td>
+                <td class="no">Keep as package</td>
+              </tr>
+              <tr>
+                <td><code>config</code></td>
+                <td>Env + JSON loading</td>
+                <td class="no">Consumed only by app/gateway/server</td>
+                <td class="no">Keep as package</td>
+              </tr>
+              <tr>
+                <td><code>store</code> + <code>blob</code></td>
+                <td>SQLite persistence, blobs</td>
+                <td class="no">Internal to the one binary</td>
+                <td class="no">Keep as packages</td>
+              </tr>
+              <tr>
+                <td><code>gateway</code></td>
+                <td>Loopback/webhook seam</td>
+                <td class="no">
+                  pbx-artmann consumes it over HTTP, not via Go imports
+                </td>
+                <td class="no">Keep as package</td>
+              </tr>
+              <tr>
+                <td><code>sipcred</code></td>
+                <td>Credential derivation (74 LOC)</td>
+                <td class="no">
+                  FreeSWITCH validates via webphone&rsquo;s directory endpoint;
+                  no second deriver exists
+                </td>
+                <td class="no">Keep as package</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Why the cost side wins by default</strong>
+            Each new module means its own go.mod + vendor tree or a workspace
+            vendor decision, a vendorHash re-pin ritual per bump, whole-tree
+            narHash churn for the stack and pbx-artmann pins, and re-validation
+            of BuildFlow gates, release.sh, smoke, and flake checks. The
+            vendorHash red-main incidents (10-06, 10-09) show this fragility is
+            real here. A boundary needs a payoff to justify that; zero
+            consumers means zero payoff.
+          </div>
+        </section>
+
+        <!-- Re-trigger -->
+        <section id="retrigger">
+          <h2><span class="num">04</span>Re-trigger criteria (falsifiable)</h2>
+          <p>
+            This verdict is durable but not permanent. Re-run the modularize
+            workflow when any of these becomes true:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">1</div>
+              <div class="text">
+                <strong>A second Go consumer appears</strong>
+                <span>
+                  Any repository importing internal/domain or
+                  internal/gateway as a module. This is the trigger named by
+                  the 09-30 review; it remains the primary one.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">2</div>
+              <div class="text">
+                <strong>The stack switches from Nix pins to Go imports</strong>
+                <span>
+                  If nix-international-telephony or pbx-artmann begin
+                  importing webphone packages directly, versioned boundaries
+                  start earning version-ceremony money.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">3</div>
+              <div class="text">
+                <strong>A sub-domain grows its own release cadence</strong>
+                <span>
+                  E.g. the island or the gateway becoming a separately
+                  deployed artifact would justify a module boundary at that
+                  seam, not before.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- What is worth doing -->
+        <section id="worthdoing">
+          <h2><span class="num">05</span>What IS worth doing instead</h2>
+          <p>
+            The 09-30 review already located the refinement that captures
+            module-level benefits at package-move cost, and today&rsquo;s data
+            confirms its trigger fired: <code>internal/server</code> has grown
+            from 19 to 26 source files since the trigger was set.
+          </p>
+          <div class="callout callout-teal">
+            <strong>One home per fact</strong>
+            The server carve (split <code>server/api</code> JSON endpoints and
+            <code>server/hooks</code> webhook ingest out of the wiring core)
+            is TRIGGERED and dependency-mapped in TODO_LIST.md, deliberately
+            scheduled as its own train. This report does not duplicate that
+            item; it ratifies that the carve, not a go.mod split, is the right
+            tool for the coupling concern.
+          </div>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">06</span>Appendix</h2>
+          <h3>Package DAG as assessed (non-test imports)</h3>
+          <div class="dep-tree">
+<span class="root">app</span> &#9500;&#9472; asr blob config crm domain fax gateway messaging paperless pbx retention server session store textagent userauth<br>
+<span class="root">server</span> &#9500;&#9472; asr blob config crm domain fax gateway messaging pbx session sipcred store textagent userauth vcard views assets<br>
+<span class="root">views</span> &#9500;&#9472; domain pbx store textagent assets<br>
+<span class="root">fax/messaging</span> &#9500;&#9472; blob domain gateway store &#9492;&#9472; paperless &#8594; domain, fax<br>
+<span class="ok">leaves</span> &#9500;&#9472; asr, blob, crm, pbx, sipcred, textagent, vcard (import nothing internal)<br>
+<span class="ok">domain</span> &#9492;&#9472; (arch-pinned: imports nothing internal)
+          </div>
+          <h3>Verification performed during this assessment</h3>
+          <pre><code><span class="tok-comment"># package graph + test-import map</span>
+go list -f <span class="tok-string">'{{join .Imports "\n"}}'</span> ./internal/...
+go list -f <span class="tok-string">'{{join .TestImports "\n"}}'</span> ./internal/...
+
+<span class="tok-comment"># consumer search</span>
+gh search code larsartmann/webphone --match file
+grep -rl larsartmann/webphone ~/projects --include=<span class="tok-string">'*.go'</span>  <span class="tok-comment"># no hits outside this repo</span>
+
+<span class="tok-comment"># co-change window</span>
+git log -n 150 --name-only  <span class="tok-comment"># 3/150 commits touch &ge;5 packages</span>
+
+<span class="tok-comment"># boundary + health evidence</span>
+go build ./... &amp;&amp; go vet ./internal/arch/ ./internal/domain/  <span class="tok-comment"># green</span>
+go test -count=1 ./...  <span class="tok-comment"># green, see AGENTS.md commands</span></code></pre>
+          <h3>Signal scoring (skill&rsquo;s When-NOT-to-Modularize table)</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Signal</th>
+                <th>Weight</th>
+                <th>Today</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Small project, single domain</td>
+                <td>High</td>
+                <td class="no">23 packages, one product surface</td>
+              </tr>
+              <tr>
+                <td>No external consumers</td>
+                <td>Medium</td>
+                <td class="yes">Triggered (decisively)</td>
+              </tr>
+              <tr>
+                <td>Prototype / spike</td>
+                <td>High</td>
+                <td class="no">v2.x in production</td>
+              </tr>
+              <tr>
+                <td>All packages change together</td>
+                <td>High</td>
+                <td class="no">2% wide commits</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            The naive score (1 Medium) would wave the split through; the
+            structural FM#6 blocker and the zero-payoff test overrule it. That
+            is the point of running the phases instead of the table.
+          </p>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-14 &middot; go-modularize seven-phase workflow
+            &middot; Assessed against main (build, vet, arch tests green at
+            assessment time) &middot; All claims verified against source
           </p>
         </footer>
       </main>
