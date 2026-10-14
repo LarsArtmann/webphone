@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-12T18:22:57.195589023Z",
+  "recordedAt": "2026-10-14T23:26:58.512274692Z",
   "entries": [
     {
       "hash": "086a798c35adf1f4",
@@ -118,6 +118,14 @@
         "internal/web/views/phone.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "3b6f94d565914976",
+      "files": [
+        "internal/store/db.go",
+        "internal/readmodels/readmodels.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "403d7df1b9d61e48",
@@ -274,14 +282,6 @@
         "internal/web/views/fax.templ"
       ],
       "tokens": 3
-    },
-    {
-      "hash": "7c596362d55dc0df",
-      "files": [
-        "internal/messaging/service.go",
-        "internal/server/webhooks.go"
-      ],
-      "tokens": 2
     },
     {
       "hash": "82933255f2d17f39",
