@@ -1,40 +1,9 @@
 package server
 
 import (
-	"context"
-	"log/slog"
 	"sync"
 	"time"
 )
-
-// DedupWindow is the engine-backed dedup seam: a check-and-set window
-// with per-key TTL (the metaengine DedupStore port, consumer-owned so
-// this package stays library-free). Nil (test compositions, map
-// fallback) degrades to the in-process idemStore.
-type DedupWindow interface {
-	// Seen reports whether key is currently recorded and unexpired.
-	Seen(ctx context.Context, collection, key string, now time.Time) (bool, error)
-	// CheckAndRecord atomically records key (expiring at now+ttl) when
-	// absent; returns true when the key was already seen.
-	CheckAndRecord(ctx context.Context, collection, key string, ttl time.Duration, now time.Time) (bool, error)
-	// Sweep deletes every expired record in the collection and returns
-	// how many.
-	Sweep(ctx context.Context, collection string, now time.Time) (int, error)
-}
-
-// DedupCollection is the single engine collection both idem gates
-// share: TTL is carried per key (a DedupWindow property), so the hook
-// and call windows can diverge inside one sweepable collection.
-const DedupCollection = "webphone.idem"
-
-// idemGate is the check-then-record contract the webhook and call
-// lanes consume: check first (only successes are recorded), then the
-// caller records after the guarded work succeeded. Both impls honor
-// it — the map (rollback seam, tests) and the engine window.
-type idemGate interface {
-	seen(key string) bool
-	record(key string)
-}
 
 // idemStore remembers recently processed webhook idempotency keys (the
 // providers' provider_ref values) so a replayed callback gets the original
@@ -42,9 +11,10 @@ type idemGate interface {
 // recorded — a failed attempt (unknown ref, transient store error) stays
 // retryable by design.
 //
-// In-memory fallback (and the rollback seam for the engine window):
-// a restart merely re-arms dedupe — the worst case is one harmless
-// re-apply of an already-terminal status.
+// In-memory on purpose: this binary owns the whole store (no
+// multi-instance deployment), the session store already makes the same
+// process-local trade, and a restart merely re-arms dedupe — the worst
+// case is one harmless re-apply of an already-terminal status.
 // branching-flow COMPOSITION_mixin (baselined): coincidental mu+ttl
 // shape; hook dedupe and the unread cache are different domains.
 type idemStore struct {
@@ -90,49 +60,4 @@ func (s *idemStore) record(key string) {
 		delete(s.entries, key)
 	}
 	s.entries[key] = now
-}
-
-// engineIdemGate adapts a DedupWindow into the idemGate contract: the
-// durable engine-backed implementation. Unlike the map, it survives
-// restarts — a restart inside the TTL window no longer forgets seen
-// hooks (the defect the swap fixes).
-//
-// Error policy is fail-open on purpose, on both legs: a dedup window
-// that cannot be read must not block a callback whose guarded work is
-// idempotent at rest anyway (treat as unseen → the work re-runs → the
-// store's own terminal-state handling absorbs the replay), and a
-// record that cannot be written leaves the key retryable — the exact
-// contract a failed attempt already has. Both log once per occurrence.
-//
-// Calls run on context.Background: the dedup record is persistence
-// that should outlive the request it guards, and the underlying ops
-// are bounded single-writer SQLite statements.
-type engineIdemGate struct {
-	window DedupWindow
-	ttl    time.Duration
-}
-
-// newIdemGate picks the implementation behind the constructor seam:
-// the engine window when the composition root wired one, the in-
-// process map otherwise (test compositions, rollback).
-func newIdemGate(window DedupWindow, ttl time.Duration) idemGate {
-	if window == nil {
-		return newIdemStore(ttl)
-	}
-	return &engineIdemGate{window: window, ttl: ttl}
-}
-
-func (g *engineIdemGate) seen(key string) bool {
-	seen, err := g.window.Seen(context.Background(), DedupCollection, key, time.Now())
-	if err != nil {
-		slog.Warn("idem gate: dedup window read failed; treating key as unseen", "key", key, "error", err)
-		return false
-	}
-	return seen
-}
-
-func (g *engineIdemGate) record(key string) {
-	if _, err := g.window.CheckAndRecord(context.Background(), DedupCollection, key, g.ttl, time.Now()); err != nil {
-		slog.Warn("idem gate: dedup window write failed; key stays retryable", "key", key, "error", err)
-	}
 }

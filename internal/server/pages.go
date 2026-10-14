@@ -43,9 +43,9 @@ type handlers struct {
 	// (strict browsers reject a non-Secure deletion of a Secure cookie).
 	csrfCfg httputil.CSRFConfig
 	// Dedupe memory for replayed provider status callbacks (provider_ref).
-	hooksIdem idemGate
+	hooksIdem *idemStore
 	// Dedupe memory for the island's post-call journal reports (key).
-	callsIdem idemGate
+	callsIdem *idemStore
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
 }
