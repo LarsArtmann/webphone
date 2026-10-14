@@ -9,6 +9,16 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 
 ## Open tasks
 
+### metaengine dogfooding train (2026-10-14 plan — P0 executable)
+
+**Status:** 🟢 `OPEN` · **Priority:** High (owner ROI: first real go-cqrs-lite consumer) · **Effort:** M per phase, 4 phases gated G1/G2/G3 · full plan + fine breakdown + execution graph: [docs/planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md](docs/planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md)
+
+- **Why:** audit found ZERO first-party go-cqrs-lite imports (metaengine only `// indirect`, `system` absent) vs ~108 hand-rolled SQL sites. Plan adopts metaengine where it wins: DedupStore swap (fixes restart-loss of webhook/call idem), contacts+snippets pilot, faxes via `ApplyIdempotent(provider_ref)` reusing train-C `faxMoves`, transcripts, enroll tokens.
+- **NOT-DO (plan §5):** no `system.New` swap (samber/do ratified), no threads/messages event-sourcing rewrite (external facts; DOM/SSE contracts pinned), sessions stay SQL, migration ladder untouched; engine-owned tables get NO schema_version entries (plan ruling N5, separate `readmodels.db`).
+- **Next action:** T02 dep promote — `go get` metaengine (direct) + `sqliteengine/v4` (new, un-vendored) → tidy → vendor → vendorHash `--rebuild` recipe → auth-grade commit (daemon-guarded) → CI watch.
+
+**Evidence:** this session's SQL census + metaengine source read (2026-10-14); continues the 2026-10-14 declarative/DDD train's typed-facts direction.
+
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTING)
 
 **Status:** 🟡 `EXECUTING — trains A/B/C/E DONE 2026-10-14, D pending owner g3` (A: delivery machine, CI green · B: re-adjudicated delivered-by-prior-train, backfills landed — B1.5 resolution-branch fax test, B1.6 P5 annotation, B2.3 README notes · C: AppendToThread + faxMoves/FaxAdvance, C2.5 re-adjudicated against the pinned panel contract (same-status verdicts refresh, dedup stays the seam's job) · E: typed events + `Notifier.Project` projection, memo, docs sweep · D island CALL_TRANSITIONS awaits the g3 sequencing call (lean: fresh session + stack browser E2E)) · **Priority:** High · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
