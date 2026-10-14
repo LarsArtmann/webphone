@@ -141,7 +141,7 @@ func (s *Service) Send(
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist message")
 	}
-	s.notify(ctx, owner, threadID)
+	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
 
 	// Self-send fast path (train C): refuse locally instead of burning a
 	// provider roundtrip the provider would refuse anyway; the failed row
@@ -161,7 +161,7 @@ func (s *Service) Send(
 		msg = msg.WithDelivery(next)
 		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
 			string(next.FailureKind), next.FailureDetail)
-		s.notify(ctx, owner, threadID)
+		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
 		}
@@ -173,7 +173,7 @@ func (s *Service) Send(
 			string(next.FailureKind), next.FailureDetail); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
-		s.notify(ctx, owner, threadID)
+		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
 		return msg, nil
 	}
 }
@@ -215,7 +215,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist inbound message")
 	}
-	s.notify(ctx, inbound.Owner, threadID)
+	s.emit(ctx, domain.MessageReceived{Owner: inbound.Owner, Thread: threadID})
 
 	return msg, nil
 }
@@ -245,18 +245,14 @@ func (s *Service) SetThreadFlag(
 	if err := s.messages.SetThreadFlag(ctx, owner, id, flag, on); err != nil {
 		return err
 	}
-	s.notifyThreads(ctx, owner)
+	s.emitThreads(ctx, owner)
 	return nil
 }
 
-// notifyThreads nudges the thread list without a thread payload: the
-// "threads" SSE event is a re-render trigger, consumers re-fetch (or
-// morph) with their own credentials — the voicemail-nudge pattern.
-func (s *Service) notifyThreads(ctx context.Context, owner domain.Extension) {
-	if s.onChange == nil {
-		return
-	}
-	s.onChange(ctx, owner, domain.ThreadID{})
+// emitThreads nudges the thread list without a transcript push: the
+// flag event carries no thread id on purpose (see ThreadFlagChanged).
+func (s *Service) emitThreads(ctx context.Context, owner domain.Extension) {
+	s.emit(ctx, domain.ThreadFlagChanged{Owner: owner})
 }
 
 // ThreadSearch filters the owner's threads by a text query over the
@@ -329,7 +325,7 @@ func (s *Service) DeliveryReceipt(
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.outbound_status", "record delivery status")
 	}
 	msg = msg.WithDelivery(next)
-	s.notify(ctx, msg.Owner, msg.ThreadID)
+	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: msg.Owner, Thread: msg.ThreadID})
 	return msg, nil
 }
 
@@ -354,9 +350,9 @@ func (s *Service) OpenAttachment(path string) (io.ReadSeekCloser, error) {
 	return s.blobs.Open(path)
 }
 
-func (s *Service) notify(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
+func (s *Service) emit(ctx context.Context, e domain.Event) {
 	if s.onChange != nil {
-		s.onChange(ctx, owner, threadID)
+		s.onChange(ctx, e)
 	}
 }
 
