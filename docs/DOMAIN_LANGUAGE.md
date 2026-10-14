@@ -1,9 +1,40 @@
 # Domain language — webphone's ubiquitous vocabulary
 
-> STATUS: DRAFT created 2026-09-23 by the pareto execution session,
-> pending owner ratification (ROADMAP open question g2: create vs
-> record accepted absence). If the owner prefers absence, delete this
-> file — nothing links to it except ROADMAP/TODO rows.
+> STATUS: DRAFT created 2026-09-23; RATIFICATION MEMO appended
+> 2026-10-14 (SUPERB train E2.1). The owner decision — ratify vs
+> delete — is MINTED, not self-answered. If the owner prefers
+> absence, delete this file and record the ruling in ROADMAP.
+
+## Ratification memo (drafted 2026-10-14 — owner question, unanswered)
+
+**The decision:** ratify this glossary as the ubiquitous-language
+artifact (one term, one meaning, across code/docs/UI copy), or delete
+it and record the absence as accepted.
+
+**What changed since the draft was written:** the 2026-10-14
+declarative/DDD trains made this vocabulary load-bearing in code.
+These terms are now Go-stable machine names, not prose:
+
+- `FailureKind` (`transient`/`rejected`/`provider`) + `IsRetryable`
+- `Verdict` (`delivered`/`failed`) and `DeliveryAdvance`
+- `AppendToThread` (unread/lastActivity/auto-unarchive invariants)
+- `faxMoves`/`FaxAdvance` (outbound lifecycle vs inbound fact)
+- `gateway.Resolution` (`immediate`/`deferred`)
+- the closed event set (`MessageReceived`,
+  `MessageDeliveryAdvanced`, `ThreadFlagChanged`, `FaxAdvanced`)
+
+**If ratified:** one refresh pass aligns the sections below with those
+names (several entries predate them), AGENTS links here as the
+language home, and future sessions check new domain terms against it.
+
+**If deleted:** the machine vocabulary keeps working unchanged (the
+code is the truth either way); what is lost is the single prose anchor
+that keeps code, docs, and UI copy using the same words — the 2026-09
+review series found three different names for the session-expiry
+concept before this file existed.
+
+**Cost either way is small; the value question is owner taste.** The
+memo deliberately does not pick.
 
 One term, one meaning, everywhere (code, docs, UI copy, commits).
 Terms the SERVER owns are Go-stable names; terms the USER sees are the

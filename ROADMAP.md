@@ -172,6 +172,10 @@ the stack browser E2E passed on the bumped tree. What remains:
 
 ## Open questions (owner calls)
 
+- Domain-language glossary: ratify `docs/DOMAIN_LANGUAGE.md` or delete
+  it and record accepted absence (memo with consequences appended to
+  the file 2026-10-14, SUPERB train E2 — the declarative trains made
+  its vocabulary load-bearing in code).
 - Provider-failure retryability (2026-10-14 data-model review g2):
   today only `transient` failures render a Retry affordance — provider
   verdicts are terminal (the user re-composes). Intended product rule,

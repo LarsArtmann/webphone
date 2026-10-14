@@ -39,10 +39,6 @@ func (e *ErrInvalidFax) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidFax) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// ChangeFunc is the change-notification seam (see domain.Event):
-// called after any mutation the owner's other surfaces should see.
-type ChangeFunc = domain.ChangeFunc
-
 // Archiver is the optional downstream filing home for INBOUND faxes
 // (Paperless-ngx today, internal/paperless). The blob store stays the
 // only storage truth: an archive failure is logged, never surfaced, and
@@ -59,7 +55,7 @@ type Service struct {
 	faxes      *store.Faxes
 	blobs      *blob.Store
 	gateway    gateway.FaxGateway
-	onChange   ChangeFunc
+	onChange   domain.ChangeFunc
 	clock      func() time.Time
 	identities map[string]string
 	archiver   Archiver
@@ -76,7 +72,7 @@ const selfSendDetail = "faxes cannot be sent to your own number"
 // entry = guard off). archiver is the optional Paperless-ngx filing home
 // for inbound faxes (nil = integration off).
 func New(
-	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange ChangeFunc, identities map[string]string, archiver Archiver,
+	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange domain.ChangeFunc, identities map[string]string, archiver Archiver,
 ) *Service {
 	return &Service{
 		faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now,

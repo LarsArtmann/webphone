@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Thread append invariants (unread increments on inbound, last activity
+  follows the message, inbound unarchives) moved from SQL CASE logic
+  into one pure domain function the store's append transaction
+  consults; behavior is byte-identical, including the unconditional
+  last-activity overwrite.
+- Fax transitions are a declarative state machine: a domain-owned
+  legality table plus a pure advance function now govern submit,
+  settle, and provider verdicts. Same-status verdicts stay legal
+  refreshing moves (a later hook carries the real page count) and
+  replay dedup remains the webhook seam's job; events against an
+  inbound "received" fact are inert.
+- Service change notifications are typed domain events (message
+  received, delivery advanced, thread flag changed, fax advanced)
+  projected to SSE pushes by a single policy switch: message events
+  push list plus transcript, flag changes push the list only, fax
+  events push the fax list. Payload bytes are unchanged.
 - Outbound message delivery is a declarative state machine: the legal
   transitions (send accepted/refused, provider verdicts) live in one
   domain-owned table with a pure advance function, and the retry

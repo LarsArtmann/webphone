@@ -1,6 +1,31 @@
 # SUPERB plan: declarative + DDD model — webphone
 
-> STATUS: PLAN (2026-10-14 17:15, pareto-planning session) — pending owner approval.
+> STATUS: EXECUTED 2026-10-14 (trains A/B/C/E; D pending owner g3).
+> Completion annotation directly below; original plan text follows
+> unmodified.
+
+> **Completion annotation (2026-10-14):** Owner dispatched execution
+> the same evening. **A** shipped (delivery machine, byte-parity, CI
+> green). **B** re-adjudicated DELIVERED-BY-PRIOR-TRAIN: the headline
+> fixes landed with the series-3 train day after this plan was drafted
+> — verified in code with test coverage, and the three missing
+> obligations backfilled (B1.5 resolution-branch fax test, B1.6 the
+> 09-30 P5 resolved-annotation, B2.3 README validation notes). **C**
+> shipped with one row re-adjudicated against pinned behavior: C2.5's
+> "replay = no legal move = inert" lost to the panel contract
+> (TestFaxStatusWebhookParsesFlexiblePageCounts pins same-status
+> verdicts refreshing pages) — same-status verdicts are legal
+> refreshing moves, replay dedup stays the hooks seam's ref-keyed
+> hooksIdem, and the machine's inert class is events against an
+> inbound "received" fact. **E** shipped (typed events + the
+> Notifier.Project projection, SSE bytes identical; DOMAIN_LANGUAGE
+> ratification memo DRAFTED owner-gated; docs sweep incl. the AGENTS
+> machine-table rule). **D** (island CALL_TRANSITIONS) awaits owner
+> question g3 — sequencing lean: its own fresh session + stack browser
+> E2E. Owner calls preserved, never self-answered: A1.7, E2, g1–g3.
+
+> Original STATUS (2026-10-14 17:15, pareto-planning session): PLAN —
+> pending owner approval.
 > Scope: the four opportunities from the 2026-10-14 declarative/DDD analysis, cross-referenced
 > against `docs/reviews/2026-09-30_data-model-review.html` (series entry 2; this plan executes
 > its three open findings plus the lifecycle-as-data direction). NOT executed in this session.

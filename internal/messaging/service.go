@@ -40,16 +40,12 @@ func (e *ErrInvalidSend) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// ChangeFunc is the change-notification seam (see domain.Event):
-// called after any mutation the owner's other surfaces should see.
-type ChangeFunc = domain.ChangeFunc
-
 // Service wires the message store, blob store, and outbound gateway.
 type Service struct {
 	messages   *store.Messages
 	blobs      *blob.Store
 	gateway    gateway.MessageGateway
-	onChange   ChangeFunc
+	onChange   domain.ChangeFunc
 	clock      func() time.Time
 	identities map[string]string
 }
@@ -64,7 +60,7 @@ const selfSendDetail = "messages cannot be sent to your own number"
 // owner's own DID is refused locally before the gateway roundtrip (nil or
 // missing entry = guard off).
 func New(
-	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange ChangeFunc, identities map[string]string,
+	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[string]string,
 ) *Service {
 	return &Service{
 		messages:   messages,

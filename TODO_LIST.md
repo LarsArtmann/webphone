@@ -11,13 +11,13 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTING)
 
-**Status:** 🟡 `EXECUTING` (owner instructed execution 2026-10-14 evening session; trains A→E per the plan's graph; this row retires when E3 lands) · **Priority:** High (1%+4% tiers) · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
+**Status:** 🟡 `EXECUTING — trains A/B/C/E DONE 2026-10-14, D pending owner g3` (A: delivery machine, CI green · B: re-adjudicated delivered-by-prior-train, backfills landed — B1.5 resolution-branch fax test, B1.6 P5 annotation, B2.3 README notes · C: AppendToThread + faxMoves/FaxAdvance, C2.5 re-adjudicated against the pinned panel contract (same-status verdicts refresh, dedup stays the seam's job) · E: typed events + `Notifier.Project` projection, memo, docs sweep · D island CALL_TRANSITIONS awaits the g3 sequencing call (lean: fresh session + stack browser E2E)) · **Priority:** High · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
 
-- **Tier 1% (51%):** delivery machine as data — `deliveryMoves` + pure `DeliveryAdvance` + `FailureKind` typed; `messages.templ` retry literal → constant. Behavior-parity; no schema/wire change.
-- **Tier 4% (64%):** 09-30 review open findings — `gateway.Receipt.Resolution` enum (deletes the `fax.drive` type-assert), `identities` key + shared-contact number validation at `Load` (boot-fail named).
-- **Tier 20% (80%):** `domain.AppendToThread` invariant fn; `faxMoves` table + `FaxAdvance` with replay = no move = inert.
-- **Tier 100%:** island `CALL_TRANSITIONS` table; typed domain events + `project(event)`→SSE map; DOMAIN_LANGUAGE ratification memo (owner-gated); docs sweep.
-- **Owner calls minted:** A1.7 out-of-order verdict tightening (recommend: keep today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (ROADMAP g2).
+- **Tier 1% (51%):** DONE — delivery machine as data (`deliveryMoves` + pure `DeliveryAdvance` + `FailureKind` typed; retry literal → `IsRetryable`), byte-parity held.
+- **Tier 4% (64%):** DONE (landed with the series-3 train; verified + backfilled this session) — `gateway.Receipt.Resolution` enum, `identities` key + shared-contact validation at `Load`.
+- **Tier 20% (80%):** DONE — `domain.AppendToThread` invariant fn; `faxMoves` + `FaxAdvance` (replay semantics re-adjudicated: same-status verdicts are legal refreshing moves; inert class = events against the inbound `received` fact).
+- **Tier 100% (partial):** typed domain events + `Notifier.Project` SSE map DONE; DOMAIN_LANGUAGE ratification memo DRAFTED (owner-gated); docs sweep DONE; island `CALL_TRANSITIONS` (D) PENDING owner g3.
+- **Owner calls minted:** A1.7 out-of-order verdict tightening (recommend: keep today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (memo in the file, ROADMAP cross-linked); g3 Train D sequencing (lean: own fresh session + stack browser E2E).
 
 **Evidence:** `docs/reviews/2026-09-30_data-model-review.html` (three open findings); analysis session 2026-10-14.
 

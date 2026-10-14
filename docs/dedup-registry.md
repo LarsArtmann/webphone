@@ -159,3 +159,4 @@ file implements that proposal and records the supersession).
 
 None currently — all five standing calls were answered 2026-10-11.
 New calls append here with date + ask.
+- 2026-10-14 — NO art-dupl run this session (SUPERB declarative trains A–E execution: the deltas are new domain machines + rewiring, parity-tested, no repeated logic introduced; the two new legality tables are intentionally distinct domains, not clones). Registry consulted before every edit per the standing rule; this line logs the sweep-log discipline, not a sweep.
