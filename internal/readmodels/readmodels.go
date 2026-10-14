@@ -29,21 +29,25 @@ import (
 // a full path.
 const fileName = "readmodels.db"
 
-// Engine is the container-adapted metaengine engine: the sqlite handle
-// plus the engine that owns its tables. Constructed once in the
-// composition root (named "metaengine"), eagerly invoked, closed on
-// the container shutdown cascade.
+// Engine is the container-adapted metaengine engine: the sqlite
+// handle, the engine that owns its tables, and the planned model
+// store over it. Constructed once in the composition root (named
+// "metaengine"), eagerly invoked, closed on the container shutdown
+// cascade.
 type Engine struct {
-	eng    metaengine.Engine
-	dedup  metaengine.DedupStore
-	db     *sql.DB
-	closed bool
+	eng      metaengine.Engine
+	dedup    metaengine.DedupStore
+	models   *metaengine.Store
+	contacts *Contacts
+	db       *sql.DB
+	closed   bool
 }
 
-// Open creates (or opens) the read-model database inside dataDir and
-// builds the sqlite engine over it. The engine applies its production
-// pragmas (WAL, busy_timeout) and creates its own tables — one call,
-// fail-fast at boot.
+// Open creates (or opens) the read-model database inside dataDir,
+// builds the sqlite engine over it, and plans every read-model query
+// the binary declares (the list grows per train step). The engine
+// applies its production pragmas (WAL, busy_timeout) and creates its
+// own tables — one call, fail-fast at boot.
 func Open(dataDir string) (*Engine, error) {
 	eng, db, err := sqliteengine.NewFromDSN(filepath.Join(dataDir, fileName))
 	if err != nil {
@@ -57,7 +61,18 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the dedup capability", eng)
 	}
-	return &Engine{eng: eng, dedup: dedup, db: db}, nil
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery)
+	if err != nil {
+		_ = db.Close()
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
+	}
+	return &Engine{
+		eng:      eng,
+		dedup:    dedup,
+		models:   models,
+		contacts: newContacts(models),
+		db:       db,
+	}, nil
 }
 
 // Engine exposes the underlying metaengine engine for the Store/Query
@@ -70,6 +85,10 @@ func (e *Engine) Engine() metaengine.Engine { return e.eng }
 // The composition root adapts it into the server-facing DedupWindow
 // port — readmodels itself never imports server.
 func (e *Engine) DedupStore() metaengine.DedupStore { return e.dedup }
+
+// Contacts returns the engine-backed personal-contacts store (the
+// SQL store's replacement behind the same method contract).
+func (e *Engine) Contacts() *Contacts { return e.contacts }
 
 // SQL exposes the engine's own sqlite handle (probe pings; future
 // engine-side maintenance). Callers must not close it — Shutdown owns
