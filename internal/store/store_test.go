@@ -130,6 +130,38 @@ func TestMessageLifecycle(t *testing.T) {
 	}
 }
 
+// TestAppendWithoutPriorThread pins AppendMessage's creation fallback:
+// the service normally pre-creates the row via FindThread, but an
+// append into a fresh (owner, remote) pair must still create the thread
+// (adopting the message's thread id) and count the inbound as unread.
+func TestAppendWithoutPriorThread(t *testing.T) {
+	messages, _, _ := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	remote := domain.MustParsePhone("+441632960961")
+	msg := domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: domain.GenerateThreadID(),
+		Owner: owner, Remote: remote,
+		Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,
+		Body: "cold open", Status: domain.StatusQueued, CreatedAt: time.Now(),
+	}
+
+	if err := messages.AppendMessage(ctx, msg); err != nil {
+		t.Fatal(err)
+	}
+
+	threads, err := messages.ListThreads(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(threads) != 1 || threads[0].Thread.ID != msg.ThreadID {
+		t.Fatalf("creation fallback must adopt the message's thread id: %+v", threads)
+	}
+	if threads[0].Thread.Unread != 1 || threads[0].Thread.Archived {
+		t.Fatalf("creation fallback invariants: unread = %d archived = %v", threads[0].Thread.Unread, threads[0].Thread.Archived)
+	}
+}
+
 func TestAttachmentOwnerScoped(t *testing.T) {
 	messages, _, _ := newTestDB(t)
 	ctx := context.Background()
