@@ -1,0 +1,91 @@
+# Metaengine dogfooding train — session status (P0 + pilot in flight)
+
+**Date:** 2026-10-15 01:39 CEST · **Session scope:** execution of [docs/planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md](../planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md) (T02 onward) · **Head:** 93df804 (unpushed daemon commit carrying T05/T06 files) · **CI:** green through 9b5c572 (run 38654410392)
+
+This report covers THIS SESSION's run only, per instruction.
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+|---|---|---|
+| 1 | **T02 — dependency promote + pin.** metaengine/v4 v4.17.0→v4.19.0 (now direct), sqliteengine/v4 v4.5.3 (new), plus the forced floor bumps its dedup requirement drags (projectionhost v4.6.0, event v4.14.0, scheduling v4.7.0). Full ritual: tidy → vendor → `nix build .#webphone.goModules --rebuild` → vendorHash re-pinned (`sha256-KVEWqRAh…`) → `nix build .#webphone` green. | go.mod/go.sum/vendor/nix/packages.nix; builds green |
+| 2 | **T03 — composition root wiring.** New `internal/readmodels` package: sqlite-backed engine in its OWN `readmodels.db` (N5/N6 isolation from the hand migration ladder), named `"metaengine"` in the container, eagerly invoked at boot, non-critical health leg, idempotent shutdown closing model store → engine → db; `DedupStore` capability asserted once at Open (fail boot, not first webhook). Lifecycle conformance asserted adapter-side (samber/do guards in app.go). | internal/readmodels/readmodels.go; internal/app/app.go |
+| 3 | **T04 — durable webhook/call dedup.** `server/idempotency.go` now has a consumer-owned `DedupWindow` port + `idemGate` interface; the engine gate (`engineIdemGate`) rides the engine's DedupStore with a **fail-open error policy** (unreadable window = treat unseen; unwritable record = key stays retryable); nil window = the in-process map, byte-identical legacy behavior (tests, rollback). 15-min `DedupSweep` loop in `App.Start`. **Restart-durability test passes** — the defect this swap fixes (a restart inside the 1h TTL forgot seen hooks) is demonstrably gone. | internal/server/idempotency.go, idempotency_engine_test.go; internal/app/dedup.go; internal/readmodels/readmodels_test.go |
+| 4 | **CI red healed and verified green.** The train's push red'd CI's art-dupl new-clone gate (1 group: the 4-line DO-6 closed-guard prologue shared by `store.Database` and `readmodels.Engine`). Accepted into the baseline (64 groups) with the dedup-registry ruling + sweep-log line. Successor run green. | run 38648078902 (red) → 38654410392 (green); docs/dedup-registry.md |
+| 5 | **Real latent bug found, root-caused, fixed.** `store.Open(":memory:")` + `SetConnMaxIdleTime(5m)`: an idle-closed in-memory conn silently discards the whole database — the next query lands on a fresh empty schema. Diagnosed via SIGQUIT goroutine dump: under host load ~95 (sibling sessions cross-compiling pbx-aarch64, nix module-eval, another Crush session's lints) a 61 MiB oversize-upload request starved to 9 minutes, idling the single conn past the window → "no such table: sessions" → spurious 401. Fix: `:memory:` pools never idle-trim; file pools keep the 5-min trim. Proven NOT a train regression (fails identically on pure pre-train main 7d44238 locally; CI runners unloaded and green). | internal/store/db.go; docs/ci-flake-ledger.md (run 38648078902 entry + local-only sibling finding) |
+| 6 | **T05+T06 — contacts read model, engine-side, fully tested.** `domain.ContactKey`/`ContactSaved`/`ContactDeleted` framework-free facts; `contactsQuery` (OnRecord insert fold + `Remove` + `FilterOnField(owner)` + `SortOnField(created_at desc)`); `readmodels.Contacts` store preserving the SQL contract exactly: upsert by (owner, phone) **keeping id + creation time on rename** (pre-read under a store mutex — single-process atomicity), per-owner cap 500 rejecting NEW numbers only, owner-scoped newest-first list, owner-scoped delete by id. Tests green: save/list/delete order, owner scoping, rename-keeps-identity, cap semantics (new-number-at-cap refused, rename-at-cap allowed, per-owner isolation), **restart durability**. Two real dogfood findings already banked: the engine's **default 100-row scan ceiling silently truncates "list all" reads** (fixed with explicit `WithLimit(cap+1)` — load-bearing comment), and unix-nanos ordering replaces the SQL seconds+rowid tiebreak. | internal/domain/contact.go; internal/readmodels/contacts.go + contacts_test.go |
+| 7 | Engine composition grows: `Open` now `metaengine.Plan`s the model store with every declared query; `Engine.Contacts()` accessor; Shutdown cascade extended. | internal/readmodels/readmodels.go |
+
+## b) PARTIALLY DONE
+
+1. **T07 — the swap. IN FLIGHT, tree mid-edit.** Done: readmodels side complete and green; blast-radius mapped (Deps field, app wiring, contacts_api.go `store.ErrListFull` reference, 4 test-file wirings, store/contacts.go deletion + test ports, family_test arm, error-registry regen). **The last two edits FAILED on daemon-modified-since-read races** (ErrListFull homing into readmodels + store/db.go init cleanup) — re-apply view-first. Handlers themselves need zero logic changes (same method set).
+2. **G1 gate — local legs incomplete.** Full local `go test -count=1 ./...` still RUNNING (~75 min under host load 95; the suite is correct since the :memory: fix but slow on this box). **buildflow full run NOT yet done this train** — the AGENTS train-start rule was missed (see e). Smoke binary test not yet run.
+3. **TODO_LIST train row is stale** — says "next action T02"; T02–T06 are done. CHANGELOG `[Unreleased]` lines owed for T04 (dedup durability) + the :memory: hardening (code-path changes, changelog bar).
+4. **Upstream feedback backlog (T17) already has two concrete findings** (default scan ceiling vs list-all; cap check-then-apply ergonomics) — collected but not filed.
+
+## c) NOT STARTED
+
+T08 (parity/golden port details beyond what readmodels tests already pin), T09 snippets, T10/G2 verdict, T11–T12 faxes (`ApplyIdempotent(provider_ref)` — the showcase), T13–T14 transcripts + trim ruling, T15 enroll tokens, T16 sweep ruling, T17 upstream filing, T18/G3 train close (CHANGELOG, vulnix, runbook, flake check), T19 sessions memo, T20 threads dual-run spike (gated), T21 v5 watch row, T22 postgres proof.
+
+## d) TOTALLY FUCKED UP (all recovered)
+
+1. **The daemon committed AND pushed my mid-bisection experiment as `1f33c3c`** — 194 lines of shipped T04 code reverted on main (I had overwritten tracked server files in-place to bisect the upload-test failure). Recovered: restored from 8752f84, healed main with `9b5c572` (CI green). **Lesson: bisections on this host MUST run in a worktree, never the live tree.**
+2. **Daemon raced my staging twice more** (`3ac1eec` swallowed the T04 restore mid-drift-fix; `93df804` just swept the in-flight T05/T07 edits). Content correct, attribution noisy, but each race forces a re-view-before-edit cycle.
+3. **The `.githooks/commit-msg` daemon-guard did NOT block the daemon's go.mod commits** (890c937, c34d51c) despite the AGENTS enforcement claim (2026-10-12). Un-investigated: either the daemon commits with `--no-verify` or `core.hooksPath` is dangling again. A bare go.mod delta in a daemon commit is a documented defect class — this time harmless only because I completed the pin within the hour.
+4. My first red-main fix commit was blocked by whitespace-drift on my own reindent (restructured the edit; second attempt clean).
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Run buildflow at train start, not just at gates** — missed this train (AGENTS 2026-10-08 lesson); run it before continuing.
+2. **Commit immediately after every green milestone** — smaller daemon-race windows than "after the whole task".
+3. **Worktree discipline for any in-place experiment** on tracked files.
+4. The language servers (gopls + golangci-lint-ls) never reloaded the new vendored module set — stale `BrokenImport` diagnostics all session (compiler disagreed and was right). Restart LSP or mentally route around them; do not "fix" phantom errors.
+5. `TestUploadBodyIsBounded` remains load-sensitive in DURATION (9 min at load ~95; passes, correct, slow). Consider a load-aware `-short` mark if local suite time on this box keeps hurting.
+6. CHANGELOG/TODO_LIST/AGENTS.md upkeep lagged the code (see f) — the train row, the `[Unreleased]` lines, and an enduring readmodels-seam paragraph are all owed.
+
+## f) NEXT (top 30, ordered)
+
+| # | Task |
+|---|---|
+| 1 | Re-apply the two daemon-raced edits (view first): ErrListFull sentinel home → readmodels (+init registration), store/db.go init drops the ErrListFull arm |
+| 2 | Deps.Contacts `*store.Contacts` → `*readmodels.Contacts`; drop the store.Contacts provider; wire `Contacts: engine.Contacts()` in app |
+| 3 | contacts_api.go: `store.ErrListFull` → `readmodels.ErrListFull` |
+| 4 | Test wirings: `newTestReadmodels(t)` helper; server_test.go:135, session_behaviors_test.go:68, helpers_contract_test.go:170/196 (store-failure test now shuts the engine), contacts_api_fuzz_test.go:34 |
+| 5 | Delete store/contacts.go (`git rm`); remove ported tests (TestContactUpsertByNumber, TestContactCountCap); fix newTestDB arity + callers; family_test ErrListFull arm → readmodels |
+| 6 | Regenerate error-code registry (`-update` — store.contact_* die, readmodels.contact_* appear); `nix fmt`; readmodels+store+server targeted tests |
+| 7 | Commit T05–T07 (detailed message); push; watch CI to green |
+| 8 | G1 close: verify the running full-suite job; run `buildflow` (full); smoke the binary (`scripts/webphone-smoke.py`) |
+| 9 | CHANGELOG `[Unreleased]`: durable dedup, :memory: hardening, contacts read model |
+| 10 | TODO_LIST train row refresh (T02–T07 done; next T08) |
+| 11 | T08: list-payload byte-parity golden at the seam |
+| 12 | T09: snippets folds (caps 100/5, quick flag) + tests; delete store/snippets.go |
+| 13 | T10/G2: metrics + verdict recorded in plan + TODO_LIST |
+| 14 | T11–T12: FaxReceipted/FaxAdvanced folds + `ApplyIdempotent(provider_ref)`; both Resolution arms; delete store/faxes.go SQL |
+| 15 | T13: transcript append folds + reader.Scan search/export shapes |
+| 16 | T14: bounded trim (5000) ruling + cap tests |
+| 17 | T15: enroll-token Map query + consume-once + expiry sweep |
+| 18 | T16: sweep split ruling (hand tables stay SQL; stats source decision) |
+| 19 | T17: file upstream issues — finding #1 default-100 scan ceiling vs list-all semantics; finding #2 cap check-then-apply ergonomics; faxes findings as they land |
+| 20 | T18/G3: smoke + buildflow + vulnix + `nix flake check` + runbook obligations |
+| 21 | T19: sessions spike memo (N4 stands) |
+| 22 | T21: v5 watch row (usermgmt `stack.Materialize`) into TODO_LIST standing watches |
+| 23 | Investigate the commit-msg hook daemon-guard miss; fix locally or file |
+| 24 | docs/lessons.md: the daemon-bisection incident + the load-starvation forensics method (SIGQUIT goroutine dump) |
+| 25 | AGENTS.md: enduring readmodels-seam paragraph (engine file, dedup port, N5 ruling pointer) |
+| 26 | Verify readmodels.db rides the backup drill (stack-side `webphone-backup-drill` next run) |
+| 27 | LSP restart to clear stale vendor diagnostics |
+| 28 | SQL-site metric recount for G2 (baseline 108; contacts −7 when T07 lands) |
+| 29 | Re-check `scripts/push-stall-watch.sh` before any manual push (anchor discipline) |
+| 30 | Consider `-short`/load-aware marking for the upload-limit test on this host |
+
+## g) QUESTIONS I CANNOT ANSWER MYSELF
+
+1. **Why did the `.githooks/commit-msg` daemon-guard not fire** on the daemon's go.mod-touching commits? I can read the hook's pattern, but whether the daemon invokes git with `--no-verify` (by design, per its own config) is outside this repo — if it's by design, AGENTS.md's enforcement claim needs correcting rather than the hook.
+2. **G2 boundary authority:** the plan lets me record the pilot verdict and continue; do you want a hard stop after G2 (contacts/snippets proven) for your own review before P2 (faxes/transcripts) starts, or continuous execution through G3?
+3. **The 9-minute upload test under host load:** leave as-is (correct, just slow), or mark it load-aware `-short` so local full-suite runs on this contended box stay practical?
+
+---
+
+*Written mid-train; the working tree holds the in-flight T07 swap (see b.1) and one unpushed daemon commit (93df804) carries the T05/T06 read-model files. Auto-commit daemon will sweep this report.*
