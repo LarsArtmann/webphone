@@ -9,6 +9,18 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 
 ## Open tasks
 
+### Declarative/DDD model train (2026-10-14 plan — APPROVAL-PENDING, do not self-start)
+
+**Status:** 🟢 `PLAN` (owner approval gates execution) · **Priority:** High (1%+4% tiers) · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
+
+- **Tier 1% (51%):** delivery machine as data — `deliveryMoves` + pure `DeliveryAdvance` + `FailureKind` typed; `messages.templ` retry literal → constant. Behavior-parity; no schema/wire change.
+- **Tier 4% (64%):** 09-30 review open findings — `gateway.Receipt.Resolution` enum (deletes the `fax.drive` type-assert), `identities` key + shared-contact number validation at `Load` (boot-fail named).
+- **Tier 20% (80%):** `domain.AppendToThread` invariant fn; `faxMoves` table + `FaxAdvance` with replay = no move = inert.
+- **Tier 100%:** island `CALL_TRANSITIONS` table; typed domain events + `project(event)`→SSE map; DOMAIN_LANGUAGE ratification memo (owner-gated); docs sweep.
+- **Owner calls minted:** A1.7 out-of-order verdict tightening (recommend: keep today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (ROADMAP g2).
+
+**Evidence:** `docs/reviews/2026-09-30_data-model-review.html` (three open findings); analysis session 2026-10-14.
+
 ### SUPERB unified-auth train tails: owner-gated cutover + hardening remainder (2026-10-12 13:45 harvest)
 
 **Status:** 🟡 `PARTIALLY DONE` (T08/T11/T12/T14 closed 2026-10-12; the same-day harvest session executed the 10-52 report's non-gated items — VM suites green with the new asserts; only the rows below remain) · **Priority:** High (cutover cluster) / Medium (tail) · **Effort:** M
