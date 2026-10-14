@@ -144,7 +144,9 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 		})
 	}
 	if err != nil {
-		job.Status = domain.FaxFailed
+		// Queued by construction (Send and Resend drive fresh jobs), so
+		// the move is legal; the machine keeps the transition honest anyway.
+		job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxSubmitFailed())
 		job.Error = err.Error()
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", job.Error, 0); updateErr != nil {
 			slog.Warn("fax: mark failed", "error", updateErr)
@@ -157,13 +159,13 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 	// verdict (loopback resolves immediate) or the webhook still owes
 	// the outcome (deferred). No gateway-type sniffing: the Receipt is
 	// the contract.
-	job.Status = domain.FaxSending
+	job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxAccepted())
 	job.ProviderRef = receipt.ProviderRef
 	if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, receipt.ProviderRef, "", 0); updateErr != nil {
 		slog.Warn("fax: mark sending", "error", updateErr)
 	}
 	if receipt.Resolution == gateway.ResolutionImmediate {
-		job.Status = domain.FaxTransmitted
+		job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxSettled())
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 1); updateErr != nil {
 			slog.Warn("fax: mark transmitted", "error", updateErr)
 		}
@@ -287,12 +289,19 @@ func (s *Service) UpdateProviderStatus(
 	if status == domain.FaxReceived {
 		status = domain.FaxTransmitted // an outbound job cannot become "received"
 	}
-	if err := s.faxes.UpdateStatus(ctx, job.ID, status, "", errMsg, pages); err != nil {
+	next, ok := domain.FaxAdvance(job.Status, domain.FaxVerdict(status))
+	if !ok {
+		// No legal move — today only a verdict against an inbound
+		// "received" fact (no lifecycle): no write, no nudge, inert
+		// success. Replay dedup is the hooks seam's job (hooksIdem).
+		return job, nil
+	}
+	if err := s.faxes.UpdateStatus(ctx, job.ID, next, "", errMsg, pages); err != nil {
 		return domain.FaxJob{}, err
 	}
 	s.notify(ctx, job.Owner, job.ID)
 
-	job.Status = status
+	job.Status = next
 	job.Pages = pages
 	job.Error = errMsg
 	return job, nil
