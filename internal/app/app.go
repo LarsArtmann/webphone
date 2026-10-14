@@ -46,6 +46,7 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/paperless"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
@@ -62,8 +63,10 @@ var (
 	_ do.HealthcheckerWithContext = (*store.Database)(nil)
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
 	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
+	_ do.HealthcheckerWithContext = (*readmodels.Engine)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
+	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
 )
 
@@ -147,6 +150,17 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
 	do.ProvideNamed(injector, "blob-dir", func(i do.Injector) (*blob.Store, error) {
 		return blob.New(filepath.Join(cfg.DataDir, "files"))
+	})
+	// The metaengine storage (read models + dedup windows) lives in its
+	// OWN database file so the engine-owned DDL and webphone's hand-
+	// written migration ladder never touch (plan N5/N6). Named like the
+	// critical pair because the probe discovers health by name; NOT in
+	// WithCriticalServices — the seams it serves today fail open
+	// (dedup forgets → one harmless re-apply), unlike sqlite/blob whose
+	// loss takes the product down.
+	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
+	do.ProvideNamed(injector, "metaengine", func(i do.Injector) (*readmodels.Engine, error) {
+		return readmodels.Open(cfg.DataDir)
 	})
 	do.Provide(injector, func(i do.Injector) (*pbx.Client, error) {
 		return pbx.NewClient(cfg.PhoneAPIURL)
@@ -324,6 +338,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 	if _, err := do.InvokeNamed[*blob.Store](injector, "blob-dir"); err != nil {
 		return nil, wrapf("open blob store: %w", err)
+	}
+	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
+		return nil, wrapf("open read-model engine: %w", err)
 	}
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
