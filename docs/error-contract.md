@@ -277,11 +277,12 @@ a deliberate code change, regenerate:
 | store.thread_flag                            | Infrastructure, Rejection | internal/store/messages.go    |
 | store.thread_get                             | Infrastructure            | internal/store/messages.go    |
 | store.thread_insert                          | Infrastructure            | internal/store/messages.go    |
+| store.thread_lookup                          | Infrastructure            | internal/store/messages.go    |
 | store.thread_mark_read                       | Infrastructure            | internal/store/messages.go    |
 | store.thread_reread                          | Infrastructure            | internal/store/messages.go    |
 | store.thread_resolve                         | Infrastructure            | internal/messaging/service.go |
 | store.thread_scan                            | Infrastructure            | internal/store/messages.go    |
-| store.thread_upsert                          | Infrastructure            | internal/store/messages.go    |
+| store.thread_update                          | Infrastructure            | internal/store/messages.go    |
 | store.transcript_append                      | Infrastructure            | internal/store/transcripts.go |
 | store.transcript_delete                      | Infrastructure            | internal/store/transcripts.go |
 | store.transcript_scan                        | Infrastructure            | internal/store/transcripts.go |
