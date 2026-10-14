@@ -6,6 +6,8 @@ package session
 
 import (
 	"database/sql"
+	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/larsartmann/go-error-family"
@@ -92,6 +94,13 @@ func (s *SQLiteStore) Get(token string) (Session, bool) {
 		 FROM sessions WHERE token = ?`, token,
 	).Scan(&extension, &password, &created, &expires)
 	if err != nil {
+		// Auth stays fail-closed on ANY error, but a driver failure
+		// (locked/busy/degraded box) is NOT "unknown token": swallow it
+		// and the 401 becomes an undiagnosable mystery (the 2026-10-14
+		// TestUploadBodyIsBounded flake class). Log the distinction.
+		if !errors.Is(err, sql.ErrNoRows) {
+			slog.Warn("session: lookup failed", "error", err)
+		}
 		return Session{}, false
 	}
 	sess := Session{
