@@ -3,8 +3,8 @@
 Point-in-time rulings live here as HTML (grep-opaque — list this index
 first when hunting prior rulings).
 
-| Date       | Artifact                                    | Verdict                                                                                                                                           |
-| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Date       | Artifact                                             | Verdict                                                                                                                                                                                                                                                                                                     |
+| ---------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-10-14 | [2026-10-14_PROPOSAL.html](2026-10-14_PROPOSAL.html) | Single go.mod **RATIFIED** (third series verdict). Zero external Go consumers (verified GitHub-wide); every package under `internal/` blocks a split structurally; co-change 2% per 150 commits. Re-open ONLY on the named trigger: a second Go consumer importing `internal/domain` or `internal/gateway`. |
 
 Earlier verdicts in the same series live in `docs/architecture-understanding/`:
