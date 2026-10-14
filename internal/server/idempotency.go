@@ -1,9 +1,40 @@
 package server
 
 import (
+	"context"
+	"log/slog"
 	"sync"
 	"time"
 )
+
+// DedupWindow is the engine-backed dedup seam: a check-and-set window
+// with per-key TTL (the metaengine DedupStore port, consumer-owned so
+// this package stays library-free). Nil (test compositions, map
+// fallback) degrades to the in-process idemStore.
+type DedupWindow interface {
+	// Seen reports whether key is currently recorded and unexpired.
+	Seen(ctx context.Context, collection, key string, now time.Time) (bool, error)
+	// CheckAndRecord atomically records key (expiring at now+ttl) when
+	// absent; returns true when the key was already seen.
+	CheckAndRecord(ctx context.Context, collection, key string, ttl time.Duration, now time.Time) (bool, error)
+	// Sweep deletes every expired record in the collection and returns
+	// how many.
+	Sweep(ctx context.Context, collection string, now time.Time) (int, error)
+}
+
+// DedupCollection is the single engine collection both idem gates
+// share: TTL is carried per key (a DedupWindow property), so the hook
+// and call windows can diverge inside one sweepable collection.
+const DedupCollection = "webphone.idem"
+
+// idemGate is the check-then-record contract the webhook and call
+// lanes consume: check first (only successes are recorded), then the
+// caller records after the guarded work succeeded. Both impls honor
+// it — the map (rollback seam, tests) and the engine window.
+type idemGate interface {
+	seen(key string) bool
+	record(key string)
+}
 
 // idemStore remembers recently processed webhook idempotency keys (the
 // providers' provider_ref values) so a replayed callback gets the original
@@ -11,10 +42,9 @@ import (
 // recorded — a failed attempt (unknown ref, transient store error) stays
 // retryable by design.
 //
-// In-memory on purpose: this binary owns the whole store (no
-// multi-instance deployment), the session store already makes the same
-// process-local trade, and a restart merely re-arms dedupe — the worst
-// case is one harmless re-apply of an already-terminal status.
+// In-memory fallback (and the rollback seam for the engine window):
+// a restart merely re-arms dedupe — the worst case is one harmless
+// re-apply of an already-terminal status.
 // branching-flow COMPOSITION_mixin (baselined): coincidental mu+ttl
 // shape; hook dedupe and the unread cache are different domains.
 type idemStore struct {
