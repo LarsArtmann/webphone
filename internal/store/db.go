@@ -38,7 +38,17 @@ func Open(path string) (*sql.DB, error) {
 	// modernc sqlite is happiest with one writer connection; the app is
 	// single-process and low-traffic, so serialize everything.
 	db.SetMaxOpenConns(1)
-	db.SetConnMaxIdleTime(5 * time.Minute)
+	// Idle-trim file-backed pools only: an idle-closed ":memory:"
+	// connection takes its whole database with it, so the next query
+	// sees a fresh empty schema (observed 2026-10-15 as "no such
+	// table: sessions" after a load-starved 9-minute test request
+	// idled the single connection past this window). In-memory
+	// databases live exactly as long as the pool's connection.
+	idleTrim := 5 * time.Minute
+	if path == ":memory:" {
+		idleTrim = 0 // never idle-close: 0 disables the idle reaper
+	}
+	db.SetConnMaxIdleTime(idleTrim)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
