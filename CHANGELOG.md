@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Outbound message delivery is a declarative state machine: the legal
+  transitions (send accepted/refused, provider verdicts) live in one
+  domain-owned table with a pure advance function, and the retry
+  vocabulary ("transient"/"rejected"/"provider") is a closed
+  `FailureKind` type instead of scattered string literals — the retry
+  affordance asks the type. Behavior is byte-identical: out-of-order
+  verdicts overwrite exactly as before, database and wire strings are
+  unchanged.
+- Failed session lookups log the driver error instead of silently
+  answering "sign in first": a transient database failure on a
+  degraded box is now distinguishable from an unknown session token.
 - Visual redesign of the shell and island around the desk-phone vernacular:
   all platform-emoji icons (call/pin/mute/archive, attachment, voicemail
   play/delete, diagnostics gear) are replaced by consistent inline SVG
