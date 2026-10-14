@@ -9,18 +9,21 @@
 ## Self-review headline (the three questions)
 
 **What did I forget?**
+
 1. I claimed "ALL type files read" in the report footer — false. I never opened `asr/google.go`, `server/idempotency.go`, `server/unread.go`, `server/metrics.go`, `server/webhooks.go` (payload structs), `server/actions.go` (`sendFailureKeys`), `server/session_api.go`, `server/toast.go`, `app/app.go` (`Deps`/`App`), `userauth/enroll.go`, `web/views/helpers.go` — nor the tails of `pbx/client.go`, `crm/resolver.go`, `asr/asr.go`. Real coverage: ~85% of the data-model surface.
 2. I never opened `docs/dedup-registry.md` itself — I relied on AGENTS.md and in-code nolint comments for the rulings I promised to "re-confirm, not re-litigate."
 3. I did not verify the `webhooks.go` status-hook payloads before publishing a finding about verdict updates — the exact file my `Delivery` proposal reshapes.
 4. Section (f) of this report is the HARVEST input for TODO_LIST/ROADMAP — noted below as pending, not done (waiting for your instructions, as ordered).
 
 **What could I have done better?**
+
 1. **Verify-before-publishing.** I published a factually wrong sentence about `blob.RelPath` layering (see section d) because I hedged instead of reading `internal/arch/arch_test.go` at design time. Two minutes of grep would have settled it.
 2. **Scope claims to what was read.** The footer's universal claim inflated coverage; an honest "all domain/store/session/config/gateway/seam files read; server DTO layer audited by type inventory" costs nothing and survives audit.
 3. **Stage-then-wait for the daemon.** My detailed commit message was lost: the daemon committed the staged file (heuristic message, `cd12cec`) seconds before my retry, so the review's rationale exists only inside the HTML, not in history. Staging without an immediate commit attempt, or amending while unpushed, preserves it.
 4. The 09-30 review praised `FailureKind` as "following the established patterns" and my series-3 review caught it — series reviews need a vocabulary checklist ("every new closed set typed at birth?") so the NEXT review doesn't re-praise the next `FailureKind`.
 
 **What could I still improve?**
+
 1. Close the 15% discovery gap, then amend the report if any missed file changes a finding (candidates: `webhooks.go` payloads could sharpen finding #4; `idempotency.go`'s in-memory TTL map is a data model I only know by name).
 2. Convert this report's section (f) into TODO_LIST/ROADMAP entries (HARVEST) once you bless the priorities.
 3. Fix the published report's two defects (section d, items 1–2) — both S effort, both in one file.
@@ -29,36 +32,36 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Data-model review series 3 written as self-contained HTML (`docs/reviews/2026-10-14_data-model-review.html`, 84.7 KB): 12 required sections (current state, series cross-ref, 11-finding catalog, strengths, vision, 6 design deltas, 3 before/after comparisons, validation-layer table, 8-row decision log, anti-patterns, 7-step roadmap), kit Bauhaus template, tag-balance + anchor checks green | Commit `cd12cec` (daemon auto-commit; 974 insertions); worktree-vs-HEAD clean |
-| Series continuity: all three 2026-09-30 roadmap items verified LANDED in code — `Resolution` enum + `receipt.Resolution` switch in `fax.Service.drive`; identities keys/DIDs + shared-contact numbers boot-validated in `config.validate`; versioned transactional migration chain (schemaVersion 3) | Read directly in `gateway/gateway.go`, `fax/service.go`, `config/config.go`, `store/db.go` this session |
-| Discovery of the core data-model surface: `domain` (all 6 files), `store` (all 7), `session` (both stores), `config`, `gateway`, `blob`, `pbx`, `crm`, `asr` (openai client), `paperless`, `textagent`, `vcard`, `retention`, `sipcred`, `userauth` — read, not grepped | This session's tool log |
-| Claim verification by targeted search: zero enum parse helpers exist; `RetentionDays` → `time.Duration(days)*24h` → negative silently disabled; `FailureKind` magic strings across domain/messaging/views/tests; post-verification (just now): zero `.(*gateway.X)` type-asserts repo-wide, `TestDomainImportsNothingInternal` confirmed at `internal/arch/arch_test.go:50` | `rg` outputs this session |
-| Baselined rulings honored: report re-confirms (not re-litigates) `FaxJob.Error`, `Session.Password` at rest, boundary trios, raw `ProviderRef`/`CallID`, per-seam URL+Token | Report §series + §decision log |
-| 11 cataloged findings with severity, 6 design deltas with highlighted Go, all grounded in named symbols | Report §catalog/§model |
+| Item                                                                                                                                                                                                                                                                                                                                                                                                  | Evidence                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Data-model review series 3 written as self-contained HTML (`docs/reviews/2026-10-14_data-model-review.html`, 84.7 KB): 12 required sections (current state, series cross-ref, 11-finding catalog, strengths, vision, 6 design deltas, 3 before/after comparisons, validation-layer table, 8-row decision log, anti-patterns, 7-step roadmap), kit Bauhaus template, tag-balance + anchor checks green | Commit `cd12cec` (daemon auto-commit; 974 insertions); worktree-vs-HEAD clean                           |
+| Series continuity: all three 2026-09-30 roadmap items verified LANDED in code — `Resolution` enum + `receipt.Resolution` switch in `fax.Service.drive`; identities keys/DIDs + shared-contact numbers boot-validated in `config.validate`; versioned transactional migration chain (schemaVersion 3)                                                                                                  | Read directly in `gateway/gateway.go`, `fax/service.go`, `config/config.go`, `store/db.go` this session |
+| Discovery of the core data-model surface: `domain` (all 6 files), `store` (all 7), `session` (both stores), `config`, `gateway`, `blob`, `pbx`, `crm`, `asr` (openai client), `paperless`, `textagent`, `vcard`, `retention`, `sipcred`, `userauth` — read, not grepped                                                                                                                               | This session's tool log                                                                                 |
+| Claim verification by targeted search: zero enum parse helpers exist; `RetentionDays` → `time.Duration(days)*24h` → negative silently disabled; `FailureKind` magic strings across domain/messaging/views/tests; post-verification (just now): zero `.(*gateway.X)` type-asserts repo-wide, `TestDomainImportsNothingInternal` confirmed at `internal/arch/arch_test.go:50`                           | `rg` outputs this session                                                                               |
+| Baselined rulings honored: report re-confirms (not re-litigates) `FaxJob.Error`, `Session.Password` at rest, boundary trios, raw `ProviderRef`/`CallID`, per-seam URL+Token                                                                                                                                                                                                                           | Report §series + §decision log                                                                          |
+| 11 cataloged findings with severity, 6 design deltas with highlighted Go, all grounded in named symbols                                                                                                                                                                                                                                                                                               | Report §catalog/§model                                                                                  |
 
 ## b) PARTIALLY DONE
 
-| Item | Works | Open | Blocker | Effort |
-| --- | --- | --- | --- | --- |
-| Discovery coverage | ~85% (core model + seams read in full) | 11 files + 3 file tails unopened (list in self-review headline) | None — pure reading time | S–M |
-| Published report accuracy | All code-cited claims except two now verified | Two defects to repair (section d, items 1–2) | None | S |
-| Review roadmap handoff | 7-step roadmap written into the report | HARVEST into TODO_LIST/ROADMAP; owner prioritization | Your instructions (explicitly waiting) | S |
+| Item                      | Works                                         | Open                                                            | Blocker                                | Effort |
+| ------------------------- | --------------------------------------------- | --------------------------------------------------------------- | -------------------------------------- | ------ |
+| Discovery coverage        | ~85% (core model + seams read in full)        | 11 files + 3 file tails unopened (list in self-review headline) | None — pure reading time               | S–M    |
+| Published report accuracy | All code-cited claims except two now verified | Two defects to repair (section d, items 1–2)                    | None                                   | S      |
+| Review roadmap handoff    | 7-step roadmap written into the report        | HARVEST into TODO_LIST/ROADMAP; owner prioritization            | Your instructions (explicitly waiting) | S      |
 
 ## c) NOT STARTED
 
-| Item | Why | Still wanted? |
-| --- | --- | --- |
-| Roadmap step 1: `FailureKind` enum + `Delivery` value object (closes findings 1+4) | Review-only session; no code changes ordered | Yes — highest-value item |
-| Roadmap step 2: `Must*` enum parsers at row reads (finding 3) | Same | Yes |
-| Roadmap step 3: lifecycle constructors `New{In,Out}boundMessage/Fax` (finding 2) | Same | Yes |
-| Roadmap step 4: config hardening — reject negative `RetentionDays`, exhaustive gateway dispatch (findings 8+9) | Same | Yes |
-| Roadmap step 5: `session.Token` brand through the Store seam + `sipcred.Derive` (finding 6; carries `auth:` prefix + session suite) | Same | Yes |
-| Roadmap step 6: `blob.RelPath` (finding 7; type home now KNOWN: `domain`, per arch test — see d1) | Same | Yes |
-| Roadmap step 7: transcript `ParsePhone` at the API boundary; `ExtensionHubs` domain-keyed maps; ASR provider enum (findings 5+10) | Same | Opportunistic |
-| HARVEST of section (f) into TODO_LIST.md / ROADMAP.md | Waiting for your go | Yes — otherwise these die in this timestamped file |
-| Concurrent session's "declarative/DDD model train" plan (`f411d29`) | Not my session's work; not read (out of scope) | Your call — see question g1 |
+| Item                                                                                                                                | Why                                            | Still wanted?                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
+| Roadmap step 1: `FailureKind` enum + `Delivery` value object (closes findings 1+4)                                                  | Review-only session; no code changes ordered   | Yes — highest-value item                           |
+| Roadmap step 2: `Must*` enum parsers at row reads (finding 3)                                                                       | Same                                           | Yes                                                |
+| Roadmap step 3: lifecycle constructors `New{In,Out}boundMessage/Fax` (finding 2)                                                    | Same                                           | Yes                                                |
+| Roadmap step 4: config hardening — reject negative `RetentionDays`, exhaustive gateway dispatch (findings 8+9)                      | Same                                           | Yes                                                |
+| Roadmap step 5: `session.Token` brand through the Store seam + `sipcred.Derive` (finding 6; carries `auth:` prefix + session suite) | Same                                           | Yes                                                |
+| Roadmap step 6: `blob.RelPath` (finding 7; type home now KNOWN: `domain`, per arch test — see d1)                                   | Same                                           | Yes                                                |
+| Roadmap step 7: transcript `ParsePhone` at the API boundary; `ExtensionHubs` domain-keyed maps; ASR provider enum (findings 5+10)   | Same                                           | Opportunistic                                      |
+| HARVEST of section (f) into TODO_LIST.md / ROADMAP.md                                                                               | Waiting for your go                            | Yes — otherwise these die in this timestamped file |
+| Concurrent session's "declarative/DDD model train" plan (`f411d29`)                                                                 | Not my session's work; not read (out of scope) | Your call — see question g1                        |
 
 ## d) TOTALLY FUCKED UP
 
@@ -82,48 +85,48 @@ Nothing in the **codebase** was broken by this session (docs-only change). What 
 
 Ranked by impact; effort S (<30 min) / M (30 min–2 h) / L (>2 h). Items 1–7 are the review's roadmap; 8–14 repair/complete this session's own work; 15+ are grounded next steps this session surfaced. HARVEST will route these — flagging per the skill so they don't die here.
 
-| # | Task | Impact | Effort | Category |
-| --- | --- | --- | --- | --- |
-| 1 | `domain.FailureKind` enum (values = stored strings) + `IsRetryable()`; templ asks the type, not `"transient"` | Critical | M | Quality |
-| 2 | `domain.Delivery` value object; collapse `UpdateOutboundStatus`/`UpdateStatus` loose params; centralize clear-on-delivered | Critical | M | Quality |
-| 3 | `Must*` enum parsers (`MustDirection/MustChannel/MustOutboundStatus/MustFaxStatus`); switch the four scan fns | High | S | Quality |
-| 4 | Lifecycle constructors `New{In,Out}boundMessage` / `New{In,Out}boundFax`; services mint, illegal pairs unbuildable | High | S–M | Quality |
-| 5 | Reject negative `RetentionDays` in `config.validate` + config test | Medium | S | Bug |
-| 6 | Exhaustive gateway dispatch — panicking default instead of Loopback fallback | Medium | S | Bug |
-| 7 | `session.Token` defined type through the Store seam + `sipcred.Derive` (`auth:` prefix + session suite) | High | S | Quality |
-| 8 | `blob.RelPath` — type home `domain` (arch test settles it); blob converts; runtime escape check stays | Medium | M | Quality |
-| 9 | `ParsePhone` the transcript remote at the island-POST boundary; `CallID` stays raw per ruling | Medium | S | Consistency |
-| 10 | Fix the published report's RelPath layering paragraph (arch-test fact) | Medium | S | Documentation |
-| 11 | Amend the report footer's coverage claim (or complete the reading and keep it) | Medium | S | Documentation |
-| 12 | Complete discovery: read `asr/google.go`, `server/idempotency.go`, `server/unread.go`, `server/metrics.go`, `server/webhooks.go`, `server/actions.go`, `server/session_api.go`, `server/toast.go`, `app/app.go` (Deps), `userauth/enroll.go`, `web/views/helpers.go` + 3 file tails | Medium | S–M | Quality |
-| 13 | Amend or accept the daemon commit `cd12cec`'s message while still unpushed | Low | S | Process |
-| 14 | HARVEST this section into TODO_LIST.md / ROADMAP.md | High | S | Process |
-| 15 | `ExtensionHubs` maps keyed by `domain.Extension` (comparable struct; string keys buy nothing internally) | Low | S | Cleanup |
-| 16 | ASR provider kind → typed enum; `Google()` becomes a comparison | Low | S | Quality |
-| 17 | Verify fax tests cover both `Resolution` arms (09-30 roadmap asserted "existing tests cover"; never re-verified) | Medium | S | Testing |
-| 18 | Read `docs/dedup-registry.md` end-to-end; cross-check every ruling my report cited | Medium | S | Documentation |
-| 19 | Audit `server/idempotency.go` (`idemStore`): TTL map invariants, string keys, 1h windows — never read this session | Medium | S | Quality |
-| 20 | Decide `Lifetime.normalized()` vs config validation: document single-home vs defense-in-depth (currently two homes for Max≥Idle) | Low | S | Documentation |
-| 21 | `ThreadFlag` map+lookup → exhaustive switch over a closed set | Low | S | Cleanup |
-| 22 | Audit `views.Lang` (and i18n dictionaries) as a candidate 10th closed enum; fix the report's stat card if so | Low | S | Quality |
-| 23 | Consider `session.Secret`-style wrapper for `Session.Password` with redacted `String()` (policy keeps at-rest; the type only guards logs) | Low | S–M | Quality |
-| 24 | Consider branded `pbx.Credentials.Extension` (accepted-with-note today; leaf-package constraint documented) | Low | S | Quality |
-| 25 | Break the N+1 in `Messages.attachAttachments` (one query per message) into a single IN-query or join | Medium | M | Performance |
-| 26 | Pin the transcript caps (5000/1500) + `transcriptFetchWindow` interaction in a table-driven test (marathon-call trim behavior) | Medium | M | Testing |
-| 27 | Add a store test: corrupt enum value in a row → Must* parser panics (after item 3 lands) | Medium | S | Testing |
-| 28 | Add a config test: negative `retention_days` boot message (after item 5) | Low | S | Testing |
-| 29 | Add a gateway test: unknown mode panics (after item 6) | Low | S | Testing |
-| 30 | Sweep for remaining stringly vocabularies with the new checklist (candidates spotted: textagent `Draft.Status`, `Frozen.Reason` — upstream wire, likely accepted; rule on it once) | Medium | S | Quality |
-| 31 | Verify the smoke + island tests still pass after each roadmap landing (runbook obligations; templ edits need `templ generate`) | High | S each | Process |
-| 32 | After items 1–2 land: `CHANGELOG.md` `[Unreleased]` line (committed code-path change) | Low | S | Documentation |
-| 33 | After item 7 lands: run the session-behavior suite (`go test ./internal/server/ -run TestServer`) per the auth-regression convention | High | S | Testing |
-| 34 | Re-check CI verdict once the daemon pushes `cd12cec` (convention: check after every push) | Medium | S | Process |
-| 35 | Reconcile this roadmap with the concurrent session's DDD-train Pareto plan (see g1) before scheduling items 1–9 | High | S | Process |
-| 36 | Keep `BlobPaths []string` vs branded path — rule on it explicitly once `RelPath` lands (sweep returns raw strings to the unlink loop) | Low | S | Quality |
-| 37 | Rule on `store.Counts`/`SweepResult` int64 bags (baselined mixin; confirm the registry actually carries them — I cited from code comments only) | Low | S | Documentation |
-| 38 | Consider a `config.Seam` helper for the four both-or-neither URL+secret pairs (owner ruling says per-seam stays — revisit ONLY if a fifth pair appears) | Low | S | Quality |
-| 39 | Document the two time granularities (sessions=millis, main store=seconds) in one place beyond the schema comment | Low | S | Documentation |
-| 40 | Add the "vocabulary checklist" item to the next data-model review's prep (from e2) | Medium | S | Process |
+| #  | Task                                                                                                                                                                                                                                                                                | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | `domain.FailureKind` enum (values = stored strings) + `IsRetryable()`; templ asks the type, not `"transient"`                                                                                                                                                                       | Critical | M      | Quality       |
+| 2  | `domain.Delivery` value object; collapse `UpdateOutboundStatus`/`UpdateStatus` loose params; centralize clear-on-delivered                                                                                                                                                          | Critical | M      | Quality       |
+| 3  | `Must*` enum parsers (`MustDirection/MustChannel/MustOutboundStatus/MustFaxStatus`); switch the four scan fns                                                                                                                                                                       | High     | S      | Quality       |
+| 4  | Lifecycle constructors `New{In,Out}boundMessage` / `New{In,Out}boundFax`; services mint, illegal pairs unbuildable                                                                                                                                                                  | High     | S–M    | Quality       |
+| 5  | Reject negative `RetentionDays` in `config.validate` + config test                                                                                                                                                                                                                  | Medium   | S      | Bug           |
+| 6  | Exhaustive gateway dispatch — panicking default instead of Loopback fallback                                                                                                                                                                                                        | Medium   | S      | Bug           |
+| 7  | `session.Token` defined type through the Store seam + `sipcred.Derive` (`auth:` prefix + session suite)                                                                                                                                                                             | High     | S      | Quality       |
+| 8  | `blob.RelPath` — type home `domain` (arch test settles it); blob converts; runtime escape check stays                                                                                                                                                                               | Medium   | M      | Quality       |
+| 9  | `ParsePhone` the transcript remote at the island-POST boundary; `CallID` stays raw per ruling                                                                                                                                                                                       | Medium   | S      | Consistency   |
+| 10 | Fix the published report's RelPath layering paragraph (arch-test fact)                                                                                                                                                                                                              | Medium   | S      | Documentation |
+| 11 | Amend the report footer's coverage claim (or complete the reading and keep it)                                                                                                                                                                                                      | Medium   | S      | Documentation |
+| 12 | Complete discovery: read `asr/google.go`, `server/idempotency.go`, `server/unread.go`, `server/metrics.go`, `server/webhooks.go`, `server/actions.go`, `server/session_api.go`, `server/toast.go`, `app/app.go` (Deps), `userauth/enroll.go`, `web/views/helpers.go` + 3 file tails | Medium   | S–M    | Quality       |
+| 13 | Amend or accept the daemon commit `cd12cec`'s message while still unpushed                                                                                                                                                                                                          | Low      | S      | Process       |
+| 14 | HARVEST this section into TODO_LIST.md / ROADMAP.md                                                                                                                                                                                                                                 | High     | S      | Process       |
+| 15 | `ExtensionHubs` maps keyed by `domain.Extension` (comparable struct; string keys buy nothing internally)                                                                                                                                                                            | Low      | S      | Cleanup       |
+| 16 | ASR provider kind → typed enum; `Google()` becomes a comparison                                                                                                                                                                                                                     | Low      | S      | Quality       |
+| 17 | Verify fax tests cover both `Resolution` arms (09-30 roadmap asserted "existing tests cover"; never re-verified)                                                                                                                                                                    | Medium   | S      | Testing       |
+| 18 | Read `docs/dedup-registry.md` end-to-end; cross-check every ruling my report cited                                                                                                                                                                                                  | Medium   | S      | Documentation |
+| 19 | Audit `server/idempotency.go` (`idemStore`): TTL map invariants, string keys, 1h windows — never read this session                                                                                                                                                                  | Medium   | S      | Quality       |
+| 20 | Decide `Lifetime.normalized()` vs config validation: document single-home vs defense-in-depth (currently two homes for Max≥Idle)                                                                                                                                                    | Low      | S      | Documentation |
+| 21 | `ThreadFlag` map+lookup → exhaustive switch over a closed set                                                                                                                                                                                                                       | Low      | S      | Cleanup       |
+| 22 | Audit `views.Lang` (and i18n dictionaries) as a candidate 10th closed enum; fix the report's stat card if so                                                                                                                                                                        | Low      | S      | Quality       |
+| 23 | Consider `session.Secret`-style wrapper for `Session.Password` with redacted `String()` (policy keeps at-rest; the type only guards logs)                                                                                                                                           | Low      | S–M    | Quality       |
+| 24 | Consider branded `pbx.Credentials.Extension` (accepted-with-note today; leaf-package constraint documented)                                                                                                                                                                         | Low      | S      | Quality       |
+| 25 | Break the N+1 in `Messages.attachAttachments` (one query per message) into a single IN-query or join                                                                                                                                                                                | Medium   | M      | Performance   |
+| 26 | Pin the transcript caps (5000/1500) + `transcriptFetchWindow` interaction in a table-driven test (marathon-call trim behavior)                                                                                                                                                      | Medium   | M      | Testing       |
+| 27 | Add a store test: corrupt enum value in a row → Must* parser panics (after item 3 lands)                                                                                                                                                                                            | Medium   | S      | Testing       |
+| 28 | Add a config test: negative `retention_days` boot message (after item 5)                                                                                                                                                                                                            | Low      | S      | Testing       |
+| 29 | Add a gateway test: unknown mode panics (after item 6)                                                                                                                                                                                                                              | Low      | S      | Testing       |
+| 30 | Sweep for remaining stringly vocabularies with the new checklist (candidates spotted: textagent `Draft.Status`, `Frozen.Reason` — upstream wire, likely accepted; rule on it once)                                                                                                  | Medium   | S      | Quality       |
+| 31 | Verify the smoke + island tests still pass after each roadmap landing (runbook obligations; templ edits need `templ generate`)                                                                                                                                                      | High     | S each | Process       |
+| 32 | After items 1–2 land: `CHANGELOG.md` `[Unreleased]` line (committed code-path change)                                                                                                                                                                                               | Low      | S      | Documentation |
+| 33 | After item 7 lands: run the session-behavior suite (`go test ./internal/server/ -run TestServer`) per the auth-regression convention                                                                                                                                                | High     | S      | Testing       |
+| 34 | Re-check CI verdict once the daemon pushes `cd12cec` (convention: check after every push)                                                                                                                                                                                           | Medium   | S      | Process       |
+| 35 | Reconcile this roadmap with the concurrent session's DDD-train Pareto plan (see g1) before scheduling items 1–9                                                                                                                                                                     | High     | S      | Process       |
+| 36 | Keep `BlobPaths []string` vs branded path — rule on it explicitly once `RelPath` lands (sweep returns raw strings to the unlink loop)                                                                                                                                               | Low      | S      | Quality       |
+| 37 | Rule on `store.Counts`/`SweepResult` int64 bags (baselined mixin; confirm the registry actually carries them — I cited from code comments only)                                                                                                                                     | Low      | S      | Documentation |
+| 38 | Consider a `config.Seam` helper for the four both-or-neither URL+secret pairs (owner ruling says per-seam stays — revisit ONLY if a fifth pair appears)                                                                                                                             | Low      | S      | Quality       |
+| 39 | Document the two time granularities (sessions=millis, main store=seconds) in one place beyond the schema comment                                                                                                                                                                    | Low      | S      | Documentation |
+| 40 | Add the "vocabulary checklist" item to the next data-model review's prep (from e2)                                                                                                                                                                                                  | Medium   | S      | Process       |
 
 (40 items; items beyond the review's 7 roadmap steps are brainstorm-grade per the skill — HARVEST should apply routing rigor, ROADMAP over TODO_LIST for 16, 23, 24, 36, 38.)
 
@@ -137,4 +140,4 @@ Ranked by impact; effort S (<30 min) / M (30 min–2 h) / L (>2 h). Items 1–7 
 
 ---
 
-*Waiting for instructions. Nothing else researched, nothing else changed. The auto-commit daemon will pick this file up; no manual commit per the harness contract.*
+_Waiting for instructions. Nothing else researched, nothing else changed. The auto-commit daemon will pick this file up; no manual commit per the harness contract._
