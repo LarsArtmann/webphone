@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>Data Model Review 2026-10-14 - webphone</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -828,9 +828,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>DATA MODEL REVIEW · SERIES 3</span>
+      <span>2026-10-14</span>
+      <span>WEBPHONE · ALL TYPE FILES READ</span>
     </div>
 
     <div class="layout">
@@ -838,195 +838,1063 @@
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#current-state">Current state</a>
+          <a href="#series">Series cross-reference</a>
+          <a href="#catalog">Problem catalog</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#catalog-table">Catalog table</a>
+          <a href="#vision">The vision</a>
+          <a href="#model">Go data model</a>
+          <a href="#composition">Composition in action</a>
+          <a href="#validation">Validation layer</a>
+          <a href="#decisions">Decision log</a>
+          <a href="#antipatterns">Anti-patterns</a>
+          <a href="#roadmap">Migration roadmap</a>
         </nav>
       </aside>
 
       <main class="main">
         <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Architecture Deep-Dive · Data Model Review</div>
+          <h1>The vocabulary is the last untyped surface</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Third entry in the data-model series (2026-09-19 → 2026-09-30 →
+            this). All three 09-30 roadmap items landed and are verified
+            below; every ID still branded, every boundary still validated —
+            and the open rot has a single root cause: domain vocabularies
+            that live in comments and string comparisons instead of types.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
+        <!-- Inline TOC -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#current-state">Current state</a></li>
+            <li><a href="#series">Series cross-reference</a></li>
+            <li><a href="#catalog">Problem catalog</a></li>
+            <li><a href="#vision">The vision</a></li>
+            <li><a href="#model">Go data model</a></li>
+            <li><a href="#composition">Composition in action</a></li>
+            <li><a href="#validation">Validation layer</a></li>
+            <li><a href="#decisions">Decision log</a></li>
+            <li><a href="#antipatterns">Anti-patterns</a></li>
+            <li><a href="#roadmap">Migration roadmap</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
-        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <!-- ======================= 00 CURRENT STATE ======================= -->
+        <h2 id="current-state"><span class="num">00</span>Current state</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+            <div class="stat-value">10</div>
+            <div class="stat-label">Branded ID families</div>
           </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+          <div class="stat-card">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Validated value objects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Closed string enums</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">11</div>
+            <div class="stat-label">Open findings (8 new)</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">3/3</div>
+            <div class="stat-label">09-30 roadmap items LANDED</div>
           </div>
         </div>
+        <p>
+          The 2026-09-30 review proposed exactly three changes. All three are
+          in the code now, verified for this review: the gateway
+          <strong>Receipt.Resolution</strong> closed enum exists and
+          fax.Service.drive switches on it — the Loopback type-assert is gone;
+          <strong>config.Load()</strong> validates identities keys as
+          normalized extensions and both identities DIDs and shared-contact
+          numbers as Phones, naming the offender on a rejected boot; and the
+          store grew a <strong>versioned migration chain</strong>
+          (schemaVersion 3, transactional per-step runner, tolerant v1
+          convergence for legacy databases) — more than the proposed
+          one-statement runner. The model also grew substantially since
+          09-30: thread organization flags, reply snippets, call transcripts
+          (two new tables, migrations v2+v3), the passkey identity layer, SIP
+          credential brokering, and the TextAgent seam. Every addition
+          followed the established ID/validation discipline — except the
+          vocabularies, which are where this review digs in.
+        </p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <!-- ======================= 01 SERIES ======================= -->
+        <h2 id="series"><span class="num">01</span>Series cross-reference — follow-ups resolved</h2>
 
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+        <div class="card card-solution">
+          <h4>Resolved · Receipt.Resolution (09-30 finding, P5)</h4>
+          <p>
+            internal/gateway now defines the closed two-value
+            <strong>Resolution</strong> enum (ResolutionDeferred as the
+            zero value, ResolutionImmediate), Loopback mints
+            ResolutionImmediate, the webhook gateways defer, and
+            fax.Service.drive branches on <code>receipt.Resolution</code>.
+            The <code>s.gateway.(*gateway.Loopback)</code> assert this
+            review series flagged twice no longer exists anywhere in the
+            repo.
+          </p>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h4>Resolved · identities + SharedContact validation (09-30 findings, P4 ×2)</h4>
+          <p>
+            config.validate walks every <strong>identities</strong> key
+            through domain.ParseExtension (rejecting non-normalized
+            spellings, not just undialable ones) and every DID and every
+            shared-contact number through domain.ParsePhone. A typo now
+            fails the boot naming the offending key — the fail-silent
+            boundary both prior reviews carried is closed. One review's
+            fix, two reviews' items closed, exactly as the 09-30 report
+            planned it.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <div class="card card-solution">
+          <h4>Resolved · schema_version (09-30 finding, P8) — exceeded</h4>
+          <p>
+            The store now owns <strong>schemaVersion 3</strong> with an
+            ordered migration chain: v1 recreates the historical shape
+            (tolerant of legacy duplicate-column ALTERs), v2 adds thread
+            flags + snippets, v3 adds call transcripts. Every step runs in
+            one transaction with a delete-then-insert version stamp, and
+            fresh and migrated databases walk the same shape-history. The
+            proposal asked for a version home "before the first ALTER";
+            the delivered design already survived two.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Re-confirmed accepted · deviations stay</h4>
+          <p>
+            <strong>FaxJob.Error</strong> stays a display-only reason string
+            (structured error typing would buy a join table's complexity for
+            zero behavior — 09-19 verdict, re-read and re-accepted 09-30).
+            <strong>session.Session.Password</strong> stays at rest by policy
+            (the /phone-api proxy needs it; swept on read/Create; the passkey
+            train moved the BROWSER exposure out via sipcred, not the
+            server-side secret). The boundary trio (domain.SharedContact ·
+            vcard.Card · apiSharedContact), the
+            InboundMessage/OutboundMessage split, the raw CallID passthrough,
+            the string ProviderRef, and the per-seam URL+Token pairs all
+            carry baselined rulings — see docs/dedup-registry.md. This review
+            does not re-litigate them.
+          </p>
+        </div>
+
+        <!-- ======================= 02 PROBLEM CATALOG ======================= -->
+        <h2 id="catalog"><span class="num">02</span>Problem catalog</h2>
+        <p>
+          Eight new findings, graded by severity. They share one root cause:
+          <strong>closed vocabularies and multi-field verdicts represented as
+          bare strings</strong> — the exact gap between the model's two
+          existing disciplines (IDs get brands + parsers; enums get a type
+          name and nothing else).
+        </p>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <span class="severity severity-critical">High</span>
+          <h3>FailureKind is a stringly vocabulary — and the retry rule lives in the view</h3>
+          <div class="where">internal/domain/message.go — Message.FailureKind string · internal/messaging/service.go · internal/web/views/messages.templ</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            The delivery-failure vocabulary — "", "transient", "rejected",
+            "provider" — is documented in a field comment and enforced
+            nowhere. It has TWO construction homes (failureKindOf maps a
+            send error; DeliveryReceipt assigns the literal "provider") and
+            its one business rule — <em>only transient is retryable</em> —
+            is executed by the VIEW layer as a string comparison
+            (<code>msg.FailureKind == "transient"</code> in messages.templ,
+            which decides whether the Retry button renders). The domain
+            vocabulary grew a second writer within a month of its birth;
+            the rule that governs it drifted two layers away from the type
+            that owns it.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            State the concrete recommended action.
+            A closed <code>FailureKind</code> enum whose values ARE the
+            stored strings (DB bytes stay identical), with
+            <code>IsRetryable()</code> as the one home of the rule; the
+            templ renders Retry iff <code>msg.FailureKind.IsRetryable()</code>.
+            See §04 delta 1.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">High</span>
+          <h3>Direction × Status legality is cross-axis — and representable wrong</h3>
+          <div class="where">internal/domain/message.go — Message · internal/domain/fax.go — FaxJob</div>
+          <p>
+            The lifecycle invariants are comments, not types: an inbound
+            message's Status must be the zero value ("the only legal status
+            for inbound"); "received" is an inbound-only fax status;
+            queued/sending/transmitted are outbound-only. Yet
+            <code>Message{Direction: in, Status: sent}</code> and
+            <code>FaxJob{Direction: in, Status: queued}</code> both
+            compile and both scan happily out of the database. The 09-30
+            vision line said "lifecycle states are types" — true at the
+            gateway boundary (InboundMessage/OutboundMessage, the baselined
+            split), still false at the aggregate the UI actually renders.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Keep the flat row types (SQLite scan simplicity is a real
+            constraint) but move legality to mint time: NewOutboundMessage /
+            NewInboundMessage / NewOutboundFax / NewInboundFax constructors
+            refuse illegal Direction×Status pairs, and the store's read path
+            canonicalizes through enum parsers so a corrupt row panics like
+            a corrupt ID does. See §04 delta 2.
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">Medium</span>
+          <h3>Enum reads skip the corruption policy the IDs already obey</h3>
+          <div class="where">internal/store/messages.go — scanMessage, scanThreadSummary · internal/store/faxes.go — scanFax · internal/store/transcripts.go — scanTranscriptRow</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            Every ID read from a row goes through domain.Must* — a malformed
+            id panics, and the panic is the honest crash for corruption.
+            Every enum read from a row is an unchecked cast:
+            <code>domain.Direction(direction)</code>,
+            <code>domain.Channel(channel)</code>,
+            <code>domain.OutboundStatus(status)</code>,
+            <code>domain.FaxStatus(status)</code>. A corrupted or
+            hand-edited row yields an out-of-vocabulary enum value that
+            flows silently into views and comparisons — the one boundary
+            where the model's own corruption doctrine is not applied. No
+            ParseDirection/ParseChannel/ParseOutboundStatus/ParseFaxStatus
+            exists anywhere in the repo.
           </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Parse-or-panic helpers beside the enum declarations, used by the
+            scan functions — the enum twin of MustThreadID. Same policy, one
+            new home per vocabulary.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Medium</span>
+          <h3>Delivery verdicts travel as four loose parameters</h3>
+          <div class="where">internal/store/messages.go — UpdateOutboundStatus · internal/store/faxes.go — UpdateStatus</div>
+          <p>
+            <code>UpdateOutboundStatus(ctx, id, status, providerRef,
+            failureKind, failureDetail)</code> — three adjacent strings and
+            an enum; every transposition compiles. The store's own doc
+            comment encodes a cross-field invariant ("a delivered verdict
+            CLEARS any earlier failure") that the signature cannot express
+            and each caller re-implements. Faxes repeat the shape with
+            <code>(status, providerRef, errorText, pages)</code>. The
+            existing nolint rulings correctly reject branding ProviderRef
+            (webhook DTO + partial-index + golden-row ripple) — but a value
+            object carries the verdict WITHOUT re-typing the ref.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            A <code>domain.Delivery</code> value (Status, ProviderRef,
+            FailureKind, FailureDetail) whose constructor enforces the
+            clear-on-delivered and failure-story-only-on-failed invariants;
+            the store takes one Delivery. See §04 delta 1.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Medium</span>
+          <h3>CallTranscript keeps Remote unbranded — with no ruling behind it</h3>
+          <div class="where">internal/domain/transcript.go — CallTranscriptSegment, CallTranscript</div>
+          <p>
+            CallID's raw string is a documented, nolinted ruling (the
+            island-owned SIP Call-ID, opaque passthrough, never joined to
+            CDR rows — the 09-18 pbx-UUID class). Remote has no such
+            rationale: it is a phone number, every sibling type
+            (Message.Remote, FaxJob.Remote, Thread.Remote) brands it as
+            domain.Phone, and the transcripts table is the one place a
+            remote number travels as an unchecked string from the island's
+            POST through the store into History renders. Two spellings of
+            one number now diverge between the Messages tab and the History
+            tab.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            ParsePhone at the transcript API boundary (the handler that
+            accepts island posts), store and render domain.Phone. CallID
+            stays raw — that ruling stands.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Medium</span>
+          <h3>The session token is the one credential-shaped string with no type</h3>
+          <div class="where">internal/session/service.go — Store seam · internal/sipcred/sipcred.go — Derive</div>
+          <p>
+            Store.Create returns a bare <code>string</code>;
+            Get/Renew/Delete/ActiveTokens take one; sipcred.Derive takes
+            <code>(secret, sessionToken string)</code>; the cookie handlers
+            pass it around as a string. The token is 256 bits of entropy
+            that mints SIP REGISTER credentials and revokes them — the
+            highest-stakes string in the process — and the compiler will
+            happily accept a provider ref, a CSRF token, or a filename in
+            its place. Every other high-stakes identifier in this repo
+            already wears a brand.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            A <code>session.Token</code> defined type minted by makeSession
+            (the one home) and threaded through the Store seam and
+            sipcred.Derive. Zero wire change — the cookie still carries the
+            raw form.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Medium</span>
+          <h3>Blob paths are three raw strings for one concept</h3>
+          <div class="where">internal/blob/store.go — Save/Open/Abs/Remove · domain.Attachment.Path · domain.FaxJob.DocumentPath · gateway.OutboundFax.PDFPath</div>
+          <p>
+            The "path relative to the data dir" contract lives in doc
+            comments. blob.Open refuses escapes at runtime — which catches
+            hostile HTTP input but not a confused caller storing an
+            absolute path into Attachment.Path (the sweep and the download
+            handler would then resolve it against the wrong root or serve
+            it directly). The same value crosses three spellings:
+            store-relative (persisted), absolute (gateway upload), and raw
+            reader paths.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            A <code>blob.RelPath</code> defined type: Save returns it,
+            Open/Abs/Remove take it, the stores scan into it. The runtime
+            escape check STAYS for the HTTP boundary; the type kills the
+            confused-caller class. blob stays a leaf package — the type
+            lives there, and domain holds it without importing anything new.
+          </div>
         </div>
 
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+          <span class="severity severity-nice">Low</span>
+          <h3>RetentionDays rejects nothing — negative silently means forever</h3>
+          <div class="where">internal/config/config.go — RetentionDays · internal/app/app.go — retention.Start wiring</div>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Zero is documented as "keep everything forever" and the sweeper
+            honors it by not starting. A negative value takes the same
+            silent path (non-positive window → disabled) without the
+            documentation or the intent — a typo'd "-30" boots green and
+            keeps every message forever, the exact fail-silent shape the
+            09-30 review deleted from identities.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            One validate() clause: negative RetentionDays is a Rejection
+            naming the value and the fix ("use 0 to keep everything").
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Low</span>
+          <h3>Gateway dispatch fails OPEN on an unknown mode</h3>
+          <div class="where">internal/gateway/gateway.go — NewMessageGateway, NewFaxGateway</div>
+          <p>
+            Both pickers switch on GatewayMode with
+            <code>default: return &amp;Loopback{…}</code>. Config.validate
+            makes an unknown mode unreachable at boot — but a second
+            caller, a test fixture, or a future mode enum value falls into
+            a default that FAKES SUCCESSFUL SENDS. In a send path,
+            fail-open is the wrong failure shape even when guarded
+            upstream; loopback is a deployment decision, not a fallback.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Exhaustive switch (loopback; webhook; default panics with the
+            mode value). Post-validation unreachable code should fail
+            loudly, not impersonate the dev gateway.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Low</span>
+          <h3>Smaller vocabulary leaks</h3>
+          <div class="where">internal/config/config.go — ASR.Provider · internal/server/sse.go — ExtensionHubs maps</div>
+          <p>
+            <strong>ASR.Provider</strong> carries "openai"/"google"/"" as
+            magic strings checked by a validate() switch and a Google()
+            method — a typed enum with Google() replaced by a comparison
+            would close it. <strong>ExtensionHubs</strong> keys its hubs,
+            langs and seen maps by extension.String() — domain.Extension is
+            a comparable struct, so map[domain.Extension]X works with zero
+            plumbing and keeps the brand to the map boundary (config-file
+            maps stay strings: koanf + JSON are the contract). Neither
+            leaks user-visible behavior today; both are free at the next
+            touch.
           </p>
         </div>
 
-        <!-- Strengths -->
-        <h2>Strengths</h2>
+        <!-- ======================= STRENGTHS ======================= -->
+        <h2 id="strengths">Strengths — the model to preserve</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Ten branded ID families with the Parse/Must split</strong>
+              <span>Thread/Message/Attachment/Fax/Contact/Snippet in domain, ContactRef in crm, Tag/DocType/Field in paperless (int-branded). Client input meets Parse* (404/reject), rows meet Must* (panic = corruption). No fourth path anywhere.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Extension and Phone are constructor-validated wrappers over ONE sanitizer</strong>
+              <span>sanitizeDialable is the single alphabet home, pinned by a Go test AND the served-asset table — the same rule the island's dial field applies. History rows and threads key identically by construction.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Storage makes webhook replays unrepresentable</strong>
+              <span>Partial unique indexes on provider_ref (messages + fax_jobs, empty refs exempt) — a replayed verdict can never double-apply. Owner scoping lives in every store query; attachments stream only through session-gated joins.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Caps enforced in one INSERT statement</strong>
+              <span>ContactsMaxPerExtension (500) and SnippetsMaxPerExtension (100) live in the INSERT's WHERE clause — the cap holds under concurrent saves with no read-then-write race. Transcripts add a scalar-bounded trim (per-owner 5000, per-call 1500) that cannot materialize a keep-list.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Versioned, transactional migrations with one shape-history</strong>
+              <span>Fresh and legacy databases walk the same chain; a failed step aborts at its version and a retry resumes there. The 09-30 "version home before the first ALTER" debt is paid with interest.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Fail-closed config with named offenders</strong>
+              <span>Every half-configuration (both-or-neither seams, passkey half-wiring, token-without-URL, dead TURN secret) is a rejected boot citing the exact key and the fix. Identities and shared contacts joined this discipline in this window.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Boundary shapes stay separate on purpose</strong>
+              <span>AttachmentContent (raw bytes) → Attachment (stored) → OutboundAttachment (wire ref); domain.SharedContact / vcard.Card / apiSharedContact; CDR/voicemail DTOs mirror the upstream API verbatim. The baselined rulings in docs/dedup-registry.md protect each — this review confirms all of them are still the right calls.</span>
             </div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- ======================= CATALOG TABLE ======================= -->
+        <h2 id="catalog-table">Catalog table</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Severity</th>
+                <th>Finding</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><span class="badge badge-critical">High</span></td>
+                <td>FailureKind stringly vocabulary; retry rule string-matched in the view</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="badge badge-critical">High</span></td>
+                <td>Direction × Status illegal pairs representable (Message, FaxJob)</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>Unchecked enum casts at DB reads — the Must* policy skips enums</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>Delivery verdicts as four loose parameters (transposable)</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>CallTranscript.Remote unbranded (no ruling behind it)</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>session.Token unbranded through the Store seam and sipcred.Derive</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>Blob paths untyped (relative-path contract in comments)</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>RetentionDays negative silently = forever</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>Gateway mode dispatch fails open into Loopback</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>ASR.Provider magic strings; ExtensionHubs raw-string map keys</td>
+                <td><span class="badge badge-high">Open</span></td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>Receipt.Resolution enum replaces the Loopback type-assert</td>
+                <td><span class="badge badge-fixed">Landed</span></td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>identities keys + shared-contact numbers validated at boot</td>
+                <td><span class="badge badge-fixed">Landed</span></td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td><span class="badge badge-fixed">Resolved</span></td>
+                <td>Versioned transactional migrations (schemaVersion 3)</td>
+                <td><span class="badge badge-fixed">Landed</span></td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td><span class="badge badge-low">Accepted</span></td>
+                <td>FaxJob.Error display-only; Session.Password at rest; CallID raw; ProviderRef string; boundary trios; per-seam URL+Token</td>
+                <td><span class="badge badge-low">Re-confirmed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
+        <!-- ======================= 03 VISION ======================= -->
+        <h2 id="vision"><span class="num">03</span>The vision</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Every closed set is a type</strong>
+              <span>The failure vocabulary, the ASR provider kind, the gateway mode dispatch — no bare string carries a domain rule. The enum values ARE the stored bytes, so storage never migrates.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Every lifecycle is legal at mint time</strong>
+              <span>Constructors own the Direction × Status pairing; an inbound-with-status message or an inbound-queued fax cannot be built, and corrupt rows panic like corrupt ids.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Verdicts travel as values</strong>
+              <span>Status, provider ref and failure story move as one Delivery — no transposable ladders, no cross-field invariants re-implemented per caller.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>High-stakes strings wear their intent</strong>
+              <span>The session token and the blob-relative path are branded; the compiler, not a code reviewer, catches the confused caller.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Zero values stay honest</strong>
+              <span>0 retention = documented forever; a negative retention is a rejected boot; an unknown gateway mode panics instead of impersonating the dev loopback.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>The boundary doors stay exactly three</strong>
+              <span>Client input meets Parse* (404), rows meet Must*/parse (panic = corruption), config meets validate (rejected boot naming the key) — and enums finally walk through the same doors as ids.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================= 04 GO DATA MODEL ======================= -->
+        <h2 id="model"><span class="num">04</span>Go data model — the deltas</h2>
+        <p>
+          The redesign is surgical: six type-level changes, nothing else.
+          The existing model earns "keep" everywhere else — every change
+          below reuses a discipline the codebase already applies to IDs.
+        </p>
+
+        <h3>Delta 1 — the failure vocabulary becomes a type; verdicts become a value</h3>
+        <div class="diagram">
+<pre><code><span class="tok-comment">// domain/message.go — the enum values ARE the stored strings:</span>
+<span class="tok-comment">// no migration, no data rewrite. The rule gets one home.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">FailureKind</span> <span class="tok-type">string</span>
+
+<span class="tok-keyword">const</span> (
+    <span class="tok-func">FailureNone</span>      <span class="tok-type">FailureKind</span> = <span class="tok-string">""</span>          <span class="tok-comment">// no failure (default)</span>
+    <span class="tok-func">FailureTransient</span> <span class="tok-type">FailureKind</span> = <span class="tok-string">"transient"</span> <span class="tok-comment">// transport/5xx: retryable</span>
+    <span class="tok-func">FailureRejected</span>  <span class="tok-type">FailureKind</span> = <span class="tok-string">"rejected"</span>  <span class="tok-comment">// our request: not retryable</span>
+    <span class="tok-func">FailureProvider</span>  <span class="tok-type">FailureKind</span> = <span class="tok-string">"provider"</span>  <span class="tok-comment">// async webhook verdict</span>
+)
+
+<span class="tok-comment">// IsRetryable is THE home of the retry rule — the view asks, never parses.</span>
+<span class="tok-keyword">func</span> <span class="tok-func">(k FailureKind)</span> <span class="tok-func">IsRetryable</span>() <span class="tok-type">bool</span> { <span class="tok-keyword">return</span> k == <span class="tok-func">FailureTransient</span> }
+
+<span class="tok-comment">// domain/message.go — one value carries the whole verdict;</span>
+<span class="tok-comment">// the cross-field invariants live in the constructor.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Delivery</span> <span class="tok-keyword">struct</span> {
+    status        <span class="tok-type">OutboundStatus</span>
+    providerRef   <span class="tok-type">string</span> <span class="tok-comment">// stays raw: the nolint rulings stand (DTO/index/golden ripple)</span>
+    failureKind   <span class="tok-type">FailureKind</span>
+    failureDetail <span class="tok-type">string</span>
+}
+
+<span class="tok-keyword">func</span> <span class="tok-func">NewDelivery</span>(status <span class="tok-type">OutboundStatus</span>, providerRef, failureDetail <span class="tok-type">string</span>) (<span class="tok-type">Delivery</span>, <span class="tok-type">error</span>) {
+    <span class="tok-keyword">switch</span> status {
+    <span class="tok-keyword">case</span> <span class="tok-func">StatusSent</span>, <span class="tok-func">StatusDelivered</span>:
+        <span class="tok-keyword">return</span> <span class="tok-type">Delivery</span>{status, providerRef, <span class="tok-func">FailureNone</span>, <span class="tok-string">""</span>}, <span class="tok-type">nil</span> <span class="tok-comment">// delivered CLEARS failure — here, not per caller</span>
+    <span class="tok-keyword">case</span> <span class="tok-func">StatusFailed</span>:
+        <span class="tok-keyword">return</span> <span class="tok-type">Delivery</span>{status, providerRef, <span class="tok-func">FailureProvider</span>, failureDetail}, <span class="tok-type">nil</span>
+    <span class="tok-keyword">default</span>:
+        <span class="tok-keyword">return</span> <span class="tok-type">Delivery</span>{}, <span class="tok-func">errorfamily</span>.<span class="tok-func">NewRejection</span>(<span class="tok-string">"domain.delivery"</span>, <span class="tok-string">"not a delivery verdict"</span>)
+    }
+}</code></pre>
+        </div>
+        <p>
+          Store signature collapses from six parameters to three
+          (<code>UpdateOutboundStatus(ctx, id, d domain.Delivery)</code>);
+          messaging's two construction sites (failureKindOf and the literal
+          "provider") collapse into NewDelivery; the templ asks
+          <code>msg.FailureKind.IsRetryable()</code>. The DB bytes, the
+          export wire and the golden-pinned rows do not move.
+        </p>
+
+        <h3>Delta 2 — lifecycle legality at mint time; corruption panics at read time</h3>
+        <div class="diagram">
+<pre><code><span class="tok-comment">// domain/message.go — constructors make the illegal pair unbuildable.</span>
+<span class="tok-keyword">func</span> <span class="tok-func">NewOutboundMessage</span>(owner <span class="tok-type">Extension</span>, remote <span class="tok-type">Phone</span>, body <span class="tok-type">string</span>, ch <span class="tok-type">Channel</span>, now <span class="tok-type">time</span>.Time) <span class="tok-type">Message</span> {
+    <span class="tok-keyword">return</span> <span class="tok-type">Message</span>{Owner: owner, Remote: remote, Body: body, Channel: ch,
+        Direction: <span class="tok-func">DirectionOutbound</span>, Status: <span class="tok-func">StatusQueued</span>, CreatedAt: now}
+}
+
+<span class="tok-keyword">func</span> <span class="tok-func">NewInboundMessage</span>(owner <span class="tok-type">Extension</span>, remote <span class="tok-type">Phone</span>, body <span class="tok-type">string</span>, ch <span class="tok-type">Channel</span>, at <span class="tok-type">time</span>.Time) <span class="tok-type">Message</span> {
+    <span class="tok-keyword">return</span> <span class="tok-type">Message</span>{Owner: owner, Remote: remote, Body: body, Channel: ch,
+        Direction: <span class="tok-func">DirectionInbound</span>, CreatedAt: at} <span class="tok-comment">// Status stays zero — the only legal inbound status</span>
+}
+
+<span class="tok-comment">// domain — parse-or-panic twins of the Must* id family, one per vocabulary.</span>
+<span class="tok-keyword">func</span> <span class="tok-func">parseDirection</span>(s <span class="tok-type">string</span>) <span class="tok-type">Direction</span> { <span class="tok-comment">// same contract as MustThreadID:</span>
+    <span class="tok-keyword">switch</span> <span class="tok-type">Direction</span>(s) {
+    <span class="tok-keyword">case</span> <span class="tok-func">DirectionInbound</span>, <span class="tok-func">DirectionOutbound</span>:
+        <span class="tok-keyword">return</span> <span class="tok-type">Direction</span>(s)
+    <span class="tok-keyword">default</span>:
+        <span class="tok-func">panic</span>(<span class="tok-string">"corrupt row: direction "</span> + s) <span class="tok-comment">// corruption is the only source</span>
+    }
+}</code></pre>
+        </div>
+        <p>
+          The scan functions switch from unchecked casts to the parsers;
+          fax gets NewOutboundFax/NewInboundFax and a parseFaxStatus the
+          same way. Flat row types stay — the union lives at the gateway
+          boundary where the baselined split already put it.
+        </p>
+
+        <h3>Delta 3 — the token and the path wear brands</h3>
+        <div class="diagram">
+<pre><code><span class="tok-comment">// session — 256 opaque bits get a name.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Token</span> <span class="tok-type">string</span>
+
+<span class="tok-keyword">type</span> <span class="tok-type">Store</span> <span class="tok-keyword">interface</span> {
+    <span class="tok-func">Create</span>(extension <span class="tok-type">domain</span>.Extension, password <span class="tok-type">string</span>) (<span class="tok-type">Token</span>, <span class="tok-type">error</span>)
+    <span class="tok-func">Get</span>(token <span class="tok-type">Token</span>) (<span class="tok-type">Session</span>, <span class="tok-type">bool</span>)
+    <span class="tok-func">Renew</span>(token <span class="tok-type">Token</span>, idle, maxAge <span class="tok-type">time</span>.Duration) (<span class="tok-type">Session</span>, <span class="tok-type">bool</span>)
+    <span class="tok-func">Delete</span>(token <span class="tok-type">Token</span>)
+    <span class="tok-func">ActiveTokens</span>(extension <span class="tok-type">domain</span>.Extension) []<span class="tok-type">Token</span>
+}
+<span class="tok-comment">// sipcred.Derive(secret string, token session.Token) string — the raw form</span>
+<span class="tok-comment">// exists only at the cookie edge; string(Token) is the explicit conversion.</span>
+
+<span class="tok-comment">// blob — the relative-path contract becomes the type.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">RelPath</span> <span class="tok-type">string</span>
+
+<span class="tok-keyword">func</span> <span class="tok-func">(s *Store)</span> <span class="tok-func">Save</span>(subDir, ext <span class="tok-type">string</span>, content []<span class="tok-type">byte</span>) (<span class="tok-type">RelPath</span>, <span class="tok-type">error</span>)
+<span class="tok-keyword">func</span> <span class="tok-func">(s *Store)</span> <span class="tok-func">Open</span>(rel <span class="tok-type">RelPath</span>) (<span class="tok-type">io</span>.ReadSeekCloser, <span class="tok-type">error</span>)
+<span class="tok-keyword">func</span> <span class="tok-func">(s *Store)</span> <span class="tok-func">Abs</span>(rel <span class="tok-type">RelPath</span>) <span class="tok-type">string</span></code></pre>
+        </div>
+        <p>
+          domain.Attachment.Path and domain.FaxJob.DocumentPath become
+          blob.RelPath (domain already imports nothing internal, and blob
+          is stdlib-only — the type can live in blob and be referenced
+          without a new edge; if the layering rules object, the type moves
+          to domain and blob converts — the one open question in §06).
+          The runtime escape check STAYS: it guards the HTTP boundary
+          where the value is still attacker-controlled text.
+        </p>
+
+        <h3>Delta 4 — config and dispatch fail closed</h3>
+        <div class="diagram">
+<pre><code><span class="tok-comment">// config.validate — the missing clause.</span>
+<span class="tok-keyword">if</span> cfg.RetentionDays &lt; <span class="tok-number">0</span> {
+    <span class="tok-keyword">return</span> <span class="tok-func">errorfamily</span>.<span class="tok-func">NewRejection</span>(<span class="tok-string">"config.retention_days"</span>,
+        <span class="tok-func">fmt</span>.<span class="tok-func">Sprintf</span>(<span class="tok-string">"retention_days %d is negative — use 0 to keep everything forever"</span>, cfg.RetentionDays))
+}
+
+<span class="tok-comment">// gateway — an unknown mode panics instead of faking sends.</span>
+<span class="tok-keyword">func</span> <span class="tok-func">NewMessageGateway</span>(cfg <span class="tok-type">config</span>.Gateway, client *<span class="tok-type">http</span>.Client) <span class="tok-type">MessageGateway</span> {
+    <span class="tok-keyword">switch</span> cfg.Mode {
+    <span class="tok-keyword">case</span> <span class="tok-type">config</span>.GatewayWebhook:
+        <span class="tok-keyword">return</span> &amp;<span class="tok-type">Webhook</span>{provider{cfg: cfg, client: client}}
+    <span class="tok-keyword">case</span> <span class="tok-type">config</span>.GatewayLoopback:
+        <span class="tok-keyword">return</span> &amp;<span class="tok-type">Loopback</span>{prefix: <span class="tok-string">"loopback-msg"</span>}
+    <span class="tok-keyword">default</span>:
+        <span class="tok-func">panic</span>(<span class="tok-string">"unreachable: validated gateway mode "</span> + <span class="tok-func">string</span>(cfg.Mode))
+    }
+}</code></pre>
+        </div>
+
+        <h3>Delta 5 — the transcript's remote becomes a Phone</h3>
+        <p>
+          The transcript API handler (the island-POST boundary) parses
+          Remote through domain.ParsePhone — sanitizeDialable makes the
+          stored form identical to what Messages and History already key
+          on; CallID stays raw per its nolinted ruling. Delta 6 (optional,
+          next touch): ExtensionHubs' three maps key on
+          <code>domain.Extension</code> directly — it is a comparable
+          struct; the string keys buy nothing inside the process.
+        </p>
+
+        <!-- ======================= 05 COMPOSITION ======================= -->
+        <h2 id="composition"><span class="num">05</span>Composition in action</h2>
+
         <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+          <div class="compare-before">Before — the rule lives in the view</div>
+          <div class="compare-after">After — the rule lives in the type</div>
         </div>
         <div class="compare-row">
           <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+<pre><code><span class="tok-comment">// messages.templ — retry affordance by string match.</span>
+<span class="tok-comment">// The vocabulary has two writers and zero guards;</span>
+<span class="tok-comment">// a fourth kind silently renders no retry button.</span>
+<span class="tok-keyword">if</span> msg.FailureKind == <span class="tok-string">"transient"</span> {
+    <span class="tok-func">@</span><span class="tok-type">views</span>.<span class="tok-func">RetryButton</span>(msg.ID)
+}</code></pre>
           </div>
           <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+<pre><code><span class="tok-comment">// messages.templ — ask the type.</span>
+<span class="tok-comment">// A new kind lands in ONE switch (parse) and inherits</span>
+<span class="tok-comment">// the rule from IsRetryable — or the parse panics.</span>
+<span class="tok-keyword">if</span> msg.FailureKind.<span class="tok-func">IsRetryable</span>() {
+    <span class="tok-func">@</span><span class="tok-type">views</span>.<span class="tok-func">RetryButton</span>(msg.ID)
+}</code></pre>
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="compare-header">
+          <div class="compare-before">Before — four loose parameters</div>
+          <div class="compare-after">After — one verdict value</div>
+        </div>
+        <div class="compare-row">
+          <div>
+<pre><code><span class="tok-comment">// store — every transposition compiles.</span>
+<span class="tok-func">UpdateOutboundStatus</span>(ctx, id,
+    <span class="tok-type">domain</span>.StatusFailed,
+    providerRef,      <span class="tok-comment">// string</span>
+    failureKind,      <span class="tok-comment">// string</span>
+    failureDetail)    <span class="tok-comment">// string — adjacent, unguarded</span>
+
+<span class="tok-comment">// …and the clear-on-delivered rule is a doc comment</span>
+<span class="tok-comment">// each caller re-implements by hand.</span></code></pre>
+          </div>
+          <div>
+<pre><code><span class="tok-comment">// store — the verdict is one value;</span>
+<span class="tok-comment">// its invariants were checked at NewDelivery.</span>
+d, err := <span class="tok-type">domain</span>.<span class="tok-func">NewDelivery</span>(status, ref, detail)
+<span class="tok-comment">// …</span>
+<span class="tok-func">UpdateOutboundStatus</span>(ctx, id, d)</code></pre>
+          </div>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <div class="compare-header">
+          <div class="compare-before">Before — enums skip the corruption door</div>
+          <div class="compare-after">After — every boundary parses</div>
+        </div>
+        <div class="compare-row">
+          <div>
+<pre><code><span class="tok-comment">// store.scanMessage — unchecked cast.</span>
+<span class="tok-comment">// A corrupt row yields a silently invalid enum</span>
+<span class="tok-comment">// that flows into views and comparisons.</span>
+Direction: <span class="tok-type">domain</span>.<span class="tok-type">Direction</span>(direction),
+Channel:   <span class="tok-type">domain</span>.<span class="tok-type">Channel</span>(channel),
+Status:    <span class="tok-type">domain</span>.<span class="tok-type">OutboundStatus</span>(status),</code></pre>
+          </div>
+          <div>
+<pre><code><span class="tok-comment">// store.scanMessage — the id policy, extended.</span>
+<span class="tok-comment">// Corrupt enum → panic, same as corrupt id.</span>
+ID:        <span class="tok-type">domain</span>.<span class="tok-func">MustMessageID</span>(id),
+Direction: <span class="tok-type">domain</span>.<span class="tok-func">MustDirection</span>(direction),
+Channel:   <span class="tok-type">domain</span>.<span class="tok-func">MustChannel</span>(channel),
+Status:    <span class="tok-type">domain</span>.<span class="tok-func">MustOutboundStatus</span>(status),</code></pre>
+          </div>
+        </div>
+
+        <!-- ======================= 06 VALIDATION ======================= -->
+        <h2 id="validation"><span class="num">06</span>Validation layer — three doors, no windows</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Boundary</th>
+                <th>Guard today</th>
+                <th>Guard after the deltas</th>
+                <th>Failure shape</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Browser input (ids, forms, island posts)</td>
+                <td>domain.Parse* on ids; sanitized dialables</td>
+                <td>+ ParsePhone on transcript remote (delta 5)</td>
+                <td>404 / 422 with the per-tab key</td>
+              </tr>
+              <tr>
+                <td>Database rows</td>
+                <td>domain.Must* on IDs — enums cast unchecked</td>
+                <td>+ Must* enum parsers beside the declarations (delta 2)</td>
+                <td>Panic = corruption, uniformly for ids AND enums</td>
+              </tr>
+              <tr>
+                <td>Operator config</td>
+                <td>validate(): seams, passkey, identities, contacts, timezone</td>
+                <td>+ negative RetentionDays rejected (delta 4)</td>
+                <td>Rejected boot naming the key and the fix</td>
+              </tr>
+              <tr>
+                <td>Provider webhooks</td>
+                <td>Secret gate + provider-ref partial unique index + hooksIdem</td>
+                <td>+ NewDelivery verdict constructor (delta 1)</td>
+                <td>503/401/404/replay-inert; a non-verdict status is a Rejection at mint</td>
+              </tr>
+              <tr>
+                <td>Internal seams (token, blob paths)</td>
+                <td>Raw strings; runtime escape check on Open</td>
+                <td>session.Token + blob.RelPath brands (delta 3)</td>
+                <td>Compile error for the confused caller; runtime check stays for hostile input</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ======================= 07 DECISION LOG ======================= -->
+        <h2 id="decisions"><span class="num">07</span>Decision log</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Decision</th>
+                <th>Rationale</th>
+                <th>Rejected alternative</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>FailureKind enum whose values are the stored strings</td>
+                <td>The vocabulary already has two writers; the type consolidates without a data migration — DB bytes, export wire and golden rows stay byte-identical</td>
+                <td>Keep string + central helper: the rule still lives one layer from the type, and nothing stops a third writer</td>
+              </tr>
+              <tr>
+                <td>Delivery value object, ProviderRef stays raw inside it</td>
+                <td>Kills the transposition and centralizes clear-on-delivered WITHOUT re-typing the ref — the existing nolint rulings (webhook DTO, partial index, golden rows) remain untouched</td>
+                <td>Branded ProviderRef type: correctly rejected by the 2026-10-11 triage — the ripple outweighs the gain</td>
+              </tr>
+              <tr>
+                <td>Lifecycle constructors, not interface unions, for Message/FaxJob</td>
+                <td>The union already exists at the gateway boundary (baselined InboundMessage/OutboundMessage); row types stay flat for one-scan persistence, and constructors make the illegal pair unbuildable at every mint</td>
+                <td>Unions on the row types: forks the read path and the scan helpers for a guarantee constructors deliver at half the cost</td>
+              </tr>
+              <tr>
+                <td>Parse-or-panic enum parsers (Must*)</td>
+                <td>Extends the corruption doctrine the ids already obey — a corrupt database crashing loudly is the honest failure (the MustThreadID argument, 2026-09-19)</td>
+                <td>Tolerant fallback to a zero enum: silently fabricates a state the sender never wrote</td>
+              </tr>
+              <tr>
+                <td>session.Token / blob.RelPath as defined types</td>
+                <td>Zero wire change, zero allocation change; the two highest-stakes internal strings stop being interchangeable with every other string</td>
+                <td>Struct wrappers with validation: token entropy needs no validation and RelPath needs the runtime escape check it already has — alias branding is the right weight</td>
+              </tr>
+              <tr>
+                <td>RetentionDays rejected when negative; 0 stays forever</td>
+                <td>0 is the documented default; negatives are a typo class, and the config package's own doctrine is "a typo fails the boot"</td>
+                <td>Clamp negatives to 0: heals the symptom, hides the typo from the operator</td>
+              </tr>
+              <tr>
+                <td>Gateway dispatch panics on default</td>
+                <td>Config validation makes it unreachable; unreachable send-path code must fail loudly — Loopback is a deployment decision, not a fallback</td>
+                <td>Status-quo default: an unknown future mode fakes successful sends</td>
+              </tr>
+              <tr>
+                <td>Config-file maps stay string-keyed</td>
+                <td>koanf + the JSON contract own those shapes; validation at Load() (landed) is the guarantee that matters</td>
+                <td>map[domain.Extension]… in config: custom unmarshal plumbing to protect a wire nobody violates (same verdict as 09-30)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ======================= 08 ANTI-PATTERNS ======================= -->
+        <h2 id="antipatterns"><span class="num">08</span>Anti-patterns to keep avoiding</h2>
+        <div class="card card-warning">
+          <h4>Carried from 09-19 / 09-30 (still true)</h4>
+          <p>
+            No new ID without its Brand struct. No "simplifying" Must* back
+            into handler paths. No unused parameters for symmetry (the
+            ChannelOf lesson). No second user identity — the extension IS
+            the identity. No nullable pointer where a separate type says it
+            better. No branching on a gateway's concrete type (fixed — keep
+            it fixed).
+          </p>
+        </div>
+        <div class="card card-warning">
+          <h4>New — recorded this review</h4>
+          <p>
+            <strong>No "temporary" stringly vocabulary:</strong> FailureKind
+            gained its second writer (the literal "provider" in
+            DeliveryReceipt) within a month — every unchecked vocabulary
+            grows writers faster than types. <strong>No fail-open default
+            in send paths:</strong> falling back to a dev gateway that
+            fakes success is the worst reachable failure shape, even
+            behind boot validation. <strong>No negative-tolerant
+            "disabled" ints where 0 already means disabled:</strong> two
+            values meaning "off" is one undocumented value waiting to be a
+            typo. <strong>No unruled exceptions to a naming/branding
+            discipline:</strong> CallID's raw string carries a written
+            ruling; Remote's raw string carried nothing — that asymmetry
+            was the smell.
+          </p>
+        </div>
+
+        <!-- ======================= 09 ROADMAP ======================= -->
+        <h2 id="roadmap"><span class="num">09</span>Migration roadmap</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>domain.FailureKind + Delivery value object</h4>
+            <p>
+              The enum (values = stored strings), IsRetryable(), NewDelivery;
+              collapse UpdateOutboundStatus's signature, both messaging
+              construction sites, and the templ retry check. Run the
+              session-behavior suite's messaging arm + store tests + a
+              nix fmt (templ changed). M effort — closes findings 1 and 4,
+              the two highest-value items.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>Must* enum parsers at every row read</h4>
+            <p>
+              MustDirection/MustChannel/MustOutboundStatus/MustFaxStatus
+              beside their declarations; scanMessage, scanThreadSummary,
+              scanFax, scanTranscriptRow switch over. S effort — closes
+              finding 3.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Lifecycle constructors for Message and FaxJob</h4>
+            <p>
+              New{In,Out}boundMessage / New{In,Out}boundFax mint every
+              aggregate (services and tests switch over; struct literals
+              remain legal for scan-adjacent code but the service paths all
+              mint). S–M effort — closes finding 2.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>config + dispatch hardening</h4>
+            <p>
+              Reject negative RetentionDays in validate() (with a config
+              test asserting the message); exhaustive gateway dispatch with
+              a panicking default. S effort — closes findings 8 and 9.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>session.Token through the Store seam</h4>
+            <p>
+              Defined type minted in makeSession; Store interface,
+              both backends, cookie handlers and sipcred.Derive convert at
+              the edge. Carries an <code>auth:</code> commit prefix and the
+              session-behavior suite per the auth-regression convention.
+              S effort — closes finding 6.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">6</div>
+          <div class="migration-content">
+            <h4>blob.RelPath (and the one open layering question)</h4>
+            <p>
+              Defined type in blob, Save/Open/Abs/Remove convert, the
+              stores scan into it; the runtime escape check stays for the
+              HTTP boundary. If the arch test objects to store→blob or
+              domain→blob edges, the type home moves to domain — decide at
+              implementation time, not before. M effort — closes finding 7.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">7</div>
+          <div class="migration-content">
+            <h4>Transcript remote + hub map keys (opportunistic)</h4>
+            <p>
+              ParsePhone at the transcript API boundary; ExtensionHubs maps
+              keyed by domain.Extension; ASR.Provider enum at the next
+              config touch. S effort each — closes findings 5 and 10; safe
+              to ride any train touching those files.
+            </p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-14 &middot; Series: 2026-09-19 data-model review →
+          2026-09-30 data-model review (all three roadmap items verified
+          landed) → this &middot; Companions: the 2026-09-19/09-23 full-code
+          reviews and the naming review in this directory &middot; All type
+          files read; claims cite stable names; baselined rulings
+          (docs/dedup-registry.md) re-confirmed, never re-litigated
         </footer>
       </main>
     </div>
