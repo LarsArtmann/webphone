@@ -9,9 +9,9 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 
 ## Open tasks
 
-### Declarative/DDD model train (2026-10-14 plan — APPROVAL-PENDING, do not self-start)
+### Declarative/DDD model train (2026-10-14 plan — EXECUTING)
 
-**Status:** 🟢 `PLAN` (owner approval gates execution) · **Priority:** High (1%+4% tiers) · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
+**Status:** 🟡 `EXECUTING` (owner instructed execution 2026-10-14 evening session; trains A→E per the plan's graph; this row retires when E3 lands) · **Priority:** High (1%+4% tiers) · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
 
 - **Tier 1% (51%):** delivery machine as data — `deliveryMoves` + pure `DeliveryAdvance` + `FailureKind` typed; `messages.templ` retry literal → constant. Behavior-parity; no schema/wire change.
 - **Tier 4% (64%):** 09-30 review open findings — `gateway.Receipt.Resolution` enum (deletes the `fax.drive` type-assert), `identities` key + shared-contact number validation at `Load` (boot-fail named).
@@ -20,6 +20,20 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 - **Owner calls minted:** A1.7 out-of-order verdict tightening (recommend: keep today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (ROADMAP g2).
 
 **Evidence:** `docs/reviews/2026-09-30_data-model-review.html` (three open findings); analysis session 2026-10-14.
+
+### Data-model review series 3 — harvest (2026-10-14; non-plan items)
+
+**Status:** 🟢 `OPEN` · **Priority:** Medium · **Effort:** S–M
+
+Source: [docs/reviews/2026-10-14_data-model-review.html](docs/reviews/2026-10-14_data-model-review.html) + routing per [docs/status/2026-10-14_17-23_data-model-review-series3-status.md](docs/status/2026-10-14_17-23_data-model-review-series3-status.md) §f. NOT re-minted (covered by the DDD train above): FailureKind enum (A1), delivery-machine centralizing clear-on-delivered (A1/A2). CLOSED this session: the review's two published defects (RelPath layering paragraph, coverage footer — corrected in the HTML). MOOT: amending daemon commit `cd12cec` (now pushed; heuristic message stands).
+
+- **Vocabulary closes (S each, independent):** `Must*` enum parsers at the four scan sites + a corrupt-row panics test (finding 3) · reject negative `retention_days` at config.validate, named boot failure + test (finding 8) · exhaustive gateway dispatch — unknown mode panics, no Loopback fallback + test (finding 9) · transcript remote `ParsePhone` at the island-POST boundary (finding 5) · `ThreadFlag` map+lookup → exhaustive switch.
+- **Type brands (S–M):** `session.Token` through the Store seam + `sipcred.Derive` — carries `auth:` prefix + the TestServer suite (finding 6) · `domain.RelPath` for blob-relative paths — type home SETTLED = domain (arch test forbids domain→blob; blob converts at its edge) (finding 7).
+- **Construction invariants (S–M):** lifecycle constructors `New{In,Out}boundMessage` / `New{In,Out}boundFax` make illegal Direction×Status pairs unbuildable (finding 2) · collapse `UpdateOutboundStatus`/`UpdateStatus` loose params onto the delivery machine's value (finding-4 residue after train A).
+- **Audits/docs (S):** verify fax tests cover both `Resolution` arms · read `docs/dedup-registry.md` end-to-end, cross-check every ruling the review cited · audit `server/idempotency.go` TTL-map invariants · `views.Lang` as the 10th closed enum (fix the review's stat card if so) · document the two time granularities (sessions=millis, store=seconds) + the `Lifetime.normalized` vs config-validation single-home ruling · stringly-vocabulary sweep round 2 (candidates: textagent `Draft.Status`, `Frozen.Reason` — upstream wire, rule once).
+- **Perf/tests (M):** break the `attachAttachments` N+1 into one IN-query · pin transcript caps (5000/1500) × `transcriptFetchWindow` interaction in a table test · `ExtensionHubs` keyed by `domain.Extension` · complete the review's discovery reading (11 named files + 3 tails) only if a future finding needs it.
+
+**Evidence:** review §catalog/§roadmap; series-3 status §f items 3–9, 12, 15–30.
 
 ### SUPERB unified-auth train tails: owner-gated cutover + hardening remainder (2026-10-12 13:45 harvest)
 
@@ -222,7 +236,7 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 
 **Status:** 🔴 `TRIGGERED — carve due, dependency-mapped 2026-10-12, execution = its own train` · **Priority:** Medium (raised by the trigger) · **Effort:** M
 
-internal/server god-package carve — TRIGGER: the next file added to internal/server (today 19 files / 3268 LOC + 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold). Carve `server/api` (JSON endpoints: contacts, calls, session, csrf) + `server/hooks` (webhook ingest + idempotency) out of the wiring (Deps, chain, mount stay); tests move with their files; the contract_test three-401-writer allowlist (actions/webhooks/session_api) + DOM-contract pins update mechanically; render-diff harness proves byte parity if wanted
+internal/server god-package carve — TRIGGER: the next file added to internal/server (26 files / 4859 non-test LOC + 8630 test LOC re-measured 2026-10-14, two independent count methods; the 09-30 baseline read 19 files / 3268 LOC / 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold). Carve `server/api` (JSON endpoints: contacts, calls, session, csrf) + `server/hooks` (webhook ingest + idempotency) out of the wiring (Deps, chain, mount stay); tests move with their files; the contract_test three-401-writer allowlist (actions/webhooks/session_api) + DOM-contract pins update mechanically; render-diff harness proves byte parity if wanted
 Trigger adjudication (2026-10-06 session): the 09-30 baseline reading
 fires on `passkey_api.go` (landed 10-04), but the round-2 plan
 (2026-10-05 20:30, §F15 "do NOT start") supersedes — the trigger is

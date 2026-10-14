@@ -159,9 +159,25 @@ the stack browser E2E passed on the bumped tree. What remains:
   gates, the vulnix train gate covers the supply-side security angle,
   and version-drift only matters AT bump time when MD-style triggers
   fire. Revisit only if an unattended drift surprises a train.
+- Data-model long shots (2026-10-14 review series 3, §f idea-grade;
+  actionable siblings live in TODO_LIST's harvest row): ASR provider
+  kind as a typed enum (`Google()` becomes a comparison) · a
+  `Session.Password` wrapper with redacted `String()` (at-rest policy
+  unchanged; the type only guards logs) · branded
+  `pbx.Credentials.Extension` (leaf-package constraint documented) ·
+  `store.BlobPaths []string` vs branded path — rule once
+  `domain.RelPath` lands · a `config.Seam` helper for the four
+  both-or-neither URL+secret pairs — revisit ONLY if a fifth pair
+  appears (per-seam stays the owner ruling).
 
 ## Open questions (owner calls)
 
+- Provider-failure retryability (2026-10-14 data-model review g2):
+  today only `transient` failures render a Retry affordance — provider
+  verdicts are terminal (the user re-composes). Intended product rule,
+  or should provider failures get a retry path like fax `Resend`
+  reuses the stored document? The typed FailureKind machine encodes
+  today's rule either way.
 - Rate-limit keys: does the stack's proxy sanitize `X-Forwarded-For`?
   Gates the flip from port-stripped peer-host keys
   (`remoteHostKey`) to `KeyExtractorFromClientIP`; standing since the

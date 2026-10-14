@@ -830,7 +830,7 @@
     <div class="top-bar">
       <span>DATA MODEL REVIEW · SERIES 3</span>
       <span>2026-10-14</span>
-      <span>WEBPHONE · ALL TYPE FILES READ</span>
+      <span>WEBPHONE · CORE MODEL + SEAMS READ</span>
     </div>
 
     <div class="layout">
@@ -1174,11 +1174,16 @@
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            A <code>blob.RelPath</code> defined type: Save returns it,
+            A <code>domain.RelPath</code> defined type: Save returns it,
             Open/Abs/Remove take it, the stores scan into it. The runtime
             escape check STAYS for the HTTP boundary; the type kills the
-            confused-caller class. blob stays a leaf package — the type
-            lives there, and domain holds it without importing anything new.
+            confused-caller class. The type home is <code>domain</code> —
+            settled by the arch test (TestDomainImportsNothingInternal):
+            domain may not import blob, so blob converts at its edge.
+            <em>Corrected 2026-10-14: this callout originally claimed the
+            type could live in blob and be referenced from domain — that
+            edge is exactly what the arch test forbids (see the companion
+            status report, defect d1).</em>
           </div>
         </div>
 
@@ -1540,7 +1545,8 @@
 <span class="tok-comment">// sipcred.Derive(secret string, token session.Token) string — the raw form</span>
 <span class="tok-comment">// exists only at the cookie edge; string(Token) is the explicit conversion.</span>
 
-<span class="tok-comment">// blob — the relative-path contract becomes the type.</span>
+<span class="tok-comment">// domain — the relative-path contract becomes the type; blob</span>
+<span class="tok-comment">// adopts it at its edge (blob→domain is the allowed direction).</span>
 <span class="tok-keyword">type</span> <span class="tok-type">RelPath</span> <span class="tok-type">string</span>
 
 <span class="tok-keyword">func</span> <span class="tok-func">(s *Store)</span> <span class="tok-func">Save</span>(subDir, ext <span class="tok-type">string</span>, content []<span class="tok-type">byte</span>) (<span class="tok-type">RelPath</span>, <span class="tok-type">error</span>)
@@ -1549,12 +1555,13 @@
         </div>
         <p>
           domain.Attachment.Path and domain.FaxJob.DocumentPath become
-          blob.RelPath (domain already imports nothing internal, and blob
-          is stdlib-only — the type can live in blob and be referenced
-          without a new edge; if the layering rules object, the type moves
-          to domain and blob converts — the one open question in §06).
-          The runtime escape check STAYS: it guards the HTTP boundary
-          where the value is still attacker-controlled text.
+          domain.RelPath — the type home is domain, settled by
+          TestDomainImportsNothingInternal (domain may not import blob;
+          blob converts at its edge, the allowed direction).
+          <em>Corrected 2026-10-14: this paragraph originally left the
+          home as "the one open question in §06" — the arch test answers
+          it.</em> The runtime escape check STAYS: it guards the HTTP
+          boundary where the value is still attacker-controlled text.
         </p>
 
         <h3>Delta 4 — config and dispatch fail closed</h3>
@@ -1703,7 +1710,7 @@ Status:    <span class="tok-type">domain</span>.<span class="tok-func">MustOutbo
               <tr>
                 <td>Internal seams (token, blob paths)</td>
                 <td>Raw strings; runtime escape check on Open</td>
-                <td>session.Token + blob.RelPath brands (delta 3)</td>
+                <td>session.Token + domain.RelPath brands (delta 3)</td>
                 <td>Compile error for the confused caller; runtime check stays for hostile input</td>
               </tr>
             </tbody>
@@ -1743,7 +1750,7 @@ Status:    <span class="tok-type">domain</span>.<span class="tok-func">MustOutbo
                 <td>Tolerant fallback to a zero enum: silently fabricates a state the sender never wrote</td>
               </tr>
               <tr>
-                <td>session.Token / blob.RelPath as defined types</td>
+                <td>session.Token / domain.RelPath as defined types</td>
                 <td>Zero wire change, zero allocation change; the two highest-stakes internal strings stop being interchangeable with every other string</td>
                 <td>Struct wrappers with validation: token entropy needs no validation and RelPath needs the runtime escape check it already has — alias branding is the right weight</td>
               </tr>
@@ -1865,13 +1872,13 @@ Status:    <span class="tok-type">domain</span>.<span class="tok-func">MustOutbo
         <div class="migration-step">
           <div class="migration-num">6</div>
           <div class="migration-content">
-            <h4>blob.RelPath (and the one open layering question)</h4>
+            <h4>domain.RelPath (layering settled by the arch test)</h4>
             <p>
-              Defined type in blob, Save/Open/Abs/Remove convert, the
-              stores scan into it; the runtime escape check stays for the
-              HTTP boundary. If the arch test objects to store→blob or
-              domain→blob edges, the type home moves to domain — decide at
-              implementation time, not before. M effort — closes finding 7.
+              Defined type in domain — TestDomainImportsNothingInternal
+              forbids the domain→blob edge, so the type cannot live in
+              blob; blob converts at its edge (Save/Open/Abs/Remove), the
+              stores scan into it, and the runtime escape check stays for
+              the HTTP boundary. M effort — closes finding 7.
             </p>
           </div>
         </div>
@@ -1892,8 +1899,11 @@ Status:    <span class="tok-type">domain</span>.<span class="tok-func">MustOutbo
           Generated 2026-10-14 &middot; Series: 2026-09-19 data-model review →
           2026-09-30 data-model review (all three roadmap items verified
           landed) → this &middot; Companions: the 2026-09-19/09-23 full-code
-          reviews and the naming review in this directory &middot; All type
-          files read; claims cite stable names; baselined rulings
+          reviews and the naming review in this directory &middot; Coverage:
+          all domain/store/session/config/gateway/seam files read; the
+          server DTO layer audited by type inventory (~85% of the
+          data-model surface — named gaps in the companion status report) &middot;
+          claims cite stable names; baselined rulings
           (docs/dedup-registry.md) re-confirmed, never re-litigated
         </footer>
       </main>
