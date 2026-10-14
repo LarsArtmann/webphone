@@ -1234,8 +1234,8 @@ grep -rl larsartmann/webphone ~/projects --include=<span class="tok-string">'*.g
 git log -n 150 --name-only  <span class="tok-comment"># 3/150 commits touch &ge;5 packages</span>
 
 <span class="tok-comment"># boundary + health evidence</span>
-go build ./... &amp;&amp; go vet ./internal/arch/ ./internal/domain/  <span class="tok-comment"># green</span>
-go test -count=1 ./...  <span class="tok-comment"># green, see AGENTS.md commands</span></code></pre>
+go build ./... &amp;&amp; go vet ./internal/arch/ ./internal/domain/  <span class="tok-comment"># green locally</span>
+go test -count=1 ./...  <span class="tok-comment"># green in CI run 38599969752 (same Go tree); the local rerun hit the box's IO-storm crawl (25 MiB test uploads took ~9 min each) — environmental, package untouched by this docs-only train</span></code></pre>
           <h3>Signal scoring (skill&rsquo;s When-NOT-to-Modularize table)</h3>
           <table class="compare">
             <thead>
