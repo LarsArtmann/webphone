@@ -90,7 +90,7 @@ type Message struct {
 	Body          string
 	Status        OutboundStatus // zero for inbound (see OutboundStatus)
 	ProviderRef   string         // gateway correlation id, "" when none
-	FailureKind   string         // "", "transient", "rejected" or "provider"; only transient is retryable
+	FailureKind   FailureKind    // retry vocabulary; only transient is retryable (see delivery.go)
 	FailureDetail string         // raw failure reason, rendered verbatim (operator English)
 	Attachments   []Attachment
 	CreatedAt     time.Time
