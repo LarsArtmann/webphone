@@ -40,10 +40,9 @@ func (e *ErrInvalidSend) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// ChangeFunc is called after any thread mutation with the owning
-// extension; listeners re-render the affected thread (SSE fan-out in the
-// server layer).
-type ChangeFunc func(ctx context.Context, owner domain.Extension, threadID domain.ThreadID)
+// ChangeFunc is the change-notification seam (see domain.Event):
+// called after any mutation the owner's other surfaces should see.
+type ChangeFunc = domain.ChangeFunc
 
 // Service wires the message store, blob store, and outbound gateway.
 type Service struct {

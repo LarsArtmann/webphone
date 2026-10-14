@@ -39,14 +39,38 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Fax
 	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn}
 }
 
-// MessagesChanged pushes a fresh thread list to the extension's tabs and,
-// for the affected thread, a fresh transcript so an open conversation
-// updates live. A zero threadID means a list-only nudge (thread
-// organization flags, M22): no transcript is pushed — an empty-thread
-// query would render an empty transcript and wipe whatever conversation
-// is open. A failed or missing read is skipped: one lost push is
-// cosmetic, the next change catches up.
-func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
+// Project is the change-notification projection (train E1): each
+// domain event kind maps to the SSE pushes it owes. The map is the
+// ONE home of notification policy — services emit facts, this switch
+// decides what surfaces re-render:
+//
+//   - message events push the thread list AND the transcript (an open
+//     conversation updates live);
+//   - ThreadFlagChanged pushes the list ONLY — the event carries no
+//     thread id on purpose, an empty transcript would wipe the open
+//     conversation;
+//   - FaxAdvanced pushes the fax list.
+func (n *Notifier) Project(ctx context.Context, e domain.Event) {
+	switch ev := e.(type) {
+	case domain.MessageReceived:
+		n.messagesChanged(ctx, ev.Owner, ev.Thread)
+	case domain.MessageDeliveryAdvanced:
+		n.messagesChanged(ctx, ev.Owner, ev.Thread)
+	case domain.ThreadFlagChanged:
+		n.messagesChanged(ctx, ev.Owner, domain.ThreadID{})
+	case domain.FaxAdvanced:
+		n.faxesChanged(ctx, ev.Owner)
+	}
+}
+
+// messagesChanged pushes a fresh thread list to the extension's tabs
+// and, for the affected thread, a fresh transcript so an open
+// conversation updates live. A zero threadID means a list-only nudge:
+// no transcript is pushed — an empty-thread query would render an
+// empty transcript and wipe whatever conversation is open. A failed
+// or missing read is skipped: one lost push is cosmetic, the next
+// change catches up.
+func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
 		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
@@ -64,8 +88,8 @@ func (n *Notifier) MessagesChanged(ctx context.Context, owner domain.Extension, 
 	}
 }
 
-// FaxChanged pushes a fresh fax job list to the extension's tabs.
-func (n *Notifier) FaxChanged(ctx context.Context, owner domain.Extension, _ domain.FaxID) {
+// faxesChanged pushes a fresh fax job list to the extension's tabs.
+func (n *Notifier) faxesChanged(ctx context.Context, owner domain.Extension) {
 	jobs, err := n.faxes.List(ctx, owner, 100)
 	if err != nil {
 		slog.Debug("sse: render fax list failed", "error", err)

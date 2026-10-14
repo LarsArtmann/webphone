@@ -39,9 +39,9 @@ func (e *ErrInvalidFax) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidFax) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// ChangeFunc is called after any fax-job mutation with the owning
-// extension (SSE fan-out).
-type ChangeFunc func(ctx context.Context, owner domain.Extension, jobID domain.FaxID)
+// ChangeFunc is the change-notification seam (see domain.Event):
+// called after any mutation the owner's other surfaces should see.
+type ChangeFunc = domain.ChangeFunc
 
 // Archiver is the optional downstream filing home for INBOUND faxes
 // (Paperless-ngx today, internal/paperless). The blob store stays the
@@ -121,7 +121,7 @@ func (s *Service) Send(
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax job")
 	}
-	s.notify(ctx, owner, job.ID)
+	s.emit(ctx, domain.FaxAdvanced{Owner: owner, Fax: job.ID})
 
 	return s.drive(ctx, job)
 }
@@ -151,7 +151,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", job.Error, 0); updateErr != nil {
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
-		s.notify(ctx, job.Owner, job.ID)
+		s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
 		return job, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
 	}
 
@@ -170,7 +170,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 			slog.Warn("fax: mark transmitted", "error", updateErr)
 		}
 	}
-	s.notify(ctx, job.Owner, job.ID)
+	s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
 
 	return job, nil
 }
@@ -211,7 +211,7 @@ func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.
 	if err := s.faxes.Create(ctx, retry); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax retry")
 	}
-	s.notify(ctx, owner, retry.ID)
+	s.emit(ctx, domain.FaxAdvanced{Owner: owner, Fax: retry.ID})
 
 	return s.drive(ctx, retry)
 }
@@ -242,7 +242,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist inbound fax")
 	}
-	s.notify(ctx, inbound.Owner, job.ID)
+	s.emit(ctx, domain.FaxAdvanced{Owner: inbound.Owner, Fax: job.ID})
 
 	// Fire-and-forget archive offer AFTER persist + notify (the plan's
 	// async posture): a slow or dead Paperless never delays or fails the
@@ -299,7 +299,7 @@ func (s *Service) UpdateProviderStatus(
 	if err := s.faxes.UpdateStatus(ctx, job.ID, next, "", errMsg, pages); err != nil {
 		return domain.FaxJob{}, err
 	}
-	s.notify(ctx, job.Owner, job.ID)
+	s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
 
 	job.Status = next
 	job.Pages = pages
@@ -322,8 +322,8 @@ func (s *Service) Document(job domain.FaxJob) (io.ReadSeekCloser, error) {
 	return s.blobs.Open(job.DocumentPath)
 }
 
-func (s *Service) notify(ctx context.Context, owner domain.Extension, id domain.FaxID) {
+func (s *Service) emit(ctx context.Context, e domain.Event) {
 	if s.onChange != nil {
-		s.onChange(ctx, owner, id)
+		s.onChange(ctx, e)
 	}
 }

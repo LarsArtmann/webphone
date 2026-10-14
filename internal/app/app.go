@@ -253,7 +253,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvoke[*store.Messages](i),
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.MessageGateway](i),
-			do.MustInvoke[*server.Notifier](i).MessagesChanged,
+			do.MustInvoke[*server.Notifier](i).Project,
 			cfg.Identities,
 		), nil
 	})
@@ -262,7 +262,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvoke[*store.Faxes](i),
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.FaxGateway](i),
-			do.MustInvoke[*server.Notifier](i).FaxChanged,
+			do.MustInvoke[*server.Notifier](i).Project,
 			cfg.Identities,
 			archiver,
 		), nil
