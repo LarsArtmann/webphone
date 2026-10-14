@@ -167,6 +167,11 @@ type Deps struct {
 	// non-nil (config-gated in the composition root). Nil: no /health
 	// surface exists, the styled 404 answers.
 	Dashboard http.Handler
+	// Dedup is the OPTIONAL engine-backed dedup window behind the
+	// webhook and call idem gates (metaengine DedupStore, adapted in
+	// the composition root). Nil: the in-process map — byte-identical
+	// legacy behavior, dedup memory lost on restart (tests, rollback).
+	Dedup DedupWindow
 	// UserAuth is the OPTIONAL embedded passkey identity layer
 	// (config-gated). Nil: the passkey mode is off — every passkey
 	// surface 404s and the login page renders the extension form only.
@@ -214,8 +219,8 @@ func New(deps Deps) http.Handler {
 		cookies:           cookies,
 		csrfCfg:           csrfCfg,
 		unread:            newUnreadCache(5 * time.Second),
-		hooksIdem:         newIdemStore(hookIdempotencyTTL),
-		callsIdem:         newIdemStore(callsIdempotencyTTL),
+		hooksIdem:         newIdemGate(deps.Dedup, hookIdempotencyTTL),
+		callsIdem:         newIdemGate(deps.Dedup, callsIdempotencyTTL),
 	}
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)

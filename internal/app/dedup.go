@@ -1,0 +1,68 @@
+package app
+
+import (
+	"context"
+	"log/slog"
+	"time"
+
+	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+
+	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/server"
+)
+
+// dedupSweepInterval reclaims expired engine dedup rows. Expiry is
+// honored on read regardless, so the sweep is space reclamation, not
+// correctness: a lazy cadence is the honest choice for a single-writer
+// sqlite the hot webhook lane also writes to.
+const dedupSweepInterval = 15 * time.Minute
+
+// engineDedupWindow adapts the metaengine DedupStore capability into
+// the server.DedupWindow port (method names differ; the adapter lives
+// here because readmodels must stay server-free and server must stay
+// metaengine-free — the composition root is the one place that may see
+// both).
+type engineDedupWindow struct {
+	store metaengine.DedupStore
+}
+
+var _ server.DedupWindow = engineDedupWindow{}
+
+func (w engineDedupWindow) Seen(ctx context.Context, collection, key string, now time.Time) (bool, error) {
+	return w.store.DedupSeen(ctx, collection, key, now)
+}
+
+func (w engineDedupWindow) CheckAndRecord(
+	ctx context.Context, collection, key string, ttl time.Duration, now time.Time,
+) (bool, error) {
+	return w.store.DedupCheckAndRecord(ctx, collection, key, ttl, now)
+}
+
+func (w engineDedupWindow) Sweep(ctx context.Context, collection string, now time.Time) (int, error) {
+	return w.store.DedupSweep(ctx, collection, now)
+}
+
+// startDedupSweeper runs the expired-row reclamation loop until ctx
+// ends. Started from App.Start alongside the retention sweep — the
+// same lifecycle home for every background loop.
+func startDedupSweeper(ctx context.Context, log *slog.Logger, window server.DedupWindow) {
+	go func() {
+		ticker := time.NewTicker(dedupSweepInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case now := <-ticker.C:
+				removed, err := window.Sweep(ctx, server.DedupCollection, now)
+				if err != nil {
+					log.Warn("dedup sweep failed", "error", err, "collection", server.DedupCollection)
+					continue
+				}
+				if removed > 0 {
+					log.Info("dedup sweep", "collection", server.DedupCollection, "expired_removed", removed)
+				}
+			}
+		}
+	}()
+}

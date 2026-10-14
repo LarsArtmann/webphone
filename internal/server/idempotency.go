@@ -91,3 +91,48 @@ func (s *idemStore) record(key string) {
 	}
 	s.entries[key] = now
 }
+
+// engineIdemGate adapts a DedupWindow into the idemGate contract: the
+// durable engine-backed implementation. Unlike the map, it survives
+// restarts — a restart inside the TTL window no longer forgets seen
+// hooks (the defect the swap fixes).
+//
+// Error policy is fail-open on purpose, on both legs: a dedup window
+// that cannot be read must not block a callback whose guarded work is
+// idempotent at rest anyway (treat as unseen → the work re-runs → the
+// store's own terminal-state handling absorbs the replay), and a
+// record that cannot be written leaves the key retryable — the exact
+// contract a failed attempt already has. Both log once per occurrence.
+//
+// Calls run on context.Background: the dedup record is persistence
+// that should outlive the request it guards, and the underlying ops
+// are bounded single-writer SQLite statements.
+type engineIdemGate struct {
+	window DedupWindow
+	ttl    time.Duration
+}
+
+// newIdemGate picks the implementation behind the constructor seam:
+// the engine window when the composition root wired one, the in-
+// process map otherwise (test compositions, rollback).
+func newIdemGate(window DedupWindow, ttl time.Duration) idemGate {
+	if window == nil {
+		return newIdemStore(ttl)
+	}
+	return &engineIdemGate{window: window, ttl: ttl}
+}
+
+func (g *engineIdemGate) seen(key string) bool {
+	seen, err := g.window.Seen(context.Background(), DedupCollection, key, time.Now())
+	if err != nil {
+		slog.Warn("idem gate: dedup window read failed; treating key as unseen", "key", key, "error", err)
+		return false
+	}
+	return seen
+}
+
+func (g *engineIdemGate) record(key string) {
+	if _, err := g.window.CheckAndRecord(context.Background(), DedupCollection, key, g.ttl, time.Now()); err != nil {
+		slog.Warn("idem gate: dedup window write failed; key stays retryable", "key", key, "error", err)
+	}
+}

@@ -299,6 +299,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		db := do.MustInvokeNamed[*store.Database](i, "sqlite")
 		blobs := do.MustInvokeNamed[*blob.Store](i, "blob-dir")
+		engine := do.MustInvokeNamed[*readmodels.Engine](i, "metaengine")
 
 		var auth *userauth.Service
 		if cfg.Auth.Passkey.Enabled() {
@@ -325,6 +326,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Probe:       probe,
 			Dashboard:   dashboardHandler,
 			UserAuth:    auth,
+			Dedup:       engineDedupWindow{store: engine.DedupStore()},
 		}), nil
 	})
 
@@ -420,6 +422,13 @@ func (a *App) Start(ctx context.Context) error {
 		return wrapf("resolve blob store: %w", err)
 	}
 	retention.Start(ctx, db.SQL(), blobs, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	// The dedup sweeper rides the same ctx bound as every background
+	// loop; a missing engine here is impossible (eager invoke in New).
+	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service
+	if err != nil {
+		return wrapf("resolve read-model engine: %w", err)
+	}
+	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
 	return nil
 }
 

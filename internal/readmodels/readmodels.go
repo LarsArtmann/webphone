@@ -35,6 +35,7 @@ const fileName = "readmodels.db"
 // the container shutdown cascade.
 type Engine struct {
 	eng    metaengine.Engine
+	dedup  metaengine.DedupStore
 	db     *sql.DB
 	closed bool
 }
@@ -48,7 +49,15 @@ func Open(dataDir string) (*Engine, error) {
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "open read-model engine in %s", dataDir)
 	}
-	return &Engine{eng: eng, db: db}, nil
+	// Asserted once here, not per call: the sqlite engine implements
+	// the DedupStore capability natively, and a future engine swap that
+	// silently dropped it must fail the boot, not the first webhook.
+	dedup, ok := eng.(metaengine.DedupStore)
+	if !ok {
+		_ = db.Close()
+		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the dedup capability", eng)
+	}
+	return &Engine{eng: eng, dedup: dedup, db: db}, nil
 }
 
 // Engine exposes the underlying metaengine engine for the Store/Query
@@ -56,6 +65,11 @@ func Open(dataDir string) (*Engine, error) {
 // the only caller; services receive derived seams (dedup windows,
 // readers), never the engine itself.
 func (e *Engine) Engine() metaengine.Engine { return e.eng }
+
+// DedupStore returns the engine's dedup capability (asserted at Open).
+// The composition root adapts it into the server-facing DedupWindow
+// port — readmodels itself never imports server.
+func (e *Engine) DedupStore() metaengine.DedupStore { return e.dedup }
 
 // SQL exposes the engine's own sqlite handle (probe pings; future
 // engine-side maintenance). Callers must not close it — Shutdown owns
