@@ -7,7 +7,6 @@ import (
 
 	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server"
 )
 
