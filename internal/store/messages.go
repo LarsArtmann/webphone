@@ -24,9 +24,11 @@ type Messages struct {
 // NewMessages builds the message store.
 func NewMessages(db *sql.DB) *Messages { return &Messages{db: db} }
 
-// AppendMessage inserts a message inside one transaction: it upserts the
-// owner/remote thread, inserts the message and its attachments, and updates
-// the thread's activity timestamp (and unread count for inbound).
+// AppendMessage inserts a message inside one transaction: it loads (or
+// creates) the owner/remote thread, folds the message into it via
+// domain.AppendToThread — the one home of the append invariants — and
+// writes the advanced row back, then inserts the message and its
+// attachments.
 func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -34,31 +36,56 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	}
 	defer func() { _ = tx.Rollback() }() //nolint:erraudit // best-effort write; the response is already committed
 
-	threadID := msg.ThreadID.String()
-	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO threads (id, owner, remote, last_activity_at, unread)
-		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(owner, remote) DO UPDATE SET
-			last_activity_at = excluded.last_activity_at,
-			unread = threads.unread + excluded.unread,
-			-- An inbound message un-archives its thread (M22 design D7): the
-			-- conversation is live again and hiding it from the list would be a
-			-- missed-message footgun. excluded.unread > 0 is exactly the inbound
-			-- increment, so outbound sends never touch the flag.
-			archived = CASE WHEN excluded.unread > 0 THEN 0 ELSE threads.archived END
-	`, threadID, msg.Owner.String(), msg.Remote.String(), msg.CreatedAt.Unix(),
-		incrementIf(domain.DirectionInbound, msg.Direction)); err != nil {
-		return errorfamily.WrapInfrastructuref(err, "store.thread_upsert", "upsert thread %s for %s/%s", threadID, msg.Owner, msg.Remote)
+	var existing domain.Thread
+	var (
+		rowID        string
+		lastActivity int64
+		unread       int
+		archived     int
+	)
+	err = tx.QueryRowContext(ctx, `
+		SELECT id, last_activity_at, unread, archived FROM threads WHERE owner = ? AND remote = ?
+	`, msg.Owner.String(), msg.Remote.String()).Scan(&rowID, &lastActivity, &unread, &archived)
+	switch {
+	case err == nil:
+		existing = domain.Thread{
+			ID:             domain.MustThreadID(rowID),
+			Owner:          msg.Owner,
+			Remote:         msg.Remote,
+			LastActivityAt: time.Unix(lastActivity, 0),
+			Unread:         unread,
+			Archived:       archived != 0,
+		}
+	case errors.Is(err, sql.ErrNoRows):
+		// Creation: the zero thread adopts the message's identity.
+	default:
+		return errorfamily.WrapInfrastructuref(err, "store.thread_lookup", "load thread %s/%s", msg.Owner, msg.Remote)
+	}
+
+	thread := domain.AppendToThread(existing, msg)
+	if existing.ID == (domain.ThreadID{}) {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO threads (id, owner, remote, last_activity_at, unread, archived)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`, thread.ID.String(), msg.Owner.String(), msg.Remote.String(),
+			thread.LastActivityAt.Unix(), thread.Unread, boolInt(thread.Archived)); err != nil {
+			return errorfamily.WrapInfrastructuref(err, "store.thread_insert", "insert thread %s for %s/%s", thread.ID, msg.Owner, msg.Remote)
+		}
+	} else if _, err := tx.ExecContext(ctx, `
+		UPDATE threads SET last_activity_at = ?, unread = ?, archived = ? WHERE id = ? AND owner = ?
+	`, thread.LastActivityAt.Unix(), thread.Unread, boolInt(thread.Archived),
+		thread.ID.String(), msg.Owner.String()); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "store.thread_update", "update thread %s for %s", thread.ID, msg.Owner)
 	}
 
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, msg.ID.String(), threadID, msg.Owner.String(), msg.Remote.String(),
+	`, msg.ID.String(), thread.ID.String(), msg.Owner.String(), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
 		string(msg.Status), msg.ProviderRef, string(msg.FailureKind), msg.FailureDetail,
 		msg.CreatedAt.Unix()); err != nil {
-		return errorfamily.WrapInfrastructuref(err, "store.message_insert", "insert message %s (thread %s)", msg.ID, threadID)
+		return errorfamily.WrapInfrastructuref(err, "store.message_insert", "insert message %s (thread %s)", msg.ID, thread.ID)
 	}
 
 	for _, att := range msg.Attachments {
@@ -75,13 +102,6 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	}
 
 	return nil
-}
-
-func incrementIf(want, got domain.Direction) int {
-	if want == got {
-		return 1
-	}
-	return 0
 }
 
 // UpdateOutboundStatus advances an outbound message's delivery status,

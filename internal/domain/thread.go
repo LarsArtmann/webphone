@@ -1,20 +1,5 @@
 package domain
 
-import "time"
-
-// Thread is the append-owned slice of a message thread: the state one
-// message append may touch. Pinned and muted are deliberately absent —
-// they are pure user toggles (SetThreadFlag) with no append interaction;
-// archived IS here because an inbound append un-archives its thread.
-type Thread struct {
-	ID             ThreadID
-	Owner          Extension
-	Remote         Phone
-	LastActivityAt time.Time
-	Unread         int
-	Archived       bool
-}
-
 // AppendToThread folds one message into its thread and returns the
 // advanced copy; the input is never mutated. It is the ONE home of the
 // append invariants:
@@ -28,8 +13,10 @@ type Thread struct {
 //   - a zero thread (no ID yet) is creation: it adopts the message's
 //     thread id, owner and remote.
 //
-// The store's append transaction computes its row through this
-// function; the SQL carries no parallel copy of these rules.
+// Pinned and Muted are untouched — they are pure user toggles with no
+// append interaction. The store's append transaction computes its row
+// through this function; the SQL carries no parallel copy of these
+// rules.
 func AppendToThread(thread Thread, msg Message) Thread {
 	if thread.ID == (ThreadID{}) {
 		thread.ID = msg.ThreadID

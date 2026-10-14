@@ -40,8 +40,8 @@ const (
 )
 
 // Thread is one conversation between an extension and a remote number,
-// keyed by (Owner, Remote). It exists only as a read model: rows are
-// created on first message and updated on every append.
+// keyed by (Owner, Remote). Rows are created on first message and
+// updated on every append — AppendToThread is that rule's one home.
 type Thread struct {
 	ID             ThreadID
 	Owner          Extension
