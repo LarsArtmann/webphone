@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   import). Legacy rows import once at boot for the first three; the deleted
   SQL stores (`store/snippets.go`, `store/faxes.go`, `store/transcripts.go`,
   the `wp_enroll_tokens` table) are gone and retention plus the metrics
-  census now read the engine.
+  census now read the engine. The NixOS backup oneshot, the restore drill,
+  and the documented restore path now snapshot `readmodels.db` alongside
+  `webphone.db` (it carries user data since this train).
 - Webhook and call-log idempotency windows are DURABLE: the engine-backed
   dedup store (readmodels.db) replaces the in-memory maps, so a restart no
   longer forgets which provider verdicts and ended-call logs were already
