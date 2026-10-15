@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Brought the strong-id brand-adoption scan (`brandid-lint -rules all`) to
+  zero findings: every deliberately-raw identifier site (wire DTOs, engine
+  read-model shapes, retired legacy rows, foreign tokens) now carries a
+  recorded suppression beside its existing rationale comment. Removed a
+  tautological dead condition in the userauth shutdown path.
+
 ## [2.9.0] - 2026-10-15
 
 ### Changed
