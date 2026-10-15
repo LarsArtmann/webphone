@@ -17,6 +17,8 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 - **NOT-DO (plan §5):** no `system.New` swap (samber/do ratified), no threads/messages event-sourcing rewrite (external facts; DOM/SSE contracts pinned), sessions stay SQL, migration ladder untouched; engine-owned tables get NO schema_version entries (plan ruling N5, separate `readmodels.db`).
 - **Next action:** T11 fax folds reusing the declarative `faxMoves` train → T12 `ApplyIdempotent(provider_ref)` + resolution-arm parity → G3. Progress: T01–T04 DONE (deps pinned, readmodels composition-root seam, DURABLE dedup window, G1 GREEN — plan §7), T05–T08 DONE (contacts read model + engine-native COUNT + one-time legacy import via schema v4 app_flags), **T09 DONE + G2 VERDICT: GO (2026-10-15, plan §7)** — snippets swapped on the contacts pattern with zero drift (CI 38764205893, smoke 47+4+8+9, census rule stated in the verdict; no pre-train latency baseline existed, post-swap reference recorded).
 
+- **cqrs-lint seeds for the remaining swaps (2026-10-15 buildflow unskip):** F019 add `Volume` hints to the metaengine query declarations (readmodels contacts.go:57; apply to every NEW declaration in the T11/T13/T15 folds) · F026 `WithPrefetch` on `reader.Scan` list reads (contacts.go:93; carry the pattern into new Scans). Both non-gating linter hints, cheap parity-preserving polish on the proven pattern. Full finding classifications: .buildflow.yml (cqrs-lint UNSKIPPED 2026-10-15).
+
 **Evidence:** this session's SQL census + metaengine source read (2026-10-14); continues the 2026-10-14 declarative/DDD train's typed-facts direction.
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTING)
