@@ -341,6 +341,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
 		return nil, wrapf("open read-model engine: %w", err)
 	}
+	importLegacyContacts(
+		context.Background(),
+		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
+		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
+		log,
+	)
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

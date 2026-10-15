@@ -108,12 +108,13 @@ type Counts struct {
 	Threads     int64
 	Messages    int64
 	Faxes       int64
-	Contacts    int64
 	Sessions    int64
 	Transcripts int64
 }
 
-// ReadCounts reads the aggregate sizes in one call.
+// ReadCounts reads the aggregate sizes in one call. Contacts are
+// counted by the read-model engine (readmodels.Contacts.Count) — the
+// SQL contacts table is retired storage.
 func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 	var c Counts
 	err := db.QueryRowContext(ctx, `
@@ -121,10 +122,9 @@ func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 			(SELECT COUNT(*) FROM threads),
 			(SELECT COUNT(*) FROM messages),
 			(SELECT COUNT(*) FROM fax_jobs),
-			(SELECT COUNT(*) FROM contacts),
 			(SELECT COUNT(*) FROM sessions),
 			(SELECT COUNT(*) FROM call_transcripts)
-	`).Scan(&c.Threads, &c.Messages, &c.Faxes, &c.Contacts, &c.Sessions, &c.Transcripts)
+	`).Scan(&c.Threads, &c.Messages, &c.Faxes, &c.Sessions, &c.Transcripts)
 	if err != nil {
 		return c, errorfamily.WrapInfrastructuref(err, "store.counts", "count aggregates")
 	}

@@ -115,7 +115,7 @@ func (d *Database) Shutdown() error {
 
 // schemaVersion is the version migrate() brings a database to. Bump it
 // when appending a migration step; never renumber or edit shipped steps.
-const schemaVersion = 3
+const schemaVersion = 4
 
 // migration is one versioned schema step. Statements run inside a single
 // transaction: a failure aborts at this version and a retry resumes there
@@ -246,6 +246,19 @@ var migrations = []migration{
 		)`,
 			`CREATE INDEX IF NOT EXISTS idx_call_transcripts_owner ON call_transcripts(owner, started_at)`,
 			`CREATE INDEX IF NOT EXISTS idx_call_transcripts_call ON call_transcripts(owner, call_id)`,
+		},
+	},
+	{
+		version: 4,
+		stmts: []string{
+			// One-time boot-transition flags (2026-10-15): the composition
+			// root marks completed data transitions here (first use: the
+			// legacy-contacts import into the metaengine read models). Hand-
+			// owned rows, hand-owned ladder — the engine never learns of it.
+			`CREATE TABLE IF NOT EXISTS app_flags (
+			key   TEXT PRIMARY KEY,
+			value TEXT NOT NULL
+		)`,
 		},
 	},
 }
