@@ -232,9 +232,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*store.Faxes, error) {
 		return store.NewFaxes(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
-	do.Provide(injector, func(i do.Injector) (*store.Contacts, error) {
-		return store.NewContacts(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
-	})
 	do.Provide(injector, func(i do.Injector) (*store.Snippets, error) {
 		return store.NewSnippets(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
@@ -310,7 +307,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
 			Messages:    do.MustInvoke[*store.Messages](i),
 			Faxes:       do.MustInvoke[*store.Faxes](i),
-			Contacts:    do.MustInvoke[*store.Contacts](i),
+			Contacts:    engine.Contacts(),
 			Snippets:    do.MustInvoke[*store.Snippets](i),
 			Transcripts: do.MustInvoke[*store.Transcripts](i),
 			Messaging:   do.MustInvoke[*messaging.Service](i),

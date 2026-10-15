@@ -83,13 +83,15 @@ var contactsQuery = metaengine.Query[contactsInput, ContactView](contactsCollect
 type Contacts struct {
 	models *metaengine.Store
 	reader *metaengine.TypedReader[ContactView]
+	agg    metaengine.AggregateReader
 	mu     sync.Mutex
 }
 
-func newContacts(models *metaengine.Store) *Contacts {
+func newContacts(models *metaengine.Store, agg metaengine.AggregateReader) *Contacts {
 	return &Contacts{
 		models: models,
 		reader: metaengine.NewReader[ContactView](models, contactsCollection),
+		agg:    agg,
 	}
 }
 
@@ -171,6 +173,17 @@ func (s *Contacts) ownerViews(ctx context.Context, owner domain.Extension) ([]Co
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.contact_list", "list contacts for %s", owner.String())
 	}
 	return views, nil
+}
+
+// Count reports the total stored contacts across all owners (the
+// metrics surface's webphone_contacts_total). Served by the engine's
+// native COUNT aggregate — no row materialization.
+func (s *Contacts) Count(ctx context.Context) (int64, error) {
+	n, err := s.agg.Aggregate(ctx, contactsCollection, metaengine.AggregateCount, "", nil)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "readmodels.contact_count", "count contacts")
+	}
+	return int64(n), nil
 }
 
 // Delete removes one contact scoped to its owner. The id-to-slot

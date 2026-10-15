@@ -37,6 +37,7 @@ const fileName = "readmodels.db"
 type Engine struct {
 	eng      metaengine.Engine
 	dedup    metaengine.DedupStore
+	agg      metaengine.AggregateReader
 	models   *metaengine.Store
 	contacts *Contacts
 	db       *sql.DB
@@ -61,6 +62,13 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the dedup capability", eng)
 	}
+	// Same doctrine for the aggregate reader: the metrics surface counts
+	// contacts through it, so a swap that dropped it fails the boot.
+	agg, ok := eng.(metaengine.AggregateReader)
+	if !ok {
+		_ = db.Close()
+		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
+	}
 	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery)
 	if err != nil {
 		_ = db.Close()
@@ -69,8 +77,9 @@ func Open(dataDir string) (*Engine, error) {
 	return &Engine{
 		eng:      eng,
 		dedup:    dedup,
+		agg:      agg,
 		models:   models,
-		contacts: newContacts(models),
+		contacts: newContacts(models, agg),
 		db:       db,
 	}, nil
 }

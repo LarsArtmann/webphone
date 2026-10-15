@@ -30,6 +30,7 @@ import (
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
@@ -132,7 +133,9 @@ type Deps struct {
 	Sessions session.Store
 	Messages *store.Messages
 	Faxes    *store.Faxes
-	Contacts *store.Contacts
+	// Contacts is the metaengine-backed personal-contacts read model
+	// (readmodels.db) — same method contract the SQL store held.
+	Contacts *readmodels.Contacts
 	Snippets *store.Snippets
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab). Nil (test compositions): the save

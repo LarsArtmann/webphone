@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -125,7 +126,7 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
-		if errors.Is(err, store.ErrListFull) {
+		if errors.Is(err, readmodels.ErrListFull) {
 			http.Error(w, "contact list is full — delete one first", http.StatusUnprocessableEntity)
 			return
 		}
