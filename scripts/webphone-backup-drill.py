@@ -185,7 +185,7 @@ def main():
         # tarfile's "data" filter keeps file modes but forces the
         # execute bit onto directories, so 0755 is the honest bound
         # (never group/world-writable either way).
-        for name in ("webphone.db", "files"):
+        for name in ("webphone.db", "readmodels.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
             limit = 0o755 if name == "files" else 0o640
             assert mode <= limit, (  # nosec B101 - drill script: the assert IS the check

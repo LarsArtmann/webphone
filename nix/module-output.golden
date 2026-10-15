@@ -22,6 +22,13 @@ handle {
 
 == backup script (retentionDays = 7) ==
 sqlite3 /var/lib/webphone/webphone.db ".backup '/var/lib/webphone-backup/webphone.db'"
+# The metaengine read-model database (dedup windows, contacts, snippets,
+# faxes, transcripts, enroll tokens) carries user data since the
+# metaengine train — guard for data dirs that have not booted a
+# webphone new enough to create it yet.
+if [ -f /var/lib/webphone/readmodels.db ]; then
+  sqlite3 /var/lib/webphone/readmodels.db ".backup '/var/lib/webphone-backup/readmodels.db'"
+fi
 rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
 # Dated history: snapshot today's state under snapshots/,
 # hardlinking unchanged blobs against the newest previous
@@ -35,6 +42,9 @@ basis=$(
 )
 mkdir -p "$snap"
 sqlite3 /var/lib/webphone/webphone.db ".backup '$snap/webphone.db'"
+if [ -f /var/lib/webphone/readmodels.db ]; then
+  sqlite3 /var/lib/webphone/readmodels.db ".backup '$snap/readmodels.db'"
+fi
 if [ -n "$basis" ]; then
   rsync -a --delete --link-dest="$basis" /var/lib/webphone/files/ "$snap/files/"
 else

@@ -65,6 +65,16 @@
                 "sqlite3 /var/lib/webphone-backup/webphone.db 'pragma integrity_check' | grep -q '^ok$'"
             )
 
+            # The metaengine read-model database rides the same snapshot
+            # (it carries user data since the metaengine train: contacts,
+            # snippets, faxes, transcripts) — present, consistent.
+            machine.succeed(
+                "test -f /var/lib/webphone-backup/readmodels.db"
+            )
+            machine.succeed(
+                "sqlite3 /var/lib/webphone-backup/readmodels.db 'pragma integrity_check' | grep -q '^ok$'"
+            )
+
             # Private-data hardening (2026-09-29 train, pinned 2026-09-30):
             # the oneshot succeeded, the state dir is group-readable at
             # most, and backup artifacts are owner-only (UMask=0077 ->
@@ -117,6 +127,9 @@
             )
             machine.succeed(
             "sqlite3 '/var/lib/webphone-backup/snapshots/'$(date +%F)'/webphone.db' 'pragma integrity_check' | grep -q '^ok$'"
+            )
+            machine.succeed(
+            "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/readmodels.db'"
             )
           '';
         };

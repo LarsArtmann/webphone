@@ -10,6 +10,13 @@ let
 in
 ''
   sqlite3 ${cfg.dataDir}/webphone.db ".backup '${dest}/webphone.db'"
+  # The metaengine read-model database (dedup windows, contacts, snippets,
+  # faxes, transcripts, enroll tokens) carries user data since the
+  # metaengine train — guard for data dirs that have not booted a
+  # webphone new enough to create it yet.
+  if [ -f ${cfg.dataDir}/readmodels.db ]; then
+    sqlite3 ${cfg.dataDir}/readmodels.db ".backup '${dest}/readmodels.db'"
+  fi
   rsync -a --delete ${cfg.dataDir}/files/ ${dest}/files/
 ''
 + (lib.optionalString history ''
@@ -25,6 +32,9 @@ in
   )
   mkdir -p "$snap"
   sqlite3 ${cfg.dataDir}/webphone.db ".backup '$snap/webphone.db'"
+  if [ -f ${cfg.dataDir}/readmodels.db ]; then
+    sqlite3 ${cfg.dataDir}/readmodels.db ".backup '$snap/readmodels.db'"
+  fi
   if [ -n "$basis" ]; then
     rsync -a --delete --link-dest="$basis" ${cfg.dataDir}/files/ "$snap/files/"
   else

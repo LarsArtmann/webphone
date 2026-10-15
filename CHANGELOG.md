@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Reply snippets, faxes, call transcripts, and enrollment tokens moved to
+  the metaengine read model (readmodels.db) behind their unchanged method
+  contracts: snippet list/create/delete (100-per-extension cap), fax
+  receipt/status folds with `FaxReceipted`/`FaxStatusAdvanced` facts and an
+  in-process idempotent webhook lane, keyed transcript segments
+  (5,000-per-extension / 1,500-per-call converging trims) with
+  ASCII-case-insensitive search, and hash-keyed enroll tokens
+  (`Mint`/`Lookup`/`Burn`, sweep-on-mint; the 15-minute TTL needs no legacy
+  import). Legacy rows import once at boot for the first three; the deleted
+  SQL stores (`store/snippets.go`, `store/faxes.go`, `store/transcripts.go`,
+  the `wp_enroll_tokens` table) are gone and retention plus the metrics
+  census now read the engine.
 - Webhook and call-log idempotency windows are DURABLE: the engine-backed
   dedup store (readmodels.db) replaces the in-memory maps, so a restart no
   longer forgets which provider verdicts and ended-call logs were already
