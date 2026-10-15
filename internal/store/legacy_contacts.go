@@ -35,7 +35,7 @@ func FlagPresent(ctx context.Context, db *sql.DB, key string) (bool, error) {
 }
 
 // SetFlag stamps an app_flags row (insert-or-replace).
-func SetFlag(ctx context.Context, db *sql.DB, key, value string) error {
+func SetFlag(ctx context.Context, db *sql.DB, key, value string) error { //nolint:branching-flow // key/value app-flag pair; one call site, literal args visible together (legacy import path, retiring with the window)
 	if _, err := db.ExecContext(ctx, `INSERT INTO app_flags (key, value) VALUES (?, ?)
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value`, key, value); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.flag_write", "set app flag %s", key)
@@ -45,6 +45,10 @@ func SetFlag(ctx context.Context, db *sql.DB, key, value string) error {
 
 // LegacyContact is one row of the retired SQL contacts table, kept as
 // plain strings: import-time parsing decides what survives.
+//
+// branching-flow DUPLICATE_TYPE (baselined): the parse-layer row of the
+// RETIRED table — typing it would dress dead storage as domain (delete
+// with the legacy import window, TODO_LIST).
 type LegacyContact struct {
 	ID        string
 	Owner     string

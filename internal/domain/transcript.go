@@ -48,6 +48,10 @@ type TranscriptSegmentKey struct {
 // rowid tiebreak's engine equivalent; sorting by seq reproduces the
 // SQL `started_at DESC, rowid DESC` stream because live segments
 // arrive in spoken order.
+//
+// branching-flow COMPOSITION_mixin (baselined): the fact mirrors the
+// TranscriptSegmentView row on purpose (the fold is a plain insert of
+// the wire shape).
 type TranscriptAppended struct {
 	Key       TranscriptSegmentKey
 	Owner     string

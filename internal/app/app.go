@@ -333,30 +333,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
 		return nil, wrapf("open read-model engine: %w", err)
 	}
-	importLegacyContacts(
-		context.Background(),
-		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
-		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
-		log,
-	)
-	importLegacySnippets(
-		context.Background(),
-		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
-		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
-		log,
-	)
-	importLegacyTranscripts(
-		context.Background(),
-		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
-		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
-		log,
-	)
-	importLegacyFaxes(
-		context.Background(),
-		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
-		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
-		log,
-	)
+	// The four legacy imports share one (sqlite, engine) resolution —
+	// named once, eagerly, per the composition-root doctrine (AGENTS.md).
+	sqlite := do.MustInvokeNamed[*store.Database](injector, "sqlite")        //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
+	engine := do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
+	importLegacyContacts(context.Background(), sqlite, engine, log)
+	importLegacySnippets(context.Background(), sqlite, engine, log)
+	importLegacyTranscripts(context.Background(), sqlite, engine, log)
+	importLegacyFaxes(context.Background(), sqlite, engine, log)
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

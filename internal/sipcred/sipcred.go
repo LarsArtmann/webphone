@@ -17,7 +17,7 @@ import (
 // endpoint and any verifier agree without shared state; the token is
 // 256 bits of entropy, so the derived credential never repeats across
 // sessions and is worthless once the session is gone.
-func Derive(secret, sessionToken string) string {
+func Derive(secret, sessionToken string) string { //nolint:branching-flow // HMAC key-then-data order IS the semantic; payload strings, not ids (the strong-id ruling covers identity)
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(sessionToken))
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))

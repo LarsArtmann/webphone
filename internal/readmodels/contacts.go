@@ -35,6 +35,10 @@ func init() {
 // Unix-nanos created_at keeps list ordering EXACTLY numeric in sqlite
 // (the SQL store compared unix seconds with a rowid tiebreak; nanos
 // make ties virtually impossible and the order stable).
+//
+// branching-flow DUPLICATE_TYPE (baselined): the engine projection of
+// the retired SQL row (parity port); the json tags ARE the engine's
+// storage schema, not a DTO to consolidate with the domain type.
 type ContactView struct {
 	ID        string `json:"id"`
 	Owner     string `json:"owner"`
@@ -80,6 +84,10 @@ var contactsQuery = metaengine.Query[contactsInput, ContactView](contactsCollect
 // process-wide mutex restores the atomicity the SQL single-statement
 // cap used to provide. Engine writes themselves are already
 // serialized by the single sqlite connection.
+//
+// branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
+// shape (models+reader+agg+mu, see Faxes/Snippets) — deliberate
+// symmetry, not a mixin candidate.
 type Contacts struct {
 	models *metaengine.Store
 	reader *metaengine.TypedReader[ContactView]

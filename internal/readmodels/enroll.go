@@ -21,7 +21,7 @@ type EnrollTokenView struct {
 }
 
 // enrollTokensCollection names the engine collection (query name).
-const enrollTokensCollection = "enroll_tokens"
+const enrollTokensCollection = "enroll_tokens" //cqrs-lint:ignore(S001) a storage-collection NAME, not a credential — trips only the "token" substring heuristic
 
 type enrollInput struct{ TokenHash string }
 
@@ -48,6 +48,10 @@ var enrollTokensQuery = metaengine.Query[enrollInput, EnrollTokenView](enrollTok
 // (invalid vs expired vs unknown) stays in the userauth service — the
 // seam only ever reports found/not-found.
 //
+// branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
+// shape (models+reader+mu, see Faxes/Contacts/Snippets) — deliberate
+// symmetry, not a mixin candidate.
+//
 // NO legacy import: tokens live 15 minutes, so an upgrade carries no
 // meaningful continuity — in-flight enrollment links at the moment of
 // an upgrade simply get re-minted (the old wp_enroll_tokens table in
@@ -67,7 +71,7 @@ func newEnrollTokens(models *metaengine.Store) *EnrollTokens {
 
 // Mint stores one hashed token with its expiry and opportunistically
 // sweeps the expired ones first (the SQL mint's preamble).
-func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string, expiresAt time.Time) error {
+func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string, expiresAt time.Time) error { //nolint:branching-flow // verbatim port of the retired SQL store's Mint signature (parity rule); classification lives in userauth, not here
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

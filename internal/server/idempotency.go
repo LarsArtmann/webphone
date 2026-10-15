@@ -11,6 +11,10 @@ import (
 // with per-key TTL (the metaengine DedupStore port, consumer-owned so
 // this package stays library-free). Nil (test compositions, map
 // fallback) degrades to the in-process idemStore.
+//
+// branching-flow IFACE_COMPLETE (baselined): consumer-side seam kept
+// small on purpose (map fallback in tests, engine window in prod) —
+// the "one implementer" reading misses the nil seam.
 type DedupWindow interface {
 	// Seen reports whether key is currently recorded and unexpired.
 	Seen(ctx context.Context, collection, key string, now time.Time) (bool, error)

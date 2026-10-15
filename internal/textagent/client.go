@@ -32,7 +32,7 @@ type Client struct {
 // secret file is a Rejection: half a seam must fail at boot, not at
 // the first button press (the same drift argument as the gateway
 // secret pair).
-func New(url, secretFile string) (*Client, error) {
+func New(url, secretFile string) (*Client, error) { //nolint:branching-flow // config pair, not ids; a swap fails the secret-file read at boot (Rejection, never silent)
 	data, err := os.ReadFile(secretFile)
 	if err != nil {
 		return nil, errorfamily.WrapRejectionf(err, "textagent.secret", "textagent: read secret file %s", secretFile)
@@ -172,7 +172,7 @@ func draftIDValid(id string) bool {
 // Approve sends a draft: empty text approves the draft verbatim, a
 // non-empty text approves the HUMAN edit (the agent records the
 // correction as a learned preference).
-func (c *Client) Approve(ctx context.Context, id, text string) (*Draft, error) {
+func (c *Client) Approve(ctx context.Context, id, text string) (*Draft, error) { //nolint:branching-flow // id+text: a swap lands the text in the URL path and fails loudly server-side
 	if !draftIDValid(id) {
 		return nil, errorfamily.NewRejection("textagent.badid", "textagent: invalid draft id")
 	}
@@ -197,7 +197,7 @@ func (c *Client) Discard(ctx context.Context, id string) error {
 
 // DraftFor asks for an on-demand draft (the compose button): the
 // contact number plus an optional hint the owner typed.
-func (c *Client) DraftFor(ctx context.Context, to, hint string) (*Draft, error) {
+func (c *Client) DraftFor(ctx context.Context, to, hint string) (*Draft, error) { //nolint:branching-flow // to+hint: a swap fails the server's number validation loudly, never silently
 	payload := map[string]string{"to": to}
 	if hint != "" {
 		payload["hint"] = hint

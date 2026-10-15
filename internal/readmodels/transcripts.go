@@ -37,6 +37,9 @@ const transcriptFetchWindow = 2000
 // engine's single sort field reproducing the SQL stream's
 // `started_at DESC, rowid DESC` — live segments arrive in spoken
 // order, so append order IS the display order.
+//
+// branching-flow COMPOSITION_mixin (baselined): the engine projection
+// row mirrors the retired SQL row verbatim (parity port).
 type TranscriptSegmentView struct {
 	ID        string           `json:"id"`
 	Owner     string           `json:"owner"`

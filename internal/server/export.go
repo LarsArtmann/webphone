@@ -52,6 +52,9 @@ type exportFax struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// branching-flow COMPOSITION_mixin (baselined): the export DTO mirrors
+// the stored row's wire shape on purpose (strong-id ruling: raw ids
+// round-trip verbatim).
 type exportTranscript struct {
 	CallID    string    `json:"callId"` //nolint:branching-flow // JSON wire DTO stays raw (strong-id ruling 2026-10-05): callId round-trips stored rows and the DOM delete affordance verbatim
 	Remote    string    `json:"remote"`

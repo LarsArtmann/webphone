@@ -27,12 +27,12 @@ type engineDedupWindow struct {
 
 var _ server.DedupWindow = engineDedupWindow{}
 
-func (w engineDedupWindow) Seen(ctx context.Context, collection, key string, now time.Time) (bool, error) {
+func (w engineDedupWindow) Seen(ctx context.Context, collection, key string, now time.Time) (bool, error) { //nolint:branching-flow // verbatim port of metaengine.DedupStore's parameter order — the engine API IS the contract
 	return w.store.DedupSeen(ctx, collection, key, now)
 }
 
 func (w engineDedupWindow) CheckAndRecord(
-	ctx context.Context, collection, key string, ttl time.Duration, now time.Time,
+	ctx context.Context, collection, key string, ttl time.Duration, now time.Time, //nolint:branching-flow // verbatim port of metaengine.DedupStore's parameter order — the engine API IS the contract
 ) (bool, error) {
 	return w.store.DedupCheckAndRecord(ctx, collection, key, ttl, now)
 }

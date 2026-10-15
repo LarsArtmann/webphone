@@ -50,6 +50,10 @@ type Archiver interface {
 // held and the read-model engine now serves (same methods, same
 // verdicts). AdvanceIdempotent is the webhook lane's in-process replay
 // guard — see readmodels.Faxes for the exact semantics.
+//
+// branching-flow IFACE_COMPLETE (baselined): single prod implementer BY
+// DESIGN — this consumer-side seam is what retired the SQL store
+// without touching fax.Service, and tests inject fakes through it.
 type Store interface {
 	Create(ctx context.Context, job domain.FaxJob) error
 	UpdateStatus(ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int) error

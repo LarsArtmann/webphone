@@ -16,6 +16,10 @@ type SnippetKey struct {
 // existing creation time on replace BEFORE emitting the fact, so the
 // fold stays a plain insert. Raw string id by the strong-id wire
 // ruling: read-model facts are wire shapes, not domain types.
+//
+// branching-flow COMPOSITION_mixin (baselined): the fact mirrors the
+// SnippetView row on purpose (the fold is a plain insert of the wire
+// shape).
 type SnippetSaved struct {
 	Key       SnippetKey
 	Owner     string

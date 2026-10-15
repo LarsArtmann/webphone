@@ -13,6 +13,10 @@ type EnrollTokenKey struct {
 
 // EnrollTokenMinted is the read-model fact inserting one enrollment
 // token (the hash, the account it enrolls, and its expiry).
+//
+// branching-flow COMPOSITION_mixin (baselined): read-model facts mirror
+// their engine row on purpose (strong-id wire ruling) — the fold is a
+// plain insert of the wire shape.
 type EnrollTokenMinted struct {
 	Key       EnrollTokenKey
 	Email     string

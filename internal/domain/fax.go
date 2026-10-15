@@ -36,6 +36,11 @@ const (
 
 // FaxJob is one fax transmission attempt (outbound) or one received
 // document (inbound). The PDF lives on disk at DocumentPath.
+//
+// branching-flow COMPOSITION_mixin (baselined): the aggregate mirrors
+// its storage row by the parity-port ruling — the SQL→engine swap
+// served this shape verbatim, and accessors would be indirection
+// without meaning.
 type FaxJob struct {
 	ID           FaxID
 	Owner        Extension
@@ -174,6 +179,10 @@ type FaxKey struct {
 // Raw string ids by the strong-id wire ruling (read-model facts are
 // wire shapes); the lifecycle enums stay typed — they ARE the faxMoves
 // vocabulary.
+//
+// branching-flow COMPOSITION_mixin (baselined): the fact mirrors the
+// FaxView row on purpose (the fold is a plain insert of the wire
+// shape).
 type FaxReceipted struct {
 	Key          FaxKey
 	Owner        string

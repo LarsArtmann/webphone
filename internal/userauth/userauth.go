@@ -304,7 +304,7 @@ func (s *Service) Credentials(email string) ([]PasskeyCredential, bool) {
 // base64url ID. The email comes from the session's extension mapping
 // (owner-match by construction); an unmapped account or an unknown id is
 // a Rejection.
-func (s *Service) RemoveCredential(ctx context.Context, email, credentialID string) error {
+func (s *Service) RemoveCredential(ctx context.Context, email, credentialID string) error { //nolint:branching-flow // email+credentialID: handler-door inputs with distinct validation paths; branding the email would fight usermgmt.UserID
 	user, ok := s.users.ReadModel().FindByEmail(strings.ToLower(strings.TrimSpace(email)))
 	if !ok {
 		return errorfamily.NewRejection("userauth.passkey.unmapped",

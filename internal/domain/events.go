@@ -10,6 +10,11 @@ import "context"
 type Event interface{ isDomainEvent() }
 
 // MessageReceived: an inbound message landed in its thread.
+//
+// branching-flow COMPOSITION_mixin+DUPLICATE_TYPE (baselined): SSE event
+// structs deliberately share the Owner+Thread pair — the closed event
+// set IS the projection's vocabulary (one notification shape per event
+// type), not an accident to dedupe.
 type MessageReceived struct {
 	Owner  Extension
 	Thread ThreadID
@@ -17,6 +22,9 @@ type MessageReceived struct {
 
 // MessageDeliveryAdvanced: an outbound message's delivery state moved
 // (send accepted or refused, provider verdict landed).
+//
+// branching-flow DUPLICATE_TYPE (baselined): same-shape sibling of
+// MessageReceived by design (the closed event set, see above).
 type MessageDeliveryAdvanced struct {
 	Owner  Extension
 	Thread ThreadID

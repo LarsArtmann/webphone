@@ -34,6 +34,9 @@ func init() {
 // Unix-nanos created_at keeps list ordering EXACTLY numeric in sqlite
 // (the SQL store compared unix seconds with a rowid tiebreak; nanos
 // make ties virtually impossible and the order stable).
+//
+// branching-flow COMPOSITION_mixin (baselined): the engine projection
+// row mirrors the retired SQL row verbatim (parity port).
 type SnippetView struct {
 	ID        string `json:"id"`
 	Owner     string `json:"owner"`
@@ -74,6 +77,10 @@ var snippetsQuery = metaengine.Query[snippetInput, SnippetView](snippetsCollecti
 // the SQL store held (Save upsert by id keeping the creation time on
 // replace; owner-scoped oldest-first List; owner-scoped Delete by id;
 // per-owner cap for NEW ids).
+//
+// branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
+// shape (models+reader+mu, see Contacts/Faxes) — deliberate symmetry,
+// not a mixin candidate.
 type Snippets struct {
 	models *metaengine.Store
 	reader *metaengine.TypedReader[SnippetView]

@@ -17,6 +17,9 @@ import (
 // timestamps keep list ordering EXACTLY numeric in sqlite (the SQL
 // store compared unix seconds with a rowid tiebreak; nanos make ties
 // virtually impossible and the order stable).
+//
+// branching-flow COMPOSITION_mixin (baselined): the engine projection
+// row mirrors the retired SQL row verbatim (parity port).
 type FaxView struct {
 	ID           string              `json:"id"`
 	Owner        string              `json:"owner"`
@@ -86,6 +89,10 @@ var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
 //
 // mu serializes the pre-read/apply sequences the same way the Contacts
 // and Snippets seams do: the binary is single-process by doctrine.
+//
+// branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
+// shape (models+reader+agg+mu, see Contacts/Snippets) — deliberate
+// symmetry, not a mixin candidate.
 type Faxes struct {
 	models *metaengine.Store
 	reader *metaengine.TypedReader[FaxView]
@@ -128,7 +135,7 @@ func (s *Faxes) Create(ctx context.Context, job domain.FaxJob) error {
 //
 // branching-flow provider correlation id + verbatim refusal text; a ProviderRef type would ripple into webhook DTOs and golden-pinned rows (triage 2026-10-11)
 func (s *Faxes) UpdateStatus(
-	ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int,
+	ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int, //nolint:branching-flow // swap-safe verdict strings; a ProviderRef brand ripples into webhook DTOs + golden-pinned rows (triage 2026-10-11)
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -162,7 +169,7 @@ func (s *Faxes) UpdateStatus(
 // been since the dedup swap — the hooks seam's engine-backed dedup
 // window (ApplyIdempotent's dedup is process-local by design).
 func (s *Faxes) AdvanceIdempotent(
-	ctx context.Context, idemKey string, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int,
+	ctx context.Context, idemKey string, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int, //nolint:branching-flow // swap-safe verdict strings; a ProviderRef brand ripples into webhook DTOs + golden-pinned rows (triage 2026-10-11)
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

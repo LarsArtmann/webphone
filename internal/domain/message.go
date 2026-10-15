@@ -60,6 +60,10 @@ type Thread struct {
 
 // Snippet is a canned reply text owned by one extension. Quick snippets
 // additionally render as chips above the reply composer.
+//
+// branching-flow COMPOSITION_mixin (baselined): mirrors its storage row
+// by the parity-port ruling — the shape IS the contract both stores
+// (SQL, engine) served verbatim.
 type Snippet struct {
 	ID        SnippetID
 	Owner     Extension
