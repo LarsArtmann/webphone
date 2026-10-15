@@ -143,6 +143,7 @@ an OWNER edit of the nix-config pma module (fleet-wide). I did not touch it.
 ## Appendix (19:35 CEST) — owner answers + M8 started, then WAITING
 
 **Owner decisions received (both questions answered):**
+
 1. **G3 scope: "Everything (plan default)"** — after M8+M9+M11+M12, run the
    complete G3 release INCLUDING the tag and the stack notification.
 2. **M9: "Yes, file now"** — both go-cqrs-lite issues filed upstream with
@@ -151,6 +152,7 @@ an OWNER edit of the nix-config pma module (fleet-wide). I did not touch it.
    TODO_LIST Standing watches.
 
 **M8 (T15 enroll tokens) — first half landed, second half owed:**
+
 - DONE: `domain/enroll.go` facts (`EnrollTokenKey` keyed by the SHA-256
   hex, `EnrollTokenMinted`, `EnrollTokenBurned`); `readmodels/enroll.go`
   seam — hash-keyed `Mint/Lookup/Burn`, expired rows swept opportunistically
