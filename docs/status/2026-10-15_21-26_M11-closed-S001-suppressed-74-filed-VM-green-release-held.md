@@ -64,78 +64,78 @@ Minor: tripped the edit-guard once on `app.go` (mtime drift, content identical �
 
 **Release-critical (the active train):**
 
-| # | Task | Impact |
-|---|------|--------|
+| # | Task                                                                                                                              | Impact                 |
+| - | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | 1 | Fire `scripts/release.sh 2.9.0` when host load < 8 (gates → tag → push → lychee → stack relock + E2E + VM → aarch64 → gh release) | BLOCKS the train close |
-| 2 | Its buildflow leg doubles as the M11 full-run verdict — record the count | Closes M11 |
-| 3 | CI-watch the release + verify `git ls-remote` end state | Release hygiene |
-| 4 | CI-watch `e1fc301`/`410aa4d` (pushed 21:2X, runs may still be queued) | Main-green proof |
-| 5 | Post the stack notification ("2.9.0 train done; relock window open") | G3 tail |
-| 6 | TODO_LIST: G3 GREEN line + HARVEST this §f list | Loop closure |
-| 7 | Addendum status report with release verdict | Owner record |
-| 8 | Kill/expire the running load-watch loop cleanly (self-expires ~21:49) | Clean state |
+| 2 | Its buildflow leg doubles as the M11 full-run verdict — record the count                                                          | Closes M11             |
+| 3 | CI-watch the release + verify `git ls-remote` end state                                                                           | Release hygiene        |
+| 4 | CI-watch `e1fc301`/`410aa4d` (pushed 21:2X, runs may still be queued)                                                             | Main-green proof       |
+| 5 | Post the stack notification ("2.9.0 train done; relock window open")                                                              | G3 tail                |
+| 6 | TODO_LIST: G3 GREEN line + HARVEST this §f list                                                                                   | Loop closure           |
+| 7 | Addendum status report with release verdict                                                                                       | Owner record           |
+| 8 | Kill/expire the running load-watch loop cleanly (self-expires ~21:49)                                                             | Clean state            |
 
 **Upstream reviews + watches (owner terminal unless noted):**
 
-| # | Task | Impact |
-|---|------|--------|
-| 9 | Review boxes on go-cqrs-lite #71 / #72 / #74 (tick + timestamp after reading) | Provenance ledger |
-| 10 | Standing watch: adopt #74's fix when released → DROP the S001 suppression directive | Debt removal |
-| 11 | Standing watch: adopt #71 truncation signal in webphone scans | Silent-100 fix |
-| 12 | Standing watch: adopt #72 cap primitive → replace converging-loop trims (sweep + enroll) | Debt removal |
-| 13 | File upstream: composition/dupe/ifacecomplete don't consult IgnoreComments (same class as branching-flow#12) — TypeDecl nolints would work | FP class fix |
-| 14 | File upstream: IFACE_COMPLETE misses the nil-seam idiom (server.DedupWindow) | Rule accuracy |
-| 15 | Consider upstream note: DO_must-in-runtime can't see the registration side (composition-root doctrine) | Rule accuracy |
-| 16 | When cqrs-lint ships the S001 fix: bump + drop directive (pairs with #10) | Debt removal |
+| #  | Task                                                                                                                                       | Impact            |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| 9  | Review boxes on go-cqrs-lite #71 / #72 / #74 (tick + timestamp after reading)                                                              | Provenance ledger |
+| 10 | Standing watch: adopt #74's fix when released → DROP the S001 suppression directive                                                        | Debt removal      |
+| 11 | Standing watch: adopt #71 truncation signal in webphone scans                                                                              | Silent-100 fix    |
+| 12 | Standing watch: adopt #72 cap primitive → replace converging-loop trims (sweep + enroll)                                                   | Debt removal      |
+| 13 | File upstream: composition/dupe/ifacecomplete don't consult IgnoreComments (same class as branching-flow#12) — TypeDecl nolints would work | FP class fix      |
+| 14 | File upstream: IFACE_COMPLETE misses the nil-seam idiom (server.DedupWindow)                                                               | Rule accuracy     |
+| 15 | Consider upstream note: DO_must-in-runtime can't see the registration side (composition-root doctrine)                                     | Rule accuracy     |
+| 16 | When cqrs-lint ships the S001 fix: bump + drop directive (pairs with #10)                                                                  | Debt removal      |
 
 **Docs + rules upkeep:**
 
-| # | Task | Impact |
-|---|------|--------|
-| 17 | docs/lessons.md: add the "warnings-capped detectors hide count drift" war story (19→59, ~1 day) | Memory |
-| 18 | docs/lessons.md: add the handoff-must-carry-terminal-verdicts lesson (VM re-run) | Memory |
-| 19 | AGENTS.md: update the stale "buildflow = 1 known FP" line to green + the finding-count rule | Memory |
-| 20 | dedup-registry: append this session's sweep-log line (59-finding triage) | Registry rule |
+| #  | Task                                                                                                                                                    | Impact         |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 17 | docs/lessons.md: add the "warnings-capped detectors hide count drift" war story (19→59, ~1 day)                                                         | Memory         |
+| 18 | docs/lessons.md: add the handoff-must-carry-terminal-verdicts lesson (VM re-run)                                                                        | Memory         |
+| 19 | AGENTS.md: update the stale "buildflow = 1 known FP" line to green + the finding-count rule                                                             | Memory         |
+| 20 | dedup-registry: append this session's sweep-log line (59-finding triage)                                                                                | Registry rule  |
 | 21 | Decide: CHANGELOG line for the app.go hoist? (internal refactor, no behavior change — the bar says code-path changes get a line; verify classification) | Bar compliance |
-| 22 | Decide (#15 prior): reconcile the 10-14 plan's over-counted census inline or keep the honest note | Record hygiene |
-| 23 | Record (#30 prior): ROADMAP verified-no-changes note | Record hygiene |
-| 24 | `.buildflow.yml` ownership confirm (#26 prior): the 2026-10-15 un-skips say "owner decision" — see g) Q3 | Provenance |
+| 22 | Decide (#15 prior): reconcile the 10-14 plan's over-counted census inline or keep the honest note                                                       | Record hygiene |
+| 23 | Record (#30 prior): ROADMAP verified-no-changes note                                                                                                    | Record hygiene |
+| 24 | `.buildflow.yml` ownership confirm (#26 prior): the 2026-10-15 un-skips say "owner decision" — see g) Q3                                                | Provenance     |
 
 **Process hardening:**
 
-| # | Task | Impact |
-|---|------|--------|
-| 25 | Add "per-tool finding counts" to the train-start buildflow checklist (e.1) | Drift detection |
-| 26 | Add "baseline staleness line must be read" to the same checklist (e.3) | Drift detection |
-| 27 | scripts/art-dupl-ci.sh wrapper pinning the CI version (#19 prior) | Skew guard |
-| 28 | Decide (#18 prior): art-dupl pin direction (see g) Q2) | One re-record vs recurring |
-| 29 | Add the version-skew war story to docs/lessons.md (#20 prior) | Memory |
-| 30 | erraudit tier-1/2 monthly re-measure — due 2026-11-05 (#17 prior) | Standing gate |
-| 31 | Quarterly art-dupl baseline audit — next ~2027-01 (#16 prior) | Standing gate |
-| 32 | Consider `rule_accepts` for whole-rule acceptance (mixin fleet-wide) vs per-finding baseline — see g) Q3 | Baseline ergonomics |
-| 33 | Commit-per-edit-batch discipline vs the daemon (e.5) — try it next train | Narrative survival |
+| #  | Task                                                                                                     | Impact                     |
+| -- | -------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 25 | Add "per-tool finding counts" to the train-start buildflow checklist (e.1)                               | Drift detection            |
+| 26 | Add "baseline staleness line must be read" to the same checklist (e.3)                                   | Drift detection            |
+| 27 | scripts/art-dupl-ci.sh wrapper pinning the CI version (#19 prior)                                        | Skew guard                 |
+| 28 | Decide (#18 prior): art-dupl pin direction (see g) Q2)                                                   | One re-record vs recurring |
+| 29 | Add the version-skew war story to docs/lessons.md (#20 prior)                                            | Memory                     |
+| 30 | erraudit tier-1/2 monthly re-measure — due 2026-11-05 (#17 prior)                                        | Standing gate              |
+| 31 | Quarterly art-dupl baseline audit — next ~2027-01 (#16 prior)                                            | Standing gate              |
+| 32 | Consider `rule_accepts` for whole-rule acceptance (mixin fleet-wide) vs per-finding baseline — see g) Q3 | Baseline ergonomics        |
+| 33 | Commit-per-edit-batch discipline vs the daemon (e.5) — try it next train                                 | Narrative survival         |
 
 **Deferred product/store work (unchanged, carried):**
 
-| # | Task | Impact |
-|---|------|--------|
-| 34 | Legacy cleanup train: delete `legacy_*.go` + flags when the import window closes (#44/#45 prior) | Census −6 sites |
-| 35 | `TestEngineCollectionsMatchPlan` arch-test so new read models can't skip Plan registration (#46) | Hygiene |
-| 36 | Boot-log line when legacy `wp_enroll_tokens` rows exist but are ignored (#34 prior) | Operator visibility |
-| 37 | threadsdual harness: re-run after every metaengine minor bump (#23 prior) | Parity evidence |
-| 38 | Consider CI-ifying the threadsdual harness as a scheduled job (#24 prior) | Evidence automation |
-| 39 | `pgengine` behind `readmodels.OpenWithEngine` ONLY on real need (#35 prior) | Recorded path |
-| 40 | Backup script comment: why `sqlite3 .backup` needs no `-wal` handling (#36 prior) | Doc debt |
-| 41 | Prod smoke after deploy: `--base https://pbx.artmann.tech --expect-version 2.9.0` (#50 prior) | Owner terminal |
-| 42 | Prod backup drill against deployed 2.9.0 | Owner terminal |
-| 43 | pbx-artmann re-pin after the stack relock (#38 prior) | Owner terminal |
-| 44 | Re-verify `.buildflow.yml` after daemon activity near it (standing rule #27 prior) | Standing rule |
-| 45 | Audit today's daemon commits for unintended sweeps (3–4 spot checks; `b3df82c` verified mine) (#25 prior) | Trust |
-| 46 | lychee: whitelist the drafts' issue-link pattern if it trips (#33 prior) | Release tail |
-| 47 | 429-combined-load test (#5) + ASR follow-ups — parked from older sweeps (#40 prior) | Backlog |
-| 48 | Watch the next Crush upgrade for the QMD `get` render fix (#39 prior) | Standing watch |
-| 49 | docs-health ANNOTATE this report when superseded by the addendum | Doc hygiene |
-| 50 | After the train closes: re-read the plan's G-gates and formally mark G3 done (#37 prior) | Train close |
+| #  | Task                                                                                                      | Impact              |
+| -- | --------------------------------------------------------------------------------------------------------- | ------------------- |
+| 34 | Legacy cleanup train: delete `legacy_*.go` + flags when the import window closes (#44/#45 prior)          | Census −6 sites     |
+| 35 | `TestEngineCollectionsMatchPlan` arch-test so new read models can't skip Plan registration (#46)          | Hygiene             |
+| 36 | Boot-log line when legacy `wp_enroll_tokens` rows exist but are ignored (#34 prior)                       | Operator visibility |
+| 37 | threadsdual harness: re-run after every metaengine minor bump (#23 prior)                                 | Parity evidence     |
+| 38 | Consider CI-ifying the threadsdual harness as a scheduled job (#24 prior)                                 | Evidence automation |
+| 39 | `pgengine` behind `readmodels.OpenWithEngine` ONLY on real need (#35 prior)                               | Recorded path       |
+| 40 | Backup script comment: why `sqlite3 .backup` needs no `-wal` handling (#36 prior)                         | Doc debt            |
+| 41 | Prod smoke after deploy: `--base https://pbx.artmann.tech --expect-version 2.9.0` (#50 prior)             | Owner terminal      |
+| 42 | Prod backup drill against deployed 2.9.0                                                                  | Owner terminal      |
+| 43 | pbx-artmann re-pin after the stack relock (#38 prior)                                                     | Owner terminal      |
+| 44 | Re-verify `.buildflow.yml` after daemon activity near it (standing rule #27 prior)                        | Standing rule       |
+| 45 | Audit today's daemon commits for unintended sweeps (3–4 spot checks; `b3df82c` verified mine) (#25 prior) | Trust               |
+| 46 | lychee: whitelist the drafts' issue-link pattern if it trips (#33 prior)                                  | Release tail        |
+| 47 | 429-combined-load test (#5) + ASR follow-ups — parked from older sweeps (#40 prior)                       | Backlog             |
+| 48 | Watch the next Crush upgrade for the QMD `get` render fix (#39 prior)                                     | Standing watch      |
+| 49 | docs-health ANNOTATE this report when superseded by the addendum                                          | Doc hygiene         |
+| 50 | After the train closes: re-read the plan's G-gates and formally mark G3 done (#37 prior)                  | Train close         |
 
 ## g) Questions for the owner (max 3)
 
@@ -145,4 +145,4 @@ Minor: tripped the edit-guard once on `app.go` (mtime drift, content identical �
 
 ---
 
-*Evidence: `buildflow -s cqrs-lint` exit 0 / 0 errors; `-s branching-flow` 40 findings all baselined, staleness gone; session suite ok (0.896s, post-hoist); webphone-backup exit 0; CI 38788192274 green; #74 landed. Commits `b3df82c`/`e1fc301`/`410aa4d` pushed.*
+_Evidence: `buildflow -s cqrs-lint` exit 0 / 0 errors; `-s branching-flow` 40 findings all baselined, staleness gone; session suite ok (0.896s, post-hoist); webphone-backup exit 0; CI 38788192274 green; #74 landed. Commits `b3df82c`/`e1fc301`/`410aa4d` pushed._

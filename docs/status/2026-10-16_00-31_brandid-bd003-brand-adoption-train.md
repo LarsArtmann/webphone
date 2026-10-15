@@ -25,16 +25,16 @@ push stall; CI green.
 
 Headline numbers:
 
-| Metric                       | Value                                    |
-| ---------------------------- | ---------------------------------------- |
-| BD003 findings in            | 35 (2 ERROR, 2 WARNING, 31 INFO)          |
-| Findings resolved            | 35 (100%)                                 |
-| Real type changes made       | 0 (deliberate — all sites carried rulings)|
-| Code deltas                  | 1 (tautology removal, `userauth.Shutdown`)|
-| Files touched                | 18 Go files + AGENTS.md + CHANGELOG.md    |
-| Full test suite              | green (24 packages; server suite 550s)    |
-| buildflow                    | exit 0                                    |
-| CI on pushed tip `c029741`   | success (run 38814348023)                 |
+| Metric                     | Value                                      |
+| -------------------------- | ------------------------------------------ |
+| BD003 findings in          | 35 (2 ERROR, 2 WARNING, 31 INFO)           |
+| Findings resolved          | 35 (100%)                                  |
+| Real type changes made     | 0 (deliberate — all sites carried rulings) |
+| Code deltas                | 1 (tautology removal, `userauth.Shutdown`) |
+| Files touched              | 18 Go files + AGENTS.md + CHANGELOG.md     |
+| Full test suite            | green (24 packages; server suite 550s)     |
+| buildflow                  | exit 0                                     |
+| CI on pushed tip `c029741` | success (run 38814348023)                  |
 
 ---
 
@@ -66,8 +66,8 @@ Headline numbers:
    classification. Reasoning recorded in the directive at the site.
 5. **Tautology fix:** `userauth.go` Shutdown's first `&& firstErr == nil` was
    dead (gopls nilness warning in a file I was editing) — removed; `go vet`
-   + build green; disk-verified (the LSP kept serving a stale snapshot —
-   see e-7).
+   - build green; disk-verified (the LSP kept serving a stale snapshot —
+     see e-7).
 6. **Full verification chain:** `nix fmt` before the gates (18 files
    reflown into the daemon commits), `go test -count=1 ./...` all green
    (server's 550s includes the session-behavior suite — the auth-regression
@@ -284,5 +284,5 @@ session's observed smaller polish.
 
 ---
 
-*Report ends. Waiting for instructions (per operator prompt). The skill's
-post-report HARVEST obligation is intentionally deferred to that instruction.*
+_Report ends. Waiting for instructions (per operator prompt). The skill's
+post-report HARVEST obligation is intentionally deferred to that instruction._
