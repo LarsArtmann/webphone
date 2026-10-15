@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-10-15
+
 ### Changed
 
 - Reply snippets, faxes, call transcripts, and enrollment tokens moved to
@@ -1675,7 +1677,8 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...HEAD
+[2.9.0]: https://github.com/LarsArtmann/webphone/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0
 [2.7.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0
 [2.6.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.6.0
