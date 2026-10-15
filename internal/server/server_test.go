@@ -22,6 +22,7 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/assets"
@@ -85,6 +86,18 @@ func newTestServerWithPhoneAPI(t testing.TB, phoneAPIURL string, mutate ...func(
 	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
 }
 
+// newTestReadmodels opens a throwaway read-model engine (contacts live
+// in readmodels.db since the T07 swap) and registers its shutdown.
+func newTestReadmodels(t testing.TB) *readmodels.Contacts {
+	t.Helper()
+	engine, err := readmodels.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
+	return engine.Contacts()
+}
+
 // newTestServerWithConfig additionally tweaks the config BEFORE the deps
 // are wired (so services like Messaging pick up the tweaked gateway).
 func newTestServerWithConfig(
@@ -132,7 +145,7 @@ func newTestServerWithConfig(
 		Sessions:    sessions,
 		Messages:    messages,
 		Faxes:       faxes,
-		Contacts:    store.NewContacts(db),
+		Contacts:    newTestReadmodels(t),
 		Snippets:    store.NewSnippets(db),
 		Transcripts: transcripts,
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),

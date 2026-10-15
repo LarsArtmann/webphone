@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -156,18 +157,20 @@ func TestInternalErrorRedactsDetail(t *testing.T) {
 }
 
 // TestContactsAPIStoreFailureRoutesThroughContactSaveFailed pins the
-// JSON API's store-failure lane: a broken store surfaces as the shared
-// 500 (save) and a plain 404 (delete never leaks store detail).
+// JSON API's store-failure lane: a broken read-model store (engine shut
+// down) surfaces as the shared 500 (save) and a plain 404 (delete never
+// leaks store detail).
 func TestContactsAPIStoreFailureRoutesThroughContactSaveFailed(t *testing.T) {
-	db, err := store.Open(":memory:")
+	engine, err := readmodels.Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Close(); err != nil {
+	contacts := engine.Contacts()
+	if err := engine.Shutdown(); err != nil {
 		t.Fatal(err)
 	}
 	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
-		d.Contacts = store.NewContacts(db)
+		d.Contacts = contacts
 	})
 	c := signIn(t, server)
 
@@ -182,21 +185,15 @@ func TestContactsAPIStoreFailureRoutesThroughContactSaveFailed(t *testing.T) {
 	}
 }
 
-// TestContactsAPIListCapRefusesNewNumbers pins the atomic cap at the
-// API surface: at ContactsMaxPerExtension the store refuses a NEW
-// number with the actionable 422, while renaming an EXISTING number
-// still succeeds (the upsert branch is not capped — one statement, one
-// invariant).
+// TestContactsAPIListCapRefusesNewNumbers pins the cap at the API
+// surface: at ContactsMaxPerExtension the read-model store refuses a
+// NEW number with the actionable 422, while renaming an EXISTING
+// number still succeeds (the upsert branch is not capped).
 func TestContactsAPIListCapRefusesNewNumbers(t *testing.T) {
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
-	contacts := store.NewContacts(db)
+	contacts := newTestReadmodels(t)
 	owner := domain.MustParseExtension("1001")
 	ctx := context.Background()
-	for i := range store.ContactsMaxPerExtension {
+	for i := range readmodels.ContactsMaxPerExtension {
 		phone, phoneErr := domain.ParsePhone(fmt.Sprintf("+441632960%03d", i))
 		if phoneErr != nil {
 			t.Fatal(phoneErr)

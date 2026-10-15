@@ -236,6 +236,12 @@ a deliberate code change, regenerate:
 | pbx.transport                                | Transient                 | internal/pbx/client.go            |
 | pbx.url                                      | Rejection                 | internal/pbx/client.go            |
 | readmodels.close                             | Infrastructure            | internal/readmodels/readmodels.go |
+| readmodels.contact_count                     | Infrastructure            | internal/readmodels/contacts.go   |
+| readmodels.contact_delete                    | Infrastructure            | internal/readmodels/contacts.go   |
+| readmodels.contact_list                      | Infrastructure            | internal/readmodels/contacts.go   |
+| readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go   |
+| readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go   |
+| readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go   |
 | readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go |
 | readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go        |
@@ -251,11 +257,6 @@ a deliberate code change, regenerate:
 | store.attachments_list                       | Infrastructure            | internal/store/messages.go        |
 | store.attachments_rows                       | Infrastructure            | internal/store/messages.go        |
 | store.close                                  | Infrastructure            | internal/store/db.go              |
-| store.contact_delete                         | Infrastructure            | internal/store/contacts.go        |
-| store.contact_list_full                      | Rejection                 | internal/store/contacts.go        |
-| store.contact_missing                        | Rejection                 | internal/store/contacts.go        |
-| store.contact_save                           | Infrastructure            | internal/store/contacts.go        |
-| store.contact_scan                           | Infrastructure            | internal/store/contacts.go        |
 | store.count_archived                         | Infrastructure            | internal/store/messages.go        |
 | store.counts                                 | Infrastructure            | internal/store/sweep.go           |
 | store.exec                                   | Infrastructure            | internal/store/sweep.go           |
@@ -264,6 +265,8 @@ a deliberate code change, regenerate:
 | store.fax_scan                               | Infrastructure            | internal/store/faxes.go           |
 | store.fax_spool                              | Infrastructure            | internal/fax/service.go           |
 | store.fax_update                             | Infrastructure            | internal/store/faxes.go           |
+| store.flag_read                              | Infrastructure            | internal/store/legacy_contacts.go |
+| store.flag_write                             | Infrastructure            | internal/store/legacy_contacts.go |
 | store.message_append                         | Infrastructure            | internal/messaging/service.go     |
 | store.message_insert                         | Infrastructure            | internal/store/messages.go        |
 | store.message_scan                           | Infrastructure            | internal/store/messages.go        |

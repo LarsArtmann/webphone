@@ -24,6 +24,7 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
@@ -61,11 +62,14 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	}
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
+	engine, err := readmodels.Open(t.TempDir())
+	Expect(err).NotTo(HaveOccurred())
+	t.Cleanup(func() { _ = engine.Shutdown() })
 	handler := server.New(server.Deps{
 		Config:    cfg,
 		Messages:  messages,
 		Faxes:     faxes,
-		Contacts:  store.NewContacts(db),
+		Contacts:  engine.Contacts(),
 		Messaging: messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:       fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:  phoneAPI,

@@ -3,7 +3,7 @@
 // 400 (decode) or 422 (bad number), and a valid body is 204. The handler
 // is driven DIRECTLY over a session-carrying request context: fuzz
 // workers forbid the HTTP harness's t.Helper, and this keeps each
-// iteration cheap (one :memory: store, no server boot).
+// iteration cheap (one throwaway read-model engine, no server boot).
 package server
 
 import (
@@ -14,7 +14,6 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/session"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 func FuzzContactsAPISave(f *testing.F) {
@@ -26,12 +25,7 @@ func FuzzContactsAPISave(f *testing.F) {
 	f.Add([]byte(`{"name":"overflow","number":"+9999999999999999999999"}`))
 
 	f.Fuzz(func(t *testing.T, body []byte) {
-		db, err := store.Open(":memory:")
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Cleanup(func() { _ = db.Close() })
-		h := &handlers{deps: Deps{Contacts: store.NewContacts(db)}}
+		h := &handlers{deps: Deps{Contacts: newTestReadmodels(t)}}
 
 		sess := session.Session{Extension: domain.MustParseExtension("1001")}
 		req := httptest.NewRequest("POST", "/api/contacts",
