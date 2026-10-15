@@ -56,7 +56,7 @@ explicitly demanded `.md` at this path (skill default is styled HTML).
     `GIT_CONFIG_{COUNT,KEY_0,VALUE_0}` = `core.hooksPath=/var/empty`, and
     env-level git config overrides repo AND global config → every daemon `git
     commit` runs hookless. Evidence: unit file read + `git config --show-origin`
-    + binary strings (`--no-verify` flags, timeout advice).
+    - binary strings (`--no-verify` flags, timeout advice).
 11. **Hook contract verified sound**: temp-index reproduction (real index never
     touched) — daemon-pattern message + staged `.buildflow.yml` ⇒ exit 1 with the
     correct refusal text. Evidence: shell transcript, hook exit 1.
@@ -174,58 +174,58 @@ explicitly demanded `.md` at this path (skill default is styled HTML).
 
 ## f) FIFTY things to get done next (brainstorm for HARVEST — impact-ranked, not a commitment)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | nix-config: drop the pma unit's `GIT_CONFIG core.hooksPath=/var/empty` override so hooks bind daemon commits fleet-wide | Critical | S | Bug |
-| 2 | After 1: verify the guard refuses a real daemon-pattern commit (watch next daemon pass on webphone) | Critical | S | Bug |
-| 3 | Watch CI to green for daemon-swept commits `89cf3b9`…`f5259f9` (`gh run list`) | High | XS | Quality |
-| 4 | Wire `scripts/commit-msg-guard-selftest.sh` into a gate (flake check or buildflow) | High | S | Quality |
-| 5 | T11 tail (concurrent session): regenerate the error-code registry golden (`go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update`) | High | XS | Bug |
-| 6 | Chase the `TestSSEPushesSwapSafeFragments` empty-state-vs-row race once T11 settles | High | M | Bug |
-| 7 | F019: add metaengine `Volume` hints to `contactsQuery`/`snippetsQuery` declarations | Medium | S | Quality |
-| 8 | F026: `WithPrefetch` on `reader.Scan` list reads (contacts.go:93) + pattern for new scans | Medium | S | Quality |
-| 9 | Decide baseline-vs-visible for accepted cqrs-lint classes (A009/C009/C014/C023×6) | Medium | S | Cleanup |
-| 10 | M11: refresh `.buildflow-baseline.json` (189 dead entries; reconcile CLI-vs-SDK ID skew #13) | High | M | Quality |
-| 11 | Re-run full buildflow at the T11/T12 landing (train-start AND end rule) | High | — | Quality |
-| 12 | M4: `ApplyIdempotent(provider_ref)` receipt lane + resolution-arm parity, delete `store/faxes.go` | High | L | Feature |
-| 13 | M5/T16: SQL-site census + list-latency smoke vs baseline into plan §7 | High | S | Documentation |
-| 14 | M6/M7: transcripts append folds + owner keying + 5000-segment trim | Medium | M | Feature |
-| 15 | M8: enroll tokens Map query + consume-once + delete enroll SQL | Medium | M | Feature |
-| 16 | M9: upstream filings (scan-ceiling-100, cap ergonomics) with verify-before-filing + github-voice | Medium | S | Feature |
-| 17 | M12: CHANGELOG `[Unreleased]` for T09–T15 + README/FEATURES/AGENTS readmodels rows | Medium | S | Documentation |
-| 18 | M13/G3: smoke + full buildflow + vulnix + release dance (version bump, tag, CI green, stack notification) | Critical | L | Release |
-| 19 | M14: sessions SQL-vs-engine spike memo (no cutover, N4 stands) | Low | M | Documentation |
-| 20 | M15: threads dual-run spike + byte-compare report (owner-gated) | Low | L | Quality |
-| 21 | M16: upload-test `-short` marking (owner answer still pending) | Low | XS | Quality |
-| 22 | M17: fuzz-perf measurement of per-iteration `t.TempDir` engine cost | Low | S | Quality |
-| 23 | M18: backup drill asserts restore+open of `readmodels.db` | Medium | S | Bug |
-| 24 | μ65: postgres engine smoke on a scratch DB (optional F53) | Low | S | Quality |
-| 25 | pma-daemon: remove or wire the dead `skip_hooks` config knob | Low | S | Cleanup |
-| 26 | pma upstream: typed non-retried hook-refusal outcome for commits | Medium | M | Feature |
-| 27 | pma upstream: reword the in-binary "try --no-verify" timeout advice (contradicts guard policy) | Low | S | Cleanup |
-| 28 | go-commit: typed hook-refusal error code from `performCommit` so callers can distinguish | Medium | S | Feature |
-| 29 | Rebuild the BuildFlow binary (repo `d114f28` > binary `518739c`) at the next release | Low | S | Cleanup |
-| 30 | Paste the `error_rules` elevation key once BuildFlow ≥899077a ships | Medium | XS | Quality |
-| 31 | Harden the guard: also match the `Daemon: true` trailer (defense-in-depth, works if patterns drift) | Medium | S | Bug |
-| 32 | Write the guard-hole war story into docs/lessons.md (one home: hook correct + unit override + `89cf3b9`) | Medium | S | Documentation |
-| 33 | Check whether OTHER fleet projects' hooks are equally neutered by the unit override | Medium | S | Bug |
-| 34 | Re-run `buildflow -s cqrs-lint` after T11 lands — the new `readmodels.fax_*` code may add findings | Medium | XS | Quality |
-| 35 | nix-hash-fix post-bump drill: confirm the unskipped step surfaces a stale pin at the next `go get` (asserted, not yet observed) | Medium | S | Quality |
-| 36 | Vendor-freshness preflight false alarm (go.mod mtime > modules.txt with identical content): file upstream or ignore | Low | S | Cleanup |
-| 37 | Explicit CHANGELOG ruling for the guard selftest (line or recorded-silent) | Low | XS | Documentation |
-| 38 | erraudit tier 1+2 re-measure (due 2026-11-05; tier-2 must stay 0) | Medium | M | Quality |
-| 39 | Quarterly art-dupl baseline audit (check the due window) | Low | M | Quality |
-| 40 | Re-verify govulncheck binary freshness before G3 | Medium | XS | Quality |
-| 41 | docs-health VERIFY pass on planning docs: the pasted T09–T22 plan still says "T01–T08 DONE" while reality is T09+G2 done — stale-plan pattern | Medium | S | Documentation |
-| 42 | Confirm the G2 one-commit rollback shape (plan §7) is still accurate post-T09 | Low | XS | Documentation |
-| 43 | After M11 refresh: re-point AGENTS' "19 findings live in baseline" claim if counts change | Low | XS | Documentation |
-| 44 | Skeleton the M14 sessions spike: collect SQL store metrics while the train is hot | Low | M | Documentation |
-| 45 | Sweep `scripts/*.sh` for gate coverage — which are gate-wired vs manual-only (mine is manual) | Low | S | Cleanup |
-| 46 | Until the unit fix lands: treat every daemon commit touching go.mod/.buildflow.yml as an incident (re-pin + CI-watch discipline) | High | — | Process |
-| 47 | Consider a post-commit watchdog (trailer-keyed) as interim mitigation for #46 if the unit fix stalls | Medium | M | Bug |
-| 48 | Record the unskip provenance precisely in AGENTS ("owner-approved in session 2026-10-15 17:5x") — currently reads as a blanket owner decision | Low | XS | Documentation |
-| 49 | Verify the selftest passes from a FRESH clone (GIT_INDEX_FILE approach should be clone-independent — prove it) | Low | XS | Quality |
-| 50 | Run `nix fmt` + shellcheck over this session's new/edited files before the next push (script + docs never saw the formatters) | Medium | XS | Quality |
+| #  | Task                                                                                                                                           | Impact   | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | nix-config: drop the pma unit's `GIT_CONFIG core.hooksPath=/var/empty` override so hooks bind daemon commits fleet-wide                        | Critical | S      | Bug           |
+| 2  | After 1: verify the guard refuses a real daemon-pattern commit (watch next daemon pass on webphone)                                            | Critical | S      | Bug           |
+| 3  | Watch CI to green for daemon-swept commits `89cf3b9`…`f5259f9` (`gh run list`)                                                                 | High     | XS     | Quality       |
+| 4  | Wire `scripts/commit-msg-guard-selftest.sh` into a gate (flake check or buildflow)                                                             | High     | S      | Quality       |
+| 5  | T11 tail (concurrent session): regenerate the error-code registry golden (`go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update`) | High     | XS     | Bug           |
+| 6  | Chase the `TestSSEPushesSwapSafeFragments` empty-state-vs-row race once T11 settles                                                            | High     | M      | Bug           |
+| 7  | F019: add metaengine `Volume` hints to `contactsQuery`/`snippetsQuery` declarations                                                            | Medium   | S      | Quality       |
+| 8  | F026: `WithPrefetch` on `reader.Scan` list reads (contacts.go:93) + pattern for new scans                                                      | Medium   | S      | Quality       |
+| 9  | Decide baseline-vs-visible for accepted cqrs-lint classes (A009/C009/C014/C023×6)                                                              | Medium   | S      | Cleanup       |
+| 10 | M11: refresh `.buildflow-baseline.json` (189 dead entries; reconcile CLI-vs-SDK ID skew #13)                                                   | High     | M      | Quality       |
+| 11 | Re-run full buildflow at the T11/T12 landing (train-start AND end rule)                                                                        | High     | —      | Quality       |
+| 12 | M4: `ApplyIdempotent(provider_ref)` receipt lane + resolution-arm parity, delete `store/faxes.go`                                              | High     | L      | Feature       |
+| 13 | M5/T16: SQL-site census + list-latency smoke vs baseline into plan §7                                                                          | High     | S      | Documentation |
+| 14 | M6/M7: transcripts append folds + owner keying + 5000-segment trim                                                                             | Medium   | M      | Feature       |
+| 15 | M8: enroll tokens Map query + consume-once + delete enroll SQL                                                                                 | Medium   | M      | Feature       |
+| 16 | M9: upstream filings (scan-ceiling-100, cap ergonomics) with verify-before-filing + github-voice                                               | Medium   | S      | Feature       |
+| 17 | M12: CHANGELOG `[Unreleased]` for T09–T15 + README/FEATURES/AGENTS readmodels rows                                                             | Medium   | S      | Documentation |
+| 18 | M13/G3: smoke + full buildflow + vulnix + release dance (version bump, tag, CI green, stack notification)                                      | Critical | L      | Release       |
+| 19 | M14: sessions SQL-vs-engine spike memo (no cutover, N4 stands)                                                                                 | Low      | M      | Documentation |
+| 20 | M15: threads dual-run spike + byte-compare report (owner-gated)                                                                                | Low      | L      | Quality       |
+| 21 | M16: upload-test `-short` marking (owner answer still pending)                                                                                 | Low      | XS     | Quality       |
+| 22 | M17: fuzz-perf measurement of per-iteration `t.TempDir` engine cost                                                                            | Low      | S      | Quality       |
+| 23 | M18: backup drill asserts restore+open of `readmodels.db`                                                                                      | Medium   | S      | Bug           |
+| 24 | μ65: postgres engine smoke on a scratch DB (optional F53)                                                                                      | Low      | S      | Quality       |
+| 25 | pma-daemon: remove or wire the dead `skip_hooks` config knob                                                                                   | Low      | S      | Cleanup       |
+| 26 | pma upstream: typed non-retried hook-refusal outcome for commits                                                                               | Medium   | M      | Feature       |
+| 27 | pma upstream: reword the in-binary "try --no-verify" timeout advice (contradicts guard policy)                                                 | Low      | S      | Cleanup       |
+| 28 | go-commit: typed hook-refusal error code from `performCommit` so callers can distinguish                                                       | Medium   | S      | Feature       |
+| 29 | Rebuild the BuildFlow binary (repo `d114f28` > binary `518739c`) at the next release                                                           | Low      | S      | Cleanup       |
+| 30 | Paste the `error_rules` elevation key once BuildFlow ≥899077a ships                                                                            | Medium   | XS     | Quality       |
+| 31 | Harden the guard: also match the `Daemon: true` trailer (defense-in-depth, works if patterns drift)                                            | Medium   | S      | Bug           |
+| 32 | Write the guard-hole war story into docs/lessons.md (one home: hook correct + unit override + `89cf3b9`)                                       | Medium   | S      | Documentation |
+| 33 | Check whether OTHER fleet projects' hooks are equally neutered by the unit override                                                            | Medium   | S      | Bug           |
+| 34 | Re-run `buildflow -s cqrs-lint` after T11 lands — the new `readmodels.fax_*` code may add findings                                             | Medium   | XS     | Quality       |
+| 35 | nix-hash-fix post-bump drill: confirm the unskipped step surfaces a stale pin at the next `go get` (asserted, not yet observed)                | Medium   | S      | Quality       |
+| 36 | Vendor-freshness preflight false alarm (go.mod mtime > modules.txt with identical content): file upstream or ignore                            | Low      | S      | Cleanup       |
+| 37 | Explicit CHANGELOG ruling for the guard selftest (line or recorded-silent)                                                                     | Low      | XS     | Documentation |
+| 38 | erraudit tier 1+2 re-measure (due 2026-11-05; tier-2 must stay 0)                                                                              | Medium   | M      | Quality       |
+| 39 | Quarterly art-dupl baseline audit (check the due window)                                                                                       | Low      | M      | Quality       |
+| 40 | Re-verify govulncheck binary freshness before G3                                                                                               | Medium   | XS     | Quality       |
+| 41 | docs-health VERIFY pass on planning docs: the pasted T09–T22 plan still says "T01–T08 DONE" while reality is T09+G2 done — stale-plan pattern  | Medium   | S      | Documentation |
+| 42 | Confirm the G2 one-commit rollback shape (plan §7) is still accurate post-T09                                                                  | Low      | XS     | Documentation |
+| 43 | After M11 refresh: re-point AGENTS' "19 findings live in baseline" claim if counts change                                                      | Low      | XS     | Documentation |
+| 44 | Skeleton the M14 sessions spike: collect SQL store metrics while the train is hot                                                              | Low      | M      | Documentation |
+| 45 | Sweep `scripts/*.sh` for gate coverage — which are gate-wired vs manual-only (mine is manual)                                                  | Low      | S      | Cleanup       |
+| 46 | Until the unit fix lands: treat every daemon commit touching go.mod/.buildflow.yml as an incident (re-pin + CI-watch discipline)               | High     | —      | Process       |
+| 47 | Consider a post-commit watchdog (trailer-keyed) as interim mitigation for #46 if the unit fix stalls                                           | Medium   | M      | Bug           |
+| 48 | Record the unskip provenance precisely in AGENTS ("owner-approved in session 2026-10-15 17:5x") — currently reads as a blanket owner decision  | Low      | XS     | Documentation |
+| 49 | Verify the selftest passes from a FRESH clone (GIT_INDEX_FILE approach should be clone-independent — prove it)                                 | Low      | XS     | Quality       |
+| 50 | Run `nix fmt` + shellcheck over this session's new/edited files before the next push (script + docs never saw the formatters)                  | Medium   | XS     | Quality       |
 
 ## g) Three questions I can NOT figure out myself
 
@@ -245,5 +245,5 @@ explicitly demanded `.md` at this path (skill default is styled HTML).
 
 ---
 
-*Point-in-time snapshot; goes stale. Section (f) is HARVEST fuel for
-TODO_LIST/ROADMAP (docs-health), not an entombed commitment list.*
+_Point-in-time snapshot; goes stale. Section (f) is HARVEST fuel for
+TODO_LIST/ROADMAP (docs-health), not an entombed commitment list._
