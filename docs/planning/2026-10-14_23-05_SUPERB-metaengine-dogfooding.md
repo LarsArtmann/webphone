@@ -71,6 +71,7 @@ Measured 2026-10-14 (rg over `internal/` + `cmd/`, non-vendor):
 ## 7. Phases, gates, rollback
 
 - **G1** (after T04): full `go test`, buildflow, smoke green → else rollback = keep `newIdemStore` map (the constructor IS the seam).
+  - **VERDICT: GREEN (2026-10-15).** CI run 38689670760 all legs (race suite 3m1s, nix build, treefmt, art-dupl @ baseline 65); local full suite green under host load ~95 (server leg 548s; the `:memory:` idle-trim fix removed the load-starved flakes); smoke 47+4+8+9 zero-fail; buildflow run at close. Rolled into the verdict: the daemon's go.mod sweep repair (paperless v0.5.0 branded-id adoption + vendorHash re-pin) — engine dedup + map fallback both covered by the suite. **Continue to T05+** (in fact T05–T08 executed under this gate's confidence).
 - **G2** (after T10): pilot verdict — metrics below; NO-GO = record why, revert contacts/snippets to SQL (interface swap = one commit), keep DedupStore.
 - **G3** (after T18): train close per release-runbook; served markup untouched in P0–P2 → no stack E2E owed until T20.
 
