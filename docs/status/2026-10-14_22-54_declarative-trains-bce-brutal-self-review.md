@@ -160,6 +160,7 @@ wrong, and what follows. Owner questions stayed minted throughout.
    the pattern; I only wrote this one when asked.
 
 ## f) Next up to 50 (ordered: owner calls → D train → this session's
+
 loose ends → harvested backlog)
 
 1. Owner g3: decide Train D sequencing (lean: fresh session + stack
@@ -278,11 +279,11 @@ the rest — re-minting them here would break the one-home rule.)
    `store.Open`'s documented pool settings (an `auth:`-adjacent
    surface). Bless, or leave documented-environmental?
 
-*(A1.7 and E2 remain open owner calls too — they are fully framed in
-their own artifacts and did not make the 3-question cut.)*
+_(A1.7 and E2 remain open owner calls too — they are fully framed in
+their own artifacts and did not make the 3-question cut.)_
 
 ---
 
-*End state at write time: local == remote == `51cca0d`, CI green,
+_End state at write time: local == remote == `51cca0d`, CI green,
 tree clean, one probe log archived at `/tmp/upload-flake-probe.log`.
-Waiting for instructions.*
+Waiting for instructions._

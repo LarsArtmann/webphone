@@ -69,9 +69,9 @@ var contactsQuery = metaengine.Query[contactsInput, ContactView](contactsCollect
 // cap used to provide. Engine writes themselves are already
 // serialized by the single sqlite connection.
 type Contacts struct {
-	models  *metaengine.Store
-	reader  *metaengine.TypedReader[ContactView]
-	mu      sync.Mutex
+	models *metaengine.Store
+	reader *metaengine.TypedReader[ContactView]
+	mu     sync.Mutex
 }
 
 func newContacts(models *metaengine.Store) *Contacts {
