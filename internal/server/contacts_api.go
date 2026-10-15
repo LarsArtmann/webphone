@@ -8,7 +8,6 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // notifyContactsChanged nudges the extension's other surfaces (open
