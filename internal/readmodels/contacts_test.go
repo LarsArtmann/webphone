@@ -129,14 +129,16 @@ func TestContactsRenameKeepsIdentity(t *testing.T) {
 }
 
 // TestContactsCapRejectsNewNumbers pins the per-owner cap: a NEW
-// number past ContactsMaxPerExtension is refused with the store's
-// ErrListFull contract; renames of EXISTING numbers stay open.
+// number past ContactsMaxPerExtension is refused with this package's
+// ErrListFull contract; renames of EXISTING numbers stay open, and a
+// delete frees the slot again.
 func TestContactsCapRejectsNewNumbers(t *testing.T) {
 	engine := openTestEngine(t)
 	contacts := engine.Contacts()
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	base := time.Unix(1700000000, 0)
+	var firstID domain.ContactID
 
 	for i := range ContactsMaxPerExtension {
 		contact := domain.Contact{
@@ -146,15 +148,18 @@ func TestContactsCapRejectsNewNumbers(t *testing.T) {
 			Phone:     domain.MustParsePhone("+15551" + digitsOf(i, 7)),
 			CreatedAt: base.Add(time.Duration(i) * time.Second),
 		}
+		if i == 0 {
+			firstID = contact.ID
+		}
 		if err := contacts.Save(ctx, contact); err != nil {
 			t.Fatalf("fill to cap (%d): %v", i, err)
 		}
 	}
 
 	over := mustContact(t, "1001", "Over", "+15559999999", base.Add(time.Hour))
-	if err := contacts.Save(ctx, over); !errors.Is(err, store.ErrListFull) {
+	if err := contacts.Save(ctx, over); !errors.Is(err, ErrListFull) {
 		t.Fatalf("save past the cap: want ErrListFull, got %v", err)
-	}
+		}
 
 	// Rename of an existing number stays open at the cap.
 	existing := domain.Contact{
@@ -172,6 +177,21 @@ func TestContactsCapRejectsNewNumbers(t *testing.T) {
 	fresh := mustContact(t, "1002", "Fresh", "+15551000000", base)
 	if err := contacts.Save(ctx, fresh); err != nil {
 		t.Fatalf("other owner at their own count: %v", err)
+	}
+
+	// A delete frees the slot: the refused number fits afterwards.
+	if err := contacts.Delete(ctx, owner, firstID); err != nil {
+		t.Fatalf("delete at cap: %v", err)
+	}
+	if err := contacts.Save(ctx, over); err != nil {
+		t.Fatalf("save after freeing a slot: %v", err)
+	}
+	list, err := contacts.List(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != ContactsMaxPerExtension {
+		t.Fatalf("owner list = %d, want exactly the cap", len(list))
 	}
 }
 

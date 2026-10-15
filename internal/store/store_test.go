@@ -2,8 +2,6 @@ package store
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"testing"
 	"time"
 

@@ -8,8 +8,6 @@ package store_test
 import (
 	"context"
 	"database/sql"
-	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
