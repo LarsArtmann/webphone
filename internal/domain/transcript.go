@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/sixafter/nanoid"
+)
 
 // CallTranscriptSegment is one live-transcribed chunk of a call. The
 // island's capture loop posts each recorder segment as its own row, so a
@@ -29,4 +33,41 @@ type CallTranscript struct {
 	Remote    string
 	StartedAt time.Time
 	Lines     []string
+}
+
+// TranscriptSegmentKey identifies one transcript segment in the
+// read-model store. SQL rows carried no id (the autoincrement rowid
+// was private); the engine requires a key, so the seam mints one per
+// append — same uniqueness role, now durable and explicit.
+type TranscriptSegmentKey struct {
+	ID string
+}
+
+// TranscriptAppended is the read-model fact inserting one transcript
+// segment. Seq carries the append order (nanos at the seam) — the
+// rowid tiebreak's engine equivalent; sorting by seq reproduces the
+// SQL `started_at DESC, rowid DESC` stream because live segments
+// arrive in spoken order.
+type TranscriptAppended struct {
+	Key       TranscriptSegmentKey
+	Owner     string
+	CallID    string //nolint:branching-flow // island-owned SIP Call-ID, verbatim passthrough (see CallTranscriptSegment.CallID)
+	Direction Direction
+	Remote    string
+	StartedAt time.Time
+	Seq       int64
+	Text      string
+}
+
+// TranscriptExpunged is the read-model fact removing one transcript
+// segment — the caps' trim arm, the end-user delete-call leg, and the
+// retention sweep all ride it.
+type TranscriptExpunged struct {
+	Key TranscriptSegmentKey
+}
+
+// GenerateTranscriptSegmentKey mints a fresh segment key: the engine
+// row identity (internal — never rendered on the wire).
+func GenerateTranscriptSegmentKey() TranscriptSegmentKey {
+	return TranscriptSegmentKey{ID: nanoid.Must().String()}
 }
