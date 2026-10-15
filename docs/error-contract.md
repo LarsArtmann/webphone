@@ -244,6 +244,11 @@ a deliberate code change, regenerate:
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go   |
 | readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go |
 | readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go |
+| readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go   |
+| readmodels.snippet_list                      | Infrastructure            | internal/readmodels/snippets.go   |
+| readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go   |
+| readmodels.snippet_missing                   | Rejection                 | internal/readmodels/snippets.go   |
+| readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go   |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go        |
 | session.migrate                              | Infrastructure            | internal/session/sqlite.go        |
 | session.nil_db                               | Infrastructure            | internal/session/sqlite.go        |
@@ -275,9 +280,6 @@ a deliberate code change, regenerate:
 | store.outbound_status                        | Infrastructure            | internal/messaging/service.go     |
 | store.ping                                   | Infrastructure            | internal/store/db.go              |
 | store.query                                  | Infrastructure            | internal/store/db.go              |
-| store.snippet_delete                         | Infrastructure            | internal/store/snippets.go        |
-| store.snippet_save                           | Infrastructure            | internal/store/snippets.go        |
-| store.snippet_scan                           | Infrastructure            | internal/store/snippets.go        |
 | store.sweep_scan                             | Infrastructure            | internal/store/sweep.go           |
 | store.thread_find                            | Infrastructure            | internal/store/messages.go        |
 | store.thread_flag                            | Infrastructure, Rejection | internal/store/messages.go        |
