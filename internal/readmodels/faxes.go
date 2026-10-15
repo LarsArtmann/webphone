@@ -20,7 +20,7 @@ import (
 //
 // branching-flow COMPOSITION_mixin (baselined): the engine projection
 // row mirrors the retired SQL row verbatim (parity port).
-//brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type FaxView struct {
 	ID           string              `json:"id"`
 	Owner        string              `json:"owner"`
@@ -38,7 +38,7 @@ type FaxView struct {
 // faxesCollection names the engine collection (query name).
 const faxesCollection = "faxes"
 
-//brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
 type faxInput struct{ ID string }
 
 // faxesQuery declares the faxes read model: a keyed projection

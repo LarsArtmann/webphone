@@ -37,7 +37,7 @@ func init() {
 //
 // branching-flow COMPOSITION_mixin (baselined): the engine projection
 // row mirrors the retired SQL row verbatim (parity port).
-//brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type SnippetView struct {
 	ID        string `json:"id"`
 	Owner     string `json:"owner"`
@@ -49,7 +49,7 @@ type SnippetView struct {
 // snippetsCollection names the engine collection (query name).
 const snippetsCollection = "snippets"
 
-//brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
 type snippetInput struct{ ID string }
 
 // snippetsQuery declares the snippets read model: a keyed projection

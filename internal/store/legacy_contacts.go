@@ -49,7 +49,7 @@ func SetFlag(ctx context.Context, db *sql.DB, key, value string) error { //nolin
 // branching-flow DUPLICATE_TYPE (baselined): the parse-layer row of the
 // RETIRED table — typing it would dress dead storage as domain (delete
 // with the legacy import window, TODO_LIST).
-//brandid-lint:ignore(BD003) retired SQL row kept as plain strings; import-time parsing decides what survives
+// brandid-lint:ignore(BD003) retired SQL row kept as plain strings; import-time parsing decides what survives
 type LegacyContact struct {
 	ID        string
 	Owner     string

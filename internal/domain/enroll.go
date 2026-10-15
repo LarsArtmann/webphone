@@ -17,7 +17,7 @@ type EnrollTokenKey struct {
 // branching-flow COMPOSITION_mixin (baselined): read-model facts mirror
 // their engine row on purpose (strong-id wire ruling) — the fold is a
 // plain insert of the wire shape.
-//brandid-lint:ignore(BD003) read-model fact: wire shape; identitymodel.UserID parses strictly at the userauth door (strong-id wire ruling)
+// brandid-lint:ignore(BD003) read-model fact: wire shape; identitymodel.UserID parses strictly at the userauth door (strong-id wire ruling)
 type EnrollTokenMinted struct {
 	Key       EnrollTokenKey
 	Email     string

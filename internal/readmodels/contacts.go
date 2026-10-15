@@ -39,7 +39,7 @@ func init() {
 // branching-flow DUPLICATE_TYPE (baselined): the engine projection of
 // the retired SQL row (parity port); the json tags ARE the engine's
 // storage schema, not a DTO to consolidate with the domain type.
-//brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type ContactView struct {
 	ID        string `json:"id"`
 	Owner     string `json:"owner"`

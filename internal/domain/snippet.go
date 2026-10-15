@@ -7,7 +7,7 @@ import "time"
 // a bare string) mirrors ContactKey so the metaengine fold key
 // extraction stays unambiguous — exactly one field of this type per
 // read-model fact.
-//brandid-lint:ignore(BD003) read-model key: wire shape (strong-id wire ruling)
+// brandid-lint:ignore(BD003) read-model key: wire shape (strong-id wire ruling)
 type SnippetKey struct {
 	ID string
 }

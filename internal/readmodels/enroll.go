@@ -13,7 +13,7 @@ import (
 
 // EnrollTokenView is the engine-side projection of one enrollment
 // token row (the hash is the key; the raw secret never exists here).
-//brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type EnrollTokenView struct {
 	TokenHash string `json:"token_hash"`
 	Email     string `json:"email"`
@@ -73,7 +73,7 @@ func newEnrollTokens(models *metaengine.Store) *EnrollTokens {
 // Mint stores one hashed token with its expiry and opportunistically
 // sweeps the expired ones first (the SQL mint's preamble).
 //
-//brandid-lint:ignore(BD003) store-seam transport: identitymodel.UserID parses strictly at the userauth door (strong-id wire ruling)
+// brandid-lint:ignore(BD003) store-seam transport: identitymodel.UserID parses strictly at the userauth door (strong-id wire ruling)
 func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string, expiresAt time.Time) error { //nolint:branching-flow // verbatim port of the retired SQL store's Mint signature (parity rule); classification lives in userauth, not here
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -97,7 +97,7 @@ func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string
 // user-facing classification (including the expired-vs-invalid
 // operator-log distinction, which needs the expiry).
 //
-//brandid-lint:ignore(BD003) store-seam transport: the raw id re-parses at the userauth door, whose corruption code stays owner of the distinction (strong-id wire ruling)
+// brandid-lint:ignore(BD003) store-seam transport: the raw id re-parses at the userauth door, whose corruption code stays owner of the distinction (strong-id wire ruling)
 func (s *EnrollTokens) Lookup(ctx context.Context, tokenHash string) (email, userID string, expiresAt time.Time, found bool, err error) {
 	view, found, err := s.reader.Get(ctx, domain.EnrollTokenKey{TokenHash: tokenHash})
 	if err != nil {

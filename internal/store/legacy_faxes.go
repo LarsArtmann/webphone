@@ -22,7 +22,7 @@ const FlagLegacyFaxesImported = "legacy_faxes_imported"
 
 // LegacyFax is one row of the retired SQL fax_jobs table, kept as
 // plain values: import-time parsing decides what survives.
-//brandid-lint:ignore(BD003) retired SQL row kept as plain values; import-time parsing decides what survives
+// brandid-lint:ignore(BD003) retired SQL row kept as plain values; import-time parsing decides what survives
 type LegacyFax struct {
 	ID           string
 	Owner        string

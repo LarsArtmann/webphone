@@ -273,7 +273,7 @@ func (s *Service) FinishRegistration(ctx context.Context, userID identitymodel.U
 // PasskeyCredential is one enrolled passkey as the settings surface sees
 // it: the base64url ID (the revoke handle), the operator/device name and
 // the enrollment time. No key material ever leaves the store.
-//brandid-lint:ignore(BD003) base64url encoding of the authenticator's WebAuthn credential id, decoded at the remove door (strong-id ruling)
+// brandid-lint:ignore(BD003) base64url encoding of the authenticator's WebAuthn credential id, decoded at the remove door (strong-id ruling)
 type PasskeyCredential struct {
 	ID        string
 	Name      string
@@ -305,7 +305,7 @@ func (s *Service) Credentials(email string) ([]PasskeyCredential, bool) {
 // base64url ID. The email comes from the session's extension mapping
 // (owner-match by construction); an unmapped account or an unknown id is
 // a Rejection.
-//brandid-lint:ignore(BD003) handler-door input: the base64url decode validates it (strong-id wire ruling)
+// brandid-lint:ignore(BD003) handler-door input: the base64url decode validates it (strong-id wire ruling)
 func (s *Service) RemoveCredential(ctx context.Context, email, credentialID string) error { //nolint:branching-flow // email+credentialID: handler-door inputs with distinct validation paths; branding the email would fight usermgmt.UserID
 	user, ok := s.users.ReadModel().FindByEmail(strings.ToLower(strings.TrimSpace(email)))
 	if !ok {

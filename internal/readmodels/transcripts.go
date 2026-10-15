@@ -40,7 +40,7 @@ const transcriptFetchWindow = 2000
 //
 // branching-flow COMPOSITION_mixin (baselined): the engine projection
 // row mirrors the retired SQL row verbatim (parity port).
-//brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema; CallID is the opaque island token (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema; CallID is the opaque island token (strong-id wire ruling)
 type TranscriptSegmentView struct {
 	ID        string           `json:"id"`
 	Owner     string           `json:"owner"`
@@ -55,7 +55,7 @@ type TranscriptSegmentView struct {
 // transcriptsCollection names the engine collection (query name).
 const transcriptsCollection = "call_transcripts"
 
-//brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
 type transcriptInput struct{ ID string }
 
 // transcriptsQuery declares the transcript read model: an append-only
@@ -156,7 +156,7 @@ func (s *Transcripts) trimOwner(ctx context.Context, owner string) error {
 }
 
 // trimCall is trimOwner against one call with the per-call cap.
-//brandid-lint:ignore(BD003) opaque island Call-ID passthrough into the engine filter (strong-id wire ruling)
+// brandid-lint:ignore(BD003) opaque island Call-ID passthrough into the engine filter (strong-id wire ruling)
 func (s *Transcripts) trimCall(ctx context.Context, owner, callID string) error {
 	for {
 		views, err := s.reader.Scan(ctx,
@@ -179,7 +179,7 @@ func (s *Transcripts) trimCall(ctx context.Context, owner, callID string) error 
 	}
 }
 
-//brandid-lint:ignore(BD003) engine key passthrough into the expunge fact (strong-id wire ruling)
+// brandid-lint:ignore(BD003) engine key passthrough into the expunge fact (strong-id wire ruling)
 func (s *Transcripts) expunge(ctx context.Context, id string) error {
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.TranscriptExpunged{}), domain.TranscriptExpunged{
 		Key: domain.TranscriptSegmentKey{ID: id},
@@ -271,7 +271,7 @@ func (s *Transcripts) fetchSegments(ctx context.Context, owner domain.Extension,
 // leg of the retention story). Idempotent — deleting an unknown call
 // removes zero rows, which is the same success as deleting an
 // already-deleted one.
-//brandid-lint:ignore(BD003) opaque island Call-ID, verbatim passthrough (strong-id wire ruling)
+// brandid-lint:ignore(BD003) opaque island Call-ID, verbatim passthrough (strong-id wire ruling)
 func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, callID string) (int64, error) { //nolint:branching-flow // the opaque island Call-ID, verbatim passthrough (see domain.CallTranscriptSegment.CallID)
 	s.mu.Lock()
 	defer s.mu.Unlock()
