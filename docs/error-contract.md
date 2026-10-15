@@ -320,15 +320,9 @@ a deliberate code change, regenerate:
 | userauth.config                              | Rejection                 | internal/userauth/userauth.go      |
 | userauth.db.open                             | Infrastructure            | internal/userauth/userauth.go      |
 | userauth.db.optimize                         | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.enroll.burn                         | Infrastructure            | internal/userauth/enroll.go        |
 | userauth.enroll.entropy                      | Infrastructure            | internal/userauth/enroll.go        |
-| userauth.enroll.expire                       | Infrastructure            | internal/userauth/enroll.go        |
 | userauth.enroll.expired                      | Rejection                 | internal/userauth/enroll.go        |
 | userauth.enroll.invalid                      | Rejection                 | internal/userauth/enroll.go        |
-| userauth.enroll.lookup                       | Infrastructure            | internal/userauth/enroll.go        |
-| userauth.enroll.migrate                      | Infrastructure            | internal/userauth/enroll.go        |
-| userauth.enroll.mint                         | Infrastructure            | internal/userauth/enroll.go        |
-| userauth.enroll.sweep                        | Infrastructure            | internal/userauth/enroll.go        |
 | userauth.enroll.userid                       | Corruption                | internal/userauth/enroll.go        |
 | userauth.passkey.bad_id                      | Rejection                 | internal/userauth/userauth.go      |
 | userauth.passkey.unmapped                    | Rejection                 | internal/userauth/userauth.go      |

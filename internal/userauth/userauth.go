@@ -41,11 +41,11 @@ const dbDriver = "sqlite"
 // config is enabled; nil on Deps means the mode is off and every passkey
 // surface 404s.
 type Service struct {
-	users   *usermgmt.Service
-	db      *sql.DB
-	enroll  *readmodels.EnrollTokens
-	cfg     PasskeyRuntime
-	log     *slog.Logger
+	users  *usermgmt.Service
+	db     *sql.DB
+	enroll *readmodels.EnrollTokens
+	cfg    PasskeyRuntime
+	log    *slog.Logger
 }
 
 // PasskeyRuntime is the resolved passkey configuration the service needs

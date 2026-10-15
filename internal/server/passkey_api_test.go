@@ -20,6 +20,7 @@ import (
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
