@@ -159,7 +159,7 @@ func TestContactsCapRejectsNewNumbers(t *testing.T) {
 	over := mustContact(t, "1001", "Over", "+15559999999", base.Add(time.Hour))
 	if err := contacts.Save(ctx, over); !errors.Is(err, ErrListFull) {
 		t.Fatalf("save past the cap: want ErrListFull, got %v", err)
-		}
+	}
 
 	// Rename of an existing number stays open at the cap.
 	existing := domain.Contact{

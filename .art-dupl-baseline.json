@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-14T23:26:58.512274692Z",
+  "recordedAt": "2026-10-15T05:57:28.528199853Z",
   "entries": [
     {
       "hash": "086a798c35adf1f4",
@@ -519,6 +519,14 @@
         "internal/server/textagent_api.go"
       ],
       "tokens": 10
+    },
+    {
+      "hash": "e2778d72c1e083b0",
+      "files": [
+        "internal/readmodels/readmodels.go",
+        "internal/readmodels/readmodels.go"
+      ],
+      "tokens": 2
     },
     {
       "hash": "e48b72c07f9b7247",
