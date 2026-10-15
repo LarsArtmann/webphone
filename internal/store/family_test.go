@@ -37,7 +37,6 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 	// error; the store's wraps must classify those as Infrastructure.
 	db := openTestDB(t)
 	messages := store.NewMessages(db)
-	faxes := store.NewFaxes(db)
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -53,12 +52,6 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 
 	if err := messages.MarkThreadRead(ctx, owner, domain.GenerateThreadID()); err == nil {
 		t.Fatal("MarkThreadRead on closed db: want error")
-	} else {
-		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-	}
-
-	if err := faxes.UpdateStatus(ctx, domain.GenerateFaxID(), domain.FaxSending, "", "", 0); err == nil {
-		t.Fatal("UpdateStatus on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 	}

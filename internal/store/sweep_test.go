@@ -15,7 +15,6 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 	messages := NewMessages(db)
-	faxes := NewFaxes(db)
 	transcripts := NewTranscripts(db)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
@@ -54,19 +53,6 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := faxes.Create(ctx, domain.FaxJob{
-		ID: domain.GenerateFaxID(), Owner: owner, Remote: domain.MustParsePhone("+441632960961"),
-		Status: domain.FaxTransmitted, DocumentPath: "old-fax-doc", CreatedAt: old, UpdatedAt: old,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if err := faxes.Create(ctx, domain.FaxJob{
-		ID: domain.GenerateFaxID(), Owner: owner, Remote: domain.MustParsePhone("+441632960977"),
-		Status: domain.FaxTransmitted, DocumentPath: "live-fax-doc", CreatedAt: now, UpdatedAt: now,
-	}); err != nil {
-		t.Fatal(err)
-	}
-
 	// Transcript segments: a fresh one through the store API, an aged
 	// one via raw SQL (Append stamps created_at = now; aging a row is a
 	// sweep-only concern, same style as the aged thread rows below).
@@ -87,11 +73,11 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Messages != 1 || res.Faxes != 1 || res.Threads != 1 || res.Transcripts != 1 {
+	if res.Messages != 1 || res.Threads != 1 || res.Transcripts != 1 {
 		t.Fatalf("sweep counts wrong: %+v", res)
 	}
-	if len(res.BlobPaths) != 2 {
-		t.Fatalf("expected the old attachment + old fax doc paths, got %v", res.BlobPaths)
+	if len(res.BlobPaths) != 1 {
+		t.Fatalf("expected the old attachment path, got %v", res.BlobPaths)
 	}
 
 	// The live thread and its message survive; the swept provider ref

@@ -42,7 +42,7 @@ func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote 
 }
 
 func TestThreadFlagRoundTrips(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -89,7 +89,7 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 }
 
 func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remoteA := domain.MustParsePhone("+441632960961")
@@ -163,7 +163,7 @@ func threadIDFor(t *testing.T, messages *Messages, owner domain.Extension, remot
 }
 
 func TestPinnedOrdering(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remoteOld := domain.MustParsePhone("+441632960961")
@@ -197,7 +197,7 @@ func TestPinnedOrdering(t *testing.T) {
 // M21/M22 added: the flag columns flow into every ThreadSummary and the
 // last message's attachment flips LastAttachment (the 📎 preview).
 func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")

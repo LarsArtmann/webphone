@@ -1,10 +1,12 @@
 // Owner-scoping behavior suite (plan T15, 2026-09-20): EVERY query that
 // takes an owner must filter by it — a scoping regression in this
-// package leaks one extension's messages, faxes or contacts to another.
-// Webhook lookups (MessageByProviderRef, fax ByProviderRef,
-// UpdateOutboundStatus/UpdateStatus) are deliberately NOT owner-scoped:
-// the provider callback carries no extension context, they are scoped by
-// the provider ref instead (unguessable, direction-pinned).
+// package leaks one extension's messages to another. The contacts and
+// fax scoping guarantees moved with their stores (readmodels
+// contacts/snippets/faxes tests carry them since the metaengine
+// swaps). Webhook lookups (MessageByProviderRef, fax ByProviderRef)
+// are deliberately NOT owner-scoped: the provider callback carries no
+// extension context, they are scoped by the provider ref instead
+// (unguessable, direction-pinned).
 package store
 
 import (
@@ -18,16 +20,14 @@ import (
 
 type ownerScopeFixture struct {
 	messages *Messages
-	faxes    *Faxes
 	owner    domain.Extension
 	foreign  domain.Extension
 	threadID domain.ThreadID
-	faxID    domain.FaxID
 }
 
 func newOwnerScopeFixture(t *testing.T) *ownerScopeFixture {
 	t.Helper()
-	messages, faxes := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	foreign := domain.MustParseExtension("1002")
@@ -46,17 +46,9 @@ func newOwnerScopeFixture(t *testing.T) *ownerScopeFixture {
 		t.Fatal(err)
 	}
 
-	faxID := domain.GenerateFaxID()
-	if err := faxes.Create(ctx, domain.FaxJob{
-		ID: faxID, Owner: owner, Remote: remote, Direction: domain.FaxOutbound,
-		Status: domain.FaxQueued, Pages: 1, CreatedAt: now, UpdatedAt: now,
-	}); err != nil {
-		t.Fatal(err)
-	}
-
 	return &ownerScopeFixture{
-		messages: messages, faxes: faxes,
-		owner: owner, foreign: foreign, threadID: threadID, faxID: faxID,
+		messages: messages,
+		owner:    owner, foreign: foreign, threadID: threadID,
 	}
 }
 
@@ -104,21 +96,6 @@ func TestOwnerScopedReads(t *testing.T) {
 		}
 	})
 
-	t.Run("FaxGet", func(t *testing.T) {
-		if _, err := f.faxes.Get(ctx, f.owner, f.faxID); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := f.faxes.Get(ctx, f.foreign, f.faxID); !errors.Is(err, ErrNotFound) {
-			t.Fatalf("foreign fax Get: %v (want ErrNotFound)", err)
-		}
-	})
-
-	t.Run("FaxList", func(t *testing.T) {
-		foreignFaxes, err := f.faxes.List(ctx, f.foreign, 10)
-		if err != nil || len(foreignFaxes) != 0 {
-			t.Fatalf("foreign fax List leaked %d jobs (err %v)", len(foreignFaxes), err)
-		}
-	})
 }
 
 // TestOwnerScopedMutations pins every WRITE path that takes an owner:

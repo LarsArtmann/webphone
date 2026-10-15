@@ -430,13 +430,13 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return wrapf("resolve blob store: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine.Faxes(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	// The dedup sweeper rides the same ctx bound as every background
 	// loop; a missing engine here is impossible (eager invoke in New).
 	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service
 	if err != nil {
 		return wrapf("resolve read-model engine: %w", err)
 	}
+	retention.Start(ctx, db.SQL(), blobs, engine.Faxes(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
 	return nil
 }

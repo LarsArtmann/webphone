@@ -8,18 +8,18 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-func newTestDB(t *testing.T) (*Messages, *Faxes) {
+func newTestDB(t *testing.T) *Messages {
 	t.Helper()
 	db, err := Open(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	return NewMessages(db), NewFaxes(db)
+	return NewMessages(db)
 }
 
 func TestMessageLifecycle(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -133,7 +133,7 @@ func TestMessageLifecycle(t *testing.T) {
 // append into a fresh (owner, remote) pair must still create the thread
 // (adopting the message's thread id) and count the inbound as unread.
 func TestAppendWithoutPriorThread(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -161,7 +161,7 @@ func TestAppendWithoutPriorThread(t *testing.T) {
 }
 
 func TestAttachmentOwnerScoped(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -199,7 +199,7 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 }
 
 func TestMessageProviderRefUniqueness(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -231,36 +231,9 @@ func TestMessageProviderRefUniqueness(t *testing.T) {
 	}
 }
 
-func TestFaxJobStatusMachine(t *testing.T) {
-	_, faxes := newTestDB(t)
-	ctx := context.Background()
-	owner := domain.MustParseExtension("1001")
-	job := domain.FaxJob{
-		ID: domain.GenerateFaxID(), Owner: owner, Remote: domain.MustParsePhone("+441632960961"),
-		Direction: domain.FaxOutbound, Status: domain.FaxQueued, DocumentPath: "faxes/a.pdf",
-		CreatedAt: time.Now(), UpdatedAt: time.Now(),
-	}
-	if err := faxes.Create(ctx, job); err != nil {
-		t.Fatal(err)
-	}
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, "gw-9", "", 0); err != nil {
-		t.Fatal(err)
-	}
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 3); err != nil {
-		t.Fatal(err)
-	}
-
-	got, err := faxes.ByProviderRef(ctx, "gw-9")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.Status != domain.FaxTransmitted || got.Pages != 3 {
-		t.Fatalf("job state: %+v", got)
-	}
-}
 
 func TestSearchThreads(t *testing.T) {
-	messages, _ := newTestDB(t)
+	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	other := domain.MustParseExtension("2002")
