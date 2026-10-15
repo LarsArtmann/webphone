@@ -142,7 +142,7 @@ type Deps struct {
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
-	Transcripts *store.Transcripts
+	Transcripts *readmodels.Transcripts
 	Messaging   *messaging.Service
 	Fax         *fax.Service
 	PhoneAPI    *pbx.Client

@@ -13,19 +13,16 @@ import (
 // branching-flow COMPOSITION_mixin (baselined): retention tallies vs
 // store Counts — coincidental int64 field shape, different domains.
 type SweepResult struct {
-	Messages    int64
-	Threads     int64
-	Transcripts int64
-	BlobPaths   []string
+	Messages  int64
+	Threads   int64
+	BlobPaths []string
 }
 
 // Sweep deletes stored content older than the cutoff: messages (their
-// attachment rows cascade), the threads left empty by those deletions,
-// and call transcript segments (plain rows — call content of
-// real people shares the retention window, never a policy limbo; the
-// end-user delete affordance is the per-call complement in M11). Fax
-// jobs ride the ENGINE sweep (readmodels.Faxes.SweepBefore) since the
-// T11 swap; the caller composes both.
+// attachment rows cascade) and the threads left empty by those
+// deletions. Fax jobs and call transcripts ride the ENGINE sweep
+// (readmodels Faxes/Transcripts SweepBefore) since the T11/T13 swaps;
+// the caller composes all three.
 // Attachment blob paths are collected BEFORE the rows go
 // and returned for unlinking — a crash between the SQL and the unlink
 // leaves an orphaned blob (harmless disk, cleaned by the next sweep of
@@ -70,14 +67,6 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 	}
 	res.Threads = threads
 
-	transcripts, err := execRows(ctx, db, "delete old call transcripts", `
-		DELETE FROM call_transcripts WHERE created_at < ?
-	`, cutoff.Unix())
-	if err != nil {
-		return res, err
-	}
-	res.Transcripts = transcripts
-
 	return res, nil
 }
 
@@ -96,24 +85,22 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 // Counts are the AGGREGATE table sizes the metrics surface reports
 // (plan T26a): totals across ALL extensions, never per-owner values.
 type Counts struct {
-	Threads     int64
-	Messages    int64
-	Sessions    int64
-	Transcripts int64
+	Threads  int64
+	Messages int64
+	Sessions int64
 }
 
-// ReadCounts reads the aggregate sizes in one call. Contacts and
-// faxes are counted by the read-model engine (readmodels Contacts /
-// Faxes Count) — their SQL tables are retired storage.
+// ReadCounts reads the aggregate sizes in one call. Contacts, faxes,
+// and transcripts are counted by the read-model engine (readmodels
+// Count) — their SQL tables are retired storage.
 func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 	var c Counts
 	err := db.QueryRowContext(ctx, `
 		SELECT
 			(SELECT COUNT(*) FROM threads),
 			(SELECT COUNT(*) FROM messages),
-			(SELECT COUNT(*) FROM sessions),
-			(SELECT COUNT(*) FROM call_transcripts)
-	`).Scan(&c.Threads, &c.Messages, &c.Sessions, &c.Transcripts)
+			(SELECT COUNT(*) FROM sessions)
+	`).Scan(&c.Threads, &c.Messages, &c.Sessions)
 	if err != nil {
 		return c, errorfamily.WrapInfrastructuref(err, "store.counts", "count aggregates")
 	}

@@ -37,6 +37,11 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
 	}
+	transcriptCount, err := h.deps.Transcripts.Count(r.Context())
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
 	var b strings.Builder
 	writeMetric := func(name, help, kind string, value any) {
 		fmt.Fprintf(&b, "# HELP %s %s\n# TYPE %s %s\n%s %v\n", name, help, name, kind, name, value)
@@ -49,7 +54,7 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", counts.Messages)
 	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", faxCount)
 	writeMetric("webphone_contacts_total", "Stored personal contacts across all extensions.", "gauge", contactCount)
-	writeMetric("webphone_transcripts_total", "Stored live-call transcript segments across all extensions.", "gauge", counts.Transcripts)
+	writeMetric("webphone_transcripts_total", "Stored live-call transcript segments across all extensions.", "gauge", transcriptCount)
 	writeMetric("webphone_sessions_stored", "Session rows in the store (expired rows are swept lazily).", "gauge", counts.Sessions)
 	// CRM integration observability: the resolver's upstream-outcome
 	// counters (aggregates by construction — no numbers, no contact

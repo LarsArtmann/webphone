@@ -107,6 +107,51 @@ func importLegacySnippets(ctx context.Context, db *store.Database, engine *readm
 		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
 }
 
+// importLegacyTranscripts is the ONE-TIME data continuity step of the
+// transcript read-model swap (2026-10-15): same shape, policy, and
+// idempotence story as importLegacyContacts above. Segments ride the
+// seam's Append (its caps self-trim an oversized legacy history).
+func importLegacyTranscripts(ctx context.Context, db *store.Database, engine *readmodels.Engine, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), store.FlagLegacyTranscriptsImported)
+	if err != nil {
+		log.Error("legacy transcripts import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+
+	legacy, err := store.ReadLegacyTranscripts(ctx, db.SQL())
+	if err != nil {
+		log.Error("legacy transcripts import: read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+
+	transcripts := engine.Transcripts()
+	imported, skipped := 0, 0
+	for _, row := range legacy {
+		segment, ok := row.ToSegment()
+		if !ok {
+			skipped++
+			continue
+		}
+		if err := transcripts.Append(ctx, segment); err != nil {
+			log.Error("legacy transcripts import: append failed; skipping rest (retries next boot)",
+				"err", err, "imported_so_far", imported)
+			return
+		}
+		imported++
+	}
+
+	if err := store.SetFlag(ctx, db.SQL(), store.FlagLegacyTranscriptsImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("legacy transcripts import: flag write failed (imports re-run idempotently next boot)",
+			"err", err, "imported", imported)
+		return
+	}
+	log.Info("legacy transcripts imported into read models",
+		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
+}
+
 // importLegacyFaxes is the ONE-TIME data continuity step of the fax
 // read-model swap (2026-10-15): same shape, policy, and idempotence
 // story as importLegacyContacts above. Corrupt rows (unknown lifecycle

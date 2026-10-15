@@ -229,9 +229,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
 		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
-	do.Provide(injector, func(i do.Injector) (*store.Transcripts, error) {
-		return store.NewTranscripts(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
-	})
 	do.Provide(injector, func(i do.Injector) (*session.SQLiteStore, error) {
 		return session.NewSQLiteStore(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL(), cfg.SessionTTL)
 	})
@@ -303,7 +300,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Faxes:       engine.Faxes(),
 			Contacts:    engine.Contacts(),
 			Snippets:    engine.Snippets(),
-			Transcripts: do.MustInvoke[*store.Transcripts](i),
+			Transcripts: engine.Transcripts(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),
@@ -342,6 +339,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		log,
 	)
 	importLegacySnippets(
+		context.Background(),
+		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
+		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
+		log,
+	)
+	importLegacyTranscripts(
 		context.Background(),
 		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
 		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
@@ -436,7 +439,7 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return wrapf("resolve read-model engine: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine.Faxes(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
 	return nil
 }

@@ -21,10 +21,11 @@ import (
 // A non-positive window is the disabled default — Start returns
 // without spawning anything. Session rows are NOT touched here: the
 // session store already sweeps its own expiry lazily (on read and on
-// the next mint). faxes is the engine-backed fax read model: fax jobs
-// live in readmodels.db since the T11 swap, so their retention leg
-// (rows + spooled document paths) rides the engine sweep.
-func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, faxes *readmodels.Faxes, window time.Duration) {
+// the next mint). engine is the read-model container: fax jobs and
+// call transcripts live in readmodels.db since the T11/T13 swaps, so
+// their retention legs ride the engine sweeps (fax documents come
+// back for unlinking; transcripts carry no blobs).
+func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, window time.Duration) {
 	if window <= 0 {
 		return
 	}
@@ -35,9 +36,13 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, faxes *readmodels
 			slog.Error("retention: sweep failed", "error", err)
 			return
 		}
-		faxPaths, faxesRemoved, err := faxes.SweepBefore(ctx, cutoff)
+		faxPaths, faxesRemoved, err := engine.Faxes().SweepBefore(ctx, cutoff)
 		if err != nil {
 			slog.Error("retention: fax sweep failed", "error", err)
+		}
+		transcriptsRemoved, err := engine.Transcripts().SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: transcript sweep failed", "error", err)
 		}
 		removedBlobs := 0
 		for _, path := range append(res.BlobPaths, faxPaths...) {
@@ -52,7 +57,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, faxes *readmodels
 			"messages", res.Messages,
 			"faxes", faxesRemoved,
 			"threads", res.Threads,
-			"transcripts", res.Transcripts,
+			"transcripts", transcriptsRemoved,
 			"blobs_removed", removedBlobs,
 		)
 	}

@@ -125,42 +125,52 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 }
 
 // trimOwner expunges the owner's oldest rows past the per-extension
-// cap: scan the newest cap+1 by seq; anything the window cannot hold
-// is expunged by key.
+// cap: scan the newest cap+1 by seq and expunge everything the window
+// cannot hold, repeating until the owner fits — one bounded scan sees
+// only cap+1 rows, so a flood converges over passes (each removes at
+// least one row).
 func (s *Transcripts) trimOwner(ctx context.Context, owner string) error {
-	views, err := s.reader.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner),
-		metaengine.WithSort("seq", true),
-		metaengine.WithLimit(TranscriptSegmentsMaxPerExtension+1),
-	)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_trim", "scan transcript trim window")
-	}
-	for _, v := range views[TranscriptSegmentsMaxPerExtension:] {
-		if err := s.expunge(ctx, v.ID); err != nil {
-			return err
+	for {
+		views, err := s.reader.Scan(ctx,
+			metaengine.WithFilter("owner", metaengine.FilterEq, owner),
+			metaengine.WithSort("seq", true),
+			metaengine.WithLimit(TranscriptSegmentsMaxPerExtension+1),
+		)
+		if err != nil {
+			return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_trim", "scan transcript trim window")
+		}
+		if len(views) <= TranscriptSegmentsMaxPerExtension {
+			return nil
+		}
+		for _, v := range views[TranscriptSegmentsMaxPerExtension:] {
+			if err := s.expunge(ctx, v.ID); err != nil {
+				return err
+			}
 		}
 	}
-	return nil
 }
 
 // trimCall is trimOwner against one call with the per-call cap.
 func (s *Transcripts) trimCall(ctx context.Context, owner, callID string) error {
-	views, err := s.reader.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner),
-		metaengine.WithFilter("call_id", metaengine.FilterEq, callID),
-		metaengine.WithSort("seq", true),
-		metaengine.WithLimit(TranscriptSegmentsMaxPerCall+1),
-	)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_trim", "scan call trim window")
-	}
-	for _, v := range views[TranscriptSegmentsMaxPerCall:] {
-		if err := s.expunge(ctx, v.ID); err != nil {
-			return err
+	for {
+		views, err := s.reader.Scan(ctx,
+			metaengine.WithFilter("owner", metaengine.FilterEq, owner),
+			metaengine.WithFilter("call_id", metaengine.FilterEq, callID),
+			metaengine.WithSort("seq", true),
+			metaengine.WithLimit(TranscriptSegmentsMaxPerCall+1),
+		)
+		if err != nil {
+			return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_trim", "scan call trim window")
+		}
+		if len(views) <= TranscriptSegmentsMaxPerCall {
+			return nil
+		}
+		for _, v := range views[TranscriptSegmentsMaxPerCall:] {
+			if err := s.expunge(ctx, v.ID); err != nil {
+				return err
+			}
 		}
 	}
-	return nil
 }
 
 func (s *Transcripts) expunge(ctx context.Context, id string) error {
