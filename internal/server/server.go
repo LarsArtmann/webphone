@@ -136,7 +136,9 @@ type Deps struct {
 	// Contacts is the metaengine-backed personal-contacts read model
 	// (readmodels.db) — same method contract the SQL store held.
 	Contacts *readmodels.Contacts
-	Snippets *store.Snippets
+	// Snippets is the metaengine-backed reply-snippet read model
+	// (readmodels.db) — same method contract the SQL store held.
+	Snippets *readmodels.Snippets
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.

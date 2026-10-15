@@ -2,7 +2,8 @@
 // model owns the ErrListFull sentinel now — the wrap keeps its
 // errors.Is identity (the contacts_api 422 branch depends on it), and
 // the delete-missing Join stays ErrNotFound-matchable with the
-// Rejection family.
+// Rejection family. The snippets swap (T09) homed ErrSnippetListFull
+// the same way; its pins ride the same shape.
 package readmodels_test
 
 import (
@@ -20,6 +21,7 @@ import (
 
 func TestErrListFullClassifiesRejection(t *testing.T) {
 	errorfamilytest.AssertFamily(t, readmodels.ErrListFull, errorfamily.Rejection)
+	errorfamilytest.AssertFamily(t, readmodels.ErrSnippetListFull, errorfamily.Rejection)
 }
 
 func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {
@@ -46,6 +48,12 @@ func TestDeleteMissingJoinsStayNotFound(t *testing.T) {
 	err = engine.Contacts().Delete(context.Background(), domain.MustParseExtension("1001"), domain.GenerateContactID())
 	if !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("delete of missing row: want ErrNotFound, got %v", err)
+	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
+
+	err = engine.Snippets().Delete(context.Background(), domain.MustParseExtension("1001"), domain.GenerateSnippetID())
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("snippet delete of missing row: want ErrNotFound, got %v", err)
 	}
 	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 }

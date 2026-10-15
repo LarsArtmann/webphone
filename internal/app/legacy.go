@@ -62,3 +62,47 @@ func importLegacyContacts(ctx context.Context, db *store.Database, engine *readm
 	log.Info("legacy contacts imported into read models",
 		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
 }
+
+// importLegacySnippets is the ONE-TIME data continuity step of the
+// snippets read-model swap (2026-10-15): same shape, policy, and
+// idempotence story as importLegacyContacts above.
+func importLegacySnippets(ctx context.Context, db *store.Database, engine *readmodels.Engine, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), store.FlagLegacySnippetsImported)
+	if err != nil {
+		log.Error("legacy snippets import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+
+	legacy, err := store.ReadLegacySnippets(ctx, db.SQL())
+	if err != nil {
+		log.Error("legacy snippets import: read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+
+	snippets := engine.Snippets()
+	imported, skipped := 0, 0
+	for _, row := range legacy {
+		snippet, ok := row.ToSnippet()
+		if !ok {
+			skipped++
+			continue
+		}
+		if err := snippets.Save(ctx, snippet); err != nil {
+			log.Error("legacy snippets import: save failed; skipping rest (retries next boot)",
+				"err", err, "imported_so_far", imported)
+			return
+		}
+		imported++
+	}
+
+	if err := store.SetFlag(ctx, db.SQL(), store.FlagLegacySnippetsImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("legacy snippets import: flag write failed (imports re-run idempotently next boot)",
+			"err", err, "imported", imported)
+		return
+	}
+	log.Info("legacy snippets imported into read models",
+		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
+}

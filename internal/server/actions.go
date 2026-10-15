@@ -319,7 +319,7 @@ func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Snippets.Save(r.Context(), snippet); err != nil {
-		if errors.Is(err, store.ErrSnippetListFull) {
+		if errors.Is(err, readmodels.ErrSnippetListFull) {
 			http.Error(w, "snippet list is full — delete one first", http.StatusUnprocessableEntity)
 			return
 		}

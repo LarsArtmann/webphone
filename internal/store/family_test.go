@@ -1,8 +1,9 @@
 // Store family pins (family-adoption train, 2026-09-30): persistence
-// failures classify Infrastructure, the absence and snippet-cap
-// sentinels classify Rejection via registration. The contacts
-// ErrListFull pins moved home to internal/readmodels with the contacts
-// read model (the SQL contacts store is retired).
+// failures classify Infrastructure, the absence sentinel classifies
+// Rejection via registration. The ErrListFull pins moved home to
+// internal/readmodels with the contacts read model and the
+// ErrSnippetListFull pins with the snippets read model (both SQL
+// stores are retired).
 package store_test
 
 import (
@@ -28,7 +29,6 @@ func openTestDB(t *testing.T) *sql.DB {
 
 func TestSentinelsClassifyRejection(t *testing.T) {
 	errorfamilytest.AssertFamily(t, store.ErrNotFound, errorfamily.Rejection)
-	errorfamilytest.AssertFamily(t, store.ErrSnippetListFull, errorfamily.Rejection)
 	errorfamilytest.AssertRetryable(t, store.ErrNotFound, false)
 }
 
@@ -38,7 +38,6 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 	db := openTestDB(t)
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
-	snippets := store.NewSnippets(db)
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -68,23 +67,6 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 		t.Fatal("ReadCounts on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-	}
-
-	// Reply snippets (M21) joined the persistence surface later; pin the
-	// save/delete codes so a refactor cannot drift them out of the family
-	// contract the erraudit tier-2 gate reads.
-	if err := snippets.Save(ctx, domain.Snippet{ID: domain.GenerateSnippetID(), Owner: owner}); err == nil {
-		t.Fatal("Save snippet on closed db: want error")
-	} else {
-		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-		errorfamilytest.AssertCode(t, err, "store.snippet_save")
-	}
-
-	if err := snippets.Delete(ctx, owner, domain.GenerateSnippetID()); err == nil {
-		t.Fatal("Delete snippet on closed db: want error")
-	} else {
-		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-		errorfamilytest.AssertCode(t, err, "store.snippet_delete")
 	}
 
 	// Thread organization (M22, T18): the flag toggle + archived count

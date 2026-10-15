@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
