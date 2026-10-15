@@ -242,6 +242,14 @@ a deliberate code change, regenerate:
 | readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go   |
 | readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go   |
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go   |
+| readmodels.fax_by_ref                        | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_count                         | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_get                           | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_insert                        | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_list                          | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_missing                       | Rejection                 | internal/readmodels/faxes.go      |
+| readmodels.fax_sweep                         | Infrastructure            | internal/readmodels/faxes.go      |
+| readmodels.fax_update                        | Infrastructure            | internal/readmodels/faxes.go      |
 | readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go |
 | readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go |
 | readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go   |
@@ -266,10 +274,7 @@ a deliberate code change, regenerate:
 | store.counts                                 | Infrastructure            | internal/store/sweep.go           |
 | store.exec                                   | Infrastructure            | internal/store/sweep.go           |
 | store.fax_create                             | Infrastructure            | internal/fax/service.go           |
-| store.fax_insert                             | Infrastructure            | internal/store/faxes.go           |
-| store.fax_scan                               | Infrastructure            | internal/store/faxes.go           |
 | store.fax_spool                              | Infrastructure            | internal/fax/service.go           |
-| store.fax_update                             | Infrastructure            | internal/store/faxes.go           |
 | store.flag_read                              | Infrastructure            | internal/store/legacy_contacts.go |
 | store.flag_write                             | Infrastructure            | internal/store/legacy_contacts.go |
 | store.message_append                         | Infrastructure            | internal/messaging/service.go     |

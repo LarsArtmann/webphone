@@ -128,7 +128,8 @@ func newTestServerWithConfig(
 	}
 
 	hubs := NewHubs()
-	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false)
+	engine := newTestEngine(t)
+	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -138,9 +139,8 @@ func newTestServerWithConfig(
 		tweakCfg(&cfg)
 	}
 	messages := store.NewMessages(db)
-	faxes := newTestEngine(t).Faxes()
+	faxes := engine.Faxes()
 	transcripts := store.NewTranscripts(db)
-	engine := newTestEngine(t)
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
 	// creates — TestMetricsServesAggregatesOnly pins that surface.

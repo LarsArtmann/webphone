@@ -317,3 +317,37 @@ func TestFaxesSurviveRestart(t *testing.T) {
 		t.Fatalf("faxes lost across restart: %+v", list)
 	}
 }
+
+// TestFaxesSweepBefore pins the retention engine arm: rows older than
+// the cutoff are expunged and their spooled document paths returned
+// for the caller to unlink; newer rows and empty paths are untouched.
+func TestFaxesSweepBefore(t *testing.T) {
+	engine := openTestEngine(t)
+	faxes := engine.Faxes()
+	ctx := context.Background()
+	now := time.Now()
+	old := now.Add(-48 * time.Hour)
+
+	oldJob := mustFax(t, "1001", "+15550000011", domain.FaxInbound, domain.FaxReceived, old)
+	oldJob.DocumentPath = "old-fax-doc"
+	liveJob := mustFax(t, "1001", "+15550000012", domain.FaxOutbound, domain.FaxTransmitted, now)
+	for _, job := range []domain.FaxJob{oldJob, liveJob} {
+		if err := faxes.Create(ctx, job); err != nil {
+			t.Fatalf("create: %v", err)
+		}
+	}
+
+	paths, removed, err := faxes.SweepBefore(ctx, now.Add(-24*time.Hour))
+	if err != nil {
+		t.Fatalf("sweep: %v", err)
+	}
+	if removed != 1 || len(paths) != 1 || paths[0] != "old-fax-doc" {
+		t.Fatalf("sweep removed %d with paths %v, want the old fax doc only", removed, paths)
+	}
+	if _, err := faxes.Get(ctx, domain.MustParseExtension("1001"), oldJob.ID); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("old fax survived the sweep: %v", err)
+	}
+	if _, err := faxes.Get(ctx, domain.MustParseExtension("1001"), liveJob.ID); err != nil {
+		t.Fatalf("live fax lost: %v", err)
+	}
+}

@@ -231,7 +231,6 @@ func TestMessageProviderRefUniqueness(t *testing.T) {
 	}
 }
 
-
 func TestSearchThreads(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
