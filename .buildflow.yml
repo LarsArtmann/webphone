@@ -12,7 +12,7 @@
 # build_mode: fast (non-default; the default is full) — `nix flake check`
 # (go build + tests in the sandbox + treefmt + statix + deadnix) remains the
 # heavyweight gate, so the pipeline skips test steps for quick iteration.
-build_mode: fast
+build_mode: full
 #
 # Findings baseline for branching-flow (see the UNSKIPPED note below):
 # the 19 type-node findings (mixin/dupe/large-struct) cannot carry
@@ -126,9 +126,6 @@ exclude:
 # train start AND end (AGENTS rule). Rationale lives with each skip.
 skip_steps:
   - pytest-test
-  - cqrs-lint
-  - nix-hash-fix
-  - gomod-check
   # go-structure-linter UNSKIPPED 2026-10-09 (SUPERB plan A5): the go-version
   # rule is detect-only in v0.11.3 (flake-owned toolchain pins are no longer
   # rewritten); assets-directory/golangci-config moved to rule-level
