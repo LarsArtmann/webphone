@@ -10,18 +10,18 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-func newTestDB(t *testing.T) (*Messages, *Faxes, *Contacts) {
+func newTestDB(t *testing.T) (*Messages, *Faxes) {
 	t.Helper()
 	db, err := Open(":memory:")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = db.Close() })
-	return NewMessages(db), NewFaxes(db), NewContacts(db)
+	return NewMessages(db), NewFaxes(db)
 }
 
 func TestMessageLifecycle(t *testing.T) {
-	messages, _, _ := newTestDB(t)
+	messages, _ := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -135,7 +135,7 @@ func TestMessageLifecycle(t *testing.T) {
 // append into a fresh (owner, remote) pair must still create the thread
 // (adopting the message's thread id) and count the inbound as unread.
 func TestAppendWithoutPriorThread(t *testing.T) {
-	messages, _, _ := newTestDB(t)
+	messages, _ := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -163,7 +163,7 @@ func TestAppendWithoutPriorThread(t *testing.T) {
 }
 
 func TestAttachmentOwnerScoped(t *testing.T) {
-	messages, _, _ := newTestDB(t)
+	messages, _ := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -201,7 +201,7 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 }
 
 func TestMessageProviderRefUniqueness(t *testing.T) {
-	messages, _, _ := newTestDB(t)
+	messages, _ := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParsePhone("+441632960961")
@@ -234,7 +234,7 @@ func TestMessageProviderRefUniqueness(t *testing.T) {
 }
 
 func TestFaxJobStatusMachine(t *testing.T) {
-	_, faxes, _ := newTestDB(t)
+	_, faxes := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	job := domain.FaxJob{
@@ -261,111 +261,8 @@ func TestFaxJobStatusMachine(t *testing.T) {
 	}
 }
 
-func TestContactUpsertByNumber(t *testing.T) {
-	_, _, contacts := newTestDB(t)
-	ctx := context.Background()
-	owner := domain.MustParseExtension("1001")
-
-	first := domain.Contact{ID: domain.GenerateContactID(), Owner: owner, Name: "Bob", Phone: domain.MustParsePhone("1002"), CreatedAt: time.Now()}
-	if err := contacts.Save(ctx, first); err != nil {
-		t.Fatal(err)
-	}
-	rename := first
-	rename.ID = domain.GenerateContactID()
-	rename.Name = "Robert"
-	if err := contacts.Save(ctx, rename); err != nil {
-		t.Fatal(err)
-	}
-
-	list, err := contacts.List(ctx, owner)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(list) != 1 || list[0].Name != "Robert" {
-		t.Fatalf("upsert by number broken: %+v", list)
-	}
-}
-
-// TestContactCountCap bounds one owner's list: a NEW number past
-// ContactsMaxPerExtension returns ErrListFull, renames of EXISTING
-// numbers stay open (no slot consumed), and a delete frees the slot
-// again. A second owner is unaffected — the cap is per extension.
-func TestContactCountCap(t *testing.T) {
-	_, _, contacts := newTestDB(t)
-	ctx := context.Background()
-	owner := domain.MustParseExtension("1001")
-	other := domain.MustParseExtension("1002")
-	var firstID domain.ContactID
-
-	for i := range ContactsMaxPerExtension {
-		contact := domain.Contact{
-			ID:        domain.GenerateContactID(),
-			Owner:     owner,
-			Name:      fmt.Sprintf("cap %d", i),
-			Phone:     domain.MustParsePhone(fmt.Sprintf("+49170%07d", i)),
-			CreatedAt: time.Now(),
-		}
-		if i == 0 {
-			firstID = contact.ID
-		}
-		if err := contacts.Save(ctx, contact); err != nil {
-			t.Fatalf("save %d under the cap: %v", i, err)
-		}
-	}
-
-	over := domain.Contact{
-		ID:        domain.GenerateContactID(),
-		Owner:     owner,
-		Name:      "one too many",
-		Phone:     domain.MustParsePhone("+491799999999"),
-		CreatedAt: time.Now(),
-	}
-	if err := contacts.Save(ctx, over); !errors.Is(err, ErrListFull) {
-		t.Fatalf("save past the cap: want ErrListFull, got %v", err)
-	}
-
-	rename := domain.Contact{
-		ID:        domain.GenerateContactID(),
-		Owner:     owner,
-		Name:      "renamed",
-		Phone:     domain.MustParsePhone("+491700000000"),
-		CreatedAt: time.Now(),
-	}
-	if err := contacts.Save(ctx, rename); err != nil {
-		t.Fatalf("rename at the cap must stay open: %v", err)
-	}
-
-	// The upsert kept the ORIGINAL row id (rename semantics), so the
-	// delete frees the slot via the id the list would hand out.
-	if err := contacts.Delete(ctx, owner, firstID); err != nil {
-		t.Fatal(err)
-	}
-	if err := contacts.Save(ctx, over); err != nil {
-		t.Fatalf("save after freeing a slot: %v", err)
-	}
-
-	spared := domain.Contact{
-		ID:        domain.GenerateContactID(),
-		Owner:     other,
-		Name:      "other owner",
-		Phone:     domain.MustParsePhone("+491601234567"),
-		CreatedAt: time.Now(),
-	}
-	if err := contacts.Save(ctx, spared); err != nil {
-		t.Fatalf("second owner must be unaffected by the first owner's cap: %v", err)
-	}
-
-	list, err := contacts.List(ctx, owner)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(list) != ContactsMaxPerExtension {
-		t.Fatalf("owner list = %d, want exactly the cap", len(list))
-	}
-}
-
 func TestSearchThreads(t *testing.T) {
-	messages, _, _ := newTestDB(t)
+	messages, _ := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	other := domain.MustParseExtension("2002")

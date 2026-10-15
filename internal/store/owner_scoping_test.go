@@ -19,17 +19,15 @@ import (
 type ownerScopeFixture struct {
 	messages *Messages
 	faxes    *Faxes
-	contacts *Contacts
 	owner    domain.Extension
 	foreign  domain.Extension
 	threadID domain.ThreadID
 	faxID    domain.FaxID
-	contact  domain.Contact
 }
 
 func newOwnerScopeFixture(t *testing.T) *ownerScopeFixture {
 	t.Helper()
-	messages, faxes, contacts := newTestDB(t)
+	messages, faxes := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	foreign := domain.MustParseExtension("1002")
@@ -56,17 +54,9 @@ func newOwnerScopeFixture(t *testing.T) *ownerScopeFixture {
 		t.Fatal(err)
 	}
 
-	contact := domain.Contact{
-		ID: domain.GenerateContactID(), Owner: owner, Name: "Scoped",
-		Phone: remote, CreatedAt: now,
-	}
-	if err := contacts.Save(ctx, contact); err != nil {
-		t.Fatal(err)
-	}
-
 	return &ownerScopeFixture{
-		messages: messages, faxes: faxes, contacts: contacts,
-		owner: owner, foreign: foreign, threadID: threadID, faxID: faxID, contact: contact,
+		messages: messages, faxes: faxes,
+		owner: owner, foreign: foreign, threadID: threadID, faxID: faxID,
 	}
 }
 
@@ -129,13 +119,6 @@ func TestOwnerScopedReads(t *testing.T) {
 			t.Fatalf("foreign fax List leaked %d jobs (err %v)", len(foreignFaxes), err)
 		}
 	})
-
-	t.Run("ContactList", func(t *testing.T) {
-		foreignContacts, err := f.contacts.List(ctx, f.foreign)
-		if err != nil || len(foreignContacts) != 0 {
-			t.Fatalf("foreign contact List leaked %d rows (err %v)", len(foreignContacts), err)
-		}
-	})
 }
 
 // TestOwnerScopedMutations pins every WRITE path that takes an owner:
@@ -155,20 +138,6 @@ func TestOwnerScopedMutations(t *testing.T) {
 		}
 		if thread.Unread != 1 {
 			t.Fatalf("foreign mark-read mutated the owner's row: unread=%d", thread.Unread)
-		}
-	})
-
-	t.Run("ContactDelete foreign is not-found", func(t *testing.T) {
-		err := f.contacts.Delete(ctx, f.foreign, f.contact.ID)
-		if !errors.Is(err, ErrNotFound) {
-			t.Fatalf("foreign contact Delete: %v (want ErrNotFound)", err)
-		}
-		if _, err := f.contacts.List(ctx, f.owner); err != nil {
-			t.Fatal(err)
-		}
-		ownerContacts, _ := f.contacts.List(ctx, f.owner)
-		if len(ownerContacts) != 1 {
-			t.Fatal("owner's contact vanished without a scoped delete")
 		}
 	})
 }

@@ -1,7 +1,8 @@
 // Store family pins (family-adoption train, 2026-09-30): persistence
-// failures classify Infrastructure, the absence and list-cap sentinels
-// classify Rejection via registration, and the ErrListFull WRAP keeps
-// its errors.Is identity (the contacts_api 422 branch depends on it).
+// failures classify Infrastructure, the absence and snippet-cap
+// sentinels classify Rejection via registration. The contacts
+// ErrListFull pins moved home to internal/readmodels with the contacts
+// read model (the SQL contacts store is retired).
 package store_test
 
 import (
@@ -29,34 +30,8 @@ func openTestDB(t *testing.T) *sql.DB {
 
 func TestSentinelsClassifyRejection(t *testing.T) {
 	errorfamilytest.AssertFamily(t, store.ErrNotFound, errorfamily.Rejection)
-	errorfamilytest.AssertFamily(t, store.ErrListFull, errorfamily.Rejection)
 	errorfamilytest.AssertFamily(t, store.ErrSnippetListFull, errorfamily.Rejection)
 	errorfamilytest.AssertRetryable(t, store.ErrNotFound, false)
-}
-
-func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {
-	owner := domain.MustParseExtension("1001")
-	full := errorfamily.WrapRejectionf(store.ErrListFull, "store.contact_list_full", "%s at %d contacts", owner, 500)
-	errorfamilytest.AssertFamily(t, full, errorfamily.Rejection)
-	if !errors.Is(full, store.ErrListFull) {
-		t.Fatal("the list-full wrap must keep errors.Is identity")
-	}
-	wrapped := fmt.Errorf("save contact: %w", full)
-	if !errors.Is(wrapped, store.ErrListFull) {
-		t.Fatal("identity must survive service wraps")
-	}
-	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Rejection)
-}
-
-func TestNotFoundJoinsStayNotFound(t *testing.T) {
-	// Delete of a missing row answers errors.Join(ErrNotFound, context).
-	contacts := store.NewContacts(openTestDB(t))
-
-	err := contacts.Delete(context.Background(), domain.MustParseExtension("1001"), domain.GenerateContactID())
-	if !errors.Is(err, store.ErrNotFound) {
-		t.Fatalf("delete of missing row: want ErrNotFound, got %v", err)
-	}
-	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 }
 
 func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
