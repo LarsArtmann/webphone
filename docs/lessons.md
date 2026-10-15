@@ -707,3 +707,42 @@ for `#phone-view` to lose `hidden`), never on a clock; and pick reveal
 markers that exist in STATIC markup (`.call-card` is JS-created only
 during live calls and never appears in this lane). Diagnose the boot
 sequence before re-fixing CSS.
+
+### Metaengine dogfooding train (2026-10-15)
+
+**The daemon commits mid-bisection experiments.** A bisection tree lived
+in the WORKING TREE during the T04 investigation; the auto-commit daemon
+swept the half-reverted state into `1f33c3c` and PUSHED it — 194 lines of
+shipped code reverted on main, red CI, ~2h of forensics. Experiments and
+bisections MUST run in git worktrees, never the main checkout. Related:
+the daemon's commit-msg guard did NOT block its own go.mod commit
+(914a174, a cqrs-htmx-family sweep that broke `internal/paperless` for
+hours until adapted) — the guard's daemon-pattern detection has a hole;
+treat "daemon commit touching go.mod/go.sum" as a standing defect class
+and re-pin on sight (the AGENTS.md rule already says re-pin and report).
+
+**SIGQUIT goroutine dumps via python, not `kill`.** The Crush tool
+shell's `kill` builtin silently no-ops; a hung 61 MiB upload test
+starved under host load ~95 and needed a goroutine dump. The working
+incantation is `python3 -c 'import os,signal; os.kill(PID,
+signal.SIGQUIT)'`. Root cause of the hang itself: the single `:memory:`
+connection idled past the 5-minute idle reaper mid-test, so the next
+query saw a FRESH EMPTY DATABASE ("no such table: sessions" → spurious
+401s). Fix: `:memory:` pools never idle-trim (db.go). CI was green the
+whole time — the unloaded runner never tripped the reaper. Corollary:
+local-suite failures under load deserve a cause analysis before a code
+change; CI divergence is evidence, not noise.
+
+**Engine scans ceiling at 100 rows silently.** metaengine's unlimited
+`Scan` returns at most the planner's default 100 rows — "list all"
+semantics need an EXPLICIT `WithLimit`. The contacts read model caps at
+500/owner, so `WithLimit(ContactsMaxPerExtension+1)` is load-bearing for
+both the list and the cap check. Upstream filing candidate (T17): the
+default ceiling vs list-all ergonomics, and check-then-apply cap
+ergonomics (no atomic conditional Apply in the API surface).
+
+**Go forbids assertion-to-type-parameter.** The twin capability
+assertions in `readmodels.Open` (DedupStore, AggregateReader) look
+extractable into one generic helper — they are not: `eng.(T)` with T a
+type parameter does not compile, so the parallel fail-fast guards stay
+(baselined in the dedup registry with exactly this ruling).
