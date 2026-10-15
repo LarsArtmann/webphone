@@ -58,7 +58,8 @@ exclude:
   - "internal/web/assets/vendor/**"
   - "**/*_templ.go"
 
-# Whole-tool skips (skip_steps cannot be per-file or per-rule):
+# Tool policy (skip_steps cannot be per-file or per-rule; skips and
+# deliberate unskips both carry their rationale here):
 # - pytest-test: no Python exists; the Go suite plus the upstream browser
 #   E2E (owned by the consuming telephony stack) cover this repo.
 # - branching-flow: UNSKIPPED 2026-10-11 (re-triage completed — the
@@ -83,42 +84,56 @@ exclude:
 #   .editorconfig, .gitattributes, README install section, /webphone
 #   gitignore); the remaining rule conflicts are suppressions in
 #   .go-structure-linter.yaml now, and go-version is detect-only (warning)
-#   upstream — it reports and never rewrites the flake-owned pin.
-#       responsibility (see the buildflow skill); a hand-curated config
-#       would fight auto-configuration.
-# - cqrs-lint: triaged 2026-09-18. All findings contradict this repo's
-#   design, not defects:
-#     * stack/preset x1 — the cqrs-htmx `setup` bundle was rejected
-#       DELIBERATELY (AGENTS.md): product identity is the PBX extension +
-#       directory password proven by the island's SIP REGISTER; a second
-#       event-sourced user database would be a split brain.
-#     * dead-import x1 — go-cqrs-lite/* arrive TRANSITIVELY via cqrs-htmx
-#       (root-library-only by design); this repo never calls
-#       Save/Publish/Dispatch directly, which is exactly the design.
-#     * dispatcher/v4 version skew x1 — the v4 pins live in cqrs-htmx's
-#       own go.mod; aligning them here would force direct requires and
-#       break the root-library-only rule. Upstream concern.
-# - nix-hash-fix: buildflow itself warns it computes the right vendorHash
-#   but never writes it in this repo layout (10/10 chronic failures) —
-#   AGENTS.md documents the manual deviation (placeholder hash →
-#   `nix build` → read `got:` → apply, only when go.mod/go.sum changed).
-#   The real gate still exists: `nix flake check` builds in the sandbox.
-# - gomod-check: triaged 2026-10-04. 99 error-severity findings, ALL the
-#   documented vendor-consistency FALSE POSITIVE ("marked as explicit in
-#   vendor/modules.txt, but not explicitly required in go.mod" — Go's
+#   upstream — it reports and never rewrites the flake-owned pin. The
+#   rest was judged BuildFlow's responsibility (see the buildflow skill);
+#   a hand-curated config would fight auto-configuration.
+# - cqrs-lint: UNSKIPPED 2026-10-15 (owner decision). The 2026-09-18
+#   skip-era triage is OBSOLETE: the readmodels/metaengine train made
+#   webphone a DIRECT go-cqrs-lite consumer (go.mod requires
+#   metaengine/sqliteengine/record v4), and with that the old
+#   dead-import and dispatcher/v4-skew findings healed. The fresh
+#   2026-10-15 run reports 11 non-gating findings (3 info, 8 warning),
+#   all classified:
+#     * A009 stack/preset (info): the cqrs-htmx `setup` bundle stays
+#       rejected DELIBERATELY (AGENTS.md): product identity is the PBX
+#       extension + directory password proven by the island's SIP
+#       REGISTER; a second event-sourced user database would be a split
+#       brain (measured +68% binary NO-GO).
+#     * C009 panic (app.go): DO-1 fail-fast on a post-validation config
+#       invariant (composition-root doctrine, MustInvoke family).
+#     * C014 time.Local (app.go): deliberate boot-time application of
+#       the validated cfg.Timezone before any server starts.
+#     * C023 x6 (readmodels.go): the deliberate `_ = x.Close()` cleanup
+#       idiom: secondary closes on failure paths that already return the
+#       primary error.
+#     * F019 + F026 (readmodels contacts): REAL metaengine usage polish
+#       (Volume hints on query declarations, WithPrefetch on scans);
+#       rides the train's query-declaration work (TODO_LIST).
+# - nix-hash-fix: UNSKIPPED 2026-10-15 (owner decision). Its 10/10
+#   chronic failure is POST-BUMP-ONLY: the step computes the right
+#   vendorHash but never writes it in this repo layout, so with the pin
+#   current it no-ops (green in the 2026-10-15 full run). A red
+#   nix-hash-fix step IS the stale-pin signal; the manual recipe
+#   (placeholder hash → `nix build` → read `got:` → apply) stays in
+#   AGENTS.md. The real gate still exists: `nix flake check` builds in
+#   the sandbox.
+# - gomod-check: UNSKIPPED 2026-10-15 (owner decision). The 2026-10-04
+#   triage's 99 vendor-consistency false positives ("marked as explicit
+#   in vendor/modules.txt, but not explicitly required in go.mod" — Go's
 #   vendoring marks test/transitive-only modules explicit without a
-#   direct require; `go build -mod=vendor`, the full test suite and the
-#   sandbox build all prove the tree consistent). AGENTS.md rule stands:
-#   do NOT hand-edit vendor markers. The one info-severity
-#   `ignore-needed` ("add ignore vendor directive") is the same family:
-#   this repo COMMITS vendor/ and builds -mod=vendor on purpose. The
-#   real gate still exists: `nix flake check` builds the vendored tree
-#   in the sandbox — a go.mod/modules.txt lie fails the build.
-# LOAD-BEARING POLICY (2026-10-08 incident): every skip below is a
-# reasoned suppression — a daemon commit once truncated 69 lines here
-# and the missing skips re-failed the gate silently for ~16 h. Re-read
-# this block after daemon activity near this file; run buildflow at
-# train start AND end (AGENTS rule). Rationale lives with each skip.
+#   direct require) HEALED with the metaengine train's tidy + direct
+#   go-cqrs-lite requires: the fresh run reports exactly 1 info finding
+#   (`ignore-needed`), the deliberate committed-vendor stance (this repo
+#   COMMITS vendor/ and builds -mod=vendor on purpose). AGENTS.md rule
+#   stands: do NOT hand-edit vendor markers. The real gate still exists:
+#   `nix flake check` builds the vendored tree in the sandbox — a
+#   go.mod/modules.txt lie fails the build.
+# LOAD-BEARING POLICY (2026-10-08 incident): the single remaining skip
+# below is a reasoned suppression — a daemon commit once truncated 69
+# lines here and the missing skips re-failed the gate silently for
+# ~16 h. Re-read this block after daemon activity near this file; run
+# buildflow at train start AND end (AGENTS rule). Rationale lives with
+# each entry.
 skip_steps:
   - pytest-test
   # go-structure-linter UNSKIPPED 2026-10-09 (SUPERB plan A5): the go-version

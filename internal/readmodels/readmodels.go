@@ -41,6 +41,7 @@ type Engine struct {
 	models   *metaengine.Store
 	contacts *Contacts
 	snippets *Snippets
+	faxes    *Faxes
 	db       *sql.DB
 	closed   bool
 }
@@ -70,7 +71,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -82,6 +83,7 @@ func Open(dataDir string) (*Engine, error) {
 		models:   models,
 		contacts: newContacts(models, agg),
 		snippets: newSnippets(models),
+		faxes:    newFaxes(models),
 		db:       db,
 	}, nil
 }
@@ -104,6 +106,10 @@ func (e *Engine) Contacts() *Contacts { return e.contacts }
 // Snippets returns the engine-backed reply-snippet store (the SQL
 // store's replacement behind the same method contract).
 func (e *Engine) Snippets() *Snippets { return e.snippets }
+
+// Faxes returns the engine-backed fax store (the SQL store's
+// replacement behind the same method contract).
+func (e *Engine) Faxes() *Faxes { return e.faxes }
 
 // SQL exposes the engine's own sqlite handle (probe pings; future
 // engine-side maintenance). Callers must not close it — Shutdown owns

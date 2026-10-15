@@ -160,3 +160,43 @@ func (e FaxEvent) target() FaxStatus {
 		return e.status
 	}
 }
+
+// FaxKey identifies one fax job row in the read-model store. A distinct
+// struct type (not a bare string) mirrors ContactKey so the metaengine
+// fold key extraction stays unambiguous — exactly one field of this
+// type per read-model fact.
+type FaxKey struct {
+	ID string
+}
+
+// FaxReceipted is the read-model fact inserting one fax job row: an
+// outbound send at its initial status, or an inbound received document.
+// Raw string ids by the strong-id wire ruling (read-model facts are
+// wire shapes); the lifecycle enums stay typed — they ARE the faxMoves
+// vocabulary.
+type FaxReceipted struct {
+	Key          FaxKey
+	Owner        string
+	Remote       string
+	Direction    FaxDirection
+	Status       FaxStatus
+	Pages        int
+	DocumentPath string
+	ProviderRef  string
+	Error        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+// FaxStatusAdvanced is the read-model fact advancing a recorded job's
+// lifecycle fields — exactly the SQL UPDATE's payload: the new status,
+// the provider correlation id (empty = keep the existing one, the fold
+// merges), the verbatim refusal/error text, and the page count.
+type FaxStatusAdvanced struct {
+	Key         FaxKey
+	Status      FaxStatus
+	ProviderRef string
+	Error       string
+	Pages       int
+	AdvancedAt  time.Time
+}
