@@ -137,3 +137,43 @@ an OWNER edit of the nix-config pma module (fleet-wide). I did not touch it.
   to leave it uncommitted; the daemon outran me. gomod-check is the
   documented vendor-consistency false positive; expect findings noise at
   M11's buildflow run.
+
+---
+
+## Appendix (19:35 CEST) — owner answers + M8 started, then WAITING
+
+**Owner decisions received (both questions answered):**
+1. **G3 scope: "Everything (plan default)"** — after M8+M9+M11+M12, run the
+   complete G3 release INCLUDING the tag and the stack notification.
+2. **M9: "Yes, file now"** — both go-cqrs-lite issues filed upstream with
+   the evidence (scan-ceiling vs WithLimit semantics with the 1506-row
+   trim-scan observation; check-then-apply cap ergonomics), links into
+   TODO_LIST Standing watches.
+
+**M8 (T15 enroll tokens) — first half landed, second half owed:**
+- DONE: `domain/enroll.go` facts (`EnrollTokenKey` keyed by the SHA-256
+  hex, `EnrollTokenMinted`, `EnrollTokenBurned`); `readmodels/enroll.go`
+  seam — hash-keyed `Mint/Lookup/Burn`, expired rows swept opportunistically
+  on every mint (the SQL mint's preamble, now a bounded scan+expunge);
+  engine wired + Plan'd, readmodels+userauth suites green. Deliberate
+  deviation, documented in the seam: **NO legacy import** — tokens live
+  15 minutes, an upgrade carries no meaningful continuity (in-flight
+  links get re-minted; the old `wp_enroll_tokens` table in usermgmt.db
+  goes dead storage).
+- OWED (next commit): `userauth/enroll.go` rewrite onto the seam
+  (classification and all `userauth.enroll.*` codes/copy stay in
+  userauth — parity of the error contract), `userauth.New` gains the
+  store param, `app.go` wires `engine.EnrollTokens()`, external tests
+  seed expiry through the returned store handle, gates, then the
+  **`auth:` commit prefix + session-behavior suite** (passkey surface —
+  AGENTS auth-regression convention).
+- The seam-half commit was swept by the daemon (messageless, as usual
+  for sweeps); the narrative lives here and in the next commit.
+
+**Then (per the owner's answers):** M9 filings (verify-before-filing +
+github-voice skills first), M11 buildflow full run + stale baseline,
+M12 docs sweep (incl. the dedup-registry ruling for baseline 66 and the
+AGENTS readmodels paragraph), M13 full G3 release, then the M14–M18 tail.
+
+**State at wait:** clean tree, all M8-partial work committed (daemon
+sweep), main green through CI 38775790916. WAITING for the owner's go.
