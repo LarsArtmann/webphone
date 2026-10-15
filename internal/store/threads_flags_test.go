@@ -237,4 +237,3 @@ func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
 		t.Errorf("last direction: %s", summary.LastDirection)
 	}
 }
-

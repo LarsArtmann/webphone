@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // threadIDFromList extracts the first thread id from the messages panel
@@ -202,7 +202,7 @@ func TestSnippetActions(t *testing.T) {
 	}
 
 	// The cap: fill to the store limit, then one more answers 422.
-	for i := 1; i < store.SnippetsMaxPerExtension; i++ {
+	for i := 1; i < readmodels.SnippetsMaxPerExtension; i++ {
 		if resp, body := save("filler", ""); resp.StatusCode != http.StatusOK {
 			t.Fatalf("fill save %d: %d %s", i, resp.StatusCode, body)
 		}

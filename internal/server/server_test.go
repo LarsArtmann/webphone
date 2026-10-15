@@ -86,16 +86,23 @@ func newTestServerWithPhoneAPI(t testing.TB, phoneAPIURL string, mutate ...func(
 	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
 }
 
-// newTestReadmodels opens a throwaway read-model engine (contacts live
-// in readmodels.db since the T07 swap) and registers its shutdown.
-func newTestReadmodels(t testing.TB) *readmodels.Contacts {
+// newTestEngine opens a throwaway read-model engine (the engine-side
+// read models live in readmodels.db since the T07/T09 swaps) and
+// registers its shutdown.
+func newTestEngine(t testing.TB) *readmodels.Engine {
 	t.Helper()
 	engine, err := readmodels.Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = engine.Shutdown() })
-	return engine.Contacts()
+	return engine
+}
+
+// newTestReadmodels returns the throwaway engine's contacts read model
+// (the seam most tests exercise).
+func newTestReadmodels(t testing.TB) *readmodels.Contacts {
+	return newTestEngine(t).Contacts()
 }
 
 // newTestServerWithConfig additionally tweaks the config BEFORE the deps
@@ -133,6 +140,7 @@ func newTestServerWithConfig(
 	messages := store.NewMessages(db)
 	faxes := store.NewFaxes(db)
 	transcripts := store.NewTranscripts(db)
+	engine := newTestEngine(t)
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
 	// creates — TestMetricsServesAggregatesOnly pins that surface.
@@ -145,8 +153,8 @@ func newTestServerWithConfig(
 		Sessions:    sessions,
 		Messages:    messages,
 		Faxes:       faxes,
-		Contacts:    newTestReadmodels(t),
-		Snippets:    store.NewSnippets(db),
+		Contacts:    engine.Contacts(),
+		Snippets:    engine.Snippets(),
 		Transcripts: transcripts,
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
