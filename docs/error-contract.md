@@ -242,6 +242,10 @@ a deliberate code change, regenerate:
 | readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go    |
+| readmodels.enroll_burn                       | Infrastructure            | internal/readmodels/enroll.go      |
+| readmodels.enroll_lookup                     | Infrastructure            | internal/readmodels/enroll.go      |
+| readmodels.enroll_mint                       | Infrastructure            | internal/readmodels/enroll.go      |
+| readmodels.enroll_sweep                      | Infrastructure            | internal/readmodels/enroll.go      |
 | readmodels.fax_by_ref                        | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_count                         | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_get                           | Infrastructure            | internal/readmodels/faxes.go       |
