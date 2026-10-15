@@ -7,7 +7,8 @@ package userauth_test
 
 import (
 	"context"
-	"database/sql"
+	"crypto/sha256"
+	"encoding/hex"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -15,14 +16,14 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	_ "modernc.org/sqlite" // registers the "sqlite" driver for the test's own connection
+	"time"
 
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -55,8 +56,9 @@ const (
 
 // newService builds the service with the stub provider, one mapped user
 // (lars/1000) and a password file holding a fixed secret; returns the
-// service, its data dir and the password file path.
-func newService(t *testing.T) (*userauth.Service, string, string) {
+// service, its enrollment-token store (for seeding rows), the data dir
+// and the password file path.
+func newService(t *testing.T) (*userauth.Service, *readmodels.EnrollTokens, string, string) {
 	t.Helper()
 	dir := t.TempDir()
 	passFile := filepath.Join(dir, "ext1000")
@@ -67,6 +69,11 @@ func newService(t *testing.T) (*userauth.Service, string, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	engine, err := readmodels.Open(dir)
+	if err != nil {
+		t.Fatalf("readmodels.Open: %v", err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "pbx.example.org",
 		RPDisplayName: "WebPhone",
@@ -76,16 +83,16 @@ func newService(t *testing.T) (*userauth.Service, string, string) {
 		},
 		ExtensionPasswordFiles: map[string]string{ext1000: passFile},
 		WebAuthn:               stubWebAuthn{},
-	}, dir, slog.Default())
+	}, dir, engine.EnrollTokens(), slog.Default())
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	t.Cleanup(func() { _ = svc.Shutdown() })
-	return svc, dir, passFile
+	return svc, engine.EnrollTokens(), dir, passFile
 }
 
 func TestRegisterIsIdempotent(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	ctx := context.Background()
 	first, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -105,7 +112,7 @@ func TestRegisterIsIdempotent(t *testing.T) {
 // on the healthy path and actually closes usermgmt.db — the health
 // check must fail afterwards, never silently keep passing.
 func TestShutdownClosesTheIdentityDatabase(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	if err := svc.HealthCheck(context.Background()); err != nil {
 		t.Fatalf("HealthCheck before Shutdown: %v", err)
 	}
@@ -118,7 +125,7 @@ func TestShutdownClosesTheIdentityDatabase(t *testing.T) {
 }
 
 func TestEnrollTokenLifecycle(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -155,7 +162,7 @@ func TestEnrollTokenLifecycle(t *testing.T) {
 }
 
 func TestEnrollTokenExpiryIsOperatorVisible(t *testing.T) {
-	svc, dir, _ := newService(t)
+	svc, store, _, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -165,14 +172,11 @@ func TestEnrollTokenExpiryIsOperatorVisible(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Force the row into the past through the store's own file (WAL
-	// allows the test connection alongside the service's).
-	testDB, err := sql.Open("sqlite", filepath.Join(dir, "usermgmt.db")+"?_pragma=busy_timeout(5000)")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer testDB.Close()
-	if _, err := testDB.ExecContext(ctx, `UPDATE wp_enroll_tokens SET expires_at = 1`); err != nil {
+	// Force the row into the past through the store's own seam: a
+	// re-mint of the same hash with a past expiry overwrites the row
+	// (insert-fold semantics) — no raw SQL, no second connection.
+	sum := sha256.Sum256([]byte(token))
+	if err := store.Mint(ctx, hex.EncodeToString(sum[:]), mappedEmail, userID.Get().String(), time.Now().Add(-time.Minute)); err != nil {
 		t.Fatalf("age the token row: %v", err)
 	}
 	_, expiredErr := svc.VerifyEnrollToken(ctx, token)
@@ -197,7 +201,7 @@ func finishLoginFor(t *testing.T, svc *userauth.Service, email string) (userauth
 }
 
 func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	ctx := context.Background()
 	userID, err := svc.Register(ctx, mappedEmail)
 	if err != nil {
@@ -234,7 +238,7 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 }
 
 func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	ctx := context.Background()
 	// Register an account that is deliberately NOT in the users mapping.
 	userID, err := svc.Register(ctx, otherEmail)
@@ -259,7 +263,7 @@ func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
 }
 
 func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
-	svc, _, passFile := newService(t)
+	svc, _, _, passFile := newService(t)
 	ext := domain.MustParseExtension(ext1000)
 
 	got, err := svc.SIPPassword(ext)
@@ -305,7 +309,7 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 }
 
 func TestResolveIsCaseAndWhitespaceInsensitive(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	mapped, ok := svc.Resolve("  LARS@Example.COM ")
 	if !ok {
 		t.Fatal("mapping lookup must normalize case and whitespace")
@@ -319,7 +323,7 @@ func TestResolveIsCaseAndWhitespaceInsensitive(t *testing.T) {
 }
 
 func TestMappedByExtensionCoversEveryMappedExtension(t *testing.T) {
-	svc, _, _ := newService(t)
+	svc, _, _, _ := newService(t)
 	mapped, ok := svc.MappedByExtension(domain.MustParseExtension(ext1000))
 	if !ok {
 		t.Fatal("1000 must reverse-resolve")

@@ -69,6 +69,11 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config)) (*test
 		t.Fatal(err)
 	}
 	ext := domain.MustParseExtension("1000")
+	engine, err := readmodels.Open(dir)
+	if err != nil {
+		t.Fatalf("readmodels.Open: %v", err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "localhost",
 		RPDisplayName: "WebPhone",
@@ -78,7 +83,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config)) (*test
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 		WebAuthn:               pkStub{},
-	}, dir, slog.Default())
+	}, dir, engine.EnrollTokens(), slog.Default())
 	if err != nil {
 		t.Fatalf("userauth.New: %v", err)
 	}

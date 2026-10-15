@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"time"
@@ -24,24 +23,6 @@ type EnrollToken struct {
 	UserID identitymodel.UserID
 }
 
-// migrateEnrollTokens owns the ONE webphone-side table in the usermgmt
-// database. The wp_ prefix keeps it out of usermgmt's namespace; the
-// schema is additive and idempotent (no versioned migration needed — it
-// never changes shape after introduction; a future change adds a new
-// table, never an ALTER).
-func (s *Service) migrateEnrollTokens(ctx context.Context) error {
-	const create = `CREATE TABLE IF NOT EXISTS wp_enroll_tokens (
-		token_hash TEXT PRIMARY KEY,
-		email TEXT NOT NULL,
-		user_id TEXT NOT NULL,
-		expires_at INTEGER NOT NULL
-	)`
-	if _, err := s.db.ExecContext(ctx, create); err != nil {
-		return errorfamily.WrapInfrastructure(err, "userauth.enroll.migrate", "create wp_enroll_tokens table")
-	}
-	return nil
-}
-
 // MintEnrollToken creates a one-time enrollment token for an existing
 // usermgmt account and returns the URL-safe secret exactly once. Only its
 // SHA-256 is stored; the row is burned on first use and expired rows are
@@ -53,15 +34,8 @@ func (s *Service) MintEnrollToken(ctx context.Context, email string, userID iden
 	}
 	token := base64.RawURLEncoding.EncodeToString(raw)
 	sum := sha256.Sum256([]byte(token))
-	now := time.Now()
-	if _, err := s.db.ExecContext(ctx,
-		`DELETE FROM wp_enroll_tokens WHERE expires_at < ?`, now.Unix()); err != nil {
-		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.sweep", "sweep expired enrollment tokens") //nolint:erraudit // ctx is bound to the exec; the wrap adds the code the journal greps
-	}
-	if _, err := s.db.ExecContext(ctx,
-		`INSERT INTO wp_enroll_tokens (token_hash, email, user_id, expires_at) VALUES (?, ?, ?, ?)`,
-		hex.EncodeToString(sum[:]), email, userID.Get().String(), now.Add(EnrollTokenTTL).Unix()); err != nil {
-		return "", errorfamily.WrapInfrastructure(err, "userauth.enroll.mint", "store enrollment token") //nolint:erraudit // ctx is bound to the exec; the wrap adds the code the journal greps
+	if err := s.enroll.Mint(ctx, hex.EncodeToString(sum[:]), email, userID.Get().String(), time.Now().Add(EnrollTokenTTL)); err != nil {
+		return "", err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_*)
 	}
 	return token, nil
 }
@@ -76,36 +50,29 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.invalid", "invalid enrollment token")
 	}
 	sum := sha256.Sum256([]byte(token))
-	row := s.db.QueryRowContext(ctx,
-		`SELECT email, user_id, expires_at FROM wp_enroll_tokens WHERE token_hash = ?`,
-		hex.EncodeToString(sum[:]))
-	var out EnrollToken
-	var rawUserID string
-	var expiresAt int64
-	if err := row.Scan(&out.Email, &rawUserID, &expiresAt); err != nil {
-		if err == sql.ErrNoRows {
-			return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.invalid",
-				"unknown, expired, or already-used enrollment token — mint a fresh one with: webphone -enroll-passkey <email>")
-		}
-		return EnrollToken{}, errorfamily.WrapInfrastructure(err, "userauth.enroll.lookup", "look up enrollment token")
+	hash := hex.EncodeToString(sum[:])
+	email, rawUserID, expiresAt, found, err := s.enroll.Lookup(ctx, hash)
+	if err != nil {
+		return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_lookup)
+	}
+	if !found {
+		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.invalid",
+			"unknown, expired, or already-used enrollment token — mint a fresh one with: webphone -enroll-passkey <email>")
 	}
 	userID, err := identitymodel.ParseUserID(rawUserID)
 	if err != nil {
 		return EnrollToken{}, errorfamily.Wrapf(err, errorfamily.Corruption, "userauth.enroll.userid",
 			"stored enrollment token names an invalid user id %q", rawUserID)
 	}
-	out.UserID = userID
-	if time.Now().Unix() >= expiresAt {
-		if _, err := s.db.ExecContext(ctx,
-			`DELETE FROM wp_enroll_tokens WHERE token_hash = ?`, hex.EncodeToString(sum[:])); err != nil {
-			return EnrollToken{}, errorfamily.WrapInfrastructure(err, "userauth.enroll.expire", "delete expired enrollment token")
+	if !time.Now().Before(expiresAt) {
+		if err := s.enroll.Burn(ctx, hash); err != nil {
+			return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_burn)
 		}
 		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.expired",
 			"enrollment token expired — mint a fresh one with: webphone -enroll-passkey <email>")
 	}
-	if _, err := s.db.ExecContext(ctx,
-		`DELETE FROM wp_enroll_tokens WHERE token_hash = ?`, hex.EncodeToString(sum[:])); err != nil {
-		return EnrollToken{}, errorfamily.WrapInfrastructure(err, "userauth.enroll.burn", "burn enrollment token")
+	if err := s.enroll.Burn(ctx, hash); err != nil {
+		return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_burn)
 	}
-	return out, nil
+	return EnrollToken{Email: email, UserID: userID}, nil
 }

@@ -85,18 +85,19 @@ func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string
 	return nil
 }
 
-// Lookup resolves a token hash to its account. found=false covers
-// unknown, burned, and swept rows alike — the caller owns the
-// user-facing classification.
-func (s *EnrollTokens) Lookup(ctx context.Context, tokenHash string) (email, userID string, found bool, err error) {
+// Lookup resolves a token hash to its account and expiry. found=false
+// covers unknown, burned, and swept rows alike — the caller owns the
+// user-facing classification (including the expired-vs-invalid
+// operator-log distinction, which needs the expiry).
+func (s *EnrollTokens) Lookup(ctx context.Context, tokenHash string) (email, userID string, expiresAt time.Time, found bool, err error) {
 	view, found, err := s.reader.Get(ctx, domain.EnrollTokenKey{TokenHash: tokenHash})
 	if err != nil {
-		return "", "", false, errorfamily.WrapInfrastructuref(err, "readmodels.enroll_lookup", "look up enrollment token")
+		return "", "", time.Time{}, false, errorfamily.WrapInfrastructuref(err, "readmodels.enroll_lookup", "look up enrollment token")
 	}
 	if !found {
-		return "", "", false, nil
+		return "", "", time.Time{}, false, nil
 	}
-	return view.Email, view.UserID, true, nil
+	return view.Email, view.UserID, time.Unix(view.ExpiresAt, 0), true, nil
 }
 
 // Burn removes one token (the consume-once arm). Removing an

@@ -17,6 +17,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/app"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -60,7 +61,16 @@ func enrollPasskey(email string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, slog.Default())
+	engine, err := readmodels.Open(cfg.DataDir)
+	if err != nil {
+		return propagatef("open read-model engine: %w", err)
+	}
+	defer func() {
+		if err := engine.Shutdown(); err != nil {
+			slog.Warn("read-model engine shutdown failed after enrollment", "error", err)
+		}
+	}()
+	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, engine.EnrollTokens(), slog.Default())
 	if err != nil {
 		return propagatef("open identity store: %w", err)
 	}

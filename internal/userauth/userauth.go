@@ -31,6 +31,7 @@ import (
 	_ "modernc.org/sqlite" // registers the "sqlite" driver (the same one the store package registers)
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // dbDriver is the modernc.org/sqlite driver name the whole app registers.
@@ -40,10 +41,11 @@ const dbDriver = "sqlite"
 // config is enabled; nil on Deps means the mode is off and every passkey
 // surface 404s.
 type Service struct {
-	users *usermgmt.Service
-	db    *sql.DB
-	cfg   PasskeyRuntime
-	log   *slog.Logger
+	users   *usermgmt.Service
+	db      *sql.DB
+	enroll  *readmodels.EnrollTokens
+	cfg     PasskeyRuntime
+	log     *slog.Logger
 }
 
 // PasskeyRuntime is the resolved passkey configuration the service needs
@@ -79,9 +81,13 @@ func (m MappedUser) SessionExtension() domain.Extension {
 
 // New opens (creating if needed) <dataDir>/usermgmt.db and wires the
 // usermgmt service: SQL event store + SQL read models + the WebAuthn
-// provider. The journal is tiny; startup drains projections synchronously
-// (the default) so a broken store fails the boot instead of the login.
-func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logger) (*Service, error) {
+// provider. Enrollment tokens live in the metaengine store the caller
+// hands over (engine.EnrollTokens()) — the wp_enroll_tokens SQL table
+// is gone (the 15-minute TTL means an upgrade carries no continuity;
+// in-flight links get re-minted). The journal is tiny; startup drains
+// projections synchronously (the default) so a broken store fails the
+// boot instead of the login.
+func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll *readmodels.EnrollTokens, log *slog.Logger) (*Service, error) {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -133,11 +139,7 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, log *slog.Logg
 		db.Close()                                                                                                   //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
-	svc := &Service{users: users, db: db, cfg: cfg, log: log}
-	if err := svc.migrateEnrollTokens(ctx); err != nil {
-		svc.Shutdown()  //nolint:errcheck // best-effort cleanup on a failed boot path
-		return nil, err //nolint:erraudit // migrateEnrollTokens owns the classification
-	}
+	svc := &Service{users: users, db: db, enroll: enroll, cfg: cfg, log: log}
 	return svc, nil
 }
 
