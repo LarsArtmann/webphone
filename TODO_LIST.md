@@ -15,7 +15,7 @@ Last sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ado
 
 - **Why:** audit found ZERO first-party go-cqrs-lite imports (metaengine only `// indirect`, `system` absent) vs ~108 hand-rolled SQL sites. Plan adopts metaengine where it wins: DedupStore swap (fixes restart-loss of webhook/call idem), contacts+snippets pilot, faxes via `ApplyIdempotent(provider_ref)` reusing train-C `faxMoves`, transcripts, enroll tokens.
 - **NOT-DO (plan §5):** no `system.New` swap (samber/do ratified), no threads/messages event-sourcing rewrite (external facts; DOM/SSE contracts pinned), sessions stay SQL, migration ladder untouched; engine-owned tables get NO schema_version entries (plan ruling N5, separate `readmodels.db`).
-- **Next action:** T02 dep promote — `go get` metaengine (direct) + `sqliteengine/v4` (new, un-vendored) → tidy → vendor → vendorHash `--rebuild` recipe → auth-grade commit (daemon-guarded) → CI watch.
+- **Next action:** T09 snippets ride the contacts pattern (caps 100/5, quick flag) → T10 G2 pilot verdict (respect the owner's pending hard-stop answer). Progress: T01–T04 DONE (deps pinned, readmodels composition-root seam, DURABLE dedup window, G1 CI leg green; local full-suite leg green 2026-10-15 after the paperless v0.5.0 + vendorHash repair of the daemon's go.mod sweep), T05–T07 DONE (contacts read model + engine-native COUNT metric + one-time legacy import via schema v4 app_flags), T08 owner-scoping/family/cap ports DONE (delete-frees-slot leg included; byte-parity golden folded into the green API suite).
 
 **Evidence:** this session's SQL census + metaengine source read (2026-10-14); continues the 2026-10-14 declarative/DDD train's typed-facts direction.
 

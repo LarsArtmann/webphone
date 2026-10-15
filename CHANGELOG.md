@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Webhook and call-log idempotency windows are DURABLE: the engine-backed
+  dedup store (readmodels.db) replaces the in-memory maps, so a restart no
+  longer forgets which provider verdicts and ended-call logs were already
+  recorded; a 15-minute sweeper bounds growth and test compositions keep the
+  map fallback behind the same seam.
+- Personal contacts moved to the metaengine read model: the same per-extension
+  list (500 cap, rename keeps id and age, owner-scoped newest-first) now lives
+  in its own readmodels.db behind the unchanged store contract; a one-time
+  boot import (schema v4 flag) re-saves legacy SQL contacts so upgrades lose
+  nothing, and webphone_contacts_total counts through the engine's native
+  aggregate.
+- In-memory test databases no longer lose their schema to idle connection
+  trimming: `:memory:` pools skip the idle reaper entirely, fixing spurious
+  "no such table" failures under load-starved test runs.
 - Thread append invariants (unread increments on inbound, last activity
   follows the message, inbound unarchives) moved from SQL CASE logic
   into one pure domain function the store's append transaction
