@@ -15,16 +15,16 @@ import (
 	_ "modernc.org/sqlite" // registers the "sqlite" driver
 )
 
-// Sentinel families (family-adoption train, 2026-09-30): absence and
-// input caps are user-facing outcomes, so both sentinels classify
-// Rejection — classifyForUser and any future handler can branch on the
-// family without another ladder. Registration follows the library's
-// documented pattern for stable error values; the sentinels keep their
-// errors.New identity.
+// Sentinel family (family-adoption train, 2026-09-30): absence is a
+// user-facing outcome, so the sentinel classifies Rejection —
+// classifyForUser and any future handler can branch on the family
+// without another ladder. Registration follows the library's
+// documented pattern for stable error values; the sentinel keeps its
+// errors.New identity. ErrListFull moved home to internal/readmodels
+// with the contacts read model (the SQL contacts store is gone).
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
 		ErrNotFound: errorfamily.Rejection,
-		ErrListFull: errorfamily.Rejection,
 	})
 }
 

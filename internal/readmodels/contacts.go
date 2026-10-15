@@ -19,6 +19,18 @@ import (
 // windowing.
 const ContactsMaxPerExtension = 500
 
+// ErrListFull is returned when a NEW number would exceed the per-owner
+// cap — the same contract the SQL store held before the read-model
+// swap homed the sentinel here (the store's contacts table left with
+// its file, the contract stays).
+var ErrListFull = errors.New("contact list full") //nolint:erraudit // sentinel: identity, not an error family; classified via init registration
+
+func init() {
+	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
+		ErrListFull: errorfamily.Rejection,
+	})
+}
+
 // ContactView is the engine-side projection of a personal contact.
 // Unix-nanos created_at keeps list ordering EXACTLY numeric in sqlite
 // (the SQL store compared unix seconds with a rowid tiebreak; nanos
@@ -83,7 +95,7 @@ func newContacts(models *metaengine.Store) *Contacts {
 
 // Save upserts a contact by (owner, phone): an existing slot is
 // renamed keeping its ID and creation time; a NEW number past the
-// per-owner cap is refused with the store's ErrListFull contract.
+// per-owner cap is refused with this package's ErrListFull contract.
 func (s *Contacts) Save(ctx context.Context, contact domain.Contact) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -120,7 +132,7 @@ func (s *Contacts) ownerHasRoom(ctx context.Context, owner domain.Extension) err
 		return err
 	}
 	if len(views) >= ContactsMaxPerExtension {
-		return errorfamily.WrapRejectionf(store.ErrListFull, "readmodels.contact_list_full",
+		return errorfamily.WrapRejectionf(ErrListFull, "readmodels.contact_list_full",
 			"%s at %d contacts", owner.String(), ContactsMaxPerExtension)
 	}
 	return nil

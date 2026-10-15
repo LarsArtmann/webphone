@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	id "github.com/larsartmann/go-branded-id"
 	sdk "github.com/larsartmann/go-paperless"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -23,34 +22,10 @@ import (
 
 // The lazily-ensured Paperless-ngx metadata (plan 2026-09-30): one tag,
 // one document type, one provenance custom field. English names like
-// every operator-greppable string in this repo. The three ids are
-// branded so a transposed ensure/assign cannot file a fax under the
-// wrong metadata (they are plain ints on the SDK wire).
-type TagBrand struct{}
-
-// Name implements the id.Brand interface.
-func (TagBrand) Name() string { return "PaperlessTag" }
-
-// TagID identifies one Paperless-ngx tag.
-type TagID = id.ID[TagBrand, int]
-
-// DocTypeBrand brands Paperless-ngx document-type identifiers.
-type DocTypeBrand struct{}
-
-// Name implements the id.Brand interface.
-func (DocTypeBrand) Name() string { return "PaperlessDocType" }
-
-// DocTypeID identifies one Paperless-ngx document type.
-type DocTypeID = id.ID[DocTypeBrand, int]
-
-// FieldBrand brands Paperless-ngx custom-field identifiers.
-type FieldBrand struct{}
-
-// Name implements the id.Brand interface.
-func (FieldBrand) Name() string { return "PaperlessField" }
-
-// FieldID identifies one Paperless-ngx custom field.
-type FieldID = id.ID[FieldBrand, int]
+// every operator-greppable string in this repo. Since go-paperless
+// v0.5.0 the SDK mints the branded ids itself (its TagID/DocumentTypeID/
+// CustomFieldID are compile-time distinct), so this package rides the
+// SDK brands directly — no local duplicate brand layer.
 
 const (
 	tagName         = "fax"
@@ -72,9 +47,9 @@ type Archiver struct {
 
 	mu      sync.Mutex
 	ensured bool
-	tagID   TagID
-	typeID  DocTypeID
-	fieldID FieldID
+	tagID   sdk.TagID
+	typeID  sdk.DocumentTypeID
+	fieldID sdk.CustomFieldID
 }
 
 // NewArchiver builds the adapter. An empty url+token pair means the
@@ -113,9 +88,9 @@ func (a *Archiver) ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte
 		Content:        pdf,
 		Title:          faxTitle(job),
 		Created:        job.CreatedAt,
-		TagIDs:         []int{tagID.Get()},
-		DocumentTypeID: typeID.Get(),
-		CustomFields:   []sdk.CustomFieldValue{{Field: fieldID.Get(), Value: job.ID.String()}},
+		TagIDs:         []sdk.TagID{tagID},
+		DocumentTypeID: typeID,
+		CustomFields:   []sdk.CustomFieldValue{{Field: fieldID, Value: job.ID.String()}},
 	})
 	if err != nil {
 		return fmt.Errorf("paperless: upload: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
@@ -138,7 +113,7 @@ func (a *Archiver) ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte
 // first use — deliberately NOT at construction, so a boot never probes
 // Paperless reachability. A failed ensure is not cached: the next fax
 // retries.
-func (a *Archiver) ensureMetadata(ctx context.Context) (TagID, DocTypeID, FieldID, error) {
+func (a *Archiver) ensureMetadata(ctx context.Context) (sdk.TagID, sdk.DocumentTypeID, sdk.CustomFieldID, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.ensured {
@@ -147,18 +122,18 @@ func (a *Archiver) ensureMetadata(ctx context.Context) (TagID, DocTypeID, FieldI
 
 	tagID, err := a.client.EnsureTag(ctx, tagName)
 	if err != nil {
-		return TagID{}, DocTypeID{}, FieldID{}, fmt.Errorf("paperless: ensure tag: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure tag: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
 	}
 	typeID, err := a.client.EnsureDocumentType(ctx, docTypeName)
 	if err != nil {
-		return TagID{}, DocTypeID{}, FieldID{}, fmt.Errorf("paperless: ensure document type: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure document type: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
 	}
 	fieldID, err := a.client.EnsureCustomField(ctx, provenanceField)
 	if err != nil {
-		return TagID{}, DocTypeID{}, FieldID{}, fmt.Errorf("paperless: ensure custom field: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure custom field: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
 	}
 
-	a.tagID, a.typeID, a.fieldID, a.ensured = id.NewID[TagBrand](tagID), id.NewID[DocTypeBrand](typeID), id.NewID[FieldBrand](fieldID), true
+	a.tagID, a.typeID, a.fieldID, a.ensured = tagID, typeID, fieldID, true
 	return a.tagID, a.typeID, a.fieldID, nil
 }
 
