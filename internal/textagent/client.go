@@ -49,6 +49,7 @@ func New(url, secretFile string) (*Client, error) { //nolint:branching-flow // c
 }
 
 // Draft is one pending review item (the textagent's draft JSON shape).
+//brandid-lint:ignore(BD003) external textagent API wire shape; draft ids are foreign tokens (strong-id ruling)
 type Draft struct {
 	ID         string `json:"id"`
 	Contact    string `json:"contact"`
@@ -165,6 +166,7 @@ func (c *Client) Reviews(ctx context.Context) (*Reviews, error) {
 // draftIDValid rejects ids that could escape the API path (the ids
 // come from the agent's own listing, but the guard keeps the loopback
 // URL honest against any future producer).
+//brandid-lint:ignore(BD003) foreign draft id validated here before URL interpolation; no local brand exists (strong-id ruling)
 func draftIDValid(id string) bool {
 	return id != "" && !strings.ContainsAny(id, "/%") && !strings.Contains(id, "..")
 }
@@ -172,6 +174,7 @@ func draftIDValid(id string) bool {
 // Approve sends a draft: empty text approves the draft verbatim, a
 // non-empty text approves the HUMAN edit (the agent records the
 // correction as a learned preference).
+//brandid-lint:ignore(BD003) foreign draft id from the agent's listing; draftIDValid guards the URL path (strong-id ruling)
 func (c *Client) Approve(ctx context.Context, id, text string) (*Draft, error) { //nolint:branching-flow // id+text: a swap lands the text in the URL path and fails loudly server-side
 	if !draftIDValid(id) {
 		return nil, errorfamily.NewRejection("textagent.badid", "textagent: invalid draft id")
@@ -188,6 +191,7 @@ func (c *Client) Approve(ctx context.Context, id, text string) (*Draft, error) {
 }
 
 // Discard drops a pending draft without sending.
+//brandid-lint:ignore(BD003) foreign draft id from the agent's listing; draftIDValid guards the URL path (strong-id ruling)
 func (c *Client) Discard(ctx context.Context, id string) error {
 	if !draftIDValid(id) {
 		return errorfamily.NewRejection("textagent.badid", "textagent: invalid draft id")

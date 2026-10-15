@@ -24,6 +24,7 @@ const FlagLegacyTranscriptsImported = "legacy_transcripts_imported"
 // LegacyTranscript is one row of the retired SQL call_transcripts
 // table, kept as plain values: import-time parsing decides what
 // survives.
+//brandid-lint:ignore(BD003) retired SQL row; CallID is the opaque island token kept verbatim (strong-id wire ruling)
 type LegacyTranscript struct {
 	Owner     string
 	CallID    string

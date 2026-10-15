@@ -129,6 +129,7 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 // legacy wire, the session's own payload) only when it is off, keeping
 // unconfigured deployments byte-identical. The omitempty tags keep the
 // wire identical to the historical map form.
+//brandid-lint:ignore(BD003) wire DTO: config-validated DID rendered verbatim, no id ever flows back in (strong-id ruling)
 type sessionIdentity struct {
 	Extension     string   `json:"extension"`
 	DID           string   `json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field

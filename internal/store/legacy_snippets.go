@@ -22,6 +22,7 @@ const FlagLegacySnippetsImported = "legacy_snippets_imported"
 
 // LegacySnippet is one row of the retired SQL snippets table, kept as
 // plain values: import-time parsing decides what survives.
+//brandid-lint:ignore(BD003) retired SQL row kept as plain values; import-time parsing decides what survives
 type LegacySnippet struct {
 	ID        string
 	Owner     string
