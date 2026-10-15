@@ -43,6 +43,7 @@ type Engine struct {
 	snippets *Snippets
 	faxes    *Faxes
 	calls    *Transcripts
+	enroll   *EnrollTokens
 	db       *sql.DB
 	closed   bool
 }
@@ -72,7 +73,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, enrollTokensQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -86,6 +87,7 @@ func Open(dataDir string) (*Engine, error) {
 		snippets: newSnippets(models),
 		faxes:    newFaxes(models, agg),
 		calls:    newTranscripts(models, agg),
+		enroll:   newEnrollTokens(models),
 		db:       db,
 	}, nil
 }
@@ -116,6 +118,11 @@ func (e *Engine) Faxes() *Faxes { return e.faxes }
 // Transcripts returns the engine-backed transcript store (the SQL
 // store's replacement behind the same method contract).
 func (e *Engine) Transcripts() *Transcripts { return e.calls }
+
+// EnrollTokens returns the engine-backed enrollment-token store (the
+// userauth SQL table's replacement; token classification stays in the
+// userauth service).
+func (e *Engine) EnrollTokens() *EnrollTokens { return e.enroll }
 
 // SQL exposes the engine's own sqlite handle (probe pings; future
 // engine-side maintenance). Callers must not close it — Shutdown owns
