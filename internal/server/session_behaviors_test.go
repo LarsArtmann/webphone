@@ -51,7 +51,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	Expect(err).NotTo(HaveOccurred())
 
 	hubs := server.NewHubs()
-	notifier := server.NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil, false)
+	notifier := server.NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -61,7 +61,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 		m(&cfg)
 	}
 	messages := store.NewMessages(db)
-	faxes := store.NewFaxes(db)
+	faxes := newTestEngine(t).Faxes()
 	engine, err := readmodels.Open(t.TempDir())
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = engine.Shutdown() })

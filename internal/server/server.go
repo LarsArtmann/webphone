@@ -132,7 +132,7 @@ type Deps struct {
 	Config   config.Config
 	Sessions session.Store
 	Messages *store.Messages
-	Faxes    *store.Faxes
+	Faxes    *readmodels.Faxes
 	// Contacts is the metaengine-backed personal-contacts read model
 	// (readmodels.db) — same method contract the SQL store held.
 	Contacts *readmodels.Contacts

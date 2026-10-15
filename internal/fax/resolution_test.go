@@ -15,7 +15,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // resolvingFaxGateway is that second synchronous gateway: a foreign type

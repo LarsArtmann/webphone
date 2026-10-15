@@ -69,7 +69,7 @@ type testServer struct {
 	handler     http.Handler
 	hubs        *ExtensionHubs
 	messages    *store.Messages
-	faxes       *store.Faxes
+	faxes       *readmodels.Faxes
 	transcripts *store.Transcripts
 	phoneAPI    *pbx.Client
 }
@@ -128,7 +128,7 @@ func newTestServerWithConfig(
 	}
 
 	hubs := NewHubs()
-	notifier := NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil, false)
+	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -138,7 +138,7 @@ func newTestServerWithConfig(
 		tweakCfg(&cfg)
 	}
 	messages := store.NewMessages(db)
-	faxes := store.NewFaxes(db)
+	faxes := newTestEngine(t).Faxes()
 	transcripts := store.NewTranscripts(db)
 	engine := newTestEngine(t)
 	// SQLite session store (not the mem store): the /metrics aggregates

@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/messaging"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -25,7 +26,7 @@ import (
 type Notifier struct {
 	hubs     *ExtensionHubs
 	messages *store.Messages
-	faxes    *store.Faxes
+	faxes    *readmodels.Faxes
 	crm      *crm.Resolver
 	asr      bool
 }
@@ -35,7 +36,7 @@ type Notifier struct {
 // asrOn rides thread pushes so audio-attachment transcribe buttons
 // survive SSE re-renders exactly when the seam is configured (a
 // boot-time flag, not a per-request read).
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *store.Faxes, crmResolver *crm.Resolver, asrOn bool) *Notifier {
+func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool) *Notifier {
 	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn}
 }
 

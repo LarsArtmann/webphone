@@ -17,7 +17,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // countingFaxGateway proves the guard short-circuits before the provider.

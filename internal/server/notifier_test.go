@@ -24,7 +24,7 @@ func TestProjectNotificationPolicy(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 	hubs := NewHubs()
 	owner := domain.MustParseExtension("100")
-	notifier := NewNotifier(hubs, store.NewMessages(db), store.NewFaxes(db), nil, false)
+	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false)
 
 	events := hubs.get(owner).Hub().Subscribe()
 	t.Cleanup(func() { hubs.get(owner).Hub().Unsubscribe(events) })
