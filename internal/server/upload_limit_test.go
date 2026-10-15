@@ -12,6 +12,9 @@ import (
 // to server disk (audit finding #1). The envelope (fields + boundaries)
 // rides inside the 1 MB headroom above uploadLimit.
 func TestUploadBodyIsBounded(t *testing.T) {
+	if testing.Short() {
+		t.Skip("allocates two ~60 MiB bodies; slow under load — run without -short")
+	}
 	server := newTestServer(t)
 	c := signIn(t, server)
 
