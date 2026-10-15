@@ -13,6 +13,7 @@ import (
 // branching-flow COMPOSITION_mixin (baselined): segment (the storage
 // grain) vs reassembled transcript (the view grain) — same identity
 // fields, different lifecycles by design.
+//brandid-lint:ignore(BD003) island-owned SIP Call-ID: opaque foreign token, verbatim passthrough (strong-id wire ruling)
 type CallTranscriptSegment struct {
 	Owner     Extension
 	CallID    string //nolint:branching-flow // the island-owned SIP Call-ID: opaque foreign token passed through verbatim (the 09-18 pbx-UUID class), never joined to CDR rows
@@ -26,6 +27,7 @@ type CallTranscriptSegment struct {
 // view: the call identity plus its segments in spoken order.
 // branching-flow COMPOSITION_mixin (baselined): domain vs export-DTO
 // boundary layers (exportTranscript mirrors this shape for the zip).
+//brandid-lint:ignore(BD003) island-owned SIP Call-ID: opaque foreign token, verbatim passthrough (strong-id wire ruling)
 type CallTranscript struct {
 	Owner     Extension
 	CallID    string //nolint:branching-flow // island-owned SIP Call-ID, verbatim passthrough (see CallTranscriptSegment.CallID)
@@ -39,6 +41,7 @@ type CallTranscript struct {
 // read-model store. SQL rows carried no id (the autoincrement rowid
 // was private); the engine requires a key, so the seam mints one per
 // append — same uniqueness role, now durable and explicit.
+//brandid-lint:ignore(BD003) engine key minted by GenerateTranscriptSegmentKey; read-model facts are wire shapes (strong-id wire ruling)
 type TranscriptSegmentKey struct {
 	ID string
 }
@@ -52,6 +55,7 @@ type TranscriptSegmentKey struct {
 // branching-flow COMPOSITION_mixin (baselined): the fact mirrors the
 // TranscriptSegmentView row on purpose (the fold is a plain insert of
 // the wire shape).
+//brandid-lint:ignore(BD003) island-owned SIP Call-ID: opaque foreign token, verbatim passthrough (strong-id wire ruling)
 type TranscriptAppended struct {
 	Key       TranscriptSegmentKey
 	Owner     string

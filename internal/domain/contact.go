@@ -28,6 +28,7 @@ type ContactKey struct {
 // existing ID and creation time on rename BEFORE emitting the fact, so
 // the fold stays a plain insert. Raw string id by the strong-id wire
 // ruling: read-model facts are wire shapes, not domain types.
+//brandid-lint:ignore(BD003) read-model fact: wire shape, not domain (strong-id wire ruling)
 type ContactSaved struct {
 	Key       ContactKey
 	ID        string
