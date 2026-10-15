@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	sqliteengine "github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4"
+	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 
 	"github.com/larsartmann/webphone/internal/domain"
@@ -162,7 +162,7 @@ func TestDualRunThreads(t *testing.T) {
 			},
 		},
 		{
-			name: "tie-broken-by-rowid", remote: "+441632960004",
+			name: "tie-broken-by-rowid", remote: "+441632960004", unread: 1,
 			msgs: []domain.Message{
 				{Direction: domain.DirectionInbound, Body: "older same-second", CreatedAt: base},
 				{Direction: domain.DirectionOutbound, Body: "newer same-second", CreatedAt: base},
@@ -288,7 +288,7 @@ func TestDualRunThreads(t *testing.T) {
 func engineSummaries(t *testing.T, models *metaengine.Store, archived bool) []ThreadSummary {
 	t.Helper()
 	views := scanAll(t, models)
-	var out []ThreadSummary
+	out := []ThreadSummary{}
 	for _, v := range views {
 		if v.Archived != archived {
 			continue
@@ -306,7 +306,7 @@ func engineSummaries(t *testing.T, models *metaengine.Store, archived bool) []Th
 func engineSearch(t *testing.T, models *metaengine.Store, needle string) []ThreadSummary {
 	t.Helper()
 	pattern := "%" + likeEscape(needle) + "%"
-	var out []ThreadSummary
+	out := []ThreadSummary{}
 	for _, v := range scanAll(t, models) {
 		if v.Archived {
 			continue
@@ -340,24 +340,35 @@ func sortDual(out []ThreadSummary) {
 
 // likeMatch evaluates the escaped LIKE pattern (always wrapped in %...% by
 // SearchThreads) as ordered contains-segments, ASCII case-insensitive —
-// the same semantics SQLite's LIKE gives the SQL side.
+// the same semantics SQLite's LIKE gives the SQL side. Walks escapes
+// (\%, \_, \\) instead of naively splitting, so "50\%" stays one literal.
 func likeMatch(pattern, value string) bool {
-	parts := strings.Split(pattern, "%")
-	if len(parts) < 2 {
-		return false
-	}
-	v := strings.ToLower(value)
-	pos := 0
-	for _, part := range parts[1 : len(parts)-1] {
-		if part == "" {
+	var segs []string
+	var cur strings.Builder
+	flush := func() { segs = append(segs, strings.ToLower(cur.String())); cur.Reset() }
+	rs := []rune(pattern)
+	for i := 0; i < len(rs); i++ {
+		if rs[i] == '%' {
+			flush()
 			continue
 		}
-		part = strings.ToLower(strings.NewReplacer(`\\`, `\`, `\%`, `%`, `\_`, `_`).Replace(part))
-		idx := strings.Index(v[pos:], part)
+		if rs[i] == '\\' && i+1 < len(rs) {
+			i++
+		}
+		cur.WriteRune(rs[i])
+	}
+	flush()
+	v := strings.ToLower(value)
+	pos := 0
+	for _, seg := range segs {
+		if seg == "" {
+			continue
+		}
+		idx := strings.Index(v[pos:], seg)
 		if idx < 0 {
 			return false
 		}
-		pos += idx + len(part)
+		pos += idx + len(seg)
 	}
 	return true
 }
