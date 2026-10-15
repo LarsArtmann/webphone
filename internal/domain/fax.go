@@ -200,3 +200,10 @@ type FaxStatusAdvanced struct {
 	Pages       int
 	AdvancedAt  time.Time
 }
+
+// FaxExpunged is the read-model fact removing one fax job row — the
+// retention pass's engine arm (fax content shares the retention
+// window; nothing else deletes fax rows).
+type FaxExpunged struct {
+	Key FaxKey
+}

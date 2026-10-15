@@ -83,7 +83,7 @@ func Open(dataDir string) (*Engine, error) {
 		models:   models,
 		contacts: newContacts(models, agg),
 		snippets: newSnippets(models),
-		faxes:    newFaxes(models),
+		faxes:    newFaxes(models, agg),
 		db:       db,
 	}, nil
 }

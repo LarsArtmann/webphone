@@ -15,7 +15,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // resolvingFaxGateway is that second synchronous gateway: a foreign type
@@ -33,16 +33,11 @@ func (g *resolvingFaxGateway) SendFax(_ context.Context, _ gateway.OutboundFax) 
 
 func newResolutionFaxService(t *testing.T, gw *resolvingFaxGateway) *fax.Service {
 	t.Helper()
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return fax.New(store.NewFaxes(db), blobs, gw, nil, nil, nil)
+	return fax.New(newTestFaxes(t), blobs, gw, nil, nil, nil)
 }
 
 func TestDriveBranchesOnReceiptResolution(t *testing.T) {

@@ -37,10 +37,11 @@ const faxesCollection = "faxes"
 type faxInput struct{ ID string }
 
 // faxesQuery declares the faxes read model: a keyed projection
-// inserted by FaxReceipted facts and merged by FaxStatusAdvanced facts
+// inserted by FaxReceipted facts, merged by FaxStatusAdvanced facts
 // (the update fold receives the previous view, so the provider-ref
-// keep-when-empty rule lives in ONE place). Filtered by owner and by
-// provider ref (the webhook's lookup path), sorted newest-first.
+// keep-when-empty rule lives in ONE place), and removed by retention's
+// FaxExpunged facts. Filtered by owner, provider ref (the webhook's
+// lookup path), and created-at (retention), sorted newest-first.
 var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
 	metaengine.OnRecord(domain.FaxReceipted{},
 		func(_ record.Record, e domain.FaxReceipted) (domain.FaxKey, FaxView) {
@@ -69,8 +70,10 @@ var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
 			prev.UpdatedAt = e.AdvancedAt.UnixNano()
 			return prev
 		}),
+	metaengine.OnRecord(domain.FaxExpunged{}, metaengine.Remove[FaxView]()),
 	metaengine.FilterOnField[FaxView]("owner", metaengine.FilterEq),
 	metaengine.FilterOnField[FaxView]("provider_ref", metaengine.FilterEq),
+	metaengine.FilterOnField[FaxView]("created_at", metaengine.FilterLt),
 	metaengine.SortOnField[FaxView]("created_at", true),
 )
 
@@ -86,13 +89,15 @@ var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
 type Faxes struct {
 	models *metaengine.Store
 	reader *metaengine.TypedReader[FaxView]
+	agg    metaengine.AggregateReader
 	mu     sync.Mutex
 }
 
-func newFaxes(models *metaengine.Store) *Faxes {
+func newFaxes(models *metaengine.Store, agg metaengine.AggregateReader) *Faxes {
 	return &Faxes{
 		models: models,
 		reader: metaengine.NewReader[FaxView](models, faxesCollection),
+		agg:    agg,
 	}
 }
 
@@ -260,5 +265,58 @@ func (v FaxView) toJob() domain.FaxJob {
 		Error:        v.Error,
 		CreatedAt:    time.Unix(0, v.CreatedAt),
 		UpdatedAt:    time.Unix(0, v.UpdatedAt),
+	}
+}
+
+// Count reports the total stored fax jobs across all owners (the
+// metrics surface's webphone_faxes_total). Served by the engine's
+// native COUNT aggregate — no row materialization (the SQL fax_jobs
+// table is retired storage after the import window).
+func (s *Faxes) Count(ctx context.Context) (int64, error) {
+	n, err := s.agg.Aggregate(ctx, faxesCollection, metaengine.AggregateCount, "", nil)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "readmodels.fax_count", "count faxes")
+	}
+	return int64(n), nil
+}
+
+// sweepPageSize bounds one retention scan/expunge batch; the loop
+// converges because every batch removes what it scanned.
+const sweepPageSize = 1000
+
+// SweepBefore deletes fax jobs created before the cutoff (the
+// retention pass's engine arm) and returns their spooled document
+// paths for the CALLER to unlink — the same contract the SQL sweep
+// kept (paths collected before the rows go; a crash between expunge
+// and unlink leaves an orphaned blob, bounded and documented).
+func (s *Faxes) SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var paths []string
+	var removed int64
+	for {
+		views, err := s.reader.Scan(ctx,
+			metaengine.WithFilter("created_at", metaengine.FilterLt, cutoff.UnixNano()),
+			metaengine.WithSort("created_at", false),
+			metaengine.WithLimit(sweepPageSize),
+		)
+		if err != nil {
+			return paths, removed, errorfamily.WrapInfrastructuref(err, "readmodels.fax_sweep", "scan expirable faxes")
+		}
+		if len(views) == 0 {
+			return paths, removed, nil
+		}
+		for _, v := range views {
+			if v.DocumentPath != "" {
+				paths = append(paths, v.DocumentPath)
+			}
+			if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.FaxExpunged{}), domain.FaxExpunged{
+				Key: domain.FaxKey{ID: v.ID},
+			}); err != nil {
+				return paths, removed, errorfamily.WrapInfrastructuref(err, "readmodels.fax_sweep", "expunge fax %s", v.ID)
+			}
+			removed++
+		}
 	}
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // countingFaxGateway proves the guard short-circuits before the provider.
@@ -30,17 +30,12 @@ func (g *countingFaxGateway) SendFax(_ context.Context, _ gateway.OutboundFax) (
 
 func newSelfSendFaxService(t *testing.T, identities map[string]string) (*fax.Service, *countingFaxGateway) {
 	t.Helper()
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	gw := &countingFaxGateway{}
-	return fax.New(store.NewFaxes(db), blobs, gw, nil, identities, nil), gw
+	return fax.New(newTestFaxes(t), blobs, gw, nil, identities, nil), gw
 }
 
 var testPDF = []byte("%PDF-1.4\n%test\ntrailer<<>>\n%%EOF\n")

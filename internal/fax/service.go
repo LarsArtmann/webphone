@@ -14,7 +14,6 @@ import (
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // Limits for fax uploads.
@@ -47,12 +46,25 @@ type Archiver interface {
 	ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte) error
 }
 
+// Store is the fax-job persistence seam: the contract the SQL store
+// held and the read-model engine now serves (same methods, same
+// verdicts). AdvanceIdempotent is the webhook lane's in-process replay
+// guard — see readmodels.Faxes for the exact semantics.
+type Store interface {
+	Create(ctx context.Context, job domain.FaxJob) error
+	UpdateStatus(ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int) error
+	AdvanceIdempotent(ctx context.Context, idemKey string, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int) error
+	List(ctx context.Context, owner domain.Extension, limit int) ([]domain.FaxJob, error)
+	Get(ctx context.Context, owner domain.Extension, id domain.FaxID) (domain.FaxJob, error)
+	ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, error)
+}
+
 // Service wires the fax store, blob store, and outbound gateway.
 // branching-flow COMPOSITION_mixin (baselined): intentional symmetry
 // with messaging.Service (the documented seam parallel); a mixin would
 // couple the two lanes.
 type Service struct {
-	faxes      *store.Faxes
+	faxes      Store
 	blobs      *blob.Store
 	gateway    gateway.FaxGateway
 	onChange   domain.ChangeFunc
@@ -72,7 +84,7 @@ const selfSendDetail = "faxes cannot be sent to your own number"
 // entry = guard off). archiver is the optional Paperless-ngx filing home
 // for inbound faxes (nil = integration off).
 func New(
-	faxes *store.Faxes, blobs *blob.Store, gw gateway.FaxGateway, onChange domain.ChangeFunc, identities map[string]string, archiver Archiver,
+	faxes Store, blobs *blob.Store, gw gateway.FaxGateway, onChange domain.ChangeFunc, identities map[string]string, archiver Archiver,
 ) *Service {
 	return &Service{
 		faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now,
@@ -292,7 +304,7 @@ func (s *Service) UpdateProviderStatus(
 		// success. Replay dedup is the hooks seam's job (hooksIdem).
 		return job, nil
 	}
-	if err := s.faxes.UpdateStatus(ctx, job.ID, next, "", errMsg, pages); err != nil {
+	if err := s.faxes.AdvanceIdempotent(ctx, "faxadv:"+providerRef+":"+string(status), job.ID, next, "", errMsg, pages); err != nil {
 		return domain.FaxJob{}, err
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
