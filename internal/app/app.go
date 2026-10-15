@@ -229,9 +229,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
 		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
-	do.Provide(injector, func(i do.Injector) (*store.Faxes, error) {
-		return store.NewFaxes(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
-	})
 	do.Provide(injector, func(i do.Injector) (*store.Transcripts, error) {
 		return store.NewTranscripts(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
 	})
@@ -245,7 +242,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return server.NewNotifier(
 			do.MustInvoke[*server.ExtensionHubs](i),
 			do.MustInvoke[*store.Messages](i),
-			do.MustInvoke[*store.Faxes](i),
+			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
 		), nil
@@ -267,7 +264,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	})
 	do.Provide(injector, func(i do.Injector) (*fax.Service, error) {
 		return fax.New(
-			do.MustInvoke[*store.Faxes](i),
+			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.FaxGateway](i),
 			do.MustInvoke[*server.Notifier](i).Project,
@@ -303,7 +300,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Config:      cfg,
 			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
 			Messages:    do.MustInvoke[*store.Messages](i),
-			Faxes:       do.MustInvoke[*store.Faxes](i),
+			Faxes:       engine.Faxes(),
 			Contacts:    engine.Contacts(),
 			Snippets:    engine.Snippets(),
 			Transcripts: do.MustInvoke[*store.Transcripts](i),
@@ -345,6 +342,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		log,
 	)
 	importLegacySnippets(
+		context.Background(),
+		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
+		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
+		log,
+	)
+	importLegacyFaxes(
 		context.Background(),
 		do.MustInvokeNamed[*store.Database](injector, "sqlite"),
 		do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine"),
@@ -427,7 +430,7 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return wrapf("resolve blob store: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	retention.Start(ctx, db.SQL(), blobs, engine.Faxes(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	// The dedup sweeper rides the same ctx bound as every background
 	// loop; a missing engine here is impossible (eager invoke in New).
 	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service

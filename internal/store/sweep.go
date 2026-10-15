@@ -14,18 +14,19 @@ import (
 // store Counts — coincidental int64 field shape, different domains.
 type SweepResult struct {
 	Messages    int64
-	Faxes       int64
 	Threads     int64
 	Transcripts int64
 	BlobPaths   []string
 }
 
 // Sweep deletes stored content older than the cutoff: messages (their
-// attachment rows cascade), fax jobs, the threads left empty by those
-// deletions, and call transcript segments (plain rows — call content of
+// attachment rows cascade), the threads left empty by those deletions,
+// and call transcript segments (plain rows — call content of
 // real people shares the retention window, never a policy limbo; the
-// end-user delete affordance is the per-call complement in M11).
-// Attachment and document blob paths are collected BEFORE the rows go
+// end-user delete affordance is the per-call complement in M11). Fax
+// jobs ride the ENGINE sweep (readmodels.Faxes.SweepBefore) since the
+// T11 swap; the caller composes both.
+// Attachment blob paths are collected BEFORE the rows go
 // and returned for unlinking — a crash between the SQL and the unlink
 // leaves an orphaned blob (harmless disk, cleaned by the next sweep of
 // the same rows... which no longer exist, so orphans stay until an
@@ -39,9 +40,7 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 		SELECT path FROM attachments WHERE message_id IN (
 			SELECT id FROM messages WHERE created_at < ?
 		)
-		UNION ALL
-		SELECT document_path FROM fax_jobs WHERE created_at < ? AND document_path != ''
-	`, []any{cutoff.Unix(), cutoff.Unix()}, func(row rowScanner) (string, error) {
+	`, []any{cutoff.Unix()}, func(row rowScanner) (string, error) {
 		var path string
 		if err := row.Scan(&path); err != nil {
 			return "", errorfamily.WrapInfrastructuref(err, "store.sweep_scan", "scan blob path")
@@ -60,14 +59,6 @@ func Sweep(ctx context.Context, db *sql.DB, cutoff time.Time) (SweepResult, erro
 		return res, err
 	}
 	res.Messages = msgs
-
-	faxes, err := execRows(ctx, db, "delete old fax jobs", `
-		DELETE FROM fax_jobs WHERE created_at < ?
-	`, cutoff.Unix())
-	if err != nil {
-		return res, err
-	}
-	res.Faxes = faxes
 
 	threads, err := execRows(ctx, db, "delete empty threads", `
 		DELETE FROM threads WHERE last_activity_at < ? AND NOT EXISTS (
@@ -107,24 +98,22 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 type Counts struct {
 	Threads     int64
 	Messages    int64
-	Faxes       int64
 	Sessions    int64
 	Transcripts int64
 }
 
-// ReadCounts reads the aggregate sizes in one call. Contacts are
-// counted by the read-model engine (readmodels.Contacts.Count) — the
-// SQL contacts table is retired storage.
+// ReadCounts reads the aggregate sizes in one call. Contacts and
+// faxes are counted by the read-model engine (readmodels Contacts /
+// Faxes Count) — their SQL tables are retired storage.
 func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
 	var c Counts
 	err := db.QueryRowContext(ctx, `
 		SELECT
 			(SELECT COUNT(*) FROM threads),
 			(SELECT COUNT(*) FROM messages),
-			(SELECT COUNT(*) FROM fax_jobs),
 			(SELECT COUNT(*) FROM sessions),
 			(SELECT COUNT(*) FROM call_transcripts)
-	`).Scan(&c.Threads, &c.Messages, &c.Faxes, &c.Sessions, &c.Transcripts)
+	`).Scan(&c.Threads, &c.Messages, &c.Sessions, &c.Transcripts)
 	if err != nil {
 		return c, errorfamily.WrapInfrastructuref(err, "store.counts", "count aggregates")
 	}

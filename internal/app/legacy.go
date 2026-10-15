@@ -106,3 +106,48 @@ func importLegacySnippets(ctx context.Context, db *store.Database, engine *readm
 	log.Info("legacy snippets imported into read models",
 		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
 }
+
+// importLegacyFaxes is the ONE-TIME data continuity step of the fax
+// read-model swap (2026-10-15): same shape, policy, and idempotence
+// story as importLegacyContacts above. Corrupt rows (unknown lifecycle
+// enums, unparseable numbers) are skipped and counted.
+func importLegacyFaxes(ctx context.Context, db *store.Database, engine *readmodels.Engine, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), store.FlagLegacyFaxesImported)
+	if err != nil {
+		log.Error("legacy faxes import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+
+	legacy, err := store.ReadLegacyFaxes(ctx, db.SQL())
+	if err != nil {
+		log.Error("legacy faxes import: read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+
+	faxes := engine.Faxes()
+	imported, skipped := 0, 0
+	for _, row := range legacy {
+		job, ok := row.ToFax()
+		if !ok {
+			skipped++
+			continue
+		}
+		if err := faxes.Create(ctx, job); err != nil {
+			log.Error("legacy faxes import: save failed; skipping rest (retries next boot)",
+				"err", err, "imported_so_far", imported)
+			return
+		}
+		imported++
+	}
+
+	if err := store.SetFlag(ctx, db.SQL(), store.FlagLegacyFaxesImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("legacy faxes import: flag write failed (imports re-run idempotently next boot)",
+			"err", err, "imported", imported)
+		return
+	}
+	log.Info("legacy faxes imported into read models",
+		"imported", imported, "skipped", skipped, "legacy_rows", len(legacy))
+}

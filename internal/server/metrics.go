@@ -23,9 +23,16 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
 	}
-	// Contacts live in the metaengine read models since the T07 swap —
-	// the engine's native COUNT aggregate is their count source now.
+	// Contacts and faxes live in the metaengine read models since the
+	// T07/T11 swaps — the engine's native COUNT aggregate is their
+	// count source now (a dead SQL table would freeze or 500 the
+	// whole metrics surface).
 	contactCount, err := h.deps.Contacts.Count(r.Context())
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
+	faxCount, err := h.deps.Faxes.Count(r.Context())
 	if err != nil {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
@@ -40,7 +47,7 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		int64(time.Since(processStart).Seconds()))
 	writeMetric("webphone_threads_total", "Stored conversation threads across all extensions.", "gauge", counts.Threads)
 	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", counts.Messages)
-	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", counts.Faxes)
+	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", faxCount)
 	writeMetric("webphone_contacts_total", "Stored personal contacts across all extensions.", "gauge", contactCount)
 	writeMetric("webphone_transcripts_total", "Stored live-call transcript segments across all extensions.", "gauge", counts.Transcripts)
 	writeMetric("webphone_sessions_stored", "Session rows in the store (expired rows are swept lazily).", "gauge", counts.Sessions)

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -20,8 +21,10 @@ import (
 // A non-positive window is the disabled default — Start returns
 // without spawning anything. Session rows are NOT touched here: the
 // session store already sweeps its own expiry lazily (on read and on
-// the next mint).
-func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, window time.Duration) {
+// the next mint). faxes is the engine-backed fax read model: fax jobs
+// live in readmodels.db since the T11 swap, so their retention leg
+// (rows + spooled document paths) rides the engine sweep.
+func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, faxes *readmodels.Faxes, window time.Duration) {
 	if window <= 0 {
 		return
 	}
@@ -32,8 +35,12 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, window time.Durat
 			slog.Error("retention: sweep failed", "error", err)
 			return
 		}
+		faxPaths, faxesRemoved, err := faxes.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: fax sweep failed", "error", err)
+		}
 		removedBlobs := 0
-		for _, path := range res.BlobPaths {
+		for _, path := range append(res.BlobPaths, faxPaths...) {
 			if err := blobs.Remove(path); err != nil {
 				slog.Warn("retention: blob unlink failed", "path", path, "error", err)
 				continue
@@ -43,7 +50,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, window time.Durat
 		slog.Info("retention: sweep complete",
 			"cutoff", cutoff.Format(time.RFC3339),
 			"messages", res.Messages,
-			"faxes", res.Faxes,
+			"faxes", faxesRemoved,
 			"threads", res.Threads,
 			"transcripts", res.Transcripts,
 			"blobs_removed", removedBlobs,
