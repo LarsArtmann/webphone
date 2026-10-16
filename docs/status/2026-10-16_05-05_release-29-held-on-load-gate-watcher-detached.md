@@ -11,16 +11,16 @@
 
 The session executed the M11 handoff's waiting contract: fire release 2.9.0 when the host quiets (the report §g Q1 default: strict load < 8, no override given). The quiet window **never opened in 7.5 hours** of continuous watching (load oscillated 5.7 → 1175; a sibling rebuild held > 1000 for 33 minutes). The release did not fire; **nothing is broken** — all preconditions stay green and the watcher is armed. The session's real work became: auditing and pushing 7 daemon commits (including a sibling session's completed BD003 train), verifying release preconditions, and — after catching my own watcher **dead silently** for ~2 hours — hardening it through four iterations into a detached, log-file-based process that survives session death. One material self-correction: I had characterized `release.sh` as refusing to start under load; source verification at 03:55 showed its load gate has a **single call site late in the script** (before the stack E2E/VM phase, after tag+push). The strict-hold policy is the owner's deliberate extra safety, not a script constraint — this sharpens §g Q1.
 
-| Metric | Value |
-| --- | --- |
-| Load-watch coverage | ~7.5 h (21:35 → 05:07), heartbeats every 3 min |
-| Daemon commits audited | 7 (all benign; 2 carried defect-class go.sum churn) |
-| Manual pushes | 1 (5 commits, push-bar anchored, CI green) |
-| Release fired | NO — strict < 8 gate never met; max quiet streak 2/3 polls |
-| Closest load to gate | 5.66 (00:18, single poll); dips 10.08 / 12.42 not sustained |
-| Worst burst | 1175 (01:57–02:30, > 1000 for 33 min) |
-| Watcher iterations | v1 in-session (died) → v2 +CI gate → v3 +clean-tree → v4 detached +sync-check |
-| My commits | 0 (all pushes were daemon-authored; none of mine pending) |
+| Metric                 | Value                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| Load-watch coverage    | ~7.5 h (21:35 → 05:07), heartbeats every 3 min                                |
+| Daemon commits audited | 7 (all benign; 2 carried defect-class go.sum churn)                           |
+| Manual pushes          | 1 (5 commits, push-bar anchored, CI green)                                    |
+| Release fired          | NO — strict < 8 gate never met; max quiet streak 2/3 polls                    |
+| Closest load to gate   | 5.66 (00:18, single poll); dips 10.08 / 12.42 not sustained                   |
+| Worst burst            | 1175 (01:57–02:30, > 1000 for 33 min)                                         |
+| Watcher iterations     | v1 in-session (died) → v2 +CI gate → v3 +clean-tree → v4 detached +sync-check |
+| My commits             | 0 (all pushes were daemon-authored; none of mine pending)                     |
 
 ---
 
@@ -68,85 +68,85 @@ The session executed the M11 handoff's waiting contract: fire release 2.9.0 when
 
 **Release-critical (the active train):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Answer §g Q1 (fire policy under load) — every other release item keys off it | BLOCKS the train | S | Decision |
-| 2 | If override authorized: fire `WEBPHONE_RELEASE_MAX_LOAD=N nix develop -c scripts/release.sh 2.9.0` and watch the stack E2E for the known flake (one re-run) | BLOCKS the train | M | Release |
-| 3 | If strict holds: detached watcher (pid 2008959, `/tmp/webphone-release-watch.log`) auto-fires on sustained quiet — verify liveness at next session start (log stale > 10 min = downed) | Safety net | S | Release |
-| 4 | After firing: CI-watch the release run, verify `git ls-remote` shows v2.9.0, watch watcher log for the per-step verdicts (buildflow count = the M11 full-run verdict) | Release hygiene | M | Release |
-| 5 | Post the stack notification ("2.9.0 train done; relock window open") after the stack relock leg lands | G3 tail | S | Comms |
-| 6 | TODO_LIST: G3 GREEN line + HARVEST this §f list (docs-health HARVEST) | Loop closure | M | Docs |
-| 7 | Addendum status report with the release verdict | Owner record | S | Docs |
-| 8 | Identify the go.sum ±26 rows (one `git show 0970b38 -- go.sum`): which checksums, which tool writes them, which session owns the writer | Kill the churn class | S | Bug |
-| 9 | Prod deploy tail after release: deploy → prod smoke `--expect-version 2.9.0` → prod backup drill → pbx-artmann re-pin | Owner terminal | M | Release |
-| 10 | Decide whether the sibling BD003 train (landed post-handoff: `c029741`..`9ff6730`) belongs in 2.9.0's notes — its CHANGELOG delta, if any, rides the same tag | Record accuracy | S | Docs |
+| #  | Task                                                                                                                                                                                   | Impact               | Effort | Category |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------ | -------- |
+| 1  | Answer §g Q1 (fire policy under load) — every other release item keys off it                                                                                                           | BLOCKS the train     | S      | Decision |
+| 2  | If override authorized: fire `WEBPHONE_RELEASE_MAX_LOAD=N nix develop -c scripts/release.sh 2.9.0` and watch the stack E2E for the known flake (one re-run)                            | BLOCKS the train     | M      | Release  |
+| 3  | If strict holds: detached watcher (pid 2008959, `/tmp/webphone-release-watch.log`) auto-fires on sustained quiet — verify liveness at next session start (log stale > 10 min = downed) | Safety net           | S      | Release  |
+| 4  | After firing: CI-watch the release run, verify `git ls-remote` shows v2.9.0, watch watcher log for the per-step verdicts (buildflow count = the M11 full-run verdict)                  | Release hygiene      | M      | Release  |
+| 5  | Post the stack notification ("2.9.0 train done; relock window open") after the stack relock leg lands                                                                                  | G3 tail              | S      | Comms    |
+| 6  | TODO_LIST: G3 GREEN line + HARVEST this §f list (docs-health HARVEST)                                                                                                                  | Loop closure         | M      | Docs     |
+| 7  | Addendum status report with the release verdict                                                                                                                                        | Owner record         | S      | Docs     |
+| 8  | Identify the go.sum ±26 rows (one `git show 0970b38 -- go.sum`): which checksums, which tool writes them, which session owns the writer                                                | Kill the churn class | S      | Bug      |
+| 9  | Prod deploy tail after release: deploy → prod smoke `--expect-version 2.9.0` → prod backup drill → pbx-artmann re-pin                                                                  | Owner terminal       | M      | Release  |
+| 10 | Decide whether the sibling BD003 train (landed post-handoff: `c029741`..`9ff6730`) belongs in 2.9.0's notes — its CHANGELOG delta, if any, rides the same tag                          | Record accuracy      | S      | Docs     |
 
 **Upstream reviews + watches (owner terminal unless noted):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 11 | Review boxes on go-cqrs-lite #71 / #72 / #74 (tick + timestamp) | Provenance ledger | S | Upstream |
-| 12 | Standing watch: adopt #74's S001 fix when released → drop the suppression directive | Debt removal | S | Upstream |
-| 13 | Standing watch: adopt #71 truncation signal in scans | Silent-100 fix | S | Upstream |
-| 14 | Standing watch: adopt #72 cap primitive → replace converging-loop trims | Debt removal | S | Upstream |
-| 15 | File upstream: branching-flow composition/dupe/ifacecomplete don't consult IgnoreComments (TypeDecl nolints would work) | FP class fix | M | Upstream |
-| 16 | File upstream: IFACE_COMPLETE misses the nil-seam idiom (server.DedupWindow) | Rule accuracy | S | Upstream |
-| 17 | Consider upstream note: DO_must-in-runtime can't see the registration side | Rule accuracy | S | Upstream |
-| 18 | When cqrs-lint ships the S001 fix: bump + drop directive (pairs with #12) | Debt removal | S | Upstream |
-| 19 | art-dupl pin direction (§g Q3): resolve once — CI v0.7.2 vs workflow v0.9.0 re-record | Kills a standing question | S | Decision |
+| #  | Task                                                                                                                    | Impact                    | Effort | Category |
+| -- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------ | -------- |
+| 11 | Review boxes on go-cqrs-lite #71 / #72 / #74 (tick + timestamp)                                                         | Provenance ledger         | S      | Upstream |
+| 12 | Standing watch: adopt #74's S001 fix when released → drop the suppression directive                                     | Debt removal              | S      | Upstream |
+| 13 | Standing watch: adopt #71 truncation signal in scans                                                                    | Silent-100 fix            | S      | Upstream |
+| 14 | Standing watch: adopt #72 cap primitive → replace converging-loop trims                                                 | Debt removal              | S      | Upstream |
+| 15 | File upstream: branching-flow composition/dupe/ifacecomplete don't consult IgnoreComments (TypeDecl nolints would work) | FP class fix              | M      | Upstream |
+| 16 | File upstream: IFACE_COMPLETE misses the nil-seam idiom (server.DedupWindow)                                            | Rule accuracy             | S      | Upstream |
+| 17 | Consider upstream note: DO_must-in-runtime can't see the registration side                                              | Rule accuracy             | S      | Upstream |
+| 18 | When cqrs-lint ships the S001 fix: bump + drop directive (pairs with #12)                                               | Debt removal              | S      | Upstream |
+| 19 | art-dupl pin direction (§g Q3): resolve once — CI v0.7.2 vs workflow v0.9.0 re-record                                   | Kills a standing question | S      | Decision |
 
 **Process + tooling (from §e):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 20 | lessons.md: "detach long watches; log-file state; stale log = downed" war story (this session's §d 1) | Memory | S | Docs |
-| 21 | lessons.md: "verify gate mechanics at source before characterizing upstream" (§d 2) | Memory | S | Docs |
-| 22 | Canonicalize the detached-watcher script (copy into scripts/ with docs) so future trains stop re-growing it | Reuse | S | Quality |
-| 23 | Fleet heavy-run convention (`/tmp/fleet-heavy-run` pid+ETA file) — owner-level, cross-session courtesy | Fleet hygiene | M | Feature |
-| 24 | §g Q2: re-bind commit-msg hook fleet-wide (nix-config pma module) or formally accept advisory-only | Guard integrity | M | Decision |
-| 25 | Check whether the sibling session closed predecessor §f 17–20 (lessons/AGENTS/dedup-registry entries) before re-doing them | Dedup of effort | S | Docs |
+| #  | Task                                                                                                                       | Impact          | Effort | Category |
+| -- | -------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | -------- |
+| 20 | lessons.md: "detach long watches; log-file state; stale log = downed" war story (this session's §d 1)                      | Memory          | S      | Docs     |
+| 21 | lessons.md: "verify gate mechanics at source before characterizing upstream" (§d 2)                                        | Memory          | S      | Docs     |
+| 22 | Canonicalize the detached-watcher script (copy into scripts/ with docs) so future trains stop re-growing it                | Reuse           | S      | Quality  |
+| 23 | Fleet heavy-run convention (`/tmp/fleet-heavy-run` pid+ETA file) — owner-level, cross-session courtesy                     | Fleet hygiene   | M      | Feature  |
+| 24 | §g Q2: re-bind commit-msg hook fleet-wide (nix-config pma module) or formally accept advisory-only                         | Guard integrity | M      | Decision |
+| 25 | Check whether the sibling session closed predecessor §f 17–20 (lessons/AGENTS/dedup-registry entries) before re-doing them | Dedup of effort | S      | Docs     |
 
 **Docs + records hygiene (carried, still open):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 26 | AGENTS.md: update the stale "buildflow = 1 known FP" line to green + the finding-count rule (#19 prior) | Memory | S | Docs |
-| 27 | dedup-registry: append the 59-finding triage sweep-log line (#20 prior) — verify not done by sibling | Registry rule | S | Docs |
-| 28 | Reconcile the 10-14 plan's over-counted census or keep the honest note (#22 prior) | Record hygiene | S | Docs |
-| 29 | ROADMAP verified-no-changes note (#23 prior) | Record hygiene | S | Docs |
-| 30 | docs-health ANNOTATE the 21-26 predecessor report with tonight's executed items (44/45 done, release pending) | Doc hygiene | S | Docs |
-| 31 | Decide the CHANGELOG classification for the app.go hoist (#21 prior: internal refactor — line or not) | Bar compliance | S | Docs |
-| 32 | lychee: whitelist the drafts' issue-link pattern if it trips the release leg (#46 prior) | Release tail | S | Release |
-| 33 | After train close: re-read the plan's G-gates, formally mark G3 done (#50 prior) | Train close | S | Docs |
+| #  | Task                                                                                                          | Impact         | Effort | Category |
+| -- | ------------------------------------------------------------------------------------------------------------- | -------------- | ------ | -------- |
+| 26 | AGENTS.md: update the stale "buildflow = 1 known FP" line to green + the finding-count rule (#19 prior)       | Memory         | S      | Docs     |
+| 27 | dedup-registry: append the 59-finding triage sweep-log line (#20 prior) — verify not done by sibling          | Registry rule  | S      | Docs     |
+| 28 | Reconcile the 10-14 plan's over-counted census or keep the honest note (#22 prior)                            | Record hygiene | S      | Docs     |
+| 29 | ROADMAP verified-no-changes note (#23 prior)                                                                  | Record hygiene | S      | Docs     |
+| 30 | docs-health ANNOTATE the 21-26 predecessor report with tonight's executed items (44/45 done, release pending) | Doc hygiene    | S      | Docs     |
+| 31 | Decide the CHANGELOG classification for the app.go hoist (#21 prior: internal refactor — line or not)         | Bar compliance | S      | Docs     |
+| 32 | lychee: whitelist the drafts' issue-link pattern if it trips the release leg (#46 prior)                      | Release tail   | S      | Release  |
+| 33 | After train close: re-read the plan's G-gates, formally mark G3 done (#50 prior)                              | Train close    | S      | Docs     |
 
 **Standing watches (re-affirmed tonight, unchanged):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 34 | Re-verify `.buildflow.yml` after ANY daemon activity near it (standing; re-verified tonight §a 7) | Integrity | S | Standing |
-| 35 | Audit future daemon sweeps for unintended content (7 clean tonight; the audit habit is the control) | Trust | S | Standing |
-| 36 | Watch for the Crush background-shell reaping behavior biting other long tasks (this session's §d 1 class) | Process | S | Standing |
-| 37 | Watch the next Crush upgrade for the QMD `get` render fix (#48 prior) | Standing | S | Standing |
-| 38 | threadsdual harness re-run after every metaengine minor bump (#37 prior) | Parity evidence | S | Standing |
-| 39 | Monthly tier 1+2 re-measure (next 2026-11-05; tier-2 must stay 0) | Error contract | M | Standing |
-| 40 | Quarterly art-dupl baseline/suppressed-set audit (#ratified baseline rule) | Hygiene | M | Standing |
+| #  | Task                                                                                                      | Impact          | Effort | Category |
+| -- | --------------------------------------------------------------------------------------------------------- | --------------- | ------ | -------- |
+| 34 | Re-verify `.buildflow.yml` after ANY daemon activity near it (standing; re-verified tonight §a 7)         | Integrity       | S      | Standing |
+| 35 | Audit future daemon sweeps for unintended content (7 clean tonight; the audit habit is the control)       | Trust           | S      | Standing |
+| 36 | Watch for the Crush background-shell reaping behavior biting other long tasks (this session's §d 1 class) | Process         | S      | Standing |
+| 37 | Watch the next Crush upgrade for the QMD `get` render fix (#48 prior)                                     | Standing        | S      | Standing |
+| 38 | threadsdual harness re-run after every metaengine minor bump (#37 prior)                                  | Parity evidence | S      | Standing |
+| 39 | Monthly tier 1+2 re-measure (next 2026-11-05; tier-2 must stay 0)                                         | Error contract  | M      | Standing |
+| 40 | Quarterly art-dupl baseline/suppressed-set audit (#ratified baseline rule)                                | Hygiene         | M      | Standing |
 
 **Backlog / recorded paths (unchanged):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 41 | 429-combined-load test (#5 prior) | Backlog | M | Feature |
-| 42 | Legacy cleanup train: delete `legacy_*.go` + flags when the import window closes (#34 prior) | Census −6 sites | M | Cleanup |
-| 43 | `TestEngineCollectionsMatchPlan` arch-test (#35 prior) | Hygiene | S | Quality |
-| 44 | Boot-log line for ignored legacy `wp_enroll_tokens` rows (#36 prior) | Operator visibility | S | Feature |
-| 45 | CI-ify the threadsdual harness as a scheduled job (#38 prior) | Evidence automation | M | Quality |
-| 46 | `pgengine` behind `readmodels.OpenWithEngine` ONLY on real need (#39 prior) | Recorded path | L | Recorded |
-| 47 | Backup script comment: why `sqlite3 .backup` needs no `-wal` handling (#40 prior) | Doc debt | S | Docs |
-| 48 | Consider CI-ifying the detached load-watch pattern for release trains (#22 generalized) | Evidence automation | M | Quality |
-| 49 | `TestServedPageHoldsTheDomContract` + stack browser E2E re-run owed after ANY served-markup change (the release's stack leg covers it — verify it ran) | Contract proof | S | Quality |
-| 50 | After 2.9.0 ships: bump-train sweep (templ-components, go-health, metaengine) rides the NEXT train's `buildflow update`, never the daemon | Dependency policy | M | Quality |
+| #  | Task                                                                                                                                                   | Impact              | Effort | Category |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ------ | -------- |
+| 41 | 429-combined-load test (#5 prior)                                                                                                                      | Backlog             | M      | Feature  |
+| 42 | Legacy cleanup train: delete `legacy_*.go` + flags when the import window closes (#34 prior)                                                           | Census −6 sites     | M      | Cleanup  |
+| 43 | `TestEngineCollectionsMatchPlan` arch-test (#35 prior)                                                                                                 | Hygiene             | S      | Quality  |
+| 44 | Boot-log line for ignored legacy `wp_enroll_tokens` rows (#36 prior)                                                                                   | Operator visibility | S      | Feature  |
+| 45 | CI-ify the threadsdual harness as a scheduled job (#38 prior)                                                                                          | Evidence automation | M      | Quality  |
+| 46 | `pgengine` behind `readmodels.OpenWithEngine` ONLY on real need (#39 prior)                                                                            | Recorded path       | L      | Recorded |
+| 47 | Backup script comment: why `sqlite3 .backup` needs no `-wal` handling (#40 prior)                                                                      | Doc debt            | S      | Docs     |
+| 48 | Consider CI-ifying the detached load-watch pattern for release trains (#22 generalized)                                                                | Evidence automation | M      | Quality  |
+| 49 | `TestServedPageHoldsTheDomContract` + stack browser E2E re-run owed after ANY served-markup change (the release's stack leg covers it — verify it ran) | Contract proof      | S      | Quality  |
+| 50 | After 2.9.0 ships: bump-train sweep (templ-components, go-health, metaengine) rides the NEXT train's `buildflow update`, never the daemon              | Dependency policy   | M      | Quality  |
 
-*(Carried items renumbered from the predecessor's list where still open; predecessor numbering in parentheses where applicable.)*
+_(Carried items renumbered from the predecessor's list where still open; predecessor numbering in parentheses where applicable.)_
 
 ## g) Questions for the owner (max 3)
 
@@ -156,4 +156,4 @@ The session executed the M11 handoff's waiting contract: fire release 2.9.0 when
 
 ---
 
-*Evidence trail: watcher log `/tmp/webphone-release-watch.log` (heartbeats 21:35→05:07, all CI verdicts, per-poll load); pushes `410aa4d..c029741` (ls-remote verified, CI 38814348023 green) and daemon's own `0970b38`/`9ff6730` (CI green per watcher poll 01:15); build + session/readmodels/domain suites green at 00:01–00:03; release preconditions verified §a 6; detached watcher pid 2008959 alive at write time. My commits this session: 0 — everything pushed was daemon-authored, audited before landing on origin.*
+_Evidence trail: watcher log `/tmp/webphone-release-watch.log` (heartbeats 21:35→05:07, all CI verdicts, per-poll load); pushes `410aa4d..c029741` (ls-remote verified, CI 38814348023 green) and daemon's own `0970b38`/`9ff6730` (CI green per watcher poll 01:15); build + session/readmodels/domain suites green at 00:01–00:03; release preconditions verified §a 6; detached watcher pid 2008959 alive at write time. My commits this session: 0 — everything pushed was daemon-authored, audited before landing on origin._
