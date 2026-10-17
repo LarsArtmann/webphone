@@ -43,7 +43,9 @@ func (c *unreadCache) put(ext domain.Extension, total int) {
 	c.items[ext] = unreadEntry{total: total, expires: time.Now().Add(c.ttl)}
 }
 
-func (c *unreadCache) drop(ext domain.Extension) {
+// Drop is the hooks.UnreadCache leg (the exported name exists so the
+// cache satisfies the carve's narrow interface from another package).
+func (c *unreadCache) Drop(ext domain.Extension) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.items, ext)

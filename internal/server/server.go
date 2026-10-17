@@ -1,8 +1,9 @@
 // Package server wires every HTTP surface of the webphone: the templ
 // shell and tab partials, the island's assets and /config.js, the session
-// API, the phone-api proxy, the message/fax actions, the inbound webhooks,
-// and the SSE feed. cqrs-htmx supplies the embedded HTMX scripts and the
-// SSE broadcaster; httputil supplies security headers and CSRF.
+// API, the phone-api proxy, the message/fax actions, the inbound webhook
+// ingest (internal/server/hooks), and the SSE feed. cqrs-htmx supplies
+// the embedded HTMX scripts and the SSE broadcaster; httputil supplies
+// security headers and CSRF.
 package server
 
 import (
@@ -31,6 +32,7 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
@@ -176,7 +178,7 @@ type Deps struct {
 	// webhook and call idem gates (metaengine DedupStore, adapted in
 	// the composition root). Nil: the in-process map — byte-identical
 	// legacy behavior, dedup memory lost on restart (tests, rollback).
-	Dedup DedupWindow
+	Dedup hooks.DedupWindow
 	// UserAuth is the OPTIONAL embedded passkey identity layer
 	// (config-gated). Nil: the passkey mode is off — every passkey
 	// surface 404s and the login page renders the extension form only.
@@ -224,9 +226,15 @@ func New(deps Deps) http.Handler {
 		cookies:           cookies,
 		csrfCfg:           csrfCfg,
 		unread:            newUnreadCache(5 * time.Second),
-		hooksIdem:         newIdemGate(deps.Dedup, hookIdempotencyTTL),
-		callsIdem:         newIdemGate(deps.Dedup, callsIdempotencyTTL),
+		callsIdem:         hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 	}
+	hooksHandlers := hooks.New(hooks.Deps{
+		Secret:    deps.Config.Gateway.WebhookSecret,
+		Messaging: deps.Messaging,
+		Fax:       deps.Fax,
+		Unread:    h.unread,
+		Dedup:     deps.Dedup,
+	})
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
 
@@ -426,7 +434,7 @@ func New(deps Deps) http.Handler {
 	}
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)
-	open.Handle("/hooks/", h.hookLimiter.Middleware()(h.secretGate(http.HandlerFunc(h.webhooks))))
+	open.Handle("/hooks/", h.hookLimiter.Middleware()(hooksHandlers.SecretGate(http.HandlerFunc(hooksHandlers.Webhooks))))
 	// The internal directory endpoint (the stack's FS directory bridge is
 	// the only consumer): outside CSRF/session (webhooks-class — secret
 	// gated), hook-grade flood budget, loopback-only posture in-handler.

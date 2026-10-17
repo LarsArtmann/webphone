@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/larsartmann/webphone/internal/server/hooks"
 )
 
 // proxyPhoneAPI forwards the island's /phone-api/* calls to the configured
@@ -17,7 +19,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.deps.PhoneAPI.Enabled() {
-		w.Header().Set("Retry-After", retryAfterHint)
+		w.Header().Set("Retry-After", hooks.RetryAfterHint)
 		http.Error(w, "phone api not configured", http.StatusServiceUnavailable)
 		return
 	}

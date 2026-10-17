@@ -93,7 +93,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		// marking read is cosmetic; a failure must not block the transcript
 		_ = err
 	}
-	h.unread.drop(sess.Extension)
+	h.unread.Drop(sess.Extension)
 	names := h.crmNames(r.Context(), []string{thread.Remote.String()})
 	// Reply snippets feed the composer's chip lane + picker (M21);
 	// nil-safe: hand-composed test Deps may carry no snippet store.

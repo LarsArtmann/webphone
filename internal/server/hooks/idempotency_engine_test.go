@@ -1,4 +1,4 @@
-package server
+package hooks
 
 import (
 	"context"
@@ -40,28 +40,28 @@ func (f *fakeDedupWindow) Sweep(_ context.Context, _ string, _ time.Time) (int, 
 	return 0, nil
 }
 
-// TestNewIdemGateFallsBackToMap pins the constructor seam: a nil
+// TestNewGateFallsBackToMap pins the constructor seam: a nil
 // window must produce the in-process map (byte-identical legacy
 // behavior for test compositions and the documented rollback).
-func TestNewIdemGateFallsBackToMap(t *testing.T) {
-	gate := newIdemGate(nil, time.Minute)
+func TestNewGateFallsBackToMap(t *testing.T) {
+	gate := NewGate(nil, time.Minute)
 	if _, ok := gate.(*idemStore); !ok {
 		t.Fatalf("nil window produced %T, want *idemStore", gate)
 	}
-	if gate.seen("k") {
+	if gate.Seen("k") {
 		t.Fatal("fresh map gate reports seen")
 	}
-	gate.record("k")
-	if !gate.seen("k") {
+	gate.Record("k")
+	if !gate.Seen("k") {
 		t.Fatal("map gate forgot a recorded key")
 	}
 }
 
 func TestEngineIdemGateRoutesToWindow(t *testing.T) {
 	window := &fakeDedupWindow{}
-	gate := newIdemGate(window, hookIdempotencyTTL)
+	gate := NewGate(window, hookIdempotencyTTL)
 
-	if gate.seen("ref-1") {
+	if gate.Seen("ref-1") {
 		t.Fatal("unseen key reported seen")
 	}
 	if len(window.seenKeys) != 1 || window.seenKeys[0] != "ref-1" {
@@ -71,7 +71,7 @@ func TestEngineIdemGateRoutesToWindow(t *testing.T) {
 		t.Fatalf("Seen collection %q, want %q", window.seenCollection, DedupCollection)
 	}
 
-	gate.record("ref-1")
+	gate.Record("ref-1")
 	if len(window.recordKeys) != 1 || window.recordKeys[0] != "ref-1" {
 		t.Fatalf("CheckAndRecord not routed: %v", window.recordKeys)
 	}
@@ -89,18 +89,18 @@ func TestEngineIdemGateRoutesToWindow(t *testing.T) {
 // failed write leaves the key retryable.
 func TestEngineIdemGateFailsOpen(t *testing.T) {
 	window := &fakeDedupWindow{seenErr: errors.New("boom"), recordErr: errors.New("boom")}
-	gate := newIdemGate(window, time.Minute)
+	gate := NewGate(window, time.Minute)
 
-	if gate.seen("ref-2") {
+	if gate.Seen("ref-2") {
 		t.Fatal("failed read must treat the key as unseen")
 	}
-	gate.record("ref-2") // must not panic
+	gate.Record("ref-2") // must not panic
 }
 
 func TestEngineIdemGateHonorsWindowVerdict(t *testing.T) {
 	window := &fakeDedupWindow{seenResult: true}
-	gate := newIdemGate(window, time.Minute)
-	if !gate.seen("ref-3") {
+	gate := NewGate(window, time.Minute)
+	if !gate.Seen("ref-3") {
 		t.Fatal("window's seen verdict not propagated")
 	}
 }

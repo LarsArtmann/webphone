@@ -15,21 +15,28 @@ import (
 // wording has one home, session.SignInFirst. The shell's anonymous-friendly
 // session.From enrichment (pages.go) is not a gate and stays allowed.
 // Three more 401 sites exist by design, all rejecting BEFORE any session
-// exists (different semantic from a missing-session gate): webhooks.go
-// (bad provider secret), session_api.go (login credentials rejected by
-// the PBX directory), and passkey_api.go (the passkey login gate:
-// unknown email or no enrolled credential — the uniform
-// anti-enumeration 401, same credential class as session_api.go's).
+// exists (different semantic from a missing-session gate): the carve's
+// hooks package (webhooks.go — bad provider secret), session_api.go
+// (login credentials rejected by the PBX directory), and passkey_api.go
+// (the passkey login gate: unknown email or no enrolled credential — the
+// uniform anti-enumeration 401, same credential class as session_api.go's).
 func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	const helperFile = "actions.go"
-	const hookFile = "webhooks.go"       // the secret gate: provider hooks 401 on a bad secret, not on a missing session
-	const loginFile = "session_api.go"   // the login gate: bad credentials, not a missing session
-	const passkeyFile = "passkey_api.go" // the passkey login gate: unknown email / no credential, uniform by design
+	const hookFile = filepath.Join("..", "hooks", "webhooks.go") // the secret gate: provider hooks 401 on a bad secret, not on a missing session
+	const loginFile = "session_api.go"                            // the login gate: bad credentials, not a missing session
+	const passkeyFile = "passkey_api.go"                          // the passkey login gate: unknown email / no credential, uniform by design
 	sawHelper := false
 	entries, err := filepath.Glob("*.go")
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The carve moved the webhook ingest into internal/server/hooks; its
+	// 401 writer travels with it, so the scan covers both directories.
+	hookEntries, err := filepath.Glob(filepath.Join("..", "hooks", "*.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries = append(entries, hookEntries...)
 	for _, name := range entries {
 		if strings.HasSuffix(name, "_test.go") {
 			continue

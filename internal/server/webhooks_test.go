@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
-	"errors"
 	"net/http"
-	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/server/hooks"
 )
 
 // signIn opens a tab session for extension 1001 on a fresh test server.
@@ -57,8 +56,8 @@ func TestFailClosedHooksCarryRetryAfter(t *testing.T) {
 	if resp.StatusCode != http.StatusServiceUnavailable {
 		t.Fatalf("fail-closed hooks: %d (want 503)", resp.StatusCode)
 	}
-	if got := resp.Header.Get("Retry-After"); got != retryAfterHint {
-		t.Fatalf("Retry-After: %q (want %q)", got, retryAfterHint)
+	if got := resp.Header.Get("Retry-After"); got != hooks.RetryAfterHint {
+		t.Fatalf("Retry-After: %q (want %q)", got, hooks.RetryAfterHint)
 	}
 }
 
@@ -396,22 +395,6 @@ func TestWebhooksSecretAndInbound(t *testing.T) {
 	}
 }
 
-// TestWebhookFailRedactsInternalDetail pins the redaction contract: a
-// provider-facing 5xx must not echo internal error text (store paths, SQL,
-// filesystem state). The full detail belongs in the server log only; the
-// body carries the library's redacted SafeDetail text.
-func TestWebhookFailRedactsInternalDetail(t *testing.T) {
-	rec := httptest.NewRecorder()
-	secret := errors.New("secret internal state: attachments table locked")
-	webhookFail(rec, "test", secret)
-
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("webhookFail status %d, want 500", rec.Code)
-	}
-	if body := rec.Body.String(); strings.Contains(body, "secret internal state") {
-		t.Errorf("internal detail leaked to the webhook body: %q", body)
-	}
-	if body := rec.Body.String(); strings.TrimSpace(body) == "" {
-		t.Error("redacted body must not be empty")
-	}
-}
+// TestWebhookFailRedactsInternalDetail moved with the carve into
+// internal/server/hooks (webhooks_test.go) — webhookFail is that
+// package's helper now.

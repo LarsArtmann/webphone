@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/sipcred"
 )
 
@@ -15,6 +16,13 @@ import (
 // directory password itself never appears here; the credentials are
 // session-scoped derivations (sipcred), so logout/revocation is
 // inherent: a dead session's credential dies at the next REGISTER.
+
+// sipDirectoryGate guards the internal directory endpoint with the
+// derivation secret (the bridge authenticates with the same secret the
+// server derives under — one secret, two sides of one seam).
+func (h *handlers) sipDirectoryGate(next http.Handler) http.Handler {
+	return hooks.BearerGate(h.deps.Config.SIP.CredentialSecret, "sip credentials not configured", next)
+}
 
 // internalDirectoryRequiredPeer is the loopback-only posture: the bridge
 // runs on the same host (the module wires it as a local systemd service

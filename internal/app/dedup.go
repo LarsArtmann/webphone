@@ -7,7 +7,7 @@ import (
 
 	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 
-	"github.com/larsartmann/webphone/internal/server"
+	"github.com/larsartmann/webphone/internal/server/hooks"
 )
 
 // dedupSweepInterval reclaims expired engine dedup rows. Expiry is
@@ -17,15 +17,15 @@ import (
 const dedupSweepInterval = 15 * time.Minute
 
 // engineDedupWindow adapts the metaengine DedupStore capability into
-// the server.DedupWindow port (method names differ; the adapter lives
-// here because readmodels must stay server-free and server must stay
-// metaengine-free — the composition root is the one place that may see
-// both).
+// the hooks.DedupWindow port (method names differ; the adapter lives
+// here because readmodels must stay server-free and the hooks lane
+// stays metaengine-free — the composition root is the one place that
+// may see both).
 type engineDedupWindow struct {
 	store metaengine.DedupStore
 }
 
-var _ server.DedupWindow = engineDedupWindow{}
+var _ hooks.DedupWindow = engineDedupWindow{}
 
 func (w engineDedupWindow) Seen(ctx context.Context, collection, key string, now time.Time) (bool, error) { //nolint:branching-flow // verbatim port of metaengine.DedupStore's parameter order — the engine API IS the contract
 	return w.store.DedupSeen(ctx, collection, key, now)
@@ -44,7 +44,7 @@ func (w engineDedupWindow) Sweep(ctx context.Context, collection string, now tim
 // startDedupSweeper runs the expired-row reclamation loop until ctx
 // ends. Started from App.Start alongside the retention sweep — the
 // same lifecycle home for every background loop.
-func startDedupSweeper(ctx context.Context, log *slog.Logger, window server.DedupWindow) {
+func startDedupSweeper(ctx context.Context, log *slog.Logger, window hooks.DedupWindow) {
 	go func() {
 		ticker := time.NewTicker(dedupSweepInterval)
 		defer ticker.Stop()
@@ -53,13 +53,13 @@ func startDedupSweeper(ctx context.Context, log *slog.Logger, window server.Dedu
 			case <-ctx.Done():
 				return
 			case now := <-ticker.C:
-				removed, err := window.Sweep(ctx, server.DedupCollection, now)
+				removed, err := window.Sweep(ctx, hooks.DedupCollection, now)
 				if err != nil {
-					log.Warn("dedup sweep failed", "error", err, "collection", server.DedupCollection)
+					log.Warn("dedup sweep failed", "error", err, "collection", hooks.DedupCollection)
 					continue
 				}
 				if removed > 0 {
-					log.Info("dedup sweep", "collection", server.DedupCollection, "expired_removed", removed)
+					log.Info("dedup sweep", "collection", hooks.DedupCollection, "expired_removed", removed)
 				}
 			}
 		}

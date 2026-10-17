@@ -31,7 +31,7 @@ import (
 // Idempotency-Key, so there is nothing to dedupe on.
 func (h *handlers) recordCallIdem(key string) {
 	if key != "" {
-		h.callsIdem.record(key)
+		h.callsIdem.Record(key)
 	}
 }
 
@@ -79,7 +79,7 @@ func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		idemKey = sess.Extension.String() + ":" + body.Key
-		if h.callsIdem.seen(idemKey) {
+		if h.callsIdem.Seen(idemKey) {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}

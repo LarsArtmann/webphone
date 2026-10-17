@@ -5,28 +5,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
 )
-
-// TestIdemStoreSeenRecord pins the dedupe primitives: a key is a replay
-// only after record() (failed attempts are never recorded), and an
-// expired entry is no longer a replay.
-func TestIdemStoreFirstTime(t *testing.T) {
-	s := newIdemStore(50 * time.Millisecond)
-	if s.seen("k") {
-		t.Fatal("unrecorded key reported as replay")
-	}
-	s.record("k")
-	if !s.seen("k") {
-		t.Fatal("recorded key not reported as replay")
-	}
-	time.Sleep(60 * time.Millisecond)
-	if s.seen("k") {
-		t.Fatal("expired entry still reported as replay")
-	}
-}
 
 // TestWebhookStatusIdempotent pins the replay contract end to end: the
 // same provider_ref verdict answers 202 on every replay, and a replay

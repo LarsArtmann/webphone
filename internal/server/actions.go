@@ -499,7 +499,7 @@ func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not mark read", http.StatusInternalServerError)
 		return
 	}
-	h.unread.drop(sess.Extension)
+	h.unread.Drop(sess.Extension)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -546,7 +546,7 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not update the thread", http.StatusInternalServerError)
 		return
 	}
-	h.unread.drop(sess.Extension)
+	h.unread.Drop(sess.Extension)
 	if r.Header.Get("HX-Target") == "wp-thread-head" {
 		thread, _, threadErr := h.deps.Messaging.Thread(r.Context(), sess.Extension, threadID)
 		if threadErr != nil {
