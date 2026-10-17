@@ -280,7 +280,7 @@ an auth-surface structural move stacked on a day with two self-inflicted
 reds and 13 unpushed commits is the fastest-over-best trap; the map above is
 the session's honest contribution.
 
-**Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer)
+**Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer); 2026-10-17 4th series entry re-affirms and pre-arms the dormant split blueprint: `docs/modularization/2026-10-17_PROPOSAL.html`
 
 ### Mic pre-warm live verification + gates
 

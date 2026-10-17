@@ -1,0 +1,2025 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Module Boundary Assessment 2026-10-17 — webphone</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  
+      /* --- Report-specific: rendered D2 figures --- */
+      figure.d2 {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      figure.d2 svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      figure.d2 figcaption {
+        margin-top: 0.75rem;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>MODULE BOUNDARY ASSESSMENT</span>
+      <span>2026-10-17</span>
+      <span>webphone &middot; 4th series entry</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#series">Series</a>
+          <a href="#delta">Delta since 10-14</a>
+          <a href="#score">Scored review</a>
+          <a href="#evidence">Fresh evidence</a>
+          <a href="#readiness">Module readiness</a>
+          <a href="#candidates">Split candidates</a>
+          <a href="#signals">Signal scoring</a>
+          <a href="#blueprint">Pre-armed blueprint</a>
+          <a href="#triggers">Re-trigger criteria</a>
+          <a href="#instead">What to do instead</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">MODULE BOUNDARY ASSESSMENT &middot; 2026-10-17</div>
+          <h1>Single go.mod, re-affirmed with receipts</h1>
+          <p class="subtitle">
+            Fourth entry in the modularization series, and the first to run all
+            four lenses: a scored architecture review, the go-modularize
+            seven-phase workflow, a data-model boundary-readiness audit, and a
+            rendered current/ideal D2 pair. The tree has changed materially
+            since the 10-14 ratification (the metaengine train landed 24 hours
+            later). The verdict did not. For the first time the proposal also
+            carries the counterfactual: a pre-armed, costed split blueprint
+            that executes only when a named trigger fires.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: go.mod boundaries</span>
+            <span class="tag">Series: 4th entry (09-19, 09-30, 10-14, 10-17)</span>
+            <span class="tag teal">Status: ratified, re-affirmed</span>
+          </div>
+        </header>
+
+        <section id="scorecard" class="scorecard">
+          <div class="score-card">
+            <div class="score">24</div>
+            <div class="label">Packages (go list)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">External Go consumers (re-verified)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4.0</div>
+            <div class="label">Structure score (1&ndash;5 rubric)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">172 MB</div>
+            <div class="label">vendor/ tree a split would multiply</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            Do not split webphone into multiple go.mod modules. This is the
+            fourth consecutive assessment to reach that verdict, the first
+            three being 2026-09-19, 2026-09-30, and 2026-10-14. This entry
+            re-measures everything the 10-14 report measured, then goes further
+            in three directions that report did not:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">1</div>
+              <div class="text">
+                <strong>A scored 7-dimension review</strong>
+                <span>
+                  Coupling, cohesion, modularity, composability, scalability,
+                  service orientation, dependency direction. Overall 4.0 / 5.
+                  The one sub-4 dimension is service orientation, and the
+                  review shows its fix is the already-triggered
+                  <code>internal/server</code> carve, not a go.mod split.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">2</div>
+              <div class="text">
+                <strong>A module-readiness audit of the data model</strong>
+                <span>
+                  The domain core is provably split-ready: 9 branded ids, a
+                  closed event union, sentinel errors living with their
+                  interfaces, and every seam already speaking consumer-side
+                  interfaces. The codebase could split tomorrow. It should not,
+                  because readiness was never the missing ingredient.
+                  Consumers are.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">3</div>
+              <div class="text">
+                <strong>The counterfactual, pre-armed</strong>
+                <span>
+                  Section 08 contains the full split blueprint (module table,
+                  versioning, replace strategy, CI matrix, 6 migration steps
+                  with verification and rollback). It is DORMANT. Writing it
+                  down does two things: it proves the no-split verdict is a
+                  decision rather than an omission, and it converts any future
+                  trigger from a two-week research project into a one-day
+                  execution.
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Keep the single module. The 10-14 ratification survives its first
+            real stress test: the heaviest train since the review series began
+            (readmodels + metaengine dogfooding, 105 commits) landed inside the
+            existing package DAG with zero cycles and 3.3% wide commits. The
+            reopen triggers stand unchanged, now with detection commands
+            attached (section 09).
+          </div>
+        </section>
+
+        <section id="series">
+          <h2><span class="num">01</span>Series continuity</h2>
+          <p>
+            This report cross-references its predecessors instead of
+            re-deriving them (series discipline). Rulings index:
+            <code>docs/modularization/INDEX.md</code>.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Entry</th>
+                <th>Tree assessed</th>
+                <th>Verdict</th>
+                <th>What it contributed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>2026-09-19 review</td>
+                <td>13 packages</td>
+                <td class="yes">No split</td>
+                <td>
+                  &ldquo;Deliberately small, sharply layered single binary,
+                  dependency direction enforced by test.&rdquo;
+                </td>
+              </tr>
+              <tr>
+                <td>2026-09-30 review &sect;05</td>
+                <td>16 packages</td>
+                <td class="yes">No split, with evidence</td>
+                <td>
+                  Named the revisit trigger (second Go consumer); set the
+                  server-carve trigger; overall structure score 4.4.
+                </td>
+              </tr>
+              <tr>
+                <td>2026-10-14 PROPOSAL</td>
+                <td>23 packages</td>
+                <td class="yes">No split, ratified</td>
+                <td>
+                  Consumer absence verified GitHub-wide; FM#6
+                  <code>internal/</code> structural blocker documented;
+                  co-change quantified (2% wide).
+                </td>
+              </tr>
+              <tr>
+                <td><strong>This assessment (10-17)</strong></td>
+                <td><strong>24 packages</strong></td>
+                <td class="yes"><strong>No split, re-affirmed</strong></td>
+                <td>
+                  Scored rubric; D2 current/ideal pair; data-model readiness
+                  audit; pre-armed split blueprint; triggers operationalized
+                  with detection commands.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="delta">
+          <h2><span class="num">02</span>What changed since 10-14 (three days, 105 commits)</h2>
+          <p>
+            The honest question for any re-affirmation: did the tree move under
+            the verdict? It moved a lot. None of the movement touches the
+            verdict's load-bearing facts.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>10-14 assessment</th>
+                <th>Today</th>
+                <th>Reading</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Packages</td>
+                <td>23</td>
+                <td>24 (+ readmodels)</td>
+                <td class="yes">Grew inside the DAG, no cycle</td>
+              </tr>
+              <tr>
+                <td>External Go consumers</td>
+                <td>0 (verified)</td>
+                <td>0 (re-verified)</td>
+                <td class="yes">Unchanged, decisive</td>
+              </tr>
+              <tr>
+                <td>Import cycles</td>
+                <td>0</td>
+                <td>0 (DFS over go list)</td>
+                <td class="yes">Arch tests still green</td>
+              </tr>
+              <tr>
+                <td>Wide commits (&ge;5 pkgs)</td>
+                <td>3 / 150 (2%)</td>
+                <td>5 / 150 (3.3%)</td>
+                <td class="yes">Driven by the readmodels birth train</td>
+              </tr>
+              <tr>
+                <td>internal/server</td>
+                <td>26 files / 4,859 LOC</td>
+                <td>26 files / 4,999 LOC</td>
+                <td class="no">Carve still due; width stable</td>
+              </tr>
+              <tr>
+                <td>vendor/ tree</td>
+                <td>not quantified</td>
+                <td>172 MB, 4,262 Go files</td>
+                <td class="yes">Cost side now concrete</td>
+              </tr>
+              <tr>
+                <td>Release state</td>
+                <td>v2.x</td>
+                <td>v2.9.0 shipped 10-16</td>
+                <td class="yes">Production, not spike</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            The 3.3% wide-commit figure deserves its nuance: all five wide
+            commits belong to the metaengine/readmodels migration window, where
+            a store-seam train necessarily touches <code>store</code>,
+            <code>readmodels</code>, <code>server</code>, <code>app</code>, and
+            docs together. That is one train co-changing by design, not four
+            packages drifting into entanglement. The 10-14 reading (2%) and
+            today's (3.3%) describe the same architecture on either side of one
+            migration.
+          </p>
+        </section>
+
+        <section id="score">
+          <h2><span class="num">03</span>Scored review (architecture-review rubric)</h2>
+          <p>
+            First scored assessment in the series. Every score cites its
+            evidence; the rubric is the 1&ndash;5 scale from
+            <code>architecture-review/references/assessment-rubric.md</code>.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>Score</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Coupling</td>
+                <td class="yes">4</td>
+                <td>
+                  Consumer-side interfaces at every seam (see section 05);
+                  DI throughout via <code>app.Deps</code>; zero cycles. Not 5:
+                  the composition root and server take concrete service types
+                  by design for a single-binary wire-up.
+                </td>
+              </tr>
+              <tr>
+                <td>Cohesion</td>
+                <td class="yes">4</td>
+                <td>
+                  Every package passes the one-sentence test. The dent:
+                  <code>internal/server</code> spans wiring, JSON endpoints,
+                  webhook ingest, and page controllers (26 files) &mdash; the
+                  carve row exists for exactly this.
+                </td>
+              </tr>
+              <tr>
+                <td>Modularity</td>
+                <td class="yes">4</td>
+                <td>
+                  Package boundaries match domain boundaries and are
+                  test-enforced (4 arch tests run in every gate), not
+                  convention-enforced.
+                </td>
+              </tr>
+              <tr>
+                <td>Composability</td>
+                <td class="yes">4</td>
+                <td>
+                  Optional seams (crm, paperless, asr) are nil-safe and
+                  config-gated; store seam swaps SQLite/memory; middleware
+                  chain composes. Single deployment unit is deliberate.
+                </td>
+              </tr>
+              <tr>
+                <td>Scalability</td>
+                <td class="yes">4</td>
+                <td>
+                  One process per stack node, SQLite engines with caps and
+                  trims; fleet scales by stacking nodes, not by scaling one.
+                  Named ceilings, not surprises.
+                </td>
+              </tr>
+              <tr>
+                <td>Service orientation</td>
+                <td class="no">3</td>
+                <td>
+                  Monolith with clear internal boundaries, &ldquo;ready for
+                  extraction if needed&rdquo; &mdash; literally the rubric's 3.
+                  The extraction-shaped work (server carve) is already
+                  triggered as its own train.
+                </td>
+              </tr>
+              <tr>
+                <td>Dependency direction</td>
+                <td class="yes">5</td>
+                <td>
+                  <code>domain</code> imports nothing internal (arch-pinned),
+                  sits at 12 fan-in as the stability core; services never
+                  import server/web; interfaces live with consumers
+                  (<code>fax.Archiver</code>, <code>session.Store</code>,
+                  <code>server.DedupWindow</code>).
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Overall</strong></td>
+                <td class="yes"><strong>4.0</strong></td>
+                <td>
+                  &ldquo;Good: address the lowest-scoring dimension; no urgent
+                  restructuring needed.&rdquo; The lowest dimension's fix is
+                  the carve, already scheduled.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <figure class="d2">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1753 3812"><svg class="d2-1681134405 d2-svg" width="1753" height="3812" viewBox="-88 -89 1753 3812"><rect x="-88" y="-89" width="1753" height="3812" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-1681134405 .text {
+	font-family: "d2-1681134405-font-regular";
+}
+@font-face {
+	font-family: d2-1681134405-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-1681134405 .text-bold {
+	font-family: "d2-1681134405-font-bold";
+}
+@font-face {
+	font-family: d2-1681134405-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-1681134405 .text-italic {
+	font-family: "d2-1681134405-font-italic";
+}
+@font-face {
+	font-family: d2-1681134405-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-1681134405 .fill-N1{fill:#0A0F25;}
+		.d2-1681134405 .fill-N2{fill:#676C7E;}
+		.d2-1681134405 .fill-N7{fill:#FFFFFF;}
+		.d2-1681134405 .fill-B1{fill:#0D32B2;}
+		.d2-1681134405 .fill-B4{fill:#E3E9FD;}
+		.d2-1681134405 .fill-B5{fill:#EDF0FD;}
+		.d2-1681134405 .fill-AA5{fill:#F7F8FE;}
+		.d2-1681134405 .stroke-B1{stroke:#0D32B2;}
+		.d2-1681134405 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="Y29tcG9zaXRpb24="><g class="shape" ><rect x="301" y="12" width="260" height="393" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="431" y="45" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">composition root</text></g><g class="aHR0cA=="><g class="shape" ><rect x="155" y="636" width="379" height="690" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="344.5" y="669" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">HTTP surface</text></g><g class="c2VydmljZXM="><g class="shape" ><rect x="321" y="1612" width="712" height="690" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="677" y="1645" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">domain services</text></g><g class="ZGF0YQ=="><g class="shape" ><rect x="210" y="2888" width="324" height="497" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="372" y="2921" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">persistence</text></g><g class="YWRhcHRlcnM="><g class="shape" ><rect x="746" y="2957" width="818" height="166" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="1155" y="2990" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">adapters + config</text></g><g class="ZG9tYWlu"><g class="shape" ><rect x="556" y="3556" width="276" height="66" stroke="#0D32B2" fill="#f4d35e" class=" stroke-B1" style="stroke-width:2;" /></g><text x="694" y="3594.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/domain (core, 12 fan-in)</text></g><g class="Y29tcG9zaXRpb24uY21k"><g class="shape" ><rect x="354" y="62" width="155" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="431.5" y="100.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">cmd/webphone</text></g><g class="Y29tcG9zaXRpb24uYXBw"><g class="shape" ><rect x="351" y="289" width="160" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="431" y="327.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/app</text></g><g class="aHR0cC5zZXJ2ZXI="><g class="shape" ><rect x="288" y="686" width="160" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="368" y="724.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/server</text></g><g class="aHR0cC52aWV3cw=="><g class="shape" ><rect x="246" y="973" width="121" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="306.5" y="1011.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">web/views</text></g><g class="aHR0cC5hc3NldHM="><g class="shape" ><rect x="296" y="1210" width="125" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="358.5" y="1248.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">web/assets</text></g><g class="c2VydmljZXMuZmF4"><g class="shape" ><rect x="629" y="1889" width="80" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="669" y="1927.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">fax</text></g><g class="c2VydmljZXMubWVzc2FnaW5n"><g class="shape" ><rect x="767" y="1889" width="120" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="827" y="1927.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">messaging</text></g><g class="c2VydmljZXMuc2Vzc2lvbg=="><g class="shape" ><rect x="753" y="2186" width="97" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="801.5" y="2224.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">session</text></g><g class="c2VydmljZXMucmV0ZW50aW9u"><g class="shape" ><rect x="371" y="2186" width="111" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="426.5" y="2224.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">retention</text></g><g class="c2VydmljZXMudXNlcmF1dGg="><g class="shape" ><rect x="563" y="2186" width="109" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="617.5" y="2224.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">userauth</text></g><g class="c2VydmljZXMuZ2F0ZXdheQ=="><g class="shape" ><rect x="870" y="2186" width="107" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="923.5" y="2224.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">gateway</text></g><g class="c2VydmljZXMucGFwZXJsZXNz"><g class="shape" ><rect x="612" y="1662" width="113" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="668.5" y="1700.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">paperless</text></g><g class="ZGF0YS5zdG9yZQ=="><g class="shape" ><path d="M 379 3241 C 379 3217 416 3217 420 3217 C 424 3217 461 3217 461 3241 V 3311 C 461 3335 424 3335 420 3335 C 416 3335 379 3335 379 3311 V 3241 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 379 3241 C 379 3265 416 3265 420 3265 C 424 3265 461 3265 461 3241" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="420" y="3293.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">store</text></g><g class="ZGF0YS5yZWFkbW9kZWxz"><g class="shape" ><path d="M 356 2962 C 356 2938 414 2938 420 2938 C 426 2938 484 2938 484 2962 V 3032 C 484 3056 426 3056 420 3056 C 414 3056 356 3056 356 3032 V 2962 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 356 2962 C 356 2986 414 2986 420 2986 C 426 2986 484 2986 484 2962" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="420" y="3014.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">readmodels</text></g><g class="ZGF0YS5ibG9i"><g class="shape" ><path d="M 260 2962 C 260 2938 294 2938 298 2938 C 302 2938 336 2938 336 2962 V 3032 C 336 3056 302 3056 298 3056 C 294 3056 260 3056 260 3032 V 2962 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 260 2962 C 260 2986 294 2986 298 2986 C 302 2986 336 2986 336 2962" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="298" y="3014.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">blob</text></g><g class="YWRhcHRlcnMuYXNy"><g class="shape" ><rect x="796" y="3007" width="68" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="830" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">asr</text></g><g class="YWRhcHRlcnMuY3Jt"><g class="shape" ><rect x="1227" y="3007" width="72" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1263" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">crm</text></g><g class="YWRhcHRlcnMucGJ4"><g class="shape" ><rect x="1019" y="3007" width="71" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1054.5" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">pbx</text></g><g class="YWRhcHRlcnMuc2lwY3JlZA=="><g class="shape" ><rect x="1110" y="3007" width="97" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1158.5" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">sipcred</text></g><g class="YWRhcHRlcnMudGV4dGFnZW50"><g class="shape" ><rect x="884" y="3007" width="115" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="941.5" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">textagent</text></g><g class="YWRhcHRlcnMudmNhcmQ="><g class="shape" ><rect x="1429" y="3007" width="85" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1471.5" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">vcard</text></g><g class="YWRhcHRlcnMuY29uZmln"><g class="shape" ><rect x="1319" y="3007" width="90" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1364" y="3045.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">config</text></g><g class="Y29tcG9zaXRpb24uKGNtZCAtJmd0OyBhcHApWzBd"><marker id="mk-d2-1681134405-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 431.875 130 L 431.875 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="432" y="214" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">main</text></g><g class="KGNvbXBvc2l0aW9uLmFwcCAtJmd0OyBodHRwLnNlcnZlcilbMF0="><path d="M 415.875 357 L 415.875 682" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="415.5" y="526" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">wires</text></g><g class="KGNvbXBvc2l0aW9uLmFwcCAtJmd0OyBzZXJ2aWNlcylbMF0="><path d="M 447.875 357 L 447.875 490 S 447.875 500 457.875 500 L 684.416016 500 S 694.416016 500 694.416016 510 L 694.416016 1416.25 C 694.416016 1425.75 684.916016 1416.25 684.916016 1425.75 L 684.916016 1608" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="694" y="870" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">wires all 7</text></g><g class="KGNvbXBvc2l0aW9uLmFwcCAtJmd0OyBkYXRhKVswXQ=="><path d="M 383.875 357 L 383.875 440 S 383.875 450 373.875 450 L 39.5 450 S 29.5 450 29.5 460 L 29.5 2838 S 29.5 2848 39.5 2848 L 241.25 2848 S 251.25 2848 251.25 2858 L 251.25 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="29.5" y="1561" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">wires</text></g><g class="KGNvbXBvc2l0aW9uLmFwcCAtJmd0OyBhZGFwdGVycylbMF0="><path d="M 479.875 357 L 479.875 440 S 479.875 450 489.875 450 L 1526 450 S 1536 450 1536 460 L 1536 2953" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="1536.5" y="1133" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">wires</text></g><g class="aHR0cC4oc2VydmVyIC0mZ3Q7IHZpZXdzKVswXQ=="><path d="M 352.458008 754 L 352.458008 969" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="352.5" y="868" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">renders</text></g><g class="aHR0cC4odmlld3MgLSZndDsgYXNzZXRzKVswXQ=="><path d="M 327.290985 1041 L 327.290985 1206" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="327.5" y="1130" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">embeds</text></g><g class="KGh0dHAuc2VydmVyIC0mZ3Q7IHNlcnZpY2VzKVswXQ=="><path d="M 384.458008 754 L 384.458008 832 S 384.458008 842 394.458008 842 L 451.373993 842 S 461.373993 842 461.373993 852 L 461.373993 1411 S 461.373993 1421 471.373993 1421 L 592.416016 1421 S 602.416016 1421 602.416016 1431 L 602.416016 1608" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="461.5" y="1220" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">handlers call</text></g><g class="KGh0dHAuc2VydmVyIC0mZ3Q7IGRhdGEpWzBd"><path d="M 320.458008 754 L 320.458008 782 S 320.458008 792 310.458008 792 L 155.998993 792 S 145.998993 792 145.998993 802 L 145.998993 2788 S 145.998993 2798 155.998993 2798 L 281.748993 2798 S 291.748993 2798 291.748993 2808 L 291.748993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="145.5" y="1811" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">sessions + read models</text></g><g class="KGh0dHAuc2VydmVyIC0mZ3Q7IGFkYXB0ZXJzKVswXQ=="><path d="M 416.458008 754 L 416.458008 782 S 416.458008 792 426.458008 792 L 1353.749023 792 S 1363.749023 792 1363.749023 802 L 1363.749023 2642.875 C 1363.749023 2653.125 1373.999023 2642.875 1373.999023 2653.125 L 1373.999023 2953" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="1363.5" y="1391" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">pbx, sipcred, asr, crm, textagent, vcard</text></g><g class="c2VydmljZXMuKGZheCAtJmd0OyBnYXRld2F5KVswXQ=="><path d="M 682.416016 1957 L 682.416016 2136 S 682.416016 2146 692.416016 2146 L 896.416016 2146 S 906.416016 2146 906.416016 2156 L 906.416016 2182" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="719" y="2152" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">submits</text></g><g class="c2VydmljZXMuKG1lc3NhZ2luZyAtJmd0OyBnYXRld2F5KVswXQ=="><path d="M 847.416016 1957 L 847.416016 1985 S 847.416016 1995 857.416016 1995 L 946.25 1995 S 956.25 1995 956.25 2005 L 956.25 2182" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="956" y="2022" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">submits</text></g><g class="c2VydmljZXMuKHBhcGVybGVzcyAtJmd0OyBmYXgpWzBd"><path d="M 669.083008 1730 L 669.083008 1885" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="669.5" y="1814" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">archives inbound</text></g><g class="KHNlcnZpY2VzLmZheCAtJmd0OyBkYXRhKVswXQ=="><path d="M 655.75 1957 L 655.75 1985 S 655.75 1995 645.75 1995 L 532.75 1995 S 522.75 1995 522.749976 2005 L 522.749048 2387 S 522.749023 2397 512.749023 2397 L 400.748993 2397 S 390.748993 2397 390.748993 2407 L 390.748993 2638 S 390.748993 2648 400.748993 2648 L 403.248993 2648 S 413.248993 2648 413.248993 2658 L 413.248993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="487" y="2403" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">persists</text></g><g class="KHNlcnZpY2VzLm1lc3NhZ2luZyAtJmd0OyBkYXRhKVswXQ=="><path d="M 807.416016 1957 L 807.416016 1985 S 807.416016 1995 797.416016 1995 L 722.75 1995 S 712.75 1995 712.749981 2005 L 712.749043 2487 S 712.749023 2497 702.749023 2497 L 645.749023 2497 S 635.749023 2497 635.749023 2507 L 635.749023 2688 S 635.749023 2698 625.749023 2698 L 504.248993 2698 S 494.248993 2698 494.248993 2708 L 494.248993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="713" y="2489" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">persists</text></g><g class="KHNlcnZpY2VzLnJldGVudGlvbiAtJmd0OyBkYXRhKVswXQ=="><path d="M 427.248993 2254 L 427.248993 2337 S 427.248993 2347 417.248993 2347 L 347.248993 2347 S 337.248993 2347 337.248993 2357 L 337.248993 2688 S 337.248993 2698 347.248993 2698 L 362.748993 2698 S 372.748993 2698 372.748993 2708 L 372.748993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="337.5" y="2548" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">trims</text></g><g class="KHNlcnZpY2VzLnVzZXJhdXRoIC0mZ3Q7IGRhdGEpWzBd"><path d="M 618.249023 2254 L 618.249023 2437 S 618.249023 2447 608.249023 2447 L 463.748993 2447 S 453.748993 2447 453.748993 2457 L 453.748993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="454" y="2493" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">engine lookups</text></g><g class="KHNlcnZpY2VzLnNlc3Npb24gLSZndDsgYWRhcHRlcnMucGJ4KVswXQ=="><path d="M 802.249023 2254 L 802.249023 2638 S 802.249023 2648 812.249023 2648 L 1044.5 2648 S 1054.5 2648 1054.5 2658 L 1054.5 3003" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="909.5" y="2654" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">directory verify</text></g><g class="KHNlcnZpY2VzLmdhdGV3YXkgLSZndDsgYWRhcHRlcnMuY29uZmlnKVswXQ=="><path d="M 924.249023 2254 L 924.249023 2337 S 924.249023 2347 934.249023 2347 L 1251 2347 S 1261 2347 1261 2357 L 1261 2688 S 1261 2698 1271 2698 L 1354 2698 S 1364 2698 1364 2708 L 1364 3003" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="1261.5" y="2518" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">loads</text></g><g class="ZGF0YS4ocmVhZG1vZGVscyAtJmd0OyBzdG9yZSlbMF0="><path d="M 421 3058 L 421 3213" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="421.5" y="3142" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">row lifecycle reuse</text></g><g class="KGh0dHAudmlld3MgLSZndDsgZGF0YSlbMF0="><path d="M 286.958008 1041 L 286.958008 1069 S 286.958008 1079 276.958008 1079 L 260.498993 1079 S 250.498993 1079 250.498993 1089 L 250.498993 2738 S 250.498993 2748 260.498993 2748 L 322.248993 2748 S 332.248993 2748 332.248993 2758 L 332.248993 2884" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="250" y="1992" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">reads</text></g><g class="KGFkYXB0ZXJzLmNvbmZpZyAtJmd0OyBkb21haW4pWzBd"><path d="M 1364 3075 L 1364 3506 S 1364 3516 1354 3516 L 773.25 3516 S 763.25 3516 763.25 3526 L 763.25 3552" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="1265" y="3522" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">types</text></g><g class="KGRhdGEgLSZndDsgZG9tYWluKVswXQ=="><path d="M 372.75 3387 L 372.75 3506 S 372.75 3516 382.75 3516 L 615.25 3516 S 625.25 3516 625.25 3526 L 625.25 3552" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="454" y="3522" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">row types</text></g><g class="KHNlcnZpY2VzIC0mZ3Q7IGRvbWFpbilbMF0="><path d="M 757.5 2304 L 757.5 2537 S 757.5 2547 747.5 2547 L 718 2547 S 708 2547 708 2557 L 708 3552" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1681134405-3488378134)" mask="url(#d2-1681134405)" /><text x="708" y="2910" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">types</text></g><mask id="d2-1681134405" maskUnits="userSpaceOnUse" x="-88" y="-89" width="1753" height="3812">
+<rect x="-88" y="-89" width="1753" height="3812" fill="white"></rect>
+<rect x="413" y="198" width="38" height="21" fill="black"></rect>
+<rect x="396" y="510" width="39" height="21" fill="black"></rect>
+<rect x="659" y="854" width="70" height="21" fill="black"></rect>
+<rect x="10" y="1545" width="39" height="21" fill="black"></rect>
+<rect x="1517" y="1117" width="39" height="21" fill="black"></rect>
+<rect x="325" y="852" width="55" height="21" fill="black"></rect>
+<rect x="299" y="1114" width="57" height="21" fill="black"></rect>
+<rect x="417" y="1204" width="89" height="21" fill="black"></rect>
+<rect x="68" y="1795" width="155" height="21" fill="black"></rect>
+<rect x="1234" y="1375" width="259" height="21" fill="black"></rect>
+<rect x="690" y="2136" width="58" height="21" fill="black"></rect>
+<rect x="927" y="2006" width="58" height="21" fill="black"></rect>
+<rect x="611" y="1798" width="117" height="21" fill="black"></rect>
+<rect x="459" y="2387" width="56" height="21" fill="black"></rect>
+<rect x="685" y="2473" width="56" height="21" fill="black"></rect>
+<rect x="318" y="2532" width="39" height="21" fill="black"></rect>
+<rect x="402" y="2477" width="104" height="21" fill="black"></rect>
+<rect x="858" y="2638" width="103" height="21" fill="black"></rect>
+<rect x="1241" y="2502" width="41" height="21" fill="black"></rect>
+<rect x="359" y="3126" width="125" height="21" fill="black"></rect>
+<rect x="229" y="1976" width="42" height="21" fill="black"></rect>
+<rect x="1245" y="3506" width="40" height="21" fill="black"></rect>
+<rect x="420" y="3506" width="68" height="21" fill="black"></rect>
+<rect x="688" y="2894" width="40" height="21" fill="black"></rect>
+</mask></svg></svg>
+            <figcaption>
+              Current state: the package DAG as assessed 2026-10-17 (production
+              imports only, go list). Yellow = domain core at 12 fan-in; groups
+              are architectural roles, drawn from the measured edges in the
+              appendix.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section id="evidence">
+          <h2><span class="num">04</span>Fresh evidence, four facts</h2>
+
+          <div class="issue issue-critical" id="fact-consumers">
+            <span class="severity severity-critical">Decisive &middot; re-verified today</span>
+            <h3>Zero external Go consumers, still</h3>
+            <div class="where">
+              gh search code + local sweep of ~/projects (*.go, vendor
+              excluded) &middot; 0 hits outside this repo
+            </div>
+            <p>
+              GitHub-wide code search returns only docs and fleet-list
+              mentions (go-health's <code>fleet-repos.txt</code>, the stack's
+              README and lessons). Nothing imports
+              <code>github.com/larsartmann/webphone/...</code> as a module. The
+              composability test every boundary must pass &mdash; &ldquo;does
+              it let consumers import only what they need?&rdquo; &mdash; has
+              no consumers to serve. One consumer exists: the binary, which
+              needs everything.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="fact-internal">
+            <span class="severity severity-important">Structural blocker &middot; FM#6</span>
+            <h3>Every package lives under internal/</h3>
+            <div class="where">all 24 packages, by design</div>
+            <p>
+              A sub-module's <code>internal/</code> tree is invisible to every
+              other module. Any split therefore forces one of two strictly
+              worse outcomes: promote packages out of <code>internal/</code>
+              (publishing app internals as public API against the app's own
+              design) or duplicate shared types across modules (split brain, a
+              declared defect class in this repo). This alone disqualifies the
+              split regardless of every other number in this report.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="fact-dag">
+            <span class="severity severity-important">Benefit already realized</span>
+            <h3>The module DAG already exists at package granularity</h3>
+            <div class="where">
+              internal/arch/arch_test.go &middot; 4 rules, green at assessment
+              time
+            </div>
+            <p>
+              The graph a split would draw is the graph the packages already
+              form: <code>domain</code> is the zero-internal-dependency core
+              (12 fan-in); ten leaves import nothing internal; services form
+              the mid layer; <code>server</code> and <code>app</code> sit on
+              top. Enforcement is a test suite, not a convention: domain
+              purity, services-never-import-server/web, MustInvoke
+              composition-root-only, island independence. A go.mod boundary
+              would re-deliver this at strictly higher ceremony.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="fact-cost">
+            <span class="severity severity-nice">Corroborating &middot; now quantified</span>
+            <h3>The cost side is 172 MB real, not hypothetical</h3>
+            <div class="where">vendor/: 172 MB, 4,262 Go files</div>
+            <p>
+              The 10-06 and 10-09 red-main incidents came from single
+              dependency bumps tripping the vendorHash. A five-module split
+              means five vendored trees (or a workspace-vendor decision), five
+              bump rituals, whole-tree narHash churn in the two consuming Nix
+              repos per bump, and a <code>GOWORK=off</code> CI matrix. The
+              benefit column is empty (zero consumers); the cost column is the
+              most incident-prone mechanism this repo has.
+            </p>
+          </div>
+        </section>
+
+        <section id="readiness">
+          <h2><span class="num">05</span>Module-readiness audit (data-model lens)</h2>
+          <p>
+            The question this section answers: <em>if a trigger fired, would
+            the domain model survive extraction?</em> It is the question the
+            first three entries never asked directly. The scan runs the
+            data-model-review problem catalog (P1&ndash;P12) against the
+            boundary-relevant subset: domain types, seam DTOs, error models.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Verdict</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>P1/P4: stringly identifiers</td>
+                <td class="yes">Clean</td>
+                <td>
+                  9 branded ids in <code>domain/ids.go</code>; brandid-lint
+                  BD003 clean repo-wide (34 reasoned
+                  <code>//brandid-lint:ignore</code> directives, verified
+                  2026-10-15).
+                </td>
+              </tr>
+              <tr>
+                <td>P5: interface unions</td>
+                <td class="yes">Present</td>
+                <td>
+                  <code>domain.Event</code> is a closed union (private-method
+                  tag); lifecycle legality lives in declarative tables, not
+                  pointer-field state machines.
+                </td>
+              </tr>
+              <tr>
+                <td>P12: error models</td>
+                <td class="yes">Structured</td>
+                <td>
+                  errorfamily constructors with stable
+                  <code>&lt;seam&gt;.&lt;op&gt;</code> codes; 14 per-seam
+                  <code>family_test.go</code> pins; sentinel errors live with
+                  their interfaces (module-split safe).
+                </td>
+              </tr>
+              <tr>
+                <td>P6/P7: coupling across seams</td>
+                <td class="yes">Consumer-owned interfaces</td>
+                <td>
+                  <code>asr.Provider</code>, <code>session.Store</code>,
+                  <code>fax.Archiver</code>, <code>fax.Store</code>,
+                  <code>gateway.MessageGateway</code>,
+                  <code>gateway.FaxGateway</code>,
+                  <code>server.DedupWindow</code>,
+                  <code>server.idemGate</code>; readmodels asserts
+                  capabilities (DedupStore, AggregateReader) at Open.
+                </td>
+              </tr>
+              <tr>
+                <td>Domain dependency weight</td>
+                <td class="yes">Near-zero</td>
+                <td>
+                  domain imports stdlib plus exactly two small third-party
+                  deps (<code>go-error-family</code>,
+                  <code>sixafter/nanoid</code>). A domain module would carry
+                  exactly those two &mdash; no transitive bloat (FM#2 check
+                  passes).
+                </td>
+              </tr>
+              <tr>
+                <td>Wire DTOs</td>
+                <td class="yes">Deliberately raw</td>
+                <td>
+                  JSON wire bytes stay raw strings by ruling, with reasoned
+                  nolints &mdash; a wire DTO is a boundary artifact, not a
+                  domain type, so a split moves none of them.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Reading</strong>
+            The model is split-<em>ready</em>. Readiness was never the missing
+            ingredient &mdash; consumers are. This is the sharpest form of the
+            verdict: the repo has done everything right for a split that
+            nobody needs.
+          </div>
+        </section>
+
+        <section id="candidates">
+          <h2><span class="num">06</span>Split candidates, re-evaluated</h2>
+          <p>
+            Direction neutrality: the split case gets its day in court, again,
+            now with readmodels in the tree. Each candidate scored against
+            decomposition depth and composability payoff.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Candidate module</th>
+                <th>Would own</th>
+                <th>Composability payoff</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>domain</td>
+                <td>Core types, branded ids, events</td>
+                <td>Zero consumers today</td>
+                <td class="yes">Keep as package</td>
+              </tr>
+              <tr>
+                <td>data (store + readmodels + blob)</td>
+                <td>SQLite engines, DDL, blobs</td>
+                <td>
+                  readmodels just re-homed engine DDL &mdash; for THIS binary;
+                  no second consumer exists
+                </td>
+                <td class="yes">Keep as packages</td>
+              </tr>
+              <tr>
+                <td>telephony (gateway + fax + messaging + session)</td>
+                <td>Loopback/webhook seam, message lanes</td>
+                <td>
+                  pbx-artmann consumes it over HTTP, not Go imports
+                </td>
+                <td class="yes">Keep as packages</td>
+              </tr>
+              <tr>
+                <td>identity (userauth + session)</td>
+                <td>Passkey/session identity</td>
+                <td>Internal to the binary</td>
+                <td class="yes">Keep as packages</td>
+              </tr>
+              <tr>
+                <td>sipcred</td>
+                <td>Credential derivation (24 LOC)</td>
+                <td>FreeSWITCH validates via the directory endpoint</td>
+                <td class="yes">Keep as package</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="signals">
+          <h2><span class="num">07</span>The When-NOT table, scored honestly</h2>
+          <p>
+            The go-modularize skill scores four signals before Phase 1. Scored
+            straight, today:
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Signal</th>
+                <th>Weight</th>
+                <th>Today</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Small project, single domain</td>
+                <td>High</td>
+                <td class="yes">
+                  Active &mdash; 24 packages, but ONE binary, one team, one
+                  product surface
+                </td>
+              </tr>
+              <tr>
+                <td>No external consumers</td>
+                <td>Medium</td>
+                <td class="yes">Active &mdash; decisively (re-verified)</td>
+              </tr>
+              <tr>
+                <td>Prototype / spike</td>
+                <td>High</td>
+                <td class="no">Inactive &mdash; v2.9.0 in production</td>
+              </tr>
+              <tr>
+                <td>All packages change together</td>
+                <td>High</td>
+                <td class="no">
+                  Inactive &mdash; 3.3% wide commits, one train-driven cluster
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Take the table at its letter: 1 active High + 1 active Medium maps
+            to &ldquo;proceed with full modularization.&rdquo; The 10-14 report
+            fudged this arithmetic (it tallied its own table as &ldquo;1
+            Medium&rdquo;). This entry corrects that and makes the stronger
+            argument: the table is a heuristic pre-filter written for repos
+            whose packages CAN become modules. Here the pre-filter's outcome is
+            overruled by three falsifiable structural facts that no signal
+            score reaches:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">a</div>
+              <div class="text">
+                <strong>FM#6 makes the split self-defeating</strong>
+                <span>
+                  With everything under <code>internal/</code>, a split either
+                  publishes app internals or duplicates types. There is no
+                  configuration of a split that does not violate a declared
+                  defect class of this repo.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">b</div>
+              <div class="text">
+                <strong>The partial branch is also dead</strong>
+                <span>
+                  The skill's fallback (&ldquo;extract only the domain module
+                  to establish a clean API surface&rdquo;) assumes a reader for
+                  that surface. A domain module with zero importers is a
+                  versioning liability, not an API.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">c</div>
+              <div class="text">
+                <strong>The cost mechanism is this repo's most incident-prone</strong>
+                <span>
+                  Two of the last three red-main incidents were vendor-pinning
+                  failures from SINGLE-module bumps. A split multiplies the
+                  mechanism by five (section 08 quantifies it).
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="blueprint">
+          <h2><span class="num">08</span>The pre-armed blueprint (DORMANT)</h2>
+          <p>
+            What follows is the full split plan, built with the go-modularize
+            Phase 3 checklist so that a trigger-fired re-run starts at
+            execution, not research. <strong>It is not scheduled. It executes
+            only when a section-09 trigger fires.</strong>
+          </p>
+          <figure class="d2">
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 2562 1217"><svg class="d2-861772124 d2-svg" width="2562" height="1217" viewBox="-89 -89 2562 1217"><rect x="-89" y="-89" width="2562" height="1217" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-861772124 .text {
+	font-family: "d2-861772124-font-regular";
+}
+@font-face {
+	font-family: d2-861772124-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-861772124 .text-bold {
+	font-family: "d2-861772124-font-bold";
+}
+@font-face {
+	font-family: d2-861772124-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-861772124 .text-italic {
+	font-family: "d2-861772124-font-italic";
+}
+@font-face {
+	font-family: d2-861772124-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-861772124 .fill-N1{fill:#0A0F25;}
+		.d2-861772124 .fill-N2{fill:#676C7E;}
+		.d2-861772124 .fill-N7{fill:#FFFFFF;}
+		.d2-861772124 .fill-B1{fill:#0D32B2;}
+		.d2-861772124 .fill-B2{fill:#0D32B2;}
+		.d2-861772124 .fill-B4{fill:#E3E9FD;}
+		.d2-861772124 .fill-B5{fill:#EDF0FD;}
+		.d2-861772124 .fill-AA5{fill:#F7F8FE;}
+		.d2-861772124 .stroke-B1{stroke:#0D32B2;}
+		.d2-861772124 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="Y29uc3VtZXJz"><g class="shape" ><rect x="12" y="12" width="586" height="184" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="305" y="45" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">consumers (hypothetical trigger)</text></g><g class="cm9vdA=="><g class="shape" ><rect x="1051" y="30" width="957" height="166" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B2 fill-B4" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" /></g><text x="1529.5" y="63" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">webphone (root app module)</text></g><g class="dGVsZXBob255"><g class="shape" ><rect x="233" y="439" width="668" height="166" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B2 fill-B4" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" /></g><text x="567" y="472" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">telephony v0.x</text></g><g class="ZGF0YQ=="><g class="shape" ><rect x="921" y="422" width="557" height="218" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B2 fill-B4" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" /></g><text x="1199.5" y="455" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">data v0.x</text></g><g class="aW50ZWdyYXRpb25z"><g class="shape" ><rect x="1498" y="448" width="724" height="166" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B2 fill-B4" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" /></g><text x="1860" y="481" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">integrations v0.x</text></g><g class="ZG9tYWlubW9k"><g class="shape" ><rect x="775" y="861" width="788" height="166" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B2 fill-B4" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" /></g><text x="1169" y="894" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">domain v1.x (stable core)</text></g><g class="Y29uc3VtZXJzLnN0YWNr"><g class="shape" ><path d="M 300 91 C 300 92 298 93 296 93 C 271 94 251 105 251 119 C 251 134 273 146 301 146 H 492 C 522 146 547 133 547 118 C 547 103 524 91 496 90 C 494 90 492 89 492 88 C 486 73 456 62 421 62 C 398 62 378 67 365 74 C 364 75 361 75 360 75 C 355 74 350 74 344 74 C 321 74 302 81 300 91 Z" stroke="#0D32B2" fill="#FFFFFF" class=" stroke-B1 fill-N7" style="stroke-width:2;" /></g><text x="398.6215" y="125.516" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">nix-international-telephony</text></g><g class="Y29uc3VtZXJzLnBieA=="><g class="shape" ><path d="M 90 91 C 90 92 89 93 88 93 C 74 94 62 105 62 119 C 62 134 75 146 91 146 H 200 C 217 146 231 133 231 118 C 231 103 218 91 202 90 C 201 90 200 89 199 88 C 195 73 178 62 159 62 C 146 62 135 67 127 74 C 126 75 125 75 124 75 C 121 74 118 74 115 74 C 102 74 91 81 90 91 Z" stroke="#0D32B2" fill="#FFFFFF" class=" stroke-B1 fill-N7" style="stroke-width:2;" /></g><text x="146.2055" y="125.516" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">pbx-artmann</text></g><g class="cm9vdC5jbWQ="><g class="shape" ><rect x="1274" y="80" width="155" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1351.5" y="118.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">cmd/webphone</text></g><g class="cm9vdC5hcHA="><g class="shape" ><rect x="1449" y="80" width="134" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1516" y="118.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/app</text></g><g class="cm9vdC5zZXJ2ZXI="><g class="shape" ><rect x="1101" y="80" width="153" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1177.5" y="118.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/server</text></g><g class="cm9vdC52aWV3cw=="><g class="shape" ><rect x="1603" y="80" width="183" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1694.5" y="118.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/web/views</text></g><g class="cm9vdC5jb25maWc="><g class="shape" ><rect x="1806" y="80" width="152" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1882" y="118.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/config</text></g><g class="dGVsZXBob255LmdhdGV3YXk="><g class="shape" ><rect x="423" y="489" width="107" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="476.5" y="527.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">gateway</text></g><g class="dGVsZXBob255LmZheA=="><g class="shape" ><rect x="550" y="489" width="67" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="583.5" y="527.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">fax</text></g><g class="dGVsZXBob255Lm1lc3NhZ2luZw=="><g class="shape" ><rect x="283" y="489" width="120" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="343" y="527.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">messaging</text></g><g class="dGVsZXBob255LnNlc3Npb24="><g class="shape" ><rect x="637" y="489" width="97" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="685.5" y="527.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">session</text></g><g class="dGVsZXBob255LnNpcGNyZWQ="><g class="shape" ><rect x="754" y="489" width="97" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="802.5" y="527.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">sipcred</text></g><g class="ZGF0YS5zdG9yZQ=="><g class="shape" ><path d="M 1067 496 C 1067 472 1104 472 1108 472 C 1112 472 1149 472 1149 496 V 566 C 1149 590 1112 590 1108 590 C 1104 590 1067 590 1067 566 V 496 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 1067 496 C 1067 520 1104 520 1108 520 C 1112 520 1149 520 1149 496" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="1108" y="548.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">store</text></g><g class="ZGF0YS5yZWFkbW9kZWxz"><g class="shape" ><path d="M 1169 496 C 1169 472 1227 472 1233 472 C 1239 472 1297 472 1297 496 V 566 C 1297 590 1239 590 1233 590 C 1227 590 1169 590 1169 566 V 496 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 1169 496 C 1169 520 1227 520 1233 520 C 1239 520 1297 520 1297 496" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="1233" y="548.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">readmodels</text></g><g class="ZGF0YS5ibG9i"><g class="shape" ><path d="M 971 496 C 971 472 1005 472 1009 472 C 1013 472 1047 472 1047 496 V 566 C 1047 590 1013 590 1009 590 C 1005 590 971 590 971 566 V 496 Z" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /><path d="M 971 496 C 971 520 1005 520 1009 520 C 1013 520 1047 520 1047 496" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-AA5" style="stroke-width:2;" /></g><text x="1009" y="548.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">blob</text></g><g class="ZGF0YS5yZXRlbnRpb24="><g class="shape" ><rect x="1317" y="498" width="111" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1372.5" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">retention</text></g><g class="aW50ZWdyYXRpb25zLmFzcg=="><g class="shape" ><rect x="1639" y="498" width="68" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1673" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">asr</text></g><g class="aW50ZWdyYXRpb25zLmNybQ=="><g class="shape" ><rect x="1860" y="498" width="72" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1896" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">crm</text></g><g class="aW50ZWdyYXRpb25zLnBieA=="><g class="shape" ><rect x="1548" y="498" width="71" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1583.5" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">pbx</text></g><g class="aW50ZWdyYXRpb25zLnRleHRhZ2VudA=="><g class="shape" ><rect x="1952" y="498" width="115" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2009.5" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">textagent</text></g><g class="aW50ZWdyYXRpb25zLnZjYXJk"><g class="shape" ><rect x="2087" y="498" width="85" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2129.5" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">vcard</text></g><g class="aW50ZWdyYXRpb25zLnBhcGVybGVzcw=="><g class="shape" ><rect x="1727" y="498" width="113" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1783.5" y="536.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">paperless</text></g><g class="ZG9tYWlubW9kLnR5cGVz"><g class="shape" ><rect x="825" y="911" width="355" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1002.5" y="949.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">branded ids + value objects + sentinel errors</text></g><g class="ZG9tYWlubW9kLmRlcHM="><g class="shape" ><rect x="1200" y="911" width="313" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1356.5" y="949.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">carries go-error-family + nanoid ONLY</text></g><g class="KGNvbnN1bWVycy5zdGFjayAtJmd0OyB0ZWxlcGhvbnkpWzBd"><marker id="mk-d2-861772124-2177206569" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B2" stroke-width="2" /> </marker><path d="M 455.998287 147.999999 L 455.75242 435.000001" stroke="#0D32B2" fill="none" class="connection stroke-B2" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" marker-end="url(#mk-d2-861772124-2177206569)" mask="url(#d2-861772124)" /><text x="456" y="298" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">trigger 2: stack adopts Go imports</text></g><g class="KGNvbnN1bWVycy5wYnggLSZndDsgZG9tYWlubW9kKVswXQ=="><path d="M 113.998764 148 L 113.589178 811.000002 S 113.583 821 123.583 821 L 896.882996 821 S 906.882996 821 906.882996 831 L 906.882996 857" stroke="#0D32B2" fill="none" class="connection stroke-B2" style="stroke-width:2;stroke-dasharray:8.000000,7.892511;" marker-end="url(#mk-d2-861772124-2177206569)" mask="url(#d2-861772124)" /><text x="192.5" y="827" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">trigger 1: second Go consumer</text></g><g class="KHRlbGVwaG9ueSAtJmd0OyBkb21haW5tb2QpWzBd"><marker id="mk-d2-861772124-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 567.083008 607 L 567.083008 761 S 567.083008 771 577.083008 771 L 1028.215942 771 S 1038.215942 771 1038.215942 781 L 1038.215942 857" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="765" y="777" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">require v1.x</text></g><g class="KGRhdGEgLSZndDsgZG9tYWlubW9kKVswXQ=="><path d="M 1169.550049 642 L 1169.550049 857" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="1170" y="756" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">require v1.x</text></g><g class="KGludGVncmF0aW9ucyAtJmd0OyBkb21haW5tb2QpWzBd"><path d="M 1860.083008 616 L 1860.083008 761 S 1860.083008 771 1850.083008 771 L 1310.883057 771 S 1300.883057 771 1300.883057 781 L 1300.883057 857" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="1614" y="777" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">require v1.x</text></g><g class="KHJvb3QgLSZndDsgdGVsZXBob255KVswXQ=="><path d="M 1242.733032 198 L 1242.733032 231 S 1242.733032 241 1232.733032 241 L 688.416016 241 S 678.416016 241 678.416016 251 L 678.416016 435" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="884.5" y="247" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">replace =&gt; ./telephony</text></g><g class="KHJvb3QgLSZndDsgZGF0YSlbMF0="><path d="M 1434.133057 198 L 1434.133057 418" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="1434" y="315" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">replace =&gt; ./data</text></g><g class="KHJvb3QgLSZndDsgaW50ZWdyYXRpb25zKVswXQ=="><path d="M 1625.532959 198 L 1625.532959 444" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="1625.5" y="328" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">replace =&gt; ./integrations</text></g><g class="KHJvb3QgLSZndDsgZG9tYWlubW9kKVswXQ=="><path d="M 1816.932983 198 L 1816.932983 231 S 1816.932983 241 1826.932983 241 L 2297.583008 241 S 2307.583008 241 2307.583008 251 L 2307.583008 811 S 2307.583008 821 2297.583008 821 L 1442.215942 821 S 1432.215942 821 1432.215942 831 L 1432.215942 857" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-861772124-3488378134)" mask="url(#d2-861772124)" /><text x="2307.5" y="726" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">replace =&gt; ./domain</text></g><mask id="d2-861772124" maskUnits="userSpaceOnUse" x="-89" y="-89" width="2562" height="1217">
+<rect x="-89" y="-89" width="2562" height="1217" fill="white"></rect>
+<rect x="343" y="282" width="226" height="21" fill="black"></rect>
+<rect x="91" y="811" width="203" height="21" fill="black"></rect>
+<rect x="724" y="761" width="82" height="21" fill="black"></rect>
+<rect x="1129" y="740" width="82" height="21" fill="black"></rect>
+<rect x="1573" y="761" width="82" height="21" fill="black"></rect>
+<rect x="809" y="231" width="151" height="21" fill="black"></rect>
+<rect x="1376" y="299" width="116" height="21" fill="black"></rect>
+<rect x="1543" y="312" width="165" height="21" fill="black"></rect>
+<rect x="2240" y="710" width="135" height="21" fill="black"></rect>
+</mask></svg></svg>
+            <figcaption>
+              Ideal state IF a trigger fires: five modules, version train on
+              the proxy, replace+go.work dual strategy for development. Dashed
+              = hypothetical; consumer edges are the triggers themselves.
+            </figcaption>
+          </figure>
+          <h3>Module table (Phase 3.1)</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Purpose (one sentence)</th>
+                <th>Prod deps</th>
+                <th>Error types live in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>domain v1.x</td>
+                <td>Ubiquitous-language types, branded ids, events, sentinels</td>
+                <td>go-error-family, nanoid only</td>
+                <td>itself (already true)</td>
+              </tr>
+              <tr>
+                <td>data v0.x</td>
+                <td>Engine-backed persistence: store, readmodels, blob, retention</td>
+                <td>domain</td>
+                <td>store/readmodels (already true)</td>
+              </tr>
+              <tr>
+                <td>telephony v0.x</td>
+                <td>Message/fax/session lanes over the gateway seam</td>
+                <td>domain, data</td>
+                <td>gateway/fax/messaging (already true)</td>
+              </tr>
+              <tr>
+                <td>integrations v0.x</td>
+                <td>Optional side-cars: asr, crm, pbx, textagent, vcard, paperless</td>
+                <td>domain (fax for paperless)</td>
+                <td>each adapter (already true)</td>
+              </tr>
+              <tr>
+                <td>webphone (root)</td>
+                <td>Binary: cmd, app composition, server, views, config</td>
+                <td>all of the above</td>
+                <td>server seams (already true)</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>DAG verification (Phase 3.2)</strong>
+            The blueprint's import graph is acyclic by construction: it is
+            today's measured DAG redrawn with module fences at the existing
+            layer edges. Nothing moves between layers; four <code>replace</code>
+            directives + <code>go.work</code> (dual strategy, app monorepo
+            class) make each module build with <code>GOWORK=off</code>.
+          </div>
+          <h3>Migration steps (Phase 5, each independently revertable)</h3>
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>domain/go.mod, packages promoted out of internal/</h4>
+              <p>
+                The one unavoidable FM#6 concession: domain alone leaves
+                internal/ because it is the only layer with a plausible
+                external consumer. Verify: <code>go build ./...</code> +
+                arch tests, per module <code>GOWORK=off go build</code>.
+                Rollback: revert one commit.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>data module (store, readmodels, blob, retention)</h4>
+              <p>
+                Engine DDL + capabilities already self-contained. Verify:
+                readmodels Open-assertions green under GOWORK=off. Rollback:
+                revert one commit.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>telephony module (gateway, fax, messaging, session, sipcred)</h4>
+              <p>
+                Gateway webhook contract is HTTP, so the consuming bridge is
+                unaffected; version tags land only if the trigger is a Go
+                import. Verify: golden part-header block test. Rollback: revert.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>integrations module</h4>
+              <p>
+                Nil-safe seams make this mechanical. Verify: buildflow green,
+                smoke boots with seams off AND on. Rollback: revert.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>Nix + CI re-plumb</h4>
+              <p>
+                goModules hash per module (5 pins), flake buildGraph per
+                module, GOWORK=off CI matrix, stack + pbx-artmann relock.
+                This is the step the cost ledger prices; budget a full day and
+                expect vendorHash friction.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">6</div>
+            <div class="migration-content">
+              <h4>Version train (only if proxy-published)</h4>
+              <p>
+                Tag format <code>domain/v1.2.3</code> et al.; replaces leave
+                go.mod, move version-qualified into go.work; consumer smoke
+                with a scratch module importing domain v1.x.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="triggers">
+          <h2><span class="num">09</span>Re-trigger criteria, operationalized</h2>
+          <p>
+            Durable, not permanent. Each trigger now carries its detection
+            command, so the quarterly review (next due ~2027-01) is a copy-paste,
+            not an investigation.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Trigger</th>
+                <th>Detection</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  A second Go consumer imports
+                  <code>internal/domain</code> or <code>internal/gateway</code>
+                </td>
+                <td>
+                  <code>gh search code larsartmann/webphone</code> + local
+                  sweep: <code>rg -l --glob '*.go' --glob '!**/vendor/**'
+                  'larsartmann/webphone' ~/projects</code> &mdash; any non-doc
+                  hit outside this repo fires it
+                </td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  The stack switches from Nix pins to Go imports
+                </td>
+                <td>
+                  A <code>require github.com/larsartmann/webphone</code> in
+                  nix-international-telephony or pbx-artmann go.mod, or a
+                  flake input dropped in favor of Go module resolution
+                </td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>A sub-domain grows its own release cadence</td>
+                <td>
+                  A deploy artifact splits (island served separately, gateway
+                  extracted as its own process) &mdash; a boundary earns money
+                  at that seam, not before
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Quarterly re-review calendar: next ~2027-01 (set by the 10-14
+            follow-ups). The section-08 blueprint is the standing answer if any
+            trigger fires before then.
+          </p>
+        </section>
+
+        <section id="instead">
+          <h2><span class="num">10</span>What IS worth doing instead</h2>
+          <p>
+            The scored review's only sub-4 dimension (service orientation, 3)
+            and the only modularity dent (cohesion in
+            <code>internal/server</code>) converge on the same work item the
+            series has pointed at since 09-30. One home per fact:
+          </p>
+          <div class="callout callout-teal">
+            <strong>The internal/server carve &mdash; still the right tool</strong>
+            Re-measured today: 26 non-test files, 4,999 LOC (4,859 at the
+            10-14 measurement), trigger adjudicated 2026-10-12, dependency-mapped, phase
+            order recorded (hooks first, csrf leaf, session last under an
+            <code>auth:</code> prefix). Status UNCHANGED: TRIGGERED, due as its
+            own train. TODO_LIST.md is its one home; this report only
+            re-confirms that the carve, not a go.mod split, is the correct
+            response to the coupling concern.
+          </div>
+          <p>
+            No new finding in this entry reaches P2. The three days of heaviest
+            churn since the series began landed inside the existing boundaries
+            &mdash; which is the strongest single argument for them.
+          </p>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">11</span>Appendix</h2>
+          <h3>Package DAG as measured (production imports, go list)</h3>
+          <div class="dep-tree"><span class="root">fan-in top:</span> domain 12 &middot; store 6 &middot; readmodels 5 &middot; blob 5 &middot; config/gateway/pbx 4
+<span class="root">leaves (no internal prod imports):</span> arch, asr, blob, crm, domain, pbx, sipcred, textagent, vcard, web/assets
+<span class="root">layers:</span>
+  cmd/webphone &#8594; app, server, readmodels, userauth, config
+  app &#8594; 17 packages (composition root)
+  server &#8594; 16 packages + views + assets
+  views &#8594; domain, pbx, store, textagent, assets
+  fax/messaging &#8594; blob, domain, gateway, (messaging: store); paperless &#8594; domain, fax
+  retention &#8594; blob, readmodels, store; userauth &#8594; domain, readmodels; session &#8594; domain, pbx
+  readmodels &#8594; domain, store; store &#8594; domain; config &#8594; domain
+<span class="ok">cycles: NONE (DFS over the full production import set)</span></div>
+          <h3>Verification battery (all run 2026-10-17)</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Claim</th>
+                <th>Command</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>24 packages, import + test-import map</td>
+                <td><code>go list -f '...|{{join .Imports ";"}}|...'</code></td>
+                <td class="yes">24 pkgs, map captured</td>
+              </tr>
+              <tr>
+                <td>Acyclic</td>
+                <td>DFS over the go list import set</td>
+                <td class="yes">NONE</td>
+              </tr>
+              <tr>
+                <td>Zero external consumers</td>
+                <td><code>gh search code</code> + local rg sweep</td>
+                <td class="yes">0 Go imports outside repo</td>
+              </tr>
+              <tr>
+                <td>Co-change window</td>
+                <td><code>git log -n 150 --name-only</code> + package tally</td>
+                <td class="yes">5/150 wide (&ge;5 pkgs)</td>
+              </tr>
+              <tr>
+                <td>vendor cost</td>
+                <td><code>du -sh vendor</code>; file count</td>
+                <td class="yes">172 MB / 4,262 files</td>
+              </tr>
+              <tr>
+                <td>Loc counts</td>
+                <td>non-test vs <code>*_test.go</code> LOC, internal+cmd</td>
+                <td class="yes">23,512 prod (8,583 generated) / 20,215 test</td>
+              </tr>
+              <tr>
+                <td>Arch rules</td>
+                <td><code>rg 'func Test' internal/arch/arch_test.go</code></td>
+                <td class="yes">4 rules enumerated</td>
+              </tr>
+              <tr>
+                <td>Diagrams</td>
+                <td><code>d2 --layout=elk --theme=0</code> (exit-code gated)</td>
+                <td class="yes">both SVGs rendered</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Series artifacts</h3>
+          <p>
+            <code>docs/modularization/INDEX.md</code> (rulings index) &middot;
+            <code>2026-10-14_PROPOSAL.html</code> &middot;
+            <code>docs/architecture-understanding/2026-09-19_19-20_architecture-review.html</code>
+            &sect;03 &middot;
+            <code>docs/architecture-understanding/2026-09-30_11-45_architecture-review.html</code>
+            &sect;05 &middot; this entry's D2 pair lives beside its siblings in
+            <code>docs/architecture-understanding/</code>.
+          </p>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-10-17 &middot; Assessed against main after v2.9.0
+            (105 commits past the 10-14 ratification) &middot; go-modularize
+            seven-phase + architecture-review rubric + data-model readiness
+            lens + architecture-visualization D2 pair &middot; All claims
+            verified against source
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
