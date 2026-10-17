@@ -101,6 +101,7 @@ func TestSaveTranscriptValidation(t *testing.T) {
 		{"empty text", `{"callId":"c","direction":"out","remote":"+49","startedAt":1,"text":"  "}`, http.StatusBadRequest},
 		{"no callId", `{"direction":"out","remote":"+49","startedAt":1,"text":"hi"}`, http.StatusBadRequest},
 		{"no startedAt", `{"callId":"c","direction":"out","remote":"+49","text":"hi"}`, http.StatusBadRequest},
+		{"no dialable remote", `{"callId":"c","direction":"out","remote":"---","startedAt":1,"text":"hi"}`, http.StatusBadRequest},
 		{"oversized text", `{"callId":"c","direction":"out","remote":"+49","startedAt":1,"text":"` + strings.Repeat("x", 4001) + `"}`, http.StatusRequestEntityTooLarge},
 		{"not json", `not-json`, http.StatusBadRequest},
 	}
@@ -109,6 +110,29 @@ func TestSaveTranscriptValidation(t *testing.T) {
 		if resp.StatusCode != tc.wantStatus {
 			t.Errorf("%s: %d (want %d)", tc.name, resp.StatusCode, tc.wantStatus)
 		}
+	}
+}
+
+func TestSaveTranscriptSanitizesRemoteAtBoundary(t *testing.T) {
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+
+	resp, body := postTranscript(t, c, "call-9", "out", " +44 1632 960961 ", "hello there")
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("save: %d %s", resp.StatusCode, body)
+	}
+
+	resp, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("history: %d", resp.StatusCode)
+	}
+	page := string(body)
+	if !strings.Contains(page, "+441632960961") {
+		t.Errorf("history must render the boundary-sanitized remote +441632960961; page:\n%s", page)
+	}
+	if strings.Contains(page, "1632 960961") {
+		t.Error("the raw spaced remote leaked through storage into the render")
 	}
 }
 

@@ -201,6 +201,7 @@ a deliberate code change, regenerate:
 | config.identities                            | Rejection                 | internal/config/config.go          |
 | config.paperless.token                       | Rejection                 | internal/config/config.go          |
 | config.paperless.url                         | Rejection                 | internal/config/config.go          |
+| config.retention_days                        | Rejection                 | internal/config/config.go          |
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
 | config.session_ttl                           | Rejection                 | internal/config/config.go          |
 | config.sip.credential_secret_file            | Rejection                 | internal/config/config.go          |
@@ -221,8 +222,13 @@ a deliberate code change, regenerate:
 | crm.request                                  | Infrastructure            | internal/crm/client.go             |
 | crm.transport                                | Transient                 | internal/crm/client.go             |
 | crm.url                                      | Rejection                 | internal/crm/client.go             |
+| domain.channel                               | Rejection                 | internal/domain/message.go         |
+| domain.direction                             | Rejection                 | internal/domain/message.go         |
 | domain.extension                             | Rejection                 | internal/domain/ids.go             |
+| domain.fax_direction                         | Rejection                 | internal/domain/fax.go             |
+| domain.fax_status                            | Rejection                 | internal/domain/fax.go             |
 | domain.id                                    | Corruption                | internal/domain/ids.go             |
+| domain.outbound_status                       | Rejection                 | internal/domain/message.go         |
 | domain.phone                                 | Rejection                 | internal/domain/ids.go             |
 | gateway.form                                 | Infrastructure            | internal/gateway/webhook.go        |
 | gateway.receipt                              | Transient                 | internal/gateway/webhook.go        |

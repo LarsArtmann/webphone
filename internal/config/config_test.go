@@ -677,6 +677,22 @@ func TestValidateRejectsUnknownTimezone(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsNegativeRetentionDays(t *testing.T) {
+	cfg := defaults()
+	cfg.RetentionDays = -1
+	err := validate(cfg)
+	if err == nil || !strings.Contains(err.Error(), "config.retention_days") {
+		t.Errorf("negative retention_days: error %v, want a rejection carrying code config.retention_days", err)
+	}
+	for _, days := range []int{0, 30} {
+		cfg := defaults()
+		cfg.RetentionDays = days
+		if err := validate(cfg); err != nil {
+			t.Errorf("retention_days=%d must validate: %v", days, err)
+		}
+	}
+}
+
 func TestTurnRESTConfig(t *testing.T) {
 	t.Run("default ttl is the 48h credential window", func(t *testing.T) {
 		scrubEnv(t)
