@@ -1,0 +1,78 @@
+direction: down
+
+consumers: {
+  label: "consumers (hypothetical trigger)"
+  stack: nix-international-telephony {
+    shape: cloud
+  }
+  pbx: pbx-artmann {
+    shape: cloud
+  }
+}
+
+root: github.com/LarsArtmann/webphone {
+  label: "webphone (root app module)"
+  style.stroke-dash: 4
+  cmd: cmd/webphone
+  app: internal/app
+  server: internal/server
+  views: internal/web/views
+  config: internal/config
+}
+
+telephony: github.com/LarsArtmann/webphone/telephony v0.x {
+  label: "telephony v0.x"
+  style.stroke-dash: 4
+  gateway: gateway
+  fax: fax
+  messaging: messaging
+  session: session
+  sipcred: sipcred
+}
+
+data: github.com/LarsArtmann/webphone/data v0.x {
+  label: "data v0.x"
+  style.stroke-dash: 4
+  store: store {
+    shape: cylinder
+  }
+  readmodels: readmodels {
+    shape: cylinder
+  }
+  blob: blob {
+    shape: cylinder
+  }
+  retention: retention
+}
+
+integrations: github.com/LarsArtmann/webphone/integrations v0.x {
+  label: "integrations v0.x"
+  style.stroke-dash: 4
+  asr: asr
+  crm: crm
+  pbx: pbx
+  textagent: textagent
+  vcard: vcard
+  paperless: paperless
+}
+
+domainmod: github.com/LarsArtmann/webphone/domain v1.x {
+  label: "domain v1.x (stable core)"
+  style.stroke-dash: 4
+  types: branded ids + value objects + sentinel errors
+  deps: carries go-error-family + nanoid ONLY
+}
+
+consumers.stack -> telephony: "trigger 2: stack adopts Go imports" {
+  style.stroke-dash: 4
+}
+consumers.pbx -> domainmod: "trigger 1: second Go consumer" {
+  style.stroke-dash: 4
+}
+telephony -> domainmod: require v1.x
+data -> domainmod: require v1.x
+integrations -> domainmod: require v1.x
+root -> telephony: "replace => ./telephony"
+root -> data: "replace => ./data"
+root -> integrations: "replace => ./integrations"
+root -> domainmod: "replace => ./domain"

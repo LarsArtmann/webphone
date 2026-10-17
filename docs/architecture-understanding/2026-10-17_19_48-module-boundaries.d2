@@ -1,0 +1,89 @@
+direction: down
+
+composition: {
+  label: "composition root"
+  cmd: cmd/webphone {
+    label: "cmd/webphone"
+  }
+  app: internal/app {
+    label: "internal/app"
+  }
+}
+
+http: {
+  label: "HTTP surface"
+  server: internal/server {
+    label: "internal/server"
+  }
+  views: internal/web/views {
+    label: "web/views"
+  }
+  assets: internal/web/assets {
+    label: "web/assets"
+  }
+}
+
+services: {
+  label: "domain services"
+  fax: fax
+  messaging: messaging
+  session: session
+  retention: retention
+  userauth: userauth
+  gateway: gateway
+  paperless: paperless
+}
+
+data: {
+  label: "persistence"
+  store: store {
+    shape: cylinder
+  }
+  readmodels: readmodels {
+    shape: cylinder
+  }
+  blob: blob {
+    shape: cylinder
+  }
+}
+
+adapters: {
+  label: "adapters + config"
+  asr: asr
+  crm: crm
+  pbx: pbx
+  sipcred: sipcred
+  textagent: textagent
+  vcard: vcard
+  config: config
+}
+
+domain: internal/domain {
+  label: "internal/domain (core, 12 fan-in)"
+  style.fill: "#f4d35e"
+}
+
+composition.cmd -> composition.app: main
+composition.app -> http.server: wires
+composition.app -> services: wires all 7
+composition.app -> data: wires
+composition.app -> adapters: wires
+http.server -> http.views: renders
+http.views -> http.assets: embeds
+http.server -> services: handlers call
+http.server -> data: sessions + read models
+http.server -> adapters: pbx, sipcred, asr, crm, textagent, vcard
+services.fax -> services.gateway: submits
+services.messaging -> services.gateway: submits
+services.paperless -> services.fax: archives inbound
+services.fax -> data: persists
+services.messaging -> data: persists
+services.retention -> data: trims
+services.userauth -> data: engine lookups
+services.session -> adapters.pbx: directory verify
+services.gateway -> adapters.config: loads
+data.readmodels -> data.store: row lifecycle reuse
+http.views -> data: reads
+adapters.config -> domain: types
+data -> domain: row types
+services -> domain: types
