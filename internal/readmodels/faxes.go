@@ -130,14 +130,13 @@ func (s *Faxes) Create(ctx context.Context, job domain.FaxJob) error {
 	return nil
 }
 
-// UpdateStatus advances a job's status; providerRef updates the
-// correlation id when non-empty. errorText is stored verbatim on
-// failure. A missing row answers the not-found sentinel (the SQL
-// UPDATE's updatedOrNotFound arm).
-//
-// branching-flow provider correlation id + verbatim refusal text; a ProviderRef type would ripple into webhook DTOs and golden-pinned rows (triage 2026-10-11)
+// UpdateStatus advances a job's status; the delivery value is the
+// machine's product — providerRef updates the correlation id when
+// non-empty, errorText is stored verbatim on failure. A missing row
+// answers the not-found sentinel (the SQL UPDATE's updatedOrNotFound
+// arm).
 func (s *Faxes) UpdateStatus(
-	ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int, //nolint:branching-flow // swap-safe verdict strings; a ProviderRef brand ripples into webhook DTOs + golden-pinned rows (triage 2026-10-11)
+	ctx context.Context, id domain.FaxID, delivery domain.FaxDelivery,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -153,10 +152,10 @@ func (s *Faxes) UpdateStatus(
 
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.FaxStatusAdvanced{}), domain.FaxStatusAdvanced{
 		Key:         domain.FaxKey{ID: id.String()},
-		Status:      status,
-		ProviderRef: providerRef,
-		Error:       errorText,
-		Pages:       pages,
+		Status:      delivery.Status,
+		ProviderRef: delivery.ProviderRef,
+		Error:       delivery.Error,
+		Pages:       delivery.Pages,
 		AdvancedAt:  time.Now(),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.fax_update", "apply fax status advance")
@@ -171,7 +170,7 @@ func (s *Faxes) UpdateStatus(
 // been since the dedup swap — the hooks seam's engine-backed dedup
 // window (ApplyIdempotent's dedup is process-local by design).
 func (s *Faxes) AdvanceIdempotent(
-	ctx context.Context, idemKey string, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int, //nolint:branching-flow // swap-safe verdict strings; a ProviderRef brand ripples into webhook DTOs + golden-pinned rows (triage 2026-10-11)
+	ctx context.Context, idemKey string, id domain.FaxID, delivery domain.FaxDelivery,
 ) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -187,10 +186,10 @@ func (s *Faxes) AdvanceIdempotent(
 
 	if err := s.models.ApplyIdempotent(ctx, idemKey, metaengine.EventTypeName(domain.FaxStatusAdvanced{}), domain.FaxStatusAdvanced{
 		Key:         domain.FaxKey{ID: id.String()},
-		Status:      status,
-		ProviderRef: providerRef,
-		Error:       errorText,
-		Pages:       pages,
+		Status:      delivery.Status,
+		ProviderRef: delivery.ProviderRef,
+		Error:       delivery.Error,
+		Pages:       delivery.Pages,
 		AdvancedAt:  time.Now(),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.fax_update", "apply fax status advance")

@@ -56,8 +56,8 @@ type Archiver interface {
 // without touching fax.Service, and tests inject fakes through it.
 type Store interface {
 	Create(ctx context.Context, job domain.FaxJob) error
-	UpdateStatus(ctx context.Context, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int) error
-	AdvanceIdempotent(ctx context.Context, idemKey string, id domain.FaxID, status domain.FaxStatus, providerRef, errorText string, pages int) error
+	UpdateStatus(ctx context.Context, id domain.FaxID, delivery domain.FaxDelivery) error
+	AdvanceIdempotent(ctx context.Context, idemKey string, id domain.FaxID, delivery domain.FaxDelivery) error
 	List(ctx context.Context, owner domain.Extension, limit int) ([]domain.FaxJob, error)
 	Get(ctx context.Context, owner domain.Extension, id domain.FaxID) (domain.FaxJob, error)
 	ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, error)
@@ -151,7 +151,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 		// the move is legal; the machine keeps the transition honest anyway.
 		job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxSubmitFailed())
 		job.Error = err.Error()
-		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", job.Error, 0); updateErr != nil {
+		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxFailed, Error: job.Error}); updateErr != nil {
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
 		s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
@@ -164,12 +164,12 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 	// the contract.
 	job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxAccepted())
 	job.ProviderRef = receipt.ProviderRef
-	if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, receipt.ProviderRef, "", 0); updateErr != nil {
+	if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxSending, ProviderRef: receipt.ProviderRef}); updateErr != nil {
 		slog.Warn("fax: mark sending", "error", updateErr)
 	}
 	if receipt.Resolution == gateway.ResolutionImmediate {
 		job.Status, _ = domain.FaxAdvance(job.Status, domain.FaxSettled())
-		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 1); updateErr != nil {
+		if updateErr := s.faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 1}); updateErr != nil {
 			slog.Warn("fax: mark transmitted", "error", updateErr)
 		}
 	}
@@ -279,7 +279,9 @@ func (s *Service) UpdateProviderStatus(
 		// success. Replay dedup is the hooks seam's job (hooksIdem).
 		return job, nil
 	}
-	if err := s.faxes.AdvanceIdempotent(ctx, "faxadv:"+providerRef+":"+string(status), job.ID, next, "", errMsg, pages); err != nil {
+	if err := s.faxes.AdvanceIdempotent(ctx, "faxadv:"+providerRef+":"+string(status), job.ID, domain.FaxDelivery{
+		Status: next, Error: errMsg, Pages: pages,
+	}); err != nil {
 		return domain.FaxJob{}, err
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})

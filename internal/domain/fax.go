@@ -131,6 +131,19 @@ func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, pro
 	}
 }
 
+// FaxDelivery is the machine-owned slice of a fax job row: the
+// advanced status plus the payload the move carried. Mirrors Delivery
+// (messages): value semantics, produced by the fax machine's caller,
+// never hand-assembled from loose strings at a store seam — the swap
+// risk those loose params carried (ref-vs-error-vs-pages) is the type's
+// whole point.
+type FaxDelivery struct {
+	Status      FaxStatus
+	ProviderRef string
+	Error       string
+	Pages       int
+}
+
 // faxEventKind discriminates the fax machine's triggers.
 type faxEventKind uint8
 
