@@ -34,14 +34,14 @@
       }
     },
     {
-      "id": "branching-flow:ANTI_PATTERN_large-struct:/home/lars/projects/webphone/internal/server/server.go:131:6",
+      "id": "branching-flow:ANTI_PATTERN_large-struct:/home/lars/projects/webphone/internal/server/server.go:134:6",
       "rule": "ANTI_PATTERN_large-struct",
       "toolName": "branching-flow",
       "message": "Struct has 21 fields (threshold: 15)",
       "severity": "warning",
       "position": {
         "file": "/home/lars/projects/webphone/internal/server/server.go",
-        "line": 131,
+        "line": 134,
         "column": 6,
         "offset": 0
       },
@@ -249,14 +249,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/enroll.go:20:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/enroll.go:21:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.EnrollTokenMinted and readmodels.EnrollTokenView share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/enroll.go",
-        "line": 20,
+        "line": 21,
         "column": 6,
         "offset": 0
       },
@@ -311,14 +311,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:186:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:187:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.FaxReceipted and readmodels.FaxView share 6 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/fax.go",
-        "line": 186,
+        "line": 187,
         "column": 6,
         "offset": 0
       },
@@ -435,14 +435,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/snippet.go:23:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/snippet.go:24:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.SnippetSaved and readmodels.SnippetView share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/snippet.go",
-        "line": 23,
+        "line": 24,
         "column": 6,
         "offset": 0
       },
@@ -466,14 +466,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:16:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:17:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.CallTranscriptSegment and domain.CallTranscript share 5 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/transcript.go",
-        "line": 16,
+        "line": 17,
         "column": 6,
         "offset": 0
       },
@@ -497,14 +497,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:29:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:31:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.CallTranscript and domain.TranscriptAppended share 4 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/transcript.go",
-        "line": 29,
+        "line": 31,
         "column": 6,
         "offset": 0
       },
@@ -528,14 +528,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:55:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/transcript.go:59:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.TranscriptAppended and readmodels.TranscriptSegmentView share 5 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/transcript.go",
-        "line": 55,
+        "line": 59,
         "column": 6,
         "offset": 0
       },
@@ -590,14 +590,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/contacts.go:91:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/contacts.go:92:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Contacts and readmodels.EnrollTokens share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/contacts.go",
-        "line": 91,
+        "line": 92,
         "column": 6,
         "offset": 0
       },
@@ -621,14 +621,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/enroll.go:59:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/enroll.go:60:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.EnrollTokens and readmodels.Faxes share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/enroll.go",
-        "line": 59,
+        "line": 60,
         "column": 6,
         "offset": 0
       },
@@ -652,14 +652,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:23:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:24:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.FaxView and store.LegacyFax share 6 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/faxes.go",
-        "line": 23,
+        "line": 24,
         "column": 6,
         "offset": 0
       },
@@ -683,14 +683,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:96:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:98:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Faxes and readmodels.Snippets share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/faxes.go",
-        "line": 96,
+        "line": 98,
         "column": 6,
         "offset": 0
       },
@@ -714,14 +714,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:40:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:41:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.SnippetView and store.LegacySnippet share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/snippets.go",
-        "line": 40,
+        "line": 41,
         "column": 6,
         "offset": 0
       },
@@ -745,14 +745,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:84:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:86:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Snippets and readmodels.Transcripts share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/snippets.go",
-        "line": 84,
+        "line": 86,
         "column": 6,
         "offset": 0
       },
@@ -776,14 +776,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/transcripts.go:43:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/transcripts.go:44:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.TranscriptSegmentView and server.exportTranscript share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/transcripts.go",
-        "line": 43,
+        "line": 44,
         "column": 6,
         "offset": 0
       },
@@ -807,14 +807,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/export.go:58:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/export.go:59:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "server.exportTranscript and store.LegacyTranscript share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/server/export.go",
-        "line": 58,
+        "line": 59,
         "column": 6,
         "offset": 0
       },
@@ -838,13 +838,13 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/idempotency.go:54:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/hooks/idempotency.go:54:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
-      "message": "server.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
+      "message": "hooks.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
-        "file": "/home/lars/projects/webphone/internal/server/idempotency.go",
+        "file": "/home/lars/projects/webphone/internal/server/hooks/idempotency.go",
         "line": 54,
         "column": 6,
         "offset": 0
@@ -854,18 +854,18 @@
         "opportunity"
       ],
       "fixStrategy": "suggest",
-      "suggestion": "Extract shared fields into a mixin, server.idemStore shares fields with 1 struct(s): server.unreadCache",
+      "suggestion": "Extract shared fields into a mixin, hooks.idemStore shares fields with 1 struct(s): server.unreadCache",
       "afterCode": "// Extract shared fields into a mixin struct:\ntype idemStoreMixin struct {\n\tmu sync.Mutex\n\tttl time.Duration\n}\n\n// idemStore embeds the mixin for field reuse\ntype idemStore struct {\n\tidemStoreMixin\n\tentries map[string]time.Time\n}\n\n// unreadCache also embeds the mixin\ntype unreadCache struct {\n\tidemStoreMixin\n\titems map[domain.Extension]unreadEntry\n}\n",
       "confidence": 0.95,
-      "groupId": "mixin:server.idemStore",
+      "groupId": "mixin:hooks.idemStore",
       "metadata": {
         "category": "opportunity",
         "confidence": "low",
-        "message": "server.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
+        "message": "hooks.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
         "pattern": "mixin",
         "patternName": "mixin",
         "relatedCount": "1",
-        "struct": "server.idemStore"
+        "struct": "hooks.idemStore"
       }
     },
     {
@@ -984,14 +984,14 @@
       }
     },
     {
-      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/domain/contact.go:51",
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/domain/contact.go:52",
       "rule": "DUPLICATE_TYPE",
       "toolName": "branching-flow",
       "message": "Duplicate struct 'SharedContact' with same signature as 2 other type(s)",
       "severity": "warning",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/contact.go",
-        "line": 51,
+        "line": 52,
         "column": 0,
         "offset": 0
       },
@@ -1004,19 +1004,19 @@
       "range": {
         "start": {
           "file": "/home/lars/projects/webphone/internal/domain/contact.go",
-          "line": 51,
+          "line": 52,
           "column": 0,
           "offset": 0
         },
         "end": {
           "file": "/home/lars/projects/webphone/internal/domain/contact.go",
-          "line": 54,
+          "line": 55,
           "column": 0,
           "offset": -1
         }
       },
       "confidence": 0.95,
-      "groupId": "dbf338e87ee834ab",
+      "groupId": "6ddff1ee1270a500",
       "metadata": {
         "groupCount": "3",
         "package": "domain",
@@ -1110,14 +1110,14 @@
       }
     },
     {
-      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/readmodels/contacts.go:42",
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/readmodels/contacts.go:43",
       "rule": "DUPLICATE_TYPE",
       "toolName": "branching-flow",
       "message": "Duplicate struct 'ContactView' with same signature as 1 other type(s)",
       "severity": "warning",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/contacts.go",
-        "line": 42,
+        "line": 43,
         "column": 0,
         "offset": 0
       },
@@ -1130,13 +1130,13 @@
       "range": {
         "start": {
           "file": "/home/lars/projects/webphone/internal/readmodels/contacts.go",
-          "line": 42,
+          "line": 43,
           "column": 0,
           "offset": 0
         },
         "end": {
           "file": "/home/lars/projects/webphone/internal/readmodels/contacts.go",
-          "line": 48,
+          "line": 49,
           "column": 0,
           "offset": -1
         }
@@ -1152,14 +1152,14 @@
       }
     },
     {
-      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/server/contacts_api.go:42",
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/server/api/contacts_api.go:30",
       "rule": "DUPLICATE_TYPE",
       "toolName": "branching-flow",
       "message": "Duplicate struct 'apiSharedContact' with same signature as 2 other type(s)",
       "severity": "warning",
       "position": {
-        "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
-        "line": 42,
+        "file": "/home/lars/projects/webphone/internal/server/api/contacts_api.go",
+        "line": 30,
         "column": 0,
         "offset": 0
       },
@@ -1171,37 +1171,37 @@
       "suggestion": "Consider consolidating into shared type",
       "range": {
         "start": {
-          "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
-          "line": 42,
+          "file": "/home/lars/projects/webphone/internal/server/api/contacts_api.go",
+          "line": 30,
           "column": 0,
           "offset": 0
         },
         "end": {
-          "file": "/home/lars/projects/webphone/internal/server/contacts_api.go",
-          "line": 45,
+          "file": "/home/lars/projects/webphone/internal/server/api/contacts_api.go",
+          "line": 33,
           "column": 0,
           "offset": -1
         }
       },
       "confidence": 0.95,
-      "groupId": "dbf338e87ee834ab",
+      "groupId": "6ddff1ee1270a500",
       "metadata": {
         "groupCount": "3",
-        "package": "server",
+        "package": "api",
         "typeKind": "struct",
         "typeName": "apiSharedContact",
         "verdict": "actionable"
       }
     },
     {
-      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/store/legacy_contacts.go:52",
+      "id": "branching-flow:DUPLICATE_TYPE:/home/lars/projects/webphone/internal/store/legacy_contacts.go:53",
       "rule": "DUPLICATE_TYPE",
       "toolName": "branching-flow",
       "message": "Duplicate struct 'LegacyContact' with same signature as 1 other type(s)",
       "severity": "warning",
       "position": {
         "file": "/home/lars/projects/webphone/internal/store/legacy_contacts.go",
-        "line": 52,
+        "line": 53,
         "column": 0,
         "offset": 0
       },
@@ -1214,13 +1214,13 @@
       "range": {
         "start": {
           "file": "/home/lars/projects/webphone/internal/store/legacy_contacts.go",
-          "line": 52,
+          "line": 53,
           "column": 0,
           "offset": 0
         },
         "end": {
           "file": "/home/lars/projects/webphone/internal/store/legacy_contacts.go",
-          "line": 58,
+          "line": 59,
           "column": 0,
           "offset": -1
         }
@@ -1268,7 +1268,7 @@
         }
       },
       "confidence": 0.95,
-      "groupId": "dbf338e87ee834ab",
+      "groupId": "6ddff1ee1270a500",
       "metadata": {
         "groupCount": "3",
         "package": "vcard",
@@ -1304,13 +1304,39 @@
       }
     },
     {
-      "id": "branching-flow:IFACE_COMPLETE:/home/lars/projects/webphone/internal/server/idempotency.go:18",
+      "id": "branching-flow:IFACE_COMPLETE:/home/lars/projects/webphone/internal/server/api/api.go:30",
+      "rule": "IFACE_COMPLETE",
+      "toolName": "branching-flow",
+      "message": "interface Server has only one implementer (server.handlers) with 2 methods, consider using the concrete type directly",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/server/api/api.go",
+        "line": 30,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "type-safety",
+      "tags": [
+        "iface-complete"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Interface Server has only one implementer (server.handlers). Consider using the concrete type directly, or add a second implementation to justify the abstraction.",
+      "confidence": 0.95,
+      "metadata": {
+        "implementer": "server.handlers",
+        "interface": "Server",
+        "methodCount": "2",
+        "severity": "low"
+      }
+    },
+    {
+      "id": "branching-flow:IFACE_COMPLETE:/home/lars/projects/webphone/internal/server/hooks/idempotency.go:18",
       "rule": "IFACE_COMPLETE",
       "toolName": "branching-flow",
       "message": "interface DedupWindow has only one implementer (app.engineDedupWindow) with 3 methods, consider using the concrete type directly",
       "severity": "info",
       "position": {
-        "file": "/home/lars/projects/webphone/internal/server/idempotency.go",
+        "file": "/home/lars/projects/webphone/internal/server/hooks/idempotency.go",
         "line": 18,
         "column": 0,
         "offset": 0
@@ -1328,23 +1354,72 @@
         "methodCount": "3",
         "severity": "low"
       }
+    },
+    {
+      "id": "branching-flow:PHANTOM-TRANSPOSE:/home/lars/projects/webphone/internal/server/hooks/webhooks.go:145",
+      "rule": "PHANTOM-TRANSPOSE",
+      "toolName": "branching-flow",
+      "message": "swap hazard: params #1 'secret' and #2 'unavailable' share type string; brand them",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/server/hooks/webhooks.go",
+        "line": 145,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "type-safety",
+      "tags": [
+        "phantom-type"
+      ],
+      "fixStrategy": "none",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/server/hooks/webhooks.go",
+          "line": 145,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/server/hooks/webhooks.go",
+          "line": 145,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "snippet": "secret, unavailable string",
+      "confidence": 0.75,
+      "metadata": {
+        "callee": "",
+        "confidence": "high",
+        "kindDisplay": "fn param",
+        "name": "secret, unavailable",
+        "originName": "",
+        "pairNames": "secret,unavailable",
+        "rule": "transpose",
+        "slotName": "",
+        "suggestedType": "Secret, Unavailable",
+        "suggestion": "create type Secret, Unavailable",
+        "type": "string",
+        "underlyingType": "string"
+      }
     }
   ],
   "summary": {
-    "total": 40,
+    "total": 42,
     "bySeverity": {
-      "info": 29,
-      "warning": 11
+      "info": 30,
+      "warning": 12
     },
     "byCategory": {
       "duplication": 9,
       "structure": 29,
-      "type-safety": 2
+      "type-safety": 4
     },
     "byFixStrategy": {
-      "suggest": 40
+      "none": 1,
+      "suggest": 41
     },
-    "filesAffected": 24,
+    "filesAffected": 26,
     "filesScanned": 0,
     "suppressed": 0
   },

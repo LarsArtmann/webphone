@@ -22,6 +22,11 @@ import (
 // implemented by the server's handlers hub: the session gate (the ONE
 // 401 writer for missing sessions) and the contacts SSE nudge (the
 // hubs are wiring-owned).
+//
+// branching-flow IFACE_COMPLETE (baselined): wiring seam by design —
+// the scan cannot see the test stub (contextSessionGate) as the second
+// implementer, and the seam exists precisely so the 401 wording and the
+// SSE push keep their one home in internal/server.
 type Server interface {
 	// RequireSession gates a handler on the attached session; on
 	// failure it has already written the 401.
@@ -35,12 +40,12 @@ type Server interface {
 // internal/server at construction. Nil-optionality follows the
 // server's Deps docs for each seam.
 type Deps struct {
-	Server     Server
-	Contacts   *readmodels.Contacts
-	Shared     []domain.SharedContact
-	CRM        *crm.Resolver
-	CallsIdem  hooks.Gate
-	ASR        asr.Provider
+	Server      Server
+	Contacts    *readmodels.Contacts
+	Shared      []domain.SharedContact
+	CRM         *crm.Resolver
+	CallsIdem   hooks.Gate
+	ASR         asr.Provider
 	Transcripts *readmodels.Transcripts
 }
 
