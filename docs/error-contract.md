@@ -170,7 +170,6 @@ a deliberate code change, regenerate:
 | asr.request                                  | Infrastructure            | internal/asr/asr.go                |
 | asr.transport                                | Transient                 | internal/asr/asr.go                |
 | asr.url                                      | Rejection                 | internal/asr/asr.go                |
-| blob.escape                                  | Rejection                 | internal/blob/store.go             |
 | blob.name                                    | Infrastructure            | internal/blob/store.go             |
 | blob.open                                    | Infrastructure            | internal/blob/store.go             |
 | blob.probe                                   | Infrastructure            | internal/blob/store.go             |
@@ -230,6 +229,7 @@ a deliberate code change, regenerate:
 | domain.id                                    | Corruption                | internal/domain/ids.go             |
 | domain.outbound_status                       | Rejection                 | internal/domain/message.go         |
 | domain.phone                                 | Rejection                 | internal/domain/ids.go             |
+| domain.relpath                               | Rejection                 | internal/domain/relpath.go         |
 | gateway.form                                 | Infrastructure            | internal/gateway/webhook.go        |
 | gateway.receipt                              | Transient                 | internal/gateway/webhook.go        |
 | gateway.request                              | Infrastructure            | internal/gateway/webhook.go        |

@@ -49,6 +49,9 @@ func goListInternal(t *testing.T) []listPackage {
 
 // TestDomainImportsNothingInternal keeps the domain layer pure: it may
 // not depend on any sibling internal package (AGENTS.md invariant).
+// This purity is what lets domain.RelPath own the blob-edge path brand:
+// its validation is pure string logic, so the escape guard stays
+// type-level without dragging storage concerns into domain.
 func TestDomainImportsNothingInternal(t *testing.T) {
 	const module = "github.com/larsartmann/webphone/internal/"
 	for _, pkg := range goListInternal(t) {
