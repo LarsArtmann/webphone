@@ -23,8 +23,8 @@ import (
 func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	const helperFile = "actions.go"
 	const hookFile = "../hooks/webhooks.go" // the secret gate: provider hooks 401 on a bad secret, not on a missing session
-	const loginFile = "session_api.go"                            // the login gate: bad credentials, not a missing session
-	const passkeyFile = "passkey_api.go"                          // the passkey login gate: unknown email / no credential, uniform by design
+	const loginFile = "session_api.go"      // the login gate: bad credentials, not a missing session
+	const passkeyFile = "passkey_api.go"    // the passkey login gate: unknown email / no credential, uniform by design
 	sawHelper := false
 	entries, err := filepath.Glob("*.go")
 	if err != nil {

@@ -331,7 +331,7 @@ a deliberate code change, regenerate:
 | userauth.password_file.read                  | Rejection                 | internal/userauth/userauth.go      |
 | userauth.register.exists_unreadable          | Infrastructure            | internal/userauth/userauth.go      |
 | userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go      |
-| webhook.fax_pages                            | Rejection                 | internal/server/webhooks.go        |
+| webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go  |
 
 <!-- error-code-registry: END -->
 

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Carved the machine-facing webhook ingest and its idempotency gates out
+  of the server wiring into `internal/server/hooks` (behavior parity:
+  same routes, same status codes, same dedupe semantics; the mount, flood
+  budgets and Deps stay in `internal/server`, and the composition root's
+  dedup adapter + sweeper now target `hooks.DedupWindow`) — phase 1 of
+  the round-5 `internal/server` carve train.
 - Brought the strong-id brand-adoption scan (`brandid-lint -rules all`) to
   zero findings: every deliberately-raw identifier site (wire DTOs, engine
   read-model shapes, retired legacy rows, foreign tokens) now carries a
