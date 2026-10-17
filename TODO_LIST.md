@@ -321,3 +321,15 @@ health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked
 Owner/stack legs that block or derive from webphone work: repair the stack FreeSWITCH `mod_enum` build → run the stack browser E2E → relock to webphone `cc98c2e` (or newer) + pbx-artmann re-pin; **the cascade-fix train (2026-10-04, island style scoped to `.island` + history filter `wp-mini`) AND the passkey-tail session (same day: csrf.js module, whoamiLine move, enroll error copy) changed served markup/assets — the stack browser E2E re-run above covers both trains' obligation**; stack `services.webphone.paperless` module option + smoke arm; the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column; ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` + CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified handovers only.
 
 **Evidence:** 02:54 / 04:07 / 05:26 reports §f; owner command sheet `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
+
+### Round-5 plan tail: process folds + row hygiene (2026-10-17 harvest)
+
+**Status:** 🟢 `OPEN` · **Priority:** Low · **Effort:** S — full plan: [docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md](docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md) (E21–E23, F74–F87)
+
+- lessons.md refinements from the 10-17 daemon-race entry: self-verifying transform scripts (`assert out != src` before any success print) + verify-a-change-exists-before-describing-it-in-a-commit-message (the no-op realigner incident).
+- Snapshot-rot header convention for future status reports ("claims verified as of HH:MM; push/CI statements rot fastest").
+- d2 cheat-sheet upstream fix (`style.stroke-dash` on v0.9.0; blocked on the sitting's Q3) + human eyeball of the 2026-10-17 D2 pair (the 4th modularization entry's diagrams — image-blind assistant ceiling).
+- Metaengine TODO row close-out: G3's release leg shipped via v2.9.0 (changelog fold `0f1031d`) — verify + rewrite the row; F019/F026 cqrs-lint hints.
+- Carve row two-method number refresh (4,999 non-test LOC measured 10-17); 10-14 go-modularize status 26-followup routing audit; markdownlint posture execution (post-sitting).
+
+**Evidence:** status reports `docs/status/2026-10-17_20-16_*` + `2026-10-17_20-34_*`; round-5 plan Errata §1–§3.
