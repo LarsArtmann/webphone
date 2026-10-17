@@ -158,6 +158,43 @@ func ChannelOf(attachmentCount int) Channel {
 	return ChannelSMS
 }
 
+// NewOutboundMessage builds the row Send persists: direction out,
+// channel derived from the attachment count, lifecycle born queued.
+// The construction makes the illegal pairs unbuildable — an outbound
+// row without a lifecycle, a direction that disagrees with the status,
+// a channel that disagrees with the attachments — because direction,
+// channel and status are not parameters: they are consequences.
+func NewOutboundMessage(id MessageID, thread ThreadID, owner Extension, remote Phone, body string, attachmentCount int, at time.Time) Message {
+	return Message{
+		ID:        id,
+		ThreadID:  thread,
+		Owner:     owner,
+		Remote:    remote,
+		Direction: DirectionOutbound,
+		Channel:   ChannelOf(attachmentCount),
+		Body:      body,
+		Status:    StatusQueued,
+		CreatedAt: at,
+	}
+}
+
+// NewInboundMessage builds the row Receive persists: direction in,
+// channel derived from the attachment count, and NO lifecycle — the
+// zero OutboundStatus is the inbound invariant (delivery is a fact),
+// enforced the same way: not a parameter, so not expressible wrong.
+func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Phone, body string, attachmentCount int, at time.Time) Message {
+	return Message{
+		ID:        id,
+		ThreadID:  thread,
+		Owner:     owner,
+		Remote:    remote,
+		Direction: DirectionInbound,
+		Channel:   ChannelOf(attachmentCount),
+		Body:      body,
+		CreatedAt: at,
+	}
+}
+
 // InboundMessage is an inbound message as it crosses the gateway boundary
 // (webhook or dev loopback). It carries no status: inbound delivery is a
 // fact, not a lifecycle.

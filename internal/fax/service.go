@@ -120,16 +120,7 @@ func (s *Service) Send(
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool pdf")
 	}
 
-	job := domain.FaxJob{
-		ID:           domain.GenerateFaxID(),
-		Owner:        owner,
-		Remote:       to,
-		Direction:    domain.FaxOutbound,
-		Status:       domain.FaxQueued,
-		DocumentPath: path.String(),
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
+	job := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, to, path.String(), now)
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax job")
 	}
@@ -210,16 +201,7 @@ func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.
 	_ = probe.Close() //nolint:erraudit // existence probe: nothing to read
 
 	now := s.clock()
-	retry := domain.FaxJob{
-		ID:           domain.GenerateFaxID(),
-		Owner:        owner,
-		Remote:       job.Remote,
-		Direction:    domain.FaxOutbound,
-		Status:       domain.FaxQueued,
-		DocumentPath: job.DocumentPath,
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
+	retry := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, job.Remote, job.DocumentPath, now)
 	if err := s.faxes.Create(ctx, retry); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax retry")
 	}
@@ -239,18 +221,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool inbound pdf")
 	}
 
-	job := domain.FaxJob{
-		ID:           domain.GenerateFaxID(),
-		Owner:        inbound.Owner,
-		Remote:       inbound.From,
-		Direction:    domain.FaxInbound,
-		Status:       domain.FaxReceived,
-		Pages:        inbound.Pages,
-		DocumentPath: path.String(),
-		ProviderRef:  inbound.ProviderRef,
-		CreatedAt:    now,
-		UpdatedAt:    now,
-	}
+	job := domain.NewInboundFaxJob(domain.GenerateFaxID(), inbound.Owner, inbound.From, path.String(), inbound.ProviderRef, inbound.Pages, now)
 	if err := s.faxes.Create(ctx, job); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist inbound fax")
 	}

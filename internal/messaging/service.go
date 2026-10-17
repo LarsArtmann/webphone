@@ -101,17 +101,7 @@ func (s *Service) Send(
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}
 
-	msg := domain.Message{
-		ID:        domain.GenerateMessageID(),
-		ThreadID:  threadID,
-		Owner:     owner,
-		Remote:    to,
-		Direction: domain.DirectionOutbound,
-		Channel:   domain.ChannelOf(len(uploads)),
-		Body:      body,
-		Status:    domain.StatusQueued,
-		CreatedAt: now,
-	}
+	msg := domain.NewOutboundMessage(domain.GenerateMessageID(), threadID, owner, to, body, len(uploads), now)
 
 	outbound := gateway.OutboundMessage{Owner: owner, To: to, Body: body}
 	for _, upload := range uploads {
@@ -182,16 +172,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}
 
-	msg := domain.Message{
-		ID:        domain.GenerateMessageID(),
-		ThreadID:  threadID,
-		Owner:     inbound.Owner,
-		Remote:    inbound.From,
-		Direction: domain.DirectionInbound,
-		Channel:   domain.ChannelOf(len(inbound.Attachments)),
-		Body:      inbound.Body,
-		CreatedAt: now,
-	}
+	msg := domain.NewInboundMessage(domain.GenerateMessageID(), threadID, inbound.Owner, inbound.From, inbound.Body, len(inbound.Attachments), now)
 	for _, att := range inbound.Attachments {
 		path, err := s.blobs.Save("attachments", extensionOf(att), att.Bytes)
 		if err != nil {

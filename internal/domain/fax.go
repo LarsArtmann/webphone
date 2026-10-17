@@ -96,6 +96,41 @@ type InboundFax struct {
 	ProviderRef string
 }
 
+// NewOutboundFaxJob builds the row Send and Resend persist: direction
+// out, status born queued — faxMoves' only entry state. Direction and
+// status are consequences of "outbound send", not parameters, so a
+// queued inbound job (or a received outbound one) has no construction
+// path.
+func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath string, at time.Time) FaxJob {
+	return FaxJob{
+		ID:           id,
+		Owner:        owner,
+		Remote:       remote,
+		Direction:    FaxOutbound,
+		Status:       FaxQueued,
+		DocumentPath: documentPath,
+		CreatedAt:    at,
+		UpdatedAt:    at,
+	}
+}
+
+// NewInboundFaxJob builds the row Receive persists: the received FACT —
+// direction in, status received, no lifecycle, stamps equal at birth.
+func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, providerRef string, pages int, at time.Time) FaxJob {
+	return FaxJob{
+		ID:           id,
+		Owner:        owner,
+		Remote:       remote,
+		Direction:    FaxInbound,
+		Status:       FaxReceived,
+		Pages:        pages,
+		DocumentPath: documentPath,
+		ProviderRef:  providerRef,
+		CreatedAt:    at,
+		UpdatedAt:    at,
+	}
+}
+
 // faxEventKind discriminates the fax machine's triggers.
 type faxEventKind uint8
 
