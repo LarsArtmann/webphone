@@ -287,7 +287,7 @@ func TestDeleteTranscriptRoundTripOwnerScopingAndIdempotency(t *testing.T) {
 	if resp, _ := other.do(http.MethodDelete, "/api/transcripts?call=call-1", nil, ""); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("other's delete: %d (want 204)", resp.StatusCode)
 	}
-	resp, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
 	if !strings.Contains(string(body), "guten tag") {
 		t.Errorf("another extension's delete erased the owner's transcript")
 	}
@@ -299,7 +299,7 @@ func TestDeleteTranscriptRoundTripOwnerScopingAndIdempotency(t *testing.T) {
 	if resp, _ := c.do(http.MethodDelete, "/api/transcripts?call=call-1", nil, ""); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("repeat delete: %d (want 204)", resp.StatusCode)
 	}
-	resp, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
 	page = string(body)
 	if strings.Contains(page, "guten tag") || strings.Contains(page, "+4989123456") {
 		t.Errorf("call-1 transcript survived its delete:\n%s", page)

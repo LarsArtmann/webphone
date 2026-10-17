@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read-model shapes, retired legacy rows, foreign tokens) now carries a
   recorded suppression beside its existing rationale comment. Removed a
   tautological dead condition in the userauth shutdown path.
+- Closed the data-model vocabulary gaps (round-5 batch 1): message
+  Channel/Direction/OutboundStatus and fax Status/FaxDirection gained
+  `Parse*`/`Must*` homes (empty stays legal for inbound rows), and the
+  store scan sites now panic naming the seam on corrupt enum columns
+  instead of laundering garbage rows; `retention_days` rejects negatives
+  at `config.validate`; the gateway constructors dispatch exhaustively
+  (an unknown mode panics instead of degrading to loopback); transcript
+  POSTs parse the remote through the domain phone rule at the boundary
+  and store the sanitized form so transcript grouping keys can never
+  drift from the threads' spelling.
 
 ## [2.9.0] - 2026-10-15
 
