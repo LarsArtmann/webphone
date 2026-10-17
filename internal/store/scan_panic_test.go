@@ -26,7 +26,7 @@ func (r fakeRow) Scan(dest ...any) error {
 // wellFormedMessageRow mirrors one stored outbound SMS row.
 func wellFormedMessageRow() []any {
 	return []any{
-		"msg_AAAAAAAAEEEEEEEEEEEEEEEE", "thr_AAAAAAAAEEEEEEEEEEEEEEEE", "1001", "+441632960961",
+		"AAAAAAAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBBBBBBB", "1001", "+441632960961",
 		"out", "sms", "hello", "sent", "ref-1", "", "", int64(1760000000),
 	}
 }
