@@ -122,12 +122,20 @@ exclude:
 #   in vendor/modules.txt, but not explicitly required in go.mod" — Go's
 #   vendoring marks test/transitive-only modules explicit without a
 #   direct require) HEALED with the metaengine train's tidy + direct
-#   go-cqrs-lite requires: the fresh run reports exactly 1 info finding
-#   (`ignore-needed`), the deliberate committed-vendor stance (this repo
-#   COMMITS vendor/ and builds -mod=vendor on purpose). AGENTS.md rule
-#   stands: do NOT hand-edit vendor markers. The real gate still exists:
-#   `nix flake check` builds the vendored tree in the sandbox — a
-#   go.mod/modules.txt lie fails the build.
+#   go-cqrs-lite requires. 2026-10-17 correction: the earlier note's
+#   "committed-vendor stance" was DRIFT — this repo has NEVER committed
+#   vendor/ (`git log -- vendor/` is empty; it is git-ignored) and nothing
+#   builds -mod=vendor by design: nix/packages.nix builds proxyVendor=true
+#   from the module proxy, and the CI checkout has no vendor/ at all. The
+#   2026-10-15 "1 info `ignore-needed`" row pointed at a stray LOCAL
+#   `go mod vendor` artifact (a stale copy silently activates -mod=vendor
+#   for local builds and masks module-graph breakage, the templ-components
+#   v1.20.0 poison class). Trashed 2026-10-17; a cache-clean
+#   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow -s gomod-check` then reports
+#   ZERO findings and does not recreate it. If one ever reappears it stays
+#   untracked; do NOT hand-edit vendor markers. The real gate still
+#   exists: `nix flake check` builds in the sandbox — a go.mod lie fails
+#   the build.
 # LOAD-BEARING POLICY (2026-10-08 incident): the single remaining skip
 # below is a reasoned suppression — a daemon commit once truncated 69
 # lines here and the missing skips re-failed the gate silently for
