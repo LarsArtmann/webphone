@@ -303,8 +303,8 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 	}
 	if lastBody.Valid {
 		sum.LastBody = lastBody.String
-		sum.LastDirection = domain.Direction(lastDir.String)
-		sum.LastChannel = domain.Channel(lastCh.String)
+		sum.LastDirection = domain.MustDirection(lastDir.String)
+		sum.LastChannel = domain.MustChannel(lastCh.String)
 	}
 
 	return sum, nil
@@ -352,10 +352,10 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 		ThreadID:      domain.MustThreadID(threadID),
 		Owner:         domain.MustParseExtension(owner),
 		Remote:        domain.MustParsePhone(remote),
-		Direction:     domain.Direction(direction),
-		Channel:       domain.Channel(channel),
+		Direction:     domain.MustDirection(direction),
+		Channel:       domain.MustChannel(channel),
 		Body:          body,
-		Status:        domain.OutboundStatus(status),
+		Status:        domain.MustOutboundStatus(status),
 		ProviderRef:   providerRef,
 		FailureKind:   domain.FailureKind(failureKind),
 		FailureDetail: failureDetail,

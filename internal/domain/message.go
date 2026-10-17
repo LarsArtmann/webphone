@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/larsartmann/go-error-family"
+)
 
 // Channel distinguishes SMS (plain text) from MMS (carries attachments).
 // The channel of a message is derived: attachments present means MMS.
@@ -13,6 +17,21 @@ const (
 	ChannelMMS Channel = "mms"
 )
 
+// ParseChannel validates a stored or wire channel string.
+func ParseChannel(raw string) (Channel, error) {
+	switch Channel(raw) {
+	case ChannelSMS, ChannelMMS:
+		return Channel(raw), nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "domain.channel", "channel %q is not one of sms|mms", raw)
+	}
+}
+
+// MustChannel is ParseChannel for row-scan sites: the writer only ever
+// stores parsed channels, so an unparsable value is a corrupt row the
+// operator must see at first read, not a mystery chip rendered to a user.
+func MustChannel(raw string) Channel { return must(ParseChannel(raw)) }
+
 // Direction tells which way a message traveled.
 type Direction string
 
@@ -22,6 +41,21 @@ const (
 	// DirectionOutbound traveled from the extension to the remote party.
 	DirectionOutbound Direction = "out"
 )
+
+// ParseDirection validates a stored or wire direction string.
+func ParseDirection(raw string) (Direction, error) {
+	switch Direction(raw) {
+	case DirectionInbound, DirectionOutbound:
+		return Direction(raw), nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "domain.direction", "direction %q is not one of in|out", raw)
+	}
+}
+
+// MustDirection is ParseDirection for row-scan and importer sites: a
+// corrupt row fails fast at first read instead of rendering as a lying
+// arrow icon.
+func MustDirection(raw string) Direction { return must(ParseDirection(raw)) }
 
 // OutboundStatus is the delivery lifecycle of an outbound message. The zero
 // value is "not applicable" and is the only legal status for inbound
@@ -38,6 +72,21 @@ const (
 	// StatusFailed: the gateway or provider rejected the message.
 	StatusFailed OutboundStatus = "failed"
 )
+
+// ParseOutboundStatus validates a stored or wire status string; the zero
+// value is legal (inbound rows carry no lifecycle).
+func ParseOutboundStatus(raw string) (OutboundStatus, error) {
+	switch OutboundStatus(raw) {
+	case "", StatusQueued, StatusSent, StatusDelivered, StatusFailed:
+		return OutboundStatus(raw), nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "domain.outbound_status", "status %q is not one of queued|sent|delivered|failed (or empty for inbound)", raw)
+	}
+}
+
+// MustOutboundStatus is ParseOutboundStatus for row-scan sites (see
+// MustChannel).
+func MustOutboundStatus(raw string) OutboundStatus { return must(ParseOutboundStatus(raw)) }
 
 // Thread is one conversation between an extension and a remote number,
 // keyed by (Owner, Remote). Rows are created on first message and

@@ -489,6 +489,9 @@ func validate(cfg Config) error {
 	if cfg.SessionTTL <= 0 {
 		return errorfamily.NewRejection("config.session_ttl", "session_ttl must be positive")
 	}
+	if cfg.RetentionDays < 0 {
+		return errorfamily.Newf(errorfamily.Rejection, "config.retention_days", "retention_days must not be negative (0 = keep forever, N = delete content older than N days)")
+	}
 	if cfg.Timezone != "" {
 		if _, err := time.LoadLocation(cfg.Timezone); err != nil {
 			return errorfamily.WrapRejectionf(err, "config.timezone", "timezone %q is not an IANA zone name", cfg.Timezone)

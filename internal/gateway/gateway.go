@@ -76,13 +76,20 @@ type FaxGateway interface {
 	SendFax(ctx context.Context, fax OutboundFax) (Receipt, error)
 }
 
-// NewMessageGateway picks the message gateway by config mode.
+// NewMessageGateway picks the message gateway by config mode. The
+// switch is exhaustive on purpose: an unknown mode PANICS here instead
+// of silently degrading to loopback — config.validate is the rejection
+// home, so an unvalidated mode reaching this constructor is a wiring
+// bug, not a user error, and swallowing the traffic into a pretend
+// gateway would hide it.
 func NewMessageGateway(cfg config.Gateway, client *http.Client) MessageGateway {
 	switch cfg.Mode {
 	case config.GatewayWebhook:
 		return &Webhook{provider{cfg: cfg, client: client}}
-	default:
+	case config.GatewayLoopback:
 		return &Loopback{prefix: "loopback-msg"}
+	default:
+		panic(fmt.Sprintf("gateway: message mode %q is not one of loopback|webhook — config.validate should have rejected it", cfg.Mode))
 	}
 }
 
@@ -91,8 +98,10 @@ func NewFaxGateway(cfg config.Gateway, client *http.Client) FaxGateway {
 	switch cfg.Mode {
 	case config.GatewayWebhook:
 		return &FaxWebhook{provider{cfg: cfg, client: client}}
-	default:
+	case config.GatewayLoopback:
 		return &Loopback{prefix: "loopback-fax"}
+	default:
+		panic(fmt.Sprintf("gateway: fax mode %q is not one of loopback|webhook — config.validate should have rejected it", cfg.Mode))
 	}
 }
 

@@ -66,14 +66,12 @@ func (f LegacyFax) ToFax() (domain.FaxJob, bool) {
 	if err != nil {
 		return domain.FaxJob{}, false
 	}
-	direction := domain.FaxDirection(f.Direction)
-	if direction != domain.FaxOutbound && direction != domain.FaxInbound {
+	direction, err := domain.ParseFaxDirection(f.Direction)
+	if err != nil {
 		return domain.FaxJob{}, false
 	}
-	status := domain.FaxStatus(f.Status)
-	switch status {
-	case domain.FaxQueued, domain.FaxSending, domain.FaxTransmitted, domain.FaxReceived, domain.FaxFailed:
-	default:
+	status, err := domain.ParseFaxStatus(f.Status)
+	if err != nil {
 		return domain.FaxJob{}, false
 	}
 	id, err := domain.ParseFaxID(f.ID)

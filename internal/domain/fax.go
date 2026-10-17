@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/larsartmann/go-error-family"
+)
 
 // FaxDirection tells which way a fax traveled.
 type FaxDirection string
@@ -33,6 +37,33 @@ const (
 	// FaxFailed: transmission failed; Error carries the reason.
 	FaxFailed FaxStatus = "failed"
 )
+
+// ParseFaxStatus validates a stored or wire fax status string.
+func ParseFaxStatus(raw string) (FaxStatus, error) {
+	switch FaxStatus(raw) {
+	case FaxQueued, FaxSending, FaxTransmitted, FaxReceived, FaxFailed:
+		return FaxStatus(raw), nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "domain.fax_status", "fax status %q is not one of queued|sending|transmitted|received|failed", raw)
+	}
+}
+
+// MustFaxStatus is ParseFaxStatus for importer and scan sites: a value
+// outside the lifecycle table is a corrupt row, not a renderable state.
+func MustFaxStatus(raw string) FaxStatus { return must(ParseFaxStatus(raw)) }
+
+// ParseFaxDirection validates a stored or wire fax direction string.
+func ParseFaxDirection(raw string) (FaxDirection, error) {
+	switch FaxDirection(raw) {
+	case FaxOutbound, FaxInbound:
+		return FaxDirection(raw), nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "domain.fax_direction", "fax direction %q is not one of in|out", raw)
+	}
+}
+
+// MustFaxDirection is ParseFaxDirection for importer and scan sites.
+func MustFaxDirection(raw string) FaxDirection { return must(ParseFaxDirection(raw)) }
 
 // FaxJob is one fax transmission attempt (outbound) or one received
 // document (inbound). The PDF lives on disk at DocumentPath.

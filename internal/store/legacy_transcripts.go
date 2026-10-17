@@ -58,8 +58,8 @@ func (t LegacyTranscript) ToSegment() (domain.CallTranscriptSegment, bool) {
 	if err != nil {
 		return domain.CallTranscriptSegment{}, false
 	}
-	direction := domain.Direction(t.Direction)
-	if direction != domain.DirectionInbound && direction != domain.DirectionOutbound {
+	direction, err := domain.ParseDirection(t.Direction)
+	if err != nil {
 		return domain.CallTranscriptSegment{}, false
 	}
 	return domain.CallTranscriptSegment{

@@ -53,7 +53,8 @@ func (h *Handlers) SaveTranscript(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.Direction != string(domain.DirectionInbound) && body.Direction != string(domain.DirectionOutbound) {
+	direction, err := domain.ParseDirection(body.Direction)
+	if err != nil {
 		http.Error(w, "direction must be in or out", http.StatusBadRequest)
 		return
 	}
@@ -68,8 +69,13 @@ func (h *Handlers) SaveTranscript(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "startedAt is required", http.StatusBadRequest)
 		return
 	}
-	if body.Remote == "" || len(body.Remote) > 64 {
-		http.Error(w, "remote is required", http.StatusBadRequest)
+	// The remote is the island's dial target (already sanitized by the
+	// dial field's rule); parsing here makes the boundary the ONE place
+	// an unparsable remote can enter, and stores the sanitized form so
+	// grouping keys can never drift from the threads' Phone spelling.
+	remote, err := domain.ParsePhone(body.Remote)
+	if err != nil {
+		http.Error(w, "remote is not a dialable number", http.StatusBadRequest)
 		return
 	}
 	if body.Text == "" {
@@ -84,8 +90,8 @@ func (h *Handlers) SaveTranscript(w http.ResponseWriter, r *http.Request) {
 	if err := h.deps.Transcripts.Append(r.Context(), domain.CallTranscriptSegment{
 		Owner:     sess.Extension,
 		CallID:    body.CallID,
-		Direction: domain.Direction(body.Direction),
-		Remote:    body.Remote,
+		Direction: direction,
+		Remote:    remote.String(),
 		StartedAt: time.UnixMilli(body.StartedAt),
 		Text:      body.Text,
 	}); err != nil {
