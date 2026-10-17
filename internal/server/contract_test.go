@@ -30,13 +30,35 @@ func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The carve moved the webhook ingest into internal/server/hooks; its
-	// 401 writer travels with it, so the scan covers both directories.
+	// The carve moved the webhook ingest into internal/server/hooks (its
+	// 401 writer travels with it) and the island JSON endpoints into
+	// internal/server/api — those must ride the Server seam, ZERO inline
+	// 401s there.
 	hookEntries, err := filepath.Glob(filepath.Join("..", "hooks", "*.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	entries = append(entries, hookEntries...)
+	apiEntries, err := filepath.Glob(filepath.Join("..", "api", "*.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range apiEntries {
+		if strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		src, err := os.ReadFile(name) //nolint:gosec // test reads its own package sources
+		if err != nil {
+			t.Fatal(err)
+		}
+		code := string(src)
+		if strings.Contains(code, `"sign in first"`) {
+			t.Errorf("%s hardcodes the 401 body — use session.SignInFirst (one home per wording)", name)
+		}
+		if n := strings.Count(code, "http.StatusUnauthorized"); n > 0 {
+			t.Errorf("%s writes %d× 401 inline — carved api handlers gate through the Server seam only", name, n)
+		}
+	}
 	for _, name := range entries {
 		if strings.HasSuffix(name, "_test.go") {
 			continue

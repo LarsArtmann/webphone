@@ -29,6 +29,6 @@ func (h *Handlers) RefreshCSRF(w http.ResponseWriter, r *http.Request) {
 	// no proxy_cache, so in practice nothing caches this route today;
 	// the headers make the contract explicit rather than incidental.
 	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Vary: Cookie")
+	w.Header().Set("Vary", "Cookie")
 	_ = json.MarshalWrite(w, map[string]string{"token": token}) //nolint:erraudit // best-effort write; the paired cookie is already set
 }

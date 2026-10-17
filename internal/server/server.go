@@ -32,6 +32,7 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
@@ -226,7 +227,6 @@ func New(deps Deps) http.Handler {
 		cookies:           cookies,
 		csrfCfg:           csrfCfg,
 		unread:            newUnreadCache(5 * time.Second),
-		callsIdem:         hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 	}
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,
@@ -234,6 +234,18 @@ func New(deps Deps) http.Handler {
 		Fax:       deps.Fax,
 		Unread:    h.unread,
 		Dedup:     deps.Dedup,
+	})
+	// The carved island JSON surface (internal/server/api): the hub
+	// implements the narrow Server seam (session gate + contacts nudge)
+	// so the 401 wording and the SSE push keep their one home here.
+	apiHandlers := api.New(api.Deps{
+		Server:      h,
+		Contacts:    deps.Contacts,
+		Shared:      deps.Shared,
+		CRM:         deps.CRM,
+		CallsIdem:   hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
+		ASR:         deps.ASR,
+		Transcripts: deps.Transcripts,
 	})
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
@@ -308,9 +320,9 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
-	protected.HandleFunc("GET /api/contacts", h.apiListContacts)
-	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiSaveContact)))
-	protected.HandleFunc("DELETE /api/contacts", h.apiDeleteContact)
+	protected.HandleFunc("GET /api/contacts", apiHandlers.ListContacts)
+	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SaveContact)))
+	protected.HandleFunc("DELETE /api/contacts", apiHandlers.DeleteContact)
 	// The per-extension data export: one zip with every thread, fax job
 	// and personal contact the signed-in extension owns (settings-tab
 	// download link). GET-only and read-only, so the session cookie alone
@@ -321,18 +333,18 @@ func New(deps Deps) http.Handler {
 	// one island JSON POST per user action). A disabled CRM answers 204 —
 	// the island normally gates on PBX_CONFIG.crm, but a config change
 	// under a long-lived session must not error.
-	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(h.apiLogCall)))
+	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.LogCall)))
 	// The transcription surface: session-gated, CSRF via authedFetch, and
 	// the ONE endpoint behind every audio stream's transcribe affordance
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
-	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiTranscribe)))
-	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiSaveTranscript)))
-	protected.Handle("DELETE /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(h.apiDeleteTranscript)))
+	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.Transcribe)))
+	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.SaveTranscript)))
+	protected.Handle("DELETE /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteTranscript)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
-	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(h.refreshCSRF)))
+	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(apiHandlers.RefreshCSRF)))
 	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime, cookies))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the

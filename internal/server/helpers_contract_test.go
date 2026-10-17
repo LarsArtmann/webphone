@@ -12,7 +12,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/server/hooks"
+	"github.com/larsartmann/webphone/internal/server/api"
 )
 
 // Micro-tests for the one-home helpers the 2026-09-22 dedup trains
@@ -22,33 +22,13 @@ import (
 // applyStatusWebhook contract moved with the carve into
 // internal/server/hooks (apply_status_test.go).
 
-// TestRecordCallIdemContract pins the call-journal key recorder: an
-// empty key (client sent none) records nothing — the legacy
-// never-dedupe shape — and a non-empty key is recorded. The handler's
-// use of these semantics (record only on 204 outcomes, 502 stays
-// retryable, extension-namespaced keys) is pinned end-to-end by
-// TestAPICallLoggingContract in crm_test.go.
-func TestRecordCallIdemContract(t *testing.T) {
-	h := &handlers{callsIdem: hooks.NewGate(nil, hooks.CallIdempotencyTTL)}
-	h.recordCallIdem("")
-	if h.callsIdem.Seen("") {
-		t.Fatal("an empty key must never be recorded: keyless reports never dedupe")
-	}
-	h.recordCallIdem("1001:uuid-1")
-	if !h.callsIdem.Seen("1001:uuid-1") {
-		t.Fatal("a recorded key must be seen")
-	}
-	if h.callsIdem.Seen("1001:uuid-2") {
-		t.Fatal("a different key must not be seen")
-	}
-}
-
 // TestContactSaveFailedText pins the one-home failure surface: both
 // contact-write homes answer this exact 500, so the island's toast and
-// the tab's banner can never diverge in words.
+// the tab's banner can never diverge in words. (The recorder contract
+// moved with the carve into internal/server/api — calls_idem_test.go.)
 func TestContactSaveFailedText(t *testing.T) {
 	w := httptest.NewRecorder()
-	contactSaveFailed(w)
+	api.ContactSaveFailed(w)
 	if w.Code != http.StatusInternalServerError || w.Body.String() != "could not save the contact\n" {
 		t.Fatalf("contactSaveFailed: %d %q", w.Code, w.Body.String())
 	}

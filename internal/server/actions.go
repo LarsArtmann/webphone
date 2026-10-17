@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/vcard"
@@ -266,12 +267,26 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
-		contactSaveFailed(w)
+		api.ContactSaveFailed(w)
 		return
 	}
 	h.NotifyContactsChanged(sess.Extension)
 	notifyToast(w, "ok", h.T(r, "toast.contactSaved"))
 	h.partial(w, r, tabFromPath("/contacts"))
+}
+
+// NotifyContactsChanged nudges the extension's other surfaces (open
+// Contacts tab, the island's contacts dropdown) with the payload-less
+// "contacts" SSE event — the voicemail-nudge pattern: both consumers
+// re-fetch with their own session credentials instead of trusting a
+// push payload. A missing hub wiring (fuzz/minimal harnesses) skips
+// the push: one lost nudge is cosmetic, the next mutation catches up.
+// Exported as the api.Server seam leg for the carved contacts API.
+func (h *handlers) NotifyContactsChanged(extension domain.Extension) {
+	if h.deps.Hubs == nil {
+		return
+	}
+	h.deps.Hubs.Publish(extension, sseEventContacts, "")
 }
 
 // deleteContact removes a personal contact.

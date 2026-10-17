@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -43,8 +42,6 @@ type handlers struct {
 	// must carry the same Secure/Path attributes as the cookie it deletes
 	// (strict browsers reject a non-Secure deletion of a Secure cookie).
 	csrfCfg httputil.CSRFConfig
-	// Dedupe memory for the island's post-call journal reports (key).
-	callsIdem hooks.Gate
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
 }
