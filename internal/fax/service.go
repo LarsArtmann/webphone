@@ -126,7 +126,7 @@ func (s *Service) Send(
 		Remote:       to,
 		Direction:    domain.FaxOutbound,
 		Status:       domain.FaxQueued,
-		DocumentPath: path,
+		DocumentPath: path.String(),
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -152,7 +152,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 		err = rejection
 	} else {
 		receipt, err = s.gateway.SendFax(ctx, gateway.OutboundFax{
-			Owner: job.Owner, To: job.Remote, PDFPath: s.blobs.Abs(job.DocumentPath),
+			Owner: job.Owner, To: job.Remote, PDFPath: s.blobs.Abs(domain.MustParseRelPath(job.DocumentPath)),
 		})
 	}
 	if err != nil {
@@ -203,7 +203,7 @@ func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.
 	// The document must still exist before a new job references it: a
 	// loopback gateway would otherwise "transmit" a resend whose PDF is
 	// gone (the probe is the honesty guard, drive never opens the file).
-	probe, err := s.blobs.Open(job.DocumentPath)
+	probe, err := s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
 	if err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "reopen fax document")
 	}
@@ -246,7 +246,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 		Direction:    domain.FaxInbound,
 		Status:       domain.FaxReceived,
 		Pages:        inbound.Pages,
-		DocumentPath: path,
+		DocumentPath: path.String(),
 		ProviderRef:  inbound.ProviderRef,
 		CreatedAt:    now,
 		UpdatedAt:    now,
@@ -274,7 +274,7 @@ func (s *Service) archiveInbound(job domain.FaxJob) {
 	ctx, cancel := context.WithTimeout(context.Background(), archiveTimeout)
 	defer cancel()
 
-	file, err := s.blobs.Open(job.DocumentPath)
+	file, err := s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
 	if err != nil {
 		slog.Warn("fax: archive: open spooled pdf", "error", err, "fax_id", job.ID.String())
 		return
@@ -331,7 +331,7 @@ func (s *Service) Get(ctx context.Context, owner domain.Extension, id domain.Fax
 
 // Document streams a job's PDF.
 func (s *Service) Document(job domain.FaxJob) (io.ReadSeekCloser, error) {
-	return s.blobs.Open(job.DocumentPath)
+	return s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
 }
 
 func (s *Service) emit(ctx context.Context, e domain.Event) {

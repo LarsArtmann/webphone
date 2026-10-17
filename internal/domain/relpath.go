@@ -29,7 +29,7 @@ func ParseRelPath(raw string) (RelPath, error) {
 	if strings.HasPrefix(raw, "/") || strings.ContainsRune(raw, '\\') {
 		return RelPath{}, errorfamily.Newf(errorfamily.Rejection, "domain.relpath", "path %q is not relative to the blob root", raw)
 	}
-	for _, seg := range strings.Split(raw, "/") {
+	for seg := range strings.SplitSeq(raw, "/") {
 		if seg == ".." {
 			return RelPath{}, errorfamily.Newf(errorfamily.Rejection, "domain.relpath", "path %q escapes the blob root", raw)
 		}

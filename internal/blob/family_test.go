@@ -1,9 +1,11 @@
 // Blob family pins (family-adoption train, 2026-09-30): every blob
 // failure classifies Infrastructure (our storage, not retryable by the
 // user) except the traversal refusal, which is a Rejection of the
-// input. Families must survive the service-level wraps the inbound
-// paths add, so classifyForUser keeps answering 502 generic for blob
-// failures and never blames the user.
+// input — now minted by domain.ParseRelPath at the RelPath brand
+// boundary (Open itself only accepts pre-validated paths). Families
+// must survive the service-level wraps the inbound paths add, so
+// classifyForUser keeps answering 502 generic for blob failures and
+// never blames the user.
 package blob_test
 
 import (
@@ -16,6 +18,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 func TestBlobFailuresAreInfrastructure(t *testing.T) {
@@ -56,14 +59,14 @@ func TestBlobFailuresAreInfrastructure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := s.Open(filepath.Join("..", "escape")); err == nil {
-		t.Fatal("Open traversal: want refusal")
+	if _, err := domain.ParseRelPath(filepath.Join("..", "escape")); err == nil {
+		t.Fatal("escaping path: want refusal at the brand boundary")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
-		errorfamilytest.AssertCode(t, err, "blob.escape")
+		errorfamilytest.AssertCode(t, err, "domain.relpath")
 	}
 
-	if _, err := s.Open("missing.pdf"); err == nil {
+	if _, err := s.Open(domain.MustParseRelPath("missing.pdf")); err == nil {
 		t.Fatal("Open missing: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
@@ -76,7 +79,7 @@ func TestBlobFamilySurvivesServiceWraps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, openErr := s.Open("missing.pdf")
+	_, openErr := s.Open(domain.MustParseRelPath("missing.pdf"))
 	if openErr == nil {
 		t.Fatal("want open error")
 	}

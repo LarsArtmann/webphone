@@ -340,9 +340,15 @@ func (s *Service) AttachmentByID(ctx context.Context, owner domain.Extension, id
 	return s.messages.AttachmentByID(ctx, owner, id)
 }
 
-// OpenAttachment streams one attachment's bytes.
+// OpenAttachment streams one attachment's bytes. The stored path is
+// branded at this boundary: a row that somehow carries an escaping
+// value is rejected here, before any disk join.
 func (s *Service) OpenAttachment(path string) (io.ReadSeekCloser, error) {
-	return s.blobs.Open(path)
+	rel, err := domain.ParseRelPath(path)
+	if err != nil {
+		return nil, err
+	}
+	return s.blobs.Open(rel)
 }
 
 func (s *Service) emit(ctx context.Context, e domain.Event) {

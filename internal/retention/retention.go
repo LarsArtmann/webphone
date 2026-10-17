@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
@@ -46,7 +47,15 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 		}
 		removedBlobs := 0
 		for _, path := range append(res.BlobPaths, faxPaths...) {
-			if err := blobs.Remove(path); err != nil {
+			// A corrupt stored path skips its unlink (logged) instead of
+			// killing the sweep: retention is daily background hygiene, and
+			// one bad row must not protect every other blob from expiry.
+			rel, err := domain.ParseRelPath(path)
+			if err != nil {
+				slog.Warn("retention: corrupt blob path skipped", "path", path, "error", err)
+				continue
+			}
+			if err := blobs.Remove(rel); err != nil {
 				slog.Warn("retention: blob unlink failed", "path", path, "error", err)
 				continue
 			}
