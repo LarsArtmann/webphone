@@ -129,11 +129,11 @@ Full table: [docs/error-contract.md](docs/error-contract.md) (cross-documented w
 
 ## Release runbook
 
-Full v2.x dance + pbx-artmann relock ritual: [docs/release-runbook.md](docs/release-runbook.md). The auto-commit daemon commits AND pushes — work in small committed units, a narrative commit per phase boundary, verify end states with `git ls-remote`.
+Full v2.x dance + pbx-artmann relock ritual: [docs/release-runbook.md](docs/release-runbook.md). The auto-commit daemon commits AND pushes — work in small committed units, a narrative commit per phase boundary, verify end states with `git ls-remote`. Stage+commit in ONE tool call: split add/commit calls lose the race (2026-10-17: the 4th-entry proposal's narrative message was eaten by two `chore:` commits; inter-call gates like whitespace-drift go in the same call).
 
 ## Concurrent sessions
 
-More than one Crush session can work this repo at once (tell-tale: uncommitted files you did not author, mid-edit compile failures that heal on re-run). Never revert/"fix" their in-flight files; re-read shared files (i18n.go, pages.go, flake.nix) before editing; attribute full-suite failures before acting; leave their dev servers running. The daemon is adversarial to in-flight edits — re-View before each Edit or write atomically. Lock-file reads in this shell: use python/grep, NEVER jq (the tool shell misinvokes it and reports stale state).
+More than one Crush session can work this repo at once (tell-tale: uncommitted files you did not author, mid-edit compile failures that heal on re-run). Never revert/"fix" their in-flight files; re-read shared files (i18n.go, pages.go, flake.nix) before editing; attribute full-suite failures before acting; leave their dev servers running. The daemon is adversarial to in-flight edits — re-View before each Edit or write atomically. Lock-file reads in this shell: use python/grep, NEVER jq (the tool shell misinvokes it and reports stale state); bash-only `PIPESTATUS` is also unavailable — capture pipeline exit codes via temp files or explicit redirects (2026-10-17 sweep lesson).
 
 ## Buildflow health warning
 

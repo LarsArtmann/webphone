@@ -746,3 +746,13 @@ assertions in `readmodels.Open` (DedupStore, AggregateReader) look
 extractable into one generic helper — they are not: `eng.(T)` with T a
 type parameter does not compile, so the parallel fail-fast guards stay
 (baselined in the dedup registry with exactly this ruling).
+
+**The daemon eats split stage/commit pairs.** Staging a narrative doc
+train, running a gate in a separate tool call, then committing gave the
+auto-commit daemon a window to sweep the staged files into two
+`chore: auto-commit` rows — the detailed message (mandated by the
+go-modularize 3.8 and data-model-review commit formats) never reached
+history. Rule (now in AGENTS): `git add … && git commit …` in ONE tool
+call under a live daemon; inter-call gates like whitespace-drift run in
+the same call, before the commit. End state was correct — only the
+history's narrative was lost.
