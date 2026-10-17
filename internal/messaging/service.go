@@ -125,7 +125,7 @@ func (s *Service) Send(
 			Name:      sanitizeFilename(upload.Name),
 			MimeType:  upload.MimeType,
 			SizeBytes: int64(len(upload.Bytes)),
-			Path:      path,
+			Path:      path.String(),
 		}
 		msg.Attachments = append(msg.Attachments, attachment)
 		outbound.Attachments = append(outbound.Attachments, gateway.OutboundAttachment{
@@ -203,7 +203,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 			Name:      sanitizeFilename(att.Name),
 			MimeType:  att.MimeType,
 			SizeBytes: int64(len(att.Bytes)),
-			Path:      path,
+			Path:      path.String(),
 		})
 	}
 
