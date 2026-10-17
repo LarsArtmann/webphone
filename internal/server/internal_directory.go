@@ -51,7 +51,7 @@ func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 	credentials := []string{}
 	for _, token := range h.deps.Sessions.ActiveTokens(extension) {
-		credentials = append(credentials, sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token))
+		credentials = append(credentials, sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String()))
 	}
 	// Unknown or session-less extensions answer an EMPTY list (200): the
 	// bridge's static-password fallback owns the decision for anyone the

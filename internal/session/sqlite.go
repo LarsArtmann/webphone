@@ -110,7 +110,7 @@ func (s *SQLiteStore) Get(token Token) (Session, bool) {
 		ExpiresAt: time.UnixMilli(expires),
 	}
 	if !s.now().Before(sess.ExpiresAt) {
-		_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token) //nolint:erraudit // best-effort hygiene; the read verdict above already returned dead
+		_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token.String()) //nolint:erraudit // best-effort hygiene; the read verdict above already returned dead
 		return Session{}, false
 	}
 	return sess, true

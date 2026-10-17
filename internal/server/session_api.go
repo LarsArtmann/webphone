@@ -59,7 +59,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	// credential (never the typed password); the browser registers with
 	// it. no-store keeps it out of every cache.
 	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token)
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
 		w.Header().Set("Cache-Control", "no-store")
 	}
 	authAudit("login", "extension", extension.String(), "ok")
@@ -107,10 +107,10 @@ func (h *handlers) verifyDirectoryCredentials(w http.ResponseWriter, r *http.Req
 // token via GET /api/csrf — the no-reload login needs that adoption
 // step because the served page carries the old masked token. Returns
 // the minted token (the derived-credential input).
-func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) (string, error) {
+func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) (session.Token, error) {
 	token, err := h.deps.Sessions.Create(extension, password)
 	if err != nil {
-		return "", err //nolint:wrapcheck // classified by the store seam; the caller answers 500
+		return session.Token{}, err //nolint:wrapcheck // classified by the store seam; the caller answers 500
 	}
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL, h.cookies)
 	httputil.InvalidateCSRFCookie(w, h.csrfCfg)
@@ -190,7 +190,7 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 	// reaches the browser — while legacy mode keeps the historical
 	// password wire byte-identical. no-store keeps either out of caches.
 	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, session.TokenFromRequest(r))
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, session.TokenFromRequest(r).String())
 	} else {
 		response.Password = sess.Password
 	}

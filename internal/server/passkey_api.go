@@ -129,7 +129,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	response := h.sessionIdentityResponse(extension)
 	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token)
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
 	} else {
 		response.Password = password
 	}
