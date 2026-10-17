@@ -311,14 +311,45 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:187:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:140:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "domain.FaxDelivery and domain.FaxStatusAdvanced share 3 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/fax.go",
+        "line": 140,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, domain.FaxDelivery shares fields with 1 struct(s): domain.FaxStatusAdvanced",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype FaxMixin struct {\n\tError string\n\tPages int\n\tProviderRef string\n}\n\n// FaxDelivery embeds the mixin for field reuse\ntype FaxDelivery struct {\n\tFaxMixin\n\tStatus FaxStatus\n}\n\n// FaxStatusAdvanced also embeds the mixin\ntype FaxStatusAdvanced struct {\n\tFaxMixin\n\tKey FaxKey\n\tStatus FaxStatus\n\tAdvancedAt time.Time\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:domain.FaxDelivery",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "domain.FaxDelivery and domain.FaxStatusAdvanced share 3 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "domain.FaxDelivery"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:266:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.FaxReceipted and readmodels.FaxView share 6 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/fax.go",
-        "line": 187,
+        "line": 266,
         "column": 6,
         "offset": 0
       },
@@ -342,14 +373,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:44:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/fax.go:75:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.FaxJob and domain.FaxReceipted share 5 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/fax.go",
-        "line": 44,
+        "line": 75,
         "column": 6,
         "offset": 0
       },
@@ -373,45 +404,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/message.go:118:6",
-      "rule": "COMPOSITION_mixin",
-      "toolName": "branching-flow",
-      "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
-      "severity": "info",
-      "position": {
-        "file": "/home/lars/projects/webphone/internal/domain/message.go",
-        "line": 118,
-        "column": 6,
-        "offset": 0
-      },
-      "category": "structure",
-      "tags": [
-        "opportunity"
-      ],
-      "fixStrategy": "suggest",
-      "suggestion": "Extract shared fields into a mixin, domain.InboundMessage shares fields with 1 struct(s): gateway.OutboundMessage",
-      "afterCode": "// Extract shared fields into a mixin struct:\ntype InboundMessageMixin struct {\n\tAttachments []AttachmentContent\n\tBody string\n}\n\n// InboundMessage embeds the mixin for field reuse\ntype InboundMessage struct {\n\tInboundMessageMixin\n\tOwner Extension\n\tFrom Phone\n\tReceivedAt time.Time\n}\n\n// OutboundMessage also embeds the mixin\ntype OutboundMessage struct {\n\tInboundMessageMixin\n\tOwner domain.Extension\n\tTo domain.Phone\n}\n",
-      "confidence": 0.95,
-      "groupId": "mixin:domain.InboundMessage",
-      "metadata": {
-        "category": "opportunity",
-        "confidence": "low",
-        "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
-        "pattern": "mixin",
-        "patternName": "mixin",
-        "relatedCount": "1",
-        "struct": "domain.InboundMessage"
-      }
-    },
-    {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/message.go:67:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/message.go:116:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "domain.Snippet and domain.SnippetSaved share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/message.go",
-        "line": 67,
+        "line": 116,
         "column": 6,
         "offset": 0
       },
@@ -432,6 +432,37 @@
         "patternName": "mixin",
         "relatedCount": "2",
         "struct": "domain.Snippet"
+      }
+    },
+    {
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/domain/message.go:204:6",
+      "rule": "COMPOSITION_mixin",
+      "toolName": "branching-flow",
+      "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
+      "severity": "info",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/message.go",
+        "line": 204,
+        "column": 6,
+        "offset": 0
+      },
+      "category": "structure",
+      "tags": [
+        "opportunity"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Extract shared fields into a mixin, domain.InboundMessage shares fields with 1 struct(s): gateway.OutboundMessage",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype InboundMessageMixin struct {\n\tAttachments []AttachmentContent\n\tBody string\n}\n\n// InboundMessage embeds the mixin for field reuse\ntype InboundMessage struct {\n\tInboundMessageMixin\n\tOwner Extension\n\tFrom Phone\n\tReceivedAt time.Time\n}\n\n// OutboundMessage also embeds the mixin\ntype OutboundMessage struct {\n\tInboundMessageMixin\n\tOwner domain.Extension\n\tTo domain.Phone\n}\n",
+      "confidence": 0.95,
+      "groupId": "mixin:domain.InboundMessage",
+      "metadata": {
+        "category": "opportunity",
+        "confidence": "low",
+        "message": "domain.InboundMessage and gateway.OutboundMessage share 2 non-incidental fields - consider mixin",
+        "pattern": "mixin",
+        "patternName": "mixin",
+        "relatedCount": "1",
+        "struct": "domain.InboundMessage"
       }
     },
     {
@@ -1356,6 +1387,102 @@
       }
     },
     {
+      "id": "branching-flow:PHANTOM-COLLISION:/home/lars/projects/webphone/internal/session/sqlite.go:164",
+      "rule": "PHANTOM-COLLISION",
+      "toolName": "branching-flow",
+      "message": "concept 'token' (declared :160) flows into 'raw' slot of ParseToken (:51); brand the slot to catch the mismatch",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/session/sqlite.go",
+        "line": 164,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "type-safety",
+      "tags": [
+        "phantom-type"
+      ],
+      "fixStrategy": "none",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/session/sqlite.go",
+          "line": 164,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/session/sqlite.go",
+          "line": 164,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "snippet": "token -> raw string",
+      "confidence": 0.5,
+      "metadata": {
+        "callee": "ParseToken",
+        "confidence": "medium",
+        "kindDisplay": "fn param",
+        "name": "token -> raw",
+        "originName": "token",
+        "pairNames": "token,raw",
+        "rule": "collision",
+        "slotName": "raw",
+        "suggestedType": "Raw",
+        "suggestion": "create type Raw",
+        "type": "string",
+        "underlyingType": "string"
+      }
+    },
+    {
+      "id": "branching-flow:PHANTOM-TRANSPOSE:/home/lars/projects/webphone/internal/domain/fax.go:119",
+      "rule": "PHANTOM-TRANSPOSE",
+      "toolName": "branching-flow",
+      "message": "swap hazard: params #4 'documentPath' and #5 'providerRef' share type string; brand them",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/domain/fax.go",
+        "line": 119,
+        "column": 0,
+        "offset": 0
+      },
+      "category": "type-safety",
+      "tags": [
+        "phantom-type"
+      ],
+      "fixStrategy": "none",
+      "range": {
+        "start": {
+          "file": "/home/lars/projects/webphone/internal/domain/fax.go",
+          "line": 119,
+          "column": 0,
+          "offset": 0
+        },
+        "end": {
+          "file": "/home/lars/projects/webphone/internal/domain/fax.go",
+          "line": 119,
+          "column": 0,
+          "offset": -1
+        }
+      },
+      "snippet": "documentPath, providerRef string",
+      "confidence": 0.75,
+      "metadata": {
+        "callee": "",
+        "confidence": "high",
+        "kindDisplay": "fn param",
+        "name": "documentPath, providerRef",
+        "originName": "",
+        "pairNames": "documentPath,providerRef",
+        "rule": "transpose",
+        "slotName": "",
+        "suggestedType": "DocumentPath, ProviderRef",
+        "suggestion": "create type DocumentPath, ProviderRef",
+        "type": "string",
+        "underlyingType": "string"
+      }
+    },
+    {
       "id": "branching-flow:PHANTOM-TRANSPOSE:/home/lars/projects/webphone/internal/server/hooks/webhooks.go:145",
       "rule": "PHANTOM-TRANSPOSE",
       "toolName": "branching-flow",
@@ -1405,21 +1532,21 @@
     }
   ],
   "summary": {
-    "total": 42,
+    "total": 45,
     "bySeverity": {
-      "info": 30,
-      "warning": 12
+      "info": 31,
+      "warning": 14
     },
     "byCategory": {
       "duplication": 9,
-      "structure": 29,
-      "type-safety": 4
+      "structure": 30,
+      "type-safety": 6
     },
     "byFixStrategy": {
-      "none": 1,
-      "suggest": 41
+      "none": 3,
+      "suggest": 42
     },
-    "filesAffected": 26,
+    "filesAffected": 27,
     "filesScanned": 0,
     "suppressed": 0
   },

@@ -36,6 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   POSTs parse the remote through the domain phone rule at the boundary
   and store the sanitized form so transcript grouping keys can never
   drift from the threads' spelling.
+- Data-model batch 2 (brands + constructors): stored blob paths are
+  branded `domain.RelPath` at the blob seam (the traversal guard moved
+  into the type — Save/Open/Abs/Remove only trade branded paths);
+  `New{In,Out}boundMessage`/`New{In,Out}boundFaxJob` constructors make
+  direction/channel/birth-status consequences of construction instead
+  of scattered literals; the message and fax status-update store seams
+  collapsed onto the machines' `Delivery`/`FaxDelivery` values (two
+  swap-risk suppressions deleted with the loose params); and the
+  session token is a branded `session.Token` end-to-end across the
+  Store seam, cookie reads and the derived-credential HMAC inputs
+  (auth battery green: session, app, TestServer).
 
 ## [2.9.0] - 2026-10-15
 
