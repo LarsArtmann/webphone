@@ -5,27 +5,27 @@
 - **Session verdicts delivered**:
   1. webphone has **zero JMAP support**; contacts interop is vCard files in/out (`internal/vcard`, `/contacts/import`, `/contacts/export`, T26c zip) + `/api/contacts`.
   2. JMAP = excellent **sync protocol**, poor **interchange format** (category confusion); ecosystem thin for contacts (JMAP Contacts stripped from RFC 8621; adopters ≈ Fastmail/Stalwart/Cyrus; Gmail/MS absent).
-  3. **JSContact: NO** for webphone — two-field contact model (`vcard.Card{Name, Number}`), interop runs the wrong way, collides with the Ledger-domain ruling; reopen trigger = a *named* consumer that ingests JSContact but not vCard (≈ a JMAP AddressBook story, which is Ledger-domain first).
+  3. **JSContact: NO** for webphone — two-field contact model (`vcard.Card{Name, Number}`), interop runs the wrong way, collides with the Ledger-domain ruling; reopen trigger = a _named_ consumer that ingests JSContact but not vCard (≈ a JMAP AddressBook story, which is Ledger-domain first).
 
 ---
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| a1 | Repo-wide JMAP absence confirmed (case-insensitive, all files incl. docs) | grep `jmap\|JMAP\|Jmap` → zero matches |
-| a2 | Contacts interop surface fully mapped | `internal/vcard/vcard.go`, `actions.go` import/export handlers, `export.go` zip lane, `contacts_api.go`, FEATURES.md:88 🟢 FULLY_FUNCTIONAL |
-| a3 | External fetch of jmap.io performed | core=RFC 8620, mail=RFC 8621 confirmed; contacts/calendars specs exist on the site |
-| a4 | Three verdicts delivered, each with a precise reopen trigger | conversation + this report |
+| #  | Item                                                                                                        | Evidence                                                                                                                                                   |
+| -- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a1 | Repo-wide JMAP absence confirmed (case-insensitive, all files incl. docs)                                   | grep `jmap\|JMAP\|Jmap` → zero matches                                                                                                                     |
+| a2 | Contacts interop surface fully mapped                                                                       | `internal/vcard/vcard.go`, `actions.go` import/export handlers, `export.go` zip lane, `contacts_api.go`, FEATURES.md:88 🟢 FULLY_FUNCTIONAL                |
+| a3 | External fetch of jmap.io performed                                                                         | core=RFC 8620, mail=RFC 8621 confirmed; contacts/calendars specs exist on the site                                                                         |
+| a4 | Three verdicts delivered, each with a precise reopen trigger                                                | conversation + this report                                                                                                                                 |
 | a5 | Report-time grounding checks (2 greps + 2 ROADMAP reads): verdicts **align with existing ratified rulings** | ROADMAP.md:402-403 (M23: contacts depth → Ledger; single-vCard export explicitly excluded), dedup-registry has NO ruling on the noticed export duplication |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Gap |
-|---|------|-----|
-| b1 | External-claim verification | Only the jmap.io **homepage** was fetched. The two fetches that would have retired risk — `/spec/` (RFC vs draft status) and `/software/` (implementation list) — were NOT made. RFC-history claims (JMAP Contacts removed from RFC 8621; RFC 9553 = JSContact Card; JMAP-for-Voicemail RFC existence/number; Gmail/MS absence; Fastmail/Stalwart/Cyrus trio) are **memory-sourced, unverified this session** |
-| b2 | In-repo prior-art check | JMAP/CardDAV/vCard grepped (turn 1), but the string **"JSContact" was never grepped in any turn** — turn 3's "no prior art / no consumer" premise rests on inference, not search |
-| b3 | Durable recording of the rejection | The JSContact REJECT + reopen trigger lives only in conversation + this report. No TODO/ROADMAP row yet (gated on owner call, question g2) |
+| #  | Item                               | Gap                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b1 | External-claim verification        | Only the jmap.io **homepage** was fetched. The two fetches that would have retired risk — `/spec/` (RFC vs draft status) and `/software/` (implementation list) — were NOT made. RFC-history claims (JMAP Contacts removed from RFC 8621; RFC 9553 = JSContact Card; JMAP-for-Voicemail RFC existence/number; Gmail/MS absence; Fastmail/Stalwart/Cyrus trio) are **memory-sourced, unverified this session** |
+| b2 | In-repo prior-art check            | JMAP/CardDAV/vCard grepped (turn 1), but the string **"JSContact" was never grepped in any turn** — turn 3's "no prior art / no consumer" premise rests on inference, not search                                                                                                                                                                                                                              |
+| b3 | Durable recording of the rejection | The JSContact REJECT + reopen trigger lives only in conversation + this report. No TODO/ROADMAP row yet (gated on owner call, question g2)                                                                                                                                                                                                                                                                    |
 
 ## c) NOT STARTED
 
@@ -45,19 +45,19 @@
 
 ## e) WHAT WE SHOULD IMPROVE (brutal-self-review, Q1–Q11)
 
-| Q | Answer |
-|---|--------|
-| Q1 forgot? | The JSContact grep; the verify-external-claims discipline; recording the rejection durably |
-| Q2 stupid-we-do-anyway | Advisory answers mix loaded-context facts and memory facts at one confidence level; verdict speed prioritized over claim provenance |
-| Q3 done better? | Fetch `/spec/`+`/software/` instead of the homepage; run one grounding grep per newly-named format; label external claims memory vs verified |
-| Q4 still improve? | The (f) list; a personal hard rule: no RFC/standard claim in a verdict without "verified" or "memory" label |
-| Q5 lied? | **No fabricated facts detected** — but confidence inflation over unverified claims is the honest close cousin, flagged in (d) |
-| Q6 less stupid? | Make "verify or label" non-optional for standards claims that bear on accept/reject verdicts |
-| Q7 ghost systems? | None — nothing created this session; nothing unwired noticed |
-| Q8 scope creep? | **Avoided, correctly**: stayed advisory; did NOT implement a JSContact lane (would have collided with the M23 Ledger ruling) |
-| Q9 removed useful things? | Nothing removed |
-| Q10 split brains? | **Noticed unjudged candidate**: the vCard-export card-building loop exists twice — `actions.go` (`exportContacts`, ~:698) and `export.go` (~:169) both build `[]vcard.Card{Name, Number}` identically. Dedup-registry checked at report time: **no ruling**. Candidate for the next art-dupl sweep / one-home helper — NOT for unilateral action now |
-| Q11 tests? | N/A (no code changed). Test-adjacent notice: the vcard-parser fuzz target remains ROADMAP-unstarted (ROADMAP.md:578-580; only `FuzzContactsAPISave` exists) |
+| Q                         | Answer                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Q1 forgot?                | The JSContact grep; the verify-external-claims discipline; recording the rejection durably                                                                                                                                                                                                                                                             |
+| Q2 stupid-we-do-anyway    | Advisory answers mix loaded-context facts and memory facts at one confidence level; verdict speed prioritized over claim provenance                                                                                                                                                                                                                    |
+| Q3 done better?           | Fetch `/spec/`+`/software/` instead of the homepage; run one grounding grep per newly-named format; label external claims memory vs verified                                                                                                                                                                                                           |
+| Q4 still improve?         | The (f) list; a personal hard rule: no RFC/standard claim in a verdict without "verified" or "memory" label                                                                                                                                                                                                                                            |
+| Q5 lied?                  | **No fabricated facts detected** — but confidence inflation over unverified claims is the honest close cousin, flagged in (d)                                                                                                                                                                                                                          |
+| Q6 less stupid?           | Make "verify or label" non-optional for standards claims that bear on accept/reject verdicts                                                                                                                                                                                                                                                           |
+| Q7 ghost systems?         | None — nothing created this session; nothing unwired noticed                                                                                                                                                                                                                                                                                           |
+| Q8 scope creep?           | **Avoided, correctly**: stayed advisory; did NOT implement a JSContact lane (would have collided with the M23 Ledger ruling)                                                                                                                                                                                                                           |
+| Q9 removed useful things? | Nothing removed                                                                                                                                                                                                                                                                                                                                        |
+| Q10 split brains?         | **Noticed unjudged candidate**: the vCard-export card-building loop exists twice — `actions.go` (`exportContacts`, ~~:698) and `export.go` (~~:169) both build `[]vcard.Card{Name, Number}` identically. Dedup-registry checked at report time: **no ruling**. Candidate for the next art-dupl sweep / one-home helper — NOT for unilateral action now |
+| Q11 tests?                | N/A (no code changed). Test-adjacent notice: the vcard-parser fuzz target remains ROADMAP-unstarted (ROADMAP.md:578-580; only `FuzzContactsAPISave` exists)                                                                                                                                                                                            |
 
 ## f) NEXT (session-scoped; honest count is 10, not padded to 50 — most "50-item" filler would violate the no-unrelated-research instruction)
 
@@ -72,7 +72,7 @@ Sorted impact/effort:
 7. **vcard parser fuzz target** (already ROADMAP-fueled, listed here only because noticed — not new).
 8. **If contact sync is EVER reopened: evaluate CardDAV before JMAP** (session conclusion; ROADMAP-fuel).
 9. **Process improvement, zero repo cost**: adopt the claim-provenance label (memory/verified) in advisory answers.
-10. *Checked, no action*: T26c zip export already lives at ROADMAP.md:505; vCard feature status green in FEATURES.md:88.
+10. _Checked, no action_: T26c zip export already lives at ROADMAP.md:505; vCard feature status green in FEATURES.md:88.
 
 **Explicitly NOT recommended** (checked at report time, do not re-surface): single-contact vCard export — RULED OUT by M23 (ROADMAP.md:402-403, Ledger's domain); JSContact export alias — rejected this session pending the reopen trigger.
 
@@ -84,4 +84,4 @@ Sorted impact/effort:
 
 ---
 
-*Reported 2026-10-16 20:41 CEST. Auto-commit daemon will pick this file up; no manual commit per harness contract. Waiting for instructions.*
+_Reported 2026-10-16 20:41 CEST. Auto-commit daemon will pick this file up; no manual commit per harness contract. Waiting for instructions._
