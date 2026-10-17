@@ -144,8 +144,7 @@ func (s *Service) Send(
 		// before the machine existed.
 		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendRefused(failureKindOf(err), err.Error()))
 		msg = msg.WithDelivery(next)
-		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
-			string(next.FailureKind), next.FailureDetail)
+		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, next)
 		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
@@ -154,8 +153,7 @@ func (s *Service) Send(
 	default:
 		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendAccepted(receipt.ProviderRef))
 		msg = msg.WithDelivery(next)
-		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
-			string(next.FailureKind), next.FailureDetail); err != nil {
+		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
 		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
@@ -296,8 +294,7 @@ func (s *Service) DeliveryReceipt(
 	// Every verdict is a legal move from every state (deliveryMoves),
 	// so advance cannot refuse; the table is the single home of that rule.
 	next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.ProviderVerdict(verdict, errMsg))
-	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next.Status, next.ProviderRef,
-		string(next.FailureKind), next.FailureDetail); err != nil {
+	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.outbound_status", "record delivery status")
 	}
 	msg = msg.WithDelivery(next)

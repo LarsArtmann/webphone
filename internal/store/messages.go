@@ -104,19 +104,18 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	return nil
 }
 
-// UpdateOutboundStatus advances an outbound message's delivery status,
-// provider reference and failure story. A delivered verdict CLEARS any
-// earlier failure (kind and detail revert to empty); a failed verdict
-// records kind + detail for the bubble's disclosure and retry decision.
-func (s *Messages) UpdateOutboundStatus(
-	ctx context.Context, id domain.MessageID, status domain.OutboundStatus, providerRef string, //nolint:branching-flow // provider correlation id + failure vocabulary (documented at FailureKind); a ProviderRef type would ripple into webhook DTOs, the partial unique index and the golden-pinned rows
-	failureKind, failureDetail string,
-) error {
+// UpdateOutboundStatus advances an outbound message's delivery: the
+// machine's Delivery value is the payload — status, provider
+// reference and failure story travel as one product of DeliveryAdvance.
+// A delivered verdict CLEARS any earlier failure (kind and detail
+// revert to empty); a failed verdict records kind + detail for the
+// bubble's disclosure and retry decision.
+func (s *Messages) UpdateOutboundStatus(ctx context.Context, id domain.MessageID, delivery domain.Delivery) error {
 	res, err := s.db.ExecContext(ctx, `
 		UPDATE messages
 		SET status = ?, provider_ref = ?, failure_kind = ?, failure_detail = ?
 		WHERE id = ? AND direction = ?
-	`, string(status), providerRef, failureKind, failureDetail,
+	`, string(delivery.Status), delivery.ProviderRef, string(delivery.FailureKind), delivery.FailureDetail,
 		id.String(), string(domain.DirectionOutbound))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "store.outbound_status", "update status of message %s", id)

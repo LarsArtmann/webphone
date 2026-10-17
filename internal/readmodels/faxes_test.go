@@ -93,7 +93,7 @@ func TestFaxesUpdateStatusParity(t *testing.T) {
 	}
 
 	// Acceptance: sending + correlation id.
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, "prov-ref-1", "", 0); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxSending, ProviderRef: "prov-ref-1"}); err != nil {
 		t.Fatalf("accept: %v", err)
 	}
 	got, err := faxes.Get(ctx, owner, job.ID)
@@ -106,7 +106,7 @@ func TestFaxesUpdateStatusParity(t *testing.T) {
 
 	// Deferred verdict: transmitted + page count; the ref rides empty
 	// and MUST be kept (the SQL CASE arm).
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 3); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 3}); err != nil {
 		t.Fatalf("verdict: %v", err)
 	}
 	got, err = faxes.Get(ctx, owner, job.ID)
@@ -118,7 +118,7 @@ func TestFaxesUpdateStatusParity(t *testing.T) {
 	}
 
 	// A failure verdict stores the verbatim text (SQL: error = ?).
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", "busy signal", 0); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxFailed, Error: "busy signal"}); err != nil {
 		t.Fatalf("failure verdict: %v", err)
 	}
 	got, _ = faxes.Get(ctx, owner, job.ID)
@@ -127,7 +127,7 @@ func TestFaxesUpdateStatusParity(t *testing.T) {
 	}
 
 	// A missing row is the not-found sentinel (updatedOrNotFound arm).
-	if err := faxes.UpdateStatus(ctx, domain.GenerateFaxID(), domain.FaxFailed, "", "", 0); !errors.Is(err, store.ErrNotFound) {
+	if err := faxes.UpdateStatus(ctx, domain.GenerateFaxID(), domain.FaxDelivery{Status: domain.FaxFailed}); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("update missing: %v, want ErrNotFound", err)
 	}
 }
@@ -164,7 +164,7 @@ func TestFaxesMovesLegalityMirror(t *testing.T) {
 		if err := faxes.Create(ctx, job); err != nil {
 			t.Fatalf("move %d create: %v", i, err)
 		}
-		if err := faxes.UpdateStatus(ctx, job.ID, m.to, "", "", 0); err != nil {
+		if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: m.to}); err != nil {
 			t.Fatalf("move %d (%s -> %s): %v", i, m.from, m.to, err)
 		}
 		got, err := faxes.Get(ctx, owner, job.ID)
@@ -192,15 +192,15 @@ func TestFaxesDeferredResolutionAndReplay(t *testing.T) {
 	if err := faxes.Create(ctx, job); err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, "ref-7", "", 0); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxSending, ProviderRef: "ref-7"}); err != nil {
 		t.Fatalf("accept: %v", err)
 	}
 	// The deferred verdict: transmitted, 2 pages.
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 2); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 2}); err != nil {
 		t.Fatalf("verdict: %v", err)
 	}
 	// A replayed verdict (richer page count) refreshes IN PLACE.
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxTransmitted, "", "", 5); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 5}); err != nil {
 		t.Fatalf("replay: %v", err)
 	}
 	list, err := faxes.List(ctx, owner, 100)
@@ -212,7 +212,7 @@ func TestFaxesDeferredResolutionAndReplay(t *testing.T) {
 	}
 	// A contradictory late verdict overwrites the settled state
 	// (faxMoves keeps {transmitted, verdict, failed} legal).
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxFailed, "", "reversal", 0); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxFailed, Error: "reversal"}); err != nil {
 		t.Fatalf("late reversal: %v", err)
 	}
 	got, _ := faxes.Get(ctx, owner, job.ID)
@@ -233,11 +233,11 @@ func TestFaxesAdvanceIdempotent(t *testing.T) {
 	if err := faxes.Create(ctx, job); err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:transmitted", job.ID, domain.FaxTransmitted, "", "", 3); err != nil {
+	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:transmitted", job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 3}); err != nil {
 		t.Fatalf("advance: %v", err)
 	}
 	// The replayed webhook: same key, richer payload — inert.
-	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:transmitted", job.ID, domain.FaxTransmitted, "", "", 9); err != nil {
+	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:transmitted", job.ID, domain.FaxDelivery{Status: domain.FaxTransmitted, Pages: 9}); err != nil {
 		t.Fatalf("replay: %v", err)
 	}
 	got, err := faxes.Get(ctx, owner, job.ID)
@@ -248,7 +248,7 @@ func TestFaxesAdvanceIdempotent(t *testing.T) {
 		t.Fatalf("idempotent replay was not inert: %+v", got)
 	}
 	// A different key applies.
-	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:failed", job.ID, domain.FaxFailed, "", "late", 0); err != nil {
+	if err := faxes.AdvanceIdempotent(ctx, "fax:ref-5:failed", job.ID, domain.FaxDelivery{Status: domain.FaxFailed, Error: "late"}); err != nil {
 		t.Fatalf("second key: %v", err)
 	}
 	got, _ = faxes.Get(ctx, owner, job.ID)
@@ -266,7 +266,7 @@ func TestFaxesByProviderRef(t *testing.T) {
 	if err := faxes.Create(ctx, job); err != nil {
 		t.Fatalf("create: %v", err)
 	}
-	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxSending, "ref-6", "", 0); err != nil {
+	if err := faxes.UpdateStatus(ctx, job.ID, domain.FaxDelivery{Status: domain.FaxSending, ProviderRef: "ref-6"}); err != nil {
 		t.Fatalf("accept: %v", err)
 	}
 
