@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   budgets and Deps stay in `internal/server`, and the composition root's
   dedup adapter + sweeper now target `hooks.DedupWindow`) — phase 1 of
   the round-5 `internal/server` carve train.
+- Carved the island's session-gated JSON endpoints (CSRF refresh,
+  contacts panel API, CRM call journal, transcription pair) into
+  `internal/server/api` (phase 2): the wiring keeps mux, limiters and the
+  one-home 401 session gate, exposed to the carved handlers through the
+  narrow `api.Server` seam; `passkey_settings` and `internal_directory`
+  were adjudicated to stay (view/wiring-coupled, not JSON leaves).
 - Brought the strong-id brand-adoption scan (`brandid-lint -rules all`) to
   zero findings: every deliberately-raw identifier site (wire DTOs, engine
   read-model shapes, retired legacy rows, foreign tokens) now carries a
