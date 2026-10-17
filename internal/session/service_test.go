@@ -87,7 +87,7 @@ func TestCookieMaxAgeMirrorsTTL(t *testing.T) {
 	ttl := 7 * time.Minute
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/api/session", nil)
-	SetCookie(rec, req, "token-abc", ttl, CookiePolicy{})
+	SetCookie(rec, req, ParseToken("token-abc"), ttl, CookiePolicy{})
 
 	cookies := rec.Result().Cookies()
 	if len(cookies) != 1 {
@@ -116,7 +116,7 @@ func TestCookieSecurePolicy(t *testing.T) {
 		if directTLS {
 			req.TLS = &tls.ConnectionState{} //nolint:exhaustruct // only non-nil matters for the flag
 		}
-		SetCookie(rec, req, "token-abc", time.Minute, policy)
+		SetCookie(rec, req, ParseToken("token-abc"), time.Minute, policy)
 		cookies := rec.Result().Cookies()
 		if len(cookies) != 1 {
 			t.Fatalf("expected 1 cookie, got %d", len(cookies))
@@ -221,7 +221,7 @@ func TestMemStoreRenew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := store.Renew("never-existed", time.Hour, 30*24*time.Hour); ok {
+	if _, ok := store.Renew(ParseToken("never-existed"), time.Hour, 30*24*time.Hour); ok {
 		t.Fatal("unknown token renewed")
 	}
 	backdateRemaining(t, store, token, 20*time.Minute)
@@ -251,7 +251,7 @@ func TestMemStoreRenew(t *testing.T) {
 
 // backdateRemaining rewrites one row's ExpiresAt to `remaining` from
 // now (white-box: the tests live beside the store).
-func backdateRemaining(t *testing.T, store *MemStore, token string, remaining time.Duration) {
+func backdateRemaining(t *testing.T, store *MemStore, token Token, remaining time.Duration) {
 	t.Helper()
 	store.mu.Lock()
 	defer store.mu.Unlock()
@@ -282,7 +282,7 @@ func TestAttachSlidesAndReIssuesCookie(t *testing.T) {
 	attach := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/", nil)
-		req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
+		req.AddCookie(&http.Cookie{Name: CookieName, Value: token.String()})
 		Attach(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if _, ok := From(r.Context()); !ok {
 				t.Error("live session not attached to the context")
@@ -325,7 +325,7 @@ func TestAttachWithoutLifetimeDisablesRenewal(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/", nil)
-	req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
+	req.AddCookie(&http.Cookie{Name: CookieName, Value: token.String()})
 	Attach(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{}, CookiePolicy{}).ServeHTTP(rec, req)
 
 	if cookies := rec.Result().Cookies(); len(cookies) != 0 {
@@ -351,7 +351,7 @@ func TestRequireSlides(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/events", nil)
-	req.AddCookie(&http.Cookie{Name: CookieName, Value: token})
+	req.AddCookie(&http.Cookie{Name: CookieName, Value: token.String()})
 	Require(store, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}), Lifetime{Idle: time.Hour, Max: 30 * 24 * time.Hour}, CookiePolicy{}).ServeHTTP(rec, req)
 
 	if sess, ok := store.Get(token); !ok || time.Until(sess.ExpiresAt) < 55*time.Minute {

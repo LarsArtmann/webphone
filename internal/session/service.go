@@ -34,6 +34,30 @@ const SignInFirst = "sign in first"
 // tokenBytes is the entropy of one session token (256 bit).
 const tokenBytes = 32
 
+// Token is a session's opaque cookie credential. A defined struct
+// (not an alias) so a raw string can never ride the Store seam by
+// accident — only ParseToken (request cookies) or Create (fresh
+// mints) produce one, and the seams that consume it (Get, Renew,
+// Delete, the derived-credential HMAC) are token-shaped end to end.
+// The wire stays raw: cookie bytes and SQL columns carry String().
+type Token struct {
+	value string
+}
+
+// ParseToken brands a cookie-borne credential. Empty is legal here —
+// it brands the no-cookie request as the zero Token, which every
+// store lookup answers "unknown"; anything the browser did send is
+// store-validated, so the constructor refuses nothing else.
+func ParseToken(raw string) Token {
+	return Token{value: raw}
+}
+
+// String returns the raw cookie/SQL form.
+func (t Token) String() string { return t.value }
+
+// IsZero reports whether no credential is present.
+func (t Token) IsZero() bool { return t.value == "" }
+
 // Session is one signed-in extension.
 type Session struct {
 	Extension domain.Extension
@@ -51,18 +75,18 @@ func (s Session) PBXCredentials() pbx.Credentials {
 // Store is the session persistence seam: mint, look up, renew, drop.
 // Attach/Require are package-level functions over any Store.
 type Store interface {
-	Create(extension domain.Extension, password string) (string, error)
-	Get(token string) (Session, bool)
+	Create(extension domain.Extension, password string) (Token, error)
+	Get(token Token) (Session, bool)
 	// Renew applies one sliding-renewal decision (see renewDue) and
 	// returns the refreshed session; ok=false when the token is absent,
 	// expired, or its expiry is already where the policy wants it.
-	Renew(token string, idle, maxAge time.Duration) (Session, bool)
-	Delete(token string)
+	Renew(token Token, idle, maxAge time.Duration) (Session, bool)
+	Delete(token Token)
 	// ActiveTokens lists the LIVE session tokens of one extension —
 	// the internal directory endpoint's source of derived REGISTER
 	// credentials (sipcred). Ordering is unspecified; only unexpired
 	// sessions qualify.
-	ActiveTokens(extension domain.Extension) []string
+	ActiveTokens(extension domain.Extension) []Token
 }
 
 // Lifetime is the session-expiry policy. Idle is the sliding idle
@@ -129,32 +153,32 @@ func renewDue(sess Session, idle, maxAge time.Duration, now time.Time) (time.Tim
 // nil-dereference by construction.
 type MemStore struct {
 	mu       sync.RWMutex
-	sessions map[string]Session
+	sessions map[Token]Session
 	ttl      time.Duration
 	now      func() time.Time
 }
 
 // NewMemStore builds the in-memory session store (tests, loopback dev).
 func NewMemStore(ttl time.Duration) *MemStore {
-	return &MemStore{sessions: make(map[string]Session), ttl: ttl, now: time.Now}
+	return &MemStore{sessions: make(map[Token]Session), ttl: ttl, now: time.Now}
 }
 
 // mintToken returns a fresh 256-bit URL-safe token.
-func mintToken() (string, error) {
+func mintToken() (Token, error) {
 	buf := make([]byte, tokenBytes)
 	if _, err := rand.Read(buf); err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "session.token", "generate session token")
+		return Token{}, errorfamily.WrapInfrastructuref(err, "session.token", "generate session token")
 	}
-	return base64.RawURLEncoding.EncodeToString(buf), nil
+	return Token{value: base64.RawURLEncoding.EncodeToString(buf)}, nil
 }
 
 // makeSession mints a token and the Session around it; the birth
 // invariant (ExpiresAt = CreatedAt + ttl) has this single home, shared
 // by both store backends.
-func makeSession(extension domain.Extension, password string, ttl time.Duration, now func() time.Time) (string, Session, error) {
+func makeSession(extension domain.Extension, password string, ttl time.Duration, now func() time.Time) (Token, Session, error) {
 	token, err := mintToken()
 	if err != nil {
-		return "", Session{}, err
+		return Token{}, Session{}, err
 	}
 	at := now()
 	return token, Session{
@@ -166,10 +190,10 @@ func makeSession(extension domain.Extension, password string, ttl time.Duration,
 }
 
 // Create mints a session for the extension and returns its token.
-func (s *MemStore) Create(extension domain.Extension, password string) (string, error) {
+func (s *MemStore) Create(extension domain.Extension, password string) (Token, error) {
 	token, sess, err := makeSession(extension, password, s.ttl, s.now)
 	if err != nil {
-		return "", err
+		return Token{}, err
 	}
 
 	s.mu.Lock()
@@ -181,7 +205,7 @@ func (s *MemStore) Create(extension domain.Extension, password string) (string, 
 }
 
 // Get returns a live session by token.
-func (s *MemStore) Get(token string) (Session, bool) {
+func (s *MemStore) Get(token Token) (Session, bool) {
 	s.mu.RLock()
 	sess, ok := s.sessions[token]
 	s.mu.RUnlock()
@@ -192,14 +216,14 @@ func (s *MemStore) Get(token string) (Session, bool) {
 }
 
 // Delete drops a session (logout).
-func (s *MemStore) Delete(token string) {
+func (s *MemStore) Delete(token Token) {
 	s.mu.Lock()
 	delete(s.sessions, token)
 	s.mu.Unlock()
 }
 
 // Renew applies the sliding-renewal policy to one live session.
-func (s *MemStore) Renew(token string, idle, maxAge time.Duration) (Session, bool) {
+func (s *MemStore) Renew(token Token, idle, maxAge time.Duration) (Session, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	sess, ok := s.sessions[token]
@@ -222,11 +246,11 @@ func (s *MemStore) Renew(token string, idle, maxAge time.Duration) (Session, boo
 
 // ActiveTokens lists the live tokens of one extension (map scan under
 // the read lock; expiry checked with the store's injectable clock).
-func (s *MemStore) ActiveTokens(extension domain.Extension) []string {
+func (s *MemStore) ActiveTokens(extension domain.Extension) []Token {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	now := s.now()
-	var out []string
+	var out []Token
 	for token, sess := range s.sessions {
 		if sess.Extension == extension && now.Before(sess.ExpiresAt) {
 			out = append(out, token)
@@ -257,13 +281,14 @@ func From(ctx context.Context) (Session, bool) {
 	return sess, ok
 }
 
-// TokenFromRequest reads the session cookie.
-func TokenFromRequest(r *http.Request) string {
+// TokenFromRequest reads the session cookie. A missing cookie brands
+// as the zero Token — unknown to every store.
+func TokenFromRequest(r *http.Request) Token {
 	cookie, err := r.Cookie(CookieName)
 	if err != nil {
-		return ""
+		return Token{}
 	}
-	return cookie.Value
+	return ParseToken(cookie.Value)
 }
 
 // lookup resolves (and maybe renews) the session for one request: the
@@ -317,10 +342,10 @@ func Require(store Store, next http.Handler, lifetime Lifetime, policy CookiePol
 // SetCookie writes the session cookie. Secure comes from the wired
 // CookiePolicy (proxy-fronted deployments leave r.TLS nil) OR a
 // directly-TLS request, whichever says https.
-func SetCookie(w http.ResponseWriter, r *http.Request, token string, ttl time.Duration, policy CookiePolicy) {
+func SetCookie(w http.ResponseWriter, r *http.Request, token Token, ttl time.Duration, policy CookiePolicy) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     CookieName,
-		Value:    token,
+		Value:    token.String(),
 		Path:     "/",
 		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,

@@ -59,24 +59,24 @@ func NewSQLiteStore(db *sql.DB, ttl time.Duration) (*SQLiteStore, error) {
 // Create mints a session row and returns its token. Expired rows are
 // swept alongside, so restarts across long downtimes cannot accumulate
 // corpses.
-func (s *SQLiteStore) Create(extension domain.Extension, password string) (string, error) {
+func (s *SQLiteStore) Create(extension domain.Extension, password string) (Token, error) {
 	token, sess, err := makeSession(extension, password, s.ttl, s.now)
 	if err != nil {
-		return "", err
+		return Token{}, err
 	}
 
 	now := sess.CreatedAt
 	if _, err := s.db.Exec(
 		`DELETE FROM sessions WHERE expires_at < ?`, now.UnixMilli(),
 	); err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "session.sweep", "sweep sessions")
+		return Token{}, errorfamily.WrapInfrastructuref(err, "session.sweep", "sweep sessions")
 	}
 	if _, err := s.db.Exec(
 		`INSERT INTO sessions (token, extension, password, created_at, expires_at)
 		 VALUES (?, ?, ?, ?, ?)`,
-		token, extension.String(), password, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
+		token.String(), extension.String(), password, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
 	); err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "session.insert", "insert session")
+		return Token{}, errorfamily.WrapInfrastructuref(err, "session.insert", "insert session")
 	}
 	return token, nil
 }
@@ -84,14 +84,14 @@ func (s *SQLiteStore) Create(extension domain.Extension, password string) (strin
 // Get returns a live session by token; an expired row is deleted on
 // sight (a session that died while the server was down must not
 // resurrect on the first read after boot).
-func (s *SQLiteStore) Get(token string) (Session, bool) {
+func (s *SQLiteStore) Get(token Token) (Session, bool) {
 	var (
 		extension, password string
 		created, expires    int64
 	)
 	err := s.db.QueryRow(
 		`SELECT extension, password, created_at, expires_at
-		 FROM sessions WHERE token = ?`, token,
+		 FROM sessions WHERE token = ?`, token.String(),
 	).Scan(&extension, &password, &created, &expires)
 	if err != nil {
 		// Auth stays fail-closed on ANY error, but a driver failure
@@ -117,15 +117,15 @@ func (s *SQLiteStore) Get(token string) (Session, bool) {
 }
 
 // Delete drops a session (logout).
-func (s *SQLiteStore) Delete(token string) {
-	_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token) //nolint:erraudit // logout stays best-effort, parity with MemStore
+func (s *SQLiteStore) Delete(token Token) {
+	_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token.String()) //nolint:erraudit // logout stays best-effort, parity with MemStore
 }
 
 // Renew applies the sliding-renewal policy: Get enforces expiry (lazy
 // delete of a row that died unseen), renewDue decides, the UPDATE
 // persists. A lost update race at worst keeps the older expiry — the
 // next past-half-life request renews again.
-func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, bool) {
+func (s *SQLiteStore) Renew(token Token, idle, maxAge time.Duration) (Session, bool) {
 	sess, ok := s.Get(token)
 	if !ok {
 		return Session{}, false
@@ -136,7 +136,7 @@ func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, 
 	}
 	if _, err := s.db.Exec(
 		`UPDATE sessions SET expires_at = ? WHERE token = ?`,
-		extended.UnixMilli(), token,
+		extended.UnixMilli(), token.String(),
 	); err != nil {
 		return Session{}, false
 	}
@@ -146,7 +146,7 @@ func (s *SQLiteStore) Renew(token string, idle, maxAge time.Duration) (Session, 
 
 // ActiveTokens lists the live tokens of one extension; expired rows are
 // dead on sight (the Get contract) and never listed.
-func (s *SQLiteStore) ActiveTokens(extension domain.Extension) []string {
+func (s *SQLiteStore) ActiveTokens(extension domain.Extension) []Token {
 	rows, err := s.db.Query(
 		`SELECT token FROM sessions WHERE extension = ? AND expires_at > ?`,
 		extension.String(), s.now().UnixMilli(),
@@ -155,13 +155,13 @@ func (s *SQLiteStore) ActiveTokens(extension domain.Extension) []string {
 		return nil
 	}
 	defer rows.Close() //nolint:errcheck // read-side close on defer; rows.Err owns the verdict
-	var out []string
+	var out []Token
 	for rows.Next() {
 		var token string
 		if err := rows.Scan(&token); err != nil {
 			return nil
 		}
-		out = append(out, token)
+		out = append(out, ParseToken(token))
 	}
 	if err := rows.Err(); err != nil {
 		return nil

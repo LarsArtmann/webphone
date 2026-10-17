@@ -106,7 +106,7 @@ func TestSQLiteSessionTTLExpiryAndSweep(t *testing.T) {
 		t.Fatal("expired session still live — TTL not honored")
 	}
 	var count int
-	if err := store.db.QueryRow(`SELECT count(*) FROM sessions WHERE token = ?`, dying).Scan(&count); err != nil {
+	if err := store.db.QueryRow(`SELECT count(*) FROM sessions WHERE token = ?`, dying.String()).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
 	if count != 0 {
@@ -144,7 +144,7 @@ func TestSQLiteSessionSweepOnCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	var count int
-	if err := store.db.QueryRow(`SELECT count(*) FROM sessions WHERE token = ?`, stale).Scan(&count); err != nil {
+	if err := store.db.QueryRow(`SELECT count(*) FROM sessions WHERE token = ?`, stale.String()).Scan(&count); err != nil {
 		t.Fatal(err)
 	}
 	if count != 0 {
@@ -168,7 +168,7 @@ func TestSQLiteSessionDeleteLogout(t *testing.T) {
 	if _, ok := store.Get(token); ok {
 		t.Fatal("deleted session still live")
 	}
-	if _, ok := store.Get("never-existed"); ok {
+	if _, ok := store.Get(ParseToken("never-existed")); ok {
 		t.Error("unknown token answered live")
 	}
 }
@@ -222,7 +222,7 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 	// extends to (approximately) the full idle window — and persists it.
 	if _, err := store.db.Exec(
 		`UPDATE sessions SET expires_at = ? WHERE token = ?`,
-		time.Now().Add(20*time.Minute).UnixMilli(), token,
+		time.Now().Add(20*time.Minute).UnixMilli(), token.String(),
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -251,7 +251,7 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 	// created+max) can never renew: the cap is the unconditional bound.
 	if _, err := store.db.Exec(
 		`UPDATE sessions SET created_at = ?, expires_at = ? WHERE token = ?`,
-		time.Now().Add(-40*24*time.Hour).UnixMilli(), time.Now().Add(20*time.Minute).UnixMilli(), token,
+		time.Now().Add(-40*24*time.Hour).UnixMilli(), time.Now().Add(20*time.Minute).UnixMilli(), token.String(),
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -262,7 +262,7 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 	// Expired rows read dead on Renew (and are deleted, like on Get).
 	if _, err := store.db.Exec(
 		`UPDATE sessions SET created_at = ?, expires_at = ? WHERE token = ?`,
-		time.Now().Add(-time.Hour).UnixMilli(), time.Now().Add(-time.Minute).UnixMilli(), token,
+		time.Now().Add(-time.Hour).UnixMilli(), time.Now().Add(-time.Minute).UnixMilli(), token.String(),
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +273,7 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 		t.Error("expired row survived the Renew read")
 	}
 
-	if _, ok := store.Renew("never-existed", idle, maxAge); ok {
+	if _, ok := store.Renew(ParseToken("never-existed"), idle, maxAge); ok {
 		t.Error("unknown token renewed")
 	}
 }
