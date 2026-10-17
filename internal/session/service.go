@@ -113,7 +113,10 @@ type CookiePolicy struct {
 // missing or mis-ordered Max degrades to Max = Idle (the pre-sliding
 // behavior: absolute lifetime equals one idle window) instead of
 // capping every session at sign-in time; a non-positive Idle disables
-// renewal entirely.
+// renewal entirely. Single-home ruling (2026-10-18): config.validate
+// owns BOOT-TIME rejection of nonsense lifetimes; this degradation
+// owns in-process constructions (tests, seeds) — the two never overlap
+// on the same value.
 func (l Lifetime) normalized() Lifetime {
 	if l.Idle <= 0 {
 		return Lifetime{}

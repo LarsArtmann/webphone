@@ -28,8 +28,8 @@ func TestHubReaperDeletesOnlyIdleHubs(t *testing.T) {
 	// deterministic instead of depending on wall-clock spacing.
 	stale := time.Now().Add(-hubIdleTTL - time.Second)
 	hubs.mu.Lock()
-	hubs.seen[ext.String()] = stale
-	hubs.seen[ext2.String()] = stale
+	hubs.seen[ext] = stale
+	hubs.seen[ext2] = stale
 	hubs.sweptAt = time.Time{}
 	hubs.sweep(time.Now())
 	hubs.mu.Unlock()
@@ -39,7 +39,7 @@ func TestHubReaperDeletesOnlyIdleHubs(t *testing.T) {
 	}
 
 	hubs.mu.Lock()
-	_, busyAlive := hubs.hubs[ext2.String()]
+	_, busyAlive := hubs.hubs[ext2]
 	hubs.mu.Unlock()
 	if !busyAlive {
 		t.Fatal("hub with a live subscriber was reaped — active hubs must never be reaped")
@@ -73,7 +73,7 @@ func TestHubReaperKeepsFreshIdleHubs(t *testing.T) {
 	hubs.mu.Unlock()
 
 	hubs.mu.Lock()
-	stillThere := hubs.hubs[ext.String()] == hub
+	stillThere := hubs.hubs[ext] == hub
 	hubs.mu.Unlock()
 	if !stillThere {
 		t.Fatal("freshly created hub was reaped — the connect window must be protected")

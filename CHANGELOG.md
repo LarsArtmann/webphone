@@ -47,6 +47,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   session token is a branded `session.Token` end-to-end across the
   Store seam, cookie reads and the derived-credential HMAC inputs
   (auth battery green: session, app, TestServer).
+- Data-model batch 3 (audits + perf): the thread transcript's
+  attachment fan-out collapsed from one query per message to a single
+  chunked IN-query (pinned by a fan-out spec), and the SSE hub registry
+  keys its hubs/languages/reaper bookkeeping by the branded
+  `domain.Extension` instead of raw strings. Audit trail: the
+  idempotency TTL-map invariants are recorded at the type (per-key TTL,
+  lazy expiry, distinct-key growth), the sessions-vs-store time
+  granularities and the `Lifetime.normalized`/config-validation
+  split are ruled in their packages, `views.Lang` is verified a closed
+  enum (the review's stat card annotated), and the dedup registry's
+  cited rulings were cross-checked at HEAD and re-sighted past the
+  carve moves.
 
 ## [2.9.0] - 2026-10-15
 
