@@ -362,18 +362,30 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 	}, nil
 }
 
+// attachAttachments loads every message's attachments in ONE query per
+// chunk (not one per message — the transcript fan-out this replaced was
+// the thread view's N+1). Chunking bounds the IN-list for SQLite's
+// variable limit; thread windows are far below it, so one query is the
+// normal shape. Grouping preserves the ORDER BY name order per message.
 func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message) error {
 	if len(msgs) == 0 {
 		return nil
 	}
-	for i, msg := range msgs {
+	const chunkSize = 500
+	for _, chunk := range slices.Chunk(msgs, chunkSize) {
+		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")
+		args := make([]any, len(chunk))
+		for i, msg := range chunk {
+			args[i] = msg.ID.String()
+		}
 		rows, err := s.db.QueryContext(ctx, `
 			SELECT id, message_id, name, mime_type, size_bytes, path
-			FROM attachments WHERE message_id = ? ORDER BY name
-		`, msg.ID.String())
+			FROM attachments WHERE message_id IN (`+placeholders+`) ORDER BY name
+		`, args...)
 		if err != nil {
 			return errorfamily.WrapInfrastructuref(err, "store.attachments_list", "list attachments")
 		}
+		byMessage := make(map[string][]domain.Attachment, len(chunk))
 		for rows.Next() {
 			var (
 				id, messageID, name, mime, path string
@@ -383,7 +395,7 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 				_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 				return errorfamily.WrapInfrastructuref(err, "store.attachment_scan", "scan attachment %s of message %s", id, messageID)
 			}
-			msgs[i].Attachments = append(msgs[i].Attachments, domain.Attachment{
+			byMessage[messageID] = append(byMessage[messageID], domain.Attachment{
 				ID:        domain.MustAttachmentID(id),
 				MessageID: domain.MustMessageID(messageID),
 				Name:      name,
@@ -397,6 +409,9 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 			return errorfamily.WrapInfrastructuref(err, "store.attachments_rows", "attachments rows")
 		}
 		_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+		for i, msg := range chunk {
+			msgs[len(msgs)-len(chunk)+i].Attachments = byMessage[msg.ID.String()]
+		}
 	}
 	return nil
 }

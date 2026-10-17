@@ -32,15 +32,17 @@ const (
 // cross-extension leakage. Hubs are created lazily and never torn down
 // (they hold no per-subscriber state beyond live connections).
 type ExtensionHubs struct {
-	mu   sync.RWMutex
-	hubs map[string]*cqrshtmx.Broadcaster
+	mu sync.RWMutex
+	// Keyed by the branded extension — the map can never mix a raw
+	// string (a phone number, a free-text id) into hub addressing.
+	hubs map[domain.Extension]*cqrshtmx.Broadcaster
 	// Per-extension UI language, remembered so the notifier renders SSE
 	// fragments (which have no request) in the tabs' language.
-	langs map[string]views.Lang
+	langs map[domain.Extension]views.Lang
 	// Reaper bookkeeping: when each hub was last fetched or published to.
 	// Mutated only under the write lock, alongside hubs, so an entry can
 	// never exist in one map without the other.
-	seen    map[string]time.Time
+	seen    map[domain.Extension]time.Time
 	sweptAt time.Time
 }
 
@@ -56,9 +58,9 @@ const (
 // NewHubs builds the per-extension hub registry.
 func NewHubs() *ExtensionHubs {
 	return &ExtensionHubs{
-		hubs:  make(map[string]*cqrshtmx.Broadcaster),
-		langs: make(map[string]views.Lang),
-		seen:  make(map[string]time.Time),
+		hubs:  make(map[domain.Extension]*cqrshtmx.Broadcaster),
+		langs: make(map[domain.Extension]views.Lang),
+		seen:  make(map[domain.Extension]time.Time),
 	}
 }
 
@@ -67,21 +69,21 @@ func NewHubs() *ExtensionHubs {
 func (h *ExtensionHubs) SetLang(extension domain.Extension, lang views.Lang) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.langs[extension.String()] = lang
+	h.langs[extension] = lang
 }
 
 // Lang returns the extension's remembered UI language (default English).
 func (h *ExtensionHubs) Lang(extension domain.Extension) views.Lang {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	if lang, ok := h.langs[extension.String()]; ok {
+	if lang, ok := h.langs[extension]; ok {
 		return lang
 	}
 	return views.LangEN
 }
 
 func (h *ExtensionHubs) get(extension domain.Extension) *cqrshtmx.Broadcaster {
-	key := extension.String()
+	key := extension
 	h.mu.RLock()
 	hub, ok := h.hubs[key]
 	h.mu.RUnlock()
@@ -128,7 +130,7 @@ func (h *ExtensionHubs) sweep(now time.Time) {
 // tabs. The sse-swap mechanism replaces the element's innerHTML with the
 // event data, so the data IS the rendered HTML.
 func (h *ExtensionHubs) Publish(extension domain.Extension, eventName EventName, html string) {
-	key := extension.String()
+	key := extension
 	hub := h.get(extension)
 
 	h.mu.Lock()
