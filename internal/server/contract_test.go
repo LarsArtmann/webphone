@@ -22,7 +22,7 @@ import (
 // uniform anti-enumeration 401, same credential class as session_api.go's).
 func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 	const helperFile = "actions.go"
-	const hookFile = filepath.Join("..", "hooks", "webhooks.go") // the secret gate: provider hooks 401 on a bad secret, not on a missing session
+	const hookFile = "../hooks/webhooks.go" // the secret gate: provider hooks 401 on a bad secret, not on a missing session
 	const loginFile = "session_api.go"                            // the login gate: bad credentials, not a missing session
 	const passkeyFile = "passkey_api.go"                          // the passkey login gate: unknown email / no credential, uniform by design
 	sawHelper := false
