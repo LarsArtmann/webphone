@@ -8,6 +8,60 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+// TestListMessagesFansAttachmentsOutInOnePass pins the grouped IN-query
+// fan-out: every message gets exactly its own attachments, in name
+// order, and a message with none stays empty — the N+1 loop this
+// replaced could attach (or duplicate) per-query rows by accident.
+func TestListMessagesFansAttachmentsOutInOnePass(t *testing.T) {
+	messages := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	remote := domain.MustParsePhone("+441632960961")
+	now := time.Now()
+
+	threadID, err := messages.FindThread(ctx, owner, remote, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, body := range []string{"m1", "m2", "m3"} {
+		msg := domain.NewOutboundMessage(
+			domain.GenerateMessageID(), threadID, owner, remote,
+			body, 0, now.Add(time.Duration(i)*time.Second),
+		)
+		switch i {
+		case 0:
+			msg.Attachments = []domain.Attachment{
+				{ID: domain.GenerateAttachmentID(), MessageID: msg.ID, Name: "b.png", MimeType: "image/png", SizeBytes: 2, Path: "attachments/b.png"},
+				{ID: domain.GenerateAttachmentID(), MessageID: msg.ID, Name: "a.png", MimeType: "image/png", SizeBytes: 1, Path: "attachments/a.png"},
+			}
+		case 2:
+			msg.Attachments = []domain.Attachment{
+				{ID: domain.GenerateAttachmentID(), MessageID: msg.ID, Name: "c.pdf", MimeType: "application/pdf", SizeBytes: 3, Path: "attachments/c.pdf"},
+			}
+		}
+		if err := messages.AppendMessage(ctx, msg); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	msgs, err := messages.ListMessages(ctx, owner, threadID, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(msgs) != 3 {
+		t.Fatalf("messages: %d (want 3)", len(msgs))
+	}
+	if got := msgs[2].Attachments; len(got) != 2 || got[0].Name != "a.png" || got[1].Name != "b.png" {
+		t.Errorf("m1 attachments must be exactly its own, in name order: %+v", got)
+	}
+	if len(msgs[1].Attachments) != 0 {
+		t.Errorf("m2 must carry no attachments: %+v", msgs[1].Attachments)
+	}
+	if got := msgs[0].Attachments; len(got) != 1 || got[0].Name != "c.pdf" {
+		t.Errorf("m3 attachments must be exactly its own: %+v", got)
+	}
+}
+
 func newTestDB(t *testing.T) *Messages {
 	t.Helper()
 	db, err := Open(":memory:")

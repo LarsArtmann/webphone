@@ -372,7 +372,7 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 		return nil
 	}
 	const chunkSize = 500
-	for _, chunk := range slices.Chunk(msgs, chunkSize) {
+	for chunk := range slices.Chunk(msgs, chunkSize) {
 		placeholders := strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")
 		args := make([]any, len(chunk))
 		for i, msg := range chunk {

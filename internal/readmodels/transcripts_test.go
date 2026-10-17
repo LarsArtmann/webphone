@@ -34,6 +34,14 @@ func seg(owner, callID, direction, remote, text string, startedAt time.Time) dom
 // per-segment trim scans.
 func bulkSeed(t *testing.T, s *Transcripts, owner, callID string, n int, text func(i int) string) {
 	t.Helper()
+	bulkSeedSeq(t, s, owner, callID, n, 1_000_000, text)
+}
+
+// bulkSeedSeq is bulkSeed with an explicit seq base, so separate calls
+// seed DISJOINT seq ranges (seq is the engine's only sort field —
+// colliding ranges interleave calls arbitrarily).
+func bulkSeedSeq(t *testing.T, s *Transcripts, owner, callID string, n, seqBase int, text func(i int) string) {
+	t.Helper()
 	ctx := context.Background()
 	for i := range n {
 		if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.TranscriptAppended{}), domain.TranscriptAppended{
@@ -43,7 +51,7 @@ func bulkSeed(t *testing.T, s *Transcripts, owner, callID string, n int, text fu
 			Direction: domain.DirectionOutbound,
 			Remote:    "+4930",
 			StartedAt: time.Unix(1760000000, 0),
-			Seq:       int64(1_000_000 + i),
+			Seq:       int64(seqBase + i),
 			Text:      text(i),
 		}); err != nil {
 			t.Fatal(err)
@@ -83,6 +91,72 @@ func TestTranscriptsRecentGroupsByCallInSpokenOrder(t *testing.T) {
 	}
 	if len(got[1].Lines) != 3 || got[1].Lines[0] != "first" || got[1].Lines[2] != "third" {
 		t.Errorf("spoken order: %v", got[1].Lines)
+	}
+}
+
+// TestTranscriptsRecentTableAcrossWindowAndCaps pins the caps × window
+// contract as a table over a flooded store (2230 stored segments, 2000
+// read window): the render cap keeps WHOLE newest calls, the window's
+// only cut is the OLDEST call's head (the group nobody renders at that
+// depth), and the reassembled total never exceeds the window.
+func TestTranscriptsRecentTableAcrossWindowAndCaps(t *testing.T) {
+	s := newTestTranscripts(t)
+	ctx := context.Background()
+	base := time.Unix(1760000000, 0)
+
+	bulkSeedSeq(t, s, "1001", "old-1", 1100, 1_000_000, func(i int) string { return fmt.Sprintf("old1-%04d", i) })
+	bulkSeedSeq(t, s, "1001", "old-2", 1100, 2_000_000, func(i int) string { return fmt.Sprintf("old2-%04d", i) })
+	for _, call := range []string{"new-1", "new-2", "new-3"} {
+		for i := range 10 {
+			if err := s.Append(ctx, seg("1001", call, "out", "+4930",
+				fmt.Sprintf("%s-%02d", call, i), base.Add(time.Duration(i)*time.Second))); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	cases := []struct {
+		name      string
+		maxCalls  int
+		wantCalls int
+	}{
+		{"render cap keeps the newest whole calls", 2, 2},
+		{"a deep render cap surfaces every stored call", 10, 5},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := s.Recent(ctx, domain.MustParseExtension("1001"), tc.maxCalls)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != tc.wantCalls {
+				t.Fatalf("groups: %d (want %d)", len(got), tc.wantCalls)
+			}
+			if got[0].CallID != "new-3" || len(got[0].Lines) != 10 || got[0].Lines[0] != "new-3-00" {
+				t.Errorf("newest call must lead, whole: %+v", got[0])
+			}
+			total := 0
+			for _, call := range got {
+				total += len(call.Lines)
+			}
+			if total > transcriptFetchWindow {
+				t.Errorf("reassembled %d lines, want the %d-segment window as the ceiling", total, transcriptFetchWindow)
+			}
+		})
+	}
+
+	// The window's honest shape: 2230 stored, 2000 read — exactly the
+	// 230 oldest segments (old-1's head) are absent; old-2 stays whole.
+	got, err := s.Recent(ctx, domain.MustParseExtension("1001"), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 5 || got[4].CallID != "old-1" || len(got[4].Lines) != 1100-230 {
+		t.Errorf("window cut shape: %d groups, oldest = %s/%d — want old-1 head-truncated to %d",
+			len(got), got[len(got)-1].CallID, len(got[len(got)-1].Lines), 1100-230)
+	}
+	if got[3].CallID != "old-2" || len(got[3].Lines) != 1100 {
+		t.Errorf("old-2 must ride the window whole: %+v", got[3])
 	}
 }
 
