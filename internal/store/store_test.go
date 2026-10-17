@@ -51,13 +51,13 @@ func TestListMessagesFansAttachmentsOutInOnePass(t *testing.T) {
 	if len(msgs) != 3 {
 		t.Fatalf("messages: %d (want 3)", len(msgs))
 	}
-	if got := msgs[2].Attachments; len(got) != 2 || got[0].Name != "a.png" || got[1].Name != "b.png" {
+	if got := msgs[0].Attachments; len(got) != 2 || got[0].Name != "a.png" || got[1].Name != "b.png" {
 		t.Errorf("m1 attachments must be exactly its own, in name order: %+v", got)
 	}
 	if len(msgs[1].Attachments) != 0 {
 		t.Errorf("m2 must carry no attachments: %+v", msgs[1].Attachments)
 	}
-	if got := msgs[0].Attachments; len(got) != 1 || got[0].Name != "c.pdf" {
+	if got := msgs[2].Attachments; len(got) != 1 || got[0].Name != "c.pdf" {
 		t.Errorf("m3 attachments must be exactly its own: %+v", got)
 	}
 }

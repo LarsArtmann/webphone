@@ -46,6 +46,16 @@ type Gate interface {
 // recorded — a failed attempt (unknown ref, transient store error) stays
 // retryable by design.
 //
+// TTL-map invariants (audit 2026-10-18, round-5 F51): (1) TTL is per
+// key — every entry carries its own stamp, so a Record refresh never
+// extends a neighbor; (2) expiry is lazy — Seen answers false for a
+// stale entry without deleting it, and only Record of the SAME key
+// drops its stale predecessor; (3) the map therefore grows with the
+// count of DISTINCT keys over the process life, not with one TTL of
+// traffic — stale entries are inert but present until the process
+// restarts (the engine-backed window is the swept, bounded lane; this
+// map is the test/rollback seam where that cost is noise).
+//
 // In-memory fallback (and the rollback seam for the engine window):
 // a restart merely re-arms dedupe — the worst case is one harmless
 // re-apply of an already-terminal status.

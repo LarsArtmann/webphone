@@ -104,8 +104,12 @@ func TestTranscriptsRecentTableAcrossWindowAndCaps(t *testing.T) {
 	ctx := context.Background()
 	base := time.Unix(1760000000, 0)
 
-	bulkSeedSeq(t, s, "1001", "old-1", 1100, 1_000_000, func(i int) string { return fmt.Sprintf("old1-%04d", i) })
-	bulkSeedSeq(t, s, "1001", "old-2", 1100, 2_000_000, func(i int) string { return fmt.Sprintf("old2-%04d", i) })
+	// Nano-scale seq bases match the seam's real width (UnixNano): the
+	// engine's seq sort must see uniform-width values, exactly as every
+	// production Append produces them.
+	nano := time.Unix(1760000000, 0).UnixNano()
+	bulkSeedSeq(t, s, "1001", "old-1", 1100, int(nano-3_000_000_000), func(i int) string { return fmt.Sprintf("old1-%04d", i) })
+	bulkSeedSeq(t, s, "1001", "old-2", 1100, int(nano-2_000_000_000), func(i int) string { return fmt.Sprintf("old2-%04d", i) })
 	for _, call := range []string{"new-1", "new-2", "new-3"} {
 		for i := range 10 {
 			if err := s.Append(ctx, seg("1001", call, "out", "+4930",
