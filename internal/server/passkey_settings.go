@@ -43,7 +43,7 @@ func (h *handlers) passkeySectionProps(extension domain.Extension) views.Passkey
 // showMessage — the island's one toast listener); the same whole-panel
 // swap the snippets section uses, so the list always shows store truth.
 func (h *handlers) revokePasskey(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

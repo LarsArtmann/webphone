@@ -129,7 +129,7 @@ func threadPageFromQuery(r *http.Request) int {
 }
 
 func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

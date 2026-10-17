@@ -56,7 +56,7 @@ func agentDetail(err error) string {
 // <section> for an outerHTML swap, so the review loop refreshes without
 // re-rendering the whole Messages tab (a half-typed composer survives).
 func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.requireSession(w, r); !ok {
+	if _, ok := h.RequireSession(w, r); !ok {
 		return
 	}
 	if !h.textAgentOn() {
@@ -109,7 +109,7 @@ func textAgentActionError(err error) (int, string) {
 // rides the panel-error contract so the banner lands where the owner
 // looks.
 func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -130,7 +130,7 @@ func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
 
 // discardDraft drops a pending draft without sending.
 func (h *handlers) discardDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

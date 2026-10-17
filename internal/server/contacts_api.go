@@ -10,13 +10,13 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
-// notifyContactsChanged nudges the extension's other surfaces (open
+// NotifyContactsChanged nudges the extension's other surfaces (open
 // Contacts tab, the island's contacts dropdown) with the payload-less
 // "contacts" SSE event — the voicemail-nudge pattern: both consumers
 // re-fetch with their own session credentials instead of trusting a
 // push payload. A missing hub wiring (fuzz/minimal harnesses) skips
 // the push: one lost nudge is cosmetic, the next mutation catches up.
-func (h *handlers) notifyContactsChanged(extension domain.Extension) {
+func (h *handlers) NotifyContactsChanged(extension domain.Extension) {
 	if h.deps.Hubs == nil {
 		return
 	}
@@ -49,7 +49,7 @@ type apiSharedContact struct {
 // personal contacts plus the operator's shared contacts from config
 // (the same merge the Contacts tab renders).
 func (h *handlers) apiListContacts(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -91,7 +91,7 @@ func contactSaveFailed(w http.ResponseWriter) {
 // contract expects. The tab handlers share the nudge but answer with a
 // toast + partial instead — this epilogue belongs to the JSON API only.
 func (h *handlers) apiContactSaved(w http.ResponseWriter, extension domain.Extension) {
-	h.notifyContactsChanged(extension)
+	h.NotifyContactsChanged(extension)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -101,7 +101,7 @@ func (h *handlers) apiContactSaved(w http.ResponseWriter, extension domain.Exten
 // and keeps the old ID on rename, so a GET is the only ID source that
 // cannot drift.
 func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -139,7 +139,7 @@ func (h *handlers) apiSaveContact(w http.ResponseWriter, r *http.Request) {
 // apiDeleteContact removes one personal contact scoped to the session's
 // extension (an id from another owner is a plain 404).
 func (h *handlers) apiDeleteContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

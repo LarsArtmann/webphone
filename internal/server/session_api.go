@@ -179,7 +179,7 @@ func (h *handlers) numbersFor(mapped userauth.MappedUser) []string {
 // served only to the cookie that proved itself at login. no-store keeps
 // the credential out of every cache.
 func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

@@ -303,7 +303,7 @@ func New(deps Deps) http.Handler {
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
-	// (no CSRF surface), self-gated through requireSession.
+	// (no CSRF surface), self-gated through RequireSession.
 	protected.HandleFunc("GET /api/session", h.getSession)
 	protected.HandleFunc("DELETE /api/session", h.destroySession)
 	// JSON surface for the island's contact panel (same store as the

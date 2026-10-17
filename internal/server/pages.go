@@ -114,7 +114,7 @@ func (h *handlers) safeDetail(r *http.Request, op string, err error) string {
 
 // partial renders just the tab region for an HTMX swap.
 func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

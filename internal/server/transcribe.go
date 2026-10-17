@@ -23,7 +23,7 @@ const transcribeBodyLimit = 25 << 20
 // surface simply does not exist, and the island hides every affordance
 // behind the same flag.
 func (h *handlers) apiTranscribe(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.requireSession(w, r); !ok {
+	if _, ok := h.RequireSession(w, r); !ok {
 		return
 	}
 	if h.deps.ASR == nil || !h.deps.ASR.Enabled() {

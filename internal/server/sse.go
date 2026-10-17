@@ -145,7 +145,7 @@ func (h *ExtensionHubs) Publish(extension domain.Extension, eventName EventName,
 // close. The hand loop that duplicated that lifecycle is gone — and with
 // it, the heartbeat that outlived its request context.
 func (h *handlers) events(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

@@ -139,7 +139,7 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 // resendFax re-submits a failed outbound fax's stored document as a new
 // job (the original row stays as evidence); the refreshed panel answers.
 func (h *handlers) resendFax(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -167,7 +167,7 @@ func (h *handlers) resendFax(w http.ResponseWriter, r *http.Request) {
 
 // faxDocument streams a job's PDF (session-gated).
 func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -196,7 +196,7 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 
 // attachment streams one MMS attachment (session-gated, owner-scoped).
 func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -225,7 +225,7 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 
 // deleteVoicemail removes a message through the phone API.
 func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -247,7 +247,7 @@ func (h *handlers) deleteVoicemail(w http.ResponseWriter, r *http.Request) {
 
 // saveContact upserts a personal contact.
 func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -269,14 +269,14 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 		contactSaveFailed(w)
 		return
 	}
-	h.notifyContactsChanged(sess.Extension)
+	h.NotifyContactsChanged(sess.Extension)
 	notifyToast(w, "ok", h.T(r, "toast.contactSaved"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
 // deleteContact removes a personal contact.
 func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -289,7 +289,7 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	h.notifyContactsChanged(sess.Extension)
+	h.NotifyContactsChanged(sess.Extension)
 	notifyToast(w, "ok", h.T(r, "toast.contactDeleted"))
 	h.partial(w, r, tabFromPath("/contacts"))
 }
@@ -299,7 +299,7 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 // operator copy; success re-renders the settings partial (toast +
 // partial, the saveContact epilogue).
 func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -333,7 +333,7 @@ func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
 
 // deleteSnippet removes one reply snippet (owner-scoped; a miss is 404).
 func (h *handlers) deleteSnippet(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -486,7 +486,7 @@ func (h *handlers) renderPanelError(
 // without a GET, so the client marks read explicitly (the badge must not
 // stay lit for the conversation on screen). Idempotent by store contract.
 func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -523,7 +523,7 @@ var threadFlagActions = map[string]store.ThreadFlag{
 // refresh). English error copy per the service policy; every miss is a
 // plain 404 (owner scoping).
 func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -565,11 +565,11 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// requireSession gates a handler behind the signed-in extension; on
+// RequireSession gates a handler behind the signed-in extension; on
 // failure it has already written the error response. Handlers keep their
 // own gate (rather than relying on route middleware) so they are safe by
 // construction no matter how they are wired.
-func (h *handlers) requireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+func (h *handlers) RequireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
 	sess, ok := session.From(r.Context())
 	if !ok {
 		http.Error(w, session.SignInFirst, http.StatusUnauthorized)
@@ -581,7 +581,7 @@ func (h *handlers) requireSession(w http.ResponseWriter, r *http.Request) (sessi
 // requireSessionMultipart parses a multipart action form for the signed-in
 // extension; on failure it has already written the error response.
 func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return session.Session{}, false
 	}
@@ -680,13 +680,13 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+strconv.Itoa(imported)+h.T(r, "toast.imported.post"))
-	h.notifyContactsChanged(sess.Extension)
+	h.NotifyContactsChanged(sess.Extension)
 	h.partial(w, r, tabFromPath("/contacts"))
 }
 
 // exportContacts streams the extension's personal contacts as vCard.
 func (h *handlers) exportContacts(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

@@ -28,7 +28,7 @@ const transcriptTextMax = 4000
 // /api/transcribe — without the seam nothing produces segments, so the
 // surface does not exist either.
 func (h *handlers) apiSaveTranscript(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -104,7 +104,7 @@ func (h *handlers) apiSaveTranscript(w http.ResponseWriter, r *http.Request) {
 // is the same 204 as a fresh erase — the store row state IS the truth,
 // and the History re-render follows on the next tab visit.
 func (h *handlers) apiDeleteTranscript(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

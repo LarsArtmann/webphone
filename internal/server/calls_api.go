@@ -24,7 +24,7 @@ import (
 //     retryable; an absent or empty key never dedupes (legacy shape).
 //
 // The session's extension scopes nothing here — the CRM is single-user —
-// but the endpoint stays behind requireSession like every /api surface so
+// but the endpoint stays behind RequireSession like every /api surface so
 // the auth posture never depends on integration wiring.
 // recordCallIdem marks a call-log attempt processed. Only successes reach
 // it (failures stay retryable); an empty key means the client sent no
@@ -36,7 +36,7 @@ func (h *handlers) recordCallIdem(key string) {
 }
 
 func (h *handlers) apiLogCall(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.requireSession(w, r)
+	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}

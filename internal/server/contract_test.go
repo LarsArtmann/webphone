@@ -9,7 +9,7 @@ import (
 )
 
 // TestSessionGatesLiveOnlyInTheHelper pins the convention the 22:55 dedup
-// session established: every handler gates itself through h.requireSession
+// session established: every handler gates itself through h.RequireSession
 // (safe by construction no matter how routes are wired). A session gate —
 // a 401 rejection — may exist only in the helper (actions.go), and the
 // wording has one home, session.SignInFirst. The shell's anonymous-friendly
@@ -50,7 +50,7 @@ func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 			t.Errorf("%s hardcodes the 401 body — use session.SignInFirst (one home per wording)", name)
 		}
 		if n := strings.Count(code, "http.StatusUnauthorized"); n > 0 && name != helperFile && name != hookFile && name != loginFile && name != passkeyFile {
-			t.Errorf("%s writes %d× 401 inline — session gates go through h.requireSession only", name, n)
+			t.Errorf("%s writes %d× 401 inline — session gates go through h.RequireSession only", name, n)
 		}
 		if strings.Contains(code, "session.From(") && name == helperFile {
 			sawHelper = true
