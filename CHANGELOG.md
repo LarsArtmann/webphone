@@ -59,6 +59,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   enum (the review's stat card annotated), and the dedup registry's
   cited rulings were cross-checked at HEAD and re-sighted past the
   carve moves.
+- ASR hardening + polish (round-5 E15/E16): both provider wires now
+  track rolling transcription outcomes (count, failures, latency mean,
+  last error/success) with a per-request debug latency line, and the
+  provider joins the health surface as an OPTIONAL NON-CRITICAL leg
+  when the seam is on — degraded only when real transcriptions are
+  failing with no success since, never by probing; /api/transcribe
+  gained a concurrency ceiling (4 in flight, 503 past a short queue
+  wait) so the surface's buffered memory stays bounded; the live call
+  card caps its transcript DOM (newest tail kept, marked) and gained a
+  per-call Clear affordance; History transcript rows gained a Download
+  affordance (shell-side text/plain save named after the call). The
+  429 combined-budget contract (transcribe + transcripts share one
+  hook-grade bucket) is now server-pinned by a flood spec. Verified
+  already-present from earlier trains: segment retry/backoff + the
+  unavailable toast, the language hint, and the voicemail button test.
 
 ## [2.9.0] - 2026-10-15
 

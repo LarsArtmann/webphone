@@ -141,6 +141,15 @@ export function installBrowserGlobals() {
       click() {
         (this.listeners.click ?? []).forEach((fn) => fn({}));
       },
+      removeChild(kid) {
+        const i = this.children.indexOf(kid);
+        if (i >= 0) this.children.splice(i, 1);
+        return kid;
+      },
+      appendChild(kid) {
+        this.append(kid);
+        return kid;
+      },
     };
     // classList with real-DOM semantics: add/remove/toggle mutate the
     // element's className string (reads always derive from it), so code

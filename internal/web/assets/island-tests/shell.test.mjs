@@ -1367,6 +1367,46 @@ test("data-copy-transcript copies the row's transcript and toasts honestly", asy
   delete globalThis.navigator.clipboard;
 });
 
+// #40: transcript download. History rows carry data-download-transcript;
+// shell.js builds a text/plain blob from the rendered row and triggers
+// one file save named after the call id.
+test("data-download-transcript saves the row's transcript as a text file", async () => {
+  const blobs = [];
+  const revoked = [];
+  globalThis.URL.createObjectURL = (blob) => {
+    blobs.push(blob);
+    return `blob:${blobs.length}`;
+  };
+  globalThis.URL.revokeObjectURL = (u) => revoked.push(u);
+
+  const row = doc.createElement();
+  row.className = "wp-transcript-call";
+  const text = doc.createElement();
+  text.className = "wp-transcript-text";
+  text.textContent = "guten tag wie gehts";
+  const btn = doc.createElement();
+  btn.selector = "[data-download-transcript]";
+  btn.setAttribute("data-download-transcript", "call-42");
+  row.append(text, btn);
+
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(blobs.length, 1, "one blob was offered for object-URLing");
+  assert.equal(await blobs[0].text(), "guten tag wie gehts");
+  assert.deepEqual(revoked, ["blob:1"], "the object URL is revoked after the save");
+  assert.match(toasts().children.at(-1).textContent, /transcript downloaded/i);
+
+  // An empty row says so instead of saving an empty file.
+  text.textContent = "";
+  doc.dispatch("click", { target: btn });
+  await settle();
+  assert.equal(blobs.length, 1);
+  assert.match(toasts().children.at(-1).textContent, /nothing to download yet/i);
+
+  delete globalThis.URL.createObjectURL;
+  delete globalThis.URL.revokeObjectURL;
+});
+
 test("a real transcription plants a copy chip; empty results plant nothing", async () => {
   const copied = [];
   globalThis.navigator.clipboard = {

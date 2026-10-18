@@ -71,6 +71,9 @@ func TestSaveTranscriptRoundTripAndHistoryRendering(t *testing.T) {
 			t.Errorf("history transcript section missing %q; page:\n%s", want, page)
 		}
 	}
+	if !strings.Contains(page, `data-copy-transcript`) || !strings.Contains(page, `data-download-transcript`) {
+		t.Errorf("history transcript rows carry no copy/download affordances:\n%s", page)
+	}
 	if strings.Index(page, "+4930111") > strings.Index(page, "+4989123456") {
 		t.Errorf("newest call must lead the section")
 	}
