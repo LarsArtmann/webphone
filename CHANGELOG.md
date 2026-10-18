@@ -80,6 +80,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   per wire-agnostic concern. A 429 from the OpenAI-compatible wire is
   now Transient (retryable) like the Google wire always was, so a
   loaded self-hosted provider is backed off, not rejected.
+- The island call card's lifecycle is a declarative transition table
+  (CALL_TRANSITIONS in state.js): hold/queue toggles and sip.js
+  stateChange arrivals both route through it — an illegal transition
+  is refused with a loud warn instead of drifting the UI into a state
+  the network never confirmed, and the rendered view state derives
+  from the same fields the table guards.
 
 ## [2.9.0] - 2026-10-15
 

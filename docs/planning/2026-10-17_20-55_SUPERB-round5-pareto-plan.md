@@ -38,7 +38,7 @@
 | E11 | Data-model harvest batch 3: audits/docs (fax Resolution arms, dedup-registry cross-check, idempotency TTL invariants, Lang 10th enum, time-granularity note) + perf (attachAttachments IN-query, caps×window table test, ExtensionHubs keyed) | assistant | 2×100m | durability | med | E9 |
 | E12 | Declarative D-train: island CALL_TRANSITIONS + memo ratification fold | assistant | 100m | closes 10-14 plan | med | E1 (g3), E2 (E2E) |
 | E13 | Stack hardening: tests/common.nix helpers (journal-assert, secretFile fixture) + dynamic-directory suite merge + fs-directory→operatorWatchedUnits + health leg | assistant (stack repo) | 2×100m | CI cost + watchability | med | E6 |
-| E14 | The three smalls: fax receipt-verbosity seam; config fail-closed typing; schema_version gate | assistant | 3×45m | old cheap debt | med | — |
+| E14 | The three smalls: fax receipt-verbosity seam; config fail-closed typing; schema_version gate — ADJUDICATED ALREADY-DONE-AT-HEAD 2026-10-18 (see F63–F65) | assistant | 3×45m | old cheap debt | med | — |
 | E15 | ASR provider hardening: retry/backoff + unavailable toast (#43/#44), latency metric (#23), optional health leg (#22), memory ceiling (#47) | assistant | 100m | robustness | med | — |
 | E16 | ASR client polish + test debt: language hint (#11/#12), DOM cap (#41), per-call affordance (#39), download (#40); voicemail button test (#37), 429 combined load (#5) | assistant | 2×100m | UX + coverage | med | E15 |
 | E17 | Gate-recovery stragglers: ui-capture 14-shot pass on v1.20.1 tree; module-cache janitor + zero-byte .tmp sweep; errorpage tagging upstream note | assistant | 100m | tool trust | med | — |
@@ -152,20 +152,20 @@
 **E14 smalls (assistant)**
 | # | Micro-task | Est |
 | --- | --- | --- |
-| F63 | Fax receipt-verbosity seam: typed receipt levels + tests | 12m ×2 (F63a/b) |
-| F64 | Config fail-closed typing: twin-option struct validation + boot test | 12m |
-| F65 | Schema_version gate: table + first migration step wired | 12m ×2 (F65a/b) |
+| F63 | Fax receipt-verbosity seam: typed receipt levels + tests — done at HEAD: the closed `domain` fax Resolution enum, both arms tested | 12m ×2 (F63a/b) |
+| F64 | Config fail-closed typing: twin-option struct validation + boot test — done at HEAD: load-time identities-keys + shared-contact number validation | 12m |
+| F65 | Schema_version gate: table + first migration step wired — done at HEAD: the versioned migration chain in store/db.go (schema v4 markers) | 12m ×2 (F65a/b) |
 
 **E15/E16 ASR (assistant)**
 | # | Micro-task | Est |
 | --- | --- | --- |
-| F66 | Segment retry/backoff with cap + "transcription unavailable" toast | 12m ×2 (F66a/b) |
+| F66 | Segment retry/backoff with cap + "transcription unavailable" toast — done at HEAD (verified 2026-10-18; pre-shipped by an earlier ASR train) | 12m ×2 (F66a/b) |
 | F67 | Provider latency metric + optional non-critical health leg | 12m |
 | F68 | Memory ceiling for concurrent live transcriptions | 12m |
-| F69 | Language hint from wp-lang + asr.language wire | 12m |
+| F69 | Language hint from wp-lang + asr.language wire — done at HEAD (verified 2026-10-18) | 12m |
 | F70 | Client transcript DOM cap + per-call scroll/clear affordance | 12m |
 | F71 | Transcript download leg | 12m |
-| F72 | Voicemail transcribe-button test (#37) | 12m |
+| F72 | Voicemail transcribe-button test (#37) — done at HEAD (verified 2026-10-18) | 12m |
 | F73 | 429 combined live+auto load test (#5) | 12m |
 
 **E17–E23 stragglers/process (assistant)**
@@ -173,10 +173,10 @@
 | --- | --- | --- |
 | F74 | ui-capture 14-shot pass on v1.20.1 tree + diff vs matrix | 12m |
 | F75 | Module-cache janitor script + zero-byte .tmp sweep | 12m |
-| F76 | templ-components errorpage tagging discipline: upstream note filed | 10m |
+| F76 | templ-components errorpage tagging discipline: upstream note filed — ALREADY UPSTREAM (verified 2026-10-18: issue #27 + docs/release-checklist.md + release-smoke workflow encode the discipline) | 10m |
 | F77 | Markdownlint posture line in AGENTS per sitting verdict | 10m |
 | F78 | d2 cheat-sheet: verify snippet matrix on v0.9.0, fix reference, PR skills repo | 12m ×2 (F78a/b) |
-| F79 | Branching-flow drafts: finalize + file both upstream | 12m ×2 (F79a/b) |
+| F79 | Branching-flow drafts: finalize + file both upstream — ALREADY FILED + COMPLETED upstream (verified 2026-10-18: panic FP shapes = issue #9 COMPLETED, phantom class scoping = issues #15/#16 COMPLETED; drafts remain in docs/drafts/) | 12m ×2 (F79a/b) |
 | F80 | 10-14 status 26-followup routing audit (grep TODO/ROADMAP per item) | 12m ×2 (F80a/b) |
 | F81 | Carve row number refresh (two-method count) + row close if E7/E8 done | 10m |
 | F82 | Metaengine row: verify G3-via-2.9.0, rewrite row to closed state | 10m |

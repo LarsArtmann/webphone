@@ -731,7 +731,12 @@ query saw a FRESH EMPTY DATABASE ("no such table: sessions" → spurious
 401s). Fix: `:memory:` pools never idle-trim (db.go). CI was green the
 whole time — the unloaded runner never tripped the reaper. Corollary:
 local-suite failures under load deserve a cause analysis before a code
-change; CI divergence is evidence, not noise.
+change; CI divergence is evidence, not noise. Refinement (10-14
+follow-up fold): on IO-storm days, SCOPE the suite to the touched
+packages and attribute surprises via CI equivalence before local
+reruns — the box tripped the no-heavy-builds gate 6× in 60 min while
+full local suites flaked red (the 401 class the flake ledger records
+as environmental).
 
 **Engine scans ceiling at 100 rows silently.** metaengine's unlimited
 `Scan` returns at most the planner's default 100 rows — "list all"
@@ -756,3 +761,14 @@ history. Rule (now in AGENTS): `git add … && git commit …` in ONE tool
 call under a live daemon; inter-call gates like whitespace-drift run in
 the same call, before the commit. End state was correct — only the
 history's narrative was lost.
+
+Two refinements from the 10-17 improvement pass (both proven that
+session): **self-verifying scripts by default** — any transform script
+gits `assert out != src` (or equivalent) BEFORE its success print; the
+row-realignment script once printed "realigned" over an unchanged
+file (border pipes missing, `replace()` matched nothing), caught only
+because the daemon commit's stat listed 5 files, not 6. And
+**verify-before-describing**: a commit message may only describe
+changes confirmed present (diff/stat check in the same call) — the
+lost realignment message claimed the realignment as done while it was
+a no-op, one daemon race away from permanent false history.
