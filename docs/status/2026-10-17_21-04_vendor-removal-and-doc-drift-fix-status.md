@@ -140,6 +140,7 @@ their work is deliberately not covered here.
    or keep this report read-only per your "wait for instructions"?
 
 ---
+
 Format note: written as `.md` at explicit user path demand (skill default is HTML dashboard) —
 override flagged. Brutal-self-review content folded into sections (d)/(e) instead of a second
 HTML file at docs/reviews/, per the same single-file instruction.

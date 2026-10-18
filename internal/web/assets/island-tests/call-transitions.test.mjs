@@ -5,11 +5,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  CALL_TRANSITIONS,
-  applyTransition,
-  viewStateOf,
-} from "../island/app/state.js";
+import { CALL_TRANSITIONS, applyTransition, viewStateOf } from "../island/app/state.js";
 
 test("the call table allows every lifecycle walk and refuses the lies", () => {
   // The happy paths.
@@ -58,14 +54,8 @@ test("viewStateOf derives the same vocabulary the renderer branches on", () => {
   const session = (state) => ({ state });
   assert.equal(viewStateOf({ session: session("Establishing") }), "ringing");
   assert.equal(viewStateOf({ session: session("Established") }), "active");
-  assert.equal(
-    viewStateOf({ session: session("Established"), held: true }),
-    "held",
-  );
-  assert.equal(
-    viewStateOf({ session: session("Established"), holdPending: "holding" }),
-    "holding",
-  );
+  assert.equal(viewStateOf({ session: session("Established"), held: true }), "held");
+  assert.equal(viewStateOf({ session: session("Established"), holdPending: "holding" }), "holding");
   assert.equal(
     viewStateOf({ session: session("Established"), holdPending: "resuming" }),
     "resuming",

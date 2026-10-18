@@ -29,16 +29,16 @@ The round-5 plan was dispatched with owner gates intact; I executed every assist
 
 Code landed (daemon commit `cf138ca`, 8 files); tests partially landed (`ce7318f`):
 
-| Item | State |
-| --- | --- |
-| F37 Must* enum parsers (Direction/Channel/OutboundStatus incl. legal zero) in `domain/message.go` | ✅ code + `domain/enums_test.go` |
-| F38 fax leg: `Parse/MustFaxStatus/FaxDirection` in `domain/fax.go`; `legacy_faxes.go` refactored onto them (reject-on-error, one home) | ✅ code (corrupt-row panic test = `store/scan_panic_test.go` ✅) |
-| F39 transcripts: `legacy_transcripts.go` onto `ParseDirection`; island boundary `SaveTranscript` uses `domain.ParseDirection` | ✅ code |
-| F40 `retention_days < 0` rejected in `config.validate` (`config.retention_days`) | ✅ code, ❌ test missing |
-| F41 gateway exhaustive dispatch: unknown mode PANICS (both constructors), Loopback fallback dropped | ✅ code, ❌ test missing |
-| F42 `ParsePhone` at the transcript POST boundary (stores the SANITIZED remote; 400 on non-dialable) | ✅ code, ❌ test missing (garbage-remote 400 + sanitized round-trip cases) |
-| **Build + test run after the final edits** | ❌ NOT DONE — last verified state predates the E9 edits |
-| `nix fmt` + gates + narrative commit | ❌ NOT DONE |
+| Item                                                                                                                                   | State                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| F37 Must* enum parsers (Direction/Channel/OutboundStatus incl. legal zero) in `domain/message.go`                                      | ✅ code + `domain/enums_test.go`                                           |
+| F38 fax leg: `Parse/MustFaxStatus/FaxDirection` in `domain/fax.go`; `legacy_faxes.go` refactored onto them (reject-on-error, one home) | ✅ code (corrupt-row panic test = `store/scan_panic_test.go` ✅)           |
+| F39 transcripts: `legacy_transcripts.go` onto `ParseDirection`; island boundary `SaveTranscript` uses `domain.ParseDirection`          | ✅ code                                                                    |
+| F40 `retention_days < 0` rejected in `config.validate` (`config.retention_days`)                                                       | ✅ code, ❌ test missing                                                   |
+| F41 gateway exhaustive dispatch: unknown mode PANICS (both constructors), Loopback fallback dropped                                    | ✅ code, ❌ test missing                                                   |
+| F42 `ParsePhone` at the transcript POST boundary (stores the SANITIZED remote; 400 on non-dialable)                                    | ✅ code, ❌ test missing (garbage-remote 400 + sanitized round-trip cases) |
+| **Build + test run after the final edits**                                                                                             | ❌ NOT DONE — last verified state predates the E9 edits                    |
+| `nix fmt` + gates + narrative commit                                                                                                   | ❌ NOT DONE                                                                |
 
 **The full buildflow gate I started (post-carve) was never harvested** — the background shell vanished before I read it; its verdict is unknown/lost (see d).
 
@@ -72,6 +72,7 @@ Code landed (daemon commit `cf138ca`, 8 files); tests partially landed (`ce7318f
 ## f) NEXT — up to 50, in execution order
 
 **Immediate (unblock the current tree):**
+
 1. Run `go build ./...` + `go test ./internal/domain/ ./internal/store/ ./internal/config/ ./internal/gateway/ ./internal/server/...` for the E9 state; fix anything red.
 2. Write the three missing E9 tests: retention-days rejection (config), gateway unknown-mode panic (gateway), transcript boundary (garbage remote → 400; `" +44 1632 960961 "` → stored `+441632960961`, history round-trip).
 3. `nix fmt`; regenerate the error-code registry if E9's new codes (`domain.direction` etc.) trip `TestErrorCodeRegistryIsFresh`.

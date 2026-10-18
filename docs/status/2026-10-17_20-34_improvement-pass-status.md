@@ -63,6 +63,7 @@
 ## f) Things to get done next (delta list; completed items from report #1 removed — its full list stands otherwise)
 
 **Tier 1 — loose ends from this pass**
+
 1. [NEW] CI-watch `d792506` + `3805c30` after the daemon pushes (bar anchor: 20:24:00; invoke only if > 60 min).
 2. [NEW] Fold the two process rules (self-verifying scripts, verify-before-describing) into the next lessons.md edit as refinements of the daemon-race entry.
 3. [CARRIED] Upstream d2 cheat-sheet fix (blocked on owner question 3).

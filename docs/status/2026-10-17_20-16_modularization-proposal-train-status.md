@@ -64,6 +64,7 @@
 ## f) Up to 50 things to get done next (brainstorm per status-report skill — extra items are ROADMAP fuel; HARVEST applies routing rigor)
 
 **Tier 1 — this session's loose ends (small, do-soon)**
+
 1. [NEW] CI-watch today's 3 unpushed commits; if push-stall crosses 60 min, invoke the manual-push bar (state anchor: oldest unpushed 2026-10-17T19:43:23+02:00).
 2. [NEW] Normalize svg perms repo-wide: `chmod 644` the four 600-perm SVGs (two 09-19, two mine).
 3. [NEW] Re-align `docs/modularization/INDEX.md` table (my row broke the pipe alignment).
