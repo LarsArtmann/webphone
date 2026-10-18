@@ -80,6 +80,7 @@ var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
 	metaengine.FilterOnField[FaxView]("provider_ref", metaengine.FilterEq),
 	metaengine.FilterOnField[FaxView]("created_at", metaengine.FilterLt),
 	metaengine.SortOnField[FaxView]("created_at", true),
+	metaengine.Volume(humanScaleVolume),
 )
 
 // Faxes is the engine-backed fax store: the same contract the SQL

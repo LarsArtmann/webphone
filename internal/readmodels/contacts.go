@@ -73,6 +73,7 @@ var contactsQuery = metaengine.Query[contactsInput, ContactView](contactsCollect
 	metaengine.OnRecord(domain.ContactDeleted{}, metaengine.Remove[ContactView]()),
 	metaengine.FilterOnField[ContactView]("owner", metaengine.FilterEq),
 	metaengine.SortOnField[ContactView]("created_at", true),
+	metaengine.Volume(humanScaleVolume),
 )
 
 // Contacts is the engine-backed personal-contacts store: the same

@@ -81,6 +81,7 @@ var transcriptsQuery = metaengine.Query[transcriptInput, TranscriptSegmentView](
 	metaengine.FilterOnField[TranscriptSegmentView]("call_id", metaengine.FilterEq),
 	metaengine.FilterOnField[TranscriptSegmentView]("seq", metaengine.FilterLt),
 	metaengine.SortOnField[TranscriptSegmentView]("seq", true),
+	metaengine.Volume(humanScaleVolume),
 )
 
 // Transcripts is the engine-backed transcript store: the same contract

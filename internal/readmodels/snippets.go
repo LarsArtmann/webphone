@@ -73,6 +73,7 @@ var snippetsQuery = metaengine.Query[snippetInput, SnippetView](snippetsCollecti
 	metaengine.OnRecord(domain.SnippetDeleted{}, metaengine.Remove[SnippetView]()),
 	metaengine.FilterOnField[SnippetView]("owner", metaengine.FilterEq),
 	metaengine.SortOnField[SnippetView]("created_at", false),
+	metaengine.Volume(humanScaleVolume),
 )
 
 // Snippets is the engine-backed reply-snippet store: the same contract

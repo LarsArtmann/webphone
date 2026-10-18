@@ -41,6 +41,7 @@ var enrollTokensQuery = metaengine.Query[enrollInput, EnrollTokenView](enrollTok
 			}
 		}),
 	metaengine.OnRecord(domain.EnrollTokenBurned{}, metaengine.Remove[EnrollTokenView]()),
+	metaengine.Volume(humanScaleVolume),
 )
 
 // EnrollTokens is the engine-backed enrollment-token store: the same

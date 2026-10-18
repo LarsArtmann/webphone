@@ -29,6 +29,12 @@ import (
 // a full path.
 const fileName = "readmodels.db"
 
+// humanScaleVolume is the Volume hint every query declaration carries:
+// webphone is single-tenant, and even its highest-rate facts (live-call
+// transcript segments) average well under one per second — the
+// planner's 1000/sec default would overestimate by three orders.
+const humanScaleVolume = 1
+
 // Engine is the container-adapted metaengine engine: the sqlite
 // handle, the engine that owns its tables, and the planned model
 // store over it. Constructed once in the composition root (named
