@@ -136,6 +136,11 @@ export function installBrowserGlobals() {
       hasAttribute(k) {
         return k in this.attrs;
       },
+      // Synthetic click (shell.js download anchors): fires the click
+      // listeners like the browser would; no-op without any.
+      click() {
+        (this.listeners.click ?? []).forEach((fn) => fn({}));
+      },
     };
     // classList with real-DOM semantics: add/remove/toggle mutate the
     // element's className string (reads always derive from it), so code

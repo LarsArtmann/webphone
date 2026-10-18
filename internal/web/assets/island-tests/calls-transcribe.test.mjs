@@ -434,6 +434,31 @@ test("the transcribe button label follows the capture state across renders", asy
 });
 
 test("the live card's transcript DOM is capped, keeping the newest tail (#41)", async () => {
+  // The label test above leaves its own Inviter stub (id "call-label")
+  // installed; re-stub the file's original shape so this test's entry
+  // is addressable as call-t1 again.
+  globalThis.SIP.Inviter = class {
+    constructor() {
+      this.id = "call-t1";
+      this.state = globalThis.SIP.SessionState.Establishing;
+      this.stateChange = {
+        listeners: [],
+        addListener(fn) {
+          this.listeners.push(fn);
+        },
+      };
+      this.sessionDescriptionHandler = {
+        peerConnection: {
+          getReceivers: () => [{ track: { kind: "audio" } }],
+          getSenders: () => [{ track: { kind: "audio" } }],
+        },
+      };
+    }
+    invite() {
+      return Promise.resolve();
+    }
+    async bye() {}
+  };
   state.userAgent = {};
   assert.equal(await placeCall("+49301110000"), true);
   const entry = sessions.get("call-t1");
@@ -451,8 +476,7 @@ test("the live card's transcript DOM is capped, keeping the newest tail (#41)", 
   entry.session.state = globalThis.SIP.SessionState.Established;
   entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
   await flush();
-  const [recorder] = globalThis.__recorders;
-
+  const recorder = globalThis.__recorders.at(-1);
   // 30 segments x 600 chars = 18k chars: past the 8k DOM cap.
   for (let i = 0; i < 30; i += 1) {
     recorder.emit({ size: 10, type: "audio/webm" });
@@ -473,7 +497,7 @@ test("the live card's transcript DOM is capped, keeping the newest tail (#41)", 
 test("the card's clear button wipes the live view without touching capture (#39)", async () => {
   state.userAgent = {};
   assert.equal(await placeCall("+49301110001"), true);
-  const entry = sessions.get("call-t1");
+  const entry = [...sessions.values()].at(-1);
   const transcriptEl = entry.dom.querySelector(".call-transcript");
   const clearBtn = entry.dom.querySelector(".clear-transcript-btn");
   assert.ok(clearBtn, "the ASR-gated card carries the clear affordance");
