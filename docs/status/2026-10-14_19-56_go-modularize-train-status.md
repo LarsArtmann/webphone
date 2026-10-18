@@ -97,58 +97,58 @@ Nothing. No data loss, no red main, no broken tests, no reverts of others' work,
 
 **Modularization follow-ups (this report's own tail)**
 
-1. Refresh TODO_LIST.md server-carve stats: 19→26 files, 3268→4859 non-test LOC (+49% in 14 days), still above the >1000 LOC/>20 files threshold.
-2. Get ground truth on the upload-test 401 mechanism (healthy-box rerun, or instrument once: log session-lookup outcome at 401 with the token's store state).
-3. Decide upload-test body policy: configurable smaller limit in tests vs documented 25 MiB fidelity.
-4. Render the package DAG as D2→SVG and link it from the report (or the architecture-understanding series, whichever owns graphs).
-5. Calendar the quarterly modularize re-trigger review (next: ~2027-01); the criteria live in report §04.
-6. Add `docs/modularization/INDEX.md` (and one for `docs/architecture-understanding/`) so HTML rulings are discoverable by `ls`.
+1. Refresh TODO_LIST.md server-carve stats: 19→26 files, 3268→4859 non-test LOC (+49% in 14 days), still above the >1000 LOC/>20 files threshold. **→ routed — TODO_LIST round-5 tail (carve number refresh, executing 2026-10-18)**
+2. ~~Get ground truth on the upload-test 401 mechanism (healthy-box rerun, or instrument once: log session-lookup outcome at 401 with the token's store state).~~ done — root cause found (the `:memory:` idle-trim reopen), hardened in store.Open; docs/ci-flake-ledger.md 2026-10-15 row
+3. Decide upload-test body policy: configurable smaller limit in tests vs documented 25 MiB fidelity. **→ routed — the report's own §g 1 (owner intent question)**
+4. ~~Render the package DAG as D2→SVG and link it from the report (or the architecture-understanding series, whichever owns graphs).~~ done — rendered as SVG pairs in docs/architecture-understanding/ incl. the 2026-10-17 module-boundaries/blueprint set
+5. Calendar the quarterly modularize re-trigger review (next: ~2027-01); the criteria live in report §04. **→ routed — round-5 plan CAL row (modularize re-review 2027-01)**
+6. ~~Add `docs/modularization/INDEX.md` (and one for `docs/architecture-understanding/`) so HTML rulings are discoverable by `ls`.~~ done — INDEX.md exists in docs/modularization/ and docs/architecture-understanding/
 
 **Flake / verification hygiene**
-7. If the upload 401 ever appears in CI: ledger row with run id + the mechanism-or-supersede verdict.
-8. lessons.md candidate: "on IO-storm days, scope the suite; attribute via CI equivalence before local reruns."
-9. Instrument the MaxBytesReader discard path once to learn why the box turned 25 MiB into 9 minutes (server-side discard vs client stream stall) — one-off knowledge for the flake class.
-10. Consider `go vet ./...` full-sweep in the verification battery (I ran it on two packages only).
+7. ~~If the upload 401 ever appears in CI: ledger row with run id + the mechanism-or-supersede verdict.~~ done — ledger row recorded WITH the mechanism (ci-flake-ledger.md, 2026-10-15)
+8. ~~lessons.md candidate: "on IO-storm days, scope the suite; attribute via CI equivalence before local reruns."~~ done — folded into docs/lessons.md 2026-10-18 (IO-storm scoping refinement)
+9. ~~Instrument the MaxBytesReader discard path once to learn why the box turned 25 MiB into 9 minutes (server-side discard vs client stream stall) — one-off knowledge for the flake class.~~ done — the concern landed as the transcribe concurrency ceiling (acquire-before-ReadAll, round-5 E15) + the lessons corollary; the one-off instrumentation never needed
+10. ~~Consider `go vet ./...` full-sweep in the verification battery (I ran it on two packages only).~~ **NOT-DO — NOT-DO — buildflow owns static analysis; ad-hoc vet rides the verification ladder as practiced.**
 
 **Carried P2s from the 09-30 review (verify presence in TODO_LIST, then execute in some train)**
-11. Fax receipt-verbosity seam; delete the `*gateway.Loopback` type assert (third carry due).
-12. `config.Load()` fail-closed typing (identities keys, shared contacts numbers).
-13. `schema_version` table ahead of the first altering migration.
-14. Server carve train (api/hooks seams; contract-test 401 allowlist + DOM pins update mechanically).
-15. Branching-flow/errorfamily monthly re-measure (2026-11-05): tier 1 exit 0, tier 2 stays 0, elevation key documented in `.buildflow.yml`.
+11. ~~Fax receipt-verbosity seam; delete the `*gateway.Loopback` type assert (third carry due).~~ done — fax Resolution enum at HEAD (F63) + the E9 exhaustive dispatch dropped the Loopback fallback
+12. ~~`config.Load()` fail-closed typing (identities keys, shared contacts numbers).~~ done — load-time identities/shared-contact validation at HEAD (F64)
+13. ~~`schema_version` table ahead of the first altering migration.~~ done — versioned migration chain in store/db.go (F65)
+14. ~~Server carve train (api/hooks seams; contract-test 401 allowlist + DOM pins update mechanically).~~ done — carve phases EXECUTED 2026-10-17 (TODO_LIST carve row)
+15. Branching-flow/errorfamily monthly re-measure (2026-11-05): tier 1 exit 0, tier 2 stays 0, elevation key documented in `.buildflow.yml`. **→ routed — CAL 2026-11-05**
 
 **Known-state items already declared (from AGENTS.md, unchanged today)**
-16. usermgmt AuditLog projection: wire or formally declare unwired-by-design with a bound.
-17. `/phone-api` identity endpoint to retire the static `identities` map.
-18. `webphone-backup-drill` (KVM-gated) — periodic restore proof.
-19. `nix run .#vulnix` before the next release train (release.sh gates on it).
-20. Upstream #12 (erraudit TypeDecl nolint limitation): track until a release honors the placements; then shrink `.buildflow-baseline.json`.
-21. Upstream #13 (branching-flow CLI IDs differ from moved checkouts): same tracking.
-22. Next served-markup change owes a fresh stack browser E2E (445s budget; transfer-step flake: re-run once).
-23. Session-behavior suite (`go test ./internal/server/ -run TestServer`) remains mandatory on any auth-surface change — no action now, keep on the checklist.
-24. `art-dupl` quarterly baseline audit (`-t 1`, zero harmful clones; false positives filed upstream, never silently accepted).
+16. ~~usermgmt AuditLog projection: wire or formally declare unwired-by-design with a bound.~~ done — declared unwired-by-design in AGENTS (2026-10-12 owner decision)
+17. `/phone-api` identity endpoint to retire the static `identities` map. **→ routed — ROADMAP stack /phone-api identity endpoint row**
+18. `webphone-backup-drill` (KVM-gated) — periodic restore proof. **→ routed — flake check gates the drill; the release-runbook owns the ritual**
+19. `nix run .#vulnix` before the next release train (release.sh gates on it). **→ routed — release.sh gates on vulnix (AGENTS)**
+20. ~~Upstream #12 (erraudit TypeDecl nolint limitation): track until a release honors the placements; then shrink `.buildflow-baseline.json`.~~ done — upstream #12 CLOSED COMPLETED 2026-10-17 (v0.6.8 out)
+21. ~~Upstream #13 (branching-flow CLI IDs differ from moved checkouts): same tracking.~~ done — upstream #13 CLOSED COMPLETED 2026-10-17
+22. Next served-markup change owes a fresh stack browser E2E (445s budget; transfer-step flake: re-run once). **→ routed — AGENTS standing obligation + TODO cross-repo row**
+23. Session-behavior suite (`go test ./internal/server/ -run TestServer`) remains mandatory on any auth-surface change — no action now, keep on the checklist. **→ routed — AGENTS auth-regression convention**
+24. `art-dupl` quarterly baseline audit (`-t 1`, zero harmful clones; false positives filed upstream, never silently accepted). **→ routed — CAL 2027-01-11**
 
 **Docs hygiene**
-25. TODO_LIST harvest check: confirm the 09-30 P2 items (11–13 above) are actually IN TODO_LIST (the review claims they were harvested; I did not verify today).
-26. Cross-link the three modularization verdicts (09-19 §, 09-30 §05, 10-14 report) so the series reads front-to-back.
-27. AGENTS.md line-cap watch: 149/377 after today's bullet — fine, but the ruling bullet is a candidate to shorten if the cap tightens.
-28. FEATURES/CHANGELOG: docs-only train, correctly changelog-silent — nothing to do; listed so the silence is explicit.
-29. The 09-30 review's server stats (19/3268/6073) vs today (26/4859/8630): next review entry should show the growth curve.
+25. ~~TODO_LIST harvest check: confirm the 09-30 P2 items (11–13 above) are actually IN TODO_LIST (the review claims they were harvested; I did not verify today).~~ done — the 09-30 P2s executed/adjudicated via the round-5 plan E14 (2026-10-18)
+26. ~~Cross-link the three modularization verdicts (09-19 §, 09-30 §05, 10-14 report) so the series reads front-to-back.~~ done — the 10-17 4th entry cross-links the series
+27. AGENTS.md line-cap watch: 149/377 after today's bullet — fine, but the ruling bullet is a candidate to shorten if the cap tightens. **→ routed — AGENTS header states the 377-line cap + docs/ move rule**
+28. ~~FEATURES/CHANGELOG: docs-only train, correctly changelog-silent — nothing to do; listed so the silence is explicit.~~ done — explicit silence; nothing to do
+29. ~~The 09-30 review's server stats (19/3268/6073) vs today (26/4859/8630): next review entry should show the growth curve.~~ done — the 10-17 entry shows the curve (26/4,999 vs 4,859)
 
 **Infra / session-level**
-30. The box tripped the no-heavy-builds gate 6× in 60 min (IO-storm, freeze #5/#25 class). The gate worked; the storm source is an owner-level investigation (`/proc/pressure/io` watch during the next window).
-31. Daemon push-leg stalled ~40 min today (18:45→19:46) and recovered before the 60-min bar. Optional: a warn-only 30-min threshold in push-stall-watch so the stall is visible earlier (owner decision).
-32. CI timing: full-suite job 5m38s vs 2m22s for docs-only pushes — the server suite dominates; the carve (14) is also the CI-speed lever.
-33. My session left three daemon-heuristic commit messages (f1558b1, 3579561, 0b76953). Per runbook that's normal; narrative-per-phase was not possible without violating the never-commit-without-instruction rule — noted as a systemic tradeoff for the owner to keep or change.
-34. HTML report QA: open the report once in a browser before the next person reads it (tokens intact, sidebar scrollspy working).
-35. `go.work`: explicitly N/A while single-module; the report says so implicitly — fine to leave.
+30. The box tripped the no-heavy-builds gate 6× in 60 min (IO-storm, freeze #5/#25 class). The gate worked; the storm source is an owner-level investigation (`/proc/pressure/io` watch during the next window). **→ routed — owner observational; ROADMAP (2026-10-18 harvest)**
+31. Daemon push-leg stalled ~40 min today (18:45→19:46) and recovered before the 60-min bar. Optional: a warn-only 30-min threshold in push-stall-watch so the stall is visible earlier (owner decision). **→ routed — owner decision; ROADMAP open questions (2026-10-18 harvest)**
+32. ~~CI timing: full-suite job 5m38s vs 2m22s for docs-only pushes — the server suite dominates; the carve (14) is also the CI-speed lever.~~ done — carve executed (TODO carve row); the CI-time lever pulled
+33. My session left three daemon-heuristic commit messages (f1558b1, 3579561, 0b76953). Per runbook that's normal; narrative-per-phase was not possible without violating the never-commit-without-instruction rule — noted as a systemic tradeoff for the owner to keep or change. **→ routed — owner E1 sitting (commit-granularity question)**
+34. ~~HTML report QA: open the report once in a browser before the next person reads it (tokens intact, sidebar scrollspy working).~~ **NOT-DO — NOT-DO — disproportionate per-report browser QA; the generators carry checks.**
+35. ~~`go.work`: explicitly N/A while single-module; the report says so implicitly — fine to leave.~~ **NOT-DO — NOT-DO — go.work N/A single-module (ratified).**
 
 **Optional polish (no urgency)**
-36. Replace the report's ASCII dep-tree with the D2 render (dup of 4 — keep whichever phrasing lands).
-37. Add a tiny test asserting report HTML files parse (guards against splice errors) — only if HTML reports become routine here.
-38. Retry Sourcegraph for the consumer search when it's back (gh+local already sufficient; belt-and-suspenders).
-39. `question`-tool templates: none needed; skip.
-40. Consider naming the re-open trigger in the stack repo's docs too (nix-international-telephony consumes the binary; it should know the boundary ruling exists) — one line, next time that repo is touched.
+36. ~~Replace the report's ASCII dep-tree with the D2 render (dup of 4 — keep whichever phrasing lands).~~ done — same as 4
+37. ~~Add a tiny test asserting report HTML files parse (guards against splice errors) — only if HTML reports become routine here.~~ **NOT-DO — NOT-DO — conditional on HTML reports becoming routine; they have not.**
+38. ~~Retry Sourcegraph for the consumer search when it's back (gh+local already sufficient; belt-and-suspenders).~~ **NOT-DO — NOT-DO — gh+local sufficient (stated in the item).**
+39. ~~`question`-tool templates: none needed; skip.~~ **NOT-DO — NOT-DO — skip (stated in the item).**
+40. Consider naming the re-open trigger in the stack repo's docs too (nix-international-telephony consumes the binary; it should know the boundary ruling exists) — one line, next time that repo is touched. **→ routed — TODO cross-repo obligations row (2026-10-18 harvest)**
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
