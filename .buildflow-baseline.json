@@ -63,14 +63,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/asr.go:85:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/asr.go:86:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
-      "message": "asr.Client and asr.GoogleClient share 3 non-incidental fields - consider mixin",
+      "message": "asr.Client and asr.GoogleClient share 4 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/asr/asr.go",
-        "line": 85,
+        "line": 86,
         "column": 6,
         "offset": 0
       },
@@ -79,29 +79,29 @@
         "opportunity"
       ],
       "fixStrategy": "suggest",
-      "suggestion": "Extract shared fields into a mixin, asr.Client shares fields with 3 struct(s): asr.GoogleClient, crm.Client, pbx.Client",
-      "afterCode": "// Extract shared fields into a mixin struct:\ntype ClientMixin struct {\n\tbase *url.URL\n\tclient *http.Client\n\tmodel string\n}\n\n// Client embeds the mixin for field reuse\ntype Client struct {\n\tClientMixin\n\ttoken string\n}\n\n// GoogleClient also embeds the mixin\ntype GoogleClient struct {\n\tClientMixin\n\tapiKey string\n\trecognizer string\n\tlanguage string\n}\n",
+      "suggestion": "Extract shared fields into a mixin, asr.Client shares fields with 2 struct(s): asr.GoogleClient, crm.Client",
+      "afterCode": "// Extract shared fields into a mixin struct:\ntype ClientMixin struct {\n\tbase *url.URL\n\tclient *http.Client\n\tmodel string\n\tstats outcomes\n}\n\n// Client embeds the mixin for field reuse\ntype Client struct {\n\tClientMixin\n\ttoken string\n}\n\n// GoogleClient also embeds the mixin\ntype GoogleClient struct {\n\tClientMixin\n\tapiKey string\n\trecognizer string\n\tlanguage string\n}\n",
       "confidence": 0.95,
       "groupId": "mixin:asr.Client",
       "metadata": {
         "category": "opportunity",
         "confidence": "low",
-        "message": "asr.Client and asr.GoogleClient share 3 non-incidental fields - consider mixin",
+        "message": "asr.Client and asr.GoogleClient share 4 non-incidental fields - consider mixin",
         "pattern": "mixin",
         "patternName": "mixin",
-        "relatedCount": "3",
+        "relatedCount": "2",
         "struct": "asr.Client"
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/google.go:46:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/asr/google.go:47:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "asr.GoogleConfig and config.ASR share 4 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/asr/google.go",
-        "line": 46,
+        "line": 47,
         "column": 6,
         "offset": 0
       },
@@ -621,14 +621,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/contacts.go:92:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/contacts.go:93:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Contacts and readmodels.EnrollTokens share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/contacts.go",
-        "line": 92,
+        "line": 93,
         "column": 6,
         "offset": 0
       },
@@ -652,14 +652,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/enroll.go:60:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/enroll.go:61:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.EnrollTokens and readmodels.Faxes share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/enroll.go",
-        "line": 60,
+        "line": 61,
         "column": 6,
         "offset": 0
       },
@@ -714,14 +714,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:98:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/faxes.go:99:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Faxes and readmodels.Snippets share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/faxes.go",
-        "line": 98,
+        "line": 99,
         "column": 6,
         "offset": 0
       },
@@ -776,14 +776,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:86:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/readmodels/snippets.go:87:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "readmodels.Snippets and readmodels.Transcripts share 3 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/readmodels/snippets.go",
-        "line": 86,
+        "line": 87,
         "column": 6,
         "offset": 0
       },
@@ -869,14 +869,14 @@
       }
     },
     {
-      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/hooks/idempotency.go:54:6",
+      "id": "branching-flow:COMPOSITION_mixin:/home/lars/projects/webphone/internal/server/hooks/idempotency.go:64:6",
       "rule": "COMPOSITION_mixin",
       "toolName": "branching-flow",
       "message": "hooks.idemStore and server.unreadCache share 2 non-incidental fields - consider mixin",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/server/hooks/idempotency.go",
-        "line": 54,
+        "line": 64,
         "column": 6,
         "offset": 0
       },
@@ -1387,6 +1387,64 @@
       }
     },
     {
+      "id": "branching-flow:INDEX_OUT_OF_RANGE:/home/lars/projects/webphone/internal/asr/outcomes.go:69:12",
+      "rule": "INDEX_OUT_OF_RANGE",
+      "toolName": "branching-flow",
+      "message": "Array index 'i' access may panic if out of bounds (array length is 32)",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/asr/outcomes.go",
+        "line": 69,
+        "column": 12,
+        "offset": 0
+      },
+      "category": "correctness",
+      "tags": [
+        "panic"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Add bounds checking before access: if i < len(arr) { ... } or use slices.Index(slice, val) for safe lookup",
+      "confidence": 0.95,
+      "metadata": {
+        "description": "Array index 'i' access may panic if out of bounds (array length is 32)",
+        "detectionType": "index_out_of_range",
+        "function": "asr",
+        "package": "asr",
+        "severityDisplay": "medium",
+        "suggestion": "Add bounds checking before access: if i < len(arr) { ... } or use slices.Index(slice, val) for safe lookup",
+        "typeDisplay": "Index Out of Range"
+      }
+    },
+    {
+      "id": "branching-flow:INDEX_OUT_OF_RANGE:/home/lars/projects/webphone/internal/store/messages.go:413:4",
+      "rule": "INDEX_OUT_OF_RANGE",
+      "toolName": "branching-flow",
+      "message": "Slice index 'len(msgs) - len(chunk) + i' access may panic if out of bounds",
+      "severity": "warning",
+      "position": {
+        "file": "/home/lars/projects/webphone/internal/store/messages.go",
+        "line": 413,
+        "column": 4,
+        "offset": 0
+      },
+      "category": "correctness",
+      "tags": [
+        "panic"
+      ],
+      "fixStrategy": "suggest",
+      "suggestion": "Add bounds checking before access: if len(msgs) - len(chunk) + i < len(arr) { ... }",
+      "confidence": 0.95,
+      "metadata": {
+        "description": "Slice index 'len(msgs) - len(chunk) + i' access may panic if out of bounds",
+        "detectionType": "index_out_of_range",
+        "function": "store",
+        "package": "store",
+        "severityDisplay": "medium",
+        "suggestion": "Add bounds checking before access: if len(msgs) - len(chunk) + i < len(arr) { ... }",
+        "typeDisplay": "Index Out of Range"
+      }
+    },
+    {
       "id": "branching-flow:PHANTOM-COLLISION:/home/lars/projects/webphone/internal/session/sqlite.go:164",
       "rule": "PHANTOM-COLLISION",
       "toolName": "branching-flow",
@@ -1532,21 +1590,22 @@
     }
   ],
   "summary": {
-    "total": 45,
+    "total": 47,
     "bySeverity": {
       "info": 31,
-      "warning": 14
+      "warning": 16
     },
     "byCategory": {
+      "correctness": 2,
       "duplication": 9,
       "structure": 30,
       "type-safety": 6
     },
     "byFixStrategy": {
       "none": 3,
-      "suggest": 42
+      "suggest": 44
     },
-    "filesAffected": 27,
+    "filesAffected": 29,
     "filesScanned": 0,
     "suppressed": 0
   },
