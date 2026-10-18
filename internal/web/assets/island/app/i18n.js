@@ -151,6 +151,8 @@ export const I18N = {
     transcribeBusy: "Transcribing…",
     transcribeEmpty: "No speech detected",
     copyTranscript: "Copy transcript",
+    clearTranscript: "Clear",
+    transcriptCleared: "Live transcript cleared.",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy — select the text manually.",
     transcribeUnsupported:

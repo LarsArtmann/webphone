@@ -158,6 +158,7 @@ var dictionaries = map[Lang]map[string]string{
 		"history.transcripts.matches":      "Transcript matches for:",
 		"history.transcript.delete":        "Delete transcript",
 		"history.transcript.copy":          "Copy transcript",
+		"history.transcript.download":      "Download transcript",
 		"history.transcript.deleteConfirm": "Delete this call's transcript? This cannot be undone.",
 		"history.unreachable":              "Call records are unreachable right now.",
 		"history.dirIn":                    "← from",
