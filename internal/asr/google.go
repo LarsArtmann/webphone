@@ -77,7 +77,12 @@ type GoogleClient struct {
 	model      string
 	language   string
 	client     *http.Client
+	stats      outcomes
 }
+
+// RecentOutcomes exposes the rolling round-trip state — same contract
+// as the OpenAI-compatible client (see outcomes.go).
+func (c *GoogleClient) RecentOutcomes() OutcomeSnapshot { return c.stats.snapshot() }
 
 // NewGoogleClient builds the client. A config without a project is the
 // disabled provider: every call returns ErrDisabled and the server
@@ -156,7 +161,13 @@ type googleRecognizeResponse struct {
 }
 
 // Transcribe sends one audio file to the provider and returns the text.
-func (c *GoogleClient) Transcribe(ctx context.Context, req Request) (string, error) {
+// Round trips feed the same outcomes tracker as the OpenAI-compatible
+// wire (latency metric + health leg).
+func (c *GoogleClient) Transcribe(ctx context.Context, req Request) (text string, err error) {
+	started := time.Now()
+	defer func() {
+		c.stats.record(time.Since(started), err)
+	}()
 	if !c.Enabled() {
 		return "", ErrDisabled
 	}

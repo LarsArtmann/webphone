@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -87,7 +88,12 @@ type Client struct {
 	token  string
 	model  string
 	client *http.Client
+	stats  outcomes
 }
+
+// RecentOutcomes exposes the rolling round-trip state — the health
+// leg's truth (see outcomes.go).
+func (c *Client) RecentOutcomes() OutcomeSnapshot { return c.stats.snapshot() }
 
 // NewClient builds the client; baseURL like "http://127.0.0.1:8081". An
 // empty baseURL means "disabled": every call returns ErrDisabled and the
@@ -138,7 +144,18 @@ type Request struct {
 }
 
 // Transcribe sends one audio file to the provider and returns the text.
-func (c *Client) Transcribe(ctx context.Context, req Request) (string, error) {
+// Every round trip feeds the outcomes tracker (latency metric + the
+// optional health leg) and one debug log line — the operator-greppable
+// latency signal (#23).
+func (c *Client) Transcribe(ctx context.Context, req Request) (text string, err error) {
+	started := time.Now()
+	defer func() {
+		latency := time.Since(started)
+		c.stats.record(latency, err)
+		slog.Debug("asr: transcription round-trip",
+			"duration_ms", latency.Milliseconds(), "audio_bytes", len(req.Audio),
+			"text_chars", len(text), "error", err)
+	}()
 	if !c.Enabled() {
 		return "", ErrDisabled
 	}
