@@ -429,6 +429,17 @@ func New(deps Deps) http.Handler {
 			// startup latch.
 			healthChecks["userauth"] = deps.UserAuth.HealthCheck
 		}
+		if deps.ASR != nil && deps.ASR.Enabled() {
+			// The optional ASR leg joins the same way: NON-critical,
+			// outcomes-based (never probes the provider), only when the
+			// seam exists. The prod probe builds this via the named
+			// "asr" service; this fallback covers test compositions.
+			if hc, ok := deps.ASR.(interface {
+				HealthCheck(context.Context) error
+			}); ok {
+				healthChecks["asr"] = hc.HealthCheck
+			}
+		}
 		selfHealth = health.NewChecks(healthChecks,
 			health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
 	}

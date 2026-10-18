@@ -53,9 +53,14 @@ type Deps struct {
 // methods are the http.HandlerFuncs the wiring mounts.
 type Handlers struct {
 	deps Deps
+	// transcribeSlots bounds CONCURRENT transcription requests
+	// (#47): each holds up to transcribeBodyLimit buffered bytes plus
+	// a provider round trip, so the ceiling is the product's honest
+	// memory bound for the whole surface.
+	transcribeSlots chan struct{}
 }
 
 // New builds the JSON endpoint handlers.
 func New(deps Deps) *Handlers {
-	return &Handlers{deps: deps}
+	return &Handlers{deps: deps, transcribeSlots: make(chan struct{}, transcribeConcurrency)}
 }

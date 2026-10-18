@@ -175,8 +175,13 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	// stream). Config-absent → a disabled provider (Enabled() false):
 	// /api/transcribe 404s and the island hides its affordances. The
 	// provider kind is a config decision: the OpenAI-compatible wire
-	// (Speaches, whisper.cpp, …) or Google Cloud Speech-to-Text V2.
-	do.Provide(injector, func(i do.Injector) (asr.Provider, error) {
+	// (Speaches, whisper.cpp, …) or Google Cloud Speech-to-Text V2. The
+	// SAME instance is additionally registered NAMED "asr" when the
+	// seam is on: the go-health probe then discovers its
+	// outcomes-based HealthCheck as an OPTIONAL NON-CRITICAL leg
+	// (#22) — never probed, never gating livez/startupz, visible on the
+	// dashboard.
+	asrProvider, err := func() (asr.Provider, error) {
 		if cfg.ASR.Google() {
 			return asr.NewGoogleClient(asr.GoogleConfig{
 				Endpoint: cfg.ASR.URL,
@@ -188,7 +193,15 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			})
 		}
 		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
-	})
+	}()
+	if err != nil {
+		return nil, wrapf("open asr provider: %w", err)
+	}
+	do.Provide(injector, func(i do.Injector) (asr.Provider, error) { return asrProvider, nil })
+	if cfg.ASR.Enabled() {
+		//samber-linter:allow hw-4 eagerly invoked below for probe discovery
+		do.ProvideNamed(injector, "asr", func(i do.Injector) (asr.Provider, error) { return asrProvider, nil })
+	}
 
 	// Optional passkey identity layer (embedded usermgmt): config-absent
 	// → the service is never registered and Deps.UserAuth stays nil
@@ -344,6 +357,11 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
+		}
+	}
+	if cfg.ASR.Enabled() {
+		if _, err := do.InvokeNamed[asr.Provider](injector, "asr"); err != nil {
+			return nil, wrapf("open asr provider: %w", err)
 		}
 	}
 	handler, err := do.Invoke[http.Handler](injector)

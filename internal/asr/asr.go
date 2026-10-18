@@ -95,6 +95,10 @@ type Client struct {
 // leg's truth (see outcomes.go).
 func (c *Client) RecentOutcomes() OutcomeSnapshot { return c.stats.snapshot() }
 
+// HealthCheck is the optional NON-CRITICAL probe leg (#22): the
+// outcomes verdict, never a provider round trip.
+func (c *Client) HealthCheck(ctx context.Context) error { return c.stats.HealthCheck(ctx) }
+
 // NewClient builds the client; baseURL like "http://127.0.0.1:8081". An
 // empty baseURL means "disabled": every call returns ErrDisabled and the
 // server treats the whole seam as off. Config validation rejects a token

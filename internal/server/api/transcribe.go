@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/larsartmann/webphone/internal/asr"
 )
@@ -14,6 +15,18 @@ import (
 // tens of KB; a stored voicemail clip is a few MB; the bound exists so a
 // runaway client cannot stream unbounded bytes into the provider seam.
 const transcribeBodyLimit = 25 << 20
+
+// transcribeConcurrency is the ceiling on IN-FLIGHT transcriptions
+// (#47): four 25 MiB bodies bound the surface's buffered memory at
+// 100 MiB no matter how many tabs and calls transcribe at once. The
+// island's backoff absorbs the rare 503.
+const transcribeConcurrency = 4
+
+// transcribeQueueWait is how long an over-ceiling request waits for a
+// slot before answering 503: long enough to smooth a burst of live
+// segments, short enough that a stuck provider fails visibly instead
+// of piling goroutines. Package var so tests can shorten it.
+var transcribeQueueWait = 3 * time.Second
 
 // Transcribe is the ONE server endpoint behind every transcription
 // surface (live calls, voicemail, MMS audio): the island and shell POST a
@@ -32,6 +45,26 @@ func (h *Handlers) Transcribe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, transcribeBodyLimit)
+	// The concurrency ceiling guards BOTH the buffered body and the
+	// provider round trip (#47): acquire before reading, so the memory
+	// bound holds even when every caller ships a maximum-size segment.
+	timer := time.NewTimer(transcribeQueueWait)
+	select {
+	case h.transcribeSlots <- struct{}{}:
+		if !timer.Stop() {
+			<-timer.C
+		}
+		defer func() { <-h.transcribeSlots }()
+	case <-timer.C:
+		slog.Warn("asr: transcription ceiling reached", "in_flight", transcribeConcurrency)
+		http.Error(w, "transcription is busy — retry shortly", http.StatusServiceUnavailable)
+		return
+	case <-r.Context().Done():
+		if !timer.Stop() {
+			<-timer.C
+		}
+		return
+	}
 	audio, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "could not read the audio", http.StatusBadRequest)

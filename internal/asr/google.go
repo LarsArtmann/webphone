@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/larsartmann/go-error-family"
 )
@@ -83,6 +84,10 @@ type GoogleClient struct {
 // RecentOutcomes exposes the rolling round-trip state — same contract
 // as the OpenAI-compatible client (see outcomes.go).
 func (c *GoogleClient) RecentOutcomes() OutcomeSnapshot { return c.stats.snapshot() }
+
+// HealthCheck is the optional NON-CRITICAL probe leg (#22), same
+// outcomes verdict as the OpenAI-compatible wire.
+func (c *GoogleClient) HealthCheck(ctx context.Context) error { return c.stats.HealthCheck(ctx) }
 
 // NewGoogleClient builds the client. A config without a project is the
 // disabled provider: every call returns ErrDisabled and the server
