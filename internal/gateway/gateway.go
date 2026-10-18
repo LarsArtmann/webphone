@@ -80,7 +80,7 @@ type FaxGateway interface {
 // switch is exhaustive on purpose: an unknown mode PANICS here instead
 // of silently degrading to loopback — config.validate is the rejection
 // home, so an unvalidated mode reaching this constructor is a wiring
-// bug, not a user error, and swallowing the traffic into a pretend
+// defect, not a user error, and swallowing the traffic into a pretend
 // gateway would hide it.
 func NewMessageGateway(cfg config.Gateway, client *http.Client) MessageGateway {
 	switch cfg.Mode {
