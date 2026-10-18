@@ -35,6 +35,7 @@ Output: ui-shots/<n>-<name>-<light|dark>.png (18 files).
 from __future__ import annotations
 
 import argparse
+import glob
 import http.client
 import json
 import os
@@ -97,7 +98,7 @@ SURFACE_MARKERS = {
     "history": "#history-panel",
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
     "contacts": ".wp-export-link",  # unconditional in the panel
-    "settings": ("#settings-panel dd.wp-service-on", "openai-compatible"),
+    "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
 }
 
 
@@ -327,6 +328,11 @@ def main() -> int:
     data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
     os.makedirs(data_dir, exist_ok=True)
     os.makedirs(args.out_dir, exist_ok=True)
+    # A failed run must not leave a mixed matrix: stale shots from an
+    # earlier pass masquerade as completeness (the 2026-10-18 settings
+    # abort left 10 fresh light shots beside 8 stale ones).
+    for stale in glob.glob(os.path.join(args.out_dir, "*.png")):
+        os.remove(stale)
     base = f"http://127.0.0.1:{args.port}"
     # A CONFIG FILE, not env: the browser posts carry Origin/Referer, and
     # the CSRF middleware only trusts them with the fronted shape
