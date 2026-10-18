@@ -207,29 +207,11 @@ func (c *GoogleClient) Transcribe(ctx context.Context, req Request) (text string
 		httpReq.Header.Set("x-goog-api-key", c.apiKey)
 	}
 
-	resp, err := c.client.Do(httpReq)
+	resp, release, err := providerRoundTrip(c.client, httpReq)
 	if err != nil {
-		return "", errorfamily.WrapTransientf(err, "asr.transport", "asr: request")
+		return "", err
 	}
-	defer func() {
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}()
-
-	switch {
-	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
-		return "", ErrUnauthorized
-	case resp.StatusCode == http.StatusTooManyRequests:
-		// A rate-limit answer is load, not misconfiguration: the
-		// caller may retry after a beat.
-		return "", errorfamily.Newf(errorfamily.Transient, "asr.http", "asr: provider answered 429")
-	case resp.StatusCode != http.StatusOK:
-		family := errorfamily.Transient
-		if resp.StatusCode < 500 {
-			family = errorfamily.Rejection
-		}
-		return "", errorfamily.Newf(family, "asr.http", "asr: provider answered %d", resp.StatusCode)
-	}
+	defer release()
 
 	return c.decodeTranscript(resp.Body)
 }

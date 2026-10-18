@@ -182,25 +182,11 @@ func (c *Client) Transcribe(ctx context.Context, req Request) (text string, err 
 		httpReq.Header.Set("Authorization", "Bearer "+c.token)
 	}
 
-	resp, err := c.client.Do(httpReq)
+	resp, release, err := providerRoundTrip(c.client, httpReq)
 	if err != nil {
-		return "", errorfamily.WrapTransientf(err, "asr.transport", "asr: request")
+		return "", err
 	}
-	defer func() {
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}()
-
-	switch {
-	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
-		return "", ErrUnauthorized
-	case resp.StatusCode != http.StatusOK:
-		family := errorfamily.Transient
-		if resp.StatusCode < 500 {
-			family = errorfamily.Rejection
-		}
-		return "", errorfamily.Newf(family, "asr.http", "asr: provider answered %d", resp.StatusCode)
-	}
+	defer release()
 
 	return decodeTranscript(resp.Body)
 }
@@ -222,6 +208,40 @@ func decodeTranscript(r io.Reader) (string, error) {
 		return "", errorfamily.WrapTransientf(err, "asr.decode", "asr: decode response")
 	}
 	return strings.TrimSpace(parsed.Text), nil
+}
+
+// providerRoundTrip executes one provider request and classifies the
+// HTTP verdict — the ONE transport tail every Provider dialect shares
+// (the OpenAI-compatible wire and the Google recognize wire differ in
+// body shape and decoding, not in how a round trip fails). The returned
+// release func drains and closes the response body; the caller defers
+// it once done reading. A 429 is load, not misconfiguration: it maps to
+// a Transient error so the caller may retry after a beat.
+func providerRoundTrip(client *http.Client, httpReq *http.Request) (*http.Response, func(), error) {
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return nil, nil, errorfamily.WrapTransientf(err, "asr.transport", "asr: request")
+	}
+	release := func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}
+	switch {
+	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+		defer release()
+		return nil, nil, ErrUnauthorized
+	case resp.StatusCode == http.StatusTooManyRequests:
+		defer release()
+		return nil, nil, errorfamily.Newf(errorfamily.Transient, "asr.http", "asr: provider answered 429")
+	case resp.StatusCode != http.StatusOK:
+		defer release()
+		family := errorfamily.Transient
+		if resp.StatusCode < 500 {
+			family = errorfamily.Rejection
+		}
+		return nil, nil, errorfamily.Newf(family, "asr.http", "asr: provider answered %d", resp.StatusCode)
+	}
+	return resp, release, nil
 }
 
 // buildMultipart assembles the multipart body: the file part carries the

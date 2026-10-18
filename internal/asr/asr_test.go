@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/asr"
 )
 
@@ -145,6 +147,25 @@ func TestUnauthorized(t *testing.T) {
 	if _, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")}); !errors.Is(err, asr.ErrUnauthorized) {
 		t.Fatalf("got %v, want ErrUnauthorized", err)
 	}
+}
+
+// A 429 from ANY provider dialect is load, not misconfiguration: the
+// shared providerRoundTrip classifier maps it Transient so the caller's
+// backoff may retry after a beat (the OpenAI wire inherited this from
+// the unification; the Google dialect always had it).
+func TestRateLimitedIsTransient(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	client, _ := asr.NewClient(server.URL, "", "")
+	_, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")})
+	if err == nil {
+		t.Fatal("want error")
+	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
+	errorfamilytest.AssertCode(t, err, "asr.http")
 }
 
 func TestProviderErrors(t *testing.T) {
