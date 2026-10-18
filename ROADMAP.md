@@ -176,6 +176,15 @@ the stack browser E2E passed on the bumped tree. What remains:
   it and record accepted absence (memo with consequences appended to
   the file 2026-10-14, SUPERB train E2 — the declarative trains made
   its vocabulary load-bearing in code).
+- IO-storm source investigation (2026-10-14 go-modularize §f item 30,
+  routed 2026-10-18): the box tripped the no-heavy-builds gate 6× in
+  60 min (freeze #5/#25 class); a `/proc/pressure/io` watch during the
+  next window would name the source. Owner-level — no assistant ssh.
+- Push-stall early-warning threshold (§f item 31, routed 2026-10-18):
+  the watchdog fires at the ratified 60-min bar; a warn-only 30-min
+  line would make stalls visible sooner (the 10-14 stall recovered at
+  ~40 min, invisible to the bar). Owner call — cheap config once
+  decided.
 - Provider-failure retryability (2026-10-14 data-model review g2):
   today only `transient` failures render a Retry affordance — provider
   verdicts are terminal (the user re-composes). Intended product rule,

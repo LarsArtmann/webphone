@@ -86,6 +86,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is refused with a loud warn instead of drifting the UI into a state
   the network never confirmed, and the rendered view state derives
   from the same fields the table guards.
+- Every metaengine read-model declaration now carries an explicit
+  `Volume` hint (`humanScaleVolume` in readmodels): single-tenant
+  fact rates, so the cost planner stops assuming its 1000/sec
+  default — three orders above anything webphone emits.
 
 ## [2.9.0] - 2026-10-15
 
@@ -199,6 +203,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `scripts/module-cache-janitor.sh`: reports (and with `--sweep`,
+  deletes) the zero-byte `.tmp` download corpses interrupted go
+  commands leave in GOMODCACHE — report-only by default, age-floored
+  so an in-flight download is never touched, self-tested, with
+  wedged non-zero downloads reported but never deleted.
 - Optional supervised text-agent seam (`textagent.url` +
   `textagent.secret_file`, both or neither; auto-wired by the stack's
   `services.telephony.textagent`): the Messages tab gains an AI-drafts
