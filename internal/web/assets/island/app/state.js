@@ -62,4 +62,3 @@ export function viewStateOf(entry) {
   if (s === "Terminating") return "ending";
   return "ended";
 }
-
