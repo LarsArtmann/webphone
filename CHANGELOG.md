@@ -74,6 +74,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hook-grade bucket) is now server-pinned by a flood spec. Verified
   already-present from earlier trains: segment retry/backoff + the
   unavailable toast, the language hint, and the voicemail button test.
+- The two ASR provider clients share one transport classifier
+  (`asr.providerRoundTrip`): request execution, body draining, and the
+  HTTP verdict mapping (401/403, 429, non-200 family) live in one home
+  per wire-agnostic concern. A 429 from the OpenAI-compatible wire is
+  now Transient (retryable) like the Google wire always was, so a
+  loaded self-hosted provider is backed off, not rejected.
 
 ## [2.9.0] - 2026-10-15
 

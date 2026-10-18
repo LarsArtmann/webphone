@@ -1,16 +1,8 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-15T17:58:52.551628822Z",
+  "recordedAt": "2026-10-18T00:40:59.949130524Z",
   "entries": [
-    {
-      "hash": "086a798c35adf1f4",
-      "files": [
-        "internal/asr/asr.go",
-        "internal/asr/google.go"
-      ],
-      "tokens": 4
-    },
     {
       "hash": "0c8c67c705cc3f0b",
       "files": [
@@ -63,6 +55,14 @@
         "internal/web/views/messages.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "216bf77c8afff11e",
+      "files": [
+        "internal/server/textagent_api.go",
+        "internal/server/textagent_api.go"
+      ],
+      "tokens": 10
     },
     {
       "hash": "23d679627738d59a",
@@ -384,6 +384,14 @@
       "tokens": 2
     },
     {
+      "hash": "9c49bc576597ebd2",
+      "files": [
+        "internal/server/api/transcribe.go",
+        "internal/server/api/transcribe.go"
+      ],
+      "tokens": 2
+    },
+    {
       "hash": "9cd50a9ec66f6eab",
       "files": [
         "internal/web/views/voicemail.templ",
@@ -394,8 +402,8 @@
     {
       "hash": "9eddfa7deb9ff8d7",
       "files": [
-        "internal/server/idempotency.go",
-        "internal/server/idempotency.go"
+        "internal/server/hooks/idempotency.go",
+        "internal/server/hooks/idempotency.go"
       ],
       "tokens": 6
     },
@@ -410,7 +418,7 @@
     {
       "hash": "a308be80215c3f44",
       "files": [
-        "internal/server/webhooks.go",
+        "internal/server/hooks/webhooks.go",
         "internal/crm/crm_test.go"
       ],
       "tokens": 2
@@ -505,12 +513,12 @@
       "tokens": 2
     },
     {
-      "hash": "da46611fe8c18a99",
+      "hash": "d773c47608efa040",
       "files": [
-        "internal/server/contacts_api.go",
-        "internal/server/actions.go"
+        "internal/asr/asr.go",
+        "internal/asr/google.go"
       ],
-      "tokens": 4
+      "tokens": 6
     },
     {
       "hash": "deae8abd8bc99e52",
@@ -519,14 +527,6 @@
         "internal/web/views/history.templ"
       ],
       "tokens": 4
-    },
-    {
-      "hash": "e03e90906e40e269",
-      "files": [
-        "internal/server/textagent_api.go",
-        "internal/server/textagent_api.go"
-      ],
-      "tokens": 10
     },
     {
       "hash": "e2778d72c1e083b0",
@@ -612,12 +612,11 @@
         "internal/server/contacts_api_test.go",
         "internal/server/idempotency_test.go",
         "internal/server/contacts_api_test.go",
-        "internal/server/upload_limit_test.go",
         "internal/server/threads_flags_test.go",
         "internal/server/transcripts_api_test.go",
         "internal/server/contacts_api_test.go"
       ],
-      "tokens": 32
+      "tokens": 30
     }
   ]
 }
