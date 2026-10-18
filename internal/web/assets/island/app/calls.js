@@ -279,6 +279,9 @@ function addCallCard(id, target) {
       mkBtn(t("copyTranscript"), "ghost copy-transcript-btn", () =>
         copyCardTranscript(transcript),
       ),
+      mkBtn(t("clearTranscript"), "ghost clear-transcript-btn", () =>
+        clearCardTranscript(transcript),
+      ),
     );
   }
   card.append(head, controls, transcript);
@@ -393,12 +396,31 @@ function clipForAnnounce(text) {
   return t("transcriptDelta")(clipped);
 }
 
+// The live card's DOM cap (#41): a marathon call must not grow an
+// unbounded transcript node. The kept tail is a few screens of live
+// context; the durable whole lives server-side (History) regardless.
+const TRANSCRIPT_DOM_CAP = 8000;
+
 function appendTranscript(target, text) {
   if (!text) return;
-  target.textContent = target.textContent
-    ? `${target.textContent} ${text}`
-    : text;
+  let next = target.textContent ? `${target.textContent} ${text}` : text;
+  if (next.length > TRANSCRIPT_DOM_CAP) {
+    next = `… ${next.slice(next.length - TRANSCRIPT_DOM_CAP)}`;
+  }
+  target.textContent = next;
   target.scrollTop = target.scrollHeight;
+}
+
+// clearCardTranscript is the per-call clear affordance (#39): the live
+// card is presentation only — clearing it never touches the stored
+// History transcript, and the announce says exactly that scope.
+function clearCardTranscript(target) {
+  if (!target.textContent) {
+    announce(t("transcribeEmpty"), "warn");
+    return;
+  }
+  target.textContent = "";
+  announce(t("transcriptCleared"), "info");
 }
 
 // copyCardTranscript puts the card's accumulated transcript on the

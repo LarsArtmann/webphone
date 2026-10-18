@@ -432,3 +432,75 @@ test("the transcribe button label follows the capture state across renders", asy
   renderCalls();
   assert.equal(btn.textContent, t("transcribe"), "torn-down capture returns the start label");
 });
+
+test("the live card's transcript DOM is capped, keeping the newest tail (#41)", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+49301110000"), true);
+  const entry = sessions.get("call-t1");
+
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ text: "x".repeat(600) }),
+      };
+    }
+    return { ok: true, status: 204 };
+  };
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
+  const [recorder] = globalThis.__recorders;
+
+  // 30 segments x 600 chars = 18k chars: past the 8k DOM cap.
+  for (let i = 0; i < 30; i += 1) {
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+  }
+  const transcriptEl = entry.dom.querySelector(".call-transcript");
+  assert.ok(
+    transcriptEl.textContent.length <= 8100,
+    `the card stays bounded (got ${transcriptEl.textContent.length} chars)`,
+  );
+  assert.match(transcriptEl.textContent, /^… /, "a capped card marks its cut head");
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});
+
+test("the card's clear button wipes the live view without touching capture (#39)", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+49301110001"), true);
+  const entry = sessions.get("call-t1");
+  const transcriptEl = entry.dom.querySelector(".call-transcript");
+  const clearBtn = entry.dom.querySelector(".clear-transcript-btn");
+  assert.ok(clearBtn, "the ASR-gated card carries the clear affordance");
+  const click = () => (clearBtn.listeners.click ?? []).forEach((fn) => fn({}));
+
+  // Clearing an empty transcript announces that honestly.
+  click();
+  await flush(2);
+  assert.ok(
+    [...doc.getElementById("toasts").children].some((el) =>
+      /no speech detected/i.test(el.textContent),
+    ),
+  );
+
+  // With text: the view empties, the announce scopes itself to the
+  // LIVE card (the stored History transcript is a different surface).
+  transcriptEl.textContent = "alter text";
+  click();
+  await flush(2);
+  assert.equal(transcriptEl.textContent, "");
+  assert.ok(
+    [...doc.getElementById("toasts").children].some((el) =>
+      /live transcript cleared/i.test(el.textContent),
+    ),
+  );
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});

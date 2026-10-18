@@ -367,6 +367,7 @@ var dictionaries = map[Lang]map[string]string{
 		"history.transcripts.matches":      "Transkript-Treffer für:",
 		"history.transcript.delete":        "Transkript löschen",
 		"history.transcript.copy":          "Transkript kopieren",
+		"history.transcript.download":      "Transkript herunterladen",
 		"history.transcript.deleteConfirm": "Transkript dieses Anrufs löschen? Das kann nicht rückgängig gemacht werden.",
 		"history.unreachable":              "Anrufprotokolle sind gerade nicht erreichbar.",
 		"history.dirIn":                    "← von",

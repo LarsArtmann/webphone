@@ -291,6 +291,35 @@
       );
     });
 
+    // 2b6. Transcript download (#40): [data-download-transcript] saves
+    //      its History row's transcript as one text/plain file named
+    //      after the call id. Blob + object URL + one synthetic click —
+    //      no server round trip (the rendered row is the truth), works
+    //      when island scripts fail. English toasts (D3).
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest) return;
+      var btn = event.target.closest("[data-download-transcript]");
+      if (!btn) return;
+      var row = btn.closest(".wp-transcript-call");
+      var node = row && row.querySelector(".wp-transcript-text");
+      var text = node ? (node.textContent || "").trim() : "";
+      if (!text) {
+        shellToast("Nothing to download yet.", "warn");
+        return;
+      }
+      var callId = btn.getAttribute("data-download-transcript") || "call";
+      var blob = new Blob([text], { type: "text/plain" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = "transcript-" + callId + ".txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      shellToast("Transcript downloaded.", "ok");
+    });
+
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
     //     every call render; the shell mirrors the live call count into
     //     the header so every tab shows the phone is busy. Cards are

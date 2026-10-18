@@ -316,6 +316,8 @@ export const I18N = {
     transcribeBusy: "Transkribiere…",
     transcribeEmpty: "Keine Sprache erkannt",
     copyTranscript: "Transkript kopieren",
+    clearTranscript: "Leeren",
+    transcriptCleared: "Live-Transkript geleert.",
     copied: "In die Zwischenablage kopiert.",
     copyFailed: "Kopieren fehlgeschlagen — Text manuell auswählen.",
     transcribeUnsupported:

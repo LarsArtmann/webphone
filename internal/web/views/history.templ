@@ -144,6 +144,15 @@ templ TranscriptSection(props HistoryPanelProps) {
 					aria-label={ T(props.Lang, "history.transcript.copy") }
 					title={ T(props.Lang, "history.transcript.copy") }
 				>⧉</button>
+				// Download affordance (#40): same row-locality — shell.js
+				// builds a text/plain blob from the rendered transcript and
+				// triggers one file save named after the call.
+				<button
+					class="wp-mini"
+					data-download-transcript={ group.CallID }
+					aria-label={ T(props.Lang, "history.transcript.download") }
+					title={ T(props.Lang, "history.transcript.download") }
+				>↓</button>
 				// End-user erasure (GDPR leg): confirm-gated delete of the
 				// whole call. The button only carries data — shell.js owns
 				// the confirm + DELETE + row removal (the shell works when
