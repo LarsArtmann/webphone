@@ -23,7 +23,7 @@ import {
   scheduleVoicemailRefresh,
 } from "./panels.js";
 import { titleFlashStop } from "./notify.js";
-import { sessions, state } from "./state.js";
+import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
   isTranscribing,
   pauseLiveTranscription,
@@ -72,14 +72,20 @@ function setTracks(entry, { recv, send }) {
 async function holdSession(id, hold) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
-  if (entry.held === hold) return;
-  // Honest pending state: the UI shows the WORK until the re-INVITE
-  // settles — never the hoped-for end state. A toggle arriving mid-flight
-  // (e.g. focus preemption) queues the latest wish instead of being lost.
+  // Mid-flight toggle: queue the latest wish (the honesty contract —
+  // a focus preemption must never be lost), BEFORE the table gate.
   if (entry.holdPending) {
     entry.holdQueued = hold;
     return;
   }
+  // The declarative gate (CALL_TRANSITIONS): asking for the state you
+  // already have (hold from active-hold, resume from active) is simply
+  // illegal in the table — one rule, no re-derived guards. A genuinely
+  // illegal move from any other state would land here too: logged and
+  // kept, never rendered.
+  const to = hold ? "holding" : "resuming";
+  const move = applyTransition(viewStateOf(entry), to);
+  if (!move.changed) return;
   entry.holdPending = hold ? "holding" : "resuming";
   renderCalls();
   try {
@@ -576,6 +582,29 @@ export function bindSession(newSession, target) {
     const live = sessions.get(id);
     if (!live) return;
     log(`call ${target} ${sessionState}`);
+    // Emission through the declarative table (D-train): every sip.js
+    // state arrival maps onto a view state and is legality-checked
+    // against CALL_TRANSITIONS. A refused arrival (Established twice,
+    // traffic after ended) is a wiring bug — logged loudly here, the
+    // view-state derivation below stays single-sourced either way.
+    const sipToView = {
+      [SIP.SessionState.Established]: "active",
+      [SIP.SessionState.Terminating]: "ending",
+      [SIP.SessionState.Terminated]: "ended",
+    };
+    const proposed = sipToView[sessionState];
+    if (proposed) {
+      const from = viewStateOf(live);
+      if (from !== proposed) {
+        const move = applyTransition(from, proposed);
+        if (!move.changed) {
+          log(
+            `call ${target}: refused illegal view transition ${from} -> ${proposed} (${sessionState})`,
+            "warn",
+          );
+        }
+      }
+    }
     if (sessionState === SIP.SessionState.Established) {
       live.established = true;
       live.startedAt = Date.now();
