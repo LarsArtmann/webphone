@@ -10,6 +10,17 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Catalog representation decision (2026-10-19 — record, no work pending)
+
+webphone is INVENTORY-ONLY in catalog.home.lan (SystemNix `catalog-platform`
+entry; page renders with the family's off-fleet deployment story): it has
+NO CQRS write model — read models + in-process SSE change notifications —
+so an event-catalog export would fabricate message vocabulary. The
+telephony family's event source is pbx-lens (true event-sourced
+aggregate). Revisit ONLY if webphone adopts go-cqrs-lite commands; a
+future contacts sync to Stalwart CardDAV also routes through Kith CRM
+(the contacts source of truth), not through webphone.
+
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 
 **Status:** 🟡 `EXECUTED — trains A/B/C/E DONE 2026-10-14, D DONE 2026-10-18 (island CALL_TRANSITIONS + table-gated hold machine, commit ef29ea9); only owner calls remain` (A: delivery machine, CI green · B: re-adjudicated delivered-by-prior-train, backfills landed — B1.5 resolution-branch fax test, B1.6 P5 annotation, B2.3 README notes · C: AppendToThread + faxMoves/FaxAdvance, C2.5 re-adjudicated against the pinned panel contract (same-status verdicts refresh, dedup stays the seam's job) · E: typed events + `Notifier.Project` projection, memo, docs sweep · D: declarative CALL_TRANSITIONS/applyTransition/viewStateOf in state.js behind the hold machine, sip.js arrivals table-gated with loud refusal warns, 2 new specs) · **Priority:** High · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
