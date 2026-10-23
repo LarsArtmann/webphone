@@ -10,6 +10,10 @@ import (
 // extension form is the only login.
 type PhoneIslandProps struct {
 	Passkey bool
+	// SSO renders the OIDC (Pocket ID) front door above the other login
+	// modes. Off keeps the markup identical to a passkey-only (or plain)
+	// deployment.
+	SSO bool
 }
 
 // PhoneIsland is the SIP call island, ported verbatim from the static
@@ -31,6 +35,17 @@ templ PhoneIsland(props PhoneIslandProps) {
 			</header>
 
 			<section id="login-view" class="card">
+				if props.SSO {
+					<h1 data-i18n="ssoSection">Sign in with Pocket ID</h1>
+					// The OIDC front door: a plain navigation into the
+					// authorization-code + PKCE dance. The callback mints
+					// the session cookie and lands back here, where the
+					// island's boot probe signs in and registers — no JS
+					// on this path at all.
+					<a id="sso-login" class="primary wp-sso" href="/api/auth/oauth2/begin" data-i18n="ssoSignin">Continue to Pocket ID</a>
+					<p class="hint" id="sso-error" hidden></p>
+					<p class="hint" data-i18n="ssoPasskeyHint">Passkeys and every other sign-in method your account has work in Pocket ID.</p>
+				}
 				if props.Passkey {
 					<h1 data-i18n="passkeySection">Sign in with a passkey</h1>
 					// The passkey front door: email in, ceremony out — the
@@ -48,6 +63,14 @@ templ PhoneIsland(props PhoneIslandProps) {
 					// Break-glass: the extension + SIP-password login stays
 					// one disclosure away — it works without the identity
 					// layer and is the recovery path when a passkey is lost.
+					<details class="passkey-breakglass">
+						<summary data-i18n="passkeyBreakglass">Use extension and password instead</summary>
+						@ExtensionLoginForm()
+					</details>
+				} else if props.SSO {
+					// SSO without passkey: the extension login stays one
+					// disclosure away (the lifeline property — signing into
+					// a phone must never depend on the IdP).
 					<details class="passkey-breakglass">
 						<summary data-i18n="passkeyBreakglass">Use extension and password instead</summary>
 						@ExtensionLoginForm()

@@ -9,3 +9,16 @@ templ ErrorPanel(message string, lang Lang) {
 		<button class="wp-primary" data-reload>{ T(lang, "error.reload") }</button>
 	</section>
 }
+
+// NotFoundPanel is the styled 404 page: the requested path echoed back
+// verbatim (a stray deep link is usually a truncated or mistyped URL, and
+// seeing the path is the fastest way to notice) plus a way back into the
+// app. It replaces ErrorPanel at the unknown-path handler only: a 404 has
+// no retry story, so the reload button would just 404 again.
+templ NotFoundPanel(path string, lang Lang) {
+	<section class="wp-panel wp-notfound">
+		@panelHead(lang, "error.notfound.title", "error.notfound")
+		<p class="wp-notfound-path"><code>{ path }</code></p>
+		<a class="wp-notfound-back" href="/">{ T(lang, "error.notfound.back") }</a>
+	</section>
+}

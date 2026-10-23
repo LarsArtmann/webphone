@@ -18,6 +18,10 @@ import (
 // extension form is the only login.
 type PhoneIslandProps struct {
 	Passkey bool
+	// SSO renders the OIDC (Pocket ID) front door above the other login
+	// modes. Off keeps the markup identical to a passkey-only (or plain)
+	// deployment.
+	SSO bool
 }
 
 // PhoneIsland is the SIP call island, ported verbatim from the static
@@ -51,8 +55,14 @@ func PhoneIsland(props PhoneIslandProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		if props.SSO {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1 data-i18n=\"ssoSection\">Sign in with Pocket ID</h1>     <a id=\"sso-login\" class=\"primary wp-sso\" href=\"/api/auth/oauth2/begin\" data-i18n=\"ssoSignin\">Continue to Pocket ID</a><p class=\"hint\" id=\"sso-error\" hidden></p><p class=\"hint\" data-i18n=\"ssoPasskeyHint\">Passkeys and every other sign-in method your account has work in Pocket ID.</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		if props.Passkey {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<h1 data-i18n=\"passkeySection\">Sign in with a passkey</h1>    <form id=\"passkey-login-form\" autocomplete=\"off\" aria-describedby=\"passkey-login-error\"><label><span data-i18n=\"passkeyEmail\">Email</span> <input id=\"passkey-email\" name=\"email\" type=\"email\" autocomplete=\"username\" placeholder=\"you@example.com\" required></label> <button type=\"submit\" class=\"primary\" data-i18n=\"passkeySignin\">Sign in with passkey</button></form><p class=\"hint\" id=\"passkey-login-error\" hidden></p>   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1 data-i18n=\"passkeySection\">Sign in with a passkey</h1>    <form id=\"passkey-login-form\" autocomplete=\"off\" aria-describedby=\"passkey-login-error\"><label><span data-i18n=\"passkeyEmail\">Email</span> <input id=\"passkey-email\" name=\"email\" type=\"email\" autocomplete=\"username\" placeholder=\"you@example.com\" required></label> <button type=\"submit\" class=\"primary\" data-i18n=\"passkeySignin\">Sign in with passkey</button></form><p class=\"hint\" id=\"passkey-login-error\" hidden></p>   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -60,12 +70,25 @@ func PhoneIsland(props PhoneIslandProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</details>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</details>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if props.SSO {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = ExtensionLoginForm().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</details>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<h1 data-i18n=\"signin\">Sign in to your extension</h1>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<h1 data-i18n=\"signin\">Sign in to your extension</h1>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -74,7 +97,7 @@ func PhoneIsland(props PhoneIslandProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</section><section id=\"phone-view\" class=\"card\" hidden><div id=\"offline-banner\" class=\"offline-banner\" role=\"status\" hidden data-i18n=\"offlineBanner\">You are offline — calls cannot be made or received.</div><div class=\"whoami\"><span data-i18n=\"signedInAs\">signed in as</span> <strong id=\"whoami-ext\"></strong> <button id=\"logout\" class=\"ghost small\" data-i18n=\"signOut\" data-i18n-title=\"signOutTitle\">sign out</button></div><form id=\"dial-form\" autocomplete=\"off\" aria-describedby=\"dial-error\"><input id=\"dest\" inputmode=\"tel\" data-i18n-placeholder=\"dialPlaceholder\" aria-label=\"Number to call\" required> <button type=\"submit\" class=\"primary\" id=\"call-btn\" data-i18n=\"call\">Call</button></form><p id=\"dial-error\" class=\"hint dial-error\" hidden></p><p id=\"wp-dial-hint\" class=\"hint wp-dial-hint\" hidden aria-hidden=\"true\"></p><div id=\"calls\"></div><div id=\"keypad\" hidden><button data-tone=\"1\">1</button> <button data-tone=\"2\">2<span>ABC</span></button> <button data-tone=\"3\">3<span>DEF</span></button> <button data-tone=\"4\">4<span>GHI</span></button> <button data-tone=\"5\">5<span>JKL</span></button> <button data-tone=\"6\">6<span>MNO</span></button> <button data-tone=\"7\">7<span>PQRS</span></button> <button data-tone=\"8\">8<span>TUV</span></button> <button data-tone=\"9\">9<span>WXYZ</span></button> <button data-tone=\"*\">✱</button> <button data-tone=\"0\">0<span>+</span></button> <button data-tone=\"#\">#</button></div><div id=\"incoming-call\" class=\"incoming\" hidden><span><span data-i18n=\"incoming\">Incoming call from</span> <strong id=\"incoming-from\"></strong></span><div class=\"controls\"><button id=\"accept-btn\" class=\"primary\" data-i18n=\"accept\">Accept</button> <button id=\"reject-btn\" class=\"danger\" data-i18n=\"reject\">Reject</button></div></div><div id=\"audio-out-wrap\" class=\"audio-out\" hidden><span data-i18n=\"audioOutput\">Speaker</span> <select id=\"audio-output\" aria-label=\"Speaker\"></select></div><details class=\"log-wrap\" id=\"contacts-wrap\" hidden><summary data-i18n=\"contacts\">Contacts</summary><ul id=\"contacts-list\" class=\"contacts\"></ul></details> <details class=\"log-wrap\" id=\"history-wrap\" hidden><summary data-i18n=\"recentCalls\">Recent calls</summary><ul id=\"history-list\" class=\"history\"></ul></details> <details class=\"log-wrap\" id=\"vm-wrap\" hidden><summary><span data-i18n=\"voicemail\">Voicemail</span> <span id=\"vm-badge\" class=\"badge\" hidden></span></summary><div class=\"vm-toolbar\"><button id=\"vm-refresh\" class=\"ghost small\" data-i18n=\"vmRefresh\">Refresh</button> <span id=\"vm-status\" class=\"hint\"></span></div><ul id=\"vm-list\" class=\"vm\"></ul></details><div class=\"wp-advanced-bar\"><button id=\"wp-adv-toggle\" class=\"ghost small\" type=\"button\" aria-expanded=\"true\" aria-controls=\"wp-advanced\" data-i18n-title=\"advancedSection\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</section><section id=\"phone-view\" class=\"card\" hidden><div id=\"offline-banner\" class=\"offline-banner\" role=\"status\" hidden data-i18n=\"offlineBanner\">You are offline — calls cannot be made or received.</div><div class=\"whoami\"><span data-i18n=\"signedInAs\">signed in as</span> <strong id=\"whoami-ext\"></strong> <button id=\"logout\" class=\"ghost small\" data-i18n=\"signOut\" data-i18n-title=\"signOutTitle\">sign out</button></div><form id=\"dial-form\" autocomplete=\"off\" aria-describedby=\"dial-error\"><input id=\"dest\" inputmode=\"tel\" data-i18n-placeholder=\"dialPlaceholder\" aria-label=\"Number to call\" required> <button type=\"submit\" class=\"primary\" id=\"call-btn\" data-i18n=\"call\">Call</button></form><p id=\"dial-error\" class=\"hint dial-error\" hidden></p><p id=\"wp-dial-hint\" class=\"hint wp-dial-hint\" hidden aria-hidden=\"true\"></p><div id=\"calls\"></div><div id=\"keypad\" hidden><button data-tone=\"1\">1</button> <button data-tone=\"2\">2<span>ABC</span></button> <button data-tone=\"3\">3<span>DEF</span></button> <button data-tone=\"4\">4<span>GHI</span></button> <button data-tone=\"5\">5<span>JKL</span></button> <button data-tone=\"6\">6<span>MNO</span></button> <button data-tone=\"7\">7<span>PQRS</span></button> <button data-tone=\"8\">8<span>TUV</span></button> <button data-tone=\"9\">9<span>WXYZ</span></button> <button data-tone=\"*\">✱</button> <button data-tone=\"0\">0<span>+</span></button> <button data-tone=\"#\">#</button></div><div id=\"incoming-call\" class=\"incoming\" hidden><span><span data-i18n=\"incoming\">Incoming call from</span> <strong id=\"incoming-from\"></strong></span><div class=\"controls\"><button id=\"accept-btn\" class=\"primary\" data-i18n=\"accept\">Accept</button> <button id=\"reject-btn\" class=\"danger\" data-i18n=\"reject\">Reject</button></div></div><div id=\"audio-out-wrap\" class=\"audio-out\" hidden><span data-i18n=\"audioOutput\">Speaker</span> <select id=\"audio-output\" aria-label=\"Speaker\"></select></div><details class=\"log-wrap\" id=\"contacts-wrap\" hidden><summary data-i18n=\"contacts\">Contacts</summary><ul id=\"contacts-list\" class=\"contacts\"></ul></details> <details class=\"log-wrap\" id=\"history-wrap\" hidden><summary data-i18n=\"recentCalls\">Recent calls</summary><ul id=\"history-list\" class=\"history\"></ul></details> <details class=\"log-wrap\" id=\"vm-wrap\" hidden><summary><span data-i18n=\"voicemail\">Voicemail</span> <span id=\"vm-badge\" class=\"badge\" hidden></span></summary><div class=\"vm-toolbar\"><button id=\"vm-refresh\" class=\"ghost small\" data-i18n=\"vmRefresh\">Refresh</button> <span id=\"vm-status\" class=\"hint\"></span></div><ul id=\"vm-list\" class=\"vm\"></ul></details><div class=\"wp-advanced-bar\"><button id=\"wp-adv-toggle\" class=\"ghost small\" type=\"button\" aria-expanded=\"true\" aria-controls=\"wp-advanced\" data-i18n-title=\"advancedSection\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -82,7 +105,7 @@ func PhoneIsland(props PhoneIslandProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</button></div><div id=\"wp-advanced\"><button id=\"wp-devtest-btn\" class=\"ghost small\" type=\"button\" data-i18n=\"deviceTest\">Test audio devices</button> <details class=\"log-wrap\" id=\"ice-wrap\" hidden><summary data-i18n=\"connectionQuality\">Connection quality</summary><div id=\"ice-panel\" class=\"ice\">—</div></details> <details class=\"log-wrap\"><summary data-i18n=\"eventLog\">Event log</summary><ul id=\"log\"></ul></details></div></section></main><div id=\"toasts\" role=\"status\" aria-live=\"polite\"></div><audio id=\"remote-audio\" autoplay></audio></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</button></div><div id=\"wp-advanced\"><button id=\"wp-devtest-btn\" class=\"ghost small\" type=\"button\" data-i18n=\"deviceTest\">Test audio devices</button> <details class=\"log-wrap\" id=\"ice-wrap\" hidden><summary data-i18n=\"connectionQuality\">Connection quality</summary><div id=\"ice-panel\" class=\"ice\">—</div></details> <details class=\"log-wrap\"><summary data-i18n=\"eventLog\">Event log</summary><ul id=\"log\"></ul></details></div></section></main><div id=\"toasts\" role=\"status\" aria-live=\"polite\"></div><audio id=\"remote-audio\" autoplay></audio></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,7 +139,7 @@ func ExtensionLoginForm() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<form id=\"login-form\" autocomplete=\"off\" aria-describedby=\"login-error\"><label><span data-i18n=\"extension\">Extension</span> <input id=\"ext\" name=\"extension\" inputmode=\"numeric\" autocomplete=\"username\" placeholder=\"1000\" required></label> <label><span data-i18n=\"password\">Password</span> <input id=\"pass\" name=\"password\" type=\"password\" autocomplete=\"current-password\" placeholder=\"••••••••\" required></label> <label class=\"remember\"><input id=\"remember\" type=\"checkbox\"> <span data-i18n=\"remember\">remember extension on this device (never the password)</span></label> <button type=\"submit\" class=\"primary\" data-i18n=\"connect\">Connect</button></form><p class=\"hint\" id=\"login-error\" hidden></p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<form id=\"login-form\" autocomplete=\"off\" aria-describedby=\"login-error\"><label><span data-i18n=\"extension\">Extension</span> <input id=\"ext\" name=\"extension\" inputmode=\"numeric\" autocomplete=\"username\" placeholder=\"1000\" required></label> <label><span data-i18n=\"password\">Password</span> <input id=\"pass\" name=\"password\" type=\"password\" autocomplete=\"current-password\" placeholder=\"••••••••\" required></label> <label class=\"remember\"><input id=\"remember\" type=\"checkbox\"> <span data-i18n=\"remember\">remember extension on this device (never the password)</span></label> <button type=\"submit\" class=\"primary\" data-i18n=\"connect\">Connect</button></form><p class=\"hint\" id=\"login-error\" hidden></p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -148,7 +171,7 @@ func IslandScripts() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<script src=\"/config.js\"></script><script src=\"/assets/vendor/sip.min.js\"></script><script type=\"module\" src=\"/assets/island/app/main.js\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<script src=\"/config.js\"></script><script src=\"/assets/vendor/sip.min.js\"></script><script type=\"module\" src=\"/assets/island/app/main.js\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

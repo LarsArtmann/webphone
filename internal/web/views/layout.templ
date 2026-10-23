@@ -47,6 +47,10 @@ type ShellProps struct {
 	// the extension login demoted to break-glass. False keeps the served
 	// shell byte-equivalent to the pre-passkey login card.
 	Passkey bool
+	// SSO renders the OIDC (Pocket ID) front door: one link into the
+	// IdP's authorization-code + PKCE dance. False renders nothing, so
+	// deployments without OIDC keep their exact login card.
+	SSO bool
 	// Lang drives the server-rendered strings.
 	Lang Lang
 }
@@ -113,7 +117,7 @@ templ ShellBody(props ShellProps) {
 	</header>
 	<div class="wp-body">
 		<aside class="wp-island" aria-label="Phone">
-			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey})
+			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey, SSO: props.SSO})
 		</aside>
 		<div class="wp-main-col">
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">

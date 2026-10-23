@@ -184,6 +184,10 @@ type Deps struct {
 	// (config-gated). Nil: the passkey mode is off — every passkey
 	// surface 404s and the login page renders the extension form only.
 	UserAuth *userauth.Service
+	// SSO is the OPTIONAL OpenID Connect login seam (config-gated). Nil:
+	// the OIDC mode is off — the begin/callback routes 404 and the login
+	// card renders no SSO entry.
+	SSO SSOClient
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -312,6 +316,16 @@ func New(deps Deps) http.Handler {
 		// settings partial; revoke is session-gated + CSRF-protected and
 		// owner-matched against the session extension's mapping.
 		protected.HandleFunc("DELETE /api/passkeys/{id}", h.revokePasskey)
+	}
+	// The OIDC/SSO login surface (Pocket ID): registered ONLY when the
+	// seam is wired. GET-only navigations (the island's SSO link and the
+	// IdP's redirect back), so they share the login flood budget and the
+	// CSRF wrapper's safe-method pass-through — no form, no token.
+	if deps.SSO != nil {
+		protected.Handle("GET /api/auth/oauth2/begin",
+			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoBegin)))
+		protected.Handle("GET /api/auth/oauth2/callback",
+			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoCallback)))
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only

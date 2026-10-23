@@ -70,6 +70,7 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	// The passkey front door renders only when the identity layer is
 	// wired; a disabled deployment keeps the extension-only login card.
 	props.Passkey = h.deps.Config.Auth.Passkey.Enabled()
+	props.SSO = h.deps.SSO != nil
 
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
