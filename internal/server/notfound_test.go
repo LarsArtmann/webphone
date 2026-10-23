@@ -101,3 +101,100 @@ func TestMissingAssetAnswersStyledForNavigationsOnly(t *testing.T) {
 		t.Error("a programmatic fetch must not receive a whole HTML page")
 	}
 }
+// The 404 echoes the requested path. It must not become a cache key: a
+// shared cache would serve one visitor's crafted URL to the next.
+func TestNotFoundPageIsNotCacheable(t *testing.T) {
+	server := newTestServer(t)
+
+	resp, err := http.Get(server.URL + "/nope")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if got := resp.Header.Get("Cache-Control"); got != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store (the echoed path must not be cached)", got)
+	}
+}
+
+// HEAD is the cheap prober form: the status and content type must be the
+// real ones, the body must be absent.
+func TestNotFoundAnswersHeadWithoutBody(t *testing.T) {
+	server := newTestServer(t)
+
+	resp, err := http.Head(server.URL + "/nope")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := readAll(t, resp)
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("status %d, want 404", resp.StatusCode)
+	}
+	if got := resp.Header.Get("Content-Type"); !strings.HasPrefix(got, "text/html") {
+		t.Errorf("content-type %q, want text/html", got)
+	}
+	if len(body) != 0 {
+		t.Errorf("HEAD body = %d bytes, want none", len(body))
+	}
+}
+
+// The error contract claims a method mismatch is unreachable without a
+// valid CSRF token, so the user never meets a bare 405. This pins the
+// claim: an unsafe request to a GET-only path dies at the CSRF gate.
+func TestUnsafeRequestsFailAtCSRFBeforeMethodMismatch(t *testing.T) {
+	server := newTestServer(t)
+
+	resp, err := http.Post(server.URL+"/messages", "text/plain", strings.NewReader("x"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := readAll(t, resp)
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("status %d, want 403 from the CSRF gate (a 405 here would break the documented contract)", resp.StatusCode)
+	}
+	if !strings.Contains(string(body), "csrf") {
+		t.Errorf("body must name the CSRF rejection, got %.120s", body)
+	}
+}
+
+// The query string is not part of the echoed path: a crafted `?redirect=`
+// value must not round-trip into the page.
+func TestNotFoundEchoesThePathWithoutTheQuery(t *testing.T) {
+	server := newTestServer(t)
+
+	resp, err := http.Get(server.URL + "/nope?next=https://evil.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(readAll(t, resp))
+	_ = resp.Body.Close()
+	if !strings.Contains(page, "/nope") {
+		t.Error("the requested path must be echoed")
+	}
+	if strings.Contains(page, "evil.example") {
+		t.Error("the query string must not be echoed into the page")
+	}
+}
+
+// The 404 follows the negotiated language like every other page.
+func TestNotFoundPageFollowsTheLanguage(t *testing.T) {
+	server := newTestServer(t)
+
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/nope", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Accept-Language", "de-DE,de;q=0.9")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(readAll(t, resp))
+	_ = resp.Body.Close()
+	for _, want := range []string{"404 — Seite nicht gefunden", "Zurück zu Nachrichten"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("German 404 missing %q: %.200s", want, page)
+		}
+	}
+}

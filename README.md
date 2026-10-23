@@ -74,8 +74,13 @@ Datastar SDK and its stylesheet served same-origin from the binary
 its expressions). Probe aliases live at `/health/livez`,
 `/health/readyz`, `/health/startupz` — same probe as the root triple,
 never a second truth. Treat the subtree like the probe triple in front
-of it: it is an operator surface, so fence it (the NixOS module's
-Caddy vhost already proxies it unbuffered for the SSE stream).
+of it: it is an operator surface, so fence it. Two fronts already do the
+mechanical half: this module's optional Caddy vhost proxies `/health/*`
+unbuffered for the SSE stream, and the telephony stack's
+`services.telephony.webphone.dashboard` option does the same in its nginx
+vhost — unbuffered, and fenced by the operator SSO gate when the operator
+window runs in `forwardAuth` mode (loopback-only otherwise), because the
+dashboard itself carries no authentication.
 `dashboard.title` names the deployment on the page.
 
 Open the page, sign in on the phone panel (any extension format your PBX

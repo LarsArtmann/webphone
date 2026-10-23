@@ -772,3 +772,44 @@ because the daemon commit's stat listed 5 files, not 6. And
 changes confirmed present (diff/stat check in the same call) — the
 lost realignment message claimed the realignment as done while it was
 a no-op, one daemon race away from permanent false history.
+
+### 404 contract + /health exposure train (2026-10-23)
+
+**Served markup is pinned in three places, and a formatter cannot see
+them.** Replacing the 404's `ErrorPanel` with a dedicated `NotFoundPanel`
+looked like a pure view change. It was not: `scripts/webphone-smoke.py`
+asserted `data-reload` in the served bytes, so the very first live smoke
+run went red (`styled 404: 404 bare-or-unstyled`) while every Go test
+stayed green. The pins are (1) Go handler/views tests, (2) the smoke
+suite, (3) the stack's `tests/browser-e2e.py` — all three grep literal
+strings. Grep all three for the marker you are about to remove BEFORE the
+edit, not after the run.
+
+**One feature, two bare 404s.** `open.Handle("/health", dashboard)` and
+`open.Handle("/health/", dashboard)` were registered only when the
+dashboard existed; with it off, `/health` fell through to the protected
+catch-all (styled) while `/health/` died in the bare open mux (19 bytes of
+`text/plain`). Whenever an optional subtree is mounted in two patterns,
+the DISABLED arm needs the same two patterns pointing at the styled page —
+otherwise the answer depends on a trailing slash. The same held for
+`/health/livez`, `/health/readyz` and `/health/startupz`.
+
+**The `/health` exposure question was never about code.** The app seam was
+finished and tested in October 2026; the surface was missing because the
+stack fronts the app with nginx (`caddy.enable = lib.mkForce false`) and
+only the Caddy generator had `/health/*`. A capability can be built,
+reviewed, tested and still be invisible for a year because the DELIVERY
+layer was never wired. When a feature "does not exist" in production,
+diff the front's location table against the app's route table before
+touching the feature.
+
+**Concurrent sessions, again, but from the other side.** A repo-wide
+`nix fmt` reformatted another session's in-flight island JS and Go files.
+The changes were harmless normalisation, but they made a foreign diff look
+authored. On any repo with a live second session: format explicit paths
+only. The same session also pushed that other agent's half-finished stack
+edit (a `default.nix` inheriting `webphoneAuthUsers` that `shared.nix`
+never exported), which broke every host evaluation until the export was
+restored — pushing a shared tree publishes other people's in-flight work,
+so check `git log origin/main..HEAD` for commits you did not make before
+pushing.

@@ -29,12 +29,15 @@ surfaced candidates stay here, unscheduled:
 
 `services.telephony.webphone.dashboard` now mounts the go-health dashboard at
 `/health` with the nginx location UNBUFFERED and fenced (operator SSO in
-`forwardAuth` mode, loopback-only otherwise); pbx-artmann sets it. Shipping needs
-the tri-repo order: the stack commit must reach `main` (the daemon pushes it), then
-`nix flake update telephony` in pbx-artmann — which ALSO clears the in-flight
-`webphone.oauth2` option from the SSO session, so that host does not evaluate
-against the old pin — then verify `https://pbx.artmann.tech/health` answers 200
-after the operator sign-in. **Priority:** High · **Effort:** S.
+`forwardAuth` mode, loopback-only otherwise); pbx-artmann sets it. **Shipped
+2026-10-23:** webphone and the stack are pushed, pbx-artmann relocked
+(`2fed91b`), and the host evaluates — the `pbx.artmann.tech` vhost renders
+`= /health` + `/health/` with `auth_request /_telephony_auth_operator` and
+`error_page 401 = @telephony_signin_operator`, and
+`services.webphone.settings.dashboard = { enable = true; title = "PBX webphone"; }`.
+What remains is the HOST REBUILD plus a browser check that logged-out `/health`
+redirects to the SSO gate and a signed-in operator sees the cards.
+**Priority:** High · **Effort:** S.
 
 
 ### Catalog representation decision (2026-10-19 — record, no work pending)
