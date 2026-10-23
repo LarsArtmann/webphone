@@ -489,8 +489,10 @@ func TestNotFoundRendersTheShell(t *testing.T) {
 		t.Fatalf("status = %d, want 404", resp.StatusCode)
 	}
 	page := string(body)
-	if !strings.Contains(page, `class="wp-panel"`) || !strings.Contains(page, "data-reload") {
-		t.Errorf("404 body lacks the styled error panel: %.200s", page)
+	// Since the not-found panel landed, the 404 renders the shell around
+	// a path-echoing panel (no reload button: reloading a 404 404s again).
+	if !strings.Contains(page, "wp-notfound") || !strings.Contains(page, "/nope") {
+		t.Errorf("404 body lacks the styled not-found panel: %.200s", page)
 	}
 	if !strings.Contains(page, `id="login-view"`) {
 		t.Errorf("404 body lacks the island shell: %.200s", page)
