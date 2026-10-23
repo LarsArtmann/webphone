@@ -9,12 +9,12 @@ Push/CI statements rot fastest; treat them as timestamped, not timeless.
 
 **Environment facts that shaped this run**
 
-| Fact | Consequence |
-|------|-------------|
-| Go 1.27.2 in the devshell, host Go 1.26.8 | every `go` command ran via `nix develop -c` |
-| An auto-commit daemon commits **and pushes** every ~2 min | all of my work landed as `chore: auto-commit N changed file(s)` |
+| Fact                                                                                                                                                                                    | Consequence                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Go 1.27.2 in the devshell, host Go 1.26.8                                                                                                                                               | every `go` command ran via `nix develop -c`                                                                                                |
+| An auto-commit daemon commits **and pushes** every ~2 min                                                                                                                               | all of my work landed as `chore: auto-commit N changed file(s)`                                                                            |
 | A second Crush session was editing the same tree the whole time (`internal/push`, `internal/matrix`, `internal/server/hooks/ring.go`, `internal/server/api/push_api.go`, chat networks) | shared files (`server.go`, `AGENTS.md`, `CHANGELOG.md`) were re-read before every edit; one foreign build break blocked my test runs twice |
-| `GOCACHE` is at `/mnt/buildcache` (shared) | no cache-clear needed this run |
+| `GOCACHE` is at `/mnt/buildcache` (shared)                                                                                                                                              | no cache-clear needed this run                                                                                                             |
 
 ---
 
@@ -22,15 +22,15 @@ Push/CI statements rot fastest; treat them as timestamped, not timeless.
 
 ### a1. Planned tasks closed this run (plan → verdict)
 
-| Plan task | Verdict | Evidence |
-|---|---|---|
-| **C6** Convert the reachable action 404s | **DONE** | 15 `http.NotFound` → `h.notFound` in `actions.go`, 1 in `panels.go` (`partialThread`), 6 in `textagent_api.go`; 5 new tests |
-| **C7** One home for 404/405 knowledge | **DONE** | `docs/error-contract.md` § "404 — one home, two shapes"; AGENTS 404 bullet reduced to a pointer; duplicate test deleted |
-| **C8** Every HTML route family answers through the shell | **DONE** | `TestEveryHTMLRouteFamilyAnswersTheStyledPage` (11 representative misses) |
-| **C9** Flight-recorder seam (default off) | **DONE (code)** | `internal/server/trace.go`, `internal/app/flightrecorder.go`, `/internal/flightrecorder`, 6 tests |
-| **C10** Latency histograms on `/metrics` | **DONE** | `internal/server/latency.go` + `httputil.Metrics` in the chain, 2 tests |
-| **C11** JSON error-contract decision for `/api` | **DONE (ruling)** | `docs/error-contract.md` § "`/api` error bodies — plain text, RULED" |
-| **C3** Pin the 404 contract end to end | **DONE (completed here)** | the last duplicate pin removed; every claim in the row now has its test named |
+| Plan task                                                | Verdict                   | Evidence                                                                                                                    |
+| -------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **C6** Convert the reachable action 404s                 | **DONE**                  | 15 `http.NotFound` → `h.notFound` in `actions.go`, 1 in `panels.go` (`partialThread`), 6 in `textagent_api.go`; 5 new tests |
+| **C7** One home for 404/405 knowledge                    | **DONE**                  | `docs/error-contract.md` § "404 — one home, two shapes"; AGENTS 404 bullet reduced to a pointer; duplicate test deleted     |
+| **C8** Every HTML route family answers through the shell | **DONE**                  | `TestEveryHTMLRouteFamilyAnswersTheStyledPage` (11 representative misses)                                                   |
+| **C9** Flight-recorder seam (default off)                | **DONE (code)**           | `internal/server/trace.go`, `internal/app/flightrecorder.go`, `/internal/flightrecorder`, 6 tests                           |
+| **C10** Latency histograms on `/metrics`                 | **DONE**                  | `internal/server/latency.go` + `httputil.Metrics` in the chain, 2 tests                                                     |
+| **C11** JSON error-contract decision for `/api`          | **DONE (ruling)**         | `docs/error-contract.md` § "`/api` error bodies — plain text, RULED"                                                        |
+| **C3** Pin the 404 contract end to end                   | **DONE (completed here)** | the last duplicate pin removed; every claim in the row now has its test named                                               |
 
 ### a2. The 404 shape rule (the core of C6/C7)
 
@@ -38,11 +38,11 @@ Before: every action miss answered Go's 19-byte `text/plain`.
 After: `h.notFound` (`internal/server/pages.go`) is the one writer for HTML-router
 misses and chooses by **what the caller can consume**:
 
-| Request shape | Answer | Why |
-|---|---|---|
-| Document (no `HX-Request`) — a stale link, a partial URL pasted from devtools | the styled page (`notFoundPage`) | a human is looking at it |
-| HTMX (`HX-Request: true`) — a button, a form, a poll | a one-line `.wp-error` notice, status stays 404 | htmx discards non-2xx bodies and fires its own toast; a shell would be ~14 KB nobody renders |
-| Machine (JSON APIs, webhooks, byte streams) | unchanged terse writers | a browser is not their client |
+| Request shape                                                                 | Answer                                          | Why                                                                                          |
+| ----------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Document (no `HX-Request`) — a stale link, a partial URL pasted from devtools | the styled page (`notFoundPage`)                | a human is looking at it                                                                     |
+| HTMX (`HX-Request: true`) — a button, a form, a poll                          | a one-line `.wp-error` notice, status stays 404 | htmx discards non-2xx bodies and fires its own toast; a shell would be ~14 KB nobody renders |
+| Machine (JSON APIs, webhooks, byte streams)                                   | unchanged terse writers                         | a browser is not their client                                                                |
 
 Ruled **exclusions**, deliberate and pinned by a test: `/attachments/{id}`
 (`<img src>` / `<audio src>`) and `markThreadRead` (island fetch) keep the bare
@@ -50,32 +50,32 @@ answer; a fax document link (`<a download>`) **does** route through the helper.
 
 ### a3. Files changed in this continuation
 
-| File | Change |
-|---|---|
-| `internal/server/pages.go` | new `notFound` helper + `latency` field on `handlers` |
-| `internal/server/actions.go` | 15 misses → `h.notFound`; 3 ruled exclusions left bare |
-| `internal/server/panels.go` | `partialThread` miss → `h.notFound` |
-| `internal/server/textagent_api.go` | all 6 seam-off/malformed-id misses → `h.notFound` |
-| `internal/server/internal_directory.go` | `internalDirectoryRequiredPeer` renamed `loopbackPeer` (now shared with the trace endpoint) |
-| `internal/server/trace.go` | **new** — `TraceRecorder` seam, `traceMiddleware`, `traceSnapshot` handler |
-| `internal/server/latency.go` | **new** — `latencyRecorder` (12 buckets, status classes, `/metrics` self-scrape excluded) |
-| `internal/server/server.go` | `Deps.Trace`, conditional trace middleware, `httputil.Metrics` in the chain, `/internal/flightrecorder` route |
-| `internal/server/metrics.go` | writes the histogram + status-class counter |
-| `internal/app/flightrecorder.go` | **new** — `go-flightrecorder` adapter, env opt-in, retention, `Close` |
-| `internal/app/app.go` | `App.Trace`, recorder built beside the probe, drained last in `Shutdown`, `Deps.Trace` wiring |
-| `internal/server/notfound_shapes_test.go` | **new** — 5 tests (htmx notice, document page, action split, fax link, attachment exclusion) |
-| `internal/server/latency_test.go` | **new** — 2 tests (cumulative buckets, no path/identifier leak) |
-| `internal/server/trace_test.go` | **new** — 3 tests (404 when off, path when on, observation per request) |
-| `internal/app/flightrecorder_test.go` | **new** — 3 tests (nil seam, env parsing, real capture + close) |
-| `internal/server/notfound_test.go` | route-family test + the island-shell assertion folded in from the deleted duplicate |
-| `internal/server/server_test.go` | deleted `TestNotFoundRendersTheShell` (duplicate home) |
-| `go.mod` / `go.sum` | `go-flightrecorder` promoted indirect → direct (`go mod tidy`) |
-| `AGENTS.md` | middleware-chain order, flight-recorder seam, latency-metrics seam, 404 pointer, 20-shot count |
-| `README.md` | flight-recorder section; `/metrics` wording now names the histogram |
-| `CHANGELOG.md` | 404 shape rule; latency metrics; flight recorder |
-| `docs/error-contract.md` | 404 row rewritten, "one home, two shapes" section, `/api` ruling, flight-recorder row |
-| `TODO_LIST.md` | visual-harness row refreshed to 20 shots |
-| `scripts/ui-capture.py` | 10th surface `not-found` (`/nope`), marker + copy pin, docstring |
+| File                                      | Change                                                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `internal/server/pages.go`                | new `notFound` helper + `latency` field on `handlers`                                                         |
+| `internal/server/actions.go`              | 15 misses → `h.notFound`; 3 ruled exclusions left bare                                                        |
+| `internal/server/panels.go`               | `partialThread` miss → `h.notFound`                                                                           |
+| `internal/server/textagent_api.go`        | all 6 seam-off/malformed-id misses → `h.notFound`                                                             |
+| `internal/server/internal_directory.go`   | `internalDirectoryRequiredPeer` renamed `loopbackPeer` (now shared with the trace endpoint)                   |
+| `internal/server/trace.go`                | **new** — `TraceRecorder` seam, `traceMiddleware`, `traceSnapshot` handler                                    |
+| `internal/server/latency.go`              | **new** — `latencyRecorder` (12 buckets, status classes, `/metrics` self-scrape excluded)                     |
+| `internal/server/server.go`               | `Deps.Trace`, conditional trace middleware, `httputil.Metrics` in the chain, `/internal/flightrecorder` route |
+| `internal/server/metrics.go`              | writes the histogram + status-class counter                                                                   |
+| `internal/app/flightrecorder.go`          | **new** — `go-flightrecorder` adapter, env opt-in, retention, `Close`                                         |
+| `internal/app/app.go`                     | `App.Trace`, recorder built beside the probe, drained last in `Shutdown`, `Deps.Trace` wiring                 |
+| `internal/server/notfound_shapes_test.go` | **new** — 5 tests (htmx notice, document page, action split, fax link, attachment exclusion)                  |
+| `internal/server/latency_test.go`         | **new** — 2 tests (cumulative buckets, no path/identifier leak)                                               |
+| `internal/server/trace_test.go`           | **new** — 3 tests (404 when off, path when on, observation per request)                                       |
+| `internal/app/flightrecorder_test.go`     | **new** — 3 tests (nil seam, env parsing, real capture + close)                                               |
+| `internal/server/notfound_test.go`        | route-family test + the island-shell assertion folded in from the deleted duplicate                           |
+| `internal/server/server_test.go`          | deleted `TestNotFoundRendersTheShell` (duplicate home)                                                        |
+| `go.mod` / `go.sum`                       | `go-flightrecorder` promoted indirect → direct (`go mod tidy`)                                                |
+| `AGENTS.md`                               | middleware-chain order, flight-recorder seam, latency-metrics seam, 404 pointer, 20-shot count                |
+| `README.md`                               | flight-recorder section; `/metrics` wording now names the histogram                                           |
+| `CHANGELOG.md`                            | 404 shape rule; latency metrics; flight recorder                                                              |
+| `docs/error-contract.md`                  | 404 row rewritten, "one home, two shapes" section, `/api` ruling, flight-recorder row                         |
+| `TODO_LIST.md`                            | visual-harness row refreshed to 20 shots                                                                      |
+| `scripts/ui-capture.py`                   | 10th surface `not-found` (`/nope`), marker + copy pin, docstring                                              |
 
 ### a4. Verification actually run (not assumed)
 
@@ -105,13 +105,13 @@ Test totals added this run: **13 functions** across 4 files.
 
 ## b) PARTIALLY DONE
 
-| Item | What exists | What is missing |
-|---|---|---|
-| **C12 visual matrix** | the `not-found` surface, its DOM marker, its copy pin, doc counts | **the matrix was never run** — the new shot is unproven |
-| **C13 gates** | targeted `go test` green in every package I touched; `gofmt` on touched files | `nix fmt`, `buildflow`, `nix flake check`, `nix run .#vulnix`, `webphone-smoke.py`, `ui-capture` — **none ran after these changes** |
-| **C14 closure** | plan state understood, docs updated as part of each task | no plan-vs-shipped reconciliation pass, no FEATURES/ROADMAP delta, no narrative commit (the daemon's `chore:` commits own the history) |
-| **C9 in production terms** | seam, endpoint, retention, shutdown drain, env opt-in | never exercised on a real host; `<dataDir>/traces` sits inside the **backup** path (size risk, see d4) |
-| **C4 stack VM test** | I read `tests/webphone.nix`, located the `/metrics` fence pattern to copy | **not written** |
+| Item                       | What exists                                                                   | What is missing                                                                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **C12 visual matrix**      | the `not-found` surface, its DOM marker, its copy pin, doc counts             | **the matrix was never run** — the new shot is unproven                                                                                |
+| **C13 gates**              | targeted `go test` green in every package I touched; `gofmt` on touched files | `nix fmt`, `buildflow`, `nix flake check`, `nix run .#vulnix`, `webphone-smoke.py`, `ui-capture` — **none ran after these changes**    |
+| **C14 closure**            | plan state understood, docs updated as part of each task                      | no plan-vs-shipped reconciliation pass, no FEATURES/ROADMAP delta, no narrative commit (the daemon's `chore:` commits own the history) |
+| **C9 in production terms** | seam, endpoint, retention, shutdown drain, env opt-in                         | never exercised on a real host; `<dataDir>/traces` sits inside the **backup** path (size risk, see d4)                                 |
+| **C4 stack VM test**       | I read `tests/webphone.nix`, located the `/metrics` fence pattern to copy     | **not written**                                                                                                                        |
 
 ---
 
@@ -164,7 +164,7 @@ Test totals added this run: **13 functions** across 4 files.
    env-only opt-in, matching `WEBPHONE_DEBUG_TIMING`. Same behaviour, different
    discoverability — this needs a yes/no, not silence.
 8. **C6's headline promise is not literally met.** The plan said "convert
-   thread/fax/snippet misses to the styled panel". I converted the *handler*
+   thread/fax/snippet misses to the styled panel". I converted the _handler_
    sites, but a thread deep-link miss still answers **200 + gone-notice**
    (`threadGone`, pinned deliberately by `TestThreadDeepLinkOpensConversation`),
    and htmx snippet/fax misses get a notice, not the page. That is the correct
@@ -211,83 +211,83 @@ Test totals added this run: **13 functions** across 4 files.
 
 **Blocking / correctness**
 
-| # | Task |
-|---|------|
-| 1 | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`) |
-| 2 | `nix fmt` (explicit paths only — a concurrent session is live) |
-| 3 | `buildflow` full run |
+| # | Task                                                                                   |
+| - | -------------------------------------------------------------------------------------- |
+| 1 | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`)      |
+| 2 | `nix fmt` (explicit paths only — a concurrent session is live)                         |
+| 3 | `buildflow` full run                                                                   |
 | 4 | `nix flake check` (package + tests + treefmt + island-lint + island-js + module check) |
-| 5 | `nix run .#vulnix` (a real scan, not the 0 ms cache hit) |
-| 6 | `python3 scripts/webphone-smoke.py --bin <fresh build>` |
-| 7 | Run `scripts/ui-capture.py` and eyeball the new 20th shot |
-| 8 | Commit the whole train with a narrative message before the daemon does |
-| 9 | Push and watch CI to green (`gh run list`) |
+| 5 | `nix run .#vulnix` (a real scan, not the 0 ms cache hit)                               |
+| 6 | `python3 scripts/webphone-smoke.py --bin <fresh build>`                                |
+| 7 | Run `scripts/ui-capture.py` and eyeball the new 20th shot                              |
+| 8 | Commit the whole train with a narrative message before the daemon does                 |
+| 9 | Push and watch CI to green (`gh run list`)                                             |
 
 **Deploy (owner/SSH gated)**
 
-| # | Task |
-|---|------|
-| 10 | `nixos-rebuild switch --flake …#pbx` on the host |
+| #  | Task                                                                           |
+| -- | ------------------------------------------------------------------------------ |
+| 10 | `nixos-rebuild switch --flake …#pbx` on the host                               |
 | 11 | Logged-out `curl -sI https://pbx.artmann.tech/health` → 302 to the SSO sign-in |
-| 12 | Signed-in `/health` renders cards; `/health/sse` streams |
-| 13 | `/health/livez` returns `"status":"pass"` through the vhost |
-| 14 | Confirm `/healthz`, `/livez`, `/startupz` still 200 |
-| 15 | Decide whether the stack's uncommitted `flake.lock` bump is intended |
+| 12 | Signed-in `/health` renders cards; `/health/sse` streams                       |
+| 13 | `/health/livez` returns `"status":"pass"` through the vhost                    |
+| 14 | Confirm `/healthz`, `/livez`, `/startupz` still 200                            |
+| 15 | Decide whether the stack's uncommitted `flake.lock` bump is intended           |
 
 **C4 — stack VM test**
 
-| # | Task |
-|---|------|
-| 16 | Add `dashboard.enable = true` to `tests/webphone.nix`'s fixture |
-| 17 | Assert external `/health` → 403 (the fence) |
+| #  | Task                                                                       |
+| -- | -------------------------------------------------------------------------- |
+| 16 | Add `dashboard.enable = true` to `tests/webphone.nix`'s fixture            |
+| 17 | Assert external `/health` → 403 (the fence)                                |
 | 18 | Assert loopback `https://localhost/health` → 200 with the dashboard marker |
-| 19 | Assert `/health/` → 301 → `/health` |
-| 20 | Assert the app port answers `/health` directly (the source) |
-| 21 | Wire it into `checks` and document it in the stack README |
+| 19 | Assert `/health/` → 301 → `/health`                                        |
+| 20 | Assert the app port answers `/health` directly (the source)                |
+| 21 | Wire it into `checks` and document it in the stack README                  |
 
 **Newly introduced surfaces**
 
-| # | Task |
-|---|------|
-| 22 | Ruling: should `<dataDir>/traces` ride the backup, or be excluded? |
-| 23 | If excluded: add the exclusion to the module's backup unit and document it |
-| 24 | Decide config-knob vs env-var for the flight recorder (deviation in d7) |
-| 25 | Consider making the latency buckets a named constant table with a comment per bucket |
-| 26 | Align trace observation with the `/metrics` exclusion |
+| #  | Task                                                                                       |
+| -- | ------------------------------------------------------------------------------------------ |
+| 22 | Ruling: should `<dataDir>/traces` ride the backup, or be excluded?                         |
+| 23 | If excluded: add the exclusion to the module's backup unit and document it                 |
+| 24 | Decide config-knob vs env-var for the flight recorder (deviation in d7)                    |
+| 25 | Consider making the latency buckets a named constant table with a comment per bucket       |
+| 26 | Align trace observation with the `/metrics` exclusion                                      |
 | 27 | Document `go tool trace` usage with the gzip step in README (done) → add it to the runbook |
-| 28 | Add a `/health`-style "is the recorder on?" line to Settings (optional) |
+| 28 | Add a `/health`-style "is the recorder on?" line to Settings (optional)                    |
 
 **Docs / plan hygiene**
 
-| # | Task |
-|---|------|
-| 29 | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx) |
-| 30 | Amend the plan's C9 wording to the env-var reality |
-| 31 | Mark C4/C13/C14 status in the plan file |
-| 32 | FEATURES.md: latency metrics + flight recorder rows |
-| 33 | ROADMAP.md: observability depth entry |
-| 34 | `docs/lessons.md`: the daemon-commit attribution lesson |
-| 35 | `docs/lessons.md`: the "plan says X, code pins Y" lesson |
-| 36 | TODO_LIST: harvest from this report (§d + §f) |
-| 37 | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep |
+| #  | Task                                                                                                                                                  |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 29 | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx)                                                                     |
+| 30 | Amend the plan's C9 wording to the env-var reality                                                                                                    |
+| 31 | Mark C4/C13/C14 status in the plan file                                                                                                               |
+| 32 | FEATURES.md: latency metrics + flight recorder rows                                                                                                   |
+| 33 | ROADMAP.md: observability depth entry                                                                                                                 |
+| 34 | `docs/lessons.md`: the daemon-commit attribution lesson                                                                                               |
+| 35 | `docs/lessons.md`: the "plan says X, code pins Y" lesson                                                                                              |
+| 36 | TODO_LIST: harvest from this report (§d + §f)                                                                                                         |
+| 37 | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep                                                                         |
 | 38 | Note the flight recorder in the module's option docs (it is env-only, so the NixOS module needs a `settings`/env surface if it should be declarative) |
 
 **Hardening ideas (owner-gated)**
 
-| # | Task |
-|---|------|
+| #  | Task                                                                                                                |
+| -- | ------------------------------------------------------------------------------------------------------------------- |
 | 39 | Add a rate limit to `/internal/flightrecorder` (loopback-only today, but a runaway script could fill the directory) |
-| 40 | Emit a metric for snapshots taken (count + bytes) instead of only logging |
-| 41 | Add a startup log line when the recorder is on (operators forget) |
-| 42 | Guard `maxBytes` by available disk instead of the fixed default |
-| 43 | Consider `Ptrace`/`perf`-free alternatives before growing this further |
-| 44 | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket |
-| 45 | Add a `/metrics` self-test to the smoke suite (shape only) |
-| 46 | Add the 404 shape rule to the stack's browser E2E expectations |
-| 47 | Consider an arch test that `h.notFound` is the only HTML-router 404 writer |
-| 48 | Re-check the art-dupl baseline now that the concurrent session's code landed |
-| 49 | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them |
-| 50 | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes |
+| 40 | Emit a metric for snapshots taken (count + bytes) instead of only logging                                           |
+| 41 | Add a startup log line when the recorder is on (operators forget)                                                   |
+| 42 | Guard `maxBytes` by available disk instead of the fixed default                                                     |
+| 43 | Consider `Ptrace`/`perf`-free alternatives before growing this further                                              |
+| 44 | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket                                    |
+| 45 | Add a `/metrics` self-test to the smoke suite (shape only)                                                          |
+| 46 | Add the 404 shape rule to the stack's browser E2E expectations                                                      |
+| 47 | Consider an arch test that `h.notFound` is the only HTML-router 404 writer                                          |
+| 48 | Re-check the art-dupl baseline now that the concurrent session's code landed                                        |
+| 49 | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them                            |
+| 50 | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes                                           |
 
 ---
 
@@ -315,19 +315,19 @@ Test totals added this run: **13 functions** across 4 files.
 
 ## Appendix — the honest one-liner per plan task
 
-| Task | One line |
-|---|---|
-| C1 | Live in config, not yet on the host |
-| C2 | Pinned |
-| C3 | Pinned, and de-duplicated |
-| C4 | Not written |
-| C5 | Written (README/AGENTS/CHANGELOG/error-contract) |
-| C6 | Done, with the shape rule instead of blanket conversion |
-| C7 | One home established |
-| C8 | Route-family test in place |
-| C9 | Built, tested, never exercised on a host |
-| C10 | Live in `/metrics`, aggregates only |
-| C11 | Ruled: plain text stays, with a named reopen trigger |
-| C12 | Surface added, matrix unrun |
-| C13 | Not run |
-| C14 | Not reconciled, commits unattributed |
+| Task | One line                                                |
+| ---- | ------------------------------------------------------- |
+| C1   | Live in config, not yet on the host                     |
+| C2   | Pinned                                                  |
+| C3   | Pinned, and de-duplicated                               |
+| C4   | Not written                                             |
+| C5   | Written (README/AGENTS/CHANGELOG/error-contract)        |
+| C6   | Done, with the shape rule instead of blanket conversion |
+| C7   | One home established                                    |
+| C8   | Route-family test in place                              |
+| C9   | Built, tested, never exercised on a host                |
+| C10  | Live in `/metrics`, aggregates only                     |
+| C11  | Ruled: plain text stays, with a named reopen trigger    |
+| C12  | Surface added, matrix unrun                             |
+| C13  | Not run                                                 |
+| C14  | Not reconciled, commits unattributed                    |
