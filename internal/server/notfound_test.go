@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/webphone/internal/config"
 )
 
 // The styled 404 is the app's face for every wrong address: an unknown
@@ -196,6 +198,40 @@ func TestNotFoundPageFollowsTheLanguage(t *testing.T) {
 	for _, want := range []string{"404 — Seite nicht gefunden", "Zurück zu Nachrichten"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("German 404 missing %q: %.200s", want, page)
+		}
+	}
+}
+
+// The dashboard serves its page at "/health"; the subtree pattern is for
+// /health/sse and friends, and the bare "/health/" used to fall through to
+// the stdlib text 404 even with the dashboard mounted. It must land on the
+// page (a canonical redirect, not an error).
+func TestDashboardSubtreeRootReachesThePage(t *testing.T) {
+	dashboard := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/health" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte("dashboard page"))
+	})
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Dashboard.Enable = true
+	}, func(d *Deps) {
+		d.Dashboard = dashboard
+	})
+
+	for _, path := range []string{"/health", "/health/"} {
+		resp, err := http.Get(server.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body := readAll(t, resp)
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("%s: status %d, want 200 (the trailing slash must resolve)", path, resp.StatusCode)
+		}
+		if !strings.Contains(string(body), "dashboard page") {
+			t.Errorf("%s: dashboard body missing, got %.120s", path, body)
 		}
 	}
 }

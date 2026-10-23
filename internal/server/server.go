@@ -474,7 +474,17 @@ func New(deps Deps) http.Handler {
 	// when Deps.Dashboard is nil.
 	if deps.Dashboard != nil {
 		open.Handle("/health", deps.Dashboard)
-		open.Handle("/health/", deps.Dashboard)
+		// The subtree pattern exists for /health/sse and friends; the
+		// dashboard answers its own page at "/health" only, so the bare
+		// "/health/" would fall through to the stdlib's text 404. Send it
+		// to the canonical form instead, like any directory index.
+		open.Handle("/health/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/health/" {
+				http.Redirect(w, r, "/health", http.StatusMovedPermanently)
+				return
+			}
+			deps.Dashboard.ServeHTTP(w, r)
+		}))
 	} else {
 		// Dashboard off: BOTH patterns must still answer with the styled
 		// page. Without this "/health" reached the protected catch-all
