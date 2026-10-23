@@ -209,6 +209,48 @@ func TestNotFoundPageFollowsTheLanguage(t *testing.T) {
 	}
 }
 
+// Every HTML route family answers a miss through the shell. This is the
+// structural half of the 404 contract: the mux grows families over time
+// (/messages, /fax, /partials, /enroll, ...), and a family that answers a
+// miss with stdlib text is the regression class the styled page exists to
+// kill. A representative unknown path per family is cheaper and stricter
+// than asserting on the mux table itself — it fails on real served bytes.
+func TestEveryHTMLRouteFamilyAnswersTheStyledPage(t *testing.T) {
+	c := signIn(t, newTestServer(t))
+
+	paths := []string{
+		"/nope",                     // no family at all
+		"/messages/",                // tab family, trailing slash
+		"/messages/42/extra",        // tab family, wrong shape
+		"/fax/",                     // tab family, trailing slash
+		"/voicemail/extra",          // tab family, wrong shape
+		"/history/",                 // tab family, trailing slash
+		"/contacts/",                // tab family, trailing slash
+		"/settings/",                // tab family, trailing slash
+		"/partials/nope",            // partial family
+		"/enroll/",                  // passkey page family, seam off
+		"/fax/not-a-fax-id/document/extra", // document family, wrong shape
+	}
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			resp, body := c.do(http.MethodGet, path, nil, "")
+			page := string(body)
+			if resp.StatusCode != http.StatusNotFound {
+				t.Fatalf("%s: status %d, want 404 (got %.120s)", path, resp.StatusCode, page)
+			}
+			if got := resp.Header.Get("Content-Type"); !strings.HasPrefix(got, "text/html") {
+				t.Fatalf("%s: content-type %q, want text/html", path, got)
+			}
+			if !strings.Contains(page, "wp-notfound") {
+				t.Errorf("%s: missing the styled panel, got %.200s", path, page)
+			}
+			if !strings.Contains(page, path) {
+				t.Errorf("%s: the requested path must be echoed, got %.200s", path, page)
+			}
+		})
+	}
+}
+
 // The dashboard serves its page at "/health"; the subtree pattern is for
 // /health/sse and friends, and the bare "/health/" used to fall through to
 // the stdlib text 404 even with the dashboard mounted. It must land on the

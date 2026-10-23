@@ -39,8 +39,10 @@ only user feedback.
 
 ## 404 — one home, two shapes
 
-`h.notFound` (`internal/server/pages.go`) is the ONLY writer for the HTML
-router's misses, and the shape follows what the caller can consume:
+`h.notFound` (`internal/server/pages.go`) is the one writer for the HTML
+router's misses (the asset mux keeps its own `Accept` split and the
+unknown-path/health-off arms call `notFoundPage` directly, since those are
+always navigations). The shape follows what the caller can consume:
 
 - **Document request** (browser navigation: a stale link, a partial URL
   pasted out of devtools) -> the styled page (`notFoundPage`).
