@@ -24,6 +24,8 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
+	"github.com/larsartmann/webphone/internal/push"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -43,6 +45,13 @@ type Deps struct {
 	// Dedup is the OPTIONAL engine-backed dedup window; nil degrades to
 	// the in-process map (byte-identical legacy behavior).
 	Dedup DedupWindow
+	// Push is the OPTIONAL push fanout behind the ring hook (nil or
+	// disabled: the hook acknowledges inertly — a dialplan must never
+	// depend on push health).
+	Push *push.Fanout
+	// Devices is the registered-device store the ring hook fans out
+	// to (nil with a disabled seam).
+	Devices *readmodels.PushDevices
 }
 
 // UnreadCache is the narrow nav-badge seam the message hook
@@ -59,6 +68,8 @@ type Handlers struct {
 	fax       *fax.Service
 	unread    UnreadCache
 	idem      Gate
+	push      *push.Fanout
+	devices   *readmodels.PushDevices
 }
 
 // New builds the webhook ingest handlers, including their idempotency
@@ -70,6 +81,8 @@ func New(deps Deps) *Handlers {
 		fax:       deps.Fax,
 		unread:    deps.Unread,
 		idem:      NewGate(deps.Dedup, hookIdempotencyTTL),
+		push:      deps.Push,
+		devices:   deps.Devices,
 	}
 }
 
@@ -135,6 +148,18 @@ const RetryAfterHint = "1"
 //	  "status":   "delivered" | "failed",
 //	  "error":    "invalid number"
 //	}
+//
+// POST /hooks/ring — inbound-call wake from the stack's FS dialplan
+// (the ring-while-closed seam): fan the push out to the owner's
+// registered devices; a ring_end stands them down.
+//
+//	{
+//	  "secret":   "...",
+//	  "owner":    "1001",
+//	  "from":     "+441632960961",
+//	  "call_id":  "fs-uuid",
+//	  "state":    "ring" | "end"
+//	}
 
 // BearerGate guards a secret-authenticated surface with the configured
 // shared secret. Without a configured secret the surface stays closed
@@ -176,6 +201,8 @@ func (h *Handlers) Webhooks(w http.ResponseWriter, r *http.Request) {
 		h.hookFax(w, r)
 	case "/hooks/fax/status":
 		h.hookFaxStatus(w, r)
+	case "/hooks/ring":
+		h.hookRing(w, r)
 	default:
 		http.NotFound(w, r)
 	}

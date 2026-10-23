@@ -31,6 +31,7 @@ import (
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/server/hooks"
@@ -193,6 +194,14 @@ type Deps struct {
 	// every request is reported and GET /internal/flightrecorder writes a
 	// trace window (loopback only).
 	Trace TraceRecorder
+	// Push is the OPTIONAL push fanout behind ring-while-closed (the
+	// /hooks/ring lane and the /api/push-devices registry). Nil or
+	// disabled: the device API answers 404 and the ring hook
+	// acknowledges inertly.
+	Push *push.Fanout
+	// PushDevices is the registered-device store (readmodels-backed;
+	// present whenever the composition built the engine).
+	PushDevices *readmodels.PushDevices
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -244,6 +253,8 @@ func New(deps Deps) http.Handler {
 		Fax:       deps.Fax,
 		Unread:    h.unread,
 		Dedup:     deps.Dedup,
+		Push:      deps.Push,
+		Devices:   deps.PushDevices,
 	})
 	// The carved island JSON surface (internal/server/api): the hub
 	// implements the narrow Server seam (session gate + contacts nudge)
@@ -256,6 +267,8 @@ func New(deps Deps) http.Handler {
 		CallsIdem:   hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 		ASR:         deps.ASR,
 		Transcripts: deps.Transcripts,
+		Push:        deps.Push,
+		Devices:     deps.PushDevices,
 	})
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
@@ -355,6 +368,14 @@ func New(deps Deps) http.Handler {
 	// the island normally gates on PBX_CONFIG.crm, but a config change
 	// under a long-lived session must not error.
 	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.LogCall)))
+	// The push-device registry the native shells ride (the Android call
+	// shell first): session-gated, CSRF via the same authedFetch dance,
+	// sharing the contacts write budget (the same one-write-per-action
+	// class). A disabled seam answers 404 — a shell must not believe
+	// registration succeeded on a server that cannot ring it.
+	protected.HandleFunc("GET /api/push-devices", apiHandlers.ListPushDevices)
+	protected.Handle("POST /api/push-devices", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SavePushDevice)))
+	protected.HandleFunc("DELETE /api/push-devices", apiHandlers.DeletePushDevice)
 	// The transcription surface: session-gated, CSRF via authedFetch, and
 	// the ONE endpoint behind every audio stream's transcribe affordance
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.

@@ -209,6 +209,36 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.ProvideNamed(injector, "asr", func(i do.Injector) (asr.Provider, error) { return asrProvider, nil })
 	}
 
+	// Optional push seam (ring-while-closed): each transport is an
+	// independent both-or-neither config; the fanout drops dead senders
+	// at construction, so zero configured transports = a disabled fanout
+	// (device API 404s, ring hook acknowledges inertly) and the product
+	// stays byte-identical. A PRESENT but unusable configuration (bad
+	// FCM credentials file, unparseable ntfy URL) fails the boot here —
+	// the same doctrine as the passkey/Paperless seams.
+	pushFanout, err := func() (*push.Fanout, error) {
+		senders := map[string]push.Sender{}
+		if cfg.Push.Ntfy.Enabled() {
+			sender, err := push.NewNtfySender(cfg.Push.Ntfy.URL, cfg.Push.Ntfy.Token)
+			if err != nil {
+				return nil, err
+			}
+			senders[push.TransportNtfy] = sender
+		}
+		if cfg.Push.Fcm.Enabled() {
+			sender, err := push.NewFcmSender(cfg.Push.Fcm.CredentialsFile)
+			if err != nil {
+				return nil, err
+			}
+			senders[push.TransportFcm] = sender
+		}
+		return push.NewFanout(senders), nil
+	}()
+	if err != nil {
+		return nil, wrapf("open push senders: %w", err)
+	}
+	do.Provide(injector, func(i do.Injector) (*push.Fanout, error) { return pushFanout, nil })
+
 	// Optional passkey identity layer (embedded usermgmt): config-absent
 	// → the service is never registered and Deps.UserAuth stays nil
 	// (every passkey surface 404s). A present but UNUSABLE configuration

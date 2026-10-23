@@ -83,6 +83,19 @@ window runs in `forwardAuth` mode (loopback-only otherwise), because the
 dashboard itself carries no authentication.
 `dashboard.title` names the deployment on the page.
 
+### Flight recorder (optional, off by default)
+
+`WEBPHONE_DEBUG_FLIGHTRECORDER=1` turns on a rolling execution-trace
+window: the runtime keeps the last ten seconds of trace data in memory,
+and a snapshot lands in `<dataDir>/traces` whenever a request runs
+longer than two seconds or answers 5xx (newest 20 kept, gzip-compressed).
+`GET /internal/flightrecorder` on the loopback listener captures one on
+demand and answers with the path; `gunzip` it and open it with `go tool
+trace`. The endpoint is loopback-only and answers 404 while the seam is
+off — like the rest of the debug surfaces, it never exists in the
+browser. Leave it off unless you are chasing something: the runtime
+tracer costs CPU on every goroutine.
+
 Open the page, sign in on the phone panel (any extension format your PBX
 accepts; against nothing it will just fail to register), and the tabs
 unlock with the same login.
@@ -632,8 +645,9 @@ reverse proxy as the app. All three are session-free GETs whose bodies
 name checks and statuses only, never secrets — safe to expose or
 scrape. Fence a fleet health hub the Caddy way with a `remote_ip`
 matcher in the vhost's `extraConfig` instead of per-location blocks;
-`/metrics` (Prometheus text, aggregate counts only — never
-per-extension data) fences the same way.
+`/metrics` (Prometheus text: stored-object counts, request-duration
+histogram and status-class counter — aggregates only, never per-extension
+data or request paths) fences the same way.
 
 **Readiness vs systemd:** the service unit stays `Type=simple` by
 DELIBERATE decision — the module does NOT wire `Type=notify`.

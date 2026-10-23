@@ -62,6 +62,7 @@ browser download, so a stale one deserves the readable page.
 The 405 stance is the neighbouring row: a method mismatch is unreachable
 without a valid CSRF token, so restyling it would mean buffering every
 protected response for a case no UI can produce.
+| Flight-recorder seam off (`GET /internal/flightrecorder`) | Styled 404 (a disabled feature answers like a missing path). Machine-facing and loopback-only when on: a browser can never reach it, a non-loopback peer gets 403, and success answers the snapshot's filesystem path as `text/plain`. Enabled with `WEBPHONE_DEBUG_FLIGHTRECORDER=1` | server `traceSnapshot` + `app.traceRecorder` | none (decision, not a gap) + `TestTraceSnapshotIsAbsentWhenTheSeamIsOff`, `TestTraceSnapshotReportsTheWrittenPath` |
 
 Shell copy (toasts, dedup, throttle wording) stays ENGLISH by decision
 D3 (2026-09-20): matches the `#log` operator-channel precedent; the

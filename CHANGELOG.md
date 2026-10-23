@@ -47,7 +47,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Every HTML surface now renders it, including `/health` and its subtree
   while the go-health dashboard is disabled (previously bare stdlib text)
   and a missing asset the browser navigated to; programmatic asset fetches
-  keep the terse answer.
+  keep the terse answer. The response shape follows the caller: a browser
+  navigation gets the page, an HTMX request gets a one-line notice (htmx
+  discards non-2xx bodies, so a shell there would be wasted bytes), and
+  JSON/webhook/byte-stream surfaces keep their own terse writers.
+- `/metrics` now carries request latency: a duration histogram (12
+  buckets, 5 ms to 30 s) plus a status-class counter, both aggregates
+  only — no path or extension label, and self-scrapes excluded.
+- An opt-in flight recorder (`WEBPHONE_DEBUG_FLIGHTRECORDER=1`, off by
+  default): the runtime keeps a rolling trace window and writes a
+  snapshot into `<dataDir>/traces` when a request runs longer than two
+  seconds or answers 5xx, retaining the newest 20. `GET
+  /internal/flightrecorder` (loopback only) captures one on demand and
+  answers with the file path; `go tool trace` reads it after gunzip.
 
 ### Fixed
 
