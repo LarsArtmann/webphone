@@ -108,6 +108,9 @@ above stays complete without them, and the E2E must not assume them:
   Discard ride `POST /messages/drafts/<id>/…`)
 - `wp-ai-draft` — the composer's on-demand-draft button class (both
   the new-conversation form and the reply composer)
+- `wp-draft-mode` — the drafts panel's auto-reply mode selector
+  (`POST /messages/drafts/mode` pins a runtime override; a
+  `value="reset"` submit returns to the configured mode)
 
 ## Notes
 
