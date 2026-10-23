@@ -52,6 +52,12 @@ type Client struct {
 
 // New builds the client. Config validation has already failed closed on
 // half configurations; the constructor stays mechanical.
+// compile-time conformance: the client IS the message gateway of the
+// matrix lane (the messaging service routes it by network).
+var _ gateway.MessageGateway = (*Client)(nil)
+
+// New builds the client. Config validation has already failed closed on
+// half configurations; the constructor stays mechanical.
 func New(homeserver, userID, token string) *Client {
 	return &Client{
 		homeserver: strings.TrimRight(homeserver, "/"),

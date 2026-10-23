@@ -78,6 +78,15 @@ type Config struct {
 	// the Messages-tab draft panel and the compose "draft with AI"
 	// affordance. Zero value = disabled: neither surface renders.
 	TextAgent TextAgent `json:"textagent" koanf:"textagent"`
+	// Matrix is the OPTIONAL Matrix chat-network lane: a thin
+	// Client-Server API client (send + sync receiver) behind the
+	// matrix config gate. Zero value = disabled: no sender registers
+	// for the matrix network and the product stays byte-identical.
+	Matrix Matrix `json:"matrix" koanf:"matrix"`
+	// Signal is the OPTIONAL Signal chat-network lane: a JSON-RPC
+	// client over a local signal-cli daemon unix socket. Zero value =
+	// disabled.
+	Signal Signal `json:"signal" koanf:"signal"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -381,6 +390,46 @@ type TextAgent struct {
 // client = no surface renders.
 func (t TextAgent) Enabled() bool { return t.URL != "" }
 
+// Matrix configures the optional Matrix chat-network lane. When set,
+// ALL four fields are required (fail closed on half configurations —
+// the same doctrine as the CRM/Paperless pairs): a client that cannot
+// authenticate, or conversations with no owning extension, must fail
+// at boot, not at the first message.
+type Matrix struct {
+	// Homeserver is the Client-Server API base (e.g. https://matrix.example.org).
+	Homeserver string `json:"homeserver,omitempty" koanf:"homeserver"`
+	// UserID is the bot account (e.g. @webphone:example.org).
+	UserID string `json:"user_id,omitempty" koanf:"user_id"`
+	// AccessToken authenticates the account; a long-lived token minted
+	// once via POST /login (deliver via environmentFile — a secret).
+	AccessToken string `json:"access_token,omitempty" koanf:"access_token"`
+	// Owner is the webphone extension whose Messages tab owns every
+	// matrix conversation (the account serves the deployment; threads
+	// are owner-scoped everywhere and need their home).
+	Owner string `json:"owner,omitempty" koanf:"owner"`
+}
+
+// Enabled reports whether the matrix lane is configured.
+func (m Matrix) Enabled() bool { return m.Homeserver != "" }
+
+// Signal configures the optional Signal chat-network lane over a
+// signal-cli daemon's unix socket (signal-cli daemon --socket). When
+// set, all three fields are required, exactly like Matrix.
+type Signal struct {
+	// SocketPath is the signal-cli JSON-RPC unix socket (e.g.
+	// /run/signal-cli/socket). Filesystem permissions are the trust
+	// boundary — the same loopback posture as the gateway.
+	SocketPath string `json:"socket_path,omitempty" koanf:"socket_path"`
+	// Account is the linked Signal number (+49...) signal-cli sends
+	// from; the multi-account daemon needs it to pick the lane.
+	Account string `json:"account,omitempty" koanf:"account"`
+	// Owner is the webphone extension owning every signal conversation.
+	Owner string `json:"owner,omitempty" koanf:"owner"`
+}
+
+// Enabled reports whether the signal lane is configured.
+func (s Signal) Enabled() bool { return s.SocketPath != "" }
+
 // Enabled reports whether an ASR provider is configured. The openai
 // wire enables on URL alone; the google wire on a project id.
 // Validation rejects half-configurations before this matters.
@@ -671,6 +720,12 @@ func validate(cfg Config) error {
 			return errorfamily.Newf(errorfamily.Rejection, "config.textagent.url", "textagent.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8071)", cfg.TextAgent.URL)
 		}
 	}
+	if err := validateMatrix(cfg.Matrix); err != nil {
+		return err
+	}
+	if err := validateSignal(cfg.Signal); err != nil {
+		return err
+	}
 	switch {
 	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google":
 		return errorfamily.Newf(errorfamily.Rejection, "config.asr.provider", "asr.provider %q is not one of \"openai\", \"google\"", cfg.ASR.Provider)
@@ -707,6 +762,55 @@ func validate(cfg Config) error {
 // silently fall back to extension logins — both worse than a failed boot.
 // The password-file existence is deliberately NOT checked here (files
 // rotate at runtime); it is enforced at login time, fail-closed.
+// validateMatrix fails closed on half configurations: the homeserver,
+// the account, its token, and the owning extension are one unit — any
+// gap would mint a client that cannot authenticate (or conversations
+// with no home), and boot is the honest place to say so.
+func validateMatrix(m Matrix) error {
+	if !m.Enabled() {
+		return nil
+	}
+	switch {
+	case m.UserID == "":
+		return errorfamily.NewRejection("config.matrix.user_id", "matrix.homeserver is set without matrix.user_id: the lane needs all of homeserver, user_id, access_token, owner")
+	case m.AccessToken == "":
+		return errorfamily.NewRejection("config.matrix.access_token", "matrix.homeserver is set without matrix.access_token: the homeserver rejects anonymous clients (deliver the token via environmentFile)")
+	case m.Owner == "":
+		return errorfamily.NewRejection("config.matrix.owner", "matrix.homeserver is set without matrix.owner: matrix conversations need the extension whose Messages tab owns them")
+	}
+	if u, err := url.Parse(m.Homeserver); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.matrix.homeserver", "matrix.homeserver %q is not an absolute http(s) URL (e.g. https://matrix.example.org)", m.Homeserver)
+	}
+	if _, err := domain.ParseAddress(domain.NetworkMatrix, m.UserID); err != nil {
+		return errorfamily.Newf(errorfamily.Rejection, "config.matrix.user_id", "matrix.user_id %q is not a Matrix user id (@localpart:server)", m.UserID)
+	}
+	if _, err := domain.ParseExtension(m.Owner); err != nil {
+		return errorfamily.Newf(errorfamily.Rejection, "config.matrix.owner", "matrix.owner %q is not a valid extension", m.Owner)
+	}
+	return nil
+}
+
+// validateSignal mirrors validateMatrix for the signal-cli lane: the
+// socket, the sending account, and the owning extension are one unit.
+func validateSignal(s Signal) error {
+	if !s.Enabled() {
+		return nil
+	}
+	switch {
+	case s.Account == "":
+		return errorfamily.NewRejection("config.signal.account", "signal.socket_path is set without signal.account: the multi-account daemon needs the number to send from")
+	case s.Owner == "":
+		return errorfamily.NewRejection("config.signal.owner", "signal.socket_path is set without signal.owner: signal conversations need the extension whose Messages tab owns them")
+	}
+	if !strings.HasPrefix(s.SocketPath, "/") {
+		return errorfamily.Newf(errorfamily.Rejection, "config.signal.socket_path", "signal.socket_path %q is not an absolute path (e.g. /run/signal-cli/socket)", s.SocketPath)
+	}
+	if _, err := domain.ParseExtension(s.Owner); err != nil {
+		return errorfamily.Newf(errorfamily.Rejection, "config.signal.owner", "signal.owner %q is not a valid extension", s.Owner)
+	}
+	return nil
+}
+
 func validatePasskey(p Passkey) error {
 	if !p.Enabled() {
 		return nil
