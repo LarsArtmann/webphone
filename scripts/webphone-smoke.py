@@ -714,6 +714,15 @@ def run_checks(
         status == 200 and b'"status":"pass"' in body,
         f"{status} {body[:80]!r}",
     )
+    # The trailing-slash form is the SUBTREE pattern: it must reach the
+    # same dashboard, not the 404 that answered here while the prefix
+    # route was registered without its bare sibling.
+    status, body, _ = s.request("GET", "/health/")
+    c.ok(
+        "dashboard subtree serves",
+        status == 200 and b"/health/datastar.js" in body,
+        f"{status} {body[:80]!r}",
+    )
 
     # 3. version reports build metadata. With --expect-version the probe
     # FAILS unless the served build is exactly that version (accepts the

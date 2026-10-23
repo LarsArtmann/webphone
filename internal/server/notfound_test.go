@@ -14,7 +14,7 @@ import (
 func TestUnknownPathsAnswerTheStyledNotFoundPage(t *testing.T) {
 	server := newTestServer(t)
 
-	for _, path := range []string{"/nope", "/health", "/health/", "/health/livez"} {
+	for _, path := range []string{"/nope", "/health", "/health/", "/health/livez", "/health/readyz", "/health/startupz"} {
 		resp, err := http.Get(server.URL + path)
 		if err != nil {
 			t.Fatal(err)
