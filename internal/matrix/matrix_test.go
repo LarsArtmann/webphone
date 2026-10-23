@@ -204,7 +204,11 @@ type cursor struct {
 	saved []string
 }
 
-func (c *cursor) Load(context.Context) (string, error) { return c.token, nil }
+func (c *cursor) Load(context.Context) (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.token, nil
+}
 
 func (c *cursor) Save(_ context.Context, token string) error {
 	c.mu.Lock()
@@ -212,6 +216,14 @@ func (c *cursor) Save(_ context.Context, token string) error {
 	c.token = token
 	c.saved = append(c.saved, token)
 	return nil
+}
+
+// saveCount reports the persisted-cursor count race-safely (the Run
+// goroutine writes while the test polls).
+func (c *cursor) saveCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return len(c.saved)
 }
 
 func TestIngestDeliversDMTextAndSkipsEncrypted(t *testing.T) {
@@ -296,7 +308,7 @@ func TestRunPersistsCursorAndExitsOnCancel(t *testing.T) {
 		close(done)
 	}()
 	deadline := time.After(5 * time.Second)
-	for len(cur.saved) == 0 {
+	for cur.saveCount() == 0 {
 		select {
 		case <-deadline:
 			t.Fatal("receiver never persisted a cursor")

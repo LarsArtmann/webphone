@@ -257,3 +257,47 @@ func TestAppServesMainPageUnderStrictCSP(t *testing.T) {
 		t.Fatalf("main page CSP was relaxed by the dashboard wiring: %q", csp)
 	}
 }
+
+// TestAppSSOOffRendersPlainLoginAndUnregistersRoutes pins the typed-nil
+// interface trap (2026-10-23): with OAuth2 unconfigured, Deps.SSO must
+// be an UNSET interface. A typed-nil *sso.Client assigned into the
+// SSOClient interface reads as non-nil to the server — the routes
+// register, the login card renders the SSO block (hiding the extension
+// form behind a closed disclosure), and the first begin panics on the
+// nil receiver. Proven live: the config-less binary served the SSO card
+// and answered begin 500 (nil dereference) while the browser suite's
+// wrong-password leg failed send_keys on the hidden form.
+func TestAppSSOOffRendersPlainLoginAndUnregistersRoutes(t *testing.T) {
+	application := startApp(t, false)
+	server := httptest.NewServer(application.Handler)
+	t.Cleanup(server.Close)
+
+	page, err := http.Get(server.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = page.Body.Close() }()
+	if page.StatusCode != http.StatusOK {
+		t.Fatalf("/ with SSO off: code %d, want 200", page.StatusCode)
+	}
+	body, err := io.ReadAll(page.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	html := string(body)
+	if !strings.Contains(html, `id="login-form"`) {
+		t.Fatal("/ with SSO off must render the plain extension login form")
+	}
+	if strings.Contains(html, `id="sso-login"`) || strings.Contains(html, "ssoSection") {
+		t.Fatal("/ with SSO off must NOT render the SSO login card (the typed-nil interface trap: the closed disclosure hides the extension form and the browser suite cannot reach it)")
+	}
+
+	begin, err := http.Get(server.URL + "/api/auth/oauth2/begin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = begin.Body.Close() }()
+	if begin.StatusCode != http.StatusNotFound {
+		t.Fatalf("/api/auth/oauth2/begin with SSO off: code %d, want 404 (the routes must not register; a 5xx here is the nil-receiver panic)", begin.StatusCode)
+	}
+}

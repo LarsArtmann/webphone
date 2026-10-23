@@ -103,11 +103,8 @@ type App struct {
 	// iterates every container service implementing the health-check
 	// interface, and *health.Probe itself conforms — self-registration
 	// would make every batch recurse into itself.
-	Probe *health.Probe
-	// chatLoops are the config-gated chat-network receivers (matrix
-	// sync, signal socket): started with the app context in Start.
-	chatLoops []func(context.Context) error
-	Handler   http.Handler
+	Probe   *health.Probe
+	Handler http.Handler
 }
 
 // wrapf is this package's home for family-neutral startup wraps (same
@@ -325,7 +322,15 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		if cfg.Auth.Passkey.Enabled() {
 			auth = do.MustInvokeNamed[*userauth.Service](i, "userauth")
 		}
-		var ssoClient *sso.Client
+		// SSO keeps a TRUE nil interface when the mode is off: a typed
+		// nil *sso.Client assigned into the SSOClient interface reads
+		// as non-nil to `deps.SSO != nil` — the routes would register,
+		// the login card would render the SSO block (hiding the
+		// extension form behind a closed disclosure), and the first
+		// begin would panic on the nil receiver (the 2026-10-23
+		// browser-suite M11 break, proven against the config-less
+		// binary).
+		var ssoClient server.SSOClient
 		if cfg.Auth.OAuth2.Enabled() {
 			ssoClient = do.MustInvokeNamed[*sso.Client](i, "sso")
 		}
@@ -397,12 +402,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("wire server: %w", err)
 	}
 
-	chatLoops, err := wireChatNetworks(cfg, injector, sqlite.SQL(), log)
-	if err != nil {
-		return nil, err
-	}
-
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Handler: handler, chatLoops: chatLoops}, nil
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Handler: handler}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
@@ -513,11 +513,6 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
-	// Chat-network receivers (config-gated; empty at zero config) ride
-	// the same ctx bound as every background loop.
-	for _, loop := range a.chatLoops {
-		go loop(ctx)
-	}
 	return nil
 }
 
