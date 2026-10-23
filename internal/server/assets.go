@@ -190,3 +190,9 @@ func noStore(next http.Handler) http.Handler {
 func (h *handlers) favicon(w http.ResponseWriter, r *http.Request) {
 	serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
 }
+
+// manifest serves the PWA-LITE install manifest at the site root; the
+// head links it from every shell render (layout.templ headExtras).
+func (h *handlers) manifest(w http.ResponseWriter, r *http.Request) {
+	serveEmbedded(w, r, "island/manifest.webmanifest", "application/manifest+json")
+}

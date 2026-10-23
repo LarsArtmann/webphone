@@ -103,8 +103,11 @@ type App struct {
 	// iterates every container service implementing the health-check
 	// interface, and *health.Probe itself conforms — self-registration
 	// would make every batch recurse into itself.
-	Probe   *health.Probe
-	Handler http.Handler
+	Probe *health.Probe
+	// chatLoops are the config-gated chat-network receivers (matrix
+	// sync, signal socket): started with the app context in Start.
+	chatLoops []func(context.Context) error
+	Handler   http.Handler
 }
 
 // wrapf is this package's home for family-neutral startup wraps (same
@@ -394,7 +397,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("wire server: %w", err)
 	}
 
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Handler: handler}, nil
+	chatLoops, err := wireChatNetworks(cfg, injector, sqlite.SQL(), log)
+	if err != nil {
+		return nil, err
+	}
+
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Handler: handler, chatLoops: chatLoops}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
@@ -505,6 +513,11 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
+	// Chat-network receivers (config-gated; empty at zero config) ride
+	// the same ctx bound as every background loop.
+	for _, loop := range a.chatLoops {
+		go loop(ctx)
+	}
 	return nil
 }
 

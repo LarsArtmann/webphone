@@ -33,8 +33,8 @@ const chatBootTimeout = 10 * time.Second
 // retries with backoff.
 func wireChatNetworks(
 	cfg config.Config, injector *do.RootScope, db *sql.DB, log *slog.Logger,
-) ([]func(context.Context), error) {
-	var loops []func(context.Context)
+) ([]func(context.Context) error, error) {
+	var loops []func(context.Context) error
 	messagingSvc := do.MustInvoke[*messaging.Service](injector)
 
 	if cfg.Matrix.Enabled() {

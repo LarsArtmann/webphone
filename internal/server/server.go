@@ -379,6 +379,12 @@ func New(deps Deps) http.Handler {
 	// link is parsed; the modern SVG answers both names (content-type
 	// carries the format, and every current browser sniffs it fine).
 	open.HandleFunc("GET /favicon.ico", h.favicon)
+	// PWA-LITE install manifest (2026-10-23 decision: owner demand signal
+	// unlocked the parked manifest; the service-worker NOT-DO of the
+	// 2026-09-22 spike stands — no fetch interception, zero staleness
+	// risk). application/manifest+json is the type Chrome requires to
+	// parse it as a manifest.
+	open.HandleFunc("GET /manifest.webmanifest", h.manifest)
 	// /metrics is the ops scrape surface: AGGREGATES only (counts +
 	// build facts, never per-extension data), fenced per-location by
 	// the module's vhost like the probe triple.
@@ -505,6 +511,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/internal/directory/", open)
 	root.Handle("/favicon.svg", open)
 	root.Handle("/favicon.ico", open)
+	root.Handle("/manifest.webmanifest", open)
 	root.Handle("/metrics", open)
 
 	security := httputil.SecurityHeaders(securityHeadersConfig())

@@ -548,6 +548,9 @@ func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	if !strings.Contains(page, `<link rel="icon" href="/favicon.svg">`) {
 		t.Error("icon link missing: browsers would request /favicon.ico and 404")
 	}
+	if !strings.Contains(page, `<link rel="manifest" href="/manifest.webmanifest">`) {
+		t.Error("manifest link missing: install-as-app would never be offered")
+	}
 }
 
 func TestStaticAssetsServe(t *testing.T) {
@@ -570,6 +573,9 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/vendor/sip.min.js":    "UserAgent",
 		"/config.js":                   "window.PBX_CONFIG",
 		"/favicon.svg":                 "<svg",
+		"/assets/island/icon-192.png":  "\x89PNG\r\n\x1a\n",
+		"/assets/island/icon-512.png":  "\x89PNG\r\n\x1a\n",
+		"/assets/island/icon-maskable.svg": "<svg",
 	} {
 		resp, body := c.do(http.MethodGet, path, nil, "")
 		if resp.StatusCode != http.StatusOK {
@@ -579,6 +585,69 @@ func TestStaticAssetsServe(t *testing.T) {
 		if !strings.Contains(string(body), wantContains) {
 			t.Errorf("%s: body does not contain %q", path, wantContains)
 		}
+	}
+}
+
+// TestManifestAnswersInstallabilityContract pins the PWA-LITE install
+// surface (2026-10-23 native-app decision, P0; the service-worker NOT-DO
+// of the 2026-09-22 spike stands): the manifest serves as
+// application/manifest+json, parses, carries the standalone-install
+// minimums, and every declared icon actually serves — a manifest pointing
+// at a 404 would silently kill installability while every other gate
+// stays green.
+func TestManifestAnswersInstallabilityContract(t *testing.T) {
+	c := newClient(t)
+	resp, body := c.do(http.MethodGet, "/manifest.webmanifest", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("manifest status %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); ct != "application/manifest+json" {
+		t.Errorf("manifest content-type %q, want application/manifest+json", ct)
+	}
+	var m struct {
+		Name      string `json:"name"`
+		StartURL  string `json:"start_url"`
+		Display   string `json:"display"`
+		ThemeColor string `json:"theme_color"`
+		Icons     []struct {
+			Src     string `json:"src"`
+			Type    string `json:"type"`
+			Purpose string `json:"purpose"`
+		} `json:"icons"`
+	}
+	if err := json.Unmarshal(body, &m); err != nil {
+		t.Fatalf("manifest is not valid JSON: %v", err)
+	}
+	if m.Name != "WebPhone" {
+		t.Errorf("manifest name %q", m.Name)
+	}
+	if m.StartURL != "/" || m.Display != "standalone" {
+		t.Errorf("manifest start_url %q display %q, want / + standalone", m.StartURL, m.Display)
+	}
+	if m.ThemeColor == "" {
+		t.Error("manifest theme_color missing: the install splash and title bar would fall back to browser defaults")
+	}
+	maskable := 0
+	for _, icon := range m.Icons {
+		if icon.Purpose == "maskable" {
+			maskable++
+		}
+		iresp, ibody := c.do(http.MethodGet, icon.Src, nil, "")
+		if iresp.StatusCode != http.StatusOK {
+			t.Errorf("manifest icon %s: status %d", icon.Src, iresp.StatusCode)
+			continue
+		}
+		if icon.Type == "image/png" {
+			if ct := iresp.Header.Get("Content-Type"); ct != "image/png" {
+				t.Errorf("manifest icon %s: content-type %q", icon.Src, ct)
+			}
+			if len(ibody) < 8 || string(ibody[:8]) != "\x89PNG\r\n\x1a\n" {
+				t.Errorf("manifest icon %s: body is not a PNG", icon.Src)
+			}
+		}
+	}
+	if maskable < 2 {
+		t.Errorf("manifest declares %d maskable icons, want at least the 192 and 512 pair", maskable)
 	}
 }
 

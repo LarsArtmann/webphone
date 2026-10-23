@@ -23,8 +23,13 @@ type SettingsPanelProps struct {
 	CRM            bool
 	// ASR reports the optional live-transcription seam; ASRDetail names
 	// the provider kind and model (asr.Provider.Describe) when it is on.
-	ASR            bool
-	ASRDetail      string
+	ASR       bool
+	ASRDetail string
+	// ChatMatrix/ChatSignal report the optional chat-network lanes. The
+	// rows render ONLY when the lane is configured (passkey-style
+	// conditional): zero config keeps the panel byte-identical.
+	ChatMatrix bool
+	ChatSignal bool
 	ICEServers     int
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
@@ -130,7 +135,7 @@ func orUnset(value string, lang Lang) string {
 // Detail strings for text values, DetailComponent where the value is
 // conditional or rich (service state, ASR detail, the export link).
 func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
-	return []display.DefinitionItem{
+	items := []display.DefinitionItem{
 		{Term: T(props.Lang, "settings.sipDomain"), Detail: orUnset(props.SIPDomain, props.Lang)},
 		{Term: T(props.Lang, "settings.sipWS"), Detail: props.WebsocketURL},
 		{Term: T(props.Lang, "settings.ice"), Detail: fmtInt(props.ICEServers)},
@@ -141,6 +146,15 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
 	}
+	// Chat-network lanes surface only when they exist (an always-on
+	// "off" row would be noise for every telephony-only deployment).
+	if props.ChatMatrix {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.matrix"), DetailComponent: serviceDetail(true, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
+	}
+	if props.ChatSignal {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.signal"), DetailComponent: serviceDetail(true, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
+	}
+	return items
 }
 
 templ serviceDetail(on bool, connected, unset string) {

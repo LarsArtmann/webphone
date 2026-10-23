@@ -241,6 +241,7 @@ templ headExtras(csrfToken string) {
 	// under it. Browsers without the key ignore it (no fork of Base).
 	<meta name="viewport" content="interactive-widget=resizes-content"></meta>
 	<script src="/assets/theme-preload.js"></script>
+	<link rel="manifest" href="/manifest.webmanifest"></link>
 	// Warm the island's script payloads from the head: the ESM graph
 	// (modulepreload — fetch AND compile while the body still parses; the
 	// entry tag sits at the end of body) and the one big classic script

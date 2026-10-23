@@ -380,6 +380,8 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		CRM:            h.deps.CRM.Enabled(),
 		ASR:            h.asrOn(),
 		ASRDetail:      asrDetail,
+		ChatMatrix:     h.deps.Config.Matrix.Enabled(),
+		ChatSignal:     h.deps.Config.Signal.Enabled(),
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
