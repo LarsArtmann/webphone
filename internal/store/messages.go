@@ -44,13 +44,14 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 		archived     int
 	)
 	err = tx.QueryRowContext(ctx, `
-		SELECT id, last_activity_at, unread, archived FROM threads WHERE owner = ? AND remote = ?
-	`, msg.Owner.String(), msg.Remote.String()).Scan(&rowID, &lastActivity, &unread, &archived)
+		SELECT id, last_activity_at, unread, archived FROM threads WHERE owner = ? AND network = ? AND remote = ?
+	`, msg.Owner.String(), string(msg.Network), msg.Remote.String()).Scan(&rowID, &lastActivity, &unread, &archived)
 	switch {
 	case err == nil:
 		existing = domain.Thread{
 			ID:             domain.MustThreadID(rowID),
 			Owner:          msg.Owner,
+			Network:        msg.Network,
 			Remote:         msg.Remote,
 			LastActivityAt: time.Unix(lastActivity, 0),
 			Unread:         unread,
@@ -65,9 +66,9 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	thread := domain.AppendToThread(existing, msg)
 	if existing.ID == (domain.ThreadID{}) {
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO threads (id, owner, remote, last_activity_at, unread, archived)
-			VALUES (?, ?, ?, ?, ?, ?)
-		`, thread.ID.String(), msg.Owner.String(), msg.Remote.String(),
+			INSERT INTO threads (id, owner, network, remote, last_activity_at, unread, archived)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+		`, thread.ID.String(), msg.Owner.String(), string(msg.Network), msg.Remote.String(),
 			thread.LastActivityAt.Unix(), thread.Unread, boolInt(thread.Archived)); err != nil {
 			return errorfamily.WrapInfrastructuref(err, "store.thread_insert", "insert thread %s for %s/%s", thread.ID, msg.Owner, msg.Remote)
 		}
@@ -79,9 +80,9 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	}
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, msg.ID.String(), thread.ID.String(), msg.Owner.String(), msg.Remote.String(),
+		INSERT INTO messages (id, thread_id, owner, network, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, msg.ID.String(), thread.ID.String(), msg.Owner.String(), string(msg.Network), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
 		string(msg.Status), msg.ProviderRef, string(msg.FailureKind), msg.FailureDetail,
 		msg.CreatedAt.Unix()); err != nil {
@@ -130,7 +131,7 @@ func (s *Messages) MessageByProviderRef(ctx context.Context, ref string) (domain
 		return domain.Message{}, ErrNotFound
 	}
 	row := s.db.QueryRowContext(ctx, `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
+		SELECT id, thread_id, owner, network, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages WHERE provider_ref = ? AND direction = ?
 	`, ref, string(domain.DirectionOutbound))
 	msg, err := scanMessage(row)
@@ -228,7 +229,7 @@ func (s *Messages) CountArchived(ctx context.Context, owner domain.Extension) (i
 // join and the attachment preview EXISTS are shared by every variant.
 func threadSummaryQuery(archivedFilter string) string {
 	return `
-		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
+		SELECT t.id, t.owner, t.network, t.remote, t.last_activity_at, t.unread,
 		       t.pinned, t.archived, t.muted,
 		       m.body, m.direction, m.channel,
 		       EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)
@@ -250,7 +251,7 @@ func threadSummaryQuery(archivedFilter string) string {
 func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, needle string) ([]ThreadSummary, error) {
 	pattern := "%" + likeEscape(needle) + "%"
 	return listRows(ctx, s.db, "search threads", `
-		SELECT t.id, t.owner, t.remote, t.last_activity_at, t.unread,
+		SELECT t.id, t.owner, t.network, t.remote, t.last_activity_at, t.unread,
 		       t.pinned, t.archived, t.muted,
 		       m.body, m.direction, m.channel,
 		       EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)
@@ -275,14 +276,14 @@ func likeEscape(needle string) string {
 
 func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 	var (
-		id, owner, remote         string
-		lastActivity              int64
-		unread                    int
-		pinned, archived, muted   int
-		lastAttachment            int
-		lastBody, lastDir, lastCh sql.NullString
+		id, owner, network, remote string
+		lastActivity               int64
+		unread                     int
+		pinned, archived, muted    int
+		lastAttachment             int
+		lastBody, lastDir, lastCh  sql.NullString
 	)
-	if err := row.Scan(&id, &owner, &remote, &lastActivity, &unread,
+	if err := row.Scan(&id, &owner, &network, &remote, &lastActivity, &unread,
 		&pinned, &archived, &muted, &lastBody, &lastDir, &lastCh, &lastAttachment); err != nil {
 		return ThreadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row") //nolint:erraudit // context_loss FP: lastDir is an OUT param, garbage exactly when the scan failed — no honest context to include
 	}
@@ -291,7 +292,8 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 		Thread: domain.Thread{
 			ID:             domain.MustThreadID(id),
 			Owner:          domain.MustParseExtension(owner),
-			Remote:         domain.MustParsePhone(remote),
+			Network:        domain.MustNetwork(network),
+			Remote:         domain.MustParseAddress(domain.MustNetwork(network), remote),
 			LastActivityAt: time.Unix(lastActivity, 0),
 			Unread:         unread,
 			Pinned:         pinned == 1,
@@ -314,7 +316,7 @@ func (s *Messages) ListMessages(
 	ctx context.Context, owner domain.Extension, threadID domain.ThreadID, limit int,
 ) ([]domain.Message, error) {
 	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
+		SELECT id, thread_id, owner, network, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC
@@ -337,12 +339,12 @@ func (s *Messages) ListMessages(
 
 func scanMessage(row rowScanner) (domain.Message, error) {
 	var (
-		id, threadID, owner, remote, direction, channel string
-		body, status, providerRef                       string
-		failureKind, failureDetail                      string
-		createdAt                                       int64
+		id, threadID, owner, network, remote, direction, channel string
+		body, status, providerRef                                string
+		failureKind, failureDetail                               string
+		createdAt                                                int64
 	)
-	if err := row.Scan(&id, &threadID, &owner, &remote, &direction, &channel,
+	if err := row.Scan(&id, &threadID, &owner, &network, &remote, &direction, &channel,
 		&body, &status, &providerRef, &failureKind, &failureDetail, &createdAt); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_scan", "scan message %s of thread %s", id, threadID)
 	}
@@ -350,7 +352,8 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 		ID:            domain.MustMessageID(id),
 		ThreadID:      domain.MustThreadID(threadID),
 		Owner:         domain.MustParseExtension(owner),
-		Remote:        domain.MustParsePhone(remote),
+		Network:       domain.MustNetwork(network),
+		Remote:        domain.MustParseAddress(domain.MustNetwork(network), remote),
 		Direction:     domain.MustDirection(direction),
 		Channel:       domain.MustChannel(channel),
 		Body:          body,
@@ -416,15 +419,16 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 	return nil
 }
 
-// FindThread returns the owner's thread for a remote number, creating it
-// (persisted) when absent. Callers use it to resolve where a message goes.
+// FindThread returns the owner's thread for a remote address on its
+// network, creating it (persisted) when absent. Callers use it to
+// resolve where a message goes.
 func (s *Messages) FindThread(
-	ctx context.Context, owner domain.Extension, remote domain.Phone, now time.Time,
+	ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time,
 ) (domain.ThreadID, error) {
 	var id string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id FROM threads WHERE owner = ? AND remote = ?
-	`, owner.String(), remote.String()).Scan(&id)
+		SELECT id FROM threads WHERE owner = ? AND network = ? AND remote = ?
+	`, owner.String(), string(remote.Network()), remote.String()).Scan(&id)
 	if err == nil {
 		return domain.MustThreadID(id), nil
 	}
@@ -434,18 +438,18 @@ func (s *Messages) FindThread(
 
 	newID := domain.GenerateThreadID()
 	if _, err := s.db.ExecContext(ctx, `
-		INSERT INTO threads (id, owner, remote, last_activity_at, unread)
-		VALUES (?, ?, ?, ?, 0)
-		ON CONFLICT(owner, remote) DO UPDATE SET last_activity_at = last_activity_at
-	`, newID.String(), owner.String(), remote.String(), now.Unix()); err != nil {
+		INSERT INTO threads (id, owner, network, remote, last_activity_at, unread)
+		VALUES (?, ?, ?, ?, ?, 0)
+		ON CONFLICT(owner, network, remote) DO UPDATE SET last_activity_at = last_activity_at
+	`, newID.String(), owner.String(), string(remote.Network()), remote.String(), now.Unix()); err != nil {
 		return domain.ThreadID{}, errorfamily.WrapInfrastructuref(err, "store.thread_insert", "insert thread %s", newID)
 	}
 
 	// The ON CONFLICT above is a no-op update so a concurrent insert cannot
 	// fail the call; re-read to return the winner's id.
 	if err := s.db.QueryRowContext(ctx, `
-		SELECT id FROM threads WHERE owner = ? AND remote = ?
-	`, owner.String(), remote.String()).Scan(&id); err != nil {
+		SELECT id FROM threads WHERE owner = ? AND network = ? AND remote = ?
+	`, owner.String(), string(remote.Network()), remote.String()).Scan(&id); err != nil {
 		return domain.ThreadID{}, errorfamily.WrapInfrastructuref(err, "store.thread_reread", "re-read thread for %s/%s", owner, remote)
 	}
 
@@ -457,15 +461,15 @@ func (s *Messages) GetThread(
 	ctx context.Context, owner domain.Extension, id domain.ThreadID,
 ) (domain.Thread, error) {
 	var (
-		ownerStr, remoteStr     string
-		lastActivity            int64
-		unread                  int
-		pinned, archived, muted int
+		ownerStr, networkStr, remoteStr string
+		lastActivity                    int64
+		unread                          int
+		pinned, archived, muted         int
 	)
 	err := s.db.QueryRowContext(ctx, `
-		SELECT owner, remote, last_activity_at, unread, pinned, archived, muted
+		SELECT owner, network, remote, last_activity_at, unread, pinned, archived, muted
 		FROM threads WHERE id = ? AND owner = ?
-	`, id.String(), owner.String()).Scan(&ownerStr, &remoteStr, &lastActivity, &unread, &pinned, &archived, &muted)
+	`, id.String(), owner.String()).Scan(&ownerStr, &networkStr, &remoteStr, &lastActivity, &unread, &pinned, &archived, &muted)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Thread{}, ErrNotFound
 	}
@@ -475,7 +479,8 @@ func (s *Messages) GetThread(
 	return domain.Thread{
 		ID:             id,
 		Owner:          domain.MustParseExtension(ownerStr),
-		Remote:         domain.MustParsePhone(remoteStr),
+		Network:        domain.MustNetwork(networkStr),
+		Remote:         domain.MustParseAddress(domain.MustNetwork(networkStr), remoteStr),
 		LastActivityAt: time.Unix(lastActivity, 0),
 		Unread:         unread,
 		Pinned:         pinned == 1,
@@ -536,7 +541,7 @@ func (s *Messages) ListMessagesPage(
 		page = 0
 	}
 	msgs, err := listRows(ctx, s.db, fmt.Sprintf("list messages of thread %s", threadID), `
-		SELECT id, thread_id, owner, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
+		SELECT id, thread_id, owner, network, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at
 		FROM messages
 		WHERE owner = ? AND thread_id = ?
 		ORDER BY created_at DESC, rowid DESC

@@ -40,14 +40,19 @@ func (e *ErrInvalidSend) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// Service wires the message store, blob store, and outbound gateway.
+// Service wires the message store, blob store, and the per-network
+// outbound senders.
 type Service struct {
 	messages   *store.Messages
 	blobs      *blob.Store
-	gateway    gateway.MessageGateway
-	onChange   domain.ChangeFunc
-	clock      func() time.Time
-	identities map[string]string
+	// senders routes by the destination address's network: the
+	// telephony gateway under sms (registered by New), chat-network
+	// clients via RegisterSender. A network with no sender is a
+	// Rejection at Send — never a silent drop.
+	senders     map[domain.Network]gateway.MessageGateway
+	onChange    domain.ChangeFunc
+	clock       func() time.Time
+	identities  map[string]string
 }
 
 // selfSendDetail is the local refusal text for a send addressed to the
@@ -55,27 +60,48 @@ type Service struct {
 // fast path. English like every service reason (operator-greppable).
 const selfSendDetail = "messages cannot be sent to your own number"
 
-// New builds the messaging service. onChange may be nil. identities maps
-// an extension to its presented DID (config identities); a send to the
-// owner's own DID is refused locally before the gateway roundtrip (nil or
-// missing entry = guard off).
+// New builds the messaging service with the telephony gateway serving
+// the sms lane. onChange may be nil. identities maps an extension to
+// its presented DID (config identities); a send to the owner's own
+// DID is refused locally before the gateway roundtrip (nil or missing
+// entry = guard off).
 func New(
 	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[string]string,
 ) *Service {
 	return &Service{
 		messages:   messages,
 		blobs:      blobs,
-		gateway:    gw,
+		senders:    map[domain.Network]gateway.MessageGateway{domain.NetworkSMS: gw},
 		onChange:   onChange,
 		clock:      time.Now,
 		identities: identities,
 	}
 }
 
+// RegisterSender adds the outbound sender for one chat network. It
+// refuses the sms lane (the telephony gateway owns it — a second
+// registration would be a wiring defect) and double registrations
+// (same defect class). The composition root is the only caller, behind
+// the network's config gate.
+func (s *Service) RegisterSender(network domain.Network, gw gateway.MessageGateway) error {
+	if network == domain.NetworkSMS {
+		return errorfamily.Newf(errorfamily.Rejection, "messaging.sender_register", "the sms lane is owned by the telephony gateway")
+	}
+	if _, ok := s.senders[network]; ok {
+		return errorfamily.Newf(errorfamily.Rejection, "messaging.sender_register", "network %q already has a sender", network)
+	}
+	parsed, err := domain.ParseNetwork(string(network))
+	if err != nil {
+		return err
+	}
+	s.senders[parsed] = gw
+	return nil
+}
+
 // Send validates and delivers one message. It returns the persisted message
 // (already carrying its final status) and the thread it belongs to.
 func (s *Service) Send(
-	ctx context.Context, owner domain.Extension, to domain.Phone, body string, uploads []domain.AttachmentContent,
+	ctx context.Context, owner domain.Extension, to domain.Address, body string, uploads []domain.AttachmentContent,
 ) (domain.Message, error) {
 	body = strings.TrimSpace(body)
 	if body == "" && len(uploads) == 0 {
@@ -92,6 +118,13 @@ func (s *Service) Send(
 			return domain.Message{}, &ErrInvalidSend{
 				Reason: fmt.Sprintf("attachment %s larger than %d MiB", upload.Name, MaxAttachmentSize>>20),
 			}
+		}
+	}
+
+	sender, ok := s.senders[to.Network()]
+	if !ok {
+		return domain.Message{}, &ErrInvalidSend{
+			Reason: fmt.Sprintf("no sender configured for network %q", to.Network()),
 		}
 	}
 
@@ -130,12 +163,14 @@ func (s *Service) Send(
 
 	// Self-send fast path (train C): refuse locally instead of burning a
 	// provider roundtrip the provider would refuse anyway; the failed row
-	// below is the evidence-preserving half of the design.
+	// below is the evidence-preserving half of the design. Telephony
+	// only — a chat-network address that matches the owner's DID is a
+	// coincidence of identities, not this lane's verdict.
 	var receipt gateway.Receipt
-	if rejection := gateway.SelfSendRejection(s.identities, owner, to, selfSendDetail); rejection != nil {
+	if rejection := s.selfSendRejection(owner, to); rejection != nil {
 		err = rejection
 	} else {
-		receipt, err = s.gateway.SendMessage(ctx, outbound)
+		receipt, err = sender.SendMessage(ctx, outbound)
 	}
 	switch {
 	case err != nil:
@@ -300,6 +335,20 @@ func (s *Service) DeliveryReceipt(
 	msg = msg.WithDelivery(next)
 	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: msg.Owner, Thread: msg.ThreadID})
 	return msg, nil
+}
+
+// selfSendRejection applies the telephony self-send guard to an sms
+// destination (see gateway.SelfSendRejection); every other network
+// returns nil by construction.
+func (s *Service) selfSendRejection(owner domain.Extension, to domain.Address) *gateway.ErrProviderRejected {
+	if to.Network() != domain.NetworkSMS {
+		return nil
+	}
+	phone, err := domain.ParsePhone(to.String())
+	if err != nil {
+		return nil // an unsanitizable value cannot equal the parsed DID below
+	}
+	return gateway.SelfSendRejection(s.identities, owner, phone, selfSendDetail)
 }
 
 // failureKindOf maps a send error to the retry vocabulary: a domain

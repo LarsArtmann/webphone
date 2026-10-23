@@ -380,16 +380,18 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, out any) error {
 
 // parseOwnerFrom validates the webhook's owner extension and from number;
 // on failure it has already written the error response.
-func parseOwnerFrom(w http.ResponseWriter, ownerRaw, fromRaw string) (domain.Extension, domain.Phone, bool) {
+func parseOwnerFrom(w http.ResponseWriter, ownerRaw, fromRaw string) (domain.Extension, domain.Address, bool) {
 	owner, err := domain.ParseExtension(ownerRaw)
 	if err != nil {
 		http.Error(w, "invalid owner extension", http.StatusBadRequest)
-		return domain.Extension{}, domain.Phone{}, false
+		return domain.Extension{}, domain.Address{}, false
 	}
-	from, err := domain.ParsePhone(fromRaw)
+	// The webhook lane is telephony-only by contract (the Telnyx
+	// bridge): the from value is a phone number on the sms network.
+	from, err := domain.ParseAddress(domain.NetworkSMS, fromRaw)
 	if err != nil {
 		http.Error(w, "invalid from number", http.StatusBadRequest)
-		return domain.Extension{}, domain.Phone{}, false
+		return domain.Extension{}, domain.Address{}, false
 	}
 	return owner, from, true
 }
