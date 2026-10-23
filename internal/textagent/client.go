@@ -78,11 +78,26 @@ type Suppressed struct {
 
 // Reviews is the review-list payload: pending drafts, frozen
 // conversations, opt-outs, and the autopilot mode for the header line.
+// ModeSource tells the panel whether the mode is the configured default
+// ("config") or a runtime override pinned from this UI ("runtime");
+// DefaultMode is what a reset returns to.
 type Reviews struct {
-	Drafts     []Draft      `json:"drafts"`
-	Frozen     []Frozen     `json:"frozen"`
-	Suppressed []Suppressed `json:"suppressed"`
-	Mode       string       `json:"mode"`
+	Drafts      []Draft      `json:"drafts"`
+	Frozen      []Frozen     `json:"frozen"`
+	Suppressed  []Suppressed `json:"suppressed"`
+	Mode        string       `json:"mode"`
+	ModeSource  string       `json:"mode_source"`
+	DefaultMode string       `json:"default_mode"`
+	Modes       []string     `json:"modes"`
+}
+
+// ModeState is the answer to a mode change: the effective mode, where it
+// came from, and the configured default a reset restores.
+type ModeState struct {
+	Mode        string   `json:"mode"`
+	ModeSource  string   `json:"mode_source"`
+	DefaultMode string   `json:"default_mode"`
+	Modes       []string `json:"modes"`
 }
 
 // Error carries the review API's honest failure: the HTTP status and
@@ -211,4 +226,26 @@ func (c *Client) DraftFor(ctx context.Context, to, hint string) (*Draft, error) 
 		return nil, err
 	}
 	return &draft, nil
+}
+
+// SetMode pins a runtime autopilot mode ("off", "drafts", "after-hours",
+// "full"); the agent persists it until ResetMode. The safety gates
+// (suppression, VIP, kill switch, confidence) are unchanged by a flip —
+// the mode only decides whether a confident draft may send itself.
+func (c *Client) SetMode(ctx context.Context, mode string) (*ModeState, error) {
+	var state ModeState
+	if err := c.do(ctx, http.MethodPost, "/mode", map[string]string{"mode": mode}, &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
+
+// ResetMode drops the runtime override and returns to the mode the
+// deployment configured.
+func (c *Client) ResetMode(ctx context.Context) (*ModeState, error) {
+	var state ModeState
+	if err := c.do(ctx, http.MethodPost, "/mode", map[string]bool{"reset": true}, &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
 }

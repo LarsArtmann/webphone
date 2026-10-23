@@ -11,12 +11,20 @@ import (
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
-// textAgentPanelTimeout bounds every review-API call a page render or
+// textAgentPanelTimeout bounds the review-API READS a page render or
 // panel action makes. The agent is a loopback neighbor, so a healthy
 // exchange is milliseconds; an unreachable one must degrade the panel
 // to its honest error state instead of stalling the Messages tab for
 // the client's full 60 s transport timeout.
 const textAgentPanelTimeout = 5 * time.Second
+
+// textAgentDraftTimeout bounds an ON-DEMAND draft, which is a
+// synchronous LLM round trip inside the agent (its Gemini client runs a
+// 60 s window, and a standby model adds a short attempt on top). The
+// read-path 5 s ceiling above would abort nearly every real draft — the
+// 2026-10-23 "AI draft is broken" class — so the compose action gets its
+// own, generation-sized budget.
+const textAgentDraftTimeout = 95 * time.Second
 
 // textAgentOn is the one gate every textagent surface reads (same rule
 // as asrOn): a nil client means the seam is off — the routes answer the
@@ -162,7 +170,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), textAgentDraftTimeout)
 	defer cancel()
 	draft, err := h.deps.TextAgent.DraftFor(ctx, to.String(), r.FormValue("body"))
 	if err != nil {
