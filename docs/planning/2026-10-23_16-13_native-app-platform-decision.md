@@ -4,8 +4,14 @@
 - **Owner demand (2026-10-23):** native Linux and Android 16 apps; **calls are the
   product** ("best in class"); ringing while the app is CLOSED is a HARD
   requirement; push transport = **BOTH** ntfy (self-hosted) and FCM.
-- **Status:** DECISION SUPPORT — phases P0 (this train) shipped; P1/P2 await
-  owner go.
+- **Status:** DECIDED + SHIPPING — owner go on P1+P2 (2026-10-23,
+  second session): P0 (PWA-LITE) and P2 (the push seam:
+  `internal/push`, ntfy + FCM senders, `/api/push-devices` registry,
+  `/hooks/ring` lane) SHIPPED; P1 scaffolded the same day as the
+  separate repo `~/projects/webphone-android` (v0.1, architecture
+  complete, untested against live FreeSWITCH until the first device
+  train — honesty markers in its README). The stack's FS dialplan must
+  POST `/hooks/ring` on inbound calls (consuming-stack work).
 - **Unblocks the parked verdict:** this demand signal is the one the
   2026-09-22 PWA spike parked the manifest behind (`../archived/2026-09-22_17-05_pwa-spike-verdict.md`).
   That verdict's core ruling stands unchanged: **NO service worker** (stale
