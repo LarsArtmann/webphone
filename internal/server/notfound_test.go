@@ -1,0 +1,103 @@
+package server
+
+import (
+	"net/http"
+	"strings"
+	"testing"
+)
+
+// The styled 404 is the app's face for every wrong address: an unknown
+// page, an absent optional surface (/health while the dashboard is off,
+// with and without the trailing slash), and a missing asset the browser
+// navigated to. The stdlib default ("404 page not found", 19 bytes of
+// text/plain) is exactly what these pins keep off the HTML surfaces.
+func TestUnknownPathsAnswerTheStyledNotFoundPage(t *testing.T) {
+	server := newTestServer(t)
+
+	for _, path := range []string{"/nope", "/health", "/health/", "/health/livez"} {
+		resp, err := http.Get(server.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body := readAll(t, resp)
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("%s: status %d, want 404", path, resp.StatusCode)
+		}
+		if got := resp.Header.Get("Content-Type"); !strings.HasPrefix(got, "text/html") {
+			t.Errorf("%s: content-type %q, want text/html (bare stdlib text is the regression this pins)", path, got)
+		}
+		page := string(body)
+		if !strings.Contains(page, "404 — page not found") {
+			t.Errorf("%s: the page must name the 404, got %.200s", path, page)
+		}
+		if !strings.Contains(page, path) {
+			t.Errorf("%s: the requested path must be echoed back, got %.200s", path, page)
+		}
+		if !strings.Contains(page, "Back to Messages") {
+			t.Errorf("%s: the way back is missing, got %.200s", path, page)
+		}
+	}
+}
+
+// A 404 has no retry story: refreshing the same wrong address 404s again.
+// The styled page therefore carries the way home instead of the generic
+// reload button.
+func TestNotFoundPageOffersNoReloadButton(t *testing.T) {
+	server := newTestServer(t)
+
+	resp, err := http.Get(server.URL + "/nope")
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(readAll(t, resp))
+	_ = resp.Body.Close()
+	if strings.Contains(page, "data-reload") {
+		t.Error("the 404 page must not offer Reload: it would reload the same wrong address")
+	}
+	if !strings.Contains(page, `href="/"`) {
+		t.Error("the 404 page must link back to the app root")
+	}
+}
+
+// Assets split by intent: a browser navigation (Accept: text/html) gets
+// the app's own page, while a programmatic fetch gets the terse answer.
+func TestMissingAssetAnswersStyledForNavigationsOnly(t *testing.T) {
+	server := newTestServer(t)
+
+	nav, err := http.NewRequest(http.MethodGet, server.URL+"/assets/nope.js", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nav.Header.Set("Accept", "text/html,application/xhtml+xml")
+	navResp, err := http.DefaultClient.Do(nav)
+	if err != nil {
+		t.Fatal(err)
+	}
+	navBody := string(readAll(t, navResp))
+	_ = navResp.Body.Close()
+	if navResp.StatusCode != http.StatusNotFound {
+		t.Fatalf("navigation: status %d, want 404", navResp.StatusCode)
+	}
+	if !strings.Contains(navBody, "404 — page not found") {
+		t.Errorf("navigation to a missing asset must render the app page, got %.200s", navBody)
+	}
+
+	fetch, err := http.NewRequest(http.MethodGet, server.URL+"/assets/nope.js", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fetch.Header.Set("Accept", "application/javascript")
+	fetchResp, err := http.DefaultClient.Do(fetch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fetchBody := string(readAll(t, fetchResp))
+	_ = fetchResp.Body.Close()
+	if fetchResp.StatusCode != http.StatusNotFound {
+		t.Fatalf("fetch: status %d, want 404", fetchResp.StatusCode)
+	}
+	if strings.Contains(fetchBody, "404 — page not found") {
+		t.Error("a programmatic fetch must not receive a whole HTML page")
+	}
+}

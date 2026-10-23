@@ -522,6 +522,33 @@ h3 {
   margin: 0;
 }
 
+/* Styled 404 (NotFoundPanel): the path the request asked for, echoed back
+ * verbatim so a mistyped deep link is obvious, plus the way home. The path
+ * can be arbitrarily long and has no word breaks, hence anywhere-wrap. */
+.wp-notfound-path {
+  margin: 14px 0 0;
+}
+
+.wp-notfound-path code {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace;
+  font-size: 0.9em;
+}
+
+.wp-notfound-back {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Self-send caution (ThreadView): the thread's remote number is the
  * extension's own DID — providers refuse self-addressed sends, so the
  * view warns at intent time. Quiet single warn-colored line, the
