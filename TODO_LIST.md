@@ -10,6 +10,31 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### go-appkit audit follow-ups (2026-10-23 — audit done, two candidates open)
+
+go-appkit itself is DECLINED per module (report:
+[docs/research/2026-10-23_go-appkit-deep-dive.html](docs/research/2026-10-23_go-appkit-deep-dive.html),
+score 77/100, 7 of 11 applicable capabilities already fully leveraged). The two
+surfaced candidates stay here, unscheduled:
+
+- **Flight recorder** (from `go-flightrecorder`, already an indirect dep): on-demand
+  `runtime/trace` capture behind a default-off seam, so a wedged SIP reconnect or a
+  lock convoy is diagnosable in production instead of by reproduction. **Priority:**
+  Low · **Effort:** S.
+- **Latency metrics**: `/metrics` carries aggregates-only counters; request-duration
+  histograms would answer "is the PBX slow or the browser" without touching the
+  per-extension privacy line. **Priority:** Low · **Effort:** S.
+
+### /health operator surface (2026-10-23 — stack option shipped, deploy pending)
+
+`services.telephony.webphone.dashboard` now mounts the go-health dashboard at
+`/health` with the nginx location UNBUFFERED and fenced (operator SSO in
+`forwardAuth` mode, loopback-only otherwise); pbx-artmann sets it. Shipping needs
+the tri-repo order: push the stack, then re-pin it in pbx-artmann, then verify
+`https://pbx.artmann.tech/health` answers 200 after the SSO sign-in. **Priority:**
+High · **Effort:** S.
+
+
 ### Catalog representation decision (2026-10-19 — record, no work pending)
 
 webphone is INVENTORY-ONLY in catalog.home.lan (SystemNix `catalog-platform`
