@@ -34,6 +34,20 @@ func FlagPresent(ctx context.Context, db *sql.DB, key string) (bool, error) {
 	return true, nil
 }
 
+// FlagValue reads one app_flags row's value (false = absent). The
+// matrix sync cursor rides this beside the one-time import markers.
+func FlagValue(ctx context.Context, db *sql.DB, key string) (string, bool, error) {
+	var value string
+	err := db.QueryRowContext(ctx, `SELECT value FROM app_flags WHERE key = ?`, key).Scan(&value)
+	if err != nil {
+		if err == sql.ErrNoRows { //nolint:erraudit // absence is an answer, not an error path
+			return "", false, nil
+		}
+		return "", false, errorfamily.WrapInfrastructuref(err, "store.flag_read", "read app flag %s", key)
+	}
+	return value, true, nil
+}
+
 // SetFlag stamps an app_flags row (insert-or-replace).
 func SetFlag(ctx context.Context, db *sql.DB, key, value string) error { //nolint:branching-flow // key/value app-flag pair; one call site, literal args visible together (legacy import path, retiring with the window)
 	if _, err := db.ExecContext(ctx, `INSERT INTO app_flags (key, value) VALUES (?, ?)

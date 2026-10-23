@@ -226,7 +226,11 @@ func (c *Client) Upload(ctx context.Context, name, mimeType string, data []byte)
 // Download fetches one mxc:// media item and reports its bytes and
 // honest Content-Type.
 func (c *Client) Download(ctx context.Context, mxc string) ([]byte, string, error) {
-	server, mediaID, ok := strings.Cut(strings.TrimPrefix(mxc, "mxc://"), "/")
+	rest, ok := strings.CutPrefix(mxc, "mxc://")
+	if !ok {
+		return nil, "", errorfamily.Newf(errorfamily.Rejection, "matrix.mxc", "matrix: %q is not an mxc:// URI", mxc)
+	}
+	server, mediaID, ok := strings.Cut(rest, "/")
 	if !ok || server == "" || mediaID == "" {
 		return nil, "", errorfamily.Newf(errorfamily.Rejection, "matrix.mxc", "matrix: %q is not an mxc:// URI", mxc)
 	}
