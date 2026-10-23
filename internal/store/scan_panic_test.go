@@ -26,7 +26,7 @@ func (r fakeRow) Scan(dest ...any) error {
 // wellFormedMessageRow mirrors one stored outbound SMS row.
 func wellFormedMessageRow() []any {
 	return []any{
-		"AAAAAAAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBBBBBBB", "1001", "+441632960961",
+		"AAAAAAAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBBBBBBB", "1001", "sms", "+441632960961",
 		"out", "sms", "hello", "sent", "ref-1", "", "", int64(1760000000),
 	}
 }
@@ -37,7 +37,7 @@ func wellFormedMessageRow() []any {
 // rendering a lying state to a user (the 2026-10-17 data-model batch,
 // F37).
 func TestScanMessageRejectsCorruptEnumRows(t *testing.T) {
-	corrupt := map[string]int{"direction": 4, "channel": 5, "status": 7}
+	corrupt := map[string]int{"network": 3, "direction": 5, "channel": 6, "status": 8}
 	for column, idx := range corrupt {
 		t.Run(column, func(t *testing.T) {
 			row := wellFormedMessageRow()
@@ -63,8 +63,8 @@ func TestScanMessageAcceptsEveryStoredEnumValue(t *testing.T) {
 	for _, direction := range []string{"in", "out"} {
 		for _, status := range []string{"", "queued", "sent", "delivered", "failed"} {
 			row := wellFormedMessageRow()
-			row[4] = direction
-			row[7] = status
+			row[5] = direction
+			row[8] = status
 			msg, err := scanMessage(fakeRow(row))
 			if err != nil {
 				t.Fatalf("scan %s/%s: %v", direction, status, err)

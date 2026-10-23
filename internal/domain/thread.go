@@ -21,7 +21,6 @@ func AppendToThread(thread Thread, msg Message) Thread {
 	if thread.ID == (ThreadID{}) {
 		thread.ID = msg.ThreadID
 		thread.Owner = msg.Owner
-		thread.Network = msg.Network
 		thread.Remote = msg.Remote
 	}
 	thread.LastActivityAt = msg.CreatedAt

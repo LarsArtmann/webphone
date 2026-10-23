@@ -247,6 +247,7 @@ a deliberate code change, regenerate:
 | gateway.receipt                              | Transient                 | internal/gateway/webhook.go        |
 | gateway.request                              | Infrastructure            | internal/gateway/webhook.go        |
 | gateway.transport                            | Transient                 | internal/gateway/webhook.go        |
+| messaging.sender_register                    | Rejection                 | internal/messaging/service.go      |
 | messaging.verdict                            | Rejection                 | internal/messaging/service.go      |
 | pbx.decode                                   | Transient                 | internal/pbx/client.go             |
 | pbx.encode                                   | Infrastructure            | internal/pbx/client.go             |

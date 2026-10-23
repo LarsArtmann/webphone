@@ -89,16 +89,14 @@ func ParseOutboundStatus(raw string) (OutboundStatus, error) {
 func MustOutboundStatus(raw string) OutboundStatus { return must(ParseOutboundStatus(raw)) }
 
 // Thread is one conversation between an extension and a remote
-// address, keyed by (Owner, Network, Remote). Rows are created on
-// first message and updated on every append — AppendToThread is that
-// rule's one home. The network is immutable at birth: a conversation
-// never migrates networks, every appended message carries its
-// thread's network (AppendToThread adopts it on creation, so the
-// pair cannot disagree).
+// address, keyed by (Owner, Remote's network, Remote). Rows are created
+// on first message and updated on every append — AppendToThread is
+// that rule's one home. The network is immutable at birth (a
+// conversation never migrates networks) and lives INSIDE the Remote
+// address: there is no separate Network field to disagree with it.
 type Thread struct {
 	ID             ThreadID
 	Owner          Extension
-	Network        Network
 	Remote         Address
 	LastActivityAt time.Time
 	Unread         int //nolint:branching-flow // display counter, not identity
@@ -138,12 +136,12 @@ type Attachment struct {
 }
 
 // Message is a single message inside a thread (SMS/MMS on telephony,
-// or a chat-network message).
+// or a chat-network message). The network rides inside Remote —
+// no separate field that could disagree with it.
 type Message struct {
 	ID            MessageID
 	ThreadID      ThreadID
 	Owner         Extension
-	Network       Network
 	Remote        Address
 	Direction     Direction
 	Channel       Channel
@@ -176,7 +174,6 @@ func NewOutboundMessage(id MessageID, thread ThreadID, owner Extension, remote A
 		ID:        id,
 		ThreadID:  thread,
 		Owner:     owner,
-		Network:   remote.Network(),
 		Remote:    remote,
 		Direction: DirectionOutbound,
 		Channel:   ChannelOf(attachmentCount),
@@ -195,7 +192,6 @@ func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Ad
 		ID:        id,
 		ThreadID:  thread,
 		Owner:     owner,
-		Network:   remote.Network(),
 		Remote:    remote,
 		Direction: DirectionInbound,
 		Channel:   ChannelOf(attachmentCount),
@@ -212,7 +208,6 @@ func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Ad
 // lifecycle (registry 2026-10-05).
 type InboundMessage struct {
 	Owner       Extension
-	Network     Network
 	From        Address
 	Body        string
 	Attachments []AttachmentContent

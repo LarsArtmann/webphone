@@ -45,13 +45,12 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	)
 	err = tx.QueryRowContext(ctx, `
 		SELECT id, last_activity_at, unread, archived FROM threads WHERE owner = ? AND network = ? AND remote = ?
-	`, msg.Owner.String(), string(msg.Network), msg.Remote.String()).Scan(&rowID, &lastActivity, &unread, &archived)
+	`, msg.Owner.String(), string(msg.Remote.Network()), msg.Remote.String()).Scan(&rowID, &lastActivity, &unread, &archived)
 	switch {
 	case err == nil:
 		existing = domain.Thread{
 			ID:             domain.MustThreadID(rowID),
 			Owner:          msg.Owner,
-			Network:        msg.Network,
 			Remote:         msg.Remote,
 			LastActivityAt: time.Unix(lastActivity, 0),
 			Unread:         unread,
@@ -68,7 +67,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 		if _, err := tx.ExecContext(ctx, `
 			INSERT INTO threads (id, owner, network, remote, last_activity_at, unread, archived)
 			VALUES (?, ?, ?, ?, ?, ?, ?)
-		`, thread.ID.String(), msg.Owner.String(), string(msg.Network), msg.Remote.String(),
+		`, thread.ID.String(), msg.Owner.String(), string(msg.Remote.Network()), msg.Remote.String(),
 			thread.LastActivityAt.Unix(), thread.Unread, boolInt(thread.Archived)); err != nil {
 			return errorfamily.WrapInfrastructuref(err, "store.thread_insert", "insert thread %s for %s/%s", thread.ID, msg.Owner, msg.Remote)
 		}
@@ -82,7 +81,7 @@ func (s *Messages) AppendMessage(ctx context.Context, msg domain.Message) error 
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO messages (id, thread_id, owner, network, remote, direction, channel, body, status, provider_ref, failure_kind, failure_detail, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, msg.ID.String(), thread.ID.String(), msg.Owner.String(), string(msg.Network), msg.Remote.String(),
+	`, msg.ID.String(), thread.ID.String(), msg.Owner.String(), string(msg.Remote.Network()), msg.Remote.String(),
 		string(msg.Direction), string(msg.Channel), msg.Body,
 		string(msg.Status), msg.ProviderRef, string(msg.FailureKind), msg.FailureDetail,
 		msg.CreatedAt.Unix()); err != nil {
@@ -292,7 +291,6 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 		Thread: domain.Thread{
 			ID:             domain.MustThreadID(id),
 			Owner:          domain.MustParseExtension(owner),
-			Network:        domain.MustNetwork(network),
 			Remote:         domain.MustParseAddress(domain.MustNetwork(network), remote),
 			LastActivityAt: time.Unix(lastActivity, 0),
 			Unread:         unread,
@@ -352,7 +350,6 @@ func scanMessage(row rowScanner) (domain.Message, error) {
 		ID:            domain.MustMessageID(id),
 		ThreadID:      domain.MustThreadID(threadID),
 		Owner:         domain.MustParseExtension(owner),
-		Network:       domain.MustNetwork(network),
 		Remote:        domain.MustParseAddress(domain.MustNetwork(network), remote),
 		Direction:     domain.MustDirection(direction),
 		Channel:       domain.MustChannel(channel),
@@ -479,7 +476,6 @@ func (s *Messages) GetThread(
 	return domain.Thread{
 		ID:             id,
 		Owner:          domain.MustParseExtension(ownerStr),
-		Network:        domain.MustNetwork(networkStr),
 		Remote:         domain.MustParseAddress(domain.MustNetwork(networkStr), remoteStr),
 		LastActivityAt: time.Unix(lastActivity, 0),
 		Unread:         unread,
