@@ -30,6 +30,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	_ "modernc.org/sqlite" // registers the "sqlite" driver (the same one the store package registers)
 
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
@@ -63,21 +64,10 @@ type PasskeyRuntime struct {
 	WebAuthn identitymodel.WebAuthnProvider
 }
 
-// MappedUser is one email's resolved mapping.
-type MappedUser struct {
-	Email       string
-	DisplayName string
-	Extensions  []domain.Extension
-}
-
-// SessionExtension is the extension a passkey login binds its session to
-// (the first mapped one — all stores are extension-scoped).
-func (m MappedUser) SessionExtension() domain.Extension {
-	if len(m.Extensions) == 0 {
-		return domain.Extension{}
-	}
-	return m.Extensions[0]
-}
+// MappedUser is one email's resolved mapping. It IS the shared
+// authmap.User (a type alias): passkey and OIDC logins must resolve
+// identities through one implementation, never two.
+type MappedUser = authmap.User
 
 // New opens (creating if needed) <dataDir>/usermgmt.db and wires the
 // usermgmt service: SQL event store + SQL read models + the WebAuthn
