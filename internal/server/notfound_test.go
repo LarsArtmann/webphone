@@ -101,6 +101,7 @@ func TestMissingAssetAnswersStyledForNavigationsOnly(t *testing.T) {
 		t.Error("a programmatic fetch must not receive a whole HTML page")
 	}
 }
+
 // The 404 echoes the requested path. It must not become a cache key: a
 // shared cache would serve one visitor's crafted URL to the next.
 func TestNotFoundPageIsNotCacheable(t *testing.T) {

@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>SUPERB PLAN · SEAM DESIGN</span>
+      <span>2026-10-23</span>
+      <span>webphone</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#research">Research</a>
+          <a href="#seam">The Seam Design</a>
+          <a href="#decisions">Decision Log</a>
+          <a href="#plan">Pareto Plan</a>
+          <a href="#graph">Execution Graph</a>
+          <a href="#risks">Risks &amp; Limits</a>
+          <a href="#done">Definition of Done</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Chat-Networks Train</div>
+          <h1>Signal · Session · Matrix</h1>
+          <p class="hero-subtitle">
+            What it takes to let the Messages tab converse beyond telephony SMS: three protocols
+            researched at the source, one generalized network seam, and a phased, costed execution
+            plan. Matrix and Signal land now; Session lands a verdict, not code.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">GO</div>
+            <div class="stat-label">Matrix — thin stdlib CS-API client, this session</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">GO</div>
+            <div class="stat-label">Signal — signal-cli 0.14.9 JSON-RPC sidecar client, this session</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">NO-GO</div>
+            <div class="stat-label">Session — no Go library, no headless path; triggers documented</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">v5</div>
+            <div class="stat-label">store migration: the thread gains a network axis</div>
+          </div>
+        </div>
+
+        <p>
+          Today every conversation is implicitly telephony: threads key on
+          <code>(owner, remote&nbsp;phone)</code>, the outbound seam is the SMS/MMS gateway, and
+          inbound arrives on Telnyx webhooks. Supporting chat networks means generalizing exactly
+          three things — the <strong>identity</strong> of the far end (a Signal number, a Matrix
+          room, a Session ID are not phone numbers), the <strong>outbound seam</strong> (one sender
+          per network), and the <strong>inbound seam</strong> (push receivers, not just webhooks).
+          Everything else — threading, delivery lifecycle, flags, search, SSE, attachments, UI —
+          already generalizes for free.
+        </p>
+
+        <div class="card card-solution">
+          <strong>The 20% that carries 80%:</strong> a typed
+          <code>domain.Network</code> (sms | signal | session | matrix) plus a typed
+          <code>domain.Address</code> (network-validated remote), threaded through the store,
+          the messaging service, and the views. Once a thread knows its network, every sender is
+          just another <code>gateway.MessageGateway</code> implementation and every receiver just
+          another caller of <code>messaging.Service.Receive</code>.
+        </div>
+
+        <h2 id="research"><span class="num">01</span>Research (verified at source)</h2>
+
+        <h3>Signal — signal-cli is the integration path</h3>
+        <p>
+          <strong>Verified against AsamK/signal-cli v0.14.9 docs + man pages, nixpkgs
+          <code>pkgs/by-name/si/signal-cli</code>.</strong> The daemon
+          (<code>signal-cli daemon --socket</code>) speaks JSON-RPC 2.0 on a unix socket:
+          <code>send</code> accepts <code>{"recipient":["+49…"],"message":"…","attachments":["data:&lt;mime&gt;;filename=…;base64,…"]}</code>
+          and answers with the send <code>timestamp</code> (our correlation ref). Incoming
+          messages are pushed as JSON-RPC <em>notifications</em> with method
+          <code>receive</code>, carrying <code>envelope.source</code>, <code>dataMessage</code>
+          (body, attachments with contentType/filename), and <code>receiptMessage</code>
+          (isDelivery / isRead + acknowledged <code>timestamps</code>) — the full delivery-receipt
+          story maps onto our existing <code>DeliveryReceipt</code> seam. Accounts link via QR
+          (<code>startLink</code>/<code>finishLink</code> over the same socket). Packaged in
+          nixpkgs at 0.14.9 (GPL-3, JVM). Caveats: linked devices must stay &lt;3 months stale;
+          inbound attachments stay in signal-cli’s data dir in v1 (skipped with a WARN, documented).
+        </p>
+
+        <h3>Matrix — plain Client-Server API, no SDK needed</h3>
+        <p>
+          <strong>Verified against spec.matrix.org v1.19.</strong> Sending is one PUT:
+          <code>PUT /_matrix/client/v3/rooms/{roomId}/send/m.room.message/{txnId}</code> with
+          <code>Authorization: Bearer …</code>, body <code>{"msgtype":"m.text","body":"…"}</code>,
+          answering <code>{"event_id":"$…"}</code>; the txn id makes retries idempotent. Receiving
+          is the long-poll <code>GET /sync?since=…&amp;timeout=30000</code>; DMs are identifiable
+          via global <code>m.direct</code> account data; media is
+          <code>POST /_matrix/media/v3/upload</code> → <code>mxc://</code> and the v1 media
+          download endpoint. A long-lived access token minted once by <code>POST /login</code> is
+          the standard bot pattern. Encrypted rooms (<code>m.room.encrypted</code>) are legally
+          skippable by a non-E2EE client — we restrict to plaintext rooms and say so in Settings.
+        </p>
+
+        <h3>Session — researched, and the honest answer is “not yet”</h3>
+        <p>
+          <strong>Verified across oxen-io / session-foundation orgs.</strong> There is no Go
+          library (the only Go repo in the foundation org is a CI config), no official bot API, no
+          headless daemon. The blessed <code>libsession-util</code> (C++, foundation-maintained)
+          covers config/crypto, but swarm polling, onion-request construction, namespace signing
+          and protobuf envelopes live inside the client apps. The realistic options are a
+          single-maintainer community SDK (<code>session.js</code>, Bun, MIT, bus-factor 1,
+          last commit 2026-01) or writing a Session client from scratch. Both fail this repo’s
+          durability bar for a security-sensitive seam.
+        </p>
+
+        <h2 id="seam"><span class="num">02</span>The Seam Design</h2>
+
+        <h3>Data model first: the network axis</h3>
+        <p>
+          Mandatory reflection, in order: <em>What is it in the domain?</em> A
+          <strong>network</strong> is the messaging transport + identity system a conversation
+          rides (telephony SMS, Signal, Matrix…). <em>Lifecycle?</em> Immutable at thread birth —
+          conversations never migrate networks; every message inherits its thread’s network.
+          <em>Invariants?</em> A thread has exactly one network; the remote address validates
+          against that network’s rule; the outbound route is a pure function of the network.
+          <em>Independent axes?</em> Network (transport) is orthogonal to
+          <code>channel</code> (format: sms | mms — that type keeps its meaning untouched) and to
+          the pin/archive/mute flags. <em>Painful later?</em> The unique key — hence migration v5
+          rebuilds <code>UNIQUE(owner, remote)</code> as <code>UNIQUE(owner, network, remote)</code>.
+        </p>
+
+        <pre><code><span class="tok-kw">type</span> <span class="tok-type">Network</span> <span class="tok-type">string</span> <span class="tok-comment">// "sms" | "signal" | "session" | "matrix"</span>
+
+<span class="tok-kw">type</span> <span class="tok-type">Address</span> <span class="tok-kw">struct</span> {
+    network <span class="tok-type">Network</span> <span class="tok-comment">// owns the validation rule</span>
+    value   <span class="tok-type">string</span>  <span class="tok-comment">// E.164-ish | @mxid:host | 05… session id</span>
+}
+
+<span class="tok-fn">ParseAddress</span>(network <span class="tok-type">Network</span>, raw <span class="tok-type">string</span>) (<span class="tok-type">Address</span>, <span class="tok-type">error</span>) <span class="tok-comment">// THE door</span></code></pre>
+
+        <p>
+          <code>domain.Phone</code> survives untouched for the lanes where a phone really is the
+          concept: fax, contacts, dial affordances, CRM enrichment, history. Only the
+          conversations model generalizes. <code>ParseAddress(sms, …)</code> reuses the exact
+          <code>sanitizeDialable</code> rule — zero behavior change for existing rows.
+        </p>
+
+        <h3>Outbound: a sender per network</h3>
+        <p>
+          <code>gateway.MessageGateway</code> already is the right interface;
+          <code>OutboundMessage.To</code> generalizes from <code>Phone</code> to
+          <code>Address</code>. The messaging service keeps a
+          <code>map[Network]MessageGateway</code>: the telephony gateway registers under
+          <code>sms</code> (exactly as today — <code>New()</code> signatures stay compatible),
+          matrix/signal clients register behind their config gates. An unregistered network is a
+          Rejection with an honest operator-facing reason, never a silent drop.
+        </p>
+
+        <h3>Inbound: receivers reuse the webhook pipeline</h3>
+        <p>
+          Matrix’s <code>/sync</code> loop and signal-cli’s socket reader are background
+          consumers that call the very same <code>messaging.Service.Receive</code> the webhook
+          lane calls — persistence, <code>AppendToThread</code> auto-unarchive, unread counting
+          and SSE notification are inherited wholesale. Matrix persists its
+          <code>next_batch</code> cursor in the existing <code>app_flags</code> table (one home,
+          no new machinery). Both receivers reconnect with backoff; both are lifecycle-bound to
+          the composition root’s context.
+        </p>
+
+        <h3>UI contract</h3>
+        <p>
+          Thread rows and heads grow a network badge (English label, no new pinned DOM ids);
+          <code>data-dial</code> renders only for SMS threads; the reply composer posts to the
+          thread it already targets — the server derives the address from the thread row, never
+          from client-supplied strings; new-conversation compose stays SMS-only in v1 (chat
+          threads are born from inbound). The event log stays English; i18n keys land in both
+          maps per house rule.
+        </p>
+
+        <h2 id="decisions"><span class="num">03</span>Decision Log</h2>
+
+        <div class="card">
+          <strong>D1 — Matrix: hand-rolled thin client, mautrix-go REJECTED.</strong>
+          The repo already hand-rolls its HTTP seams (<code>pbx.Client</code>,
+          <code>crm.Client</code>, <code>asr.Client</code>). mautrix-go drags in the full E2EE
+          state machinery and a large dependency tree for capability we deliberately do not want
+          (plaintext rooms only); the CS-API surface we need is three endpoints. VendorHash cost,
+          attack surface, and the 20-year-durability posture all favor ~300 stdlib lines we own.
+        </div>
+        <div class="card">
+          <strong>D2 — Signal: raw signal-cli unix socket, signal-cli-rest-api REJECTED.</strong>
+          The REST wrapper is an extra JVM container hop whose receive endpoints have no
+          authentication, and its webhook mode is a lossy re-encoding of the same JSON-RPC
+          notifications we can read directly. The unix socket is local-only by filesystem
+          permissions — the same trust boundary as the loopback gateway.
+        </div>
+        <div class="card card-problem">
+          <strong>D3 — Session: NO-GO now. Reopen triggers:</strong>
+          (a) an official or foundation-blessed headless daemon/bot API appears;
+          (b) a maintained Go implementation of the Session protocol emerges;
+          (c) the owner accepts a <code>session.js</code> sidecar (Bun, single-maintainer, MIT)
+          knowing it is research-grade — then it becomes a stack-side service question first.
+        </div>
+        <div class="card">
+          <strong>D4 — Scope fences for v1.</strong> Matrix: DM rooms, plaintext only, media both
+          ways; group rooms and read-receipts follow. Signal: 1:1 DMs, text outbound + data-URI
+          attachments, delivery receipts wired; groups and inbound attachments follow (they need
+          signal-cli-side plumbing). Both: OFF by default, byte-identical product at zero config —
+          the passkey/ASR/CRM gate pattern.
+        </div>
+
+        <h2 id="plan"><span class="num">04</span>Pareto Plan</h2>
+
+        <h3>Tier 1% → 51%: Train F — the network axis (foundation)</h3>
+        <table>
+          <thead><tr><th>Task</th><th>Effort</th><th>Impact</th></tr></thead>
+          <tbody>
+            <tr><td>F1 <code>domain.Network</code> + <code>domain.Address</code> + per-network validation + tests</td><td>60m</td><td>everything blocks on this</td></tr>
+            <tr><td>F2 Generalize Thread/Message/Inbound/Outbound types (Address) + <code>AppendToThread</code> adopts network</td><td>60m</td><td>compile-time honesty</td></tr>
+            <tr><td>F3 Store migration v5 (threads.network + rebuilt unique key, messages.network) + scan sites</td><td>90m</td><td>data-model correctness</td></tr>
+            <tr><td>F4 Sender registry in <code>messaging.Service</code>; <code>Send</code> routes by network</td><td>45m</td><td>the outbound seam</td></tr>
+            <tr><td>F5 Reply lane derives address from thread; hooks/CRM/dial stay phone-honest</td><td>60m</td><td>no client-trusted ids</td></tr>
+            <tr><td>F6 Views: network badge, dial-only-for-sms, verbatim remote render + i18n ×2</td><td>60m</td><td>user-visible truth</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Tier 4% → 64%: Train M — Matrix</h3>
+        <table>
+          <thead><tr><th>Task</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td>M1 <code>internal/matrix</code> client: send (txn id), login-verify, 429 Retry-After</td><td>90m</td></tr>
+            <tr><td>M2 Sync receiver loop: DM filter (m.direct), plaintext filter, next_batch cursor</td><td>90m</td></tr>
+            <tr><td>M3 Media both ways: mxc upload/download + m.file/m.image events</td><td>90m</td></tr>
+            <tr><td>M4 Config + composition wiring + app_flags cursor + Settings row + tests (httptest homeserver)</td><td>90m</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Tier 20% → 80%: Train S — Signal</h3>
+        <table>
+          <thead><tr><th>Task</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td>S1 <code>internal/signal</code> JSON-RPC client over unix socket: send + data-URI attachments</td><td>90m</td></tr>
+            <tr><td>S2 Receive loop: socket reader, envelope → inbound, reconnect w/ backoff</td><td>90m</td></tr>
+            <tr><td>S3 Receipts: receiptMessage timestamps → <code>DeliveryReceipt</code> (delivered/read)</td><td>60m</td></tr>
+            <tr><td>S4 Config + wiring + Settings row + tests (fake unix-socket JSON-RPC server)</td><td>75m</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Tier 100%: verdicts, docs, gates</h3>
+        <table>
+          <thead><tr><th>Task</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td>V1 Session verdict row in TODO_LIST + this plan is the research evidence</td><td>15m</td></tr>
+            <tr><td>G1 go tests + island specs; G2 nix fmt + templ generate; G3 buildflow full</td><td>60m</td></tr>
+            <tr><td>G4 CHANGELOG + TODO_LIST + AGENTS seam rules + release-runbook note</td><td>45m</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="graph"><span class="num">05</span>Execution Graph</h2>
+        <div style="border:1px solid var(--border);padding:12px;background:var(--surface-raised)">
+          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1364 2304"><svg class="d2-370228242 d2-svg" width="1364" height="2304" viewBox="-21 -61 1364 2304"><rect x="-21" y="-61" width="1364" height="2304" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-370228242 .text {
+	font-family: "d2-370228242-font-regular";
+}
+@font-face {
+	font-family: d2-370228242-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-370228242 .text-bold {
+	font-family: "d2-370228242-font-bold";
+}
+@font-face {
+	font-family: d2-370228242-font-bold;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAABTgAAoAAAAAHxwAAguFAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgXxHXrmNtYXAAAAFUAAAA5AAAAVIrNCgmZ2x5ZgAAAjgAAA1vAAASYM57InNoZWFkAAAPqAAAADYAAAA2G38e1GhoZWEAAA/gAAAAJAAAACQKfwYCaG10eAAAEAQAAADiAAABDIQmCpdsb2NhAAAQ6AAAAIgAAACIogimmm1heHAAABFwAAAAIAAAACAAWwD3bmFtZQAAEZAAAAMvAAAIKgjwVkFwb3N0AAAUwAAAACAAAAAg/9EAMgADAioCvAAFAAACigJYAAAASwKKAlgAAAFeADIBKQAAAgsHAwMEAwICBGAAAvcAAAADAAAAAAAAAABBREJPACAAIP//Au7/BgAAA9gBESAAAZ8AAAAAAfAClAAAACAAA3iclM5JTloBHIDx3yuvI5ROlM7tg5YWOtAWERGVxJi4MC6McU9cGk/gNTyHGz2Awy1cGT2GuPibPBOjS/Ntv8UPiYIEJWmyiLZMqizT0PLLb3+0/dXR0zcwNG/JijUjG7aySm07gvxv3vj/6V7/C5atGlm3efXHmarnXnjokVQxLmIc5zGOiKM4jIPYj+PYi93T+slOrrtLiRl902ZNmNQxuKX6r2vOPQWp+x7kgseeKCp5quxZ7nppyisVr1W98dY7733w0SeffZGpqfvqm4bvfmhq+alnyCUAAAD//wMAW0MyhHichFd7bFvXef/OIXWvRV09+Lh8ie8r3ktSEiXx8vLqTVGiqIdFPSNLrinJERxHtmRZteVJSeSkQJ1kS+g5jVxHqbfUMxp0y5LBgTfA6+oNK7BkXo0OWJIZGFo3yQIva7ZYLdguTSRyOFfUw96A/iEdgDj3e/y+3/f7vgMFMAiAp/FFUEEhlIIOWABR69Z6RUHgaFmUZc6kkgWkpQexLvv69wS/2u9XB1xrzienplByEl/cnDuUnJ7+zVRTU/a1v/5B9jw6/QMAnPsSAHfgNBSCFkBPiwLPCxxFqfSinhM4+l7Zi6XF5cVqxvLl7bdv/5HvXR/qbW6umxfDJ7LP4vTm4uXLAAAIgrkMrsVrUA5Q4OF5KRyJiCGjieZ5zkNRrMEohiKyiUITwy+MjJ4fjh5x91tkrqqn8kC3L2ruH2b6vn1i7tUh0TNpsocm248sVFhShwFDEgD34TRotjIWQ0Yja6AoThBDkYgU5nmOS9448vLQ4IXD1bb6kWBwpN6G0/ELCwsvdy35Uv39B71KfEkAdB+noYhYcbNuVmQ51s0m0Vr2q7t3USlOr3zzqUsrO3c/VTDZczeJLme/+PhjnF55ZWVzN+c4XgPn/5dzPmWJk0QtRaETB781OvbSWNdRV9JSH+g7nDpk4Jm5zz1fzycedk8aHQvTRxY0moXl7Pvu4FYceHQ7ZpEVJVHLaTltcvWjixc/wumvvtpcRGXZ9e2Y4UOcBpVyV5tcxenNRUBQlsug6zgNZQAmDy/IRhKVpBW1Bor6uPeo54iu1uLzr1ZNME1NvW5XXQx9P5uMzrRu4/AxTkPBlk03m1xFGKc31wlM+fjewmmSv6gV9UajSYxEZL2o5QgUMkfTnCBwDsyyyT85ptFp1Bqt5vErz9GFKrU0MTQRVqv30TidvWtrdThabcizuXjfNTDovPzb3152Dg647m/76MNp0G/5MIk8LxEcVAJnNLJs8pU32tTqkjQ5CopxOvvDl8LfaLy3uYg6/zCy0vgfAICVOj2N16D0IXYqTBJChEZbBUMHxp/dv//Z8a3/Hf39HR39/czwq8dnvz0wcOn48VeHn1mcnp6fn55ehDw3a3EaGDA8wE2O1YohYpRLfth9JpFY7BzqXm5rjuO0kBrom675GRqeEQMEwy0bIzgNJWDaY4MmzUesKLFxyc86T8Wj0sXXzw71Nba0NPbhtHe8v3vClP3qs8/Q4braWp5gxeUyWIPXIKBkuV3rMC8IQfx/yGkyKZ4oZGh7JvQId8AXrBYrR93NfNOxeP1CYL+rTeCrGwKPNCUa55na4GMO3mN32nUVJTWJmsh4uCowYSl32hwOrcf8SGckVQ8ILABYj9NAk0w4yc1y2tvX0ZfXcdnKyiahKWAI5DLofbQBFuAURkrhiKyERAtKgKyWI/ojhyKyRJGa/G188Nwq5vzOtgqpZrZx6uiyRu3s2mfx6vubncxYtH+81C2Y2UftFfOnsp+INu6UST+mqbSbTYq/WC6DjfgmGPJdKnA0pxVZ+iECcB6aNRpRp7vDrmZOr6rtcU/zeE3z1DgfOVDlN/gYt0vCN9/ss9pbv943+kR0OdH3XPWPdSVKH1TkMugm2gDrwzqwKwMmikKWzpOx7t+LB7tsnZxLikZrzUF9o/cA03JmeGSxxWGasvfF2pJs6WFX+RZWQi6DNvBN0INrGysStUmQxD0obRf0V6mTTVNhf72FWl3WqK0JbBZ0+koDF6lhXnxi6Eyrzdz3Z5sddVZu2WD5sa6ko6unE7AS+0doA8wPqRjhBu0mDJJNFKUSlRZBzq5T7R1zTV0TNWqcvaNJ1EmROn7yO9eFKk+EaV0cHlqMRmfjem9hRHQftDpQo1+qIbkgMAOgRXyLnIQb8kN8JBKr/Vp7e8VghzNcVl5sZcodBw+isycKyqUDYYaaKyhw847T2W8CqMCTq8Y02oAaaIJeBRleCsuSEnv+iIghk8hy+Yb0CAQgkdDLQFGqPR2vz3eYh1eu/Kpxsr5LX+4yW/2Nk1KV+68G6MLwuGx36jz+wdSj8ZVeuyDY7YLgD7UJXtHiZspb3rPWVzX71MU+Z3moTK2LVzYP+JjZIo+hobdCU2rU65o6xKEguhXwC36fzx/IrlZYTGUqldlis29hEyPFVjgK4g43WS2nVUCntbFV2rY/NNSzanfZfGZ8882DlsrZiext5I74LKbs25DLgQwAP8PvYR6iAEBDG7ywY9uBbwJDcBe1oiwSbaHZ2AX1H1/5i7/57kIU38zO/8Pt7E//vutJcj+XQTp8E0oVXJVBsU3gf+xrWtUWFtCUjvEyh/ZjbvOOSYfQiQKafAegsqMNcCt+yCAg1X0gE3rnjJEeTtRJMb27t25w/6rd5a0l/2rQepuzutLnqdtOrzb7dv7YxgltgGGvj704LWvUruQOUGg96qh+AKctvivc+d2zwBg9GY+fjEbn4/H5aHUwWB2srs73asviyPCZlqVkW6yPtCwJK5brxka0AXpwAJh2o1PoxwsmVr8rMyR9e4/wtZnmqYir2VowwEcOVAYMvhv4T+us3B+cHl2OllsGvoUqdkSGaEE32lDsuwAKJFkxu91EoixqVXu1AB2jLO2eLUFoJYr2yY4Y3Hilz+xUBMHuqtscRxW7apDnC7qANkD3QB1pfhfh8j6etWnMxZYyW4sBrY+F6goKnlGr/aHsh4CAzWXQd9EGCA/sG2Ge35pBO8bIBHJg1kC9V/c43+6JOt0Oe9DqaPIdG20Yc7Zbw9aGBt7V4p9heGfKUm7Sa416DVPR4O88IJjHDUbBbCkp4hqCHRNbPaTNZdA8XiRTtMDDSxInybJIVGWPAENqIN6nfXJpibMzFo1JLzPHD9w6QZ07d/rdgJdSz1LMlq3mXAZ9gdbB8FAPaPOy+69DPasOl403ri4XqZy9zOwECmd/LvmtdtSdLev0VgEi/YZyaB2KAUSVaMrvRrKouv79i20avUZdqNfEzl9F67/wJgUh6f1FtmxbJ/E6Wgf3Q9/tscDld3Savrjyci2lodR0caH8TH1hKa2mC+ma3196s5ouptV0EV2F1u95u3m+l7unnN3ee9myd7iEz5fg3lH8lQCgDFons1vUC3sc0qZdPyVrF16r0hg16n26fZ61l159rZYxMepCQ6GA8OeDbCXLVrKDuV8Os1UsW2kcJnaZXCvaROtQvpcHsvwAFCV42egutdK6fV6fhv67i11FOo16n7aw+fybpvqBH1HqBVRQYbeif//Ak/ByXdwH2aLW0fze5M1l0Gf4eSjK97EUzrebsP0u2Hp2GNG+o2fPHiV/Fp/J5LOYfWazj3nj6tXXX7969Y1T3smxsZTHkxobm/SSuBMA6N/wU6R+yr4tRSIyEeXEC0vhbs/c0hI6eUhjM2xuLJE4EOl29Al+HmzkfiuWwnt2GRIORTYNkfUOnU3U+T2yebBmOh6dlJpSYXOz8RuPJM8eq66pE6wDITF0qEU6eTKiKlgheqIHQF/gp6CQsFAvkslGSq6X3JKexMOxV54rQGrGWhLK/venf9nTg/Y97hxyWCPl2fm1x9DT2fMLayQ+Uy6DPsRPgXNvHbaj1LtZjt6J9H/65/h2e9xX11hfZfPa23Vo5j+L3Lx8qD52nAl7J6zeUF1tqEQXQLGVpdLAWDxxJKzUwp/LoP9SauEDQB6K3nai2tXX/KCn8sPNQFFIbxENmnq3u6bG0TLf2XOmI5pyJMtkG9fIqSw99uHZxinktXv2N9RFQoHsP8dePLm01lPtHNeVe8d6XdzUY+1TxL9K2Sk/VWogQHhH1Xc3AeKO6C4ph2pX4fV5YVJ4gujokcZotbc2nGoaOx5yB9vqH7MJ/gp7oJnx1nqafaytkakaEBt7zWpbdygyEJgaCHYZ1Zb+aGgwiJ6urvVWV3iFquwHgs/mtWv1kj1QAwhachm4D2+RN5xpD0sv8aLI86LISIJPknyCRGoVzLUigLeI9pqESETweLg9n/Q56hsRVmMuEuFD4dSP+g0xb6WPD/bGhpcByA6g+EK/xAKEAFAcKHICgkq4hdyojrwNZUlkK39za2aG+KuEn+Bfo6qt391sJf6nn0xOKr27iD7NvUt+N0lulkE/TY+MAILuXBL58M+JppkUbImqEiG/He3sjKbkUEi+/vjdc+fuPs4/emf2+J1pQFCbS6Ky/DeC0pnkXcIaqHSqPhSqT0U7O6/z03eOz955lFe+BQTFucMogt9R/OtFVfGtw7euqI5ufIfkaM1lVG14DQSyDSAKBGhHZ5WNJ4Y+Ii0JCDwwiT7HEYK58v6WtgbBv1y7Nnft2uSNmRs3Zm6Q/D0wgz7HteSdL0uyLAmCVMB6rj3//DV0e+aJxhp1TeMTbx/dsunL3ccjuJDcLRBkt+QWZMSilsSl7GX02KUEMmoHzi2eG8j+Wr2z08H7aH37PR5bRevZMkC5t3ADjOD3SGzaPcX1BoNebzCIGwIcFyB/pK+suQyaQi9DEZgeZM/ePeWHiVQq0ZVKdVk4zmLhOGZ+enpubnp6frg+kYhEEol6Ek9uNJdB5G2oAqCRiP4cHR7NXmHw9zZTAPC/AAAA//8DAJZo7hMAAAEAAAACC4VJg0nBXw889QABA+gAAAAA2F2ghAAAAADdZi82/jf+xAhtA/EAAQADAAIAAAAAAAAAAQAAA9j+7wAACJj+N/43CG0AAQAAAAAAAAAAAAAAAAAAAEN4nATAMS8DYRzH8e//d0lDHB5RVIdGzknpnYuNRJ/hWRqDfyKhSbtZDN6BRMI7sFvNLFZvwO6tmJrI+eiTK75BsV1oQqNHXCWuHNcTjd5wO8btj6AOrgWuV1zvNLrBdYerZl81u1pnpEiyH0pFhupQ2pSetil0TrIupypJNiBlc5LGJFWUiiRFhvZCsi+27JkNnTHWCnm2RE9iTcvkChwoMFFgoMCmAjsKHCkwsppoNY3VRLukyvao7JfcZlzYjBO7ZjWb01egUKDQPYfWJUH7YQ/0uW2n/wAAAP//AwCdGiQpAAAAAAAsACwAUAB8AKAAtgDKAPoBEAEcAToBSgF8AZ4BygHsAhICUgJkApwCzgL6AywDYAOGA+4EEAQcBDQEUASCBKQE0AUABTQFVAWQBbYF2AX0BiwGWAaIBrQGzAb4BxwHTgeOB9wH8ggSCB4IKgg2CEIIXAh2CIQIlgiqCMAI2AjkCPoJIAkwAAEAAABDAJAADABjAAcAAQAAAAAAAAAAAAAAAAAEAAN4nJyUz24bZRTFf05s0wrBAkVVuom+BYsitWNTJVXbrCakVkZEcfC4ICSENLYntuXxzMgzdhqegDVvwVt0xUPwHIg1utfXrl0QBSuKdWbm/jnfued+wAF/sk+leh/4rZ4arnBUvza8x736heF9WvU9w1Ue1X43XGNQWxiu83mtY/gj3lZ/MXyP4+qPhu9zWG0Z/pin1QPDn+w7/jD8Kce8XeIKPOdnwxUOyQ3vccAPhvd5gNWsVHlA03CNzzgyXOcI6DKmJGFMyhDHDWOGzJkRUxASM2PMDTEDHAE+CaW+TYkUOYb/+DYipGRGpBVHlDgSQhIiCkZW8SfNyrjWjtJnpki6+ZSMiOhpxoSIFEfGkIyUmInWKSnJeUmDBgV95ZtTUuBRMCbBI2PGkAZtWlzSZcSYAkdLKwmzkIwbSm6JtL+zCFGmT0xKYazmpAyUp1N+sWYHXOJok2vsZuXLrQqPcXyr2cJNYhxf4um/22C23XfFJmKheoqGPRLleasTHKni0tfnG8UlL3E76bPN5MMaDZSdzHpMj7nOX+YnecIkxblDfEJ1UOge4jjT54BQFfmOgC4XtHlNV599OnTwuaJLwCvNbdPB8RVtrjjXjEDx8ltLHXPF9zi+JtAYqR2bPqK5PL0hN3cLd3GGnGNKrlsgM5bzi/PjnSYsO5RtuaNQV/R1jyRS9kBUkT2LGJorcnXFVLVceaMw/QbmCPla6mzffZdtWNjurbb4jkx32DE3TjK5JaMPTdV7zzO3+ucRMSCjpxF9MqY0KLnTs10TMSfBca4+vtAtKfHXOdLnTl0SM1UGAanWmZHrb2S+CY17f8v3zu4S2byp7uhkfapdukjldGNGr1W91bfQVI43JtCwqWaWIxOWysuTivcl2tviH6r7C73dMp5wRkbC4G83wFM8mhxzwikj7SCVUxZ2OzT1hmjyglM9/YRYo+S+fKM6SYUTPJ5xwgkvePaejismzri4NZfN3j7nnNHm9D+dYhnf5oxX63f/3vVXZdrUszierJ+e7zzFR//DrV/weOu+7OgtIJuzsGrvtuKKiKlwcYebWriHeH8BAAD//wMA9LdPUQAAAwAAAAAAAP/OADIAAAAAAAAAAAAAAAAAAAAAAAAAAA==");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-370228242 .fill-N1{fill:#0A0F25;}
+		.d2-370228242 .fill-N7{fill:#FFFFFF;}
+		.d2-370228242 .fill-B1{fill:#0D32B2;}
+		.d2-370228242 .fill-B4{fill:#E3E9FD;}
+		.d2-370228242 .fill-B5{fill:#EDF0FD;}
+		.d2-370228242 .fill-AA4{fill:#EDF0FD;}
+		.d2-370228242 .stroke-B1{stroke:#0D32B2;}
+		.d2-370228242 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="Zm91bmRhdGlvbg=="><g class="shape" ><path d="M 70 0 L 220 0 L 220 55 L 1322 55 L 1322 664 L 70 664 Z" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /></g><text x="696" y="-13" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Train F — the Network axis (1% → 51%)</text></g><g class="bWF0cml4"><g class="shape" ><path d="M 886 764 L 1036 764 L 1036 819 L 1322 819 L 1322 1478 L 886 1478 Z" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /></g><text x="1104" y="751" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Train M — Matrix channel (4% → 64%)</text></g><g class="c2lnbmFs"><g class="shape" ><path d="M 0 764 L 150 764 L 150 819 L 443 819 L 443 1478 L 0 1478 Z" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /></g><text x="221.5" y="751" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Train S — Signal channel (20% → 80%)</text></g><g class="c2Vzc2lvbg=="><g class="shape" ><path d="M 463 1146 L 613 1146 L 613 1201 L 866 1201 L 866 1478 L 463 1478 Z" stroke="#0D32B2" fill="#3a2a2a" class=" stroke-B1" style="stroke-width:2;" /></g><text x="664.5" y="1133" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Session — researched verdict</text></g><g class="Z2F0ZXM="><g class="shape" ><rect x="191" y="1598" width="942" height="624" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="662" y="1585" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Gates</text></g><g class="Zm91bmRhdGlvbi5mMQ=="><g class="shape" ><rect x="515" y="50" width="295" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="662.5" y="88.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">domain.Network + domain.Address</text></g><g class="Zm91bmRhdGlvbi5mMg=="><g class="shape" ><rect x="440" y="216" width="446" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="663" y="254.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">store migration v5 (threads.network, rebuilt unique key)</text></g><g class="Zm91bmRhdGlvbi5mMw=="><g class="shape" ><rect x="510" y="382" width="305" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="662.5" y="420.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">sender registry in messaging.Service</text></g><g class="Zm91bmRhdGlvbi5mNA=="><g class="shape" ><rect x="504" y="548" width="317" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="662.5" y="586.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">reply lane derives address from thread</text></g><g class="Zm91bmRhdGlvbi5iYWRnZXMgaW4gdmlld3M="><g class="shape" ><rect x="1125" y="548" width="156" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1203" y="586.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">badges in views</text></g><g class="bWF0cml4Lm0x"><g class="shape" ><rect x="954" y="814" width="301" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1104.5" y="852.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/matrix client (send + txn id)</text></g><g class="bWF0cml4Lm0y"><g class="shape" ><rect x="926" y="980" width="356" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1104" y="1018.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">sync receiver loop (next_batch in app_flags)</text></g><g class="bWF0cml4Lm0z"><g class="shape" ><rect x="936" y="1196" width="336" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1104" y="1234.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">media both ways (mxc upload/download)</text></g><g class="bWF0cml4Lm00"><g class="shape" ><rect x="931" y="1362" width="346" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1104" y="1400.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">composition-root wiring, config-gated OFF</text></g><g class="c2lnbmFsLnMx"><g class="shape" ><rect x="40" y="814" width="363" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="221.5" y="852.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">internal/signal JSON-RPC client (unix socket)</text></g><g class="c2lnbmFsLnMy"><g class="shape" ><rect x="74" y="980" width="296" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="222" y="1018.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">receive loop (envelopes -&gt; inbound)</text></g><g class="c2lnbmFsLnMz"><g class="shape" ><rect x="75" y="1196" width="293" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="221.5" y="1234.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">receiptMessage -&gt; delivery verdicts</text></g><g class="c2lnbmFsLnM0"><g class="shape" ><rect x="49" y="1362" width="346" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="222" y="1400.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">composition-root wiring, config-gated OFF</text></g><g class="c2Vzc2lvbi52MQ=="><g class="shape" ><rect x="503" y="1196" width="323" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="664.5" y="1234.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">NO-GO now: no Go lib, no headless path</text></g><g class="c2Vzc2lvbi52Mg=="><g class="shape" ><rect x="506" y="1362" width="317" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="664.5" y="1400.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">TODO row with named reopen triggers</text></g><g class="Z2F0ZXMuZzE="><g class="shape" ><rect x="564" y="1628" width="201" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="664.5" y="1666.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">go tests + island specs</text></g><g class="Z2F0ZXMuZzI="><g class="shape" ><rect x="556" y="1794" width="218" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="665" y="1832.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">nix fmt + templ generate</text></g><g class="Z2F0ZXMuZzM="><g class="shape" ><rect x="595" y="1960" width="140" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="665" y="1998.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">buildflow full</text></g><g class="Z2F0ZXMuZzQ="><g class="shape" ><rect x="477" y="2126" width="375" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="664.5" y="2164.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">CHANGELOG + TODO_LIST + AGENTS + runbook</text></g><g class="Zm91bmRhdGlvbi4oZjEgLSZndDsgZjIpWzBd"><marker id="mk-d2-370228242-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 662.75 118 C 662.75 156 662.75 176 662.75 212" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="Zm91bmRhdGlvbi4oZjIgLSZndDsgZjMpWzBd"><path d="M 662.75 284 C 662.75 322 662.75 342 662.75 378" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="Zm91bmRhdGlvbi4oZjMgLSZndDsgZjQpWzBd"><path d="M 662.75 450 C 662.75 488 662.75 508 662.75 544" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="bWF0cml4LihtMSAtJmd0OyBtMilbMF0="><path d="M 1104 882 C 1104 920 1104 940 1104 976" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="bWF0cml4LihtMiAtJmd0OyBtMylbMF0="><path d="M 1104 1048 C 1104 1086 1104 1156 1104 1192" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="bWF0cml4LihtMyAtJmd0OyBtNClbMF0="><path d="M 1104 1264 C 1104 1302 1104 1322 1104 1358" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="c2lnbmFsLihzMSAtJmd0OyBzMilbMF0="><path d="M 221.5 882 C 221.5 920 221.5 940 221.5 976" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="c2lnbmFsLihzMiAtJmd0OyBzMylbMF0="><path d="M 221.5 1048 C 221.5 1086 221.5 1156 221.5 1192" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="c2lnbmFsLihzMyAtJmd0OyBzNClbMF0="><path d="M 221.5 1264 C 221.5 1302 221.5 1322 221.5 1358" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="c2Vzc2lvbi4odjEgLSZndDsgdjIpWzBd"><path d="M 664.5 1264 C 664.5 1302 664.5 1322 664.5 1358" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="Z2F0ZXMuKGcxIC0mZ3Q7IGcyKVswXQ=="><path d="M 664.5 1696 C 664.5 1734 664.5 1754 664.5 1790" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="Z2F0ZXMuKGcyIC0mZ3Q7IGczKVswXQ=="><path d="M 664.5 1862 C 664.5 1900 664.5 1920 664.5 1956" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="Z2F0ZXMuKGczIC0mZ3Q7IGc0KVswXQ=="><path d="M 664.5 2028 C 664.5 2066 664.5 2086 664.5 2122" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="KGZvdW5kYXRpb24gLSZndDsgbWF0cml4KVswXQ=="><path d="M 1104 666 L 1104 719" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="KGZvdW5kYXRpb24gLSZndDsgc2lnbmFsKVswXQ=="><path d="M 221.016949 665.999928 L 221.466103 719.000144" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="KHNlc3Npb24gLSZndDsgZ2F0ZXMpWzBd"><path d="M 664.02 1479.9999 C 664.400024 1518 664.5 1533.800049 664.5 1553" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="KG1hdHJpeCAtJmd0OyBnYXRlcylbMF0="><path d="M 1104 1480 C 1104 1518 1104 1542 1104 1594" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><g class="KHNpZ25hbCAtJmd0OyBnYXRlcylbMF0="><path d="M 221.019999 1479.9999 C 221.399994 1518 221.5 1542 221.5 1594" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-370228242-3488378134)" mask="url(#d2-370228242)" /></g><mask id="d2-370228242" maskUnits="userSpaceOnUse" x="-21" y="-61" width="1364" height="2304">
+<rect x="-21" y="-61" width="1364" height="2304" fill="white"></rect>
+
+</mask></svg></svg>
+
+        </div>
+
+        <h2 id="risks"><span class="num">06</span>Risks &amp; Standing Limits</h2>
+        <ul>
+          <li><strong>Migration v5 rebuilds the threads table</strong> (SQLite cannot drop an inline UNIQUE). Threads are small (per-extension conversations); the rebuild runs once, versioned, transactional.</li>
+          <li><strong>Matrix E2EE:</strong> encrypted rooms are skipped — surfaced in Settings, never silent.</li>
+          <li><strong>signal-cli is a JVM sidecar</strong> — deployment (stack repo: systemd unit, linked-device QR ritual, 3-month freshness) is follow-up work in <em>nix-international-telephony</em>; webphone ships the client now, config-gated OFF.</li>
+          <li><strong>Served-markup changes owe the stack browser E2E</strong> (standing rule) — rides the next relock.</li>
+          <li><strong>CRM enrichment is number-keyed by design</strong> — chat-network threads render verbatim identities; the CRM miss is graceful (documented, not “fixed”).</li>
+          <li><strong>Rate limits:</strong> matrix client honors Retry-After/429; signal send surfaces retryAfterSeconds as a transient failure.</li>
+        </ul>
+
+        <h2 id="done"><span class="num">07</span>Definition of Done</h2>
+        <ul>
+          <li>Zero config ⇒ byte-identical product (render-diff discipline + the parity tests).</li>
+          <li>With <code>matrix.*</code> set: a DM on a real homeserver appears as a thread; replies send; media flows; encrypted rooms skipped loudly.</li>
+          <li>With <code>signal.*</code> set against a live signal-cli socket: DMs both ways; delivery receipts flip the status badge live.</li>
+          <li>Full gate suite green: go tests, island specs, nix fmt, buildflow; CHANGELOG/TODO/AGENTS updated; plan verdicts recorded.</li>
+        </ul>
+
+        <footer>
+          <p>Snapshot 2026-10-23 · Research verified against AsamK/signal-cli v0.14.9, spec.matrix.org v1.19, session-foundation org · Claims carry sources in §01.</p>
+        </footer>
+      </main>
+    </div>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
