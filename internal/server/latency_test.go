@@ -35,7 +35,9 @@ func TestLatencyHistogramExpositionIsCumulative(t *testing.T) {
 			t.Errorf("missing %q in:\n%s", want, body)
 		}
 	}
-	if strings.Contains(body, "{le=\"30\"} 2") {
+	// The 100 s self-scrape is the difference between the sum of the two
+	// recorded observations (2.007 s) and anything larger.
+	if !strings.Contains(body, "webphone_http_request_duration_seconds_sum 2.007") {
 		t.Errorf("the 100 s self-scrape must not be recorded:\n%s", body)
 	}
 }

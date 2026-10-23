@@ -65,7 +65,6 @@ What remains is the HOST REBUILD plus a browser check that logged-out `/health`
 redirects to the SSO gate and a signed-in operator sees the cards.
 **Priority:** High · **Effort:** S.
 
-
 ### Catalog representation decision (2026-10-19 — record, no work pending)
 
 webphone is INVENTORY-ONLY in catalog.home.lan (SystemNix `catalog-platform`

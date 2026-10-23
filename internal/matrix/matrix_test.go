@@ -49,10 +49,10 @@ func newHomeserver(t *testing.T) (*homeserver, *httptest.Server) {
 		defer hs.mu.Unlock()
 		switch {
 		case r.URL.Path == "/_matrix/client/v3/account/whoami":
-			fmt.Fprint(w, `{"user_id":"@webphone:example.org"}`)
+			_ = fmt.Fprint(w, `{"user_id":"@webphone:example.org"}`)
 		case r.URL.Path == "/_matrix/client/v3/createRoom" && r.Method == http.MethodPost:
 			hs.creations++
-			fmt.Fprint(w, `{"room_id":"!newroom:example.org"}`)
+			_ = fmt.Fprint(w, `{"room_id":"!newroom:example.org"}`)
 		case strings.HasPrefix(r.URL.Path, "/_matrix/client/v3/user/") && strings.HasSuffix(r.URL.Path, "/account_data/m.direct"):
 			raw, _ := io.ReadAll(r.Body)
 			var body map[string][]string
@@ -72,7 +72,7 @@ func newHomeserver(t *testing.T) (*homeserver, *httptest.Server) {
 				return
 			}
 			hs.sends = append(hs.sends, sentEvent{Room: room, Type: eventType, Content: content})
-			fmt.Fprint(w, fmt.Sprintf(`{"event_id":"$ev%d"}`, len(hs.sends)))
+			_ = fmt.Fprint(w, fmt.Sprintf(`{"event_id":"$ev%d"}`, len(hs.sends)))
 		case r.URL.Path == "/_matrix/media/v3/upload":
 			data, _ := io.ReadAll(r.Body)
 			if len(data) == 0 {

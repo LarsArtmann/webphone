@@ -194,10 +194,10 @@ func (r *Receiver) ingest(ctx context.Context, resp syncResponse) {
 
 // ingestEvent maps one timeline event onto the inbound pipeline.
 func (r *Receiver) ingestEvent(ctx context.Context, peer string, ev roomEvent) {
-	switch {
-	case ev.Type == "m.room.encrypted":
+	switch ev.Type {
+	case "m.room.encrypted":
 		r.log.Warn("matrix: skipped an encrypted event (v1: plaintext rooms only)", "peer", peer, "event", ev.EventID)
-	case ev.Type == "m.room.message":
+	case "m.room.message":
 		switch ev.Content.MsgType {
 		case "m.text":
 			from, err := domain.ParseAddress(domain.NetworkMatrix, peer)

@@ -87,6 +87,11 @@ type Config struct {
 	// client over a local signal-cli daemon unix socket. Zero value =
 	// disabled.
 	Signal Signal `json:"signal" koanf:"signal"`
+	// Push is the OPTIONAL push seam behind ring-while-closed: the
+	// registered-device registry rides readmodels unconditionally, but
+	// no transport is configured with a zero value — the device API
+	// 404s and /hooks/ring acknowledges inertly. Zero value = disabled.
+	Push Push `json:"push" koanf:"push"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -754,8 +759,70 @@ func validate(cfg Config) error {
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
 	}
-	return nil
+	return validatePush(cfg.Push)
 }
+
+// Push configures the optional push seam (ring-while-closed). The
+// two transports are independent — either, both or neither may be
+// configured — but each fails closed on its own half states: an ntfy
+// token without a URL is a credential with nowhere to send it, and a
+// malformed FCM credentials file refuses the boot (parsed in the
+// composition root, not here — the file's EXISTENCE is runtime
+// state, its path shape is config).
+type Push struct {
+	// Ntfy is the self-hosted transport (no Google, the de-Googled
+	// device's lane).
+	Ntfy PushNtfy `json:"ntfy" koanf:"ntfy"`
+	// Fcm is the FCM HTTP v1 transport (service-account credentials,
+	// the GMS device's lane).
+	Fcm PushFcm `json:"fcm" koanf:"fcm"`
+}
+
+// PushNtfy configures the ntfy transport. The URL enables the
+// transport; the token is optional (a public self-hosted server
+// accepts anonymous publishes) and rides the Bearer header when set.
+// The per-device topics live in the registry, never here — a shared
+// config topic would ring every device on every call.
+type PushNtfy struct {
+	// URL is the ntfy server base (e.g. https://ntfy.example.org).
+	URL string `json:"url,omitempty" koanf:"url"`
+	// Token is the optional access-token credential (env-borne: the
+	// environmentFile is the right home for it).
+	Token string `json:"token,omitempty" koanf:"token"`
+}
+
+// PushFcm configures the FCM HTTP v1 transport.
+type PushFcm struct {
+	// CredentialsFile is the Google service-account JSON key file
+	// (read+parsed at boot; a broken file refuses the boot).
+	CredentialsFile string `json:"credentials_file,omitempty" koanf:"credentials_file"`
+}
+
+// Enabled reports whether any push transport is configured.
+func (p Push) Enabled() bool { return p.Ntfy.Enabled() || p.Fcm.Enabled() }
+
+// Enabled reports whether the ntfy transport is configured.
+func (n PushNtfy) Enabled() bool { return n.URL != "" }
+
+// Enabled reports whether the FCM transport is configured.
+func (f PushFcm) Enabled() bool { return f.CredentialsFile != "" }
+
+// validatePush rejects the push seam's half configurations: an ntfy
+// token with no URL is a credential with nowhere to send it; a
+// non-absolute ntfy URL cannot carry a publish.
+func validatePush(cfg Push) error {
+	switch {
+	case cfg.Ntfy.URL == "" && cfg.Ntfy.Token != "":
+		return errorfamily.NewRejection("config.push.ntfy.url", "push.ntfy.token is set without push.ntfy.url: a credential with nowhere to send it (set the url, or clear the token for an anonymous server)")
+	}
+	if cfg.Ntfy.URL != "" {
+		u, err := url.Parse(cfg.Ntfy.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.push.ntfy.url", "push.ntfy.url %q is not an absolute http(s) URL (e.g. https://ntfy.example.org)", cfg.Ntfy.URL)
+		}
+	}
+	return nil
+	}
 
 // validatePasskey fails closed on half a passkey configuration: a login
 // mode that is half-wired would either brick passkey logins at runtime or

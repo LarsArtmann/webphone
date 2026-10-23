@@ -23,7 +23,7 @@ const (
 	ntfyRequestTimeout = 10 * time.Second
 	// ntfyPriorityMax is ntfy's max/urgent priority (the ring wake);
 	// ring_end rides the default priority (a stand-down is not urgent).
-	ntfyPriorityMax = 5
+	ntfyPriorityMax     = 5
 	ntfyPriorityDefault = 3
 )
 

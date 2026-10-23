@@ -188,6 +188,11 @@ type Deps struct {
 	// the OIDC mode is off — the begin/callback routes 404 and the login
 	// card renders no SSO entry.
 	SSO SSOClient
+	// Trace is the OPTIONAL flight-recorder seam (operator opt-in, default
+	// off). Nil: no request observation and no snapshot endpoint. Non-nil:
+	// every request is reported and GET /internal/flightrecorder writes a
+	// trace window (loopback only).
+	Trace TraceRecorder
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -503,6 +508,10 @@ func New(deps Deps) http.Handler {
 	// gated), hook-grade flood budget, loopback-only posture in-handler.
 	open.Handle("GET /internal/directory/{extension}",
 		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(h.internalDirectory))))
+	// The flight-recorder snapshot endpoint: machine-facing, registered
+	// unconditionally so the disabled seam answers the styled 404 rather
+	// than falling through the open mux; loopback-only in-handler.
+	open.HandleFunc("GET /internal/flightrecorder", h.traceSnapshot)
 
 	root := http.NewServeMux()
 	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))
@@ -520,6 +529,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
 	root.Handle("/internal/directory/", open)
+	root.Handle("/internal/flightrecorder", open)
 	root.Handle("/favicon.svg", open)
 	root.Handle("/favicon.ico", open)
 	root.Handle("/manifest.webmanifest", open)
@@ -543,15 +553,22 @@ func New(deps Deps) http.Handler {
 	// Latency sits directly under enrichment and above the request log:
 	// it measures the same span the log line reports, for every status,
 	// and its ResponseRecorder forwards Flush/Hijack so /events and the
-	// phone-api streaming keep working unchanged.
-	return cqrshtmx.Chain(
+	// phone-api streaming keep working unchanged. Trace is conditional: an
+	// opt-out deployment carries no extra wrapper at all.
+	middlewares := []func(http.Handler) http.Handler{
 		cqrshtmx.ContextEnrichmentMiddleware(nil),
 		httputil.Metrics(httputil.MetricsConfig{Recorder: h.latency}),
+	}
+	if deps.Trace != nil {
+		middlewares = append(middlewares, traceMiddleware(deps.Trace))
+	}
+	middlewares = append(middlewares,
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,
 		cqrshtmx.RecoveryMiddleware,
-	)(root)
+	)
+	return cqrshtmx.Chain(middlewares...)(root)
 }
 
 // checkTimeout bounds every /healthz named check (NamedCheck.Timeout): a

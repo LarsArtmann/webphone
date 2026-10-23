@@ -103,7 +103,11 @@ type App struct {
 	// iterates every container service implementing the health-check
 	// interface, and *health.Probe itself conforms — self-registration
 	// would make every batch recurse into itself.
-	Probe   *health.Probe
+	Probe *health.Probe
+	// Trace is the OPTIONAL flight recorder (nil — the default). It is
+	// built outside the injector because the injector's Shutdown would
+	// call Close on a typed nil; the process layer owns its lifetime.
+	Trace   *traceRecorder
 	Handler http.Handler
 }
 
@@ -308,6 +312,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		health.WithRefreshInterval(probeRefreshIf(cfg.Dashboard.Enable)),
 	)
 
+	// Flight recorder: nil unless the operator opted in. A boot failure
+	// here is fatal on purpose — a tracing request that silently did not
+	// happen would waste exactly the debugging session it exists for.
+	trace, err := traceRecorderFor(cfg.DataDir)
+	if err != nil {
+		return nil, err
+	}
+
 	var dashboardHandler http.Handler
 	if cfg.Dashboard.Enable {
 		dashboardHandler = newDashboard(injector, probe, cfg)
@@ -356,6 +368,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Dashboard:   dashboardHandler,
 			UserAuth:    auth,
 			SSO:         ssoClient,
+			Trace:       traceSeam(trace),
 			Dedup:       engineDedupWindow{store: engine.DedupStore()},
 		}), nil
 	})
@@ -402,7 +415,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("wire server: %w", err)
 	}
 
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Handler: handler}, nil
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
@@ -524,6 +537,14 @@ func (a *App) Start(ctx context.Context) error {
 func (a *App) Shutdown() error {
 	a.Probe.Shutdown()
 	report := a.injector.Shutdown()
+	// The flight recorder leaves the container untouched (see App.Trace),
+	// so its drain is explicit — last, after every handler that could
+	// still report a request has stopped.
+	if a.Trace != nil {
+		if err := a.Trace.Close(); err != nil {
+			a.log.Warn("flight recorder close failed", "error", err)
+		}
+	}
 	if report == nil || report.Succeed {
 		return nil
 	}

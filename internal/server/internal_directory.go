@@ -24,11 +24,12 @@ func (h *handlers) sipDirectoryGate(next http.Handler) http.Handler {
 	return hooks.BearerGate(h.deps.Config.SIP.CredentialSecret, "sip credentials not configured", next)
 }
 
-// internalDirectoryRequiredPeer is the loopback-only posture: the bridge
-// runs on the same host (the module wires it as a local systemd service
-// talking to the loopback webphone listener). A non-loopback peer is a
-// misdeployment — fail closed before the secret even matters.
-func internalDirectoryRequiredPeer(r *http.Request) bool {
+// loopbackPeer is the machine-surface posture: the FreeSWITCH directory
+// bridge and the operator's flight-recorder probe both run on the same
+// host (the module wires them as local processes talking to the loopback
+// listener). A non-loopback peer is a misdeployment — fail closed before
+// any secret even matters.
+func loopbackPeer(r *http.Request) bool {
 	ip := net.ParseIP(remoteHostKey(r))
 	return ip != nil && ip.IsLoopback()
 }
@@ -40,7 +41,7 @@ func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if !internalDirectoryRequiredPeer(r) {
+	if !loopbackPeer(r) {
 		http.Error(w, "internal", http.StatusForbidden)
 		return
 	}
