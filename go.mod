@@ -8,8 +8,8 @@ require (
 	github.com/knadh/koanf/providers/confmap v1.0.1
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.4.0
-	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.12.3
+	github.com/knadh/koanf/v2 v2.4.1
+	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.13.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.14.3
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.12.1
 	github.com/larsartmann/cqrs-htmx/v4 v4.14.1
