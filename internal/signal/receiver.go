@@ -6,13 +6,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
 )
-
-// Sink is the inbound pipeline (the messaging service satisfies it).
-type Sink interface {
-	Receive(ctx context.Context, inbound domain.InboundMessage) (domain.Message, error)
-}
 
 // ReceiptSink applies delivery verdicts to outbound rows correlated by
 // provider_ref — the signal send timestamps. The messaging service
@@ -28,17 +24,14 @@ type ReceiptSink interface {
 type Receiver struct {
 	client   *Client
 	owner    domain.Extension
-	sink     Sink
+	sink     chatloop.Sink
 	receipts ReceiptSink
 	log      *slog.Logger
 }
 
 // NewReceiver builds the receiver.
-func NewReceiver(client *Client, owner domain.Extension, sink Sink, receipts ReceiptSink, log *slog.Logger) *Receiver {
-	if log == nil {
-		log = slog.Default()
-	}
-	return &Receiver{client: client, owner: owner, sink: sink, receipts: receipts, log: log}
+func NewReceiver(client *Client, owner domain.Extension, sink chatloop.Sink, receipts ReceiptSink, log *slog.Logger) *Receiver {
+	return &Receiver{client: client, owner: owner, sink: sink, receipts: receipts, log: chatloop.Default(log)}
 }
 
 // Run blocks until ctx is done: it registers the envelope handler and
@@ -53,18 +46,15 @@ func (r *Receiver) Run(ctx context.Context) error {
 			return nil //nolint:erraudit // shutdown is the designed exit
 		}
 		if err := r.client.Ping(ctx); err != nil {
-			if ctx.Err() != nil {
-				return nil //nolint:erraudit // shutdown is the designed exit
-			}
 			r.log.Warn("signal: daemon unreachable", "error", err)
-			if !sleepCtx(ctx, backoff) {
+			if !chatloop.Sleep(ctx, backoff) {
 				return nil
 			}
-			backoff = doubleBackoff(backoff)
+			backoff = chatloop.NextBackoff(backoff, 60*time.Second)
 			continue
 		}
 		backoff = time.Second
-		if !sleepCtx(ctx, 30*time.Second) {
+		if !chatloop.Sleep(ctx, 30*time.Second) {
 			return nil
 		}
 	}
@@ -128,23 +118,4 @@ func (r *Receiver) handleReceipt(ctx context.Context, env Envelope) {
 			r.log.Warn("signal: apply receipt", "ref", ref, "error", err)
 		}
 	}
-}
-
-// sleepCtx waits d or until ctx ends; false means ctx ended first.
-func sleepCtx(ctx context.Context, d time.Duration) bool {
-	t := time.NewTimer(d)
-	defer t.Stop()
-	select {
-	case <-ctx.Done():
-		return false
-	case <-t.C:
-		return true
-	}
-}
-
-func doubleBackoff(d time.Duration) time.Duration {
-	if d *= 2; d > 60*time.Second {
-		return 60 * time.Second
-	}
-	return d
 }

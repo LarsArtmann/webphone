@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -104,12 +105,6 @@ type Cursor interface {
 	Save(ctx context.Context, token string) error
 }
 
-// Sink is the inbound pipeline the receiver feeds (the messaging
-// service satisfies it: persist + notify + auto-unarchive, wholesale).
-type Sink interface {
-	Receive(ctx context.Context, inbound domain.InboundMessage) (domain.Message, error)
-}
-
 // Receiver is the matrix inbound lane: a sync loop that turns DM
 // timeline events into inbound messages. Encrypted rooms and non-DM
 // rooms are skipped LOUDLY (WARN) — a skipped message is a documented
@@ -127,11 +122,8 @@ type Receiver struct {
 
 // NewReceiver builds the receiver; all dependencies are injected, so
 // tests drive it with a fake cursor and an in-memory sink.
-func NewReceiver(client *Client, owner domain.Extension, sink Sink, cursor Cursor, log *slog.Logger) *Receiver {
-	if log == nil {
-		log = slog.Default()
-	}
-	return &Receiver{client: client, owner: owner, sink: sink, cursor: cursor, log: log}
+func NewReceiver(client *Client, owner domain.Extension, sink chatloop.Sink, cursor Cursor, log *slog.Logger) *Receiver {
+	return &Receiver{client: client, owner: owner, sink: sink, cursor: cursor, log: chatloop.Default(log)}
 }
 
 // Run blocks on the sync loop until ctx is done. Errors back off
@@ -146,10 +138,10 @@ func (r *Receiver) Run(ctx context.Context) error {
 		since, err := r.cursor.Load(ctx)
 		if err != nil {
 			r.log.Error("matrix: load sync cursor", "error", err)
-			if !sleepCtx(ctx, backoff) {
+			if !chatloop.Sleep(ctx, backoff) {
 				return nil
 			}
-			backoff = doubleBackoff(backoff)
+			backoff = chatloop.NextBackoff(backoff, 30*time.Second)
 			continue
 		}
 		timeout := 30 * time.Second
@@ -266,23 +258,4 @@ func (r *Receiver) deliver(ctx context.Context, inbound domain.InboundMessage) {
 	if _, err := r.sink.Receive(ctx, inbound); err != nil {
 		r.log.Error("matrix: ingest inbound message", "peer", inbound.From.String(), "error", err)
 	}
-}
-
-// sleepCtx waits d or until ctx ends; false means ctx ended first.
-func sleepCtx(ctx context.Context, d time.Duration) bool {
-	t := time.NewTimer(d)
-	defer t.Stop()
-	select {
-	case <-ctx.Done():
-		return false
-	case <-t.C:
-		return true
-	}
-}
-
-func doubleBackoff(d time.Duration) time.Duration {
-	if d *= 2; d > 30*time.Second {
-		return 30 * time.Second
-	}
-	return d
 }
