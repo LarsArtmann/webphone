@@ -143,7 +143,7 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 		>
 			<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
 			<span class="wp-thread-text">
-				<span class="wp-thread-remote">{ displayName(summary.Thread.Remote.String(), names) }</span>
+				<span class="wp-thread-remote">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
 				<span class="wp-thread-preview">
 				if summary.LastAttachment {
 					@icons.Icon(icons.Document, "wp-icon wp-icon-text")
@@ -164,12 +164,16 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 				}
 			</span>
 		</a>
-		<button
-			class="wp-mini wp-icon-btn"
-			data-dial={ summary.Thread.Remote.String() }
-			aria-label={ T(lang, "contacts.call") }
-			title={ T(lang, "contacts.call") }
-		>@icons.Icon(icons.Phone, "wp-icon")</button>
+		// The dial affordance is telephony-only: a chat-network remote is
+		// not a SIP destination, and a dial button that cannot dial lies.
+		if summary.Thread.Remote.Network() == domain.NetworkSMS {
+			<button
+				class="wp-mini wp-icon-btn"
+				data-dial={ summary.Thread.Remote.String() }
+				aria-label={ T(lang, "contacts.call") }
+				title={ T(lang, "contacts.call") }
+			>@icons.Icon(icons.Phone, "wp-icon")</button>
+		}
 		// Organization flags (M22): each button posts the DESIRED state
 		// (the row renders the flip of its current state). The archived
 		// view offers only the way back — the filing cabinet keeps no pins.
@@ -232,7 +236,7 @@ templ ThreadHead(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:top"
 			hx-push-url="/messages"
 		>← All messages</a>
-		<h2>{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
+		<h2>{ networkLabel(props.Thread.Remote.Network()) }{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
 		if props.Thread.Archived {
 			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
 		} else {
@@ -240,10 +244,12 @@ templ ThreadHead(props ThreadViewProps) {
 			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
 			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), icons.ArchiveBox, 1)
 		}
-		@display.Button(display.ButtonProps{
-			Text:  T(props.Lang, "contacts.call"),
-			Attrs: templ.Attributes{"data-dial": props.Thread.Remote.String()},
-		})
+		if props.Thread.Remote.Network() == domain.NetworkSMS {
+			@display.Button(display.ButtonProps{
+				Text:  T(props.Lang, "contacts.call"),
+				Attrs: templ.Attributes{"data-dial": props.Thread.Remote.String()},
+			})
+		}
 	</header>
 }
 
@@ -490,7 +496,8 @@ templ ThreadView(props ThreadViewProps) {
 			enctype="multipart/form-data"
 			hx-disabled-elt="find button[type=submit]"
 		>
-			<input type="hidden" name="to" value={ props.Thread.Remote.String() }></input>
+			// No hidden "to": the reply lane derives the destination from the
+			// stored thread (?thread= above) — never from a client string.
 			// The snippet lane (M21): quick chips plus the full picker, above
 			// the reply textarea and INSIDE the form so shell.js's delegated
 			// data-snippet fill finds the compose box via closest(). Buttons
@@ -615,15 +622,16 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 				<p class="wp-failed-detail">{ msg.FailureDetail }</p>
 			}
 			if msg.FailureKind.IsRetryable() {
+				// The retry rides the thread lane (?thread=): the destination
+				// is derived from the stored thread, correct for every network.
 				<form
 					class="wp-retry"
-					hx-post="/messages/send"
+					hx-post={ "/messages/send?thread=" + msg.ThreadID.String() }
 					hx-target="#tab-content"
 					hx-swap="innerHTML show:window:bottom"
 					hx-encoding="multipart/form-data"
 					hx-disabled-elt="find button[type=submit]"
 				>
-					<input type="hidden" name="to" value={ msg.Remote.String() }></input>
 					<input type="hidden" name="body" value={ msg.Body }></input>
 					<button type="submit" class="wp-mini">{ T(lang, "retry") }</button>
 				</form>

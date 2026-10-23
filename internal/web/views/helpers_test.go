@@ -136,3 +136,17 @@ func TestFormatForSwitchesAndDefaults(t *testing.T) {
 		}
 	}
 }
+
+func TestNetworkLabel(t *testing.T) {
+	if got := networkLabel(domain.NetworkSMS); got != "" {
+		t.Fatalf("sms must wear no badge, got %q", got)
+	}
+	for n, want := range map[domain.Network]string{
+		domain.NetworkSignal: "Signal · ",
+		domain.NetworkMatrix: "Matrix · ",
+	} {
+		if got := networkLabel(n); got != want {
+			t.Fatalf("networkLabel(%s) = %q, want %q", n, got, want)
+		}
+	}
+}

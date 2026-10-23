@@ -109,6 +109,23 @@ func isSelfThread(identity string, remote domain.Address) bool {
 	return own.String() == remote.String()
 }
 
+// networkLabel is the chat-network prefix beside a thread identity:
+// the proper noun for chat networks, "" for telephony — the default
+// lane wears no badge (most conversations are SMS; a badge everywhere
+// is noise). Proper nouns stay untranslated in both languages.
+func networkLabel(n domain.Network) string {
+	switch n {
+	case domain.NetworkSignal:
+		return "Signal · "
+	case domain.NetworkMatrix:
+		return "Matrix · "
+	case domain.NetworkSession:
+		return "Session · "
+	default:
+		return ""
+	}
+}
+
 // formatFor is the one home of the language switch behind the timestamp
 // helpers: German renders its de convention, English keeps its en form
 // byte-stable so existing pins and the stack E2E never churn.

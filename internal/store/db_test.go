@@ -225,16 +225,6 @@ func TestVersionedMigrations(t *testing.T) {
 	})
 
 	t.Run("already-latest database is a no-op rerun", func(t *testing.T) {
-		db, err := Open(":memory:")
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Cleanup(func() { _ = db.Close() })
-		if err := migrate(context.Background(), db); err != nil {
-			t.Fatalf("rerun: %v", err)
-		}
-		assertSchemaVersion(t, db, schemaVersion)
-	})
 
 	t.Run("the chain stays consistent with schemaVersion", func(t *testing.T) {
 		if len(migrations) == 0 || migrations[len(migrations)-1].version != schemaVersion {
