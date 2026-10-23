@@ -18,9 +18,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -45,6 +43,7 @@ type Service struct {
 	users  *usermgmt.Service
 	db     *sql.DB
 	enroll *readmodels.EnrollTokens
+	mapped *authmap.Map
 	cfg    PasskeyRuntime
 	log    *slog.Logger
 }
@@ -129,7 +128,12 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll *readmo
 		db.Close()                                                                                                   //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
-	svc := &Service{users: users, db: db, enroll: enroll, cfg: cfg, log: log}
+	mapped, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
+	if err != nil {
+		db.Close()                                                                                          //nolint:errcheck // best-effort cleanup on a failed boot path
+		return nil, errorfamily.WrapRejection(err, "userauth.mapping", "build the email→extension mapping") //nolint:erraudit // pure config verdict: nothing failed, no ctx to carry
+	}
+	svc := &Service{users: users, db: db, enroll: enroll, mapped: mapped, cfg: cfg, log: log}
 	return svc, nil
 }
 
@@ -189,8 +193,7 @@ func (s *Service) FinishLogin(ctx context.Context, userID identitymodel.UserID, 
 // email has no mapping (login fails closed — a passkey alone must never
 // mint a session for an unmapped account).
 func (s *Service) Resolve(email string) (MappedUser, bool) {
-	mapped, ok := s.cfg.Users[strings.ToLower(strings.TrimSpace(email))]
-	return mapped, ok
+	return s.mapped.Resolve(email)
 }
 
 // MappedByExtension reverse-resolves: which mapped user (if any) a
@@ -198,12 +201,7 @@ func (s *Service) Resolve(email string) (MappedUser, bool) {
 // extension login too — a mapped user gets their name and numbers in
 // the whoami line regardless of how they signed in.
 func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, bool) {
-	for _, mapped := range s.cfg.Users {
-		if slices.Contains(mapped.Extensions, extension) {
-			return mapped, true
-		}
-	}
-	return MappedUser{}, false
+	return s.mapped.MappedByExtension(extension)
 }
 
 // SIPPassword reads the extension's directory password from its
@@ -212,22 +210,7 @@ func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, boo
 // whitespace-only files are Rejections (the 2026-10-01 outage class: an
 // empty secret must fail loudly, never mint a passwordless session).
 func (s *Service) SIPPassword(extension domain.Extension) (string, error) {
-	file, ok := s.cfg.ExtensionPasswordFiles[extension.String()]
-	if !ok || file == "" {
-		return "", errorfamily.NewRejection("userauth.password_file.missing",
-			"no password file configured for extension %q (auth.passkey.extension_password_files)").WithContext("extension", extension.String())
-	}
-	raw, err := os.ReadFile(file)
-	if err != nil {
-		return "", errorfamily.WrapRejection(err, "userauth.password_file.read",
-			"read password file for extension %q (check the secrets pipeline and the secrets-perms grants)").WithContext("extension", extension.String())
-	}
-	password := strings.TrimSpace(string(raw))
-	if password == "" {
-		return "", errorfamily.NewRejection("userauth.password_file.empty",
-			"password file for extension %q is empty").WithContext("extension", extension.String())
-	}
-	return password, nil
+	return s.mapped.SIPPassword(extension)
 }
 
 // Register creates the usermgmt account if it does not exist yet and
