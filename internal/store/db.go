@@ -115,7 +115,7 @@ func (d *Database) Shutdown() error {
 
 // schemaVersion is the version migrate() brings a database to. Bump it
 // when appending a migration step; never renumber or edit shipped steps.
-const schemaVersion = 4
+const schemaVersion = 5
 
 // migration is one versioned schema step. Statements run inside a single
 // transaction: a failure aborts at this version and a retry resumes there
@@ -259,6 +259,37 @@ var migrations = []migration{
 			key   TEXT PRIMARY KEY,
 			value TEXT NOT NULL
 		)`,
+		},
+	},
+	{
+		version: 5,
+		stmts: []string{
+			// Chat-network axis (2026-10-23): threads and messages gain the
+			// network their conversation rides (sms|signal|session|matrix);
+			// every existing row is telephony by definition. SQLite cannot
+			// drop an inline UNIQUE constraint, so the threads table is
+			// rebuilt with the widened key UNIQUE(owner, network, remote) —
+			// the same number can now carry one telephony AND one Signal
+			// conversation. messages denormalize the network like they
+			// already denormalize owner and remote (scan sites need it to
+			// rebuild the typed Address without a join).
+			`ALTER TABLE messages ADD COLUMN network TEXT NOT NULL DEFAULT 'sms'`,
+			`CREATE TABLE threads_v5 (
+			id         TEXT PRIMARY KEY,
+			owner      TEXT NOT NULL,
+			network    TEXT NOT NULL DEFAULT 'sms',
+			remote     TEXT NOT NULL,
+			last_activity_at INTEGER NOT NULL,
+			unread     INTEGER NOT NULL DEFAULT 0,
+			pinned     INTEGER NOT NULL DEFAULT 0,
+			archived   INTEGER NOT NULL DEFAULT 0,
+			muted      INTEGER NOT NULL DEFAULT 0,
+			UNIQUE(owner, network, remote)
+			)`,
+			`INSERT INTO threads_v5 (id, owner, network, remote, last_activity_at, unread, pinned, archived, muted)
+			 SELECT id, owner, 'sms', remote, last_activity_at, unread, pinned, archived, muted FROM threads`,
+			`DROP TABLE threads`,
+			`ALTER TABLE threads_v5 RENAME TO threads`,
 		},
 	},
 }

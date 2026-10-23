@@ -88,13 +88,18 @@ func ParseOutboundStatus(raw string) (OutboundStatus, error) {
 // MustChannel).
 func MustOutboundStatus(raw string) OutboundStatus { return must(ParseOutboundStatus(raw)) }
 
-// Thread is one conversation between an extension and a remote number,
-// keyed by (Owner, Remote). Rows are created on first message and
-// updated on every append — AppendToThread is that rule's one home.
+// Thread is one conversation between an extension and a remote
+// address, keyed by (Owner, Network, Remote). Rows are created on
+// first message and updated on every append — AppendToThread is that
+// rule's one home. The network is immutable at birth: a conversation
+// never migrates networks, every appended message carries its
+// thread's network (AppendToThread adopts it on creation, so the
+// pair cannot disagree).
 type Thread struct {
 	ID             ThreadID
 	Owner          Extension
-	Remote         Phone
+	Network        Network
+	Remote         Address
 	LastActivityAt time.Time
 	Unread         int //nolint:branching-flow // display counter, not identity
 	// Organization flags (M22): three independent axes, never an enum.
@@ -132,12 +137,14 @@ type Attachment struct {
 	Path      string
 }
 
-// Message is a single SMS/MMS inside a thread.
+// Message is a single message inside a thread (SMS/MMS on telephony,
+// or a chat-network message).
 type Message struct {
 	ID            MessageID
 	ThreadID      ThreadID
 	Owner         Extension
-	Remote        Phone
+	Network       Network
+	Remote        Address
 	Direction     Direction
 	Channel       Channel
 	Body          string
@@ -164,11 +171,12 @@ func ChannelOf(attachmentCount int) Channel {
 // row without a lifecycle, a direction that disagrees with the status,
 // a channel that disagrees with the attachments — because direction,
 // channel and status are not parameters: they are consequences.
-func NewOutboundMessage(id MessageID, thread ThreadID, owner Extension, remote Phone, body string, attachmentCount int, at time.Time) Message {
+func NewOutboundMessage(id MessageID, thread ThreadID, owner Extension, remote Address, body string, attachmentCount int, at time.Time) Message {
 	return Message{
 		ID:        id,
 		ThreadID:  thread,
 		Owner:     owner,
+		Network:   remote.Network(),
 		Remote:    remote,
 		Direction: DirectionOutbound,
 		Channel:   ChannelOf(attachmentCount),
@@ -182,11 +190,12 @@ func NewOutboundMessage(id MessageID, thread ThreadID, owner Extension, remote P
 // channel derived from the attachment count, and NO lifecycle — the
 // zero OutboundStatus is the inbound invariant (delivery is a fact),
 // enforced the same way: not a parameter, so not expressible wrong.
-func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Phone, body string, attachmentCount int, at time.Time) Message {
+func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Address, body string, attachmentCount int, at time.Time) Message {
 	return Message{
 		ID:        id,
 		ThreadID:  thread,
 		Owner:     owner,
+		Network:   remote.Network(),
 		Remote:    remote,
 		Direction: DirectionInbound,
 		Channel:   ChannelOf(attachmentCount),
@@ -203,7 +212,8 @@ func NewInboundMessage(id MessageID, thread ThreadID, owner Extension, remote Ph
 // lifecycle (registry 2026-10-05).
 type InboundMessage struct {
 	Owner       Extension
-	From        Phone
+	Network     Network
+	From        Address
 	Body        string
 	Attachments []AttachmentContent
 	ReceivedAt  time.Time

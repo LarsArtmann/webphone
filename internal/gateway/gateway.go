@@ -28,9 +28,11 @@ type OutboundAttachment struct {
 }
 
 // OutboundMessage is one message handed to a gateway for delivery.
+// The address's network selects the gateway: the messaging service
+// routes by it (see messaging.Service.RegisterSender).
 type OutboundMessage struct {
 	Owner       domain.Extension
-	To          domain.Phone
+	To          domain.Address
 	Body        string
 	Attachments []OutboundAttachment
 }

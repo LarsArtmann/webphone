@@ -17,6 +17,10 @@ import (
 // means no local verdict; the gateway decides. detail is the lane's
 // user-facing refusal text (English, operator-greppable like every
 // service reason).
+//
+// The check is telephony-only by construction: the caller gates it on
+// NetworkSMS (an address to one's own DID on a chat network is not this
+// lane's business).
 func SelfSendRejection(
 	identities map[string]string, owner domain.Extension, to domain.Phone, detail string,
 ) *ErrProviderRejected {
