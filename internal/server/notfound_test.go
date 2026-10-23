@@ -39,6 +39,13 @@ func TestUnknownPathsAnswerTheStyledNotFoundPage(t *testing.T) {
 		if !strings.Contains(page, "Back to Messages") {
 			t.Errorf("%s: the way back is missing, got %.200s", path, page)
 		}
+		// The page keeps the island: a stray deep link still lands in the
+		// working app (the SIP stack, the tab chrome), not in a bare error
+		// document. This is the assertion the older shell test carried
+		// before the 404 pins were consolidated here.
+		if !strings.Contains(page, `id="login-view"`) {
+			t.Errorf("%s: the 404 must keep the island shell, got %.200s", path, page)
+		}
 	}
 }
 

@@ -482,26 +482,6 @@ func TestFaviconAnswersBothNames(t *testing.T) {
 	}
 }
 
-func TestNotFoundRendersTheShell(t *testing.T) {
-	c := newClient(t)
-	resp, body := c.do(http.MethodGet, "/nope", nil, "")
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("status = %d, want 404", resp.StatusCode)
-	}
-	page := string(body)
-	// Since the not-found panel landed, the 404 renders the shell around
-	// a path-echoing panel (no reload button: reloading a 404 404s again).
-	if !strings.Contains(page, "wp-notfound") || !strings.Contains(page, "/nope") {
-		t.Errorf("404 body lacks the styled not-found panel: %.200s", page)
-	}
-	if !strings.Contains(page, `id="login-view"`) {
-		t.Errorf("404 body lacks the island shell: %.200s", page)
-	}
-	if !strings.Contains(page, "There is nothing at this address.") {
-		t.Errorf("404 body lacks the English not-found message: %.200s", page)
-	}
-}
-
 // TestServedPageSatisfiesStrictCSP guards the strict-CSP contract: the
 // page serves ZERO inline scripts and script-src allows none — no hashes,
 // no unsafe-inline — so a dependency bump can never silently change
