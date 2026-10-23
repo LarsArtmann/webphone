@@ -115,7 +115,7 @@ type Cursor interface {
 type Receiver struct {
 	client *Client
 	owner  domain.Extension
-	sink   Sink
+	sink   chatloop.Sink
 	cursor Cursor
 	log    *slog.Logger
 }
@@ -138,10 +138,11 @@ func (r *Receiver) Run(ctx context.Context) error {
 		since, err := r.cursor.Load(ctx)
 		if err != nil {
 			r.log.Error("matrix: load sync cursor", "error", err)
-			if !chatloop.Sleep(ctx, backoff) {
+			var alive bool
+			backoff, alive = chatloop.Backoff(ctx, r.log, "matrix: retrying cursor load", err, backoff, 30*time.Second)
+			if !alive {
 				return nil
 			}
-			backoff = chatloop.NextBackoff(backoff, 30*time.Second)
 			continue
 		}
 		timeout := 30 * time.Second
@@ -153,11 +154,11 @@ func (r *Receiver) Run(ctx context.Context) error {
 			if ctx.Err() != nil {
 				return nil //nolint:erraudit // shutdown is the designed exit
 			}
-			r.log.Warn("matrix: sync", "error", err)
-			if !sleepCtx(ctx, backoff) {
+			var alive bool
+			backoff, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, backoff, 30*time.Second)
+			if !alive {
 				return nil
 			}
-			backoff = doubleBackoff(backoff)
 			continue
 		}
 		backoff = time.Second

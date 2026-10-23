@@ -46,11 +46,11 @@ func (r *Receiver) Run(ctx context.Context) error {
 			return nil //nolint:erraudit // shutdown is the designed exit
 		}
 		if err := r.client.Ping(ctx); err != nil {
-			r.log.Warn("signal: daemon unreachable", "error", err)
-			if !chatloop.Sleep(ctx, backoff) {
+			var alive bool
+			backoff, alive = chatloop.Backoff(ctx, r.log, "signal: daemon unreachable", err, backoff, 60*time.Second)
+			if !alive {
 				return nil
 			}
-			backoff = chatloop.NextBackoff(backoff, 60*time.Second)
 			continue
 		}
 		backoff = time.Second

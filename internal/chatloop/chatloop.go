@@ -51,3 +51,14 @@ func Default(log *slog.Logger) *slog.Logger {
 	}
 	return log
 }
+
+// Backoff is the receivers' shared failure step: log the reason, wait
+// out the current backoff, and double it (capped). false means ctx
+// ended during the wait — the caller exits its loop.
+func Backoff(ctx context.Context, log *slog.Logger, message string, err error, wait, max time.Duration) (time.Duration, bool) {
+	log.Warn(message, "error", err)
+	if !Sleep(ctx, wait) {
+		return wait, false
+	}
+	return NextBackoff(wait, max), true
+}
