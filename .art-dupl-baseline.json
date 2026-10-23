@@ -1,17 +1,16 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-18T00:40:59.949130524Z",
+  "recordedAt": "2026-10-23T14:59:31.630216806Z",
   "entries": [
     {
       "hash": "0c8c67c705cc3f0b",
       "files": [
         "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ"
       ],
-      "tokens": 8
+      "tokens": 6
     },
     {
       "hash": "0e31d5301362f440",
@@ -24,6 +23,14 @@
       "tokens": 4
     },
     {
+      "hash": "0e73909cd6a51b04",
+      "files": [
+        "internal/matrix/receiver.go",
+        "internal/matrix/receiver.go"
+      ],
+      "tokens": 8
+    },
+    {
       "hash": "112322f48c9f18a1",
       "files": [
         "internal/web/views/messages.templ",
@@ -31,6 +38,14 @@
         "internal/web/views/settings.templ"
       ],
       "tokens": 3
+    },
+    {
+      "hash": "18bd9d5f2b66e759",
+      "files": [
+        "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ"
+      ],
+      "tokens": 2
     },
     {
       "hash": "1c3686a8f377258d",
@@ -60,9 +75,10 @@
       "hash": "216bf77c8afff11e",
       "files": [
         "internal/server/textagent_api.go",
+        "internal/server/textagent_api.go",
         "internal/server/textagent_api.go"
       ],
-      "tokens": 10
+      "tokens": 15
     },
     {
       "hash": "23d679627738d59a",
@@ -86,12 +102,11 @@
     {
       "hash": "2b0d49d1429850ef",
       "files": [
-        "internal/web/views/enroll.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/layout.templ"
       ],
-      "tokens": 4
+      "tokens": 3
     },
     {
       "hash": "2da16c2a95e10e62",
@@ -106,6 +121,14 @@
       "files": [
         "internal/app/legacy.go",
         "internal/app/legacy.go"
+      ],
+      "tokens": 2
+    },
+    {
+      "hash": "331db2045aede1c5",
+      "files": [
+        "internal/signal/client.go",
+        "internal/paperless/paperless.go"
       ],
       "tokens": 2
     },
@@ -171,6 +194,30 @@
       "tokens": 4
     },
     {
+      "hash": "4ebddc0af69e86e9",
+      "files": [
+        "internal/server/actions.go",
+        "internal/server/actions.go"
+      ],
+      "tokens": 4
+    },
+    {
+      "hash": "507de1a6c654ae78",
+      "files": [
+        "internal/web/views/layout.templ",
+        "internal/web/views/enroll.templ"
+      ],
+      "tokens": 4
+    },
+    {
+      "hash": "5468c76ed1ab72a0",
+      "files": [
+        "internal/matrix/receiver.go",
+        "internal/signal/receiver.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "58acd847e751aa14",
       "files": [
         "internal/web/views/enroll.templ",
@@ -199,10 +246,9 @@
       "hash": "604bb285d366e47f",
       "files": [
         "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ",
         "internal/web/views/phone.templ"
       ],
-      "tokens": 3
+      "tokens": 2
     },
     {
       "hash": "6244acd5a5ec3d22",
@@ -213,23 +259,36 @@
       "tokens": 2
     },
     {
-      "hash": "6ef656f2e2759c97",
+      "hash": "639d99d501842bf9",
+      "files": [
+        "internal/web/views/phone.templ",
+        "internal/web/views/enroll.templ"
+      ],
+      "tokens": 2
+    },
+    {
+      "hash": "652c41d21c5f62dc",
       "files": [
         "internal/web/views/messages.templ",
+        "internal/web/views/fax.templ"
+      ],
+      "tokens": 2
+    },
+    {
+      "hash": "6ef656f2e2759c97",
+      "files": [
         "internal/web/views/voicemail.templ",
         "internal/web/views/layout.templ"
       ],
-      "tokens": 3
+      "tokens": 2
     },
     {
       "hash": "7561d09c6a3f298d",
       "files": [
         "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ",
         "internal/web/views/settings.templ"
       ],
-      "tokens": 4
+      "tokens": 2
     },
     {
       "hash": "7651fca23bba19c5",
@@ -262,11 +321,13 @@
         "internal/web/views/layout.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ",
         "internal/web/views/voicemail.templ",
         "internal/web/views/voicemail.templ",
         "internal/web/views/voicemail.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/fax.templ",
+        "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/fax.templ",
         "internal/web/views/messages.templ",
@@ -277,10 +338,12 @@
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/error.templ",
-        "internal/web/views/fax.templ"
+        "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ",
+        "internal/web/views/error.templ"
       ],
-      "tokens": 36
+      "tokens": 40
     },
     {
       "hash": "78dd46cd10c1b449",
@@ -345,11 +408,9 @@
       "hash": "910c134aaa550a8e",
       "files": [
         "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ",
-        "internal/web/views/layout.templ",
-        "internal/web/views/enroll.templ"
+        "internal/web/views/phone.templ"
       ],
-      "tokens": 4
+      "tokens": 2
     },
     {
       "hash": "95af37c5e3ddf663",
@@ -540,9 +601,10 @@
       "hash": "e48b72c07f9b7247",
       "files": [
         "internal/web/views/phone.templ",
+        "internal/web/views/phone.templ",
         "internal/web/views/phone.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "e66aed7a050c96ba",
@@ -556,9 +618,10 @@
       "hash": "e6714ae6d67509f0",
       "files": [
         "internal/web/views/layout.templ",
+        "internal/web/views/error.templ",
         "internal/web/views/contacts.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "e81c9c157fb2e753",
@@ -573,11 +636,10 @@
       "files": [
         "internal/web/views/fax.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ"
       ],
-      "tokens": 5
+      "tokens": 4
     },
     {
       "hash": "f284a893cb53f85c",
@@ -588,6 +650,14 @@
         "internal/web/views/phone.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "f5e434bba0d6bd74",
+      "files": [
+        "internal/web/views/phone.templ",
+        "internal/web/views/phone.templ"
+      ],
+      "tokens": 2
     },
     {
       "hash": "f66b6a70c5b971f6",
