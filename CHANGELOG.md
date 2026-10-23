@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ring-while-closed push seam (the native-app decision's P2, shipped
+  with the owner go on P1): the optional `push.*` config gates two
+  independent transports — `push.ntfy.{url,token}` (self-hosted ntfy,
+  JSON publish to per-device topics) and `push.fcm.credentials_file`
+  (FCM HTTP v1 via service-account JWT-bearer, no Google SDK, two
+  POSTs of stdlib) — both-or-neither per transport, zero config =
+  byte-identical product (the device API 404s, the ring hook
+  acknowledges inertly). Native shells register their wake address on
+  the new session-gated `/api/push-devices` registry (owner-scoped,
+  8-device cap, re-registration replaces rotated tokens, the list
+  never echoes the token); the stack's FS dialplan rings them all via
+  the shared-secret `POST /hooks/ring` ({owner, from, call_id, state:
+  ring|end} — fire-and-forget 202, dead tokens pruned on the
+  transport's unregistered verdict). Registry: readmodels
+  (`push_devices` collection); senders: `internal/push` with
+  errorfamily codes `push.ntfy_send`, `push.fcm_token`,
+  `push.fcm_send`, `push.transport`, `config.push.*`.
 - Installable as an app (PWA-LITE): the shell links a served
   `manifest.webmanifest` (standalone display, teal theme color, maskable
   192/512 PNG icons + the SVG favicon as any-purpose), so Chrome on

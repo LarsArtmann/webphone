@@ -79,8 +79,14 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   worker stays a NOT-DO (stale cached island = a bug class invisible to
   every gate; offline is impossible for a phone:
   `docs/planning/archived/2026-09-22_17-05_pwa-spike-verdict.md`).
-  Ring-while-closed rides the decision doc's P1 (Android native-call
-  shell + ntfy/FCM push seam) — awaiting owner go.
+  Ring-while-closed: the P2 push seam SHIPPED 2026-10-23 (owner go on
+  P1+P2: `internal/push` ntfy+FCM senders, `/api/push-devices`
+  registry, `/hooks/ring` dialplan lane — zero config = off). The P1
+  Android native-call shell lives in `~/projects/webphone-android`
+  (v0.1 scaffold: SIP UA + WebRTC + Telecom/CallStyle + both push
+  receivers, buildable; device-train testing is the open work). The
+  stack's FS dialplan must POST `/hooks/ring` on inbound calls —
+  consuming-stack work, tracked there.
 - Video calls: SIP.js video negotiation + a `<video>` call card —
   FreeSWITCH side needs a video-capable profile; large surface, only
   on demand.
