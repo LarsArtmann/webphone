@@ -138,6 +138,8 @@ the app which (re)establishes the WSS registration and answers.
   linphone-sdk source, not marketing pages). Note the server executes
   transfers on REFER server-side (FreeSWITCH) — any native stack must
   reproduce the island's NOTIFY sipfrag verdict parsing.
-- **Stream-webrtc-android 16 KB alignment**: claimed aligned at 1.3.10 by
-  a third-party reporter (issue #312, 2026-03); VERIFY per shipped
-  release before pinning.
+- **Stream-webrtc-android 16 KB alignment**: VERIFIED at 1.3.10
+  (2026-10-23, the shell's first assembled debug APK):
+  `zipalign -c -P 16 4 app-debug.apk` PASSES with build-tools 35
+  packaging (the `-P` flag needs build-tools ≥ 35 — a bare 34 install
+  rejects it). Re-verify per release bump.
