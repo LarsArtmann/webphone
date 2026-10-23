@@ -14,9 +14,11 @@ references (`/config.js`, `/assets/vendor/sip.min.js`,
 `/assets/island/app/main.js`, `/htmx.min.js`), the `WebPhone` brand,
 the toast host's live-region attributes (`#toasts` carries
 `role="status" aria-live="polite"`), the durable error slot
-`#wp-tab-error`, and the `htmx-config` meta. The E2E also greps
-served island sources verbatim — see AGENTS.md "The DOM + bundle
-contract".
+`#wp-tab-error`, and the `htmx-config` meta. Unknown paths answer the
+styled 404 (`section.wp-panel.wp-notfound`: the literal 404 in the
+heading, the requested path echoed back, one link home, no
+`data-reload`) while the status stays 404. The E2E also greps served
+island sources verbatim — see AGENTS.md "The DOM + bundle contract".
 
 <!-- dom-contract:begin -->
 

@@ -30,9 +30,11 @@ surfaced candidates stay here, unscheduled:
 `services.telephony.webphone.dashboard` now mounts the go-health dashboard at
 `/health` with the nginx location UNBUFFERED and fenced (operator SSO in
 `forwardAuth` mode, loopback-only otherwise); pbx-artmann sets it. Shipping needs
-the tri-repo order: push the stack, then re-pin it in pbx-artmann, then verify
-`https://pbx.artmann.tech/health` answers 200 after the SSO sign-in. **Priority:**
-High · **Effort:** S.
+the tri-repo order: the stack commit must reach `main` (the daemon pushes it), then
+`nix flake update telephony` in pbx-artmann — which ALSO clears the in-flight
+`webphone.oauth2` option from the SSO session, so that host does not evaluate
+against the old pin — then verify `https://pbx.artmann.tech/health` answers 200
+after the operator sign-in. **Priority:** High · **Effort:** S.
 
 
 ### Catalog representation decision (2026-10-19 — record, no work pending)
