@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -24,11 +24,11 @@ import (
 // homeserver is a scripted Matrix CS-API fake: it records requests and
 // answers from per-endpoint handlers the test installs.
 type homeserver struct {
-	mu       sync.Mutex
-	sends    []sentEvent
+	mu        sync.Mutex
+	sends     []sentEvent
 	creations int
-	direct   map[string][]string
-	t        *testing.T
+	direct    map[string][]string
+	t         *testing.T
 }
 
 type sentEvent struct {
@@ -199,9 +199,9 @@ func (s *sink) Receive(_ context.Context, inbound domain.InboundMessage) (domain
 
 // cursor is an in-memory Cursor.
 type cursor struct {
-	mu     sync.Mutex
-	token  string
-	saved  []string
+	mu    sync.Mutex
+	token string
+	saved []string
 }
 
 func (c *cursor) Load(context.Context) (string, error) { return c.token, nil }

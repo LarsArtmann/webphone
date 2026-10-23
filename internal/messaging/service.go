@@ -43,16 +43,16 @@ func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.R
 // Service wires the message store, blob store, and the per-network
 // outbound senders.
 type Service struct {
-	messages   *store.Messages
-	blobs      *blob.Store
+	messages *store.Messages
+	blobs    *blob.Store
 	// senders routes by the destination address's network: the
 	// telephony gateway under sms (registered by New), chat-network
 	// clients via RegisterSender. A network with no sender is a
 	// Rejection at Send — never a silent drop.
-	senders     map[domain.Network]gateway.MessageGateway
-	onChange    domain.ChangeFunc
-	clock       func() time.Time
-	identities  map[string]string
+	senders    map[domain.Network]gateway.MessageGateway
+	onChange   domain.ChangeFunc
+	clock      func() time.Time
+	identities map[string]string
 }
 
 // selfSendDetail is the local refusal text for a send addressed to the

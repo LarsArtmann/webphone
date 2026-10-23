@@ -209,11 +209,18 @@ a deliberate code change, regenerate:
 | config.gateway.webhook_url                   | Rejection                 | internal/config/config.go          |
 | config.gateway_secret_sources                | Rejection                 | internal/config/config.go          |
 | config.identities                            | Rejection                 | internal/config/config.go          |
+| config.matrix.access_token                   | Rejection                 | internal/config/config.go          |
+| config.matrix.homeserver                     | Rejection                 | internal/config/config.go          |
+| config.matrix.owner                          | Rejection                 | internal/config/config.go          |
+| config.matrix.user_id                        | Rejection                 | internal/config/config.go          |
 | config.paperless.token                       | Rejection                 | internal/config/config.go          |
 | config.paperless.url                         | Rejection                 | internal/config/config.go          |
 | config.retention_days                        | Rejection                 | internal/config/config.go          |
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
 | config.session_ttl                           | Rejection                 | internal/config/config.go          |
+| config.signal.account                        | Rejection                 | internal/config/config.go          |
+| config.signal.owner                          | Rejection                 | internal/config/config.go          |
+| config.signal.socket_path                    | Rejection                 | internal/config/config.go          |
 | config.sip.credential_secret_file            | Rejection                 | internal/config/config.go          |
 | config.sip.credential_secret_sources         | Rejection                 | internal/config/config.go          |
 | config.textagent.secret_file                 | Rejection                 | internal/config/config.go          |
@@ -247,6 +254,18 @@ a deliberate code change, regenerate:
 | gateway.receipt                              | Transient                 | internal/gateway/webhook.go        |
 | gateway.request                              | Infrastructure            | internal/gateway/webhook.go        |
 | gateway.transport                            | Transient                 | internal/gateway/webhook.go        |
+| matrix.attachment_read                       | Infrastructure            | internal/matrix/client.go          |
+| matrix.create_room                           | Infrastructure            | internal/matrix/client.go          |
+| matrix.decode                                | Infrastructure, Transient | internal/matrix/client.go          |
+| matrix.download                              | Rejection, Transient      | internal/matrix/client.go          |
+| matrix.empty                                 | Rejection                 | internal/matrix/client.go          |
+| matrix.encode                                | Rejection                 | internal/matrix/client.go          |
+| matrix.mxc                                   | Rejection                 | internal/matrix/client.go          |
+| matrix.network                               | Rejection                 | internal/matrix/client.go          |
+| matrix.request                               | Infrastructure, Transient | internal/matrix/client.go          |
+| matrix.send                                  | Infrastructure            | internal/matrix/client.go          |
+| matrix.token                                 | Rejection                 | internal/matrix/client.go          |
+| matrix.upload                                | Infrastructure, Transient | internal/matrix/client.go          |
 | messaging.sender_register                    | Rejection                 | internal/messaging/service.go      |
 | messaging.verdict                            | Rejection                 | internal/messaging/service.go      |
 | pbx.decode                                   | Transient                 | internal/pbx/client.go             |
@@ -293,6 +312,14 @@ a deliberate code change, regenerate:
 | session.sweep                                | Infrastructure            | internal/session/sqlite.go         |
 | session.token                                | Infrastructure            | internal/session/service.go        |
 | session.ttl                                  | Infrastructure            | internal/session/sqlite.go         |
+| signal.attachment_read                       | Infrastructure            | internal/signal/client.go          |
+| signal.connect                               | Transient                 | internal/signal/client.go          |
+| signal.decode                                | Infrastructure            | internal/signal/client.go          |
+| signal.encode                                | Rejection                 | internal/signal/client.go          |
+| signal.network                               | Rejection                 | internal/signal/client.go          |
+| signal.rpc                                   | Rejection                 | internal/signal/client.go          |
+| signal.send                                  | Infrastructure            | internal/signal/client.go          |
+| signal.write                                 | Infrastructure, Transient | internal/signal/client.go          |
 | sso.attempt.missing                          | Rejection                 | internal/server/sso_api.go         |
 | sso.claims                                   | Rejection                 | internal/sso/sso.go                |
 | sso.client_id                                | Rejection                 | internal/sso/sso.go                |

@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
-	"github.com/samber/do/v2"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/matrix"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/signal"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/samber/do/v2"
 )
 
 // chatBootTimeout bounds the boot-time reachability checks below; it

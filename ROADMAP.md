@@ -72,11 +72,15 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 - Retention/cleanup job: SHIPPED — `retention_days` (T25) deletes
   messages+attachments, faxes+documents and emptied threads on a daily
   sweep; sessions were already covered by the store's own expiry sweep.
-- PWA: RESOLVED 2026-09-22 — the service worker is a NOT-DO (stale
-  cached island = a bug class invisible to every gate; offline is
-  impossible for a phone: `docs/planning/archived/2026-09-22_17-05_pwa-spike-verdict.md`).
-  Parked behind an owner demand signal: manifest-LITE only (manifest
-  - maskable PNG icons, NO fetch interception, zero staleness risk).
+- PWA: manifest-LITE SHIPPED 2026-10-23 — the owner demand signal
+  landed with the native Linux + Android 16 app decision
+  (`docs/planning/2026-10-23_16-13_native-app-platform-decision.md`):
+  manifest + maskable icons + head link, NO service worker. The service
+  worker stays a NOT-DO (stale cached island = a bug class invisible to
+  every gate; offline is impossible for a phone:
+  `docs/planning/archived/2026-09-22_17-05_pwa-spike-verdict.md`).
+  Ring-while-closed rides the decision doc's P1 (Android native-call
+  shell + ntfy/FCM push seam) — awaiting owner go.
 - Video calls: SIP.js video negotiation + a `<video>` call card —
   FreeSWITCH side needs a video-capable profile; large surface, only
   on demand.

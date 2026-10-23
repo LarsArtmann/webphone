@@ -15,8 +15,8 @@ import (
 // cursor, global account data (m.direct DM map), and the joined rooms'
 // timelines.
 type syncResponse struct {
-	NextBatch    string `json:"next_batch"`
-	AccountData  struct {
+	NextBatch   string `json:"next_batch"`
+	AccountData struct {
 		Events []accountDataEvent `json:"events"`
 	} `json:"account_data"`
 	Rooms struct {

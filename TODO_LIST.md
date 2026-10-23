@@ -10,6 +10,32 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Chat networks follow-ups (2026-10-23 train — matrix + signal shipped, session deferred)
+
+Foundation (network axis + sender registry + receivers) and both shippable lanes
+landed (`internal/matrix`, `internal/signal`, store v5, config gates, Settings rows;
+plan + research evidence:
+[docs/planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html](docs/planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html)).
+Remaining, unscheduled:
+
+- **Session messenger: NO-GO** (researched at source: no Go library anywhere, no
+  official headless daemon/bot API; `libsession-util` is C++ config-layer only;
+  the community `session.js` is Bun + bus-factor 1). Reopen ONLY on a named
+  trigger: (a) an official/foundation headless API, (b) a maintained Go
+  implementation, (c) an owner call accepting a research-grade `session.js`
+  sidecar (then the stack repo owns the service first). **Priority:** parked ·
+  **Effort:** n/a until a trigger fires.
+- **Stack deployment work** (nix-international-telephony repo, NOT this one):
+  signal-cli systemd unit (nixpkgs 0.14.9, `daemon --socket`, linked-device QR
+  bootstrap ritual, 3-month freshness watch) + matrix homeserver choice/config;
+  both feed webphone via `settings`/`environmentFile` — no webphone module
+  change required. Served-markup changes (network prefix rows) owe the standing
+  stack browser E2E on the next relock. **Priority:** Medium · **Effort:** M.
+- **Lane v2 fences**: matrix group rooms + read receipts (`m.read` → delivered),
+  matrix E2EE (needs olm/megolm — big), signal inbound attachments (signal-cli
+  side plumbing), signal groups, compose-new-DM affordance for chat networks
+  (v1: chat threads are born inbound). **Priority:** Low · **Effort:** M each.
+
 ### go-appkit audit follow-ups (2026-10-23 — audit done, two candidates open)
 
 go-appkit itself is DECLINED per module (report:

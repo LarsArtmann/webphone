@@ -567,14 +567,14 @@ func TestStaticAssetsServe(t *testing.T) {
 		// keep letters exactly like domain.sanitizeDialable (see
 		// TestParsePhoneSanitizesLikeTheIsland). Grepping the literal pins
 		// a one-sided regex drift at build time.
-		"/assets/island/app/calls.js":  "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
-		"/assets/island/app/panels.js": "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
-		"/assets/island/style.css":     "#wp-sse-live",
-		"/assets/vendor/sip.min.js":    "UserAgent",
-		"/config.js":                   "window.PBX_CONFIG",
-		"/favicon.svg":                 "<svg",
-		"/assets/island/icon-192.png":  "\x89PNG\r\n\x1a\n",
-		"/assets/island/icon-512.png":  "\x89PNG\r\n\x1a\n",
+		"/assets/island/app/calls.js":      "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
+		"/assets/island/app/panels.js":     "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
+		"/assets/island/style.css":         "#wp-sse-live",
+		"/assets/vendor/sip.min.js":        "UserAgent",
+		"/config.js":                       "window.PBX_CONFIG",
+		"/favicon.svg":                     "<svg",
+		"/assets/island/icon-192.png":      "\x89PNG\r\n\x1a\n",
+		"/assets/island/icon-512.png":      "\x89PNG\r\n\x1a\n",
 		"/assets/island/icon-maskable.svg": "<svg",
 	} {
 		resp, body := c.do(http.MethodGet, path, nil, "")
@@ -605,11 +605,11 @@ func TestManifestAnswersInstallabilityContract(t *testing.T) {
 		t.Errorf("manifest content-type %q, want application/manifest+json", ct)
 	}
 	var m struct {
-		Name      string `json:"name"`
-		StartURL  string `json:"start_url"`
-		Display   string `json:"display"`
+		Name       string `json:"name"`
+		StartURL   string `json:"start_url"`
+		Display    string `json:"display"`
 		ThemeColor string `json:"theme_color"`
-		Icons     []struct {
+		Icons      []struct {
 			Src     string `json:"src"`
 			Type    string `json:"type"`
 			Purpose string `json:"purpose"`

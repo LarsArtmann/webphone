@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Installable as an app (PWA-LITE): the shell links a served
+  `manifest.webmanifest` (standalone display, teal theme color, maskable
+  192/512 PNG icons + the SVG favicon as any-purpose), so Chrome on
+  Android offers home-screen install and desktop Chrome/Edge installs it
+  as a standalone window with a dock/taskbar entry. No service worker —
+  the 2026-09-22 verdict stands (a stale cached island is a bug class
+  invisible to every gate; offline is impossible for a phone).
+- Chat-network conversations in the Messages tab: threads carry a typed
+  network axis (`sms` since ever, plus `signal`, `session`, `matrix`) and
+  a network-validated remote address; the same number can now hold one
+  telephony AND one Signal conversation (store migration v5 widens the
+  thread key). The messaging service routes outbound by network through
+  a sender registry, and two new optional lanes ship behind config gates,
+  both OFF by default (zero config = byte-identical product):
+  - `matrix.*` — a thin stdlib Client-Server API client (no SDK): DM
+    text both ways, media upload/download, encrypted rooms and non-DM
+    rooms skipped loudly, sync cursor persisted in app_flags.
+  - `signal.*` — a JSON-RPC client over a local signal-cli daemon unix
+    socket: DM text outbound with data-URI attachments, delivery/read
+    receipts flip the status badge live, groups skipped loudly (v1).
+  Thread rows/heads show a network prefix for chat conversations; dial
+  affordances render for SMS threads only; reply and retry derive the
+  destination from the stored thread, never from client strings.
+- Session messenger: researched and DECLINED for now — no Go library, no
+  official headless path (verdict + reopen triggers in the chat-networks
+  plan doc and TODO_LIST).
 - The AI-drafts panel now owns the agent's auto-reply mode: a selector
   pins `off` / `drafts` / `after-hours` / `full` through the new
   `POST /messages/drafts/mode` route (the agent persists the override

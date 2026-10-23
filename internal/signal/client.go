@@ -12,8 +12,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json/v2"
 	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"log/slog"
@@ -54,21 +54,21 @@ type Client struct {
 // and receipt messages (delivery/read acknowledgements of OUR send
 // timestamps, which are exactly our provider refs).
 type Envelope struct {
-	Source     string `json:"source"`
-	SourceUuid string `json:"sourceUuid"`
-	Timestamp  int64  `json:"timestamp"`
+	Source      string `json:"source"`
+	SourceUuid  string `json:"sourceUuid"`
+	Timestamp   int64  `json:"timestamp"`
 	DataMessage *struct {
-		Message     string `json:"message"`
-		Timestamp   int64  `json:"timestamp"`
-		GroupInfo   *struct {
+		Message   string `json:"message"`
+		Timestamp int64  `json:"timestamp"`
+		GroupInfo *struct {
 			GroupId string `json:"groupId"`
 		} `json:"groupInfo"`
 	} `json:"dataMessage"`
 	ReceiptMessage *struct {
-		When        int64   `json:"when"`
-		IsDelivery  bool    `json:"isDelivery"`
-		IsRead      bool    `json:"isRead"`
-		Timestamps  []int64 `json:"timestamps"`
+		When       int64   `json:"when"`
+		IsDelivery bool    `json:"isDelivery"`
+		IsRead     bool    `json:"isRead"`
+		Timestamps []int64 `json:"timestamps"`
 	} `json:"receiptMessage"`
 }
 
@@ -240,13 +240,13 @@ func (c *Client) readLoop(conn net.Conn) {
 			continue
 		}
 		var msg struct {
-			ID     string          `json:"id"`
+			ID     string         `json:"id"`
 			Result jsontext.Value `json:"result"`
 			Error  *struct {
 				Message string `json:"message"`
 				Code    int    `json:"code"`
 			} `json:"error"`
-			Method string          `json:"method"`
+			Method string         `json:"method"`
 			Params jsontext.Value `json:"params"`
 		}
 		if err := json.Unmarshal(line, &msg); err != nil {

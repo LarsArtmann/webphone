@@ -345,12 +345,11 @@ func classify(resp *http.Response, code string) error {
 	if shape.ErrCode != "" {
 		detail = shape.ErrCode + ": " + detail
 	}
-	switch {
-	case resp.StatusCode == http.StatusTooManyRequests:
-		return errorfamily.NewTransient(code+".rate_limited", "matrix: "+detail)
-	case resp.StatusCode >= 500:
-		return errorfamily.NewTransient(code, "matrix: "+detail)
-	default:
-		return errorfamily.NewRejection(code, "matrix: "+detail)
+	// The message rides a variable so the registry scanner reads the
+	// CODE argument, not the seam prefix inside the message literal.
+	message := "matrix: " + detail
+	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+		return errorfamily.NewTransient(code, message)
 	}
+	return errorfamily.NewRejection(code, message)
 }
