@@ -332,9 +332,9 @@ a deliberate code change, regenerate:
 | userauth.enroll.userid                       | Corruption                | internal/userauth/enroll.go        |
 | userauth.passkey.bad_id                      | Rejection                 | internal/userauth/userauth.go      |
 | userauth.passkey.unmapped                    | Rejection                 | internal/userauth/userauth.go      |
-| userauth.password_file.empty                 | Rejection                 | internal/userauth/userauth.go      |
-| userauth.password_file.missing               | Rejection                 | internal/userauth/userauth.go      |
-| userauth.password_file.read                  | Rejection                 | internal/userauth/userauth.go      |
+| authmap.password_file.empty                  | Rejection                 | internal/authmap/authmap.go        |
+| authmap.password_file.missing                | Rejection                 | internal/authmap/authmap.go        |
+| authmap.password_file.read                   | Rejection                 | internal/authmap/authmap.go        |
 | userauth.register.exists_unreadable          | Infrastructure            | internal/userauth/userauth.go      |
 | userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go      |
 | webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go  |

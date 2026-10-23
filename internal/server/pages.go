@@ -153,13 +153,13 @@ func (h *handlers) partialSettings(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, views.TabSettings)
 }
 
-// notFoundPage renders unknown paths as the shell around an error panel —
-// error-page parity with the pre-templ-components era: a stray deep link
-// gets the app chrome and the reload affordance instead of Go's bare
-// "404 page not found" text. The status stays 404 so probers, crawlers
-// and the smoke suite's stale-token probe all keep reading the truth.
+// notFoundPage renders unknown paths as the shell around the not-found
+// panel: a stray deep link gets the app chrome, the literal 404, the path
+// it asked for and a way back, instead of Go's bare "404 page not found"
+// text. The status stays 404 so probers, crawlers and the smoke suite's
+// stale-token probe all keep reading the truth.
 // (Handler-level 500s mid-render keep http.Error by necessity — bytes may
-// already be on the wire; store failures render this same panel inside
+// already be on the wire; store failures render the error panel inside
 // the shell via tabComponent's error path.)
 func (h *handlers) notFoundPage(w http.ResponseWriter, r *http.Request) {
 	lang := h.lang(r)
@@ -167,9 +167,12 @@ func (h *handlers) notFoundPage(w http.ResponseWriter, r *http.Request) {
 		ActiveTab:  views.TabMessages,
 		Lang:       lang,
 		CSRFToken:  csrfToken(r),
-		TabContent: views.ErrorPanel(views.T(lang, "error.notfound"), lang),
+		TabContent: views.NotFoundPanel(r.URL.Path, lang),
 	}
 	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
+	// The requested path is echoed into the page; keep a crafted one from
+	// being cached as a permanent answer under a shared CDN key.
+	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
 	if err := views.Shell(props).Render(r.Context(), w); err != nil {

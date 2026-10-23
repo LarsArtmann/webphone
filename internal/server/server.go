@@ -468,6 +468,14 @@ func New(deps Deps) http.Handler {
 	if deps.Dashboard != nil {
 		open.Handle("/health", deps.Dashboard)
 		open.Handle("/health/", deps.Dashboard)
+	} else {
+		// Dashboard off: BOTH patterns must still answer with the styled
+		// page. Without this "/health" reached the protected catch-all
+		// (styled) while "/health/" fell through the open mux into the
+		// stdlib's bare-text default, so one absent feature had two
+		// different 404s depending on a trailing slash.
+		open.HandleFunc("/health", h.notFoundPage)
+		open.HandleFunc("/health/", h.notFoundPage)
 	}
 	open.Handle("GET /version", versionHandler())
 	open.HandleFunc("GET /openapi.json", openapiHandler)

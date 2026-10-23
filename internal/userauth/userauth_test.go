@@ -282,7 +282,7 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 	if err == nil {
 		t.Fatal("empty password file must reject")
 	}
-	errorfamilytest.AssertCode(t, err, "userauth.password_file.empty")
+	errorfamilytest.AssertCode(t, err, "authmap.password_file.empty")
 
 	// Unreadable file: perms reject with the read code. (WriteFile does
 	// not change an existing file's mode — Chmod is the honest lever.)
@@ -297,7 +297,7 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 	if err == nil {
 		t.Fatal("unreadable password file must reject")
 	}
-	errorfamilytest.AssertCode(t, err, "userauth.password_file.read")
+	errorfamilytest.AssertCode(t, err, "authmap.password_file.read")
 
 	// Unmapped extension: no file configured at all.
 	otherExt := domain.MustParseExtension("1009")
@@ -305,7 +305,7 @@ func TestSIPPasswordFailsClosedOnEveryBadState(t *testing.T) {
 	if err == nil {
 		t.Fatal("extension without a configured file must reject")
 	}
-	errorfamilytest.AssertCode(t, err, "userauth.password_file.missing")
+	errorfamilytest.AssertCode(t, err, "authmap.password_file.missing")
 }
 
 func TestResolveIsCaseAndWhitespaceInsensitive(t *testing.T) {

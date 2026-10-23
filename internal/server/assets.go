@@ -63,6 +63,17 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/health.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "health.css", "text/css; charset=utf-8")
 	})
+	// A miss inside the asset subtree: browser navigations get the app's
+	// own 404 (a hand-typed or stale asset URL should not drop the user
+	// onto stdlib text), while fetches keep the terse answer — a body no
+	// client renders is bandwidth spent for nothing.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/html") {
+			h.notFoundPage(w, r)
+			return
+		}
+		http.NotFound(w, r)
+	})
 	// Revalidate-always + content ETag + scoped gzip: a repeat visit skips
 	// the payload transfer (304) while a redeploy is still picked up on the
 	// next request. gzip wraps ONLY this static subtree — /events must stay

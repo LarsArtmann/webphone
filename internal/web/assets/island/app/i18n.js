@@ -98,6 +98,21 @@ export const I18N = {
     passkeyFinishFailed: (status) =>
       `Passkey verification failed (HTTP ${status}).`,
     passkeyNetFailed: "Passkey sign-in failed — network error.",
+    ssoSection: "Sign in with Pocket ID",
+    ssoSignin: "Continue to Pocket ID",
+    ssoPasskeyHint:
+      "Passkeys and every other sign-in method your account has work in Pocket ID.",
+    ssoErrorUnmapped:
+      "Your Pocket ID account has no phone mapping here — ask the operator to add your email address.",
+    ssoErrorUnverified:
+      "Your Pocket ID email is not verified — verify it in Pocket ID, then try again.",
+    ssoErrorStale: "That sign-in attempt expired — please start again.",
+    ssoErrorConfig:
+      "Sign-in is not configured correctly on the server — the operator finds the details in the journal.",
+    ssoErrorUnavailable:
+      "Pocket ID is not reachable right now — try again in a minute, or use extension and password.",
+    ssoErrorFailed:
+      "Sign-in with Pocket ID failed — try again, or use extension and password.",
     enrollVerified: (email) =>
       `Token verified for ${email}. Follow your device to create the passkey.`,
     enrollSuccess: "Passkey created. Go to the main page and sign in with it.",
@@ -186,6 +201,22 @@ export const I18N = {
     passkeyFinishFailed: (status) =>
       `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
     passkeyNetFailed: "Passkey-Anmeldung fehlgeschlagen — Netzwerkfehler.",
+    ssoSection: "Mit Pocket ID anmelden",
+    ssoSignin: "Weiter zu Pocket ID",
+    ssoPasskeyHint:
+      "Passkeys und alle anderen Anmeldeverfahren Ihres Kontos funktionieren in Pocket ID.",
+    ssoErrorUnmapped:
+      "Ihr Pocket ID-Konto hat hier keine Telefon-Zuordnung — bitten Sie den Betreiber, Ihre E-Mail-Adresse einzutragen.",
+    ssoErrorUnverified:
+      "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
+    ssoErrorStale:
+      "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
+    ssoErrorConfig:
+      "Die Anmeldung ist serverseitig nicht korrekt konfiguriert — der Betreiber findet die Details im Journal.",
+    ssoErrorUnavailable:
+      "Pocket ID ist gerade nicht erreichbar — versuchen Sie es in einer Minute erneut oder nutzen Sie Nebenstelle und Passwort.",
+    ssoErrorFailed:
+      "Anmeldung mit Pocket ID fehlgeschlagen — erneut versuchen oder Nebenstelle und Passwort verwenden.",
     enrollVerified: (email) =>
       `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
     enrollSuccess:
