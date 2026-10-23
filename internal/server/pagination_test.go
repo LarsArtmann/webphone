@@ -16,7 +16,7 @@ func TestThreadPaginationLoadsOlderPages(t *testing.T) {
 	c := signIn(t, server)
 
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	ctx := context.Background()
 	base := time.Now().Add(-time.Hour)
 

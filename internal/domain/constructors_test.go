@@ -15,7 +15,7 @@ var constructorAt = time.Unix(1760000000, 0)
 func TestMessageConstructorsMakeIllegalPairsUnbuildable(t *testing.T) {
 	out := NewOutboundMessage(
 		GenerateMessageID(), GenerateThreadID(),
-		MustParseExtension("1001"), MustParsePhone("+441632960961"),
+		MustParseExtension("1001"), MustParseAddress(NetworkSMS, "+441632960961"),
 		"hi", 2, constructorAt,
 	)
 	if out.Direction != DirectionOutbound || out.Status != StatusQueued || out.Channel != ChannelMMS {
@@ -24,7 +24,7 @@ func TestMessageConstructorsMakeIllegalPairsUnbuildable(t *testing.T) {
 
 	in := NewInboundMessage(
 		GenerateMessageID(), GenerateThreadID(),
-		MustParseExtension("1001"), MustParsePhone("+441632960961"),
+		MustParseExtension("1001"), MustParseAddress(NetworkSMS, "+441632960961"),
 		"hi", 0, constructorAt,
 	)
 	if in.Direction != DirectionInbound || in.Status != "" || in.Channel != ChannelSMS {
@@ -33,12 +33,12 @@ func TestMessageConstructorsMakeIllegalPairsUnbuildable(t *testing.T) {
 }
 
 func TestFaxConstructorsPinBirthStates(t *testing.T) {
-	out := NewOutboundFaxJob(GenerateFaxID(), MustParseExtension("1001"), MustParsePhone("+441632960961"), "faxes/x.pdf", constructorAt)
+	out := NewOutboundFaxJob(GenerateFaxID(), MustParseExtension("1001"), MustParseAddress(NetworkSMS, "+441632960961"), "faxes/x.pdf", constructorAt)
 	if out.Direction != FaxOutbound || out.Status != FaxQueued || !out.CreatedAt.Equal(out.UpdatedAt) {
 		t.Errorf("outbound fax ctor: %s/%s, want out/queued with equal birth stamps", out.Direction, out.Status)
 	}
 
-	in := NewInboundFaxJob(GenerateFaxID(), MustParseExtension("1001"), MustParsePhone("+441632960961"), "faxes/y.pdf", "ref-7", 3, constructorAt)
+	in := NewInboundFaxJob(GenerateFaxID(), MustParseExtension("1001"), MustParseAddress(NetworkSMS, "+441632960961"), "faxes/y.pdf", "ref-7", 3, constructorAt)
 	if in.Direction != FaxInbound || in.Status != FaxReceived || in.Pages != 3 || in.ProviderRef != "ref-7" {
 		t.Errorf("inbound fax ctor: %s/%s pages=%d ref=%q, want in/received/3/ref-7", in.Direction, in.Status, in.Pages, in.ProviderRef)
 	}

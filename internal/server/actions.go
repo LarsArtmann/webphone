@@ -51,9 +51,35 @@ func attachmentMimeType(fh *multipart.FileHeader, content []byte) string {
 
 // sendMessage handles the composer forms (new conversation and reply).
 func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
-	sess, to, ok := h.requireMultipartTo(w, r, views.TabMessages, "err.invalidTo")
+	sess, ok := h.requireSessionMultipart(w, r)
 	if !ok {
 		return
+	}
+
+	// The destination is derived, never trusted: a reply addresses its
+	// own thread's stored remote (any network); a new conversation is
+	// telephony — the compose form's number field is the sms lane.
+	threadParam := r.URL.Query().Get("thread")
+	var to domain.Address
+	if threadParam != "" {
+		threadID, err := domain.ParseThreadID(threadParam)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		thread, err := h.deps.Messaging.ResolveThread(r.Context(), sess.Extension, threadID)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		to = thread.Remote
+	} else {
+		parsed, err := domain.ParseAddress(domain.NetworkSMS, r.FormValue("to"))
+		if err != nil {
+			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.invalidTo"))
+			return
+		}
+		to = parsed
 	}
 
 	uploads := make([]domain.AttachmentContent, 0)
@@ -85,7 +111,6 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Reply keeps the thread open; a new conversation returns to the list.
-	threadParam := r.URL.Query().Get("thread")
 	if threadParam != "" {
 		threadID, err := domain.ParseThreadID(threadParam)
 		if err != nil {

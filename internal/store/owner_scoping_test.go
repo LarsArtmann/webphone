@@ -31,7 +31,7 @@ func newOwnerScopeFixture(t *testing.T) *ownerScopeFixture {
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	foreign := domain.MustParseExtension("1002")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
 	threadID, err := messages.FindThread(ctx, owner, remote, now)

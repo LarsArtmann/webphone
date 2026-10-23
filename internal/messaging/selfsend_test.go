@@ -46,7 +46,7 @@ func TestSendToOwnNumberIsRefusedLocally(t *testing.T) {
 	svc, gw := newSelfSendService(t, map[string]string{"100": "+15550001111"})
 
 	msg, err := svc.Send(context.Background(),
-		domain.MustParseExtension("100"), domain.MustParsePhone("+15550001111"), "to myself", nil)
+		domain.MustParseExtension("100"), domain.MustParseAddress(domain.NetworkSMS, "+15550001111"), "to myself", nil)
 
 	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 	if gw.calls != 0 {
@@ -70,7 +70,7 @@ func TestSendToOwnNumberMatchesSanitizedDID(t *testing.T) {
 	svc, gw := newSelfSendService(t, map[string]string{"100": "+1 (555) 000-1111"})
 
 	_, err := svc.Send(context.Background(),
-		domain.MustParseExtension("100"), domain.MustParsePhone("+15550001111"), "still myself", nil)
+		domain.MustParseExtension("100"), domain.MustParseAddress(domain.NetworkSMS, "+15550001111"), "still myself", nil)
 
 	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 	if gw.calls != 0 {
@@ -90,7 +90,7 @@ func TestSendWithoutIdentitiesSkipsTheGuard(t *testing.T) {
 			svc, gw := newSelfSendService(t, identities)
 
 			msg, err := svc.Send(context.Background(),
-				domain.MustParseExtension("100"), domain.MustParsePhone("+15550001111"), "free to try", nil)
+				domain.MustParseExtension("100"), domain.MustParseAddress(domain.NetworkSMS, "+15550001111"), "free to try", nil)
 
 			if err != nil {
 				t.Fatalf("guard fired without an identity for this owner: %v", err)

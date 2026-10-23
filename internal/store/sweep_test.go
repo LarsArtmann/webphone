@@ -20,13 +20,13 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	now := time.Now()
 	old := now.Add(-48 * time.Hour)
 
-	oldThread, err := messages.FindThread(ctx, owner, domain.MustParsePhone("+441632960961"), old)
+	oldThread, err := messages.FindThread(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), old)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := messages.AppendMessage(ctx, domain.Message{
 		ID: domain.GenerateMessageID(), ThreadID: oldThread, Owner: owner,
-		Remote:    domain.MustParsePhone("+441632960961"),
+		Remote:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
 		Body: "old one", Status: domain.StatusSent, ProviderRef: "old-ref",
 		CreatedAt: old,
@@ -38,13 +38,13 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	liveThread, err := messages.FindThread(ctx, owner, domain.MustParsePhone("+441632960977"), now)
+	liveThread, err := messages.FindThread(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960977"), now)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := messages.AppendMessage(ctx, domain.Message{
 		ID: domain.GenerateMessageID(), ThreadID: liveThread, Owner: owner,
-		Remote:    domain.MustParsePhone("+441632960977"),
+		Remote:    domain.MustParseAddress(domain.NetworkSMS, "+441632960977"),
 		Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
 		Body: "keep me", Status: domain.StatusSent,
 		CreatedAt: now,

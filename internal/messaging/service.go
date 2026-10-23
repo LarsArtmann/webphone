@@ -229,6 +229,15 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	return msg, nil
 }
 
+// ResolveThread loads one thread row scoped to the owner — the reply
+// composer's address source: the destination is derived from the stored
+// thread, never from a client-supplied string.
+func (s *Service) ResolveThread(
+	ctx context.Context, owner domain.Extension, id domain.ThreadID,
+) (domain.Thread, error) {
+	return s.messages.GetThread(ctx, owner, id)
+}
+
 // Threads lists the owner's threads for the sidebar.
 func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
 	return s.messages.ListThreads(ctx, owner)

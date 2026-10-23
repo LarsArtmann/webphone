@@ -14,7 +14,7 @@ func newThreadFixture() (Thread, Message) {
 	thread := Thread{
 		ID:             GenerateThreadID(),
 		Owner:          MustParseExtension("100"),
-		Remote:         MustParsePhone("+15550001111"),
+		Remote:         MustParseAddress(NetworkSMS, "+15550001111"),
 		LastActivityAt: older,
 		Unread:         2,
 		Archived:       true,

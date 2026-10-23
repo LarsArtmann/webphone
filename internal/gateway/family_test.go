@@ -26,7 +26,7 @@ func postProbe(t *testing.T, gw *Webhook, attachments ...OutboundAttachment) err
 	t.Helper()
 	_, err := gw.SendMessage(context.Background(), OutboundMessage{
 		Owner:       domain.MustParseExtension("1001"),
-		To:          domain.MustParsePhone("+441632960961"),
+		To:          domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Body:        "family probe",
 		Attachments: attachments,
 	})

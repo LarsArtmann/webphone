@@ -284,8 +284,10 @@ func (h *Handlers) hookFax(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The fax lane is telephony-only: the sms-parsed address round-trips
+	// through the same dialable rule, so the phone parse cannot fail.
 	if _, err := h.fax.Receive(r.Context(), domain.InboundFax{
-		Owner: owner, From: from, Pages: payload.count(), PDFBytes: pdf,
+		Owner: owner, From: domain.MustParsePhone(from.String()), Pages: payload.count(), PDFBytes: pdf,
 		Received: time.Now(), ProviderRef: payload.ProviderRef,
 	}); err != nil {
 		webhookFail(w, "fax-store", err)

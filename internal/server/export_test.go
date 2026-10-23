@@ -54,7 +54,7 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 	c := signIn(t, server)
 
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	ctx := context.Background()
 
 	threadID, err := server.messages.FindThread(ctx, owner, remote, time.Now())
@@ -69,7 +69,7 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := server.faxes.Create(ctx, domain.FaxJob{
-		ID: domain.GenerateFaxID(), Owner: owner, Remote: remote,
+		ID: domain.GenerateFaxID(), Owner: owner, Remote: domain.MustParsePhone(remote.String()),
 		Direction: domain.FaxOutbound, Status: domain.FaxTransmitted, Pages: 2,
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}); err != nil {

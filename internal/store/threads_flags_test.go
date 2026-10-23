@@ -45,7 +45,7 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID := seedThread(t, messages, owner, remote)
 
 	for _, flag := range []ThreadFlag{FlagPinned, FlagArchived, FlagMuted} {
@@ -93,7 +93,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remoteA := domain.MustParsePhone("+441632960961")
-	remoteB := domain.MustParsePhone("+441632960962")
+	remoteB := domain.MustParseAddress(domain.NetworkSMS("+441632960962")
 	threadA := seedThread(t, messages, owner, remoteA)
 	seedThread(t, messages, owner, remoteB)
 
@@ -166,7 +166,7 @@ func TestPinnedOrdering(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remoteOld := domain.MustParsePhone("+441632960961")
+	remoteOld := domain.MustParseAddress(domain.NetworkSMS("+441632960961")
 	remoteNew := domain.MustParsePhone("+441632960962")
 	oldID := seedThread(t, messages, owner, remoteOld)
 	seedThread(t, messages, owner, remoteNew)
@@ -200,7 +200,7 @@ func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID := seedThread(t, messages, owner, remote)
 
 	if err := messages.SetThreadFlag(ctx, owner, threadID, FlagPinned, true); err != nil {

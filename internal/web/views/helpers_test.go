@@ -66,11 +66,11 @@ func TestAvatarHueStableAndBounded(t *testing.T) {
 }
 
 func TestIsSelfThread(t *testing.T) {
-	remote := domain.MustParsePhone("+17287289311")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+17287289311")
 	cases := []struct {
 		name     string
 		identity string
-		remote   domain.Phone
+		remote   domain.Address
 		want     bool
 	}{
 		{"match", "+17287289311", remote, true},

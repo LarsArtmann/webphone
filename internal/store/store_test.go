@@ -16,7 +16,7 @@ func TestListMessagesFansAttachmentsOutInOnePass(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
 	threadID, err := messages.FindThread(ctx, owner, remote, now)
@@ -76,7 +76,7 @@ func TestMessageLifecycle(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
 	threadID, err := messages.FindThread(ctx, owner, remote, now)
@@ -192,7 +192,7 @@ func TestAppendWithoutPriorThread(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	msg := domain.Message{
 		ID: domain.GenerateMessageID(), ThreadID: domain.GenerateThreadID(),
 		Owner: owner, Remote: remote,
@@ -220,7 +220,7 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID, _ := messages.FindThread(ctx, owner, remote, time.Now())
 
 	msg := domain.Message{
@@ -258,7 +258,7 @@ func TestMessageProviderRefUniqueness(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remote := domain.MustParsePhone("+441632960961")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
 	threadID, err := messages.FindThread(ctx, owner, remote, now)
@@ -295,7 +295,7 @@ func TestSearchThreads(t *testing.T) {
 
 	// Thread one: the match lives in an OLDER message body, not the
 	// preview — the search must scan every message, not just the last.
-	first := domain.MustParsePhone("+441632960961")
+	first := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	firstID, err := messages.FindThread(ctx, owner, first, time.Now())
 	if err != nil {
 		t.Fatal(err)
@@ -317,7 +317,7 @@ func TestSearchThreads(t *testing.T) {
 	}
 
 	// Thread two: matches only by remote number.
-	second := domain.MustParsePhone("+491601234567")
+	second := domain.MustParseAddress(domain.NetworkSMS, "+491601234567")
 	secondID, err := messages.FindThread(ctx, owner, second, time.Now())
 	if err != nil {
 		t.Fatal(err)
