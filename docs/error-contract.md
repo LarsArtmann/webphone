@@ -37,6 +37,37 @@ only user feedback.
 | Passkey revoke on an extension with no mapped identity account                                   | Plain-text 404 "no passkey account" (machine-facing state, unreachable through the UI — the section only renders when a mapping exists)                                                                                                                                                                                                                                                                                                                                                       | server `revokePasskey`                                                                              | `TestPasskeySettingsListsAndRevokes` (unmapped arm)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Internal directory seam off (`GET /internal/directory/{extension}`)                              | Honest 404 — a disabled feature answers like a missing one (ASR-seam convention). Machine-facing (the stack's FS xml_curl bridge), never the browser: loopback + Bearer secret only (403 otherwise), invalid extension 400, unknown/session-less extension answers an EMPTY list so the bridge's static fallback keeps the lockout decision. Stack side — the bridge, fail-closed posture, <2-min rollback drill: nix-international-telephony `docs/ops-runbook.md` § "Dynamic SIP directory" | server `internalDirectory` (bare statuses like every gate — no `sipcred.*` codes, 2026-10-12 train) | `TestInternalDirectoryFailsClosedWithoutASecret` + `TestInternalDirectoryAnswersTheDerivedCredentials` + `TestInternalDirectoryRejectsBadSecrets` + `TestInternalDirectoryUnknownExtensionAnswersEmpty` + `TestInternalDirectoryInvalidExtensionIs400` + `TestInternalDirectoryLoopbackOnly`                                                                                                                                                                                                                                                                                                          |
 
+## `/api` error bodies — plain text, RULED (2026-10-23)
+
+The island JSON endpoints answer failures as plain-text copy with the
+honest reason and the status that carries the meaning (`http.Error`, so
+`text/plain; charset=utf-8`). Success bodies are JSON; failures are not.
+That asymmetry is deliberate, not an oversight, and it stays:
+
+- **No consumer parses the body.** `authedFetch`, `shell.js` and the
+  passkey/enroll modules branch on the STATUS and show their own toast or
+  inline message; `passkey.js` renders "(HTTP N)". A JSON envelope would
+  be decoded by nobody.
+- **The copy is already the user-facing explanation** — "contact list is
+  full — delete one first", "transcription is busy — retry shortly".
+  Wrapping it in `{"error": …}` would only add a field to unwrap.
+- **A partial migration splits the contract.** Forty-odd failure sites
+  across `internal/server/api`, `passkey_api.go` and `transcribe.go`
+  would ship both shapes for as long as the sweep takes, and every client
+  would need a "maybe JSON" branch — strictly worse than one shape.
+- **`errorpages`-style JSON is for machine consumers that do not exist
+  here.** The only machine consumers of this deployment are the provider
+  webhooks and the stack's SIP directory bridge; both have their own
+  byte-stable contracts (see the webhook rows above) and neither touches
+  `/api`.
+
+**Reopen trigger:** a non-island consumer of `/api` appears (a CLI, a
+mobile client, a second in-repo service) that must branch on an error
+CODE rather than a status. Then the contract becomes
+`{"code": "<seam>.<op>", "message": "…"}` for every `/api` failure in one
+change, versioned at the endpoint, and the plain-text shape is retired —
+never run side by side.
+
 ## 404 — one home, two shapes
 
 `h.notFound` (`internal/server/pages.go`) is the one writer for the HTML
@@ -242,6 +273,8 @@ a deliberate code change, regenerate:
 | config.matrix.user_id                        | Rejection                 | internal/config/config.go          |
 | config.paperless.token                       | Rejection                 | internal/config/config.go          |
 | config.paperless.url                         | Rejection                 | internal/config/config.go          |
+| config.push.fcm                              | Rejection                 | internal/push/fcm.go               |
+| config.push.ntfy.url                         | Rejection                 | internal/config/config.go          |
 | config.retention_days                        | Rejection                 | internal/config/config.go          |
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
 | config.session_ttl                           | Rejection                 | internal/config/config.go          |
@@ -301,6 +334,10 @@ a deliberate code change, regenerate:
 | pbx.request                                  | Infrastructure            | internal/pbx/client.go             |
 | pbx.transport                                | Transient                 | internal/pbx/client.go             |
 | pbx.url                                      | Rejection                 | internal/pbx/client.go             |
+| push.fcm_send                                | Infrastructure, Rejection | internal/push/fcm.go               |
+| push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go               |
+| push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go              |
+| push.transport                               | Rejection                 | internal/push/push.go              |
 | readmodels.close                             | Infrastructure            | internal/readmodels/readmodels.go  |
 | readmodels.contact_count                     | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.contact_delete                    | Infrastructure            | internal/readmodels/contacts.go    |
@@ -322,6 +359,10 @@ a deliberate code change, regenerate:
 | readmodels.fax_update                        | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go  |
 | readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go  |
+| readmodels.push_list                         | Infrastructure            | internal/readmodels/push.go        |
+| readmodels.push_list_full                    | Rejection                 | internal/readmodels/push.go        |
+| readmodels.push_remove                       | Infrastructure            | internal/readmodels/push.go        |
+| readmodels.push_upsert                       | Infrastructure            | internal/readmodels/push.go        |
 | readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go    |

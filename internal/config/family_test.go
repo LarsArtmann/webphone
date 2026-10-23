@@ -33,6 +33,11 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		{"asr unknown provider", map[string]string{"WEBPHONE_ASR__PROVIDER": "deepgram"}, "config.asr.provider"},
 		{"asr google without project", map[string]string{"WEBPHONE_ASR__PROVIDER": "google"}, "config.asr.project"},
 		{"asr google path-shaped project", map[string]string{"WEBPHONE_ASR__PROVIDER": "google", "WEBPHONE_ASR__PROJECT": "a/b"}, "config.asr.project"},
+		// Push: an ntfy token without a URL (nowhere to send it) rejects;
+		// so does a non-absolute URL. The FCM lane's file CONTENT is
+		// parsed at boot in the composition root, not here.
+		{"push ntfy token without url", map[string]string{"WEBPHONE_PUSH__NTFY__TOKEN": "secret"}, "config.push.ntfy.url"},
+		{"push ntfy relative url", map[string]string{"WEBPHONE_PUSH__NTFY__URL": "ntfy.example.org"}, "config.push.ntfy.url"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

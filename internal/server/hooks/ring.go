@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 )
 

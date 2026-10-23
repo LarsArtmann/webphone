@@ -17,7 +17,7 @@ type fakeSender struct {
 	err     error
 }
 
-func (f *fakeSender) Enabled() bool { return f.enabled }
+func (f *fakeSender) Enabled() bool    { return f.enabled }
 func (f *fakeSender) Describe() string { return "fake" }
 func (f *fakeSender) Send(_ context.Context, _ string, ring push.Ring) error {
 	f.got = append(f.got, ring)

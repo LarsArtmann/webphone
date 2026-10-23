@@ -749,15 +749,16 @@ func validate(cfg Config) error {
 	}
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
-		return nil
+		// Both unset: nothing to check — the tail validates the next seam.
 	case cfg.CRM.URL == "":
 		return errorfamily.NewRejection("config.crm.url", "crm.token is set without crm.url: the integration needs both (or neither)")
 	case cfg.CRM.Token == "":
 		return errorfamily.NewRejection("config.crm.token", "crm.url is set without crm.token: the CRM machine API answers 401 without a bearer token")
-	}
-	u, err := url.Parse(cfg.CRM.URL)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
+	default:
+		u, err := url.Parse(cfg.CRM.URL)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
+		}
 	}
 	return validatePush(cfg.Push)
 }
@@ -822,7 +823,7 @@ func validatePush(cfg Push) error {
 		}
 	}
 	return nil
-	}
+}
 
 // validatePasskey fails closed on half a passkey configuration: a login
 // mode that is half-wired would either brick passkey logins at runtime or

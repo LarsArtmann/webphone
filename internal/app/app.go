@@ -47,6 +47,7 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/paperless"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
@@ -400,6 +401,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			SSO:         ssoClient,
 			Trace:       traceSeam(trace),
 			Dedup:       engineDedupWindow{store: engine.DedupStore()},
+			Push:        pushFanout,
+			PushDevices: engine.PushDevices(),
 		}), nil
 	})
 
