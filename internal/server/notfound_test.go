@@ -219,16 +219,16 @@ func TestEveryHTMLRouteFamilyAnswersTheStyledPage(t *testing.T) {
 	c := signIn(t, newTestServer(t))
 
 	paths := []string{
-		"/nope",                     // no family at all
-		"/messages/",                // tab family, trailing slash
-		"/messages/42/extra",        // tab family, wrong shape
-		"/fax/",                     // tab family, trailing slash
-		"/voicemail/extra",          // tab family, wrong shape
-		"/history/",                 // tab family, trailing slash
-		"/contacts/",                // tab family, trailing slash
-		"/settings/",                // tab family, trailing slash
-		"/partials/nope",            // partial family
-		"/enroll/",                  // passkey page family, seam off
+		"/nope",                            // no family at all
+		"/messages/",                       // tab family, trailing slash
+		"/messages/42/extra",               // tab family, wrong shape
+		"/fax/",                            // tab family, trailing slash
+		"/voicemail/extra",                 // tab family, wrong shape
+		"/history/",                        // tab family, trailing slash
+		"/contacts/",                       // tab family, trailing slash
+		"/settings/",                       // tab family, trailing slash
+		"/partials/nope",                   // partial family
+		"/enroll/",                         // passkey page family, seam off
 		"/fax/not-a-fax-id/document/extra", // document family, wrong shape
 	}
 	for _, path := range paths {

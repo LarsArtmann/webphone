@@ -3,8 +3,13 @@
 gateway — the whole product, zero PBX), seeds deterministic content over
 HTTP, then drives headless chromium (selenium — the SAME driver family
 the consuming stack's browser E2E uses) through the server tabs and
-screenshots each in light and dark: the 18-shot matrix (9 surfaces x 2
+screenshots each in light and dark: the 20-shot matrix (10 surfaces x 2
 themes).
+
+The tenth surface is the styled 404 (`/nope`): it is a real page with
+chrome, so it belongs in the matrix rather than being merely asserted —
+a regression to stdlib text would show up as a broken shot, not just a
+red test.
 
 M13 extension (2026-10-08): the boot turns the ASR seam ON (a fake
 provider BASE url — shell.js AUTO-transcribes seen audio, so the call
@@ -83,6 +88,7 @@ TABS = [
     ("history-transcript", "/history?q=revenue"),  # seeded transcript search
     ("contacts", "/contacts"),
     ("settings", "/settings"),
+    ("not-found", "/nope"),  # the styled 404: a real page, shot like any other
 ]
 # Capture-time DOM assertion per surface: a screenshot is only evidence
 # when the DOM beneath it is the real surface (this check would have
@@ -99,6 +105,7 @@ SURFACE_MARKERS = {
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
+    "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
 }
 
 

@@ -53,7 +53,7 @@ nix build .#webphone --system aarch64-linux   # cross-builds — verify by ELF b
 PYSEL=$(nix build --no-link --print-out-paths --impure --expr '(builtins.getFlake "path:'"$(pwd)"'").inputs.nixpkgs.legacyPackages.x86_64-linux.python312.withPackages (ps: [ ps.selenium ])') && \
 nix shell nixpkgs#chromium nixpkgs#chromedriver "$PYSEL" \
   --command python3 scripts/ui-capture.py --binary $(nix build --no-link --print-out-paths .#webphone)/bin/webphone
-                                     # T23 visual harness: 18 shots (9 surfaces × light/dark) into ui-shots/ (ASR-on; M13 surfaces included); LOCAL-ONLY by budget decision;
+                                     # T23 visual harness: 20 shots (10 surfaces × light/dark, the styled 404 included) into ui-shots/ (ASR-on; M13 surfaces included); LOCAL-ONLY by budget decision;
                                      # asserts DOM per shot, waits on the island call view (the resume reveal races short sleeps); the PYSEL dance: nix ≥2.34 parses
                                      # paren attrpaths like nixpkgs#python312.withPackages(ps: …) as PATHS — build the env via the flake's locked nixpkgs instead
 ```
