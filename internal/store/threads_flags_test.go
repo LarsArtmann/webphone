@@ -13,7 +13,7 @@ import (
 // seedThread creates a thread with one outbound message and returns its
 // id; appendInbound/appendOutbound grow it for ordering and
 // auto-unarchive scenarios.
-func seedThread(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Phone) domain.ThreadID {
+func seedThread(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Address) domain.ThreadID {
 	t.Helper()
 	ctx := context.Background()
 	threadID, err := messages.FindThread(ctx, owner, remote, time.Now())
@@ -30,7 +30,7 @@ func seedThread(t *testing.T, messages *Messages, owner domain.Extension, remote
 	return threadID
 }
 
-func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Phone, threadID domain.ThreadID, direction domain.Direction, body string) {
+func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Address, threadID domain.ThreadID, direction domain.Direction, body string) {
 	t.Helper()
 	if err := messages.AppendMessage(context.Background(), domain.Message{
 		ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: owner, Remote: remote,
@@ -92,8 +92,8 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remoteA := domain.MustParsePhone("+441632960961")
-	remoteB := domain.MustParseAddress(domain.NetworkSMS("+441632960962")
+	remoteA := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
+	remoteB := domain.MustParseAddress(domain.NetworkSMS, "+441632960962")
 	threadA := seedThread(t, messages, owner, remoteA)
 	seedThread(t, messages, owner, remoteB)
 
@@ -147,7 +147,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 
 // threadIDFor resolves the thread id for a remote (the archived-thread
 // search assertion needs identity, not just count).
-func threadIDFor(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Phone) domain.ThreadID {
+func threadIDFor(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Address) domain.ThreadID {
 	t.Helper()
 	threads, err := messages.ListThreads(context.Background(), owner)
 	if err != nil {
@@ -166,8 +166,8 @@ func TestPinnedOrdering(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
-	remoteOld := domain.MustParseAddress(domain.NetworkSMS("+441632960961")
-	remoteNew := domain.MustParsePhone("+441632960962")
+	remoteOld := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
+	remoteNew := domain.MustParseAddress(domain.NetworkSMS, "+441632960962")
 	oldID := seedThread(t, messages, owner, remoteOld)
 	seedThread(t, messages, owner, remoteNew)
 

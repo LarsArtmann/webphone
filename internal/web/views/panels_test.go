@@ -50,7 +50,7 @@ func requireNode(t *testing.T, panel, rendered, want string, wantPresent bool) {
 // change to these nodes must land in every panel at once — which is why
 // they route through shared components.
 func TestPanelsRenderTheSharedErrorAndIdentityNodes(t *testing.T) {
-	thread := domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+17287289311")}
+	thread := domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+17287289311")}
 	panels := map[string]struct {
 		withFailure templ.Component
 		clean       templ.Component
@@ -241,7 +241,7 @@ func TestThreadRowFlagControlsBothLanguages(t *testing.T) {
 		return store.ThreadSummary{Thread: flags}
 	}
 	plain := newSummary(domain.Thread{
-		ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961"), Unread: 2,
+		ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Unread: 2,
 	})
 	pinned := plain
 	pinned.Thread.Pinned = true
@@ -343,7 +343,7 @@ func testSnippets(count, quick int) []domain.Snippet {
 // picker disclosure, and an empty snippet list renders no lane at all.
 func TestSnippetChipsAndPicker(t *testing.T) {
 	view := renderComponent(t, ThreadView(ThreadViewProps{
-		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961")},
+		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+441632960961")},
 		Snippets: func() []domain.Snippet {
 			snippets := testSnippets(7, 6)
 			snippets[6] = domain.Snippet{
@@ -372,7 +372,7 @@ func TestSnippetChipsAndPicker(t *testing.T) {
 	}
 
 	bare := renderComponent(t, ThreadView(ThreadViewProps{
-		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParsePhone("+441632960961")},
+		Thread: domain.Thread{ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+441632960961")},
 		Lang:   LangEN,
 	}))
 	if strings.Contains(bare, "wp-snippet-bar") {

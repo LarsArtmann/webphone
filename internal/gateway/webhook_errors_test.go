@@ -24,7 +24,7 @@ import (
 func sendVia(t *testing.T, gw *Webhook, owner domain.Extension) {
 	t.Helper()
 	_, err := gw.SendMessage(context.Background(), OutboundMessage{
-		Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "branch probe",
+		Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "branch probe",
 	})
 	if err == nil {
 		t.Fatal("expected an error")
@@ -55,7 +55,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err == nil {
 			t.Fatal("expected provider rejection error")
@@ -86,7 +86,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		rejected, ok := err.(*ErrProviderRejected)
 		if !ok {
@@ -107,7 +107,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err == nil {
 			t.Fatal("expected an error")
@@ -128,7 +128,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err == nil {
 			t.Fatal("expected provider rejection error")
@@ -145,7 +145,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err == nil {
 			t.Fatal("expected receipt decode error")
@@ -162,7 +162,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		_, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err == nil {
 			t.Fatal("expected oversized token to be rejected")
@@ -180,7 +180,7 @@ func TestWebhookPostErrorBranches(t *testing.T) {
 		defer srv.Close()
 		gw := webhookGateway(srv.URL, "s", srv.Client())
 		receipt, err := gw.SendMessage(context.Background(), OutboundMessage{
-			Owner: owner, To: domain.MustParsePhone("+441632960961"), Body: "x",
+			Owner: owner, To: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Body: "x",
 		})
 		if err != nil {
 			t.Fatal(err)

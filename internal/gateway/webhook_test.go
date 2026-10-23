@@ -99,7 +99,7 @@ func TestWebhookSendMessagePostsMultipartWithBearer(t *testing.T) {
 	gw := webhookGateway(srv.URL, "s3cret", srv.Client())
 	receipt, err := gw.SendMessage(context.Background(), OutboundMessage{
 		Owner: domain.MustParseExtension("1001"),
-		To:    domain.MustParsePhone("+441632960961"),
+		To:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Body:  "hello there",
 		Attachments: []OutboundAttachment{
 			{Name: "pic.jpg", MimeType: "image/jpeg", Path: attPath},
@@ -140,7 +140,7 @@ func TestWebhookSendMessageWithoutSecretOmitsAuthorization(t *testing.T) {
 	gw := webhookGateway(srv.URL, "", srv.Client())
 	if _, err := gw.SendMessage(context.Background(), OutboundMessage{
 		Owner: domain.MustParseExtension("1001"),
-		To:    domain.MustParsePhone("+441632960961"),
+		To:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Body:  "hi",
 	}); err != nil {
 		t.Fatal(err)
@@ -158,7 +158,7 @@ func TestWebhookSendMessageAcceptsBareTokenReceipt(t *testing.T) {
 	gw := webhookGateway(srv.URL, "s", srv.Client())
 	receipt, err := gw.SendMessage(context.Background(), OutboundMessage{
 		Owner: domain.MustParseExtension("1001"),
-		To:    domain.MustParsePhone("+441632960961"),
+		To:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Body:  "hi",
 	})
 	if err != nil {
@@ -188,7 +188,7 @@ func TestWebhookProviderErrorsStayErrors(t *testing.T) {
 			gw := webhookGateway(srv.URL, "s", srv.Client())
 			_, err := gw.SendMessage(context.Background(), OutboundMessage{
 				Owner: domain.MustParseExtension("1001"),
-				To:    domain.MustParsePhone("+441632960961"),
+				To:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 				Body:  "hi",
 			})
 			if err == nil {

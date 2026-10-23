@@ -39,7 +39,7 @@ func TestWebhookReceiptsResolveDeferred(t *testing.T) {
 	gw := &Webhook{provider{cfg: configGateway(server.URL, "secret"), client: server.Client()}}
 	receipt, err := gw.SendMessage(context.Background(), OutboundMessage{
 		Owner: domain.MustParseExtension("1001"),
-		To:    domain.MustParsePhone("+441632960961"),
+		To:    domain.MustParseAddress(domain.NetworkSMS, "+441632960961"),
 		Body:  "resolution probe",
 	})
 	if err != nil {
