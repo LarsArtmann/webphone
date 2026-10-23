@@ -37,6 +37,7 @@ import (
 	"github.com/samber/do/v2"
 
 	"github.com/larsartmann/webphone/internal/asr"
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -50,6 +51,7 @@ import (
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/sso"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
@@ -218,6 +220,19 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		})
 	}
 
+	// Optional OIDC/SSO login mode (Pocket ID): config-absent → the
+	// provider is never registered and Deps.SSO stays nil (the login card
+	// renders no SSO entry and the begin/callback routes 404). A present
+	// but INVALID shape fails the boot at the eager invoke below; an
+	// unreachable IdP does NOT (discovery is lazy — the phone must keep
+	// working while the IdP is down).
+	if cfg.Auth.OAuth2.Enabled() {
+		//samber-linter:allow hw-4 eagerly resolved via InvokeNamed in New
+		do.ProvideNamed(injector, "sso", func(i do.Injector) (*sso.Client, error) {
+			return sso.New(SSOConfig(cfg.Auth))
+		})
+	}
+
 	// Optional Paperless-ngx archive for inbound faxes: config-absent →
 	// a nil fax.Archiver (fax.Service treats nil as off). A present but
 	// UNUSABLE configuration fails the boot here — archiving must never
@@ -307,6 +322,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		if cfg.Auth.Passkey.Enabled() {
 			auth = do.MustInvokeNamed[*userauth.Service](i, "userauth")
 		}
+		var ssoClient *sso.Client
+		if cfg.Auth.OAuth2.Enabled() {
+			ssoClient = do.MustInvokeNamed[*sso.Client](i, "sso")
+		}
 		return server.New(server.Deps{
 			Config:      cfg,
 			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
@@ -328,6 +347,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Probe:       probe,
 			Dashboard:   dashboardHandler,
 			UserAuth:    auth,
+			SSO:         ssoClient,
 			Dedup:       engineDedupWindow{store: engine.DedupStore()},
 		}), nil
 	})
@@ -357,6 +377,11 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
+		}
+	}
+	if cfg.Auth.OAuth2.Enabled() {
+		if _, err := do.InvokeNamed[*sso.Client](injector, "sso"); err != nil {
+			return nil, wrapf("wire oidc login: %w", err)
 		}
 	}
 	if cfg.ASR.Enabled() {
@@ -409,6 +434,42 @@ func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
 		RPOrigins:              p.RPOrigins,
 		Users:                  users,
 		ExtensionPasswordFiles: p.ExtensionPasswordFiles,
+	}
+}
+
+// SSOConfig is the config→runtime adapter for the OIDC login mode. The
+// mapping is the SHARED one (auth.users, folded into the passkey shape by
+// config.Load) so passkey and SSO can never disagree about who may sign
+// in or where an extension's SIP password lives.
+func SSOConfig(a config.Auth) sso.Config {
+	users := a.Users
+	if len(users) == 0 {
+		users = a.Passkey.Users
+	}
+	passwordFiles := a.ExtensionPasswordFiles
+	if len(passwordFiles) == 0 {
+		passwordFiles = a.Passkey.ExtensionPasswordFiles
+	}
+	mapped := make(map[string]authmap.User, len(users))
+	for email, user := range users {
+		extensions := make([]domain.Extension, 0, len(user.Extensions))
+		for _, raw := range user.Extensions {
+			ext, err := domain.ParseExtension(raw)
+			if err != nil {
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+			}
+			extensions = append(extensions, ext)
+		}
+		mapped[email] = authmap.User{Email: email, DisplayName: user.DisplayName, Extensions: extensions}
+	}
+	return sso.Config{
+		Issuer:                 a.OAuth2.Issuer,
+		ClientID:               a.OAuth2.ClientID,
+		ClientSecretFile:       a.OAuth2.ClientSecretFile,
+		RedirectURL:            a.OAuth2.RedirectURL,
+		Scopes:                 a.OAuth2.Scopes,
+		Users:                  mapped,
+		ExtensionPasswordFiles: passwordFiles,
 	}
 }
 

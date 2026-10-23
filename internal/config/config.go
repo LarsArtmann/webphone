@@ -143,10 +143,101 @@ type Dashboard struct {
 
 // Auth selects the login modes. The extension login is ALWAYS available
 // (lifeline property: signing into a phone must never depend on more
-// than FreeSWITCH and the webphone process itself); the passkey mode is
-// strictly additive on top of it.
+// than FreeSWITCH and the webphone process itself); the passkey and
+// OIDC/SSO modes are strictly additive on top of it.
 type Auth struct {
-	Passkey Passkey `json:"passkey" koanf:"passkey"`
+	// Users maps an account email to the extensions it may sign in as —
+	// shared by every passwordless mode (passkey and OIDC), so one
+	// operator edit governs both. auth.passkey.users stays supported as
+	// the historical home; the two must never disagree (Load rejects a
+	// divergent pair, and folds the shared map down into the passkey
+	// shape so exactly one mapping reaches the runtime).
+	Users map[string]PasskeyUser `json:"users,omitempty" koanf:"users"`
+	// ExtensionPasswordFiles maps a normalized extension to the runtime
+	// file carrying its SIP directory password (shared like Users).
+	ExtensionPasswordFiles map[string]string `json:"extension_password_files,omitempty" koanf:"extension_password_files"`
+	Passkey                Passkey           `json:"passkey" koanf:"passkey"`
+	OAuth2                 OAuth2            `json:"oauth2" koanf:"oauth2"`
+}
+
+// OAuth2 configures the OpenID Connect login mode (Pocket ID for the PBX
+// stack): authorization-code + PKCE in the browser, a server-side token
+// exchange, then the same mapping + directory verification + session
+// minting every other login mode rides.
+//
+// Enabled is DERIVED: any field being set counts, and validation fails
+// closed on half a configuration. Discovery is lazy, so an unreachable
+// IdP breaks logins (with an honest error) but never the boot.
+type OAuth2 struct {
+	// Issuer is the provider's discovery base URL (e.g.
+	// https://auth.example.org). The ID token's issuer claim must equal
+	// it exactly.
+	Issuer string `json:"issuer" koanf:"issuer"`
+	// ClientID is the registered OIDC client id (webphone).
+	ClientID string `json:"client_id" koanf:"client_id"`
+	// ClientSecretFile is the runtime file holding the confidential
+	// client's secret (single line, trimmed, read per exchange so
+	// rotation needs no restart). Empty or missing fails CLOSED.
+	ClientSecretFile string `json:"client_secret_file" koanf:"client_secret_file"`
+	// RedirectURL is the registered callback, absolute
+	// (https://<host>/api/auth/oauth2/callback). Must match verbatim.
+	RedirectURL string `json:"redirect_url" koanf:"redirect_url"`
+	// Scopes defaults to openid/email/profile; "openid" is mandatory.
+	Scopes []string `json:"scopes,omitempty" koanf:"scopes"`
+}
+
+// Enabled reports whether the OIDC mode is configured at all.
+func (o OAuth2) Enabled() bool {
+	return o.Issuer != "" || o.ClientID != "" || o.ClientSecretFile != "" || o.RedirectURL != ""
+}
+
+// resolvedAuth folds the shared mapping into the passkey shape so the
+// runtime has exactly one mapping. A divergent pair is a config bug (two
+// sources of truth for who may sign in), never a silent winner.
+func resolvedAuth(a Auth) (Auth, error) {
+	if len(a.Users) == 0 {
+		return a, nil
+	}
+	if len(a.Passkey.Users) > 0 && !sameUserMap(a.Users, a.Passkey.Users) {
+		return a, errorfamily.NewRejection("config.auth.users",
+			"auth.users and auth.passkey.users disagree: declare the email→extension mapping ONCE (auth.users is the shared home)")
+	}
+	if len(a.ExtensionPasswordFiles) > 0 {
+		for ext, file := range a.ExtensionPasswordFiles {
+			if current, ok := a.Passkey.ExtensionPasswordFiles[ext]; ok && current != file {
+				return a, errorfamily.Newf(errorfamily.Rejection, "config.auth.extension_password_files",
+					"auth.extension_password_files[%q] (%s) disagrees with auth.passkey.extension_password_files (%s): declare the password files ONCE", ext, file, current)
+			}
+		}
+	}
+	a.Passkey.Users = a.Users
+	merged := make(map[string]string, len(a.Passkey.ExtensionPasswordFiles)+len(a.ExtensionPasswordFiles))
+	for ext, file := range a.Passkey.ExtensionPasswordFiles {
+		merged[ext] = file
+	}
+	for ext, file := range a.ExtensionPasswordFiles {
+		merged[ext] = file
+	}
+	a.Passkey.ExtensionPasswordFiles = merged
+	return a, nil
+}
+
+func sameUserMap(a, b map[string]PasskeyUser) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for email, user := range a {
+		other, ok := b[email]
+		if !ok || other.DisplayName != user.DisplayName || len(other.Extensions) != len(user.Extensions) {
+			return false
+		}
+		for i, ext := range user.Extensions {
+			if other.Extensions[i] != ext {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // Passkey enables passkey logins via the embedded usermgmt service.
@@ -450,6 +541,12 @@ func Load() (Config, error) {
 		cfg.SIP.CredentialSecret = secret
 	}
 
+	auth, err := resolvedAuth(cfg.Auth)
+	if err != nil {
+		return Config{}, fmt.Errorf("config invalid: %w", err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	}
+	cfg.Auth = auth
+
 	if err := validate(cfg); err != nil {
 		return Config{}, fmt.Errorf("config invalid: %w", err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
 	}
@@ -558,6 +655,9 @@ func validate(cfg Config) error {
 	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
 		return err
 	}
+	if err := validateOAuth2(cfg.Auth.OAuth2); err != nil {
+		return err
+	}
 	switch {
 	case cfg.TextAgent.URL == "" && cfg.TextAgent.SecretFile == "":
 	case cfg.TextAgent.URL == "":
@@ -649,6 +749,47 @@ func validatePasskey(p Passkey) error {
 				return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.extension_password_files", "auth.passkey.extension_password_files: no password file for extension %q (mapped by %q) — passkey login must source the SIP directory password server-side", raw, email)
 			}
 		}
+	}
+	return nil
+}
+
+// validateOAuth2 fails closed on half an OIDC configuration: a login mode
+// that is half-wired would either brick SSO logins at runtime or silently
+// fall back to extension logins — both worse than a failed boot. The
+// client-secret FILE is deliberately not read here (it rotates at
+// runtime); it is enforced at login time, fail-closed.
+func validateOAuth2(o OAuth2) error {
+	if !o.Enabled() {
+		return nil
+	}
+	if o.Issuer == "" {
+		return errorfamily.NewRejection("config.auth.oauth2.issuer", "auth.oauth2: issuer is required when the OIDC mode is configured (the IdP discovery base URL, e.g. https://auth.example.org)")
+	}
+	u, err := url.Parse(o.Issuer)
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.RawQuery != "" || u.Fragment != "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.auth.oauth2.issuer", "auth.oauth2.issuer %q is not a bare https URL (no query/fragment: the issuer claim must match verbatim)", o.Issuer)
+	}
+	if o.ClientID == "" {
+		return errorfamily.NewRejection("config.auth.oauth2.client_id", "auth.oauth2: client_id is required (the registered OIDC client id)")
+	}
+	if o.ClientSecretFile == "" {
+		return errorfamily.NewRejection("config.auth.oauth2.client_secret_file", "auth.oauth2: client_secret_file is required — the client is confidential and the secret must never live in the config file")
+	}
+	if o.RedirectURL == "" {
+		return errorfamily.NewRejection("config.auth.oauth2.redirect_url", "auth.oauth2: redirect_url is required (the registered callback, e.g. https://pbx.example.org/api/auth/oauth2/callback)")
+	}
+	ru, err := url.Parse(o.RedirectURL)
+	if err != nil || ru.Scheme != "https" || ru.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.auth.oauth2.redirect_url", "auth.oauth2.redirect_url %q is not an absolute https URL", o.RedirectURL)
+	}
+	hasOpenID := false
+	for _, scope := range o.Scopes {
+		if scope == "openid" {
+			hasOpenID = true
+		}
+	}
+	if !hasOpenID {
+		return errorfamily.NewRejection("config.auth.oauth2.scopes", "auth.oauth2.scopes must include \"openid\" (without it the IdP returns no id_token and no login can complete)")
 	}
 	return nil
 }
