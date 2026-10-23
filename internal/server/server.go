@@ -280,6 +280,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /snippets/delete", h.deleteSnippet)
 	protected.HandleFunc("POST /messages/send", h.sendMessage)
 	protected.HandleFunc("GET /partials/messages/drafts", h.partialDrafts)
+	protected.HandleFunc("POST /messages/drafts/mode", h.setDraftMode)
 	protected.HandleFunc("POST /messages/drafts/{id}/approve", h.approveDraft)
 	protected.HandleFunc("POST /messages/drafts/{id}/discard", h.discardDraft)
 	protected.HandleFunc("POST /messages/ai-draft", h.aiDraft)

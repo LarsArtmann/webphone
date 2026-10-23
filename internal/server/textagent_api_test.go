@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,7 +28,9 @@ func newStubReviewAPI(t *testing.T) *stubReviewAPI {
 	stub := &stubReviewAPI{payload: `{"drafts":[{"id":"d-7","contact":"441632960961",
 		"trigger":"inbound","text":"Guten Morgen","en_gloss":"Good morning",
 		"language":"de","confidence":93,"status":"pending",
-		"created_at":"2026-10-12T18:00:00Z"}],"frozen":[],"suppressed":[],"mode":"drafts"}`}
+		"created_at":"2026-10-12T18:00:00Z"}],"frozen":[],"suppressed":[],
+		"mode":"drafts","mode_source":"config","default_mode":"drafts",
+		"modes":["off","drafts","after-hours","full"]}`}
 	stub.status.Store(http.StatusOK)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +42,9 @@ func newStubReviewAPI(t *testing.T) *stubReviewAPI {
 			_, _ = w.Write([]byte(`{"id":"d-7","status":"sent","provider_ref":"stub-1"}`))
 		case strings.HasSuffix(r.URL.Path, "/discard"):
 			_, _ = w.Write([]byte(`{"ok":true}`))
+		case strings.HasSuffix(r.URL.Path, "/mode"):
+			_, _ = w.Write([]byte(`{"mode":"full","mode_source":"runtime",
+				"default_mode":"drafts","modes":["off","drafts","after-hours","full"]}`))
 		case strings.HasSuffix(r.URL.Path, "/draft"):
 			_, _ = w.Write([]byte(`{"id":"d-ond","text":"Guten Morgen","language":"de","confidence":90}`))
 		default:
@@ -89,6 +95,7 @@ func TestTextAgentSeamOffIsInvisible(t *testing.T) {
 	for path := range map[string]struct{}{
 		"/messages/drafts/d-7/approve": {},
 		"/messages/drafts/d-7/discard": {},
+		"/messages/drafts/mode":        {},
 		"/messages/ai-draft":           {},
 	} {
 		if resp, _ := c.do(http.MethodPost, path, form, contentType); resp.StatusCode != http.StatusNotFound {
@@ -111,7 +118,7 @@ func TestDraftsPanelRidesTheList(t *testing.T) {
 
 	_, body := c.do(http.MethodGet, "/partials/messages", nil, "")
 	page := string(body)
-	for _, marker := range []string{`id="wp-drafts"`, "Guten Morgen", `id="wp-draft-d-7"`, `id="wp-draft-count"`, "93%", "Good morning", `class="wp-ai-draft"`, `hx-post="/messages/drafts/d-7/approve"`} {
+	for _, marker := range []string{`id="wp-drafts"`, "Guten Morgen", `id="wp-draft-d-7"`, `id="wp-draft-count"`, "93%", "Good morning", `class="wp-ai-draft"`, `hx-post="/messages/drafts/d-7/approve"`, `id="wp-draft-mode"`, `hx-post="/messages/drafts/mode"`} {
 		if !strings.Contains(page, marker) {
 			t.Errorf("messages tab missing %q", marker)
 		}
@@ -227,5 +234,49 @@ func TestAgentOutageDegradesHonestly(t *testing.T) {
 	}
 	if !strings.Contains(string(panel), `class="wp-error"`) {
 		t.Error("the failed action must land the visible error banner")
+	}
+}
+
+// TestModeSwitchRoundTrip: the drafts panel's auto-reply selector posts
+// here; the handler pins the mode on the agent and re-renders the panel.
+func TestModeSwitchRoundTrip(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	c := clientWithAgent(t, stub)
+	c.login("1001", "pw")
+
+	form := url.Values{"mode": {"full"}}.Encode()
+	resp, panel := c.do(http.MethodPost, "/messages/drafts/mode", []byte(form), "application/x-www-form-urlencoded")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("mode switch: %d %s", resp.StatusCode, panel)
+	}
+	if !strings.Contains(string(panel), `id="wp-drafts"`) {
+		t.Error("mode switch must answer the refreshed drafts panel")
+	}
+	if stub.calls.Load() < 2 {
+		t.Errorf("mode switch must hit the review API (switch + refresh), saw %d calls", stub.calls.Load())
+	}
+}
+
+// TestResetButtonRendersOnlyUnderARuntimeOverride: the configured mode is
+// the default; only a runtime override grows the reset action.
+func TestResetButtonRendersOnlyUnderARuntimeOverride(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	c := clientWithAgent(t, stub)
+	c.login("1001", "pw")
+
+	_, body := c.do(http.MethodGet, "/partials/messages/drafts", nil, "")
+	if strings.Contains(string(body), `value="reset"`) {
+		t.Error("a configured-mode panel must not offer a reset action")
+	}
+	if strings.Contains(string(body), "runtime override") {
+		t.Error("a configured-mode panel must not claim a runtime override")
+	}
+	stub.payload = strings.Replace(stub.payload, `"mode_source":"config"`, `"mode_source":"runtime"`, 1)
+	_, body = c.do(http.MethodGet, "/partials/messages/drafts", nil, "")
+	if !strings.Contains(string(body), `value="reset"`) {
+		t.Error("a runtime override must offer the reset action")
+	}
+	if !strings.Contains(string(body), "runtime override") {
+		t.Error("the runtime marker must render beside the mode")
 	}
 }

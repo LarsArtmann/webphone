@@ -27,7 +27,7 @@ type stubRequest struct {
 	method string
 	path   string
 	bearer string
-	body   map[string]string
+	body   map[string]any
 }
 
 func newStubAgent(t *testing.T, handle func(stubRequest) (int, string)) *stubAgent {
@@ -134,6 +134,33 @@ func TestApproveSendsEmptyObjectVerbatimAndTextAsEdit(t *testing.T) {
 	}
 	if req := stub.lastRequest(t); req.body["text"] != "Edited" {
 		t.Errorf("edited approve must carry the text override, got %v", req.body)
+	}
+}
+
+func TestSetModeAndResetMode(t *testing.T) {
+	const modePayload = `{"mode":"full","mode_source":"runtime","default_mode":"drafts",
+"modes":["off","drafts","after-hours","full"]}`
+	stub := newStubAgent(t, func(stubRequest) (int, string) { return http.StatusOK, modePayload })
+	client := mustClient(t, stub.server.URL)
+	state, err := client.SetMode(context.Background(), "full")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := stub.lastRequest(t)
+	if req.method != http.MethodPost || req.path != "/mode" {
+		t.Errorf("mode switch must POST /mode, got %s %s", req.method, req.path)
+	}
+	if req.body["mode"] != "full" {
+		t.Errorf("mode switch must carry the chosen mode, got %v", req.body)
+	}
+	if state.Mode != "full" || state.ModeSource != "runtime" || state.DefaultMode != "drafts" || len(state.Modes) != 4 {
+		t.Errorf("mode state decode drift: %+v", state)
+	}
+	if _, err := client.ResetMode(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if req := stub.lastRequest(t); req.body["reset"] != true {
+		t.Errorf("reset must send {\"reset\": true}, got %v", req.body)
 	}
 }
 

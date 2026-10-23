@@ -208,3 +208,34 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "render error", http.StatusInternalServerError)
 	}
 }
+
+// setDraftMode is the drafts panel's auto-reply switch: "reset" drops the
+// agent-side runtime override and returns to the deployment's configured
+// mode; any other value pins the mode the agent persists until reset. The
+// safety gates are unchanged — the mode only decides whether a confident
+// draft may send itself.
+func (h *handlers) setDraftMode(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.RequireSession(w, r)
+	if !ok {
+		return
+	}
+	if !h.textAgentOn() {
+		http.NotFound(w, r)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
+	defer cancel()
+	var err error
+	if r.FormValue("mode") == "reset" {
+		_, err = h.deps.TextAgent.ResetMode(ctx)
+	} else {
+		_, err = h.deps.TextAgent.SetMode(ctx, r.FormValue("mode"))
+	}
+	if err != nil {
+		status, detail := textAgentActionError(err)
+		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, "drafts.mode.label")+": "+detail)
+		return
+	}
+	notifyToast(w, "ok", h.T(r, "drafts.mode.changed"))
+	h.draftPanel(w, r)
+}

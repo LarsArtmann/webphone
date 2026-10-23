@@ -777,9 +777,45 @@ templ DraftsPanel(props DraftsPanelProps) {
 				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ T(props.Lang, "drafts.title") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
 			}
 			if props.Drafts != nil && props.Drafts.Mode != "" {
-				<span class="wp-drafts-mode">{ props.Drafts.Mode }</span>
+				<span class="wp-drafts-mode">
+					{ props.Drafts.Mode }
+					if props.Drafts.ModeSource == "runtime" {
+						{ " · " + T(props.Lang, "drafts.mode.runtime") }
+					}
+				</span>
 			}
 		</h2>
+		if props.Drafts != nil && len(props.Drafts.Modes) > 0 {
+			// The auto-reply switch (configurable mode): the env value is
+			// the deployment default; picking here pins a runtime
+			// override the agent persists, and reset drops it. The safety
+			// gates (STOP suppression, VIP, kill switch, confidence) are
+			// unchanged by a flip — only the send decision moves.
+			<form
+				class="wp-drafts-mode-form"
+				hx-post="/messages/drafts/mode"
+				hx-target="#wp-drafts"
+				hx-swap="outerHTML"
+			>
+				<label class="wp-drafts-mode-label" for="wp-draft-mode">{ T(props.Lang, "drafts.mode.label") }</label>
+				<select
+					id="wp-draft-mode"
+					name="mode"
+					hx-post="/messages/drafts/mode"
+					hx-trigger="change"
+					hx-target="#wp-drafts"
+					hx-swap="outerHTML"
+					hx-include="closest form"
+				>
+					for _, mode := range props.Drafts.Modes {
+						<option value={ mode } selected?={ mode == props.Drafts.Mode }>{ mode }</option>
+					}
+				</select>
+				if props.Drafts.ModeSource == "runtime" {
+					<button type="submit" name="mode" value="reset" class="wp-mini">{ T(props.Lang, "drafts.mode.reset") }</button>
+				}
+			</form>
+		}
 		if props.Error != "" {
 			@panelError(props.Error)
 		} else if props.Drafts == nil || len(props.Drafts.Drafts) == 0 {
