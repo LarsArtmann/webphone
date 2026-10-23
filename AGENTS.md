@@ -28,6 +28,10 @@ go-appkit (github:LarsArtmann/go-appkit) is NOT a dependency and stays that way 
 - SIP credential brokering (SUPERB train): with `sip.credential_secret*` set, the directory password NEVER reaches the browser — sessions REGISTER with a per-session derived credential (`sipcred.Derive`, HMAC-SHA256→base64url over the session token), FreeSWITCH validates it dynamically via the stack's xml_curl bridge reading `GET /internal/directory/{extension}` (loopback + Bearer, machine-facing), and logout revokes at the next REGISTER. OFF (zero config) = byte-identical legacy behavior; half config refuses boot. The `extension_password_files` read STAYS for the session row (`/phone-api` proxy needs it) — B removes the browser exposure, not the server-side secret.
 - Passkey management + audit shipped in the same train: Settings lists/revokes the session's own mapped passkeys (owner structural, never request-sourced); `authAudit` emits one greppable line per login/denied-logout/enroll/revoke. usermgmt's AuditLog projection stays UNWIRED (memory-only, no login events, unbounded).
 
+## Owner decisions (2026-10-23)
+
+- Native-app platform direction (calls are the product; ring-while-closed is a HARD requirement; push transport = ntfy AND FCM): P0 PWA-LITE SHIPPED; P1 = Kotlin native-call shell + `internal/push` seam — comparison table, evidence and phases in `docs/planning/2026-10-23_16-13_native-app-platform-decision.md`. **Flutter is a HARD NO**: closed as an option for ANY path (Android or Linux native included), a ruling not a cost/benefit call — never re-propose.
+
 ## Commands
 
 ```console

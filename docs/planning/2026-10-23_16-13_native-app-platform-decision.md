@@ -34,7 +34,7 @@ product.
 | **Android native-call shell** (Kotlin call layer + web content) | **YES** — FCM/ntfy high-priority push → CallStyle notification + full-screen intent; Telecom ConnectionService | **YES** — typed FGS (`microphone`/`phoneCall`); audio focus + BT routing survive backgrounding | **Best in class**: native libwebrtc AudioProcessing, system call UI, BT/watch/wired answer via InCallService | n/a (desktop stays web — see below) | Call signaling must be re-owned by Kotlin (SIP-over-WSS + island call contract); tabs stay 100% | Weeks-months | ✅ **P1 — the recommended native path** |
 | Full native Kotlin + Compose (all tabs native) | YES | YES | Best in class (same call layer as above) | n/a | ~0%: needs NEW JSON APIs for every surface (today: HTML fragments + SSE), rewrites all proven UI + contract suites | Months | ✖ Rejected BY CATEGORY for now: the call gain over the hybrid shell is zero, the cost is the whole product |
 | **Kotlin Multiplatform** (Compose Android + desktop Linux) | YES (Android) | YES (Android) | Android = best in class; **Linux desktop = the weak leg**: webrtc-kmp (shepeliev) has NO desktop target and is stagnating (0.125.x, ~1y quiet); Piasy kmp-webrtc linuxX64 is 2025-new (9★); webrtc-java (JVM) is the workable fallback — all far less battle-tested than any browser engine | Compose Desktop is production-ready, but the native Linux WebRTC audio path is the immature part | ~0% (same full-native cost) + a young call-engine dependency | Months, high risk on the call path | ✖ Rejected: pays full-native cost AND lands the call engine on its least mature platform |
-| Flutter (flutter_webrtc: Android + Linux ✔ native) | YES | YES | Native libwebrtc both platforms — the only cross-platform stack with a REAL Linux audio path | Real native Linux app | ~0% (full UI+API rewrite, Dart toolchain inside a Go/Nix repo — nix+flutter is notoriously painful) | Months | ✖ Rejected vs hybrid: double the cost of P1 for Linux-native calls the desktop browser already delivers at Chrome quality |
+| Flutter (flutter_webrtc: Android + Linux ✔ native) | YES | YES | Native libwebrtc both platforms — the only cross-platform stack with a REAL Linux audio path | Real native Linux app | ~0% (full UI+API rewrite, Dart toolchain inside a Go/Nix repo — nix+flutter is notoriously painful) | Months | ✖ **HARD NO (owner ruling 2026-10-23)** — option closed for ANY path, not subject to cost/benefit re-litigation |
 | Instant Apps | — | — | — | — | — | — | ✖ **DEAD platform**: Google Play Instant shutdown — since Dec 2025 Instant Apps cannot be published and the APIs no longer work (Play docs, 2026-06-24) |
 
 ## Android 16 (API 36) constraints the native path must design for (verified 2026-10-23)
@@ -90,6 +90,11 @@ the app which (re)establishes the WSS registration and answers.
   remote-origin client.
 - **gomobile-embedded server**: wrong-topology (device cannot host the
   user's data; no trunk on-device).
+- **Flutter**: HARD NO by owner ruling (2026-10-23) — closed regardless
+  of its unique position as the only cross-platform stack with a real
+  native Linux WebRTC path. Recorded so no future session re-proposes
+  it; the Linux call story stays the browser engine (P0), per the phases
+  below.
 
 ## Phases
 
