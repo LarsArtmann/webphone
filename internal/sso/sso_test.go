@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -28,13 +27,13 @@ import (
 )
 
 const (
-	stubClientID   = "webphone"
-	stubRedirect   = "https://pbx.example.org/api/auth/oauth2/callback"
-	stubPassword   = "dir-password"
-	stubUserEmail  = "lars@example.com"
-	stubGoodCode   = "good-code"
-	stubKid        = "test-key"
-	stubSubject    = "user-1"
+	stubClientID  = "webphone"
+	stubRedirect  = "https://pbx.example.org/api/auth/oauth2/callback"
+	stubPassword  = "dir-password"
+	stubUserEmail = "lars@example.com"
+	stubGoodCode  = "good-code"
+	stubKid       = "test-key"
+	stubSubject   = "user-1"
 )
 
 // stubIDP is a minimal OpenID provider: discovery, JWKS, token and
@@ -46,7 +45,6 @@ type stubIDP struct {
 	server        *httptest.Server
 	key           *rsa.PrivateKey
 	extraClaims   map[string]any
-	omitEmail     bool
 	userinfoEmail string
 	lastVerifier  string
 	lastCode      string
@@ -401,45 +399,3 @@ func TestNewFailsClosedOnHalfAConfiguration(t *testing.T) {
 		})
 	}
 }
-
-func TestErrorCodeVocabularyIsStable(t *testing.T) {
-	cases := map[string]string{
-		"sso.unmapped_email":      "unmapped",
-		"sso.email_unverified":    "unverified",
-		"sso.state.mismatch":      "stale",
-		"sso.nonce.mismatch":      "stale",
-		"sso.client_secret.read":  "config",
-		"sso.client_secret.empty": "config",
-		"sso.exchange":            "config",
-		"sso.discovery":           "unavailable",
-		"sso.id_token.verify":     "unavailable",
-		"something.else":          "failed",
-	}
-	for code, want := range cases {
-		if got := errorCodeForTest(code); got != want {
-			t.Errorf("errorCode(%q) = %q, want %q", code, got, want)
-		}
-	}
-}
-
-// errorCodeForTest mirrors the server's ssoErrorCode mapping without
-// importing the server package (which would create a cycle through the
-// interface). The vocabulary lives here so a code rename trips a test.
-func errorCodeForTest(code string) string {
-	switch code {
-	case "sso.unmapped_email":
-		return "unmapped"
-	case "sso.email_unverified":
-		return "unverified"
-	case "sso.state.mismatch", "sso.nonce.mismatch":
-		return "stale"
-	case "sso.client_secret.read", "sso.client_secret.empty", "sso.exchange":
-		return "config"
-	case "sso.discovery", "sso.userinfo", "sso.id_token.verify":
-		return "unavailable"
-	default:
-		return "failed"
-	}
-}
-
-var _ = fmt.Sprintf

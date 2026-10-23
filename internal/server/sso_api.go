@@ -138,7 +138,7 @@ func ssoErrorCode(err error) string {
 		return "unmapped"
 	case "sso.email_unverified":
 		return "unverified"
-	case "sso.state.mismatch", "sso.nonce.mismatch":
+	case "sso.state.mismatch", "sso.nonce.mismatch", "sso.attempt.missing":
 		return "stale"
 	case "sso.client_secret.read", "sso.client_secret.empty", "sso.exchange":
 		return "config"
@@ -164,7 +164,7 @@ func (h *handlers) setSSOCookie(w http.ResponseWriter, name, value string) {
 func (h *handlers) readSSOCookie(r *http.Request, name string) (string, error) {
 	cookie, err := r.Cookie(name)
 	if err != nil || cookie.Value == "" {
-		return "", errorfamily.Newf(errorfamily.Rejection, "sso."+name+".missing",
+		return "", errorfamily.Newf(errorfamily.Rejection, "sso.attempt.missing",
 			"this sign-in attempt has no live %s cookie — restart the sign-in from this browser", name)
 	}
 	return cookie.Value, nil

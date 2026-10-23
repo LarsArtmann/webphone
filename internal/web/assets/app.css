@@ -538,7 +538,12 @@ h3 {
   background: var(--surface-2);
   overflow-wrap: anywhere;
   font-family:
-    ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace;
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    Liberation Mono,
+    monospace;
   font-size: 0.9em;
 }
 

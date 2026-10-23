@@ -209,8 +209,7 @@ export const I18N = {
       "Ihr Pocket ID-Konto hat hier keine Telefon-Zuordnung — bitten Sie den Betreiber, Ihre E-Mail-Adresse einzutragen.",
     ssoErrorUnverified:
       "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
-    ssoErrorStale:
-      "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
+    ssoErrorStale: "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
     ssoErrorConfig:
       "Die Anmeldung ist serverseitig nicht korrekt konfiguriert — der Betreiber findet die Details im Journal.",
     ssoErrorUnavailable:
