@@ -808,15 +808,17 @@ def run_checks(
     )
 
     # 4c. Unknown paths render the STYLED 404: shell chrome around the
-    # error panel, status stays 404 (error-page parity; works in --base
-    # foreign mode, so the post-deploy probe validates prod too).
+    # not-found panel (literal 404, the requested path echoed back, a way
+    # home, NO reload button), status stays 404. Works in --base foreign
+    # mode too, so the post-deploy probe validates prod.
     status, body, _ = anon_nav.request("GET", "/definitely/not/a/path")
     nf = body.decode("utf-8", "replace")
     c.ok(
         "styled 404",
         status == 404
-        and 'class="wp-panel"' in nf
-        and "data-reload" in nf
+        and 'class="wp-panel wp-notfound"' in nf
+        and "/definitely/not/a/path" in nf
+        and "Back to Messages" in nf
         and 'id="login-view"' in nf,
         f"{status} bare-or-unstyled: {nf[:80]!r}",
     )
