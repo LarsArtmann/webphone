@@ -68,7 +68,7 @@ func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.textAgentOn() {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	h.draftPanel(w, r)
@@ -122,7 +122,7 @@ func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.textAgentOn() {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
@@ -143,7 +143,7 @@ func (h *handlers) discardDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.textAgentOn() {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
@@ -167,7 +167,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.textAgentOn() {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentDraftTimeout)
@@ -184,7 +184,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 	if threadParam := r.URL.Query().Get("thread"); threadParam != "" {
 		threadID, err := domain.ParseThreadID(threadParam)
 		if err != nil {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		component, err := h.threadPanelPrefilled(r, sess, threadID, 0, draft.Text)
@@ -220,7 +220,7 @@ func (h *handlers) setDraftMode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !h.textAgentOn() {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)

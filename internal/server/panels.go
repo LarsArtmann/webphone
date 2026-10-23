@@ -135,7 +135,7 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := domain.ParseThreadID(r.PathValue("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	component, err := h.threadPanel(r, sess, id, threadPageFromQuery(r))

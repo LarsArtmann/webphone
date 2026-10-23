@@ -64,12 +64,12 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	if threadParam != "" {
 		threadID, err := domain.ParseThreadID(threadParam)
 		if err != nil {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		thread, err := h.deps.Messaging.ResolveThread(r.Context(), sess.Extension, threadID)
 		if err != nil {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		to = thread.Remote
@@ -114,7 +114,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	if threadParam != "" {
 		threadID, err := domain.ParseThreadID(threadParam)
 		if err != nil {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		component, err := h.threadPanel(r, sess, threadID, 0)
@@ -171,13 +171,13 @@ func (h *handlers) resendFax(w http.ResponseWriter, r *http.Request) {
 	}
 	faxID, err := domain.ParseFaxID(r.PathValue("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	// Owner-scoped pre-fetch: a missing or foreign id is a plain 404
 	// (same as faxDocument), never a send-failure family verdict.
 	if _, err := h.deps.Fax.Get(r.Context(), sess.Extension, faxID); err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	if _, err := h.deps.Fax.Resend(r.Context(), sess.Extension, faxID); err != nil {
@@ -199,12 +199,12 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 	}
 	faxID, err := domain.ParseFaxID(r.PathValue("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	job, err := h.deps.Fax.Get(r.Context(), sess.Extension, faxID)
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	document, err := h.deps.Fax.Document(job)
@@ -322,11 +322,11 @@ func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 	}
 	contactID, err := domain.ParseContactID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	if err := h.deps.Contacts.Delete(r.Context(), sess.Extension, contactID); err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	h.NotifyContactsChanged(sess.Extension)
@@ -379,11 +379,11 @@ func (h *handlers) deleteSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 	snippetID, err := domain.ParseSnippetID(r.URL.Query().Get("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	if err := h.deps.Snippets.Delete(r.Context(), sess.Extension, snippetID); err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.snippetDeleted"))
@@ -569,18 +569,18 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 	}
 	flag, known := threadFlagActions[r.PathValue("flag")]
 	if !known {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	threadID, err := domain.ParseThreadID(r.PathValue("id"))
 	if err != nil {
-		http.NotFound(w, r)
+		h.notFound(w, r)
 		return
 	}
 	on := r.FormValue("on") == "1"
 	if err := h.deps.Messaging.SetThreadFlag(r.Context(), sess.Extension, threadID, flag, on); err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		http.Error(w, "could not update the thread", http.StatusInternalServerError)
@@ -590,7 +590,7 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("HX-Target") == "wp-thread-head" {
 		thread, _, threadErr := h.deps.Messaging.Thread(r.Context(), sess.Extension, threadID)
 		if threadErr != nil {
-			http.NotFound(w, r)
+			h.notFound(w, r)
 			return
 		}
 		names := h.crmNames(r.Context(), []string{thread.Remote.String()})
