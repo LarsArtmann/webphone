@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The AI-drafts panel now owns the agent's auto-reply mode: a selector
+  pins `off` / `drafts` / `after-hours` / `full` through the new
+  `POST /messages/drafts/mode` route (the agent persists the override
+  across restarts) and a reset action returns to the mode the
+  deployment configured. The header names a runtime override; the
+  STOP/VIP/kill-switch/confidence gates are untouched by a flip.
 - A 404 page that actually says what happened: `views.NotFoundPanel`
   shows the literal 404, echoes the requested path back, and links home
   (no reload button, since reloading a wrong address fails the same way).
@@ -16,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   while the go-health dashboard is disabled (previously bare stdlib text)
   and a missing asset the browser navigated to; programmatic asset fetches
   keep the terse answer.
+
+### Fixed
+
+- "Draft with AI" no longer aborts at the panel-read timeout: the
+  on-demand draft is a synchronous model round trip inside the agent,
+  so it rides a generation-sized budget (`textAgentDraftTimeout`)
+  instead of the 5 s review-list ceiling that made nearly every draft
+  look broken.
 
 ### Changed
 
