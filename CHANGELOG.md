@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A 404 page that actually says what happened: `views.NotFoundPanel`
+  shows the literal 404, echoes the requested path back, and links home
+  (no reload button, since reloading a wrong address fails the same way).
+  Every HTML surface now renders it, including `/health` and its subtree
+  while the go-health dashboard is disabled (previously bare stdlib text)
+  and a missing asset the browser navigated to; programmatic asset fetches
+  keep the terse answer.
+
 ### Changed
 
 - Carved the machine-facing webhook ingest and its idempotency gates out
