@@ -224,7 +224,76 @@ func TestVersionedMigrations(t *testing.T) {
 		assertTable(t, db, "snippets")
 	})
 
+	t.Run("v4 database walks forward to v5 preserving rows", func(t *testing.T) {
+		db, err := sql.Open("sqlite", ":memory:")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = db.Close() })
+		ctx := context.Background()
+		// The v4 shape: flags aboard, no network columns.
+		for _, stmt := range []string{
+			`CREATE TABLE schema_version (version INTEGER NOT NULL)`,
+			`CREATE TABLE threads (
+				id TEXT PRIMARY KEY, owner TEXT NOT NULL, remote TEXT NOT NULL,
+				last_activity_at INTEGER NOT NULL, unread INTEGER NOT NULL DEFAULT 0,
+				pinned INTEGER NOT NULL DEFAULT 0, archived INTEGER NOT NULL DEFAULT 0, muted INTEGER NOT NULL DEFAULT 0,
+				UNIQUE(owner, remote))`,
+			`CREATE TABLE messages (
+				id TEXT PRIMARY KEY, thread_id TEXT NOT NULL, owner TEXT NOT NULL,
+				remote TEXT NOT NULL, direction TEXT NOT NULL, channel TEXT NOT NULL,
+				body TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT '',
+				provider_ref TEXT NOT NULL DEFAULT '',
+				failure_kind TEXT NOT NULL DEFAULT '', failure_detail TEXT NOT NULL DEFAULT '',
+				created_at INTEGER NOT NULL)`,
+			`CREATE TABLE app_flags (key TEXT PRIMARY KEY, value TEXT NOT NULL)`,
+			`INSERT INTO threads (id, owner, remote, last_activity_at, unread, pinned, archived, muted)
+			 VALUES ('T1', '1001', '+441632960961', 1760000000, 2, 1, 0, 0)`,
+			`INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, created_at)
+			 VALUES ('M1', 'T1', '1001', '+441632960961', 'out', 'sms', 'hi', 'sent', 1760000000)`,
+			`INSERT INTO schema_version (version) VALUES (4)`,
+		} {
+			if _, err := db.ExecContext(ctx, stmt); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := migrate(ctx, db); err != nil {
+			t.Fatalf("migrate v4: %v", err)
+		}
+		assertSchemaVersion(t, db, 5)
+		assertColumns(t, db, "threads", "network")
+		assertColumns(t, db, "messages", "network")
+		// Rows survive the rebuild, backfilled onto the sms network.
+		var network, remote string
+		var unread, pinned int
+		if err := db.QueryRowContext(ctx,
+			`SELECT network, remote, unread, pinned FROM threads WHERE id = 'T1'`,
+		).Scan(&network, &remote, &unread, &pinned); err != nil {
+			t.Fatalf("thread row lost in the v5 rebuild: %v", err)
+		}
+		if network != "sms" || remote != "+441632960961" || unread != 2 || pinned != 1 {
+			t.Fatalf("v5 rebuild distorted the row: network=%q remote=%q unread=%d pinned=%d", network, remote, unread, pinned)
+		}
+		// The widened key: the same number may now carry a second,
+		// chat-network conversation.
+		if _, err := db.ExecContext(ctx,
+			`INSERT INTO threads (id, owner, network, remote, last_activity_at) VALUES ('T2', '1001', 'signal', '+441632960961', 1760000001)`,
+		); err != nil {
+			t.Fatalf("the widened UNIQUE(owner, network, remote) must admit a signal twin: %v", err)
+		}
+	})
+
 	t.Run("already-latest database is a no-op rerun", func(t *testing.T) {
+		db, err := Open(":memory:")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = db.Close() })
+		if err := migrate(context.Background(), db); err != nil {
+			t.Fatalf("rerun: %v", err)
+		}
+		assertSchemaVersion(t, db, schemaVersion)
+	})
 
 	t.Run("the chain stays consistent with schemaVersion", func(t *testing.T) {
 		if len(migrations) == 0 || migrations[len(migrations)-1].version != schemaVersion {

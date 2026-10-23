@@ -401,3 +401,43 @@ func TestSearchThreads(t *testing.T) {
 		t.Fatalf("ordering: want newest thread first, got %s then %s", list[0].Thread.ID, list[1].Thread.ID)
 	}
 }
+
+// TestSameNumberCarriesTwoNetworkThreads pins the v5 key widening: the
+// same remote value on two networks is TWO conversations — the telephony
+// thread and its chat-network twin never merge.
+func TestSameNumberCarriesTwoNetworkThreads(t *testing.T) {
+	messages := newTestDB(t)
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	sms := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
+	signal := domain.MustParseAddress(domain.NetworkSignal, "+441632960961")
+
+	smsThread, err := messages.FindThread(ctx, owner, sms, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	signalThread, err := messages.FindThread(ctx, owner, signal, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if smsThread == signalThread {
+		t.Fatalf("sms and signal conversations must be distinct threads, got %s twice", smsThread)
+	}
+
+	threads, err := messages.ListThreads(ctx, owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(threads) != 2 {
+		t.Fatalf("want 2 threads (one per network), got %d", len(threads))
+	}
+	for _, summary := range threads {
+		want := domain.NetworkSMS
+		if summary.Thread.ID == signalThread {
+			want = domain.NetworkSignal
+		}
+		if got := summary.Thread.Remote.Network(); got != want {
+			t.Fatalf("thread %s: network %s, want %s", summary.Thread.ID, got, want)
+		}
+	}
+}
