@@ -231,6 +231,7 @@ func New(deps Deps) http.Handler {
 		cookies:           cookies,
 		csrfCfg:           csrfCfg,
 		unread:            newUnreadCache(5 * time.Second),
+		latency:           newLatencyRecorder(),
 	}
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,
@@ -539,8 +540,13 @@ func New(deps Deps) http.Handler {
 	// and its writer forwards Flush/Hijack (SSE keeps flushing). Read the
 	// env once at construction like the old middleware did.
 	timingEnabled := os.Getenv("WEBPHONE_DEBUG_TIMING") != ""
+	// Latency sits directly under enrichment and above the request log:
+	// it measures the same span the log line reports, for every status,
+	// and its ResponseRecorder forwards Flush/Hijack so /events and the
+	// phone-api streaming keep working unchanged.
 	return cqrshtmx.Chain(
 		cqrshtmx.ContextEnrichmentMiddleware(nil),
+		httputil.Metrics(httputil.MetricsConfig{Recorder: h.latency}),
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,

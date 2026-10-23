@@ -45,6 +45,9 @@ type handlers struct {
 	csrfCfg httputil.CSRFConfig
 	// Memoized nav-badge totals, invalidated on every unread mutation.
 	unread *unreadCache
+	// Request-duration aggregates for /metrics (the ONE recorder instance:
+	// the middleware writes it, the metrics handler reads it).
+	latency *latencyRecorder
 }
 
 // page renders the full shell for the root URL.

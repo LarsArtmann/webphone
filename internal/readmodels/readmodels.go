@@ -50,6 +50,7 @@ type Engine struct {
 	faxes    *Faxes
 	calls    *Transcripts
 	enroll   *EnrollTokens
+	devices  *PushDevices
 	db       *sql.DB
 	closed   bool
 }
@@ -79,7 +80,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, enrollTokensQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, enrollTokensQuery, pushDevicesQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -94,6 +95,7 @@ func Open(dataDir string) (*Engine, error) {
 		faxes:    newFaxes(models, agg),
 		calls:    newTranscripts(models, agg),
 		enroll:   newEnrollTokens(models),
+		devices:  newPushDevices(models),
 		db:       db,
 	}, nil
 }
@@ -129,6 +131,10 @@ func (e *Engine) Transcripts() *Transcripts { return e.calls }
 // userauth SQL table's replacement; token classification stays in the
 // userauth service).
 func (e *Engine) EnrollTokens() *EnrollTokens { return e.enroll }
+
+// PushDevices returns the engine-backed registered-device store (the
+// push seam's ring fan-out source; owner-scoped everywhere).
+func (e *Engine) PushDevices() *PushDevices { return e.devices }
 
 // SQL exposes the engine's own sqlite handle (probe pings; future
 // engine-side maintenance). Callers must not close it — Shutdown owns

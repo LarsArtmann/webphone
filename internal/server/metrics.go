@@ -69,6 +69,10 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(&b, "webphone_crm_lookups_total{outcome=\"failure\"} %d\n", failure)
 	}
 
+	// Request-duration aggregates last: they describe the traffic that
+	// produced the counts above (aggregates only, no path labels).
+	h.latency.writePrometheus(&b)
+
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	_, _ = w.Write([]byte(b.String())) //nolint:erraudit // best-effort body write; nothing left to do on failure
 }
