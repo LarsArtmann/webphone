@@ -16,7 +16,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -51,6 +54,10 @@ type stubIDP struct {
 	lastVerifier   string
 	lastCode       string
 	lastAuthHeader string
+
+	discoveries    atomic.Int64
+	discoveryDelay time.Duration
+	outage         atomic.Bool
 }
 
 func newStubIDP(t *testing.T) *stubIDP {
@@ -81,6 +88,14 @@ func newStubIDP(t *testing.T) *stubIDP {
 func (s *stubIDP) issuer() string { return s.server.URL }
 
 func (s *stubIDP) discovery(w http.ResponseWriter, _ *http.Request) {
+	s.discoveries.Add(1)
+	if s.discoveryDelay > 0 {
+		time.Sleep(s.discoveryDelay)
+	}
+	if s.outage.Load() {
+		http.Error(w, "idp down", http.StatusServiceUnavailable)
+		return
+	}
 	writeStubJSON(s.t, w, map[string]any{
 		"issuer":                                s.issuer(),
 		"authorization_endpoint":                s.issuer() + "/authorize",
@@ -479,5 +494,84 @@ func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
 	defer resp2.Body.Close()
 	if resp2.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("the raw (padded+newline) secret must be refused with 401, got %d", resp2.StatusCode)
+	}
+}
+
+// Single-flight discovery (2026-10-24): the old shape held the client
+// mutex ACROSS the network call, so an IdP outage turned N concurrent
+// logins into N serialized 10 s discovery attempts. The single-flight
+// shape runs ONE attempt and every waiter shares its outcome.
+func TestConcurrentLoginsRunExactlyOneDiscovery(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	idp.discoveryDelay = 100 * time.Millisecond
+	client := newTestClient(t, idp, nil)
+
+	const n = 8
+	errs := make([]error, n)
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, errs[i] = client.providerFor(testContext(idp))
+		}()
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("caller %d: providerFor: %v", i, err)
+		}
+	}
+	if got := idp.discoveries.Load(); got != 1 {
+		t.Fatalf("concurrent providerFor must run exactly ONE discovery, got %d", got)
+	}
+}
+
+// The positive cache is bounded: after the TTL the next login
+// re-discovers (IdP endpoint or key rotation is picked up without a
+// restart). Failures are never cached — an outage costs one attempt
+// per login, and a recovered IdP serves the very next caller.
+func TestDiscoveryCacheExpiresAndFailuresStayUncached(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	client := newTestClient(t, idp, nil)
+
+	if _, err := client.providerFor(testContext(idp)); err != nil {
+		t.Fatalf("first providerFor: %v", err)
+	}
+	if _, err := client.providerFor(testContext(idp)); err != nil {
+		t.Fatalf("cached providerFor: %v", err)
+	}
+	if got := idp.discoveries.Load(); got != 1 {
+		t.Fatalf("the second call inside the TTL must ride the cache, got %d discoveries", got)
+	}
+
+	client.fetchedAt = client.fetchedAt.Add(-providerTTL - time.Second)
+	if _, err := client.providerFor(testContext(idp)); err != nil {
+		t.Fatalf("post-TTL providerFor: %v", err)
+	}
+	if got := idp.discoveries.Load(); got != 2 {
+		t.Fatalf("an expired cache entry must re-discover, got %d discoveries", got)
+	}
+
+	client.fetchedAt = client.fetchedAt.Add(-providerTTL - time.Second)
+	idp.outage.Store(true)
+	if _, err := client.providerFor(testContext(idp)); err == nil {
+		t.Fatal("an IdP outage must fail the login, not serve a stale provider")
+	}
+	if _, err := client.providerFor(testContext(idp)); err == nil {
+		t.Fatal("a failed discovery must stay uncached (the outage must cost the next attempt too)")
+	}
+	if got := idp.discoveries.Load(); got != 4 {
+		t.Fatalf("failures must not be cached: want 4 discovery attempts, got %d", got)
+	}
+
+	idp.outage.Store(false)
+	if _, err := client.providerFor(testContext(idp)); err != nil {
+		t.Fatalf("a recovered IdP must serve the next caller: %v", err)
 	}
 }

@@ -40,6 +40,12 @@ import (
 // request (and with it a worker) for minutes.
 const discoveryTimeout = 10 * time.Second
 
+// providerTTL bounds the positive discovery cache: a long-running
+// process re-discovers after this window so IdP endpoint or key
+// rotation is picked up without a restart. Failures are never cached —
+// an outage costs a login attempt, never the boot.
+const providerTTL = 15 * time.Minute
+
 // Config is the resolved OIDC configuration: the operator-declared client
 // shape plus the mapping the composition root translated from config.
 type Config struct {
@@ -69,8 +75,18 @@ type Client struct {
 	mapped *authmap.Map
 	http   *http.Client
 
-	mu       sync.Mutex
-	provider *oidc.Provider
+	mu        sync.Mutex
+	provider  *oidc.Provider
+	fetchedAt time.Time
+	inflight  chan providerResult
+}
+
+// providerResult is the single-flight handoff: every goroutine that
+// arrives while one discovery is running shares its outcome instead of
+// stacking its own network attempt behind the mutex.
+type providerResult struct {
+	p   *oidc.Provider
+	err error
 }
 
 // New validates the static shape and builds the mapping. No network is
@@ -261,18 +277,38 @@ func (c *Client) clientSecret() (string, error) {
 // be retried on the next, not remembered forever.
 func (c *Client) providerFor(ctx context.Context) (*oidc.Provider, error) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.provider != nil {
-		return c.provider, nil
+	if c.provider != nil && time.Since(c.fetchedAt) < providerTTL {
+		p := c.provider
+		c.mu.Unlock()
+		return p, nil
 	}
+	if c.inflight != nil {
+		ch := c.inflight
+		c.mu.Unlock()
+		res := <-ch
+		return res.p, res.err
+	}
+	ch := make(chan providerResult, 1)
+	c.inflight = ch
+	c.mu.Unlock()
+
 	dctx, cancel := context.WithTimeout(ctx, discoveryTimeout)
-	defer cancel()
 	provider, err := oidc.NewProvider(dctx, c.cfg.Issuer)
+	cancel()
+
+	c.mu.Lock()
+	c.inflight = nil
+	if err == nil {
+		c.provider = provider
+		c.fetchedAt = time.Now()
+	}
+	c.mu.Unlock()
+	ch <- providerResult{p: provider, err: err}
+	close(ch)
 	if err != nil {
 		return nil, errorfamily.WrapRejection(err, "sso.discovery",
 			"discover the OIDC provider (check auth.oauth2.issuer and that the IdP is reachable)")
 	}
-	c.provider = provider
 	return provider, nil
 }
 
