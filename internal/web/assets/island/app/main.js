@@ -19,6 +19,7 @@ import {
   teardownAll,
 } from "./calls.js";
 import { sipCredentialMode, sipDomain, websocketUrl } from "./config.js";
+import { showSSOError } from "./ssoerror.js";
 import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
@@ -151,20 +152,9 @@ async function resumeSession() {
 
 // SSO callback failures land on the shell as ?sso_error=<code> (the
 // callback always redirects home, so the browser never sits on a raw
-// error page). The short code maps onto a localized, actionable sentence
-// on the login card; the journal keeps the classified detail.
-function showSSOError() {
-  const code = new URLSearchParams(location.search).get("sso_error");
-  if (!code) return;
-  const el = document.getElementById("sso-error");
-  if (!el) return;
-  const key = "ssoError" + code.charAt(0).toUpperCase() + code.slice(1);
-  const message = t(key);
-  el.textContent = typeof message === "string" ? message : t("ssoErrorFailed");
-  el.hidden = false;
-}
-
-showSSOError();
+// error page); ssoerror.js renders the localized sentence and strips
+// the parameter so a reload never re-shows a stale failure.
+showSSOError(t);
 els.loginView.hidden = true;
 resumeSession().catch((err) => {
   log(`session resume failed: ${err.message}`, "error");
