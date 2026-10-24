@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>go-cqrs-lite catalog — Adoption &amp; Utilization Audit</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>Library Deep Dive</span>
+      <span>2026-10-24</span>
+      <span>webphone · LarsArtmann</span>
     </div>
 
     <div class="layout">
@@ -861,10 +861,11 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
+          <a href="#baseline">Baseline</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#na">Not applicable</a>
+          <a href="#version">Version</a>
+          <a href="#opportunities">Opportunities</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -873,43 +874,50 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-10-24</div>
+          <h1>go-cqrs-lite/catalog — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            webphone builds on go-cqrs-lite (3 direct modules, 21 indirect) but
+            imports the <strong>catalog</strong> documentation module exactly zero
+            times. This audit measures that gap against every capability of
+            catalog/v4.10.0 — and finds two paths where webphone hand-rolls
+            precisely what the library generates.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Imported: nowhere</span>
+            <span class="tag">Latest: catalog/v4.10.0</span>
+            <span class="tag">Applicable rows: 3 of 12</span>
+            <span class="tag teal">Adoption Score: 0/100</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+          <div class="score-card score-bad">
+            <div class="score">0</div>
+            <div class="label">Adoption score / 100 · low band</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">0 / 3</div>
+            <div class="label">Rows fully leveraged</div>
           </div>
           <div class="score-card score-warn">
             <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="label">Missed opportunities</div>
           </div>
-          <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Misuses / anti-patterns</div>
           </div>
           <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">9</div>
+            <div class="label">N/A rows (each reasoned)</div>
           </div>
         </section>
 
@@ -917,39 +925,90 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            The direct answer to <em>"do we use catalog superbly?"</em> is
+            <strong>no — webphone does not use it at all</strong>. Not in
+            <code>go.mod</code>, not in a single import. On one path that
+            non-use is a recorded owner ruling with sound reasoning; on the two
+            remaining applicable paths it is an unexamined gap in which
+            webphone hand-maintains exactly the artifacts the library
+            generates from Go types.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            The EventCatalog path is ruled out by an owner decision
+            (2026-10-19: no CQRS write model, an event-catalog export would
+            fabricate message vocabulary — TODO_LIST.md:68-77) and this audit
+            respects it. But the ruling never considered the other two
+            applicable capabilities: webphone hand-writes a 227-line OpenAPI
+            JSON constant (4 of 23 <code>/api/*</code> paths, schemas unbound
+            from the Go DTOs) and documents its cross-repo wire contracts
+            (ring hook, webhook lanes, SSE kinds) only in Go comments and
+            AGENTS.md prose — consumed by two other repos. A small
+            <code>catalog/openapi</code> + <code>catalog/asyncapi</code>
+            adoption closes both gaps without touching the EventCatalog
+            ruling.
           </div>
         </section>
 
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+        <!-- Baseline -->
+        <section id="baseline">
+          <h2><span class="num">&#9670;</span>Baseline — zero usage, and what's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            <strong>Current usage: none.</strong> webphone requires three
+            go-cqrs-lite modules directly (<code>metaengine</code> v4.19.0,
+            <code>metaengine/sqliteengine</code> v4.5.3,
+            <code>record</code> v4.6.2 — go.mod:18-20) and carries 21 more
+            indirectly (go.mod:71-91); <code>catalog</code> is absent from the
+            entire module graph. A repo-wide search finds zero references.
+            Adoption cost is unusually low for a new dependency: the spec
+            exporters need only <code>go-error-family</code> (already a direct
+            dep at v0.12.0) plus <code>go-faster/yaml</code>; templ and
+            templ-components are linked only by the docserver package
+            (catalog README.md:24-37).
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>The hand-written spec is disciplined, not sloppy</strong>
+                <span
+                  ><code>openapiSpec</code> (internal/server/server.go:717-947)
+                  is deliberately scoped to "the one machine-facing contract
+                  worth publishing", compiles into the binary, and is pinned by
+                  three tests (middleware_test.go:196-320) that force every
+                  documented response code to match what the handlers actually
+                  emit — including the 429 limiter's Retry-After header.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>The EventCatalog non-adoption is a reasoned ruling</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >Recorded in webphone's TODO_LIST.md:68-77 and the hub's
+                  CHANGELOG (2026-10-19): webphone has read models + in-process
+                  SSE notifications, no CQRS write model — an event-catalog
+                  export would fabricate message vocabulary. pbx-lens is the
+                  telephony family's event source. Honest-docs discipline, with
+                  a revisit trigger ("only if webphone adopts go-cqrs-lite
+                  commands").</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The wire contracts are typed where it counts</strong>
+                <span
+                  >The ring-hook payload is a real struct
+                  (internal/server/hooks/ring.go:19-23:
+                  <code>owner/from/call_id/state</code>), the login DTO fields
+                  exist at session_api.go:33-34, and the SSE event names are
+                  constants (sse.go:23-24: threads, thread, fax, voicemail,
+                  contacts). The gap is <em>publication</em>, not
+                  modeling.</span
                 >
               </div>
             </div>
@@ -959,112 +1018,481 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            The 3 applicable capability rows, ordered by impact. All three are
+            missed — nothing is partially used or misused.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+
+          <!-- Finding 1: OpenAPI -->
+          <div class="issue issue-critical" id="missed-openapi">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; High impact</span
+            >
+            <h3>
+              OpenAPI is hand-written as a 227-line JSON constant — catalog
+              generates it from the real Go types
+            </h3>
+            <div class="where">
+              internal/server/server.go:717-947 (const) &middot; :948-953
+              (handler) &middot; :525 (route) &middot;
+              internal/server/middleware_test.go:196-320 (pins) &middot;
+              catalog README.md:146-292 (REST API documentation)
+            </div>
+            <p>
+              <strong>What the library offers:</strong>
+              <code>catalog.Command[T]</code> / <code>catalog.Query[T]</code>
+              with <code>MsgOperation(method, path, codes...)</code>,
+              <code>Response[T](code, desc)</code>, and
+              <code>SchemaFromType[T]()</code> derive OpenAPI paths from the
+              same structs the handlers decode — field names, required flags,
+              descriptions and formats come from <code>json</code> /
+              <code>doc</code> / <code>format</code> struct tags. Parameters
+              (<code>query</code>/<code>path</code>/<code>header</code>/
+              <code>cookie</code>) are extracted automatically;
+              <code>Catalog.Validate()</code> detects duplicate operation paths
+              and missing response schemas; <code>DELETE/PUT/PATCH[T]</code>
+              shortcuts cut the boilerplate.
+            </p>
+            <p>
+              <strong>What webphone does instead:</strong> a hand-maintained
+              JSON string constant covering 4 paths
+              (<code>/api/session</code>, <code>/api/csrf</code>,
+              <code>/api/contacts</code>, <code>/api/calls</code>) of the 23
+              <code>/api/*</code> routes that exist — the schemas mirror DTO
+              fields by hand with no compile-time link. The tests pin paths and
+              response <em>codes</em>, but a renamed or restructured field in
+              the session/contacts DTOs would leave the spec's
+              <em>bodies</em> silently stale. Undocumented today:
+              <code>/api/transcribe</code>, <code>/api/transcripts</code>, and
+              <code>/api/push-devices</code> — the last consumed by the new
+              webphone-android shell, which has no spec to build against.
+            </p>
+            <pre><code>// Before: hand-mirrored schema inside a 227-line JSON const
+// (server.go:729-747 — must be edited in lockstep with the DTO)
+"properties": {
+  "extension": {"type": "string", "examples": ["1001"]},
+  "password":  {"type": "string", "format": "password"}
+}
+
+// After: derived from the type the handler actually decodes
+b := catalog.NewBuilder("webphone session API", "1.0.0")
+b.AddService("webphone", "webphone", "1.0.0",
+    "Server session for the tabs and the phone-api proxy",
+    catalog.Command[loginRequest]("createSession",
+        catalog.MsgOperation("POST", "/api/session",
+            "201", "400", "401", "502", "500"),
+        catalog.Response[sessionIdentity]("201", "Session created"),
+        catalog.MsgSecurity("sessionCookie"),
+    ),
+    catalog.DELETE[struct{}]("deleteSession", "/api/session"),
+    catalog.Query[struct{}]("resumeSession",
+        catalog.MsgOperation("GET", "/api/session")),
+)
+spec, err := openapi.Exporter{}.Export(b.Build()) // schemas from the types</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Declare the machine API in one registry (start with the current
+              four paths + the three the Android shell consumes), render with
+              <code>openapi.Exporter</code>, serve from the existing
+              <code>/openapi.json</code> route, and keep the three pin tests —
+              they would then pin the <em>generated</em> document. Honest
+              counterweight: for exactly 4 paths a constant is defensible; the
+              trade flips clearly in catalog's favor as the surface grows and
+              schema bodies gain a type binding.
+            </div>
+          </div>
+
+          <!-- Finding 2: AsyncAPI -->
+          <div class="issue issue-important" id="missed-asyncapi">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Moderate impact</span
+            >
+            <h3>
+              Cross-repo wire contracts live in comment blocks and prose —
+              AsyncAPI export would give them a machine-readable home
+            </h3>
+            <div class="where">
+              internal/server/hooks/ring.go:19-23 (typed payload) &middot;
+              hooks/webhooks.go:152-169 (contract in a comment) &middot;
+              internal/server/notifier.go:54-71 + sse.go:23-24 (SSE kinds)
+              &middot; AGENTS.md "Gateway seam" / "Push seam" prose &middot;
+              catalog README.md:313-343 (AsyncAPI exporter)
+            </div>
+            <p>
+              webphone's real async surface spans three repos: the ring hook
+              (<code>{owner, from, call_id, state: ring|end}</code>) is POSTed
+              by the stack's FreeSWITCH dialplan and prunes devices on
+              <code>ErrUnregistered</code>; the webhook lanes
+              (<code>/hooks/message|fax|status|ring</code>) are driven by
+              pbx-artmann's <code>telnyx-webhooks.py</code> bridge; the
+              outbound gateway posts multipart to
+              <code>{url}/message|/fax</code> with a JSON
+              <code>{"provider_ref"}</code> receipt; the SSE stream pushes five
+              named event kinds. Every one of these contracts is documented in
+              Go comments, AGENTS.md prose, or archived plan docs — none in a
+              spec. <code>asyncapi.Exporter{}</code> maps
+              sends/receives/directions to AsyncAPI 3.0 channels from typed
+              messages, and unlike the EventCatalog path this fabricates
+              nothing: these are wire messages that already exist.
+            </p>
+            <pre><code>// The ring contract, today: a comment block (webhooks.go:152-161)
+//	"owner": the ringing extension
+//	"state":    "ring" | "end"
+
+// After: one declared message, exported to docs/contracts/asyncapi.yaml
+b.AddService("webphone-hooks", "webphone webhook lane", "1.0.0",
+    "Machine lane shared with the pbx-artmann bridge and the FS dialplan",
+    catalog.Event[ringRequest]("call.ringing", catalog.Receives),
+    catalog.Event[gatewayReceipt]("gateway.receipt", catalog.Sends),
+)</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Follow bank-sync's proven shape (catalog README.md:348-372): a
+              headless <code>webphone -export-contracts</code> subcommand or CI
+              step that writes <code>docs/contracts/asyncapi.yaml</code> from
+              one registry. The pbx-artmann bridge and the Android shell gain a
+              checkable contract; webphone's docs gain a generated one-home
+              instead of three prose homes.
+            </div>
+          </div>
+
+          <!-- Finding 3: registry mechanics -->
+          <div class="issue issue-nice" id="missed-registry">
+            <span class="severity severity-nice"
+              >Enabler &middot; Gateway capability</span
+            >
+            <h3>Core registry + schema reflection: the gate to both findings above</h3>
+            <div class="where">not used anywhere &middot; catalog README.md:39-105, 117-143</div>
+            <p>
+              <code>NewRegistry</code>/<code>NewBuilder</code>,
+              <code>AddService/AddCommand/AddEvent/AddQuery</code>,
+              <code>SchemaFromType[T]()</code> with
+              <code>json</code>/<code>doc</code>/<code>format</code>/
+              <code>enum</code> tag reflection, and <code>Validate()</code> are
+              the foundation both findings build on. It is scored as a
+              capability row because adopting it has costs of its own that must
+              be planned: the vendorHash re-pin ritual after
+              <code>go get</code>, and a route-vs-registry drift test —
+              <code>Validate()</code> checks internal consistency, not that a
+              declared path has a registered handler (webphone's existing pin
+              tests are exactly the right pattern to extend).
+            </p>
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Not applicable -->
+        <section id="na">
+          <h2><span class="num">02</span>What does not apply — and why</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            9 of the 12 capability rows are Not Applicable. Each carries its
+            reason; none is an escape hatch.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Capability</th>
+                <th>Reason it cannot apply to webphone</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>EventCatalog MDX export + hub federation</td>
+                <td>
+                  Owner ruling 2026-10-19 (TODO_LIST.md:68-77): no CQRS write
+                  model — an event-catalog export would fabricate message
+                  vocabulary; pbx-lens is the family's event source. webphone
+                  rides the hub as an inventory-only entry. Revisit trigger
+                  recorded: "only if webphone adopts go-cqrs-lite commands".
+                </td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>Architecture HTML reference (ADR-0159/0160)</td>
+                <td>
+                  Covered by an existing analysis-driven practice:
+                  docs/architecture-understanding/ holds three cycles of
+                  generated D2 + SVG + review HTML. catalog's variant is
+                  registry-driven (hand-maintained declarations) — its value
+                  accrues to hub-federated multi-service estates, not a
+                  single-binary app.
+                </td>
+              </tr>
+              <tr>
+                <td>D2 diagram export</td>
+                <td>
+                  Same: D2s are already generated from code analysis by the
+                  architecture-visualization workflow; a registry-driven D2
+                  would be a hand-maintained duplicate.
+                </td>
+              </tr>
+              <tr>
+                <td>docserver (in-binary /docs UI)</td>
+                <td>
+                  Single-operator deployed app; surface-minimalism doctrine
+                  (machine surfaces gated, health dashboard fenced, strict
+                  CSP). No audience for a Scalar/AsyncAPI-react UI;
+                  <code>/openapi.json</code> is the honest scope.
+                </td>
+              </tr>
+              <tr>
+                <td>llms.txt / schemas.txt</td>
+                <td>
+                  Rides the EventCatalog export (ruled out above); AGENTS.md is
+                  the curated AI-context home and is richer than generated
+                  scaffolding.
+                </td>
+              </tr>
+              <tr>
+                <td>catalog.index.json manifest diff gates</td>
+                <td>
+                  Rides the EventCatalog export — PR gates over manifests only
+                  exist once there is a hub tree to diff.
+                </td>
+              </tr>
+              <tr>
+                <td>huma / httptyped adapters</td>
+                <td>
+                  Framework mismatch: webphone's handlers are raw net/http +
+                  cqrs-htmx; adopting typed envelopes would be re-architecture,
+                  not documentation.
+                </td>
+              </tr>
+              <tr>
+                <td>Message versioning + changelog</td>
+                <td>
+                  Only meaningful once OpenAPI/AsyncAPI adoption gives messages
+                  a home; noted as the follow-on practice if finding 1 or 2 is
+                  adopted.
+                </td>
+              </tr>
+              <tr>
+                <td>simple builder facade + branded catalog IDs</td>
+                <td>
+                  Convenience layer over the core registry; folds into any
+                  adoption of finding 1/2 rather than standing alone.
+                </td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Version -->
+        <section id="version">
+          <h2><span class="num">03</span>Version currency</h2>
+          <p>
+            Nothing to compare in the usual sense — catalog is not in the
+            module graph at all. Latest tag at audit time:
+            <code>catalog/v4.10.0</code> (go-cqrs-lite HEAD 619854859,
+            2026-10-24). Any adoption starts at the current tag with no
+            migration burden.
+          </p>
+          <div class="callout callout-amber">
+            <strong>Side observation (different module, same family)</strong>
+            webphone pins <code>metaengine/v4 v4.19.0</code> (go.mod:19) while
+            <code>metaengine/v4.20.0</code> is already tagged upstream — a
+            routine bump candidate through the vendorHash ritual, unrelated to
+            catalog.
+          </div>
+        </section>
+
+        <!-- Opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">04</span>Top opportunities</h2>
+          <p>
+            Ranked by impact &times; ease (1-5 each). The Pareto set is small
+            because 9 of 12 rows do not apply.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  Adopt <code>catalog/openapi</code> for the machine API;
+                  serve generated spec from <code>/openapi.json</code>; keep the
+                  pin tests (finding 1)
+                </td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  Record a decision on the widened scope: the 2026-10-19 ruling
+                  names only the event-catalog path — either adopt findings 1+2
+                  or record their decline in TODO_LIST.md:68-77
+                </td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>
+                  Publish the cross-repo wire contracts via
+                  <code>catalog/asyncapi</code> to docs/contracts/ (finding 2)
+                </td>
+                <td>3</td>
+                <td>3</td>
+                <td><span class="highlight">9</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>
+                  Add a route-vs-registry drift test with any adoption
+                  (<code>Validate()</code> cannot see the mux)
+                </td>
+                <td>3</td>
+                <td>3</td>
+                <td><span class="highlight">9</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Conclusion.</strong> "Superbly" is not the right bar —
+            "at all" is the honest one, and the answer is no. The zero score is
+            honest, not damning: one third of the ruling is deliberate
+            (EventCatalog, by recorded owner decision), one third is defensible
+            minimalism under mild pressure to grow (the hand-written OpenAPI
+            constant), and one third is a real, cheap gap (the cross-repo wire
+            contracts). The single highest-leverage step is opportunity 1: a
+            small catalog/openapi registry that turns the machine API's
+            documentation from hand-maintained JSON into generated-from-types
+            output — with webphone-android as its first external consumer.
+          </p>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">05</span>Appendix</h2>
+          <h3>A. Capability inventory (score denominator)</h3>
+          <p>
+            12 rows: 3 applicable (all missed, score 0 each) and 9 not
+            applicable. Adoption score = round(100 &times; 0 / 3) =
+            <strong>0/100</strong>, band <strong>low</strong>.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Core registry + builder + schema reflection</td>
+                <td class="no">Missed (enabler)</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>OpenAPI export (operations, typed responses, Validate)</td>
+                <td class="no">Missed &middot; high impact</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>AsyncAPI export (channels, directions)</td>
+                <td class="no">Missed &middot; moderate impact</td>
+                <td>0</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>EventCatalog export + hub federation</td>
+                <td class="yes">N/A — owner ruling 2026-10-19</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Architecture HTML reference</td>
+                <td class="yes">N/A — existing analysis-driven practice</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>D2 export</td>
+                <td class="yes">N/A — covered by visualization workflow</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>docserver docs UI</td>
+                <td class="yes">N/A — no audience, surface doctrine</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>llms.txt / schemas.txt</td>
+                <td class="yes">N/A — rides ruled-out row 4</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>catalog.index.json manifest gates</td>
+                <td class="yes">N/A — rides ruled-out row 4</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>huma / httptyped adapters</td>
+                <td class="yes">N/A — framework mismatch</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>Message versioning + changelog</td>
+                <td class="yes">N/A — contingent on rows 2-3</td>
+                <td>&ndash;</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>simple facade + branded IDs</td>
+                <td class="yes">N/A — folds into adoption</td>
+                <td>&ndash;</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>B. How to verify</h3>
+          <pre><code># Zero usage (the headline claim)
+rg -n "go-cqrs-lite/catalog" ~/projects/webphone          # no matches
+grep -c "go-cqrs-lite" ~/projects/webphone/go.mod         # 24 modules, none is catalog
+
+# The hand-written spec and its pins
+sed -n '717,721p' ~/projects/webphone/internal/server/server.go
+rg -n "TestOpenAPI" ~/projects/webphone/internal/server/middleware_test.go
+
+# The owner ruling (EventCatalog N/A)
+sed -n '68,77p' ~/projects/webphone/TODO_LIST.md
+rg -n "webphone" ~/projects/eventcatalog-hub/sources.json  # listed under "excluded"
+
+# Library capability surface + version
+less ~/projects/go-cqrs-lite/catalog/README.md
+git -C ~/projects/go-cqrs-lite tag --sort=-creatordate | grep -m1 "catalog/v4"  # catalog/v4.10.0
+
+# Re-derive the score: count appendix rows (12), N/A rows (9),
+# applicable rows (3), leveraged (0) -&gt; 0/100</code></pre>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-24 &middot; Audited against
+            github.com/larsartmann/go-cqrs-lite catalog/v4.10.0 (HEAD
+            619854859) &middot; Claims verified against source code as of
+            2026-10-24 13:00 CEST &middot; Prior reports: none for go-cqrs-lite
+            (cqrs-htmx 2026-09-18/19 cover a different library)
           </p>
         </footer>
       </main>
