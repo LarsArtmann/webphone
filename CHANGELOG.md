@@ -88,6 +88,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Consolidated the push-train surfaces onto one-home helpers: JSON
+  responses and cap refusals (`api.writeJSONBody`, `api.storeAtCapacity`),
+  the device-API prologue (`api.pushSession`), the HTML render tail
+  (`server.renderHTML`), the session+id thread prologue
+  (`server.requireThread`), the loopback-only machine-surface prologue
+  (`server.machineSurface`), the drafts-panel session/gate/action sequence
+  (`server.textAgentSession`/`textAgentGate`/`textAgentPanelAction`) and
+  the 2xx transport verdict (`push.statusOK`). Behavior parity; the push
+  transports keep their literal error codes at each call site so the
+  error-code registry stays authoritative. Also restored the
+  daemon-truncated `.buildflow.yml` policy file and re-applied treefmt to
+  the prettier-owned island/shell sources (a formatter pass had deleted
+  the config and reflowed the JS to a non-prettier width).
+
 - Carved the machine-facing webhook ingest and its idempotency gates out
   of the server wiring into `internal/server/hooks` (behavior parity:
   same routes, same status codes, same dedupe semantics; the mount, flood

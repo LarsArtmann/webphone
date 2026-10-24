@@ -129,41 +129,47 @@ func textAgentActionError(err error) (int, string) {
 	return status, agentDetail(err)
 }
 
+// textAgentPanelAction runs one drafts-panel action under the panel
+// timeout: the session gate, the error contract (agent verdict → panel
+// banner), the optional success toast, and the panel refresh live here so
+// every action answers the same way.
+func (h *handlers) textAgentPanelAction(
+	w http.ResponseWriter, r *http.Request, key, toastKey string, action func(context.Context) error,
+) {
+	sess, ok := h.textAgentSession(w, r)
+	if !ok {
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
+	defer cancel()
+	if err := action(ctx); err != nil {
+		status, detail := textAgentActionError(err)
+		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, key)+": "+detail)
+		return
+	}
+	if toastKey != "" {
+		notifyToast(w, "ok", h.T(r, toastKey))
+	}
+	h.draftPanel(w, r)
+}
+
 // approveDraft sends a pending draft — verbatim, or with the human
 // edit the review form carried (the agent records the correction as a
 // learned preference). Success re-renders the drafts panel; failure
 // rides the panel-error contract so the banner lands where the owner
 // looks.
 func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.textAgentSession(w, r)
-	if !ok {
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
-	defer cancel()
-	if _, err := h.deps.TextAgent.Approve(ctx, r.PathValue("id"), r.FormValue("text")); err != nil {
-		status, detail := textAgentActionError(err)
-		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, "drafts.approve")+": "+detail)
-		return
-	}
-	notifyToast(w, "ok", h.T(r, "toast.messageSent"))
-	h.draftPanel(w, r)
+	h.textAgentPanelAction(w, r, "drafts.approve", "toast.messageSent", func(ctx context.Context) error {
+		_, err := h.deps.TextAgent.Approve(ctx, r.PathValue("id"), r.FormValue("text"))
+		return err
+	})
 }
 
 // discardDraft drops a pending draft without sending.
 func (h *handlers) discardDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.textAgentSession(w, r)
-	if !ok {
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
-	defer cancel()
-	if err := h.deps.TextAgent.Discard(ctx, r.PathValue("id")); err != nil {
-		status, detail := textAgentActionError(err)
-		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, "drafts.discard")+": "+detail)
-		return
-	}
-	h.draftPanel(w, r)
+	h.textAgentPanelAction(w, r, "drafts.discard", "", func(ctx context.Context) error {
+		return h.deps.TextAgent.Discard(ctx, r.PathValue("id"))
+	})
 }
 
 // aiDraft is the compose button: the signed-in owner asks the agent for
@@ -212,10 +218,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 		h.internalError(w, r, "load messages", err)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := component.Render(r.Context(), w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
-	}
+	renderHTML(w, r, component)
 }
 
 // setDraftMode is the drafts panel's auto-reply switch: "reset" drops the
@@ -224,23 +227,13 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 // safety gates are unchanged — the mode only decides whether a confident
 // draft may send itself.
 func (h *handlers) setDraftMode(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.textAgentSession(w, r)
-	if !ok {
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
-	defer cancel()
-	var err error
-	if r.FormValue("mode") == "reset" {
-		_, err = h.deps.TextAgent.ResetMode(ctx)
-	} else {
-		_, err = h.deps.TextAgent.SetMode(ctx, r.FormValue("mode"))
-	}
-	if err != nil {
-		status, detail := textAgentActionError(err)
-		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, "drafts.mode.label")+": "+detail)
-		return
-	}
-	notifyToast(w, "ok", h.T(r, "drafts.mode.changed"))
-	h.draftPanel(w, r)
+	h.textAgentPanelAction(w, r, "drafts.mode.label", "drafts.mode.changed", func(ctx context.Context) error {
+		var err error
+		if r.FormValue("mode") == "reset" {
+			_, err = h.deps.TextAgent.ResetMode(ctx)
+		} else {
+			_, err = h.deps.TextAgent.SetMode(ctx, r.FormValue("mode"))
+		}
+		return err
+	})
 }

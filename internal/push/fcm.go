@@ -183,13 +183,14 @@ func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
 	errorBody, _ := io.ReadAll(io.LimitReader(resp.Body, fcmBodyLimit))
 	_ = resp.Body.Close() //nolint:erraudit // best-effort socket return; the body is drained
 
+	if statusOK(resp.StatusCode) {
+		return nil
+	}
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_send", "fcm rejected the access token (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound || strings.Contains(string(errorBody), fcmUnregisteredMarker):
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm reports the device token dead (%d)", resp.StatusCode)
-	case statusOK(resp.StatusCode):
-		return nil
 	default:
 		return errorfamily.Newf(errorfamily.Infrastructure, "push.fcm_send", "fcm answered %d", resp.StatusCode)
 	}
