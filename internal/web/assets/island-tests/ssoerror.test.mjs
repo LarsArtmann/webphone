@@ -83,3 +83,18 @@ test("the directory reason renders its own sentence", () => {
   assert.notEqual(el.textContent, "directory", "the raw code must never render");
   assert.ok(!lastReplaced.includes("sso_error"));
 });
+
+test("the groups reason renders its own sentence", () => {
+  const el = card();
+  withLocation("?sso_error=groups");
+  showSSOError(t);
+  assert.equal(el.hidden, false);
+  assert.notEqual(el.textContent, "");
+  assert.notEqual(el.textContent, "groups", "the raw code must never render");
+  assert.notEqual(
+    el.textContent,
+    t("ssoErrorFailed"),
+    "the groups sentence must not fall back to the generic failure",
+  );
+  assert.ok(!lastReplaced.includes("sso_error"));
+});

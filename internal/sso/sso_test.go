@@ -620,3 +620,80 @@ func TestLoginClaimsAuditLineCarriesGroupsOnlyInTheJournal(t *testing.T) {
 		t.Fatalf("groups must never reach the mapped identity/session shape: %s", encoded)
 	}
 }
+
+// The in-app group allowlist (H4, 2026-10-24): a second admission gate
+// on top of the IdP-side client-group link. Default OFF; configured, it
+// fails closed both ways — no intersection and NO groups claim at all
+// are both denied with the named code before the mapping is consulted.
+func TestCompleteAllowsAMemberOfAnAllowedGroup(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	idp.extraClaims["groups"] = []string{"pbx-mail-admin", "pbx-phone"}
+	client := newTestClient(t, idp, func(c *Config) { c.AllowedGroups = []string{"pbx-phone"} })
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	user, _, err := client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce)
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+	if user.Email != stubUserEmail {
+		t.Errorf("email = %q, want %q", user.Email, stubUserEmail)
+	}
+}
+
+func TestCompleteDeniesAMemberOfNoAllowedGroup(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	idp.extraClaims["groups"] = []string{"some-unrelated-group"}
+	client := newTestClient(t, idp, func(c *Config) { c.AllowedGroups = []string{"pbx-phone"} })
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	_, _, err = client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce)
+	errorfamilytest.AssertCode(t, err, "sso.groups_denied")
+}
+
+func TestCompleteFailsClosedOnNoGroupsClaimWhenAnAllowlistIsSet(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	client := newTestClient(t, idp, func(c *Config) { c.AllowedGroups = []string{"pbx-phone"} })
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	_, _, err = client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce)
+	errorfamilytest.AssertCode(t, err, "sso.groups_denied")
+}
+
+func TestCompleteSkipsTheGroupCheckWhenNoAllowlistIsConfigured(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	idp.extraClaims["groups"] = []string{"some-unrelated-group"}
+	client := newTestClient(t, idp, nil)
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	if _, _, err := client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce); err != nil {
+		t.Fatalf("Complete: %v (an absent allowlist must never deny)", err)
+	}
+}

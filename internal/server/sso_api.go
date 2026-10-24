@@ -140,6 +140,8 @@ func ssoErrorCode(err error) string {
 		return "directory"
 	case "sso.email_unverified":
 		return "unverified"
+	case "sso.groups_denied":
+		return "groups"
 	case "sso.state.mismatch", "sso.nonce.mismatch", "sso.attempt.missing":
 		return "stale"
 	case "sso.client_secret.read", "sso.client_secret.empty", "sso.exchange":

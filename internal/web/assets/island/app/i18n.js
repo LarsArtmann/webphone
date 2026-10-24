@@ -108,6 +108,8 @@ export const I18N = {
       "Your phone account's password could not be verified — ask the operator to refresh it, then try again.",
     ssoErrorUnverified:
       "Your Pocket ID email is not verified — verify it in Pocket ID, then try again.",
+    ssoErrorGroups:
+      "Your Pocket ID account is missing the required access group for this phone — ask the operator to add it, then try again.",
     ssoErrorStale: "That sign-in attempt expired — please start again.",
     ssoErrorConfig:
       "Sign-in is not configured correctly on the server — the operator finds the details in the journal.",
@@ -213,6 +215,8 @@ export const I18N = {
       "Das Passwort Ihres Telefon-Kontos konnte nicht verifiziert werden — bitten Sie den Betreiber, es zu erneuern, und versuchen Sie es erneut.",
     ssoErrorUnverified:
       "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
+    ssoErrorGroups:
+      "Ihrem Pocket ID-Konto fehlt die erforderliche Zugriffsgruppe für dieses Telefon — bitten Sie den Betreiber, sie einzutragen, und versuchen Sie es erneut.",
     ssoErrorStale: "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
     ssoErrorConfig:
       "Die Anmeldung ist serverseitig nicht korrekt konfiguriert — der Betreiber findet die Details im Journal.",

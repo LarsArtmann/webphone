@@ -124,3 +124,27 @@ func TestResolvedAuthKeepsTheLegacyPasskeyShapeWorking(t *testing.T) {
 		t.Fatal("auth.passkey.users must stay the historical home")
 	}
 }
+
+// The in-app group allowlist counts as "configured" on its own: a
+// lone allowed_groups setting must trip validation (the issuer/client
+// demands) instead of sitting inert while the operator believes the
+// gate is on. H4, 2026-10-24.
+func TestAllowedGroupsAloneCountsAsConfiguredAndFailsClosed(t *testing.T) {
+	lone := OAuth2{AllowedGroups: []string{"pbx-phone"}}
+	if !lone.Enabled() {
+		t.Fatal("an allowed_groups-only shape must count as enabled")
+	}
+	err := validateOAuth2(lone)
+	if err == nil {
+		t.Fatal("an allowed_groups-only shape must fail validation (no issuer)")
+	}
+	if errorfamily.Code(err) != "config.auth.oauth2.issuer" {
+		t.Fatalf("code = %q, want config.auth.oauth2.issuer", errorfamily.Code(err))
+	}
+
+	full := validOAuth2()
+	full.AllowedGroups = []string{"pbx-phone"}
+	if err := validateOAuth2(full); err != nil {
+		t.Fatalf("the canonical shape plus an allowlist must validate: %v", err)
+	}
+}
