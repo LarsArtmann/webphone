@@ -103,6 +103,12 @@ func run() error {
 	if len(os.Args) >= 3 && os.Args[1] == "-enroll-passkey" {
 		return enrollPasskey(os.Args[2])
 	}
+	// The catalog one-shot renders the eventcatalog export tree and
+	// exits — same pre-server slot as enrollment: neither touches the
+	// app composition root.
+	if len(os.Args) >= 2 && os.Args[1] == "catalog" {
+		return runCatalog(os.Args[2:])
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
