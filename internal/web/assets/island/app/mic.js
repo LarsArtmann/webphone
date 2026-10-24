@@ -83,11 +83,16 @@ export function micMediaStreamFactory(constraints) {
   if (constraints && !constraints.audio && !constraints.video) {
     return Promise.resolve(new MediaStream());
   }
-  const warm = constraints && constraints.audio && !constraints.video ? takeWarmMic() : null;
+  const warm =
+    constraints && constraints.audio && !constraints.video
+      ? takeWarmMic()
+      : null;
   if (warm) return Promise.resolve(warm);
   const mediaDevices = navigator.mediaDevices;
   if (!mediaDevices || !mediaDevices.getUserMedia) {
-    return Promise.reject(new Error("Media devices not available in insecure contexts."));
+    return Promise.reject(
+      new Error("Media devices not available in insecure contexts."),
+    );
   }
   return mediaDevices.getUserMedia(constraints);
 }

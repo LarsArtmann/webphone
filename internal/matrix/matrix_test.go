@@ -79,12 +79,12 @@ func newHomeserver(t *testing.T) (*homeserver, *httptest.Server) {
 				http.Error(w, "empty", 400)
 				return
 			}
-			_ = fmt.Fprint(w, `{"content_uri":"mxc://example.org/media1"}`)
+			_, _ = fmt.Fprint(w, `{"content_uri":"mxc://example.org/media1"}`)
 		case strings.HasPrefix(r.URL.Path, "/_matrix/client/v1/media/download/"):
 			w.Header().Set("Content-Type", "image/png")
-			_ = fmt.Fprint(w, "pngbytes")
+			_, _ = fmt.Fprint(w, "pngbytes")
 		case r.URL.Path == "/_matrix/client/v3/sync":
-			_ = fmt.Fprint(w, `{"next_batch":"s1"}`)
+			_, _ = fmt.Fprint(w, `{"next_batch":"s1"}`)
 		default:
 			http.Error(w, `{"errcode":"M_UNRECOGNIZED","error":"nope"}`, http.StatusNotFound)
 		}

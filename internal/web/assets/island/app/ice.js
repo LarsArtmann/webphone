@@ -27,11 +27,14 @@ function noteFirstMedia(pc, bytesReceived) {
 function setupLine(pc, firstMediaAt) {
   const setup = setupSummary(pc);
   if (!setup) return null;
-  const secondsFrom = (ts) => `${((ts - setup.gatheringStartedAt) / 1000).toFixed(1)} s`;
+  const secondsFrom = (ts) =>
+    `${((ts - setup.gatheringStartedAt) / 1000).toFixed(1)} s`;
   const parts = [];
   if (setup.gatherMs != null) parts.push(`gather ${setup.gatherMs} ms`);
-  else if (setup.gatherCapped) parts.push("gather capped (>1 s, partial candidates)");
-  if (setup.iceConnectedAt) parts.push(`ice +${secondsFrom(setup.iceConnectedAt)}`);
+  else if (setup.gatherCapped)
+    parts.push("gather capped (>1 s, partial candidates)");
+  if (setup.iceConnectedAt)
+    parts.push(`ice +${secondsFrom(setup.iceConnectedAt)}`);
   if (firstMediaAt) parts.push(`first media +${secondsFrom(firstMediaAt)}`);
   return parts.length ? `setup: ${parts.join("  ·  ")}` : null;
 }
@@ -50,7 +53,10 @@ function iceHints(summary) {
     hints.push(t("iceSrflx"));
   } else if (summary.localType === "host") {
     hints.push(t("iceHost"));
-  } else if ((pair && pair.state === "failed") || summary.iceState === "failed") {
+  } else if (
+    (pair && pair.state === "failed") ||
+    summary.iceState === "failed"
+  ) {
     hints.push(t("iceFailed"));
   } else {
     hints.push(t("iceNoMedia"));
@@ -112,7 +118,11 @@ async function updateIcePanel() {
     }
   }
   for (const stat of stats.values()) {
-    if (stat.type === "codec" && stat.mimeType && stat.mimeType.startsWith("audio")) {
+    if (
+      stat.type === "codec" &&
+      stat.mimeType &&
+      stat.mimeType.startsWith("audio")
+    ) {
       summary.codec = stat.mimeType.replace("audio/", "");
       break;
     }

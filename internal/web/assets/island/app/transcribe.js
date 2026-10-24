@@ -71,7 +71,10 @@ let failureToasted = false;
 
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
-export async function transcribeBlob(blob, { filename = "audio.webm", language } = {}) {
+export async function transcribeBlob(
+  blob,
+  { filename = "audio.webm", language } = {},
+) {
   const query = new URLSearchParams();
   if (filename) query.set("filename", filename);
   if (language) query.set("lang", language);
@@ -130,13 +133,17 @@ export function captureStream(entry) {
   const ctx = new AudioCtx();
   const dest = ctx.createMediaStreamDestination();
 
-  const receivers = pc.getReceivers ? pc.getReceivers().filter((r) => r.track) : [];
+  const receivers = pc.getReceivers
+    ? pc.getReceivers().filter((r) => r.track)
+    : [];
   if (receivers.length) {
     const remote = new MediaStream();
     receivers.forEach((r) => remote.addTrack(r.track));
     ctx.createMediaStreamSource(remote).connect(dest);
   }
-  const sender = pc.getSenders && pc.getSenders().find((s) => s.track && s.track.kind === "audio");
+  const sender =
+    pc.getSenders &&
+    pc.getSenders().find((s) => s.track && s.track.kind === "audio");
   if (sender && sender.track) {
     const local = new MediaStream([sender.track]);
     ctx.createMediaStreamSource(local).connect(dest);
@@ -197,7 +204,10 @@ function ensureRunning(ctx) {
     ctx.resume().catch(() => {});
   };
   if (ctx.state === "suspended") {
-    log("live transcription waiting for a click or keypress to unlock audio", "warn");
+    log(
+      "live transcription waiting for a click or keypress to unlock audio",
+      "warn",
+    );
     window.addEventListener("pointerdown", retry, { once: true });
     window.addEventListener("keydown", retry, { once: true });
   }
@@ -270,7 +280,8 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       } else {
         liveFailures += 1;
         backoffUntil =
-          Date.now() + Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
+          Date.now() +
+          Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
         log(`live transcription segment failed: ${err.message}`, "warn");
         if (liveFailures >= FAILURE_TOAST_AT && !failureToasted) {
           failureToasted = true;

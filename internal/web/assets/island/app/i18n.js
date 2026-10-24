@@ -64,7 +64,8 @@ export const I18N = {
     contactSave: "save",
     contactRemove: "remove",
     contactSaved: (n) => `contact ${n} saved`,
-    contactSaveFailed: (detail) => `contact save failed (${detail}); kept locally`,
+    contactSaveFailed: (detail) =>
+      `contact save failed (${detail}); kept locally`,
     contactsMigrated: (n) => `imported ${n} local contact(s) to the server`,
     voicemail: "Voicemail",
     vmRefresh: "Refresh",
@@ -75,12 +76,14 @@ export const I18N = {
     connectionQuality: "Connection quality",
     iceNoMedia:
       "no media path yet — if the other side stays silent, TURN (ports 3478/5349 UDP) may be blocked",
-    iceRelay: "media relays through TURN (expected behind strict NAT; adds a little latency)",
+    iceRelay:
+      "media relays through TURN (expected behind strict NAT; adds a little latency)",
     iceSrflx: "direct path via STUN (router hole-punched)",
     iceHost: "direct local-network path",
     iceLoss: (lost) => `${lost} packets lost on receive — network congestion?`,
     iceFailed: "connection failed — media blocked between the networks",
-    reconnecting: (delay, attempt) => `reconnecting in ${delay}s (try ${attempt})`,
+    reconnecting: (delay, attempt) =>
+      `reconnecting in ${delay}s (try ${attempt})`,
     loginError: (message) =>
       `Could not connect: ${message}. Check extension/password and that your browser trusts the server certificate.`,
     passkeySection: "Sign in with a passkey",
@@ -90,12 +93,15 @@ export const I18N = {
     passkeyUnknown:
       "No passkey matches this email — check the address or use extension and password below.",
     passkeyThrottled: "Too many attempts — wait a minute, then try again.",
-    passkeyBeginFailed: (status) => `Passkey sign-in unavailable (HTTP ${status}).`,
-    passkeyFinishFailed: (status) => `Passkey verification failed (HTTP ${status}).`,
+    passkeyBeginFailed: (status) =>
+      `Passkey sign-in unavailable (HTTP ${status}).`,
+    passkeyFinishFailed: (status) =>
+      `Passkey verification failed (HTTP ${status}).`,
     passkeyNetFailed: "Passkey sign-in failed — network error.",
     ssoSection: "Sign in with Pocket ID",
     ssoSignin: "Continue to Pocket ID",
-    ssoPasskeyHint: "Passkeys and every other sign-in method your account has work in Pocket ID.",
+    ssoPasskeyHint:
+      "Passkeys and every other sign-in method your account has work in Pocket ID.",
     ssoErrorUnmapped:
       "Your Pocket ID account has no phone mapping here — ask the operator to add your email address.",
     ssoErrorUnverified:
@@ -105,13 +111,15 @@ export const I18N = {
       "Sign-in is not configured correctly on the server — the operator finds the details in the journal.",
     ssoErrorUnavailable:
       "Pocket ID is not reachable right now — try again in a minute, or use extension and password.",
-    ssoErrorFailed: "Sign-in with Pocket ID failed — try again, or use extension and password.",
+    ssoErrorFailed:
+      "Sign-in with Pocket ID failed — try again, or use extension and password.",
     enrollVerified: (email) =>
       `Token verified for ${email}. Follow your device to create the passkey.`,
     enrollSuccess: "Passkey created. Go to the main page and sign in with it.",
     enrollFailed: (status) =>
       `Enrollment failed (HTTP ${status}) — the token may be invalid, expired or already used; ask for a new link if this repeats.`,
-    enrollDismissed: "Passkey creation was cancelled — submit the token again to retry.",
+    enrollDismissed:
+      "Passkey creation was cancelled — submit the token again to retry.",
     enrollNetFailed: "Network error — try again.",
     enrollTokenMissing: "Paste the token from your enrollment link first.",
     callFailed: (detail) => `call failed: ${detail}`,
@@ -120,7 +128,8 @@ export const I18N = {
     incomingCall: (from) => `Incoming call from ${from}`,
     noActiveCall: "no active call",
     notConnected: "not connected — sign in first",
-    audioBlocked: "browser blocked audio playback — click the page to enable sound",
+    audioBlocked:
+      "browser blocked audio playback — click the page to enable sound",
     rejectedSecond: "second incoming call rejected (one call at a time)",
     dialEmpty: "enter a number to call",
     nothingDialable: "no dialable characters — use digits, letters, +, * or #",
@@ -132,19 +141,23 @@ export const I18N = {
     dtmfFailed: (detail) => `could not send tone: ${detail}`,
     vmDeleteFailed: (detail) => `could not delete message: ${detail}`,
     vmPlayFailed: (detail) => `could not play message: ${detail}`,
-    sessionFailed401: "The server rejected the tab sign-in — check extension and password.",
+    sessionFailed401:
+      "The server rejected the tab sign-in — check extension and password.",
     sessionThrottled: "Too many attempts — wait a moment, then try again.",
     sessionFailed: (status) =>
       `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
-    sessionNetFailed: "Could not reach the server for tab sign-in — calls keep working.",
-    sseDropped: "Live tab updates lost — check the connection; calls keep working.",
+    sessionNetFailed:
+      "Could not reach the server for tab sign-in — calls keep working.",
+    sseDropped:
+      "Live tab updates lost — check the connection; calls keep working.",
     sseRestored: "Live tab updates restored.",
     ssePillLive: "Live tab updates: connected",
     ssePillDown: "Live tab updates: not connected",
     resuming: "resuming session…",
     resumeRejected: (message) =>
       `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
-    crmLogFailed: (detail) => `Call not recorded in the CRM (${detail}) — you can log it manually.`,
+    crmLogFailed: (detail) =>
+      `Call not recorded in the CRM (${detail}) — you can log it manually.`,
     typeaheadLabel: "Contact suggestions",
     audioOutput: "Speaker",
     audioDefault: "System default",
@@ -157,9 +170,11 @@ export const I18N = {
     transcriptCleared: "Live transcript cleared.",
     copied: "Copied to clipboard.",
     copyFailed: "Could not copy — select the text manually.",
-    transcribeUnsupported: "Live transcription is not supported in this browser",
+    transcribeUnsupported:
+      "Live transcription is not supported in this browser",
     transcribeFailed: (detail) => `transcription failed: ${detail}`,
-    transcribeUnavailable: "Live transcription keeps failing — the provider may be unreachable.",
+    transcribeUnavailable:
+      "Live transcription keeps failing — the provider may be unreachable.",
     transcribeStarted: "Live transcription started",
     transcribeStopped: "Live transcription stopped",
     transcriptDelta: (text) => `Transcript: ${text}`,
@@ -179,9 +194,12 @@ export const I18N = {
     passkeyBreakglass: "Stattdessen Nebenstelle und Passwort verwenden",
     passkeyUnknown:
       "Zu dieser E-Mail passt kein Passkey — Adresse prüfen oder unten Nebenstelle und Passwort verwenden.",
-    passkeyThrottled: "Zu viele Versuche — eine Minute warten, dann erneut versuchen.",
-    passkeyBeginFailed: (status) => `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
-    passkeyFinishFailed: (status) => `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
+    passkeyThrottled:
+      "Zu viele Versuche — eine Minute warten, dann erneut versuchen.",
+    passkeyBeginFailed: (status) =>
+      `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
+    passkeyFinishFailed: (status) =>
+      `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
     passkeyNetFailed: "Passkey-Anmeldung fehlgeschlagen — Netzwerkfehler.",
     ssoSection: "Mit Pocket ID anmelden",
     ssoSignin: "Weiter zu Pocket ID",
@@ -200,7 +218,8 @@ export const I18N = {
       "Anmeldung mit Pocket ID fehlgeschlagen — erneut versuchen oder Nebenstelle und Passwort verwenden.",
     enrollVerified: (email) =>
       `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
-    enrollSuccess: "Passkey erstellt. Gehen Sie zur Hauptseite und melden Sie sich damit an.",
+    enrollSuccess:
+      "Passkey erstellt. Gehen Sie zur Hauptseite und melden Sie sich damit an.",
     enrollFailed: (status) =>
       `Hinterlegung fehlgeschlagen (HTTP ${status}) — das Token ist möglicherweise ungültig, abgelaufen oder bereits benutzt; fordern Sie im Zweifel einen neuen Link an.`,
     enrollDismissed:
@@ -246,7 +265,8 @@ export const I18N = {
     transferAttended: "Rückfrage",
     transferring: "wird weitergeleitet…",
     transferFailed: (detail) => `Weiterleitung fehlgeschlagen: ${detail}`,
-    transferNoPartner: "kein zweiter bestehender Anruf für Rückfrage-Weiterleitung",
+    transferNoPartner:
+      "kein zweiter bestehender Anruf für Rückfrage-Weiterleitung",
     transferComplete: "Weiterleitung vom Netz bestätigt",
     reconnectPreserved: (n) => `neu registriert; ${n} Gespräch(e) erhalten`,
     contacts: "Kontakte",
@@ -254,7 +274,8 @@ export const I18N = {
     contactSave: "merken",
     contactRemove: "entfernen",
     contactSaved: (n) => `Kontakt ${n} gespeichert`,
-    contactSaveFailed: (detail) => `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
+    contactSaveFailed: (detail) =>
+      `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
     contactsMigrated: (n) => `${n} lokale Kontakte auf den Server übernommen`,
     voicemail: "Mailbox",
     vmRefresh: "Aktualisieren",
@@ -265,12 +286,15 @@ export const I18N = {
     connectionQuality: "Verbindungsqualität",
     iceNoMedia:
       "noch kein Medienweg — falls die Gegenseite stumm bleibt, ist vermutlich TURN (UDP 3478/5349) blockiert",
-    iceRelay: "Medien laufen über TURN (hinter strengem NAT normal; etwas mehr Laufzeit)",
+    iceRelay:
+      "Medien laufen über TURN (hinter strengem NAT normal; etwas mehr Laufzeit)",
     iceSrflx: "direkter Weg über STUN (Router-Lochbohrung)",
     iceHost: "direkter Weg im lokalen Netz",
     iceLoss: (lost) => `${lost} Pakete verloren — Netzüberlastung?`,
-    iceFailed: "Verbindung fehlgeschlagen — Medien zwischen den Netzen blockiert",
-    reconnecting: (delay, attempt) => `Neuverbindung in ${delay}s (Versuch ${attempt})`,
+    iceFailed:
+      "Verbindung fehlgeschlagen — Medien zwischen den Netzen blockiert",
+    reconnecting: (delay, attempt) =>
+      `Neuverbindung in ${delay}s (Versuch ${attempt})`,
     loginError: (message) =>
       `Verbindung fehlgeschlagen: ${message}. Prüfen Sie Nebenstelle/Passwort und ob Ihr Browser dem Serverzertifikat vertraut.`,
     callFailed: (detail) => `Anruf fehlgeschlagen: ${detail}`,
@@ -281,31 +305,39 @@ export const I18N = {
     notConnected: "nicht verbunden — bitte zuerst anmelden",
     audioBlocked:
       "Browser hat die Audiowiedergabe blockiert — Seite anklicken, um Ton zu aktivieren",
-    rejectedSecond: "zweiter eingehender Anruf abgelehnt (ein Gespräch gleichzeitig)",
+    rejectedSecond:
+      "zweiter eingehender Anruf abgelehnt (ein Gespräch gleichzeitig)",
     dialEmpty: "bitte eine Nummer eingeben",
-    nothingDialable: "keine wählbaren Zeichen — Ziffern, Buchstaben, +, * oder # verwenden",
+    nothingDialable:
+      "keine wählbaren Zeichen — Ziffern, Buchstaben, +, * oder # verwenden",
     invalidDest: "ungültige Zielnummer",
     holdFailed: (detail) => `Halten fehlgeschlagen: ${detail}`,
     resumeFailed: (detail) => `Fortsetzen fehlgeschlagen: ${detail}`,
     acceptFailed: (detail) => `Anruf konnte nicht angenommen werden: ${detail}`,
     hangupFailed: (detail) => `Anruf konnte nicht beendet werden: ${detail}`,
     dtmfFailed: (detail) => `Ton konnte nicht gesendet werden: ${detail}`,
-    vmDeleteFailed: (detail) => `Nachricht konnte nicht gelöscht werden: ${detail}`,
-    vmPlayFailed: (detail) => `Nachricht konnte nicht abgespielt werden: ${detail}`,
-    sessionFailed401: "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
-    sessionThrottled: "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
+    vmDeleteFailed: (detail) =>
+      `Nachricht konnte nicht gelöscht werden: ${detail}`,
+    vmPlayFailed: (detail) =>
+      `Nachricht konnte nicht abgespielt werden: ${detail}`,
+    sessionFailed401:
+      "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
+    sessionThrottled:
+      "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
     sessionFailed: (status) =>
       `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
     sessionNetFailed:
       "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
-    sseDropped: "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
+    sseDropped:
+      "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
     sseRestored: "Live-Aktualisierungen wiederhergestellt.",
     ssePillLive: "Live-Aktualisierungen: verbunden",
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
     resuming: "Sitzung wird fortgesetzt…",
     resumeRejected: (message) =>
       `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
-    crmLogFailed: (detail) => `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
+    crmLogFailed: (detail) =>
+      `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
     typeaheadLabel: "Kontaktvorschläge",
     audioOutput: "Ausgabe",
     audioDefault: "Systemstandard",
@@ -318,7 +350,8 @@ export const I18N = {
     transcriptCleared: "Live-Transkript geleert.",
     copied: "In die Zwischenablage kopiert.",
     copyFailed: "Kopieren fehlgeschlagen — Text manuell auswählen.",
-    transcribeUnsupported: "Live-Transkription wird in diesem Browser nicht unterstützt",
+    transcribeUnsupported:
+      "Live-Transkription wird in diesem Browser nicht unterstützt",
     transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
     transcribeUnavailable:
       "Live-Transkription schlägt wiederholt fehl — der Anbieter ist womöglich nicht erreichbar.",

@@ -26,7 +26,10 @@ export function setExtraContacts(contacts) {
 
 function suggestionSource() {
   const personalNumbers = new Set(personalContacts.map((c) => c.number));
-  return [...personalContacts, ...sharedContacts.filter((c) => !personalNumbers.has(c.number))];
+  return [
+    ...personalContacts,
+    ...sharedContacts.filter((c) => !personalNumbers.has(c.number)),
+  ];
 }
 
 // rankContacts scores a contact against the query: a name that starts
@@ -53,7 +56,10 @@ export function rankContacts(contacts, query) {
     scored.push({ contact, score, name: lowerName, number: lowerNumber });
   }
   scored.sort(
-    (a, b) => a.score - b.score || a.name.localeCompare(b.name) || a.number.localeCompare(b.number),
+    (a, b) =>
+      a.score - b.score ||
+      a.name.localeCompare(b.name) ||
+      a.number.localeCompare(b.number),
   );
   return scored.slice(0, MAX_SUGGESTIONS).map((entry) => entry.contact);
 }
@@ -149,7 +155,9 @@ export function initDialTypeahead() {
   // mousedown, not click: it wins the race against the input's blur and
   // keep the focus in the field (choose() refocuses anyway).
   list.addEventListener("mousedown", (event) => {
-    const option = event.target.closest ? event.target.closest("li[data-index]") : null;
+    const option = event.target.closest
+      ? event.target.closest("li[data-index]")
+      : null;
     if (!option) return;
     event.preventDefault();
     const contact = entries[Number(option.dataset.index)];
