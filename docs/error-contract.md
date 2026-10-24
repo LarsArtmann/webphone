@@ -471,6 +471,7 @@ a deliberate code change, regenerate:
 | userauth.register.exists_unreadable          | Infrastructure            | internal/userauth/userauth.go      |
 | userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go      |
 | webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go  |
+| webphone.cli.catalog                         | Infrastructure            | cmd/webphone/catalog.go            |
 
 <!-- error-code-registry: END -->
 
