@@ -199,11 +199,20 @@ type OAuth2 struct {
 	RedirectURL string `json:"redirect_url" koanf:"redirect_url"`
 	// Scopes defaults to openid/email/profile; "openid" is mandatory.
 	Scopes []string `json:"scopes,omitempty" koanf:"scopes"`
+	// AllowedGroups is the in-app IdP group allowlist. Empty (the
+	// default) disables the check entirely — admission stays with the
+	// users mapping and the IdP-side client-group link. Non-empty, every
+	// login must carry at least one of these groups in its token claims;
+	// a login without any of them is denied with a named reason before
+	// the mapping is consulted. This is a second gate on top of the IdP
+	// link, not a replacement: the link governs who the IdP will even
+	// authenticate for this client.
+	AllowedGroups []string `json:"allowed_groups,omitempty" koanf:"allowed_groups"`
 }
 
 // Enabled reports whether the OIDC mode is configured at all.
 func (o OAuth2) Enabled() bool {
-	return o.Issuer != "" || o.ClientID != "" || o.ClientSecretFile != "" || o.RedirectURL != ""
+	return o.Issuer != "" || o.ClientID != "" || o.ClientSecretFile != "" || o.RedirectURL != "" || len(o.AllowedGroups) > 0
 }
 
 // resolvedAuth folds the shared mapping into the passkey shape so the

@@ -57,6 +57,11 @@ type Config struct {
 	Scopes                 []string
 	Users                  map[string]authmap.User
 	ExtensionPasswordFiles map[string]string
+	// AllowedGroups is the in-app IdP group allowlist (empty = the
+	// check is off). Non-empty, a login must carry at least one of
+	// these groups in its claims or it is denied before the mapping
+	// is consulted.
+	AllowedGroups []string
 }
 
 // Challenge is one authorization attempt: the URL the browser must visit
@@ -197,6 +202,28 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 	if claims.EmailVerified != nil && !*claims.EmailVerified {
 		return empty, "", errorfamily.NewRejection("sso.email_unverified",
 			"the IdP reports %q as unverified — verify the address in the IdP before signing in").WithContext("email", claims.Email)
+	}
+	// The in-app group allowlist: the second gate, after the IdP-side
+	// client-group link. Fail-closed both ways — a token with no groups
+	// claim never passes a non-empty allowlist, and the check is off
+	// entirely when the operator configures none.
+	if len(c.cfg.AllowedGroups) > 0 {
+		allowed := false
+		for _, claim := range claims.Groups {
+			for _, want := range c.cfg.AllowedGroups {
+				if claim == want {
+					allowed = true
+					break
+				}
+			}
+			if allowed {
+				break
+			}
+		}
+		if !allowed {
+			return empty, "", errorfamily.NewRejection("sso.groups_denied",
+				"the IdP account %q carries none of the allowed groups (%s) — add the account to a required access group in the IdP").WithContext("email", claims.Email).WithContext("allowed_groups", strings.Join(c.cfg.AllowedGroups, ", "))
+		}
 	}
 	mapped, ok := c.mapped.Resolve(claims.Email)
 	if !ok {

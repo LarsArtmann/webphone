@@ -522,6 +522,7 @@ func SSOConfig(a config.Auth) sso.Config {
 		ClientSecretFile:       a.OAuth2.ClientSecretFile,
 		RedirectURL:            a.OAuth2.RedirectURL,
 		Scopes:                 a.OAuth2.Scopes,
+		AllowedGroups:          a.OAuth2.AllowedGroups,
 		Users:                  mapped,
 		ExtensionPasswordFiles: passwordFiles,
 	}
