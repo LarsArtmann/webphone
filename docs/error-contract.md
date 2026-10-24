@@ -399,6 +399,7 @@ a deliberate code change, regenerate:
 | sso.email_missing                            | Rejection                 | internal/sso/sso.go                |
 | sso.email_unverified                         | Rejection                 | internal/sso/sso.go                |
 | sso.exchange                                 | Rejection                 | internal/sso/sso.go                |
+| sso.groups_denied                            | Rejection                 | internal/sso/sso.go                |
 | sso.id_token                                 | Rejection                 | internal/sso/sso.go                |
 | sso.id_token.verify                          | Rejection                 | internal/sso/sso.go                |
 | sso.idp_error                                | Rejection                 | internal/server/sso_api.go         |
