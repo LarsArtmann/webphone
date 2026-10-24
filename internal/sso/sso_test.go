@@ -1,6 +1,7 @@
 package sso
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/rand"
@@ -8,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"log/slog"
 	"maps"
 	"math/big"
 	"net/http"
@@ -573,5 +575,48 @@ func TestDiscoveryCacheExpiresAndFailuresStayUncached(t *testing.T) {
 	idp.outage.Store(false)
 	if _, err := client.providerFor(testContext(idp)); err != nil {
 		t.Fatalf("a recovered IdP must serve the next caller: %v", err)
+	}
+}
+
+// The groups claim is journal-only admission evidence (2026-10-24):
+// the audit line names who knocked with which groups, and the groups
+// NEVER reach the mapped identity or anything session-shaped.
+func TestLoginClaimsAuditLineCarriesGroupsOnlyInTheJournal(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	idp := newStubIDP(t)
+	idp.extraClaims["groups"] = []string{"pbx-phone", "pbx-mail-admin"}
+	client := newTestClient(t, idp, nil)
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	user, _, err := client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce)
+	if err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	line := buf.String()
+	if !strings.Contains(line, "oidc login claims") {
+		t.Fatalf("the claims audit line is missing from the journal: %s", line)
+	}
+	if !strings.Contains(line, "pbx-phone") || !strings.Contains(line, "pbx-mail-admin") {
+		t.Fatalf("the audit line must name the IdP groups: %s", line)
+	}
+
+	encoded, err := json.Marshal(user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "group") {
+		t.Fatalf("groups must never reach the mapped identity/session shape: %s", encoded)
 	}
 }

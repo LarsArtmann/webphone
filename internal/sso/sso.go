@@ -21,6 +21,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -185,6 +186,14 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 	if err != nil {
 		return empty, "", err
 	}
+	// Audit line: who knocked, with which IdP-side groups. The groups
+	// CLAIM is admission evidence for the journal only — it is never
+	// copied onto the mapped user or the session (the mapping and the
+	// IdP-side group link are the two gates, not token contents).
+	slog.Info("webphone: oidc login claims",
+		"email", claims.Email,
+		"username", claims.PreferredUsername,
+		"groups", strings.Join(claims.Groups, ","))
 	if claims.EmailVerified != nil && !*claims.EmailVerified {
 		return empty, "", errorfamily.NewRejection("sso.email_unverified",
 			"the IdP reports %q as unverified — verify the address in the IdP before signing in").WithContext("email", claims.Email)
