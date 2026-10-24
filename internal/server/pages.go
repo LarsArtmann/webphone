@@ -127,6 +127,13 @@ func (h *handlers) partial(w http.ResponseWriter, r *http.Request, tab views.Tab
 		_ = errorPanel(h.safeDetail(r, "render tab", err), h.lang(r)).Render(r.Context(), w) //nolint:erraudit // best-effort write; the response is already committed
 		return
 	}
+	renderHTML(w, r, component)
+}
+
+// renderHTML sends a rendered component as the response body. The status
+// and headers are already committed when a render fails, so the failure
+// can only surface as a plain 500.
+func renderHTML(w http.ResponseWriter, r *http.Request, component templ.Component) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := component.Render(r.Context(), w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)

@@ -114,7 +114,7 @@ func (s *NtfySender) Send(ctx context.Context, topic string, ring Ring) error {
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.ntfy_send", "ntfy rejected the credential (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound:
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.ntfy_send", "ntfy topic %q not found", topic)
-	case resp.StatusCode >= 200 && resp.StatusCode < 300:
+	case statusOK(resp.StatusCode):
 		return nil
 	default:
 		return errorfamily.Newf(errorfamily.Infrastructure, "push.ntfy_send", "ntfy answered %d for topic %q", resp.StatusCode, topic)

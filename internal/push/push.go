@@ -38,6 +38,12 @@ const (
 	TransportFcm  = "fcm"
 )
 
+// statusOK reports a 2xx transport answer — the one success every push
+// provider promises (the bodies differ beyond that).
+func statusOK(code int) bool {
+	return code >= 200 && code < 300
+}
+
 // Event is the inbound-call lifecycle fact a ring message carries.
 // "ring" wakes the device with a CallStyle notification; "ring_end"
 // tells it to stand down (answered elsewhere, caller gave up).

@@ -138,10 +138,7 @@ func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
 		h.internalError(w, r, "load conversation", err)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := component.Render(r.Context(), w); err != nil {
-		http.Error(w, "render error", http.StatusInternalServerError)
-	}
+	renderHTML(w, r, component)
 }
 
 func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Component, error) {

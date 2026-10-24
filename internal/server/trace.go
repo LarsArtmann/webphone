@@ -57,8 +57,7 @@ func (h *handlers) traceSnapshot(w http.ResponseWriter, r *http.Request) {
 		h.notFound(w, r)
 		return
 	}
-	if !loopbackPeer(r) {
-		http.Error(w, "internal", http.StatusForbidden)
+	if !requireLoopback(w, r) {
 		return
 	}
 	path, err := h.deps.Trace.Snapshot(r.Context())

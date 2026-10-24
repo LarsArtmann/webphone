@@ -34,6 +34,16 @@ func loopbackPeer(r *http.Request) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// requireLoopback answers the machine-surface posture: a non-loopback peer
+// is refused before any secret matters. Reports whether the peer may pass.
+func requireLoopback(w http.ResponseWriter, r *http.Request) bool {
+	if loopbackPeer(r) {
+		return true
+	}
+	http.Error(w, "internal", http.StatusForbidden)
+	return false
+}
+
 func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
 	if !h.deps.Config.SIP.DerivedCredentials() {
 		// Honest 404: the seam is off, no surface exists (the ASR-seam
@@ -41,8 +51,7 @@ func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if !loopbackPeer(r) {
-		http.Error(w, "internal", http.StatusForbidden)
+	if !requireLoopback(w, r) {
 		return
 	}
 	extension, err := domain.ParseExtension(r.PathValue("extension"))

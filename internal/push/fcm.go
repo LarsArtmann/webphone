@@ -188,7 +188,7 @@ func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_send", "fcm rejected the access token (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound || strings.Contains(string(errorBody), fcmUnregisteredMarker):
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm reports the device token dead (%d)", resp.StatusCode)
-	case resp.StatusCode >= 200 && resp.StatusCode < 300:
+	case statusOK(resp.StatusCode):
 		return nil
 	default:
 		return errorfamily.Newf(errorfamily.Infrastructure, "push.fcm_send", "fcm answered %d", resp.StatusCode)
