@@ -1,0 +1,24 @@
+{
+  "name": "webphone",
+  "repo": "LarsArtmann/webphone",
+  "forgejo": "lars/webphone",
+  "branch": "main",
+  "build": "go build -o work/bin/webphone ./cmd/webphone",
+  "export": [
+    "work/bin/webphone",
+    "catalog",
+    "-o",
+    "work/out/webphone"
+  ],
+  "tree": "work/out/webphone/eventcatalog",
+  "lint": {
+    "export": [
+      "work/bin/webphone",
+      "catalog",
+      "-o",
+      "work/lint/webphone",
+      "-plain"
+    ],
+    "tree": "work/lint/webphone/eventcatalog"
+  }
+}

@@ -15,6 +15,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.12.1
 	github.com/larsartmann/cqrs-htmx/v4 v4.14.1
 	github.com/larsartmann/go-branded-id v0.7.0
+	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.9.0
 	github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 v4.5.3
 	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.19.0
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.2
@@ -71,7 +72,6 @@ require (
 	github.com/justinas/nosurf v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
 	github.com/larsartmann/go-codec v0.3.2 // indirect
-	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.9.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/claiming/v4 v4.0.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0 // indirect

@@ -195,12 +195,18 @@ func TestCatalogExportFrontmatter(t *testing.T) {
 			return nil
 		}
 
-		content, err := os.ReadFile(path)
+		rel, err := filepath.Rel(tree, path)
 		if err != nil {
 			return err
 		}
 
-		rel, err := filepath.Rel(tree, path)
+		// Users and teams are unversioned in EventCatalog; every other
+		// resource kind carries the catalog version.
+		if rel == "users" || rel == "teams" || strings.HasPrefix(rel, "users/") || strings.HasPrefix(rel, "teams/") {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
