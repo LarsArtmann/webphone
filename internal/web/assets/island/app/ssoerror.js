@@ -11,7 +11,8 @@ export function showSSOError(t) {
   if (el) {
     const key = "ssoError" + code.charAt(0).toUpperCase() + code.slice(1);
     const message = t(key);
-    el.textContent = typeof message === "string" ? message : t("ssoErrorFailed");
+    el.textContent =
+      typeof message === "string" ? message : t("ssoErrorFailed");
     el.hidden = false;
   }
   params.delete("sso_error");
