@@ -65,16 +65,27 @@ What remains is the HOST REBUILD plus a browser check that logged-out `/health`
 redirects to the SSO gate and a signed-in operator sees the cards.
 **Priority:** High · **Effort:** S.
 
-### Catalog representation decision (2026-10-19 — record, no work pending)
+### Catalog adoption SHIPPED locally (2026-10-24 — push pending; supersedes the 2026-10-19 inventory-only record)
 
-webphone is INVENTORY-ONLY in catalog.home.lan (SystemNix `catalog-platform`
-entry; page renders with the family's off-fleet deployment story): it has
-NO CQRS write model — read models + in-process SSE change notifications —
-so an event-catalog export would fabricate message vocabulary. The
-telephony family's event source is pbx-lens (true event-sourced
-aggregate). Revisit ONLY if webphone adopts go-cqrs-lite commands; a
-future contacts sync to Stalwart CardDAV also routes through Kith CRM
-(the contacts source of truth), not through webphone.
+webphone is now a full federated source of catalog.home.lan:
+`internal/domain/catalog.go` (the four seam events — message.received,
+message.delivery.advanced, thread.flag.changed, fax.advanced — service
+meta, telephony-domain membership, owner lars), a `catalog` CLI
+subcommand (versioned + `-plain` export), catalog/export tests
+(`internal/domain/catalog_test.go`), and `.eventcatalog-hub.json`.
+The 2026-10-19 "inventory-only, an export would fabricate message
+vocabulary" record is superseded by the 2026-10-24 coverage plan: the
+seam events are webphone's real emitted vocabulary, documented AS
+change notifications in their summaries; NO commands are declared
+(the build test asserts zero), so nothing fabricates a CQRS write
+model and no cross-service consumer edges render.
+
+- [ ] [blocked:push] **Push the catalog adoption** — the hub's
+  sources.json already lists webphone as a source, so the next hub CI
+  build clones webphone@main and REQUIRES the pushed `catalog` command
+  (until it lands, that build reds on webphone's export step; the
+  hub+webphone pushes are a pair). Ritual unchanged: webphone-push
+  first, stack re-pin after (tri-repo rule).
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 
