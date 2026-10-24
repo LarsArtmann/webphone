@@ -15,13 +15,19 @@ import (
 // never wait on (or fail because of) push health. Per-device failures
 // log and continue; a transport reporting the device dead (FCM
 // UNREGISTERED, ntfy's 404 lane) prunes the registration on the spot.
+// RingRequest is the POST /hooks/ring wire shape (the inbound-call wake
+// lane from the stack's FS dialplan). Named (not inline) so the
+// wire-contract catalog derives its schema from this type
+// (internal/server/wirecontracts.go).
+type RingRequest struct {
+	Owner  string `json:"owner"`
+	From   string `json:"from"`
+	CallID string `json:"call_id"`
+	State  string `json:"state"` // "ring" | "end"
+}
+
 func (h *Handlers) hookRing(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Owner  string `json:"owner"`
-		From   string `json:"from"`
-		CallID string `json:"call_id"`
-		State  string `json:"state"`
-	}
+	var payload RingRequest
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}

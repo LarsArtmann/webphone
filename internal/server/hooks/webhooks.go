@@ -208,17 +208,26 @@ func (h *Handlers) Webhooks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// HookAttachment is one MMS attachment in a HookMessageRequest.
+type HookAttachment struct {
+	Name     string `json:"name"`
+	MimeType string `json:"mime_type"`
+	DataB64  string `json:"data_base64"`
+}
+
+// HookMessageRequest is the POST /hooks/message wire shape (inbound
+// SMS/MMS from the stack's Telnyx bridge). Named (not inline) so the
+// wire-contract catalog derives its schema from this type
+// (internal/server/wirecontracts.go).
+type HookMessageRequest struct {
+	Owner       string           `json:"owner"`
+	From        string           `json:"from"`
+	Body        string           `json:"body"`
+	Attachments []HookAttachment `json:"attachments"`
+}
+
 func (h *Handlers) hookMessage(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Owner       string `json:"owner"`
-		From        string `json:"from"`
-		Body        string `json:"body"`
-		Attachments []struct {
-			Name     string `json:"name"`
-			MimeType string `json:"mime_type"`
-			DataB64  string `json:"data_base64"`
-		} `json:"attachments"`
-	}
+	var payload HookMessageRequest
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
@@ -273,15 +282,15 @@ func (p *flexPages) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	return nil
 }
 
-// faxStatusPages collects the field names providers actually use for
+// FaxStatusPages collects the field names providers actually use for
 // page counts; the first non-zero wins.
-type faxStatusPages struct {
+type FaxStatusPages struct {
 	Pages     flexPages `json:"pages"`
 	PageCount flexPages `json:"page_count"`
 	NumPages  flexPages `json:"num_pages"`
 }
 
-func (p faxStatusPages) count() int {
+func (p FaxStatusPages) count() int {
 	for _, candidate := range []flexPages{p.Pages, p.PageCount, p.NumPages} {
 		if candidate != 0 {
 			return int(candidate)
@@ -290,14 +299,18 @@ func (p faxStatusPages) count() int {
 	return 0
 }
 
+// HookFaxRequest is the POST /hooks/fax wire shape (inbound fax
+// document). Named for the wire-contract catalog.
+type HookFaxRequest struct {
+	Owner string `json:"owner"`
+	From  string `json:"from"`
+	FaxStatusPages
+	ProviderRef string `json:"provider_ref"`
+	PDFB64      string `json:"pdf_base64"`
+}
+
 func (h *Handlers) hookFax(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		Owner string `json:"owner"`
-		From  string `json:"from"`
-		faxStatusPages
-		ProviderRef string `json:"provider_ref"`
-		PDFB64      string `json:"pdf_base64"`
-	}
+	var payload HookFaxRequest
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
@@ -351,13 +364,18 @@ func (h *Handlers) applyStatusWebhook(w http.ResponseWriter, r *http.Request, ki
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// HookFaxStatusRequest is the POST /hooks/fax/status wire shape
+// (outbound fax verdict from the provider). Named for the wire-contract
+// catalog.
+type HookFaxStatusRequest struct {
+	ProviderRef string `json:"provider_ref"`
+	Status      string `json:"status"`
+	FaxStatusPages
+	Error string `json:"error"`
+}
+
 func (h *Handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		ProviderRef string `json:"provider_ref"`
-		Status      string `json:"status"`
-		faxStatusPages
-		Error string `json:"error"`
-	}
+	var payload HookFaxStatusRequest
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}
@@ -375,12 +393,17 @@ func (h *Handlers) hookFaxStatus(w http.ResponseWriter, r *http.Request) {
 		})
 }
 
+// HookMessageStatusRequest is the POST /hooks/message/status wire
+// shape (outbound message verdict from the provider). Named for the
+// wire-contract catalog.
+type HookMessageStatusRequest struct {
+	ProviderRef string `json:"provider_ref"`
+	Status      string `json:"status"`
+	Error       string `json:"error"`
+}
+
 func (h *Handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
-	var payload struct {
-		ProviderRef string `json:"provider_ref"`
-		Status      string `json:"status"`
-		Error       string `json:"error"`
-	}
+	var payload HookMessageStatusRequest
 	if err := decodeJSON(w, r, &payload); err != nil {
 		return
 	}

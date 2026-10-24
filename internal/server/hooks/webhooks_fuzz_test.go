@@ -44,7 +44,7 @@ func FuzzHookJSONDecode(f *testing.F) {
 		var fax struct {
 			ProviderRef string `json:"provider_ref"`
 			Status      string `json:"status"`
-			faxStatusPages
+			FaxStatusPages
 			Error  string `json:"error"`
 			PDFB64 string `json:"pdf_base64"`
 		}

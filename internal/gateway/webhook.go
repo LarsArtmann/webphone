@@ -243,9 +243,7 @@ func (p provider) post(
 	if err != nil {
 		return Receipt{}, errorfamily.WrapTransientf(err, "gateway.receipt", "read provider receipt (content-type %s)", contentType)
 	}
-	var receipt struct {
-		ProviderRef string `json:"provider_ref"`
-	}
+	var receipt ReceiptEnvelope
 	if err := json.Unmarshal(raw, &receipt); err != nil {
 		// The documented contract also allows a bare provider token as
 		// the acceptance receipt: any small answer that is not a JSON
@@ -257,6 +255,15 @@ func (p provider) post(
 	}
 
 	return Receipt{ProviderRef: receipt.ProviderRef, Resolution: ResolutionDeferred}, nil
+}
+
+// ReceiptEnvelope is the JSON acceptance receipt the provider bridge
+// answers a webhook POST with. Named (not inline) so the wire-contract
+// catalog derives its schema from this type
+// (internal/server/wirecontracts.go). The documented contract also
+// allows a bare provider token (any small non-JSON answer) as the ref.
+type ReceiptEnvelope struct {
+	ProviderRef string `description:"The provider reference to address later status hooks at." json:"provider_ref"`
 }
 
 // DefaultClient is the shared HTTP client for provider calls.
