@@ -17,6 +17,59 @@ func TestAPIContractIsValid(t *testing.T) {
 	}
 }
 
+// TestOpenAPISeamSurfacesMatchHandlers extends the middleware_test pins
+// to the config-gated surfaces: every one documents the honest 404 the
+// disabled seam answers, and the limiter-carrying POSTs document their
+// Retry-After contract.
+func TestOpenAPISeamSurfacesMatchHandlers(t *testing.T) {
+	var doc struct {
+		Paths map[string]map[string]struct {
+			Responses map[string]struct {
+				Description string `json:"description"`
+			} `json:"responses"`
+		} `json:"paths"`
+	}
+	body, err := openAPIContract()
+	if err != nil {
+		t.Fatalf("openapi contract render: %v", err)
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatalf("generated openapi doc is not JSON: %v", err)
+	}
+
+	type want struct {
+		path, method   string
+		codes          []string
+		retryAfterCode string
+	}
+	for _, w := range []want{
+		{"/api/transcribe", "post", []string{"200", "400", "401", "403", "404", "429", "502", "503"}, "429"},
+		{"/api/transcripts", "post", []string{"204", "400", "401", "403", "404", "413", "429", "500", "503"}, "429"},
+		{"/api/transcripts", "delete", []string{"204", "400", "401", "403", "404", "429", "500", "503"}, "429"},
+		{"/api/push-devices", "get", []string{"200", "401", "404", "500"}, ""},
+		{"/api/push-devices", "post", []string{"204", "400", "401", "403", "404", "422", "429", "500"}, "429"},
+		{"/api/push-devices", "delete", []string{"204", "401", "403", "404", "500"}, ""},
+	} {
+		op, ok := doc.Paths[w.path][w.method]
+		if !ok {
+			t.Fatalf("%s %s missing from the contract", w.method, w.path)
+		}
+		for _, code := range w.codes {
+			if _, ok := op.Responses[code]; !ok {
+				t.Errorf("%s %s spec missing documented response %s", w.method, w.path, code)
+			}
+		}
+		for _, code := range []string{"404"} {
+			if !strings.Contains(op.Responses[code].Description, "configured") {
+				t.Errorf("%s %s %s must document the disabled-seam 404 contract", w.method, w.path, code)
+			}
+		}
+		if w.retryAfterCode != "" && !strings.Contains(op.Responses[w.retryAfterCode].Description, "Retry-After") {
+			t.Errorf("%s %s %s must document the Retry-After header (limiter contract)", w.method, w.path, w.retryAfterCode)
+		}
+	}
+}
+
 // TestAPIContractPathsAreMounted walks the GENERATED contract and probes
 // the live mux: every declared (path, method) must reach a real handler.
 // The discriminator is the 404 SHAPE — a declared path the mux never

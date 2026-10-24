@@ -36,11 +36,26 @@ const (
 // (strong-id wire ruling).
 type apiPushDevice struct {
 	// DeviceID is the shell-minted per-install id.
-	DeviceID string `json:"device_id"`
+	DeviceID string `description:"The shell-minted per-install id." json:"device_id"`
 	// Transport names the wake wire ("ntfy" or "fcm").
-	Transport string `json:"transport"`
+	Transport string `description:"The wake wire: ntfy or fcm." json:"transport"`
 	// UpdatedAt is the last successful registration, unix nanoseconds.
-	UpdatedAt int64 `json:"updated_at"`
+	UpdatedAt int64 `description:"Last successful registration, unix nanoseconds." json:"updated_at"`
+}
+
+// PushDeviceListResponse is the GET /api/push-devices wire shape. Named
+// (not inline) so the machine-API contract derives its schema from this
+// type (internal/server/apidocs.go).
+type PushDeviceListResponse struct {
+	Devices []apiPushDevice `description:"The extension's registered devices, newest registration first. The wake address (token) is write-only and never echoed." json:"devices"`
+}
+
+// PushDeviceRegisterRequest is the POST /api/push-devices wire shape:
+// one register call per install at login.
+type PushDeviceRegisterRequest struct {
+	DeviceID  string `description:"The shell-minted per-install id (8-64 chars of letters, digits, hyphens, underscores)." json:"device_id"`
+	Transport string `description:"The wake wire to register: ntfy or fcm (must be configured on the server)." json:"transport"`
+	Token     string `description:"The device's wake address: an ntfy topic or an FCM registration token. Write-only — never echoed back." json:"token"`
 }
 
 // pushSeamOff answers the disabled-seam 404 — the same contract as
@@ -78,9 +93,7 @@ func (h *Handlers) ListPushDevices(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not list push devices", http.StatusInternalServerError)
 		return
 	}
-	body := struct {
-		Devices []apiPushDevice `json:"devices"`
-	}{Devices: make([]apiPushDevice, 0, len(views))}
+	body := PushDeviceListResponse{Devices: make([]apiPushDevice, 0, len(views))}
 	for _, view := range views {
 		body.Devices = append(body.Devices, apiPushDevice{
 			DeviceID:  view.DeviceID,
@@ -101,11 +114,7 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var body struct {
-		DeviceID  string `json:"device_id"`
-		Transport string `json:"transport"`
-		Token     string `json:"token"`
-	}
+	var body PushDeviceRegisterRequest
 	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, pushDeviceBodyLimit), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
