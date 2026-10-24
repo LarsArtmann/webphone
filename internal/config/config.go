@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -226,12 +227,8 @@ func resolvedAuth(a Auth) (Auth, error) {
 	}
 	a.Passkey.Users = a.Users
 	merged := make(map[string]string, len(a.Passkey.ExtensionPasswordFiles)+len(a.ExtensionPasswordFiles))
-	for ext, file := range a.Passkey.ExtensionPasswordFiles {
-		merged[ext] = file
-	}
-	for ext, file := range a.ExtensionPasswordFiles {
-		merged[ext] = file
-	}
+	maps.Copy(merged, a.Passkey.ExtensionPasswordFiles)
+	maps.Copy(merged, a.ExtensionPasswordFiles)
 	a.Passkey.ExtensionPasswordFiles = merged
 	return a, nil
 }

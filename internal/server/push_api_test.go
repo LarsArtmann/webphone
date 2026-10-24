@@ -140,7 +140,7 @@ func TestPushDeviceRegistryCap(t *testing.T) {
 	c := clientFor(t, server)
 	c.login("1001", "pass")
 
-	for i := 0; i < readmodels.PushDevicesMaxPerExtension; i++ {
+	for i := range readmodels.PushDevicesMaxPerExtension {
 		deviceID := fmt.Sprintf("device-%d", i)
 		if resp := registerPushDevice(t, c, deviceID, "ntfy", "wp-topic"); resp.StatusCode != http.StatusNoContent {
 			t.Fatalf("register %d: status %d", i, resp.StatusCode)

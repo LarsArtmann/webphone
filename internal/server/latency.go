@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -69,9 +70,7 @@ func (l *latencyRecorder) writePrometheus(b *strings.Builder) {
 	counts := l.counts
 	sum, total := l.sum, l.total
 	classes := make(map[int]uint64, len(l.classes))
-	for k, v := range l.classes {
-		classes[k] = v
-	}
+	maps.Copy(classes, l.classes)
 	l.mu.Unlock()
 
 	fmt.Fprintf(b, "# HELP webphone_http_request_duration_seconds Wall-clock duration of completed HTTP requests (aggregates only; /metrics self-scrapes excluded).\n")

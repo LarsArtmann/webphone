@@ -9,7 +9,9 @@
 package authmap
 
 import (
+	"maps"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/larsartmann/go-error-family"
@@ -58,9 +60,7 @@ func New(users map[string]User, passwordFiles map[string]string) (*Map, error) {
 		}
 	}
 	files := make(map[string]string, len(passwordFiles))
-	for ext, file := range passwordFiles {
-		files[ext] = file
-	}
+	maps.Copy(files, passwordFiles)
 	return &Map{users: normalized, passwordFiles: files}, nil
 }
 
@@ -84,10 +84,8 @@ func (m *Map) MappedByExtension(extension domain.Extension) (User, bool) {
 		return User{}, false
 	}
 	for _, user := range m.users {
-		for _, mapped := range user.Extensions {
-			if mapped == extension {
-				return user, true
-			}
+		if slices.Contains(user.Extensions, extension) {
+			return user, true
 		}
 	}
 	return User{}, false

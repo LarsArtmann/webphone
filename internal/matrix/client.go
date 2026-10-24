@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"mime"
 	"net/http"
 	"net/url"
@@ -162,9 +163,7 @@ func (c *Client) roomFor(ctx context.Context, peer string) (string, error) {
 	c.mu.Lock()
 	c.dmRooms[peer] = out.RoomID
 	dm := make(map[string]string, len(c.dmRooms))
-	for k, v := range c.dmRooms {
-		dm[k] = v
-	}
+	maps.Copy(dm, c.dmRooms)
 	c.mu.Unlock()
 	if err := c.putDirect(ctx, dm); err != nil {
 		// The room exists and works; the account-data nicety is

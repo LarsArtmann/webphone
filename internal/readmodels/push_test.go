@@ -84,7 +84,7 @@ func TestPushDevicesCap(t *testing.T) {
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 
-	for i := 0; i < PushDevicesMaxPerExtension; i++ {
+	for i := range PushDevicesMaxPerExtension {
 		if err := devices.Upsert(ctx, owner, "device-"+string(rune('a'+i)), push.TransportNtfy, "topic"); err != nil {
 			t.Fatalf("register %d: %v", i, err)
 		}

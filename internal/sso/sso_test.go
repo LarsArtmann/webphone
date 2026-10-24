@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"maps"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -119,9 +120,7 @@ func (s *stubIDP) token(w http.ResponseWriter, r *http.Request) {
 		"exp": 4102444800, // 2100-01-01: no clock dependence
 		"iat": 1700000000,
 	}
-	for k, v := range s.extraClaims {
-		claims[k] = v
-	}
+	maps.Copy(claims, s.extraClaims)
 	writeStubJSON(s.t, w, map[string]any{
 		"access_token": "stub-access-token",
 		"token_type":   "Bearer",

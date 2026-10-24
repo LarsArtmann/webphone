@@ -97,22 +97,22 @@ fix.
 
 ### 8. Verification battery (all local)
 
-| Gate | Result |
-| --- | --- |
-| `go build ./...` | pass |
-| `go test -count=1 ./...` | all packages pass |
-| `nix develop .#ci -c go test -race ./...` | all packages pass |
-| `nix fmt` | 0 changes after final run |
-| `checks.format` | pass |
-| `checks.island-js` | 228 tests, 0 fail |
-| `checks.island-lint` | pass |
-| `checks.statix`, `checks.deadnix` | pass |
-| `nix build .#webphone` | pass |
-| `checks.vulnix-triage` | pass |
-| `checks.webphone-module` | pass |
-| `scripts/buildflow.sh` (`BUILDFLOW_NO_RESULT_CACHE=1`) | passed with warnings |
-| CI-pinned `art-dupl check . -t 1` | 0 new groups (baseline 75) |
-| `go mod tidy -diff` | empty (go.mod stays `go 1.27.2`, which cqrs-htmx v4.14.1 / usermgmt v4.14.3 require) |
+| Gate                                                   | Result                                                                               |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `go build ./...`                                       | pass                                                                                 |
+| `go test -count=1 ./...`                               | all packages pass                                                                    |
+| `nix develop .#ci -c go test -race ./...`              | all packages pass                                                                    |
+| `nix fmt`                                              | 0 changes after final run                                                            |
+| `checks.format`                                        | pass                                                                                 |
+| `checks.island-js`                                     | 228 tests, 0 fail                                                                    |
+| `checks.island-lint`                                   | pass                                                                                 |
+| `checks.statix`, `checks.deadnix`                      | pass                                                                                 |
+| `nix build .#webphone`                                 | pass                                                                                 |
+| `checks.vulnix-triage`                                 | pass                                                                                 |
+| `checks.webphone-module`                               | pass                                                                                 |
+| `scripts/buildflow.sh` (`BUILDFLOW_NO_RESULT_CACHE=1`) | passed with warnings                                                                 |
+| CI-pinned `art-dupl check . -t 1`                      | 0 new groups (baseline 75)                                                           |
+| `go mod tidy -diff`                                    | empty (go.mod stays `go 1.27.2`, which cqrs-htmx v4.14.1 / usermgmt v4.14.3 require) |
 
 ---
 
@@ -215,7 +215,7 @@ fix.
    activity. That is what exposed the deleted config and the formatter reflow.
 2. **Run buildflow at train start.** A late full run lets daemon damage age.
 3. **Check the project's own guard tests before designing a shared helper.**
-   The error-code registry is a *literal-at-call-site* contract; a shared error
+   The error-code registry is a _literal-at-call-site_ contract; a shared error
    ladder is structurally not allowed. Check `internal/arch` tests first.
 4. **Expect the clone detector to flag new idioms created by extraction.**
    Remove a clone in a way that does not create a new 3-line twin; plan the
@@ -236,7 +236,7 @@ fix.
 8. **Formatter ownership needs a hard fence.** treefmt owns
    island/shell/theme-preload; oxfmt owns island-tests and Go. The daemon ran a
    formatter across the wrong side of that fence. `checks.format` catches it
-   only *after* a commit; a pre-commit/preflight assertion would catch it before.
+   only _after_ a commit; a pre-commit/preflight assertion would catch it before.
 9. **The buildflow baseline is stale.** 47 accepted entries matched nothing for
    three consecutive runs; refresh it deliberately (CI-pinned version) or the
    accepted-noise mechanism slowly loses meaning.
