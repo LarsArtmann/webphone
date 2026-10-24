@@ -28,13 +28,14 @@ import (
 )
 
 const (
-	stubClientID  = "webphone"
-	stubRedirect  = "https://pbx.example.org/api/auth/oauth2/callback"
-	stubPassword  = "dir-password"
-	stubUserEmail = "lars@example.com"
-	stubGoodCode  = "good-code"
-	stubKid       = "test-key"
-	stubSubject   = "user-1"
+	stubClientID     = "webphone"
+	stubRedirect     = "https://pbx.example.org/api/auth/oauth2/callback"
+	stubPassword     = "dir-password"
+	stubUserEmail    = "lars@example.com"
+	stubGoodCode     = "good-code"
+	stubKid          = "test-key"
+	stubSubject      = "user-1"
+	stubClientSecret = "s3cret"
 )
 
 // stubIDP is a minimal OpenID provider: discovery, JWKS, token and
@@ -42,13 +43,14 @@ const (
 // (no JWT library) so the verification path is tested against the wire
 // shape go-oidc actually consumes.
 type stubIDP struct {
-	t             *testing.T
-	server        *httptest.Server
-	key           *rsa.PrivateKey
-	extraClaims   map[string]any
-	userinfoEmail string
-	lastVerifier  string
-	lastCode      string
+	t              *testing.T
+	server         *httptest.Server
+	key            *rsa.PrivateKey
+	extraClaims    map[string]any
+	userinfoEmail  string
+	lastVerifier   string
+	lastCode       string
+	lastAuthHeader string
 }
 
 func newStubIDP(t *testing.T) *stubIDP {
@@ -105,6 +107,15 @@ func (s *stubIDP) jwks(w http.ResponseWriter, _ *http.Request) {
 func (s *stubIDP) token(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	s.lastAuthHeader = r.Header.Get("Authorization")
+	// client_secret_basic is the ONLY accepted auth (Pocket ID shape):
+	// BasicAuth decodes WITHOUT trimming, so a padded or newline-riding
+	// secret fails here exactly like it did against the real IdP.
+	id, secret, ok := r.BasicAuth()
+	if !ok || id != stubClientID || secret != stubClientSecret {
+		http.Error(w, `{"error":"invalid_client"}`, http.StatusUnauthorized)
 		return
 	}
 	s.lastCode = r.PostForm.Get("code")
@@ -177,7 +188,7 @@ func testContext(idp *stubIDP) context.Context {
 func newTestClient(t *testing.T, idp *stubIDP, tweak func(*Config)) *Client {
 	t.Helper()
 	secretFile := filepath.Join(t.TempDir(), "client-secret")
-	if err := os.WriteFile(secretFile, []byte("  s3cret\n"), 0o600); err != nil {
+	if err := os.WriteFile(secretFile, []byte("  "+stubClientSecret+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	cfg := Config{
@@ -396,5 +407,77 @@ func TestNewFailsClosedOnHalfAConfiguration(t *testing.T) {
 			_, err := New(tc.cfg)
 			errorfamilytest.AssertCode(t, err, tc.code)
 		})
+	}
+}
+
+// The token endpoint speaks client_secret_basic ONLY (the Pocket ID
+// shape, pinned 2026-10-24): the Authorization header must carry the
+// base64(client_id:client_secret) pair with the TRIMMED secret
+// byte-exact. A padded or newline-riding secret rides the header raw
+// (oauth2 does not trim either) and was the 2026-10-14 invalid_client
+// burn; client_secret_post form auth is refused outright.
+func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIDP(t)
+	client := newTestClient(t, idp, nil)
+
+	ctx := testContext(idp)
+	ch, err := client.Challenge(ctx)
+	if err != nil {
+		t.Fatalf("Challenge: %v", err)
+	}
+	idp.extraClaims["nonce"] = ch.Nonce
+	if _, _, err := client.Complete(ctx, stubGoodCode, ch.Verifier, ch.Nonce); err != nil {
+		t.Fatalf("Complete: %v", err)
+	}
+
+	if !strings.HasPrefix(idp.lastAuthHeader, "Basic ") {
+		t.Fatalf("token exchange must use client_secret_basic, got Authorization: %q", idp.lastAuthHeader)
+	}
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(idp.lastAuthHeader, "Basic "))
+	if err != nil {
+		t.Fatalf("Authorization header is not base64: %v", err)
+	}
+	id, secret, ok := strings.Cut(string(raw), ":")
+	if !ok || id != stubClientID {
+		t.Fatalf("Basic pair client id drifted: %q", string(raw))
+	}
+	if secret != stubClientSecret {
+		t.Fatalf("Basic pair secret must be the trimmed file value %q byte-exact, got %q (a padded or newline-riding secret is the invalid_client burn shape)", stubClientSecret, secret)
+	}
+
+	// client_secret_post (credentials in the form) is refused: no Basic
+	// header means no auth.
+	form := url.Values{
+		"code":          {stubGoodCode},
+		"code_verifier": {ch.Verifier},
+		"client_id":     {stubClientID},
+		"client_secret": {stubClientSecret},
+	}
+	resp, err := idp.server.Client().PostForm(idp.issuer()+"/token", form)
+	if err != nil {
+		t.Fatalf("post-form probe: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("client_secret_post must be refused with 401, got %d", resp.StatusCode)
+	}
+
+	// A Basic header carrying the RAW file bytes (padded + newline) is
+	// the exact 2026-10-14 burn twin: refused, never half-accepted.
+	req, err := http.NewRequest(http.MethodPost, idp.issuer()+"/token", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(stubClientID, "  "+stubClientSecret+"\n")
+	resp2, err := idp.server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("raw-secret probe: %v", err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("the raw (padded+newline) secret must be refused with 401, got %d", resp2.StatusCode)
 	}
 }
