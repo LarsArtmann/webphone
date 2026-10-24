@@ -21,6 +21,14 @@ import (
 // hang logins for the full client timeout.
 const verifyTimeout = 5 * time.Second
 
+// loginRequest is the POST /api/session wire shape: the extension and
+// its PBX directory password. Named (not inline) so the machine-API
+// contract derives its schema from this type (internal/server/apidocs.go).
+type loginRequest struct {
+	Extension string `description:"The PBX extension to sign in, e.g. 1001." json:"extension"`
+	Password  string `description:"The extension's PBX directory password." json:"password"`
+}
+
 // createSession opens the tab/proxy session. The submitted credentials
 // are verified against the PBX directory first (VerifyCredentials: the
 // same directory the SIP REGISTER checks): a forged POST must not mint
@@ -29,10 +37,7 @@ const verifyTimeout = 5 * time.Second
 // Deployments without a phone API (loopback dev) skip verification,
 // matching the mode where no PBX-backed panels exist.
 func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Extension string `json:"extension"`
-		Password  string `json:"password"`
-	}
+	var body loginRequest
 	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -131,12 +136,12 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 // wire identical to the historical map form.
 // brandid-lint:ignore(BD003) wire DTO: config-validated DID rendered verbatim, no id ever flows back in (strong-id ruling)
 type sessionIdentity struct {
-	Extension     string   `json:"extension"`
-	DID           string   `json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
-	DisplayName   string   `json:"display_name,omitempty"`
-	Numbers       []string `json:"numbers,omitempty"`
-	Password      string   `json:"password,omitempty"`
-	SIPCredential string   `json:"sip_credential,omitempty"`
+	Extension     string   `description:"The signed-in extension." json:"extension"`
+	DID           string   `description:"Presented PSTN number (config identities), when known." json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
+	DisplayName   string   `description:"The passkey user's display name, when the extension is passkey-mapped." json:"display_name,omitempty"`
+	Numbers       []string `description:"Every number mapped to the passkey user, deduplicated." json:"numbers,omitempty"`
+	Password      string   `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
+	SIPCredential string   `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
 }
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)

@@ -35,19 +35,24 @@ func (h *Handlers) recordCallIdem(key string) {
 	}
 }
 
+// CallLogRequest is the POST /api/calls wire shape: the island's
+// post-call report. Named (not inline) so the machine-API contract
+// derives its schema from this type (internal/server/apidocs.go).
+type CallLogRequest struct {
+	Number    string `description:"The remote number the call was made with, e.g. +4917012345678." json:"number"`
+	Direction string `description:"Call direction: in or out." json:"direction"`
+	Seconds   int    `description:"Duration in seconds; negative values are clamped to 0." json:"seconds"`
+	Outcome   string `description:"answered or missed." json:"outcome"`
+	Key       string `description:"Island-generated idempotency key (UUID, max 128 chars). A retry with the same key answers 204 without journaling again; a failed (502) attempt stays retryable. Absent or empty means no dedupe." json:"key"`
+}
+
 func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.deps.Server.RequireSession(w, r)
 	if !ok {
 		return
 	}
 
-	var body struct {
-		Number    string `json:"number"`
-		Direction string `json:"direction"`
-		Seconds   int    `json:"seconds"`
-		Outcome   string `json:"outcome"`
-		Key       string `json:"key"`
-	}
+	var body CallLogRequest
 	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return

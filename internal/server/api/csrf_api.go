@@ -7,6 +7,13 @@ import (
 	"github.com/larsartmann/httputil"
 )
 
+// CSRFTokenResponse is the GET /api/csrf wire shape: the fresh masked
+// token. Named (not inline) so the machine-API contract derives its
+// schema from this type (internal/server/apidocs.go).
+type CSRFTokenResponse struct {
+	Token string `description:"The fresh masked CSRF token; pair it with the csrf_token cookie." json:"token"`
+}
+
 // RefreshCSRF hands the island the fresh masked CSRF token after the login
 // rotation deleted the old cookie. Riding inside the CSRF middleware, this
 // GET makes nosurf regenerate the cookie (missing cookie ⇒ new token) and
@@ -30,5 +37,5 @@ func (h *Handlers) RefreshCSRF(w http.ResponseWriter, r *http.Request) {
 	// the headers make the contract explicit rather than incidental.
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Vary", "Cookie")
-	_ = json.MarshalWrite(w, map[string]string{"token": token}) //nolint:erraudit // best-effort write; the paired cookie is already set
+	_ = json.MarshalWrite(w, CSRFTokenResponse{Token: token}) //nolint:erraudit // best-effort write; the paired cookie is already set
 }

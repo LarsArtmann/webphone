@@ -30,6 +30,22 @@ type apiSharedContact struct {
 	Number string `json:"number"`
 }
 
+// ContactListResponse is the GET /api/contacts wire shape: the session
+// extension's personal contacts plus the configured shared ones. Named
+// (not inline) so the machine-API contract derives its schema from this
+// type (internal/server/apidocs.go).
+type ContactListResponse struct {
+	Personal []apiContact       `description:"The extension's store-backed personal contacts." json:"personal"`
+	Shared   []apiSharedContact `description:"The operator's configured shared contacts." json:"shared"`
+}
+
+// ContactSaveRequest is the POST /api/contacts wire shape: a repeated
+// number renames the existing entry.
+type ContactSaveRequest struct {
+	Name   string `description:"Display name; may be empty." json:"name"`
+	Number string `description:"Dialable phone number, e.g. +4917012345678." json:"number"`
+}
+
 // ListContacts answers the island's panel read: the extension's
 // personal contacts plus the operator's shared contacts from config
 // (the same merge the Contacts tab renders).
@@ -43,10 +59,7 @@ func (h *Handlers) ListContacts(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not list contacts", http.StatusInternalServerError)
 		return
 	}
-	body := struct {
-		Personal []apiContact       `json:"personal"`
-		Shared   []apiSharedContact `json:"shared"`
-	}{
+	body := ContactListResponse{
 		Personal: make([]apiContact, 0, len(contacts)),
 		Shared:   make([]apiSharedContact, 0, len(h.deps.Shared)),
 	}
@@ -90,10 +103,7 @@ func (h *Handlers) SaveContact(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var body struct {
-		Name   string `json:"name"`
-		Number string `json:"number"`
-	}
+	var body ContactSaveRequest
 	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
