@@ -101,11 +101,6 @@ func apiCatalog() *catalog.Catalog {
 			catalog.Response[struct{}]("204", "No response body. Session destroyed (any live session deleted, cookies cleared)."),
 			catalog.WithResponse("403", csrfClause+"."),
 		),
-		catalog.Query[struct{}]("ghost.probe",
-			catalog.MsgOperation(http.MethodGet, "/api/ghost"),
-			catalog.WithName("Ghost Probe"),
-			catalog.Response[struct{}]("200", "never mounted"),
-		),
 		// --- CSRF ---
 		catalog.Query[struct{}]("csrf.refresh",
 			catalog.MsgOperation(http.MethodGet, "/api/csrf"),

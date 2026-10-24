@@ -713,4 +713,3 @@ func versionHandler() http.HandlerFunc {
 	}
 	return cqrshtmx.DebugHandler(payload)
 }
-

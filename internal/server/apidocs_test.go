@@ -43,7 +43,10 @@ func TestAPIContractPathsAreMounted(t *testing.T) {
 	client := server.Client()
 	for path, methods := range doc.Paths {
 		for method := range methods {
-			req, err := http.NewRequest(method, server.URL+path, nil)
+			// OpenAPI method keys are lowercase; the CSRF gate treats
+			// non-canonical methods as unsafe and would mask the
+			// catch-all 404, so probe with the canonical verb.
+			req, err := http.NewRequest(strings.ToUpper(method), server.URL+path, nil)
 			if err != nil {
 				t.Fatalf("probe %s %s: %v", method, path, err)
 			}
