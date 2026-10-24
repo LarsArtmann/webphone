@@ -171,7 +171,7 @@ func TestSendRefusesForeignNetworks(t *testing.T) {
 func TestHomeserverVerdictsClassify(t *testing.T) {
 	rateLimited := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTooManyRequests)
-		fmt.Fprint(w, `{"errcode":"M_LIMIT_EXCEEDED","error":"slow down"}`)
+		_ = fmt.Fprint(w, `{"errcode":"M_LIMIT_EXCEEDED","error":"slow down"}`)
 	}))
 	defer rateLimited.Close()
 	c := New(rateLimited.URL, "@w:example.org", "tok")
