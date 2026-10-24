@@ -104,6 +104,8 @@ export const I18N = {
       "Passkeys and every other sign-in method your account has work in Pocket ID.",
     ssoErrorUnmapped:
       "Your Pocket ID account has no phone mapping here — ask the operator to add your email address.",
+    ssoErrorDirectory:
+      "Your phone account's password could not be verified — ask the operator to refresh it, then try again.",
     ssoErrorUnverified:
       "Your Pocket ID email is not verified — verify it in Pocket ID, then try again.",
     ssoErrorStale: "That sign-in attempt expired — please start again.",
@@ -207,6 +209,8 @@ export const I18N = {
       "Passkeys und alle anderen Anmeldeverfahren Ihres Kontos funktionieren in Pocket ID.",
     ssoErrorUnmapped:
       "Ihr Pocket ID-Konto hat hier keine Telefon-Zuordnung — bitten Sie den Betreiber, Ihre E-Mail-Adresse einzutragen.",
+    ssoErrorDirectory:
+      "Das Passwort Ihres Telefon-Kontos konnte nicht verifiziert werden — bitten Sie den Betreiber, es zu erneuern, und versuchen Sie es erneut.",
     ssoErrorUnverified:
       "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
     ssoErrorStale: "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",

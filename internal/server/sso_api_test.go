@@ -268,18 +268,21 @@ func TestSSOCallbackWithoutAttemptCookiesIsStale(t *testing.T) {
 
 func TestSSOErrorCodeVocabulary(t *testing.T) {
 	for code, want := range map[string]string{
-		"sso.unmapped_email":         "unmapped",
-		"sso.email_unverified":       "unverified",
-		"sso.state.mismatch":         "stale",
-		"sso.nonce.mismatch":         "stale",
-		"sso.attempt.missing":        "stale",
-		"sso.client_secret.read":     "config",
-		"sso.client_secret.empty":    "config",
-		"sso.exchange":               "config",
-		"sso.discovery":              "unavailable",
-		"sso.userinfo":               "unavailable",
-		"sso.id_token.verify":        "unavailable",
-		"sso.something.unclassified": "failed",
+		"sso.unmapped_email":            "unmapped",
+		"authmap.password_file.missing": "directory",
+		"authmap.password_file.read":    "directory",
+		"authmap.password_file.empty":   "directory",
+		"sso.email_unverified":          "unverified",
+		"sso.state.mismatch":            "stale",
+		"sso.nonce.mismatch":            "stale",
+		"sso.attempt.missing":           "stale",
+		"sso.client_secret.read":        "config",
+		"sso.client_secret.empty":       "config",
+		"sso.exchange":                  "config",
+		"sso.discovery":                 "unavailable",
+		"sso.userinfo":                  "unavailable",
+		"sso.id_token.verify":           "unavailable",
+		"sso.something.unclassified":    "failed",
 	} {
 		if got := ssoErrorCode(errorfamily.NewRejection(code, "x")); got != want {
 			t.Errorf("ssoErrorCode(%q) = %q, want %q", code, got, want)

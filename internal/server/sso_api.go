@@ -136,6 +136,8 @@ func ssoErrorCode(err error) string {
 	switch errorfamily.Code(err) {
 	case "sso.unmapped_email":
 		return "unmapped"
+	case "authmap.password_file.missing", "authmap.password_file.read", "authmap.password_file.empty":
+		return "directory"
 	case "sso.email_unverified":
 		return "unverified"
 	case "sso.state.mismatch", "sso.nonce.mismatch", "sso.attempt.missing":

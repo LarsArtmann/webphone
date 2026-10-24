@@ -73,3 +73,13 @@ test("no card element: the strip still happens (no-JS-shaped page, JS hygiene)",
   );
   assert.ok(lastReplaced.includes("x=1"), "unrelated parameters survive");
 });
+
+test("the directory reason renders its own sentence", () => {
+  const el = card();
+  withLocation("?sso_error=directory");
+  showSSOError(t);
+  assert.equal(el.hidden, false);
+  assert.notEqual(el.textContent, "");
+  assert.notEqual(el.textContent, "directory", "the raw code must never render");
+  assert.ok(!lastReplaced.includes("sso_error"));
+});
