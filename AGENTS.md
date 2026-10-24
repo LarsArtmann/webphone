@@ -38,6 +38,7 @@ go-appkit (github:LarsArtmann/go-appkit) is NOT a dependency and stays that way 
 nix develop                        # Go, templ, golangci-lint, esbuild, … — GOTOOLCHAIN=local; bare `go` works inside. Host go is below the 1.27.1 floor: OUTSIDE-the-shell go commands need `nix develop -c`
 nix develop .#ci                   # minimal CI shell (go + templ + golangci-lint only); what the `go-tests` CI job enters
 templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
+nix develop -c go run ./cmd/webphone catalog -o work/out/webphone   # render the EventCatalog export tree (catalog.home.lan federation; add -plain for the hub's governance-lint tree; pure render, no config/db — .eventcatalog-hub.json carries the exact recipe CI uses)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations
 python3 scripts/webphone-smoke.py --bin /tmp/webphone-bin   # live smoke, self-boots a fresh binary (flag is --bin; --base URL reuses a server; --expect-version X asserts /version); grep verdict lines "smoke: N passed" / "restart scenario: N passed" / "boot failure scenario: N passed" — the script PRINTS the counts, never hardcode them
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)

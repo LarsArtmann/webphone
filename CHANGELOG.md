@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- EventCatalog federation (2026-10-24): webphone joined catalog.home.lan
+  as a full source — `internal/domain/catalog.go` declares the four
+  service-seam events (`message.received`, `message.delivery.advanced`,
+  `thread.flag.changed`, `fax.advanced`) with explicit mirror schema
+  structs (the branded ID types hide their values from the schema
+  reflector; `TestCatalogSchemaParity` fails the build on drift),
+  service meta + `telephony`-domain membership + owner `lars`, and ZERO
+  commands by design (writes are HTTP; the build test asserts it).
+  New `webphone catalog [-o dir] [-plain]` one-shot renders the
+  EventCatalog tree (pure render: no config, no database); export +
+  frontmatter tests pin `1.0.0` versions, owners, and summaries on every
+  message (the zlota44 lesson), and `.eventcatalog-hub.json` carries the
+  hub build/export recipe. Local; the push is gated on the hub push-pair
+  (see TODO_LIST).
 - Ring-while-closed push seam (the native-app decision's P2, shipped
   with the owner go on P1): the optional `push.*` config gates two
   independent transports — `push.ntfy.{url,token}` (self-hosted ntfy,
