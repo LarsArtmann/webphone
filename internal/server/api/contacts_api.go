@@ -2,12 +2,10 @@ package api
 
 import (
 	"encoding/json/v2"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // JSON contacts API for the SIP island's contact panel. The island used
@@ -62,8 +60,7 @@ func (h *Handlers) ListContacts(w http.ResponseWriter, r *http.Request) {
 	for _, shared := range h.deps.Shared {
 		body.Shared = append(body.Shared, apiSharedContact{Name: shared.Name, Number: shared.Number})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.MarshalWrite(w, body) //nolint:erraudit // best-effort write; the response is already committed
+	writeJSONBody(w, body)
 }
 
 // ContactSaveFailed answers both contact-write surfaces (the tab form
@@ -114,8 +111,7 @@ func (h *Handlers) SaveContact(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: time.Now(),
 	}
 	if err := h.deps.Contacts.Save(r.Context(), contact); err != nil {
-		if errors.Is(err, readmodels.ErrListFull) {
-			http.Error(w, "contact list is full — delete one first", http.StatusUnprocessableEntity)
+		if storeAtCapacity(w, err, "contact list is full — delete one first") {
 			return
 		}
 		ContactSaveFailed(w)

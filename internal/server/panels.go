@@ -129,13 +129,8 @@ func threadPageFromQuery(r *http.Request) int {
 }
 
 func (h *handlers) partialThread(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+	sess, id, ok := h.requireThread(w, r, h.notFound)
 	if !ok {
-		return
-	}
-	id, err := domain.ParseThreadID(r.PathValue("id"))
-	if err != nil {
-		h.notFound(w, r)
 		return
 	}
 	component, err := h.threadPanel(r, sess, id, threadPageFromQuery(r))

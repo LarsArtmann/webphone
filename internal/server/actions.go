@@ -526,13 +526,8 @@ func (h *handlers) renderPanelError(
 // without a GET, so the client marks read explicitly (the badge must not
 // stay lit for the conversation on screen). Idempotent by store contract.
 func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+	sess, threadID, ok := h.requireThread(w, r, http.NotFound)
 	if !ok {
-		return
-	}
-	threadID, err := domain.ParseThreadID(r.PathValue("id"))
-	if err != nil {
-		http.NotFound(w, r)
 		return
 	}
 	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, threadID); err != nil {
@@ -616,6 +611,24 @@ func (h *handlers) RequireSession(w http.ResponseWriter, r *http.Request) (sessi
 		return session.Session{}, false
 	}
 	return sess, true
+}
+
+// requireThread resolves the live session and the {id} path thread in one
+// prologue. missing picks the surface's own not-found answer: a bare
+// http.NotFound for JSON callers, h.notFound for the HTMX shell.
+func (h *handlers) requireThread(
+	w http.ResponseWriter, r *http.Request, missing func(http.ResponseWriter, *http.Request),
+) (session.Session, domain.ThreadID, bool) {
+	sess, ok := h.RequireSession(w, r)
+	if !ok {
+		return session.Session{}, domain.ThreadID{}, false
+	}
+	threadID, err := domain.ParseThreadID(r.PathValue("id"))
+	if err != nil {
+		missing(w, r)
+		return session.Session{}, domain.ThreadID{}, false
+	}
+	return sess, threadID, true
 }
 
 // requireSessionMultipart parses a multipart action form for the signed-in

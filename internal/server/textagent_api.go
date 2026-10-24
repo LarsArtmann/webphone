@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -31,6 +32,27 @@ const textAgentDraftTimeout = 95 * time.Second
 // styled 404 and the views render neither the drafts panel nor the
 // compose buttons.
 func (h *handlers) textAgentOn() bool { return h.deps.TextAgent != nil }
+
+// textAgentSession is the drafts surfaces' prologue: a live session, then
+// the enabled seam. Both gates write their own answer (401 / styled 404),
+// so the caller only returns when this reports false.
+func (h *handlers) textAgentSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+	sess, ok := h.RequireSession(w, r)
+	if !ok {
+		return sess, false
+	}
+	return sess, h.textAgentGate(w, r)
+}
+
+// textAgentGate answers the disabled-seam 404 without touching the
+// session (the compose button's multipart prologue already resolved it).
+func (h *handlers) textAgentGate(w http.ResponseWriter, r *http.Request) bool {
+	if h.textAgentOn() {
+		return true
+	}
+	h.notFound(w, r)
+	return false
+}
 
 // textAgentReviews fetches the review queue under the panel timeout and
 // maps any failure onto the panel's honest error line (translated
@@ -64,11 +86,7 @@ func agentDetail(err error) string {
 // <section> for an outerHTML swap, so the review loop refreshes without
 // re-rendering the whole Messages tab (a half-typed composer survives).
 func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.RequireSession(w, r); !ok {
-		return
-	}
-	if !h.textAgentOn() {
-		h.notFound(w, r)
+	if _, ok := h.textAgentSession(w, r); !ok {
 		return
 	}
 	h.draftPanel(w, r)
@@ -117,12 +135,8 @@ func textAgentActionError(err error) (int, string) {
 // rides the panel-error contract so the banner lands where the owner
 // looks.
 func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+	sess, ok := h.textAgentSession(w, r)
 	if !ok {
-		return
-	}
-	if !h.textAgentOn() {
-		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
@@ -138,12 +152,8 @@ func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
 
 // discardDraft drops a pending draft without sending.
 func (h *handlers) discardDraft(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+	sess, ok := h.textAgentSession(w, r)
 	if !ok {
-		return
-	}
-	if !h.textAgentOn() {
-		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
@@ -166,8 +176,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !h.textAgentOn() {
-		h.notFound(w, r)
+	if !h.textAgentGate(w, r) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentDraftTimeout)
@@ -215,12 +224,8 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 // safety gates are unchanged — the mode only decides whether a confident
 // draft may send itself.
 func (h *handlers) setDraftMode(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+	sess, ok := h.textAgentSession(w, r)
 	if !ok {
-		return
-	}
-	if !h.textAgentOn() {
-		h.notFound(w, r)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)

@@ -2,11 +2,11 @@ package api
 
 import (
 	"encoding/json/v2"
-	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/larsartmann/webphone/internal/push"
-	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/session"
 )
 
 // JSON push-device API for the native shells (the Android call shell
@@ -50,16 +50,27 @@ func (h *Handlers) pushSeamOff() bool {
 	return h.deps.Push == nil || !h.deps.Push.Enabled() || h.deps.Devices == nil
 }
 
+// pushSession is the push surfaces' prologue: a live session, then the
+// enabled seam. Both gates write their own answer (401 / honest 404), so
+// the caller only returns when this reports false.
+func (h *Handlers) pushSession(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
+	sess, ok := h.deps.Server.RequireSession(w, r)
+	if !ok {
+		return sess, false
+	}
+	if h.pushSeamOff() {
+		http.NotFound(w, r)
+		return sess, false
+	}
+	return sess, true
+}
+
 // ListPushDevices answers the shell's/Settings' read: the session
 // extension's registered devices, newest registration first, without
 // any wake address.
 func (h *Handlers) ListPushDevices(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.deps.Server.RequireSession(w, r)
+	sess, ok := h.pushSession(w, r)
 	if !ok {
-		return
-	}
-	if h.pushSeamOff() {
-		http.NotFound(w, r)
 		return
 	}
 	views, err := h.deps.Devices.List(r.Context(), sess.Extension)
@@ -77,8 +88,7 @@ func (h *Handlers) ListPushDevices(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: view.UpdatedAt,
 		})
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.MarshalWrite(w, body) //nolint:erraudit // best-effort write; the response is already committed
+	writeJSONBody(w, body)
 }
 
 // SavePushDevice registers (or re-registers) the calling install's
@@ -87,12 +97,8 @@ func (h *Handlers) ListPushDevices(w http.ResponseWriter, r *http.Request) {
 // transport the server cannot send to is a 422, not a silent dead
 // letter: the fanout's Knows is the honest signal.
 func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.deps.Server.RequireSession(w, r)
+	sess, ok := h.pushSession(w, r)
 	if !ok {
-		return
-	}
-	if h.pushSeamOff() {
-		http.NotFound(w, r)
 		return
 	}
 	var body struct {
@@ -119,8 +125,7 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 
 	err := h.deps.Devices.Upsert(r.Context(), sess.Extension, body.DeviceID, body.Transport, body.Token)
 	if err != nil {
-		if errors.Is(err, readmodels.ErrListFull) {
-			http.Error(w, "device list is full — deregister one first", http.StatusUnprocessableEntity)
+		if storeAtCapacity(w, err, "device list is full — deregister one first") {
 			return
 		}
 		http.Error(w, "could not register the device", http.StatusInternalServerError)
@@ -133,12 +138,8 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 // the session's extension; an unknown or foreign id is a plain 204 —
 // the deregistration outcome is the same.
 func (h *Handlers) DeletePushDevice(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.deps.Server.RequireSession(w, r)
+	sess, ok := h.pushSession(w, r)
 	if !ok {
-		return
-	}
-	if h.pushSeamOff() {
-		http.NotFound(w, r)
 		return
 	}
 	deviceID := r.URL.Query().Get("id")
@@ -159,14 +160,7 @@ func validDeviceID(id string) bool {
 	if len(id) < deviceIDMinLen || len(id) > deviceIDMaxLen {
 		return false
 	}
-	for _, ch := range id {
-		switch {
-		case ch >= 'a' && ch <= 'z', ch >= 'A' && ch <= 'Z', ch >= '0' && ch <= '9', ch == '-', ch == '_':
-		default:
-			return false
-		}
-	}
-	return true
+	return asciiIdentifier(id, "-_")
 }
 
 // validDeviceToken checks the wake-address shape per transport: an
@@ -180,9 +174,15 @@ func validDeviceToken(transport, token string) bool {
 	if transport == push.TransportNtfy {
 		return push.ValidNtfyTopic(token)
 	}
-	for _, ch := range token {
+	return asciiIdentifier(token, ":-_")
+}
+
+// asciiIdentifier reports whether every rune is an ASCII letter, digit, or
+// one of extra — the shared device-id/token charset rule.
+func asciiIdentifier(value, extra string) bool {
+	for _, ch := range value {
 		switch {
-		case ch >= 'a' && ch <= 'z', ch >= 'A' && ch <= 'Z', ch >= '0' && ch <= '9', ch == ':', ch == '-', ch == '_':
+		case ch >= 'a' && ch <= 'z', ch >= 'A' && ch <= 'Z', ch >= '0' && ch <= '9', strings.ContainsRune(extra, ch):
 		default:
 			return false
 		}
