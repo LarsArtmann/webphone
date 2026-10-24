@@ -39,7 +39,7 @@ func TestWireContractSchemasMatchHandlerTypes(t *testing.T) {
 		t.Fatalf("wire contract is not JSON: %v", err)
 	}
 
-	faxStatus := doc.Components.Schemas["event.wire.hooks.fax.status"]
+	faxStatus := doc.Components.Schemas["command.wire.hooks.fax.status"]
 	if faxStatus == nil {
 		t.Fatal("fax.status payload schema missing")
 	}

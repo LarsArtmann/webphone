@@ -109,6 +109,12 @@ func run() error {
 	if len(os.Args) >= 2 && os.Args[1] == "catalog" {
 		return runCatalog(os.Args[2:])
 	}
+	// The wire-contracts one-shot renders the machine-to-machine lanes
+	// (hooks, gateway receipt, SSE) as AsyncAPI and exits — same
+	// pre-server slot as the catalog export.
+	if len(os.Args) >= 2 && os.Args[1] == "contracts" {
+		return runContracts(os.Args[2:])
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))

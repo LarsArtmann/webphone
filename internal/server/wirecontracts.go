@@ -121,13 +121,12 @@ func BuildWireContracts() *catalog.Catalog {
 	return builder.Build()
 }
 
-// renderWireContracts exports the declared lanes as an AsyncAPI
-// document (JSON render; the CLI writes the YAML form of the same
-// document). The exporter's default server stanza is a kafka broker —
+// wireContractsDocument exports the declared lanes as an AsyncAPI
+// document. The exporter's default server stanza is a kafka broker —
 // pure fabrication for these HTTP lanes — so the empty host suppresses
 // the Servers section entirely.
-func renderWireContracts() ([]byte, error) {
-	doc := asyncapi.NewExporter(WireContractsTitle, WireContractsVersion,
+func wireContractsDocument() *asyncapi.Document {
+	return asyncapi.NewExporter(WireContractsTitle, WireContractsVersion,
 		asyncapi.WithServer("webphone", "", ""),
 		asyncapi.WithDescription(
 			"Generated from the handler wire types (go-cqrs-lite/catalog). "+
@@ -135,7 +134,24 @@ func renderWireContracts() ([]byte, error) {
 				"/hooks/* channels with the Bearer gateway secret, and webphone's "+
 				"browser clients live on the /events SSE stream.",
 		)).Export(BuildWireContracts())
-	body, err := doc.MarshalJSON()
+}
+
+// renderWireContracts renders the declared lanes as AsyncAPI JSON
+// (the tests read this form).
+func renderWireContracts() ([]byte, error) {
+	body, err := wireContractsDocument().MarshalJSON()
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructure(err, "webphone.server.wire_render",
+			"marshal the generated AsyncAPI wire-contract document")
+	}
+	return body, nil
+}
+
+// RenderWireContractsYAML renders the declared lanes as the AsyncAPI
+// YAML document the `webphone contracts` command writes (the YAML form
+// of the same document the tests pin in JSON).
+func RenderWireContractsYAML() ([]byte, error) {
+	body, err := wireContractsDocument().MarshalYAML()
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructure(err, "webphone.server.wire_render",
 			"marshal the generated AsyncAPI wire-contract document")
