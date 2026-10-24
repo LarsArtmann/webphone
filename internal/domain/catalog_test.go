@@ -140,7 +140,7 @@ func TestCatalogSchemaParity(t *testing.T) {
 	t.Parallel()
 
 	pairs := []struct {
-		event any
+		event  any
 		mirror any
 	}{
 		{MessageReceived{}, CatalogMessageReceivedSchema{}},
