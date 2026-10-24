@@ -20,6 +20,18 @@ const transcriptBodyLimit = 16 << 10
 // misbehaving client, not a transcript.
 const transcriptTextMax = 4000
 
+// TranscriptSaveRequest is the POST /api/transcripts wire shape: one
+// live-call transcript segment. Named (not inline) so the machine-API
+// contract derives its schema from this type
+// (internal/server/apidocs.go).
+type TranscriptSaveRequest struct {
+	CallID    string `description:"The island's SIP Call-ID for the call the segment belongs to (max 128 chars)." json:"callId"`
+	Direction string `description:"Call direction: in or out." json:"direction"`
+	Remote    string `description:"The dial target (dialable number); stored sanitized so grouping keys never drift." json:"remote"`
+	StartedAt int64  `description:"Segment start, unix milliseconds." json:"startedAt"`
+	Text      string `description:"Trimmed plain text for the segment (max 4000 chars)." json:"text"`
+}
+
 // SaveTranscript persists one live-call transcript segment to the
 // owner-scoped store behind the History tab's transcript section. The
 // island's capture loop posts fire-and-forget: 204 whether stored or
@@ -41,13 +53,7 @@ func (h *Handlers) SaveTranscript(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body struct {
-		CallID    string `json:"callId"`
-		Direction string `json:"direction"`
-		Remote    string `json:"remote"`
-		StartedAt int64  `json:"startedAt"`
-		Text      string `json:"text"`
-	}
+	var body TranscriptSaveRequest
 	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, transcriptBodyLimit), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return

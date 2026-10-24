@@ -28,6 +28,13 @@ const transcribeConcurrency = 4
 // of piling goroutines. Package var so tests can shorten it.
 var transcribeQueueWait = 3 * time.Second
 
+// TranscriptionResponse is the POST /api/transcribe wire shape. Named
+// (not inline) so the machine-API contract derives its schema from this
+// type (internal/server/apidocs.go).
+type TranscriptionResponse struct {
+	Text string `description:"The transcribed plain text for the segment." json:"text"`
+}
+
 // Transcribe is the ONE server endpoint behind every transcription
 // surface (live calls, voicemail, MMS audio): the island and shell POST a
 // whole audio segment here and get the text back. Session-gated (the
@@ -87,9 +94,7 @@ func (h *Handlers) Transcribe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.MarshalWrite(w, struct { //nolint:erraudit // best-effort write; the response is already committed
-		Text string `json:"text"`
-	}{Text: text})
+	_ = json.MarshalWrite(w, TranscriptionResponse{Text: text}) //nolint:erraudit // best-effort write; the response is already committed
 }
 
 // transcribeFailed maps a provider failure to one visible surface. The
