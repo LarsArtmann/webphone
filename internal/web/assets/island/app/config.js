@@ -14,9 +14,7 @@ export const websocketUrl = `${location.protocol === "https:" ? "wss" : "ws"}://
   location.host
 }${config.websocketPath || "/sip"}`;
 
-export const iceServers = Array.isArray(config.iceServers)
-  ? config.iceServers
-  : [];
+export const iceServers = Array.isArray(config.iceServers) ? config.iceServers : [];
 
 export const phoneApiEnabled = config.phoneApi === true;
 
@@ -36,6 +34,4 @@ export const crmEnabled = config.crm === true;
 // affordances (live calls, voicemail). Off by default.
 export const asrEnabled = config.asr === true;
 
-export const sharedContacts = Array.isArray(config.contacts)
-  ? config.contacts
-  : [];
+export const sharedContacts = Array.isArray(config.contacts) ? config.contacts : [];

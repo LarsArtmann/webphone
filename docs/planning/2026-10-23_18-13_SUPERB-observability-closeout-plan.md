@@ -10,15 +10,15 @@ would change behaviour nobody asked about, it is not in this plan.
 
 **State at plan time (verified 18:12):**
 
-| Fact | Value |
-|---|---|
-| Branch | `main` |
-| Working tree | clean apart from an in-flight fix (A1.1) and another session's docs |
-| `go build ./...` | exit 0 |
-| `go test ./...` | **green** after the A1.1 fix |
-| Commits ahead of `origin/main` | 6+ (the daemon's push leg is behind) |
-| Blocking foreign red | `internal/matrix/matrix_test.go` — **fixed here** (3 lines, `_ =` → `_, _ =`) |
-| Prior plan status | C1/C2/C3/C5/C6/C7/C8/C9/C10/C11 done; C12 surface only; C4, C13, C14 open |
+| Fact                           | Value                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| Branch                         | `main`                                                                        |
+| Working tree                   | clean apart from an in-flight fix (A1.1) and another session's docs           |
+| `go build ./...`               | exit 0                                                                        |
+| `go test ./...`                | **green** after the A1.1 fix                                                  |
+| Commits ahead of `origin/main` | 6+ (the daemon's push leg is behind)                                          |
+| Blocking foreign red           | `internal/matrix/matrix_test.go` — **fixed here** (3 lines, `_ =` → `_, _ =`) |
+| Prior plan status              | C1/C2/C3/C5/C6/C7/C8/C9/C10/C11 done; C12 surface only; C4, C13, C14 open     |
 
 ---
 
@@ -74,20 +74,20 @@ concurrent chat-network train.
 
 Sorted by importance x impact x effort x customer value. `Tier` follows §1.
 
-| # | Task | Tier | Impact | Effort | Customer value | Depends on |
-|---|------|------|--------|--------|----------------|------------|
-| A1 | Green main: land the matrix fix, format explicit paths, whitespace-drift, full suite | 1% | Unblocks every other gate | 30m | Highest (nothing ships red) | — |
-| A2 | Gate battery: `buildflow` + full `go test` + `nix flake check` | 1% | Turns "I tested" into "proven" | 100m | Highest | A1 |
-| A3 | Supply chain: real `vulnix` scan + module-cache sanity | 4% | Release-blocking proof | 45m | High | — |
-| A4 | Live proof: fresh binary + `webphone-smoke.py` | 4% | End-to-end truth for 404 + `/health` | 60m | Highest | A1 |
-| A5 | Visual proof: `ui-capture` 20 shots + review the 404 shot | 4% | Seen, not asserted | 45m | High | A4 |
-| A6 | Narrative commits + push + CI watched to green | 1% | Attribution + release truth | 40m | Highest | A1–A5 |
-| A7 | Docs harvest: FEATURES/ROADMAP/TODO_LIST + amend the old plan | 4% | Stops doc drift | 85m | High | A6 |
-| A8 | C4: stack VM test — dashboard location + fence + trailing slash | 20% | Catches nginx drift | 95m | Medium-high | A6 |
-| A9 | C4 wiring + stack docs + stack push | 20% | Discoverability | 35m | Medium | A8 |
-| A10 | Owner rulings applied: trace-snapshot directory + opt-in surface | 20% | Correct new-seam behaviour | 70m | Medium-high | ruling |
-| A11 | Lessons (2 entries) + go-appkit report reconciliation | 20% | Memory that survives | 55m | Medium | A7 |
-| A12 | Durability batch: arch test, 24-site audit, metrics polish, tier re-measure | 80% | Less future rot | 90m | Medium | A6 |
+| #   | Task                                                                                 | Tier | Impact                               | Effort | Customer value              | Depends on |
+| --- | ------------------------------------------------------------------------------------ | ---- | ------------------------------------ | ------ | --------------------------- | ---------- |
+| A1  | Green main: land the matrix fix, format explicit paths, whitespace-drift, full suite | 1%   | Unblocks every other gate            | 30m    | Highest (nothing ships red) | —          |
+| A2  | Gate battery: `buildflow` + full `go test` + `nix flake check`                       | 1%   | Turns "I tested" into "proven"       | 100m   | Highest                     | A1         |
+| A3  | Supply chain: real `vulnix` scan + module-cache sanity                               | 4%   | Release-blocking proof               | 45m    | High                        | —          |
+| A4  | Live proof: fresh binary + `webphone-smoke.py`                                       | 4%   | End-to-end truth for 404 + `/health` | 60m    | Highest                     | A1         |
+| A5  | Visual proof: `ui-capture` 20 shots + review the 404 shot                            | 4%   | Seen, not asserted                   | 45m    | High                        | A4         |
+| A6  | Narrative commits + push + CI watched to green                                       | 1%   | Attribution + release truth          | 40m    | Highest                     | A1–A5      |
+| A7  | Docs harvest: FEATURES/ROADMAP/TODO_LIST + amend the old plan                        | 4%   | Stops doc drift                      | 85m    | High                        | A6         |
+| A8  | C4: stack VM test — dashboard location + fence + trailing slash                      | 20%  | Catches nginx drift                  | 95m    | Medium-high                 | A6         |
+| A9  | C4 wiring + stack docs + stack push                                                  | 20%  | Discoverability                      | 35m    | Medium                      | A8         |
+| A10 | Owner rulings applied: trace-snapshot directory + opt-in surface                     | 20%  | Correct new-seam behaviour           | 70m    | Medium-high                 | ruling     |
+| A11 | Lessons (2 entries) + go-appkit report reconciliation                                | 20%  | Memory that survives                 | 55m    | Medium                      | A7         |
+| A12 | Durability batch: arch test, 24-site audit, metrics polish, tier re-measure          | 80%  | Less future rot                      | 90m    | Medium                      | A6         |
 
 **Total:** ~750 min ≈ 12.5 h. The 1% layer alone is ~170 min (A1+A2+A6) and is
 the entire difference between "we built it" and "it exists".
@@ -100,133 +100,133 @@ Every fine task is independently verifiable. `min` is wall-clock.
 
 ### A1 — Green main (4)
 
-| # | Task | min |
-|---|------|-----|
-| A1.1 | Commit the committed-broken matrix test fix (`_ =` → `_, _ =`, 3 lines, test-only, blocking exception) | 3 |
-| A1.2 | `nix fmt` on explicit paths only (a concurrent session is live) | 6 |
-| A1.3 | `scripts/whitespace-drift.sh` after `git add`, before commit | 4 |
-| A1.4 | `go test -count=1 ./...` and read the verdict, not the exit code alone | 12 |
+| #    | Task                                                                                                   | min |
+| ---- | ------------------------------------------------------------------------------------------------------ | --- |
+| A1.1 | Commit the committed-broken matrix test fix (`_ =` → `_, _ =`, 3 lines, test-only, blocking exception) | 3   |
+| A1.2 | `nix fmt` on explicit paths only (a concurrent session is live)                                        | 6   |
+| A1.3 | `scripts/whitespace-drift.sh` after `git add`, before commit                                           | 4   |
+| A1.4 | `go test -count=1 ./...` and read the verdict, not the exit code alone                                 | 12  |
 
 ### A2 — Gate battery (9)
 
-| # | Task | min |
-|---|------|-----|
-| A2.1 | `buildflow` full run inside `nix develop` | 12 |
-| A2.2 | Read every finding; classify mine vs foreign | 10 |
-| A2.3 | Fix my findings | 12 |
-| A2.4 | Re-run buildflow to zero remaining findings | 12 |
-| A2.5 | `nix flake check` (package + tests + treefmt + island-lint + island-js) | 12 |
-| A2.6 | Read the check log; attribute flakes vs breaks | 10 |
-| A2.7 | `nix build .#checks.x86_64-linux.webphone-module` alone | 10 |
-| A2.8 | Re-read `.buildflow.yml` after daemon activity near it | 6 |
-| A2.9 | Record the verdict lines in the plan's execution log | 6 |
+| #    | Task                                                                    | min |
+| ---- | ----------------------------------------------------------------------- | --- |
+| A2.1 | `buildflow` full run inside `nix develop`                               | 12  |
+| A2.2 | Read every finding; classify mine vs foreign                            | 10  |
+| A2.3 | Fix my findings                                                         | 12  |
+| A2.4 | Re-run buildflow to zero remaining findings                             | 12  |
+| A2.5 | `nix flake check` (package + tests + treefmt + island-lint + island-js) | 12  |
+| A2.6 | Read the check log; attribute flakes vs breaks                          | 10  |
+| A2.7 | `nix build .#checks.x86_64-linux.webphone-module` alone                 | 10  |
+| A2.8 | Re-read `.buildflow.yml` after daemon activity near it                  | 6   |
+| A2.9 | Record the verdict lines in the plan's execution log                    | 6   |
 
 ### A3 — Supply chain (4)
 
-| # | Task | min |
-|---|------|-----|
-| A3.1 | `nix run .#vulnix` (a real scan, not the 0 ms cache hit) | 10 |
-| A3.2 | Read the triage verdict | 10 |
-| A3.3 | `scripts/module-cache-janitor.sh` report | 6 |
-| A3.4 | Record the closure summary | 5 |
+| #    | Task                                                     | min |
+| ---- | -------------------------------------------------------- | --- |
+| A3.1 | `nix run .#vulnix` (a real scan, not the 0 ms cache hit) | 10  |
+| A3.2 | Read the triage verdict                                  | 10  |
+| A3.3 | `scripts/module-cache-janitor.sh` report                 | 6   |
+| A3.4 | Record the closure summary                               | 5   |
 
 ### A4 — Live proof (5)
 
-| # | Task | min |
-|---|------|-----|
-| A4.1 | `nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone` | 6 |
-| A4.2 | `python3 scripts/webphone-smoke.py --bin /tmp/webphone-bin` | 12 |
-| A4.3 | Read the three verdict lines (smoke / restart / boot failure) | 6 |
-| A4.4 | Fix any probe the new markup broke | 12 |
-| A4.5 | Re-run to green | 12 |
+| #    | Task                                                          | min |
+| ---- | ------------------------------------------------------------- | --- |
+| A4.1 | `nix develop -c go build -o /tmp/webphone-bin ./cmd/webphone` | 6   |
+| A4.2 | `python3 scripts/webphone-smoke.py --bin /tmp/webphone-bin`   | 12  |
+| A4.3 | Read the three verdict lines (smoke / restart / boot failure) | 6   |
+| A4.4 | Fix any probe the new markup broke                            | 12  |
+| A4.5 | Re-run to green                                               | 12  |
 
 ### A5 — Visual proof (4)
 
-| # | Task | min |
-|---|------|-----|
-| A5.1 | Run the PYSEL dance and `ui-capture.py` | 12 |
-| A5.2 | Confirm 20 shots exist and the `not-found` pair is among them | 8 |
-| A5.3 | Review the two 404 shots (light + dark) for chrome/clipping | 10 |
-| A5.4 | Fix the surface if the marker or wait hung | 12 |
+| #    | Task                                                          | min |
+| ---- | ------------------------------------------------------------- | --- |
+| A5.1 | Run the PYSEL dance and `ui-capture.py`                       | 12  |
+| A5.2 | Confirm 20 shots exist and the `not-found` pair is among them | 8   |
+| A5.3 | Review the two 404 shots (light + dark) for chrome/clipping   | 10  |
+| A5.4 | Fix the surface if the marker or wait hung                    | 12  |
 
 ### A6 — Attribution and push (5)
 
-| # | Task | min |
-|---|------|-----|
-| A6.1 | `git status` + `git diff --stat` to see exactly what is mine | 5 |
-| A6.2 | Stage my files in ONE call (add + commit together) | 3 |
-| A6.3 | Write the narrative commit body (why, not which files) | 6 |
-| A6.4 | `git push origin main` | 3 |
-| A6.5 | `gh run list` and watch the run to green | 12 |
+| #    | Task                                                         | min |
+| ---- | ------------------------------------------------------------ | --- |
+| A6.1 | `git status` + `git diff --stat` to see exactly what is mine | 5   |
+| A6.2 | Stage my files in ONE call (add + commit together)           | 3   |
+| A6.3 | Write the narrative commit body (why, not which files)       | 6   |
+| A6.4 | `git push origin main`                                       | 3   |
+| A6.5 | `gh run list` and watch the run to green                     | 12  |
 
 ### A7 — Docs harvest (9)
 
-| # | Task | min |
-|---|------|-----|
-| A7.1 | FEATURES: latency-metrics row | 12 |
-| A7.2 | FEATURES: flight-recorder row (status: opt-in, unproven on host) | 8 |
-| A7.3 | ROADMAP: observability-depth entry | 8 |
-| A7.4 | TODO_LIST: harvest §d and §f of the status report | 12 |
-| A7.5 | Amend the old plan's C6 wording to the shape rule | 10 |
-| A7.6 | Amend the old plan's C9 wording (env var, not config knob) | 8 |
-| A7.7 | Mark C4/C13/C14 status in the old plan | 8 |
-| A7.8 | Grep for contradicting claims across living docs | 8 |
-| A7.9 | Commit the docs unit | 5 |
+| #    | Task                                                             | min |
+| ---- | ---------------------------------------------------------------- | --- |
+| A7.1 | FEATURES: latency-metrics row                                    | 12  |
+| A7.2 | FEATURES: flight-recorder row (status: opt-in, unproven on host) | 8   |
+| A7.3 | ROADMAP: observability-depth entry                               | 8   |
+| A7.4 | TODO_LIST: harvest §d and §f of the status report                | 12  |
+| A7.5 | Amend the old plan's C6 wording to the shape rule                | 10  |
+| A7.6 | Amend the old plan's C9 wording (env var, not config knob)       | 8   |
+| A7.7 | Mark C4/C13/C14 status in the old plan                           | 8   |
+| A7.8 | Grep for contradicting claims across living docs                 | 8   |
+| A7.9 | Commit the docs unit                                             | 5   |
 
 ### A8 — C4 stack VM test (8)
 
-| # | Task | min |
-|---|------|-----|
-| A8.1 | Add `webphone.dashboard.enable = true` to `tests/webphone.nix`'s fixture | 8 |
-| A8.2 | Assert external `/health` → 403 (the fence) | 8 |
-| A8.3 | Assert loopback `https://localhost/health` → 200 with a stable dashboard marker | 8 |
-| A8.4 | Assert `/health/` → 301 → `/health` | 8 |
-| A8.5 | Assert the app port answers `/health` directly (prove the source) | 6 |
-| A8.6 | Place the block next to the existing `/metrics` fence assertions | 8 |
-| A8.7 | Run `nix build .#checks.x86_64-linux.telephony-webphone` | 12 |
-| A8.8 | Fix the marker/asserts from the real output | 12 |
+| #    | Task                                                                            | min |
+| ---- | ------------------------------------------------------------------------------- | --- |
+| A8.1 | Add `webphone.dashboard.enable = true` to `tests/webphone.nix`'s fixture        | 8   |
+| A8.2 | Assert external `/health` → 403 (the fence)                                     | 8   |
+| A8.3 | Assert loopback `https://localhost/health` → 200 with a stable dashboard marker | 8   |
+| A8.4 | Assert `/health/` → 301 → `/health`                                             | 8   |
+| A8.5 | Assert the app port answers `/health` directly (prove the source)               | 6   |
+| A8.6 | Place the block next to the existing `/metrics` fence assertions                | 8   |
+| A8.7 | Run `nix build .#checks.x86_64-linux.telephony-webphone`                        | 12  |
+| A8.8 | Fix the marker/asserts from the real output                                     | 12  |
 
 ### A9 — C4 wiring and stack docs (4)
 
-| # | Task | min |
-|---|------|-----|
-| A9.1 | Confirm the check is picked up by the VM-suite loop (no wiring needed) | 8 |
-| A9.2 | Stack README: the `/health` option + its fence | 10 |
-| A9.3 | Stack AGENTS: one line for the new assertion | 8 |
-| A9.4 | Commit + push the stack repo | 6 |
+| #    | Task                                                                   | min |
+| ---- | ---------------------------------------------------------------------- | --- |
+| A9.1 | Confirm the check is picked up by the VM-suite loop (no wiring needed) | 8   |
+| A9.2 | Stack README: the `/health` option + its fence                         | 10  |
+| A9.3 | Stack AGENTS: one line for the new assertion                           | 8   |
+| A9.4 | Commit + push the stack repo                                           | 6   |
 
 ### A10 — Owner rulings applied (6)
 
-| # | Task | min |
-|---|------|-----|
-| A10.1 | Ruling 1 recorded: trace snapshots inside or outside the backup path | 10 |
-| A10.2 | Implement the ruling (module exclusion + README) or document why not | 12 |
-| A10.3 | Ruling 2 recorded: env var vs `debug.flightrecorder.*` | 10 |
-| A10.4 | Implement the chosen surface (config section + env nesting) | 12 |
-| A10.5 | Tests for the new config arm (both-or-neither style) | 12 |
-| A10.6 | Docs: README + AGENTS + module option text | 8 |
+| #     | Task                                                                 | min |
+| ----- | -------------------------------------------------------------------- | --- |
+| A10.1 | Ruling 1 recorded: trace snapshots inside or outside the backup path | 10  |
+| A10.2 | Implement the ruling (module exclusion + README) or document why not | 12  |
+| A10.3 | Ruling 2 recorded: env var vs `debug.flightrecorder.*`               | 10  |
+| A10.4 | Implement the chosen surface (config section + env nesting)          | 12  |
+| A10.5 | Tests for the new config arm (both-or-neither style)                 | 12  |
+| A10.6 | Docs: README + AGENTS + module option text                           | 8   |
 
 ### A11 — Lessons and reconciliation (4)
 
-| # | Task | min |
-|---|------|-----|
-| A11.1 | `docs/lessons.md`: "the daemon owns the commit unless you do" | 10 |
-| A11.2 | `docs/lessons.md`: "a plan line can contradict a deliberate pin" | 10 |
-| A11.3 | Reconcile the go-appkit report (go-flightrecorder is now a direct dep) | 10 |
-| A11.4 | Commit the memory unit | 5 |
+| #     | Task                                                                   | min |
+| ----- | ---------------------------------------------------------------------- | --- |
+| A11.1 | `docs/lessons.md`: "the daemon owns the commit unless you do"          | 10  |
+| A11.2 | `docs/lessons.md`: "a plan line can contradict a deliberate pin"       | 10  |
+| A11.3 | Reconcile the go-appkit report (go-flightrecorder is now a direct dep) | 10  |
+| A11.4 | Commit the memory unit                                                 | 5   |
 
 ### A12 — Durability batch (8)
 
-| # | Task | min |
-|---|------|-----|
-| A12.1 | Arch test: `h.notFound` is the only HTML-router 404 writer | 12 |
-| A12.2 | Run it; fix any regression it finds | 8 |
-| A12.3 | Doc: the 24 remaining bare `http.NotFound` sites, re-ruled in one table | 12 |
-| A12.4 | Snapshot counter + bytes as a metric family | 12 |
-| A12.5 | `/metrics` shape test in the smoke suite | 10 |
-| A12.6 | Pin the histogram bucket set with a test | 8 |
-| A12.7 | errorfamily tier re-measure (tier 2 must stay 0) | 12 |
-| A12.8 | art-dupl baseline re-check after the concurrent chat-network train | 10 |
+| #     | Task                                                                    | min |
+| ----- | ----------------------------------------------------------------------- | --- |
+| A12.1 | Arch test: `h.notFound` is the only HTML-router 404 writer              | 12  |
+| A12.2 | Run it; fix any regression it finds                                     | 8   |
+| A12.3 | Doc: the 24 remaining bare `http.NotFound` sites, re-ruled in one table | 12  |
+| A12.4 | Snapshot counter + bytes as a metric family                             | 12  |
+| A12.5 | `/metrics` shape test in the smoke suite                                | 10  |
+| A12.6 | Pin the histogram bucket set with a test                                | 8   |
+| A12.7 | errorfamily tier re-measure (tier 2 must stay 0)                        | 12  |
+| A12.8 | art-dupl baseline re-check after the concurrent chat-network train      | 10  |
 
 ---
 
@@ -293,44 +293,44 @@ graph TD
 
 The status report's §f listed 50 next steps. Nothing is dropped:
 
-| Status-report item | Lands in |
-|---|---|
-| f1 foreign matrix red | **A1.1 (fixed 18:12)** |
-| f2 `nix fmt` | A1.2 |
-| f3 `buildflow` | A2.1–A2.4 |
-| f4 `nix flake check` | A2.5–A2.7 |
-| f5 `vulnix` | A3.1–A3.2 |
-| f6 smoke | A4.2–A4.5 |
-| f7 ui-capture | A5.1–A5.4 |
-| f8 narrative commit | A1.3, A6.1–A6.3, A7.9, A11.4 |
-| f9 push + CI | A6.4–A6.5, A9.4 |
-| f10–f14 host rebuild + fence + cards + livez + probe triple | A13 (owner) |
-| f15 stack lock bump decision | A9.4 (surfaced for the owner) |
-| f16–f21 C4 VM test | A8.1–A8.8 |
-| f22–f23 trace dir vs backup | A10.1–A10.2 |
-| f24 config knob vs env | A10.3–A10.5 |
-| f25 bucket constant table | A12.6 |
-| f26 align trace with `/metrics` exclusion | A12.4 (same edit site) |
-| f27 runbook for `go tool trace` | A10.6 |
-| f28 Settings "recorder on?" line | A10.6 (optional, only if the knob lands) |
-| f29–f31 plan amendments | A7.5–A7.7 |
-| f32–f33 FEATURES/ROADMAP | A7.1–A7.3 |
-| f34–f35 lessons | A11.1–A11.2 |
-| f36 TODO_LIST harvest | A7.4 |
-| f37 go-appkit reconcile | A11.3 |
-| f38 module option docs | A10.6 |
-| f39 rate limit on the snapshot endpoint | A12.3 (recorded ruling; implemented only if the audit says so) |
-| f40 snapshot metrics | A12.4 |
-| f41 startup log line | A10.6 |
-| f42 disk-aware maxBytes | A12.3 (recorded as rejected-unless-evidence) |
-| f43 alternative profilers | A12.3 (recorded) |
-| f44 bucket pin test | A12.6 |
-| f45 `/metrics` smoke shape | A12.5 |
-| f46 stack E2E 404 expectation | A9.2–A9.3 |
-| f47 arch test "only writer" | A12.1–A12.2 |
-| f48 art-dupl baseline | A12.8 |
-| f49 24-site audit | A12.3 |
-| f50 errorfamily tiers | A12.7 |
+| Status-report item                                          | Lands in                                                       |
+| ----------------------------------------------------------- | -------------------------------------------------------------- |
+| f1 foreign matrix red                                       | **A1.1 (fixed 18:12)**                                         |
+| f2 `nix fmt`                                                | A1.2                                                           |
+| f3 `buildflow`                                              | A2.1–A2.4                                                      |
+| f4 `nix flake check`                                        | A2.5–A2.7                                                      |
+| f5 `vulnix`                                                 | A3.1–A3.2                                                      |
+| f6 smoke                                                    | A4.2–A4.5                                                      |
+| f7 ui-capture                                               | A5.1–A5.4                                                      |
+| f8 narrative commit                                         | A1.3, A6.1–A6.3, A7.9, A11.4                                   |
+| f9 push + CI                                                | A6.4–A6.5, A9.4                                                |
+| f10–f14 host rebuild + fence + cards + livez + probe triple | A13 (owner)                                                    |
+| f15 stack lock bump decision                                | A9.4 (surfaced for the owner)                                  |
+| f16–f21 C4 VM test                                          | A8.1–A8.8                                                      |
+| f22–f23 trace dir vs backup                                 | A10.1–A10.2                                                    |
+| f24 config knob vs env                                      | A10.3–A10.5                                                    |
+| f25 bucket constant table                                   | A12.6                                                          |
+| f26 align trace with `/metrics` exclusion                   | A12.4 (same edit site)                                         |
+| f27 runbook for `go tool trace`                             | A10.6                                                          |
+| f28 Settings "recorder on?" line                            | A10.6 (optional, only if the knob lands)                       |
+| f29–f31 plan amendments                                     | A7.5–A7.7                                                      |
+| f32–f33 FEATURES/ROADMAP                                    | A7.1–A7.3                                                      |
+| f34–f35 lessons                                             | A11.1–A11.2                                                    |
+| f36 TODO_LIST harvest                                       | A7.4                                                           |
+| f37 go-appkit reconcile                                     | A11.3                                                          |
+| f38 module option docs                                      | A10.6                                                          |
+| f39 rate limit on the snapshot endpoint                     | A12.3 (recorded ruling; implemented only if the audit says so) |
+| f40 snapshot metrics                                        | A12.4                                                          |
+| f41 startup log line                                        | A10.6                                                          |
+| f42 disk-aware maxBytes                                     | A12.3 (recorded as rejected-unless-evidence)                   |
+| f43 alternative profilers                                   | A12.3 (recorded)                                               |
+| f44 bucket pin test                                         | A12.6                                                          |
+| f45 `/metrics` smoke shape                                  | A12.5                                                          |
+| f46 stack E2E 404 expectation                               | A9.2–A9.3                                                      |
+| f47 arch test "only writer"                                 | A12.1–A12.2                                                    |
+| f48 art-dupl baseline                                       | A12.8                                                          |
+| f49 24-site audit                                           | A12.3                                                          |
+| f50 errorfamily tiers                                       | A12.7                                                          |
 
 ---
 

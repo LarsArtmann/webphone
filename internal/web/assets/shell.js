@@ -71,14 +71,11 @@
         return;
       }
       if (!stored || stored === "messages") return;
-      var link = document.querySelector(
-        '#wp-nav .wp-nav-link[data-tab="' + stored + '"]',
-      );
+      var link = document.querySelector('#wp-nav .wp-nav-link[data-tab="' + stored + '"]');
       var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
       if (!link || (active && active === link)) return;
       var content = document.getElementById("tab-content");
-      if (!content || !window.htmx || content.querySelector(".wp-welcome"))
-        return;
+      if (!content || !window.htmx || content.querySelector(".wp-welcome")) return;
       window.htmx.ajax("GET", "/partials/" + stored, {
         target: "#tab-content",
         swap: "innerHTML",
@@ -137,11 +134,7 @@
       };
       toast.addEventListener("click", dismiss);
       toast.addEventListener("keydown", function (event) {
-        if (
-          event.key === "Enter" ||
-          event.key === " " ||
-          event.key === "Escape"
-        ) {
+        if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
           event.preventDefault();
           dismiss();
         }
@@ -160,10 +153,7 @@
       if (phoneView && phoneView.hidden) {
         var ext = document.getElementById("ext");
         if (ext) ext.focus();
-        shellToast(
-          "Phone is signed out — sign in on the phone panel to call.",
-          "warn",
-        );
+        shellToast("Phone is signed out — sign in on the phone panel to call.", "warn");
         return;
       }
       dest.value = button.getAttribute("data-dial");
@@ -184,9 +174,7 @@
         if (nav) nav.click();
         var prefill = function () {
           document.removeEventListener("htmx:afterSwap", prefill);
-          var to = document.querySelector(
-            "form.wp-compose-new input[name='to']",
-          );
+          var to = document.querySelector("form.wp-compose-new input[name='to']");
           if (to) {
             to.value = number;
             to.focus();
@@ -219,10 +207,8 @@
       var btn = event.target.closest("[data-delete-transcript]");
       if (!btn) return;
       var callId = btn.getAttribute("data-delete-transcript");
-      var confirmText =
-        btn.getAttribute("data-confirm") || "Delete this transcript?";
-      if (typeof window.confirm === "function" && !window.confirm(confirmText))
-        return;
+      var confirmText = btn.getAttribute("data-confirm") || "Delete this transcript?";
+      if (typeof window.confirm === "function" && !window.confirm(confirmText)) return;
       fetch("/api/transcripts?call=" + encodeURIComponent(callId), {
         method: "DELETE",
         credentials: "same-origin",
@@ -241,10 +227,7 @@
           shellToast("Transcript deleted.", "ok");
         })
         .catch(function () {
-          shellToast(
-            "Could not delete the transcript — nothing was removed.",
-            "warn",
-          );
+          shellToast("Could not delete the transcript — nothing was removed.", "warn");
         });
     });
 
@@ -266,11 +249,8 @@
         var node = row && row.querySelector(".wp-transcript-text");
         text = node ? (node.textContent || "").trim() : "";
       } else {
-        var target = document.getElementById(
-          btn.getAttribute("data-copy-target") || "",
-        );
-        text =
-          target && !target.hidden ? (target.textContent || "").trim() : "";
+        var target = document.getElementById(btn.getAttribute("data-copy-target") || "");
+        text = target && !target.hidden ? (target.textContent || "").trim() : "";
       }
       if (!text) {
         shellToast("Nothing to copy yet.", "warn");
@@ -380,9 +360,7 @@
     });
     document.addEventListener("click", function (event) {
       var link =
-        event.target && event.target.closest
-          ? event.target.closest("[data-tab='history']")
-          : null;
+        event.target && event.target.closest ? event.target.closest("[data-tab='history']") : null;
       if (!link) return;
       missedCount = 0;
       renderMissedBadge();
@@ -397,9 +375,7 @@
     //     closes the disclosure.
     document.addEventListener("click", function (event) {
       var snippet =
-        event.target && event.target.closest
-          ? event.target.closest("[data-snippet]")
-          : null;
+        event.target && event.target.closest ? event.target.closest("[data-snippet]") : null;
       if (!snippet) return;
       var form = snippet.closest("form.wp-compose");
       var body = form ? form.querySelector("textarea.wp-compose-body") : null;
@@ -420,9 +396,7 @@
     var lightboxImg = null;
     document.addEventListener("click", function (event) {
       var link =
-        event.target && event.target.closest
-          ? event.target.closest("a[data-lightbox]")
-          : null;
+        event.target && event.target.closest ? event.target.closest("a[data-lightbox]") : null;
       if (!link) return;
       event.preventDefault();
       if (!lightbox) {
@@ -510,8 +484,7 @@
         // accompanies.
         try {
           if (!target.id) return;
-          if (document.querySelector('[data-copy-target="' + target.id + '"]'))
-            return;
+          if (document.querySelector('[data-copy-target="' + target.id + '"]')) return;
           var chip = document.createElement("button");
           chip.type = "button";
           chip.className = "wp-mini";
@@ -544,9 +517,7 @@
         });
     };
     document.addEventListener("click", function (event) {
-      var btn = event.target.closest
-        ? event.target.closest("[data-transcribe-src]")
-        : null;
+      var btn = event.target.closest ? event.target.closest("[data-transcribe-src]") : null;
       if (!btn) return;
       runTranscribe(btn);
     });
@@ -614,9 +585,7 @@
     var refreshNav = function () {
       if (!window.htmx) return;
       var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
-      var source = active
-        ? "/partials/nav?active=" + active.dataset.tab
-        : "/partials/nav";
+      var source = active ? "/partials/nav?active=" + active.dataset.tab : "/partials/nav";
       window.htmx.ajax("GET", source, {
         target: "#wp-nav",
         swap: "morph:innerHTML",
@@ -712,9 +681,7 @@
     });
     document.addEventListener("click", function (event) {
       var chip =
-        event.target && event.target.closest
-          ? event.target.closest(".wp-jump-latest")
-          : null;
+        event.target && event.target.closest ? event.target.closest(".wp-jump-latest") : null;
       if (!chip) return;
       var transcript = document.getElementById("thread-transcript");
       if (transcript) transcript.scrollTop = transcript.scrollHeight;
@@ -735,12 +702,7 @@
     //     next keystroke's debounced fetch re-renders the list anyway.
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
       var list = event.target;
-      if (
-        !list ||
-        !list.classList ||
-        !list.classList.contains("wp-thread-list")
-      )
-        return;
+      if (!list || !list.classList || !list.classList.contains("wp-thread-list")) return;
       var input = document.getElementById("wp-thread-search-input");
       if (input && input.value.trim() !== "") event.preventDefault();
     });
@@ -781,18 +743,14 @@
       if (!xhr) return;
       if (xhr.getResponseHeader("HX-Trigger")) return;
       if (xhr.status === 401) {
-        showThrottledError(
-          "Tab session ended; calls keep working. Reload to sign back in.",
-        );
+        showThrottledError("Tab session ended; calls keep working. Reload to sign back in.");
         return;
       }
       if (xhr.status === 429) {
         // Rate limiting is client-correctable, so the toast says what to
         // DO. The server's limiter is generic middleware with no toast
         // header, so client text owns this feedback (plan T03 decision).
-        showThrottledError(
-          "Too many requests — wait a moment, then try again.",
-        );
+        showThrottledError("Too many requests — wait a moment, then try again.");
         return;
       }
       showThrottledError("The request failed (HTTP " + xhr.status + ").");
@@ -814,9 +772,7 @@
     };
     var currentDraftId = function () {
       var transcript = document.getElementById("thread-transcript");
-      return transcript && transcript.dataset.thread
-        ? transcript.dataset.thread
-        : "new";
+      return transcript && transcript.dataset.thread ? transcript.dataset.thread : "new";
     };
     var saveDraft = function (draftId, text) {
       try {
@@ -879,8 +835,7 @@
       var fileInput = form.querySelector('input[type="file"]');
       var names = [];
       if (fileInput && fileInput.files) {
-        for (var i = 0; i < fileInput.files.length; i++)
-          names.push(fileInput.files[i].name);
+        for (var i = 0; i < fileInput.files.length; i++) names.push(fileInput.files[i].name);
       }
       if (!body.trim() && names.length === 0) return;
       var bubble = document.createElement("div");
@@ -944,9 +899,7 @@
       retry.textContent = "Retry";
       retry.addEventListener("click", function () {
         record.bubble.remove();
-        var current = document.querySelector(
-          "form.wp-compose:not(.wp-compose-new)",
-        );
+        var current = document.querySelector("form.wp-compose:not(.wp-compose-new)");
         if (current) current.requestSubmit();
       });
       var dismiss = document.createElement("button");
@@ -996,14 +949,11 @@
     var tickRelative = function () {
       var nodes = document.querySelectorAll("[data-when]");
       for (var i = 0; i < nodes.length; i++) {
-        var seconds =
-          Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
+        var seconds = Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
         if (!(seconds >= 0)) continue;
         if (seconds < 60) nodes[i].textContent = "now";
-        else if (seconds < 3600)
-          nodes[i].textContent = Math.floor(seconds / 60) + "m";
-        else if (seconds < 86400)
-          nodes[i].textContent = Math.floor(seconds / 3600) + "h";
+        else if (seconds < 3600) nodes[i].textContent = Math.floor(seconds / 60) + "m";
+        else if (seconds < 86400) nodes[i].textContent = Math.floor(seconds / 3600) + "h";
       }
     };
     setInterval(tickRelative, 30000);
@@ -1159,9 +1109,7 @@
       var btn = document.getElementById("vm-play-" + uuid);
       if (btn) {
         btn.innerHTML = playing ? WP_PAUSE_SVG : WP_PLAY_SVG;
-        var label = btn.getAttribute(
-          playing ? "data-label-pause" : "data-label-play",
-        );
+        var label = btn.getAttribute(playing ? "data-label-pause" : "data-label-play");
         if (label) btn.setAttribute("aria-label", label);
       }
       if (playing) vmClearUnread(row);
@@ -1215,10 +1163,7 @@
       });
       if (!vmFallbackToasted) {
         vmFallbackToasted = true;
-        shellToast(
-          "voicemail waveform unavailable — using built-in player controls",
-          "warn",
-        );
+        shellToast("voicemail waveform unavailable — using built-in player controls", "warn");
       }
     };
 
@@ -1240,8 +1185,7 @@
       }
       return fetch(src)
         .then(function (response) {
-          if (!response.ok)
-            throw new Error("audio fetch HTTP " + response.status);
+          if (!response.ok) throw new Error("audio fetch HTTP " + response.status);
           return response.arrayBuffer();
         })
         .then(function (buffer) {
@@ -1267,11 +1211,7 @@
         return;
       }
       // single active player: starting one pauses the previous row
-      if (
-        vmActiveAudio &&
-        vmActiveAudio !== audio &&
-        typeof vmActiveAudio.pause === "function"
-      ) {
+      if (vmActiveAudio && vmActiveAudio !== audio && typeof vmActiveAudio.pause === "function") {
         vmActiveAudio.pause();
       }
       vmActiveAudio = audio;
@@ -1295,8 +1235,7 @@
       if (!audio) return;
       var current = Number(audio.playbackRate) || 1;
       var idx = VM_SPEED_LADDER.indexOf(current);
-      var next =
-        idx >= 0 ? VM_SPEED_LADDER[(idx + 1) % VM_SPEED_LADDER.length] : 1;
+      var next = idx >= 0 ? VM_SPEED_LADDER[(idx + 1) % VM_SPEED_LADDER.length] : 1;
       audio.playbackRate = next;
       btn.textContent = next + "×";
     };
@@ -1500,12 +1439,10 @@
 
     var selectOverlay = function (delta) {
       if (overlayItems.length === 0) return;
-      overlayIndex =
-        (overlayIndex + delta + overlayItems.length) % overlayItems.length;
+      overlayIndex = (overlayIndex + delta + overlayItems.length) % overlayItems.length;
       var rows = overlayList.children;
       for (var i = 0; i < rows.length; i++) {
-        rows[i].className =
-          "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
+        rows[i].className = "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
       }
     };
 
@@ -1559,24 +1496,19 @@
       overlayReturnFocus = document.activeElement;
       overlay.hidden = false;
       overlayInput.value = "";
-      overlayInput.placeholder =
-        mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";
+      overlayInput.placeholder = mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";
       renderOverlay();
       overlayInput.focus();
     };
 
     var closeOverlay = function () {
       if (overlay) overlay.hidden = true;
-      if (overlayReturnFocus && overlayReturnFocus.focus)
-        overlayReturnFocus.focus();
+      if (overlayReturnFocus && overlayReturnFocus.focus) overlayReturnFocus.focus();
       overlayReturnFocus = null;
     };
 
     document.addEventListener("keydown", function (event) {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        (event.key === "k" || event.key === "K")
-      ) {
+      if ((event.ctrlKey || event.metaKey) && (event.key === "k" || event.key === "K")) {
         event.preventDefault();
         if (overlay && !overlay.hidden) closeOverlay();
         else openOverlay("commands");
@@ -1675,8 +1607,7 @@
 
     document.addEventListener("keydown", function (event) {
       var area = event.target;
-      if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
-        return;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
       if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
       var form = area.closest("form");
       if (!form || !form.requestSubmit) return; // degrade: Enter inserts a newline
@@ -1686,8 +1617,7 @@
 
     document.addEventListener("input", function (event) {
       var area = event.target;
-      if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
-        return;
+      if (!area || !area.closest || !area.closest("textarea.wp-compose-body")) return;
       var form = area.closest("form");
       if (form) updateSegcount(form, area.value);
     });
@@ -1724,10 +1654,7 @@
     });
 
     document.addEventListener("click", function (event) {
-      var remove =
-        event.target && event.target.closest
-          ? event.target.closest(".wp-chip-x")
-          : null;
+      var remove = event.target && event.target.closest ? event.target.closest(".wp-chip-x") : null;
       if (!remove) return;
       var form = remove.closest("form");
       var input = form && form.querySelector('input[type="file"]');
@@ -1749,8 +1676,7 @@
       entry.dataset.level = "error";
       logList.prepend(entry);
     }
-    if (window.console && console.error)
-      console.error("webphone: shell load failed", err);
+    if (window.console && console.error) console.error("webphone: shell load failed", err);
   }
 
   // Test seam only: on the wire this file is a classic script where

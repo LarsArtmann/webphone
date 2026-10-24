@@ -14,9 +14,7 @@ import { log } from "./ui.js";
 function typingTarget(event) {
   const target = event.target;
   if (!(target instanceof Element)) return true;
-  return Boolean(
-    target.closest("input, textarea, select, [contenteditable='true']"),
-  );
+  return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
 }
 
 export function initShortcuts() {
@@ -56,7 +54,5 @@ export function initShortcuts() {
     }
     event.preventDefault();
   });
-  log(
-    "keyboard shortcuts: A answer · H hangup · M mute · P hold · Esc reject/hangup",
-  );
+  log("keyboard shortcuts: A answer · H hangup · M mute · P hold · Esc reject/hangup");
 }

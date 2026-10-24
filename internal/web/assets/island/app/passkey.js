@@ -142,10 +142,7 @@ async function registerIsland(data) {
       await signOutQuiet();
       els.whoami.textContent = "";
       showLoginError(t("resumeRejected")(err.message));
-      log(
-        `passkey credentials rejected; server session dropped (${err.message})`,
-        "error",
-      );
+      log(`passkey credentials rejected; server session dropped (${err.message})`, "error");
       return;
     }
     networkOnline();
