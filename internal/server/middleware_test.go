@@ -242,18 +242,25 @@ func TestOpenAPIEndpoint(t *testing.T) {
 // TestOpenAPIContactsMatchesHandlers pins the contacts spec against the
 // handlers it describes: every documented response code is one the
 // handler actually emits, and the 429 the limiter adds (T12) is
-// documented with its Retry-After header — the spec must not promise
-// (or hide) behavior the route does not have.
+// documented with its Retry-After contract — the spec must not promise
+// (or hide) behavior the route does not have. Source is the GENERATED
+// contract (internal/server/apidocs.go): the schema bodies are derived
+// from the handler DTOs, so this pin guards the status inventory and
+// the Retry-After clause.
 func TestOpenAPIContactsMatchesHandlers(t *testing.T) {
 	var doc struct {
 		Paths map[string]map[string]struct {
 			Responses map[string]struct {
-				Headers map[string]any `json:"headers"`
+				Description string `json:"description"`
 			} `json:"responses"`
 		} `json:"paths"`
 	}
-	if err := json.Unmarshal([]byte(openapiSpec), &doc); err != nil {
-		t.Fatalf("openapiSpec is not JSON: %v", err)
+	body, err := openAPIContract()
+	if err != nil {
+		t.Fatalf("openapi contract render: %v", err)
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatalf("generated openapi doc is not JSON: %v", err)
 	}
 	contacts := doc.Paths["/api/contacts"]
 	if contacts == nil {
@@ -261,12 +268,12 @@ func TestOpenAPIContactsMatchesHandlers(t *testing.T) {
 	}
 
 	post := contacts["post"]
-	for _, code := range []string{"204", "400", "401", "422", "429", "500"} {
+	for _, code := range []string{"204", "400", "401", "403", "422", "429", "500"} {
 		if _, ok := post.Responses[code]; !ok {
 			t.Errorf("POST /api/contacts spec missing documented response %s", code)
 		}
 	}
-	if _, ok := post.Responses["429"].Headers["Retry-After"]; !ok {
+	if !strings.Contains(post.Responses["429"].Description, "Retry-After") {
 		t.Error("POST /api/contacts 429 must document the Retry-After header (limiter contract)")
 	}
 
@@ -288,18 +295,23 @@ func TestOpenAPIContactsMatchesHandlers(t *testing.T) {
 // TestOpenAPICallLogMatchesHandler pins the /api/calls spec against the
 // handler it describes: every documented response is one apiLogCall (or
 // its limiter) actually emits, and the shared contacts budget's 429
-// carries the Retry-After header — the spec must not promise (or hide)
-// behavior the route does not have.
+// carries the Retry-After contract — the spec must not promise (or hide)
+// behavior the route does not have. Source is the GENERATED contract
+// (internal/server/apidocs.go).
 func TestOpenAPICallLogMatchesHandler(t *testing.T) {
 	var doc struct {
 		Paths map[string]map[string]struct {
 			Responses map[string]struct {
-				Headers map[string]any `json:"headers"`
+				Description string `json:"description"`
 			} `json:"responses"`
 		} `json:"paths"`
 	}
-	if err := json.Unmarshal([]byte(openapiSpec), &doc); err != nil {
-		t.Fatalf("openapiSpec is not JSON: %v", err)
+	body, err := openAPIContract()
+	if err != nil {
+		t.Fatalf("openapi contract render: %v", err)
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatalf("generated openapi doc is not JSON: %v", err)
 	}
 	post, ok := doc.Paths["/api/calls"]["post"]
 	if !ok {
@@ -310,7 +322,7 @@ func TestOpenAPICallLogMatchesHandler(t *testing.T) {
 			t.Errorf("POST /api/calls spec missing documented response %s", code)
 		}
 	}
-	if _, ok := post.Responses["429"].Headers["Retry-After"]; !ok {
+	if !strings.Contains(post.Responses["429"].Description, "Retry-After") {
 		t.Error("POST /api/calls 429 must document the Retry-After header (limiter contract)")
 	}
 }
