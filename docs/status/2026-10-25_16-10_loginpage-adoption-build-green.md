@@ -129,3 +129,20 @@ wave, and MY narrative `auth:` commit + push (paste #8, still owed).
 3. **Push timing**: push immediately after my narrative commit lands
    (paste #8 asked for it), or hold for your explicit GO given the daemon
    may race its own push?
+
+## h) RESOLUTION (2026-10-25 close-out session — questions were votes, defaults taken)
+
+1. tw.css refresh: COMMITTED (additive, honest to its input).
+2. Granularity: ONE narrative `auth:` commit carrying the close-out delta;
+   the daemon had already interleaved most code+docs as chore: commits
+   (content verified intact each sweep).
+3. Push: executed per paste #8, after `git ls-remote` confirmed no daemon
+   push race.
+
+Close-out extras this session: island closure test exposed and fixed the
+orphaned `webauthn.js` (moved to `assets/enroll/`); the smoke boot caught
+`/assets/login.css` un-embedded/un-served (fixed + test-pinned);
+`contracts-fresh` pre-existing red healed (asyncapi regen, content-inert).
+All gates re-verified: island 227/227, full go suite, session suite,
+buildflow (re-run post-fix), flake check. Verdicts in the plan doc's
+completion block.

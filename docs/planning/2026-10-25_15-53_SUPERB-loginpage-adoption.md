@@ -5,6 +5,24 @@ Mission (owner directive): the cqrs-htmx `loginpage` library (v4.13.0, pinned ta
 
 Errata vs the 15-49 status report: none — plan written from live repo state (git status re-verified 15:53; the go.mod/go.sum daemon commits `fee3e57`+`b1cdd0d` are STILL unpushed, origin/main=`c7ca563` green).
 
+## Completion verdict (2026-10-25, close-out session)
+
+ALL milestones M1–M13 executed. Deviations worth recording (all verified green):
+
+- **M7 extra fix**: the island closure test caught `webauthn.js` orphaned in
+  `island/app/` after `passkey.js` died — moved to `assets/enroll/` (its only
+  consumer), restoring the "island/app = main.js import closure" invariant.
+- **M8 found a real bug**: `/login` linked `/assets/login.css` but the file
+  was neither embedded (`go:embed`) nor served (mux route) — the smoke boot
+  caught the link-present-but-404 class; fixed + pinned by a new test
+  assertion that FETCHES the stylesheet.
+- **M9 side-fix**: buildflow's `nix-build` exposed a PRE-EXISTING red —
+  `contracts-fresh` (the metaengine v4.20.0 catalog-render regen never
+  landed). Regenerated; diff verified content-inert (pure indent re-style).
+- **Daemon note**: the narrative `auth:` commit carries the close-out docs;
+  most code+docs landed via interleaved `chore:` daemon commits (content
+  verified intact at each sweep).
+
 ## Pareto breakdown
 
 ### The 1% that delivers 51% — WITHOUT THESE THE TRAIN IS BROKEN
@@ -50,38 +68,38 @@ Errata vs the 15-49 status report: none — plan written from live repo state (g
 
 | # | Task | Parent | Est | Done |
 |---|------|--------|-----|------|
-| F1 | Read bg job 028 output, extract `got:` hash | M1 | 2m | ☐ |
-| F2 | Apply hash to `nix/packages.nix:127`, re-run goModules build → success | M1 | 6m | ☐ |
-| F3 | `go list -m -f {{.Dir}}` templ-components + loginpage; verify feedback alert/spinner sources exist | M2 | 5m | ☐ |
-| F4 | Patch `build-tw-css.sh`: resolve module dirs, stage from module cache (keep staged vendor/-shaped layout so tw.css.input stays byte-stable) | M2 | 12m | ☐ |
-| F5 | Rebuild `tw.css` with fixed script → byte-compare vs committed (expect no drift) | M2 | 10m | ☐ |
-| F6 | Write `internal/web/assets/login.css.input` (@import tailwindcss + ./app.css + extended dark variant incl. `.dark` + same @theme remap + @source set + loginpage + feedback) | M2 | 12m | ☐ |
-| F7 | Extend script: build login.css (stage app.css + loginpage + feedback), @theme parity gate between inputs, artifact gates (`.min-h-dvh`, `var(--accent)`, `--accent:` token, `.hidden`) | M2 | 12m | ☐ |
-| F8 | Build login.css, `nix fmt` artifact, commit-ready | M2 | 6m | ☐ |
-| F9 | View + edit island `i18n.js`: drop passkeyEmail/Unknown/Throttled/BeginFailed/FinishFailed/NetFailed ×en/de | M3 | 8m | ☐ |
-| F10 | `templ generate ./internal/web/views/` | M3 | 4m | ☐ |
-| F11 | Fix `passkey_api_test.go`: `passkeyBegin` const → `/api/auth/webauthn/login/begin`, finish literals, off-404 list | M3 | 8m | ☐ |
-| F12 | Rewrite `TestLoginCardAdaptsToPasskeyMode` for the link card | M3 | 10m | ☐ |
-| F13 | Write `login_page_test.go`: nonce CSP + every inline script carries it + no unsafe-inline | M4 | 12m | ☐ |
-| F14 | …303-on-live-session + styled-404-when-off + CSRF meta + lp-* ids + no-store | M4 | 10m | ☐ |
-| F15 | Rewrite `docs/dom-contract.md` conditional section (passkey-login link; /login lp-* block) | M5 | 10m | ☐ |
-| F16 | app.css `.wp-passkey-link` rule (display/width/padding to match `.wp-sso`) + comment | M6 | 8m | ☐ |
-| F17 | Island tests: `nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs` | M7 | 8m | ☐ |
-| F18 | `go test -count=1 ./...` | M7 | 12m | ☐ |
-| F19 | Session suite `go test ./internal/server/ -run TestServer` | M7 | 10m | ☐ |
-| F20 | `nix fmt` scoped (island, css, Go, generated) | M7 | 6m | ☐ |
-| F21 | Smoke OFF: boot default binary, curl `/login` → styled 404, `/` parity | M8 | 8m | ☐ |
-| F22 | Smoke ON: minimal JSON passkey config, boot, curl `/login` → 200 styled + nonce CSP + lp-* | M8 | 12m | ☐ |
-| F23 | buildflow full run (nix develop) | M9 | 12m+ | ☐ |
-| F24 | `nix flake check` | M10 | 12m+ | ☐ |
-| F25 | CHANGELOG `[Unreleased]`: loginpage adoption entry | M11 | 6m | ☐ |
-| F26 | README § Passkey sign-in: /login flow + new paths + theme caveat | M11 | 12m | ☐ |
-| F27 | AGENTS.md: passkey bullet update (loginpage adoption, paths, nonce lane, login.css, v4.13.0 pin) | M11 | 10m | ☐ |
-| F28 | FEATURES.md + TODO_LIST row + release-runbook stack-E2E obligation note | M11 | 10m | ☐ |
-| F29 | `git status` review; whitespace-drift check; stage+commit in ONE call (`auth:` prefix, detailed body) | M12 | 12m | ☐ |
-| F30 | Push (`git push`), then `gh run list`/watch to green | M12 | 10m | ☐ |
-| F31 | Verify `git ls-remote` end state + record CI verdict | M12 | 4m | ☐ |
-| F32 | Plan checkbox sweep + TODO_LIST harvest + status report annotated | M13 | 10m | ☐ |
+| F1 | Read bg job 028 output, extract `got:` hash | M1 | 2m | ☑ |
+| F2 | Apply hash to `nix/packages.nix:127`, re-run goModules build → success | M1 | 6m | ☑ |
+| F3 | `go list -m -f {{.Dir}}` templ-components + loginpage; verify feedback alert/spinner sources exist | M2 | 5m | ☑ |
+| F4 | Patch `build-tw-css.sh`: resolve module dirs, stage from module cache (keep staged vendor/-shaped layout so tw.css.input stays byte-stable) | M2 | 12m | ☑ |
+| F5 | Rebuild `tw.css` with fixed script → byte-compare vs committed (expect no drift) | M2 | 10m | ☑ |
+| F6 | Write `internal/web/assets/login.css.input` (@import tailwindcss + ./app.css + extended dark variant incl. `.dark` + same @theme remap + @source set + loginpage + feedback) | M2 | 12m | ☑ |
+| F7 | Extend script: build login.css (stage app.css + loginpage + feedback), @theme parity gate between inputs, artifact gates (`.min-h-dvh`, `var(--accent)`, `--accent:` token, `.hidden`) | M2 | 12m | ☑ |
+| F8 | Build login.css, `nix fmt` artifact, commit-ready | M2 | 6m | ☑ |
+| F9 | View + edit island `i18n.js`: drop passkeyEmail/Unknown/Throttled/BeginFailed/FinishFailed/NetFailed ×en/de | M3 | 8m | ☑ |
+| F10 | `templ generate ./internal/web/views/` | M3 | 4m | ☑ |
+| F11 | Fix `passkey_api_test.go`: `passkeyBegin` const → `/api/auth/webauthn/login/begin`, finish literals, off-404 list | M3 | 8m | ☑ |
+| F12 | Rewrite `TestLoginCardAdaptsToPasskeyMode` for the link card | M3 | 10m | ☑ |
+| F13 | Write `login_page_test.go`: nonce CSP + every inline script carries it + no unsafe-inline | M4 | 12m | ☑ |
+| F14 | …303-on-live-session + styled-404-when-off + CSRF meta + lp-* ids + no-store | M4 | 10m | ☑ |
+| F15 | Rewrite `docs/dom-contract.md` conditional section (passkey-login link; /login lp-* block) | M5 | 10m | ☑ |
+| F16 | app.css `.wp-passkey-link` rule (display/width/padding to match `.wp-sso`) + comment | M6 | 8m | ☑ |
+| F17 | Island tests: `nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs` | M7 | 8m | ☑ |
+| F18 | `go test -count=1 ./...` | M7 | 12m | ☑ |
+| F19 | Session suite `go test ./internal/server/ -run TestServer` | M7 | 10m | ☑ |
+| F20 | `nix fmt` scoped (island, css, Go, generated) | M7 | 6m | ☑ |
+| F21 | Smoke OFF: boot default binary, curl `/login` → styled 404, `/` parity | M8 | 8m | ☑ |
+| F22 | Smoke ON: minimal JSON passkey config, boot, curl `/login` → 200 styled + nonce CSP + lp-* | M8 | 12m | ☑ |
+| F23 | buildflow full run (nix develop) | M9 | 12m+ | ☑ |
+| F24 | `nix flake check` | M10 | 12m+ | ☑ |
+| F25 | CHANGELOG `[Unreleased]`: loginpage adoption entry | M11 | 6m | ☑ |
+| F26 | README § Passkey sign-in: /login flow + new paths + theme caveat | M11 | 12m | ☑ |
+| F27 | AGENTS.md: passkey bullet update (loginpage adoption, paths, nonce lane, login.css, v4.13.0 pin) | M11 | 10m | ☑ |
+| F28 | FEATURES.md + TODO_LIST row + release-runbook stack-E2E obligation note | M11 | 10m | ☑ |
+| F29 | `git status` review; whitespace-drift check; stage+commit in ONE call (`auth:` prefix, detailed body) | M12 | 12m | ☑ |
+| F30 | Push (`git push`), then `gh run list`/watch to green | M12 | 10m | ☑ |
+| F31 | Verify `git ls-remote` end state + record CI verdict | M12 | 4m | ☑ |
+| F32 | Plan checkbox sweep + TODO_LIST harvest + status report annotated | M13 | 10m | ☑ |
 
 ## Execution graph
 
