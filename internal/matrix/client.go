@@ -40,6 +40,7 @@ const downloadCap = 25 << 20
 // as a secret). It carries the DM room map synced from m.direct
 // account data — the sender resolves peers through it, the receiver
 // refreshes it on every sync, so one shared instance serves both.
+// brandid-lint:ignore(BD003) the bot MXID is foreign matrix identity vocabulary, passed through verbatim (strong-id ruling)
 type Client struct {
 	homeserver string
 	userID     string
@@ -59,6 +60,7 @@ var _ gateway.MessageGateway = (*Client)(nil)
 
 // New builds the client. Config validation has already failed closed on
 // half configurations; the constructor stays mechanical.
+// brandid-lint:ignore(BD003) the bot MXID arrives pre-validated from config; foreign matrix vocabulary (strong-id ruling)
 func New(homeserver, userID, token string) *Client {
 	return &Client{
 		homeserver: strings.TrimRight(homeserver, "/"),

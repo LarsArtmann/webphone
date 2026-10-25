@@ -33,6 +33,7 @@ import (
 var _ gateway.MessageGateway = (*Client)(nil)
 
 // Client speaks JSON-RPC 2.0 to one signal-cli socket.
+// brandid-lint:ignore(BD003) nextID is the JSON-RPC request counter: a sequence number, not an identity (strong-id ruling)
 type Client struct {
 	socketPath string
 	account    string
@@ -292,6 +293,7 @@ func (c *Client) dispatch(params jsontext.Value) {
 	handler(env)
 }
 
+// brandid-lint:ignore(BD003) JSON-RPC correlation: the id keys the in-flight pending map, echoed verbatim (strong-id ruling)
 func (c *Client) resolve(id string, result jsontext.Value, rpcErr *struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`

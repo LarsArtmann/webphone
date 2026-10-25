@@ -52,6 +52,7 @@ const providerTTL = 15 * time.Minute
 // shape plus the mapping the composition root translated from config.
 type Config struct {
 	Issuer                 string
+	// brandid-lint:ignore(BD003) resolved OIDC config: the IdP-registered client id is foreign-issuer vocabulary (strong-id ruling)
 	ClientID               string
 	ClientSecretFile       string
 	RedirectURL            string

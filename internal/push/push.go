@@ -57,6 +57,7 @@ const (
 // Ring is the one fact this seam ships: which event, the caller, and
 // the PBX call id (the dedup/ordering key the shell correlates a
 // ring_end against its ring by).
+// brandid-lint:ignore(BD003) shell wire contract: the PBX call id is an opaque foreign token (strong-id wire ruling)
 type Ring struct {
 	Event  Event  `json:"event"`
 	From   string `json:"from"`

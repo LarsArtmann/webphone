@@ -51,6 +51,7 @@ const (
 
 // serviceAccount is the subset of Google's service-account JSON the
 // sender needs.
+// brandid-lint:ignore(BD003) Google wire shape: project ids are foreign cloud vocabulary, decoded verbatim (strong-id wire ruling)
 type serviceAccount struct {
 	ProjectID   string `json:"project_id"`
 	ClientEmail string `json:"client_email"`

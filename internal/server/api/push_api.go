@@ -30,10 +30,7 @@ const (
 
 // apiPushDevice is the LIST projection: identity and recency only —
 // never the token.
-//
-// brandid-lint:ignore(BD003) wire DTO: the device id is a foreign
-// client-generated install identity (a UUID), not a domain entity
-// (strong-id wire ruling).
+// brandid-lint:ignore(BD003) wire DTO: the device id is a foreign client-generated install identity (a UUID), not a domain entity (strong-id wire ruling)
 type apiPushDevice struct {
 	// DeviceID is the shell-minted per-install id.
 	DeviceID string `description:"The shell-minted per-install id." json:"device_id"`
@@ -52,6 +49,7 @@ type PushDeviceListResponse struct {
 
 // PushDeviceRegisterRequest is the POST /api/push-devices wire shape:
 // one register call per install at login.
+// brandid-lint:ignore(BD003) wire DTO: foreign client-generated install identity, shape-checked at the door (strong-id wire ruling)
 type PushDeviceRegisterRequest struct {
 	DeviceID  string `description:"The shell-minted per-install id (8-64 chars of letters, digits, hyphens, underscores)." json:"device_id"`
 	Transport string `description:"The wake wire to register: ntfy or fcm (must be configured on the server)." json:"transport"`
@@ -165,6 +163,7 @@ func (h *Handlers) DeletePushDevice(w http.ResponseWriter, r *http.Request) {
 
 // validDeviceID checks the install-id shape (UUID-shaped client ids;
 // the charset keeps engine keys and query strings sane).
+// brandid-lint:ignore(BD003) validator door: the param is the raw wire value under test, not a domain id (strong-id wire ruling)
 func validDeviceID(id string) bool {
 	if len(id) < deviceIDMinLen || len(id) > deviceIDMaxLen {
 		return false

@@ -19,6 +19,7 @@ import (
 // lane from the stack's FS dialplan). Named (not inline) so the
 // wire-contract catalog derives its schema from this type
 // (internal/server/wirecontracts.go).
+// brandid-lint:ignore(BD003) wire contract: the PBX call id is an opaque foreign token, correlated verbatim by the shell (strong-id wire ruling)
 type RingRequest struct {
 	Owner  string `json:"owner"`
 	From   string `json:"from"`

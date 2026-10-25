@@ -36,6 +36,7 @@ type roomSync struct {
 	} `json:"timeline"`
 }
 
+// brandid-lint:ignore(BD003) homeserver wire shape: matrix event ids are foreign tokens (strong-id wire ruling)
 type roomEvent struct {
 	Type           string `json:"type"`
 	Sender         string `json:"sender"`

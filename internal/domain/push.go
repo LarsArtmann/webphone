@@ -7,6 +7,7 @@ import "time"
 // id. The device id is stable across token rotations (an FCM
 // registration token churns; the identity must not), so re-registering
 // the same install replaces its address instead of growing a row.
+// brandid-lint:ignore(BD003) the device id is the shell's client-generated install identity (a UUID), not a domain entity (strong-id wire ruling)
 type PushDeviceKey struct {
 	Owner    string
 	DeviceID string
@@ -16,10 +17,6 @@ type PushDeviceKey struct {
 // one device row: which transport wakes it ("ntfy" or "fcm") and the
 // device's address on that transport (the ntfy topic or the FCM
 // registration token).
-//
-// brandid-lint:ignore(BD003) read-model fact: wire shape; the transport
-// is a foreign protocol vocabulary and the token a foreign credential,
-// neither owns a domain brand (strong-id wire ruling).
 type PushDeviceRegistered struct {
 	Key       PushDeviceKey
 	Transport string

@@ -84,6 +84,7 @@ func newPushDevices(models *metaengine.Store) *PushDevices {
 // Upsert registers (or re-registers) one device for the owner. A known
 // device id replaces its transport/token row (rotation); a NEW device
 // id past the per-owner cap is refused with the ErrListFull contract.
+// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys engine rows (strong-id wire ruling)
 func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -122,6 +123,7 @@ func (s *PushDevices) List(ctx context.Context, owner domain.Extension) ([]PushD
 
 // Remove drops one device scoped to its owner; removing an unknown id
 // is inert (the deregistration outcome is the same).
+// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys engine rows (strong-id wire ruling)
 func (s *PushDevices) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

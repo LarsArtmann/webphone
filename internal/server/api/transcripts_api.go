@@ -24,6 +24,7 @@ const transcriptTextMax = 4000
 // live-call transcript segment. Named (not inline) so the machine-API
 // contract derives its schema from this type
 // (internal/server/apidocs.go).
+// brandid-lint:ignore(BD003) wire DTO: CallID is the opaque island SIP Call-ID, verbatim passthrough (strong-id wire ruling)
 type TranscriptSaveRequest struct {
 	CallID    string `description:"The island's SIP Call-ID for the call the segment belongs to (max 128 chars)." json:"callId"`
 	Direction string `description:"Call direction: in or out." json:"direction"`

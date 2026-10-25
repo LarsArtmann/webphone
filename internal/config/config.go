@@ -189,6 +189,7 @@ type OAuth2 struct {
 	// it exactly.
 	Issuer string `json:"issuer" koanf:"issuer"`
 	// ClientID is the registered OIDC client id (webphone).
+	// brandid-lint:ignore(BD003) config boundary: the IdP-registered client id is foreign-issuer vocabulary, never minted here (strong-id ruling)
 	ClientID string `json:"client_id" koanf:"client_id"`
 	// ClientSecretFile is the runtime file holding the confidential
 	// client's secret (single line, trimmed, read per exchange so
@@ -410,6 +411,7 @@ type Matrix struct {
 	// Homeserver is the Client-Server API base (e.g. https://matrix.example.org).
 	Homeserver string `json:"homeserver,omitempty" koanf:"homeserver"`
 	// UserID is the bot account (e.g. @webphone:example.org).
+	// brandid-lint:ignore(BD003) config boundary: the bot MXID is foreign matrix vocabulary, passed through verbatim (strong-id ruling)
 	UserID string `json:"user_id,omitempty" koanf:"user_id"`
 	// AccessToken authenticates the account; a long-lived token minted
 	// once via POST /login (deliver via environmentFile — a secret).
