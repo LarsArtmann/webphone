@@ -895,6 +895,11 @@
             <span class="tag">Applicable rows: 3 of 12</span>
             <span class="tag teal">Adoption Score: 0/100</span>
           </div>
+          <div class="callout callout-amber">
+            <strong>ADDENDUM 2026-10-24 evening — this audit is a 12:44 snapshot, and the gap it measured closed the SAME DAY.</strong>
+            A concurrent session shipped the EventCatalog federation lane (<code>internal/domain/catalog.go</code>, <code>webphone catalog</code>), and the execution session shipped the OpenAPI + AsyncAPI lanes (<code>internal/server/apidocs.go</code> serving all eleven session-gated surfaces, <code>internal/server/wirecontracts.go</code> + <code>webphone contracts</code> → docs/contracts/asyncapi.yaml).
+            "Imported: nowhere" was true at 12:44 and is FALSE as of 17:47 — see the Addenda section at the end for the re-run of every verify command below. The findings' SUBSTANCE (hand-rolled docs drift; pins over prose) is what shipped; the score measures the snapshot, not today's tree.
+          </div>
         </header>
 
         <!-- Scorecard -->
@@ -1075,6 +1080,11 @@
 }
 
 // After: derived from the type the handler actually decodes
+// (ADDENDUM 2026-10-24 evening: at audit time `loginRequest` did NOT
+// exist — the handler decoded an inline anonymous struct, and this
+// example implied otherwise. The hoist was the unstated prerequisite;
+// it EXECUTED the same day alongside this exact registry — see the
+// Addenda section.)
 b := catalog.NewBuilder("webphone session API", "1.0.0")
 b.AddService("webphone", "webphone", "1.0.0",
     "Server session for the tabs and the phone-api proxy",
@@ -1286,11 +1296,13 @@ b.AddService("webphone-hooks", "webphone webhook lane", "1.0.0",
             migration burden.
           </p>
           <div class="callout callout-amber">
-            <strong>Side observation (different module, same family)</strong>
+            <strong>Side observation (different module, same family) — ERRATUM 2026-10-24 evening:</strong>
             webphone pins <code>metaengine/v4 v4.19.0</code> (go.mod:19) while
-            <code>metaengine/v4.20.0</code> is already tagged upstream — a
-            routine bump candidate through the vendorHash ritual, unrelated to
-            catalog.
+            <code>metaengine/v4.20.0</code> is already tagged upstream — this audit called it a
+            "routine bump candidate", which is WRONG SIZING: <code>git log v4.19.0..v4.20.0</code>
+            spans <strong>418 commits</strong> (codec contract changes, typedfixture, branded-ID
+            fixtures). It is a real train, priced as such in
+            docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md (N10); not touched since.
           </div>
         </section>
 
@@ -1483,6 +1495,43 @@ git -C ~/projects/go-cqrs-lite tag --sort=-creatordate | grep -m1 "catalog/v4"  
 
 # Re-derive the score: count appendix rows (12), N/A rows (9),
 # applicable rows (3), leveraged (0) -&gt; 0/100</code></pre>
+        </section>
+
+        <!-- Addenda (2026-10-24 evening) -->
+        <section id="addenda">
+          <h2><span class="num">!</span>Addenda — the same-day adoption (annotated, not rewritten)</h2>
+          <p>
+            The 19:27 completion plan's honesty batch. This audit was a
+            point-in-time measurement; the same day closed the measured gap.
+            Per the docs-health ANNOTATE rule the original sections stand
+            unrewritten; corrections live here and in the two inline amber
+            callouts above.
+          </p>
+          <h3>A. What shipped after 12:44</h3>
+          <ul>
+            <li><strong>EventCatalog lane</strong> (concurrent session, 17:47–18:02): <code>internal/domain/catalog.go</code> (four seam events + mirrors + parity test), <code>webphone catalog [-o dir] [-plain]</code> CLI, <code>.eventcatalog-hub.json</code>; catalog pinned <code>v4.9.0</code> as a direct dependency.</li>
+            <li><strong>OpenAPI lane</strong> (execution session): <code>internal/server/apidocs.go</code> — the registry over ALL eleven session-gated surfaces; the 227-line hand-written <code>openapiSpec</code> const DELETED from server.go; drift test + seam pins; the DELETE /api/session phantom 200/401 corrected to the true 204.</li>
+            <li><strong>AsyncAPI lane</strong> (execution session): <code>internal/server/wirecontracts.go</code> + <code>webphone contracts</code> → committed <code>docs/contracts/asyncapi.yaml</code>; split rule + passkey conditional note in docs/contracts/README.md.</li>
+          </ul>
+          <h3>B. Verify commands re-run 2026-10-24 ~19:55 CEST (every answer changed)</h3>
+          <table>
+            <tr><th>Command (from §B above)</th><th>At 12:44 (audit)</th><th>At 19:55 (re-run)</th></tr>
+            <tr><td><code>rg "go-cqrs-lite/catalog"</code></td><td>no matches</td><td><strong>4+ files</strong>: internal/domain/catalog.go, catalog_test.go, internal/server/apidocs.go, wirecontracts.go</td></tr>
+            <tr><td><code>go.mod</code> cqrs-lite count</td><td>24, none is catalog</td><td><strong>26, catalog/v4 v4.9.0 is a DIRECT require</strong></td></tr>
+            <tr><td><code>server.go:717</code></td><td>the hand-written const</td><td><strong>const deleted</strong> — the handler serves the generated document</td></tr>
+            <tr><td><code>TestOpenAPI*</code></td><td>3 pins over the const</td><td>3 pins adapted to the generated document + 2 new contract tests (validate, drift)</td></tr>
+            <tr><td><code>TODO_LIST.md:68</code></td><td>2026-10-19 inventory-only record</td><td><strong>superseded in place</strong> by the concurrent session's "SHIPPED locally" record + the wire-lanes section</td></tr>
+            <tr><td>hub <code>sources.json</code></td><td>webphone under "excluded"</td><td>webphone listed as a <strong>source</strong> (verify with the hub repo's current tree)</td></tr>
+            <tr><td>latest catalog tag</td><td>v4.10.0</td><td>v4.10.0 (unchanged; webphone pins v4.9.0 — bump assessment is completion-plan N12)</td></tr>
+          </table>
+          <h3>C. Score interpretation</h3>
+          <p>
+            The 0/100 measures the 12:44 snapshot and stands as history. The
+            completion plan (docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md)
+            tracks the remaining universe: freshness gate, upstream exporter
+            filings (response headers, 204 rule, kafka default, multipart,
+            3.1.0), metaengine v4.20.0 prep, and consumer adoption.
+          </p>
         </section>
 
         <!-- Footer -->
