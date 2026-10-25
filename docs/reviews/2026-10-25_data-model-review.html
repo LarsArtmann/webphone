@@ -826,207 +826,557 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>ARCHITECTURE DEEP-DIVE &middot; DATA MODEL REVIEW</span>
+      <span>2026-10-25</span>
+      <span>webphone &middot; fourth series entry</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#state">00 Current state</a>
+          <a href="#series">01 Series cross-reference</a>
+          <a href="#catalog">02 Problem catalog</a>
+          <a href="#vision">03 The vision</a>
+          <a href="#model">04 Go data model</a>
+          <a href="#composition">05 Composition in action</a>
+          <a href="#validation">06 Validation layer</a>
+          <a href="#decisions">07 Decision log</a>
+          <a href="#antipatterns">08 Anti-patterns</a>
+          <a href="#roadmap">09 Migration roadmap</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Architecture Deep-Dive &middot; Data Model Review</div>
+          <h1>The doctrine held; the seams moved</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Fourth entry in the data-model series. Six of seven roadmap items from
+            2026-10-14 landed and are verified below. The rot that remains is not new
+            species: the same vocabulary pattern recurred in the seams built after that
+            review, plus a family of constructor string-trains. All 18 branching-flow
+            type-safety findings triaged; 4 adopted designs, the rest baselined with
+            reasons. Claims verified as of 2026-10-25 ~20:00 CET.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#state">00 Current state</a></li>
+            <li><a href="#series">01 Series cross-reference</a></li>
+            <li><a href="#catalog">02 Problem catalog</a></li>
+            <li><a href="#vision">03 The vision</a></li>
+            <li><a href="#model">04 Go data model</a></li>
+            <li><a href="#composition">05 Composition in action</a></li>
+            <li><a href="#validation">06 Validation layer</a></li>
+            <li><a href="#decisions">07 Decision log</a></li>
+            <li><a href="#antipatterns">08 Anti-patterns</a></li>
+            <li><a href="#roadmap">09 Migration roadmap</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
-        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <h2 id="state"><span class="num">00</span>Current state</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">18</div>
+            <div class="stat-label">type-safety findings triaged</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">6/7</div>
+            <div class="stat-label">10-14 roadmap items landed</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">4</div>
+            <div class="stat-label">adopted designs proposed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">14</div>
+            <div class="stat-label">findings baselined or rejected, with reasons</div>
           </div>
         </div>
+        <p>
+          Scope: the branching-flow type-safety family over the whole tree (8
+          PHANTOM transpose/plumbing/collision sites, 6 IFACE_COMPLETE seam
+          interfaces, 1 FLAG_PARAM), triaged against the ratified doctrine of this
+          series. The duplication and structure families (mixins, duplicate config
+          structs) are adjacent but ruled by the dedup registry, not here.
+        </p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
-        </div>
-
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
-        </div>
-
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="series"><span class="num">01</span>Series cross-reference: the 10-14 roadmap, audited</h2>
+        <p>
+          The 2026-10-14 review proposed seven items. Six landed. This is the
+          series working as designed: one review proposes, the next verifies.
+        </p>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>10-14 item</th><th>Verdict</th><th>Evidence verified today</th></tr>
           </thead>
           <tbody>
             <tr>
               <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>domain.FailureKind + Delivery value object</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td><code>type FailureKind string</code> (domain/delivery.go); the machine-owned Delivery slice carries the moves</td>
             </tr>
             <tr>
               <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>Must* enum parsers at every row read</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>MustChannel, MustDirection, MustOutboundStatus (domain/message.go), MustFaxStatus (domain/fax.go) beside their declarations</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Lifecycle constructors for Message and FaxJob</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>NewOutboundFaxJob / NewInboundFaxJob mint every row; FaxDelivery's doc names the swap risk as its reason to exist</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>config + dispatch hardening</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>TestValidateRejectsNegativeRetentionDays pins the fail-closed boot</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>session.Token through the Store seam</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>Create returns Token; the SQLite scan converts at the door via ParseToken</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>domain.RelPath (layering settled by the arch test)</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>ParseRelPath / MustParseRelPath used at the blob edge in fax (fax/service.go:146), messaging (service.go:383) and retention</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Transcript remote + hub map keys + ASR.Provider enum</td>
+              <td><span class="badge badge-high">Partial</span></td>
+              <td>asr.Provider is now an interface, but provider selection is still the string compare <code>cfg.ASR.Provider == "whispercpp"</code> (app.go:202). Carried forward.</td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
+        <h2 id="catalog"><span class="num">02</span>Problem catalog</h2>
+        <p>
+          The 10-14 thesis was "vocabularies that live in comments and string
+          comparisons instead of types". Every finding below is that thesis
+          recurring in code the review predates (the chat-network, push and SSO
+          trains landed after it), plus one detector blind spot the series should
+          stop re-litigating.
+        </p>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Adopt &middot; P4/P5</span>
+          <h3>push.Transport: a closed vocabulary living as map keys and params</h3>
+          <div class="where">internal/push/push.go:116,136 &middot; internal/readmodels/push.go:88</div>
+          <p>
+            "ntfy" and "fcm" are a closed, repo-owned vocabulary: they key the
+            Fanout registry (<code>senders map[string]Sender</code>), flow through
+            Knows and Send, get validated by the device-registration API, and name
+            themselves in error codes. Yet the type is <code>string</code> end to
+            end, so <code>Send(ctx, transport, target, ring)</code> can swap its
+            second and third string silently. This is exactly the class the 10-14
+            review converted into enums (gateway.Resolution, FailureKind).
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Defined type <code>push.Transport</code> with two constants and a
+            ParseTransport door; the registry becomes
+            <code>map[Transport]Sender</code>. The readmodels storage schema stays
+            raw (engine-row doctrine, directives already in place).
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Adopt &middot; P2-adjacent</span>
+          <h3>sso.Complete re-scatters the Challenge it minted</h3>
+          <div class="where">internal/sso/sso.go:159</div>
+          <p>
+            Begin mints <code>Challenge{URL, State, Nonce, Verifier}</code>, a
+            value object. Complete takes the values back as three loose strings:
+            <code>Complete(ctx, code, verifier, nonce)</code>. On the
+            authentication-critical path, a verifier/nonce transposition compiles
+            and weakens or breaks sign-in. FaxDelivery exists for precisely this
+            shape of risk.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Value object <code>sso.Finish{Code, Verifier, Nonce}</code> assembled
+            at the callback door. Lands under the auth-regression convention:
+            <code>auth:</code> commit prefix and the session-behavior suite.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Adopt &middot; P4</span>
+          <h3>FaxJob.DocumentPath is still raw beside a landed brand</h3>
+          <div class="where">internal/domain/fax.go:119,146</div>
+          <p>
+            The 10-14 review landed domain.RelPath and this series verified it in
+            use at three blob edges, including
+            <code>domain.MustParseRelPath(job.DocumentPath)</code>. The FaxJob
+            field itself stayed string, so NewInboundFaxJob still carries the
+            documentPath / providerRef transposition pair the tool flags.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Type the field as domain.RelPath; the store scan converts with
+            ParseRelPath (corruption crashes loudly, the MustThreadID doctrine).
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Adopt &middot; P4, bounded</span>
+          <h3>Constructor string-trains in the new seams (asr, matrix)</h3>
+          <div class="where">internal/asr/asr.go:137 &middot; internal/matrix/client.go:64</div>
+          <p>
+            NewWhisperCppClient(baseURL, token, model) and matrix.New(homeserver,
+            userID, token) are three same-typed strings each, wired once from
+            config at boot. A swap surfaces as broken wiring at first use, not at
+            compile time. The services must stay config-free (the userauth
+            doctrine), so the fix is a package-local wiring struct, not the config
+            type.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Small param structs (asr.Wire, matrix.Wire) at the constructor door;
+            app/chat.go and app/app.go assemble them from the config fields they
+            already read.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Adopt &middot; trivial</span>
+          <h3>machineSurface: bool parameter not last</h3>
+          <div class="where">internal/server/internal_directory.go:40</div>
+          <p>
+            The one-home helper takes its enabled flag mid-signature. Reordering
+            costs one line and kills the positional-confusion finding.
+          </p>
+        </div>
+
+        <div class="issue issue-critical" style="border-left-color: var(--ok, #2a7);">
+          <span class="severity severity-nice">Baseline &middot; deliberate</span>
+          <h3>The detector blind spot: edge doors and seam interfaces</h3>
+          <div class="where">session/sqlite.go:164 &middot; hooks/webhooks.go:170 &middot; matrix/client.go:189 &middot; IFACE_COMPLETE &times;6</div>
+          <p>
+            The session "collision" finding flags ParseToken at the scan door,
+            which IS the ratified design (Token exists; the store converts at the
+            edge; the 10-14 decision log says exactly this). BearerGate(secret,
+            unavailable) is a single wiring call whose swap the smoke catches on
+            the first hook. The six single-implementer interfaces (TraceRecorder,
+            DedupWindow, SSOClient, fax Store, matrix Cursor, api Server) are the
+            Deps-seam architecture itself: nil-safety and test injection. The
+            tool cannot see test-side second implementers; removing the seams
+            would un-make the architecture.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Record in the branching-flow baseline with per-site reasons, so the
+            class stops re-appearing as new findings. Never re-litigate.
+          </div>
+        </div>
+
+        <h2>Strengths, verified today</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>The series loop closed</strong>
+              <span>Six of seven prior roadmap items verified landed in source, not in docs.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>The ID wall held through three feature trains</strong>
+              <span>Matrix, Signal, push, SSO and the cqrs-htmx identity layer all grew branded or parse-at-door ids (domain.Extension owners, usermgmt.UserID strict parse); zero new raw domain ids.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Boundary validation is now the default</strong>
+              <span>config.Load rejects bad identities, Phones, negative retention; ParseTransport has an established pattern family to join (ParseExtension, ParsePhone, ParseAddress, ParseRelPath).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Foreign tokens stay raw on purpose</strong>
+              <span>The brandid-lint BD003 directives (refreshed 2026-10-25, scan exit 0) keep wire DTOs, storage schema and foreign protocol ids raw with written reasons. Deliberate is a type decision too.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="vision"><span class="num">03</span>The vision</h2>
+        <p>
+          Every repo-owned vocabulary is a defined type with its parser at the
+          door; every value that crosses a seam as a bundle travels as a value
+          object; every deliberate raw string carries its written reason. After
+          this roadmap: the push registry is keyed by a type, the OAuth finish
+          path is a struct, the fax row carries the path brand it already uses,
+          and the baseline records why the rest stays as it is.
+        </p>
+
+        <h2 id="model"><span class="num">04</span>Go data model: the deltas</h2>
+
+        <h3>1. The Transport vocabulary</h3>
+        <pre><code><span class="tok-comment">// Transport names a push delivery wire. The vocabulary is closed:</span>
+<span class="tok-comment">// the registry, the registration API and the dialplan hook are its</span>
+<span class="tok-comment">// only writers, and ParseTransport is the only door in.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Transport</span> <span class="tok-type">string</span>
+
+<span class="tok-keyword">const</span> (
+    TransportNtfy Transport = <span class="tok-string">"ntfy"</span>
+    TransportFcm  Transport = <span class="tok-string">"fcm"</span>
+)
+
+<span class="tok-keyword">func</span> <span class="tok-func">ParseTransport</span>(raw <span class="tok-type">string</span>) (Transport, <span class="tok-type">error</span>)
+
+<span class="tok-comment">// The registry and the route become swap-proof:</span>
+senders <span class="tok-keyword">map</span>[Transport]<span class="tok-type">Sender</span>
+<span class="tok-keyword">func</span> (f *Fanout) <span class="tok-func">Send</span>(ctx context.Context, t Transport, target <span class="tok-type">string</span>, ring Ring) <span class="tok-type">error</span></code></pre>
+        <p>
+          The stored schema stays string (the engine row json tags are the
+          storage schema); the registration API parses at its door and answers
+          422 on an unknown transport, which it already does in prose today.
+        </p>
+
+        <h3>2. The Finish value object</h3>
+        <pre><code><span class="tok-comment">// Finish is the callback-side counterpart of Challenge: the code</span>
+<span class="tok-comment">// from the IdP redirect plus the verifier and nonce from this</span>
+<span class="tok-comment">// browser's cookies, assembled once at the callback door.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Finish</span> <span class="tok-keyword">struct</span> {
+    Code     <span class="tok-type">string</span>
+    Verifier <span class="tok-type">string</span>
+    Nonce    <span class="tok-type">string</span>
+}
+
+<span class="tok-keyword">func</span> (c *Client) <span class="tok-func">Complete</span>(ctx context.Context, f Finish) (authmap.User, <span class="tok-type">string</span>, <span class="tok-type">error</span>)</code></pre>
+
+        <h3>3. RelPath on the fax row</h3>
+        <pre><code><span class="tok-keyword">type</span> <span class="tok-type">FaxJob</span> <span class="tok-keyword">struct</span> {
+    <span class="tok-comment">// ...</span>
+    DocumentPath domain.<span class="tok-type">RelPath</span> <span class="tok-comment">// was string; ParseRelPath at the scan door</span>
+    ProviderRef  <span class="tok-type">string</span>      <span class="tok-comment">// stays raw: foreign token, 10-11 ruling</span>
+}</code></pre>
+
+        <h3>4. Wiring structs at the config-free constructor doors</h3>
+        <pre><code><span class="tok-comment">// asr (and matrix alike): one struct per seam, assembled by app</span>
+<span class="tok-comment">// from the config fields it already reads. Services stay config-free.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Wire</span> <span class="tok-keyword">struct</span> {
+    BaseURL <span class="tok-type">string</span>
+    Token   <span class="tok-type">string</span>
+    Model   <span class="tok-type">string</span>
+}
+<span class="tok-keyword">func</span> <span class="tok-func">NewWhisperCppClient</span>(w Wire) (*Client, <span class="tok-type">error</span>)</code></pre>
+
+        <h2 id="composition"><span class="num">05</span>Composition in action</h2>
         <div class="compare-header">
           <div class="compare-before">Before</div>
           <div class="compare-after">After</div>
         </div>
         <div class="compare-row">
           <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+            <pre><code><span class="tok-comment">// three strings, one meaning each,</span>
+<span class="tok-comment">// silent under transposition</span>
+sender, ok := f.senders[transport]
+<span class="tok-keyword">return</span> sender.Send(ctx, target, ring)
+
+client := matrix.New(
+    cfg.Matrix.Homeserver,
+    cfg.Matrix.UserID,
+    cfg.Matrix.AccessToken,
+)</code></pre>
           </div>
           <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+            <pre><code><span class="tok-comment">// the registry key is the type;</span>
+<span class="tok-comment">// the route cannot swap</span>
+sender, ok := f.senders[t]
+<span class="tok-keyword">return</span> sender.Send(ctx, target, ring)
+
+client := matrix.New(matrix.Wire{
+    Homeserver: cfg.Matrix.Homeserver,
+    UserID:     cfg.Matrix.UserID,
+    Token:      cfg.Matrix.AccessToken,
+})</code></pre>
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <h2 id="validation"><span class="num">06</span>Validation layer</h2>
+        <p>
+          ParseTransport joins the established parser family
+          (ParseExtension, ParsePhone, ParseAddress, ParseRelPath, the Must*
+          row readers): validation lives at the door, corruption crashes
+          loudly, and the zero value is never a silently accepted state. The
+          registration API's existing 422-on-unknown-transport prose becomes a
+          type-backed guarantee, and the dialplan ring hook keeps failing
+          closed with a named code.
+        </p>
+
+        <h2 id="decisions"><span class="num">07</span>Decision log</h2>
+        <table>
+          <thead>
+            <tr><th>Decision</th><th>Rationale</th><th>Rejected alternative</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Transport lives in push, not domain</td>
+              <td>It is a push-local delivery vocabulary; domain holds cross-seam concepts (Network, Address, Phone). readmodels keeps the storage-schema string, so no layering edge is crossed.</td>
+              <td>domain.Transport: drags a push detail into the domain package for zero extra safety.</td>
+            </tr>
+            <tr>
+              <td>sso.Finish value object, not branded string types</td>
+              <td>The bundle is the invariant (code + verifier + nonce travel together from one browser flow); FaxDelivery set the precedent.</td>
+              <td>type AuthCode string etc.: three new brands to thread through cookies for the guarantee a struct gives.</td>
+            </tr>
+            <tr>
+              <td>FaxJob.DocumentPath becomes RelPath</td>
+              <td>The brand already exists and is in use at this very call site; typing the field deletes a parse door instead of adding one.</td>
+              <td>Keep string + MustParseRelPath at use: the tool keeps flagging the constructor pair, honestly.</td>
+            </tr>
+            <tr>
+              <td>Wiring structs instead of per-string brands in asr/matrix</td>
+              <td>Two-call-site boot wiring; a struct kills the swap and reads as one fact (the provider wiring), matching the config-free doctrine.</td>
+              <td>type BaseURL / Token / Model brands: the BD003 mechanical-brand trap this repo already ruled against.</td>
+            </tr>
+            <tr>
+              <td>Baseline the edge doors and seam interfaces</td>
+              <td>ParseToken at the scan door, BearerGate's two strings, and the six Deps seams are ratified design; a detector that cannot see tests should not veto architecture.</td>
+              <td>Restructuring to satisfy the tool: un-makes nil-safety and test seams to silence an info finding.</td>
+            </tr>
+            <tr>
+              <td>signal.New and ntfy stay two-string constructors</td>
+              <td>Two params, one call site each, boot-fail-fast inside the smoke; a struct there is ceremony without a failure mode.</td>
+              <td>Uniform structs everywhere: uniformity for its own sake is the over-engineering the series warns about.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="antipatterns"><span class="num">08</span>Anti-patterns to keep avoiding</h2>
+        <div class="card card-problem">
+          <h4>Mechanical brand minting</h4>
+          <p>
+            The tool suggests a brand for every raw string; the doctrine says
+            brands only where a domain identity exists (BD003 directives carry
+            the reasons). Every suggested-but-unminted brand in this report's
+            findings is deliberate.
+          </p>
+        </div>
+        <div class="card card-problem">
+          <h4>Typed-constant smuggling</h4>
+          <p>
+            A <code>const TransportNtfy = "ntfy"</code> next to string params is
+            documentation, not type safety. The constant must carry the type
+            (<code>Transport</code>) and the map key must demand it.
+          </p>
+        </div>
+        <div class="card card-problem">
+          <h4>Refactoring to please a detector</h4>
+          <p>
+            Single-implementer seam interfaces and edge-door conversions are
+            architecture. Baseline them with reasons; revisit only when a
+            second implementer actually arrives.
+          </p>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <h2 id="roadmap"><span class="num">09</span>Migration roadmap</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>push.Transport (S-M)</h4>
+            <p>
+              Defined type + two typed constants + ParseTransport; Fanout
+              registry and Send/Knows re-typed; registration API and the ring
+              hook parse at their doors; push family tests updated. Closes the
+              push.go:136 finding; readmodels stays raw per the row doctrine.
+            </p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>sso.Finish value object (S, auth:)</h4>
+            <p>
+              Finish struct + Complete signature change; callback handler
+              assembles it. Lands with an auth: commit prefix and the
+              session-behavior suite per the auth-regression convention.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>FaxJob.DocumentPath as domain.RelPath (S)</h4>
+            <p>
+              Field re-typed, store scan converts with ParseRelPath, golden rows
+              and the legacy import path re-verified. Closes the fax.go:119
+              pair with a brand the repo already owns.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>Wiring structs for asr and matrix constructors (S)</h4>
+            <p>
+              asr.Wire and matrix.Wire; app/chat.go and app/app.go assemble
+              them. Signal and ntfy stay as they are (decision log).
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>machineSurface bool-last reorder (S, trivial)</h4>
+            <p>
+              Move the enabled flag to the last parameter; call sites follow.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">6</div>
+          <div class="migration-content">
+            <h4>Record the baseline (S)</h4>
+            <p>
+              The edge-door and seam-interface class goes into the
+              branching-flow baseline with per-site reasons, and AGENTS.md notes
+              the class so future sweeps extend instead of re-litigate.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">7</div>
+          <div class="migration-content">
+            <h4>Carry-forwards from the 10-14 item 7 (opportunistic)</h4>
+            <p>
+              ASR.Provider selection becomes a parsed enum at the next config
+              touch; transcript remote and hub map keys keep their standing
+              invitation from the prior review.
+            </p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-25 &middot; Fourth series entry: 2026-09-19 data-model
+          review &rarr; 2026-09-30 &rarr; 2026-10-14 (6/7 roadmap items verified
+          landed above) &rarr; this &middot; Claims verified as of ~20:00 CET:
+          every cited declaration read in source today &middot; Companions: the
+          full-code and naming reviews in this directory &middot; Scope note: the
+          duplication/structure finding families are ruled by
+          docs/dedup-registry.md doctrine, not here
         </footer>
       </main>
     </div>
