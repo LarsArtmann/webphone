@@ -7,24 +7,30 @@ import (
 
 // TestLoginCardAdaptsToPasskeyMode pins the login card's two shapes:
 // off (the default) renders EXACTLY the extension login — no passkey
-// ids anywhere — while on promotes the passkey form to the front door
-// and demotes the extension login into the break-glass disclosure
+// ids anywhere — while on renders the /login front-door link (the
+// cqrs-htmx loginpage owns the ceremony; the island card only links to
+// it) and demotes the extension login into the break-glass disclosure
 // without losing a single one of its DOM-contract ids.
 func TestLoginCardAdaptsToPasskeyMode(t *testing.T) {
 	off := renderComponent(t, PhoneIsland(PhoneIslandProps{}))
 	on := renderComponent(t, PhoneIsland(PhoneIslandProps{Passkey: true}))
 
-	passkeyIds := []string{
-		`id="passkey-login-form"`,
-		`id="passkey-email"`,
-		`id="passkey-login-error"`,
+	link := `id="passkey-login"`
+	if strings.Contains(off, link) {
+		t.Errorf("passkey-off card renders %s — a disabled deployment must stay byte-shaped like the pre-passkey card", link)
 	}
-	for _, id := range passkeyIds {
-		if strings.Contains(off, id) {
-			t.Errorf("passkey-off card renders %s — a disabled deployment must stay byte-shaped like the pre-passkey card", id)
-		}
-		if !strings.Contains(on, id) {
-			t.Errorf("passkey-on card lacks %s — the front door is incomplete:\n%s", id, on)
+	if !strings.Contains(on, link) {
+		t.Errorf("passkey-on card lacks %s — the /login front door is incomplete:\n%s", link, on)
+	}
+	if !strings.Contains(on, `id="passkey-login" class="primary wp-passkey-link" href="/login"`) {
+		t.Errorf("passkey-on card must link to /login (the library login page):\n%s", on)
+	}
+
+	// The hand-rolled ceremony form is DEAD: its ids must never come
+	// back on either shape (the library page owns the lp-* contract).
+	for _, dead := range []string{`id="passkey-login-form"`, `id="passkey-email"`, `id="passkey-login-error"`} {
+		if strings.Contains(off, dead) || strings.Contains(on, dead) {
+			t.Errorf("dead hand-rolled id %s rendered — the library login page owns the ceremony UI", dead)
 		}
 	}
 

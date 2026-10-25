@@ -54,7 +54,6 @@ import {
 } from "./ui.js";
 import { initAudioOutput } from "./audioout.js";
 import { initDeviceCheck } from "./selftest.js";
-import { initPasskeyLogin } from "./passkey.js";
 
 const REMEMBER_KEY = "pbx-extension";
 
@@ -294,9 +293,8 @@ els.reject.addEventListener("click", () => {
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());
 
 initShortcuts();
-// The passkey front door binds only when the server rendered it — a
-// disabled deployment stays byte-identical in behavior.
-initPasskeyLogin();
+// The passkey front door lives on the library-owned /login page now —
+// the island card links to it (plain navigation, no island JS).
 initSseLiveIndicator();
 initDialTypeahead();
 initDialHint();

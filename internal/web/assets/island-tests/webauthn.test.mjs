@@ -10,7 +10,6 @@ import assert from "node:assert/strict";
 import {
   base64urlToBytes,
   bytesToBase64url,
-  prepareLoginOptions,
   prepareRegistrationOptions,
   serializeCredential,
 } from "../island/app/webauthn.js";
@@ -51,33 +50,6 @@ test("base64url accepts unpadded and padded spellings (server tolerance)", () =>
 test("base64url rejects garbage instead of decoding silently", () => {
   assert.throws(() => base64urlToBytes("not!base64"));
   assert.throws(() => base64urlToBytes(42));
-});
-
-test("prepareLoginOptions decodes challenge and allowCredentials ids to bytes", () => {
-  const options = prepareLoginOptions({
-    challenge: "AAAAAQ",
-    rpId: "pbx.example.com",
-    timeout: 60000,
-    userVerification: "preferred",
-    allowCredentials: [
-      { id: "AAECAw", type: "public-key", transports: ["internal"] },
-      { id: "BAUGBw", type: "public-key" },
-    ],
-  });
-  assert.deepEqual([...options.challenge], [0, 0, 0, 1]);
-  assert.equal(options.rpId, "pbx.example.com");
-  assert.equal(options.timeout, 60000);
-  assert.equal(options.userVerification, "preferred");
-  assert.deepEqual([...options.allowCredentials[0].id], [0, 1, 2, 3]);
-  assert.deepEqual(options.allowCredentials[0].transports, ["internal"]);
-  assert.deepEqual([...options.allowCredentials[1].id], [4, 5, 6, 7]);
-  assert.equal(options.allowCredentials[1].transports, undefined);
-});
-
-test("prepareLoginOptions tolerates a missing allowCredentials list", () => {
-  const options = prepareLoginOptions({ challenge: "AA", rpId: "x" });
-  assert.deepEqual([...options.challenge], [0]);
-  assert.equal(options.allowCredentials, undefined);
 });
 
 test("prepareRegistrationOptions decodes challenge, user.id and excludeCredentials", () => {

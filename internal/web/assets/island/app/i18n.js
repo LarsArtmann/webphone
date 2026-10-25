@@ -87,17 +87,8 @@ export const I18N = {
     loginError: (message) =>
       `Could not connect: ${message}. Check extension/password and that your browser trusts the server certificate.`,
     passkeySection: "Sign in with a passkey",
-    passkeyEmail: "Email",
     passkeySignin: "Sign in with passkey",
     passkeyBreakglass: "Use extension and password instead",
-    passkeyUnknown:
-      "No passkey matches this email — check the address or use extension and password below.",
-    passkeyThrottled: "Too many attempts — wait a minute, then try again.",
-    passkeyBeginFailed: (status) =>
-      `Passkey sign-in unavailable (HTTP ${status}).`,
-    passkeyFinishFailed: (status) =>
-      `Passkey verification failed (HTTP ${status}).`,
-    passkeyNetFailed: "Passkey sign-in failed — network error.",
     ssoSection: "Sign in with Pocket ID",
     ssoSignin: "Continue to Pocket ID",
     ssoPasskeyHint:
@@ -195,18 +186,8 @@ export const I18N = {
     remember: "Nebenstelle auf diesem Gerät merken (niemals das Passwort)",
     connect: "Verbinden",
     passkeySection: "Mit Passkey anmelden",
-    passkeyEmail: "E-Mail",
     passkeySignin: "Mit Passkey anmelden",
     passkeyBreakglass: "Stattdessen Nebenstelle und Passwort verwenden",
-    passkeyUnknown:
-      "Zu dieser E-Mail passt kein Passkey — Adresse prüfen oder unten Nebenstelle und Passwort verwenden.",
-    passkeyThrottled:
-      "Zu viele Versuche — eine Minute warten, dann erneut versuchen.",
-    passkeyBeginFailed: (status) =>
-      `Passkey-Anmeldung nicht verfügbar (HTTP ${status}).`,
-    passkeyFinishFailed: (status) =>
-      `Passkey-Verifikation fehlgeschlagen (HTTP ${status}).`,
-    passkeyNetFailed: "Passkey-Anmeldung fehlgeschlagen — Netzwerkfehler.",
     ssoSection: "Mit Pocket ID anmelden",
     ssoSignin: "Weiter zu Pocket ID",
     ssoPasskeyHint:

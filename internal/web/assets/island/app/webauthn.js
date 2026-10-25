@@ -2,8 +2,11 @@
 // go-webauthn's protocol.URLEncodedBase64 — RFC 4648 §5 base64url,
 // unpadded — while the browser half (navigator.credentials) speaks
 // ArrayBuffer. Every field crossing that boundary is converted here, in
-// the one module both ceremony flows (login, enrollment) share. Pure
-// functions, no DOM: the node:test suite pins the round-trips.
+// the one module the enrollment flow shares with the standalone enroll
+// page. Pure functions, no DOM: the node:test suite pins the
+// round-trips. (The LOGIN ceremony client now lives in the
+// cqrs-htmx/loginpage library page at /login — its JS owns its own
+// coercion.)
 
 const base64url = {
   // decode loosens the padding requirement deliberately: go-webauthn
@@ -47,21 +50,6 @@ const toBytes = (value) =>
   value instanceof ArrayBuffer || value instanceof Uint8Array
     ? value
     : base64url.decode(value);
-
-// prepareLoginOptions turns the server's PublicKeyCredentialRequestOptions
-// JSON into the dictionary navigator.credentials.get accepts: challenge
-// and each allowCredentials[].id become byte views. Fields the server
-// omitted stay omitted — the browser fills its own defaults.
-export function prepareLoginOptions(options) {
-  const prepared = { ...options, challenge: toBytes(options.challenge) };
-  if (Array.isArray(options.allowCredentials)) {
-    prepared.allowCredentials = options.allowCredentials.map((entry) => ({
-      ...entry,
-      id: toBytes(entry.id),
-    }));
-  }
-  return prepared;
-}
 
 // prepareRegistrationOptions turns the server's
 // PublicKeyCredentialCreationOptions JSON into the dictionary

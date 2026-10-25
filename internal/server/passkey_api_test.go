@@ -30,7 +30,8 @@ const (
 	pkUnknown    = "nobody@example.com"
 	pkPassword   = "dir-password"
 	uniformBody  = "unknown email or no passkey enrolled\n"
-	passkeyBegin = `/api/auth/passkey/begin`
+	passkeyBegin = `/api/auth/webauthn/login/begin`
+	passkeyFinish = `/api/auth/webauthn/login/finish`
 )
 
 // pkStub mirrors userauth's test stub: every ceremony succeeds.
@@ -125,8 +126,9 @@ func TestPasskeyOffAnswersTheStyled404(t *testing.T) {
 	c := newClient(t) // standard fixture: no UserAuth
 	for _, target := range []struct{ method, path string }{
 		{http.MethodPost, passkeyBegin},
-		{http.MethodPost, "/api/auth/passkey/finish?user_id=x"},
+		{http.MethodPost, passkeyFinish + "?user_id=x"},
 		{http.MethodPost, "/api/auth/passkey/enroll/verify"},
+		{http.MethodGet, "/login"},
 		{http.MethodGet, "/enroll"},
 	} {
 		resp, body := c.do(target.method, target.path, []byte(`{}`), "application/json")
@@ -176,7 +178,7 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 		t.Fatalf("begin login: %v", err)
 	}
 	resp, body := c.do(http.MethodPost,
-		"/api/auth/passkey/finish?user_id="+begun.SessionKey,
+		"/api/auth/webauthn/login/finish?user_id="+begun.SessionKey,
 		[]byte(`{"id":"x","rawId":"eA","type":"public-key","response":{"clientDataJSON":"eA"}}`),
 		"application/json")
 	if resp.StatusCode != http.StatusCreated {
@@ -215,7 +217,7 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 func TestPasskeyFinishWithoutUserIDIsA400(t *testing.T) {
 	server, _ := newPasskeyServer(t)
 	c := clientFor(t, server)
-	resp, _ := c.do(http.MethodPost, "/api/auth/passkey/finish", []byte(`{}`), "application/json")
+	resp, _ := c.do(http.MethodPost, "/api/auth/webauthn/login/finish", []byte(`{}`), "application/json")
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("missing user_id: %d, want 400", resp.StatusCode)
 	}
@@ -227,7 +229,7 @@ func TestPasskeyFinishWithoutUserIDIsA400(t *testing.T) {
 func TestPasskeyFinishRejectsAMalformedUserID(t *testing.T) {
 	server, _ := newPasskeyServer(t)
 	c := clientFor(t, server)
-	resp, _ := c.do(http.MethodPost, "/api/auth/passkey/finish?user_id=not-a-ulid", []byte(`{}`), "application/json")
+	resp, _ := c.do(http.MethodPost, "/api/auth/webauthn/login/finish?user_id=not-a-ulid", []byte(`{}`), "application/json")
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("garbage user_id: %d, want 400", resp.StatusCode)
 	}
@@ -372,7 +374,7 @@ func TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn(t *testing.T)
 		t.Fatalf("begin login: %v", err)
 	}
 	resp, body := c.do(http.MethodPost,
-		"/api/auth/passkey/finish?user_id="+begun.SessionKey,
+		"/api/auth/webauthn/login/finish?user_id="+begun.SessionKey,
 		[]byte(`{"id":"x","rawId":"eA","type":"public-key","response":{"clientDataJSON":"eA"}}`),
 		"application/json")
 	if resp.StatusCode != http.StatusCreated {
@@ -461,7 +463,7 @@ func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 	if len(creds) != 0 {
 		t.Fatalf("after revoke Credentials = %v, want none", creds)
 	}
-	resp, body = c.do(http.MethodGet, "/partials/settings", nil, "")
+	_, body = c.do(http.MethodGet, "/partials/settings", nil, "")
 	if !strings.Contains(string(body), "wp-passkeys-empty") {
 		t.Errorf("settings partial must render the empty state after revoke:\n%s", body)
 	}

@@ -62,7 +62,7 @@ func PhoneIsland(props PhoneIslandProps) templ.Component {
 			}
 		}
 		if props.Passkey {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1 data-i18n=\"passkeySection\">Sign in with a passkey</h1>    <form id=\"passkey-login-form\" autocomplete=\"off\" aria-describedby=\"passkey-login-error\"><label><span data-i18n=\"passkeyEmail\">Email</span> <input id=\"passkey-email\" name=\"email\" type=\"email\" autocomplete=\"username\" placeholder=\"you@example.com\" required></label> <button type=\"submit\" class=\"primary\" data-i18n=\"passkeySignin\">Sign in with passkey</button></form><p class=\"hint\" id=\"passkey-login-error\" hidden></p>   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h1 data-i18n=\"passkeySection\">Sign in with a passkey</h1>       <a id=\"passkey-login\" class=\"primary wp-passkey-link\" href=\"/login\" data-i18n=\"passkeySignin\">Sign in with passkey</a>   <details class=\"passkey-breakglass\"><summary data-i18n=\"passkeyBreakglass\">Use extension and password instead</summary>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
