@@ -136,9 +136,9 @@ type failedProjectionProvider struct{}
 
 func (failedProjectionProvider) ProjectionStatuses() []cqrshtmx.ProjectionStatusEntry {
 	return []cqrshtmx.ProjectionStatusEntry{{
-		Name:       "user-views",
-		Status:     cqrshtmx.ProjectionStatusFailed,
-		LastError:  "boom: projection kept erroring",
+		Name:      "user-views",
+		Status:    cqrshtmx.ProjectionStatusFailed,
+		LastError: "boom: projection kept erroring",
 	}}
 }
 

@@ -487,10 +487,10 @@ func New(deps Deps) http.Handler {
 		// The projectionhost behind the identity layer joins the same
 		// truth: a worker still draining its journal (async startup) or
 		// exhausted past its restart budget degrades healthz naming
-			// "projections" (and the failed worker's name in the error
-			// text) instead of green-lighting traffic into a passkey lane
-			// that cannot answer logins. Library check, bounded like the
-			// rest; the provider defaults to the wired service — only
+		// "projections" (and the failed worker's name in the error
+		// text) instead of green-lighting traffic into a passkey lane
+		// that cannot answer logins. Library check, bounded like the
+		// rest; the provider defaults to the wired service — only
 		// tests override it.
 		provider := deps.ProjectionStatus
 		if provider == nil {

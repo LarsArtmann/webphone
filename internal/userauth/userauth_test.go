@@ -240,6 +240,43 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 	}
 }
 
+// TestSecondLoginWithNonAdvancingCounterIsRejected pins the clone signal
+// LIVE through the whole seam (the identity train's WebAuthn clone
+// detection — deep-dive finding 2). The stub's assertion reports
+// sign_count 1 every time: the FIRST login advances 0→1 and persists the
+// used credential, and a SECOND login presenting the same
+// non-advancing counter must be rejected naming the clone. This is
+// exactly the proof the old error-only stub shape could not express —
+// the persisted high-water mark is what the comparison reads.
+func TestSecondLoginWithNonAdvancingCounterIsRejected(t *testing.T) {
+	svc, _, _, _ := newService(t)
+	ctx := context.Background()
+	userID, err := svc.Register(ctx, mappedEmail)
+	if err != nil {
+		t.Fatal(err)
+	}
+	begun, err := svc.BeginRegistration(ctx, userID)
+	if err != nil {
+		t.Fatalf("begin registration: %v", err)
+	}
+	r := httptest.NewRequest(http.MethodPost, "/enroll/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
+	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
+		t.Fatalf("finish registration: %v", err)
+	}
+
+	if _, err := finishLoginFor(t, svc, mappedEmail); err != nil {
+		t.Fatalf("first login (counter 0→1) must succeed: %v", err)
+	}
+	_, err = finishLoginFor(t, svc, mappedEmail)
+	if err == nil {
+		t.Fatal("second login with the same non-advancing counter must be rejected (clone signal)")
+	}
+	if !strings.Contains(err.Error(), "cloned") {
+		t.Errorf("error should name the clone signal, got: %v", err)
+	}
+	errorfamilytest.AssertCode(t, err, "usermgmt.webauthn.credential_use_failed")
+}
+
 func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
 	svc, _, _, _ := newService(t)
 	ctx := context.Background()
