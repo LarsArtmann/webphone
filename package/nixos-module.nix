@@ -98,6 +98,82 @@ in
           StateDirectory value for the webphone-backup unit.
         '';
       }
+    ]
+    # Eval-time mirror of the app's fail-closed OIDC validation: an
+    # enabled-but-half SSO config must fail `nixos-rebuild`, never a
+    # reboot into a login card whose every attempt dies.
+    ++ lib.optionals cfg.oauth2.enable [
+      {
+        assertion = cfg.oauth2.issuer != null && bareHTTPS cfg.oauth2.issuer;
+        message = ''
+          services.webphone.oauth2.issuer must be a bare https URL with no
+          query or fragment (got `${
+            if cfg.oauth2.issuer == null then "unset" else cfg.oauth2.issuer
+          }`): the IdP's `iss` claim is matched verbatim.
+        '';
+      }
+      {
+        assertion = cfg.oauth2.clientSecretFile != null;
+        message = ''
+          services.webphone.oauth2.clientSecretFile is required when
+          enable = true — the client secret never lives in the world-readable
+          config JSON or the Nix store; point it at the runtime file.
+        '';
+      }
+      {
+        assertion = lib.elem "openid" cfg.oauth2.scopes;
+        message = ''
+          services.webphone.oauth2.scopes must include "openid" — without it
+          the IdP returns no id_token and no login can complete.
+        '';
+      }
+      {
+        assertion = oauth2RedirectUrl != null && bareHTTPS oauth2RedirectUrl;
+        message = ''
+          services.webphone.oauth2: the callback cannot be derived — enable
+          caddy (derives https://<caddy.hostName>/api/auth/oauth2/callback)
+          or set redirectUrl to the registered absolute https callback.
+        '';
+      }
+      {
+        assertion = oauth2Users != { };
+        message = ''
+          services.webphone.oauth2.enable requires settings.auth.users (the
+          shared email→extension mapping) — without it every SSO login is
+          unmapped and denied.
+        '';
+      }
+      {
+        assertion = (cfg.settings.auth.passkey.rp_id or "") != "" && (cfg.settings.auth.passkey.rp_origins or [ ]) != [ ];
+        message = ''
+          services.webphone.oauth2.enable turns on the shared identity layer,
+          which the app derives passkey mode from — settings.auth.passkey.rp_id
+          and rp_origins must resolve. Enable caddy to derive them from
+          caddy.hostName, or set both explicitly behind an external front.
+        '';
+      }
+      {
+        assertion = oauth2MissingPasswordFiles == [ ];
+        message = ''
+          services.webphone.oauth2: every mapped extension needs a SIP
+          directory password file in settings.auth.extension_password_files
+          (missing: ${lib.concatStringsSep ", " oauth2MissingPasswordFiles}).
+        '';
+      }
+    ]
+    ++ lib.optionals (!cfg.oauth2.enable) [
+      {
+        assertion =
+          cfg.oauth2.issuer == null
+          && cfg.oauth2.clientSecretFile == null
+          && cfg.oauth2.redirectUrl == null
+          && cfg.oauth2.allowedGroups == [ ];
+        message = ''
+          services.webphone.oauth2: set enable = true — issuer,
+          clientSecretFile, redirectUrl or allowedGroups without enable would
+          silently do nothing.
+        '';
+      }
     ];
 
     services.webphone.settings = {
@@ -119,6 +195,32 @@ in
         })
         (lib.mkIf (cfg.csrf.trustedOrigins != [ ]) {
           trusted_origins = lib.mkForce cfg.csrf.trustedOrigins;
+        })
+      ];
+    }
+    // lib.optionalAttrs (cfg.oauth2.enable || deriveWebAuthnRP) {
+      auth = lib.mkMerge [
+        (lib.mkIf deriveWebAuthnRP {
+          # mkDefault: an explicitly declared settings.auth.passkey.*
+          # value wins, so an operator pin stays authoritative.
+          passkey = {
+            rp_id = lib.mkDefault cfg.caddy.hostName;
+            rp_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
+          };
+        })
+        (lib.mkIf cfg.oauth2.enable {
+          # PLAIN definitions, deliberately: a raw
+          # settings.auth.oauth2.* of the same key makes the eval fail
+          # with a conflict (declare the OIDC client shape ONCE) instead
+          # of one lane silently winning.
+          oauth2 = {
+            issuer = cfg.oauth2.issuer;
+            client_id = cfg.oauth2.clientId;
+            client_secret_file = oauth2SecretPath;
+            redirect_url = oauth2RedirectUrl;
+            scopes = cfg.oauth2.scopes;
+            allowed_groups = cfg.oauth2.allowedGroups;
+          };
         })
       ];
     };
@@ -153,6 +255,15 @@ in
             EnvironmentFile = lib.mkIf (cfg.environmentFile != null || cfg.environmentFiles != [ ]) (
               (lib.optional (cfg.environmentFile != null) cfg.environmentFile) ++ cfg.environmentFiles
             );
+            # OIDC client secret: systemd copies the operator's file into
+            # the unit's private credential directory at start (0400,
+            # owned by the webphone user), so the app reads the copy and
+            # no host-side group grant is needed. A missing source file
+            # fails the unit start — earlier and louder than the first
+            # SSO login.
+            LoadCredential = lib.mkIf cfg.oauth2.enable [
+              "${oauth2CredentialName}:${cfg.oauth2.clientSecretFile}"
+            ];
             User = "webphone";
             Group = "webphone";
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.dataDir;
