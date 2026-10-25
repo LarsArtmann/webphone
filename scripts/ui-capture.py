@@ -3,13 +3,25 @@
 gateway — the whole product, zero PBX), seeds deterministic content over
 HTTP, then drives headless chromium (selenium — the SAME driver family
 the consuming stack's browser E2E uses) through the server tabs and
-screenshots each in light and dark: the 20-shot matrix (10 surfaces x 2
+screenshots each in light and dark: the 24-shot matrix (12 surfaces x 2
 themes).
 
 The tenth surface is the styled 404 (`/nope`): it is a real page with
 chrome, so it belongs in the matrix rather than being merely asserted —
 a regression to stdlib text would show up as a broken shot, not just a
 red test.
+
+loginpage extension (2026-10-25, owner GO): the boot ALSO turns the
+passkey mode on (a render-only config — no ceremony ever runs), and two
+ANONYMOUS surfaces join the matrix ahead of the session'd tabs:
+`login-card` (the island card with its /login link) and `login-page`
+(the cqrs-htmx loginpage library page at /login — its own stylesheet,
+its own ThemeScript). The session cookie is dropped for these two shots
+and re-injected after (with a live session /login 303s home and the
+card never renders). The library page follows prefers-color-scheme, NOT
+the shell's wp-theme key (the documented forced-theme caveat), so each
+theme pass emulates the media feature via CDP — which is exactly the
+color a dark-OS user sees.
 
 M13 extension (2026-10-08): the boot turns the ASR seam ON (a fake
 provider BASE url — shell.js AUTO-transcribes seen audio, so the call
@@ -34,7 +46,7 @@ Run (from the repo root):
   nix shell nixpkgs#chromium nixpkgs#python312.withPackages(ps: [ ps.selenium ]) \\
     --command python3 scripts/ui-capture.py --binary /tmp/wp-visual-bin/bin/webphone
 
-Output: ui-shots/<n>-<name>-<light|dark>.png (18 files).
+Output: ui-shots/<n>-<name>-<light|dark>.png (up to 24 files).
 """
 
 from __future__ import annotations
@@ -106,6 +118,23 @@ SURFACE_MARKERS = {
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
     "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
+}
+
+# Anonymous surfaces (2026-10-25): shot per theme BEFORE the session'd
+# tabs, with the session cookie deleted — the login card only renders
+# pre-session, and /login bounces a live session home (303). Render-only
+# passkey config (see main()); no ceremony ever runs, so the rp_id never
+# faces a browser — it only has to pass boot validation.
+ANONYMOUS_SURFACES = [
+    ("login-card", "/"),
+    ("login-page", "/login"),
+]
+ANONYMOUS_MARKERS = {
+    # The card's anchor text is the island i18n default (server-rendered,
+    # swapped client-side); the library page's copy is the library's —
+    # pin the WIRE id only, not prose we do not own.
+    "login-card": ("#passkey-login", "Sign in with passkey"),
+    "login-page": ("#lp-login-form", None),
 }
 
 
@@ -267,6 +296,50 @@ def capture(
             # it pre-paint — no cycling the 3-state toggle from "auto").
             driver.get(base + "/")
             driver.execute_script(f"localStorage.setItem('wp-theme', '{theme}')")
+            # The library /login page follows prefers-color-scheme, not
+            # wp-theme (the documented forced-theme caveat) — emulate the
+            # media feature so the anonymous shots see exactly what a
+            # same-scheme OS user sees. Shell surfaces stay pinned via
+            # wp-theme, so this is a no-op for the tabs.
+            driver.execute_cdp_cmd(
+                "Emulation.setEmulatedMedia",
+                {"features": [{"name": "prefers-color-scheme", "value": theme}]},
+            )
+            # Anonymous surfaces first: the login card renders pre-session
+            # and /login 303s a live session home — drop the cookie for
+            # these two shots, restore it after.
+            driver.delete_cookie("webphone_session")
+            for name, path in ANONYMOUS_SURFACES:
+                driver.get(base + path)
+                if name == "login-card":
+                    # The island reveals the card once the anonymous resume
+                    # probe fails — wait on the link itself (the surface's
+                    # whole point) instead of a fixed sleep.
+                    WebDriverWait(driver, 8).until(
+                        lambda d: d.find_elements("css selector", "#passkey-login")
+                    )
+                time.sleep(0.4)  # settle: theme script, fonts
+                marker, expected_text = ANONYMOUS_MARKERS[name]
+                if not driver.find_elements("css selector", marker):
+                    raise AssertionError(
+                        f"surface {name!r} at {path} is missing {marker!r} — "
+                        f"url={driver.current_url} — the shot would not be "
+                        "evidence; aborting"
+                    )
+                if (
+                    expected_text
+                    and expected_text
+                    not in driver.find_element("css selector", "body").text
+                ):
+                    raise AssertionError(
+                        f"surface {name!r} rendered without {expected_text!r} — "
+                        "the marker matched but the copy is wrong; aborting"
+                    )
+                target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
+                driver.save_screenshot(target)
+                print(f"captured {target}")
+                shots += 1
+            driver.add_cookie({"name": "webphone_session", "value": session})
             for name, path in TABS:
                 if name == "thread":
                     path = thread_path
@@ -363,7 +436,21 @@ def main() -> int:
             "trusted_proxies": ["127.0.0.1"],
             "trusted_origins": [base],
         },
+        # Passkey ON, render-only (2026-10-25): turns the mode on so the
+        # two anonymous login surfaces exist; no ceremony ever runs, so
+        # the rp_id never faces a browser — it only has to satisfy boot
+        # validation (hostname-shaped, host of every origin entry).
+        "auth": {
+            "passkey": {
+                "rp_id": "webphone.test",
+                "rp_origins": ["https://webphone.test"],
+                "users": {"ui-capture@example.com": {"extensions": ["1001"]}},
+                "extension_password_files": {"1001": os.path.join(data_dir, "ext1001.pass")},
+            }
+        },
     }
+    with open(os.path.join(data_dir, "ext1001.pass"), "w", encoding="utf-8") as fh:
+        fh.write("ui-capture-fixture\n")  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
     config_path = os.path.join(data_dir, "ui-capture-config.json")
     with open(config_path, "w", encoding="utf-8") as fh:
         json.dump(config, fh)
@@ -385,7 +472,7 @@ def main() -> int:
             return 1
         shots = capture(base, args.out_dir, thread_path, attach_thread_path, session)
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
-        return 0 if shots >= 18 else 1
+        return 0 if shots >= 22 else 1
     finally:
         server.terminate()
         server.wait(timeout=10)
