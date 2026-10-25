@@ -12,7 +12,7 @@ import {
   bytesToBase64url,
   prepareRegistrationOptions,
   serializeCredential,
-} from "../island/app/webauthn.js";
+} from "../enroll/webauthn.js";
 
 const bytes = (...nums) => new Uint8Array(nums);
 
