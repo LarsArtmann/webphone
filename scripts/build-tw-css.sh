@@ -104,16 +104,23 @@ done
 for f in icon.templ icon_templ.go; do
 	cp "$ICONS_DIR/$f" "$stage/$COMP/icons/$f"
 done
-for f in page.templ page_templ.go assets/login.js; do
-	cp "$LP_DIR/$f" "$stage/$LOGIN/$f"
-done
-
 tw() { # input output
 	nix run "github:NixOS/nixpkgs/$rev#tailwindcss_4" -- \
 		-i "$stage/internal/web/assets/$1" \
 		-o "$stage/$2"
 }
+
+# ORDER MATTERS: the shell build runs BEFORE the loginpage sources land
+# in the stage, AND the shell build auto-scans the staged assets dir —
+# so the login input and its comments must never mention dark-variant
+# utility names (a literal utility in a comment EMITS it into tw.css;
+# the 2026-10-25 leak). Belt and suspenders: neither stage order nor
+# comment prose can leak the other build's classes.
 tw tw.css.input tw.css
+
+for f in page.templ page_templ.go assets/login.js; do
+	cp "$LP_DIR/$f" "$stage/$LOGIN/$f"
+done
 tw login.css.input login.css
 
 mv "$stage/tw.css" internal/web/assets/tw.css
