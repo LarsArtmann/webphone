@@ -161,6 +161,14 @@ func (s *Service) Shutdown() error {
 	return firstErr
 }
 
+// Usermgmt exposes the embedded usermgmt service for READ-ONLY page
+// wiring: the loginpage package reads HasWebAuthn to decide which
+// sections to render. Every ceremony still runs through this seam's
+// methods — nothing outside may drive the identity layer directly.
+func (s *Service) Usermgmt() *usermgmt.Service {
+	return s.users
+}
+
 // BeginLogin starts the passkey login ceremony for an email. The
 // response's SessionKey doubles as the FinishLogin userID (usermgmt's own
 // wire contract — see its AuthHandler).
