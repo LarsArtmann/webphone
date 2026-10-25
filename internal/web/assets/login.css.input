@@ -1,0 +1,127 @@
+/* Input for the login-page stylesheet (internal/web/assets/login.css) —
+   the cqrs-htmx/loginpage surface at /login. Rebuild ONLY with
+   scripts/build-tw-css.sh (tailwindcss v4 ONLY; v3 emits a different
+   layer model and breaks the dark variant), staged build, locked nixpkgs
+   rev. The artifact NEVER merges with tw.css (the shell build) or
+   health.css (the dashboard build).
+
+   Unlike the shell — which links app.css + tw.css as two stylesheets —
+   the library page takes ONE CSSPath, so this build INLINES app.css:
+   the design tokens the @theme remap resolves through must live in the
+   artifact itself. The unlayered-token + layered-utility cascade shape
+   is identical to the shell's two-link arrangement (coexistence
+   proven).
+
+   The @theme remap below is BYTE-PINNED to tw.css.input's (the build
+   script gates the parity); only the dark variant and the @source set
+   differ. */
+
+@import "tailwindcss";
+@import "./app.css";
+
+/* Manual dark mode, EXTENDED for the login page: webphone toggles
+   data-theme="dark" on <html> (theme-preload.js + shell.js), while the
+   library page's ThemeScript resolves prefers-color-scheme into a .dark
+   class on the root (its own preload; the page has no theme-preload.js).
+   This variant answers BOTH, so dark: utilities activate on the login
+   page whichever mechanism drives them. */
+
+@custom-variant dark (&:where(:root[data-theme="dark"], :root[data-theme="dark"] *, .dark, .dark *));
+
+@theme inline {
+  /* accent family (signal green) */
+  --color-blue-50: color-mix(in oklab, var(--accent) 10%, transparent);
+  --color-blue-100: color-mix(in oklab, var(--accent) 15%, transparent);
+  --color-blue-300: var(--accent-strong);
+  --color-blue-400: var(--accent-strong);
+  --color-blue-500: var(--accent-strong);
+  --color-blue-600: var(--accent);
+  --color-blue-800: var(--accent);
+  --color-blue-900: var(--accent);
+
+  /* neutral family (graphite desk) */
+  --color-gray-50: var(--surface-2);
+  --color-gray-100: var(--surface-3);
+  --color-gray-200: var(--border-strong);
+  --color-gray-300: var(--border);
+  --color-gray-400: var(--muted);
+  --color-gray-500: var(--muted);
+  --color-gray-600: var(--muted);
+  --color-gray-700: var(--border-strong);
+  --color-gray-800: var(--surface-2);
+  --color-gray-900: var(--text);
+  --color-gray-950: var(--bg);
+
+  /* white is the on-accent ink for filled buttons; bg-white (secondary
+     button in light) resolves to the same #ffffff the light surface
+     uses, and dark:bg-gray-800 overrides it in dark. */
+  --color-white: var(--on-accent);
+
+  /* danger family */
+  --color-red-50: color-mix(in oklab, var(--danger) 10%, transparent);
+  --color-red-300: var(--danger);
+  --color-red-400: var(--danger);
+  --color-red-500: var(--danger);
+  --color-red-600: var(--danger);
+  --color-red-700: var(--danger);
+  --color-red-800: var(--danger);
+  --color-red-900: var(--danger);
+
+  /* warning family */
+  --color-amber-50: color-mix(in oklab, var(--warn) 10%, transparent);
+  --color-amber-300: var(--warn);
+  --color-amber-400: var(--warn);
+  --color-amber-600: var(--warn);
+  --color-amber-700: var(--warn);
+  --color-amber-800: var(--warn);
+  --color-amber-900: var(--warn);
+
+  /* ok family */
+  --color-green-50: color-mix(in oklab, var(--ok) 10%, transparent);
+  --color-green-300: var(--ok);
+  --color-green-400: var(--ok);
+  --color-green-600: var(--ok);
+  --color-green-700: var(--ok);
+  --color-green-800: var(--ok);
+  --color-green-900: var(--ok);
+
+  /* webphone radii (theme-invariant). The literals duplicate app.css
+     tokens because Tailwind's own token names (--radius-md/--radius-lg)
+     collide with the app names they must follow; build-tw-css.sh
+     asserts the values stay in lockstep with app.css. */
+  --radius-md: 9px;
+  --radius-lg: 12px;
+}
+
+/* Scan set, relative to this file (internal/web/assets/): the webphone
+   views (same rationale as tw.css.input), the adopted templ-components
+   sources (button/input/label/base/icon — the page renders
+   forms.Input + display.Button), the feedback pair the page adds
+   (Alert + the Spinner inside loading.templ), and the loginpage's own
+   page + embedded JS (the lp-* hooks and the "hidden" toggles). */
+@source "../../../internal/web/views";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/definition_list.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/definition_list_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/empty_state.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/empty_state_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button_go.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/button_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/input_classes.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/label.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/label_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/textarea.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/forms/textarea_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/layout/base.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/layout/base_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/icons/icon.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/icons/icon_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/feedback/alert.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/feedback/alert_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/feedback/loading.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/feedback/loading_templ.go";
+@source "../../../vendor/github.com/larsartmann/cqrs-htmx/loginpage/v4/page.templ";
+@source "../../../vendor/github.com/larsartmann/cqrs-htmx/loginpage/v4/page_templ.go";
+@source "../../../vendor/github.com/larsartmann/cqrs-htmx/loginpage/v4/assets/login.js";
