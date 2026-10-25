@@ -81,13 +81,13 @@ change notifications in their summaries; NO commands are declared
 model and no cross-service consumer edges render.
 
 - [ ] [blocked:push] **Push the catalog adoption** — the hub's
-  sources.json already lists webphone as a source, so the next hub CI
-  build clones webphone@main and REQUIRES the pushed `catalog` command
-  (until it lands, that build reds on webphone's export step; the
-  hub+webphone pushes are a pair). Ritual unchanged: webphone-push
-  first, stack re-pin after (tri-repo rule). **UPDATE 2026-10-24
-  evening: the `catalog` command IS pushed (origin/main ≥ 46cc6db) —
-  the hub side of the pair (re-pin/build) is the remaining leg.**
+      sources.json already lists webphone as a source, so the next hub CI
+      build clones webphone@main and REQUIRES the pushed `catalog` command
+      (until it lands, that build reds on webphone's export step; the
+      hub+webphone pushes are a pair). Ritual unchanged: webphone-push
+      first, stack re-pin after (tri-repo rule). **UPDATE 2026-10-24
+      evening: the `catalog` command IS pushed (origin/main ≥ 46cc6db) —
+      the hub side of the pair (re-pin/build) is the remaining leg.**
 
 ### Wire contracts SHIPPED (2026-10-24 — same catalog universe, the OTHER two lanes)
 
@@ -115,32 +115,32 @@ HARVEST 2026-10-24 ~20:05 (the freshness gate + research index + the
 three-catalog ruling SHIPPED since that plan was written):
 
 - [ ] **File the seven catalog-exporter candidates upstream**
-  (go-cqrs-lite): response-header support (Retry-After forced into 429
-  description text), 204 exempt from the 2xx-body-schema rule,
-  `WithParam` type support, no fabricated default kafka server,
-  multipart request bodies, operationId Pascal leaves dots, OpenAPI
-  3.1.0 emission. EACH needs a source-level repro against the pinned
-  v4.9.0 + a dupe search (verify-before-filing + github-voice).
-  **Priority:** Medium · **Effort:** M.
+      (go-cqrs-lite): response-header support (Retry-After forced into 429
+      description text), 204 exempt from the 2xx-body-schema rule,
+      `WithParam` type support, no fabricated default kafka server,
+      multipart request bodies, operationId Pascal leaves dots, OpenAPI
+      3.1.0 emission. EACH needs a source-level repro against the pinned
+      v4.9.0 + a dupe search (verify-before-filing + github-voice).
+      **Priority:** Medium · **Effort:** M.
 - [ ] **metaengine v4.19.0→v4.20.0 bump train** — 418 commits (codec
-  contract ADR, typedfixture branded-ID fixtures, no-decoder proofs);
-  risk surface = readmodels' Open-asserted capabilities. Priced in
-  [docs/planning/2026-10-24_20-05_dependency-train-notes.md](docs/planning/2026-10-24_20-05_dependency-train-notes.md).
-  **Priority:** Medium · **Effort:** M.
+      contract ADR, typedfixture branded-ID fixtures, no-decoder proofs);
+      risk surface = readmodels' Open-asserted capabilities. Priced in
+      [docs/planning/2026-10-24_20-05_dependency-train-notes.md](docs/planning/2026-10-24_20-05_dependency-train-notes.md).
+      **Priority:** Medium · **Effort:** M.
 - [ ] **OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
-  (architecture-reference + export-selection features webphone does
-  not use; the seven upstream candidates are NOT obviously fixed).
-  Lean: ride the next natural train. Same notes file. **Priority:**
-  Low · **Effort:** S (decision) / M (bump).
+      (architecture-reference + export-selection features webphone does
+      not use; the seven upstream candidates are NOT obviously fixed).
+      Lean: ride the next natural train. Same notes file. **Priority:**
+      Low · **Effort:** S (decision) / M (bump).
 - [ ] **webphone-android consumes the specs** — fetch/parse
-  `/openapi.json` in the client bootstrap, derive the push-devices
-  client calls, parse the asyncapi ring contract, verify the CSRF-dance
-  paths against the spec (completion-plan N14; other repo's gates).
-  **Priority:** Medium · **Effort:** M.
+      `/openapi.json` in the client bootstrap, derive the push-devices
+      client calls, parse the asyncapi ring contract, verify the CSRF-dance
+      paths against the spec (completion-plan N14; other repo's gates).
+      **Priority:** Medium · **Effort:** M.
 - [ ] **OWNER CALL: /openapi.json ETag + golden fixture** — cheap
-  client caching / byte-pinned generated spec; recorded, not built
-  (a disabled deployment must not promise; an ETag is a product
-  decision). **Priority:** Low · **Effort:** S.
+      client caching / byte-pinned generated spec; recorded, not built
+      (a disabled deployment must not promise; an ETag is a product
+      decision). **Priority:** Low · **Effort:** S.
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 
@@ -451,15 +451,15 @@ Owner/stack legs that block or derive from webphone work: repair the stack FreeS
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
 
 - [ ] **Hub cross-link: webphone's wire contracts from its inventory page**
-  (eventcatalog-hub) — DISCOVERED 2026-10-24: the hub's `services/` AND
-  `domains/` are GENERATED (gitignored; merge.py unions source trees,
-  bodies preserved first-source-wins; the webphone body comes from the
-  SystemNix inventory writer). A contract-spec link therefore needs a
-  PIPELINE home: either the SystemNix inventory module (a links/notes
-  field rendered into the Details table) or webphone's OWN exported
-  eventcatalog service page (the summary in
-  `internal/domain.BuildCatalog` — the concurrent session's file; ask
-  first). A direct `services/webphone/index.mdx` edit is drift (tested:
-  appended content sits untracked until the next build clobbers it —
-  restored byte-exact 2026-10-24). **Priority:** Low · **Effort:** M
-  (pipeline change, other repo).
+      (eventcatalog-hub) — DISCOVERED 2026-10-24: the hub's `services/` AND
+      `domains/` are GENERATED (gitignored; merge.py unions source trees,
+      bodies preserved first-source-wins; the webphone body comes from the
+      SystemNix inventory writer). A contract-spec link therefore needs a
+      PIPELINE home: either the SystemNix inventory module (a links/notes
+      field rendered into the Details table) or webphone's OWN exported
+      eventcatalog service page (the summary in
+      `internal/domain.BuildCatalog` — the concurrent session's file; ask
+      first). A direct `services/webphone/index.mdx` edit is drift (tested:
+      appended content sits untracked until the next build clobbers it —
+      restored byte-exact 2026-10-24). **Priority:** Low · **Effort:** M
+      (pipeline change, other repo).

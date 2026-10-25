@@ -2,7 +2,7 @@
 
 **Claims verified as of 2026-10-24 16:22 CEST** (git state re-checked at that
 time; the audit itself ran ~12:15–12:44 CEST). Scope: THIS session only — one
-task: *"Do we use /home/lars/projects/go-cqrs-lite/catalog superbly?"* — plus
+task: _"Do we use /home/lars/projects/go-cqrs-lite/catalog superbly?"_ — plus
 this self-review. Nothing else was researched or changed.
 
 **Deliverable:** `docs/research/2026-10-24_go-cqrs-lite-catalog-deep-dive.html`
@@ -134,33 +134,33 @@ ruling and was respected, not re-litigated.
 
 ## f) Things to get done next (ranked, impact × ease; 25 real items, not padded)
 
-| # | Item | Why |
-|---|------|-----|
-| 1 | Owner decision: adopt or decline `catalog/openapi` (report opp. 2) | The one call that unlocks or closes items 3–11 |
-| 2 | If decline: widen the 2026-10-19 ruling to cover openapi+asyncapi in TODO_LIST.md:68 | Keeps the decision honest and re-audit-proof |
-| 3 | If adopt: hoist login/session DTOs to named package-level types | Prereq for generics; also fixes the report's example gap (d3) |
-| 4 | Build the catalog registry (session×3, csrf, contacts×3, calls) | The 4 currently-documented paths, generated instead of hand-written |
-| 5 | Serve generated spec from `/openapi.json`; keep the 3 pin tests | Tests then pin generated output — drift dies |
-| 6 | Add route-vs-registry drift test | `Validate()` cannot see the mux |
-| 7 | Extend spec to `/api/transcribe` + `/api/transcripts` | Real machine consumers, undocumented today |
-| 8 | Extend spec to `/api/push-devices` ×3 | webphone-android's contract |
-| 9 | vendorHash re-pin for catalog + go-faster/yaml | Mandatory tail of any dep add |
-| 10 | asyncapi export for wire contracts (ring, receipt, webhook lanes, SSE kinds) | Three repos share prose contracts today |
-| 11 | `webphone -export-contracts` headless subcommand (bank-sync shape) | CI-checkable, hub-linkable |
-| 12 | Investigate cqrs-htmx's `catalog-demo` for reusable plumbing | The root dep may already ship the seam — never checked this session |
-| 13 | Inspect metaengine v4.19.0→v4.20.0 delta, then bump | Side finding; one vendorHash train could carry items 9+13 together |
-| 14 | HARVEST this report's opportunities into TODO_LIST (docs-health) | Reports entombed without harvest rot |
-| 15 | Add the DTO-hoisting prerequisite addendum to the report (d3) | 3-line honesty fix to my own artifact |
-| 16 | Visual render check of the deep-dive report (headless chromium) | Parsed ≠ pretty |
-| 17 | Create `docs/research/README.md` index (7 reports) | Discoverability; the skill's index row has nowhere to land today |
-| 18 | Document passkey routes as CONDITIONAL surfaces if spec adopted | They render only when `auth.passkey.*` is on |
-| 19 | Record the OpenAPI-vs-AsyncAPI split rule (`/hooks/*` → asyncapi home) | Prevents future seam confusion |
-| 20 | Decide the documentation stance for `/api/export` + `/api/auth/oauth2/*` | In the route list, absent from every doc home |
-| 21 | If adopted: message `Version` + `Changelog` discipline from day one | The README's versioning guidance, applied at birth |
-| 22 | Hub: link wire-contract specs from webphone's inventory page | Cross-repo (eventcatalog-hub), cheap once item 10 exists |
-| 23 | webphone-android: consume the published spec | Closes the loop that motivated finding 1 |
-| 24 | Fix or accept the daemon's template-only commit in history (3d2ee89) | Cosmetic; `git rebase -i` risk likely outweighs the value — lean accept |
-| 25 | Re-audit row 4 (EventCatalog) ONLY on the recorded trigger | CQRS-commands adoption; the ruling stays until then |
+| #  | Item                                                                                 | Why                                                                     |
+| -- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| 1  | Owner decision: adopt or decline `catalog/openapi` (report opp. 2)                   | The one call that unlocks or closes items 3–11                          |
+| 2  | If decline: widen the 2026-10-19 ruling to cover openapi+asyncapi in TODO_LIST.md:68 | Keeps the decision honest and re-audit-proof                            |
+| 3  | If adopt: hoist login/session DTOs to named package-level types                      | Prereq for generics; also fixes the report's example gap (d3)           |
+| 4  | Build the catalog registry (session×3, csrf, contacts×3, calls)                      | The 4 currently-documented paths, generated instead of hand-written     |
+| 5  | Serve generated spec from `/openapi.json`; keep the 3 pin tests                      | Tests then pin generated output — drift dies                            |
+| 6  | Add route-vs-registry drift test                                                     | `Validate()` cannot see the mux                                         |
+| 7  | Extend spec to `/api/transcribe` + `/api/transcripts`                                | Real machine consumers, undocumented today                              |
+| 8  | Extend spec to `/api/push-devices` ×3                                                | webphone-android's contract                                             |
+| 9  | vendorHash re-pin for catalog + go-faster/yaml                                       | Mandatory tail of any dep add                                           |
+| 10 | asyncapi export for wire contracts (ring, receipt, webhook lanes, SSE kinds)         | Three repos share prose contracts today                                 |
+| 11 | `webphone -export-contracts` headless subcommand (bank-sync shape)                   | CI-checkable, hub-linkable                                              |
+| 12 | Investigate cqrs-htmx's `catalog-demo` for reusable plumbing                         | The root dep may already ship the seam — never checked this session     |
+| 13 | Inspect metaengine v4.19.0→v4.20.0 delta, then bump                                  | Side finding; one vendorHash train could carry items 9+13 together      |
+| 14 | HARVEST this report's opportunities into TODO_LIST (docs-health)                     | Reports entombed without harvest rot                                    |
+| 15 | Add the DTO-hoisting prerequisite addendum to the report (d3)                        | 3-line honesty fix to my own artifact                                   |
+| 16 | Visual render check of the deep-dive report (headless chromium)                      | Parsed ≠ pretty                                                         |
+| 17 | Create `docs/research/README.md` index (7 reports)                                   | Discoverability; the skill's index row has nowhere to land today        |
+| 18 | Document passkey routes as CONDITIONAL surfaces if spec adopted                      | They render only when `auth.passkey.*` is on                            |
+| 19 | Record the OpenAPI-vs-AsyncAPI split rule (`/hooks/*` → asyncapi home)               | Prevents future seam confusion                                          |
+| 20 | Decide the documentation stance for `/api/export` + `/api/auth/oauth2/*`             | In the route list, absent from every doc home                           |
+| 21 | If adopted: message `Version` + `Changelog` discipline from day one                  | The README's versioning guidance, applied at birth                      |
+| 22 | Hub: link wire-contract specs from webphone's inventory page                         | Cross-repo (eventcatalog-hub), cheap once item 10 exists                |
+| 23 | webphone-android: consume the published spec                                         | Closes the loop that motivated finding 1                                |
+| 24 | Fix or accept the daemon's template-only commit in history (3d2ee89)                 | Cosmetic; `git rebase -i` risk likely outweighs the value — lean accept |
+| 25 | Re-audit row 4 (EventCatalog) ONLY on the recorded trigger                           | CQRS-commands adoption; the ruling stays until then                     |
 
 ## g) Questions I can NOT figure out myself
 
@@ -179,6 +179,6 @@ ruling and was respected, not re-litigated.
 
 ---
 
-*Point-in-time snapshot; rot starts immediately. Companion artifact:
+_Point-in-time snapshot; rot starts immediately. Companion artifact:
 `docs/research/2026-10-24_go-cqrs-lite-catalog-deep-dive.html` (corrected
-footer, uncommitted at 16:22 — the daemon will take it).*
+footer, uncommitted at 16:22 — the daemon will take it)._
