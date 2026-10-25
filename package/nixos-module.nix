@@ -62,11 +62,13 @@ let
     ext: (oauth2PasswordFiles.${ext} or "") == ""
   ) oauth2MappedExtensions;
 
-  # A passwordless config (the shared users map) derives passkey mode in
-  # the app, which then DEMANDS rp_id/rp_origins. Behind the generated
-  # vhost they follow from caddy.hostName; a raw value still wins
-  # (mkDefault), so an operator pinning something else stays in charge.
-  deriveWebAuthnRP = cfg.caddy.enable && (cfg.oauth2.enable || oauth2Users != { });
+  # A typed OIDC config derives passkey mode in the app (the shared
+  # users map feeds both modes), which then DEMANDS rp_id/rp_origins.
+  # Behind the generated vhost they follow from caddy.hostName; a raw
+  # value still wins (mkDefault), so an operator pin stays authoritative.
+  # Deliberately keyed on the TYPED lane only: reading the merged
+  # settings.auth.users from inside the settings definition would recurse.
+  deriveWebAuthnRP = cfg.caddy.enable && cfg.oauth2.enable;
 
   bareHTTPS = url: lib.match "https://[^/?#]+(/[^?#]*)?" url != null;
 in
@@ -144,7 +146,9 @@ in
         '';
       }
       {
-        assertion = (cfg.settings.auth.passkey.rp_id or "") != "" && (cfg.settings.auth.passkey.rp_origins or [ ]) != [ ];
+        assertion =
+          (cfg.settings.auth.passkey.rp_id or "") != ""
+          && (cfg.settings.auth.passkey.rp_origins or [ ]) != [ ];
         message = ''
           services.webphone.oauth2.enable turns on the shared identity layer,
           which the app derives passkey mode from — settings.auth.passkey.rp_id

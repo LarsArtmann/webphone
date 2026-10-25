@@ -56,6 +56,8 @@ const (
 
 // apiCatalog declares the session-gated JSON surface as a catalog:
 // one service, cookie-auth security, one message per (path, method).
+//
+//nolint:gohumanize // the "4 KiB"/"8 KiB"/"25 MiB" matches are fixed limits in API doc prose, not runtime formatting
 func apiCatalog() *catalog.Catalog {
 	builder := catalog.NewBuilder(apiContractTitle, apiContractVersion)
 	builder.Registry().AddSecurityScheme(catalog.SecurityScheme{

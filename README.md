@@ -161,6 +161,14 @@ in the JSON file.
 | `auth.passkey.rp_origins`               | _required_                | Browser-facing origins (`https://…`); each origin's host must equal `rp_id`                                                                                                                                          |
 | `auth.passkey.users`                    | _required_                | Email → `{extensions: ["1000"], display_name: "Lars"}`: the mapping a verified passkey resolves to (first extension binds the session; every mapped extension's `identities` number shows in the whoami line)        |
 | `auth.passkey.extension_password_files` | _required_                | Extension → runtime file carrying its SIP directory password (single line, read at login time, never cached; empty/missing fails closed)                                                                             |
+| `auth.users`                            | _empty_                   | Shared email → `{extensions: [...], display_name}` mapping for EVERY passwordless mode (passkey and OIDC); `auth.passkey.users` stays supported but the two must agree — one mapping governs both modes               |
+| `auth.extension_password_files`         | _empty_                   | Shared extension → SIP-password file map (folded into the passkey shape); every extension a resolved login can bind needs one                                                                                        |
+| `auth.oauth2.issuer`                    | _empty_ = disabled        | OIDC discovery base URL (bare https, no query/fragment — the `iss` claim is matched verbatim); any `auth.oauth2.*` key enables the mode, all-or-nothing per validation                                                |
+| `auth.oauth2.client_id`                 | `webphone`                | Registered OIDC client id (confidential client)                                                                                                                                                                      |
+| `auth.oauth2.client_secret_file`        | _required_                | Runtime file holding the client secret (single line, read per exchange so rotation needs no restart; missing/empty fails CLOSED)                                                                                     |
+| `auth.oauth2.redirect_url`              | _required_                | Registered callback, absolute https (`https://<host>/api/auth/oauth2/callback`); must match the IdP registration verbatim                                                                                            |
+| `auth.oauth2.scopes`                    | `[openid email profile]`  | OIDC scopes; MUST include `openid` (without it the IdP returns no `id_token`)                                                                                                                                        |
+| `auth.oauth2.allowed_groups`            | _empty_                   | In-app IdP group allowlist; non-empty, every login must carry one of these groups in its claims (fail-closed: no groups claim = denied) — a second gate, not a replacement                                           |
 
 `csrf.*` matters whenever TLS ends at a proxy: a truthful browser POST
 then arrives with `Origin: https://host` while the listener sees plain
@@ -281,6 +289,36 @@ logins next to the extension form:
   extension login; operator-fixable rejections answer 503 with the
   honest `userauth.*` code in the journal (full table:
   docs/error-contract.md).
+
+### OIDC / SSO sign-in (optional)
+
+With `auth.oauth2.*` configured (OFF by default — zero config keeps the
+login card byte-identical), the card gains a "Sign in with Pocket ID"
+entry: `GET /api/auth/oauth2/begin` mints state + nonce + PKCE verifier
+into short-lived path-scoped cookies and redirects to the IdP;
+`GET /api/auth/oauth2/callback` verifies them, exchanges the code,
+verifies the ID token (signature, issuer, audience, expiry, nonce), maps
+the verified email through the SAME `auth.users` mapping the passkey
+mode uses, verifies the sourced SIP directory password against the PBX
+and mints the one webphone session. OIDC tokens are used once and never
+reach the browser; discovery is lazy inside the app, so a dead IdP costs
+a login (with an honest reason code on the card) and never the boot.
+The extension login stays available, so the phone is never locked by an
+IdP outage.
+
+**NixOS module:** `services.webphone.oauth2.*` is the typed front. The
+client secret is handed to systemd via `LoadCredential` — systemd copies
+the operator's file into the unit's private credential directory (0400,
+owned by the service user) at every start, and the app reads that copy,
+so no host-side group grant is needed and a missing source file fails the
+UNIT START instead of the first login. With `caddy.enable` set, the
+callback and the passkey `rp_id`/`rp_origins` are derived from
+`caddy.hostName`, so the vhost and the IdP registration cannot drift.
+Every half configuration fails at EVAL time (`nixos-rebuild`), naming
+the missing key: issuer, secret file, `openid` scope, callback, the
+shared `auth.users` mapping, or a mapped extension's SIP-password file.
+Declaring the OIDC client shape in BOTH the typed options and raw
+`settings.auth.oauth2` is an eval conflict — one home per fact.
 
 ### Derived SIP credentials (optional, credential brokering)
 
@@ -641,6 +679,13 @@ Module options beyond `enable`/`package`/`settings`:
 | `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                       |
 | `caddy.sipUpstream`               | `null`                     | Bridge the SIP WebSocket path to the PBX (e.g. `https://pbx:7443`); null = deployment routes it |
 | `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                |
+| `oauth2.enable`                   | `false`                    | Typed front for `settings.auth.oauth2`: OIDC/SSO login (also derives passkey `rp_id`/`rp_origins`) |
+| `oauth2.issuer`                   | `null`                     | IdP discovery base URL, bare https (required when enabled)                                      |
+| `oauth2.clientId`                 | `webphone`                 | Registered OIDC client id                                                                       |
+| `oauth2.clientSecretFile`         | `null`                     | HOST path of the client secret — copied by systemd `LoadCredential`; the app reads the unit copy |
+| `oauth2.redirectUrl`              | `null`                     | Callback; derived from `caddy.hostName` when null (explicit behind an external front)           |
+| `oauth2.scopes`                   | `[openid email profile]`   | OIDC scopes; must include `openid`                                                              |
+| `oauth2.allowedGroups`            | `[]`                       | IdP group allowlist (non-empty = fail-closed admission gate)                                    |
 
 **Health probes behind the vhost:** `/healthz` (readiness), `/livez`
 (process liveness) and `/startupz` (startup completion) ride the same
