@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Native whisper.cpp provider variant (2026-10-25): `asr.provider =
+  "whispercpp"` posts the same multipart body and decodes the same
+  `{"text"}` answer, but targets the server's native `/inference`
+  endpoint instead of the OpenAI-compatible
+  `/v1/audio/transcriptions` path; the Settings row names the kind.
+  Default config is untouched.
 - Live transcripts now say they persist (2026-10-25): the first
   server-confirmed segment save reveals a persistent
   "Saved to History — N segments." count on the call card (en/de),
