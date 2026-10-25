@@ -207,6 +207,9 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("GET /openapi.json: %d", resp.StatusCode)
 	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/schema+json") {
+		t.Errorf("GET /openapi.json content-type %q, want application/schema+json (the machine-surface media type)", ct)
+	}
 	var doc struct {
 		Openapi string `json:"openapi"`
 		Paths   map[string]struct {
