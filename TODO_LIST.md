@@ -24,6 +24,27 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### loginpage-adoption tail (2026-10-25 train — shipped, two candidates)
+
+The library `/login` page, path rename (`/api/auth/webauthn/login/*`),
+nonce CSP lane, and `login.css` artifact are SHIPPED (CHANGELOG
+[Unreleased]; smoke-verified both modes). Two candidates stay open:
+
+1. **tw.css freshness grep in CI** — the refreshed tw.css carried 15
+   additive utilities NO view references (benign: module-cache sources
+   vs the old vendor snapshot), but nothing FAILS when the artifact
+   drifts from its input. Candidate: a CI step that rebuilds both
+   artifacts via `scripts/build-tw-css.sh` and diffs against the
+   committed bytes (byte-stable by construction). Evidence:
+   docs/status/2026-10-25_16-10_loginpage-adoption-build-green.md.
+2. **Forced-theme users see the OS theme on `/login`** — the library
+   ThemeScript follows `prefers-color-scheme` only; the shell's
+   localStorage forced theme does not apply there. Accepted caveat for
+   now (documented in README § Passkey sign-in); revisit only if the
+   owner notices.
+
+**Priority:** Low · **Effort:** S each.
+
 ### Chat networks follow-ups (2026-10-23 train — matrix + signal shipped, session deferred)
 
 Foundation (network axis + sender registry + receivers) and both shippable lanes

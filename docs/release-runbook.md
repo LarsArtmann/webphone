@@ -97,7 +97,11 @@ re-run the formatter if it moved styled files.
     and the `data-lightbox` image-attachment trigger + shell.js
     `#wp-lightbox` dialog), and the T19 M24/M25 surfaces (Settings CRM
     row + service dots, the `wp-devtest-btn` pre-call device check in
-    phone.templ). The
+    phone.templ), and the 2026-10-25 loginpage-adoption train (the
+    island passkey form became the `passkey-login` link to the
+    library-owned `/login` page — ceremony paths moved to
+    `/api/auth/webauthn/login/{begin,finish}`; the stack E2E greps the
+    login card's markup). The
     next release tag
     MUST run step 7's browser E2E against the new lock; no exemption.
 - **Load precondition**: `release.sh` step 7 refuses to start the
