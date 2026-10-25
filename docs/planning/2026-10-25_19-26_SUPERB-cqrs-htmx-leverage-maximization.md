@@ -191,3 +191,17 @@ M9/M10/M11 close the loop. M12–M14 are optional tails, any time after M11.
   `do.Shutdowner` (dashboard precedent), not `ShutdownerWithError` as the
   fine-plan worded it — Broadcaster.Close cannot fail, so an error return
   would be a lie.
+- M12 SHIPPED: cqrs-htmx issue #32 filed (dup-checked, voice-checked,
+  verified landed). M13 DEVIATED: the README section is written and
+  committed (a7d2836b on cqrs-htmx master), but no PR was opened — the
+  library repo's daemon swept a CONCURRENT session's 19-file in-flight
+  work onto the fresh branch, so a PR would have carried their changes
+  under this train's name; the branch was folded back into master (ref
+  move, tree untouched) and the section rides the daemon's own push flow.
+- M14 SHIPPED: crush-config a9aeb2a carries both lesson rules.
+- Gate collision discovered + resolved: the identity bump changed the
+  generated asyncapi output into shapes pretty_yaml reformats, so the
+  contracts-fresh byte-parity gate and dprint fought over one file.
+  Resolution: `docs/contracts/**` is dprint-EXCLUDED (generated artifact
+  — the generator owns its bytes, same doctrine as `*_templ.go`), the
+  yaml restored to pure generator output.
