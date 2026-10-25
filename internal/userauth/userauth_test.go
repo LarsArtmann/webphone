@@ -43,8 +43,11 @@ func (stubWebAuthn) BeginLogin(_ context.Context, _ []byte) ([]byte, []byte, err
 	return []byte(`{"publicKey":{"challenge":"dGVzdA=="}}`), []byte(`{"sid":"login"}`), nil
 }
 
-func (stubWebAuthn) FinishLogin(_ context.Context, _, _, _ []byte) error {
-	return nil
+// stubUsedCredential is the canned credential state FinishLogin returns:
+// the registered credential with an advanced signature counter — the exact
+// shape the real provider emits (usermgmt persists it via CredentialUsed).
+func (stubWebAuthn) FinishLogin(_ context.Context, _, _, _ []byte) ([]byte, error) {
+	return []byte(`{"id":"dGVzdA==","public_key":"dGVzdA==","attestation_type":"none","sign_count":1,"user_present":true,"user_verified":true}`), nil
 }
 
 const (

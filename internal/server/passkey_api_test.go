@@ -49,8 +49,10 @@ func (pkStub) BeginLogin(_ context.Context, _ []byte) ([]byte, []byte, error) {
 	return []byte(`{"publicKey":{}}`), []byte(`{}`), nil
 }
 
-func (pkStub) FinishLogin(_ context.Context, _, _, _ []byte) error {
-	return nil
+// Mirrors userauth's stub: the returned credential carries the advanced
+// signature counter the service persists (clone detection depends on it).
+func (pkStub) FinishLogin(_ context.Context, _, _, _ []byte) ([]byte, error) {
+	return []byte(`{"id":"dGVzdA==","public_key":"dGVzdA==","attestation_type":"none","sign_count":1,"user_present":true,"user_verified":true}`), nil
 }
 
 // newPasskeyServer wires the identity layer (stub provider, mapped
