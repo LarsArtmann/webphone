@@ -8,6 +8,7 @@ import (
 
 	"github.com/a-h/templ"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
@@ -36,6 +37,11 @@ type handlers struct {
 	// Passkey enrollment ceremonies (token-gated by design; the bucket
 	// only fences runaway clients, the one-time token is the real gate).
 	passkeyLimiter *httputil.KeyedRateLimiter
+	// loginPageHandler is the library-owned passkey login page
+	// (cqrs-htmx/loginpage), built ONLY when the identity layer is wired;
+	// nil keeps /login on the styled 404 (mode off, or the page build
+	// failed loudly at boot).
+	loginPageHandler *loginpage.Handler
 	// cookies is the wired session-cookie policy (Secure mirrors the
 	// TLS-fronted deployment; r.TLS is nil behind the proxy).
 	cookies session.CookiePolicy

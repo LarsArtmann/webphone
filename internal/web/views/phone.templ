@@ -48,18 +48,14 @@ templ PhoneIsland(props PhoneIslandProps) {
 				}
 				if props.Passkey {
 					<h1 data-i18n="passkeySection">Sign in with a passkey</h1>
-					// The passkey front door: email in, ceremony out — the
-					// island's passkey.js binds this form and drives
-					// begin/get/finish, then registers SIP with the minted
-					// session's credentials.
-					<form id="passkey-login-form" autocomplete="off" aria-describedby="passkey-login-error">
-						<label>
-							<span data-i18n="passkeyEmail">Email</span>
-							<input id="passkey-email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required></input>
-						</label>
-						<button type="submit" class="primary" data-i18n="passkeySignin">Sign in with passkey</button>
-					</form>
-					<p class="hint" id="passkey-login-error" hidden></p>
+					// The passkey front door: the library-owned login page at
+					// /login (cqrs-htmx/loginpage) drives the ceremony —
+					// its finish mints the session and the redirect back
+					// here hands the browser to the island's boot probe,
+					// which signs in and REGISTERs (the SSO lane's exact
+					// resume path). A plain link: no island JS, no inline
+					// ceremony client, works without scripts.
+					<a id="passkey-login" class="primary wp-passkey-link" href="/login" data-i18n="passkeySignin">Sign in with passkey</a>
 					// Break-glass: the extension + SIP-password login stays
 					// one disclosure away — it works without the identity
 					// layer and is the recovery path when a passkey is lost.

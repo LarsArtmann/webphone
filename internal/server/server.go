@@ -19,6 +19,7 @@ import (
 	"time"
 
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
@@ -233,6 +234,20 @@ func New(deps Deps) http.Handler {
 	// cookie derives: behind the TLS-terminating proxy r.TLS is always
 	// nil, so Secure must come from the wired policy, not the request.
 	cookies := session.CookiePolicy{Secure: csrfCfg.Secure}
+	// The library passkey login page over the identity layer. Our config
+	// is constant (fixed paths, valid CSS URL), so a build failure is a
+	// wiring defect, not an operator state: log it loudly and leave the
+	// handler nil — /login then answers the styled 404 instead of a
+	// half-built login surface.
+	var loginPage *loginpage.Handler
+	if deps.UserAuth != nil {
+		lp, err := newLoginPage(deps)
+		if err != nil {
+			slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
+		} else {
+			loginPage = lp
+		}
+	}
 	h := &handlers{
 		deps:              deps,
 		loginLimiter:      newKeyedRateLimiter(loginLimit, loginBurst),
@@ -242,6 +257,7 @@ func New(deps Deps) http.Handler {
 		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
 		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
+		loginPageHandler:  loginPage,
 		cookies:           cookies,
 		csrfCfg:           csrfCfg,
 		unread:            newUnreadCache(5 * time.Second),
@@ -321,9 +337,23 @@ func New(deps Deps) http.Handler {
 	// one-time token is the real gate, the bucket only fences runaway
 	// clients).
 	if deps.UserAuth != nil {
-		protected.Handle("POST /api/auth/passkey/begin",
+		// The library login page's front door. The nonce middleware
+		// mints the per-request CSP nonce; loginPage overrides the
+		// app-wide strict CSP for this surface alone (the library's
+		// inline ceremony scripts carry the nonce). Anonymous surface:
+		// the handler redirects a live session to the shell.
+		protected.Handle("GET /login",
+			httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(h.loginPage)))
+		// The passkey login ceremonies at the usermgmt-canonical paths
+		// the library page's JS drives (usermgmt's pinned wire
+		// contract; the handlers are webphone's session-minting own).
+		// Login ceremonies share the login flood budget (email probing
+		// is password-guessing class); enrollment rides its own bucket
+		// (the one-time token is the real gate, the bucket only fences
+		// runaway clients).
+		protected.Handle("POST /api/auth/webauthn/login/begin",
 			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyBeginLogin)))
-		protected.Handle("POST /api/auth/passkey/finish",
+		protected.Handle("POST /api/auth/webauthn/login/finish",
 			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyFinishLogin)))
 		protected.Handle("POST /api/auth/passkey/enroll/verify",
 			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollVerify)))
