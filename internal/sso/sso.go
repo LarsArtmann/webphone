@@ -51,7 +51,7 @@ const providerTTL = 15 * time.Minute
 // Config is the resolved OIDC configuration: the operator-declared client
 // shape plus the mapping the composition root translated from config.
 type Config struct {
-	Issuer                 string
+	Issuer string
 	// brandid-lint:ignore(BD003) resolved OIDC config: the IdP-registered client id is foreign-issuer vocabulary (strong-id ruling)
 	ClientID               string
 	ClientSecretFile       string
