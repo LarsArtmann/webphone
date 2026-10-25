@@ -257,9 +257,24 @@ log. Outbound faxes are not archived (v1 scope).
 With `auth.passkey.*` configured (OFF by default — zero config keeps
 the login card byte-identical), the webphone embeds the
 cqrs-htmx/usermgmt identity layer in-process and offers email + passkey
-logins next to the extension form:
+logins next to the extension form. The passkey front door is the
+cqrs-htmx `loginpage` library page at **`/login`** (published tag
+v4.13.0, chosen so it rides the exact library versions webphone
+already pins): the island login card renders a "Sign in with passkey"
+link to it, and a live session visiting `/login` bounces home (`303
+/`). The page carries the ceremony UI only — no registration
+(enrollment stays CLI-token-gated at `/enroll`) and no OAuth2 buttons
+(the card's Pocket ID link stays the one SSO door). It is the single
+HTML surface with a per-request nonce CSP (`script-src 'self'
+'nonce-…'`; every other surface keeps the strict no-inline-scripts
+policy) and links its own standalone Tailwind build
+(`/assets/login.css`), so it renders styled without the shell. Its
+theme script follows the OS `prefers-color-scheme` — a user who forced
+a theme in the shell may see the OS theme on `/login`.
 
-- **Login order is inverted**: `POST /api/auth/passkey/finish` verifies
+- **Login order is inverted**: `POST /api/auth/webauthn/login/finish`
+  (the usermgmt-canonical path the library's embedded JS posts to;
+  begin answers `{options, session_key}` identically) verifies
   the ceremony, resolves the configured email→extension mapping
   (`auth.passkey.users`), sources the extension's SIP directory
   password from `auth.passkey.extension_password_files` (read per
@@ -273,7 +288,10 @@ logins next to the extension form:
   session-derived REGISTER credential: the directory password never
   reaches the browser (the file read stays, feeding the `/phone-api`
   proxy server-side). Without brokering, the legacy wire keeps the
-  file-sourced password byte-identical.
+  file-sourced password byte-identical. After finish the library page
+  redirects to `/`, where the island's existing boot probe (`GET
+  /api/session`) resumes the session and REGISTERs — the same proven
+  mechanism the SSO lane uses, no new session-adoption path.
 - **Enrollment is CLI-minted**: `webphone -enroll-passkey <email>`
   prints a one-time link (`/enroll?token=…`; the token is stored
   sha256-hashed, expires after 15 minutes, and burns at first verify —

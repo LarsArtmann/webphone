@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Library-owned passkey login page (2026-10-25): `/login` now renders
+  the cqrs-htmx `loginpage` library page (published tag v4.13.0 —
+  pinned so it rides the exact usermgmt/templ-components/httputil
+  versions webphone already pins, zero dependency bumps) with the
+  passkey ceremony only (no registration — enrollment stays
+  token-gated at `/enroll` — and no OAuth2 buttons; the island card's
+  Pocket ID link stays the SSO door). The login ceremony endpoints
+  moved to the usermgmt-canonical paths the library JS drives:
+  `POST /api/auth/webauthn/login/{begin,finish}` (the old
+  `/api/auth/passkey/{begin,finish}` paths are gone; handlers and
+  wire shape unchanged — they still mint the webphone session and
+  source the SIP credential server-side). After finish, the library
+  redirects to `/` where the existing island boot probe resumes the
+  session. The page ships its own standalone Tailwind build
+  (`/assets/login.css`, regenerated with tw.css by
+  `scripts/build-tw-css.sh` — now module-cache-sourced instead of the
+  dead `vendor/` path) and is the ONE HTML surface with a per-request
+  nonce CSP lane (`script-src 'self' 'nonce-…'`, the health-dashboard
+  pattern); every other surface keeps the strict no-inline-scripts
+  CSP. The island login card replaces its passkey form with a styled
+  link to `/login` — fixing a pre-existing gap where the SSO and
+  break-glass links had never received the primary-button treatment.
+  `webauthn.js` moved from `island/app/` to `assets/enroll/` (its only
+  consumer — the island module list stays exactly main.js's import
+  closure). Off by default: zero passkey config keeps `/login` a
+  styled 404 and the login card byte-identical.
 - Typed NixOS surface for OIDC/SSO login (2026-10-25):
   `services.webphone.oauth2.*` renders the app's `auth.oauth2` block,
   hands the client secret to systemd via `LoadCredential` (the app reads
