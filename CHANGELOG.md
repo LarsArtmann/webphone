@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings surfaces the push seam (2026-10-25): when a ring-while-closed
+  transport is configured, the Settings tab gains a "Ring while closed"
+  fact row (naming the live wires) and a read-only registered-devices
+  list for the signed-in extension — identity and recency only, the
+  wake address (token) never leaves the store. Zero push config keeps
+  the panel byte-identical (the chat-lane conditional pattern).
 - Machine-API contracts generated from the wire types (2026-10-24):
   `/openapi.json` is no longer a hand-written 227-line constant — it is
   RENDERED via go-cqrs-lite/catalog from the same named DTOs the
