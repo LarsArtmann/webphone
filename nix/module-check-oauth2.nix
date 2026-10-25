@@ -240,11 +240,13 @@ in
     name = "oauth2-typed-raw-conflict";
     path = pkgs.writeText "oauth2-typed-raw-conflict" (
       let
-        attempt = builtins.tryEval (evaluated (
-            lib.recursiveUpdate validOAuth2 {
-              settings.auth.oauth2.issuer = "https://raw.example.org";
-            }
-          )).config.services.webphone.settings.auth.oauth2.issuer;
+        attempt =
+          builtins.tryEval
+            (evaluated (
+              lib.recursiveUpdate validOAuth2 {
+                settings.auth.oauth2.issuer = "https://raw.example.org";
+              }
+            )).config.services.webphone.settings.auth.oauth2.issuer;
       in
       if !attempt.success then
         "typed + raw oauth2 for the same key is an eval conflict"
