@@ -132,10 +132,10 @@ run — see (d) and (b).
    copy-then-edit would have produced a smaller diff vs the template and
    kept me honest about which parts are template vs content. Minor.
 5. **Concurrent-train detection could be proactive:** a `git log --oneline -3`
-   + `git status` pulse before EACH phase boundary (I did it at start and
-   after failures) would have caught `e27093d` before I wrote the
-   version-currency table rather than after. The snapshot-rot callout saved
-   it, but the pulse cadence is the fix.
+   - `git status` pulse before EACH phase boundary (I did it at start and
+     after failures) would have caught `e27093d` before I wrote the
+     version-currency table rather than after. The snapshot-rot callout saved
+     it, but the pulse cadence is the fix.
 6. **Skill deviation should be declared at deviation time, not in the
    closeout:** the library-deep-dive skill prescribes Context7/agentic_fetch
    for Phase 2; those tools don't exist here, and the local checkout is the
@@ -144,30 +144,30 @@ run — see (d) and (b).
 
 ## f) Next tasks (ranked, feeds docs-health HARVEST)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Wire `ProjectionReadinessCheck(auth.Usermgmt())` as a second /healthz userauth check + `OnProjectionFailed` WARN in userauth.New | High | S | Feature/Reliability |
-| 2 | Finish identity-train tail: adapt `stubWebAuthn` (userauth_test.go) + `pkStub` (passkey_api_test.go) to `FinishLogin → ([]byte, error)` | High | S | Bug (test build) |
-| 3 | Re-pin nix vendorHash after the identity bump (`nix build .#webphone.goModules --rebuild` recipe) | High | M | Build |
-| 4 | Add behavior test: a failed projection turns /healthz 503 naming the projection (guards task 1) | High | S | Quality |
-| 5 | Implement `ExtensionHubs.Shutdown` closing every hub; wire into container shutdown order | Medium | S | Feature |
-| 6 | Test: with a live SSE subscriber, App shutdown completes well under the 30s budget (guards task 5) | Medium | S | Quality |
-| 7 | Verify clone detection end-to-end post-train: replayed counter regressed ⇒ login Rejection (stub-level test) | Medium | S | Quality |
-| 8 | Confirm the auth-audit journal writes LoginSucceeded/LoginFailed rows in usermgmt.db post-train; grep one login | Medium | S | Verification |
-| 9 | Edit AGENTS.md § 2026-10-12: retire "no login events" from the AuditLog-unwired sentence (keep memory-only + unbounded) | Medium | S | Documentation |
-| 10 | Check CI verdicts for runs after `e27093d`; if red on stubs, that's task 2's signal | Medium | S | CI |
-| 11 | Run docs-health HARVEST on this report's (f) into TODO_LIST.md | Medium | S | Documentation |
-| 12 | After the train: re-run `buildflow` full mode (dependency bumps never ride the daemon) | Medium | M | Build |
-| 13 | Re-measure report score post-fixes (findings 1–4 closed ⇒ expected ~89-93/100); append Addendum to the report, do not rewrite | Low | S | Documentation |
-| 14 | File upstream (cqrs-htmx): bounded AuditLog projection request (cap + eviction) — the last blocker to adopting the read side | Low | S | Upstream |
-| 15 | File upstream: usermgmt readiness doc pointer — `ProjectionReadinessCheck` deserves a line in the usermgmt README (consumers miss it; this audit did) | Low | S | Upstream |
-| 16 | Add `cmd/cqrs-htmx-upgrade` codemod note to the report's N/A table (v5-window tooling row — currently an unexplained exclusion) | Low | S | Documentation |
-| 17 | Consider a session-start pulse convention: `git log -3` + `git status` at every phase boundary in multi-session repos | Low | S | Process |
-| 18 | loginpage favicon: after its next tag lands, bump passively and drop finding 5 | Low | S | Dependency |
-| 19 | dashboardui reopen trigger (from report N/A): only if identity-ops debugging ever demands event inspection — leave closed | Low | S | Decision |
-| 20 | Optional: move /tmp screenshots into docs/research/screenshots/ as the run trace (lost on reboot otherwise) | Low | S | Documentation |
-| 21 | Consider whether lockout becomes applicable if any password-adjacent lane ever lands (passkey-only makes it N/A today) | Low | S | Decision |
-| 22 | Personal/tooling: add the symbol-level-verification rule to crush-config lessons (repo commit, not global write) | Low | S | Process |
+| #  | Task                                                                                                                                                  | Impact | Effort | Category            |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------- |
+| 1  | Wire `ProjectionReadinessCheck(auth.Usermgmt())` as a second /healthz userauth check + `OnProjectionFailed` WARN in userauth.New                      | High   | S      | Feature/Reliability |
+| 2  | Finish identity-train tail: adapt `stubWebAuthn` (userauth_test.go) + `pkStub` (passkey_api_test.go) to `FinishLogin → ([]byte, error)`               | High   | S      | Bug (test build)    |
+| 3  | Re-pin nix vendorHash after the identity bump (`nix build .#webphone.goModules --rebuild` recipe)                                                     | High   | M      | Build               |
+| 4  | Add behavior test: a failed projection turns /healthz 503 naming the projection (guards task 1)                                                       | High   | S      | Quality             |
+| 5  | Implement `ExtensionHubs.Shutdown` closing every hub; wire into container shutdown order                                                              | Medium | S      | Feature             |
+| 6  | Test: with a live SSE subscriber, App shutdown completes well under the 30s budget (guards task 5)                                                    | Medium | S      | Quality             |
+| 7  | Verify clone detection end-to-end post-train: replayed counter regressed ⇒ login Rejection (stub-level test)                                          | Medium | S      | Quality             |
+| 8  | Confirm the auth-audit journal writes LoginSucceeded/LoginFailed rows in usermgmt.db post-train; grep one login                                       | Medium | S      | Verification        |
+| 9  | Edit AGENTS.md § 2026-10-12: retire "no login events" from the AuditLog-unwired sentence (keep memory-only + unbounded)                               | Medium | S      | Documentation       |
+| 10 | Check CI verdicts for runs after `e27093d`; if red on stubs, that's task 2's signal                                                                   | Medium | S      | CI                  |
+| 11 | Run docs-health HARVEST on this report's (f) into TODO_LIST.md                                                                                        | Medium | S      | Documentation       |
+| 12 | After the train: re-run `buildflow` full mode (dependency bumps never ride the daemon)                                                                | Medium | M      | Build               |
+| 13 | Re-measure report score post-fixes (findings 1–4 closed ⇒ expected ~89-93/100); append Addendum to the report, do not rewrite                         | Low    | S      | Documentation       |
+| 14 | File upstream (cqrs-htmx): bounded AuditLog projection request (cap + eviction) — the last blocker to adopting the read side                          | Low    | S      | Upstream            |
+| 15 | File upstream: usermgmt readiness doc pointer — `ProjectionReadinessCheck` deserves a line in the usermgmt README (consumers miss it; this audit did) | Low    | S      | Upstream            |
+| 16 | Add `cmd/cqrs-htmx-upgrade` codemod note to the report's N/A table (v5-window tooling row — currently an unexplained exclusion)                       | Low    | S      | Documentation       |
+| 17 | Consider a session-start pulse convention: `git log -3` + `git status` at every phase boundary in multi-session repos                                 | Low    | S      | Process             |
+| 18 | loginpage favicon: after its next tag lands, bump passively and drop finding 5                                                                        | Low    | S      | Dependency          |
+| 19 | dashboardui reopen trigger (from report N/A): only if identity-ops debugging ever demands event inspection — leave closed                             | Low    | S      | Decision            |
+| 20 | Optional: move /tmp screenshots into docs/research/screenshots/ as the run trace (lost on reboot otherwise)                                           | Low    | S      | Documentation       |
+| 21 | Consider whether lockout becomes applicable if any password-adjacent lane ever lands (passkey-only makes it N/A today)                                | Low    | S      | Decision            |
+| 22 | Personal/tooling: add the symbol-level-verification rule to crush-config lessons (repo commit, not global write)                                      | Low    | S      | Process             |
 
 Realistic scope note: items 1–12 are the actionable core; 13–22 are
 low-priority hygiene and decisions. (f) intentionally stops at 22 — padding
