@@ -144,7 +144,7 @@ in the JSON file.
 | `crm.token`                             | _empty_                   | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                            |
 | `paperless.url`                         | _empty_ = disabled        | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                            |
 | `paperless.token`                       | _empty_                   | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                           |
-| `asr.provider`                          | `openai`                  | Provider kind: `openai` (any `/v1/audio/transcriptions` server), `whispercpp` (native whisper.cpp `/inference` server), or `google` (Cloud Speech-to-Text V2)                                                         |
+| `asr.provider`                          | `openai`                  | Provider kind: `openai` (any `/v1/audio/transcriptions` server), `whispercpp` (native whisper.cpp `/inference` server), or `google` (Cloud Speech-to-Text V2)                                                        |
 | `asr.url`                               | _empty_ = disabled        | OpenAI wire: base URL of the provider (e.g. `http://127.0.0.1:8081`); a URL alone enables. Google wire: optional endpoint override (empty derives the `europe-west3` regional endpoint)                              |
 | `asr.token`                             | _empty_                   | OpenAI wire: optional bearer credential (a token WITHOUT a URL fails closed). Google wire: API key sent as `x-goog-api-key`                                                                                          |
 | `asr.model`                             | `whisper-1` / `telephony` | Model name the provider expects (OpenAI wire: e.g. `large-v3`; Google wire defaults to the 8 kHz-tuned `telephony`)                                                                                                  |
@@ -161,9 +161,9 @@ in the JSON file.
 | `auth.passkey.rp_origins`               | _required_                | Browser-facing origins (`https://…`); each origin's host must equal `rp_id`                                                                                                                                          |
 | `auth.passkey.users`                    | _required_                | Email → `{extensions: ["1000"], display_name: "Lars"}`: the mapping a verified passkey resolves to (first extension binds the session; every mapped extension's `identities` number shows in the whoami line)        |
 | `auth.passkey.extension_password_files` | _required_                | Extension → runtime file carrying its SIP directory password (single line, read at login time, never cached; empty/missing fails closed)                                                                             |
-| `auth.users`                            | _empty_                   | Shared email → `{extensions: [...], display_name}` mapping for EVERY passwordless mode (passkey and OIDC); `auth.passkey.users` stays supported but the two must agree — one mapping governs both modes               |
+| `auth.users`                            | _empty_                   | Shared email → `{extensions: [...], display_name}` mapping for EVERY passwordless mode (passkey and OIDC); `auth.passkey.users` stays supported but the two must agree — one mapping governs both modes              |
 | `auth.extension_password_files`         | _empty_                   | Shared extension → SIP-password file map (folded into the passkey shape); every extension a resolved login can bind needs one                                                                                        |
-| `auth.oauth2.issuer`                    | _empty_ = disabled        | OIDC discovery base URL (bare https, no query/fragment — the `iss` claim is matched verbatim); any `auth.oauth2.*` key enables the mode, all-or-nothing per validation                                                |
+| `auth.oauth2.issuer`                    | _empty_ = disabled        | OIDC discovery base URL (bare https, no query/fragment — the `iss` claim is matched verbatim); any `auth.oauth2.*` key enables the mode, all-or-nothing per validation                                               |
 | `auth.oauth2.client_id`                 | `webphone`                | Registered OIDC client id (confidential client)                                                                                                                                                                      |
 | `auth.oauth2.client_secret_file`        | _required_                | Runtime file holding the client secret (single line, read per exchange so rotation needs no restart; missing/empty fails CLOSED)                                                                                     |
 | `auth.oauth2.redirect_url`              | _required_                | Registered callback, absolute https (`https://<host>/api/auth/oauth2/callback`); must match the IdP registration verbatim                                                                                            |
@@ -665,29 +665,29 @@ end to end.
 
 Module options beyond `enable`/`package`/`settings`:
 
-| Option                            | Default                    | Meaning                                                                                         |
-| --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `dataDir`                         | `/var/lib/webphone`        | State directory (must stay under `/var/lib/` — asserted)                                        |
-| `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                        |
-| `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)        |
-| `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                               |
-| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the caddy-derived default when set       |
-| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the caddy-derived default when set       |
-| `serverTiming.enable`             | `false`                    | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`)                                 |
-| `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                                     |
-| `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                            |
-| `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                                  |
-| `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days         |
-| `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                       |
-| `caddy.sipUpstream`               | `null`                     | Bridge the SIP WebSocket path to the PBX (e.g. `https://pbx:7443`); null = deployment routes it |
-| `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                |
+| Option                            | Default                    | Meaning                                                                                            |
+| --------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------- |
+| `dataDir`                         | `/var/lib/webphone`        | State directory (must stay under `/var/lib/` — asserted)                                           |
+| `environmentFile`                 | _none_                     | systemd EnvironmentFile for secrets (`WEBPHONE_GATEWAY__WEBHOOK_SECRET`)                           |
+| `environmentFiles`                | `[]`                       | Additional EnvironmentFiles loaded after `environmentFile` (later files win on dup keys)           |
+| `memoryMax`                       | _uncapped_                 | systemd MemoryMax for the service                                                                  |
+| `csrf.trustedProxies`             | `[]`                       | Typed front for `settings.csrf.trusted_proxies`; beats the caddy-derived default when set          |
+| `csrf.trustedOrigins`             | `[]`                       | Typed front for `settings.csrf.trusted_origins`; beats the caddy-derived default when set          |
+| `serverTiming.enable`             | `false`                    | Server-Timing response headers (sets `WEBPHONE_DEBUG_TIMING=1`)                                    |
+| `backup.enable`                   | `false`                    | Daily online snapshot timer (sqlite `.backup` + blob rsync)                                        |
+| `backup.destDir`                  | `/var/lib/webphone-backup` | Snapshot destination                                                                               |
+| `backup.calendar`                 | `*-*-* 04:30:00`           | Timer schedule                                                                                     |
+| `backup.retentionDays`            | `null`                     | When set (e.g. `30`): daily dated `snapshots/<date>/` history + prune older than N days            |
+| `caddy.enable` / `caddy.hostName` | _off_                      | Generated TLS vhost proxying the app (derives the csrf fronting defaults)                          |
+| `caddy.sipUpstream`               | `null`                     | Bridge the SIP WebSocket path to the PBX (e.g. `https://pbx:7443`); null = deployment routes it    |
+| `caddy.hsts.enable` / `maxAge`    | _off_ / 2y                 | Strict-Transport-Security on the generated vhost                                                   |
 | `oauth2.enable`                   | `false`                    | Typed front for `settings.auth.oauth2`: OIDC/SSO login (also derives passkey `rp_id`/`rp_origins`) |
-| `oauth2.issuer`                   | `null`                     | IdP discovery base URL, bare https (required when enabled)                                      |
-| `oauth2.clientId`                 | `webphone`                 | Registered OIDC client id                                                                       |
-| `oauth2.clientSecretFile`         | `null`                     | HOST path of the client secret — copied by systemd `LoadCredential`; the app reads the unit copy |
-| `oauth2.redirectUrl`              | `null`                     | Callback; derived from `caddy.hostName` when null (explicit behind an external front)           |
-| `oauth2.scopes`                   | `[openid email profile]`   | OIDC scopes; must include `openid`                                                              |
-| `oauth2.allowedGroups`            | `[]`                       | IdP group allowlist (non-empty = fail-closed admission gate)                                    |
+| `oauth2.issuer`                   | `null`                     | IdP discovery base URL, bare https (required when enabled)                                         |
+| `oauth2.clientId`                 | `webphone`                 | Registered OIDC client id                                                                          |
+| `oauth2.clientSecretFile`         | `null`                     | HOST path of the client secret — copied by systemd `LoadCredential`; the app reads the unit copy   |
+| `oauth2.redirectUrl`              | `null`                     | Callback; derived from `caddy.hostName` when null (explicit behind an external front)              |
+| `oauth2.scopes`                   | `[openid email profile]`   | OIDC scopes; must include `openid`                                                                 |
+| `oauth2.allowedGroups`            | `[]`                       | IdP group allowlist (non-empty = fail-closed admission gate)                                       |
 
 **Health probes behind the vhost:** `/healthz` (readiness), `/livez`
 (process liveness) and `/startupz` (startup completion) ride the same

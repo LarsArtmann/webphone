@@ -58,6 +58,7 @@ Nothing landed broken — every pushed state is CI-green and the tree is clean. 
 ## f) Up to 50 things to get done next
 
 In-repo, actionable (this session's tails first):
+
 1. Add a whisper.cpp scenario to the smoke's fake ASR provider (`asr_scenario` variant serving `/inference`), wire into main.
 2. Full local `go test -race ./...` sweep on the final tree (post-whisper.cpp; CI already proved it, close the local loop).
 3. `nix run .#vulnix` over the bumped runtime closure (pre-release dry run of the release.sh gate).
@@ -75,14 +76,14 @@ In-repo, actionable (this session's tails first):
 15. Run buildflow once more on an idle machine to clear the timing-regression noise from the baseline record.
 16. FEATURES.md check: flight-recorder + latency-metrics rows present (go-appkit TODO deletion follow-through).
 17. Error-contract/table freshness spot-check after the provider-enum message change (TestErrorCodeRegistryIsFresh green, but eyeball the rendered row).
-Owner-gated (bring to the sitting, do not self-answer):
+    Owner-gated (bring to the sitting, do not self-answer):
 18. OWNER-calls batch sitting (38-row briefing + everything accrued since).
 19. ASR #48 remote-leg-only transcription default (privacy).
 20. /openapi.json ETag + golden fixture ruling.
 21. catalog v4.10.0 bump — ride the next natural train; revisit when #91–#97 fixes land (v4.11+).
 22. §g 2: Settings push-device revoke — yes/no.
 23. §g 3: who implements #91–#97 upstream.
-Cross-repo (route, don't build here):
+    Cross-repo (route, don't build here):
 24. Hub re-pin/build (the catalog-pushed leg of the pair).
 25. Hub cross-link pipeline home (generated pages need a links field, not a direct mdx edit).
 26. webphone-android: consume `/openapi.json` + asyncapi ring contract; `/api/session` field check.
@@ -92,7 +93,7 @@ Cross-repo (route, don't build here):
 30. Chat lane v2: matrix groups + read receipts, matrix E2EE (big), signal inbound attachments, signal groups, compose-new-DM affordance.
 31. Stack hardening tail: shared `secretFile` fixture, `fs-directory` into `operatorWatchedUnits`, sipcred wire vector into the stack fixture, xml_curl × fail2ban check, suite merge consideration.
 32. Gateway stack-side bits: `ftypqt` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 text.
-Owner-terminal (deploy/ops):
+    Owner-terminal (deploy/ops):
 33. /health host rebuild + logged-out SSO redirect + signed-in cards check.
 34. T13/T15 cutover cluster (xml_curl staged cutover + rollback drill + T15 live proofs).
 35. Passkey live proof + fail-closed password-file drill; enroll-begin ULID-risk verdict.
@@ -104,7 +105,7 @@ Owner-terminal (deploy/ops):
 41. Visual harness: eyeball the 20-shot matrix; per-release persistence decision; vision-CLI cross-check provider/key.
 42. samber/do train owner calls: stack `/health` exposure policy, v2.9.0 fold decision.
 43. End-to-end ring proof: stack leg + android leg + one real device.
-Standing/scheduled:
+    Standing/scheduled:
 44. erraudit tier-2 monthly re-measure (due 2026-11-05).
 45. Standing-watches quarterly re-check (due 2026-12-20: sip.js 0.22, templ-components, oxlint globals, E2E budget).
 46. Quarterly art-dupl baseline/suppressed-set audit (first 2027-01-11).
