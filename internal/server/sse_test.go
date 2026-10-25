@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -193,5 +194,49 @@ func TestSSEContactsNudgeIsPayloadLess(t *testing.T) {
 	deleted := expectEvent(t, events, "contacts")
 	if deleted.Data != "" {
 		t.Errorf("delete nudge must be payload-less, got %.80q", deleted.Data)
+	}
+}
+
+// TestSSEHubShutdownReleasesLiveStreams pins the restart-UX contract
+// behind ExtensionHubs.Shutdown (deep-dive finding 4): a real, connected
+// /events stream — an open tab — must end when the hubs close, well
+// inside the HTTP drain budget. Before the close, an idle SSE handler
+// never returns and the drain burns its full 30s on every restart with
+// a signed-in tab.
+func TestSSEHubShutdownReleasesLiveStreams(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL+"/events", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("events status %d", resp.StatusCode)
+	}
+	reader := ssetest.NewStreamReader(resp.Body)
+	handshake := ssetest.MustReadNextEvent(t, reader)
+	ssetest.RequireEventType(t, handshake, sse.EventConnected)
+
+	// The stream is live and subscribed. Closing the hubs must end it:
+	// the subscriber channel closes, ServeSSE returns, the response
+	// finishes, and the client's body read hits EOF.
+	server.hubs.Shutdown()
+
+	drained := make(chan error, 1)
+	go func() {
+		_, copyErr := io.Copy(io.Discard, resp.Body)
+		drained <- copyErr
+	}()
+	select {
+	case <-drained:
+		// Stream ended on hub close — the drain budget is free.
+	case <-time.After(10 * time.Second):
+		t.Fatal("live /events stream still open 10s after hubs.Shutdown — an open tab would hold the HTTP drain for its full 30s budget")
 	}
 }

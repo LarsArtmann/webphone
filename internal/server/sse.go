@@ -104,6 +104,24 @@ func (h *ExtensionHubs) get(extension domain.Extension) *cqrshtmx.Broadcaster {
 	return hub
 }
 
+// Shutdown closes every hub and empties the registry (idempotent — the
+// container cascade calls it too after the process layer already did).
+// Closing a hub closes its subscriber channels, and ServeSSE returns the
+// moment its channel closes: that is the whole point — a live tab can no
+// longer hold the HTTP drain hostage for the server's full shutdown
+// budget. In-flight tab nudges are dropped, deliberately: SSE payloads
+// are refresh hints, not guaranteed delivery, and the next process
+// serves fresh state on reconnect.
+func (h *ExtensionHubs) Shutdown() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for key, hub := range h.hubs {
+		hub.Close()
+		delete(h.hubs, key)
+		delete(h.seen, key)
+	}
+}
+
 // sweep deletes hubs that are both untouched for hubIdleTTL and carry no
 // live subscribers. A hub mid-connect is safe twice over: get() refreshed
 // its seen stamp microseconds before ServeSSE subscribes, and once the

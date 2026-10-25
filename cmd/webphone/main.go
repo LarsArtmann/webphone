@@ -192,9 +192,12 @@ func run() error {
 		return errors.Join(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
 	case <-ctx.Done():
 		slog.Info("shutting down")
-		// Order matters: the HTTP drain finishes in-flight responses
-		// (SSE hubs flush), THEN the container closes the dashboard
-		// pusher and the SQLite handle.
+		// Order matters: the SSE hubs close FIRST (every live /events
+		// handler returns the moment its subscriber channel closes, so an
+		// open tab cannot hold the drain for the full 30s budget), THEN
+		// the HTTP drain finishes the remaining in-flight responses, THEN
+		// the container closes the dashboard pusher and the SQLite handle.
+		application.Hubs.Shutdown()
 		if err := httpServer.Shutdown(context.WithoutCancel(ctx)); err != nil {
 			return errors.Join(propagatef("http shutdown: %w", err), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
 		}

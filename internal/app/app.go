@@ -71,6 +71,7 @@ var (
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
 	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
+	_ do.Shutdowner               = (*server.ExtensionHubs)(nil)
 )
 
 // probeRefresh runs the probe's background cache loop while the
@@ -110,6 +111,13 @@ type App struct {
 	// call Close on a typed nil; the process layer owns its lifetime.
 	Trace   *traceRecorder
 	Handler http.Handler
+	// Hubs is the per-extension SSE hub registry, exposed so the process
+	// layer can close live streams BEFORE the HTTP drain (ServeSSE
+	// returns the moment its subscriber channel closes — an open tab
+	// cannot hold the drain for the full shutdown budget). The container
+	// cascade closes it again idempotently; the field exists because the
+	// drain runs BEFORE do.Shutdown.
+	Hubs *server.ExtensionHubs
 }
 
 // wrapf is this package's home for family-neutral startup wraps (same
@@ -451,7 +459,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("wire server: %w", err)
 	}
 
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler}, nil
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector)}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
