@@ -162,8 +162,8 @@ func TestCatalogSchemaParity(t *testing.T) {
 
 func exportedFieldNames(t reflect.Type) []string {
 	names := make([]string, 0, t.NumField())
-	for i := range t.NumField() {
-		if f := t.Field(i); f.IsExported() {
+	for f := range t.Fields() {
+		if f := f; f.IsExported() {
 			names = append(names, f.Name)
 		}
 	}
@@ -213,8 +213,8 @@ func TestCatalogExportFrontmatter(t *testing.T) {
 
 		frontmatter := string(content)
 		if body, ok := strings.CutPrefix(frontmatter, "---\n"); ok {
-			if end := strings.Index(body, "\n---"); end >= 0 {
-				frontmatter = body[:end]
+			if before, _, ok := strings.Cut(body, "\n---"); ok {
+				frontmatter = before
 			}
 		}
 		if !strings.Contains(frontmatter, wantVersionLine) {

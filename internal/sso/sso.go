@@ -24,6 +24,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -210,11 +211,8 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 	if len(c.cfg.AllowedGroups) > 0 {
 		allowed := false
 		for _, claim := range claims.Groups {
-			for _, want := range c.cfg.AllowedGroups {
-				if claim == want {
-					allowed = true
-					break
-				}
+			if slices.Contains(c.cfg.AllowedGroups, claim) {
+				allowed = true
 			}
 			if allowed {
 				break

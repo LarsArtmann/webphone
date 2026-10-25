@@ -514,11 +514,9 @@ func TestConcurrentLoginsRunExactlyOneDiscovery(t *testing.T) {
 	errs := make([]error, n)
 	var wg sync.WaitGroup
 	for i := range n {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			_, errs[i] = client.providerFor(testContext(idp))
-		}()
+		})
 	}
 	wg.Wait()
 
