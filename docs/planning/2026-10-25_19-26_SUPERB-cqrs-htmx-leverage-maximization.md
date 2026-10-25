@@ -168,9 +168,26 @@ M9/M10/M11 close the loop. M12–M14 are optional tails, any time after M11.
 
 ## Errata (fill during execution)
 
-- (pending) CI verdict for `e27093d`..`bad4885`: _to record_.
-- (pending) Actual re-derived score post M1–M7: _to record_.
+- CI verdict for `e27093d`..`bad4885`: run 40223475986 (covers c347d8f)
+  RED on exactly the two predicted classes — `go test -race` (stub
+  compile) and `nix build .#webphone` (stale vendorHash); run 40221451743
+  (plan push c05f16b) same classes. Both healed by M1 (`beb870c`) +
+  M2 (pin in `3d47c5c`). Run 40224322289 (3d47c5c) RED on the fast
+  flake checks — the daemon committed the M3 files mid-edit, before
+  `nix fmt` ran; the formatted state (1d1b778+76b831b) is the verified
+  fix and rides the manual push (bar anchor: red main + verified fix
+  in hand, 2026-10-25 20:15 CET).
+- Actual re-derived score post M1–M7: **100/100** (Σ = 14×1 of A=14;
+  all five pins at latest tags). Report §07 Addendum carries the
+  per-finding evidence table.
 - Correction at plan time: the deep-dive's first committed version claimed
   "exactly ONE" FinishLogin stub site; truth is TWO (`pkStub` missed by a
   name-grep). Already fixed in `5c654f7`; recorded here so the next session
   never trusts a count that wasn't symbol-verified.
+- Execution deviation (honest): F32's "copy /tmp screenshots" was SKIPPED —
+  the audit session's screenshot artifacts no longer exist in /tmp; the
+  report's errata records this instead of fabricating evidence.
+- M5 refinement: the container lifecycle assertion is the plain
+  `do.Shutdowner` (dashboard precedent), not `ShutdownerWithError` as the
+  fine-plan worded it — Broadcaster.Close cannot fail, so an error return
+  would be a lie.

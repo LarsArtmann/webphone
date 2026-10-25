@@ -24,6 +24,32 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### cqrs-htmx leverage-maximization tails (2026-10-25 SUPERB train — M1–M11 SHIPPED same day)
+
+The critical path is done: identity-train stub tail + vendorHash (un-reds
+main), projections readiness on /healthz, hub Shutdown pre-drain, clone
+detection + auth-audit journal verified live, report re-scored 100/100
+(§07 Addendum). What remains are the optional tails:
+
+1. **Upstream: bounded AuditLog projection ask** (M12) — file the
+   cqrs-htmx issue (cap + eviction on the AuditLog read projection; the
+   journal itself is durable and fine). Verify-at-source first
+   (memory-only + unbounded still true at v4.16.0), github-voice
+   register. This is the last blocker to the read-side audit surface.
+2. **Upstream: usermgmt README pointer** (M13) — one paragraph +
+   example for `ProjectionReadinessCheck` so the next consumer wires it
+   without an audit. PR against ~/projects/cqrs-htmx;
+   verify-before-filing gate applies.
+3. **Process lessons → crush-config** (M14) — two rules for
+   references/lessons.md: symbol-level greps for "exactly N" claims;
+   cheap session-start baseline (`go build && go test -count=1`).
+4. **loginpage next-tag passive watch** — favicon + NewPageData fixes
+   ride the tag AFTER v4.13.0; bump when it lands, nothing to do now
+   (report finding 5).
+
+Evidence: docs/planning/2026-10-25_19-26_SUPERB-cqrs-htmx-leverage-maximization.md
+(errata filled); docs/research/2026-10-25_cqrs-htmx-deep-dive.html §07.
+
 ### loginpage-adoption tail (2026-10-25 train — shipped, two candidates)
 
 The library `/login` page, path rename (`/api/auth/webauthn/login/*`),

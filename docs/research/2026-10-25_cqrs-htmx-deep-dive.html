@@ -868,6 +868,7 @@
           <a href="#opportunities">Top opportunities</a>
           <a href="#na">Not applicable</a>
           <a href="#rubric">Rubric appendix</a>
+          <a href="#addendum">Addendum — re-score</a>
           <a href="#verify">How to verify</a>
         </nav>
       </aside>
@@ -895,31 +896,31 @@
           <div class="meta">
             <span class="tag amber">Root: v4.14.1 (latest tag)</span>
             <span class="tag">usermgmt: v4.14.3 &rarr; v4.16.0 available</span>
-            <span class="tag teal">Adoption Score: 71/100</span>
+            <span class="tag teal">Adoption Score: 71/100 &rarr; re-scored 100/100 (post-train, same day)</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">71</div>
-            <div class="label">Adoption score (high)</div>
+            <div class="score">100</div>
+            <div class="label">Adoption score (max) — re-scored post-train; 71 at audit time</div>
           </div>
           <div class="score-card">
-            <div class="score">9/14</div>
-            <div class="label">Capabilities fully leveraged</div>
+            <div class="score">14/14</div>
+            <div class="label">Capabilities fully leveraged (was 9/14)</div>
           </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Missed opportunities</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Missed opportunities (was 3)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
             <div class="label">Anti-patterns</div>
           </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Modules behind latest</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Modules behind latest (was 3)</div>
           </div>
         </section>
 
@@ -1545,8 +1546,8 @@ func (h *ExtensionHubs) Shutdown() error {
             <tbody>
               <tr><td>1</td><td>Middleware chain (Chain, Recovery, RequestLoggingSlog, ContextEnrichment)</td><td class="yes">Fully leveraged</td></tr>
               <tr><td>2</td><td>Embedded HTMX + SSE/idiomorph extension bundle</td><td class="yes">Fully leveraged</td></tr>
-              <tr><td>3</td><td>SSE: per-extension Broadcaster hubs + ServeSSE + reaper</td><td>Partially used — Close/drain unwired (finding 4)</td></tr>
-              <tr><td>4</td><td>Health surface: ReadinessHandler, NamedCheck, DebugHandler, livez/startupz</td><td>Partially used — projection check missing (finding 1)</td></tr>
+              <tr><td>3</td><td>SSE: per-extension Broadcaster hubs + ServeSSE + reaper</td><td class="yes">Fully leveraged — Shutdown wired pre-drain + container + drain test (re-scored 2026-10-25)</td></tr>
+              <tr><td>4</td><td>Health surface: ReadinessHandler, NamedCheck, DebugHandler, livez/startupz</td><td class="yes">Fully leveraged — projections check wired (re-scored 2026-10-25)</td></tr>
               <tr><td>5</td><td>Error honesty: SafeDetail, ToastDetail</td><td class="yes">Fully leveraged</td></tr>
               <tr><td>6</td><td>Deprecated re-export avoidance (httputil-direct posture)</td><td class="yes">Fully leveraged</td></tr>
               <tr><td>7</td><td>usermgmt Service wiring (SQLEventStore, OptimizeSQLiteDB, read model)</td><td class="yes">Fully leveraged</td></tr>
@@ -1554,9 +1555,9 @@ func (h *ExtensionHubs) Shutdown() error {
               <tr><td>9</td><td>loginpage deep adoption (full Config surface)</td><td class="yes">Fully leveraged</td></tr>
               <tr><td>10</td><td>identity-model direct types (UserID, parse, sentinels, provider iface)</td><td class="yes">Fully leveraged</td></tr>
               <tr><td>11</td><td>webauthn provider module (waprovider.New)</td><td class="yes">Fully leveraged</td></tr>
-              <tr><td>12</td><td>Projection readiness (ProjectionReadinessCheck, ProjectionStatuses, OnProjectionFailed)</td><td class="no">Missed — in-pin (finding 1)</td></tr>
-              <tr><td>13</td><td>WebAuthn sign-counter clone detection (v4.15+)</td><td class="no">Missed — version lag (finding 2)</td></tr>
-              <tr><td>14</td><td>Durable auth-audit journal (v4.15+)</td><td class="no">Missed — version lag (finding 3)</td></tr>
+              <tr><td>12</td><td>Projection readiness (ProjectionReadinessCheck, ProjectionStatuses, OnProjectionFailed)</td><td class="yes">Fully leveraged — wired + guard-pinned (re-scored 2026-10-25)</td></tr>
+              <tr><td>13</td><td>WebAuthn sign-counter clone detection (v4.15+)</td><td class="yes">Fully leveraged — v4.16 landed, pinned by test (re-scored 2026-10-25)</td></tr>
+              <tr><td>14</td><td>Durable auth-audit journal (v4.15+)</td><td class="yes">Fully leveraged — verified queryable in a live boot (re-scored 2026-10-25)</td></tr>
               <tr><td>15</td><td>App command/query pipeline + decoders + HandlerOptions</td><td>N/A</td></tr>
               <tr><td>16</td><td>HTMX response helpers (RenderPartial, PushURL, NotifySuccess, OOBHTML)</td><td>N/A</td></tr>
               <tr><td>17</td><td>Root idempotency store</td><td>N/A</td></tr>
@@ -1581,6 +1582,52 @@ func (h *ExtensionHubs) Shutdown() error {
               <tr><td>36</td><td>systemadapter</td><td>N/A</td></tr>
             </tbody>
           </table>
+        </section>
+
+        <!-- Addendum: post-train re-score -->
+        <section id="addendum">
+          <h2><span class="num">07</span>Addendum — post-train re-score (2026-10-25, same day)</h2>
+          <p>
+            The SUPERB execution train (plan:
+            <code>docs/planning/2026-10-25_19-26_SUPERB-cqrs-htmx-leverage-maximization.md</code>)
+            shipped every actionable finding the same evening. Re-derived
+            score: &Sigma; = 14&times;1 = 14 of A=14 &rarr;
+            round(100 &times; 14/14) = <strong>100</strong> — every
+            APPLICABLE capability fully leveraged, 0 anti-patterns, all
+            five module pins at their latest tags. The distance to the
+            literal max is exactly the 22 deliberate non-adoptions in the
+            N/A table (setup, dashboardui, lockout, AuditLog read
+            projection, &hellip;) — each with its pinned reason.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr><th>Finding</th><th>Resolution</th><th>Evidence at the commit</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1 — projection readiness unwired</td><td>Wired: passkey-gated &ldquo;projections&rdquo; NamedCheck on /healthz + <code>OnProjectionFailed</code> WARN in userauth.New (<code>Deps.ProjectionStatus</code> test override mirrors the Probe nil-fallback idiom)</td><td>guard test: failed provider &rArr; 503 naming check + worker; live boot healthz reports <code>projections: ok</code></td></tr>
+              <tr><td>2 — identity train tail</td><td>Both FinishLogin stubs return the used credential (library-canonical shape); vendorHash re-pinned</td><td>31/31 Go packages green; <code>nix build .#webphone</code> + module check green with the new FOD hash</td></tr>
+              <tr><td>2b — clone detection dormant</td><td>LIVE and pinned</td><td><code>TestSecondLoginWithNonAdvancingCounterIsRejected</code>: same counter twice &rArr; Rejection naming the clone signal</td></tr>
+              <tr><td>3 — auth-audit journal dormant</td><td>LIVE and verified in a real boot</td><td>a credential-less begin-login landed a durable <code>LoginFailed</code> Auth-stream row in <code>usermgmt.db</code>, queryable via plain SQL</td></tr>
+              <tr><td>4 — hubs never closed</td><td><code>ExtensionHubs.Shutdown</code> (Close per hub) called PRE-drain in cmd/webphone + container Shutdowner (idempotent)</td><td><code>TestSSEHubShutdownReleasesLiveStreams</code>: live stream ends in 0.01s after Shutdown, not the 30s budget</td></tr>
+              <tr><td>5 — loginpage favicon</td><td>Passive watch unchanged — the fix rides the next tag; nothing to do until then</td><td>pin == latest tag today</td></tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Errata</strong>
+            (a) The N/A table omitted a row for the root codemod tool:
+            deliberate non-adoption (no Go-codebase migrations ride it),
+            N/A — counted nowhere, N stays 36, derivation unchanged.
+            (b) The plan&rsquo;s &ldquo;copy /tmp screenshots&rdquo; step
+            was SKIPPED honestly: the audit session&rsquo;s screenshot
+            artifacts no longer exist in /tmp, and this report does not
+            fabricate evidence. DOM-level verification (tag balance,
+            served-bytes greps) stands in as before.
+          </div>
+          <p style="font-size:0.85em;color:var(--muted,#666)">
+            Claims verified as of 2026-10-25 ~20:30 CET at commits
+            beb870c (stub tail) &amp; 76b831b (readiness + pins), on the
+            working tree through 76b831b + daemon cluster commits.
+          </p>
         </section>
 
         <!-- How to verify -->

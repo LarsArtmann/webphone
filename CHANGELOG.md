@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- cqrs-htmx leverage train (2026-10-25): `/healthz` now carries a
+  passkey-gated `projections` readiness check
+  (`cqrshtmx.ProjectionReadinessCheck` over the wired usermgmt service)
+  so a draining or failed projectionhost degrades readiness naming the
+  failed worker — plus the `OnProjectionFailed` WARN hook in the
+  identity-layer boot. `ExtensionHubs.Shutdown` closes every SSE hub
+  BEFORE the HTTP drain (and again, idempotently, in the container
+  cascade), so a restart with a signed-in tab releases the live
+  `/events` stream immediately instead of burning the 30s drain budget.
+  The identity version train (usermgmt v4.16.0, identity-model v4.14.0,
+  webauthn v4.13.0) is fully landed: both test stubs return the used
+  credential, WebAuthn clone detection is pinned by test (a
+  non-advancing signature counter rejects the login naming the clone),
+  and the durable auth-audit journal was verified in a live boot
+  (LoginFailed Auth rows queryable in usermgmt.db).
+
 - Library-owned passkey login page (2026-10-25): `/login` now renders
   the cqrs-htmx `loginpage` library page (published tag v4.13.0 —
   pinned so it rides the exact usermgmt/templ-components/httputil
