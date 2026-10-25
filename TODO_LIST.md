@@ -111,6 +111,36 @@ real vocabularies (seam events, browser JSON, machine-to-machine).
 Remaining tail lives in
 [docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md)
 (freshness gate, upstream exporter filings, android consumption).
+HARVEST 2026-10-24 ~20:05 (the freshness gate + research index + the
+three-catalog ruling SHIPPED since that plan was written):
+
+- [ ] **File the seven catalog-exporter candidates upstream**
+  (go-cqrs-lite): response-header support (Retry-After forced into 429
+  description text), 204 exempt from the 2xx-body-schema rule,
+  `WithParam` type support, no fabricated default kafka server,
+  multipart request bodies, operationId Pascal leaves dots, OpenAPI
+  3.1.0 emission. EACH needs a source-level repro against the pinned
+  v4.9.0 + a dupe search (verify-before-filing + github-voice).
+  **Priority:** Medium · **Effort:** M.
+- [ ] **metaengine v4.19.0→v4.20.0 bump train** — 418 commits (codec
+  contract ADR, typedfixture branded-ID fixtures, no-decoder proofs);
+  risk surface = readmodels' Open-asserted capabilities. Priced in
+  [docs/planning/2026-10-24_20-05_dependency-train-notes.md](docs/planning/2026-10-24_20-05_dependency-train-notes.md).
+  **Priority:** Medium · **Effort:** M.
+- [ ] **OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
+  (architecture-reference + export-selection features webphone does
+  not use; the seven upstream candidates are NOT obviously fixed).
+  Lean: ride the next natural train. Same notes file. **Priority:**
+  Low · **Effort:** S (decision) / M (bump).
+- [ ] **webphone-android consumes the specs** — fetch/parse
+  `/openapi.json` in the client bootstrap, derive the push-devices
+  client calls, parse the asyncapi ring contract, verify the CSRF-dance
+  paths against the spec (completion-plan N14; other repo's gates).
+  **Priority:** Medium · **Effort:** M.
+- [ ] **OWNER CALL: /openapi.json ETag + golden fixture** — cheap
+  client caching / byte-pinned generated spec; recorded, not built
+  (a disabled deployment must not promise; an ETag is a product
+  decision). **Priority:** Low · **Effort:** S.
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 
