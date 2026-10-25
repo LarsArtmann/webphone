@@ -43,3 +43,15 @@ are **conditional** (registered only when `auth.passkey.*` / SSO is
 configured, styled 404 otherwise) and therefore deliberately absent from
 both documents — a disabled deployment must not promise a surface it
 does not mount.
+
+## One home each: why there are THREE catalog builders
+
+webphone declares three catalogs and that is the ruling, not an
+accident (2026-10-24): `internal/domain.BuildCatalog` (the EventCatalog
+federation — domain-seam events; domain cannot import server, and the
+hub consumes it), `internal/server/apidocs.go` (the served OpenAPI —
+references session/api handler DTOs, so it MUST live in server), and
+`internal/server/wirecontracts.go` (this document's AsyncAPI source —
+references hooks + gateway wire types, likewise server-owned). A merge
+would either invert an import edge or split-brain a lane; the shared
+parts (title/version consts, the split rule) stay documented here.
