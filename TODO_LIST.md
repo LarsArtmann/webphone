@@ -85,7 +85,32 @@ model and no cross-service consumer edges render.
   build clones webphone@main and REQUIRES the pushed `catalog` command
   (until it lands, that build reds on webphone's export step; the
   hub+webphone pushes are a pair). Ritual unchanged: webphone-push
-  first, stack re-pin after (tri-repo rule).
+  first, stack re-pin after (tri-repo rule). **UPDATE 2026-10-24
+  evening: the `catalog` command IS pushed (origin/main ≥ 46cc6db) —
+  the hub side of the pair (re-pin/build) is the remaining leg.**
+
+### Wire contracts SHIPPED (2026-10-24 — same catalog universe, the OTHER two lanes)
+
+The openapi/asyncapi lanes of
+[docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md](docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md)
+landed the same day (status:
+[docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md](docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md)):
+`/openapi.json` is GENERATED from the handler DTOs via
+go-cqrs-lite/catalog over all eleven session-gated surfaces (the
+hand-written 227-line const is gone; drift test + seam pins keep it
+honest), and `webphone contracts` renders the machine-to-machine lanes
+(five `/hooks/*` types, the `{"provider_ref"}` receipt, five SSE kinds)
+as the committed `docs/contracts/asyncapi.yaml`. The split rule
+(browser JSON→OpenAPI, machine lanes→AsyncAPI, never both) + the
+passkey/SSO conditional-surface note live in
+[docs/contracts/README.md](docs/contracts/README.md). This section
+records the decision the 16-50 plan's M1 gate asked for: ADOPTED by
+ship, extending the eventcatalog supersession above — the three catalog
+lanes (eventcatalog federation, OpenAPI, AsyncAPI) now cover the three
+real vocabularies (seam events, browser JSON, machine-to-machine).
+Remaining tail lives in
+[docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md)
+(freshness gate, upstream exporter filings, android consumption).
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 
