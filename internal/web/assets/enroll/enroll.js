@@ -8,7 +8,7 @@
 // so retry needs a fresh link — the copy says so.
 import { t } from "../island/app/i18n.js";
 import { csrfToken } from "../island/app/csrf.js";
-import { prepareRegistrationOptions, serializeCredential } from "../island/app/webauthn.js";
+import { prepareRegistrationOptions, serializeCredential } from "./webauthn.js";
 
 const $ = (id) => document.getElementById(id);
 const form = $("enroll-form");

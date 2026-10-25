@@ -21,8 +21,9 @@ import (
 // Wire contract mirrors usermgmt's own AuthHandler (its shape is the
 // library's pinned ceremony contract): begin answers
 // {options, session_key}; finish takes ?user_id=<session_key> plus the
-// RAW ceremony body (attestation/assertion JSON). The island coerces
-// base64url fields both ways (see assets/island/app/webauthn.js).
+// RAW ceremony body (attestation/assertion JSON). The enroll page
+// coerces base64url fields both ways (see assets/enroll/webauthn.js);
+// the /login library page owns its own coercion.
 
 // maxPasskeyBodySize bounds the ceremony bodies (attestation/assertion
 // JSON): a few KB of base64; 64 KiB leaves generous headroom while

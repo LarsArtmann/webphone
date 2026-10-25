@@ -1,9 +1,9 @@
 // webauthn.js under node:test — the base64url wire coercion. The server
 // side of the ceremony is go-webauthn's protocol.URLEncodedBase64 (RFC
 // 4648 §5, NO padding); the browser side speaks ArrayBuffer. Every bug
-// here is an opaque ceremony failure on a fresh passkey login, so the
-// round-trips are pinned against vectors the padding and sign-bit paths
-// actually exercise (lengths 1..5 mod 4, plus a 0-length value).
+// here is an opaque ceremony failure on a fresh passkey enrollment, so
+// the round-trips are pinned against vectors the padding and sign-bit
+// paths actually exercise (lengths 1..5 mod 4, plus a 0-length value).
 import test from "node:test";
 import assert from "node:assert/strict";
 

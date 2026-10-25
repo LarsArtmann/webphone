@@ -2,11 +2,10 @@
 // go-webauthn's protocol.URLEncodedBase64 — RFC 4648 §5 base64url,
 // unpadded — while the browser half (navigator.credentials) speaks
 // ArrayBuffer. Every field crossing that boundary is converted here, in
-// the one module the enrollment flow shares with the standalone enroll
-// page. Pure functions, no DOM: the node:test suite pins the
-// round-trips. (The LOGIN ceremony client now lives in the
-// cqrs-htmx/loginpage library page at /login — its JS owns its own
-// coercion.)
+// the enroll page's own module (the island's login ceremony client now
+// lives in the cqrs-htmx/loginpage library page at /login — its JS owns
+// its own coercion). Pure functions, no DOM: the node:test suite pins
+// the round-trips.
 
 const base64url = {
   // decode loosens the padding requirement deliberately: go-webauthn
