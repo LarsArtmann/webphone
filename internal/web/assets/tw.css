@@ -1109,6 +1109,12 @@
   ) {
     background-color: var(--surface-2);
   }
+  .dark\:bg-gray-900:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *
+  ) {
+    background-color: var(--text);
+  }
   .dark\:bg-gray-950:where(
     :root[data-theme="dark"],
     :root[data-theme="dark"] *
@@ -1132,6 +1138,12 @@
     :root[data-theme="dark"] *
   ) {
     color: var(--accent-strong);
+  }
+  .dark\:text-gray-50:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *
+  ) {
+    color: var(--surface-2);
   }
   .dark\:text-gray-100:where(
     :root[data-theme="dark"],

@@ -91,17 +91,17 @@
     --color-pink-600: oklch(59.2% 0.249 0.584);
     --color-rose-400: oklch(71.2% 0.194 13.428);
     --color-rose-600: oklch(58.6% 0.253 17.585);
-    --color-gray-50: var(--surface-2);
-    --color-gray-100: var(--surface-3);
-    --color-gray-200: var(--border-strong);
-    --color-gray-300: var(--border);
-    --color-gray-400: var(--muted);
-    --color-gray-500: var(--muted);
-    --color-gray-600: var(--muted);
-    --color-gray-700: var(--border-strong);
-    --color-gray-800: var(--surface-2);
-    --color-gray-900: var(--text);
-    --color-gray-950: var(--bg);
+    --color-gray-50: oklch(98.5% 0.002 247.839);
+    --color-gray-100: oklch(96.7% 0.003 264.542);
+    --color-gray-200: oklch(92.8% 0.006 264.531);
+    --color-gray-300: oklch(87.2% 0.01 258.338);
+    --color-gray-400: oklch(70.7% 0.022 261.325);
+    --color-gray-500: oklch(55.1% 0.027 264.364);
+    --color-gray-600: oklch(44.6% 0.03 256.802);
+    --color-gray-700: oklch(37.3% 0.034 259.733);
+    --color-gray-800: oklch(27.8% 0.033 256.848);
+    --color-gray-900: oklch(21% 0.034 264.665);
+    --color-gray-950: oklch(13% 0.028 261.692);
     --color-black: #000;
     --color-white: var(--on-accent);
     --spacing: 0.25rem;
@@ -730,10 +730,10 @@
     border-style: dashed;
   }
   .border-gray-200 {
-    border-color: var(--border-strong);
+    border-color: var(--color-gray-200);
   }
   .border-gray-300 {
-    border-color: var(--border);
+    border-color: var(--color-gray-300);
   }
   .border-red-200 {
     border-color: var(--color-red-200);
@@ -758,13 +758,13 @@
     background-color: var(--accent);
   }
   .bg-gray-50 {
-    background-color: var(--surface-2);
+    background-color: var(--color-gray-50);
   }
   .bg-gray-100 {
-    background-color: var(--surface-3);
+    background-color: var(--color-gray-100);
   }
   .bg-gray-200 {
-    background-color: var(--border-strong);
+    background-color: var(--color-gray-200);
   }
   .bg-red-50 {
     background-color: var(--danger);
@@ -880,19 +880,19 @@
     color: var(--accent);
   }
   .text-gray-400 {
-    color: var(--muted);
+    color: var(--color-gray-400);
   }
   .text-gray-500 {
-    color: var(--muted);
+    color: var(--color-gray-500);
   }
   .text-gray-600 {
-    color: var(--muted);
+    color: var(--color-gray-600);
   }
   .text-gray-700 {
-    color: var(--border-strong);
+    color: var(--color-gray-700);
   }
   .text-gray-900 {
-    color: var(--text);
+    color: var(--color-gray-900);
   }
   .text-green-700 {
     color: var(--ok);
@@ -994,7 +994,7 @@
     --tw-ring-color: var(--accent-strong);
   }
   .ring-gray-300 {
-    --tw-ring-color: var(--border);
+    --tw-ring-color: var(--color-gray-300);
   }
   .ring-green-300 {
     --tw-ring-color: var(--ok);
@@ -1124,7 +1124,7 @@
     color: var(--accent);
   }
   .placeholder\:text-gray-400::placeholder {
-    color: var(--muted);
+    color: var(--color-gray-400);
   }
   @media (hover: hover) {
     .hover\:bg-amber-50:hover {
@@ -1147,10 +1147,10 @@
       background-color: var(--accent-strong);
     }
     .hover\:bg-gray-50:hover {
-      background-color: var(--surface-2);
+      background-color: var(--color-gray-50);
     }
     .hover\:bg-gray-100:hover {
-      background-color: var(--surface-3);
+      background-color: var(--color-gray-100);
     }
     .hover\:bg-green-50:hover {
       background-color: var(--ok);
@@ -1339,7 +1339,7 @@
     .dark,
     .dark *
   ) {
-    border-color: var(--muted);
+    border-color: var(--color-gray-600);
   }
   .dark\:border-gray-700:where(
     :root[data-theme="dark"],
@@ -1347,7 +1347,7 @@
     .dark,
     .dark *
   ) {
-    border-color: var(--border-strong);
+    border-color: var(--color-gray-700);
   }
   .dark\:border-red-800:where(
     :root[data-theme="dark"],
@@ -1382,7 +1382,7 @@
     .dark,
     .dark *
   ) {
-    background-color: var(--border-strong);
+    background-color: var(--color-gray-700);
   }
   .dark\:bg-gray-800:where(
     :root[data-theme="dark"],
@@ -1390,7 +1390,7 @@
     .dark,
     .dark *
   ) {
-    background-color: var(--surface-2);
+    background-color: var(--color-gray-800);
   }
   .dark\:bg-gray-900:where(
     :root[data-theme="dark"],
@@ -1398,7 +1398,7 @@
     .dark,
     .dark *
   ) {
-    background-color: var(--text);
+    background-color: var(--color-gray-900);
   }
   .dark\:bg-gray-950:where(
     :root[data-theme="dark"],
@@ -1406,7 +1406,7 @@
     .dark,
     .dark *
   ) {
-    background-color: var(--bg);
+    background-color: var(--color-gray-950);
   }
   .dark\:bg-red-500:where(
     :root[data-theme="dark"],
@@ -1449,7 +1449,7 @@
     .dark,
     .dark *
   ) {
-    color: var(--surface-2);
+    color: var(--color-gray-50);
   }
   .dark\:text-gray-100:where(
     :root[data-theme="dark"],
@@ -1457,7 +1457,7 @@
     .dark,
     .dark *
   ) {
-    color: var(--surface-3);
+    color: var(--color-gray-100);
   }
   .dark\:text-gray-200:where(
     :root[data-theme="dark"],
@@ -1465,7 +1465,7 @@
     .dark,
     .dark *
   ) {
-    color: var(--border-strong);
+    color: var(--color-gray-200);
   }
   .dark\:text-gray-400:where(
     :root[data-theme="dark"],
@@ -1473,7 +1473,7 @@
     .dark,
     .dark *
   ) {
-    color: var(--muted);
+    color: var(--color-gray-400);
   }
   .dark\:text-gray-500:where(
     :root[data-theme="dark"],
@@ -1481,7 +1481,7 @@
     .dark,
     .dark *
   ) {
-    color: var(--muted);
+    color: var(--color-gray-500);
   }
   .dark\:text-green-400:where(
     :root[data-theme="dark"],
@@ -1553,7 +1553,7 @@
     .dark,
     .dark *
   ) {
-    --tw-ring-color: var(--muted);
+    --tw-ring-color: var(--color-gray-600);
   }
   .dark\:ring-gray-700:where(
     :root[data-theme="dark"],
@@ -1561,7 +1561,7 @@
     .dark,
     .dark *
   ) {
-    --tw-ring-color: var(--border-strong);
+    --tw-ring-color: var(--color-gray-700);
   }
   .dark\:ring-green-800:where(
     :root[data-theme="dark"],
@@ -1633,7 +1633,7 @@
       .dark,
       .dark *
     )::placeholder {
-    color: var(--muted);
+    color: var(--color-gray-500);
   }
   .dark\:checked\:bg-blue-600:where(
       :root[data-theme="dark"],
@@ -1694,7 +1694,7 @@
         .dark,
         .dark *
       ):hover {
-      background-color: var(--border-strong);
+      background-color: var(--color-gray-700);
     }
     .dark\:hover\:bg-green-900\/20:where(
         :root[data-theme="dark"],
@@ -1787,7 +1787,7 @@
       .dark,
       .dark *
     ):focus {
-    --tw-ring-offset-color: var(--text);
+    --tw-ring-offset-color: var(--color-gray-900);
   }
   .dark\:focus-visible\:outline-amber-400:where(
       :root[data-theme="dark"],

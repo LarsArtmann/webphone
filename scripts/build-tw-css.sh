@@ -52,13 +52,21 @@ radius_pair() { # tailwind-token app-token
 radius_pair radius-md radius
 radius_pair radius-lg radius-lg
 
-# @theme parity gate: the login input's token remap must be byte-equal to
-# tw.css.input's (one home for the remap; the login input only ADDS
-# sources and the .dark-extended variant — a diverged remap would theme
-# the login page off the app's palette).
-if ! diff <(sed -n '/@theme inline {/,/^}/p' internal/web/assets/tw.css.input) \
-	<(sed -n '/@theme inline {/,/^}/p' internal/web/assets/login.css.input) >/dev/null; then
-	echo "login.css.input @theme block diverged from tw.css.input — copy it back over (one home per remap)" >&2
+# @theme parity gate: the login input's NON-GRAY token remap must be
+# byte-equal to tw.css.input's (one home for the brand remap; the login
+# input only ADDS sources and the .dark-extended variant). The GRAY
+# family is deliberately ABSENT from the login input — the loginpage's
+# standard dark idiom needs Tailwind's stock palette (the shell's
+# gray-to-token remap inverts the dark page: gray-900=--text makes the
+# dark page background light; caught by the T23 dark shot, 2026-10-25) —
+# so the gate compares only the non-gray token declarations.
+if ! diff <(sed -n '/@theme inline {/,/^}/p' internal/web/assets/tw.css.input | grep -E '^\s*--' | grep -v -- '--color-gray-') \
+	<(sed -n '/@theme inline {/,/^}/p' internal/web/assets/login.css.input | grep -E '^\s*--' | grep -v -- '--color-gray-') >/dev/null; then
+	echo "login.css.input @theme brand slots diverged from tw.css.input — copy the non-gray remap back over (one home per remap)" >&2
+	exit 1
+fi
+if grep -q -- '--color-gray-' internal/web/assets/login.css.input; then
+	echo "login.css.input remaps the gray family — the loginpage's dark idiom needs Tailwind's stock palette; see the input's header comment" >&2
 	exit 1
 fi
 

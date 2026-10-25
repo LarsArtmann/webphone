@@ -12,9 +12,18 @@
    is identical to the shell's two-link arrangement (coexistence
    proven).
 
-   The @theme remap below is BYTE-PINNED to tw.css.input's (the build
-   script gates the parity); only the dark variant and the @source set
-   differ. */
+   The @theme remap below pins the NON-GRAY slots byte-equal to
+   tw.css.input's (the build script gates that parity). The GRAY family
+   deliberately stays Tailwind's default palette: the loginpage uses
+   Tailwind's standard dark idiom, where one gray step serves BOTH a
+   background slot and a text slot across themes (bg-gray-50 light page
+   vs dark:text-gray-50 light ink; dark:bg-gray-900 dark page vs
+   text-gray-900 dark ink). No single app token can fill both — the
+   shell's remap (gray-900 = --text, gray-50 = --surface-2) inverts the
+   dark page: light page background, invisible heading. The accent,
+   white, danger, warn, ok and radii remaps carry the brand; the
+   neutrals stay stock so the library's own dark: design renders
+   correctly (caught by the T23 dark shot, 2026-10-25). */
 
 @import "tailwindcss";
 @import "./app.css";
@@ -39,22 +48,13 @@
   --color-blue-800: var(--accent);
   --color-blue-900: var(--accent);
 
-  /* neutral family (graphite desk) */
-  --color-gray-50: var(--surface-2);
-  --color-gray-100: var(--surface-3);
-  --color-gray-200: var(--border-strong);
-  --color-gray-300: var(--border);
-  --color-gray-400: var(--muted);
-  --color-gray-500: var(--muted);
-  --color-gray-600: var(--muted);
-  --color-gray-700: var(--border-strong);
-  --color-gray-800: var(--surface-2);
-  --color-gray-900: var(--text);
-  --color-gray-950: var(--bg);
+  /* Neutral family: deliberately NOT remapped — see the header comment.
+     Tailwind's default gray palette renders the library's light/dark
+     design correctly; the shell's token remap would invert dark mode. */
 
   /* white is the on-accent ink for filled buttons; bg-white (secondary
      button in light) resolves to the same #ffffff the light surface
-     uses, and dark:bg-gray-800 overrides it in dark. */
+     uses, and dark:bg-gray-800 (stock palette) overrides it in dark. */
   --color-white: var(--on-accent);
 
   /* danger family */
