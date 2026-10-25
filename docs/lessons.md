@@ -813,3 +813,36 @@ never exported), which broke every host evaluation until the export was
 restored — pushing a shared tree publishes other people's in-flight work,
 so check `git log origin/main..HEAD` for commits you did not make before
 pushing.
+
+## Machine-contract surfaces (2026-10-24 train)
+
+- **The daemon pushes red-test state** (2026-10-24, commits e9635bf →
+  70bf5a9): the new route-vs-registry drift test needed a red-test — a
+  ghost route injected into `internal/server/apidocs.go` plus a
+  throwaway probe file in the package dir. The auto-commit daemon
+  snapshotted and PUSHED both mid-verification, so deliberately-red
+  state reached CI. Rule that fell out: red-test artifacts never live
+  in watched package dirs — inject via a scratch copy of the builder,
+  or accept the daemon commit and fix forward FAST (which worked: the
+  fix landed one commit later), but never assume the working tree is
+  private for more than minutes.
+- **Registry drift = the red-main class** (2026-10-24, CI run
+  40113240902): three new errorfamily codes
+  (`webphone.server.openapi_render`, `webphone.server.wire_render`,
+  `webphone.cli.contracts`) shipped without registering them in
+  docs/error-contract.md's generated block — `TestErrorCodeRegistryIsFresh`
+  (internal/arch) reds on exactly this, and it reds ON MAIN because the
+  daemon pushed before `go test ./...` ever ran in the session. The
+  root cause is sequencing, not knowledge: register codes IN THE SAME
+  COMMIT that mints them, and run the full suite before any walk-away
+  when the daemon is live. Recovery was one `-update` run + push (the
+  manual-push bar: red main with a verified fix in hand).
+- **A drift test is born only when its red-test fails** (same train):
+  the first drift test PASSED with the ghost route still in place — a
+  false green. Cause: OpenAPI method map keys are lowercase ("get"),
+  and net/http canonicalizes them at the transport, so the probe was
+  treated as an unsafe method by the CSRF gate and answered 403 before
+  routing — masking the styled catch-all 404 the test exists to catch.
+  Probing with `strings.ToUpper(method)` made the ghost fail loudly.
+  Any test whose whole job is catching an absence must be shown to
+  fail in its presence.
