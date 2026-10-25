@@ -26,11 +26,11 @@ import (
 )
 
 const (
-	pkEmail      = "lars@example.com"
-	pkUnknown    = "nobody@example.com"
-	pkPassword   = "dir-password"
-	uniformBody  = "unknown email or no passkey enrolled\n"
-	passkeyBegin = `/api/auth/webauthn/login/begin`
+	pkEmail       = "lars@example.com"
+	pkUnknown     = "nobody@example.com"
+	pkPassword    = "dir-password"
+	uniformBody   = "unknown email or no passkey enrolled\n"
+	passkeyBegin  = `/api/auth/webauthn/login/begin`
 	passkeyFinish = `/api/auth/webauthn/login/finish`
 )
 

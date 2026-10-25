@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"

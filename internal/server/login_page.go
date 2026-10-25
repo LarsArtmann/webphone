@@ -28,9 +28,9 @@ import (
 // unchanged), so each sign-in method keeps exactly one door.
 func newLoginPage(deps Deps) (*loginpage.Handler, error) {
 	return loginpage.New(loginpage.Config{
-		Service: deps.UserAuth.Usermgmt(),
-		Title:   "Sign in",
-		Brand:   "WebPhone",
+		Service:  deps.UserAuth.Usermgmt(),
+		Title:    "Sign in",
+		Brand:    "WebPhone",
 		Redirect: "/",
 		// The scoped Tailwind build carrying the app tokens + the
 		// loginpage/templ-components classes (see login.css.input).

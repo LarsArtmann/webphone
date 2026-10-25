@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
