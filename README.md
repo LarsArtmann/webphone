@@ -311,9 +311,11 @@ client secret is handed to systemd via `LoadCredential` — systemd copies
 the operator's file into the unit's private credential directory (0400,
 owned by the service user) at every start, and the app reads that copy,
 so no host-side group grant is needed and a missing source file fails the
-UNIT START instead of the first login. With `caddy.enable` set, the
-callback and the passkey `rp_id`/`rp_origins` are derived from
-`caddy.hostName`, so the vhost and the IdP registration cannot drift.
+UNIT START instead of the first login. systemd snapshots the file at unit
+start, so rotate the secret with a `systemctl restart webphone`. With
+`caddy.enable` set, the callback and the passkey `rp_id`/`rp_origins` are
+derived from `caddy.hostName`, so the vhost and the IdP registration
+cannot drift.
 Every half configuration fails at EVAL time (`nixos-rebuild`), naming
 the missing key: issuer, secret file, `openid` scope, callback, the
 shared `auth.users` mapping, or a mapped extension's SIP-password file.

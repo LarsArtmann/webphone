@@ -202,7 +202,7 @@ in
         })
       ];
     }
-    // lib.optionalAttrs (cfg.oauth2.enable || deriveWebAuthnRP) {
+    // lib.optionalAttrs cfg.oauth2.enable {
       auth = lib.mkMerge [
         (lib.mkIf deriveWebAuthnRP {
           # mkDefault: an explicitly declared settings.auth.passkey.*

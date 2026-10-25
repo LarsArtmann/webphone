@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Typed NixOS surface for OIDC/SSO login (2026-10-25):
+  `services.webphone.oauth2.*` renders the app's `auth.oauth2` block,
+  hands the client secret to systemd via `LoadCredential` (the app reads
+  the unit's private copy, so no host-side group grant is needed and a
+  missing secret fails the unit start, not the first login), and derives
+  the callback and passkey `rp_id`/`rp_origins` from `caddy.hostName`.
+  An enabled-but-half configuration now fails at eval time with a named
+  fix (issuer, secret, `openid`, callback, `auth.users`, per-extension
+  password files); typed and raw `auth.oauth2` for the same key is a
+  conflict. Zero config keeps the generated settings byte-identical.
 - Native whisper.cpp provider variant (2026-10-25): `asr.provider =
   "whispercpp"` posts the same multipart body and decodes the same
   `{"text"}` answer, but targets the server's native `/inference`

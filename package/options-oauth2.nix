@@ -69,6 +69,11 @@
         path in place — no host-side group grant needed, and a missing
         source file fails the UNIT START instead of the first SSO login.
 
+        Rotation: systemd snapshots the file at unit start, so after
+        rotating the secret run `systemctl restart webphone` (the app
+        itself re-reads the file per login; the copy is what pins the
+        value for the unit's lifetime).
+
         Declared as a STRING, never a Nix `path`: a path value would be
         copied into the world-readable Nix store and publish the secret
         to every user on the machine.

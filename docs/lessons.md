@@ -158,6 +158,21 @@ and the evidence. Newest last is NOT enforced — group by topic.
   sumdb exactly — if the oracle agrees, your hasher is wrong, not the
   artifact. Companion rule already in AGENTS: vendorHash re-pin via
   `nix build .#webphone.goModules --rebuild` → read `got:` → apply.
+- **Reading `cfg.settings` from inside a `settings` definition recurses**
+  (2026-10-25, the typed-`oauth2` train). The module wanted to derive
+  the WebAuthn `rp_id`/`rp_origins` whenever the shared `auth.users` map
+  is non-empty, so `deriveWebAuthnRP` read `cfg.settings.auth.users` —
+  and because that branch also DEFINES part of `settings`, the eval died
+  with "infinite recursion encountered" while evaluating
+  `services.webphone.settings`. Assertions may read merged settings (a
+  different option, evaluated lazily by the caller); definitions must
+  not. The derivation is now keyed on the typed `oauth2.enable` only,
+  and a comment at the site says why. Companion trap: `pkgs.formats.json`
+  / `types.json` merges nested attrsets per key with PRIORITY resolution
+  (`attrsOf` merges each name via `mergeDefinitions`), so plain+plain is
+  a conflict error while `mkDefault` loses to a raw value — which is why
+  the typed OIDC keys are plain (declare once, conflict if doubled) and
+  the derived rp values are `mkDefault` (operator pin wins).
 
 ## Tooling traps
 
