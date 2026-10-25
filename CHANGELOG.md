@@ -129,6 +129,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- metaengine v4.19.0 → v4.20.0 (2026-10-25, with go-cqrs-lite/id
+  v4.7.3): the codec-contract train. The readmodels seam is untouched —
+  no direct stream-codec use (the engine owns encoding inside the
+  query declarations), and the Open-asserted capabilities
+  (DedupStore, AggregateReader) held under the full suite, the race
+  suite, buildflow, the format/island/contracts-fresh checks, and the
+  KVM backup/restore drill. The shared graph's YAML marshaller style
+  changed (indentation + ref quoting), regenerating the committed
+  asyncapi.yaml content-inertly.
 - Consolidated the push-train surfaces onto one-home helpers: JSON
   responses and cap refusals (`api.writeJSONBody`, `api.storeAtCapacity`),
   the device-API prologue (`api.pushSession`), the HTML render tail

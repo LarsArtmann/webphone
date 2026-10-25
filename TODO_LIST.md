@@ -105,11 +105,17 @@ three-catalog ruling SHIPPED since that plan was written):
       3.1.0 emission. EACH needs a source-level repro against the pinned
       v4.9.0 + a dupe search (verify-before-filing + github-voice).
       **Priority:** Medium · **Effort:** M.
-- [ ] **metaengine v4.19.0→v4.20.0 bump train** — 418 commits (codec
-      contract ADR, typedfixture branded-ID fixtures, no-decoder proofs);
-      risk surface = readmodels' Open-asserted capabilities. Priced in
-      [docs/planning/2026-10-24_20-05_dependency-train-notes.md](docs/planning/2026-10-24_20-05_dependency-train-notes.md).
-      **Priority:** Medium · **Effort:** M.
+- [x] **metaengine v4.19.0→v4.20.0 bump train — SHIPPED 2026-10-25.**
+      Executed per the notes' GO recipe: codec contract read at source
+      (`stream_codec.go`: strings as-is / JSON else, `Err` write
+      variants; webphone has ZERO direct stream-codec use — the engine
+      encodes inside the query declarations), readmodels' Open-asserted
+      capabilities held, full suite + race suite + buildflow (exit 0) +
+      format/island/contracts-fresh checks + the KVM backup/restore
+      drill all green, vendorHash re-pinned via the documented rebuild
+      recipe, and the asyncapi.yaml regenerated content-inertly (the
+      shared graph's YAML style flipped; every ref/name identical).
+      go-cqrs-lite/id rode to v4.7.3 with it.
 - [ ] **OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
       (architecture-reference + export-selection features webphone does
       not use; the seven upstream candidates are NOT obviously fixed).
