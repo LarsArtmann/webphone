@@ -335,6 +335,12 @@ def capture(
                         f"surface {name!r} rendered without {expected_text!r} — "
                         "the marker matched but the copy is wrong; aborting"
                     )
+                print(
+                    f"DBG {name}-{theme}: html="
+                    f"{driver.execute_script('return document.documentElement.className')!r} "
+                    f"media={driver.execute_script('return window.matchMedia(\'(prefers-color-scheme: dark)\').matches')} "
+                    f"bg={driver.execute_script('return getComputedStyle(document.body).backgroundColor')}"
+                )
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)
                 print(f"captured {target}")
