@@ -919,6 +919,15 @@ button.small {
   overflow-y: auto;
 }
 
+/* Confirmed-persistence marker (calls.js): the muted "saved to History"
+   count under the live transcript. Hidden until the first save the
+   server accepted — the island shows only confirmed state. */
+.call-transcript-saved {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
 .vm-transcript {
   margin-inline-start: 0.5rem;
   font-size: 0.85rem;

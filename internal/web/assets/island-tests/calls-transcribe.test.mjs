@@ -528,3 +528,44 @@ test("the card's clear button wipes the live view without touching capture (#39)
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   await flush();
 });
+
+test("a confirmed save surfaces the saved-to-History count, announced once", async () => {
+  state.userAgent = {};
+  assert.equal(await placeCall("+4930123456"), true);
+  const entry = sessions.get("call-t1");
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      return { ok: true, status: 200, json: async () => ({ text: "hi" }) };
+    }
+    return { ok: true, status: 204 };
+  };
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
+  const [recorder] = globalThis.__recorders.slice(-1);
+  const savedToasts = () =>
+    [...doc.getElementById("toasts").children].filter((el) =>
+      /Saved to History/i.test(el.textContent),
+    ).length;
+
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush();
+  const marker = entry.dom.querySelector(".call-transcript-saved");
+  assert.ok(marker, "the marker node exists when the seam is on");
+  assert.equal(marker.hidden, false, "the first confirmed save reveals it");
+  assert.match(marker.textContent, /Saved to History — 1 segment/);
+  assert.equal(savedToasts(), 1, "the first save announces politely");
+
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush();
+  assert.match(marker.textContent, /2 segments/);
+  assert.equal(
+    savedToasts(),
+    1,
+    "the count is the ongoing affordance; the announce fires once per call",
+  );
+
+  entry.session.state = globalThis.SIP.SessionState.Terminated;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+});

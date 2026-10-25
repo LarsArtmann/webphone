@@ -203,6 +203,10 @@ export function renderCalls() {
       transcribeBtn.textContent = isTranscribing(id)
         ? t("transcribeStop")
         : t("transcribe");
+    const savedEl = entry.dom.querySelector(".call-transcript-saved");
+    if (savedEl && entry.transcriptSaved) {
+      savedEl.textContent = t("transcriptSavedToHistory")(entry.transcriptSaved);
+    }
   });
   const established =
     state.focusedId &&
@@ -291,6 +295,12 @@ function addCallCard(id, target) {
     );
   }
   card.append(head, controls, transcript);
+  if (asrEnabled) {
+    const saved = document.createElement("div");
+    saved.className = "call-transcript-saved";
+    saved.hidden = true;
+    card.append(saved);
+  }
   els.calls.append(card);
   return card;
 }
@@ -382,7 +392,9 @@ function flushTranscriptSaves(entry) {
   saveTranscriptSegment(entry.transcriptSaveQueue[0])
     .then(() => {
       entry.transcriptSaveQueue.shift();
+      entry.transcriptSaved = (entry.transcriptSaved || 0) + 1;
       entry.transcriptSaveFlushing = false;
+      showTranscriptSaved(entry);
       flushTranscriptSaves(entry);
     })
     .catch((err) => {
@@ -393,6 +405,23 @@ function flushTranscriptSaves(entry) {
         announce(t("transcriptSaveFailed")(err.message), "warn");
       }
     });
+}
+
+// showTranscriptSaved is the #13 discoverability affordance: a CONFIRMED
+// save surfaces a persistent "saved to History" count on the card and
+// announces once per call — the live transcript must not read as a
+// card-only artifact that vanishes on hangup.
+function showTranscriptSaved(entry) {
+  const marker =
+    entry.dom && entry.dom.querySelector(".call-transcript-saved");
+  if (marker) {
+    marker.textContent = t("transcriptSavedToHistory")(entry.transcriptSaved);
+    marker.hidden = false;
+  }
+  if (!entry.transcriptSavedAnnounced) {
+    entry.transcriptSavedAnnounced = true;
+    announce(t("transcriptSavedToHistory")(entry.transcriptSaved), "info");
+  }
 }
 
 // clipForAnnounce bounds what the live region reads per segment: a

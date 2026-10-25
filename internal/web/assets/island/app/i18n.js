@@ -182,6 +182,8 @@ export const I18N = {
     transcribeStarted: "Live transcription started",
     transcribeStopped: "Live transcription stopped",
     transcriptDelta: (text) => `Transcript: ${text}`,
+    transcriptSavedToHistory: (n) =>
+      `Saved to History — ${n} segment${n === 1 ? "" : "s"}.`,
     transcriptSaveFailed: (detail) =>
       `transcript not saved (${detail}) — it stays on the call card only`,
   },
@@ -366,6 +368,8 @@ export const I18N = {
     transcribeStarted: "Live-Transkription gestartet",
     transcribeStopped: "Live-Transkription gestoppt",
     transcriptDelta: (text) => `Transkript: ${text}`,
+    transcriptSavedToHistory: (n) =>
+      `In der Historie gespeichert — ${n} Segment${n === 1 ? "" : "e"}.`,
     transcriptSaveFailed: (detail) =>
       `Transkript nicht gespeichert (${detail}) — es bleibt nur auf der Anrufkarte`,
   },
