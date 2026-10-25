@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Machine-API contracts generated from the wire types (2026-10-24):
+  `/openapi.json` is no longer a hand-written 227-line constant — it is
+  RENDERED via go-cqrs-lite/catalog from the same named DTOs the
+  handlers decode and encode, now covering ALL eleven session-gated
+  JSON surfaces (session ×3, csrf, contacts ×3, calls, transcribe,
+  transcripts ×2, push-devices ×3) instead of the old four, with the
+  honest status inventory (the CSRF 403s, limiter 429s with their
+  Retry-After contract, disabled-seam 404s, and the DELETE /api/session
+  truth: 204, not the phantom 200/401). A route-vs-registry drift test
+  and seam pins keep the generated spec honest. `webphone contracts`
+  renders the machine-to-machine lanes (five `/hooks/*` ingest types,
+  the `{"provider_ref"}` gateway receipt, the five SSE kinds) as the
+  committed `docs/contracts/asyncapi.yaml` — regenerated, never
+  hand-edited; the split rule (browser JSON→OpenAPI, machine
+  lanes→AsyncAPI) lives in docs/contracts/README.md.
 - EventCatalog federation (2026-10-24): webphone joined catalog.home.lan
   as a full source — `internal/domain/catalog.go` declares the four
   service-seam events (`message.received`, `message.delivery.advanced`,
