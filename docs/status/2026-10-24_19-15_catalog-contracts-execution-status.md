@@ -256,3 +256,45 @@ lanes: `internal/server`, `internal/server/api`, `internal/server/hooks`,
 *Report: docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md.
 Format `.md` per your explicit instruction (skill default is HTML — divergence
 flagged, not propagated). WAITING FOR INSTRUCTIONS.*
+
+---
+
+## Close-out (20:55 CEST, same day) — the completion train executed
+
+The SUPERB completion plan
+([docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](../planning/2026-10-24_19-27_SUPERB-contracts-completion.md))
+ran its tiers. Claims verified as of 20:55 CEST:
+
+- **1% DONE**: red main RECOVERED — the three error codes registered
+  (`docs/error-contract.md` regenerated block, commit 7b7bcc6, CI run
+  40153856104 GREEN); the smoke pin trued to the generator's 3.0.3 and
+  the live smoke runs 48/48 incl. `/openapi.json`; CHANGELOG Added
+  entry landed.
+- **4% DONE**: TODO_LIST carries the wire-lane record + the hub
+  push-pair update; the audit report annotated (addenda + erratum +
+  verify re-run, render-checked); `scripts/contracts-fresh.sh` + the
+  `contracts-fresh` flake check gate the committed asyncapi.yaml
+  (green path AND red path verified); AGENTS/lessons/dedup carry the
+  gotchas and the three war stories; the remainder is HARVESTED into
+  TODO_LIST rows.
+- **20% DONE (as records)**: both dependency trains priced
+  (metaengine v4.19→v4.20 = 418 commits, codec contract — the
+  readmodels capability assertions are the risk surface; catalog
+  v4.9→v4.10 = 213 commits, no fix for the seven upstream candidates
+  — owner-gated ride recommendation);
+  `docs/research/README.md` indexes all seven reports; the seven
+  upstream exporter candidates carry a TODO row gated on pinned-version
+  repro + dupe search (deliberately NOT filed unverified).
+- **rest DONE or HONESTLY DEFERRED**: the three-catalog one-home ruling
+  is recorded in docs/contracts/README.md; the /openapi.json content
+  type is now pinned by test; the hub cross-link turned out to need a
+  PIPELINE home (services/ is generated — verified by append+restore,
+  zero drift left) and rides a TODO row; android consumption rides a
+  TODO row (other repo's gates).
+- **Gates, all green**: `go test -count=1 ./...` 31/31 · buildflow
+  exit 0 (warnings = the documented 9-unavailable noise + advisory
+  baseline/timing notes) · `nix flake check` all checks passed ·
+  `nix run .#vulnix` zero real advisories (both findings
+  distro-patched range-match noise) · live smoke 48/48.
+- **Owner calls left open** (rows, not surprises): the catalog bump
+  timing, the ETag/golden-fixture pair, upstream filings, android.
