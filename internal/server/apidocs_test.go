@@ -1,7 +1,8 @@
 package server
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"net/http"
 	"strings"
 	"testing"
@@ -79,7 +80,7 @@ func TestOpenAPISeamSurfacesMatchHandlers(t *testing.T) {
 // see: it knows the declarations, not the router.
 func TestAPIContractPathsAreMounted(t *testing.T) {
 	var doc struct {
-		Paths map[string]map[string]json.RawMessage `json:"paths"`
+		Paths map[string]map[string]jsontext.Value `json:"paths"`
 	}
 	body, err := openAPIContract()
 	if err != nil {

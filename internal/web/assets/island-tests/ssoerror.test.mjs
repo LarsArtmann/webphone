@@ -67,10 +67,7 @@ test("an unknown code still shows a sentence (the Failed fallback)", () => {
 test("no card element: the strip still happens (no-JS-shaped page, JS hygiene)", () => {
   withLocation("?sso_error=unavailable&x=1");
   showSSOError(t);
-  assert.ok(
-    !lastReplaced.includes("sso_error"),
-    "the strip must not depend on the card existing",
-  );
+  assert.ok(!lastReplaced.includes("sso_error"), "the strip must not depend on the card existing");
   assert.ok(lastReplaced.includes("x=1"), "unrelated parameters survive");
 });
 
