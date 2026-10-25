@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -122,6 +124,60 @@ func TestHealthzProbesThePasskeyIdentityLayer(t *testing.T) {
 		}
 		if !strings.Contains(string(body), `"userauth"`) {
 			t.Errorf("503 body does not name the userauth check: %s", body)
+		}
+	})
+}
+
+// failedProjectionProvider reports one worker past its restart budget —
+// the state the real projectionhost reaches when a projection keeps
+// erroring. It stands in for the wired service so the wiring's honesty is
+// pinnable without manufacturing a real failed worker.
+type failedProjectionProvider struct{}
+
+func (failedProjectionProvider) ProjectionStatuses() []cqrshtmx.ProjectionStatusEntry {
+	return []cqrshtmx.ProjectionStatusEntry{{
+		Name:       "user-views",
+		Status:     cqrshtmx.ProjectionStatusFailed,
+		LastError:  "boom: projection kept erroring",
+	}}
+}
+
+// TestHealthzNamesAFailedIdentityProjection pins the projections leg of
+// the passkey-gated readiness truth (deep-dive finding 1): a projection
+// worker that exhausted its restart budget degrades healthz — the DB ping
+// alone stays green while logins cannot be served — naming BOTH the
+// "projections" check and the failed worker.
+func TestHealthzNamesAFailedIdentityProjection(t *testing.T) {
+	t.Run("failed worker", func(t *testing.T) {
+		server, _ := newPasskeyServerWithConfig(t, nil, func(d *Deps) {
+			d.ProjectionStatus = failedProjectionProvider{}
+		})
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusServiceUnavailable {
+			t.Fatalf("healthz status %d, want 503 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"projections"`) {
+			t.Errorf("503 body does not name the projections check: %s", body)
+		}
+		if !strings.Contains(string(body), "user-views") {
+			t.Errorf("503 body does not name the failed projection: %s", body)
+		}
+	})
+
+	t.Run("wired and drained", func(t *testing.T) {
+		// The default provider (the real service) joins healthz and stays
+		// green once workers drained: passkey-on deployments keep a 200.
+		server, _ := newPasskeyServer(t)
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("healthz status %d, want 200 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"projections"`) {
+			t.Errorf("healthz body does not carry the projections check: %s", body)
 		}
 	})
 }

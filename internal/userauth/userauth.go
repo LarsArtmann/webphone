@@ -123,6 +123,14 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll *readmo
 		ReadModelDialect: "sqlite",
 		WebAuthn:         provider,
 		Logger:           log,
+		// A projection worker exhausting its restart budget is NOT a boot
+		// error (usermgmt's own contract) — it surfaces via
+		// ProjectionStatuses, which the /healthz "projections" check
+		// reads. This hook makes the same event greppable in the journal
+		// the moment it happens, not only when a prober asks.
+		OnProjectionFailed: func(projectionName, lastError string) {
+			log.Warn("usermgmt projection worker failed", "projection", projectionName, "last_error", lastError)
+		},
 	})
 	if err != nil {
 		db.Close()                                                                                                   //nolint:errcheck // best-effort cleanup on a failed boot path

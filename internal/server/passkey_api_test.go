@@ -64,8 +64,10 @@ func newPasskeyServer(t *testing.T) (*testServer, *userauth.Service) {
 }
 
 // newPasskeyServerWithConfig builds the passkey fixture with an optional
-// config tweak (e.g. the SIP credential-brokering secret).
-func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config)) (*testServer, *userauth.Service) {
+// config tweak (e.g. the SIP credential-brokering secret) and optional
+// Deps mutates (e.g. the projections-readiness override) applied alongside
+// the UserAuth wiring, before the handler is built.
+func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMutate ...func(*Deps)) (*testServer, *userauth.Service) {
 	t.Helper()
 	dir := t.TempDir()
 	passFile := filepath.Join(dir, "ext1000")
@@ -98,9 +100,9 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config)) (*test
 		if tweak != nil {
 			tweak(cfg)
 		}
-	}, func(deps *Deps) {
+	}, append(depsMutate, func(deps *Deps) {
 		deps.UserAuth = svc
-	})
+	})...)
 	return server, svc
 }
 

@@ -186,6 +186,13 @@ type Deps struct {
 	// (config-gated). Nil: the passkey mode is off — every passkey
 	// surface 404s and the login page renders the extension form only.
 	UserAuth *userauth.Service
+	// ProjectionStatus overrides the projection-status source behind the
+	// passkey-gated "projections" readiness check (nil: the wired
+	// UserAuth's own usermgmt service reports — the only prod source).
+	// The override exists for tests, mirroring the Probe nil-fallback
+	// idiom: the wiring's honesty is pinnable without a real failed
+	// projectionhost.
+	ProjectionStatus cqrshtmx.ProjectionStatusProvider
 	// SSO is the OPTIONAL OpenID Connect login seam (config-gated). Nil:
 	// the OIDC mode is off — the begin/callback routes 404 and the login
 	// card renders no SSO entry.
@@ -477,6 +484,21 @@ func New(deps Deps) http.Handler {
 			Check:   func() error { return deps.UserAuth.HealthCheck(context.Background()) },
 			Timeout: checkTimeout,
 		})
+		// The projectionhost behind the identity layer joins the same
+		// truth: a worker still draining its journal (async startup) or
+		// exhausted past its restart budget degrades healthz naming
+			// "projections" (and the failed worker's name in the error
+			// text) instead of green-lighting traffic into a passkey lane
+			// that cannot answer logins. Library check, bounded like the
+			// rest; the provider defaults to the wired service — only
+		// tests override it.
+		provider := deps.ProjectionStatus
+		if provider == nil {
+			provider = deps.UserAuth.Usermgmt()
+		}
+		projectionCheck := cqrshtmx.ProjectionReadinessCheck(provider)
+		projectionCheck.Timeout = checkTimeout
+		checks = append(checks, projectionCheck)
 	}
 	readiness := cqrshtmx.ReadinessHandler(checks...)
 	open.Handle("GET /healthz", readiness)
