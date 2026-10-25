@@ -1,0 +1,1662 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>cqrs-htmx v4 — Adoption &amp; Utilization Audit (Round 3)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>Library Deep Dive</span>
+      <span>2026-10-25</span>
+      <span>webphone &middot; round 3</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#baseline">Current usage</a>
+          <a href="#findings">Findings</a>
+          <a href="#version">Version currency</a>
+          <a href="#opportunities">Top opportunities</a>
+          <a href="#na">Not applicable</a>
+          <a href="#rubric">Rubric appendix</a>
+          <a href="#verify">How to verify</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">Library Deep Dive &middot; 2026-10-25</div>
+          <h1>cqrs-htmx v4 — Adoption &amp; Utilization Audit</h1>
+          <p class="subtitle">
+            Round 3 of the cqrs-htmx series. The 2026-09-19 revision audited a
+            root-library-only posture; since then webphone adopted the entire
+            identity lane (usermgmt, webauthn, identity-model, loginpage) for
+            passkey sign-in. This audit re-measures adoption against the
+            library at its latest tags — including what the pinned versions
+            already ship but webphone never wired.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Root: v4.14.1 (latest tag)</span>
+            <span class="tag">usermgmt: v4.14.3 &rarr; v4.16.0 available</span>
+            <span class="tag teal">Adoption Score: 71/100</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">71</div>
+            <div class="label">Adoption score (high)</div>
+          </div>
+          <div class="score-card">
+            <div class="score">9/14</div>
+            <div class="label">Capabilities fully leveraged</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Missed opportunities</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Anti-patterns</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Modules behind latest</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            webphone's cqrs-htmx adoption grew from one module to five since
+            the last audit, and the new identity lane is wired with unusual
+            care: the usermgmt session is deliberately discarded so the
+            webphone session stays the single truth, enrollment is
+            token-gated through the service-level API, and the login page
+            rides the library's templ-components build under a nonce-CSP
+            exception. The root-library posture pinned in round 2 —
+            middleware chain, embedded HTMX bundle, per-extension SSE hubs,
+            honest readiness — is unchanged and still correct.
+          </p>
+          <p>
+            The distance to &ldquo;to the max&rdquo; is now concrete: one
+            capability shipped in the versions webphone <em>already pins</em>
+            (the projection readiness check), one coordinated version train
+            (clone-detection + durable auth audit, usermgmt v4.15/v4.16 +
+            identity-model v4.14 + webauthn v4.13), and one two-line lifecycle
+            fix (closing the SSE hubs on shutdown).
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            The single highest-leverage action needs no version bump:
+            <code>cqrshtmx.ProjectionReadinessCheck(svc)</code> exists in the
+            pinned root v4.14.1 and <code>*usermgmt.Service</code> implements
+            <code>ProjectionStatuses()</code> in the pinned usermgmt
+            v4.14.3 — webphone's /healthz userauth leg pings the database
+            but never asks the projections, so a failed user-read-model
+            leaves health green while passkey logins degrade.
+          </div>
+        </section>
+
+        <!-- Current usage -->
+        <section id="baseline">
+          <h2><span class="num">&#9670;</span>Current usage — the baseline since round 2</h2>
+          <p>
+            Five modules are imported (14 source files carry import lines; 21
+            files mention the library including comments), all through the
+            module proxy — no replace directives. Everything below was
+            verified by reading the code at HEAD and the module sources at
+            the pinned tags.
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Middleware chain, ordered exactly as the library intends</strong>
+                <span
+                  >ContextEnrichmentMiddleware &rarr; metrics &rarr; logging
+                  &rarr; timing &rarr; SecurityHeaders &rarr;
+                  RecoveryMiddleware, chained via
+                  <code>cqrshtmx.Chain</code> — internal/server/server.go:610-622.
+                  Panic behavior is test-pinned.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Embedded HTMX + SSE + idiomorph bundle, one request</strong>
+                <span
+                  ><code>HTMXScriptHandler</code> +
+                  <code>HTMXExtensionsHandler(HTMXExtSSE, HTMXExtIdiomorph)</code>
+                  at internal/server/server.go:427-431 — same-origin,
+                  ETag/304, CSP-clean. The round-2 idiomorph finding landed
+                  (morph-swap surfaces are now product-standard).</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Per-extension SSE hubs with an honest lifecycle</strong>
+                <span
+                  ><code>NewBroadcaster</code> + <code>ServeSSE</code> behind
+                  a branded-extension hub registry with idle-TTL reaper —
+                  internal/server/sse.go:34-159. No deprecated
+                  <code>Raw()</code> usage.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Three-tier health surface</strong>
+                <span
+                  ><code>ReadinessHandler</code> + <code>NamedCheck</code>
+                  (with Timeout) for /healthz, go-health /livez +
+                  /startupz, <code>DebugHandler</code> for /version —
+                  internal/server/server.go:481-525.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The identity lane, adopted deeply rather than partially</strong>
+                <span
+                  >usermgmt <code>NewService</code> on
+                  <code>NewSQLEventStore</code> +
+                  <code>OptimizeSQLiteDB</code> (internal/userauth/userauth.go:86-126);
+                  every ceremony (login, enroll, revoke) goes through the
+                  Service seam; the usermgmt session is intentionally
+                  discarded so the webphone session stays the single
+                  truth.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>loginpage configured like a first-class citizen</strong>
+                <span
+                  >Title/Brand/Redirect/CSSPath/AuthPrefix/NonceFromRequest/NoRegistration
+                  all set — internal/server/login_page.go:29-46 — under a
+                  per-page nonce-CSP exception that keeps the app-wide
+                  strict CSP everywhere else.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Correct posture on deprecated re-exports</strong>
+                <span
+                  >Security headers, CSRF, rate limiting, and timing are
+                  imported from httputil directly — precisely what
+                  cqrs-htmx's own deprecation notes instruct.
+                  <code>SafeDetail</code> redacts webhook 500s
+                  (internal/server/hooks/webhooks.go:96);
+                  <code>ToastDetail</code> types the toast surface.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Capability assessment — findings by impact</h2>
+          <p>
+            Ordered by impact. Two findings are available in the pinned
+            versions today; two ride one coordinated version train.
+          </p>
+
+          <!-- Finding 1 -->
+          <div class="issue issue-critical" id="missed-projection-readiness">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; available in the pinned versions</span
+            >
+            <h3>Projection readiness check unwired — /healthz can lie while passkey logins degrade</h3>
+            <div class="where">
+              internal/userauth/userauth.go:146-148 &middot;
+              internal/app/app.go:253-256 &middot; library:
+              projection_readiness.go (root v4.14.1, pinned),
+              es_projection_health.go (usermgmt v4.14.3, pinned)
+            </div>
+            <p>
+              usermgmt's <code>NewService</code> runs its read models and the
+              casbin projection on an async projectionhost
+              (<code>es_setup.go</code>: <code>projectionHost
+              *projectionhost.Host</code>, with an
+              <code>OnProjectionFailed</code> hook webphone never sets).
+              webphone's userauth health leg only pings the database:
+              <code>HealthCheck &rarr; s.db.PingContext(ctx)</code> — the
+              comment claims &ldquo;the service's failure mode IS the
+              database&rdquo;, but a failed or backoff worker leaves the user
+              read model stale with health still green. The library ships the
+              exact one-liner for this, and webphone's pins already contain
+              it: root v4.14.1 exports
+              <code>ProjectionReadinessCheck(provider) NamedCheck</code> and
+              <code>ProjectionDrainReady</code>, and usermgmt v4.14.3's
+              <code>*Service</code> implements
+              <code>ProjectionStatuses()</code> satisfying the provider
+              interface.
+            </p>
+            <pre><code>// Before (internal/server/server.go, userauth leg):
+checks = append(checks, named("userauth", auth.HealthCheck)) // db ping only
+
+// After — no version bump, the pins already carry it:
+checks = append(checks, cqrshtmx.ProjectionReadinessCheck(auth.Usermgmt()))
+
+// And at boot (userauth.New), make failures loud:
+usermgmt.ServiceConfig{
+        ...
+        OnProjectionFailed: func(name, lastErr string) {
+                log.Error("usermgmt projection failed", "projection", name, "error", lastErr)
+        },
+}</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Add <code>ProjectionReadinessCheck</code> as a second named
+              check on the userauth leg (503 names the failing projection)
+              and set <code>OnProjectionFailed</code> to a loud WARN so the
+              log explains what health is reporting. Zero new dependencies;
+              the health bridge module is <em>not</em> needed for this.
+            </div>
+          </div>
+
+          <!-- Finding 2 -->
+          <div class="issue issue-critical" id="missed-clone-detection">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; version lag (security)</span
+            >
+            <h3>WebAuthn clone detection is dead — the identity train is two minors behind</h3>
+            <div class="where">
+              go.mod pins: usermgmt v4.14.3, identity-model v4.12.3,
+              webauthn v4.12.1 &middot; latest: v4.16.0, v4.14.0, v4.13.0
+              &middot; seam: internal/userauth/userauth.go:186-198
+            </div>
+            <p>
+              usermgmt v4.15.0 shipped <strong>WebAuthn sign-counter
+              persistence</strong>: every successful login records the
+              assertion's signature counter and UP/UV/backup flags
+              (<code>RecordCredentialUse</code> &rarr; <code>CredentialUsed</code>),
+              and a regressed counter is rejected as a conflict — WebAuthn
+              L3 &sect;7.2 clone detection. Without it (webphone's v4.14.3),
+              &ldquo;clone detection compared every assertion to the
+              registration-time counter and never fired&rdquo; (identity-model
+              CHANGELOG v4.14.0). For a phone system whose passkeys mint SIP
+              credentials, a cloned authenticator signal is a
+              security-relevant gap. The stored flags also stop being
+              fabricated <code>true</code> on reload, so go-webauthn's UV
+              latch works as designed.
+            </p>
+            <pre><code>// The coordinated train (one bump, three modules):
+//   usermgmt         v4.14.3 -&gt; v4.16.0
+//   identity-model   v4.12.3 -&gt; v4.14.0
+//   webauthn         v4.12.1 -&gt; v4.13.0
+// root v4.14.1 and loginpage v4.13.0 are already current.
+//
+// Migration cost, verified in-tree: identity-model v4.14.0 changed
+// WebAuthnProvider.FinishLogin to return (credentialJSON, err).
+// webphone implements that interface in exactly ONE place — the
+// deterministic test stub in internal/userauth/userauth_test.go.
+// The service-side changes are invisible to webphone: FinishLogin
+// already goes through s.users.FinishLogin.</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Take the train as one dependency bump (it is exempt from the
+              auto-commit daemon by owner decision): <code>go get</code> the
+              three modules, adapt the one stub signature,
+              <code>go mod tidy</code>, re-pin vendorHash, run the
+              session-behavior suite. Clone detection and honest UV flags
+              then ride for free inside <code>s.users.FinishLogin</code>.
+            </div>
+          </div>
+
+          <!-- Finding 3 -->
+          <div class="issue issue-important" id="missed-auth-journal">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; rides the same train</span
+            >
+            <h3>Durable auth-audit journal unbumped — and one documented non-adoption reason is now stale</h3>
+            <div class="where">
+              AGENTS.md (AuditLog projection &ldquo;unwired&rdquo; reasons)
+              &middot; library: usermgmt/auth_audit.go (v4.15.0+) &middot;
+              webphone's own authAudit lines
+            </div>
+            <p>
+              usermgmt v4.15.0 added the auth audit journal (cqrs-htmx#23):
+              successful and failed logins and registration-closed probes
+              become <strong>durable journal events</strong> on dedicated
+              Auth-typed streams (best-effort append, never failing a login;
+              unknown-user failures deliberately excluded to deny an
+              unbounded journal-write vector). webphone's AGENTS.md records
+              the AuditLog projection as unwired for three reasons —
+              memory-only, <em>no login events</em>, unbounded. The second
+              reason is now false at v4.15+: <code>login_succeeded</code>,
+              <code>login_failed</code>, and <code>registration_closed</code>
+              are first-class. The other two still hold for the read-side
+              projection (<code>audit_log.go</code> remains an append-only
+              in-memory slice), so webphone's hand-rolled greppable
+              authAudit lines stay the right operational surface — but the
+              bump makes the durable &ldquo;who logged in, when&rdquo;
+              record exist in usermgmt.db, queryable long after log lines
+              rotate.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Fold this into finding 2's train (no extra work — the journal
+              is automatic inside the service). Afterwards, update the
+              AGENTS.md non-adoption note: &ldquo;memory-only, unbounded
+              projection&rdquo; stays; &ldquo;no login events&rdquo; is
+              retired. Reconsider surfacing only if the projection gains a
+              bound.
+            </div>
+          </div>
+
+          <!-- Finding 4 -->
+          <div class="issue issue-important" id="sse-drain">
+            <span class="severity severity-important"
+              >Partially Used &middot; small but real</span
+            >
+            <h3>SSE hubs are never closed — shutdown always burns the drain budget</h3>
+            <div class="where">
+              internal/server/sse.go:34-141 (no Close anywhere) &middot;
+              internal/app/app.go:303 (hubs provided, no shutdown hook)
+              &middot; cmd/webphone/main.go:173-176 (&ldquo;30s shutdown
+              budget covers the SSE hub drain&rdquo;)
+            </div>
+            <p>
+              The library's documented broadcaster lifecycle is
+              <code>defer broadcaster.Close()</code> — closing signals every
+              subscriber's stream to end cleanly. webphone's
+              <code>ExtensionHubs</code> has no Close method; the hub map is
+              provided into the injector without a shutdown hook, and
+              <code>App.Shutdown</code> drains HTTP &rarr; probe &rarr;
+              container without touching it. With any signed-in tab
+              connected, the HTTP drain waits on live SSE streams until the
+              full 30 s budget expires — every restart pays it. The
+              comment in main.go assumes a drain mechanism that was never
+              wired.
+            </p>
+            <pre><code>// ExtensionHubs gains the lifecycle the library intends:
+func (h *ExtensionHubs) Shutdown() error {
+        h.mu.Lock()
+        defer h.mu.Unlock()
+        for key, hub := range h.hubs {
+                hub.Close() //nolint:errcheck // best-effort drain
+                delete(h.hubs, key)
+                delete(h.seen, key)
+        }
+        return nil
+}
+// The do-injector then drains it with the other ShutdownerWithError
+// services — subscribers see a clean stream end inside milliseconds.</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Implement <code>Shutdown</code> on <code>ExtensionHubs</code>
+              (it then rides the container's existing shutdown order,
+              asserted adapter-side in app.go). Restart time drops from
+              &ldquo;always 30 s with a tab open&rdquo; to near-instant.
+            </div>
+          </div>
+
+          <!-- Finding 5 -->
+          <div class="issue issue-nice" id="loginpage-unreleased">
+            <span class="severity severity-nice"
+              >Nice to have &middot; rides the next tag</span
+            >
+            <h3>loginpage unreleased fixes — favicon percent-encoding and NewPageData enrichment</h3>
+            <div class="where">
+              loginpage CHANGELOG (Unreleased, after v4.13.0) &middot; webphone
+              pins v4.13.0 = latest tag</div>
+            <p>
+              The inline SVG favicon truncates at the first raw
+              <code>#</code> in a hex accent color (data-URI fragment
+              boundary) — no favicon ever rendered for hex accents. Also
+              <code>NewPageData</code> (the embed-in-your-own-layout path)
+              now populates Nonce/Theme from the request. webphone uses the
+              <code>ServeHTTP</code> path, so only the favicon fix applies.
+              Nothing to do now: both land with the next loginpage tag.
+            </p>
+          </div>
+        </section>
+
+        <!-- Version currency -->
+        <section id="version">
+          <h2><span class="num">02</span>Version currency</h2>
+          <p>
+            Mixed: the two modules webphone leans on hardest are current;
+            the three identity modules form one coordinated train that is
+            behind. The library repo's HEAD also carries an unreleased
+            usermgmt train (OAuth2 nonce round-trip, tenant-cascade fixes,
+            lockout fixed-expiry) — none of it applies to webphone's
+            passkey-only, tenant-free, lockout-free configuration.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th>Pinned</th>
+                <th>Latest tag</th>
+                <th>Notable in the gap</th>
+                <th>Relevance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>cqrs-htmx/v4 (root)</td>
+                <td>v4.14.1</td>
+                <td>v4.14.1</td>
+                <td>v4.15.0 train in flight (setup alignment)</td>
+                <td class="yes">Current</td>
+              </tr>
+              <tr>
+                <td>usermgmt/v4</td>
+                <td>v4.14.3</td>
+                <td>v4.16.0</td>
+                <td>Sign-counter clone detection; auth audit journal; review-wave fixes</td>
+                <td class="no">High — findings 2 + 3</td>
+              </tr>
+              <tr>
+                <td>identity-model/v4</td>
+                <td>v4.12.3</td>
+                <td>v4.14.0</td>
+                <td>CredentialUse data model; FinishLogin returns credential JSON</td>
+                <td class="no">High — required by the train</td>
+              </tr>
+              <tr>
+                <td>usermgmt/webauthn/v4</td>
+                <td>v4.12.1</td>
+                <td>v4.13.0</td>
+                <td>Provider returns assertion credential state</td>
+                <td class="no">High — required by the train</td>
+              </tr>
+              <tr>
+                <td>loginpage/v4</td>
+                <td>v4.13.0</td>
+                <td>v4.13.0</td>
+                <td>Unreleased: favicon fix, NewPageData enrichment</td>
+                <td class="yes">Current (finding 5 rides next tag)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Top opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities — Pareto-ordered</h2>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Wire <code>ProjectionReadinessCheck</code> + <code>OnProjectionFailed</code> (finding 1)</td>
+                <td class="yes">4</td>
+                <td class="yes">5</td>
+                <td><span class="badge badge-fixed">20</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Coordinated identity bump &rarr; clone detection + durable auth journal (findings 2 + 3)</td>
+                <td class="yes">5</td>
+                <td>3</td>
+                <td><span class="badge badge-high">15</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Close SSE hubs on shutdown (finding 4)</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="badge badge-medium">10</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Retire the stale &ldquo;no login events&rdquo; AGENTS.md reason post-bump</td>
+                <td>1</td>
+                <td class="yes">5</td>
+                <td><span class="badge badge-low">5</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>loginpage fixes — passive, ride the next tag (finding 5)</td>
+                <td>1</td>
+                <td class="yes">5</td>
+                <td><span class="badge badge-low">5</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Items 1 and 3 are an afternoon together with no dependency
+            changes; item 2 is one dependency-bump train following the
+            repo's documented bump ritual (tidy &rarr; vendorHash re-pin
+            &rarr; CI watch).
+          </p>
+        </section>
+
+        <!-- Not applicable -->
+        <section id="na">
+          <h2><span class="num">04</span>Not applicable — assessed, with reasons</h2>
+          <p>
+            Carried forward from round 2 where unchanged; every exclusion
+            states why it cannot apply. Re-litigation belongs in a future
+            report only when a stated reason changes.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Capability / module</th>
+                <th>Why it does not fit webphone</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>App.Command / Query pipeline, decoders, HandlerOptions</td>
+                <td>Dispatch layer rejected 2026-09-18: product identity is the PBX, not event-sourced command endpoints; handlers are thin session-gated templ renders.</td>
+              </tr>
+              <tr>
+                <td>HTMX response helpers (RenderPartial, PushURL, NotifySuccess, OOBHTML)</td>
+                <td>URL design separates full pages from /partials/*; no HX-Request branching exists to centralize.</td>
+              </tr>
+              <tr>
+                <td>Root idempotency store</td>
+                <td>Records-before-process command dedup; webhook replays must stay retryable — hooksIdem records successes only, one-home in readmodels.</td>
+              </tr>
+              <tr>
+                <td>Root event-catalog served handler</td>
+                <td>The catalog lane renders an export tree via go-cqrs-lite/catalog (2026-10-24 report); serving a catalog page is not a product surface.</td>
+              </tr>
+              <tr>
+                <td>Root OpenAPI builder (openapi/)</td>
+                <td>/openapi.json renders from handler DTOs through the catalog exporter — the ratified one home; the root builder targets App-registered endpoints webphone does not have.</td>
+              </tr>
+              <tr>
+                <td>Frontend sync protocol (ADR-0056) + sync assets</td>
+                <td>Offline is impossible for a phone (PWA-LITE, no service worker — standing 2026-09-22 NOT-DO; reaffirmed 2026-10-23).</td>
+              </tr>
+              <tr>
+                <td>transport/ domain-event SSE + JournalSSEStore replay</td>
+                <td>webphone's SSE payloads are rendered HTML fragments and payload-less nudges; clients refetch on nudge — no domain-event stream exists to replay.</td>
+              </tr>
+              <tr>
+                <td>AuditLog projection (ServiceConfig.AuditLog)</td>
+                <td>Still memory-only and unbounded at v4.16 (append-only slice); webphone's greppable authAudit lines stay the operational surface. Note: the &ldquo;no login events&rdquo; reason is stale post-v4.15 (finding 3).</td>
+              </tr>
+              <tr>
+                <td>Lockout store</td>
+                <td>Passkey-only login: assertions present no offline guessing surface, and the per-IP rate limiter already fences abuse; cloned-credential detection is finding 2's job, not lockout's.</td>
+              </tr>
+              <tr>
+                <td>TOTP + OAuth2 submodules</td>
+                <td>Passkey-first owner decision; SSO rides Pocket ID at the caddy layer (typed OIDC lane), not an in-process OAuth2 provider.</td>
+              </tr>
+              <tr>
+                <td>usermgmt sessions / session middleware</td>
+                <td>The usermgmt session is intentionally discarded at login — the webphone session (with SIP credential minting) is the single truth.</td>
+              </tr>
+              <tr>
+                <td>Roles, tenants, bots, Casbin authz</td>
+                <td>Single-tenant per-extension scoping enforced in every store query; a policy engine would add a second authorization truth.</td>
+              </tr>
+              <tr>
+                <td>Email verification flow</td>
+                <td>Operator-provisioned, CLI-minted enrollment tokens; a phone system never grows self-service accounts.</td>
+              </tr>
+              <tr>
+                <td>MaxUsers registration cap</td>
+                <td>Enrollment tokens already gate account creation; a numeric cap would be a second, weaker gate.</td>
+              </tr>
+              <tr>
+                <td>usermgmt AuthHandler / RegisterRoutes</td>
+                <td>Ceremony endpoints stay webphone's own so they mint the webphone session and return the SIP credential; they speak usermgmt's pinned wire contract (login_page.go documents it).</td>
+              </tr>
+              <tr>
+                <td>adminui</td>
+                <td>No user-administration use case: users are config-mapped, passkeys managed in Settings; an admin panel would grow surface the operator ruling keeps closed.</td>
+              </tr>
+              <tr>
+                <td>dashboardui</td>
+                <td>Event-store observability for an identity store with a handful of users; ops observability is already served (go-health-dashboard at /health, operator-gated). Reopen if identity-ops debugging ever demands event inspection.</td>
+              </tr>
+              <tr>
+                <td>setup bundle</td>
+                <td>REJECTED with measurement: +10.4 MB / +68.2% binary (go/no-go gate, 2026-09-30); the lifecycle value rides httputil.NewServer (cmd/webphone/main.go:168-176). Do not re-litigate without new numbers.</td>
+              </tr>
+              <tr>
+                <td>datastar</td>
+                <td>One frontend protocol by design (htmx + SSE); the dual-frontend strategy is a library option, not a webphone need.</td>
+              </tr>
+              <tr>
+                <td>health bridge module</td>
+                <td>Its value is composing recorders into injector-built probes; webphone needs exactly one check — root's ProjectionReadinessCheck covers it with zero new modules.</td>
+              </tr>
+              <tr>
+                <td>auditlog bridge (samber-do-auditlog)</td>
+                <td>DI invocation auditing; webphone's audit needs are auth-domain-specific and already have one home (authAudit).</td>
+              </tr>
+              <tr>
+                <td>systemadapter</td>
+                <td>go-cqrs-lite system.New composition for the identity domain; webphone composes usermgmt.NewService directly and owns its readmodels separately on metaengine.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Rubric appendix -->
+        <section id="rubric">
+          <h2><span class="num">05</span>Rubric appendix — the 36-row inventory behind the score</h2>
+          <p>
+            Score derivation: 36 capability rows (N), 22 Not Applicable
+            (reasons above) &rarr; 14 applicable (A). Fully Leveraged = 1,
+            Partially Used = 0.5, Missed = 0. &Sigma; = 9&times;1 +
+            2&times;0.5 + 3&times;0 = 10. Score = round(100 &times; 10/14) =
+            <strong>71</strong> — band: high (70&ndash;84).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability row</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Middleware chain (Chain, Recovery, RequestLoggingSlog, ContextEnrichment)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>2</td><td>Embedded HTMX + SSE/idiomorph extension bundle</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>3</td><td>SSE: per-extension Broadcaster hubs + ServeSSE + reaper</td><td>Partially used — Close/drain unwired (finding 4)</td></tr>
+              <tr><td>4</td><td>Health surface: ReadinessHandler, NamedCheck, DebugHandler, livez/startupz</td><td>Partially used — projection check missing (finding 1)</td></tr>
+              <tr><td>5</td><td>Error honesty: SafeDetail, ToastDetail</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>6</td><td>Deprecated re-export avoidance (httputil-direct posture)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>7</td><td>usermgmt Service wiring (SQLEventStore, OptimizeSQLiteDB, read model)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>8</td><td>WebAuthn ceremony seam (login, enroll, revoke)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>9</td><td>loginpage deep adoption (full Config surface)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>10</td><td>identity-model direct types (UserID, parse, sentinels, provider iface)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>11</td><td>webauthn provider module (waprovider.New)</td><td class="yes">Fully leveraged</td></tr>
+              <tr><td>12</td><td>Projection readiness (ProjectionReadinessCheck, ProjectionStatuses, OnProjectionFailed)</td><td class="no">Missed — in-pin (finding 1)</td></tr>
+              <tr><td>13</td><td>WebAuthn sign-counter clone detection (v4.15+)</td><td class="no">Missed — version lag (finding 2)</td></tr>
+              <tr><td>14</td><td>Durable auth-audit journal (v4.15+)</td><td class="no">Missed — version lag (finding 3)</td></tr>
+              <tr><td>15</td><td>App command/query pipeline + decoders + HandlerOptions</td><td>N/A</td></tr>
+              <tr><td>16</td><td>HTMX response helpers (RenderPartial, PushURL, NotifySuccess, OOBHTML)</td><td>N/A</td></tr>
+              <tr><td>17</td><td>Root idempotency store</td><td>N/A</td></tr>
+              <tr><td>18</td><td>Root event-catalog served handler</td><td>N/A</td></tr>
+              <tr><td>19</td><td>Root OpenAPI builder</td><td>N/A</td></tr>
+              <tr><td>20</td><td>Frontend sync protocol + sync assets</td><td>N/A</td></tr>
+              <tr><td>21</td><td>transport/ domain-event SSE + journal replay</td><td>N/A</td></tr>
+              <tr><td>22</td><td>AuditLog projection</td><td>N/A (reason updated)</td></tr>
+              <tr><td>23</td><td>Lockout store</td><td>N/A</td></tr>
+              <tr><td>24</td><td>TOTP + OAuth2 submodules</td><td>N/A</td></tr>
+              <tr><td>25</td><td>usermgmt sessions / session middleware</td><td>N/A</td></tr>
+              <tr><td>26</td><td>Roles / tenants / bots / Casbin authz</td><td>N/A</td></tr>
+              <tr><td>27</td><td>Email verification flow</td><td>N/A</td></tr>
+              <tr><td>28</td><td>MaxUsers registration cap</td><td>N/A</td></tr>
+              <tr><td>29</td><td>usermgmt AuthHandler / RegisterRoutes</td><td>N/A</td></tr>
+              <tr><td>30</td><td>adminui</td><td>N/A</td></tr>
+              <tr><td>31</td><td>dashboardui</td><td>N/A</td></tr>
+              <tr><td>32</td><td>setup bundle</td><td>N/A (measured NO-GO)</td></tr>
+              <tr><td>33</td><td>datastar</td><td>N/A</td></tr>
+              <tr><td>34</td><td>health bridge module</td><td>N/A</td></tr>
+              <tr><td>35</td><td>auditlog bridge</td><td>N/A</td></tr>
+              <tr><td>36</td><td>systemadapter</td><td>N/A</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- How to verify -->
+        <section id="verify">
+          <h2><span class="num">06</span>How to verify</h2>
+          <p>
+            Every claim above is re-derivable from the two checkouts. The
+            snapshot header applies: verified as of 2026-10-25.
+          </p>
+          <pre><code># Usage surface (expect 14 import-carrying files; 21 files mention
+# the library including comments; 5 modules; no replace):
+grep -rn "larsartmann/cqrs-htmx" --include="*.go" . | grep -v vendor
+
+# Pinned versions vs latest tags:
+grep cqrs-htmx go.mod
+git -C ~/projects/cqrs-htmx tag --list 'v4*' --sort=-v:refname | head -1
+git -C ~/projects/cqrs-htmx tag --list 'usermgmt/v4*' --sort=-v:refname | head -1
+git -C ~/projects/cqrs-htmx tag --list 'identity-model/v4*' --sort=-v:refname | head -1
+git -C ~/projects/cqrs-htmx tag --list 'usermgmt/webauthn/v4*' --sort=-v:refname | head -1
+git -C ~/projects/cqrs-htmx tag --list 'loginpage/v4*' --sort=-v:refname | head -1
+
+# Finding 1 — the check exists in the PIN, unused in webphone:
+grep -rn "ProjectionReadinessCheck" \
+  /mnt/buildcache/go-mod/github.com/larsartmann/cqrs-htmx/v4@v4.14.1/projection_readiness.go
+grep -rn "ProjectionStatuses" \
+  /mnt/buildcache/go-mod/github.com/larsartmann/cqrs-htmx/usermgmt/v4@v4.14.3/es_projection_health.go
+grep -rn "ProjectionReadinessCheck\|OnProjectionFailed" internal/ # expect: nothing
+
+# Finding 2/3 — what the train ships:
+sed -n '/## \[v4.15.0\]/,/## \[v4.14.3\]/p' ~/projects/cqrs-htmx/usermgmt/CHANGELOG.md
+
+# Finding 4 — no hub Close exists:
+grep -rn "func (h \*ExtensionHubs)" internal/server/sse.go
+
+# Score inputs — count this appendix's rows (36) and the N/A table (22):
+grep -c "&lt;tr&gt;&lt;td&gt;" docs/research/2026-10-25_cqrs-htmx-deep-dive.html</code></pre>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-10-25 &middot; Round 3 of the cqrs-htmx series;
+            supersedes 2026-09-19 (round 2) whose usermgmt/loginpage
+            rejection verdicts were correctly overturned by the 2026-10-04
+            passkey owner decision &middot; Root audited at v4.14.1 (pinned
+            = latest tag); usermgmt at v4.14.3 vs v4.16.0 &middot; All
+            usage claims cited to webphone source at HEAD; all capability
+            claims cited to library source at the pinned or latest tags
+            &middot; Claims verified as of 2026-10-25.
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
