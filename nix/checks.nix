@@ -189,6 +189,28 @@
                 exit 1
               fi
             '';
+
+        # The committed AsyncAPI wire-contract document must equal a
+        # fresh render from the handler wire types — the contract
+        # cannot rot silently against the code (same recipe as
+        # scripts/contracts-fresh.sh, sandboxed against the built
+        # package).
+        contracts-fresh =
+          pkgs.runCommand "contracts-fresh-check"
+            {
+              nativeBuildInputs = [ self'.packages.webphone ];
+              meta.description = "docs/contracts/asyncapi.yaml equals a fresh render";
+            }
+            ''
+              cd ${self}
+              export HOME=$TMPDIR
+              webphone contracts -o $TMPDIR/fresh
+              if ! diff -u docs/contracts/asyncapi.yaml $TMPDIR/fresh/asyncapi.yaml; then
+                echo "docs/contracts/asyncapi.yaml is STALE — run: nix develop -c go run ./cmd/webphone contracts" >&2
+                exit 1
+              fi
+              echo "wire contracts fresh" >$out
+            '';
       };
     };
 }
