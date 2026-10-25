@@ -35,6 +35,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consumer — the island module list stays exactly main.js's import
   closure). Off by default: zero passkey config keeps `/login` a
   styled 404 and the login card byte-identical.
+- loginpage dark-mode fix + visual coverage (2026-10-25, owner GO on
+  the T23 extension): the login stylesheet's gray family no longer
+  remaps through app tokens — the loginpage's standard Tailwind dark
+  idiom needs the stock palette (the shell's remap inverted dark mode:
+  light page background, invisible heading; found by the harness's new
+  dark shot). The T23 visual matrix grows to 24 shots: the boot turns
+  passkey on and two anonymous `/login` surfaces (island login card +
+  library page) are captured cookie-less per theme, with the library
+  page's OS-scheme theme driven by CDP media emulation. The build
+  script now gates the non-gray @theme parity and refuses gray
+  overrides in the login input, and the shell build runs before the
+  loginpage sources land in the stage (a comment naming a utility in a
+  sibling input EMITS it into the other build — the twice-learned
+  auto-scan leak).
 - Typed NixOS surface for OIDC/SSO login (2026-10-25):
   `services.webphone.oauth2.*` renders the app's `auth.oauth2` block,
   hands the client secret to systemd via `LoadCredential` (the app reads
