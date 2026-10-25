@@ -73,11 +73,16 @@ These ids render ONLY when the deployment enables the passkey
 (WebAuthn) login mode (`auth.passkey.*`); the always-on contract above
 stays complete without them, and the E2E must not assume them:
 
-- `passkey-login-form` — the email-first front door (island module
-  `passkey.js` binds it; absent markup means the mode is off and the
-  module no-ops)
-- `passkey-email` — the email input
-- `passkey-login-error` — the inline error slot
+- `passkey-login` — the `/login` front-door LINK on the island login
+  card (the cqrs-htmx `loginpage` library page owns the whole ceremony;
+  the card only navigates there — a plain anchor, works without
+  scripts)
+
+The passkey ceremony UI itself lives on the SEPARATE `/login` page
+(same gate), rendered by the library: `lp-login-form`, `lp-email`,
+`lp-login-btn`, `lp-error` (plus the `loginpage-config` JSON blob its
+embedded nonce'd script reads). That markup is library-owned contract —
+do not pin it beyond presence checks.
 
 Settings passkey management (passkey mode on AND the signed-in
 extension has a mapped account) renders `wp-passkeys-head`,
