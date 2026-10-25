@@ -472,6 +472,9 @@ a deliberate code change, regenerate:
 | userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go      |
 | webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go  |
 | webphone.cli.catalog                         | Infrastructure            | cmd/webphone/catalog.go            |
+| webphone.cli.contracts                       | Infrastructure            | cmd/webphone/contracts.go          |
+| webphone.server.openapi_render               | Infrastructure            | internal/server/apidocs.go         |
+| webphone.server.wire_render                  | Infrastructure            | internal/server/wirecontracts.go   |
 
 <!-- error-code-registry: END -->
 
