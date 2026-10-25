@@ -1159,8 +1159,10 @@ usermgmt.ServiceConfig{
 //
 // Migration cost, verified in-tree: identity-model v4.14.0 changed
 // WebAuthnProvider.FinishLogin to return (credentialJSON, err).
-// webphone implements that interface in exactly ONE place — the
-// deterministic test stub in internal/userauth/userauth_test.go.
+// webphone implements that interface in exactly two places — the
+// deterministic test stubs: stubWebAuthn
+// (internal/userauth/userauth_test.go) and pkStub
+// (internal/server/passkey_api_test.go).
 // The service-side changes are invisible to webphone: FinishLogin
 // already goes through s.users.FinishLogin.</code></pre>
             <div class="callout callout-teal">
@@ -1294,6 +1296,17 @@ func (h *ExtensionHubs) Shutdown() error {
             lockout fixed-expiry) — none of it applies to webphone's
             passkey-only, tenant-free, lockout-free configuration.
           </p>
+          <div class="callout callout-amber">
+            <strong>Snapshot rot, same day</strong>
+            While this report was being written, a concurrent session took
+            the identity train in-tree (commit e27093d: usermgmt v4.16.0,
+            identity-model v4.14.0, webauthn v4.13.0 — the exact bump of
+            finding 2). The gap rows below are therefore historical as of
+            HEAD; the train's outstanding tail at snapshot time: both
+            FinishLogin test stubs still carry the old signature and the
+            nix vendorHash re-pin has not landed. Findings 2 and 3 close
+            when that tail lands.
+          </div>
           <table class="compare">
             <thead>
               <tr>
