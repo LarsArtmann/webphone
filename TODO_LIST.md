@@ -36,21 +36,6 @@ Remaining, unscheduled:
   side plumbing), signal groups, compose-new-DM affordance for chat networks
   (v1: chat threads are born inbound). **Priority:** Low · **Effort:** M each.
 
-### go-appkit audit follow-ups (2026-10-23 — audit done, two candidates open)
-
-go-appkit itself is DECLINED per module (report:
-[docs/research/2026-10-23_go-appkit-deep-dive.html](docs/research/2026-10-23_go-appkit-deep-dive.html),
-score 77/100, 7 of 11 applicable capabilities already fully leveraged). The two
-surfaced candidates stay here, unscheduled:
-
-- **Flight recorder** (from `go-flightrecorder`, already an indirect dep): on-demand
-  `runtime/trace` capture behind a default-off seam, so a wedged SIP reconnect or a
-  lock convoy is diagnosable in production instead of by reproduction. **Priority:**
-  Low · **Effort:** S.
-- **Latency metrics**: `/metrics` carries aggregates-only counters; request-duration
-  histograms would answer "is the PBX slow or the browser" without touching the
-  per-extension privacy line. **Priority:** Low · **Effort:** S.
-
 ### /health operator surface (2026-10-23 — stack option shipped, deploy pending)
 
 `services.telephony.webphone.dashboard` now mounts the go-health dashboard at
@@ -80,14 +65,12 @@ change notifications in their summaries; NO commands are declared
 (the build test asserts zero), so nothing fabricates a CQRS write
 model and no cross-service consumer edges render.
 
-- [ ] [blocked:push] **Push the catalog adoption** — the hub's
-      sources.json already lists webphone as a source, so the next hub CI
-      build clones webphone@main and REQUIRES the pushed `catalog` command
-      (until it lands, that build reds on webphone's export step; the
-      hub+webphone pushes are a pair). Ritual unchanged: webphone-push
-      first, stack re-pin after (tri-repo rule). **UPDATE 2026-10-24
-      evening: the `catalog` command IS pushed (origin/main ≥ 46cc6db) —
-      the hub side of the pair (re-pin/build) is the remaining leg.**
+- [x] **Catalog adoption pushed + verified** (2026-10-25): `46cc6db`
+      (the `catalog` command) is on origin/main. REMAINING LEG IS
+      CROSS-REPO: the eventcatalog-hub re-pin + build — the hub CI clones
+      webphone@main and runs the export; ritual unchanged (webphone-push
+      first, stack re-pin after, tri-repo rule). Owned by the hub/stack
+      session, not this repo.
 
 ### Wire contracts SHIPPED (2026-10-24 — same catalog universe, the OTHER two lanes)
 
@@ -171,7 +154,7 @@ three-catalog ruling SHIPPED since that plan was written):
 
 1. **settingsRow ADOPTION** (owner: BUILD → resolved to ADOPT) — EXECUTED 2026-10-12: settings.templ renders `display.DefinitionList` (Class `wp-settings`), tw.css `@source` rebuilt, old-vs-new render diff 6/7 panels byte-identical (radius literals synced to the redesign train's 9/12px), registry ruling #2 annotated EXECUTED. templ-components ALREADY ships the component, so no new one anywhere.
 2. **branching-flow upstream filings** (owner: file): (a) phantom-analysis class scoping/config — 13/14 rows this session were non-identity plumbing, per-finding nolint + baseline exist but no class-level knob; (b) panic-analysis FP precision — 3 guard shapes (closure nil-guard, map-to-slice invariant, i<j two-pointer) produced 6/8 false rows. Drafts land in `docs/drafts/`, evidence: docs/status/2026-10-11_02-19 triage doc.
-3. **Re-triage the branching-flow skip**: `.buildflow.yml`'s whole-tool skip rests on a now-STALE "honors NO nolint" premise (live-verified false 2026-10-11) — convert the finding set to targeted nolints + an `all --baseline` file, then UNSKIP.
+3. **Re-triage the branching-flow skip** — EXECUTED 2026-10-11 (stale premise retired): the tool runs UNSKIPPED (19 baselined findings with in-source rationales; the SDK severity cap keeps new findings non-gating until the error_rules-bearing BuildFlow release); `skip_steps` now holds only pytest-test (verified 2026-10-25).
 4. **art-dupl `-t 1` + baseline ritual** — EXECUTED 2026-10-12: first deep sweep 867→58 actionable groups, ZERO harmful; `.art-dupl-baseline.json` recorded (tool v0.7.2) and CI gained the new-only `dup-gate` job; sweep-log line in the registry. Unfixable detector FPs: none surfaced this sweep (upstream-filing duty stays with future sweeps).
 5. **Daemon dep-lane move** (owner: MOVE): configure pma to stop bumping go.mod/go.sum (owner-side daemon config); bumps ride `buildflow update`/Dependabot with the tidy → re-pin → CI-watch tail (AGENTS Conventions row added).
 6. **Quarterly baseline/suppressed-set audit** — first 2027-01-11 (registry Protocol step 1).
@@ -245,10 +228,9 @@ runbook-only enroll + Lars-only v1 mapping; switch-now-vs-CI-first
 ceiling inside `nix flake check` — aarch64 VM leg green 6m16s, browser
 E2E on-demand never fires; the mod_enum/timeout diagnosis precedes any
 lock bump); installer release republish timing (stale since the
-relock). HANDOFF NOTE: the gopls unused-`r` Info at
-`internal/server/passkey_api.go:236` is still live at HEAD (file last
-touched 2026-10-05 14:52 by this train) — the owning session resolves
-it; no cross-session fixes.
+relock). HANDOFF NOTE: RESOLVED 2026-10-25 — LSP diagnostics on
+`internal/server/passkey_api.go` are clean at HEAD (the note's owning
+session is long gone; verified by this sweep).
 
 **Evidence:** status `docs/status/2026-10-04_17-28_passkey-train-resumed-session-brutal-status.md` (§f harvest source); plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`
 
@@ -433,10 +415,10 @@ Owner/stack legs that block or derive from webphone work: repair the stack FreeS
 
 ### Round-5 plan tail: process folds + row hygiene (2026-10-17 harvest)
 
-**Status:** 🟡 `PARTIALLY DONE — 2026-10-18 execution closed F75/F76/F79/F80/F81/F82/F83/F84; remains F74 result capture, F85 adoption note, F86 (BuildFlow-repo)` · **Priority:** Low · **Effort:** S — full plan: [docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md](docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md) (E17–E23, F74–F87)
+**Status:** 🟡 `PARTIALLY DONE — 2026-10-18 closed F75/F76/F79–F84; 2026-10-25 row-hygiene sweep closed F74/F85/F86; remains d2 + markdownlint posture (both owner-gated)` · **Priority:** Low · **Effort:** S — full plan: [docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md](docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md) (E17–E23, F74–F87)
 
 - CLOSED 2026-10-18: lessons folds (self-verifying scripts + verify-before-describing, appended to the daemon-race entry; IO-storm scoping refinement folded into the local-suite corollary) · module-cache janitor (`scripts/module-cache-janitor.sh`, self-tested, 24 live sweeps) · templ-components tagging note VERIFIED ALREADY-UPSTREAM (#27 + release-checklist + workflow) · branching-flow drafts VERIFIED ALREADY-FILED-COMPLETED (#9, #15/#16) · go-modularize §f 1–40 routing audit (annotated inline; items 30/31 → ROADMAP, 40 → cross-repo row) · carve LOC refresh (wiring 4,056 / tree 27 files 5,204 LOC, two methods agree) · metaengine row CLOSED (G3 via v2.9.0 verified in-tag) · F019 Volume hints landed on all five declarations (`humanScaleVolume`); F026 NOT-DO (no cursor pagination at HEAD to cache — reopens only if a surface adopts cursor paging).
-- REMAINS: F74 ui-capture pass result capture (the run's DOM assertions + shot inventory recorded in the 2026-10-18 closing report; the EYEBALL stays owner §g1) · F85 snapshot-rot header convention applied to the 2026-10-18 closing report + AGENTS Conventions line (kept on first adoption) · F86 CLOSED 2026-10-18 (verified at source: the retry-or-kill wrapper ask is SUBSUMED by BuildFlow's 10-13 retry-economics train — starvation-floor retry + the no-output watchdog cover the 4.5h network-wedge class; the fleet GOPROXY fallback chain stays the owner's §g-3 network-posture decision, crush-config side) · d2 cheat-sheet upstream fix (`style.stroke-dash` on v0.9.0; blocked on the sitting's Q3) + human eyeball of the 2026-10-17 D2 pair (image-blind assistant ceiling) · markdownlint posture execution (post-sitting row-18 verdict).
+- CLOSED 2026-10-25 (row-hygiene sweep, evidence re-verified at HEAD): F74 (the run's DOM assertions + shot inventory recorded in the 2026-10-18 closing reports; the EYEBALL stays owner §g1) · F85 (snapshot-rot header adopted: both 10-18 reports carry it, AGENTS Conventions line landed) · F86 (verified at source: the retry-or-kill wrapper ask is SUBSUMED by BuildFlow's 10-13 retry-economics train — starvation-floor retry + the no-output watchdog cover the 4.5h network-wedge class; the fleet GOPROXY fallback chain stays the owner's §g-3 network-posture decision, crush-config side). REMAINS: d2 cheat-sheet upstream fix (`style.stroke-dash` on v0.9.0; blocked on the sitting's Q3) + human eyeball of the 2026-10-17 D2 pair (image-blind assistant ceiling) · markdownlint posture execution (post-sitting row-18 verdict).
 
 **Evidence:** status reports `docs/status/2026-10-17_20-16_*` + `2026-10-17_20-34_*`; round-5 plan Errata §1–§3; 2026-10-18 closing report.
 
