@@ -28,9 +28,53 @@ let
   # stays readable (nix-review monolith guideline).
   caddyVhost = import ./caddy-vhost.nix { inherit lib cfg listenPort; };
   backupScript = import ./backup-script.nix { inherit lib cfg; };
+
+  # --- OIDC/SSO wiring (services.webphone.oauth2) ---
+  # The secret is handed to systemd as a credential; systemd exposes
+  # credentials at $CREDENTIALS_DIRECTORY, which is the unit's
+  # /run/credentials path. The app reads THIS copy, never the
+  # operator's host file, so no group grant is required.
+  oauth2CredentialName = "webphone-oidc-client-secret";
+  oauth2SecretPath = "/run/credentials/webphone.service/${oauth2CredentialName}";
+
+  # null = derive from the vhost; eval fails closed when neither is
+  # available (an external front must declare the registration).
+  oauth2RedirectUrl =
+    if cfg.oauth2.redirectUrl != null then
+      cfg.oauth2.redirectUrl
+    else if cfg.caddy.enable then
+      "https://${cfg.caddy.hostName}/api/auth/oauth2/callback"
+    else
+      null;
+
+  # The identity map is shared by both passwordless modes and lives in
+  # the app's ONE home for it (settings.auth.*, folded into the passkey
+  # shape by the app). The module reads the same merged value so its
+  # assertions reflect what the binary will actually see.
+  oauth2Users = cfg.settings.auth.users or { };
+  oauth2PasswordFiles =
+    (cfg.settings.auth.extension_password_files or { })
+    // (cfg.settings.auth.passkey.extension_password_files or { });
+  oauth2MappedExtensions = lib.unique (
+    lib.concatMap (user: user.extensions or [ ]) (lib.attrValues oauth2Users)
+  );
+  oauth2MissingPasswordFiles = lib.filter (
+    ext: (oauth2PasswordFiles.${ext} or "") == ""
+  ) oauth2MappedExtensions;
+
+  # A passwordless config (the shared users map) derives passkey mode in
+  # the app, which then DEMANDS rp_id/rp_origins. Behind the generated
+  # vhost they follow from caddy.hostName; a raw value still wins
+  # (mkDefault), so an operator pinning something else stays in charge.
+  deriveWebAuthnRP = cfg.caddy.enable && (cfg.oauth2.enable || oauth2Users != { });
+
+  bareHTTPS = url: lib.match "https://[^/?#]+(/[^?#]*)?" url != null;
 in
 {
-  imports = [ ./options.nix ];
+  imports = [
+    ./options.nix
+    ./options-oauth2.nix
+  ];
 
   config = lib.mkIf cfg.enable {
     assertions = [
