@@ -449,3 +449,17 @@ Owner/stack legs that block or derive from webphone work: repair the stack FreeS
 - **Deferred by scope (this repo):** a Settings-tab row for the push seam state + registered devices (GET /api/push-devices exists; the .templ/i18n surface waits for a non-hot settings.templ — the chat-networks train owns that file right now).
 
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
+
+- [ ] **Hub cross-link: webphone's wire contracts from its inventory page**
+  (eventcatalog-hub) — DISCOVERED 2026-10-24: the hub's `services/` AND
+  `domains/` are GENERATED (gitignored; merge.py unions source trees,
+  bodies preserved first-source-wins; the webphone body comes from the
+  SystemNix inventory writer). A contract-spec link therefore needs a
+  PIPELINE home: either the SystemNix inventory module (a links/notes
+  field rendered into the Details table) or webphone's OWN exported
+  eventcatalog service page (the summary in
+  `internal/domain.BuildCatalog` — the concurrent session's file; ask
+  first). A direct `services/webphone/index.mdx` edit is drift (tested:
+  appended content sits untracked until the next build clobbers it —
+  restored byte-exact 2026-10-24). **Priority:** Low · **Effort:** M
+  (pipeline change, other repo).
