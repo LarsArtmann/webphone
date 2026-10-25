@@ -15,6 +15,10 @@ import (
 // writes the one true home; the HTML-partial routes the tab uses
 // (/contacts/save|delete|import|export) stay untouched.
 
+// ContactsBodyLimit bounds a contact-save body (one contact JSON object
+// with room to spare).
+const ContactsBodyLimit = 4096
+
 type apiContact struct {
 	//brandid-lint:ignore(BD003) wire DTO: raw id at the JSON edge; the delete route re-parses client ids strictly (strong-id ruling)
 	ID     string `json:"id"` //nolint:branching-flow // wire DTO projecting domain.ContactID at the JSON edge; the branded home is the domain type and the delete route re-parses client ids strictly
@@ -104,7 +108,7 @@ func (h *Handlers) SaveContact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body ContactSaveRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
+	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, ContactsBodyLimit), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

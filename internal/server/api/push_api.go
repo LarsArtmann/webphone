@@ -16,9 +16,9 @@ import (
 // list NEVER echoes it back (a credential stays where it was trusted
 // in, the same doctrine as the SIP directory password).
 
-// pushDeviceBodyLimit bounds the register body (a service-ready JSON
+// PushDeviceBodyLimit bounds the register body (a service-ready JSON
 // object with room to spare).
-const pushDeviceBodyLimit = 8192
+const PushDeviceBodyLimit = 8192
 
 // deviceIDShape bounds a registered device id: the shell mints a
 // UUID-shaped per-install id; the charset keeps engine keys sane.
@@ -115,7 +115,7 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body PushDeviceRegisterRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, pushDeviceBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, PushDeviceBodyLimit), &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

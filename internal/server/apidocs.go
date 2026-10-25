@@ -34,6 +34,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/dustin/go-humanize"
 	"github.com/larsartmann/go-cqrs-lite/catalog/v4"
 	catalogopenapi "github.com/larsartmann/go-cqrs-lite/catalog/v4/openapi"
 	errorfamily "github.com/larsartmann/go-error-family"
@@ -56,8 +57,6 @@ const (
 
 // apiCatalog declares the session-gated JSON surface as a catalog:
 // one service, cookie-auth security, one message per (path, method).
-//
-//nolint:gohumanize // the "4 KiB"/"8 KiB"/"25 MiB" matches are fixed limits in API doc prose, not runtime formatting
 func apiCatalog() *catalog.Catalog {
 	builder := catalog.NewBuilder(apiContractTitle, apiContractVersion)
 	builder.Registry().AddSecurityScheme(catalog.SecurityScheme{
@@ -128,7 +127,7 @@ func apiCatalog() *catalog.Catalog {
 			catalog.WithSummary("Upsert one personal contact: a repeated number renames. Mutations answer 204 and the island re-fetches the list."),
 			catalog.MsgSecurity("cookieAuth"),
 			catalog.Response[struct{}]("204", "No response body. Saved (upsert by number within the session's extension)."),
-			catalog.WithResponse("400", "Invalid body (or body over 4 KiB)."),
+			catalog.WithResponse("400", "Invalid body (or body over "+humanize.IBytes(api.ContactsBodyLimit)+".)"),
 			catalog.WithResponse("401", "No live session."),
 			catalog.WithResponse("403", csrfClause+"."),
 			catalog.WithResponse("422", "Number failed dialable validation, or the per-extension list is full (500; renames never count)."),
@@ -165,7 +164,7 @@ func apiCatalog() *catalog.Catalog {
 			catalog.MsgOperation(http.MethodPost, "/api/transcribe"),
 			catalog.WithName("Transcribe Audio"),
 			catalog.WithSummary("Transcribe one audio segment via the configured ASR provider (live calls, voicemail, MMS audio all ride this endpoint). "+
-				"The request body is the raw audio bytes as a multipart/form-data part (honest Content-Type, up to 25 MiB); "+
+				"The request body is the raw audio bytes as a multipart/form-data part (honest Content-Type, up to "+humanize.IBytes(api.TranscribeBodyLimit)+"); "+
 				"filename and lang ride the query string. Session-gated and CSRF-protected like every JSON post."),
 			catalog.MsgSecurity("cookieAuth"),
 			catalog.WithParam("filename", "query", "Original filename hint for the provider (optional).", false),
@@ -226,7 +225,7 @@ func apiCatalog() *catalog.Catalog {
 			catalog.WithSummary("Register (or re-register) the calling install's wake address; re-registration replaces the stored row so FCM token churn never strands a device."),
 			catalog.MsgSecurity("cookieAuth"),
 			catalog.Response[struct{}]("204", "No response body. Registered."),
-			catalog.WithResponse("400", "Invalid body (or body over 8 KiB)."),
+			catalog.WithResponse("400", "Invalid body (or body over "+humanize.IBytes(api.PushDeviceBodyLimit)+".)"),
 			catalog.WithResponse("401", "No live session."),
 			catalog.WithResponse("403", csrfClause+"."),
 			catalog.WithResponse("404", "No push transport is configured — a shell must not believe registration succeeded."),

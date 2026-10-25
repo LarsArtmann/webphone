@@ -62,6 +62,27 @@ let
     ext: (oauth2PasswordFiles.${ext} or "") == ""
   ) oauth2MappedExtensions;
 
+  # `settings` accepts Nix paths (types.json), and a path literal is
+  # COPIED into the world-readable store when the config renders — a
+  # silent secret leak. Every secret-file setting must be a runtime-file
+  # STRING (a string already pointing into the store is equally wrong).
+  # builtins.isPath keeps this check from coercing (and thereby copying)
+  # the offending value itself.
+  leaksSecretToStore =
+    value:
+    if builtins.isPath value then
+      true
+    else if builtins.isString value then
+      lib.hasPrefix "/nix/store/" value
+    else
+      false;
+  secretFilePaths = [
+    (cfg.settings.auth.oauth2.client_secret_file or "")
+  ]
+  ++ lib.attrValues (cfg.settings.auth.extension_password_files or { })
+  ++ lib.attrValues (cfg.settings.auth.passkey.extension_password_files or { });
+  leakedSecretFiles = lib.count leaksSecretToStore secretFilePaths;
+
   # A typed OIDC config derives passkey mode in the app (the shared
   # users map feeds both modes), which then DEMANDS rp_id/rp_origins.
   # Behind the generated vhost they follow from caddy.hostName; a raw
@@ -178,7 +199,21 @@ in
           silently do nothing.
         '';
       }
-    ];
+    ]
+    # Secret leak guard: Nix path VALUES in settings (accepted by the
+    # freeform JSON type) are copied into the world-readable store when
+    # the config renders, and a string already pointing there is just as
+    # wrong. Always an error, independent of the OIDC mode.
+    ++ lib.optional (leakedSecretFiles > 0) {
+      assertion = false;
+      message = ''
+        a secret file setting under services.webphone.settings is a Nix path
+        (or a /nix/store string): path values are copied into the
+        world-readable Nix store when the config renders. Point
+        auth.oauth2.client_secret_file and the extension_password_files at
+        runtime files as plain strings (e.g. /run/secrets/...).
+      '';
+    };
 
     services.webphone.settings = {
       data_dir = lib.mkDefault cfg.dataDir;

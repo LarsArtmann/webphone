@@ -11,10 +11,10 @@ import (
 	"github.com/larsartmann/webphone/internal/asr"
 )
 
-// transcribeBodyLimit caps one audio segment. MediaRecorder chunks are
+// TranscribeBodyLimit caps one audio segment. MediaRecorder chunks are
 // tens of KB; a stored voicemail clip is a few MB; the bound exists so a
 // runaway client cannot stream unbounded bytes into the provider seam.
-const transcribeBodyLimit = 25 << 20
+const TranscribeBodyLimit = 25 << 20
 
 // transcribeConcurrency is the ceiling on IN-FLIGHT transcriptions
 // (#47): four 25 MiB bodies bound the surface's buffered memory at
@@ -51,7 +51,7 @@ func (h *Handlers) Transcribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, transcribeBodyLimit)
+	r.Body = http.MaxBytesReader(w, r.Body, TranscribeBodyLimit)
 	// The concurrency ceiling guards BOTH the buffered body and the
 	// provider round trip (#47): acquire before reading, so the memory
 	// bound holds even when every caller ships a maximum-size segment.

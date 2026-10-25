@@ -63,7 +63,7 @@ type Deps struct {
 type Handlers struct {
 	deps Deps
 	// transcribeSlots bounds CONCURRENT transcription requests
-	// (#47): each holds up to transcribeBodyLimit buffered bytes plus
+	// (#47): each holds up to TranscribeBodyLimit buffered bytes plus
 	// a provider round trip, so the ceiling is the product's honest
 	// memory bound for the whole surface.
 	transcribeSlots chan struct{}

@@ -254,4 +254,32 @@ in
         throw "webphone-module check: typed and raw oauth2 definitions merged silently (expected a conflict)"
     );
   }
+  {
+    # Secrets must never ride the Nix store: a /nix/store string (or a
+    # path VALUE, which the freeform JSON type accepts and the renderer
+    # copies) trips the leak guard, while a runtime-file string stays
+    # clean.
+    name = "oauth2-secret-store-guard";
+    path = pkgs.writeText "oauth2-secret-store-guard" (
+      let
+        trips =
+          extra: lib.any (a: !a.assertion && lib.hasInfix "/nix/store" a.message) (failedAssertions extra);
+        storeString = trips (
+          lib.recursiveUpdate validOAuth2 {
+            settings.auth.extension_password_files."1000" = "/nix/store/xxx-secret";
+          }
+        );
+        pathValue = trips (
+          lib.recursiveUpdate validOAuth2 {
+            settings.auth.extension_password_files."1000" = ./module-check-oauth2.nix;
+          }
+        );
+        clean = failedAssertions validOAuth2 == [ ];
+      in
+      if storeString && pathValue && clean then
+        "the store-path secret guard trips on both a /nix/store string and a path value, and stays quiet otherwise"
+      else
+        throw "webphone-module check: the store-path secret guard mis-fires (store string: ${toString storeString}, path value: ${toString pathValue}, clean: ${toString clean})"
+    );
+  }
 ]
