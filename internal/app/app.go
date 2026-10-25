@@ -199,6 +199,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 				Language: cfg.ASR.Language,
 			})
 		}
+		if cfg.ASR.Provider == "whispercpp" {
+			return asr.NewWhisperCppClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+		}
 		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
 	}()
 	if err != nil {

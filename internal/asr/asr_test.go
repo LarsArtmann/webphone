@@ -195,3 +195,46 @@ func TestProviderErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestWhisperCppInferencePath(t *testing.T) {
+	var gotPath, gotAuth string
+	var sawFile, sawModel bool
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotAuth = r.Header.Get("Authorization")
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Errorf("parse multipart: %v", err)
+			return
+		}
+		_, sawFile = r.MultipartForm.File["file"]
+		_, sawModel = r.MultipartForm.Value["model"]
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"text": " cpp segment "}`))
+	}))
+	defer server.Close()
+
+	client, err := asr.NewWhisperCppClient(server.URL, "tok", "whisper-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := client.Describe(); !strings.Contains(got, "whisper.cpp") {
+		t.Errorf("Describe = %q, want the whisper.cpp kind", got)
+	}
+	text, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("audio"), ContentType: "audio/webm"})
+	if err != nil {
+		t.Fatalf("Transcribe: %v", err)
+	}
+	if text != "cpp segment" {
+		t.Errorf("text = %q", text)
+	}
+	if gotPath != "/inference" {
+		t.Errorf("path = %q, want /inference", gotPath)
+	}
+	if gotAuth != "Bearer tok" {
+		t.Errorf("auth = %q", gotAuth)
+	}
+	if !sawFile || !sawModel {
+		t.Errorf("multipart shape: file=%v model=%v", sawFile, sawModel)
+	}
+}

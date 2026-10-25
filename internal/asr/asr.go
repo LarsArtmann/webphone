@@ -77,6 +77,10 @@ const (
 	defaultFilename = "audio.webm"
 	// transcriptionsPath is the OpenAI-compatible transcription endpoint.
 	transcriptionsPath = "/v1/audio/transcriptions"
+	// inferencePath is the native whisper.cpp server endpoint: the same
+	// multipart + {"text"} wire as the OpenAI-compatible lane, posted to
+	// /inference (asr.provider = "whispercpp").
+	inferencePath = "/inference"
 )
 
 // Client talks to one OpenAI-compatible transcription provider.
@@ -87,6 +91,7 @@ type Client struct {
 	base   *url.URL
 	token  string
 	model  string
+	path   string
 	client *http.Client
 	stats  outcomes
 }
@@ -120,15 +125,35 @@ func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branchi
 		base:   parsed,
 		token:  token,
 		model:  model,
+		path:   transcriptionsPath,
 		client: &http.Client{Timeout: requestTimeout},
 	}, nil
+}
+
+// NewWhisperCppClient is NewClient for the native whisper.cpp server
+// wire (#21): the multipart body and the {"text"} response are the same
+// shape, the endpoint path is /inference. Unknown form fields (model,
+// language) are ignored by the server, so the body stays shared.
+func NewWhisperCppClient(baseURL, token, model string) (*Client, error) {
+	client, err := NewClient(baseURL, token, model)
+	if err != nil {
+		return nil, err
+	}
+	client.path = inferencePath
+	return client, nil
 }
 
 // Enabled reports whether a provider is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
 // Describe names the wire kind and the configured model.
-func (c *Client) Describe() string { return "openai-compatible · " + c.model }
+func (c *Client) Describe() string {
+	kind := "openai-compatible"
+	if c.path == inferencePath {
+		kind = "whisper.cpp"
+	}
+	return kind + " · " + c.model
+}
 
 // Request is one transcription job: a whole (segmented) audio file plus
 // the metadata the provider needs to decode and route it.
@@ -172,7 +197,7 @@ func (c *Client) Transcribe(ctx context.Context, req Request) (text string, err 
 		return "", err
 	}
 
-	target := c.base.JoinPath(transcriptionsPath).String()
+	target := c.base.JoinPath(c.path).String()
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, target, body)
 	if err != nil {
 		return "", errorfamily.WrapInfrastructuref(err, "asr.request", "asr: build request")

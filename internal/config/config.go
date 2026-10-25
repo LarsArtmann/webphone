@@ -738,8 +738,8 @@ func validate(cfg Config) error {
 		return err
 	}
 	switch {
-	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google":
-		return errorfamily.Newf(errorfamily.Rejection, "config.asr.provider", "asr.provider %q is not one of \"openai\", \"google\"", cfg.ASR.Provider)
+	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google" && cfg.ASR.Provider != "whispercpp":
+		return errorfamily.Newf(errorfamily.Rejection, "config.asr.provider", "asr.provider %q is not one of \"openai\", \"google\", \"whispercpp\"", cfg.ASR.Provider)
 	case cfg.ASR.Google() && cfg.ASR.Project == "":
 		return errorfamily.NewRejection("config.asr.project", "asr.provider is google without asr.project: the recognizer path needs the cloud project id")
 	case cfg.ASR.Google() && (strings.ContainsAny(cfg.ASR.Project, "/ ") || strings.ContainsAny(cfg.ASR.Location, "/ ")):
