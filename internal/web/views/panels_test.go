@@ -412,6 +412,35 @@ func TestSettingsSnippetsSection(t *testing.T) {
 	}
 }
 
+// TestSettingsPushSection pins the ring-while-closed surface: the seam
+// row + device list render ONLY when the seam is on (zero config keeps
+// the panel byte-identical), rows show identity + recency — never a
+// wake address — and the empty state exists.
+func TestSettingsPushSection(t *testing.T) {
+	off := renderComponent(t, SettingsPanel(SettingsPanelProps{Lang: LangEN}))
+	if strings.Contains(off, "Ring while closed") || strings.Contains(off, "Registered devices") {
+		t.Errorf("push surface rendered with the seam off: %s", off)
+	}
+	on := renderComponent(t, SettingsPanel(SettingsPanelProps{
+		Push: true, PushTransports: "fcm+ntfy",
+		PushDevices: []PushDeviceRow{{ID: "pixel-9a01abc", Transport: "ntfy", UpdatedAt: time.Date(2026, 10, 25, 9, 30, 0, 0, time.UTC)}},
+		Lang:        LangEN,
+	}))
+	if !strings.Contains(on, "Ring while closed") || !strings.Contains(on, "fcm+ntfy") {
+		t.Errorf("seam row missing when the seam is on: %s", on)
+	}
+	if !strings.Contains(on, "Registered devices") || !strings.Contains(on, "pixel-9a01abc") || !strings.Contains(on, "ntfy · 2026-10-25") {
+		t.Errorf("device list missing its rows: %s", on)
+	}
+	if got := strings.Count(on, "<dl"); got != 2 {
+		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d", got)
+	}
+	empty := renderComponent(t, SettingsPanel(SettingsPanelProps{Push: true, Lang: LangEN}))
+	if !strings.Contains(empty, "No devices registered yet — the mobile app registers itself at sign-in.") {
+		t.Errorf("push empty state missing: %s", empty)
+	}
+}
+
 // TestImageAttachmentCarriesLightboxAttr: the inline image attachment
 // anchor carries data-lightbox (shell.js opens the dialog on it); a
 // non-image attachment never does.

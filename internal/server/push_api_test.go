@@ -5,6 +5,7 @@ import (
 	"encoding/json/v2"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/push"
@@ -208,5 +209,41 @@ func TestPushDeviceRegistrySeamOffAnswers404(t *testing.T) {
 		if resp.StatusCode != http.StatusNotFound {
 			t.Fatalf("%s %s: status %d, want 404", tc.method, tc.path, resp.StatusCode)
 		}
+	}
+}
+
+// TestSettingsTabSurfacesPushDevices pins the Settings-tab read side of
+// the registry: the seam row + the extension's devices render on the
+// served tab (identity + recency, never the wake address), and a
+// seam-off server renders neither.
+func TestSettingsTabSurfacesPushDevices(t *testing.T) {
+	server := newPushServer(t)
+	c := clientFor(t, server)
+	c.login("1001", "pass")
+	if resp := registerPushDevice(t, c, "device-2222-bbbb", "ntfy", "wp-secret-topic"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("register status %d, want 204", resp.StatusCode)
+	}
+	resp, body := c.do(http.MethodGet, "/settings", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("settings tab status %d: %s", resp.StatusCode, body)
+	}
+	for _, want := range []string{"Ring while closed", "fcm+ntfy", "Registered devices", "device-2222-bbbb"} {
+		if !strings.Contains(string(body), want) {
+			t.Errorf("settings tab missing %q", want)
+		}
+	}
+	if strings.Contains(string(body), "wp-secret-topic") {
+		t.Error("settings tab must never render the wake address")
+	}
+
+	off := newTestServer(t)
+	oc := clientFor(t, off)
+	oc.login("1001", "pass")
+	resp, body = oc.do(http.MethodGet, "/settings", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("seam-off settings status %d: %s", resp.StatusCode, body)
+	}
+	if strings.Contains(string(body), "Ring while closed") || strings.Contains(string(body), "Registered devices") {
+		t.Errorf("seam-off settings rendered the push surface: %s", body)
 	}
 }
