@@ -122,7 +122,7 @@ kept producing auth bugs.
    build story), FEATURES.md, TODO_LIST row, release-runbook note (markup
    change owes fresh stack browser E2E).
 10. Smoke boot of the passkey-on binary (needs the HOSTNAME rp_id dance)
-    + verify `/login` renders styled + ceremony round-trip.
+    - verify `/login` renders styled + ceremony round-trip.
 
 ## d) TOTALLY FUCKED UP (and what I did about it)
 
@@ -178,8 +178,8 @@ kept producing auth bugs.
    `lp-*` on /login; note the library owns that markup).
 8. Write `internal/web/assets/login.css.input`; extend/generalize
    `scripts/build-tw-css.sh` (fix the vendor/ dependency, stage loginpage
-   + feedback sources from the module cache, add @theme/variant parity
-   gate between inputs); build + commit `login.css`.
+   - feedback sources from the module cache, add @theme/variant parity
+     gate between inputs); build + commit `login.css`.
 9. app.css rule for `.wp-passkey-link` (verify against `.wp-sso` style).
 10. `nix fmt` (scoped: island, css, Go artifacts).
 11. Island tests: `nix run nixpkgs#nodejs -- --test --test-force-exit

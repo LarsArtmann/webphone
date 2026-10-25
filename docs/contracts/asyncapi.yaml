@@ -1,495 +1,495 @@
 asyncapi: 3.0.0
 id: urn:webphonewirecontracts:api
 info:
-    title: webphone wire contracts
-    version: 1.0.0
-    description: 'Generated from the handler wire types (go-cqrs-lite/catalog). The lanes are plain HTTPS calls: the telephony stack POSTs the /hooks/* channels with the Bearer gateway secret, and webphone''s browser clients live on the /events SSE stream.'
+  title: webphone wire contracts
+  version: 1.0.0
+  description: 'Generated from the handler wire types (go-cqrs-lite/catalog). The lanes are plain HTTPS calls: the telephony stack POSTs the /hooks/* channels with the Bearer gateway secret, and webphone''s browser clients live on the /events SSE stream.'
 defaultContentType: application/json
 channels:
-    commands.wire.hooks.fax:
-        address: webphone-wire.commands.wire.hooks.fax
-        title: Inbound Fax Hook command Channel
-        description: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
-        messages:
-            command.wire.hooks.fax:
-                $ref: '#/components/messages/command.wire.hooks.fax'
-    commands.wire.hooks.fax.status:
-        address: webphone-wire.commands.wire.hooks.fax.status
-        title: Fax Status Hook command Channel
-        description: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
-        messages:
-            command.wire.hooks.fax.status:
-                $ref: '#/components/messages/command.wire.hooks.fax.status'
-    commands.wire.hooks.message:
-        address: webphone-wire.commands.wire.hooks.message
-        title: Inbound Message Hook command Channel
-        description: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
-        messages:
-            command.wire.hooks.message:
-                $ref: '#/components/messages/command.wire.hooks.message'
-    commands.wire.hooks.message.status:
-        address: webphone-wire.commands.wire.hooks.message.status
-        title: Message Status Hook command Channel
-        description: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
-        messages:
-            command.wire.hooks.message.status:
-                $ref: '#/components/messages/command.wire.hooks.message.status'
-    commands.wire.hooks.ring:
-        address: webphone-wire.commands.wire.hooks.ring
-        title: Ring Hook command Channel
-        description: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
-        messages:
-            command.wire.hooks.ring:
-                $ref: '#/components/messages/command.wire.hooks.ring'
-    events.wire.gateway.receipt:
-        address: webphone-wire.events.wire.gateway.receipt
-        title: Gateway Receipt event Channel
-        description: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
-        messages:
-            event.wire.gateway.receipt:
-                $ref: '#/components/messages/event.wire.gateway.receipt'
-    events.wire.sse.contacts:
-        address: webphone-wire.events.wire.sse.contacts
-        title: SSE contacts event Channel
-        description: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
-        messages:
-            event.wire.sse.contacts:
-                $ref: '#/components/messages/event.wire.sse.contacts'
-    events.wire.sse.fax:
-        address: webphone-wire.events.wire.sse.fax
-        title: SSE fax event Channel
-        description: 'GET /events event "fax": the fax list re-renders.'
-        messages:
-            event.wire.sse.fax:
-                $ref: '#/components/messages/event.wire.sse.fax'
-    events.wire.sse.thread:
-        address: webphone-wire.events.wire.sse.thread
-        title: SSE thread event Channel
-        description: 'GET /events event "thread": one open conversation''s transcript re-renders.'
-        messages:
-            event.wire.sse.thread:
-                $ref: '#/components/messages/event.wire.sse.thread'
-    events.wire.sse.threads:
-        address: webphone-wire.events.wire.sse.threads
-        title: SSE threads event Channel
-        description: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
-        messages:
-            event.wire.sse.threads:
-                $ref: '#/components/messages/event.wire.sse.threads'
-    events.wire.sse.voicemail:
-        address: webphone-wire.events.wire.sse.voicemail
-        title: SSE voicemail event Channel
-        description: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
-        messages:
-            event.wire.sse.voicemail:
-                $ref: '#/components/messages/event.wire.sse.voicemail'
-operations:
-    publishwire.sse.contacts:
-        title: Publish SSE contacts
-        summary: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
-        action: send
-        channel:
-            $ref: '#/channels/events.wire.sse.contacts'
-        messages:
-            -   $ref: '#/channels/events.wire.sse.contacts/messages/event.wire.sse.contacts'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    publishwire.sse.fax:
-        title: Publish SSE fax
-        summary: 'GET /events event "fax": the fax list re-renders.'
-        action: send
-        channel:
-            $ref: '#/channels/events.wire.sse.fax'
-        messages:
-            -   $ref: '#/channels/events.wire.sse.fax/messages/event.wire.sse.fax'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    publishwire.sse.thread:
-        title: Publish SSE thread
-        summary: 'GET /events event "thread": one open conversation''s transcript re-renders.'
-        action: send
-        channel:
-            $ref: '#/channels/events.wire.sse.thread'
-        messages:
-            -   $ref: '#/channels/events.wire.sse.thread/messages/event.wire.sse.thread'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    publishwire.sse.threads:
-        title: Publish SSE threads
-        summary: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
-        action: send
-        channel:
-            $ref: '#/channels/events.wire.sse.threads'
-        messages:
-            -   $ref: '#/channels/events.wire.sse.threads/messages/event.wire.sse.threads'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    publishwire.sse.voicemail:
-        title: Publish SSE voicemail
-        summary: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
-        action: send
-        channel:
-            $ref: '#/channels/events.wire.sse.voicemail'
-        messages:
-            -   $ref: '#/channels/events.wire.sse.voicemail/messages/event.wire.sse.voicemail'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    receivewire.gateway.receipt:
-        title: Publish Gateway Receipt
-        summary: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
-        action: receive
-        channel:
-            $ref: '#/channels/events.wire.gateway.receipt'
-        messages:
-            -   $ref: '#/channels/events.wire.gateway.receipt/messages/event.wire.gateway.receipt'
-        tags:
-            -   name: events
-            -   name: webphone-wire
-    receivewire.hooks.fax:
-        title: Receive Inbound Fax Hook
-        summary: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
-        action: receive
-        channel:
-            $ref: '#/channels/commands.wire.hooks.fax'
-        messages:
-            -   $ref: '#/channels/commands.wire.hooks.fax/messages/command.wire.hooks.fax'
-        tags:
-            -   name: commands
-            -   name: webphone-wire
-            -   name: http:POST
-    receivewire.hooks.fax.status:
-        title: Receive Fax Status Hook
-        summary: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
-        action: receive
-        channel:
-            $ref: '#/channels/commands.wire.hooks.fax.status'
-        messages:
-            -   $ref: '#/channels/commands.wire.hooks.fax.status/messages/command.wire.hooks.fax.status'
-        tags:
-            -   name: commands
-            -   name: webphone-wire
-            -   name: http:POST
-    receivewire.hooks.message:
-        title: Receive Inbound Message Hook
-        summary: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
-        action: receive
-        channel:
-            $ref: '#/channels/commands.wire.hooks.message'
-        messages:
-            -   $ref: '#/channels/commands.wire.hooks.message/messages/command.wire.hooks.message'
-        tags:
-            -   name: commands
-            -   name: webphone-wire
-            -   name: http:POST
-    receivewire.hooks.message.status:
-        title: Receive Message Status Hook
-        summary: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
-        action: receive
-        channel:
-            $ref: '#/channels/commands.wire.hooks.message.status'
-        messages:
-            -   $ref: '#/channels/commands.wire.hooks.message.status/messages/command.wire.hooks.message.status'
-        tags:
-            -   name: commands
-            -   name: webphone-wire
-            -   name: http:POST
-    receivewire.hooks.ring:
-        title: Receive Ring Hook
-        summary: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
-        action: receive
-        channel:
-            $ref: '#/channels/commands.wire.hooks.ring'
-        messages:
-            -   $ref: '#/channels/commands.wire.hooks.ring/messages/command.wire.hooks.ring'
-        tags:
-            -   name: commands
-            -   name: webphone-wire
-            -   name: http:POST
-components:
-    schemas:
-        command.wire.hooks.fax:
-            properties:
-                from:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                num_pages:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                owner:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                page_count:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                pages:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                pdf_base64:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                provider_ref:
-                    deprecated: false
-                    nullable: false
-                    type: string
-            required:
-                - owner
-                - from
-                - pages
-                - page_count
-                - num_pages
-                - provider_ref
-                - pdf_base64
-            type: object
-        command.wire.hooks.fax.status:
-            properties:
-                error:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                num_pages:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                page_count:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                pages:
-                    deprecated: false
-                    nullable: false
-                    type: integer
-                provider_ref:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                status:
-                    deprecated: false
-                    nullable: false
-                    type: string
-            required:
-                - provider_ref
-                - status
-                - pages
-                - page_count
-                - num_pages
-                - error
-            type: object
-        command.wire.hooks.message:
-            properties:
-                attachments:
-                    deprecated: false
-                    items:
-                        deprecated: false
-                        nullable: false
-                        properties:
-                            data_base64:
-                                deprecated: false
-                                nullable: false
-                                type: string
-                            mime_type:
-                                deprecated: false
-                                nullable: false
-                                type: string
-                            name:
-                                deprecated: false
-                                nullable: false
-                                type: string
-                        required:
-                            - name
-                            - mime_type
-                            - data_base64
-                        type: object
-                    nullable: false
-                    type: array
-                body:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                from:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                owner:
-                    deprecated: false
-                    nullable: false
-                    type: string
-            required:
-                - owner
-                - from
-                - body
-                - attachments
-            type: object
-        command.wire.hooks.message.status:
-            properties:
-                error:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                provider_ref:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                status:
-                    deprecated: false
-                    nullable: false
-                    type: string
-            required:
-                - provider_ref
-                - status
-                - error
-            type: object
-        command.wire.hooks.ring:
-            properties:
-                call_id:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                from:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                owner:
-                    deprecated: false
-                    nullable: false
-                    type: string
-                state:
-                    deprecated: false
-                    nullable: false
-                    type: string
-            required:
-                - owner
-                - from
-                - call_id
-                - state
-            type: object
-        event.wire.gateway.receipt:
-            properties:
-                provider_ref:
-                    deprecated: false
-                    description: The provider reference to address later status hooks at.
-                    nullable: false
-                    type: string
-            required:
-                - provider_ref
-            type: object
-        event.wire.sse.contacts:
-            type: object
-        event.wire.sse.fax:
-            type: object
-        event.wire.sse.thread:
-            type: object
-        event.wire.sse.threads:
-            type: object
-        event.wire.sse.voicemail:
-            type: object
+  commands.wire.hooks.fax:
+    address: webphone-wire.commands.wire.hooks.fax
+    title: Inbound Fax Hook command Channel
+    description: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
     messages:
-        command.wire.hooks.fax:
-            name: wire.hooks.fax
-            title: Inbound Fax Hook
-            summary: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/command.wire.hooks.fax'
-            tags:
-                -   name: commands
-        command.wire.hooks.fax.status:
-            name: wire.hooks.fax.status
-            title: Fax Status Hook
-            summary: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/command.wire.hooks.fax.status'
-            tags:
-                -   name: commands
-        command.wire.hooks.message:
-            name: wire.hooks.message
-            title: Inbound Message Hook
-            summary: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/command.wire.hooks.message'
-            tags:
-                -   name: commands
-        command.wire.hooks.message.status:
-            name: wire.hooks.message.status
-            title: Message Status Hook
-            summary: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/command.wire.hooks.message.status'
-            tags:
-                -   name: commands
-        command.wire.hooks.ring:
-            name: wire.hooks.ring
-            title: Ring Hook
-            summary: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/command.wire.hooks.ring'
-            tags:
-                -   name: commands
-        event.wire.gateway.receipt:
-            name: wire.gateway.receipt
-            title: Gateway Receipt
-            summary: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.gateway.receipt'
-            tags:
-                -   name: events
-        event.wire.sse.contacts:
-            name: wire.sse.contacts
-            title: SSE contacts
-            summary: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.sse.contacts'
-            tags:
-                -   name: events
-        event.wire.sse.fax:
-            name: wire.sse.fax
-            title: SSE fax
-            summary: 'GET /events event "fax": the fax list re-renders.'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.sse.fax'
-            tags:
-                -   name: events
-        event.wire.sse.thread:
-            name: wire.sse.thread
-            title: SSE thread
-            summary: 'GET /events event "thread": one open conversation''s transcript re-renders.'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.sse.thread'
-            tags:
-                -   name: events
-        event.wire.sse.threads:
-            name: wire.sse.threads
-            title: SSE threads
-            summary: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.sse.threads'
-            tags:
-                -   name: events
-        event.wire.sse.voicemail:
-            name: wire.sse.voicemail
-            title: SSE voicemail
-            summary: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
-            contentType: application/json
-            payload:
-                $ref: '#/components/schemas/event.wire.sse.voicemail'
-            tags:
-                -   name: events
+      command.wire.hooks.fax:
+        $ref: "#/components/messages/command.wire.hooks.fax"
+  commands.wire.hooks.fax.status:
+    address: webphone-wire.commands.wire.hooks.fax.status
+    title: Fax Status Hook command Channel
+    description: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
+    messages:
+      command.wire.hooks.fax.status:
+        $ref: "#/components/messages/command.wire.hooks.fax.status"
+  commands.wire.hooks.message:
+    address: webphone-wire.commands.wire.hooks.message
+    title: Inbound Message Hook command Channel
+    description: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
+    messages:
+      command.wire.hooks.message:
+        $ref: "#/components/messages/command.wire.hooks.message"
+  commands.wire.hooks.message.status:
+    address: webphone-wire.commands.wire.hooks.message.status
+    title: Message Status Hook command Channel
+    description: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
+    messages:
+      command.wire.hooks.message.status:
+        $ref: "#/components/messages/command.wire.hooks.message.status"
+  commands.wire.hooks.ring:
+    address: webphone-wire.commands.wire.hooks.ring
+    title: Ring Hook command Channel
+    description: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
+    messages:
+      command.wire.hooks.ring:
+        $ref: "#/components/messages/command.wire.hooks.ring"
+  events.wire.gateway.receipt:
+    address: webphone-wire.events.wire.gateway.receipt
+    title: Gateway Receipt event Channel
+    description: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
+    messages:
+      event.wire.gateway.receipt:
+        $ref: "#/components/messages/event.wire.gateway.receipt"
+  events.wire.sse.contacts:
+    address: webphone-wire.events.wire.sse.contacts
+    title: SSE contacts event Channel
+    description: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
+    messages:
+      event.wire.sse.contacts:
+        $ref: "#/components/messages/event.wire.sse.contacts"
+  events.wire.sse.fax:
+    address: webphone-wire.events.wire.sse.fax
+    title: SSE fax event Channel
+    description: 'GET /events event "fax": the fax list re-renders.'
+    messages:
+      event.wire.sse.fax:
+        $ref: "#/components/messages/event.wire.sse.fax"
+  events.wire.sse.thread:
+    address: webphone-wire.events.wire.sse.thread
+    title: SSE thread event Channel
+    description: 'GET /events event "thread": one open conversation''s transcript re-renders.'
+    messages:
+      event.wire.sse.thread:
+        $ref: "#/components/messages/event.wire.sse.thread"
+  events.wire.sse.threads:
+    address: webphone-wire.events.wire.sse.threads
+    title: SSE threads event Channel
+    description: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
+    messages:
+      event.wire.sse.threads:
+        $ref: "#/components/messages/event.wire.sse.threads"
+  events.wire.sse.voicemail:
+    address: webphone-wire.events.wire.sse.voicemail
+    title: SSE voicemail event Channel
+    description: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
+    messages:
+      event.wire.sse.voicemail:
+        $ref: "#/components/messages/event.wire.sse.voicemail"
+operations:
+  publishwire.sse.contacts:
+    title: Publish SSE contacts
+    summary: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
+    action: send
+    channel:
+      $ref: "#/channels/events.wire.sse.contacts"
+    messages:
+      - $ref: "#/channels/events.wire.sse.contacts/messages/event.wire.sse.contacts"
+    tags:
+      - name: events
+      - name: webphone-wire
+  publishwire.sse.fax:
+    title: Publish SSE fax
+    summary: 'GET /events event "fax": the fax list re-renders.'
+    action: send
+    channel:
+      $ref: "#/channels/events.wire.sse.fax"
+    messages:
+      - $ref: "#/channels/events.wire.sse.fax/messages/event.wire.sse.fax"
+    tags:
+      - name: events
+      - name: webphone-wire
+  publishwire.sse.thread:
+    title: Publish SSE thread
+    summary: 'GET /events event "thread": one open conversation''s transcript re-renders.'
+    action: send
+    channel:
+      $ref: "#/channels/events.wire.sse.thread"
+    messages:
+      - $ref: "#/channels/events.wire.sse.thread/messages/event.wire.sse.thread"
+    tags:
+      - name: events
+      - name: webphone-wire
+  publishwire.sse.threads:
+    title: Publish SSE threads
+    summary: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
+    action: send
+    channel:
+      $ref: "#/channels/events.wire.sse.threads"
+    messages:
+      - $ref: "#/channels/events.wire.sse.threads/messages/event.wire.sse.threads"
+    tags:
+      - name: events
+      - name: webphone-wire
+  publishwire.sse.voicemail:
+    title: Publish SSE voicemail
+    summary: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
+    action: send
+    channel:
+      $ref: "#/channels/events.wire.sse.voicemail"
+    messages:
+      - $ref: "#/channels/events.wire.sse.voicemail/messages/event.wire.sse.voicemail"
+    tags:
+      - name: events
+      - name: webphone-wire
+  receivewire.gateway.receipt:
+    title: Publish Gateway Receipt
+    summary: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
+    action: receive
+    channel:
+      $ref: "#/channels/events.wire.gateway.receipt"
+    messages:
+      - $ref: "#/channels/events.wire.gateway.receipt/messages/event.wire.gateway.receipt"
+    tags:
+      - name: events
+      - name: webphone-wire
+  receivewire.hooks.fax:
+    title: Receive Inbound Fax Hook
+    summary: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
+    action: receive
+    channel:
+      $ref: "#/channels/commands.wire.hooks.fax"
+    messages:
+      - $ref: "#/channels/commands.wire.hooks.fax/messages/command.wire.hooks.fax"
+    tags:
+      - name: commands
+      - name: webphone-wire
+      - name: http:POST
+  receivewire.hooks.fax.status:
+    title: Receive Fax Status Hook
+    summary: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
+    action: receive
+    channel:
+      $ref: "#/channels/commands.wire.hooks.fax.status"
+    messages:
+      - $ref: "#/channels/commands.wire.hooks.fax.status/messages/command.wire.hooks.fax.status"
+    tags:
+      - name: commands
+      - name: webphone-wire
+      - name: http:POST
+  receivewire.hooks.message:
+    title: Receive Inbound Message Hook
+    summary: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
+    action: receive
+    channel:
+      $ref: "#/channels/commands.wire.hooks.message"
+    messages:
+      - $ref: "#/channels/commands.wire.hooks.message/messages/command.wire.hooks.message"
+    tags:
+      - name: commands
+      - name: webphone-wire
+      - name: http:POST
+  receivewire.hooks.message.status:
+    title: Receive Message Status Hook
+    summary: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
+    action: receive
+    channel:
+      $ref: "#/channels/commands.wire.hooks.message.status"
+    messages:
+      - $ref: "#/channels/commands.wire.hooks.message.status/messages/command.wire.hooks.message.status"
+    tags:
+      - name: commands
+      - name: webphone-wire
+      - name: http:POST
+  receivewire.hooks.ring:
+    title: Receive Ring Hook
+    summary: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
+    action: receive
+    channel:
+      $ref: "#/channels/commands.wire.hooks.ring"
+    messages:
+      - $ref: "#/channels/commands.wire.hooks.ring/messages/command.wire.hooks.ring"
+    tags:
+      - name: commands
+      - name: webphone-wire
+      - name: http:POST
+components:
+  schemas:
+    command.wire.hooks.fax:
+      properties:
+        from:
+          deprecated: false
+          nullable: false
+          type: string
+        num_pages:
+          deprecated: false
+          nullable: false
+          type: integer
+        owner:
+          deprecated: false
+          nullable: false
+          type: string
+        page_count:
+          deprecated: false
+          nullable: false
+          type: integer
+        pages:
+          deprecated: false
+          nullable: false
+          type: integer
+        pdf_base64:
+          deprecated: false
+          nullable: false
+          type: string
+        provider_ref:
+          deprecated: false
+          nullable: false
+          type: string
+      required:
+        - owner
+        - from
+        - pages
+        - page_count
+        - num_pages
+        - provider_ref
+        - pdf_base64
+      type: object
+    command.wire.hooks.fax.status:
+      properties:
+        error:
+          deprecated: false
+          nullable: false
+          type: string
+        num_pages:
+          deprecated: false
+          nullable: false
+          type: integer
+        page_count:
+          deprecated: false
+          nullable: false
+          type: integer
+        pages:
+          deprecated: false
+          nullable: false
+          type: integer
+        provider_ref:
+          deprecated: false
+          nullable: false
+          type: string
+        status:
+          deprecated: false
+          nullable: false
+          type: string
+      required:
+        - provider_ref
+        - status
+        - pages
+        - page_count
+        - num_pages
+        - error
+      type: object
+    command.wire.hooks.message:
+      properties:
+        attachments:
+          deprecated: false
+          items:
+            deprecated: false
+            nullable: false
+            properties:
+              data_base64:
+                deprecated: false
+                nullable: false
+                type: string
+              mime_type:
+                deprecated: false
+                nullable: false
+                type: string
+              name:
+                deprecated: false
+                nullable: false
+                type: string
+            required:
+              - name
+              - mime_type
+              - data_base64
+            type: object
+          nullable: false
+          type: array
+        body:
+          deprecated: false
+          nullable: false
+          type: string
+        from:
+          deprecated: false
+          nullable: false
+          type: string
+        owner:
+          deprecated: false
+          nullable: false
+          type: string
+      required:
+        - owner
+        - from
+        - body
+        - attachments
+      type: object
+    command.wire.hooks.message.status:
+      properties:
+        error:
+          deprecated: false
+          nullable: false
+          type: string
+        provider_ref:
+          deprecated: false
+          nullable: false
+          type: string
+        status:
+          deprecated: false
+          nullable: false
+          type: string
+      required:
+        - provider_ref
+        - status
+        - error
+      type: object
+    command.wire.hooks.ring:
+      properties:
+        call_id:
+          deprecated: false
+          nullable: false
+          type: string
+        from:
+          deprecated: false
+          nullable: false
+          type: string
+        owner:
+          deprecated: false
+          nullable: false
+          type: string
+        state:
+          deprecated: false
+          nullable: false
+          type: string
+      required:
+        - owner
+        - from
+        - call_id
+        - state
+      type: object
+    event.wire.gateway.receipt:
+      properties:
+        provider_ref:
+          deprecated: false
+          description: The provider reference to address later status hooks at.
+          nullable: false
+          type: string
+      required:
+        - provider_ref
+      type: object
+    event.wire.sse.contacts:
+      type: object
+    event.wire.sse.fax:
+      type: object
+    event.wire.sse.thread:
+      type: object
+    event.wire.sse.threads:
+      type: object
+    event.wire.sse.voicemail:
+      type: object
+  messages:
+    command.wire.hooks.fax:
+      name: wire.hooks.fax
+      title: Inbound Fax Hook
+      summary: POST /hooks/fax — inbound fax document (base64 PDF) from the bridge. Bearer gateway secret.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/command.wire.hooks.fax"
+      tags:
+        - name: commands
+    command.wire.hooks.fax.status:
+      name: wire.hooks.fax.status
+      title: Fax Status Hook
+      summary: POST /hooks/fax/status — outbound fax verdict from the provider (transmitted | failed). Bearer gateway secret; idempotent (1 h window).
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/command.wire.hooks.fax.status"
+      tags:
+        - name: commands
+    command.wire.hooks.message:
+      name: wire.hooks.message
+      title: Inbound Message Hook
+      summary: POST /hooks/message — inbound SMS/MMS from the stack's Telnyx bridge. Persists into the owner's thread, nudges the SSE surfaces, auto-unarchives. Bearer gateway secret; status answers are idempotent (1 h window; replays answer 202).
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/command.wire.hooks.message"
+      tags:
+        - name: commands
+    command.wire.hooks.message.status:
+      name: wire.hooks.message.status
+      title: Message Status Hook
+      summary: POST /hooks/message/status — outbound message verdict from the provider (delivered | failed). Bearer gateway secret; idempotent (1 h window).
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/command.wire.hooks.message.status"
+      tags:
+        - name: commands
+    command.wire.hooks.ring:
+      name: wire.hooks.ring
+      title: Ring Hook
+      summary: POST /hooks/ring — inbound-call wake from the stack's FS dialplan (ring-while-closed seam). Fans a push out to the owner's registered devices; state "end" stands them down. Answers 202 inertly whether or not push is configured — the dialplan must never wait on push health. Bearer gateway secret; fail-closed 503 without one.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/command.wire.hooks.ring"
+      tags:
+        - name: commands
+    event.wire.gateway.receipt:
+      name: wire.gateway.receipt
+      title: Gateway Receipt
+      summary: 'The acceptance receipt the bridge answers webphone''s webhook POST with: the provider_ref to address later status hooks at. A small non-JSON answer is taken verbatim as the ref (the bare-token alternative); the receipt only ever acknowledges acceptance — settlement waits for the status hook.'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.gateway.receipt"
+      tags:
+        - name: events
+    event.wire.sse.contacts:
+      name: wire.sse.contacts
+      title: SSE contacts
+      summary: 'GET /events event "contacts": payload-less nudge — the panel re-fetches.'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.sse.contacts"
+      tags:
+        - name: events
+    event.wire.sse.fax:
+      name: wire.sse.fax
+      title: SSE fax
+      summary: 'GET /events event "fax": the fax list re-renders.'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.sse.fax"
+      tags:
+        - name: events
+    event.wire.sse.thread:
+      name: wire.sse.thread
+      title: SSE thread
+      summary: 'GET /events event "thread": one open conversation''s transcript re-renders.'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.sse.thread"
+      tags:
+        - name: events
+    event.wire.sse.threads:
+      name: wire.sse.threads
+      title: SSE threads
+      summary: 'GET /events event "threads": the thread LIST morphs (list-only by design — a zero thread id never pushes the transcript, so an open conversation is never wiped).'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.sse.threads"
+      tags:
+        - name: events
+    event.wire.sse.voicemail:
+      name: wire.sse.voicemail
+      title: SSE voicemail
+      summary: 'GET /events event "voicemail": payload-less nudge — the panel re-fetches.'
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/event.wire.sse.voicemail"
+      tags:
+        - name: events

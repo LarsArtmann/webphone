@@ -160,5 +160,5 @@ report). Scope: the owner's GO on report question g.1 — everything between the
 
 ---
 
-*Written from session memory + direct observations; no new investigations
-were opened. Awaiting owner instructions.*
+_Written from session memory + direct observations; no new investigations
+were opened. Awaiting owner instructions._

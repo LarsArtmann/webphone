@@ -111,10 +111,10 @@ wave, and MY narrative `auth:` commit + push (paste #8, still owed).
 2. M7: island tests → `go test -count=1 ./...` → session suite → nix fmt.
 3. M8: two smoke boots (OFF parity, ON render).
 4. M9 buildflow; 5. M10 flake check.
-6. M11 docs wave (CHANGELOG/README/AGENTS/FEATURES/TODO_LIST/runbook).
-7. M12: `git status` review → whitespace-drift check → narrative `auth:`
+5. M11 docs wave (CHANGELOG/README/AGENTS/FEATURES/TODO_LIST/runbook).
+6. M12: `git status` review → whitespace-drift check → narrative `auth:`
    commit (detailed) → push → `gh run list` to green → ls-remote end state.
-8. M13 close-out (plan checkboxes, harvest CI-freshness candidate row).
+7. M13 close-out (plan checkboxes, harvest CI-freshness candidate row).
 
 ## g) QUESTIONS (cannot figure out myself)
 

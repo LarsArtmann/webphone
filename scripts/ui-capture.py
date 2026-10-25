@@ -445,7 +445,9 @@ def main() -> int:
                 "rp_id": "webphone.test",
                 "rp_origins": ["https://webphone.test"],
                 "users": {"ui-capture@example.com": {"extensions": ["1001"]}},
-                "extension_password_files": {"1001": os.path.join(data_dir, "ext1001.pass")},
+                "extension_password_files": {
+                    "1001": os.path.join(data_dir, "ext1001.pass")
+                },
             }
         },
     }

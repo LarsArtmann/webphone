@@ -160,6 +160,7 @@ report covers ONLY this session's run and what I noticed in it.
 ## f) NEXT — up to 50 things, ordered by value
 
 **Close the /login verification gaps (this train's residue):**
+
 1. Add `/login` to the T23 ui-capture matrix (2 modes × light/dark = 4 shots;
    budget note: harness is LOCAL-ONLY by owner decision).
 2. Eyeball/`/login` + island card render once in a real browser (login.css
@@ -174,65 +175,65 @@ report covers ONLY this session's run and what I noticed in it.
 
 **Dup-gate + baseline hygiene:**
 6. Decide: refresh `.buildflow-baseline.json` (branching-flow, 47 stale
-   entries) now vs quarterly audit (owner call — question g.3).
+entries) now vs quarterly audit (owner call — question g.3).
 7. Add the tw.css/login.css freshness rebuild-diff CI step (TODO_LIST
-   candidate #1; script is byte-stable by construction).
+candidate #1; script is byte-stable by construction).
 8. Quarterly art-dupl baseline audit is due 2027-01-11 — calendar it (the
-   75→70 shrink this session is exactly the drift that audit exists for).
+75→70 shrink this session is exactly the drift that audit exists for).
 9. File/verify upstream: art-dupl v0.7.2 vs v0.9.0 group-identity drift still
-   means local runs can lie (AGENTS pins it, but the trap stands for
-   newcomers).
+means local runs can lie (AGENTS pins it, but the trap stands for
+newcomers).
 
 **loginpage evolution:**
 10. Track the loginpage HEAD (usermgmt v4.16) vs our pinned v4.13.0 — when
-    webphone's own pins align, upgrade deliberately (or stay tag-pinned
-    forever; owner call — question g.2).
+webphone's own pins align, upgrade deliberately (or stay tag-pinned
+forever; owner call — question g.2).
 11. Forced-theme propagation to `/login` (documented caveat; probably a tiny
-    nonce'd pre-script reading localStorage `wp-theme`) — owner call on
-    whether the caveat is acceptable long-term.
+nonce'd pre-script reading localStorage `wp-theme`) — owner call on
+whether the caveat is acceptable long-term.
 12. Consider exposing `RPDisplayName` config (currently hardcoded default
-    "webphone") if deployments want branding on the passkey prompt.
+"webphone") if deployments want branding on the passkey prompt.
 13. The library page's email-first flow vs conditional-mediation (passkey
-    autofill): verify the lp form carries `webauthn` autocomplete hints; if
-    not, upstream feature request to loginpage.
+autofill): verify the lp form carries `webauthn` autocomplete hints; if
+not, upstream feature request to loginpage.
 
 **Train-residue code quality:**
 14. The enroll page imports `../island/app/{i18n,csrf}.js` — legal (both in
-    the island closure) but cross-tree; if enroll ever needs its own i18n
-    flavor this is the split-brain seed. Decide the shared-helper home.
+the island closure) but cross-tree; if enroll ever needs its own i18n
+flavor this is the split-brain seed. Decide the shared-helper home.
 15. `scripts/build-tw-css.sh` module-cache sourcing: add a guard that FAILS
-    when `go list -m` returns a store path that vanished (cache eviction
-    mid-build).
+when `go list -m` returns a store path that vanished (cache eviction
+mid-build).
 16. The smoke-boot wrapper script (e) item — `scripts/smoke-boot.sh` with PID
-    ownership.
+ownership.
 17. `webauthn.test.mjs` now lives in island-tests but imports from enroll/ —
-    consider renaming the file or moving it next to its module for findability.
+consider renaming the file or moving it next to its module for findability.
 
 **Release/deploy obligations:**
 18. Run the stack browser E2E against the new lock before the next release tag
-    (runbook obligation, markup moved this train).
+(runbook obligation, markup moved this train).
 19. After release: pbx-artmann relock ritual (release-runbook v2.x dance).
 20. FEATURES.md passkey row still 🟡 — the live browser ceremony against the
-    deployed stack is the last evidence needed to flip it; schedule with 18.
+deployed stack is the last evidence needed to flip it; schedule with 18.
 
 **Process/tooling:**
 21. Sequential gate scheduler: a tiny `scripts/run-gates.sh` that runs
-    fmt → tests → buildflow → flake check serially with explicit exit capture.
+fmt → tests → buildflow → flake check serially with explicit exit capture.
 22. Add exit-code discipline helper: since PIPESTATUS is unavailable, standard
-    pattern `out=$(cmd); rc=$?` in every gate wrapper.
+pattern `out=$(cmd); rc=$?` in every gate wrapper.
 23. lsp_restart at session start when the panel is known-stale (crush config).
 24. Consider a pre-push hook that runs whitespace-drift + closure test (the
-    two cheap gates that caught real things this session).
+two cheap gates that caught real things this session).
 25. The daemon race: propose to owner a `DAEMON_PAUSE=1` env or a lock file
-    the daemon honors during narrative-commit windows (fleet-wide policy call,
-    lives in nix-config).
+the daemon honors during narrative-commit windows (fleet-wide policy call,
+lives in nix-config).
 26. CI: add `nix flake check`-subset job for docs-only diffs? (cheaper signal;
-    low priority).
+low priority).
 
 **Deferred tails already in TODO_LIST (still open, from the registry docs):**
 27. Forced-theme /login caveat (dup of 11 — it IS the TODO row; keep once).
 28. Chat-networks follow-ups (matrix encryption, signal attachments, session
-    protocol reopen triggers).
+protocol reopen triggers).
 29. `/health` deploy host-rebuild + browser check (2026-10-23 tail).
 30. Catalog adoption push-verification + hub governance-lint tree.
 31. SUPERB unified-auth owner-gated cutover cluster.
@@ -247,22 +248,22 @@ report covers ONLY this session's run and what I noticed in it.
 40. Visual harness shot disposition + optional vision cross-check.
 41. Erraudit tier re-measure due 2026-11-05.
 42. Push-stall watchdog: wire `scripts/push-stall-watch.sh` into the manual-push
-    bar invocation habit (I verified the anchor manually this session; the
-    script exists, I didn't run it — should have, per its AGENTS contract).
+bar invocation habit (I verified the anchor manually this session; the
+script exists, I didn't run it — should have, per its AGENTS contract).
 43. Module-cache janitor awareness for build-tw-css.sh failures (the
-    zero-byte-corpse class).
+zero-byte-corpse class).
 44. The `wireChatNetworks` unused-func gopls info (chat.go:34) — pre-existing,
-    not mine, but it sat in the panel all session; triage owner.
+not mine, but it sat in the panel all session; triage owner.
 45. Consider teaching `webphone-smoke.py` the passkey ON fixture (a JSON
-    config + password file) so the ON-mode becomes a standing scenario.
+config + password file) so the ON-mode becomes a standing scenario.
 46. CHANGELOG: the loginpage entry is long; if the owner prefers terse
-    entries, split Added/Changed (style call).
+entries, split Added/Changed (style call).
 47. README: the passkey section now ~40 lines; consider folding ceremony
-    detail into a sub-doc if README bloats further (docs-health sweep).
+detail into a sub-doc if README bloats further (docs-health sweep).
 48. AGENTS.md line-count check: the passkey bullet grew; still under the 377
-    cap (169 lines) — no action, noted for the docs-size preflight.
+cap (169 lines) — no action, noted for the docs-size preflight.
 49. Dedup registry: the phone.templ door ruling cites "6+ props" from memory —
-    fine, but if the SSO lane ever grows an error-arm refactor, re-judge.
+fine, but if the SSO lane ever grows an error-arm refactor, re-judge.
 50. Delete THIS session's ad-hoc /tmp fixtures (/tmp/wp-smoke-*) — cosmetic.
 
 ## g) QUESTIONS (cannot figure out myself)
@@ -282,5 +283,5 @@ report covers ONLY this session's run and what I noticed in it.
 
 ---
 
-*Report written from session memory + direct observations only; no new
-investigations were opened. Next action: awaiting owner instructions.*
+_Report written from session memory + direct observations only; no new
+investigations were opened. Next action: awaiting owner instructions._
