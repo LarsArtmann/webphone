@@ -86,6 +86,10 @@ func TestLoginPageRedirectsALiveSessionHome(t *testing.T) {
 	c := clientFor(t, server)
 	c.login("1000", pkPassword)
 
+	// The shared client follows redirects; the 303 itself is the
+	// contract, so stop at the first response.
+	c.http.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	defer func() { c.http.CheckRedirect = nil }()
 	resp, _ := c.do(http.MethodGet, "/login", nil, "")
 	if resp.StatusCode != http.StatusSeeOther {
 		t.Fatalf("/login with a live session: status %d, want 303", resp.StatusCode)
