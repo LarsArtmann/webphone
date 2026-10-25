@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/a-h/templ"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
@@ -364,6 +365,29 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 	if h.asrOn() {
 		asrDetail = h.deps.ASR.Describe()
 	}
+	// The push row + device list render only when a transport is live
+	// (the chat-lane pattern; nil-safe for hand-composed test Deps). The
+	// wake address never leaves the store.
+	pushOn, pushTransports := false, ""
+	var pushDevices []views.PushDeviceRow
+	if h.deps.Push != nil && h.deps.Push.Enabled() {
+		pushOn = true
+		pushTransports = h.deps.Push.Describe()
+		if h.deps.PushDevices != nil {
+			registered, err := h.deps.PushDevices.List(r.Context(), sess.Extension)
+			if err != nil {
+				return nil, err
+			}
+			pushDevices = make([]views.PushDeviceRow, 0, len(registered))
+			for _, device := range registered {
+				pushDevices = append(pushDevices, views.PushDeviceRow{
+					ID:        device.DeviceID,
+					Transport: device.Transport,
+					UpdatedAt: time.Unix(0, device.UpdatedAt),
+				})
+			}
+		}
+	}
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
@@ -374,6 +398,9 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		ASRDetail:      asrDetail,
 		ChatMatrix:     h.deps.Config.Matrix.Enabled(),
 		ChatSignal:     h.deps.Config.Signal.Enabled(),
+		Push:           pushOn,
+		PushTransports: pushTransports,
+		PushDevices:    pushDevices,
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,

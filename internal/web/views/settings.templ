@@ -30,6 +30,16 @@ type SettingsPanelProps struct {
 	// conditional): zero config keeps the panel byte-identical.
 	ChatMatrix bool
 	ChatSignal bool
+	// Push reports the optional ring-while-closed seam; PushTransports
+	// names the live wires (push.Fanout.Describe). The rows render ONLY
+	// when the seam is on (the chat-lane pattern): zero config keeps the
+	// panel byte-identical.
+	Push           bool
+	PushTransports string
+	// PushDevices feeds PushDevicesSection (the session extension's
+	// registered devices, newest first); the wake address (token) is
+	// write-only and never reaches any view.
+	PushDevices []PushDeviceRow
 	ICEServers     int
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
@@ -48,6 +58,9 @@ templ SettingsPanel(props SettingsPanelProps) {
 			Class: "wp-settings",
 			Items: settingsItems(props),
 		})
+		if props.Push {
+			@PushDevicesSection(props.PushDevices, props.Lang)
+		}
 		@SnippetsSection(props.Snippets, props.Lang)
 		if props.Passkeys.Available {
 			@PasskeysSection(props.Passkeys)
@@ -68,6 +81,19 @@ templ SettingsPanel(props SettingsPanelProps) {
 			{ T(props.Lang, "settings.themeNote") }
 		</p>
 	</section>
+}
+
+// PushDeviceRow is one registered ring-while-closed device in the
+// Settings list: identity and recency only — the wake address (token)
+// is write-only and never reaches any view.
+//
+// brandid-lint:ignore(BD003) view row: the device id is a foreign
+// client-generated install identity, not a domain entity (strong-id
+// wire ruling).
+type PushDeviceRow struct {
+	ID        string
+	Transport string
+	UpdatedAt time.Time
 }
 
 // PasskeysSection manages the mapped account's passkeys (A2): the
@@ -123,6 +149,26 @@ func (c PasskeyCredentialView) displayName() string {
 	return c.Name
 }
 
+// PushDevicesSection lists the session extension's registered
+// ring-while-closed devices. Read-only: registration and deregistration
+// are the native shells' login/logout contract, so the panel only shows
+// the store's truth.
+templ PushDevicesSection(devices []PushDeviceRow, lang Lang) {
+	<h3 class="wp-settings-head">{ T(lang, "push.title") }</h3>
+	if len(devices) == 0 {
+		<p class="wp-empty">{ T(lang, "push.empty") }</p>
+	} else {
+		<ul class="wp-snippet-manage">
+			for _, device := range devices {
+				<li class="wp-snippet-row">
+					<span class="wp-snippet-body">{ device.ID }</span>
+					<span class="wp-muted">{ device.Transport } · { device.UpdatedAt.Format("2006-01-02") }</span>
+				</li>
+			}
+		</ul>
+	}
+}
+
 func orUnset(value string, lang Lang) string {
 	if value == "" {
 		return T(lang, "err.requestHost")
@@ -142,7 +188,7 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
 		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.crm"), DetailComponent: serviceDetail(props.CRM, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		{Term: T(props.Lang, "settings.asr"), DetailComponent: asrDetail(props.ASR, props.ASRDetail, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, props.ASRDetail, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
 	}
@@ -153,6 +199,12 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 	}
 	if props.ChatSignal {
 		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.signal"), DetailComponent: serviceDetail(true, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
+	}
+	// The push seam surfaces only when a transport is configured; the
+	// muted tail names the live wires (raw service vocabulary, like the
+	// gateway-mode row).
+	if props.Push {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.push"), DetailComponent: serviceDetailExtra(props.Push, props.PushTransports, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
 	}
 	return items
 }
@@ -167,12 +219,14 @@ templ serviceDetail(on bool, connected, unset string) {
 	</span>
 }
 
-templ asrDetail(on bool, detail, connected, unset string) {
+// serviceDetailExtra is serviceDetail with a muted tail for the live
+// wire names (the ASR provider kind·model, the push transports).
+templ serviceDetailExtra(on bool, extra, connected, unset string) {
 	<span class={ "wp-service", templ.KV("wp-service-on", on), templ.KV("wp-service-off", !on) }>
 		if on {
 			{ connected }
-			if detail != "" {
-				<span class="wp-muted"> · { detail }</span>
+			if extra != "" {
+				<span class="wp-muted"> · { extra }</span>
 			}
 		} else {
 			{ unset }
