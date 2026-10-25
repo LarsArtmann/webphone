@@ -12,7 +12,7 @@ import (
 	"sort"
 )
 
-//go:embed all:island all:vendor all:enroll app.css tw.css health.css shell.js theme-preload.js
+//go:embed all:island all:vendor all:enroll app.css tw.css login.css health.css shell.js theme-preload.js
 var embedded embed.FS
 
 // islandModuleURLs is the island's ESM graph as serving URLs: every

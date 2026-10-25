@@ -79,6 +79,15 @@ func TestLoginPageServesBehindANonceCSP(t *testing.T) {
 	if strings.Contains(string(body), "passkey-login-form") {
 		t.Error("/login renders the dead hand-rolled form id")
 	}
+
+	// The linked stylesheet must actually SERVE — the smoke boot caught
+	// the link-present-but-asset-404 class (the embed directive is a
+	// separate fact from the page's href) and no markup assertion can
+	// see it.
+	cssResp, _ := c.do(http.MethodGet, "/assets/login.css", nil, "")
+	if cssResp.StatusCode != http.StatusOK {
+		t.Errorf("/assets/login.css status %d, want 200 (the login page links it)", cssResp.StatusCode)
+	}
 }
 
 func TestLoginPageRedirectsALiveSessionHome(t *testing.T) {

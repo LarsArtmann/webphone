@@ -53,6 +53,15 @@ func (h *handlers) assets() http.Handler {
 	mux.HandleFunc("GET /assets/tw.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "tw.css", "text/css; charset=utf-8")
 	})
+	// The login page's standalone Tailwind build: the cqrs-htmx
+	// loginpage links exactly ONE stylesheet (its Config takes a single
+	// CSSPath), so this artifact inlines the app tokens (via @import of
+	// app.css in login.css.input) and carries the loginpage + alert/loading
+	// component classes. Regenerated together with tw.css (script:
+	// scripts/build-tw-css.sh — one input tree, two artifacts).
+	mux.HandleFunc("GET /assets/login.css", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "login.css", "text/css; charset=utf-8")
+	})
 	// The dashboard's own scoped Tailwind build: same generator, but
 	// sourced from the go-health-dashboard page + the templ-components
 	// subtrees IT renders (layout/display/feedback/utils/datastar). Kept
