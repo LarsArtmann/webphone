@@ -205,7 +205,9 @@ export function renderCalls() {
         : t("transcribe");
     const savedEl = entry.dom.querySelector(".call-transcript-saved");
     if (savedEl && entry.transcriptSaved) {
-      savedEl.textContent = t("transcriptSavedToHistory")(entry.transcriptSaved);
+      savedEl.textContent = t("transcriptSavedToHistory")(
+        entry.transcriptSaved,
+      );
     }
   });
   const established =
@@ -412,8 +414,7 @@ function flushTranscriptSaves(entry) {
 // announces once per call — the live transcript must not read as a
 // card-only artifact that vanishes on hangup.
 function showTranscriptSaved(entry) {
-  const marker =
-    entry.dom && entry.dom.querySelector(".call-transcript-saved");
+  const marker = entry.dom && entry.dom.querySelector(".call-transcript-saved");
   if (marker) {
     marker.textContent = t("transcriptSavedToHistory")(entry.transcriptSaved);
     marker.hidden = false;

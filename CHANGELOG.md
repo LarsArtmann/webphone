@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live transcripts now say they persist (2026-10-25): the first
+  server-confirmed segment save reveals a persistent
+  "Saved to History — N segments." count on the call card (en/de),
+  announced politely once per call. Failed saves change nothing on the
+  card — the existing once-per-call warn toast stays the failure
+  signal.
 - Settings surfaces the push seam (2026-10-25): when a ring-while-closed
   transport is configured, the Settings tab gains a "Ring while closed"
   fact row (naming the live wires) and a read-only registered-devices
