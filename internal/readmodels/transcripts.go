@@ -268,6 +268,41 @@ func (s *Transcripts) fetchSegments(ctx context.Context, owner domain.Extension,
 	return rows, nil
 }
 
+// Call reassembles ONE call's transcript for one owner — the
+// summary-draft seam's read. Nil (no error) when the owner holds no
+// such call: the caller answers 404 and never another owner's words.
+// brandid-lint:ignore(BD003) opaque island Call-ID, verbatim passthrough (strong-id wire ruling)
+func (s *Transcripts) Call(ctx context.Context, owner domain.Extension, callID string) (*domain.CallTranscript, error) { //nolint:branching-flow // the opaque island Call-ID, verbatim passthrough (see DeleteCall)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	views, err := s.reader.Scan(ctx,
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithFilter("call_id", metaengine.FilterEq, callID),
+		metaengine.WithSort("seq", true),
+		metaengine.WithLimit(TranscriptSegmentsMaxPerCall),
+	)
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.transcript_call", "scan call transcript for %s", owner.String())
+	}
+	rows := make([]domain.CallTranscriptSegment, 0, len(views))
+	for _, v := range views {
+		rows = append(rows, domain.CallTranscriptSegment{
+			Owner:     owner,
+			CallID:    v.CallID,
+			Direction: v.Direction,
+			Remote:    v.Remote,
+			StartedAt: time.Unix(v.StartedAt, 0),
+			Text:      v.Text,
+		})
+	}
+	groups := reassembleTranscripts(rows, 1)
+	if len(groups) == 0 {
+		return nil, nil
+	}
+	return &groups[0], nil
+}
+
 // DeleteCall erases one call's transcript for one owner (the end-user
 // leg of the retention story). Idempotent — deleting an unknown call
 // removes zero rows, which is the same success as deleting an
