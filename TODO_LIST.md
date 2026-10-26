@@ -46,24 +46,39 @@ stack-gated on FS `Replaces`). Priority order:
    post-call notes (migration v6), locality indicator, agent audit trail,
    attended-transfer stack spike, docs/E2E tail.
 
-### Error-agents tooling train (2026-10-26 SUPERB plan — not started)
+### Error-agents tooling train (2026-10-26 SUPERB plan — ALL 20 M-tasks SHIPPED same day)
 
 Pareto plan: [docs/planning/2026-10-26_10-33_SUPERB-error-agents.md](docs/planning/2026-10-26_10-33_SUPERB-error-agents.md)
 (20 medium / 79 micro tasks, mermaid execution graph; PURE TOOLING — zero
 product code, advisory-first; source: the 2026-10-26 practice scan
-`docs/research/2026-10-26_ai-agent-error-management.html`). Priority order:
+`docs/research/2026-10-26_ai-agent-error-management.html`). SHIPPED, with
+evidence:
 
-1. **P0 — Error-code router** (M1–M2): `scripts/error-context.py` — journal
-   line in → context bundle out (seam files, contract row, family-test pin,
-   lessons/ledger mentions). The substrate everything else consumes.
-2. **P0 — Reproduce-first gate** (M3–M5): fix-scoped CI check — a fix
-   train's new tests must FAIL on the merge base; advisory-first.
-3. **P1 — Observers** (M6–M9): main-red watcher (recurrence-grep vs ledger
-   + lessons → auto-filed issue with a DRAFT ledger row) + daemon-audit
-   (whitespace drift, guarded-files audit) on a */15 cron. NO dispatch.
-4. **P2 tails** (M10–M20): bump-preflight, incident-bundle harvester,
-   error-contract drill VM test, gated sketches (LLM prose gate, agent
-   dispatch — owner calls), docs/verification tails.
+1. **P0 — Error-code router** (M1–M2) SHIPPED: `scripts/error-context.py`
+   (`--self-test` 37/37; README troubleshooting one-liner + AGENTS
+   Commands line).
+2. **P0 — Reproduce-first gate** (M3–M5) SHIPPED:
+   `scripts/reproduce-first-check.sh` (`--self-test` 3/3 scenarios) + the
+   advisory `reproduce-first` CI job (`continue-on-error`; blocking flip
+   is a documented later decision).
+3. **P1 — Observers** (M6–M9) SHIPPED: `watch.yml` */15 cron →
+   `main-red-watch.sh` (tracker issue with DRAFT ledger row; `--self-test`
+   8/8) + `daemon-audit.sh` (guarded files + drift via the new
+   `whitespace-drift.sh --ref` mode; `--self-test` 3/3). NO dispatch.
+   First live catch on day one: the drill-era incident class (six daemon
+   commits, zero CI runs, red main ~2.5h) is the ledger row for run
+   40301017699 — exactly what the watcher closes.
+4. **P2 tails** (M10–M20) SHIPPED: `bump-preflight.sh` (verified on two
+   real histories; `--self-test` 4/4), `incident-bundle.sh`
+   (`--self-test` 6/6), the KVM-gated `webphone-error-drill` VM test
+   (built green locally, ~20s VM time), the two gated sketches in
+   `docs/drafts/gated-sketches/` (LLM prose gate, agent dispatch — owner
+   GO recorded as trigger criteria, nothing wired). Plan errata: drill
+   scenarios B/C stay smoke-owned (one home per fact).
+
+REMAINING (owner calls, not tasks): the reproduce-first blocking flip
+(after N clean advisory trains), the two gated GOs, and the daemon
+hook-override fix that lives in the nix-config pma module.
 
 ### cqrs-htmx leverage-maximization tails (2026-10-25 SUPERB train — M1–M11 SHIPPED same day)
 

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Error-agents tooling train (2026-10-26, SUPERB plan — pure tooling,
+  zero product code): `scripts/error-context.py` routes an error code or
+  journal line to its context bundle (registry row, seam files, family
+  pin, lessons/ledger mentions, recent commits; `--json` for agents).
+  `scripts/reproduce-first-check.sh` + an advisory `reproduce-first` CI
+  job pin that a fix train's new tests FAIL on the merge base (kills the
+  false-green class; blocking is a deliberate later flip). A */15
+  `watch.yml` carries the observers: `main-red-watch.sh` files a tracker
+  issue with a DRAFT ledger row + recurrence matches for a red main,
+  and `daemon-audit.sh` flags auto-commit landings that touch guarded
+  files or carry whitespace drift (a new `--ref` mode in
+  `whitespace-drift.sh`; both verdicts advisory, state in the tracker).
+  `scripts/bump-preflight.sh` pre-reads a dependency bump from the
+  module proxy (capped diff, removed exported symbols, usage sites;
+  fail-open offline). `scripts/incident-bundle.sh` assembles the
+  evidence pack (traces window, run window, code sweep) with TBD-verdict
+  doc skeletons. The KVM-gated `webphone-error-drill` VM test asserts
+  the failure shape in the real module context: five-part boot block on
+  the journal, exit taxonomy, restart loop, `/healthz` degrading 503
+  naming the wedged leg, and `/hooks/*` failing closed without a
+  secret. The LLM prose gate and agent dispatch stay UNIMPLEMENTED —
+  gated sketches with decision menus live in `docs/drafts/gated-sketches/`.
 - cqrs-htmx leverage train (2026-10-25): `/healthz` now carries a
   passkey-gated `projections` readiness check
   (`cqrshtmx.ProjectionReadinessCheck` over the wired usermgmt service)

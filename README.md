@@ -612,6 +612,16 @@ takes both. Point an off-machine restic/borg repository (or any remote
 rsync job) at `destDir`; the files are plain sqlite + blobs, so any
 file-level backup tool handles them.
 
+### Troubleshooting: reading a red CI run or a journal error
+
+Every failure the server mints carries a stable `<seam>.<op>` code. Feed
+the code (or the whole journal line) to the router and get the context
+bundle — seam files, contract row, family-test pin, prior history:
+
+```console
+python3 scripts/error-context.py "send failed: [gateway.http] provider 502"
+```
+
 ### Troubleshooting: 403 logins behind a TLS proxy
 
 **Symptom:** every browser login (and every form POST) returns 403 once the
