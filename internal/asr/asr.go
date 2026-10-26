@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,6 +63,39 @@ var ErrDisabled = errors.New("asr not configured") //nolint:erraudit // sentinel
 // ErrUnauthorized is returned when the provider rejected the bearer token
 // (HTTP 401/403): the integration is half-configured and must surface.
 var ErrUnauthorized = errors.New("asr rejected the bearer token") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
+
+// Locality classifies where a provider URL processes caller audio — the
+// config-honest trust label the Settings tab and the caption strip
+// render (M17). "local" names infrastructure the operator runs
+// (loopback, RFC1918/private, .lan/.home.arpa, or a dotless hostname);
+// everything else is "remote". An unparseable URL answers "remote"
+// (the honest default: assume the outside world).
+func LocalityOf(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed.Hostname() == "" {
+		return "remote"
+	}
+	host := strings.ToLower(parsed.Hostname())
+	if host == "localhost" || host == "::1" || strings.HasSuffix(host, ".lan") || strings.HasSuffix(host, ".home.arpa") {
+		return "local"
+	}
+	if strings.HasPrefix(host, "127.") || strings.HasPrefix(host, "10.") || strings.HasPrefix(host, "192.168.") {
+		return "local"
+	}
+	if strings.HasPrefix(host, "172.") {
+		if second, ok := strings.CutPrefix(host, "172."); ok {
+			if octet, _, found := strings.Cut(second, "."); found {
+				if n, err := strconv.Atoi(octet); err == nil && n >= 16 && n <= 31 {
+					return "local"
+				}
+			}
+		}
+	}
+	if !strings.Contains(host, ".") {
+		return "local"
+	}
+	return "remote"
+}
 
 const (
 	// requestTimeout bounds one transcription round-trip. Long voicemail

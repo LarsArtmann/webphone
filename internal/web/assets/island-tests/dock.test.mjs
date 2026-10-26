@@ -76,18 +76,11 @@ function addRealEstablished(target) {
 }
 
 const reset = () => {
-  dockCleanup();
   sessions.clear();
-  doc.getElementById("calls").replaceChildren();
   state.focusedId = null;
+  renderCalls();
+  doc.getElementById("calls").replaceChildren();
 };
-
-function dockCleanup() {
-  const calls = doc.getElementById("calls");
-  for (const kid of [...calls.children]) {
-    if (kid.className === "wp-call-dock") kid.remove();
-  }
-}
 
 const dockEl = () => {
   const calls = doc.getElementById("calls");
