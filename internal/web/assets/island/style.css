@@ -698,6 +698,25 @@ button.small {
   }
 }
 
+/* Ringing-queue slots 2..N (JS-rendered into #incoming-queue): each
+   row is one queued caller with its own answer/reject pair. Quieter
+   than slot 1 — the pulse stays on the banner that owns the pinned
+   ids — but every row answers the same phone vernacular. */
+.incoming-slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  flex-wrap: wrap;
+}
+
+.incoming-slot-from {
+  overflow-wrap: anywhere;
+}
+
 /* --- panels (contacts, history, voicemail, ICE, log) --------------------------- */
 
 .log-wrap {

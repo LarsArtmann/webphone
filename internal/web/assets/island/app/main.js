@@ -287,7 +287,10 @@ els.accept.addEventListener("click", () => {
 });
 
 els.reject.addEventListener("click", () => {
-  rejectIncoming();
+  // The pinned Reject button labels the banner's FIRST slot (the oldest
+  // ring the #incoming-from line displays) — it must reject exactly
+  // that caller, never a newer one further down the stack.
+  rejectIncoming(0);
 });
 
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());

@@ -31,7 +31,15 @@ import {
   startLiveTranscription,
   stopLiveTranscription,
 } from "./transcribe.js";
-import { announce, els, hideIncomingBanner, log, showDialError } from "./ui.js";
+import {
+  announce,
+  els,
+  hideIncomingBanner,
+  log,
+  renderIncomingSlots,
+  setIncomingSlotActions,
+  showDialError,
+} from "./ui.js";
 
 function outgoingCount() {
   let n = 0;

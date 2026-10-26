@@ -42,6 +42,7 @@ calls
 keypad
 incoming-call
 incoming-from
+incoming-queue
 accept-btn
 reject-btn
 contacts-wrap

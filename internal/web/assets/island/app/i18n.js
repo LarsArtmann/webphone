@@ -125,7 +125,6 @@ export const I18N = {
     notConnected: "not connected — sign in first",
     audioBlocked:
       "browser blocked audio playback — click the page to enable sound",
-    rejectedSecond: "second incoming call rejected (one call at a time)",
     dialEmpty: "enter a number to call",
     nothingDialable: "no dialable characters — use digits, letters, +, * or #",
     invalidDest: "invalid destination number",
@@ -296,8 +295,6 @@ export const I18N = {
     notConnected: "nicht verbunden — bitte zuerst anmelden",
     audioBlocked:
       "Browser hat die Audiowiedergabe blockiert — Seite anklicken, um Ton zu aktivieren",
-    rejectedSecond:
-      "zweiter eingehender Anruf abgelehnt (ein Gespräch gleichzeitig)",
     dialEmpty: "bitte eine Nummer eingeben",
     nothingDialable:
       "keine wählbaren Zeichen — Ziffern, Buchstaben, +, * oder # verwenden",

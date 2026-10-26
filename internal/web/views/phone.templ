@@ -115,6 +115,11 @@ templ PhoneIsland(props PhoneIslandProps) {
 						<button id="accept-btn" class="primary" data-i18n="accept">Accept</button>
 						<button id="reject-btn" class="danger" data-i18n="reject">Reject</button>
 					</div>
+					// The ringing queue's slots 2..N (JS-rendered): one row per
+					// additional simultaneous caller, each with its own answer
+					// and reject pair. The pinned ids above stay slot 1 (the
+					// oldest ring) so the E2E contract holds.
+					<div id="incoming-queue"></div>
 				</div>
 
 				<div id="audio-out-wrap" class="audio-out" hidden>

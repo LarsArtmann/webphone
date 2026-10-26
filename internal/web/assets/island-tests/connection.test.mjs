@@ -455,7 +455,7 @@ test("connect wires the mic factory and caps ice gathering", async () => {
 test("an incoming call starts acquiring the mic while it rings", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   const { gumCalls } = stubMic();
   const connection = await loadConnection("mic-warm");
   await connection.connect("1001", "pw");
@@ -475,7 +475,7 @@ test("an incoming call starts acquiring the mic while it rings", async () => {
 test("a missed call releases the warm mic", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   const { gumCalls, streams } = stubMic();
   const connection = await loadConnection("mic-missed");
   await connection.connect("1001", "pw");
@@ -499,7 +499,7 @@ test("a missed call releases the warm mic", async () => {
 test("a second incoming call is rejected without disturbing the first", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   const { gumCalls } = stubMic();
   const connection = await loadConnection("second-invite");
   await connection.connect("1001", "pw");
@@ -524,7 +524,7 @@ test("a second incoming call is rejected without disturbing the first", async ()
   assert.equal(gumCalls.length, 1, "no second microphone acquisition");
 
   first.stateChange.fire(globalThis.SIP.SessionState.Terminated);
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
 });
 
 // The watchdog rebuild (recover a wedged agent) must NOT release the
@@ -533,7 +533,7 @@ test("a second incoming call is rejected without disturbing the first", async ()
 test("a watchdog rebuild keeps the warm mic", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   const { gumCalls } = stubMic();
   const connection = await loadConnection("mic-survives-rebuild");
   await connection.connect("1001", "pw");
@@ -556,7 +556,7 @@ test("a watchdog rebuild keeps the warm mic", async () => {
   );
   micModule.releaseWarmMic();
   invitation.stateChange.fire(globalThis.SIP.SessionState.Terminated);
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
 });
 
 // M25 A6 incoming focus mode: the ring dims the shell (root class) and
@@ -565,7 +565,7 @@ test("a watchdog rebuild keeps the warm mic", async () => {
 test("a ringing call dims the shell and focuses Accept", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   stubMic();
   const connection = await loadConnection("focus-mode");
   doc.activeElement = null;
@@ -596,7 +596,7 @@ test("a ringing call dims the shell and focuses Accept", async () => {
 test("a user mid-type keeps their focus when a call rings", async () => {
   resetStubs();
   micModule.releaseWarmMic();
-  state.incomingSession = null;
+  state.incomingSessions.length = 0;
   stubMic();
   const connection = await loadConnection("focus-typing");
   doc.activeElement = { tagName: "INPUT" };

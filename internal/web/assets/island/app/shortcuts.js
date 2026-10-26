@@ -42,7 +42,10 @@ export function initShortcuts() {
         toggleHoldFocused();
         break;
       case "Escape":
-        if (state.incomingSession) rejectIncoming();
+        // Esc clears the NEWEST ring first (the ringing queue's tail);
+        // only with an empty queue does it hang up the focused call —
+        // a second caller ringing must never kill the live conversation.
+        if (state.incomingSessions.length) rejectIncoming();
         else hangupFocused();
         break;
       case "MediaPlayPause":
@@ -57,6 +60,6 @@ export function initShortcuts() {
     event.preventDefault();
   });
   log(
-    "keyboard shortcuts: A answer · H hangup · M mute · P hold · Esc reject/hangup",
+    "keyboard shortcuts: A answer oldest ring · H hangup · M mute · P hold · Esc reject newest ring/hangup",
   );
 }
