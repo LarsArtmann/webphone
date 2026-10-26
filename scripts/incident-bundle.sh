@@ -48,11 +48,14 @@ LOG
 	assert "1" "$([ -n "$bundle" ] && echo 1 || echo 0)" "bundle.md written"
 	local body
 	body=$(cat "$bundle")
-	assert "1" "$(grep -c 'gateway.http' <<<"$body")" "code sweep found gateway.http"
-	assert "1" "$(grep -c 'verdict: TBD' <<<"$body")" "lessons skeleton keeps verdict TBD"
-	assert "1" "$(grep -c 'CHANGELOG candidate' <<<"$body")" "changelog candidate present"
-	assert "1" "$(grep -c 'flake-ledger row' <<<"$body")" "ledger skeleton present"
-	assert "1" "$(grep -c 'trace' <<<"$body")" "traces section present"
+	has() {
+		grep -q "$1" <<<"$body" && echo 1 || echo 0
+	}
+	assert "1" "$(has 'gateway.http')" "code sweep found gateway.http"
+	assert "1" "$(has 'verdict: TBD')" "lessons skeleton keeps verdict TBD"
+	assert "1" "$(has 'CHANGELOG candidate')" "changelog candidate present"
+	assert "1" "$(has 'flake-ledger row')" "ledger skeleton present"
+	assert "1" "$(has 'flight-recorder snapshots')" "traces section present"
 	echo "incident-bundle self-test: $((checks - failed))/$checks passed"
 	[ "$failed" -eq 0 ]
 }
