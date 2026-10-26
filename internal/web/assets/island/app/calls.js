@@ -203,16 +203,19 @@ function liveStateLine(entry) {
 // UI shows the work; a mid-flight toggle queues, never lies).
 
 const dockChips = new Map();
+let dockEl = null;
 
 function renderCallDock() {
-  const existing = document.getElementById("wp-call-dock");
   if (sessions.size < 2) {
     dockChips.forEach((chip) => chip.remove());
     dockChips.clear();
-    if (existing) existing.remove();
+    if (dockEl) {
+      dockEl.remove();
+      dockEl = null;
+    }
     return;
   }
-  const dock = existing || createCallDock();
+  if (!dockEl) dockEl = createCallDock();
   dockChips.forEach((chip, id) => {
     if (!sessions.has(id)) {
       chip.remove();
@@ -224,7 +227,7 @@ function renderCallDock() {
     if (!chip) {
       chip = buildDockChip(id, entry);
       dockChips.set(id, chip);
-      dock.append(chip);
+      dockEl.append(chip);
     }
     updateDockChip(chip, id, entry);
   });
