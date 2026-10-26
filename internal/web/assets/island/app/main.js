@@ -139,10 +139,19 @@ async function resumeSession() {
   els.phoneView.hidden = false;
   connectLiveUpdates();
   // The wp:session-opened listener appends the did and refreshes the
-  // session-gated panels — the exact post-login wiring, reused.
+  // session-gated panels — the exact post-login wiring, reused. The
+  // agent_mode* fields feed the shell's drafts pill (M13).
   document.dispatchEvent(
     new CustomEvent("wp:session-opened", {
-      detail: { did: session.did || "" },
+      detail: {
+        did: session.did || "",
+        agentMode: session.agent_mode || "",
+        agentModeSource: session.agent_mode_source || "",
+        agentDefaultMode: session.agent_default_mode || "",
+        agentModes: Array.isArray(session.agent_modes)
+          ? session.agent_modes
+          : [],
+      },
     }),
   );
 }

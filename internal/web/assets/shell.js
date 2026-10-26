@@ -430,6 +430,7 @@
         actions.appendChild(agentPill);
       }
       var pinned = agentModeState.source === "runtime";
+      agentPill.classList.toggle("pinned", pinned);
       agentPill.textContent =
         "AI drafts: " + agentModeState.mode + (pinned ? " · pinned" : "");
       if (pinned) {

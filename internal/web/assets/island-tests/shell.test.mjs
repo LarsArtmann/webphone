@@ -1476,3 +1476,116 @@ test("a real transcription plants a copy chip; empty results plant nothing", asy
   doc.querySelector = realQS;
   delete globalThis.navigator.clipboard;
 });
+
+// M13: the agent-mode pill. The island forwards the session identity's
+// agent fields on wp:session-opened; the shell renders the pill beside
+// the header badges — hidden without a mode, cycle-on-click, reset chip
+// only while a runtime pin exists.
+const pillHeader = () => {
+  const actions = doc.createElement();
+  doc.body.append(actions);
+  const realQS = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === ".wp-header-actions" ? actions : realQS(selector);
+  return { actions, restore: () => (doc.querySelector = realQS) };
+};
+
+test("the agent pill stays hidden when the seam is off or the probe saw nothing", () => {
+  const { actions, restore } = pillHeader();
+  try {
+    doc.dispatch("wp:session-opened", { detail: { did: "1001" } });
+    assert.equal(
+      actions.children.some((el) => el.id === "agent-mode-pill"),
+      false,
+      "no agentMode field: no pill",
+    );
+  } finally {
+    restore();
+  }
+});
+
+test("the agent pill shows the mode, cycles on click, and resets a pin", async () => {
+  const { actions, restore } = pillHeader();
+  const posts = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (url === "/messages/drafts/mode") {
+      posts.push(options.body);
+      return { ok: true, status: 200 };
+    }
+    return realFetch(url, options);
+  };
+  const live = doc.getElementById("wp-live");
+  try {
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "drafts",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["off", "drafts", "after-hours", "full"],
+      },
+    });
+    const pill = actions.children.find((el) => el.id === "agent-mode-pill");
+    assert.ok(pill, "idle mode shows the pill");
+    assert.equal(pill.textContent, "AI drafts: drafts");
+    assert.equal(pill.classList.contains("pinned"), false, "config mode is not pinned");
+    assert.equal(
+      actions.children.some((el) => el.id === "agent-mode-reset"),
+      false,
+      "no reset chip without a runtime pin",
+    );
+
+    // Click cycles to the NEXT mode in the agent's list.
+    pill.click();
+    await settle();
+    assert.deepEqual(posts, ["mode=after-hours"]);
+    assert.match(pill.textContent, /AI drafts: after-hours · pinned/);
+    assert.ok(pill.classList.contains("pinned"), "a non-default mode pins");
+    assert.ok(
+      actions.children.some((el) => el.id === "agent-mode-reset"),
+      "a runtime pin grows the reset chip",
+    );
+    assert.match(live.textContent, /AI drafts set to after-hours/);
+
+    // The reset chip returns to the default and disappears.
+    actions.children.find((el) => el.id === "agent-mode-reset").click();
+    await settle();
+    assert.deepEqual(posts, ["mode=after-hours", "mode=reset"]);
+    assert.match(pill.textContent, /AI drafts: drafts$/);
+    assert.equal(pill.classList.contains("pinned"), false);
+    assert.equal(
+      actions.children.some((el) => el.id === "agent-mode-reset"),
+      false,
+      "the reset chip goes with the pin",
+    );
+    assert.match(live.textContent, /AI drafts back to drafts/);
+  } finally {
+    globalThis.fetch = realFetch;
+    restore();
+  }
+});
+
+test("a failed mode change keeps the pill honest (state unchanged, announced)", async () => {
+  const { actions, restore } = pillHeader();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false, status: 503 });
+  const live = doc.getElementById("wp-live");
+  try {
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "drafts",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["off", "drafts"],
+      },
+    });
+    const pill = actions.children.find((el) => el.id === "agent-mode-pill");
+    pill.click();
+    await settle();
+    assert.match(pill.textContent, /AI drafts: drafts$/, "the mode did not move");
+    assert.match(live.textContent, /Could not change the AI drafts mode/);
+  } finally {
+    globalThis.fetch = realFetch;
+    restore();
+  }
+});
