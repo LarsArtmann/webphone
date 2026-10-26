@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -20,6 +21,13 @@ import (
 // this POST before showing the signed-in state, and a hung PBX must not
 // hang logins for the full client timeout.
 const verifyTimeout = 5 * time.Second
+
+// agentModeProbeTimeout bounds the best-effort draft-mode decoration of
+// the session identity (the nav pill's data, M13). The agent is
+// loopback; a slow or dead seam degrades to NO pill, never to a broken
+// login (the SSO boot doctrine: wrong config fails boot, an
+// unreachable peer only warns).
+const agentModeProbeTimeout = 3 * time.Second
 
 // loginRequest is the POST /api/session wire shape: the extension and
 // its PBX directory password. Named (not inline) so the machine-API
@@ -142,11 +150,15 @@ type sessionIdentity struct {
 	Numbers       []string `description:"Every number mapped to the passkey user, deduplicated." json:"numbers,omitempty"`
 	Password      string   `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
 	SIPCredential string   `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
+	AgentMode     string   `description:"The textagent's effective draft mode (agent seam on only; empty hides the nav pill)." json:"agent_mode,omitempty"`
+	AgentModeSource string `description:"Where the draft mode comes from: config or a runtime pin." json:"agent_mode_source,omitempty"`
+	AgentDefaultMode string `description:"The configured draft mode a reset restores." json:"agent_default_mode,omitempty"`
+	AgentModes    []string `description:"The draft modes the agent supports, in cycle order." json:"agent_modes,omitempty"`
 }
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
 // session tells the client about itself (see sessionIdentity).
-func (h *handlers) sessionIdentityResponse(extension domain.Extension) sessionIdentity {
+func (h *handlers) sessionIdentityResponse(ctx context.Context, extension domain.Extension) sessionIdentity {
 	response := sessionIdentity{Extension: extension.String()}
 	response.DID = h.identityFor(extension)
 	if h.deps.UserAuth != nil {
@@ -155,7 +167,30 @@ func (h *handlers) sessionIdentityResponse(extension domain.Extension) sessionId
 			response.Numbers = h.numbersFor(mapped)
 		}
 	}
+	h.fillAgentMode(ctx, &response)
 	return response
+}
+
+// fillAgentMode decorates the identity with the textagent's draft mode
+// (the nav pill's data, M13). Best-effort by contract: the agent is
+// loopback, the ask is bounded, and a failure leaves the fields empty —
+// the shell hides the pill rather than lying about an autonomy state it
+// could not see.
+func (h *handlers) fillAgentMode(ctx context.Context, response *sessionIdentity) {
+	if h.deps.TextAgent == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(ctx, agentModeProbeTimeout)
+	defer cancel()
+	reviews, err := h.deps.TextAgent.Reviews(ctx)
+	if err != nil {
+		slog.Warn("agent mode probe failed; the nav pill stays hidden", "error", err)
+		return
+	}
+	response.AgentMode = reviews.Mode
+	response.AgentModeSource = reviews.ModeSource
+	response.AgentDefaultMode = reviews.DefaultMode
+	response.AgentModes = reviews.Modes
 }
 
 // numbersFor lists the mapped user's presented numbers (identities of
