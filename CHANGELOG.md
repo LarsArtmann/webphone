@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Multi-call island train (2026-10-26): the island answers N-deep —
+  a second inbound INVITE now QUEUES (ringing-queue state, banner
+  stack with per-slot answer/reject, per-caller notifications,
+  `A` answers the oldest ring, `Esc` rejects only the newest and
+  never a live call) instead of auto-rejecting the second caller.
+  Two live calls collapse into a call dock: one chip per call
+  (avatar, state pill, duration; click = hold & take through the
+  existing hold pending machine) plus one expanded focused card,
+  with `[`/`]` focus cycling (established calls only, polite
+  announce), per-call volume on the expanded card, and a held-call
+  attention blip (reduced-motion respected). The live transcript
+  became a bounded caption strip (30 line segments, aria-hidden —
+  the polite announce path already speaks each segment) with a
+  config-honest locality chip (`asrLocality`, derived from the ASR
+  provider host: loopback/private/.lan = local, else remote).
 - Error-agents tooling train (2026-10-26, SUPERB plan — pure tooling,
   zero product code): `scripts/error-context.py` routes an error code or
   journal line to its context bundle (registry row, seam files, family

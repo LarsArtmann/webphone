@@ -641,7 +641,10 @@ function clearCardTranscript(id, target) {
 // plain text node (the unsupported notice) passes through.
 function transcriptText(target) {
   if (!target.children.length) return (target.textContent || "").trim();
-  return target.children.map((line) => line.textContent).join(" ").trim();
+  return target.children
+    .map((line) => line.textContent)
+    .join(" ")
+    .trim();
 }
 
 // copyCardTranscript puts the card's accumulated transcript on the
@@ -1101,7 +1104,9 @@ export function cycleFocus(step) {
   if (established.length < 2) return;
   const at = established.findIndex(([id]) => id === state.focusedId);
   const next =
-    established[(Math.max(at, 0) + step + established.length) % established.length];
+    established[
+      (Math.max(at, 0) + step + established.length) % established.length
+    ];
   focusSession(next[0]);
   announce(t("focusChanged")(next[1].target), "info");
 }

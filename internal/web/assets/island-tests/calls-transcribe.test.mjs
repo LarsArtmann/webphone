@@ -185,6 +185,11 @@ test("live transcription auto-starts on connect, persists segments, and tears do
   const transcriptEl = entry.dom.querySelector(".call-transcript");
   assert.equal(transcriptEl.children.length, 1, "the segment is one strip line");
   assert.match(transcriptEl.children[0].textContent, /hello world/);
+  // F053: the strip is aria-hidden — the announce path already speaks
+  // each segment politely; the strip must not double-speak.
+  const strip = entry.dom.querySelector(".wp-captions");
+  assert.ok(strip, "the strip wraps the lines when the seam is on");
+  assert.equal(strip.getAttribute("aria-hidden"), "true");
   const saved = fetchCalls.find((c) => c.url === "/api/transcripts");
   assert.ok(saved, "segment persisted via POST /api/transcripts");
   assert.deepEqual(JSON.parse(saved.options.body), {

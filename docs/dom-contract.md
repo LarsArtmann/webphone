@@ -120,6 +120,24 @@ above stays complete without them, and the E2E must not assume them:
 
 ## Notes
 
+### Runtime-created ids (NOT in the served-bytes block above)
+
+The multi-call train (2026-10-26) adds ids the island creates at
+runtime — they can never appear in the served bytes, so they stay out
+of the pinned block and are documented here for the E2E and future
+sessions:
+
+- `wp-call-dock` — the call dock strip (JS-created when a second call
+  goes live; removed again below two live calls)
+- `wp-dock-chip-<callId>` — one dock chip per live call (stable per
+  call, click = hold & take)
+- `wp-captions-<callId>` — the caption strip wrapper (aria-hidden) on
+  an ASR-enabled call card; the inner `call-transcript-<callId>` node
+  carries the bounded line scrollback (`wp-caption-line` children)
+- `wp-incoming-slot-<n>` — ringing-queue slots 2..N inside
+  `#incoming-queue` (slot 1 IS the pinned `#incoming-from` /
+  `#accept-btn` / `#reject-btn` markup above)
+
 ### Greppable SSE row classes on the templ-components v1.20.1 tree (2026-10-06)
 
 `wp-thread-row` / `wp-bubble` (plus `wp-thread-rowwrap`, `wp-bubble-body`,

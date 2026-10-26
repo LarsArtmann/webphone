@@ -39,7 +39,10 @@ export const asrEnabled = config.asr === true;
 // Where the provider processes the audio (config-honest trust label,
 // M17): "local" names a loopback/private provider host the operator
 // runs, "remote" an external one. Empty when the seam is off.
-export const asrLocality = config.asrLocality === "local" || config.asrLocality === "remote" ? config.asrLocality : "";
+export const asrLocality =
+  config.asrLocality === "local" || config.asrLocality === "remote"
+    ? config.asrLocality
+    : "";
 
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
