@@ -295,6 +295,7 @@ func New(deps Deps) http.Handler {
 		CallsIdem:   hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 		ASR:         deps.ASR,
 		Transcripts: deps.Transcripts,
+		TextAgent:   deps.TextAgent,
 		Push:        deps.Push,
 		Devices:     deps.PushDevices,
 	})
@@ -410,6 +411,11 @@ func New(deps Deps) http.Handler {
 	// the island normally gates on PBX_CONFIG.crm, but a config change
 	// under a long-lived session must not error.
 	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.LogCall)))
+	// The post-call summarize chain: one call's transcript becomes an AI
+	// follow-up draft in the review queue. Session-gated, CSRF via
+	// authedFetch, sharing the contacts write budget (one island POST per
+	// user action). A disabled seam answers 404.
+	protected.Handle("POST /api/calls/{id}/summary-draft", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SummaryDraft)))
 	// The push-device registry the native shells ride (the Android call
 	// shell first): session-gated, CSRF via the same authedFetch dance,
 	// sharing the contacts write budget (the same one-write-per-action

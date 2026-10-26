@@ -228,6 +228,27 @@ func (c *Client) DraftFor(ctx context.Context, to, hint string) (*Draft, error) 
 	return &draft, nil
 }
 
+// summarizeHintPrefix frames the ask so the agent drafts a follow-up
+// SMS FROM the call's words instead of answering the raw transcript.
+const summarizeHintPrefix = "Summarize this phone call as a short follow-up SMS to the other party. Call transcript:\n\n"
+
+// SummarizeHintCap bounds the transcript excerpt riding the hint: the
+// agent's LLM window is finite, and the newest words matter most — a
+// longer transcript rides its tail.
+const SummarizeHintCap = 6000
+
+// DraftFromTranscript asks the agent for a follow-up draft from one
+// call's transcript (the post-call summarize chain). It rides the same
+// /draft op as DraftFor — the hint carries the framed transcript — so
+// the review API needs no new endpoint.
+func (c *Client) DraftFromTranscript(ctx context.Context, to, transcript string) (*Draft, error) {
+	trimmed := transcript
+	if len(trimmed) > SummarizeHintCap {
+		trimmed = "… " + trimmed[len(trimmed)-SummarizeHintCap:]
+	}
+	return c.DraftFor(ctx, to, summarizeHintPrefix+trimmed)
+}
+
 // SetMode pins a runtime autopilot mode ("off", "drafts", "after-hours",
 // "full"); the agent persists it until ResetMode. The safety gates
 // (suppression, VIP, kill switch, confidence) are unchanged by a flip —

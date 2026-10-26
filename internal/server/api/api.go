@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // Server is the narrow wiring seam the carved handlers ride on,
@@ -49,6 +50,10 @@ type Deps struct {
 	CallsIdem   hooks.Gate
 	ASR         asr.Provider
 	Transcripts *readmodels.Transcripts
+	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
+	// review API). Nil: the summarize endpoint answers 404 — a client
+	// reads that as "this server does not draft".
+	TextAgent *textagent.Client
 	// Push is the OPTIONAL push fanout behind the device registry API.
 	// Nil or disabled: the routes answer 404 (a native shell reads
 	// that as "this server does not ring closed apps").
