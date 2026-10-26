@@ -62,6 +62,10 @@ function attachRemoteAudio(id) {
     if (receiver.track) remoteStream.addTrack(receiver.track);
   });
   els.remoteAudio.srcObject = remoteStream;
+  // Per-call volume (the dock's slider): the focused call's remembered
+  // level rides every (re)attach — the shared element plays exactly one
+  // call at a time (held calls carry no receiver audio).
+  els.remoteAudio.volume = entry.volume ?? 1;
   els.remoteAudio.play().catch((err) => {
     log(`audio playback blocked: ${err.message}`, "warn");
     announce(t("audioBlocked"), "warn");
@@ -168,31 +172,141 @@ function durationLabel(startedAt) {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 }
 
+// liveStateLine derives the card/chip state line for one entry — the
+// ONE derivation both surfaces read (the dock chip and the expanded
+// card can never disagree about what a call is doing).
+function liveStateLine(entry) {
+  const sessionState = entry.session.state;
+  if (sessionState === SIP.SessionState.Established) {
+    const dataState =
+      entry.holdPending || (entry.held ? "held" : "established");
+    const text = entry.transferring
+      ? t("transferring")
+      : entry.holdPending
+        ? t(entry.holdPending === "holding" ? "callHolding" : "callResuming")
+        : `${entry.held ? t("onHold") : t("inCall")} · ${durationLabel(entry.startedAt)}`;
+    return { dataState, text };
+  }
+  if (sessionState === SIP.SessionState.Establishing) {
+    return { dataState: "ringing", text: t("ringing") };
+  }
+  return { dataState: "ending", text: t("ending") };
+}
+
+// --- the call dock (multi-call train) ---------------------------------------
+//
+// More than one live call collapses the cards into a dock: one chip per
+// call (stable id wp-dock-chip-<callId>) plus ONE expanded card for the
+// focused call. The chip click IS hold & take — focusSession holds the
+// current call and resumes the target through the existing
+// holdPending/holdQueued pending machine, so the swap stays honest (the
+// UI shows the work; a mid-flight toggle queues, never lies).
+
+const dockChips = new Map();
+
+function renderCallDock() {
+  const existing = document.getElementById("wp-call-dock");
+  if (sessions.size < 2) {
+    dockChips.forEach((chip) => chip.remove());
+    dockChips.clear();
+    if (existing) existing.remove();
+    return;
+  }
+  const dock = existing || createCallDock();
+  dockChips.forEach((chip, id) => {
+    if (!sessions.has(id)) {
+      chip.remove();
+      dockChips.delete(id);
+    }
+  });
+  sessions.forEach((entry, id) => {
+    let chip = dockChips.get(id);
+    if (!chip) {
+      chip = buildDockChip(id, entry);
+      dockChips.set(id, chip);
+      dock.append(chip);
+    }
+    updateDockChip(chip, id, entry);
+  });
+}
+
+function createCallDock() {
+  const dock = document.createElement("div");
+  dock.id = "wp-call-dock";
+  dock.className = "wp-call-dock";
+  dock.setAttribute("role", "toolbar");
+  dock.setAttribute("aria-label", t("dockLabel"));
+  els.calls.prepend(dock);
+  return dock;
+}
+
+function buildDockChip(id, entry) {
+  const chip = document.createElement("div");
+  chip.className = "wp-dock-chip";
+  chip.id = `wp-dock-chip-${id}`;
+  chip.dataset.callId = id;
+  chip.tabIndex = 0;
+  chip.append(chipAvatar(entry.target), chipName(entry.target));
+  const pill = document.createElement("span");
+  pill.className = "wp-chip-pill";
+  chip.append(pill);
+  // The whole chip is the one-gesture hold & take: focus (hold current,
+  // resume this one) lands where the user clicked.
+  const take = () => focusSession(id);
+  chip.addEventListener("click", take);
+  chip.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      take();
+    }
+  });
+  return chip;
+}
+
+function updateDockChip(chip, id, entry) {
+  const { dataState, text } = liveStateLine(entry);
+  chip.dataset.state = dataState;
+  chip.classList.toggle("focused", id === state.focusedId);
+  const pill = chip.children[2];
+  pill.textContent = text;
+}
+
+// chipAvatar mirrors the server's desk-phone vernacular: a hue-bucketed
+// disc showing the number's LAST TWO DIGITS (never a country signum).
+// Classes, never inline styles — the strict CSP silently drops those.
+function chipAvatar(target) {
+  const digits = String(target).replace(/\D/g, "");
+  const label =
+    digits.length >= 2 ? digits.slice(-2) : String(target).slice(-2) || "·";
+  let sum = 0;
+  for (const ch of String(target)) sum = (sum * 31 + ch.charCodeAt(0)) % 360;
+  const av = document.createElement("span");
+  av.className = `wp-chip-av h${Math.floor(sum / 30) * 30}`;
+  av.textContent = label;
+  av.setAttribute("aria-hidden", "true");
+  return av;
+}
+
+function chipName(target) {
+  const name = document.createElement("span");
+  name.className = "wp-chip-name";
+  name.textContent = target;
+  return name;
+}
+
 export function renderCalls() {
+  renderCallDock();
   sessions.forEach((entry, id) => {
     if (!entry.dom) return;
-    const sessionState = entry.session.state;
+    const { dataState, text } = liveStateLine(entry);
     const stateEl = entry.dom.querySelector(".call-state-text");
-    let dataState = "ending";
-    if (sessionState === SIP.SessionState.Established) {
-      dataState = entry.holdPending || (entry.held ? "held" : "established");
-      stateEl.textContent = entry.transferring
-        ? t("transferring")
-        : entry.holdPending
-          ? t(entry.holdPending === "holding" ? "callHolding" : "callResuming")
-          : `${entry.held ? t("onHold") : t("inCall")} · ${durationLabel(entry.startedAt)}`;
-    } else if (sessionState === SIP.SessionState.Establishing) {
-      dataState = "ringing";
-      stateEl.textContent = t("ringing");
-    } else if (
-      sessionState === SIP.SessionState.Terminating ||
-      sessionState === SIP.SessionState.Terminated
-    ) {
-      stateEl.textContent = t("ending");
-    }
+    stateEl.textContent = text;
     entry.dom.dataset.state = dataState;
     announceCallState(entry, dataState);
     entry.dom.classList.toggle("focused", id === state.focusedId);
+    // Dock mode: the chips carry the other calls; only the focused call
+    // keeps its expanded card. A single call renders the plain card.
+    entry.dom.hidden = sessions.size > 1 && id !== state.focusedId;
     const holdBtn = entry.dom.querySelector(".hold-btn");
     holdBtn.disabled = Boolean(entry.holdPending);
     holdBtn.textContent = entry.holdPending
@@ -206,6 +320,8 @@ export function renderCalls() {
     if (focusBtn) focusBtn.textContent = t("focus");
     const endBtn = entry.dom.querySelector(".hangup-btn");
     if (endBtn) endBtn.textContent = t("end");
+    const slider = entry.dom.querySelector(".volume-slider");
+    if (slider) slider.value = String(Math.round((entry.volume ?? 1) * 100));
     const transcribeBtn = entry.dom.querySelector(".transcribe-btn");
     if (transcribeBtn)
       transcribeBtn.textContent = isTranscribing(id)
@@ -286,6 +402,23 @@ function addCallCard(id, target) {
     ),
     mkBtn(t("end"), "danger hangup-btn", () => hangup(id)),
   );
+  // Per-call volume (multi-call train): the focused call's slider
+  // drives the shared remote-audio element directly and is remembered
+  // per entry, so switching back to a call restores its level.
+  const volume = document.createElement("input");
+  volume.type = "range";
+  volume.className = "volume-slider";
+  volume.min = "0";
+  volume.max = "100";
+  volume.value = "100";
+  volume.setAttribute("aria-label", t("volume"));
+  volume.addEventListener("input", () => {
+    const entry = sessions.get(id);
+    if (!entry) return;
+    entry.volume = Number(volume.value) / 100;
+    els.remoteAudio.volume = entry.volume;
+  });
+  controls.append(volume);
   // Live transcription (only when the ASR seam is configured): a toggle
   // that captures the call audio and appends each segment's text below.
   const transcript = document.createElement("div");
@@ -900,6 +1033,22 @@ export function toggleHoldFocused() {
 
 export function hangupFocused() {
   if (state.focusedId) hangup(state.focusedId);
+}
+
+// cycleFocus walks the ESTABLISHED calls ([ and ]) — ringing-only
+// sessions are skipped (a ring is answered or rejected, not focused).
+// The move announces politely with the remote party's name so a screen
+// reader user knows whose voice just came up.
+export function cycleFocus(step) {
+  const established = [...sessions.entries()].filter(
+    ([, entry]) => entry.session.state === SIP.SessionState.Established,
+  );
+  if (established.length < 2) return;
+  const at = established.findIndex(([id]) => id === state.focusedId);
+  const next =
+    established[(Math.max(at, 0) + step + established.length) % established.length];
+  focusSession(next[0]);
+  announce(t("focusChanged")(next[1].target), "info");
 }
 
 // The ringing queue's answer/reject primitives. The no-arg answer pops

@@ -3,6 +3,7 @@
 
 import {
   answerIncoming,
+  cycleFocus,
   hangupFocused,
   rejectIncoming,
   toggleHoldFocused,
@@ -41,6 +42,12 @@ export function initShortcuts() {
       case "P":
         toggleHoldFocused();
         break;
+      case "[":
+        cycleFocus(-1);
+        break;
+      case "]":
+        cycleFocus(1);
+        break;
       case "Escape":
         // Esc clears the NEWEST ring first (the ringing queue's tail);
         // only with an empty queue does it hang up the focused call —
@@ -60,6 +67,6 @@ export function initShortcuts() {
     event.preventDefault();
   });
   log(
-    "keyboard shortcuts: A answer oldest ring · H hangup · M mute · P hold · Esc reject newest ring/hangup",
+    "keyboard shortcuts: A answer oldest ring · H hangup · M mute · P hold · [ ] switch calls · Esc reject newest ring/hangup",
   );
 }

@@ -677,6 +677,152 @@ button.small {
   margin-top: 14px;
 }
 
+/* --- call dock (multi-call train) -------------------------------------- */
+
+/* The chip strip: one chip per live call, one expanded focused card.
+   Chips are class-built (strict CSP: no inline styles) and carry stable
+   ids (wp-dock-chip-<callId>) so stateful nodes survive re-renders. */
+.wp-call-dock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.wp-dock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  cursor: pointer;
+  max-width: 100%;
+  font-size: 0.85rem;
+}
+
+.wp-dock-chip:hover {
+  border-color: var(--border-strong);
+}
+
+.wp-dock-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.wp-dock-chip.focused {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.wp-dock-chip[data-state="held"] {
+  border-color: var(--warn);
+  animation: held-blip 0.9s ease-out 1;
+}
+
+.wp-dock-chip[data-state="held"] .wp-chip-pill {
+  color: var(--warn);
+}
+
+@keyframes held-blip {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--warn) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.wp-chip-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wp-chip-pill {
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.wp-chip-av {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.64rem;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  letter-spacing: 0.02em;
+}
+
+.wp-chip-av.h0 {
+  background: hsl(0 42% 38%);
+}
+.wp-chip-av.h30 {
+  background: hsl(30 42% 36%);
+}
+.wp-chip-av.h60 {
+  background: hsl(60 38% 33%);
+}
+.wp-chip-av.h90 {
+  background: hsl(90 34% 31%);
+}
+.wp-chip-av.h120 {
+  background: hsl(120 32% 30%);
+}
+.wp-chip-av.h150 {
+  background: hsl(150 34% 30%);
+}
+.wp-chip-av.h180 {
+  background: hsl(180 36% 31%);
+}
+.wp-chip-av.h210 {
+  background: hsl(210 40% 35%);
+}
+.wp-chip-av.h240 {
+  background: hsl(240 38% 40%);
+}
+.wp-chip-av.h270 {
+  background: hsl(270 36% 40%);
+}
+.wp-chip-av.h300 {
+  background: hsl(300 38% 39%);
+}
+.wp-chip-av.h330 {
+  background: hsl(330 40% 38%);
+}
+
+/* Per-call volume on the expanded card (the shared remote-audio element
+   plays exactly the focused call). */
+.volume-slider {
+  accent-color: var(--accent);
+  min-width: 90px;
+}
+
+/* Mobile: one scrollable dock row above the shell's fixed bottom tab
+   bar; the banner stack's rows wrap under the caller line. */
+@media (max-width: 700px) {
+  .wp-call-dock {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .wp-dock-chip {
+    flex: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-dock-chip[data-state="held"] {
+    animation: none;
+  }
+}
+
 /* --- incoming call ------------------------------------------------------------ */
 
 .incoming {
