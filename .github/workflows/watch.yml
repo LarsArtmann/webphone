@@ -1,0 +1,40 @@
+# The observers (SUPERB error-agents M8): a cron lane independent of
+# the push lane — the 2026-10-26 incident class (six daemon commits, no
+# push-triggered run, red main invisible for hours) is what this
+# closes. Every step is advisory: the scripts signal via issues in the
+# tracker and stay exit-0 on verdicts, so this workflow going red means
+# the watcher itself is broken, not main.
+name: watch
+
+on:
+  schedule:
+    - cron: "*/15 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  observers:
+    name: main-red-watch + daemon-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      # depth 2: daemon-audit reads the tip commit against its parent.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+
+      - name: main-red-watch (red main -> tracked issue with a draft ledger row)
+        run: scripts/main-red-watch.sh
+
+      - name: daemon-audit (guarded files / drift in the tip auto-commit)
+        run: scripts/daemon-audit.sh --file-issue
