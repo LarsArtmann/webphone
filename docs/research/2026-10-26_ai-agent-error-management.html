@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>AI Agents in Error Management — Practice Scan 2026-10-26</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>PRACTICE SCAN</span>
+      <span>2026-10-26</span>
+      <span>CRUSH SESSION &middot; WEBPHONE</span>
     </div>
 
     <div class="layout">
@@ -861,11 +861,12 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
-          <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
+          <a href="#baseline">Repo baseline</a>
+          <a href="#landscape">2026 landscape</a>
+          <a href="#practices">Ten practices</a>
+          <a href="#proposals">Repo shortlist</a>
+          <a href="#antipatterns">Anti-patterns</a>
+          <a href="#appendix">Verification</a>
         </nav>
       </aside>
 
@@ -880,36 +881,38 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">PRACTICE SCAN &middot; 2026-10-26</div>
+          <h1>AI agents in error management</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            What 2026's agents make possible on the error side of software — and
+            why almost nobody does it. Grounded against this repo's existing
+            error culture, so every "nobody does this" is checked against what
+            webphone already owns.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Scope: error management</span>
+            <span class="tag">10 practices, 7 proposals</span>
+            <span class="tag teal">Status: research, no rulings</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">10</div>
+            <div class="label">Undervalued practices</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">6</div>
+            <div class="label">Proven &amp; underused</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">7</div>
+            <div class="label">Repo-specific proposals</div>
           </div>
           <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
-          </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">5</div>
+            <div class="label">Hype flags to avoid</div>
           </div>
         </section>
 
@@ -917,154 +920,685 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            In 2026 agents write most of the world's feature code, but the error
+            side of software — triage, repair, verification, knowledge capture,
+            drills — is still done by hand almost everywhere. That lag is not a
+            capability gap: the vendor surface exists (Sentry Seer opens fix PRs
+            from production errors, Devin and the Claude Code action can be
+            paged on red CI, Datadog drafts postmortems, Gremlin runs agentic
+            chaos). It is an <em>adoption</em> gap, and it compounds: the teams
+            that could benefit most never built the one thing agents need to be
+            useful on errors — machine-readable failure structure. Webphone
+            built exactly that (total error families, stable
+            <code>&lt;seam&gt;.&lt;op&gt;</code> codes, a pinned error contract,
+            generated wire contracts), which makes the undervalued practices
+            here unusually cheap to adopt.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            The smartest thing almost nobody does: put agents on the FAILURE
+            side with evidence gates — a fix must arrive with a test that fails
+            on the base commit; a diagnosis must arrive as a routed context
+            bundle, not prose; an incident must end as a drafted ledger row,
+            with the human owning every verdict. Six of the ten practices below
+            are proven and cheap here; the top two (reproduce-first CI leg,
+            main-red watcher) address this repo's two documented red-main
+            hours-classes directly.
           </div>
         </section>
 
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+        <!-- Baseline -->
+        <section id="baseline">
+          <h2><span class="num">&#9670;</span>The baseline this repo already owns</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Every "people don't do this" claim below is measured against this
+            floor. Webphone's error infrastructure is, without exaggeration, the
+            precondition most orgs lack for agent-assisted error work — stable
+            structure an agent can grep, route, and assert against.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>Total error families + stable codes</strong>
+                <span
+                  >Every error carries a family (Rejection/Conflict/Transient/
+                  Corruption/Infrastructure/Orchestration) and a
+                  <code>&lt;seam&gt;.&lt;op&gt;</code> code; the registry is
+                  pinned by <code>TestErrorCodeRegistryIsFresh</code>, so codes
+                  cannot drift silently (docs/error-contract.md).</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>A test-pinned failure&rarr;feedback map</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >Every user-visible failure surface (toast, banner, styled 404,
+                  5-part boot report) has a test home named in the contract
+                  table — failures are specified behavior, not accidents.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Generated wire contracts + drift tests</strong>
+                <span
+                  >OpenAPI and AsyncAPI render from the handler DTOs; the
+                  contracts cannot drift because they are not handwritten.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Machine-readable operator telemetry</strong>
+                <span
+                  >Structured logs with <code>error=</code>/<code>family=</code>
+                  fields, honest healthz legs that name the failing check, a
+                  flight-recorder seam that snapshots &gt;2s/5xx requests, and
+                  latency histograms — the exact inputs an agent needs.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Failure knowledge bases</strong>
+                <span
+                  >docs/lessons.md war stories, the CI-flake ledger, the dedup
+                  registry — folklore already converted to data, by hand. The
+                  agent opportunity is doing that conversion automatically.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Drills as tests</strong>
+                <span
+                  >The backup oneshot has a KVM-gated VM test covering snapshot
+                  AND restore — the precedent for asserting failure behavior
+                  under real conditions.</span
                 >
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Findings -->
-        <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+        <!-- Landscape -->
+        <section id="landscape">
+          <h2><span class="num">01</span>The 2026 landscape (verified)</h2>
+          <p>
+            The vendor surface for agent-assisted error work is real and
+            current. None of the rows below are speculative — each was checked
+            against official product docs in this session (verification table
+            and flags in the Appendix).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Who ships it (2026)</th>
+                <th>Maturity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Prod error &rarr; root cause &rarr; fix PR</td>
+                <td>Sentry Seer, Rollbar Resolve, Datadog Bits Code</td>
+                <td class="yes">GA — human merges</td>
+              </tr>
+              <tr>
+                <td>Agentic incident response (investigate, draft, retrospective)</td>
+                <td>Rootly Agents, incident.io Investigations, Bits Investigation</td>
+                <td class="yes">Early GA — human approves moves</td>
+              </tr>
+              <tr>
+                <td>Paged-on-red-CI fix agents</td>
+                <td>Devin automations, Claude Code Action (automation mode), Copilot coding agent, Codex "Fix in Checks", Cursor Cloud Agents</td>
+                <td class="yes">GA — rarely deployed event-driven</td>
+              </tr>
+              <tr>
+                <td>PR review + runtime validation in sandbox</td>
+                <td>Greptile (TREX), Cursor Bugbot, Graphite</td>
+                <td class="yes">GA</td>
+              </tr>
+              <tr>
+                <td>Flaky-test detection + quarantine</td>
+                <td>BuildPulse, Trunk Flaky Tests, Datadog Test Optimization</td>
+                <td class="yes">Mature; agent autofix still beta</td>
+              </tr>
+              <tr>
+                <td>Agentic chaos / resilience loops</td>
+                <td>Gremlin Foresight AI (+ MCP server)</td>
+                <td class="no">Emerging — single-vendor</td>
+              </tr>
+              <tr>
+                <td>Observability access for agents (MCP)</td>
+                <td>Datadog MCP, Sentry MCP, Rollbar MCP</td>
+                <td class="yes">Real plumbing; read-only proven</td>
+              </tr>
+              <tr>
+                <td>Durable execution for agents</td>
+                <td>Temporal, Restate, DBOS</td>
+                <td class="yes">Proven — adoption lags hard</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            The pattern across every mature row: the agent proposes, a human
+            disposes. Vendors that automate diagnosis aggressively still gate
+            merges and postmortem sign-off behind people. That is the correct
+            shape, and it frames everything below.
+          </p>
+        </section>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
+        <!-- Practices -->
+        <section id="practices">
+          <h2><span class="num">02</span>Ten things agents can do that people don't</h2>
+          <p>
+            Ordered roughly by (value &divide; effort) for a repo with this
+            error culture. Severity labels: <em>proven</em> (teal) = shipped
+            somewhere at industrial scale, just not adopted; <em>emerging</em>
+            (amber) = real but young.
+          </p>
+
+          <div class="issue issue-nice" id="practice-1">
+            <span class="severity severity-nice">Proven &middot; the highest-leverage gate</span>
+            <h3>P1 — Reproduce-before-fix as a mechanical gate, not a vibe</h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              The practice: no agent fix is credible until a test FAILS on the base commit and passes on the fix
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              Agents graded on green CI will reach green — sometimes by fixing
+              the bug, sometimes by weakening the test. The discipline that
+              separates the two is mechanical: the fix PR must contain a
+              reproduction test, and CI must verify that this test actually
+              fails against the base commit (red &rarr; green &rarr;
+              red-on-revert). Google formalized this as Bug Reproduction Tests:
+              their BRT agent produced plausible reproductions for 28% of 80
+              real production bugs, and feeding those tests to their repair
+              system made fixes ~30% more plausible (arXiv 2502.01821).
+              Practitioner guides converge on the same gate. Almost nobody
+              wires the base-commit check into CI — it is a ~40-line job.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Here:</strong> webphone already pins every contract row
+              with a test home; the missing leg is the anti-false-green check
+              itself — a CI job that runs the PR's new/changed tests against the
+              merge base and requires red-before-fix (proposal R1).
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <div class="issue issue-nice" id="practice-2">
+            <span class="severity severity-nice">Proven &middot; and this repo holds the unfair advantage</span>
+            <h3>P2 — Structured-error routing: exploit machine-readable errors</h3>
+            <div class="where">
+              Error code in &rarr; owning package, contract row, family-test pin, lessons mentions out
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              Vendor triage agents work from stack traces and vibes because
+              almost nobody has stable error codes. This repo does: every
+              journal line carries <code>family=</code> and a
+              <code>&lt;seam&gt;.&lt;op&gt;</code> code that greps to exactly
+              one seam. A routing step (a script or skill: journal line in
+              &rarr; context bundle out — owning files, the error-contract row,
+              the family-test pin, every lessons.md mention, recent CI history
+              for that test) turns any agent into an on-call engineer that
+              arrives already oriented. Observability MCP servers (Datadog,
+              Sentry, Rollbar) are the hosted version of this pattern; the
+              homemade version over structured codes is strictly better ground
+              truth.
             </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> proposal R3 — the codes, the pinned
+              registry, and the contract table already exist; only the router
+              (a grep-and-assemble step, no AI even required for the retrieval
+              leg) is missing.
+            </div>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <div class="issue issue-nice" id="practice-3">
+            <span class="severity severity-nice">Proven &middot; tools GA, event-driven use rare</span>
+            <h3>P3 — Page the agent on red CI (repair bots, not review bots)</h3>
+            <div class="where">
+              Devin "fix CI when it fails" automations; Claude Code Action automation mode reads CI results; Codex Fix-in-Checks
+            </div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              Teams deploy passive review bots everywhere but almost never the
+              active loop: main goes red &rarr; an agent is dispatched
+              &rarr; it reproduces locally, classifies flake-vs-real against
+              history, and returns either a fix PR with an evidence pack or a
+              diagnosis that says "not a code problem". The capability is GA at
+              multiple vendors; the trigger discipline is what nobody builds.
             </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the cost is documented: main sat red ~4h
+              (2026-10-05) and ~2.5h (2026-10-24, unregistered error codes),
+              and the daemon-reflow race class recurred across 2026-10-12. A
+              scheduled watcher that runs the flake-ledger check first and only
+              then dispatches a fix session would have converted both incidents
+              into minutes (proposal R2).
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="practice-4">
+            <span class="severity severity-nice">Proven &middot; the counter-intuitive half is skipping autonomy</span>
+            <h3>P4 — Flake forensics as auto-documentation, not auto-quarantine</h3>
+            <div class="where">
+              BuildPulse/Trunk/Datadog detect and quarantine; the smart part nobody does is drafting the VERDICT row
+            </div>
+            <p>
+              Auto-quarantine is the commodity; it also has a documented
+              trade-off (blanket auto-retry can turn real bugs green). The
+              underused move is the opposite of autonomous: after a suspected
+              flake, an agent assembles the DRAFT ledger row — run id, failing
+              test, duration, same-commit pass/fail evidence, similarity to
+              prior rows ("same class as run 38245220074?") — and the owner
+              rules the verdict. Folklore-to-data stops depending on a human
+              remembering to write it down at 2am.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> docs/ci-flake-ledger.md is exactly this
+              table, hand-maintained since 2026-10-06. The agent drafts; the
+              verdict column stays human (rides R2).
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="practice-5">
+            <span class="severity severity-nice">Proven pattern &middot; novel target</span>
+            <h3>P5 — Contract-chaos drills: assert the SHAPE of failure, not its absence</h3>
+            <div class="where">
+              Inject the failure; assert the contract held (fail-closed 503, honest healthz, styled 404, 5-part boot, redaction)
+            </div>
+            <p>
+              Chaos engineering asserts liveness under failure. The agent-era
+              upgrade asserts your ERROR CONTRACT under failure: kill the
+              database mid-write, blackhole webhook egress, corrupt a blob,
+              wedge the health probe — then assert fail-closed (not
+              fail-open), the healthz leg naming the failing check, the styled
+              404 for browsers vs terse answers for machines, the 5-part boot
+              report, and SafeDetail redaction. Most orgs cannot do this
+              because they have no contract to assert. Gremlin's agentic
+              Foresight loop is the hosted version of this idea; the homemade
+              version is just a test.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the backup-drill VM test is the standing
+              precedent — an error-contract drill check generalizes it
+              (proposal R4). Bonus: the 2026-10-24 lesson (a lowercased OpenAPI
+              method key slipped past the CSRF gate and false-greened a drift
+              test) is precisely the class adversarial probing catches.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="practice-6">
+            <span class="severity severity-nice">Proven &middot; vendors ship it, small repos never close the loop</span>
+            <h3>P6 — Telemetry&rarr;knowledge closing: auto-drafted war stories</h3>
+            <div class="where">
+              Datadog drafts postmortems with accuracy disclaimers; incident.io's stance is "exoskeletons, not robots"
+            </div>
+            <p>
+              After an incident, the expensive artifact is not the fix — it is
+              the write-up that prevents round two. Agents can now assemble the
+              draft mechanically: flight-recorder snapshots, the metric window,
+              the git context, the timeline from structured logs, the
+              recurrence check against past lessons. The human owns the verdict
+              and the blameless-analysis judgment; the blank page is gone.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the flight recorder + structured logs +
+              latency histograms are the inputs; lessons.md rows are the
+              hand-written output today (proposal R6).
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="practice-7">
+            <span class="severity severity-nice">Proven &middot; uniquely cheap with prose lessons</span>
+            <h3>P7 — Recurrence detection: "known lesson violated" beats "new bug"</h3>
+            <div class="where">
+              Every new incident matched against the lessons base before it is treated as novel
+            </div>
+            <p>
+              Knowledge bases accrete precisely because nobody rereads them at
+              incident time. An agent sweep that takes the failure signature
+              and asks "which past lesson does this resemble?" converts a prose
+              archive into a live classifier — and when the match hits, the
+              finding escalates as a recurrence (the root-cause write-up
+              already exists) instead of being re-diagnosed from scratch.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the whitespace-drift class alone has 3+
+              entries (the e62fe34 red, runs 38245220074/38255111611); every
+              one was re-diagnosed by hand. A red-CI first step of "grep the
+              ledger + lessons for this signature" (rides R2) makes the
+              recurrence check free.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="practice-8">
+            <span class="severity severity-nice">Proven &middot; Anthropic's own verification-tier ladder, applied to prose</span>
+            <h3>P8 — Error-prose gates: an LLM judges user-facing copy against the empathy contract</h3>
+            <div class="where">
+              Structural linters check codes and families; nothing checks the WORDS
+            </div>
+            <p>
+              Anthropic's verification ladder is: rules first, visual feedback
+              second, LLM-as-judge last (least robust). For code that is right.
+              For PROSE the ladder inverts — no rule can tell whether an error
+              message answers what happened, reassures, explains why, gives a
+              fix, and offers an escape; an LLM judge can, cheaply, on the diff
+              only. Nobody runs this gate. It is the rare case where
+              LLM-as-judge is the correct tool, not the lazy one.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the 5-part contract (What / Reassure /
+              Why / Fix / Escape) is already the rubric, and erraudit already
+              holds the structural half at zero. A detect-only, changed-strings-only
+              prose gate matches the repo's tier-3 owner-only bar (proposal R5).
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="practice-9">
+            <span class="severity severity-important">Emerging &middot; the pattern is sound, full autonomy is hype</span>
+            <h3>P9 — Evidence-gated autonomy tiers (test diffs are the riskiest diffs)</h3>
+            <div class="where">
+              Mechanical fixes may merge behind full gates; auth/session/migration fixes stay proposals forever
+            </div>
+            <p>
+              The emerging convention for agent PRs: an evidence pack (failing
+              run id, reproduction test, exact commands, rollback one-liner,
+              previous green SHA) plus risk tiers where high-risk paths — auth,
+              payments, migrations — are draft-only, and where TEST diffs are
+              treated as higher-risk than production diffs, because a green
+              suite that no longer guards the bug is a false green. Fully
+              autonomous merge for medium/high risk remains hype; every serious
+              vendor keeps human merge authority.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the tier already exists culturally — the
+              <code>auth:</code> commit prefix + mandatory session-behavior
+              suite is a risk tier in all but name. Formalizing it as an agent
+              policy is mostly writing down what the repo already enforces on
+              humans (rides R1/R2).
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="practice-10">
+            <span class="severity severity-important">Emerging &middot; the meta-inversion</span>
+            <h3>P10 — Agent-reliability engineering: apply your error contract TO the agents</h3>
+            <div class="where">
+              Idempotent side effects, journaled checkpoints, compensation semantics, stopping conditions, durable human pauses
+            </div>
+            <p>
+              The spicy version of this whole report: people deploy agents with
+              zero of the error discipline they would demand from a payment
+              flow. The 2026 playbook exists — durable execution (Temporal/
+              Restate journal every step; never re-execute a side effect on
+              replay), idempotency keys, compensation ("undo" defined before
+              ship; irreversible actions routed through human gates),
+              stopping conditions, verification after every action. Git itself
+              is the poor man's journal: small committed units ARE
+              checkpoints, and a PR IS a durable human-approval pause.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Here:</strong> the repo's own patterns map one-to-one —
+              <code>hooksIdem</code> is exactly-once by another name; the
+              release ritual's rollback legs are compensations; the auto-commit
+              daemon is the live specimen of an unmanaged agent (it ate 69
+              skip_steps lines once, and its commit-msg guard hole is
+              documented). A watchdog leg that audits daemon commits —
+              whitespace-drift check, .buildflow.yml diff audit, push-stall
+              anchor — is watchdog-on-watchdog (proposal R7).
+            </div>
           </div>
         </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+        <!-- Proposals -->
+        <section id="proposals">
+          <h2><span class="num">03</span>What this repo could do — Pareto shortlist</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Research only — no rulings. Each row names the practice it comes
+            from, the effort guess, and the documented incident or standing
+            convention it builds on. R1+R2 first: they are small, and they
+            attack the repo's only measured error-management losses (red-main
+            hours and false greens).
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Proposal</th>
+                <th>From</th>
+                <th>Effort</th>
+                <th>Builds on</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>R1</td>
+                <td>Reproduce-first CI leg: new/changed tests must FAIL on the merge base</td>
+                <td>P1, P9</td>
+                <td>Small (one CI job)</td>
+                <td>Test-pinned contract rows; the false-green risk is named in repo lore</td>
+              </tr>
+              <tr>
+                <td>R2</td>
+                <td>Main-red watcher: red main &rarr; ledger-recurrence check &rarr; reproduce locally &rarr; evidence-pack fix PR or flake-ledger draft row</td>
+                <td>P3, P4, P7</td>
+                <td>Medium (a skill + a schedule)</td>
+                <td>ci-flake-ledger, scripts/push-stall-watch.sh, the manual-push bar anchor</td>
+              </tr>
+              <tr>
+                <td>R3</td>
+                <td>Error-code router: journal line &rarr; context bundle (seam files, contract row, family-test pin, lessons mentions)</td>
+                <td>P2</td>
+                <td>Small</td>
+                <td>The pinned code registry + error-contract.md are already greppable</td>
+              </tr>
+              <tr>
+                <td>R4</td>
+                <td>Error-contract drill check: inject failures (DB kill, webhook blackhole, corrupt blob), assert contract shape (fail-closed, honest healthz, styled 404, redaction)</td>
+                <td>P5</td>
+                <td>Medium (VM test)</td>
+                <td>webphone-backup-drill precedent; every assertion already has a test home</td>
+              </tr>
+              <tr>
+                <td>R5</td>
+                <td>Error-prose gate (detect-only): changed user-facing strings judged against the 5-part contract; warns, never blocks</td>
+                <td>P8</td>
+                <td>Small</td>
+                <td>5-part contract; erraudit tier-1/2/3 bar</td>
+              </tr>
+              <tr>
+                <td>R6</td>
+                <td>Incident draft harvester: flight-recorder window + metrics + git context &rarr; proposed lessons.md/CHANGELOG/ledger entries</td>
+                <td>P6</td>
+                <td>Medium</td>
+                <td>Flight-recorder seam, structured logs, latency histograms</td>
+              </tr>
+              <tr>
+                <td>R7</td>
+                <td>Daemon-audit leg: every daemon commit auto-checked (whitespace-drift, .buildflow.yml diff audit, push-stall anchor)</td>
+                <td>P10</td>
+                <td>Small-medium</td>
+                <td>scripts/whitespace-drift.sh + push-stall-watch.sh exist as seeds; the 2026-10-08 truncation is the threat model</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Sequencing note</strong>
+            R1 and R2 reinforce each other: the watcher's fix PRs are only
+            trustworthy because R1 guarantees they reproduce first. R3 is the
+            cheapest and makes every later agent smarter; do it whenever a
+            session touches tooling anyway. R4–R7 are independent follow-ons.
+          </div>
+        </section>
+
+        <!-- Anti-patterns -->
+        <section id="antipatterns">
+          <h2><span class="num">04</span>What NOT to do (the hype flags)</h2>
+          <p>
+            Every capability above has a failure mode the vendors themselves
+            warn about. The 2026 line between smart and reckless:
+          </p>
+          <div class="grid-2">
+            <div class="card card-problem">
+              <strong>Auto-merge beyond mechanical risk</strong>
+              <p>
+                Vendors that automate diagnosis aggressively still keep human
+                merge authority. Auth/session/CSRF/migration fixes from agents
+                unattended is the documented false-green / review-skill-atrophy
+                failure mode, not a bold move.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <strong>Auto-retry/auto-quarantine that masks real bugs</strong>
+              <p>
+                Blanket test retries turn some real bugs green (documented
+                Datadog trade-off). Quarantine decisions need the verdict
+                discipline of the ledger, not a rate threshold alone.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Sign-off-free postmortems</strong>
+              <p>
+                LLM postmortem drafts ship with explicit accuracy disclaimers.
+                Letting one be the record, rather than the draft, encodes
+                plausible fiction into institutional memory.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Agents editing tests to reach green</strong>
+              <p>
+                The highest-risk diff in any agent PR is the TEST diff. Treat
+                test changes as adversarial until proven reproducing (that is
+                exactly what R1 operationalizes).
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Unbounded loops &amp; unmanaged agents</strong>
+              <p>
+                No stopping conditions, no idempotency, no compensation — the
+                auto-commit daemon's incidents are the local proof. Deploying
+                an agent without ITS error contract is the meta-failure this
+                report's P10 exists to prevent.
+              </p>
+            </div>
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">05</span>Appendix — verification status</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            External claims were checked this session against official product
+            docs via an AI fetch layer (capability-level statements, not exact
+            byte strings). Repo claims were checked against AGENTS.md,
+            docs/error-contract.md, and docs/ci-flake-ledger.md as of
+            2026-10-26. Remaining uncertainty is labeled, not hidden.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
+                <th>Claim</th>
                 <th>Status</th>
+                <th>Source</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>Sentry Seer: AI debugger, autofix opens PRs, external-agent handoff</td>
+                <td class="yes">Verified</td>
+                <td>sentry.io/product/seer, docs.sentry.io/product/ai-in-sentry/seer</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>Rollbar Resolve writes fix PRs; Agent Automation; MCP server</td>
+                <td class="yes">Verified</td>
+                <td>docs.rollbar.com, changelog.rollbar.com (recent; plan availability unverified)</td>
+              </tr>
+              <tr>
+                <td>Datadog: Watchdog, Bits AI (Investigation/Code), test flaky management, incident AI drafts, MCP server</td>
+                <td class="yes">Verified</td>
+                <td>datadoghq.com/product/watchdog, /product/bits-ai, docs.datadoghq.com/tests/flaky_management, /incident_response/…/incident_ai, /mcp_server</td>
+              </tr>
+              <tr>
+                <td>incident.io: AI Assistant, related incidents, Investigations (agentic RCA); "exoskeletons not robots" stance</td>
+                <td class="yes">Verified</td>
+                <td>incident.io/blog/ai, /blog/introducing-investigations-powered-by-nexus (very new; GA unverified)</td>
+              </tr>
+              <tr>
+                <td>Rootly AI SRE / Agents investigate, draft fixes, write retrospectives with human approval</td>
+                <td class="yes">Verified</td>
+                <td>rootly.com/agents, docs.rootly.com/ai</td>
+              </tr>
+              <tr>
+                <td>Devin "fix CI when it fails" automations; Claude Code Action automation mode + CI-result reading; Codex Fix-in-Checks; Copilot coding agent assignable to failures; Cursor @cursor dispatch</td>
+                <td class="yes">Verified</td>
+                <td>devin.ai, code.claude.com/docs/en/github-actions, developers.openai.com/codex, docs.github.com/copilot coding-agent docs, cursor.com/docs</td>
+              </tr>
+              <tr>
+                <td>Greptile reviews + TREX sandbox runtime validation; hands fixes to other agents</td>
+                <td class="yes">Verified</td>
+                <td>greptile.com</td>
+              </tr>
+              <tr>
+                <td>Gremlin Foresight AI agentic resilience loop, GA Oct 2026, + chaos MCP server</td>
+                <td class="no">Vendor-sourced</td>
+                <td>gremlin.com blog — single-vendor claim, treat skeptically</td>
+              </tr>
+              <tr>
+                <td>Google BRT agent: reproductions for 28% of 80 prod bugs; +30% plausible fixes when fed to APR</td>
+                <td class="yes">Verified</td>
+                <td>arXiv 2502.01821 (HTML read this session)</td>
+              </tr>
+              <tr>
+                <td>BuildPulse / Trunk flake detection + quarantine; Trunk agent autofix beta</td>
+                <td class="yes">Verified</td>
+                <td>buildpulse.io, trunk docs, mergify.com comparison</td>
+              </tr>
+              <tr>
+                <td>Anthropic verification ladder (rules &gt; visual &gt; LLM-judge), agent loop gather&rarr;act&rarr;verify, tool-poka-yoke guidance</td>
+                <td class="yes">Verified</td>
+                <td>anthropic.com/engineering/building-effective-agents, /writing-tools-for-agents, /building-agents-with-the-claude-agent-sdk</td>
+              </tr>
+              <tr>
+                <td>Temporal / Restate / DBOS durable agent execution; journal-every-LLM-call rule</td>
+                <td class="yes">Verified</td>
+                <td>temporal.io/docs, docs.restate.dev/ai/patterns/durable-agents</td>
+              </tr>
+              <tr>
+                <td>"AI on-call" as a product name (it is a category, not an incident.io product)</td>
+                <td class="no">Corrected</td>
+                <td>Fetch-layer flag, this session</td>
+              </tr>
+              <tr>
+                <td>Copilot autofix exact capabilities</td>
+                <td class="no">Unverified</td>
+                <td>Docs page 404'd during verification; encoded only at capability level</td>
               </tr>
             </tbody>
           </table>
+          <p>
+            Method note: agent-summarized fetches are paraphrase, not
+            extraction — no exact-string claims (flags, error messages,
+            version numbers) are encoded in this report on that evidence
+            alone. Where a number matters (BRT percentages) the primary paper
+            was read directly.
+          </p>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-26 &middot; Practice scan, no rulings encoded
+            &middot; External claims verified against official docs this
+            session (Appendix); repo claims verified against AGENTS.md,
+            docs/error-contract.md, docs/ci-flake-ledger.md
           </p>
         </footer>
       </main>
