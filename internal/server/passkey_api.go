@@ -128,7 +128,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	// posture as the resume endpoint — the credential stays out of every
 	// cache.
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(extension)
+	response := h.sessionIdentityResponse(r.Context(), extension)
 	if h.deps.Config.SIP.DerivedCredentials() {
 		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
 	} else {

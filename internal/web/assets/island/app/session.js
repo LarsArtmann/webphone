@@ -54,12 +54,21 @@ export async function createSession(
     // did is the extension's presented number (server config); it rides
     // the event detail so the whoami line can show the real number too.
     // sip_credential is the derived REGISTER credential (brokering on).
+    // The agent_mode* fields feed the shell's drafts pill (M13); empty
+    // when the seam is off or the boot probe could not see the agent.
     let did = "";
     let sipCredential = null;
+    let agent = {};
     try {
       const data = await res.json();
       did = data.did || "";
       sipCredential = data.sip_credential || null;
+      agent = {
+        agentMode: data.agent_mode || "",
+        agentModeSource: data.agent_mode_source || "",
+        agentDefaultMode: data.agent_default_mode || "",
+        agentModes: Array.isArray(data.agent_modes) ? data.agent_modes : [],
+      };
     } catch {
       // A bodyless or non-JSON success is not fatal: identity is cosmetic.
     }
@@ -67,7 +76,7 @@ export async function createSession(
     // defense); adopt the fresh one before anything else POSTs — the
     // shared post-login sequence (adopt → SSE attach → announce) lives
     // in adoptServerSession below.
-    await adoptServerSession({ did });
+    await adoptServerSession({ did, ...agent });
     return sipCredential;
   } catch (err) {
     if (!quiet) announce(t("sessionNetFailed"), "warn");

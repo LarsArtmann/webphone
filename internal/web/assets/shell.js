@@ -388,6 +388,118 @@
       renderMissedBadge();
     });
 
+    // 2d-2. Agent-mode pill (M13): the textagent's draft autonomy,
+    //     glanceable next to the call badge. The island forwards the
+    //     session identity's agent fields on wp:session-opened; no mode
+    //     field = no pill (the seam is off, or the boot probe could not
+    //     see the agent — hiding beats lying). Click cycles through the
+    //     agent's modes; a runtime pin grows a reset chip (the Messages
+    //     panel select stays the ONE settings home — the pill is
+    //     visibility plus one gesture, never a second config surface).
+    //     English shell copy (D3); announcements ride the polite live
+    //     region.
+    var agentPill = null;
+    var agentReset = null;
+    var agentModeState = null;
+    var announceLive = function (text) {
+      var live = document.getElementById("wp-live");
+      if (!live) return;
+      live.textContent = "";
+      live.textContent = text;
+    };
+    var renderAgentPill = function () {
+      var actions = document.querySelector(".wp-header-actions");
+      if (!actions) return;
+      if (!agentModeState || !agentModeState.mode) {
+        if (agentPill) {
+          agentPill.remove();
+          agentPill = null;
+        }
+        if (agentReset) {
+          agentReset.remove();
+          agentReset = null;
+        }
+        return;
+      }
+      if (!agentPill) {
+        agentPill = document.createElement("button");
+        agentPill.id = "agent-mode-pill";
+        agentPill.className = "wp-agent-pill";
+        agentPill.type = "button";
+        agentPill.addEventListener("click", cycleAgentMode);
+        actions.appendChild(agentPill);
+      }
+      var pinned = agentModeState.source === "runtime";
+      agentPill.textContent =
+        "AI drafts: " + agentModeState.mode + (pinned ? " · pinned" : "");
+      if (pinned) {
+        if (!agentReset) {
+          agentReset = document.createElement("button");
+          agentReset.id = "agent-mode-reset";
+          agentReset.className = "wp-agent-reset";
+          agentReset.type = "button";
+          agentReset.addEventListener("click", function () {
+            postAgentMode("reset");
+          });
+          actions.appendChild(agentReset);
+        }
+        agentReset.textContent = "reset";
+      } else if (agentReset) {
+        agentReset.remove();
+        agentReset = null;
+      }
+    };
+    var postAgentMode = function (value) {
+      if (!agentModeState) return;
+      fetch("/messages/drafts/mode", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrfToken() },
+        credentials: "same-origin",
+        body: new URLSearchParams({ mode: value }).toString(),
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          if (value === "reset") {
+            agentModeState.mode = agentModeState.defaultMode;
+            agentModeState.source = "config";
+            announceLive(
+              "AI drafts back to " + agentModeState.defaultMode + ".",
+            );
+          } else {
+            agentModeState.mode = value;
+            agentModeState.source =
+              value === agentModeState.defaultMode ? "config" : "runtime";
+            announceLive("AI drafts set to " + value + ".");
+          }
+          renderAgentPill();
+        })
+        .catch(function () {
+          announceLive("Could not change the AI drafts mode.");
+        });
+    };
+    var cycleAgentMode = function () {
+      if (!agentModeState || !agentModeState.modes || !agentModeState.modes.length)
+        return;
+      var modes = agentModeState.modes;
+      var at = modes.indexOf(agentModeState.mode);
+      postAgentMode(modes[(at + 1 + modes.length) % modes.length]);
+    };
+    var agentModeOpened = function (event) {
+      var detail = (event && event.detail) || {};
+      if (!detail.agentMode) {
+        agentModeState = null;
+      } else {
+        agentModeState = {
+          mode: detail.agentMode,
+          source: detail.agentModeSource || "config",
+          defaultMode: detail.agentDefaultMode || detail.agentMode,
+          modes: Array.isArray(detail.agentModes) ? detail.agentModes : [],
+        };
+      }
+      renderAgentPill();
+    };
+    document.addEventListener("wp:session-opened", agentModeOpened);
+
     // 2e. Reply snippets (M21): a chip or picker button carries the body
     //     itself (data-snippet). The fill REPLACES the reply textarea's
     //     content (the data-sms prefill precedent — a snippet is a whole
@@ -1763,5 +1875,6 @@
     module.exports.refreshNav = refreshNav;
     module.exports.vmPeaks = vmPeaks;
     module.exports.vmClock = vmClock;
+    module.exports.agentModeOpened = agentModeOpened;
   }
 })();

@@ -67,7 +67,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	response := h.sessionIdentityResponse(extension)
+	response := h.sessionIdentityResponse(r.Context(), extension)
 	// Derived mode: the 201 answer carries the session-derived REGISTER
 	// credential (never the typed password); the browser registers with
 	// it. no-store keeps it out of every cache.
@@ -224,7 +224,7 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(sess.Extension)
+	response := h.sessionIdentityResponse(r.Context(), sess.Extension)
 	// Credential policy (see sessionIdentity): derived mode answers the
 	// session-derived REGISTER credential — the directory password never
 	// reaches the browser — while legacy mode keeps the historical
