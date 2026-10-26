@@ -153,7 +153,9 @@ FAILED_JOBS=$(gh run view "$RUN_ID" --json jobs --jq '[.jobs[] | select(.conclus
 [ -n "$FAILED_JOBS" ] || FAILED_JOBS="unknown"
 
 RECURRENCE=""
-for job in $(python3 -c 'import json,sys; print("\n".join(j["name"] for j in json.loads(sys.argv[1]).get("jobs",[]) if j["conclusion"]=="failure"))' "$(gh run view "$RUN_ID" --json jobs 2>/dev/null || echo '{}")" 2>/dev/null || true); do
+IFS=',' read -ra JOB_NAMES <<<"$FAILED_JOBS"
+for job in "${JOB_NAMES[@]}"; do
+	job=$(echo "$job" | sed 's/^ *//;s/ *$//')
 	[ -n "$job" ] || continue
 	while IFS= read -r hit; do
 		[ -n "$hit" ] && RECURRENCE+="- $hit"$'\n'

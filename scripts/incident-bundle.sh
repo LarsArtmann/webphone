@@ -68,12 +68,30 @@ LOG
 SINCE="" DATADIR="" LOGFILE="" SLUG="" OUT=""
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--since) SINCE=$2; shift 2 ;;
-	--dataDir) DATADIR=$2; shift 2 ;;
-	--log-file) LOGFILE=$2; shift 2 ;;
-	--slug) SLUG=$2; shift 2 ;;
-	--out) OUT=$2; shift 2 ;;
-	*) say "unknown argument $1"; exit 1 ;;
+	--since)
+		SINCE=$2
+		shift 2
+		;;
+	--dataDir)
+		DATADIR=$2
+		shift 2
+		;;
+	--log-file)
+		LOGFILE=$2
+		shift 2
+		;;
+	--slug)
+		SLUG=$2
+		shift 2
+		;;
+	--out)
+		OUT=$2
+		shift 2
+		;;
+	*)
+		say "unknown argument $1"
+		exit 1
+		;;
 	esac
 done
 [ -n "$SINCE" ] && [ -n "$DATADIR" ] || {

@@ -182,7 +182,7 @@ self_test() {
 	local script
 	script=$(readlink -f "$0")
 	local tmp
-tmp=$(mktemp -d)
+	tmp=$(mktemp -d)
 	trap 'rm -rf "${tmp:-}"' EXIT
 
 	local checks=0 failed=0

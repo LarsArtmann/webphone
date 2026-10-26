@@ -128,7 +128,8 @@ if [ -z "$FLAGS" ]; then
 	exit 0
 fi
 
-BODY=$(cat <<EOF
+BODY=$(
+	cat <<EOF
 ## daemon-audit flag — $audited_sha
 
 Commit: \`$SUBJECT\`
