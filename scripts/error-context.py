@@ -113,10 +113,11 @@ def family_pins(code):
     out = run(["rg", "-n", "--fixed-strings", code, "--glob", "*family_test.go", "internal/"], cwd=REPO)
     pins = []
     for line in out.stdout.splitlines():
-        path, _, text = line.partition(":")
-        if not text:
+        parts = line.split(":", 2)
+        if len(parts) < 3:
             continue
-        pins.append({"file": path, "line": line.partition(":")[1], "text": text.strip(), "test": enclosing_test(path, int(line.partition(":")[1]))})
+        path, line_no, text = parts
+        pins.append({"file": path, "line": line_no, "text": text.strip(), "test": enclosing_test(path, int(line_no))})
     return pins
 
 
