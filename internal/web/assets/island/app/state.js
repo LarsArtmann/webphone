@@ -7,7 +7,12 @@ export const sessions = new Map();
 
 export const state = {
   focusedId: null,
-  incomingSession: null,
+  // The ringing queue: every unanswered inbound INVITE, OLDEST FIRST
+  // (index 0 rings longest). The queue is UI-state only — the answer
+  // path pops the head, Esc rejects the tail (the newest ring), and
+  // every other removal goes through the invite's own stateChange
+  // listener so a remote cancel takes exactly its own slot.
+  incomingSessions: [],
   // The live SIP.UserAgent, written by connection.js only. Lives here so
   // calls and ice never import the connection module for it.
   userAgent: null,

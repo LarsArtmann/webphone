@@ -23,9 +23,9 @@ import {
   els,
   hideIncomingBanner,
   log,
+  renderIncomingSlots,
   setOfflineBanner,
   setRegStatus,
-  showIncomingBanner,
 } from "./ui.js";
 
 let registerer = null;
@@ -275,20 +275,16 @@ async function buildConnection() {
         if (error) scheduleReconnect();
       },
       onInvite: (invitation) => {
-        if (state.incomingSession) {
-          invitation.reject();
-          log("rejected second incoming call", "warn");
-          announce(t("rejectedSecond"), "warn");
-          return;
-        }
-        state.incomingSession = invitation;
         warmMic();
         const from = (invitation.remoteIdentity &&
           invitation.remoteIdentity.uri) || {
           user: "unknown",
         };
-        els.incomingFrom.textContent = from.user || "unknown";
-        showIncomingBanner();
+        const caller = from.user || "unknown";
+        // The ringing queue (N-deep): every invite takes a slot answered
+        // oldest-first. A second ring never rejects itself.
+        state.incomingSessions.push({ invitation, from: caller });
+        renderIncomingSlots();
         // A6 incoming focus: a ringing phone moves focus to Accept —
         // unless the user is mid-type somewhere (the assertive
         // announcement already reached them; stealing keystrokes would
@@ -302,41 +298,53 @@ async function buildConnection() {
         if (!midType) els.accept.focus();
         // Assertive announcement (M17 J9): a hidden→visible swap of the
         // banner is invisible to screen readers — the ringing call is
-        // the one message allowed to interrupt (role=alert).
-        announce(t("incomingCall")(from.user || "unknown"), "info", {
+        // the one message allowed to interrupt (role=alert). Per invite:
+        // N simultaneous callers are N announcements.
+        announce(t("incomingCall")(caller), "info", {
           assertive: true,
         });
-        // Incoming-call UX: system notification, audible ring, tab flash.
-        notifyIncoming(from.user || "unknown");
+        // Incoming-call UX: system notification (per caller, so N callers
+        // are N notifications), audible ring, tab flash.
+        notifyIncoming(caller);
         ringToneStart();
         titleFlashStart();
         invitation.stateChange.addListener((state2) => {
-          if (state2 === SIP.SessionState.Terminated && !els.incoming.hidden) {
+          if (state2 !== SIP.SessionState.Terminated) return;
+          // An answered (or deliberately rejected) invite left the queue
+          // already; a Terminated arrival only means "the caller gave
+          // up" while the invite still held its slot — remove exactly
+          // that slot, keep the remaining rings ringing.
+          const slot = state.incomingSessions.findIndex(
+            (entry) => entry.invitation === invitation,
+          );
+          if (slot === -1) return;
+          state.incomingSessions.splice(slot, 1);
+          if (state.incomingSessions.length > 0) {
+            renderIncomingSlots();
+          } else {
             hideIncomingBanner();
-            state.incomingSession = null;
             ringToneStop();
             titleFlashStop();
             releaseWarmMic();
-            // The far end gave up before the user answered: say so and
-            // keep the attempt in Recent calls (dir in, no duration).
-            const missed = from.user || "unknown";
-            log(`missed call from ${missed}`, "warn");
-            announce(t("missedCall")(missed), "warn");
-            // shell.js mirrors this into the missed-call header badge;
-            // a deliberate REJECT sets els.incoming.hidden first and
-            // never lands here.
-            document.dispatchEvent(
-              new CustomEvent("wp:call-missed", { detail: { target: missed } }),
-            );
-            recordHistory({
-              dir: "in",
-              target: missed,
-              at: Date.now(),
-              dur: 0,
-            });
           }
+          // The far end gave up before the user answered: say so and
+          // keep the attempt in Recent calls (dir in, no duration).
+          log(`missed call from ${caller}`, "warn");
+          announce(t("missedCall")(caller), "warn");
+          // shell.js mirrors this into the missed-call header badge; a
+          // deliberate REJECT empties the queue slot first and never
+          // lands here (the queue-membership check above).
+          document.dispatchEvent(
+            new CustomEvent("wp:call-missed", { detail: { target: caller } }),
+          );
+          recordHistory({
+            dir: "in",
+            target: caller,
+            at: Date.now(),
+            dur: 0,
+          });
         });
-        log(`incoming call from ${from.user}`);
+        log(`incoming call from ${caller}`);
       },
     },
   });
