@@ -17,13 +17,16 @@ export function requestNotifications() {
   }
 }
 
+// One notification PER CALLER: the tag carries the caller so two
+// simultaneous rings are two shade entries (the stock ntfy/Chrome
+// behavior replaces same-tag notifications only).
 export function notifyIncoming(from) {
   if (!("Notification" in window) || Notification.permission !== "granted")
     return;
   try {
     const n = new Notification(`☎ ${from}`, {
       body: `Incoming call on ${sipDomain}`,
-      tag: "pbx-incoming",
+      tag: `pbx-incoming-${from}`,
     });
     n.addEventListener("click", () => window.focus());
   } catch (err) {

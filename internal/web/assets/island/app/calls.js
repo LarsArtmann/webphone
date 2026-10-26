@@ -894,18 +894,47 @@ export function hangupFocused() {
   if (state.focusedId) hangup(state.focusedId);
 }
 
-export function answerIncoming() {
-  const invitation = state.incomingSession;
-  if (!invitation) return false;
+// The ringing queue's answer/reject primitives. The no-arg answer pops
+// the OLDEST ring (the A key and the pinned Accept button land here);
+// the no-arg reject takes the NEWEST ring (Esc) — the freshest
+// interruption clears first and the focused live call is never touched.
+// An explicit INVITE (the banner stack's per-slot buttons) targets that
+// exact slot, so a button can never reject a different caller than the
+// one it labels.
+function takeIncomingEntry(target) {
+  const queue = state.incomingSessions;
+  if (!queue.length) return null;
+  let at;
+  if (target === undefined) at = 0;
+  else if (typeof target === "number") at = target;
+  else at = queue.findIndex((entry) => entry.invitation === target);
+  if (at < 0 || at >= queue.length) return null;
+  return queue.splice(at, 1)[0];
+}
+
+// After one slot leaves the queue: remaining rings re-render the stack
+// and keep ringing; the LAST one out hides the banner and stands the
+// ring UX down (the warm mic stays for an answer, is released on a
+// reject-to-empty by the reject path).
+function settleIncomingAfterRemoval() {
+  if (state.incomingSessions.length > 0) {
+    renderIncomingSlots();
+    return;
+  }
+  hideIncomingBanner();
+  ringToneStop();
+  titleFlashStop();
+}
+
+export function answerIncoming(target) {
+  const entry = takeIncomingEntry(target);
+  if (!entry) return false;
   // The accept click is a user gesture — bring the shared AudioContext
   // out of Chrome's suspended state so call audio starts immediately.
   resumeAudio().catch(() => {});
-  hideIncomingBanner();
-  state.incomingSession = null;
-  ringToneStop();
-  titleFlashStop();
-  bindSession(invitation, els.incomingFrom.textContent);
-  invitation
+  settleIncomingAfterRemoval();
+  bindSession(entry.invitation, entry.from);
+  entry.invitation
     .accept({
       sessionDescriptionHandlerOptions: {
         constraints: { audio: true, video: false },
@@ -914,19 +943,27 @@ export function answerIncoming() {
     .catch((err) => {
       log(`accept failed: ${err.message}`, "error");
       announce(t("acceptFailed")(err.message), "error");
-      teardownSession(invitation.id);
+      teardownSession(entry.invitation.id);
     });
   return true;
 }
 
-export function rejectIncoming() {
-  if (!state.incomingSession) return;
+export function rejectIncoming(target) {
+  let entry;
+  if (target === undefined) {
+    const queue = state.incomingSessions;
+    entry = queue.length ? queue.pop() : null;
+  } else {
+    entry = takeIncomingEntry(target);
+  }
+  if (!entry) return;
   // Gesture: unlock the shared context for every later tone.
   resumeAudio().catch(() => {});
-  state.incomingSession.reject();
-  hideIncomingBanner();
-  state.incomingSession = null;
-  ringToneStop();
-  titleFlashStop();
-  releaseWarmMic();
+  entry.invitation.reject();
+  settleIncomingAfterRemoval();
+  if (!state.incomingSessions.length) releaseWarmMic();
 }
+
+// The banner stack's per-slot buttons route through here (ui.js owns
+// the rows, calls.js owns the actions — the import stays one-way).
+setIncomingSlotActions({ answer: answerIncoming, reject: rejectIncoming });

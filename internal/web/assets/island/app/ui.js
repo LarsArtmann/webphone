@@ -4,6 +4,8 @@
 // AGENTS.md before renaming anything).
 
 import { sipDomain } from "./config.js";
+import { t } from "./i18n.js";
+import { state } from "./state.js";
 
 export const $ = (id) => document.getElementById(id);
 
@@ -27,6 +29,7 @@ export const els = {
   historyWrap: $("history-wrap"),
   incoming: $("incoming-call"),
   incomingFrom: $("incoming-from"),
+  incomingQueue: $("incoming-queue"),
   accept: $("accept-btn"),
   reject: $("reject-btn"),
   contactsWrap: $("contacts-wrap"),
@@ -145,14 +148,60 @@ export function setIncomingFocusMode(active) {
   document.documentElement.classList.toggle("wp-incoming-focus", active);
 }
 
-export function showIncomingBanner() {
+// The ringing queue's slot rendering (the N-deep banner stack). Slot 1
+// IS the served markup: the pinned ids (#incoming-from, #accept-btn,
+// #reject-btn) belong to the OLDEST ring, so the stack's browser E2E
+// keeps driving the first invite through them. Slots 2..N render as
+// per-invite rows into #incoming-queue, each with its own answer/reject
+// pair. The extra-slot buttons ride the actions registry below — ui.js
+// must not import calls.js (calls imports ui; the registry keeps the
+// graph one-way).
+let slotActions = null;
+
+export function setIncomingSlotActions(actions) {
+  slotActions = actions;
+}
+
+export function renderIncomingSlots() {
+  const queue = state.incomingSessions;
+  if (!queue.length) return;
   els.incoming.hidden = false;
   setIncomingFocusMode(true);
+  els.incomingFrom.textContent = queue[0].from;
+  if (!els.incomingQueue) return;
+  els.incomingQueue.replaceChildren();
+  for (let i = 1; i < queue.length; i += 1) {
+    const entry = queue[i];
+    const row = document.createElement("div");
+    row.className = "incoming-slot";
+    row.id = `wp-incoming-slot-${i}`;
+    const label = document.createElement("span");
+    label.className = "incoming-slot-from";
+    label.textContent = `${t("incoming")} ${entry.from}`;
+    const controls = document.createElement("div");
+    controls.className = "controls";
+    const answer = document.createElement("button");
+    answer.className = "primary";
+    answer.textContent = t("accept");
+    answer.addEventListener("click", () => {
+      if (slotActions) slotActions.answer(i);
+    });
+    const reject = document.createElement("button");
+    reject.className = "danger";
+    reject.textContent = t("reject");
+    reject.addEventListener("click", () => {
+      if (slotActions) slotActions.reject(i);
+    });
+    controls.append(answer, reject);
+    row.append(label, controls);
+    els.incomingQueue.append(row);
+  }
 }
 
 export function hideIncomingBanner() {
   els.incoming.hidden = true;
   setIncomingFocusMode(false);
+  if (els.incomingQueue) els.incomingQueue.replaceChildren();
 }
 
 export function dialFromUi(number) {
