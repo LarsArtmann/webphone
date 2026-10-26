@@ -975,3 +975,11 @@ export function rejectIncoming(target) {
 // The banner stack's per-slot buttons route through here (ui.js owns
 // the rows, calls.js owns the actions — the import stays one-way).
 setIncomingSlotActions({ answer: answerIncoming, reject: rejectIncoming });
+// The PINNED Accept/Reject buttons label slot 1 (the OLDEST ring the
+// #incoming-from line displays): Accept answers the queue head; Reject
+// must reject exactly that caller, never a newer one down the stack.
+// The wiring lives here — next to the actions they dispatch — so the
+// buttons work in any page that loads the island, and the queue's
+// tests can drive them without importing main.js.
+els.accept.addEventListener("click", () => answerIncoming());
+els.reject.addEventListener("click", () => rejectIncoming(0));

@@ -91,12 +91,17 @@ const reset = () => {
   state.userAgent = null;
 };
 
-// A ringing invite stub: one stateChange emitter, one accept.
+// A ringing invite stub: one stateChange emitter, one accept. The stub
+// models the stack's state machine as far as calls.js reads it: accept
+// reaches Established, and a hangup's bye() settles into Terminated —
+// that arrival is what tears the session card down (bindSession's
+// listener), exactly as the real sip.js stack notifies.
 const invitation = (caller) => {
   const listeners = [];
-  return {
+  const inv = {
     caller,
     remoteIdentity: { uri: { user: caller } },
+    state: globalThis.SIP.SessionState.Establishing,
     stateChange: {
       addListener: (fn) => listeners.push(fn),
       fire: (value) => {
@@ -105,15 +110,25 @@ const invitation = (caller) => {
     },
     acceptCalls: 0,
     rejectCalls: 0,
+    byeCalls: 0,
     accept() {
       this.acceptCalls += 1;
+      this.state = globalThis.SIP.SessionState.Established;
       return Promise.resolve();
     },
     reject() {
       this.rejectCalls += 1;
+      this.state = globalThis.SIP.SessionState.Terminated;
+    },
+    bye() {
+      this.byeCalls += 1;
+      this.state = globalThis.SIP.SessionState.Terminated;
+      this.stateChange.fire(globalThis.SIP.SessionState.Terminated);
+      return Promise.resolve();
     },
     id: `invite-${caller}`,
   };
+  return inv;
 };
 
 const ring = async (agent, invite) => {

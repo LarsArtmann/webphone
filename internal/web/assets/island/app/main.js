@@ -9,11 +9,9 @@ import {
   registerWasRejected,
 } from "./connection.js";
 import {
-  answerIncoming,
   initDialHint,
   initDialWarm,
   placeCall,
-  rejectIncoming,
   renderCalls,
   sendDtmf,
   teardownAll,
@@ -280,6 +278,17 @@ els.dialForm.addEventListener("submit", async (event) => {
   // next dial (the E2E concatenated two extensions exactly once too
   // often).
   if (dialed) els.dest.value = "";
+});
+
+els.accept.addEventListener("click", () => {
+  answerIncoming();
+});
+
+els.reject.addEventListener("click", () => {
+  // The pinned Reject button labels the banner's FIRST slot (the oldest
+  // ring the #incoming-from line displays) — it must reject exactly
+  // that caller, never a newer one further down the stack.
+  rejectIncoming(0);
 });
 
 els.accept.addEventListener("click", () => {
