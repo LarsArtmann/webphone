@@ -13,7 +13,7 @@ import {
   ringbackStop,
   ringToneStop,
 } from "./audio.js";
-import { asrEnabled, sipDomain } from "./config.js";
+import { asrEnabled, asrLocality, sipDomain } from "./config.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
@@ -25,11 +25,15 @@ import {
 import { titleFlashStop } from "./notify.js";
 import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
+  CAPTION_LINE_CAP,
+  callSegments,
+  clearCallSegments,
   isTranscribing,
   pauseLiveTranscription,
   saveTranscriptSegment,
   startLiveTranscription,
   stopLiveTranscription,
+  subscribeCallSegments,
 } from "./transcribe.js";
 import {
   announce,
@@ -147,6 +151,8 @@ export function teardownSession(id) {
   const entry = sessions.get(id);
   if (!entry) return;
   stopLiveTranscription(id);
+  if (entry.captionUnsub) entry.captionUnsub();
+  clearCallSegments(id);
   // The call's undelivered transcript segments get one last flush
   // attempt before the entry goes away (the queue drains in the
   // background; a still-failing save stays logged, never blocking).
@@ -422,12 +428,37 @@ function addCallCard(id, target) {
     els.remoteAudio.volume = entry.volume;
   });
   controls.append(volume);
-  // Live transcription (only when the ASR seam is configured): a toggle
-  // that captures the call audio and appends each segment's text below.
+  // Live captions (only when the ASR seam is configured): the strip is
+  // the line-based reading surface under the card (last CAPTION_LINE_CAP
+  // segments, aria-hidden — the polite announce path already speaks each
+  // segment; the strip must not double-speak), with a config-honest
+  // locality chip naming where the audio is processed. The inner
+  // .call-transcript node stays the copy/clear surface.
   const transcript = document.createElement("div");
   transcript.className = "call-transcript";
   transcript.id = `call-transcript-${id}`;
   if (asrEnabled) {
+    const strip = document.createElement("div");
+    strip.className = "wp-captions";
+    strip.id = `wp-captions-${id}`;
+    strip.setAttribute("aria-hidden", "true");
+    const captionsHead = document.createElement("div");
+    captionsHead.className = "wp-captions-head";
+    const title = document.createElement("span");
+    title.className = "wp-captions-title";
+    title.textContent = t("captionsTitle");
+    captionsHead.append(title);
+    if (asrLocality) {
+      const locality = document.createElement("span");
+      locality.className = "wp-captions-locality";
+      locality.textContent = t(
+        asrLocality === "local" ? "captionsLocal" : "captionsRemote",
+      );
+      captionsHead.append(locality);
+    }
+    strip.append(captionsHead, transcript);
+    card.append(head, controls, strip);
+    for (const line of callSegments(id)) appendTranscript(transcript, line);
     controls.append(
       mkBtn(t("transcribe"), "ghost transcribe-btn", () =>
         toggleTranscription(id, transcript),
@@ -436,11 +467,12 @@ function addCallCard(id, target) {
         copyCardTranscript(transcript),
       ),
       mkBtn(t("clearTranscript"), "ghost clear-transcript-btn", () =>
-        clearCardTranscript(transcript),
+        clearCardTranscript(id, transcript),
       ),
     );
+  } else {
+    card.append(head, controls, transcript);
   }
-  card.append(head, controls, transcript);
   if (asrEnabled) {
     const saved = document.createElement("div");
     saved.className = "call-transcript-saved";
@@ -576,31 +608,39 @@ function clipForAnnounce(text) {
   return t("transcriptDelta")(clipped);
 }
 
-// The live card's DOM cap (#41): a marathon call must not grow an
-// unbounded transcript node. The kept tail is a few screens of live
-// context; the durable whole lives server-side (History) regardless.
-const TRANSCRIPT_DOM_CAP = 8000;
-
+// The live card's DOM cap (multi-call train): the transcript renders as
+// bounded LINE divs (CAPTION_LINE_CAP, scalar-bounded like the server
+// store cap) — a marathon call cannot grow the strip. The durable whole
+// lives server-side (History) regardless.
 function appendTranscript(target, text) {
   if (!text) return;
-  let next = target.textContent ? `${target.textContent} ${text}` : text;
-  if (next.length > TRANSCRIPT_DOM_CAP) {
-    next = `… ${next.slice(next.length - TRANSCRIPT_DOM_CAP)}`;
-  }
-  target.textContent = next;
+  const line = document.createElement("div");
+  line.className = "wp-caption-line";
+  line.textContent = text;
+  target.append(line);
+  while (target.children.length > CAPTION_LINE_CAP) target.firstChild.remove();
   target.scrollTop = target.scrollHeight;
 }
 
 // clearCardTranscript is the per-call clear affordance (#39): the live
 // card is presentation only — clearing it never touches the stored
-// History transcript, and the announce says exactly that scope.
-function clearCardTranscript(target) {
-  if (!target.textContent) {
+// History transcript (nor the per-call segment log), and the announce
+// says exactly that scope.
+function clearCardTranscript(id, target) {
+  if (!target.children.length && !target.textContent) {
     announce(t("transcribeEmpty"), "warn");
     return;
   }
-  target.textContent = "";
+  target.replaceChildren();
   announce(t("transcriptCleared"), "info");
+}
+
+// transcriptText reads the call's words for the clipboard: the line
+// divs join with spaces (the browser DOM would concatenate bare); a
+// plain text node (the unsupported notice) passes through.
+function transcriptText(target) {
+  if (!target.children.length) return (target.textContent || "").trim();
+  return target.children.map((line) => line.textContent).join(" ").trim();
 }
 
 // copyCardTranscript puts the card's accumulated transcript on the
@@ -608,7 +648,7 @@ function clearCardTranscript(target) {
 // either way: an empty transcript announces that instead of copying
 // nothing, a missing clipboard API announces the manual fallback.
 function copyCardTranscript(target) {
-  const text = (target.textContent || "").trim();
+  const text = transcriptText(target);
   if (!text) {
     announce(t("transcribeEmpty"), "warn");
     return;
@@ -751,6 +791,17 @@ export function bindSession(newSession, target) {
   sessions.set(id, entry);
   state.focusedId = state.focusedId || id;
   if (newSession instanceof SIP.Inviter) ringbackStart();
+  // The caption strip rides the per-call segment subscription: new
+  // segments render as bounded lines; the subscription dies with the
+  // card (teardownSession unsubscribes and clears the log).
+  if (asrEnabled) {
+    const target = entry.dom.querySelector(".call-transcript");
+    if (target) {
+      entry.captionUnsub = subscribeCallSegments(id, (text) =>
+        appendTranscript(target, text),
+      );
+    }
+  }
 
   newSession.stateChange.addListener((sessionState) => {
     const live = sessions.get(id);
