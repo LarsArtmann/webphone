@@ -178,12 +178,13 @@ test("live transcription auto-starts on connect, persists segments, and tears do
     "the auto-start announces itself politely",
   );
 
-  // One segment: the card grows, the delta is announced, the text is
-  // persisted fire-and-forget to the owner-scoped store.
+  // One segment: the strip grows by one line, the delta is announced,
+  // the text is persisted fire-and-forget to the owner-scoped store.
   recorder.emit({ size: 10, type: "audio/webm" });
   await flush();
   const transcriptEl = entry.dom.querySelector(".call-transcript");
-  assert.match(transcriptEl.textContent, /hello world/);
+  assert.equal(transcriptEl.children.length, 1, "the segment is one strip line");
+  assert.match(transcriptEl.children[0].textContent, /hello world/);
   const saved = fetchCalls.find((c) => c.url === "/api/transcripts");
   assert.ok(saved, "segment persisted via POST /api/transcripts");
   assert.deepEqual(JSON.parse(saved.options.body), {
@@ -229,7 +230,10 @@ test("a failed save warns once per call and never blocks the capture", async () 
 
   recorder.emit({ size: 8, type: "audio/webm" });
   await flush();
-  assert.match(entry.dom.querySelector(".call-transcript").textContent, /still live/);
+  assert.match(
+    entry.dom.querySelector(".call-transcript").children.at(-1).textContent,
+    /still live/,
+  );
   assert.ok(
     [...doc.getElementById("toasts").children].some((el) => /not saved/i.test(el.textContent)),
     "the failed persistence surfaces once",
@@ -313,8 +317,23 @@ test("the card's copy button copies the accumulated transcript honestly", async 
     "an empty transcript announces that instead of copying nothing",
   );
 
-  // With text: the whole joined transcript lands on the clipboard.
-  transcriptEl.textContent = "erste worte zweite worte";
+  // With text: the whole joined transcript lands on the clipboard. The
+  // words arrive the honest way — two REAL segments through the capture
+  // path — because the strip's lines are the copy source now.
+  const words = ["erste worte", "zweite worte"];
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      const text = words.length ? words[0] : "";
+      if (words.length) words.shift();
+      return { ok: true, status: 200, json: async () => ({ text }) };
+    }
+    return { ok: true, status: 204 };
+  };
+  const recorder = globalThis.__recorders.at(-1);
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush(2);
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush(2);
   click();
   await flush(2);
   assert.deepEqual(copied, ["erste worte zweite worte"]);
@@ -463,13 +482,11 @@ test("the live card's transcript DOM is capped, keeping the newest tail (#41)", 
   assert.equal(await placeCall("+49301110000"), true);
   const entry = sessions.get("call-t1");
 
+  let segment = 0;
   fetchImpl = async (url) => {
     if (String(url).startsWith("/api/transcribe")) {
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({ text: "x".repeat(600) }),
-      };
+      const n = (segment += 1);
+      return { ok: true, status: 200, json: async () => ({ text: `seg-${n}` }) };
     }
     return { ok: true, status: 204 };
   };
@@ -477,17 +494,28 @@ test("the live card's transcript DOM is capped, keeping the newest tail (#41)", 
   entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
   await flush();
   const recorder = globalThis.__recorders.at(-1);
-  // 30 segments x 600 chars = 18k chars: past the 8k DOM cap.
-  for (let i = 0; i < 30; i += 1) {
+  // 35 segments: past the strip's 30-line cap. The kept tail is the
+  // NEWEST 30 lines; the durable whole lives server-side (History).
+  for (let i = 0; i < 35; i += 1) {
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
   }
   const transcriptEl = entry.dom.querySelector(".call-transcript");
-  assert.ok(
-    transcriptEl.textContent.length <= 8100,
-    `the card stays bounded (got ${transcriptEl.textContent.length} chars)`,
+  assert.equal(
+    transcriptEl.children.length,
+    30,
+    "the strip stays bounded at 30 lines",
   );
-  assert.match(transcriptEl.textContent, /^… /, "a capped card marks its cut head");
+  assert.equal(
+    transcriptEl.children[0].textContent,
+    "seg-6",
+    "the cap drops the OLDEST head (seg-1..5)",
+  );
+  assert.equal(
+    transcriptEl.children.at(-1).textContent,
+    "seg-35",
+    "the newest segment is the last line",
+  );
 
   entry.session.state = globalThis.SIP.SessionState.Terminated;
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
@@ -514,9 +542,23 @@ test("the card's clear button wipes the live view without touching capture (#39)
 
   // With text: the view empties, the announce scopes itself to the
   // LIVE card (the stored History transcript is a different surface).
-  transcriptEl.textContent = "alter text";
+  // The line arrives the honest way: one REAL segment.
+  fetchImpl = async (url) => {
+    if (String(url).startsWith("/api/transcribe")) {
+      return { ok: true, status: 200, json: async () => ({ text: "alter text" }) };
+    }
+    return { ok: true, status: 204 };
+  };
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
+  const recorder = globalThis.__recorders.at(-1);
+  recorder.emit({ size: 8, type: "audio/webm" });
+  await flush(2);
+  assert.equal(transcriptEl.children.length, 1, "the segment rendered");
   click();
   await flush(2);
+  assert.equal(transcriptEl.children.length, 0, "the strip emptied");
   assert.equal(transcriptEl.textContent, "");
   assert.ok(
     [...doc.getElementById("toasts").children].some((el) =>

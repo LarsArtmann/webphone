@@ -1140,6 +1140,41 @@ button.small {
   overflow-y: auto;
 }
 
+/* Caption strip (multi-call train): the head names the surface and —
+   config-honestly — where the audio is processed; the lines are the
+   bounded segment scrollback. The whole strip is aria-hidden: each
+   segment already rides the polite announce path, and the strip must
+   not double-speak to screen readers. */
+.wp-captions-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.wp-captions-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.wp-captions-locality {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.wp-caption-line {
+  padding: 1px 0;
+  overflow-wrap: anywhere;
+}
+
+.wp-caption-line + .wp-caption-line {
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
 /* Confirmed-persistence marker (calls.js): the muted "saved to History"
    count under the live transcript. Hidden until the first save the
    server accepted — the island shows only confirmed state. */

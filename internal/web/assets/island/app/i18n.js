@@ -179,6 +179,9 @@ export const I18N = {
       `Saved to History — ${n} segment${n === 1 ? "" : "s"}.`,
     transcriptSaveFailed: (detail) =>
       `transcript not saved (${detail}) — it stays on the call card only`,
+    captionsTitle: "Live transcript",
+    captionsLocal: "audio processed on this server",
+    captionsRemote: "audio sent to the configured provider",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -356,6 +359,9 @@ export const I18N = {
       `In der Historie gespeichert — ${n} Segment${n === 1 ? "" : "e"}.`,
     transcriptSaveFailed: (detail) =>
       `Transkript nicht gespeichert (${detail}) — es bleibt nur auf der Anrufkarte`,
+    captionsTitle: "Live-Transkript",
+    captionsLocal: "Audio wird auf diesem Server verarbeitet",
+    captionsRemote: "Audio geht an den konfigurierten Anbieter",
   },
 };
 

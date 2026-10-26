@@ -530,12 +530,13 @@ function ensureTranscription(id, entry) {
   }
 }
 
-// onCallTranscript is the per-segment sink: the card grows, screen
-// readers hear the delta (polite — this IS the product for them), and
-// the segment goes through the per-call save queue (a failed save costs
-// the LATER re-read, never the live card).
+// onCallTranscript is the per-segment sink: the screen reader hears the
+// delta (polite — this IS the product for them), and the segment goes
+// through the per-call save queue (a failed save costs the LATER
+// re-read, never the live card). The strip renders via the
+// transcribe.js segment subscription — this path never touches the DOM
+// (one renderer per surface).
 function onCallTranscript(id, entry, target, text) {
-  appendTranscript(target, text);
   announce(clipForAnnounce(text), "info");
   queueTranscriptSave(entry, {
     callId: id,
