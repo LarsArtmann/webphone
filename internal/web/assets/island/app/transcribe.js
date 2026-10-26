@@ -272,7 +272,10 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       liveFailures = 0;
       backoffUntil = 0;
       failureToasted = false;
-      if (text) onText(text);
+      if (text) {
+        onText(text);
+        recordSegment(id, text);
+      }
     } catch (err) {
       if (/\b429\b/.test(err.message)) {
         cooldownUntil = Date.now() + COOLDOWN_MS;
@@ -359,4 +362,57 @@ export async function transcribeNow(url, target, { filename } = {}) {
     target.textContent = t("transcribeFailed")(err.message);
     log(`transcription failed: ${err.message}`, "error");
   }
+}
+
+// --- live caption log (multi-call train) ------------------------------------
+//
+// Every accepted segment lands in a per-call bounded log (the caption
+// strip's scrollback — the durable whole stays server-side in History)
+// and fans out to subscribers (calls.js renders the strip). The log is
+// the copy surface too: reading the words from data, never from DOM
+// text nodes.
+
+// CAPTION_LINE_CAP bounds one call's scrollback, scalar-bounded like
+// the server's store cap — a marathon call cannot grow the strip.
+export const CAPTION_LINE_CAP = 30;
+
+const segmentLogs = new Map();
+const segmentSubs = new Map();
+
+function recordSegment(id, text) {
+  let entries = segmentLogs.get(id);
+  if (!entries) {
+    entries = [];
+    segmentLogs.set(id, entries);
+  }
+  entries.push(text);
+  if (entries.length > CAPTION_LINE_CAP) entries.shift();
+  const subs = segmentSubs.get(id);
+  if (subs) for (const fn of subs) fn(text);
+}
+
+// callSegments snapshots one call's logged segments (oldest first).
+export function callSegments(id) {
+  return [...(segmentLogs.get(id) ?? [])];
+}
+
+// clearCallSegments drops one call's log (teardown, explicit clear).
+export function clearCallSegments(id) {
+  segmentLogs.delete(id);
+}
+
+// subscribeCallSegments wires one listener to a call's future segments
+// and returns the unsubscribe handle. The listener receives ONLY new
+// segments (the strip replays callSegments() for its initial paint).
+export function subscribeCallSegments(id, fn) {
+  let subs = segmentSubs.get(id);
+  if (!subs) {
+    subs = new Set();
+    segmentSubs.set(id, subs);
+  }
+  subs.add(fn);
+  return () => {
+    const current = segmentSubs.get(id);
+    if (current) current.delete(fn);
+  };
 }

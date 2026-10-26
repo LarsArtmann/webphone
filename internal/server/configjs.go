@@ -34,6 +34,9 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI      bool               `json:"phoneApi"`
 		CRM           bool               `json:"crm"`
 		ASR           bool               `json:"asr"`
+		// ASRLocality is the config-honest trust label ("local"|"remote"):
+		// the caption-strip footer chip names where caller audio goes.
+		ASRLocality string                 `json:"asrLocality,omitempty"`
 		// SIPCredential tells the island the login ORDER changes: the
 		// session must be minted BEFORE the REGISTER (the derived
 		// credential comes back in the login/resume answers).
@@ -46,6 +49,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
 		CRM:           h.deps.CRM.Enabled(),
 		ASR:           h.asrOn(),
+		ASRLocality:   h.deps.ASRLocality,
 		SIPCredential: h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:      h.deps.Shared,
 	}

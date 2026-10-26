@@ -403,6 +403,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Shared:      cfg.Contacts,
 			CRM:         do.MustInvoke[*crm.Resolver](i),
 			ASR:         do.MustInvoke[asr.Provider](i),
+			ASRLocality: asrLocality(cfg),
 			TextAgent:   agent,
 			DB:          db.SQL(),
 			BlobRoot:    blobs.Root(),
@@ -470,6 +471,16 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 		return probeRefresh
 	}
 	return 0
+}
+
+// asrLocality derives the seam's config-honest trust label ("local" |
+// "remote", asr.LocalityOf); empty when the seam is off (no label may
+// imply processing that does not happen).
+func asrLocality(cfg config.Config) string {
+	if !cfg.ASR.Enabled() {
+		return ""
+	}
+	return asr.LocalityOf(cfg.ASR.URL)
 }
 
 // passkeyRuntime adapts the validated config into the userauth runtime
