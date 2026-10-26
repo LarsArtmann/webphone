@@ -1,6 +1,9 @@
 # SUPERB Error-Agents Pareto Plan
 
-**Snapshot:** claims verified 2026-10-26 10:33 at HEAD `13fb114`. Sources:
+**Snapshot:** claims verified 2026-10-26 10:33 at HEAD `13fb114`;
+**closeout re-verified 2026-10-26 ~18:40 CET** — every task below
+shipped, self-tested, and pushed with CI green (see §7 errata for the
+execution record). Sources:
 `docs/research/2026-10-26_ai-agent-error-management.html` (the practice scan,
 v2 — every claim source-pinned there), `.github/workflows/ci.yml` (jobs:
 build / go-tests / fast-checks / dup-gate; `pull_request` trigger present;
@@ -216,4 +219,30 @@ flowchart LR
 
 ## 7. Errata
 
-(none at plan birth; execution annotates here)
+(execution annotations, 2026-10-26 closeout — all 20 M-tasks shipped)
+
+1. **The plan's birth was its own demo.** The docs-only push landing this
+   plan went RED (run 40301017699): six daemon commits had landed the
+   multicall train's ringing queue with three test-side breaks and ZERO
+   CI runs between them — red main sat invisible ~2.5h until an
+   unrelated push surfaced it. Fixed same day (island tests repaired,
+   ledger row written). That observability gap is precisely what M6–M9
+   close; the watchers shipped hours after the class they target.
+2. **Drill scenarios B/C stay smoke-owned** (F061/F062 amended): the
+   gateway-lane and surface-shape asserts already run per-train in
+   `scripts/webphone-smoke.py` on the same binary; the VM drill carries
+   only what the smoke cannot see (journald boot markers, exit
+   taxonomy, NRestarts, the `/healthz` wedge in the real unit,
+   `/hooks` fail-closed in module context). One home per fact.
+3. **Family-test pins are not universal**: the error-context self-test
+   pins codes that carry an `AssertCode` literal (asr.empty, blob.open,
+   crm.http); several codes are family-classified without a code pin,
+   and the router honestly reports "no family_test.go pin found".
+4. **scripts/ has a formatter home after all**: treefmt does not own
+   .sh/.py, but BuildFlow's shfmt does — all five scripts are
+   shfmt-formatted (the train-start gate caught the first draft's
+   syntax error and style deltas).
+5. **Self-test verdicts**: error-context 37/37, reproduce-first 3/3,
+   main-red-watch 8/8, daemon-audit 3/3, bump-preflight 4/4 (incl. two
+   real proxy histories), incident-bundle 6/6; the drill VM test built
+   green locally (~20s VM time, KVM-gated — consumer CI never runs it).
