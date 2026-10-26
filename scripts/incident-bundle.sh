@@ -106,12 +106,15 @@ mkdir -p "$OUT"
 	if [ "${BUNDLE_SKIP_GH:-}" = "1" ]; then
 		echo "(skipped in self-test)"
 	elif command -v gh >/dev/null 2>&1; then
-		GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}" GH_REPO="${GH_REPO:-LarsArtmann/webphone}" \
-			gh run list --limit 20 --json createdAt,displayTitle,conclusion,url 2>/dev/null |
-			python3 - "$SINCE" <<'PY'
+		gh run list --limit 20 --json createdAt,displayTitle,conclusion,url 2>/dev/null |
+			python3 - "$SINCE" <<'PY' || echo "(gh window unavailable — check GH_TOKEN)"
 import json, sys
 since = sys.argv[1]
-runs = json.load(sys.stdin)
+try:
+    runs = json.load(sys.stdin)
+except Exception:
+    print("(gh returned nothing — token scope?)")
+    raise SystemExit
 hits = [r for r in runs if r.get("createdAt", "") >= since]
 if not hits:
     print("(no runs in window)")
