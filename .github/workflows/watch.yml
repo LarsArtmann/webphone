@@ -18,6 +18,10 @@ concurrency:
 permissions:
   contents: read
   issues: write
+  # gh run list / gh run view need actions: read; an explicit
+  # permissions block sets EVERYTHING unlisted to none — the four
+  # 2026-10-26 17:xx-17:53Z runs failed exactly there.
+  actions: read
 
 jobs:
   observers:
