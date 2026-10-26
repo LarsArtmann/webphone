@@ -46,6 +46,25 @@ stack-gated on FS `Replaces`). Priority order:
    post-call notes (migration v6), locality indicator, agent audit trail,
    attended-transfer stack spike, docs/E2E tail.
 
+### Error-agents tooling train (2026-10-26 SUPERB plan — not started)
+
+Pareto plan: [docs/planning/2026-10-26_10-33_SUPERB-error-agents.md](docs/planning/2026-10-26_10-33_SUPERB-error-agents.md)
+(20 medium / 79 micro tasks, mermaid execution graph; PURE TOOLING — zero
+product code, advisory-first; source: the 2026-10-26 practice scan
+`docs/research/2026-10-26_ai-agent-error-management.html`). Priority order:
+
+1. **P0 — Error-code router** (M1–M2): `scripts/error-context.py` — journal
+   line in → context bundle out (seam files, contract row, family-test pin,
+   lessons/ledger mentions). The substrate everything else consumes.
+2. **P0 — Reproduce-first gate** (M3–M5): fix-scoped CI check — a fix
+   train's new tests must FAIL on the merge base; advisory-first.
+3. **P1 — Observers** (M6–M9): main-red watcher (recurrence-grep vs ledger
+   + lessons → auto-filed issue with a DRAFT ledger row) + daemon-audit
+   (whitespace drift, guarded-files audit) on a */15 cron. NO dispatch.
+4. **P2 tails** (M10–M20): bump-preflight, incident-bundle harvester,
+   error-contract drill VM test, gated sketches (LLM prose gate, agent
+   dispatch — owner calls), docs/verification tails.
+
 ### cqrs-htmx leverage-maximization tails (2026-10-25 SUPERB train — M1–M11 SHIPPED same day)
 
 The critical path is done: identity-train stub tail + vendorHash (un-reds
