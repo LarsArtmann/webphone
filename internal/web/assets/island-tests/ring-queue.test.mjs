@@ -8,7 +8,13 @@ import assert from "node:assert/strict";
 import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
-globalThis.Element = class Element {};
+globalThis.Element = class Element {
+  // The shortcuts gate reads target.closest("input, …"); a BODY target
+  // matches no typing selector, so null is the honest stub answer.
+  closest() {
+    return null;
+  }
+};
 globalThis.SIP = {
   SessionState: {
     Establishing: "Establishing",
@@ -45,7 +51,6 @@ const { answerIncoming, rejectIncoming, teardownAll } = await import(
   "../island/app/calls.js"
 );
 const { initShortcuts } = await import("../island/app/shortcuts.js");
-const { t } = await import("../island/app/i18n.js");
 const connection = await import("../island/app/connection.js");
 
 const flushes = async (rounds = 12) => {
@@ -209,7 +214,8 @@ test("the per-slot buttons answer/reject exactly their own caller", async () => 
 
   // The pinned Accept (slot 1) answers the remaining (now oldest) ring.
   doc.getElementById("accept-btn").click();
-  assert.equal(second.acceptCalls, 1);
+  assert.equal(first.acceptCalls, 1, "the pinned slot answers the survivor");
+  assert.equal(second.acceptCalls, 0, "the rejected caller stays rejected");
   assert.equal(state.incomingSessions.length, 0);
   teardownAll();
 });

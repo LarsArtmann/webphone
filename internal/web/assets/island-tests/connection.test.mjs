@@ -493,10 +493,10 @@ test("a missed call releases the warm mic", async () => {
   );
 });
 
-// The second-invite guard: one call at a time. A second INVITE arriving
-// while one rings is rejected on the spot and must not touch the first
-// call's banner, session or warm mic.
-test("a second incoming call is rejected without disturbing the first", async () => {
+// The ringing queue: a second INVITE while one rings takes the NEXT
+// slot (never rejects itself) and must not disturb the first call's
+// banner slot, session or warm mic.
+test("a second incoming call queues without disturbing the first", async () => {
   resetStubs();
   micModule.releaseWarmMic();
   state.incomingSessions.length = 0;
@@ -518,8 +518,13 @@ test("a second incoming call is rejected without disturbing the first", async ()
   agents.at(-1).delegate.onInvite(second);
   await flushes();
 
-  assert.equal(secondRejected, true, "the second INVITE is rejected");
-  assert.equal(state.incomingSession, first, "the first call keeps the banner");
+  assert.equal(secondRejected, false, "a second ring never rejects itself");
+  assert.equal(state.incomingSessions.length, 2, "the second INVITE takes a slot");
+  assert.equal(
+    state.incomingSessions[0].invitation,
+    first,
+    "the oldest ring keeps the pinned banner",
+  );
   assert.equal(doc.getElementById("incoming-call").hidden, false);
   assert.equal(gumCalls.length, 1, "no second microphone acquisition");
 
