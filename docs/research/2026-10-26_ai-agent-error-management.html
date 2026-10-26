@@ -865,6 +865,7 @@
           <a href="#landscape">2026 landscape</a>
           <a href="#practices">Ten practices</a>
           <a href="#proposals">Repo shortlist</a>
+          <a href="#limits">Agent limits</a>
           <a href="#antipatterns">Anti-patterns</a>
           <a href="#appendix">Verification</a>
         </nav>
@@ -891,7 +892,7 @@
           </p>
           <div class="meta">
             <span class="tag amber">Scope: error management</span>
-            <span class="tag">10 practices, 7 proposals</span>
+            <span class="tag">10 practices, 8 proposals</span>
             <span class="tag teal">Status: research, no rulings</span>
           </div>
         </header>
@@ -903,12 +904,12 @@
             <div class="label">Undervalued practices</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">6</div>
+            <div class="score">8</div>
             <div class="label">Proven &amp; underused</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">7</div>
-            <div class="label">Repo-specific proposals</div>
+            <div class="score">2</div>
+            <div class="label">Emerging &middot; watch</div>
           </div>
           <div class="score-card score-bad">
             <div class="score">5</div>
@@ -940,11 +941,20 @@
             side with evidence gates — a fix must arrive with a test that fails
             on the base commit; a diagnosis must arrive as a routed context
             bundle, not prose; an incident must end as a drafted ledger row,
-            with the human owning every verdict. Six of the ten practices below
-            are proven and cheap here; the top two (reproduce-first CI leg,
-            main-red watcher) address this repo's two documented red-main
-            hours-classes directly.
+            with the human owning every verdict. Eight of the ten practices
+            below are proven and cheap here; the top two (the fix-scoped
+            reproduce-first leg and a main-red watcher) address this repo's
+            two documented red-main hours-classes directly.
           </div>
+          <p>
+            <strong>Deployment fit, stated up front:</strong> this stack is
+            self-hosted, single-binary, and runs a local-first doctrine for
+            caller data (the ASR ruling). The SaaS rows in the landscape are
+            therefore <em>proof-of-capability</em>, not adoption lanes — no
+            error telemetry leaves this host. That is precisely why every
+            proposal below is homemade: the practices survive the
+            translation; the products do not.
+          </p>
         </section>
 
         <!-- Baseline -->
@@ -1129,8 +1139,12 @@
             <div class="callout callout-teal">
               <strong>Here:</strong> webphone already pins every contract row
               with a test home; the missing leg is the anti-false-green check
-              itself — a CI job that runs the PR's new/changed tests against the
-              merge base and requires red-before-fix (proposal R1).
+              itself — but scoped <em>honestly</em>: a blanket
+              tests-must-fail-on-base rule would reject every legitimate
+              new-feature test, i.e. it would block the normal train. The gate
+              belongs on <strong>fix trains and agent-authored PRs only</strong>,
+              and it should start advisory (annotate the PR, do not block it).
+              That scoping — and the trap it avoids — is proposal R1.
             </div>
           </div>
 
@@ -1381,16 +1395,16 @@
             <tbody>
               <tr>
                 <td>R1</td>
-                <td>Reproduce-first CI leg: new/changed tests must FAIL on the merge base</td>
+                <td>Reproduce-first leg, FIX-SCOPED: on fix trains and agent-authored PRs, new/changed tests must fail on the merge base — advisory annotation first, blocking later</td>
                 <td>P1, P9</td>
-                <td>Small (one CI job)</td>
-                <td>Test-pinned contract rows; the false-green risk is named in repo lore</td>
+                <td>Small (one CI job + a train-type label)</td>
+                <td>Test-pinned contract rows; the blanket variant is a trap (it would block feature trains — see P1)</td>
               </tr>
               <tr>
                 <td>R2</td>
                 <td>Main-red watcher: red main &rarr; ledger-recurrence check &rarr; reproduce locally &rarr; evidence-pack fix PR or flake-ledger draft row</td>
                 <td>P3, P4, P7</td>
-                <td>Medium (a skill + a schedule)</td>
+                <td>Medium (mechanism sketch below)</td>
                 <td>ci-flake-ledger, scripts/push-stall-watch.sh, the manual-push bar anchor</td>
               </tr>
               <tr>
@@ -1428,20 +1442,88 @@
                 <td>Small-medium</td>
                 <td>scripts/whitespace-drift.sh + push-stall-watch.sh exist as seeds; the 2026-10-08 truncation is the threat model</td>
               </tr>
+              <tr>
+                <td>R8</td>
+                <td>Upstream-diff pre-read on dependency bumps: agent reads the upstream release diff, maps it to usage sites, runs the delivering-layer tests BEFORE the bump lands</td>
+                <td>P9</td>
+                <td>Small</td>
+                <td>The bump doctrine (tidy &rarr; repin &rarr; CI-watch) + the two vendorHash red-main incidents it exists to prevent</td>
+              </tr>
             </tbody>
           </table>
           <div class="callout callout-amber">
             <strong>Sequencing note</strong>
             R1 and R2 reinforce each other: the watcher's fix PRs are only
-            trustworthy because R1 guarantees they reproduce first. R3 is the
-            cheapest and makes every later agent smarter; do it whenever a
-            session touches tooling anyway. R4–R7 are independent follow-ons.
+            trustworthy because R1 (fix-scoped) guarantees they reproduce
+            first. R3 is the cheapest and makes every later agent smarter; do
+            it whenever a session touches tooling anyway. R4–R8 are independent
+            follow-ons.
+          </div>
+          <p><strong>R2 mechanism sketch</strong> — concrete wiring, no new infrastructure:</p>
+          <pre><code># scheduled GitHub Action (or host systemd timer), ~every 15 min:
+gh run list --branch main --status failure --limit 1   # red?
+# 1. recurrence check FIRST: grep the failure signature against
+#    docs/ci-flake-ledger.md + docs/lessons.md   (known class &rarr; draft row)
+# 2. not a known class &rarr; dispatch one headless agent session
+#    (Crush run / claude-code-action / Devin automation) with the
+#    evidence-pack template: failing run id, repro commands, rollback line
+# 3. agent output: fix PR (fix-scoped, R1-gated, auth: surfaces draft-only)
+#    OR a diagnosis that says "not a code problem" + drafted ledger row
+# 4. human merges; watcher CI-watches to green (the manual-push bar's
+#    anchor becomes machine-observed)</code></pre>
+        </section>
+
+        <!-- Limits -->
+        <section id="limits">
+          <h2><span class="num">04</span>Where agents still fail (the honest ceiling)</h2>
+          <p>
+            A report that only lists capabilities is a sales pitch. The
+            measured limits, which are exactly why every proposal above keeps
+            the human on the verdict:
+          </p>
+          <div class="grid-2">
+            <div class="card card-problem">
+              <strong>Reproduction is the minority case</strong>
+              <p>
+                Google's BRT agent reproduced 28% of 80 real production bugs
+                — meaning <em>72% resisted automated reproduction</em>. The
+                gate (P1) works because it refuses to certify what the agent
+                cannot show; it does not make agents reproduce more.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <strong>Fault localization lags repair</strong>
+              <p>
+                An empirical study of six repair agents on SWE-bench Verified
+                (arXiv 2411.10213) finds the bottleneck is localization and
+                reproduction, not patch generation — optimization is needed
+                in both model capability and agentic flow design.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>LLM-as-judge is the least robust tier</strong>
+              <p>
+                Anthropic's own ladder ranks it last — which is why P8 scopes
+                it to prose (where rules cannot judge) and R5 keeps it
+                detect-only. The moment a judge BLOCKS, its errors become
+                your errors.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Vendors ship drafts with disclaimers</strong>
+              <p>
+                Datadog's own incident-AI docs carry "AI-generated responses
+                may be inaccurate." Every generated diagnosis, postmortem, or
+                fix in this report inherits that caveat — hence evidence
+                packs, not conclusions.
+              </p>
+            </div>
           </div>
         </section>
 
         <!-- Anti-patterns -->
         <section id="antipatterns">
-          <h2><span class="num">04</span>What NOT to do (the hype flags)</h2>
+          <h2><span class="num">05</span>What NOT to do (the hype flags)</h2>
           <p>
             Every capability above has a failure mode the vendors themselves
             warn about. The 2026 line between smart and reckless:
@@ -1494,13 +1576,13 @@
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">05</span>Appendix — verification status</h2>
+          <h2><span class="num">06</span>Appendix — verification status</h2>
           <p>
-            External claims were checked this session against official product
-            docs via an AI fetch layer (capability-level statements, not exact
-            byte strings). Repo claims were checked against AGENTS.md,
-            docs/error-contract.md, and docs/ci-flake-ledger.md as of
-            2026-10-26. Remaining uncertainty is labeled, not hidden.
+            External claims were checked this session; the load-bearing
+            statistics were then re-verified by fetching the primary papers'
+            abstracts directly from arxiv.org. Repo claims were greped against
+            the source tree — not against AGENTS.md prose. Remaining
+            uncertainty is labeled, not hidden.
           </p>
           <table class="compare">
             <thead>
@@ -1513,8 +1595,8 @@
             <tbody>
               <tr>
                 <td>Sentry Seer: AI debugger, autofix opens PRs, external-agent handoff</td>
-                <td class="yes">Verified</td>
-                <td>sentry.io/product/seer, docs.sentry.io/product/ai-in-sentry/seer</td>
+                <td class="no">Mirror-verified only</td>
+                <td>sentry.io is DNS-blocked at the resolver on this host (HaGeZi blocklist) — capability cross-checked via changelog/blog mirrors, never fetched directly; treat exact feature scope as unconfirmed</td>
               </tr>
               <tr>
                 <td>Rollbar Resolve writes fix PRs; Agent Automation; MCP server</td>
@@ -1552,9 +1634,19 @@
                 <td>gremlin.com blog — single-vendor claim, treat skeptically</td>
               </tr>
               <tr>
-                <td>Google BRT agent: reproductions for 28% of 80 prod bugs; +30% plausible fixes when fed to APR</td>
-                <td class="yes">Verified</td>
-                <td>arXiv 2502.01821 (HTML read this session)</td>
+                <td>Google BRT agent: 28% plausible reproductions (vs 10% LIBRO baseline) on 80 prod bugs; +30% bugs with plausible fixes when fed to APR; EPR picks the right fix top-1 from 20 candidates in 70% of cases</td>
+                <td class="yes">Verified — abstract fetched directly</td>
+                <td>arxiv.org/abs/2502.01821 (v2), fetched this session</td>
+              </tr>
+              <tr>
+                <td>Repair agents' bottleneck is fault localization + reproduction, not patch generation (six systems, SWE-bench Verified)</td>
+                <td class="yes">Verified — abstract fetched directly</td>
+                <td>arxiv.org/abs/2411.10213 (v2), fetched this session</td>
+              </tr>
+              <tr>
+                <td>Repo claims: scripts/whitespace-drift.sh + push-stall-watch.sh + .githooks/commit-msg exist; TestErrorCodeRegistryIsFresh (internal/arch); hooksIdem (internal/fax); flight recorder (internal/app/flightrecorder.go); go-error-family v0.12.0 direct dep; webphone-backup-drill VM check; CI = GitHub Actions ci.yml</td>
+                <td class="yes">Verified — greped against source</td>
+                <td>Source tree greps, this session (not AGENTS.md prose)</td>
               </tr>
               <tr>
                 <td>BuildPulse / Trunk flake detection + quarantine; Trunk agent autofix beta</td>
@@ -1584,11 +1676,15 @@
             </tbody>
           </table>
           <p>
-            Method note: agent-summarized fetches are paraphrase, not
+            Method notes: (1) agent-summarized fetches are paraphrase, not
             extraction — no exact-string claims (flags, error messages,
-            version numbers) are encoded in this report on that evidence
-            alone. Where a number matters (BRT percentages) the primary paper
-            was read directly.
+            version numbers) are encoded on that evidence alone; where a
+            number matters it was re-fetched from the primary source. (2) One
+            environment limit cuts both ways: this host's DNS filter blocks
+            sentry.io, so the Sentry row above is mirror-verified — the honest
+            label, not the confident one. (3) All "GA / beta" maturity labels
+            describe vendor positioning as of fetch date; none were evaluated
+            hands-on.
           </p>
         </section>
 
@@ -1596,9 +1692,8 @@
         <footer class="footer">
           <p>
             Generated 2026-10-26 &middot; Practice scan, no rulings encoded
-            &middot; External claims verified against official docs this
-            session (Appendix); repo claims verified against AGENTS.md,
-            docs/error-contract.md, docs/ci-flake-ledger.md
+            &middot; Statistics re-verified by direct arXiv fetch; repo claims
+            greped against source; vendor claims labeled per the appendix
           </p>
         </footer>
       </main>
