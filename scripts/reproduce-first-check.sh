@@ -67,7 +67,6 @@ run_check() {
 	tests=$(changed_tests)
 	if [ -z "$tests" ]; then
 		say "SKIP no changed *_test.go files between base and head"
-		echo "$VERDICT_OVERRIDE" >/dev/null
 		[ "${ARGV_EXPECT:-}" = "SKIP" ] || [ -z "${ARGV_EXPECT:-}" ] || {
 			say "--expect mismatch: wanted $ARGV_EXPECT got SKIP"
 			exit 4
@@ -86,7 +85,7 @@ run_check() {
 
 	local tmp
 	tmp=$(mktemp -d)
-	trap 'git worktree remove --force "$tmp/wt" >/dev/null 2>&1 || true; rm -rf "$tmp"' EXIT
+	trap 'git worktree remove --force "${tmp:-}/wt" >/dev/null 2>&1 || true; rm -rf "${tmp:-}"' EXIT
 
 	git worktree add --detach "$tmp/wt" "$MERGE_BASE" >/dev/null 2>&1
 	if ! git diff "$MERGE_BASE" "$HEAD" -- $tests | git -C "$tmp/wt" apply --whitespace=nowarn -; then
@@ -124,7 +123,7 @@ run_check() {
 
 make_scratch_repo() {
 	local dir=$1
-	git init -q "$dir"
+	git init -q -b main "$dir"
 	(
 		cd "$dir"
 		git config user.email t@t
@@ -148,7 +147,7 @@ scratch_branch() {
 	local dir=$1 branch=$2 msg=$3 broken=$4
 	(
 		cd "$dir"
-		git checkout -q -b "$branch"
+		git checkout -q -b "$branch" main
 		if [ "$broken" = broken ]; then
 			cat >lib_test.go <<'GOTEST'
 package scratch
@@ -183,8 +182,8 @@ self_test() {
 	local script
 	script=$(readlink -f "$0")
 	local tmp
-	tmp=$(mktemp -d)
-	trap 'rm -rf "$tmp"' EXIT
+tmp=$(mktemp -d)
+	trap 'rm -rf "${tmp:-}"' EXIT
 
 	local checks=0 failed=0
 	assert() {

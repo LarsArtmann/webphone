@@ -82,3 +82,22 @@ jobs:
 
       - name: Fail on clone groups new since the baseline
         run: "$(go env GOPATH)/bin/art-dupl check . -t 1 --baseline-path .art-dupl-baseline.json"
+
+  # False-green gate (SUPERB error-agents M5, advisory): a fix train's
+  # new tests must FAIL on the merge base. continue-on-error keeps this
+  # annotation-only until N clean trains justify the deliberate blocking
+  # flip — flipping means deleting that flag, never silently tightening.
+  reproduce-first:
+    name: reproduce-first (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Reproduce the fix train's tests on the merge base
+        run: nix develop .#ci -c scripts/reproduce-first-check.sh --base origin/main --head HEAD
