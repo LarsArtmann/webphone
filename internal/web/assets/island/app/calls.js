@@ -184,8 +184,10 @@ export function settleEndedCall(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
-  // The caption lines stay on the ended card for Copy (bounded by the
-  // strip cap); they die with the card node.
+  // The segment STORE dies with the live call (it feeds the next live
+  // card's pre-render); the ended card's strip lines live in the DOM and
+  // keep serving Copy/Clear after it.
+  clearCallSegments(id);
   flushTranscriptSaves(entry);
   if (entry.timer) clearInterval(entry.timer);
   morphToEndedCard(id, entry);
