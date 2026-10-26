@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>Brutal self-review 2026-10-26: the practice scan, graded by its own standards</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -828,9 +828,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>BRUTAL SELF-REVIEW</span>
+      <span>2026-10-26 08:54</span>
+      <span>SUBJECT: PRACTICE-SCAN REPORT</span>
     </div>
 
     <div class="layout">
@@ -838,131 +838,203 @@
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#summary">The honest numbers</a>
+          <a href="#stupid">What was stupid</a>
+          <a href="#defects">Defect log</a>
+          <a href="#answers">The remaining honest answers</a>
+          <a href="#rules">Rules encoded</a>
         </nav>
       </aside>
 
       <main class="main">
         <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Brutal self-review</div>
+          <h1>The practice scan, graded by its own standards</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Owner challenge: "Is this the best report you can produce???" —
+            Answer: no. Four defects found, all fixed in the same session.
+            Subject: docs/research/2026-10-26_ai-agent-error-management.html.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
-          <h3>Contents</h3>
+          <h3>Series</h3>
           <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li>Prior episode: 2026-09-19 (repo-level) — no overlapping open items; this one is artifact-level</li>
           </ul>
         </nav>
 
         <!-- Stats Dashboard -->
-        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <h2 id="summary"><span class="num">00</span>The honest numbers</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Defects found under challenge</div>
           </div>
           <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Unearned "Verified" labels</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">9</div>
+            <div class="stat-label">Repo claims re-grounded by grep</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Papers re-fetched directly (arXiv)</div>
           </div>
         </div>
+        <p>
+          The v1 report was structurally clean (anchors validated, template
+          copied not transcribed, no placeholders) and its thesis held — but it
+          violated the standards it preached: it graded vendors' honesty while
+          overstating its own verification, and its flagship proposal would
+          have failed on first contact with the repo's own train discipline.
+          All four defects are fixed in the report's v2; this review exists so
+          the failure modes become rules, not scars.
+        </p>
 
         <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <h2 id="stupid"><span class="num">01</span>What was stupid that I did anyway</h2>
 
         <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <h4>Arithmetic against my own content</h4>
+          <p>
+            The v1 scorecard claimed "6 proven &amp; underused" practices
+            while the practices section itself contained EIGHT teal
+            (proven-labeled) cards. I never recounted the section the number
+            summarized. A one-command recount would have caught it.
+          </p>
         </div>
 
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+        <div class="card card-problem">
+          <h4>A flagship proposal that breaks on day one</h4>
+          <p>
+            R1 as first written — "new/changed tests must FAIL on the merge
+            base" — would have rejected every legitimate new-feature test in
+            the repo. The reproduce-first gate belongs on FIX trains and
+            agent-authored PRs, advisory first. I proposed a CI gate without
+            simulating its first contact with the repo's normal train traffic.
+          </p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <div class="card card-problem">
+          <h4>Borrowed confidence</h4>
+          <p>
+            The research sub-agent labeled Sentry Seer "Verified" — but its
+            environment had sentry.io DNS-blocked, so it verified via mirrors.
+            I relayed the label without asking HOW it was verified. Worse, the
+            footer claimed repo claims were "verified against AGENTS.md" —
+            prose, not source. That is the exact trophy-case-marking failure
+            mode the verify-external-claims skill exists to prevent, committed
+            WITH the skill loaded.
+          </p>
+        </div>
+
+        <!-- Defect log -->
+        <h2 id="defects"><span class="num">02</span>Defect log &mdash; all fixed in v2</h2>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <span class="severity severity-critical">Design flaw &middot; fixed</span>
+          <h3>R1 would have blocked every feature train</h3>
+          <div class="where">practice scan &sect;Proposals R1 + P1 callout</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            The blanket tests-must-fail-on-base rule fails closed against
+            legitimate new-feature tests. v2 scopes the gate to fix trains and
+            agent-authored PRs, starts it advisory (annotate, not block), and
+            states the trap explicitly &mdash; the next reader inherits the
+            failure mode, not just the fix.
           </p>
           <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
+            <strong>Fix applied</strong>
+            R1 rewritten fix-scoped; P1 callout names the trap.
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">Integrity &middot; fixed</span>
+          <h3>Two unearned "Verified" labels</h3>
+          <div class="where">practice scan appendix, Sentry row + footer</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            The research sub-agent labeled Sentry Seer "Verified" &mdash; but
+            its environment had sentry.io DNS-blocked (mirror check only), and
+            I relayed the label without asking HOW it was verified. The footer
+            also claimed repo claims were "verified" when I had read AGENTS.md
+            prose, not source. v2: the Sentry row reads "Mirror-verified only"
+            with the reason; the arXiv statistics were re-fetched directly
+            (28% vs 10% LIBRO, +30% plausible fixes, EPR 70% top-1 &mdash;
+            confirmed exact); nine repo claims re-grounded by grep (scripts,
+            tests, seams, CI).
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Honesty gap &middot; fixed</span>
+          <h3>No capability ceiling in a capabilities report</h3>
+          <div class="where">practice scan, new &sect;04</div>
+          <p>
+            v1 cited the 28% reproduction rate as a success stat and omitted
+            the inverse: 72% of real bugs resisted automated reproduction. v2
+            adds the limits section (reproduction ceiling, localization
+            bottleneck per arXiv 2411.10213, LLM-judge as least-robust tier,
+            vendor accuracy disclaimers). A capabilities report without its
+            ceiling is a sales pitch.
           </p>
         </div>
 
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+          <span class="severity severity-nice">Polish &middot; fixed</span>
+          <h3>Missing deployment-fit framing, R8, concrete R2 wiring</h3>
+          <div class="where">practice scan summary &amp; proposals</div>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            v2 states up front that SaaS rows are proof-of-capability, not
+            adoption lanes (self-hosted, local-first caller-data doctrine)
+            &mdash; the reason every proposal is homemade; adds R8
+            (upstream-diff pre-read on bumps, grounded in the vendorHash
+            red-main incidents) and a concrete R2 mechanism sketch.
           </p>
         </div>
 
         <!-- Strengths -->
-        <h2>Strengths</h2>
+        <h2>What survived the challenge</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Mechanical validation, both rounds</strong>
+              <span>Placeholder scan, anchor resolution, and tag balance were checked by script before and after the fixes &mdash; structure was never the weak leg.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Scope discipline held</strong>
+              <span>Research-only genre preserved under challenge: the artifact was upgraded; no rulings, TODO_LIST entries, or AGENTS.md bloat smuggled in.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Template discipline</strong>
+              <span>Both artifacts started as kit-template copies (editorial for the scan, dark for this review, matching their series) &mdash; CSS never hand-transcribed.</span>
             </div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <!-- Defect table -->
+        <h2>Defect table</h2>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Severity</th>
-              <th>Issue</th>
+              <th>Defect</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -970,63 +1042,127 @@
             <tr>
               <td>1</td>
               <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>R1 design flaw (would block feature trains)</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
             </tr>
             <tr>
               <td>2</td>
               <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>Sentry "Verified" label was mirror-only</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>Footer claimed repo claims verified (prose-read, not greped)</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Scorecard said 6 proven; the own section had 8</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>No capability-ceiling section</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>No deployment-fit framing / no R8 / vague R2 mechanism</td>
+              <td><span class="badge badge-fixed">Fixed v2</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Practice scan unindexed (research README tables library deep-dives only)</td>
+              <td><span class="badge badge-low">Owner call</span></td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+        <!-- Honest answers -->
+        <h2 id="answers"><span class="num">03</span>The remaining honest answers</h2>
+        <div class="card card-warning">
+          <h4>What did I forget?</h4>
+          <p>
+            The capability ceiling (research had the paper; the report dropped
+            it), the deployment-fit framing, R8, and ground-truthing repo
+            claims against source. All four were in my planning notes; v1
+            published without them to stay "tight" &mdash; a false economy.
+          </p>
         </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
+        <div class="card card-warning">
+          <h4>Did I lie to you?</h4>
+          <p>
+            Not in intent, but yes in effect: two "Verified" labels were
+            unearned (one borrowed from a sub-agent whose environment could
+            not reach the source, one claiming prose-reading was verification).
+            Unearned confidence presented as verification is the lie that
+            matters in a report whose whole subject is verification discipline.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Ghost systems or split brains?</h4>
+          <p>
+            None. Every seed the report references was greped and exists
+            (whitespace-drift.sh, push-stall-watch.sh, .githooks/commit-msg,
+            TestErrorCodeRegistryIsFresh, hooksIdem, flightrecorder.go,
+            webphone-backup-drill, ci.yml). One discoverability gap stays open:
+            the practice scan is not in any index (defect 7, owner call &mdash;
+            the research README's table is deliberately library-only).
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>How are we doing on tests?</h4>
+          <p>
+            For a docs artifact the test surface is the structural validation:
+            placeholder scan, anchor resolution, tag balance &mdash; scripted
+            and re-run after every fix round in this session. The next level
+            (not done, honest) would be validating the R3 effort guess by
+            actually wiring its grep router once.
+          </p>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <!-- Rules encoded -->
+        <h2 id="rules"><span class="num">04</span>Rules encoded from this failure</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>Recount every displayed number</h4>
+            <p>Any count shown in a scorecard/stat grid is recounted from the section it summarizes before publish.</p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>A "Verified" label names HOW</h4>
+            <p>Direct fetch / mirror / grep &mdash; recorded in the claim's source cell. Borrowed labels from sub-agents are re-verified or downgraded, never relayed.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Every proposal gets a day-one pass</h4>
+            <p>Before publishing, simulate the proposal's first contact with normal repo traffic (the R1 lesson: a gate that blocks feature trains is a defect, not discipline).</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>Load-bearing stats get the primary fetch first</h4>
+            <p>Numbers that carry an argument are fetched from the primary source BEFORE first publish, not after an owner challenge.</p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-26 08:54 &middot; Subject:
+          docs/research/2026-10-26_ai-agent-error-management.html (v2) &middot;
+          All v2 fixes applied in the same session; every repo claim in both
+          artifacts greped against source
         </footer>
       </main>
     </div>
