@@ -34,6 +34,10 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI      bool               `json:"phoneApi"`
 		CRM           bool               `json:"crm"`
 		ASR           bool               `json:"asr"`
+		// Agent tells the island the textagent seam is on: the ended
+		// call card grows the summarize affordance (M12). Off by
+		// default; the post-call row then carries only Close.
+		Agent bool `json:"agent"`
 		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
 		ASRLocality string `json:"asrLocality,omitempty"`
@@ -49,6 +53,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
 		CRM:           h.deps.CRM.Enabled(),
 		ASR:           h.asrOn(),
+		Agent:         h.deps.TextAgent != nil,
 		ASRLocality:   h.deps.ASRLocality,
 		SIPCredential: h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:      h.deps.Shared,

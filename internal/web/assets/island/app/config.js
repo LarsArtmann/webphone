@@ -44,6 +44,11 @@ export const asrLocality =
     ? config.asrLocality
     : "";
 
+// Optional text-agent seam (post-call summarize, M12): when the server
+// has the review API configured, the ended call card offers "Summarize
+// → draft SMS". Off by default — the post-call row carries only Close.
+export const agentEnabled = config.agent === true;
+
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
   : [];

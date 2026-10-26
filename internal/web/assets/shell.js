@@ -747,6 +747,9 @@
     // The island's language switch re-labels itself and re-fetches the open
     // tab; the nav is shell territory, so it asks via this event.
     document.addEventListener("wp:lang-changed", refreshNav);
+    // A freshly summarized call became a draft in Messages (island
+    // summarize affordance); the nav badges are shell territory too.
+    document.addEventListener("wp:drafts-changed", refreshNav);
 
     // 3c. Error surfacing for htmx requests: htmx swaps NOTHING on error
     //     responses (responseHandling defaults: 4xx/5xx → error, no swap),

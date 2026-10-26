@@ -13,7 +13,8 @@ import {
   ringbackStop,
   ringToneStop,
 } from "./audio.js";
-import { asrEnabled, asrLocality, sipDomain } from "./config.js";
+import { asrEnabled, asrLocality, agentEnabled, sipDomain } from "./config.js";
+import { authedFetch } from "./auth.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
@@ -166,6 +167,105 @@ export function teardownSession(id) {
     if (state.focusedId) attachRemoteAudio(state.focusedId);
   }
   renderCalls();
+}
+
+// settleEndedCall is the NORMAL termination pipeline (transcription
+// stops, queued segments flush, timers clear, the session-table entry
+// goes exactly as teardownSession would) — but the card STAYS as a
+// settled ended card: the post-call row replaces the live controls
+// (the summarize affordance when the agent seam is on and the call
+// actually carried media — only established calls have a transcript —
+// plus Close always). Nothing reads the session map afterwards: the
+// DOM outlives the call, the state does not. Error-path teardowns
+// (failed setup, watchdog rebuilds) keep teardownSession's instant
+// removal — a card for a call that never lived offers nothing.
+export function settleEndedCall(id) {
+  const entry = sessions.get(id);
+  if (!entry) return;
+  stopLiveTranscription(id);
+  if (entry.captionUnsub) entry.captionUnsub();
+  // The caption lines stay on the ended card for Copy (bounded by the
+  // strip cap); they die with the card node.
+  flushTranscriptSaves(entry);
+  if (entry.timer) clearInterval(entry.timer);
+  morphToEndedCard(id, entry);
+  sessions.delete(id);
+  if (state.focusedId === id) {
+    const next = sessions.keys().next();
+    state.focusedId = next.done ? null : next.value;
+    if (state.focusedId) attachRemoteAudio(state.focusedId);
+  }
+  renderCalls();
+}
+
+// morphToEndedCard turns one live call card into its settled ended
+// shape: the ended state line, the post-call action row, and the
+// wp-ended-card hook the stylesheet uses to mute the card.
+function morphToEndedCard(id, entry) {
+  const card = entry.dom;
+  if (!card) return;
+  card.classList.add("wp-ended-card");
+  card.dataset.callId = id;
+  const stateEl = card.querySelector(".call-state-text");
+  if (stateEl) {
+    stateEl.textContent = entry.established
+      ? `${t("ended")} · ${durationLabel(entry.startedAt)}`
+      : t("ended");
+  }
+  const controls = card.querySelector(".controls");
+  if (!controls) return;
+  controls.replaceChildren();
+  if (agentEnabled && entry.established) {
+    controls.append(summarizeButton(id));
+  }
+  const close = document.createElement("button");
+  close.className = "ghost close-ended-btn";
+  close.textContent = t("close");
+  close.addEventListener("click", () => card.remove());
+  controls.append(close);
+}
+
+// summarizeButton is the ended card's one AI affordance: the ask is
+// idempotent server-side, the busy state disables the row (a double
+// click must not double-speak), and every settle is honest — success
+// and duplicates point at Messages (nav nudge), a failure returns the
+// SETTLED retryable state with the reason as a toast.
+function summarizeButton(id) {
+  const btn = document.createElement("button");
+  btn.className = "ghost summarize-btn";
+  btn.textContent = t("summarizeDraft");
+  btn.addEventListener("click", () => summarizeCall(id, btn));
+  return btn;
+}
+
+async function summarizeCall(id, btn) {
+  btn.disabled = true;
+  btn.textContent = t("summarizing");
+  let status = 0;
+  let duplicate = false;
+  try {
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(id)}/summary-draft`,
+      { method: "POST" },
+    );
+    status = res.status;
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      duplicate = body.duplicate === true;
+    }
+  } catch {
+    status = 0;
+  }
+  if (status === 200) {
+    announce(duplicate ? t("summarizeDuplicate") : t("summarizeReady"), "ok");
+    document.dispatchEvent(new CustomEvent("wp:drafts-changed"));
+    btn.textContent = t("summarizeSettled");
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = t("summarizeDraft");
+  if (status === 404) announce(t("summarizeNoTranscript"), "warn");
+  else announce(t("summarizeFailed"), "error");
 }
 
 export function teardownAll() {
@@ -881,7 +981,7 @@ export function bindSession(newSession, target) {
         dur: dur > 0 ? dur : 0,
         established: live.established,
       });
-      teardownSession(id);
+      settleEndedCall(id);
       // A just-ended call may have left a voicemail deposit.
       scheduleVoicemailRefresh();
       refreshServerHistory();

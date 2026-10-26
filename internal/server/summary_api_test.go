@@ -28,6 +28,31 @@ func serverWithAgentAndASR(t *testing.T, agentURL string) *testServer {
 	})
 }
 
+// TestConfigJSCarriesAgentFlag pins the island's summarize gate (M12):
+// the served window.PBX_CONFIG mirrors the textagent seam's presence —
+// on with a client wired, absent (the zero value) without.
+func TestConfigJSCarriesAgentFlag(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.TextAgent = agentClientFor(t, stub.server.URL)
+	})
+	c := clientFor(t, server)
+	resp, body := c.do(http.MethodGet, "/config.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("config.js: %d", resp.StatusCode)
+	}
+	if !strings.Contains(string(body), `"agent":true`) {
+		t.Errorf("config.js must carry agent:true with the seam wired: %.300s", body)
+	}
+
+	off := newTestServerWithPhoneAPI(t, "")
+	oc := clientFor(t, off)
+	_, obody := oc.do(http.MethodGet, "/config.js", nil, "")
+	if strings.Contains(string(obody), `"agent":true`) {
+		t.Errorf("config.js must not carry agent:true without the seam: %.300s", obody)
+	}
+}
+
 // TestSummaryDraftSeamOffIs404: a server without the textagent seam has
 // no summarize surface (the disabled-seam convention).
 func TestSummaryDraftSeamOffIs404(t *testing.T) {

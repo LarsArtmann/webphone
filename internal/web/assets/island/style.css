@@ -536,6 +536,17 @@ button.small {
   background: var(--accent-soft);
 }
 
+/* Ended card (M12): the settled post-call shape. Muted surface, the
+   state dot frozen gray, the transcript strip stays readable for Copy. */
+.call-card.wp-ended-card {
+  opacity: 0.85;
+}
+
+.call-card.wp-ended-card[data-state] .call-state-text::before {
+  background: var(--border);
+  animation: none;
+}
+
 .call-card .call-state {
   margin: 0 0 10px;
 }
