@@ -170,7 +170,7 @@ def build_bundle(raw, registry):
         "target": raw,
         "code": code,
         "verdict": verdict,
-        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
         "registry": {"families": row[1], "first_site": first_site} if row else None,
         "seam_files": files,
         "family_pins": family_pins(code),
