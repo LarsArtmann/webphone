@@ -221,6 +221,7 @@ a deliberate code change, regenerate:
 
 | Code                                         | Families                  | First site                         |
 | -------------------------------------------- | ------------------------- | ---------------------------------- |
+| agent.summarize                              | Transient                 | internal/server/api/summary_api.go |
 | asr.decode                                   | Transient                 | internal/asr/asr.go                |
 | asr.empty                                    | Rejection                 | internal/asr/asr.go                |
 | asr.encode                                   | Infrastructure            | internal/asr/asr.go                |
@@ -369,6 +370,7 @@ a deliberate code change, regenerate:
 | readmodels.snippet_missing                   | Rejection                 | internal/readmodels/snippets.go    |
 | readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.transcript_append                 | Infrastructure            | internal/readmodels/transcripts.go |
+| readmodels.transcript_call                   | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_count                  | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_delete                 | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_scan                   | Infrastructure            | internal/readmodels/transcripts.go |

@@ -37,6 +37,13 @@ func newStubReviewAPI(t *testing.T) *stubReviewAPI {
 		stub.calls.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(int(stub.status.Load()))
+		if stub.status.Load() >= 400 {
+			// The real agent phrases its refusals as {"error": "..."} —
+			// the client extracts that field verbatim, so a passthrough
+			// test can pin on the agent's own words.
+			_, _ = w.Write([]byte(`{"error":"fail-closed: the agent cannot draft right now"}`))
+			return
+		}
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/approve"):
 			_, _ = w.Write([]byte(`{"id":"d-7","status":"sent","provider_ref":"stub-1"}`))
