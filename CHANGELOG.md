@@ -198,6 +198,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so it rides a generation-sized budget (`textAgentDraftTimeout`)
   instead of the 5 s review-list ceiling that made nearly every draft
   look broken.
+- The ringing queue's pinned Accept/Reject buttons are wired once, next
+  to the slot actions they dispatch (the multicall train had left a
+  duplicated listener block in the shell bootstrap), and the island
+  test suite covers the queue semantics it ships: the second INVITE
+  queues instead of auto-rejecting, and the Esc-shortcut test drives a
+  stub that settles into Terminated the way the real SIP stack does.
 
 ### Changed
 
