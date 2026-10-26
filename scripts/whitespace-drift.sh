@@ -18,12 +18,49 @@
 # line counts mean hand-edited whitespace a formatter did not
 # canonicalize. Exit 1 names the fix; exit 0 is clean.
 #
+# `--ref <sha>` runs the same divergence check over the diff sha~1..sha
+# instead of the index (daemon-audit mode, 2026-10-26) — an auto-commit
+# is audited after it landed, not before.
+#
 # Habit: run after `git add`, before `git commit`.
 set -euo pipefail
 
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
 	echo "whitespace-drift: not a git repository" >&2
 	exit 2
+fi
+
+REF=""
+if [ "${1:-}" = "--ref" ]; then
+	[ -n "${2:-}" ] || {
+		echo "whitespace-drift: --ref needs a commit sha" >&2
+		exit 2
+	}
+	REF=$2
+	shift 2
+fi
+
+if [ -n "$REF" ]; then
+	owned=$(git diff --name-only "$REF~1" "$REF" --diff-filter=ACMR |
+		grep -E '\.(go|js|mjs|css|nix)$' |
+		grep -v '_templ\.go$' |
+		grep -v '^vendor/' || true)
+
+	if [ -z "$owned" ]; then
+		echo "whitespace-drift: --ref $REF touches no formatter-owned files (nothing to gate)"
+		exit 0
+	fi
+
+	full=$(git diff "$REF~1" "$REF" -- $owned | wc -l)
+	ws=$(git diff -w "$REF~1" "$REF" -- $owned | wc -l)
+
+	if [ "$full" -ne "$ws" ]; then
+		echo "whitespace-drift: --ref $REF diff is $full lines but only $ws when whitespace is ignored" >&2
+		echo "  -> a landed commit carries hand-edited whitespace a formatter did not canonicalize; run: nix fmt" >&2
+		exit 1
+	fi
+	echo "whitespace-drift: --ref $REF clean ($full lines in formatter-owned files, none whitespace-only)"
+	exit 0
 fi
 
 owned=$(git diff --cached --name-only --diff-filter=ACMR |
