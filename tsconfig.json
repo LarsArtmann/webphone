@@ -31,6 +31,7 @@
   },
   "include": [
     "types/**/*.d.ts",
+    "internal/web/assets/enroll/enroll.js",
     "internal/web/assets/enroll/webauthn.js",
     "internal/web/assets/island/app/audio.js",
     "internal/web/assets/island/app/audioout.js",

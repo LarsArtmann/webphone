@@ -223,3 +223,35 @@ interface IslandSerializedCredential {
   type: string;
   response: Record<string, string | string[]>;
 }
+
+// The standalone passkey-enrollment page (served at /assets/enroll/, no
+// island runtime). Ids come from views/enroll.templ; the page is
+// CONDITIONAL markup (only rendered when auth.passkey.* is enabled), so
+// nothing outside its own module may assume these elements exist.
+interface IslandEnrollDomIds {
+  "enroll-form": HTMLFormElement;
+  "enroll-token": HTMLInputElement;
+  "enroll-credential-name": HTMLInputElement;
+  "enroll-status": HTMLElement;
+  "enroll-error": HTMLElement;
+}
+
+/** The verify endpoint's answer: the address the token belongs to. */
+interface IslandEnrollVerifyBody {
+  email: string;
+  user_id: string;
+}
+
+/** The begin endpoint's answer: the ceremony options plus the session key
+ * the finish call must echo back. */
+interface IslandEnrollBeginBody {
+  options: IslandRegistrationOptionsWire;
+  session_key: string;
+}
+
+/** One postJSON verdict — never throws; status 0 is the network sentinel. */
+interface IslandPostJSONAnswer {
+  ok: boolean;
+  status: number;
+  body: any;
+}

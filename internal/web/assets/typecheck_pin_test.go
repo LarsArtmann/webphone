@@ -32,7 +32,6 @@ const repoRoot = "../../.."
 // here must exist and must NOT be reachable from tsconfig.json's include; the
 // only legal edit is DELETE a line (add the file to the include first).
 var typecheckDebt = []string{
-	"internal/web/assets/enroll/enroll.js",
 	"internal/web/assets/island/app/calls.js",
 	"internal/web/assets/island/app/connection.js",
 	"internal/web/assets/island/app/main.js",
