@@ -229,3 +229,88 @@ func TestHistoryEmptyStateIsFilterAware(t *testing.T) {
 		t.Errorf("a filter with no matches must say so, not claim an empty history: %.400s", page)
 	}
 }
+
+// TestHistoryDispositionFilter pins the T3 verdict filter: the select
+// narrows the transcript section to calls whose note slot carries the
+// confirmed verdict, the CDR section stays empty under an active
+// disposition filter (CDR rows carry no call uuid to join the verdict
+// with), the filter echoes back into the form, and garbage falls back
+// to unfiltered.
+func TestHistoryDispositionFilter(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if !strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"entries":[
+			{"context":"public","caller_id_number":"+449162000123","caller_id_name":"Cara","destination_number":"1001","start":"2026-09-18 09:00","billsec":30}
+		]}`))
+	}))
+	t.Cleanup(upstream.Close)
+
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, upstream.URL, func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+
+	if resp, body := postTranscript(t, c, "call-1", "in", "+4989123456", "first call"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("transcript 1: %d %s", resp.StatusCode, body)
+	}
+	if resp, body := postTranscript(t, c, "call-2", "in", "+4930123456", "second call"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("transcript 2: %d %s", resp.StatusCode, body)
+	}
+	if resp, body := confirmDisposition(t, c, "call-1", map[string]any{"disposition": "answered"}); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("confirm: %d %s", resp.StatusCode, body)
+	}
+
+	// answered: call-1 keeps its badge, the unconfirmed call-2 drops,
+	// and no CDR row leaks through the verdict filter.
+	_, body := c.do(http.MethodGet, "/partials/history?disposition=answered", nil, "")
+	page := string(body)
+	if !strings.Contains(page, "wp-disposition-chip") || !strings.Contains(page, ">Answered</span>") {
+		t.Errorf("the confirmed call must render its badge: %.600s", page)
+	}
+	if strings.Contains(page, "+4930123456") {
+		t.Errorf("the unconfirmed call must drop under disposition=answered: %.600s", page)
+	}
+	if strings.Contains(page, "+449162000123") {
+		t.Errorf("no CDR row may render under an active disposition filter: %.600s", page)
+	}
+	if !strings.Contains(page, `value="answered" selected`) {
+		t.Errorf("the disposition select must echo the filter: %.400s", page)
+	}
+
+	// missed: no call carries that verdict — the disposition-specific
+	// empty state speaks, no transcript section renders.
+	_, body = c.do(http.MethodGet, "/partials/history?disposition=missed", nil, "")
+	page = string(body)
+	if !strings.Contains(page, "No calls carry this verdict yet.") {
+		t.Errorf("a verdict with no calls must render its own empty state: %.600s", page)
+	}
+	if strings.Contains(page, "wp-transcript-call") {
+		t.Errorf("no transcript may render under a verdict no call carries: %.600s", page)
+	}
+
+	// Unfiltered: both transcripts render, but the badge appears exactly
+	// once (call-2 was never confirmed — no glyph for it).
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	page = string(body)
+	if got := strings.Count(page, "wp-disposition-chip"); got != 1 {
+		t.Errorf("only the confirmed call may carry a badge, got %d: %.600s", got, page)
+	}
+	if !strings.Contains(page, "+4930123456") {
+		t.Errorf("the unfiltered view must keep both transcripts: %.600s", page)
+	}
+
+	// Garbage: a filter param that parses to nothing filters nothing.
+	_, body = c.do(http.MethodGet, "/partials/history?disposition=picked-up", nil, "")
+	page = string(body)
+	if !strings.Contains(page, "+4930123456") || !strings.Contains(page, "+449162000123") {
+		t.Errorf("an unknown disposition value must fall back to unfiltered: %.600s", page)
+	}
+}

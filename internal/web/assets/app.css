@@ -1293,6 +1293,20 @@ a:focus-visible {
   justify-content: flex-end;
 }
 
+/* Confirmed-verdict chip (T3): the operator's post-call disposition on
+ * a history transcript row. Muted by design — a verdict is metadata,
+ * not a status alarm; unknown/absent renders NO chip at all. */
+.wp-disposition-chip {
+  flex: none;
+  align-self: center;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 0.8em;
+  white-space: nowrap;
+}
+
 /* Direction chip: inbound/outbound at a glance without reading text. */
 .wp-dir-chip {
   width: 38px;

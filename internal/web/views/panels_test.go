@@ -549,3 +549,31 @@ func TestHistoryPanelRendersTranscriptGroups(t *testing.T) {
 		t.Errorf("empty store must not render the section heading")
 	}
 }
+
+// TestHistoryTranscriptDispositionBadgeGuard pins the T3 badge guard:
+// the confirmed-verdict chip renders ONLY for the five operator-
+// confirmable verdicts — a call whose slot is unknown or absent renders
+// NO badge at all (never a success glyph for an unconfirmed call, the
+// stop-the-lying ruling).
+func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
+	group := func(disposition string) TranscriptGroup {
+		return TranscriptGroup{
+			CallID: "call-1", Remote: "+4989123456", Direction: "in",
+			Disposition: disposition, Lines: []string{"hello"},
+		}
+	}
+	confirmed := renderComponent(t, HistoryPanel(HistoryPanelProps{
+		Enabled: true, Lang: LangEN, Transcripts: []TranscriptGroup{group("answered")},
+	}))
+	if !strings.Contains(confirmed, "wp-disposition-chip") || !strings.Contains(confirmed, "Answered") {
+		t.Errorf("a confirmed verdict must render the badge: %s", confirmed)
+	}
+	for _, absent := range []string{"unknown", ""} {
+		page := renderComponent(t, HistoryPanel(HistoryPanelProps{
+			Enabled: true, Lang: LangEN, Transcripts: []TranscriptGroup{group(absent)},
+		}))
+		if strings.Contains(page, "wp-disposition-chip") {
+			t.Errorf("disposition %q must render no badge (never a success glyph): %s", absent, page)
+		}
+	}
+}
