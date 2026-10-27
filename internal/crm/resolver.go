@@ -205,6 +205,14 @@ func (r *Resolver) LogCall(ctx context.Context, contactID ContactRef, direction,
 	return r.client.LogCall(ctx, contactID, direction, number, seconds, disposition)
 }
 
+// HealthCheck forwards the authenticated health leg. The go-health probe
+// discovers it as an OPTIONAL NON-CRITICAL service check when the
+// composition registered the resolver NAMED "crm" (only when the seam
+// is configured — a CRM-less deployment carries no crm leg at all).
+func (r *Resolver) HealthCheck(ctx context.Context) error {
+	return r.client.HealthCheck(ctx)
+}
+
 func errIsMiss(err error) bool { return err == ErrNotFound || err == ErrDisabled }
 
 // join registers the caller as the lookup's leader (nil return) or hands

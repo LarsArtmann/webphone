@@ -195,6 +195,41 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 	return Match{ID: NewContactRef(first.ID), Name: name}, nil
 }
 
+// healthProbeNumber is the health probe's lookup argument: a
+// syntactically valid number that never matches a real contact (the
+// reserved +42 fictional range). The probe must be AUTHENTICATED —
+// its whole point is catching a revoked token within one poll cycle —
+// so it rides the real lookup endpoint and expects 200-with-no-results.
+const healthProbeNumber = "+42990000000"
+
+// HealthCheck is the authenticated health leg (issue #9): one cheap
+// lookup round trip against the real endpoint with a never-matching
+// number. 200 (even with zero results) proves reachable AND authorized;
+// 401/403 names the revoked token so the operator reads the fix from
+// the 503 body. Deliberately NOT routed through the Resolver: the
+// negative result must never pollute the lookup cache or the
+// single-flight, and the disabled case is answered by do() with
+// ErrDisabled (the leg is only registered when the seam is on).
+func (c *Client) HealthCheck(ctx context.Context) error {
+	resp, err := c.do(ctx, http.MethodGet, "/api/contacts/by-phone",
+		url.Values{"number": {healthProbeNumber}}, nil)
+	if err != nil {
+		return err
+	}
+	defer drainClose(resp)
+
+	switch {
+	case resp.StatusCode == http.StatusOK:
+		return nil
+	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+		return errorfamily.Newf(errorfamily.Rejection, "crm.health.unauthorized",
+			"crm: the bearer token was rejected (status %d) — rotate the CRM token credential", resp.StatusCode)
+	default:
+		return errorfamily.Newf(errorfamily.Transient, "crm.health.failed",
+			"crm: health probe answered status %d", resp.StatusCode)
+	}
+}
+
 // LogCall appends one call activity to the CRM contact (204 expected).
 // The ref is the Match's own ID: only a real lookup can mint one. The
 // disposition travels verbatim — the CRM renders the outcome string

@@ -67,6 +67,7 @@ var (
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
 	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
 	_ do.HealthcheckerWithContext = (*readmodels.Engine)(nil)
+	_ do.HealthcheckerWithContext = (*crm.Resolver)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
 	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
@@ -219,6 +220,18 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if cfg.ASR.Enabled() {
 		//samber-linter:allow hw-4 eagerly invoked below for probe discovery
 		do.ProvideNamed(injector, "asr", func(i do.Injector) (asr.Provider, error) { return asrProvider, nil })
+	}
+	if cfg.CRM.URL != "" {
+		// The CRM resolver joins the go-health probe discovery the same
+		// way asr does: NAMED registration only when the seam is on, so
+		// a CRM-less deployment carries no crm leg anywhere (zero
+		// config = byte-identical probes). The authenticated
+		// HealthCheck is NON-critical by the seam's own doctrine (a
+		// dead CRM costs toasts and raw names, never call flow).
+		//samber-linter:allow hw-4 eagerly invoked below for probe discovery
+		do.ProvideNamed(injector, "crm", func(i do.Injector) (*crm.Resolver, error) {
+			return do.MustInvoke[*crm.Resolver](i), nil
+		})
 	}
 
 	// Optional push seam (ring-while-closed): each transport is an

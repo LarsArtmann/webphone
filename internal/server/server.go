@@ -502,6 +502,19 @@ func New(deps Deps) http.Handler {
 		{Name: "sqlite", Check: deps.DB.Ping, Timeout: checkTimeout},
 		{Name: "blob-dir", Check: func() error { return blob.ProbeWrite(deps.BlobRoot) }, Timeout: checkTimeout},
 	}
+	if deps.CRM != nil && deps.CRM.Enabled() {
+		// The CRM leg (issue #9): an AUTHENTICATED probe, so a revoked
+		// token reddens healthz naming "crm" on the very next request —
+		// the operator reads the fix from the 503 body instead of
+		// discovering it as silent raw numbers. Same conditional shape
+		// as the identity layer below: an unconfigured CRM keeps
+		// probing exactly the resources it has.
+		checks = append(checks, cqrshtmx.NamedCheck{
+			Name:    "crm",
+			Check:   func() error { return deps.CRM.HealthCheck(context.Background()) },
+			Timeout: checkTimeout,
+		})
+	}
 	if deps.UserAuth != nil {
 		checks = append(checks, cqrshtmx.NamedCheck{
 			Name:    "userauth",
@@ -563,6 +576,13 @@ func New(deps Deps) http.Handler {
 			}); ok {
 				healthChecks["asr"] = hc.HealthCheck
 			}
+		}
+		if deps.CRM != nil && deps.CRM.Enabled() {
+			// The optional CRM leg: NON-critical by the seam's own
+			// doctrine (a dead CRM costs toasts and raw names, never
+			// call flow), but AUTHENTICATED — it must catch a revoked
+			// token. Same conditional shape as readiness above.
+			healthChecks["crm"] = deps.CRM.HealthCheck
 		}
 		selfHealth = health.NewChecks(healthChecks,
 			health.WithCriticalServices("sqlite", "blob-dir"), health.WithRefreshInterval(0))
