@@ -21,15 +21,15 @@ handle {
 }
 
 == backup script (retentionDays = 7) ==
-sqlite3 /var/lib/webphone/webphone.db ".backup '/var/lib/webphone-backup/webphone.db'"
+sqlite3 "/var/lib/webphone/webphone.db" ".backup '/var/lib/webphone-backup/webphone.db'"
 # The metaengine read-model database (dedup windows, contacts, snippets,
 # faxes, transcripts, enroll tokens) carries user data since the
 # metaengine train — guard for data dirs that have not booted a
 # webphone new enough to create it yet.
-if [ -f /var/lib/webphone/readmodels.db ]; then
-  sqlite3 /var/lib/webphone/readmodels.db ".backup '/var/lib/webphone-backup/readmodels.db'"
+if [ -f "/var/lib/webphone/readmodels.db" ]; then
+  sqlite3 "/var/lib/webphone/readmodels.db" ".backup '/var/lib/webphone-backup/readmodels.db'"
 fi
-rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
+rsync -a --delete "/var/lib/webphone/files/" "/var/lib/webphone-backup/files/"
 # Dated history: snapshot today's state under snapshots/,
 # hardlinking unchanged blobs against the newest previous
 # snapshot (first run has no basis — plain copy; a same-day
@@ -37,23 +37,23 @@ rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
 today=$(date +%F)
 snap="/var/lib/webphone-backup/snapshots/$today"
 basis=$(
-  find /var/lib/webphone-backup/snapshots -mindepth 1 -maxdepth 1 -type d \
+  find "/var/lib/webphone-backup/snapshots" -mindepth 1 -maxdepth 1 -type d \
     -name '????-??-??' ! -name "$today" 2>/dev/null | sort | tail -1 || true
 )
 mkdir -p "$snap"
-sqlite3 /var/lib/webphone/webphone.db ".backup '$snap/webphone.db'"
-if [ -f /var/lib/webphone/readmodels.db ]; then
-  sqlite3 /var/lib/webphone/readmodels.db ".backup '$snap/readmodels.db'"
+sqlite3 "/var/lib/webphone/webphone.db" ".backup '$snap/webphone.db'"
+if [ -f "/var/lib/webphone/readmodels.db" ]; then
+  sqlite3 "/var/lib/webphone/readmodels.db" ".backup '$snap/readmodels.db'"
 fi
 if [ -n "$basis" ]; then
-  rsync -a --delete --link-dest="$basis" /var/lib/webphone/files/ "$snap/files/"
+  rsync -a --delete --link-dest="$basis" "/var/lib/webphone/files/" "$snap/files/"
 else
-  rsync -a --delete /var/lib/webphone/files/ "$snap/files/"
+  rsync -a --delete "/var/lib/webphone/files/" "$snap/files/"
 fi
 # Prune: only the dated directories themselves, never the
 # latest top-level snapshot pair, and never anything that
 # is not a YYYY-MM-DD name.
-find /var/lib/webphone-backup/snapshots -mindepth 1 -maxdepth 1 -type d \
+find "/var/lib/webphone-backup/snapshots" -mindepth 1 -maxdepth 1 -type d \
   -name '????-??-??' -mtime +7 \
   -exec rm -rf -- {} +
 

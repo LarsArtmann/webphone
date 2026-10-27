@@ -9,15 +9,15 @@ let
   history = cfg.backup.retentionDays != null;
 in
 ''
-  sqlite3 ${cfg.dataDir}/webphone.db ".backup '${dest}/webphone.db'"
+  sqlite3 "${cfg.dataDir}/webphone.db" ".backup '${dest}/webphone.db'"
   # The metaengine read-model database (dedup windows, contacts, snippets,
   # faxes, transcripts, enroll tokens) carries user data since the
   # metaengine train — guard for data dirs that have not booted a
   # webphone new enough to create it yet.
-  if [ -f ${cfg.dataDir}/readmodels.db ]; then
-    sqlite3 ${cfg.dataDir}/readmodels.db ".backup '${dest}/readmodels.db'"
+  if [ -f "${cfg.dataDir}/readmodels.db" ]; then
+    sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '${dest}/readmodels.db'"
   fi
-  rsync -a --delete ${cfg.dataDir}/files/ ${dest}/files/
+  rsync -a --delete "${cfg.dataDir}/files/" "${dest}/files/"
 ''
 + (lib.optionalString history ''
   # Dated history: snapshot today's state under snapshots/,
@@ -27,23 +27,23 @@ in
   today=$(date +%F)
   snap="${dest}/snapshots/$today"
   basis=$(
-    find ${dest}/snapshots -mindepth 1 -maxdepth 1 -type d \
+    find "${dest}/snapshots" -mindepth 1 -maxdepth 1 -type d \
       -name '????-??-??' ! -name "$today" 2>/dev/null | sort | tail -1 || true
   )
   mkdir -p "$snap"
-  sqlite3 ${cfg.dataDir}/webphone.db ".backup '$snap/webphone.db'"
-  if [ -f ${cfg.dataDir}/readmodels.db ]; then
-    sqlite3 ${cfg.dataDir}/readmodels.db ".backup '$snap/readmodels.db'"
+  sqlite3 "${cfg.dataDir}/webphone.db" ".backup '$snap/webphone.db'"
+  if [ -f "${cfg.dataDir}/readmodels.db" ]; then
+    sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '$snap/readmodels.db'"
   fi
   if [ -n "$basis" ]; then
-    rsync -a --delete --link-dest="$basis" ${cfg.dataDir}/files/ "$snap/files/"
+    rsync -a --delete --link-dest="$basis" "${cfg.dataDir}/files/" "$snap/files/"
   else
-    rsync -a --delete ${cfg.dataDir}/files/ "$snap/files/"
+    rsync -a --delete "${cfg.dataDir}/files/" "$snap/files/"
   fi
   # Prune: only the dated directories themselves, never the
   # latest top-level snapshot pair, and never anything that
   # is not a YYYY-MM-DD name.
-  find ${dest}/snapshots -mindepth 1 -maxdepth 1 -type d \
+  find "${dest}/snapshots" -mindepth 1 -maxdepth 1 -type d \
     -name '????-??-??' -mtime +${toString cfg.backup.retentionDays} \
     -exec rm -rf -- {} +
 '')

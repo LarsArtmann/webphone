@@ -12,7 +12,7 @@
 #       inherit pkgs; lib = pkgs.lib;
 #       self' = { packages = flake.packages.''${system}; };
 #     };
-#   in import (flake.outPath + "/nix/module-output.nix") { inherit pkgs; lib = pkgs.lib; inherit base; }' \
+#   in import (flake.outPath + "/nix/module-output.nix") { lib = pkgs.lib; inherit base; }' \
 #     > nix/module-output.golden
 { lib, base }:
 let

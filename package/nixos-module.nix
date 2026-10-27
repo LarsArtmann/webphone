@@ -417,11 +417,34 @@ in
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
             StateDirectoryMode = "0750";
             UMask = "0077";
+            # Sandbox parity with the main unit (the oneshot reads the
+            # same private data): everything the backup needs is local
+            # files — AF_UNIX only, no capabilities, no exotic syscalls
+            # (sqlite3/rsync/date/find all sit inside @system-service).
             NoNewPrivileges = true;
             PrivateTmp = true;
             PrivateDevices = true;
             ProtectSystem = "strict";
             ProtectHome = true;
+            ProtectClock = true;
+            ProtectHostname = true;
+            ProtectKernelLogs = true;
+            ProtectKernelModules = true;
+            ProtectKernelTunables = true;
+            ProtectControlGroups = true;
+            ProtectProc = "invisible";
+            RestrictAddressFamilies = [ "AF_UNIX" ];
+            RestrictNamespaces = true;
+            RestrictRealtime = true;
+            RestrictSUIDSGID = true;
+            LockPersonality = true;
+            MemoryDenyWriteExecute = true;
+            CapabilityBoundingSet = "";
+            SystemCallArchitectures = "native";
+            SystemCallFilter = [
+              "@system-service"
+              "~@privileged @resources"
+            ];
             ReadWritePaths = [ cfg.backup.destDir ];
           };
           # Online copy: sqlite's .backup API takes a consistent snapshot
