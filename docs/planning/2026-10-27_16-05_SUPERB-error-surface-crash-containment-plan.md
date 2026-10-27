@@ -296,3 +296,23 @@ readmodels refactor healed.
   commit); `nix flake check` verdict recorded below when it lands. M70 browser E2E NOT
   owed: zero served-markup changes (all new surfaces are island-JS-created; the DOM
   contract test passed inside the full suite).
+
+### Execution-log close-out (19:05)
+
+- **T22 verdict: ALL LOCAL GATES GREEN** — `go test -count=1 ./...` (full tree),
+  island suite 248/248, `buildflow -s erraudit` 0 findings, oxlint clean on the
+  gated scope under the NEW rules (no-empty + no-unused-vars + no-console), FULL
+  `nix flake check` **all checks passed** (treefmt, island-lint, island-js, the
+  KVM-gated backup VM test + error drill included). **CI GREEN at `d035691`**
+  (run 40556018731: nix build ✓, -race ✓, fast flake checks ✓, art-dupl ✓).
+- Two gate fixes landed after the concurrent disposition train red-ed main:
+  the error-code registry row (same-commit rule) and 3 clone groups (all
+  ACCEPTED, registry-ruled, baseline 75 → 79 with the CI-pinned v0.7.2); the
+  treefmt reflow that the daemon then swept and pushed. My train's own deltas
+  introduced ZERO new clone groups and zero registry rows.
+- M70 browser E2E: NOT owed (zero served-markup changes; DOM-contract test
+  green inside the full suite).
+- Blocked on owner (single pass): the host-leg verdicts (TODO_LIST row 1) —
+  journal panic grep, NRestarts, Caddy /events flush check, dialplan ring-end
+  hook. A panic line there reopens P0 forensics; absence closes the incident
+  as the deploy-restart signature the evidence already supports.
