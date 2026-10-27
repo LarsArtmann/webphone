@@ -5,7 +5,7 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-25 (whole-list execution session: the unpushed go.sum
+Last sweep: 2026-10-27 (multi-call dock + agent-UX SUPERB train executed end-to-end: M1–M14 + M16–M18 shipped, tails recorded below) (whole-list execution session: the unpushed go.sum
 daemon commit triaged canonical (`go mod tidy` no-op; vendorHash insensitive;
 pushed green) · stale rows closed with evidence re-verified at HEAD (go-appkit
 flight recorder + latency metrics SHIPPED, branching-flow unskip EXECUTED,
@@ -24,27 +24,26 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
-### Multi-call dock + agent-UX train (2026-10-26 SUPERB plan — not started)
+### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
 
 Pareto plan: [docs/planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md](docs/planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md)
-(20 medium / 120 micro tasks, execution graph, errata: missed-call badge
-already shipped, `SetMode` autonomy exists server-side, attended transfer
-stack-gated on FS `Replaces`). Priority order:
+(20 medium / 120 micro tasks; round-two errata in the plan doc: M15 search
+already shipped, notes home = readmodels not the store ladder, M18 durable
+journal NO-GO, M19 NO-GO on this host). M1–M14 + M16–M18 shipped across
+2026-10-26/27 (ring queue, dock, captions, ended-card summarize chain,
+agent-mode pill, draft-ready push, call notes with AI prefill, locality
+labels, audit lines). Open tails:
 
-1. **P0 — Ring queue** (M1–M3): N-deep incoming invites replace the single
-   `incomingSession` slot; banner stack; `A`=oldest, `Esc`=newest ring.
-2. **P0 — Call dock** (M4–M8): chip strip when N>1 + expanded focused card;
-   one-gesture hold-swap via the existing `holdQueued` machine; per-call
-   volume; focus cycling + announcements; DOM-contract batch gate.
-3. **P0 — Live captions** (M9–M10): render transcript segments live under
-   the focused call card (`aria-hidden` strip; segments persist today but
-   are never shown).
-4. **P1 — Agent chain** (M11–M13): post-call summarize→drafts via
-   `textagent.Client` (verify ops first), agent-mode nav pill (visibility of
-   the existing pinned mode).
-5. **P1/P2 tails** (M14–M20): push-notified approvals, transcript search,
-   post-call notes (migration v6), locality indicator, agent audit trail,
-   attended-transfer stack spike, docs/E2E tail.
+1. **Stack browser E2E re-run** (release-runbook obligation, ~445s
+   budget): any served-markup change owes it; this train touched the
+   calls island + History rows. Owner-runnable from the stack checkout.
+2. **M18 tail — Settings last-N agent-actions row**: needs a durable
+   agent-action read model; the trigger is an operator who needs in-UI
+   history (the `agent <event>` journal line covers audits today).
+3. **M19 re-open trigger — attended transfer**: the stack grows an FS
+   lab with an attended-REFER-with-Replaces VM scenario; the island
+   delta is small (sketch in
+   `docs/research/2026-10-27_attended-transfer-spike.md`).
 
 ### Error-agents tooling train (2026-10-26 SUPERB plan — ALL 20 M-tasks SHIPPED same day)
 
