@@ -336,42 +336,44 @@ async function buildConnection() {
         notifyIncoming(caller);
         ringToneStart();
         titleFlashStart();
-        invitation.stateChange.addListener((/** @type {SipSessionStateName} */ state2) => {
-          if (state2 !== SIP.SessionState.Terminated) return;
-          // An answered (or deliberately rejected) invite left the queue
-          // already; a Terminated arrival only means "the caller gave
-          // up" while the invite still held its slot — remove exactly
-          // that slot, keep the remaining rings ringing.
-          const slot = state.incomingSessions.findIndex(
-            (entry) => entry.invitation === invitation,
-          );
-          if (slot === -1) return;
-          state.incomingSessions.splice(slot, 1);
-          if (state.incomingSessions.length > 0) {
-            renderIncomingSlots();
-          } else {
-            hideIncomingBanner();
-            ringToneStop();
-            titleFlashStop();
-            releaseWarmMic();
-          }
-          // The far end gave up before the user answered: say so and
-          // keep the attempt in Recent calls (dir in, no duration).
-          log(`missed call from ${caller}`, "warn");
-          announce(t("missedCall")(caller), "warn");
-          // shell.js mirrors this into the missed-call header badge; a
-          // deliberate REJECT empties the queue slot first and never
-          // lands here (the queue-membership check above).
-          document.dispatchEvent(
-            new CustomEvent("wp:call-missed", { detail: { target: caller } }),
-          );
-          recordHistory({
-            dir: "in",
-            target: caller,
-            at: Date.now(),
-            dur: 0,
-          });
-        });
+        invitation.stateChange.addListener(
+          (/** @type {SipSessionStateName} */ state2) => {
+            if (state2 !== SIP.SessionState.Terminated) return;
+            // An answered (or deliberately rejected) invite left the queue
+            // already; a Terminated arrival only means "the caller gave
+            // up" while the invite still held its slot — remove exactly
+            // that slot, keep the remaining rings ringing.
+            const slot = state.incomingSessions.findIndex(
+              (entry) => entry.invitation === invitation,
+            );
+            if (slot === -1) return;
+            state.incomingSessions.splice(slot, 1);
+            if (state.incomingSessions.length > 0) {
+              renderIncomingSlots();
+            } else {
+              hideIncomingBanner();
+              ringToneStop();
+              titleFlashStop();
+              releaseWarmMic();
+            }
+            // The far end gave up before the user answered: say so and
+            // keep the attempt in Recent calls (dir in, no duration).
+            log(`missed call from ${caller}`, "warn");
+            announce(t("missedCall")(caller), "warn");
+            // shell.js mirrors this into the missed-call header badge; a
+            // deliberate REJECT empties the queue slot first and never
+            // lands here (the queue-membership check above).
+            document.dispatchEvent(
+              new CustomEvent("wp:call-missed", { detail: { target: caller } }),
+            );
+            recordHistory({
+              dir: "in",
+              target: caller,
+              at: Date.now(),
+              dur: 0,
+            });
+          },
+        );
         log(`incoming call from ${caller}`);
       },
     },

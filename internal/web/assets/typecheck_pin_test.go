@@ -1,7 +1,7 @@
 package assets
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"io/fs"
 	"os"
 	"path"
@@ -32,9 +32,7 @@ const repoRoot = "../../.."
 // here must exist and must NOT be reachable from tsconfig.json's include; the
 // only legal edit is DELETE a line (add the file to the include first).
 var typecheckDebt = []string{
-	"internal/web/assets/island/app/connection.js",
 	"internal/web/assets/island/app/main.js",
-	"internal/web/assets/island/app/shortcuts.js",
 	"internal/web/assets/shell.js",
 }
 
