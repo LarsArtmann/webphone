@@ -4,6 +4,22 @@
 (function () {
   "use strict";
 
+  // The element an event came from. DOM events type their target as a bare
+  // EventTarget (and a document-dispatched event has no element at all), so
+  // every delegated handler here would otherwise cast at each call site —
+  // and a text-node or document target would throw on .closest() instead of
+  // falling through the "not my element" test. An event with no element
+  // answers the document element, which matches none of this file's
+  // selectors.
+  /**
+   * @param {Event} event
+   * @returns {Element}
+   */
+  function eventElement(event) {
+    var target = eventElement(event);
+    return target instanceof Element ? target : document.documentElement;
+  }
+
   // Inline SVG icon markup (the JS-created twins of the server's
   // templ-components icons): plain strings assigned via innerHTML —
   // sized by the shared .wp-icon CSS class, tinted by currentColor.
@@ -30,7 +46,7 @@
     //    active link on full renders; after a partial swap only the clicked
     //    link knows. htmx:afterRequest fires on the link that issued it.
     document.addEventListener("htmx:afterRequest", function (event) {
-      var element = event.target;
+      var element = eventElement(event);
       if (!element || !element.hasAttribute("data-tab")) return;
       var nav = element.closest(".wp-nav");
       if (!nav) return;
@@ -101,7 +117,7 @@
     //     persist the flag and flip the class so the collapse takes
     //     effect immediately, without a reload.
     document.addEventListener("click", function (event) {
-      var button = event.target.closest(".wp-welcome-dismiss");
+      var button = eventElement(event).closest(".wp-welcome-dismiss");
       if (!button) return;
       try {
         localStorage.setItem("wp-welcome-dismissed", "1");
@@ -155,7 +171,7 @@
       setTimeout(dismiss, 6000);
     };
     document.addEventListener("click", function (event) {
-      var button = event.target.closest("[data-dial]");
+      var button = eventElement(event).closest("[data-dial]");
       if (!button) return;
       var dest = document.getElementById("dest");
       var form = document.getElementById("dial-form");
@@ -181,7 +197,7 @@
     //      one-shot afterSwap: the composer only exists once the tab
     //      partial has swapped in.
     document.addEventListener("click", function (event) {
-      var sms = event.target.closest("[data-sms]");
+      var sms = eventElement(event).closest("[data-sms]");
       if (sms) {
         var number = sms.getAttribute("data-sms");
         var nav = document.querySelector("[data-tab='messages']");
@@ -199,7 +215,7 @@
         document.addEventListener("htmx:afterSwap", prefill);
         return;
       }
-      var save = event.target.closest("[data-save-contact]");
+      var save = eventElement(event).closest("[data-save-contact]");
       if (save) {
         document.dispatchEvent(
           new CustomEvent("wp:save-contact", {
@@ -220,7 +236,7 @@
     //      with its last row. A failed delete keeps the row and says
     //      so; erasure must never LOOK done when it is not.
     document.addEventListener("click", function (event) {
-      var btn = event.target.closest("[data-delete-transcript]");
+      var btn = eventElement(event).closest("[data-delete-transcript]");
       if (!btn) return;
       var callId = btn.getAttribute("data-delete-transcript");
       var confirmText =
@@ -259,10 +275,10 @@
     //      handler, clipboard API only (secure context — the stack
     //      fronts TLS), honest toasts either way. English (D3).
     document.addEventListener("click", function (event) {
-      if (!event.target.closest) return;
+      if (!eventElement(event).closest) return;
       var btn =
-        event.target.closest("[data-copy-transcript]") ||
-        event.target.closest("[data-copy-target]");
+        eventElement(event).closest("[data-copy-transcript]") ||
+        eventElement(event).closest("[data-copy-target]");
       if (!btn) return;
       var text = "";
       if (btn.hasAttribute("data-copy-transcript")) {
@@ -301,8 +317,8 @@
     //      no server round trip (the rendered row is the truth), works
     //      when island scripts fail. English toasts (D3).
     document.addEventListener("click", function (event) {
-      if (!event.target.closest) return;
-      var btn = event.target.closest("[data-download-transcript]");
+      if (!eventElement(event).closest) return;
+      var btn = eventElement(event).closest("[data-download-transcript]");
       if (!btn) return;
       var row = btn.closest(".wp-transcript-call");
       var node = row && row.querySelector(".wp-transcript-text");
@@ -335,8 +351,8 @@
       return document.querySelector('[data-note-body="' + callId + '"]');
     };
     document.addEventListener("click", function (event) {
-      if (!event.target.closest) return;
-      var btn = event.target.closest("[data-note-save]");
+      if (!eventElement(event).closest) return;
+      var btn = eventElement(event).closest("[data-note-save]");
       if (!btn) return;
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
@@ -374,8 +390,8 @@
         });
     });
     document.addEventListener("click", function (event) {
-      if (!event.target.closest) return;
-      var btn = event.target.closest("[data-note-draft]");
+      if (!eventElement(event).closest) return;
+      var btn = eventElement(event).closest("[data-note-draft]");
       if (!btn) return;
       var callId = btn.getAttribute("data-note-draft") || "";
       var box = noteBodyFor(callId);
@@ -475,8 +491,8 @@
     });
     document.addEventListener("click", function (event) {
       var link =
-        event.target && event.target.closest
-          ? event.target.closest("[data-tab='history']")
+        eventElement(event) && eventElement(event).closest
+          ? eventElement(event).closest("[data-tab='history']")
           : null;
       if (!link) return;
       missedCount = 0;
@@ -609,8 +625,8 @@
     //     closes the disclosure.
     document.addEventListener("click", function (event) {
       var snippet =
-        event.target && event.target.closest
-          ? event.target.closest("[data-snippet]")
+        eventElement(event) && eventElement(event).closest
+          ? eventElement(event).closest("[data-snippet]")
           : null;
       if (!snippet) return;
       var form = snippet.closest("form.wp-compose");
@@ -632,8 +648,8 @@
     var lightboxImg = null;
     document.addEventListener("click", function (event) {
       var link =
-        event.target && event.target.closest
-          ? event.target.closest("a[data-lightbox]")
+        eventElement(event) && eventElement(event).closest
+          ? eventElement(event).closest("a[data-lightbox]")
           : null;
       if (!link) return;
       event.preventDefault();
@@ -668,7 +684,7 @@
     // 2b. data-reload buttons (error panel): full reload, same as the old
     //      inline onclick but CSP-safe via this delegated listener.
     document.addEventListener("click", function (event) {
-      if (!event.target.closest("[data-reload]")) return;
+      if (!eventElement(event).closest("[data-reload]")) return;
       location.reload();
     });
 
@@ -759,8 +775,8 @@
         });
     };
     document.addEventListener("click", function (event) {
-      var btn = event.target.closest
-        ? event.target.closest("[data-transcribe-src]")
+      var btn = eventElement(event).closest
+        ? eventElement(event).closest("[data-transcribe-src]")
         : null;
       if (!btn) return;
       runTranscribe(btn);
@@ -844,12 +860,12 @@
       }
     };
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
-      var transcript = event.target;
+      var transcript = eventElement(event);
       if (!transcript || transcript.id !== "thread-transcript") return;
       if (transcript.dataset.page !== "0") event.preventDefault();
     });
     document.addEventListener("htmx:sseMessage", function (event) {
-      var transcript = event.target;
+      var transcript = eventElement(event);
       if (!transcript || transcript.id !== "thread-transcript") return;
       if (transcript.dataset.page !== "0" || !transcript.dataset.thread) return;
       // Politely announce the arrival (the live region is SR-only, so
@@ -893,18 +909,18 @@
       "scroll",
       function (event) {
         var transcript = document.getElementById("thread-transcript");
-        if (!transcript || event.target !== transcript) return;
+        if (!transcript || eventElement(event) !== transcript) return;
         if (nearBottom(transcript)) resetJumpChip();
       },
       true,
     );
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
-      var transcript = event.target;
+      var transcript = eventElement(event);
       if (!transcript || transcript.id !== "thread-transcript") return;
       transcript.dataset.wasNearBottom = nearBottom(transcript) ? "1" : "0";
     });
     document.addEventListener("htmx:sseMessage", function (event) {
-      var transcript = event.target;
+      var transcript = eventElement(event);
       if (!transcript || transcript.id !== "thread-transcript") return;
       if (transcript.dataset.page !== "0" || !transcript.dataset.thread) return;
       if (transcript.dataset.wasNearBottom === "0") {
@@ -927,8 +943,8 @@
     });
     document.addEventListener("click", function (event) {
       var chip =
-        event.target && event.target.closest
-          ? event.target.closest(".wp-jump-latest")
+        eventElement(event) && eventElement(event).closest
+          ? eventElement(event).closest(".wp-jump-latest")
           : null;
       if (!chip) return;
       var transcript = document.getElementById("thread-transcript");
@@ -949,7 +965,7 @@
     //     matches. Cancel the push until the box is empty again — the
     //     next keystroke's debounced fetch re-renders the list anyway.
     document.addEventListener("htmx:sseBeforeMessage", function (event) {
-      var list = event.target;
+      var list = eventElement(event);
       if (
         !list ||
         !list.classList ||
@@ -1049,7 +1065,7 @@
     };
     var draftTimer = null;
     document.addEventListener("input", function (event) {
-      var area = event.target;
+      var area = eventElement(event);
       if (!area.closest || !area.closest("textarea.wp-compose-body")) return;
       if (draftTimer) clearTimeout(draftTimer);
       draftTimer = setTimeout(function () {
@@ -1068,7 +1084,7 @@
       if (draft) area.value = draft;
     });
     document.addEventListener("htmx:afterRequest", function (event) {
-      var form = event.target;
+      var form = eventElement(event);
       if (!form || !form.matches || !form.matches("form")) return;
       if (!event.detail || !event.detail.successful) return;
       if (!form.querySelector("textarea.wp-compose-body")) return;
@@ -1087,7 +1103,7 @@
     //     is transient by design.
     var optPending = new WeakMap();
     document.addEventListener("htmx:beforeRequest", function (event) {
-      var form = (event.detail && event.detail.elt) || event.target;
+      var form = (event.detail && event.detail.elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (form.classList.contains("wp-compose-new")) return;
       var transcript = document.getElementById("thread-transcript");
@@ -1134,7 +1150,7 @@
       optPending.set(form, { bubble: bubble, body: body });
     });
     var rollbackOptimistic = function (event) {
-      var form = (event.detail && event.detail.elt) || event.target;
+      var form = (event.detail && event.detail.elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       var record = optPending.get(form);
       if (!record) return;
@@ -1180,7 +1196,7 @@
     document.addEventListener("htmx:responseError", rollbackOptimistic);
     document.addEventListener("htmx:sendError", rollbackOptimistic);
     document.addEventListener("htmx:afterRequest", function (event) {
-      var form = (event.detail && event.detail.elt) || event.target;
+      var form = (event.detail && event.detail.elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (event.detail && event.detail.successful) optPending.delete(form);
     });
@@ -1192,7 +1208,7 @@
     //     driven swaps (search, composer, drafts) deliberately keep
     //     focus where the user is.
     document.addEventListener("htmx:afterSwap", function (event) {
-      var elt = event.target;
+      var elt = eventElement(event);
       if (!elt || !elt.matches) return;
       var navigating =
         elt.hasAttribute && elt.hasAttribute("data-tab")
@@ -1240,7 +1256,7 @@
       );
     };
     document.addEventListener("htmx:beforeRequest", function (event) {
-      if (!navigatingSwap(event.target)) return;
+      if (!navigatingSwap(eventElement(event))) return;
       skeleton = skeleton || document.getElementById("wp-tab-skeleton");
       if (skeleton) skeleton.hidden = false;
     });
@@ -1520,13 +1536,13 @@
     };
 
     document.addEventListener("click", function (event) {
-      if (!event.target || !event.target.closest) return;
-      var play = event.target.closest(".wp-vm-play");
+      if (!eventElement(event) || !eventElement(event).closest) return;
+      var play = eventElement(event).closest(".wp-vm-play");
       if (play) {
         vmTogglePlay(play);
         return;
       }
-      var speed = event.target.closest(".wp-vm-speed");
+      var speed = eventElement(event).closest(".wp-vm-speed");
       if (speed) vmCycleSpeed(speed);
     });
 
@@ -1544,8 +1560,8 @@
     };
 
     document.addEventListener("pointerdown", function (event) {
-      if (!event.target || !event.target.closest) return;
-      var canvas = event.target.closest(".wp-vm-wave");
+      if (!eventElement(event) || !eventElement(event).closest) return;
+      var canvas = eventElement(event).closest(".wp-vm-wave");
       if (!canvas) return;
       var uuid = canvas.id.slice("vm-wave-".length);
       var audio = document.getElementById("vm-audio-" + uuid);
@@ -1566,8 +1582,8 @@
 
     // keyboard seek on the scrubber (it carries role=slider + tabindex)
     document.addEventListener("keydown", function (event) {
-      if (!event.target || !event.target.closest) return;
-      var canvas = event.target.closest(".wp-vm-wave");
+      if (!eventElement(event) || !eventElement(event).closest) return;
+      var canvas = eventElement(event).closest(".wp-vm-wave");
       if (!canvas) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       var uuid = canvas.id.slice("vm-wave-".length);
@@ -1767,7 +1783,7 @@
         }
       });
       overlay.addEventListener("click", function (event) {
-        if (event.target === overlay) closeOverlay();
+        if (eventElement(event) === overlay) closeOverlay();
       });
     };
 
@@ -1801,7 +1817,7 @@
         return;
       }
       if (event.key === "?" && !event.ctrlKey && !event.metaKey) {
-        var target = event.target;
+        var target = eventElement(event);
         if (
           target &&
           target.closest &&
@@ -1892,7 +1908,7 @@
     }
 
     document.addEventListener("keydown", function (event) {
-      var area = event.target;
+      var area = eventElement(event);
       if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
         return;
       if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
@@ -1903,7 +1919,7 @@
     });
 
     document.addEventListener("input", function (event) {
-      var area = event.target;
+      var area = eventElement(event);
       if (!area || !area.closest || !area.closest("textarea.wp-compose-body"))
         return;
       var form = area.closest("form");
@@ -1932,7 +1948,7 @@
     }
 
     document.addEventListener("change", function (event) {
-      var input = event.target;
+      var input = eventElement(event);
       if (!input || !input.closest || !input.closest(".wp-compose")) return;
       if (String(input.type || "") !== "file") return;
       if (typeof DataTransfer === "undefined") return;
@@ -1943,8 +1959,8 @@
 
     document.addEventListener("click", function (event) {
       var remove =
-        event.target && event.target.closest
-          ? event.target.closest(".wp-chip-x")
+        eventElement(event) && eventElement(event).closest
+          ? eventElement(event).closest(".wp-chip-x")
           : null;
       if (!remove) return;
       var form = remove.closest("form");
