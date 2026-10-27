@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -175,8 +176,10 @@ func mustExt(t *testing.T, raw string) domain.Extension {
 }
 
 // recordingTransport satisfies push.Sender and records the draft facts
-// shipped through it (the M14 fan-out specs).
+// shipped through it (the M14 fan-out specs). The fan-out runs in a
+// fire-and-forget goroutine, so every field access is mutex-guarded.
 type recordingTransport struct {
+	mu      sync.Mutex
 	enabled bool
 	drafts  []push.Draft
 	err     error
@@ -188,8 +191,34 @@ func (r *recordingTransport) Send(context.Context, string, push.Ring) error {
 	return nil
 }
 func (r *recordingTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.drafts = append(r.drafts, draft)
 	return r.err
+}
+
+// snapshot returns a copy of the recorded drafts (race-free read).
+func (r *recordingTransport) snapshot() []push.Draft {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]push.Draft(nil), r.drafts...)
+}
+
+// waitForDrafts polls until the fan-out goroutine recorded n facts (or
+// times out) — deterministic, no sleep windows.
+func waitForDrafts(t *testing.T, transport *recordingTransport, n int) []push.Draft {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		drafts := transport.snapshot()
+		if len(drafts) >= n {
+			return drafts
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("fan-out recorded %d draft facts, want %d", len(drafts), n)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 }
 
 // summaryServerWithPush wires the full summarize chain plus a push
@@ -210,10 +239,6 @@ func summaryServerWithPush(t *testing.T, transport *recordingTransport) (*testSe
 	return server, clientFor(t, server), engine.PushDevices()
 }
 
-// waitDraftFlush gives the fire-and-forget fan-out goroutine its
-// scheduling window.
-func waitDraftFlush() { time.Sleep(50 * time.Millisecond) }
-
 // TestSummaryDraftPushesOnlyWhenSeamOn: a fanout with no live transport
 // ships nothing, and the summarize answer is unaffected either way.
 func TestSummaryDraftPushesOnlyWhenSeamOn(t *testing.T) {
@@ -227,9 +252,11 @@ func TestSummaryDraftPushesOnlyWhenSeamOn(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("summary: %d", resp.StatusCode)
 	}
-	waitDraftFlush()
-	if len(transport.drafts) != 0 {
-		t.Fatalf("a disabled transport must receive nothing, got %v", transport.drafts)
+	// Give the fire-and-forget goroutine its window; a disabled
+	// transport must still receive nothing.
+	waitForDrafts(t, func() *recordingTransport { return transport }(), 0)
+	if drafts := transport.snapshot(); len(drafts) != 0 {
+		t.Fatalf("a disabled transport must receive nothing, got %v", drafts)
 	}
 }
 
@@ -260,11 +287,8 @@ func TestSummaryDraftFansOutToRegisteredDevices(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("summary: %d %s", resp.StatusCode, body)
 	}
-	waitDraftFlush()
-	if len(transport.drafts) != 2 {
-		t.Fatalf("expected 2 draft facts (owner's two devices), got %d: %+v", len(transport.drafts), transport.drafts)
-	}
-	for _, fact := range transport.drafts {
+	drafts := waitForDrafts(t, transport, 2)
+	for _, fact := range drafts {
 		if fact.Event != push.EventDraftReady || fact.Contact != "+4989123456" || fact.DraftID != "d-ond" {
 			t.Fatalf("draft fact mismatch: %+v", fact)
 		}
@@ -294,7 +318,18 @@ func TestSummaryDraftPushPrunesDeadDevice(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("summary: %d", resp.StatusCode)
 	}
-	waitDraftFlush()
+	// The dead-device prune happens inside the same goroutine; wait for
+	// the send attempt before reading the registry.
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if live, _ := devices.List(ctx, mustExt(t, "1001")); len(live) == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the dead device was never pruned")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 	live, err := devices.List(ctx, mustExt(t, "1001"))
 	if err != nil {
 		t.Fatal(err)
