@@ -57,6 +57,14 @@ exclude:
   - "internal/web/assets/shell.js"
   - "internal/web/assets/vendor/**"
   - "**/*_templ.go"
+#
+# NOT a JS/TS toolchain project: there is no package.json, no bundler and no
+# node_modules. The served JavaScript is checked by the flake's
+# `island-typecheck` step (`tsc -p tsconfig.json`, whole served tree, strict +
+# checkJs) and linted by `island-lint`; oxfmt still owns formatting for the
+# files above (which prettier handles via treefmt). Do not add a JS/TS lint or
+# type step here — a second, divergent toolchain is how the two-formatters war
+# restarts.
 
 # Tool policy (skip_steps cannot be per-file or per-rule; skips and
 # deliberate unskips both carry their rationale here):
