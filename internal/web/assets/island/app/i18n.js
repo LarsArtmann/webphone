@@ -7,10 +7,30 @@
 
 const LANG_KEY = "pbx-lang";
 
+// The message tables are a heterogeneous bag: plain strings and
+// formatter functions (the call site writes t("key")(arg)). defineMessages
+// is an identity function that exists only to give the literal a contextual
+// signature — that is what types the formatter parameters (no implicit any)
+// while KEEPING the key union, which an index-signature annotation would
+// flatten to string.
+/**
+ * @template {Record<string, string | ((...args: any[]) => string)>} T
+ * @param {T} table
+ * @returns {T}
+ */
+const defineMessages = (table) => table;
+
+/** One dictionary entry: a finished string or the formatter that builds it. */
+/** @typedef {string | ((...args: any[]) => string)} IslandMessage */
+/** The two shipped languages. */
+/** @typedef {"en" | "de"} IslandLang */
+/** Every key the tables carry (derived from `en`, never hand-listed). */
+/** @typedef {keyof typeof I18N.en} IslandI18nKey */
+
 // Exported for the node:test suite (island-tests/): the en/de parity test
 // enumerates keys exactly like the Go-side i18n sync test does.
 export const I18N = {
-  en: {
+  en: defineMessages({
     regState: "Registration state",
     signin: "Sign in to your extension",
     extension: "Extension",
@@ -209,8 +229,8 @@ export const I18N = {
     dispositionIvr: "IVR",
     dispositionSaved: (label) => `Verdict saved: ${label}`,
     dispositionFailed: "Saving the verdict failed — try again.",
-  },
-  de: {
+  }),
+  de: defineMessages({
     regState: "Registrierungsstatus",
     signin: "Anmeldung an Ihrer Nebenstelle",
     extension: "Nebenstelle",
@@ -418,7 +438,7 @@ export const I18N = {
     dispositionSaved: (label) => `Einschätzung gespeichert: ${label}`,
     dispositionFailed:
       "Speichern der Einschätzung fehlgeschlagen — bitte erneut versuchen.",
-  },
+  }),
 };
 
 // The wp-lang cookie is what the SERVER already renders the shell, tabs
@@ -426,25 +446,38 @@ export const I18N = {
 // user gets one language everywhere: German tabs under a German phone,
 // screen readers announcing with the right phonemes. localStorage only
 // leads before the first setLang (which is what writes the cookie).
+/** @returns {IslandLang | ""} */
 function cookieLang() {
   const match = document.cookie.match(/(?:^|;\s*)wp-lang=(de|en)\b/);
-  return match ? match[1] : "";
+  return match ? /** @type {IslandLang} */ (match[1]) : "";
 }
 
+/** @type {IslandLang} */
 let lang =
   cookieLang() ||
-  localStorage.getItem(LANG_KEY) ||
+  /** @type {IslandLang} */ (localStorage.getItem(LANG_KEY)) ||
   ((navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en");
 
+// The table value is a finished string OR the formatter for it, and the
+// call sites write both t("key") and t("key")(arg). Returning the union
+// would force a cast at all 155 call sites for no safety (the KEY is what
+// the type gate can check); returning any keeps that split at the seam.
+/**
+ * @param {IslandI18nKey} key
+ * @returns {any}
+ */
 export function t(key) {
+  /** @type {typeof I18N.en} */
   const table = I18N[lang] || I18N.en;
   return table[key] !== undefined ? table[key] : I18N.en[key];
 }
 
+/** @returns {IslandLang} */
 export function getLang() {
   return lang;
 }
 
+/** @param {IslandLang} next */
 export function setLang(next) {
   lang = next;
   localStorage.setItem(LANG_KEY, lang);
@@ -455,14 +488,19 @@ export function setLang(next) {
 
 export function applyI18n() {
   document.documentElement.lang = lang;
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const value = t(el.dataset.i18n);
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    const el = /** @type {HTMLElement} */ (node);
+    const value = t(/** @type {IslandI18nKey} */ (el.dataset.i18n));
     if (typeof value === "string") el.textContent = value;
   });
-  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
-    el.placeholder = t(el.dataset.i18nPlaceholder);
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+    const el = /** @type {HTMLInputElement} */ (node);
+    el.placeholder = t(
+      /** @type {IslandI18nKey} */ (el.dataset.i18nPlaceholder),
+    );
   });
-  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
-    el.title = t(el.dataset.i18nTitle);
+  document.querySelectorAll("[data-i18n-title]").forEach((node) => {
+    const el = /** @type {HTMLElement} */ (node);
+    el.title = t(/** @type {IslandI18nKey} */ (el.dataset.i18nTitle));
   });
 }

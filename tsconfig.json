@@ -1,3 +1,19 @@
+// THE TYPE GATE. `tsc -p . --noEmit` is green over every file listed below.
+//
+// Only a file whose ENTIRE import closure is at zero errors may be listed:
+// TypeScript type-checks a module the moment an imported module reaches it, so
+// a red file cannot hide behind a green one — and listing one red file would
+// drag its own errors into the gate. The untyped remainder is DECLARED BY NAME
+// in internal/web/assets/typecheck_pin_test.go, which also refuses a shrunken
+// include, a disabled checkJs/strict, or a bare @ts-ignore.
+//
+// tsconfig.all.json extends this file over the whole asset tree. It is the
+// campaign's measuring project (use it on a file you are annotating); it is
+// NOT the gate and must never be wired into CI.
+//
+// No `// @ts-check` pragmas anywhere: island sources are served verbatim, so a
+// pragma would change a served byte. checkJs + include gives the same checking
+// with zero served-byte changes.
 {
   "compilerOptions": {
     "allowJs": true,
@@ -15,9 +31,22 @@
   },
   "include": [
     "types/**/*.d.ts",
-    "internal/web/assets/island/app/**/*.js",
-    "internal/web/assets/shell.js",
-    "internal/web/assets/enroll/**/*.js",
+    "internal/web/assets/enroll/webauthn.js",
+    "internal/web/assets/island/app/audio.js",
+    "internal/web/assets/island/app/audioout.js",
+    "internal/web/assets/island/app/auth.js",
+    "internal/web/assets/island/app/config.js",
+    "internal/web/assets/island/app/csrf.js",
+    "internal/web/assets/island/app/i18n.js",
+    "internal/web/assets/island/app/ice.js",
+    "internal/web/assets/island/app/mic.js",
+    "internal/web/assets/island/app/notify.js",
+    "internal/web/assets/island/app/pcsetup.js",
+    "internal/web/assets/island/app/selftest.js",
+    "internal/web/assets/island/app/session.js",
+    "internal/web/assets/island/app/ssoerror.js",
+    "internal/web/assets/island/app/state.js",
+    "internal/web/assets/island/app/ui.js",
     "internal/web/assets/theme-preload.js"
   ]
 }
