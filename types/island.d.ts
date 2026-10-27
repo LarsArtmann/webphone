@@ -255,3 +255,18 @@ interface IslandPostJSONAnswer {
   status: number;
   body: any;
 }
+
+/** The live-capture mix: one AudioContext carrying both call legs, whose
+ * destination node the silence probe taps. */
+interface IslandCapture {
+  stream: MediaStream;
+  ctx: AudioContext;
+  dest: MediaStreamAudioDestinationNode;
+}
+
+/** One running live-capture controller per call id. */
+interface IslandCaptureController {
+  recorder: MediaRecorder;
+  ctx: AudioContext;
+  stream: MediaStream;
+}

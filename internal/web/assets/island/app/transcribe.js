@@ -23,6 +23,7 @@ export const transcribeEnabled = asrEnabled;
 // owner-scoped transcript store (the History tab's durable source).
 // Fire-and-forget: a failed save costs the LATER re-read, not the live
 // card — the caller logs/toasts, never blocks the capture loop.
+/** @param {IslandTranscriptSegment} segment */
 export async function saveTranscriptSegment(segment) {
   const res = await authedFetch("/api/transcripts", {
     method: "POST",
@@ -71,10 +72,12 @@ let failureToasted = false;
 
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
-export async function transcribeBlob(
-  blob,
-  { filename = "audio.webm", language } = {},
-) {
+/**
+ * @param {Blob} blob
+ * @param {{filename?: string, language?: string}} [options]
+ * @returns {Promise<string>}
+ */
+export async function transcribeBlob(blob, { filename = "audio.webm", language } = {}) {
   const query = new URLSearchParams();
   if (filename) query.set("filename", filename);
   if (language) query.set("lang", language);
@@ -95,6 +98,11 @@ export async function transcribeBlob(
 
 // transcribeUrl fetches a same-origin audio URL (voicemail playback,
 // MMS attachment) into a blob and transcribes it.
+/**
+ * @param {string} url
+ * @param {{filename?: string, language?: string}} [options]
+ * @returns {Promise<string>}
+ */
 export async function transcribeUrl(url, { filename, language } = {}) {
   const res = await authedFetch(url);
   if (!res.ok) {
@@ -110,8 +118,10 @@ export async function transcribeUrl(url, { filename, language } = {}) {
 // --- live call capture ------------------------------------------------------
 
 // live maps a call id to its running controller (recorder + metadata).
+/** @type {Map<string, IslandCaptureController>} */
 const live = new Map();
 
+/** @param {string} id @returns {boolean} */
 export function isTranscribing(id) {
   return live.has(id);
 }
@@ -124,6 +134,10 @@ export function isTranscribing(id) {
 // browser cannot mix (no AudioContext) or the call has no peer connection
 // yet — the caller renders an honest unsupported notice. The destination
 // node rides along so the silence probe can tap the same mix.
+/**
+ * @param {IslandCallEntry | null | undefined} entry
+ * @returns {IslandCapture | null}
+ */
 export function captureStream(entry) {
   const sdh = entry && entry.session && entry.session.sessionDescriptionHandler;
   const pc = sdh && sdh.peerConnection;
@@ -158,6 +172,11 @@ export function captureStream(entry) {
 // when the browser or the test stub lacks the pieces — the guard then
 // FAILS OPEN (segments always POST); a mis-built probe must never
 // silently kill capture.
+/**
+ * @param {AudioContext} ctx
+ * @param {MediaStreamAudioDestinationNode} dest
+ * @returns {(() => boolean) | null}
+ */
 function attachSilenceProbe(ctx, dest) {
   if (!ctx || typeof ctx.createAnalyser !== "function") return null;
   if (!dest || typeof dest.connect !== "function") return null;
@@ -199,6 +218,7 @@ function recorderOptions() {
 // (Chrome holds resume() unresolved until the gesture fires). Never
 // silent: the wait is logged where the operator reads it (#log stays
 // English by contract).
+/** @param {AudioContext} ctx */
 function ensureRunning(ctx) {
   if (!ctx || typeof ctx.resume !== "function") return;
   const retry = () => {
@@ -224,6 +244,13 @@ function ensureRunning(ctx) {
 // chunks — the operator's UI language is the honest default). Returns
 // false when the browser or the seam cannot support it (the caller
 // shows the notice).
+/**
+ * @param {string} id
+ * @param {IslandCallEntry} entry
+ * @param {(text: string) => void} onText
+ * @param {{language?: string}} [options]
+ * @returns {boolean}
+ */
 export function startLiveTranscription(id, entry, onText, { language } = {}) {
   if (!transcribeEnabled || live.has(id)) return false;
   if (typeof MediaRecorder === "undefined") {
@@ -239,6 +266,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
   ensureRunning(ctx);
   const isSilent = attachSilenceProbe(ctx, dest);
 
+  /** @type {MediaRecorder} */
   let recorder;
   try {
     recorder = new MediaRecorder(stream, recorderOptions());
@@ -309,6 +337,10 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
 // scarce resource (browsers cap concurrent instances), the mixed
 // stream's tracks die with it. Defensive typeof guards keep the node
 // test stubs honest.
+/**
+ * @param {AudioContext} ctx
+ * @param {MediaStream} stream
+ */
 function releaseCapture(ctx, stream) {
   if (ctx && typeof ctx.close === "function") {
     // Teardown: a refused close dies with the page anyway.
@@ -326,6 +358,7 @@ function releaseCapture(ctx, stream) {
 // track directions are disabled), so recording on would ship silence
 // to the provider — the hallucination magnet. Pause/resume is a no-op
 // for a call that is not being transcribed (safe on every hold flip).
+/** @param {string} id @param {boolean} paused */
 export function pauseLiveTranscription(id, paused) {
   const controller = live.get(id);
   if (!controller || !controller.recorder) return;
@@ -342,6 +375,7 @@ export function pauseLiveTranscription(id, paused) {
 
 // stopLiveTranscription ends capture for one call. A no-op when the call
 // was never being transcribed (safe to call on every hangup).
+/** @param {string} id */
 export function stopLiveTranscription(id) {
   const controller = live.get(id);
   if (!controller) return;
@@ -357,6 +391,12 @@ export function stopLiveTranscription(id) {
 
 // transcribeNow is the on-demand helper shared by the island's voicemail
 // panel: fetch a URL and render the text into target (or an error).
+/**
+ * @param {string} url
+ * @param {HTMLElement} target
+ * @param {{filename?: string}} [options]
+ * @returns {Promise<void>}
+ */
 export async function transcribeNow(url, target, { filename } = {}) {
   if (!transcribeEnabled) return;
   target.textContent = t("transcribeBusy");
@@ -381,9 +421,12 @@ export async function transcribeNow(url, target, { filename } = {}) {
 // the server's store cap — a marathon call cannot grow the strip.
 export const CAPTION_LINE_CAP = 30;
 
+/** @type {Map<string, string[]>} */
 const segmentLogs = new Map();
+/** @type {Map<string, Set<(text: string) => void>>} */
 const segmentSubs = new Map();
 
+/** @param {string} id @param {string} text */
 function recordSegment(id, text) {
   let entries = segmentLogs.get(id);
   if (!entries) {
@@ -397,11 +440,13 @@ function recordSegment(id, text) {
 }
 
 // callSegments snapshots one call's logged segments (oldest first).
+/** @param {string} id @returns {string[]} */
 export function callSegments(id) {
   return [...(segmentLogs.get(id) ?? [])];
 }
 
 // clearCallSegments drops one call's log (teardown, explicit clear).
+/** @param {string} id */
 export function clearCallSegments(id) {
   segmentLogs.delete(id);
 }
@@ -409,6 +454,11 @@ export function clearCallSegments(id) {
 // subscribeCallSegments wires one listener to a call's future segments
 // and returns the unsubscribe handle. The listener receives ONLY new
 // segments (the strip replays callSegments() for its initial paint).
+/**
+ * @param {string} id
+ * @param {(text: string) => void} fn
+ * @returns {() => void}
+ */
 export function subscribeCallSegments(id, fn) {
   let subs = segmentSubs.get(id);
   if (!subs) {

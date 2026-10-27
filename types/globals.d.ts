@@ -37,6 +37,8 @@ interface PBXConfig {
 
 interface Window {
   PBX_CONFIG?: PBXConfig;
+  /** Older WebKit/Chromium spelling of AudioContext (progressive fallback). */
+  webkitAudioContext?: typeof AudioContext;
   /** htmx 2.x, loaded as a classic script before the island modules. */
   htmx?: {
     trigger(target: Element | string, eventName: string): void;
