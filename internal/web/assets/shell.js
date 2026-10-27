@@ -12,11 +12,15 @@
   // answers the document element, which matches none of this file's
   // selectors.
   /**
+   * The element an event came from, as an HTMLElement: every event wired in
+   * this file is dispatched from (or bubbles through) HTML markup — the
+   * inline SVG icons live inside HTML buttons, so a path target still
+   * resolves through closest().
    * @param {Event} event
-   * @returns {Element}
+   * @returns {HTMLElement}
    */
   function eventElement(event) {
-    var target = /** @type {Element | null} */ (event.target);
+    var target = /** @type {HTMLElement | null} */ (event.target);
     // Duck check rather than `instanceof Element`: the node test stubs are
     // plain objects (and some are forms that answer matches() but not
     // closest()), so instanceof would throw there and take every delegated
@@ -228,10 +232,10 @@
     document.addEventListener("click", function (event) {
       var button = closestHTMLElement(eventElement(event), "[data-dial]");
       if (!button) return;
-      var dest = /** @type {HTMLInputElement} */ (
+      dest = /** @type {HTMLInputElement} */ (
         document.getElementById("dest")
       );
-      var form = /** @type {HTMLFormElement} */ (
+      form = /** @type {HTMLFormElement} */ (
         document.getElementById("dial-form")
       );
       var dest = document.getElementById("dest");
@@ -306,7 +310,9 @@
         closestHTMLElement(eventElement(event), "[data-delete-transcript]")
       );
       if (!btn) return;
-      var callId = btn.getAttribute("data-delete-transcript");
+      // Bound once: a `var` is not narrowed inside the promise closures.
+      var button = btn;
+      var callId = btn.getAttribute("data-delete-transcript") || "";
       var confirmText =
         btn.getAttribute("data-confirm") || "Delete this transcript?";
       if (typeof window.confirm === "function" && !window.confirm(confirmText))
@@ -318,7 +324,7 @@
       })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
-          var row = closestHTMLElement(btn, ".wp-transcript-call");
+          var row = closestHTMLElement(button, ".wp-transcript-call");
           if (row) {
             var section = closestHTMLElement(row, ".wp-transcripts");
             row.remove();
@@ -432,6 +438,7 @@
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
+      var note = box;
       btn.disabled = true;
       fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
         method: "PUT",
@@ -472,6 +479,7 @@
       var callId = btn.getAttribute("data-note-draft") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
+      var note = box;
       btn.disabled = true;
       fetch("/api/calls/" + encodeURIComponent(callId) + "/summary-draft", {
         method: "POST",
@@ -485,7 +493,7 @@
                 shellToast("Already drafted — see Messages.", "info");
                 return;
               }
-              box.value = draft.text || "";
+              note.value = draft.text || "";
               shellToast("Draft inserted — edit before saving.", "ok");
             });
           }
@@ -587,9 +595,9 @@
     //     visibility plus one gesture, never a second config surface).
     //     English shell copy (D3); announcements ride the polite live
     //     region.
-    /** @type {HTMLElement | null} */
+    /** @type {HTMLButtonElement | null} */
     var agentPill = null;
-    /** @type {HTMLElement | null} */
+    /** @type {HTMLButtonElement | null} */
     var agentReset = null;
     /** @type {IslandAgentModeState | null} */
     var agentModeState = null;
@@ -813,12 +821,13 @@
         return res;
       });
     };
-    /** @param {Element} btn @returns {Promise<unknown>} */
+    /** @param {Element} btn @returns {Promise<void>} */
     var runTranscribe = function (btn) {
       var src = btn.getAttribute("data-transcribe-src");
       var targetId = btn.getAttribute("data-transcribe-target");
       var found = targetId ? document.getElementById(targetId) : null;
       if (!src || !found) return Promise.resolve();
+      var source = src;
       var target = found;
       /** @param {string} text */
       var render = function (text) {
@@ -849,13 +858,13 @@
         }
       };
       render("Transcribing…");
-      return fetch(src, { credentials: "same-origin" })
+      return fetch(source, { credentials: "same-origin" })
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
           return res.blob();
         })
         .then(function (blob) {
-          var name = src.split("/").pop() || "audio";
+          var name = source.split("/").pop() || "audio";
           return postTranscribe(blob, name, false);
         })
         .then(function (res) {

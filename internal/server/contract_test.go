@@ -115,7 +115,12 @@ func TestShellJSHandlesReloadButtons(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("shell.js status %d", resp.StatusCode)
 	}
-	if !strings.Contains(string(body), `closest("[data-reload]")`) {
+	// The delegated handler routes through the shell's typed closest helper
+	// (closestHTMLElement), so the assertion names the whole call: the
+	// SELECTOR alone would pass on a comment or an unused string.
+	// Whitespace-free comparison: the formatter wraps these calls across
+	// lines, and a pin that breaks on formatting is a pin people delete.
+	if !strings.Contains(withoutSpace(string(body)), `closestHTMLElement(eventElement(event),"[data-reload]")`) {
 		t.Error("shell.js lost the data-reload delegated handler — the error panel's reload button would stop working")
 	}
 }
@@ -163,14 +168,26 @@ func TestShellJSHandlesTranscribeButtons(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("shell.js status %d", resp.StatusCode)
 	}
-	page := string(body)
+	page := withoutSpace(string(body))
 	for _, want := range []string{
-		`closest("[data-transcribe-src]")`, // the delegated click handler
-		"autoTranscribe",                   // the auto-start pass
-		"PBX_CONFIG.asr",                   // gated on the served seam flag
+		// No closing paren: the formatter decides whether this call gets a
+		// trailing comma, and the pin is about the delegated lookup, not
+		// about punctuation.
+		`closestHTMLElement(eventElement(event),"[data-transcribe-src]"`, // the delegated click handler
+		"autoTranscribe", // the auto-start pass
+		"PBX_CONFIG.asr", // gated on the served seam flag
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("shell.js lost %q — server-rendered transcription would stop working", want)
 		}
 	}
+}
+
+// withoutSpace collapses every whitespace run out of a served asset. The
+// served-byte pins below name whole call expressions (a bare selector would
+// also match a comment); the formatter wraps those calls across lines, so
+// comparing whitespace-free text keeps the pins exact without making them
+// depend on prettier's line breaking.
+func withoutSpace(s string) string {
+	return strings.Join(strings.Fields(s), "")
 }
