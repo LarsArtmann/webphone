@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TypeScript / platform-language Pareto plan — webphone</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        --radius: 0px;
+        --font-heading: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 48px 24px 96px;
+      }
+
+      header.hero {
+        border-bottom: 4px solid var(--accent);
+        padding-bottom: 24px;
+        margin-bottom: 40px;
+      }
+
+      .kicker {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin: 0 0 12px;
+      }
+
+      h1 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: clamp(1.9rem, 4.2vw, 3.1rem);
+        line-height: 1.06;
+        letter-spacing: -0.025em;
+        margin: 0 0 16px;
+      }
+
+      h2 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.45rem;
+        letter-spacing: -0.015em;
+        margin: 56px 0 8px;
+        padding-top: 8px;
+      }
+
+      h2 .num {
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 0.8em;
+        margin-right: 10px;
+      }
+
+      h3 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin: 28px 0 8px;
+      }
+
+      p { color: var(--text-muted); margin: 0 0 14px; max-width: 78ch; }
+      p.lead { font-size: 1.1rem; color: var(--text); }
+
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--text-faint);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 22px;
+      }
+
+      a { color: var(--color-blue); text-decoration: none; border-bottom: 1px solid rgba(110, 181, 255, 0.35); }
+      a:hover { border-bottom-color: var(--color-blue); }
+
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1px 5px;
+        white-space: nowrap;
+      }
+
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 14px 16px;
+        overflow-x: auto;
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.5;
+        color: var(--text-muted);
+      }
+
+      pre code { background: none; border: 0; padding: 0; white-space: pre; }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1px;
+        background: var(--border);
+        border: 1px solid var(--border);
+        margin: 24px 0 8px;
+      }
+
+      .stat {
+        background: var(--surface-raised);
+        padding: 18px 16px;
+      }
+
+      .stat .value {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.9rem;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+
+      .stat .label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin-top: 8px;
+      }
+
+      .stat.tier1 { border-top: 3px solid var(--problem); }
+      .stat.tier2 { border-top: 3px solid var(--warning); }
+      .stat.tier3 { border-top: 3px solid var(--solution); }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 18px 0 8px;
+        font-size: 13.5px;
+      }
+
+      .scroll { overflow-x: auto; border: 1px solid var(--border); }
+
+      .scroll table { margin: 0; min-width: 720px; }
+
+      th {
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        background: var(--surface-sunken);
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-strong);
+        white-space: nowrap;
+      }
+
+      td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+        color: var(--text-muted);
+      }
+
+      tbody tr:last-child td { border-bottom: 0; }
+      td:first-child { color: var(--text); font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+      td strong { color: var(--text); font-weight: 600; }
+      td .file { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); }
+
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 2px 7px;
+        border: 1px solid currentColor;
+        white-space: nowrap;
+      }
+
+      .badge.go { color: var(--solution); background: color-mix(in srgb, var(--solution) 12%, transparent); }
+      .badge.defer, .badge.cond { color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+      .badge.reject { color: var(--problem); background: color-mix(in srgb, var(--problem) 12%, transparent); }
+
+      .card {
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-raised);
+        padding: 18px 20px;
+        margin: 18px 0;
+      }
+
+      .card-problem { border-left-color: var(--problem); }
+      .card-solution { border-left-color: var(--solution); }
+      .card-warning { border-left-color: var(--warning); }
+
+      .card h3 { margin-top: 0; }
+      .card p:last-child { margin-bottom: 0; }
+
+      ul, ol { color: var(--text-muted); max-width: 80ch; padding-left: 22px; }
+      li { margin-bottom: 6px; }
+      li strong { color: var(--text); }
+
+      .graph {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin: 24px 0;
+        text-align: center;
+        overflow: auto;
+        max-height: 760px;
+      }
+
+      .graph > svg { width: 100%; max-width: 640px; height: auto; }
+
+      .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 24px 0; }
+
+      .tier-card {
+        border: 1px solid var(--border);
+        background: var(--surface-raised);
+        padding: 18px 20px;
+      }
+
+      .tier-card h3 { margin: 0 0 4px; font-size: 1rem; }
+      .tier-card .pct { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+      .tier-card p { font-size: 13.5px; margin: 10px 0 0; }
+
+      footer {
+        margin-top: 72px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-faint);
+      }
+
+      @media (max-width: 720px) {
+        .wrap { padding: 32px 16px 64px; }
+        body { font-size: 15px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <p class="kicker">webphone · pareto plan · snapshot</p>
+        <h1>TypeScript, or Go→JavaScript, or Kotlin Multiplatform?</h1>
+        <p class="lead">
+          Three language questions arrived in one breath. Two of them are not migrations — they are
+          rewrites of the operating premise. The third is real, and it is the cheapest type-safety win
+          this repo can buy: <strong>type-check the island with TypeScript's own checker, emit nothing</strong>.
+        </p>
+        <div class="meta">
+          <span>2026-10-27 16:04 CET</span>
+          <span>scope: webphone + webphone-android (read-only)</span>
+          <span>claims verified at HEAD <code>abd622d</code></span>
+          <span>status: PLAN — nothing implemented</span>
+        </div>
+      </header>
+
+      <h2><span class="num">00</span>Verdict in six lines</h2>
+      <div class="stat-grid">
+        <div class="stat tier1"><div class="value">GO</div><div class="label">B · JSDoc + tsc --noEmit</div></div>
+        <div class="stat tier2"><div class="value">DEFER</div><div class="label">A · island → .ts with emit</div></div>
+        <div class="stat tier3"><div class="value">SPIKE</div><div class="label">E · KMP, protocol layer only</div></div>
+        <div class="stat"><div class="value">2×</div><div class="label">REJECT: Go→JS · KMP full</div></div>
+      </div>
+      <p>
+        <strong>Go→JavaScript is rejected by category</strong> (57,349 Go LOC and the entire single-binary/nix
+        deployment premise for zero product gain). <strong>Full Kotlin Multiplatform is rejected</strong> — already
+        adjudicated in writing on 2026-10-23, with Flutter under a standing hard no. <strong>Island→TypeScript with a
+        build step is deferred behind named triggers.</strong> What ships is a type gate that cannot change a single served
+        byte.
+      </p>
+
+      <h2><span class="num">01</span>Candidate matrix</h2>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Candidate</th><th>Changes served bytes?</th><th>Buys</th><th>Costs</th><th>Verdict</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A</td>
+              <td><strong>Island JS → .ts, tsc emits .js into <code>island/app/</code></strong></td>
+              <td><strong>Yes</strong> — hand-written sources become generated artifacts</td>
+              <td>Type syntax, enums, TS-only features; identical checking power to B</td>
+              <td>Codegen step in every loop; drift gate; source-of-truth moves; three served-byte pin sites re-verified; stack browser E2E owed</td>
+              <td><span class="badge defer">Defer</span></td>
+            </tr>
+            <tr>
+              <td>B</td>
+              <td><strong>Island JS + <code>// @ts-check</code> + JSDoc + <code>tsc --noEmit</code></strong></td>
+              <td><strong>No</strong> — byte-identical tree</td>
+              <td>The same checker, same inference, same <code>strict</code> flags; editor DX; config-key drift caught; no build step</td>
+              <td>One scaffold session + ~18–26 h of annotation, spread file-by-file, opt-in per file</td>
+              <td><span class="badge go">Go — Tier 1</span></td>
+            </tr>
+            <tr>
+              <td>C</td>
+              <td><strong>Go server → JavaScript</strong></td>
+              <td>n/a — total rewrite</td>
+              <td>Nothing the product needs</td>
+              <td>57,349 Go LOC, 32 packages, embed.FS binary, modernc sqlite, samber/do root, usermgmt identity, generated OpenAPI/AsyncAPI, every nix check, the stack's <code>nixosModules.default</code> option surface; plus a Node runtime and an npm supply chain on the host</td>
+              <td><span class="badge reject">Reject</span></td>
+            </tr>
+            <tr>
+              <td>D</td>
+              <td><strong>Kotlin Multiplatform: Android + Compose Desktop Linux + web</strong></td>
+              <td>n/a</td>
+              <td>Shared UI/protocol code across platforms</td>
+              <td>Full-native cost <em>and</em> the call engine lands on its least mature leg (Linux WebRTC); the web target rewrites the island, the templ/htmx model and 5 tab surfaces</td>
+              <td><span class="badge reject">Reject</span></td>
+            </tr>
+            <tr>
+              <td>E</td>
+              <td><strong>KMP scoped: <code>sip/</code> protocol layer → <code>commonMain</code>, Android as the only target</strong></td>
+              <td>No (android repo)</td>
+              <td>Compile-enforced platform purity; a pre-paid seam for a future second target</td>
+              <td>~1 day; buys nothing user-visible today</td>
+              <td><span class="badge cond">Conditional</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2><span class="num">02</span>Errata — what was already adjudicated (read before ranking)</h2>
+      <p>Rule from the planning discipline: a plan that re-dispatches decided work is worse than no plan. Four prior rulings bind this one.</p>
+      <ul>
+        <li>
+          <strong>Kotlin Multiplatform was already evaluated and rejected</strong> —
+          <code>docs/planning/2026-10-23_16-13_native-app-platform-decision.md</code>, comparison table row
+          "Kotlin Multiplatform (Compose Android + desktop Linux)": <em>"Rejected: pays full-native cost AND lands the call
+          engine on its least mature platform."</em> The Linux leg's WebRTC options are named there (webrtc-kmp has no desktop
+          target; Piasy kmp-webrtc is 2025-new; webrtc-java is the fallback). Option D would re-litigate it without new
+          evidence, so this plan does not. Option E is the one variant that decision never priced.
+        </li>
+        <li>
+          <strong>Flutter is a standing hard no</strong> (owner ruling 2026-10-23, recorded in AGENTS.md § "Owner decisions
+          (2026-10-23)"): closed for ANY path, Android or Linux, not subject to cost/benefit re-litigation. Not re-proposed
+          here.
+        </li>
+        <li>
+          <strong>"Island modules are served VERBATIM — no bundling, no minification" is a live invariant</strong>, and three
+          independent pin sites grep the served bytes (Go tests, <code>scripts/webphone-smoke.py</code>, the stack's
+          <code>tests/browser-e2e.py</code>). Any candidate that moves the source of truth to a compiled artifact (A) inherits
+          an E2E re-run obligation and a generated-file drift gate. Candidate B inherits neither, because nothing on the wire
+          moves.
+        </li>
+        <li>
+          <strong>The real open gap is already queued</strong>: <code>docs/status/2026-10-27_15-57_sse-502-incident-triage-and-error-surface-ruling.md</code>
+          item 3 — <em>"TypeScript error-modernization conventions — the island-JS mirror of the Go doctrine (error-contract
+          island section, oxlint rules, typed rejection convention). Nothing started."</em> Tier 1 of this plan absorbs that
+          item (T24) instead of inventing a parallel one. The owner ruling from the same doc ("an unhandled error without a
+          user-visible surface IS a bug") is the doctrine the annotations will encode.
+        </li>
+      </ul>
+      <p>
+        Also checked and dropped as "already done": no <code>.ts</code>/<code>.tsx</code> file, no <code>tsconfig</code>, no
+        <code>tsc</code> anywhere in the tree; the archived 2026-09-19 sweep's mention of <code>vue-tsc</code>/<code>svelte-check</code>
+        was BuildFlow's not-applicable list, never an adoption.
+      </p>
+
+      <h2><span class="num">03</span>Measured fact base</h2>
+      <p>Measured this session with <code>wc -l</code>, <code>go list</code>, <code>grep</code> and file reads — not estimated.</p>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Fact</th><th>Value</th><th>How verified</th></tr></thead>
+          <tbody>
+            <tr><td>Hand-written browser JS</td><td><strong>7,280 LOC</strong> (22 island/app modules + <code>shell.js</code> 1,976 + <code>enroll/</code> 214 + theme-preload 25)</td><td><code>wc -l island/app/*.js shell.js enroll/*.js theme-preload.js</code></td></tr>
+            <tr><td>Island test suite</td><td><strong>8,050 LOC</strong> · 30 spec files · <code>node:test</code></td><td><code>wc -l island-tests/*.mjs</code></td></tr>
+            <tr><td>Island external deps</td><td><strong>Zero</strong> — every import is a relative <code>.js</code></td><td><code>grep -rh "from '" island/app/*.js</code> filtered to non-relative</td></tr>
+            <tr><td>Go server</td><td><strong>57,349 LOC</strong> · 32 packages</td><td><code>find -name '*.go' | xargs wc -l</code>; <code>go list ./... | wc -l</code></td></tr>
+            <tr><td>webphone-android</td><td><strong>7,429 LOC Kotlin</strong> (src + test); plugins = <code>android.application</code> + <code>kotlin.android</code> ONLY</td><td><code>app/build.gradle.kts</code>, <code>gradle/libs.versions.toml</code> (Kotlin 2.1.0, AGP 8.7.3, webrtc 1.3.10, minSdk 31 / target 36)</td></tr>
+            <tr><td>Android platform-free surface</td><td><code>sip/</code> — SipMessage, Digest, SipEngine (no Android imports in the codec/digest pair)</td><td>file reads; RFC-vector + MockWebServer tests exist</td></tr>
+            <tr><td>Toolchain availability</td><td><code>node</code> + <code>npx</code> + <code>d2</code> on host; <strong>no <code>tsc</code></strong>; devshell has no nodejs (only <code>pkgs.nodejs</code>/<code>pkgs.oxlint</code> inside nix checks)</td><td><code>which</code>; <code>grep nix/*.nix</code></td></tr>
+            <tr><td>Existing island gates</td><td><code>island-js</code> (node:test) + <code>island-lint</code> (oxlint, <code>no-undef</code> only) in <code>nix/checks.nix</code>; prettier owns island files</td><td><code>nix/checks.nix:31–39, 174–188</code>; <code>nix/treefmt.nix</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2><span class="num">04</span>Why B is not a downgrade</h2>
+      <div class="card card-solution">
+        <h3><code>checkJs</code> runs the same checker</h3>
+        <p>
+          TypeScript type-checks JavaScript. With <code>allowJs</code> + <code>checkJs</code> (or per-file <code>// @ts-check</code>)
+          and the same <code>strict</code> flag set, <code>tsc</code> infers the same types from the same code and reports the
+          same errors — the annotation carrier differs (JSDoc <code>@param</code>/<code>@returns</code>/<code>@typedef</code>
+          versus inline syntax), not the analysis. What A adds over B is syntax ergonomics and TS-only constructs (enums,
+          namespaces); what A removes is the property this repo is built on: <em>the file you edit is the byte you serve</em>.
+        </p>
+      </div>
+      <p>Three concrete wins that land on day one of the gate, before any annotation marathon:</p>
+      <ul>
+        <li><strong>Config drift dies.</strong> <code>window.PBX_CONFIG</code> gets one declared shape; a server-side key rename in
+          <code>/config.js</code> becomes a type error in the island instead of a silent <code>undefined</code> at runtime.</li>
+        <li><strong>The SIP surface becomes checkable.</strong> A hand-written <code>types/sip.d.ts</code> pinned to the vendored
+          0.21.2 enumerates the calls the island actually makes — the 0.x upgrade class that the watchdog exists for.</li>
+        <li><strong>Property/arity typos die</strong> in the 1,296-LOC <code>calls.js</code> and the 1,976-LOC <code>shell.js</code>,
+          which the current gates cannot see: oxlint runs with every category off except <code>no-undef</code>, and <code>no-undef</code>
+          says nothing about <code>entry.holdPendng</code>.</li>
+      </ul>
+      <p>
+        The exit is cheap and pre-paid: JSDoc annotations carry the exact type information a later <code>.ts</code> codemod needs,
+        so A remains available if the named triggers fire.
+      </p>
+
+      <h2><span class="num">05</span>Pareto tiers</h2>
+      <div class="tiers">
+        <div class="tier-card">
+          <div class="pct">1% of effort → 51% of result</div>
+          <h3>Teaching the gate to breathe</h3>
+          <p>
+            <code>tsconfig.json</code> + <code>types/globals.d.ts</code> + <code>types/sip.d.ts</code> + the
+            <code>island-typecheck</code> nix check + two leaf modules annotated. Nothing else works until this exists, and once
+            it exists every later file is a 15-minute self-contained unit. ~3–4 h.
+          </p>
+        </div>
+        <div class="tier-card">
+          <div class="pct">4% → 64%</div>
+          <h3>The call path</h3>
+          <p>
+            <code>session.js</code> → <code>ice.js</code> → <code>pcsetup.js</code> → <code>connection.js</code> →
+            <code>calls.js</code>. This is where the incident classes live (hold state machine, registration watchdog, invite
+            queue). If only five files ever get annotated, let it be these. ~6–8 h.
+          </p>
+        </div>
+        <div class="tier-card">
+          <div class="pct">20% → 80%</div>
+          <h3>Everything servable</h3>
+          <p>
+            Surfaces (<code>panels</code>, <code>transcribe</code>, <code>typeahead</code>, <code>main</code>,
+            <code>state</code>), <code>shell.js</code>, the standalone page entries, then the 8,050-LOC test suite, then the
+            <code>checkJs: true</code> flip that retires the per-file pragma. ~10–14 h, parallelizable.
+          </p>
+        </div>
+      </div>
+      <div class="card card-warning">
+        <h3>What the tiers deliberately do NOT contain</h3>
+        <p>
+          No bundler, no npm dependency, no framework, no <code>.ts</code> file, no markup change, no stack E2E re-run. If a step
+          needs any of those, it belongs to a different train and a different approval.
+        </p>
+      </div>
+
+      <h2><span class="num">06</span>Comprehensive plan — 27 tasks, 30–100 min each</h2>
+      <p>Sorted by impact first, then by dependency order. Tier 1 (T01–T06, T23) is the scout pass; Tier 2 (T07–T20) is the annotation campaign; Tier 3 (T21–T22, T24–T25) is headroom; Tier 0 (T26–T27) is the android conditional and may stay unstarted indefinitely.</p>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Task</th><th>Why it matters</th><th>Files</th><th>Acceptance</th><th>Min</th><th>Tier</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>T01</td><td>Ratify the stance (decision record + AGENTS.md block + CHANGELOG-silent)</td><td>Stops the next session from re-asking the same three questions</td><td class="file">AGENTS.md, this plan</td><td>Six-line stance is citable; the two commands are in AGENTS.md § Commands</td><td>30</td><td>1</td></tr>
+            <tr><td>T02</td><td>Add <code>tsconfig.json</code>: <code>allowJs</code>, <code>noEmit</code>, <code>checkJs: false</code>, <code>strict: true</code>, <code>moduleDetection: auto</code></td><td>The gate's spine; per-file <code>// @ts-check</code> opts in without config churn</td><td class="file">tsconfig.json</td><td><code>npx -p typescript tsc -p . --noEmit</code> exits 0 with 0 files checked</td><td>45</td><td>1</td></tr>
+            <tr><td>T03</td><td>Write <code>types/globals.d.ts</code>: <code>PBX_CONFIG</code>, <code>SIP</code>, island globals</td><td>Turns config-key drift into a compile error; the single largest value-per-line item</td><td class="file">types/globals.d.ts</td><td>Keys match the server's <code>/config.js</code> writer 1:1 (grep-verified)</td><td>90</td><td>1</td></tr>
+            <tr><td>T04</td><td>Write <code>types/sip.d.ts</code> for the vendored sip.js 0.21.2 surface actually used</td><td>The 0.x upgrade class becomes visible; <code>SIP.*</code> stops being <code>any</code></td><td class="file">types/sip.d.ts</td><td>Every <code>SIP.</code> symbol grepped from island/app is declared</td><td>90</td><td>1</td></tr>
+            <tr><td>T05</td><td>Add nix check <code>island-typecheck</code> (<code>pkgs.typescript</code>, sandbox-safe) + devshell tools</td><td>Makes the gate real: no local-only promise, no network at check time</td><td class="file">nix/checks.nix, nix/devshell.nix</td><td><code>nix build .#checks.x86_64-linux.island-typecheck</code> green</td><td>60</td><td>1</td></tr>
+            <tr><td>T06</td><td>Progress pin: checked-file set never shrinks; no bare <code>@ts-ignore</code></td><td>Without it, the opt-in mechanism is also an opt-out mechanism</td><td class="file">internal/web/assets/*_test.go</td><td>Deleting a pragma or adding a bare ignore reds a test</td><td>60</td><td>1</td></tr>
+            <tr><td>T07</td><td>Annotate leaf pair <code>csrf.js</code> + <code>config.js</code></td><td>Proves the loop on two tiny, dependency-free files</td><td class="file">island/app/csrf.js, config.js</td><td>0 errors under <code>strict</code>; no <code>any</code> escape</td><td>45</td><td>2</td></tr>
+            <tr><td>T08</td><td>Annotate <code>ui.js</code> (els registry, log, announce, whoamiLine)</td><td>The shared DOM handle every module imports — annotating it lifts all callers</td><td class="file">island/app/ui.js</td><td>0 errors; <code>els</code> members typed, not <code>HTMLElement</code>-widened</td><td>60</td><td>2</td></tr>
+            <tr><td>T09</td><td>Annotate <code>i18n.js</code> (<code>t()</code> signature, dictionary key union)</td><td>Typo'd keys become errors instead of untranslated UI</td><td class="file">island/app/i18n.js</td><td>Unknown key is a type error; en/de parity untouched</td><td>60</td><td>2</td></tr>
+            <tr><td>T10</td><td>Annotate <code>notify.js</code>, <code>shortcuts.js</code>, <code>selftest.js</code>, <code>ssoerror.js</code></td><td>Four small leaves; cheap breadth for the pin</td><td class="file">island/app/{notify,shortcuts,selftest,ssoerror}.js</td><td>0 errors each</td><td>90</td><td>2</td></tr>
+            <tr><td>T11</td><td>Annotate <code>audio.js</code>, <code>audioout.js</code>, <code>mic.js</code></td><td>Media handles: <code>AudioContext</code>/<code>MediaStream</code> provenance is exactly where <code>undefined</code> bites</td><td class="file">island/app/{audio,audioout,mic}.js</td><td>0 errors; stream factories typed</td><td>90</td><td>2</td></tr>
+            <tr><td>T12</td><td>Annotate <code>session.js</code> + <code>auth.js</code> (sessionIdentity wire shape)</td><td>The resume path + credential seam; auth: convention applies</td><td class="file">island/app/{session,auth}.js</td><td>0 errors; identity fields match the Go struct</td><td>90</td><td>2</td></tr>
+            <tr><td>T13</td><td>Annotate <code>ice.js</code> + <code>pcsetup.js</code></td><td>The <code>wp:calls-changed</code> bridge and SDP instrumentation</td><td class="file">island/app/{ice,pcsetup}.js</td><td>0 errors; SDP handler types come from <code>sip.d.ts</code></td><td>90</td><td>2</td></tr>
+            <tr><td>T14</td><td>Annotate <code>connection.js</code> (registration, watchdog, invite fan-in)</td><td>Highest incident density after calls.js</td><td class="file">island/app/connection.js</td><td>0 errors; watchdog state typed</td><td>90</td><td>2</td></tr>
+            <tr><td>T15</td><td>Annotate <code>calls.js</code> in two passes (state machine, then handlers/cards)</td><td>1,296 LOC — the product's core; also the biggest risk of a rushed job</td><td class="file">island/app/calls.js</td><td>0 errors; <code>CALL_TRANSITIONS</code> rows typed literal</td><td>180</td><td>2</td></tr>
+            <tr><td>T16</td><td>Annotate <code>panels.js</code> + <code>typeahead.js</code></td><td>History/voicemail rows + contact search; morph-target ids</td><td class="file">island/app/{panels,typeahead}.js</td><td>0 errors; <code>data-*</code> attribute reads typed</td><td>100</td><td>2</td></tr>
+            <tr><td>T17</td><td>Annotate <code>transcribe.js</code> (ASR segments, live capture)</td><td>Audio pipeline + POST <code>/api/transcripts</code> payload</td><td class="file">island/app/transcribe.js</td><td>0 errors; segment type matches the Go row</td><td>90</td><td>2</td></tr>
+            <tr><td>T18</td><td>Annotate <code>main.js</code> + <code>state.js</code></td><td>The import-closure root and the acyclic state hub</td><td class="file">island/app/{main,state}.js</td><td>0 errors; import closure test still green</td><td>60</td><td>2</td></tr>
+            <tr><td>T19</td><td>Annotate <code>shell.js</code> (classic script; own project or shared via <code>moduleDetection: auto</code>)</td><td>1,976 LOC with the most DOM surface; currently oxlint-only</td><td class="file">island/shell.js</td><td>0 errors; prettier remains the sole formatter</td><td>200</td><td>2</td></tr>
+            <tr><td>T20</td><td>Annotate standalone entries: <code>enroll.js</code>, <code>webauthn.js</code>, <code>theme-preload.js</code></td><td>Not in the island closure — easy to forget, easy to regress</td><td class="file">enroll/*.js, theme-preload.js</td><td>0 errors; passkey page unaffected</td><td>60</td><td>2</td></tr>
+            <tr><td>T21</td><td>Opt the 8,050-LOC test suite in (<code>@types/node</code>, node:test globals)</td><td>Tests are where wrong assumptions get frozen; typecheck them too</td><td class="file">island-tests/*.mjs</td><td>0 errors in <code>helpers.mjs</code> + a 5-spec pilot</td><td>100</td><td>3</td></tr>
+            <tr><td>T22</td><td>Flip <code>checkJs: true</code> tree-wide; retire the pragma pin</td><td>Ends opt-in asymmetry once coverage is complete</td><td class="file">tsconfig.json, pin test</td><td>Full gate green with no pragma requirement</td><td>60</td><td>3</td></tr>
+            <tr><td>T23</td><td>Document the gate (AGENTS.md Commands, README dev, CHANGELOG <code>[Unreleased]</code>, buildflow note)</td><td>A gate nobody can run locally is a gate that rots</td><td class="file">AGENTS.md, README, CHANGELOG</td><td>Command copy-pasteable from AGENTS.md alone</td><td>45</td><td>1</td></tr>
+            <tr><td>T24</td><td>Island error-surface conventions: typed rejection + empty-catch kill (the queued 2026-10-27 item 3)</td><td>Encodes the owner ruling where the annotations are being written anyway</td><td class="file">island/app/*.js, error-contract.md</td><td>No silent catch without a written justification at the site</td><td>100</td><td>3</td></tr>
+            <tr><td>T25</td><td>Retrofit report: defects the gate caught, annotation cost per file</td><td>Decides whether A's triggers have fired</td><td class="file">docs/status/</td><td>Numbers, not impressions</td><td>45</td><td>3</td></tr>
+            <tr><td>T26</td><td><em>android</em>: KMP spike — <code>sip/</code> → <code>commonMain</code>, Android-only target</td><td>Compile-enforces platform purity; prices the seam honestly</td><td class="file">webphone-android shared/</td><td><code>sip/</code> tests green under KMP; build-time delta recorded</td><td>100</td><td>0</td></tr>
+            <tr><td>T27</td><td><em>android</em>: second-target gate — WebRTC evidence doc only, NO target added</td><td>Prevents the KMP conversation from re-opening on vibes</td><td class="file">android docs/</td><td>3-call audio smoke defined; go/no-go conditions recorded</td><td>90</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2><span class="num">07</span>Execution graph</h2>
+      <div class="graph"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 626 1960"><svg class="d2-1985849096 d2-svg" width="626" height="1960" viewBox="-21 -21 626 1960"><rect x="-21" y="-21" width="626" height="1960" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-1985849096 .text-bold {
+	font-family: "d2-1985849096-font-bold";
+}
+@font-face {
+	font-family: d2-1985849096-font-bold;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAABSoAAoAAAAAHrAAAguFAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgXxHXrmNtYXAAAAFUAAAA0wAAATYnUSprZ2x5ZgAAAigAAA1VAAASII4UbL9oZWFkAAAPgAAAADYAAAA2G38e1GhoZWEAAA+4AAAAJAAAACQKfwX/aG10eAAAD9wAAADYAAABAHyeCh5sb2NhAAAQtAAAAIIAAACCnnSaBG1heHAAABE4AAAAIAAAACAAWAD3bmFtZQAAEVgAAAMvAAAIKgjwVkFwb3N0AAAUiAAAACAAAAAg/9EAMgADAioCvAAFAAACigJYAAAASwKKAlgAAAFeADIBKQAAAgsHAwMEAwICBGAAAvcAAAADAAAAAAAAAABBREJPACAAIP//Au7/BgAAA9gBESAAAZ8AAAAAAfAClAAAACAAA3icjM67LvNhAMfxz/9tX0qL0jqfntaprfNZyyYWk4ikszsQm801uAwJa8PAnQhXIaZHNAY2+a2f5PdFIiVBTjqpoSJIywiqFi1ZtmJVXcOhIyfONF240grF0k2MCCo/5Nq3PHaq6dylVih8yfgmL69Dp5RsfI8f8Tk+xcf4EFvxPt7F69fyy2275W9L7Knbt2HLuoYFFVW1Xy2b/klJ+9/+zejSLSunR68+ef0GFBQNGjJsxKgx4yZMmjItKCmbMWvOvF3bdhzwCQAA//8DANkWLOoAeJyEWHlwG+d1f98HcJcEwQNYLC7iXmAXAEmQwGJ3eYPgAR4ieMkiaYuHzNFBixKlSpRJW5SdmSh2q0C1WyoKZU9sR1NPXI/dOlUzo7hVO/U0btW49kwdV51OI7uJR03iNqJTOk0actH5locoTWfyB/FhVvu94/d+7/0eBAUwCICn8SXQQRGUgRlYANHkN4VEQeBoRVQUzqZTBGSiB7FZffWPhIg+EtFHfSveJ6emUHYSX9o4tj87Pf3LqcZG9aXvvq1eRKffBkAQy6/hWrwCFQAFAZ6XkrIsJqw2mue5AEWxFquYkBUbhSaGL+zdd3E4ddDf71C4qp7Kke5wyt4/bOz72vFjV4bEwKTNnZhsO3gy6Bg/AAiyAOguzkGxFifrZ0WWY/1sFq2ov7l9G5Xh3NKXz15eAhJDeX4NXcM5KAewBXhBsRKnkkk0WSjqR72HAwfNtY5wZLlqwtjY2Ov3xdPoW2o2NdNC7mYB8DGcAyPxI5pERtQxnI5ms8v6d65+76fffLkP59QvULG6ri4i5uCfbt1BP8I5KNi842ezywjj3MYqCWfL5ps4B17t3xmr1SbKssKIJo7Ao3A0zQkC58Esm/3mYwazQW8wGY688gxdpNNLE0MTSb2+kMY59barxeNpcaHAxvxd38Cg98Vf//pF7+CA7+62jz6cA2bTh03keUkSTZxO4KxWls1+/fVWvb40R46CEpxT//L55Jca7mzMo87fl5ca/gMAsFa7p/AKlD1QPStroSghIUtJUkTWYkUjY1/Zs+crY5uf7f397e39/cbhK0dnvzYwcPno0SvDT89PT8/NTU/PE7sktloNU4sW3ZZFjmNNYoIY5bKfdJ/JZOY7h7oXW5s6cE4YH+ibrvkhGp4RowTDTRt7cQ5KwbbLBs1wgmZFi43LftZ5qiMlXXr13FBfQ3NzQx/Ohcb6uyds6m8++wwdiNfW8gQrLr+GDXgFolqW2/xI8oIQw/cTlrVYbTbNE4UsrU8nHuJGwrFqsXKfv4lvfKyj7mR0j69V4Kvrow81ZhrmjLWxQx4+4Pa6zcHSmkyNPJasik44Krwuj8cUsD/UKY/XAQIHAGZwDmiSCSf5Wc703jX0v9dw+dLSxirJF0EpgM6Hc+AHEHW7OHPvm47T8bzAURSte/aJr1dTpZTewBgy5zIGxqCnS+jqi/PfbS0sKdBTJYXNOKd+IB5JJo+IKK5+EJ+RpCMJFN+YR2E+GwxmefVfAEM0v4Z+gNbBAZzWOVJSVrS+pQUNFNbEEX9KQlYkrZf/qmPw/DLmIt7WoFQz2zB1eNGg93YVOkJMf5PXOJrqHyvzC3b2UXdw7pT6qejiTtmYUUOl227TaprOr2ErvgEW0hmkEhzNmUSWfoB0XIBmrVbU6W93642nl/XujkDTWE3T1Bgvj1RFLGGj3yfhG2/0Od0tv9O374nUYqbvmervm0s1HIP5NXQDrYPzwXm0yeTNaUQhR+eJdPfjHbEuVyfnk1KpWnuMaQiNGJvPDO+db/bYptx96dYsW3bAV0Hqg0HIr6F1fAMY8G1jRaK2CZK4C6VtEv1i/ETjVDJS56CWFw16ZwbbBTNTaeHkGuNXnxg60+Ky9/3xRnvcyS1aHN83l7Z39XQC1mL/d7QOdvDeFz3hI+0nrFVsFKUTtbZE3q5Tbe3HGrsmavRYvWXIxCU5zk++cE2oCsjGlvnhoflUaraDCRXJov9hpwc1RKQakgsCOwCaxzfJSfioPNADZNSaHmlrCw62e5PlFSVOY4Xn4YfRueMFFdJI0kgdKyjw857T6pcBdBDIV2MarUMNNEKvhgwvJRVJi33rkMWETWS5rSEQEAhAIqGXhaJ0u6YMs/mdC/DaK79omKzrYip8dmekYVKq8n9ngC5KjilurzkQGRx/tGOp1y0IbrcgRBKtQkh0+I0VzR8666qawvqSsLciUa43d1Q2DYSNs8UBS31v0FBmZcyN7eJQDN2MRoRIOByJqstBh61cp7M7XO5NbNKk2BpHQdzhJmviTBrotCm9TLv2JIZ6lt0+V9iOb7zxsKNydkJ9D/nlsMOmfhvyeVAA4If4Q8xDMwDQ0AIXAPL5/D/mm+Bj7Xlq63lux6cH39jRIEUkc45m08/pv/HKn/zFyydT+IY697331H/7m64nyfv5NWTGN6BMw1sTum1i/31f47KpqICmzMaQcf8ezG3cspkROl5Ak3sAOjda12aMSSSiRKp+X4b0zpkmvZ2JS2nG3xsf3LPs9oVqyUcNWm31VleGA/HttGvVb28d2/ihdbDs9rEbv0WD3pfdARCtpjzV9+G32Qcap367LllTJzo6TqRScx0dc6nqWKw6Vl291cPN83uHzzQvZFvTfaSVSVjpfDe2onVgwANguxedRktesLHMvfFD0nf3CI/MNE3JviZnwQAvj1RGLeHr+LW4k/u90/sWUxWOgT9AwZ3ho+WOnkPrYL4PX5q/l3lFH8+6DPYSR7mr2YJWRxPxgoKn9fpIQv0EELD5NfQyWgfhvj0myfObOrVjjKiUB7MW6sP4Eb4tkPL6Pe6Y09MYfmxf/ai3zZl01tfzvubIjJH3jjsqbIzJyhiMwfpI54hgH7NYBbujtJirj7VPbHLelF9Dc3ieKG1BgJckTlIUkUyBXQMTxgc6+kxPLixwbqPDYGMU49GRm8ep8+dP/100ROlnKeOmrab8GvoVWgXLA9w0bY3Jfx7qWfb4XLx1ebFY5+01zk6gpPqxFHG6Ubda3hmqAkT6AOXRKpRoWmjbUkBF1F371qVWonZFjCF98Spa/VkoKwjZ0M/U8u25hlfRKvgfuLfLAidsaSh9aekPaykDpadLipSn64rKaD1dRNf87sIb1XQJraeL6Sq0eifUzfO93B3t7A7dUcvf5TLhcIZ7d1uz0RpaJfouMsIuh7Ttnp/SledeqjJYDfpCc2Fg5fkrL9UabUZ9kaVIQPjng2wly1ayg/nPh9kqlq20DhO7xnwL2kCrULGbB4pyHxSleNHqL3PS5sJQ2ED/9aWuYrNBX2gqarr4hq1u4B1KfxIVBN1O9OOPApkQ18V9pBa37NvarUL5NfQZfhaKt/pLSm61gZCQZSm5s7pbUeHhc+cOkz9H2GYLO+xhuz1sfP3q1VdfvXr19VOhydHR8UBgfHR0MkTizgCgf8VnSf1EIouSLCtkiGYuLCS7A8cWFtCJ/QaXZWN9gcSBSBeiT/Gz4CLvt2ApuWv3IOFQZDMQ2dDQuUw8ElDsgzXTHalJqXE8aW+yfumh7LnHqmvignMgISb2N0snTsi6giVi15pfQx/jZyHyYB9xUkK+zwtroUizE1//nT3Odbgz4Zo6V2/nSGuYDyie3qrphuknFFHpSs8aE+EJV1AIuiLWmRreH/I4H+Er9++NZ6z68mxL495KkhMm+zj6FT4LRaQDGJGoIFnZGMkvMQQLjn3lmQKkNzpLE+p//eTPe3pQ4RHvkMcpV6hzK4fQU+rFkyskB1t+DX2Cz4L3gRzIKBEYP8vROyj9T/8xvs3dEY431FW5Qu42M5r5abGfV/bXpY8ak6EJZygRr02UmqMovbRQFh3tyBxMarFG8mvoPzUehAFQgKK3nejuzdytpYDaEkILRSHGIVoMdX5/TY2nea6z50x7atyTLVdcXAOnc/S4h2cbplDIHdhTH5cTUfWD9FdPLKz0VHvHzBWh0V4fN3WobYr4R1AFgO7gs1qft2DFL/nZUh39MhXINKk/Rm8r7aFy/dHXXti79Ej742efJ8NKp+2sP9E4I0ByRx3ubRq7S6p7cLfgBY3XiE4dbEhVh2qT442jRxP+WGvdIZcQCbqjTcZQbaApzLoajFUDYkOvXe/qTsgD0amBWJdV7+hPJQZj6Knq2lB1MCRUqR8JYVfIbWIkd7QGMATya+iOhmcEgNmcnRp6zE4FZUXTmu1gSbTUa7VBh8gYlICvtjk14ekvl13B+iB29LjlfYmGA/UtBGT0Z4mohqlqjHk2ofQGo6PtbQfE9IWTj1/pAQTN+TW4C2+S38y2XV19mRdFnhdFoySEJSksSAT7WL4FAbxJtMomyLIQCHC7rvR56hoQ1mNOlvlEcvydfks6VBnmY73p4UUgu8ymL/Q5FiAOgDqAIicgqISbyI/ioANQJJGt/OXNmRnirxLeR99BVZvP/WwluvD+5OTmc/zFruf4H96fnCT24VO4i76Bac0u+ZGEoDufRWH8MeGLTas3USYihu+lOjtT40oioVw7cvv8+dtH+EdvzR69NQ0IavNZVL51R9CmG6kEa6Fy43WJRN14qrPzGj996+jsrUd57S4gKMkfQDJ+l8RkY0Rdyc0DN1/RHV5/gcQQgEn0cywTjBWJk0RpUyj/6a23jr311uT1mevXZ66T98L5u3gvLoIigAKBUFtQEIuaM5fVF9GhyxlkNQ2cnz8/oH6h39k74QdolfgkO2B6Ga2q5YDyb+J62Is/JP5MuwoUisVCoVgM10c5Lkr+iGSS/fIjtPr//j9I0BspcxoYg9u27Mv+bSF1TKcXIuhzlZEfUeD/AAAA//8DACQE1hMAAAAAAQAAAAILhehUzg1fDzz1AAED6AAAAADYXaCEAAAAAN1mLzb+N/7ECG0D8QABAAMAAgAAAAAAAAABAAAD2P7vAAAImP43/jcIbQABAAAAAAAAAAAAAAAAAAAAQHicBMBBLgNRHMfx7/83SUNU/UWN2jRST9B5JnYk+hZv01h4iQRJHYDEKdzA3h3Y2LqATVcu4BwSGR99cM0XaE6rQLE/XI8U9Sj6peiVojda3VL0QFFkX5Hd6oSBNpgqke2boMShegS7Y6SaiS7INuTM6m6pQLYxubona0ZWQ1Ai2wvZPtm2ZzZ1zkxr9KsVRhIDrdKXcyBnLmcsp5azJWdHzrGcKGcqZ2KRZJHWIsmuaOyHptqjsUiyBZe24NRuWJcz0RNHNiRD9251t/wHAAD//wMATZQhIwAAACwALABYAG4AjACmALYA6AEKATYBWAF+Ab4B0AIKAkICdAKgAtIDBgMsA5QDtgPCA84D5gQCBDQEVgSCBLIE0gUOBTQFVgVyBaoF1gYGBjIGSgZ2BrQG2AcKB0oHZAeyB/IICAgoCDQIQAhMCFgIYgh8CJYIpAi4CNAI3AjyCRAAAAABAAAAQACQAAwAYwAHAAEAAAAAAAAAAAAAAAAABAADeJyclM9uG2UUxX9ObNMKwQJFVbqJvgWLIrVjUyVV26wmpFZGRHHwuCAkhDS2J7bl8czIM3YanoA1b8FbdMVD8ByINbrX165dEAUrinVm5v4537nnfsABf7JPpXof+K2eGq5wVL82vMe9+oXhfVr1PcNVHtV+N1xjUFsYrvN5rWP4I95WfzF8j+Pqj4bvc1htGf6Yp9UDw5/sO/4w/CnHvF3iCjznZ8MVDskN73HAD4b3eYDVrFR5QNNwjc84MlznCOgypiRhTMoQxw1jhsyZEVMQEjNjzA0xAxwBPgmlvk2JFDmG//g2IqRkRqQVR5Q4EkISIgpGVvEnzcq41o7SZ6ZIuvmUjIjoacaEiBRHxpCMlJiJ1ikpyXlJgwYFfeWbU1LgUTAmwSNjxpAGbVpc0mXEmAJHSysJs5CMG0puibS/swhRpk9MSmGs5qQMlKdTfrFmB1ziaJNr7Gbly60Kj3F8q9nCTWIcX+Lpv9tgtt13xSZioXqKhj0S5XmrExyp4tLX5xvFJS9xO+mzzeTDGg2Uncx6TI+5zl/mJ3nCJMW5Q3xCdVDoHuI40+eAUBX5joAuF7R5TVeffTp08LmiS8ArzW3TwfEVba4414xA8fJbSx1zxfc4vibQGKkdmz6iuTy9ITd3C3dxhpxjSq5bIDOW84vz450mLDuUbbmjUFf0dY8kUvZAVJE9ixiaK3J1xVS1XHmjMP0G5gj5Wups332XbVjY7q22+I5Md9gxN04yuSWjD03Ve88zt/rnETEgo6cRfTKmNCi507NdEzEnwXGuPr7QLSnx1znS505dEjNVBgGp1pmR629kvgmNe3/L987uEtm8qe7oZH2qXbpI5XRjRq9VvdW30FSONybQsKlmliMTlsrLk4r3Jdrb4h+q+wu93TKecEZGwuBvN8BTPJocc8IpI+0glVMWdjs09YZo8oJTPf2EWKPkvnyjOkmFEzyeccIJL3j2no4rJs64uDWXzd4+55zR5vQ/nWIZ3+aMV+t3/971V2Xa1LM4nqyfnu88xUf/w61f8HjrvuzoLSCbs7Bq77biioipcHGHm1q4h3h/AQAA//8DAPS3T1EAAAMAAAAAAAD/zgAyAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-1985849096 .fill-N1{fill:#0A0F25;}
+		.d2-1985849096 .fill-N7{fill:#FFFFFF;}
+		.d2-1985849096 .fill-B1{fill:#000536;}
+		.d2-1985849096 .fill-B2{fill:#0F66B7;}
+		.d2-1985849096 .fill-B6{fill:#E5F3FF;}
+		.d2-1985849096 .stroke-B1{stroke:#000536;}
+		.d2-1985849096 .stroke-B2{stroke:#0F66B7;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#000536;--color-border-muted:#0F66B7;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0F66B7;--color-accent-emphasis:#0F66B7;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="c2NhZmZvbGQ="><g class="shape" ><rect x="124" y="0" width="291" height="98" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="269.5" y="38.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="269.5" dy="0">T01–T06 Scaffold</tspan><tspan x="269.5" dy="17.666667">tsconfig · globals.d.ts · sip.d.ts</tspan><tspan x="269.5" dy="17.666667">nix island-typecheck · progress pin</tspan></text></g><g class="bGVhdmVz"><g class="shape" ><rect x="146" y="198" width="248" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="270" y="236.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="270" dy="0">T07–T10 Leaf modules</tspan><tspan x="270" dy="18.5">csrf · config · ui · i18n · notify</tspan></text></g><g class="bWVkaWE="><g class="shape" ><rect x="106" y="380" width="328" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="270" y="418.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="270" dy="0">T11–T13 Media + session</tspan><tspan x="270" dy="18.5">audio · mic · session · auth · ice · pcsetup</tspan></text></g><g class="Y2FsbHBhdGg="><g class="shape" ><rect x="170" y="562" width="200" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="270" y="600.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="270" dy="0">T14–T15 Call path</tspan><tspan x="270" dy="18.5">connection.js · calls.js</tspan></text></g><g class="c3VyZmFjZXM="><g class="shape" ><rect x="227" y="744" width="357" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="405.5" y="782.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="405.5" dy="0">T16–T18 Surfaces</tspan><tspan x="405.5" dy="18.5">panels · transcribe · typeahead · main · state</tspan></text></g><g class="c2hlbGw="><g class="shape" ><rect x="292" y="926" width="228" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="406" y="964.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="406" dy="0">T19 shell.js</tspan><tspan x="406" dy="18.5">classic script, own project</tspan></text></g><g class="cGFnZXM="><g class="shape" ><rect x="262" y="1108" width="287" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="405.5" y="1146.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="405.5" dy="0">T20 Standalone entries</tspan><tspan x="405.5" dy="18.5">enroll · webauthn · theme-preload</tspan></text></g><g class="dGVzdHM="><g class="shape" ><rect x="327" y="1290" width="157" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="405.5" y="1328.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="405.5" dy="0">T21 island-tests</tspan><tspan x="405.5" dy="18.5">node:test types</tspan></text></g><g class="ZmxpcA=="><g class="shape" ><rect x="161" y="1472" width="217" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="269.5" y="1510.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="269.5" dy="0">T22 checkJs:true</tspan><tspan x="269.5" dy="18.5">pragma-free, whole tree</tspan></text></g><g class="ZXJyb3Jz"><g class="shape" ><rect x="0" y="1290" width="267" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="133.5" y="1328.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="133.5" dy="0">T24 Error-surface conventions</tspan><tspan x="133.5" dy="18.5">typed rejection · no silent catch</tspan></text></g><g class="a21w"><g class="shape" ><rect x="129" y="1654" width="282" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="270" y="1692.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="270" dy="0">T26 KMP spike (android repo)</tspan><tspan x="270" dy="18.5">sip/ → commonMain, single target</tspan></text></g><g class="Z2F0ZQ=="><g class="shape" ><rect x="101" y="1836" width="338" height="82" stroke="#000536" fill="#E5F3FF" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="270" y="1874.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="270" dy="0">T27 Second-target gate</tspan><tspan x="270" dy="18.5">WebRTC evidence only — NO target added</tspan></text></g><g class="KHNjYWZmb2xkIC0mZ3Q7IGxlYXZlcylbMF0="><marker id="mk-d2-1985849096-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#000536" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 269.5 100 C 269.5 138 269.5 158 269.5 194" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KGxlYXZlcyAtJmd0OyBtZWRpYSlbMF0="><path d="M 269.5 282 C 269.5 320 269.5 340 269.5 376" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KG1lZGlhIC0mZ3Q7IGNhbGxwYXRoKVswXQ=="><path d="M 269.5 464 C 269.5 502 269.5 522 269.5 558" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KGNhbGxwYXRoIC0mZ3Q7IHN1cmZhY2VzKVswXQ=="><path d="M 332.164101 645.1094 C 390.5 684 405.5 704 405.5 740" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KHN1cmZhY2VzIC0mZ3Q7IHNoZWxsKVswXQ=="><path d="M 405.5 828 C 405.5 866 405.5 886 405.5 922" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KHNoZWxsIC0mZ3Q7IHBhZ2VzKVswXQ=="><path d="M 405.5 1010 C 405.5 1048 405.5 1068 405.5 1104" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KHBhZ2VzIC0mZ3Q7IHRlc3RzKVswXQ=="><path d="M 405.5 1192 C 405.5 1230 405.5 1250 405.5 1286" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KHRlc3RzIC0mZ3Q7IGZsaXApWzBd"><path d="M 405.5 1374 C 405.5 1412 390.5 1432 333.828201 1469.781199" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KGNhbGxwYXRoIC0mZ3Q7IGVycm9ycylbMF0="><path d="M 206.835899 645.1094 C 148.5 684 133.5 712.200012 133.5 739.5 C 133.5 766.799988 133.5 803.200012 133.5 830.5 C 133.5 857.799988 133.5 894.200012 133.5 921.5 C 133.5 948.799988 133.5 985.200012 133.5 1012.5 C 133.5 1039.800049 133.5 1076.199951 133.5 1103.5 C 133.5 1130.800049 133.5 1250 133.5 1286" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KGVycm9ycyAtJmd0OyBmbGlwKVswXQ=="><path d="M 133.5 1374 C 133.5 1412 148.5 1432 205.171799 1469.781199" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><g class="KGZsaXAgLSZndDsga21wKVswXQ=="><marker id="mk-d2-1985849096-2177206569" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0F66B7" class="connection fill-B2" stroke-width="2" /> </marker><path d="M 269.5 1556 C 269.5 1594 269.5 1614 269.5 1650" stroke="#0F66B7" fill="none" class="connection stroke-B2" style="stroke-width:2;stroke-dasharray:6.000000,5.919384;" marker-end="url(#mk-d2-1985849096-2177206569)" mask="url(#d2-1985849096)" /></g><g class="KGttcCAtJmd0OyBnYXRlKVswXQ=="><path d="M 269.5 1738 C 269.5 1776 269.5 1796 269.5 1832" stroke="#000536" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1985849096-3488378134)" mask="url(#d2-1985849096)" /></g><mask id="d2-1985849096" maskUnits="userSpaceOnUse" x="-21" y="-21" width="626" height="1960">
+<rect x="-21" y="-21" width="626" height="1960" fill="white"></rect>
+
+</mask></svg></svg>
+</div>
+      <p style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint);">
+        Source: <code>docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.d2</code> —
+        regenerate with <code>d2 --theme 4 --pad 20 &lt;d2&gt; &lt;svg&gt;</code>.
+      </p>
+
+      <h2><span class="num">08</span>Rejected paths, with evidence</h2>
+
+      <div class="card card-problem">
+        <h3>C · Go server → JavaScript — reject by category, not by estimate</h3>
+        <p>
+          This is not a migration plan that lost a ranking; it is a proposal that removes the product's delivery
+          mechanism. A Node port would have to reproduce, at minimum: the <code>embed.FS</code> single binary that the NixOS
+          module starts as <code>Type=simple</code> (no Node runtime exists on that host today); modernc sqlite under
+          <code>/var/lib/webphone</code> with its versioned migration ladder; the samber/do composition root with named critical
+          services and go-health probes behind <code>/healthz</code>; the usermgmt/cqrs-htmx identity layer with WebAuthn and the
+          durable auth-audit journal; the generated <code>/openapi.json</code> + <code>docs/contracts/asyncapi.yaml</code>; the
+          errorfamily code registry with its freshness test; the 32-package DAG with its arch tests; every nix check
+          (<code>vendorHash</code>, treefmt, island-lint, VM backup drill, vulnix triage); and it would still have to satisfy the
+          stack's <code>nixosModules.default</code> option surface unchanged, or the consuming stack stops evaluating.
+        </p>
+        <p>
+          Effort: months. Benefit: none — the browser already runs the only JS that matters, and it ships inside the Go binary.
+          Cost of adopting it: a second toolchain, a second lockfile, and an npm supply chain in the runtime path of a
+          telephony product. The honest framing: if the goal is "less Go", the correct answer is a narrower surface, and this
+          repo has already spent three series deciding which surfaces deserve splitting (the ratified answer: none; reopen
+          trigger = a second Go consumer).
+        </p>
+      </div>
+
+      <div class="card card-problem">
+        <h3>D · Full Kotlin Multiplatform — reject, prior adjudication stands</h3>
+        <p>
+          Already ruled on 2026-10-23 with the same evidence this plan would produce: Compose Desktop is production-ready, the
+          native Linux WebRTC audio path is not (webrtc-kmp has no desktop target; Piasy kmp-webrtc is a 9-star 2025 newcomer;
+          webrtc-java is the fallback). Calls are the product, so the ranking axis is the call path — and KMP puts it on the
+          weakest leg while charging the full-native price (~0% reuse: every tab needs new JSON APIs, because today the
+          surfaces are HTML fragments + SSE partials).
+        </p>
+        <p>
+          The <em>web</em> leg deserves a separate word because it is the newest temptation: a Kotlin/Wasm target would replace
+          7,280 LOC of proven, byte-served island against SIP.js 0.21.2, the <code>dtmf-relay</code> equals-form quirk, the
+          morph-swap partial model, the CSP-with-no-inline-scripts posture and the three-gate served-byte contract — with a
+          Compose-for-Web UI and a JS interop layer for sip.js. That is a rewrite of the product's frontend to gain a shared
+          language, on the one platform where the current implementation is strongest.
+        </p>
+      </div>
+
+      <div class="card card-warning">
+        <h3>A · Island → .ts with emit — defer, do not forget</h3>
+        <p>
+          The blockers are structural, not aesthetic: <code>//go:embed all:island</code> plus
+          <code>fs.Glob(embedded, "island/app/*.js")</code> means the served tree is also the source tree; the import-closure test
+          parses those sources; prettier owns their formatting; and three pin sites grep the bytes that ship. A generated tree is
+          workable (templ does exactly this for <code>*_templ.go</code>) but it buys ergonomics the JSDoc path already delivers,
+          and it costs a drift gate plus a codegen step in every contributor loop and in the daemon-commit story.
+        </p>
+        <p>
+          Deferral is honest only with triggers, so: (1) a browser-side npm dependency becomes justified (bundler arrives
+          anyway); (2) JSDoc annotation overhead crosses ~1 line of JSDoc per 3 lines of code in a majority of files; (3) the
+          island adopts a component framework. Absent one of those, B wins on every axis that is not syntax.
+        </p>
+      </div>
+
+      <h2><span class="num">09</span>Named triggers — when this plan must be re-opened</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Trigger</th><th>Measurement</th><th>Re-opens</th></tr></thead>
+          <tbody>
+            <tr><td>A browser-side npm dependency becomes justified</td><td>A third-party library in the island with no vendored-single-file option</td><td>A (bundler arrives regardless)</td></tr>
+            <tr><td>JSDoc overhead ceiling</td><td>Annotation lines &gt; ~1 per 3 code lines in a majority of modules</td><td>A</td></tr>
+            <tr><td>Island adopts a component framework</td><td>Any framework whose build output replaces hand-written modules</td><td>A</td></tr>
+            <tr><td>A desktop Linux call path becomes a requirement</td><td>An owner decision, not a technical drift</td><td>D (re-run the 2026-10-23 decision with the new requirement)</td></tr>
+            <tr><td>A linuxX64 WebRTC candidate passes a 3-call audio smoke</td><td>Bidirectional audio + AEC/NS on two machines, recorded</td><td>D / a second KMP target</td></tr>
+            <tr><td>A second Kotlin target becomes committed roadmap</td><td>Roadmap row with a date</td><td>E is no longer conditional — it becomes Tier 2</td></tr>
+            <tr><td>The repo gains a second Go consumer of <code>internal/domain</code> or <code>internal/gateway</code></td><td>Verified import (GitHub-wide)</td><td>The ratified modularization stance, not this plan</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2><span class="num">10</span>Risk register</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+          <tbody>
+            <tr><td><code>sip.d.ts</code> drifts from the vendored 0.21.2</td><td>Medium (a bump is the only trigger)</td><td>Pin the version in a header comment; <code>update.sh</code> gains a "re-check types/sip.d.ts" line; the .d.ts declares only symbols the island uses</td></tr>
+            <tr><td><code>strict: true</code> produces a wall of errors in event-heavy files</td><td>High per file, low per train</td><td>Per-file <code>// @ts-check</code> opt-in: the blast radius is exactly one file per commit</td></tr>
+            <tr><td>Annotation noise makes diffs unreadable</td><td>Medium</td><td>Land annotations file-by-file as separate commits; never mix with behavior changes (the repo's parity-first rule)</td></tr>
+            <tr><td>Concurrent Crush sessions touch the same island file</td><td>Medium (documented reality)</td><td>One file per commit; re-View before each edit; attribute full-suite failures before acting</td></tr>
+            <tr><td>TypeScript version drift via nixpkgs</td><td>Low</td><td>flake.lock pins it; a tsc major bump rides a dependency-train tail (tidy → gates → CI watch), never the daemon</td></tr>
+            <tr><td>The gate duplicates <code>island-lint</code> and gets skipped as "redundant"</td><td>Low</td><td>They are orthogonal: oxlint is <code>no-undef</code> only; the type gate is inference. Document the split in AGENTS.md</td></tr>
+            <tr><td>Someone "helpfully" adds <code>@ts-ignore</code> to go green</td><td>Medium</td><td>T06 pins a zero-bare-ignore rule; every suppression needs a reason at the site (same doctrine as <code>nolint</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2><span class="num">11</span>Acceptance criteria for the whole train</h2>
+      <ul>
+        <li><code>git diff</code> after T01–T06 touches only <code>tsconfig.json</code>, <code>types/</code>, <code>nix/</code>, docs and one test file — <strong>no island module content changes</strong>.</li>
+        <li><code>nix build .#checks.x86_64-linux.island-typecheck</code> is green and network-free.</li>
+        <li>The served-byte pin sites are untouched and their suites stay green (Go tests, smoke script). <strong>The stack browser E2E is NOT owed</strong>, because no markup and no served asset changed.</li>
+        <li>Every opted-in file: 0 errors under <code>strict</code>, no bare <code>any</code> escape in new annotations, no <code>@ts-ignore</code> without a reason comment.</li>
+        <li>T06's pin fails if a pragma is removed or an unreasoned ignore is added.</li>
+        <li><code>nix fmt</code> clean; prettier remains the sole formatter for island files; oxfmt still excludes them.</li>
+      </ul>
+
+      <h2><span class="num">12</span>Non-goals</h2>
+      <ul>
+        <li>No bundler, no minification, no npm dependency for the island.</li>
+        <li>No <code>.ts</code> file in stage 1 (that is candidate A, deferred).</li>
+        <li>No rewrite of <code>src/</code> in <code>webphone-android</code>; T26 moves files and adds a plugin, nothing more.</li>
+        <li>No second KMP target, no Compose Desktop, no Kotlin/Wasm.</li>
+        <li>No Go-language change of any kind. No server-side refactor rides this train.</li>
+        <li>No behavior change: annotations only, or the change moves to its own commit with its own test.</li>
+      </ul>
+
+      <h2><span class="num">13</span>Appendix — the fine breakdown (~109 × ≤15 min)</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>ID</th><th>Fine task</th><th>Parent</th><th>Min</th></tr></thead>
+          <tbody>
+            <tr><td>F001</td><td>Draft the five-candidate verdict matrix (done — §01 of this doc)</td><td>T01</td><td>15</td></tr>
+            <tr><td>F002</td><td>Append the six-line stance block to AGENTS.md § "The DOM + bundle contract"</td><td>T01</td><td>15</td></tr>
+            <tr><td>F003</td><td>Add <code>tsc -p . --noEmit</code> + the nix check path to AGENTS.md § Commands</td><td>T01</td><td>10</td></tr>
+            <tr><td>F004</td><td>Add the TODO_LIST row pointing at this plan (living source)</td><td>T01</td><td>10</td></tr>
+            <tr><td>F005</td><td>Create <code>tsconfig.json</code> skeleton with <code>allowJs</code> + <code>noEmit</code></td><td>T02</td><td>10</td></tr>
+            <tr><td>F006</td><td>Set <code>target: ES2022</code>, <code>lib: [DOM, DOM.Iterable, ES2022]</code></td><td>T02</td><td>5</td></tr>
+            <tr><td>F007</td><td>Set <code>module: ESNext</code>, <code>moduleResolution: bundler</code></td><td>T02</td><td>5</td></tr>
+            <tr><td>F008</td><td>Set <code>moduleDetection: auto</code> so ESM modules and classic <code>shell.js</code> coexist</td><td>T02</td><td>5</td></tr>
+            <tr><td>F009</td><td>Set <code>strict: true</code>; record the <code>noUncheckedIndexedAccess</code> decision in a comment</td><td>T02</td><td>10</td></tr>
+            <tr><td>F010</td><td>Add <code>include</code>: island/app, shell.js, enroll/*.js, theme-preload.js, types/</td><td>T02</td><td>5</td></tr>
+            <tr><td>F011</td><td>Run <code>npx -p typescript tsc -p . --noEmit</code>; record the 0-file baseline</td><td>T02</td><td>10</td></tr>
+            <tr><td>F012</td><td>Create <code>types/</code> and reference it from <code>include</code></td><td>T03</td><td>5</td></tr>
+            <tr><td>F013</td><td>Declare <code>PBX_CONFIG</code> base keys: <code>sipDomain</code>, <code>websocketPath</code>, <code>phoneApi</code></td><td>T03</td><td>10</td></tr>
+            <tr><td>F014</td><td>Type <code>iceServers</code> as the RTCIceServer shape</td><td>T03</td><td>10</td></tr>
+            <tr><td>F015</td><td>Add <code>asr</code>, agent/drafts, push, contacts, crm fields</td><td>T03</td><td>15</td></tr>
+            <tr><td>F016</td><td>Declare the <code>SIP</code> readonly global</td><td>T03</td><td>5</td></tr>
+            <tr><td>F017</td><td>Declare island globals (<code>htmx</code>, idiomorph, <code>wp:*</code> event names)</td><td>T03</td><td>10</td></tr>
+            <tr><td>F018</td><td>Cross-check every key against the server's <code>/config.js</code> writer</td><td>T03</td><td>15</td></tr>
+            <tr><td>F019</td><td>Enumerate SIP symbols actually used (<code>grep -o 'SIP\.[A-Za-z]*'</code>)</td><td>T04</td><td>10</td></tr>
+            <tr><td>F020</td><td>Declare <code>UserAgent</code> + constructor options</td><td>T04</td><td>15</td></tr>
+            <tr><td>F021</td><td>Declare <code>Registerer</code> + <code>RegistererState</code></td><td>T04</td><td>10</td></tr>
+            <tr><td>F022</td><td>Declare <code>Inviter</code>/<code>Invitation</code>/<code>SessionState</code></td><td>T04</td><td>15</td></tr>
+            <tr><td>F023</td><td>Declare <code>SessionDescriptionHandler</code> + track/stream types</td><td>T04</td><td>15</td></tr>
+            <tr><td>F024</td><td>Declare the REFER/NOTIFY sipfrag surface</td><td>T04</td><td>10</td></tr>
+            <tr><td>F025</td><td>Pin the version in a header comment + note the <code>update.sh</code> obligation</td><td>T04</td><td>5</td></tr>
+            <tr><td>F026</td><td>Sanity-check the .d.ts against the first annotated module</td><td>T04</td><td>10</td></tr>
+            <tr><td>F027</td><td>Write the <code>island-typecheck</code> runCommand with <code>pkgs.typescript</code></td><td>T05</td><td>15</td></tr>
+            <tr><td>F028</td><td>Register it in the flake's check set</td><td>T05</td><td>5</td></tr>
+            <tr><td>F029</td><td>Add nodejs + typescript to <code>nix/devshell.nix</code></td><td>T05</td><td>10</td></tr>
+            <tr><td>F030</td><td>First green run; log the checked-file list into the derivation output</td><td>T05</td><td>10</td></tr>
+            <tr><td>F031</td><td>Confirm the check needs no network and no install step</td><td>T05</td><td>10</td></tr>
+            <tr><td>F032</td><td>Document the one-line invocation</td><td>T05</td><td>10</td></tr>
+            <tr><td>F033</td><td>Go test: the checked-file set never shrinks (pinned list on disk)</td><td>T06</td><td>20</td></tr>
+            <tr><td>F034</td><td>Go test: no <code>@ts-ignore</code>/<code>@ts-expect-error</code> without a reason on the same line</td><td>T06</td><td>15</td></tr>
+            <tr><td>F035</td><td>Bootstrap the pinned list from the current tree</td><td>T06</td><td>10</td></tr>
+            <tr><td>F036</td><td>Write remediation copy into both failure messages</td><td>T06</td><td>15</td></tr>
+            <tr><td>F037</td><td><code>csrf.js</code>: pragma + annotate the token reader</td><td>T07</td><td>10</td></tr>
+            <tr><td>F038</td><td><code>config.js</code>: pragma + annotate the config readers</td><td>T07</td><td>10</td></tr>
+            <tr><td>F039</td><td><code>ui.js</code>: type the <code>els</code> registry per element</td><td>T08</td><td>15</td></tr>
+            <tr><td>F040</td><td><code>ui.js</code>: type <code>log</code>, <code>announce</code>, <code>whoamiLine</code></td><td>T08</td><td>15</td></tr>
+            <tr><td>F041</td><td><code>i18n.js</code>: type <code>t()</code> and derive the key union from the dictionary</td><td>T09</td><td>15</td></tr>
+            <tr><td>F042</td><td><code>i18n.js</code>: confirm en/de parity tests still pass</td><td>T09</td><td>10</td></tr>
+            <tr><td>F043</td><td><code>notify.js</code>: pragma + annotate</td><td>T10</td><td>10</td></tr>
+            <tr><td>F044</td><td><code>shortcuts.js</code>: pragma + annotate</td><td>T10</td><td>10</td></tr>
+            <tr><td>F045</td><td><code>selftest.js</code>: pragma + annotate</td><td>T10</td><td>10</td></tr>
+            <tr><td>F046</td><td><code>ssoerror.js</code>: pragma + annotate</td><td>T10</td><td>10</td></tr>
+            <tr><td>F047</td><td><code>audio.js</code>: type tone handles and stop functions</td><td>T11</td><td>15</td></tr>
+            <tr><td>F048</td><td><code>audioout.js</code>: type output-device selection</td><td>T11</td><td>15</td></tr>
+            <tr><td>F049</td><td><code>mic.js</code>: type the MediaStream factory + warm-mic release</td><td>T11</td><td>15</td></tr>
+            <tr><td>F050</td><td><code>auth.js</code>: type CSRF/credential helpers</td><td>T12</td><td>15</td></tr>
+            <tr><td>F051</td><td><code>session.js</code>: type the <code>sessionIdentity</code> wire shape against the Go struct</td><td>T12</td><td>15</td></tr>
+            <tr><td>F052</td><td><code>session.js</code>: type the resume/renew paths</td><td>T12</td><td>15</td></tr>
+            <tr><td>F053</td><td><code>ice.js</code>: type the <code>wp:calls-changed</code> bridge</td><td>T13</td><td>15</td></tr>
+            <tr><td>F054</td><td><code>pcsetup.js</code>: type the SDP instrumentation hooks</td><td>T13</td><td>15</td></tr>
+            <tr><td>F055</td><td><code>connection.js</code>: type registration state + events</td><td>T14</td><td>15</td></tr>
+            <tr><td>F056</td><td><code>connection.js</code>: type the watchdog rebuild path</td><td>T14</td><td>15</td></tr>
+            <tr><td>F057</td><td><code>connection.js</code>: type the invite fan-in</td><td>T14</td><td>15</td></tr>
+            <tr><td>F058</td><td><code>calls.js</code> pass 1: type <code>CALL_TRANSITIONS</code> as literal rows</td><td>T15</td><td>15</td></tr>
+            <tr><td>F059</td><td><code>calls.js</code> pass 1: type <code>applyTransition</code>/<code>viewStateOf</code></td><td>T15</td><td>15</td></tr>
+            <tr><td>F060</td><td><code>calls.js</code> pass 2: type the hold pending-state machine</td><td>T15</td><td>15</td></tr>
+            <tr><td>F061</td><td><code>calls.js</code> pass 2: type the answer/reject queue</td><td>T15</td><td>15</td></tr>
+            <tr><td>F062</td><td><code>calls.js</code> pass 2: type the card settle + summary-draft call</td><td>T15</td><td>15</td></tr>
+            <tr><td>F063</td><td><code>calls.js</code> pass 2: type <code>recordCrmCall</code> + DTMF</td><td>T15</td><td>15</td></tr>
+            <tr><td>F064</td><td><code>panels.js</code>: type History/fax/voicemail row builders</td><td>T16</td><td>15</td></tr>
+            <tr><td>F065</td><td><code>panels.js</code>: type the note save/draft handlers</td><td>T16</td><td>15</td></tr>
+            <tr><td>F066</td><td><code>typeahead.js</code>: type the contact search + <code>data-*</code> reads</td><td>T16</td><td>15</td></tr>
+            <tr><td>F067</td><td><code>transcribe.js</code>: type the segment + POST payload</td><td>T17</td><td>15</td></tr>
+            <tr><td>F068</td><td><code>transcribe.js</code>: type live capture + AudioContext lifecycle</td><td>T17</td><td>15</td></tr>
+            <tr><td>F069</td><td><code>main.js</code>: type the boot sequence</td><td>T18</td><td>15</td></tr>
+            <tr><td>F070</td><td><code>state.js</code>: type the store + <code>incomingSessions</code> invariant</td><td>T18</td><td>15</td></tr>
+            <tr><td>F071</td><td><code>shell.js</code>: decide project shape (own <code>tsconfig.shell.json</code> vs shared) and prove it</td><td>T19</td><td>15</td></tr>
+            <tr><td>F072</td><td><code>shell.js</code>: type toasts + <code>#wp-live</code> announcements</td><td>T19</td><td>15</td></tr>
+            <tr><td>F073</td><td><code>shell.js</code>: type nav, skeleton reveal, language re-fetch</td><td>T19</td><td>15</td></tr>
+            <tr><td>F074</td><td><code>shell.js</code>: type the optimistic-send bubble + retry/dismiss</td><td>T19</td><td>15</td></tr>
+            <tr><td>F075</td><td><code>shell.js</code>: type the command palette + CSRF copy</td><td>T19</td><td>15</td></tr>
+            <tr><td>F076</td><td><code>enroll.js</code> + <code>webauthn.js</code>: pragma + annotate</td><td>T20</td><td>15</td></tr>
+            <tr><td>F077</td><td><code>theme-preload.js</code>: pragma + annotate</td><td>T20</td><td>10</td></tr>
+            <tr><td>F078</td><td>Add <code>@types/node</code> to the dev toolchain</td><td>T21</td><td>10</td></tr>
+            <tr><td>F079</td><td>Extend the project to <code>island-tests/</code></td><td>T21</td><td>10</td></tr>
+            <tr><td>F080</td><td>Type <code>helpers.mjs</code> (the DOM stub is the crux)</td><td>T21</td><td>15</td></tr>
+            <tr><td>F081</td><td>Declare the <code>node:test</code> globals; pilot 5 specs</td><td>T21</td><td>15</td></tr>
+            <tr><td>F082</td><td>Measure pragma coverage across the tree</td><td>T22</td><td>10</td></tr>
+            <tr><td>F083</td><td>Flip <code>checkJs: true</code></td><td>T22</td><td>5</td></tr>
+            <tr><td>F084</td><td>Fix the bounded residue (stop and re-plan if &gt; 20 errors)</td><td>T22</td><td>15</td></tr>
+            <tr><td>F085</td><td>Drop the pragma requirement from the pin; keep the ignore rule</td><td>T22</td><td>10</td></tr>
+            <tr><td>F086</td><td>Full gate green + record timing</td><td>T22</td><td>15</td></tr>
+            <tr><td>F087</td><td>AGENTS.md § Commands line</td><td>T23</td><td>10</td></tr>
+            <tr><td>F088</td><td>README dev section (how to run the gate locally)</td><td>T23</td><td>15</td></tr>
+            <tr><td>F089</td><td>CHANGELOG <code>[Unreleased]</code> line (code path changed: a gate exists)</td><td>T23</td><td>10</td></tr>
+            <tr><td>F090</td><td><code>.buildflow.yml</code> note: island stays excluded, the gate is a nix check</td><td>T23</td><td>10</td></tr>
+            <tr><td>F091</td><td>Inventory every catch/rejection site in island/app</td><td>T24</td><td>15</td></tr>
+            <tr><td>F092</td><td>Define the typed rejection shape (kind + message)</td><td>T24</td><td>15</td></tr>
+            <tr><td>F093</td><td>One helper module + its node:test spec</td><td>T24</td><td>15</td></tr>
+            <tr><td>F094</td><td>Convert the first five empty catches to surfaced failures</td><td>T24</td><td>15</td></tr>
+            <tr><td>F095</td><td>Add an empty-catch tripwire (oxlint rule or a grep pin)</td><td>T24</td><td>15</td></tr>
+            <tr><td>F096</td><td>Write the island section of <code>docs/error-contract.md</code></td><td>T24</td><td>15</td></tr>
+            <tr><td>F097</td><td>Collect the defect list the gate caught</td><td>T25</td><td>15</td></tr>
+            <tr><td>F098</td><td>Write the 30-day retrofit report</td><td>T25</td><td>15</td></tr>
+            <tr><td>F099</td><td>Decide whether any candidate-A trigger has fired</td><td>T25</td><td>15</td></tr>
+            <tr><td>F100</td><td>android: add the <code>shared</code> KMP module skeleton</td><td>T26</td><td>15</td></tr>
+            <tr><td>F101</td><td>Move <code>SipMessage.kt</code> to <code>commonMain</code></td><td>T26</td><td>15</td></tr>
+            <tr><td>F102</td><td>Move <code>Digest.kt</code></td><td>T26</td><td>15</td></tr>
+            <tr><td>F103</td><td>Move <code>SipEngine.kt</code>; isolate okhttp behind expect/actual</td><td>T26</td><td>15</td></tr>
+            <tr><td>F104</td><td>Run the sip test suite under KMP</td><td>T26</td><td>15</td></tr>
+            <tr><td>F105</td><td>Measure build-time delta and record it</td><td>T26</td><td>15</td></tr>
+            <tr><td>F106</td><td>Write the spike verdict (keep or revert)</td><td>T26</td><td>15</td></tr>
+            <tr><td>F107</td><td>Collect linuxX64 WebRTC candidates with activity evidence</td><td>T27</td><td>15</td></tr>
+            <tr><td>F108</td><td>Define the 3-call audio smoke (bidirectional, AEC/NS, two machines)</td><td>T27</td><td>15</td></tr>
+            <tr><td>F109</td><td>Record go/no-go conditions in ROADMAP.md and stop</td><td>T27</td><td>15</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer>
+        <p>
+          Snapshot artifact — claims verified 2026-10-27 16:04 CET at HEAD <code>abd622d</code>. Push/CI statements rot fastest;
+          re-verify any row before acting on it. Nothing in this plan has been implemented: no file under
+          <code>internal/web/assets/</code> was modified to produce it.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

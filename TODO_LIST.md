@@ -29,6 +29,27 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Language stance: island type gate GO, Go→JS + full KMP rejected (2026-10-27 plan, unstarted)
+
+Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
+(27 tasks / 109 fine rows; nothing implemented). **Priority:** High · **Effort:** M.
+
+1. **Island type gate (GO — Tier 1)**: JSDoc `// @ts-check` + `tsc --noEmit` + hand-written
+   `types/globals.d.ts` (PBX_CONFIG) and `types/sip.d.ts` (vendored 0.21.2) + a sandbox-safe
+   `island-typecheck` nix check + a progress pin (checked-file set never shrinks, no bare
+   `@ts-ignore`). Served bytes stay IDENTICAL, so no stack browser E2E is owed. T01–T06 + T23 is
+   the scaffold (~4 h); the per-file annotation campaign (T07–T22) is one commit per file.
+2. **Island error-surface conventions (T24)**: absorbs the queued 2026-10-27 status item 3
+   (typed rejection, no silent catch) into the same files the annotations touch.
+3. **KMP protocol-layer spike (CONDITIONAL — T26/T27, `~/projects/webphone-android`)**:
+   `sip/` → `commonMain`, Android as the ONLY target, then STOP — no second target without a
+   linuxX64 WebRTC 3-call audio smoke. Gate: a committed second target in ROADMAP.
+4. **REJECTED, do not re-propose**: Go server → JavaScript (57,349 LOC plus the
+   single-binary/nix deployment premise for zero product gain) · full Kotlin Multiplatform (the
+   2026-10-23 platform decision stands: Linux WebRTC is the weak leg) · a Kotlin/Wasm web target
+   (rewrites the island + templ/htmx model) · island → `.ts` with emit (deferred behind three
+   named triggers: a justified npm dependency, a JSDoc overhead ceiling, framework adoption).
+
 ### Dialer-adoption issues #6–#8 + Kith switch-on #9 (2026-10-27 — claims verified, unimplemented)
 
 Owner-filed adoption candidates from the dialer postmortem
