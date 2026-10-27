@@ -218,10 +218,10 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	defer drainClose(resp)
 
-	switch {
-	case resp.StatusCode == http.StatusOK:
+	switch resp.StatusCode {
+	case http.StatusOK:
 		return nil
-	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return errorfamily.Newf(errorfamily.Rejection, "crm.health.unauthorized",
 			"crm: the bearer token was rejected (status %d) — rotate the CRM token credential", resp.StatusCode)
 	default:
