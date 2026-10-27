@@ -16,14 +16,57 @@
    * @returns {Element}
    */
   function eventElement(event) {
-    var target = eventElement(event);
-    return target instanceof Element ? target : document.documentElement;
+    var target = /** @type {Element | null} */ (event.target);
+    // Duck check rather than `instanceof Element`: the node test stubs are
+    // plain objects, so instanceof would throw there and take every
+    // delegated handler down with it. A real element is the only target
+    // that answers closest().
+    if (target && typeof target.closest === "function") return target;
+    return document.documentElement;
+  }
+
+  /**
+   * The custom-event detail htmx and the island attach. Deliberately `any`:
+   * each listener below narrows the fields it reads, and htmx's own detail
+   * shapes are untyped, so a single honest hole beats twenty casts.
+   * @param {Event} event
+   * @returns {any}
+   */
+  function eventDetail(event) {
+    return /** @type {CustomEvent} */ (event).detail;
+  }
+
+  /**
+   * closest() with the HTMLElement result the shell's handlers read.
+   * Element.closest returns the bare Element base, which carries neither
+   * dataset nor value nor disabled — and every selector this file searches
+   * matches a real HTML element (form/button/a/input/textarea/li).
+   * @param {Element} el
+   * @param {string} selector
+   * @returns {HTMLElement | null}
+   */
+  function closestHTMLElement(el, selector) {
+    return /** @type {HTMLElement | null} */ (el.closest(selector));
+  }
+
+  /**
+   * One of the voicemail panel's media elements by id, typed as the audio
+   * element it is (the panel renders <audio> under these ids).
+   * @param {string} id
+   * @returns {HTMLAudioElement | null}
+   */
+  function audioElement(id) {
+    return /** @type {HTMLAudioElement | null} */ (document.getElementById(id));
   }
 
   // Inline SVG icon markup (the JS-created twins of the server's
   // templ-components icons): plain strings assigned via innerHTML —
   // sized by the shared .wp-icon CSS class, tinted by currentColor.
   // Platform emoji rendered differently per OS and read as decoration.
+  /**
+   * @param {string} path
+   * @returns {string}
+   */
   var svgIconHtml = function (path) {
     return (
       '<svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
@@ -134,6 +177,10 @@
     //    form, so we say so and point at the login field instead. The
     //    toast mirrors the island's announce() markup (shared CSS, no
     //    island import — shell and island never load each other's code).
+    /**
+     * @param {string} message
+     * @param {IslandToastKind} [kind]
+     */
     var shellToast = function (message, kind) {
       var host = document.getElementById("toasts");
       if (!host) return;
@@ -347,8 +394,14 @@
     //      always the owner's keystroke). The server's failure lines
     //      are already human-phrased; the toasts relay them verbatim.
     //      English toasts (D3).
+    /**
+     * @param {string} callId
+     * @returns {HTMLTextAreaElement | null}
+     */
     var noteBodyFor = function (callId) {
-      return document.querySelector('[data-note-body="' + callId + '"]');
+      return /** @type {HTMLTextAreaElement | null} */ (
+        document.querySelector('[data-note-body="' + callId + '"]')
+      );
     };
     document.addEventListener("click", function (event) {
       if (!eventElement(event).closest) return;
@@ -437,6 +490,7 @@
     //     removed on teardown (calls.js), so counting them counts live
     //     calls (ringing included). English by the shell.js precedent
     //     (theme toggle) — presence is operator glanceable state.
+    /** @type {HTMLElement | null} */
     var callBadge = null;
     var updateCallBadge = function () {
       var calls = document.getElementById("calls");
@@ -467,6 +521,7 @@
     //     reviewed — is opened. English shell copy (D3); client-only
     //     state: the PBX CDR carries no missed flag, and the badge is
     //     a session-scoped glance signal by nature.
+    /** @type {HTMLElement | null} */
     var missedBadge = null;
     var missedCount = 0;
     var renderMissedBadge = function () {
@@ -509,9 +564,13 @@
     //     visibility plus one gesture, never a second config surface).
     //     English shell copy (D3); announcements ride the polite live
     //     region.
+    /** @type {HTMLElement | null} */
     var agentPill = null;
+    /** @type {HTMLElement | null} */
     var agentReset = null;
+    /** @type {IslandAgentModeState | null} */
     var agentModeState = null;
+    /** @param {string} text */
     var announceLive = function (text) {
       var live = document.getElementById("wp-live");
       if (!live) return;
@@ -561,6 +620,7 @@
         agentReset = null;
       }
     };
+    /** @param {string} value */
     var postAgentMode = function (value) {
       if (!agentModeState) return;
       fetch("/messages/drafts/mode", {
@@ -600,8 +660,10 @@
       var at = modes.indexOf(agentModeState.mode);
       postAgentMode(modes[(at + 1 + modes.length) % modes.length]);
     };
+    /** @param {Event} event */
     var agentModeOpened = function (event) {
-      var detail = (event && event.detail) || {};
+      /** @type {{agentMode?: string, agentModeSource?: string, agentDefaultMode?: string, agentModes?: string[]}} */
+      var detail = /** @type {CustomEvent} */ (event).detail || {};
       if (!detail.agentMode) {
         agentModeState = null;
       } else {
@@ -644,7 +706,9 @@
     //     download stays available via the browser's image context
     //     menu). ESC and backdrop clicks close it natively — CSP-clean,
     //     zero keyboard JS. English shell copy (D3).
+    /** @type {HTMLDialogElement | null} */
     var lightbox = null;
+    /** @type {HTMLImageElement | null} */
     var lightboxImg = null;
     document.addEventListener("click", function (event) {
       var link =
@@ -697,6 +761,12 @@
     //     A 429 from the seam's flood budget is retried ONCE after the
     //     Retry-After delay (bounded to 10 s — a hostile header must not
     //     freeze the tab).
+    /**
+     * @param {Blob} blob
+     * @param {string} name
+     * @param {boolean} retried429
+     * @returns {Promise<Response>}
+     */
     var postTranscribe = function (blob, name, retried429) {
       return fetch("/api/transcribe?filename=" + encodeURIComponent(name), {
         method: "POST",
@@ -719,11 +789,13 @@
         return res;
       });
     };
+    /** @param {Element} btn @returns {Promise<unknown>} */
     var runTranscribe = function (btn) {
       var src = btn.getAttribute("data-transcribe-src");
       var targetId = btn.getAttribute("data-transcribe-target");
       var target = targetId ? document.getElementById(targetId) : null;
       if (!src || !target) return Promise.resolve();
+      /** @param {string} text */
       var render = function (text) {
         target.hidden = false;
         target.textContent = text;
@@ -812,6 +884,7 @@
         });
       });
     };
+    /** @type {ReturnType<typeof setTimeout> | null} */
     var autoTranscribeTimer = null;
     var scheduleAutoTranscribe = function () {
       if (autoTranscribeTimer) clearTimeout(autoTranscribeTimer);
@@ -838,9 +911,10 @@
     //     - on the newest page the push marks the thread read — a live
     //       swap never re-GETs the partial, so only the client can clear
     //       the unread badge for the conversation on screen.
+    /** @returns {string} */
     var csrfToken = function () {
       var meta = document.querySelector('meta[name="csrf-token"]');
-      return meta ? meta.getAttribute("content") : "";
+      return (meta && meta.getAttribute("content")) || "";
     };
     var refreshNav = function () {
       if (!window.htmx) return;
@@ -894,7 +968,9 @@
     //     matching the segcounter precedent.
     var NEAR_BOTTOM_PX = 80;
     var pendingNew = 0;
+    /** @type {HTMLElement | null} */
     var jumpChip = null;
+    /** @param {HTMLElement} el @returns {boolean} */
     var nearBottom = function (el) {
       return el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM_PX;
     };
@@ -1004,6 +1080,7 @@
       }
       return Date.now();
     };
+    /** @param {string} message */
     var showThrottledError = function (message) {
       var nowMs = now();
       if (nowMs - lastErrorToast < 8000) return;
@@ -1043,6 +1120,7 @@
     //     fresh typing), cleared after a successful send. Best-effort:
     //     storage failures (private mode, quota) are silently ignored.
     var DRAFT_MAX = 4000;
+    /** @param {string} threadId @returns {string} */
     var draftKey = function (threadId) {
       return "wp-draft:" + threadId;
     };
@@ -1052,6 +1130,7 @@
         ? transcript.dataset.thread
         : "new";
     };
+    /** @param {string} draftId @param {string} text */
     var saveDraft = function (draftId, text) {
       try {
         if (text && text.length <= DRAFT_MAX) {
@@ -1063,6 +1142,7 @@
         /* storage unavailable — drafts are best-effort */
       }
     };
+    /** @type {ReturnType<typeof setTimeout> | null} */
     var draftTimer = null;
     document.addEventListener("input", function (event) {
       var area = eventElement(event);
@@ -1136,6 +1216,7 @@
       meta.className = "wp-bubble-meta";
       var clock = document.createElement("span");
       var stamp = new Date();
+      /** @param {number} n @returns {string} */
       var pad = function (n) {
         return (n < 10 ? "0" : "") + n;
       };
@@ -1149,8 +1230,11 @@
       transcript.scrollTop = transcript.scrollHeight;
       optPending.set(form, { bubble: bubble, body: body });
     });
+    /** @param {Event} event */
     var rollbackOptimistic = function (event) {
-      var form = (event.detail && event.detail.elt) || eventElement(event);
+      /** @type {{elt?: Element}} */
+      var detail = /** @type {CustomEvent} */ (event).detail || {};
+      var form = detail.elt || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       var record = optPending.get(form);
       if (!record) return;
@@ -1247,7 +1331,9 @@
     //     flight. Typing-driven fetches (search, composer) stay quiet —
     //     morph keeps those surfaces alive and a flash there would be
     //     noise, not signal.
+    /** @type {HTMLElement | null} */
     var skeleton = null;
+    /** @param {Element} elt @returns {boolean} */
     var navigatingSwap = function (elt) {
       if (!elt || !elt.matches) return false;
       return Boolean(
@@ -1279,7 +1365,9 @@
     //     controls instead of a dead scrubber.
     var vmPeaksCache = new Map(); // uuid -> peak array (48 bars)
     var vmWired = new WeakSet(); // audio elements with listeners attached
+    /** @type {HTMLAudioElement | null} */
     var vmActiveAudio = null; // single-active-player invariant
+    /** @type {AudioContext | null} */
     var vmAudioContext = null; // browsers cap contexts — one per page, lazy
     var vmFallbackToasted = false;
 
@@ -1290,10 +1378,16 @@
     // per bar. Pure and unit-tested: empty input renders silence, and a
     // bar whose sample slice is empty (more bars than samples) inherits
     // the nearest valued bar so the wave starts where the audio does.
+    /**
+     * @param {Float32Array} samples
+     * @param {number} bars
+     * @returns {number[]}
+     */
     var vmPeaks = function (samples, bars) {
       var peaks = new Array(bars).fill(0);
       if (!samples || samples.length === 0) return peaks;
       var step = samples.length / bars;
+      /** @type {Array<number | null>} */
       var filled = new Array(bars).fill(null);
       for (var b = 0; b < bars; b++) {
         var start = Math.floor(b * step);
@@ -1325,6 +1419,7 @@
 
     // vmClock mirrors the server's m:ss shape (vmClock in voicemail.templ)
     // so the running readout never disagrees with the initial render.
+    /** @param {number} seconds @returns {string} */
     var vmClock = function (seconds) {
       if (!isFinite(seconds) || seconds < 0) seconds = 0;
       var s = Math.floor(seconds);
@@ -1333,16 +1428,28 @@
       return mm + ":" + (ss < 10 ? "0" : "") + ss;
     };
 
+    /** @param {Element | null} el @returns {Element | null} */
     var vmRowOf = function (el) {
       return el && el.closest ? el.closest(".wp-vm-row") : null;
     };
 
+    /**
+     * @param {HTMLElement} canvas
+     * @param {string} name
+     * @param {string} fallback
+     * @returns {string}
+     */
     var vmToken = function (canvas, name, fallback) {
       if (typeof getComputedStyle !== "function") return fallback;
       var value = getComputedStyle(canvas).getPropertyValue(name);
       return value && value.trim() ? value.trim() : fallback;
     };
 
+    /**
+     * @param {HTMLCanvasElement} canvas
+     * @param {number[]} peaks
+     * @param {number} progress
+     */
     var vmDraw = function (canvas, peaks, progress) {
       if (!canvas || !canvas.getContext) return;
       var ctx = canvas.getContext("2d");
@@ -1369,6 +1476,7 @@
     // and the nav badge count follows (the server re-renders the real
     // counts on the next nudge — this is the same optimistic shape the
     // mark-read path uses, grounded in the user's own play action).
+    /** @param {Element | null} row */
     var vmClearUnread = function (row) {
       if (!row || !row.classList || !row.classList.contains("wp-unread")) {
         return;
@@ -1384,6 +1492,11 @@
       }
     };
 
+    /**
+     * @param {string} uuid
+     * @param {HTMLAudioElement} audio
+     * @param {boolean} playing
+     */
     var vmSetPlaying = function (uuid, audio, playing) {
       var row = vmRowOf(audio);
       if (row && row.classList) {
@@ -1401,6 +1514,7 @@
       if (playing) vmClearUnread(row);
     };
 
+    /** @param {string} uuid @param {HTMLAudioElement} audio */
     var vmPaint = function (uuid, audio) {
       var duration = isFinite(audio.duration) ? audio.duration : 0;
       var current = isFinite(audio.currentTime) ? audio.currentTime : 0;
@@ -1417,6 +1531,7 @@
       }
     };
 
+    /** @param {HTMLAudioElement} audio @param {string} uuid */
     var vmWire = function (audio, uuid) {
       if (vmWired.has(audio)) return;
       vmWired.add(audio);
@@ -1439,6 +1554,7 @@
       });
     };
 
+    /** @param {string} uuid @param {HTMLAudioElement | null} audio */
     var vmFallback = function (uuid, audio) {
       // Honest degradation (C1): without WebAudio there is no waveform;
       // the browser's native controls take over so playback still works.
@@ -1491,6 +1607,7 @@
         });
     };
 
+    /** @param {Element} btn */
     var vmTogglePlay = function (btn) {
       var uuid = btn.getAttribute("data-vm-play");
       var audio = document.getElementById("vm-audio-" + uuid);
@@ -1523,6 +1640,7 @@
         });
     };
 
+    /** @param {Element} btn */
     var vmCycleSpeed = function (btn) {
       var uuid = btn.getAttribute("data-vm-speed");
       var audio = document.getElementById("vm-audio-" + uuid);
@@ -1546,6 +1664,11 @@
       if (speed) vmCycleSpeed(speed);
     });
 
+    /**
+     * @param {HTMLCanvasElement} canvas
+     * @param {HTMLAudioElement} audio
+     * @param {number} clientX
+     */
     var vmSeek = function (canvas, audio, clientX) {
       if (!canvas.getBoundingClientRect) return;
       var rect = canvas.getBoundingClientRect();
@@ -1569,6 +1692,7 @@
       vmWire(audio, uuid);
       vmSeek(canvas, audio, event.clientX);
       // drag-to-scrub continues while the pointer is down
+      /** @param {PointerEvent} moveEvent */
       var move = function (moveEvent) {
         vmSeek(canvas, audio, moveEvent.clientX);
       };
@@ -1658,12 +1782,17 @@
       ["Ctrl/Cmd+K", "Command palette"],
       ["?", "This help"],
     ];
+    /** @type {HTMLElement | null} */
     var overlay = null;
+    /** @type {HTMLInputElement | null} */
     var overlayInput = null;
+    /** @type {HTMLElement | null} */
     var overlayList = null;
     var overlayMode = "commands";
+    /** @type {Array<{label: string, run: () => void}>} */
     var overlayItems = [];
     var overlayIndex = 0;
+    /** @type {Element | null} */
     var overlayReturnFocus = null;
 
     var collectCommands = function () {
@@ -1732,6 +1861,7 @@
       }
     };
 
+    /** @param {number} delta */
     var selectOverlay = function (delta) {
       if (overlayItems.length === 0) return;
       overlayIndex =
@@ -1787,6 +1917,7 @@
       });
     };
 
+    /** @param {string} mode */
     var openOverlay = function (mode) {
       if (!overlay) buildOverlay();
       overlayMode = mode;
@@ -1848,6 +1979,7 @@
     var GSM7_SET = new Set(GSM7_BASIC);
     var GSM7_EXT_SET = new Set(GSM7_EXT);
 
+    /** @param {string} text @returns {number} */
     function ucs2Segments(text) {
       var chars = Array.from(text).length;
       return chars <= 70 ? 1 : Math.ceil(chars / 67);
@@ -1856,6 +1988,7 @@
     // smsSegments returns the billable segment count for a body. CRLF
     // is normalized first: the composer textarea submits \r\n. Code
     // points (not UTF-16 units) count, so emoji cost one UCS-2 char.
+    /** @param {unknown} body @returns {number} */
     function smsSegments(body) {
       var text = String(body == null ? "" : body).replace(/\r\n/g, "\n");
       var units = 0;
@@ -1875,6 +2008,7 @@
     // while the body is comfortably small.
     var LIMIT_WINDOW_BYTES = 200;
 
+    /** @param {unknown} text @returns {number} */
     function bodyBytes(text) {
       return new TextEncoder().encode(String(text == null ? "" : text)).length;
     }
@@ -1885,6 +2019,7 @@
     // counter loud; the submit stays enabled so the server's own 422
     // banner remains the enforcing verdict (the counter warns, it does
     // not block).
+    /** @param {HTMLFormElement} form @param {string} body */
     function updateSegcount(form, body) {
       var counter = form.querySelector(".wp-segcount");
       if (!counter) return;
@@ -1929,6 +2064,7 @@
     // Attachment chips: names + remove for the composer file inputs.
     // Remove rebuilds the FileList via DataTransfer (the only mutable
     // route); without DataTransfer the native input stays the only UI.
+    /** @param {HTMLInputElement} input @param {HTMLElement} box */
     function renderAttachChips(input, box) {
       var files = input.files || [];
       box.replaceChildren();
