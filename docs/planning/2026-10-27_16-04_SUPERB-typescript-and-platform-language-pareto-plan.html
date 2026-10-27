@@ -336,7 +336,7 @@
               <td><strong>Island JS + <code>// @ts-check</code> + JSDoc + <code>tsc --noEmit</code></strong></td>
               <td><strong>No</strong> — byte-identical tree</td>
               <td>The same checker, same inference, same <code>strict</code> flags; editor DX; config-key drift caught; no build step</td>
-              <td>One scaffold session + ~18–26 h of annotation, spread file-by-file, opt-in per file</td>
+              <td>One scaffold session + a measured annotation rate (see the pilot note in §03), spread file-by-file, opt-in per file</td>
               <td><span class="badge go">Go — Tier 1</span></td>
             </tr>
             <tr>
@@ -523,7 +523,7 @@
             <tr><td>T23</td><td>Document the gate (AGENTS.md Commands, README dev, CHANGELOG <code>[Unreleased]</code>, buildflow note)</td><td>A gate nobody can run locally is a gate that rots</td><td class="file">AGENTS.md, README, CHANGELOG</td><td>Command copy-pasteable from AGENTS.md alone</td><td>45</td><td>1</td></tr>
             <tr><td>T24</td><td>Island error-surface conventions — <strong>design only</strong>: typed rejection shape + the no-silent-catch rule (queued 2026-10-27 item 3)</td><td>Encodes the owner ruling in the same pass that adds the annotations</td><td class="file">island/app/*.js</td><td>Convention written + one helper + spec; sweep, oxlint rules and the error-contract section stay with the 16:05 plan (T5/T11/T12)</td><td>100</td><td>3</td></tr>
             <tr><td>T25</td><td>Retrofit report: defects the gate caught, annotation cost per file</td><td>Decides whether A's triggers have fired</td><td class="file">docs/status/</td><td>Numbers, not impressions</td><td>45</td><td>3</td></tr>
-            <tr><td>T26</td><td><em>android</em>: KMP spike — <code>sip/</code> → <code>commonMain</code>, Android-only target</td><td>Compile-enforces platform purity; prices the seam honestly</td><td class="file">webphone-android shared/</td><td><code>sip/</code> tests green under KMP; build-time delta recorded</td><td>100</td><td>0</td></tr>
+            <tr><td>T26</td><td><em>android</em>: KMP spike in two parts — <strong>(a)</strong> <code>sip/</code> codec + digest → <code>commonMain</code> (genuinely platform-free); <strong>(b)</strong> <code>SipEngine</code> → <code>commonMain</code> with its okhttp dependency behind <code>expect</code>/<code>actual</code></td><td>Compile-enforces platform purity for the pure half, and prices the impure half honestly instead of pretending it is free</td><td class="file">webphone-android shared/</td><td>(a) codec/digest tests green under KMP; (b) engine compiles with an <code>expect fun</code> transport + an android <code>actual</code>, and its MockWebServer suite stays green</td><td>100 (a) + 180 (b)</td><td>0</td></tr>
             <tr><td>T27</td><td><em>android</em>: second-target gate — WebRTC evidence doc only, NO target added</td><td>Prevents the KMP conversation from re-opening on vibes</td><td class="file">android docs/</td><td>3-call audio smoke defined; go/no-go conditions recorded</td><td>90</td><td>0</td></tr>
           </tbody>
         </table>
@@ -663,7 +663,7 @@
         <li>The served-byte pin sites are untouched and their suites stay green (Go tests, smoke script). <strong>The stack browser E2E is NOT owed</strong>, because no markup and no served asset changed.</li>
         <li>Every opted-in file: 0 errors under <code>strict</code>, no bare <code>any</code> escape in new annotations, no <code>@ts-ignore</code> without a reason comment.</li>
         <li>T06's pin fails if a pragma is removed or an unreasoned ignore is added.</li>
-        <li><code>nix fmt</code> clean; prettier remains the sole formatter for island files; oxfmt still excludes them.</li>
+        <li><strong>Formatter ownership is split, not single.</strong> prettier (treefmt) never sees <code>tsconfig.json</code> or <code>types/*.d.ts</code> — <code>nix/treefmt.nix</code>'s prettier <code>includes</code> match neither path. Those files are <strong>oxfmt/BuildFlow-owned</strong> (only <code>island/**</code>, <code>shell.js</code>, <code>vendor/**</code> and <code>*_templ.go</code> are excluded from BuildFlow). The criterion is therefore <code>buildflow</code> format-clean for the new files and <code>nix fmt</code>-clean for the island files the campaign touches. Erratum 2026-10-27: this bullet previously said "<code>nix fmt</code> clean" for everything, which cannot pass as written.</li>
       </ul>
 
       <h2><span class="num">12</span>Non-goals</h2>
@@ -783,7 +783,7 @@
             <tr><td>F100</td><td>android: add the <code>shared</code> KMP module skeleton</td><td>T26</td><td>15</td></tr>
             <tr><td>F101</td><td>Move <code>SipMessage.kt</code> to <code>commonMain</code></td><td>T26</td><td>15</td></tr>
             <tr><td>F102</td><td>Move <code>Digest.kt</code></td><td>T26</td><td>15</td></tr>
-            <tr><td>F103</td><td>Move <code>SipEngine.kt</code>; isolate okhttp behind expect/actual</td><td>T26</td><td>15</td></tr>
+            <tr><td>F103</td><td><code>SipEngine.kt</code>: extract the okhttp call as an <code>expect</code> transport, add the android <code>actual</code>, then move the engine to <code>commonMain</code> (180 min, not 15 — erratum: <code>sip/</code> is not uniformly platform-free)</td><td>T26</td><td>180</td></tr>
             <tr><td>F104</td><td>Run the sip test suite under KMP</td><td>T26</td><td>15</td></tr>
             <tr><td>F105</td><td>Measure build-time delta and record it</td><td>T26</td><td>15</td></tr>
             <tr><td>F106</td><td>Write the spike verdict (keep or revert)</td><td>T26</td><td>15</td></tr>

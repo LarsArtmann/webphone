@@ -62,7 +62,7 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
 ### Language stance: island type gate GO, Go→JS + full KMP rejected (2026-10-27 plan, unstarted)
 
 Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
-(27 tasks / 109 fine rows; nothing implemented). **Priority:** High · **Effort:** M.
+(the plan owns the task count; this row points at it). **Priority:** High · **Effort:** M.
 
 1. **Island type gate (GO — Tier 1)**: JSDoc `// @ts-check` + `tsc --noEmit` + hand-written
    `types/globals.d.ts` (PBX_CONFIG) and `types/sip.d.ts` (vendored 0.21.2) + a sandbox-safe
@@ -76,8 +76,10 @@ Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-
    [docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md](docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md)
    (T5/T11/T12); de-overlap recorded in both files.
 3. **KMP protocol-layer spike (CONDITIONAL — T26/T27, `~/projects/webphone-android`)**:
-   `sip/` → `commonMain`, Android as the ONLY target, then STOP — no second target without a
-   linuxX64 WebRTC 3-call audio smoke. Gate: a committed second target in ROADMAP.
+   the codec + digest move to `commonMain` cleanly; `SipEngine` needs its okhttp transport behind
+   `expect`/`actual` first (re-estimated at 180 min, not 15). Android stays the ONLY target, then
+   STOP — no second target without a linuxX64 WebRTC 3-call audio smoke. Gate: a committed second
+   target in ROADMAP.
 4. **REJECTED, do not re-propose**: Go server → JavaScript (57,349 LOC plus the
    single-binary/nix deployment premise for zero product gain) · full Kotlin Multiplatform (the
    2026-10-23 platform decision stands: Linux WebRTC is the weak leg) · a Kotlin/Wasm web target

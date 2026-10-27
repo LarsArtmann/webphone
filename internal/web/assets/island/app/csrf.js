@@ -1,3 +1,4 @@
+// @ts-check
 // The CSRF token's ONE home. The server renders it into
 // <meta name="csrf-token"> and the nosurf double-submit cookie pairs
 // with it; every module that POSTs (island session/passkey surfaces and

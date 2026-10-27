@@ -1,0 +1,50 @@
+// The window.PBX_CONFIG wire contract, declared once for the island.
+//
+// The keys mirror the server's writer EXACTLY (internal/server/configjs.go,
+// the anonymous struct behind `window.PBX_CONFIG = …`). A server-side rename
+// or an island-side typo therefore becomes a compile error instead of a
+// silent `undefined` at runtime — the drift class this gate exists for.
+// Everything is optional: a config-less boot degrades to same-host defaults.
+
+/** One ICE server entry, mirroring config.ICEServer's JSON tags. */
+interface PBXICEServer {
+  urls: string[];
+  username?: string;
+  credential?: string;
+}
+
+/** One shared contact, mirroring domain.SharedContact's JSON tags. */
+interface PBXSharedContact {
+  name: string;
+  number: string;
+}
+
+/** Where the ASR provider runs: a loopback/private host or an external one. */
+type PBXASRLocality = "" | "local" | "remote";
+
+interface PBXConfig {
+  sipDomain?: string;
+  websocketPath?: string;
+  iceServers?: PBXICEServer[];
+  phoneApi?: boolean;
+  crm?: boolean;
+  asr?: boolean;
+  agent?: boolean;
+  asrLocality?: PBXASRLocality;
+  sipCredential?: boolean;
+  contacts?: PBXSharedContact[];
+}
+
+interface Window {
+  PBX_CONFIG?: PBXConfig;
+}
+
+/**
+ * The classic-script globals the island reads.
+ *
+ * `shell.js` is NOT a module — it declares these on the global scope and the
+ * island modules read them, so they are declared here rather than imported.
+ */
+declare const WP_PLAY_SVG: string;
+declare const WP_PAUSE_SVG: string;
+declare const WP_ATTACH_SVG: string;

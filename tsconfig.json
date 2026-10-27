@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "strict": true,
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "auto",
+    "types": [],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "internal/web/assets/island/app/**/*.js",
+    "internal/web/assets/shell.js",
+    "internal/web/assets/enroll/**/*.js",
+    "internal/web/assets/theme-preload.js"
+  ]
+}

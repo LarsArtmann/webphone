@@ -1,3 +1,4 @@
+// @ts-check
 // Runtime config injected by the serving PBX as window.PBX_CONFIG
 // (config.js, rendered at boot because it carries short-lived TURN
 // credentials). Every key is optional: without a config the phone
