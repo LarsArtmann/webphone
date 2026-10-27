@@ -110,6 +110,9 @@ type TranscriptGroup struct {
 	// Name is the CRM-resolved contact name (optional); empty renders
 	// the raw remote.
 	Name string
+	// Note is the owner's saved post-call note (optional; empty renders
+	// an empty editor box).
+	Note string
 }
 
 templ TranscriptSection(props HistoryPanelProps) {
@@ -164,6 +167,31 @@ templ TranscriptSection(props HistoryPanelProps) {
 					aria-label={ T(props.Lang, "history.transcript.delete") }
 					title={ T(props.Lang, "history.transcript.delete") }
 				>@icons.Icon(icons.Trash, "wp-icon")</button>
+				// Post-call note (M16): one freeform box per call. The form
+				// is inert markup until shell.js wires it (without JS the
+				// buttons do nothing, the transcript stays readable) — the
+				// AI-prefill button rides the summarize chain and inserts
+				// the draft text for a HUMAN edit before saving.
+				<div class="wp-call-note">
+					<label class="wp-muted" for={ "wp-note-body-" + group.CallID }>{ T(props.Lang, "history.note.edit") }</label>
+					<textarea
+						id={ "wp-note-body-" + group.CallID }
+						data-note-body={ group.CallID }
+						rows="3"
+					>{ group.Note }</textarea>
+					<button
+						class="wp-mini"
+						data-note-save={ group.CallID }
+						aria-label={ T(props.Lang, "history.note.save") }
+						title={ T(props.Lang, "history.note.save") }
+					>{ T(props.Lang, "history.note.save") }</button>
+					<button
+						class="wp-mini"
+						data-note-draft={ group.CallID }
+						aria-label={ T(props.Lang, "history.note.aiDraft") }
+						title={ T(props.Lang, "history.note.aiDraft") }
+					>{ T(props.Lang, "history.note.aiDraft") }</button>
+				</div>
 			</details>
 		}
 	</section>

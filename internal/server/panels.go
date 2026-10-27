@@ -284,10 +284,18 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 	names := h.crmNames(r.Context(), numbers)
 	groups := make([]views.TranscriptGroup, 0, len(recent))
 	for _, tx := range recent {
+		note := ""
+		if h.deps.Notes != nil {
+			if view, err := h.deps.Notes.Get(r.Context(), sess.Extension, tx.CallID); err != nil {
+				slog.Warn("history: note fetch failed", "error", err, "extension", sess.Extension.String())
+			} else if view != nil {
+				note = view.Body
+			}
+		}
 		groups = append(groups, views.TranscriptGroup{
 			CallID: tx.CallID,
 			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
-			Lines: tx.Lines, Name: names[tx.Remote],
+			Lines: tx.Lines, Name: names[tx.Remote], Note: note,
 		})
 	}
 	return groups
