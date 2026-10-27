@@ -373,6 +373,17 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 	if h.asrOn() {
 		asrDetail = h.deps.ASR.Describe()
 	}
+	// The agent row (M17) renders only when the textagent seam is wired;
+	// the mode probe is the identity lane's bounded, fail-open ask — an
+	// unreachable agent still shows the row naming its home.
+	agentOn, agentMode := h.deps.TextAgent != nil, ""
+	if agentOn {
+		ctx, cancel := context.WithTimeout(r.Context(), agentModeProbeTimeout)
+		if reviews, err := h.deps.TextAgent.Reviews(ctx); err == nil {
+			agentMode = reviews.Mode
+		}
+		cancel()
+	}
 	// The push row + device list render only when a transport is live
 	// (the chat-lane pattern; nil-safe for hand-composed test Deps). The
 	// wake address never leaves the store.
@@ -404,6 +415,9 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		CRM:            h.deps.CRM.Enabled(),
 		ASR:            h.asrOn(),
 		ASRDetail:      asrDetail,
+		ASRLocality:    h.deps.ASRLocality,
+		Agent:          agentOn,
+		AgentMode:      agentMode,
 		ChatMatrix:     h.deps.Config.Matrix.Enabled(),
 		ChatSignal:     h.deps.Config.Signal.Enabled(),
 		Push:           pushOn,

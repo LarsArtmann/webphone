@@ -237,6 +237,12 @@ func TestSettingsNamesTheASRProviderWhenSeamIsOn(t *testing.T) {
 	if page := string(body); !strings.Contains(page, "openai-compatible · whisper-1") {
 		t.Errorf("settings must name the provider kind and model:\n%s", page)
 	}
+	// The locality sentence (M17): the default Deps.ASRLocality is empty
+	// in the harness, which renders the REMOTE label — the honest default
+	// (an unset classification must not claim local processing).
+	if page := string(body); !strings.Contains(page, "caller audio is sent to the external provider") {
+		t.Errorf("settings must name the processing location:\n%s", page)
+	}
 
 	// Seam off: the row stays honest ("not configured"), no detail.
 	plain := newTestServer(t)
@@ -244,6 +250,39 @@ func TestSettingsNamesTheASRProviderWhenSeamIsOn(t *testing.T) {
 	_, body = other.do(http.MethodGet, "/partials/settings", nil, "")
 	if page := string(body); strings.Contains(page, "openai-compatible") {
 		t.Errorf("no provider detail without the seam:\n%s", page)
+	}
+	if page := string(body); strings.Contains(page, "caller audio") {
+		t.Errorf("no locality sentence without the seam:\n%s", page)
+	}
+}
+
+// TestSettingsNamesTheAgentRowWhenSeamIsOn (M17): the agent row renders
+// only when the textagent seam is wired, names the draft mode (the
+// bounded probe answered) and the loopback home; without the seam no
+// row exists at all.
+func TestSettingsNamesTheAgentRowWhenSeamIsOn(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.TextAgent = agentClientFor(t, stub.server.URL)
+	})
+	c := signIn(t, server)
+	_, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+	page := string(body)
+	if !strings.Contains(page, "AI drafts (textagent)") {
+		t.Errorf("the agent row must exist with the seam wired:\n%s", page)
+	}
+	if !strings.Contains(page, "draft mode: drafts") {
+		t.Errorf("the agent row must name the probed mode:\n%s", page)
+	}
+	if !strings.Contains(page, "runs on this server") {
+		t.Errorf("the agent row must name its processing location:\n%s", page)
+	}
+
+	plain := newTestServer(t)
+	other := signIn(t, plain)
+	_, obody := other.do(http.MethodGet, "/partials/settings", nil, "")
+	if opage := string(obody); strings.Contains(opage, "AI drafts") {
+		t.Errorf("no agent row without the seam:\n%s", opage)
 	}
 }
 

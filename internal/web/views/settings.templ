@@ -201,11 +201,14 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.crm"), DetailComponent: serviceDetail(props.CRM, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		if props.Agent {
-			{Term: T(props.Lang, "settings.agent"), DetailComponent: serviceDetailExtra(true, agentDetail(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		}
 		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
+	}
+	// The agent row (M17) surfaces only when the textagent seam is
+	// wired (an always-on "off" row would be noise for every
+	// telephony-only deployment).
+	if props.Agent {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.agent"), DetailComponent: serviceDetailExtra(true, agentDetail(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
 	}
 	// Chat-network lanes surface only when they exist (an always-on
 	// "off" row would be noise for every telephony-only deployment).

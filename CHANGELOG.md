@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Processing-locality labels (2026-10-27, agent UX train): the
+  Settings ASR row names where caller audio goes ("processed on this
+  server" vs "sent to the external provider", from the same
+  config-honest `asrLocality` classifier the caption chip uses), and a
+  new agent row (only when the textagent seam is wired) names the
+  effective draft mode plus the review API's loopback home — an
+  unreachable agent still shows the row, never a lie.
 - Post-call notes (2026-10-27, agent UX train): every History
   transcript row grows a freeform note box — Save rides the new
   session-gated `GET/PUT /api/calls/{id}/note` (one slot per owner+call
