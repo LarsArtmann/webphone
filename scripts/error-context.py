@@ -92,7 +92,9 @@ def seam_files(code, first_site):
         n = run(["rg", "-c", "--fixed-strings", code, p], cwd=REPO)
         counts[p] = int(n.stdout.strip()) if n.stdout.strip() else 1
     ranked = sorted(counts, key=lambda p: (p != first_site, -counts[p], p))
-    files = [{"path": p, "matches": counts[p], "first_site": p == first_site} for p in ranked]
+    files = [
+        {"path": p, "matches": counts[p], "first_site": p == first_site} for p in ranked
+    ]
     return files, ("OK" if paths else "DRIFT")
 
 
@@ -110,32 +112,49 @@ def enclosing_test(path, line_no):
 
 
 def family_pins(code):
-    out = run(["rg", "-n", "--fixed-strings", code, "--glob", "*family_test.go", "internal/"], cwd=REPO)
+    out = run(
+        ["rg", "-n", "--fixed-strings", code, "--glob", "*family_test.go", "internal/"],
+        cwd=REPO,
+    )
     pins = []
     for line in out.stdout.splitlines():
         parts = line.split(":", 2)
         if len(parts) < 3:
             continue
         path, line_no, text = parts
-        pins.append({"file": path, "line": line_no, "text": text.strip(), "test": enclosing_test(path, int(line_no))})
+        pins.append(
+            {
+                "file": path,
+                "line": line_no,
+                "text": text.strip(),
+                "test": enclosing_test(path, int(line_no)),
+            }
+        )
     return pins
 
 
 def doc_mentions(code):
     mentions = {"lessons": [], "ledger": []}
-    for key, path in (("lessons", REPO / "docs" / "lessons.md"), ("ledger", REPO / "docs" / "ci-flake-ledger.md")):
+    for key, path in (
+        ("lessons", REPO / "docs" / "lessons.md"),
+        ("ledger", REPO / "docs" / "ci-flake-ledger.md"),
+    ):
         if not path.exists():
             continue
         for i, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if code in text:
-                mentions[key].append({"file": f"docs/{path.name}", "line": i, "text": text.strip()[:200]})
+                mentions[key].append(
+                    {"file": f"docs/{path.name}", "line": i, "text": text.strip()[:200]}
+                )
     return mentions
 
 
 def recent_commits(first_site):
     if not first_site:
         return []
-    out = run(["git", "log", "--oneline", "-5", "--", str(Path(first_site).parent)], cwd=REPO)
+    out = run(
+        ["git", "log", "--oneline", "-5", "--", str(Path(first_site).parent)], cwd=REPO
+    )
     commits = []
     for line in out.stdout.splitlines():
         sha, _, subject = line.partition(" ")
@@ -145,7 +164,9 @@ def recent_commits(first_site):
 
 def nearest_codes(raw, registry):
     codes = [c for c, _, _ in registry]
-    prefixes = [c for c in codes if c.startswith(raw) or raw.startswith(c.split(".")[0] + ".")]
+    prefixes = [
+        c for c in codes if c.startswith(raw) or raw.startswith(c.split(".")[0] + ".")
+    ]
     close = difflib.get_close_matches(raw, codes, n=5, cutoff=0.5)
     seen = []
     for c in prefixes + close:
@@ -156,7 +177,9 @@ def nearest_codes(raw, registry):
 
 def build_bundle(raw, registry):
     code = resolve_code(raw, registry)
-    registered = row = next(((c, f, s) for c, f, s in registry if c == code), None) if code else None
+    registered = row = (
+        next(((c, f, s) for c, f, s in registry if c == code), None) if code else None
+    )
     if not code or not registered:
         probe = code or (normalize_target(raw) or raw.strip())
         return {
@@ -170,7 +193,9 @@ def build_bundle(raw, registry):
         "target": raw,
         "code": code,
         "verdict": verdict,
-        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(timespec="seconds"),
+        "generated_at": datetime.datetime.now(datetime.UTC).isoformat(
+            timespec="seconds"
+        ),
         "registry": {"families": row[1], "first_site": first_site} if row else None,
         "seam_files": files,
         "family_pins": family_pins(code),
@@ -186,13 +211,22 @@ def build_bundle(raw, registry):
 
 
 def render_human(b):
-    out = [f"== error-context: {b.get('code', b['target'])} ==", f"verdict: {b['verdict']}"]
+    out = [
+        f"== error-context: {b.get('code', b['target'])} ==",
+        f"verdict: {b['verdict']}",
+    ]
     if b["verdict"] == "UNKNOWN":
-        out.append("nearest registry codes: " + (", ".join(b["suggestions"]) or "(none)"))
-        out.append("the code never minted — check spelling or the registry: docs/error-contract.md")
+        out.append(
+            "nearest registry codes: " + (", ".join(b["suggestions"]) or "(none)")
+        )
+        out.append(
+            "the code never minted — check spelling or the registry: docs/error-contract.md"
+        )
         return "\n".join(out)
     r = b.get("registry")
-    out.append(f"registry: {b['code']} | families: {r['families']} | first site: {r['first_site']}")
+    out.append(
+        f"registry: {b['code']} | families: {r['families']} | first site: {r['first_site']}"
+    )
     out.append("")
     out.append("[seam files]")
     if b["seam_files"]:
@@ -219,7 +253,9 @@ def render_human(b):
         else:
             out.append(f"  {key}: (no mentions — clean slate)")
     out.append("")
-    out.append(f"[recent commits — {Path(r['first_site']).parent if r and r['first_site'] else 'n/a'}]")
+    out.append(
+        f"[recent commits — {Path(r['first_site']).parent if r and r['first_site'] else 'n/a'}]"
+    )
     if b["recent_commits"]:
         for c in b["recent_commits"]:
             out.append(f"  {c['sha']} {c['subject'][:110]}")
@@ -248,15 +284,25 @@ def self_test():
         b = build_bundle(code, registry)
         check(f"{code}: verdict OK", b["verdict"] == "OK")
         check(f"{code}: registry row present", bool(b["registry"]))
-        check(f"{code}: families mention {family}", family in (b["registry"] or {}).get("families", ""))
+        check(
+            f"{code}: families mention {family}",
+            family in (b["registry"] or {}).get("families", ""),
+        )
         check(f"{code}: seam files non-empty", len(b["seam_files"]) > 0)
         check(f"{code}: first site ranked first", b["seam_files"][0]["first_site"])
         check(f"{code}: family pin found", len(b["family_pins"]) > 0)
         human = render_human(b)
-        for section in ("[seam files]", "[family test pins]", "[lessons / flake-ledger mentions]", "[recent commits"):
+        for section in (
+            "[seam files]",
+            "[family test pins]",
+            "[lessons / flake-ledger mentions]",
+            "[recent commits",
+        ):
             check(f"{code}: section {section!r} present", section in human)
 
-    b = build_bundle("[asr.http] upstream answered 500 while transcribing a segment", registry)
+    b = build_bundle(
+        "[asr.http] upstream answered 500 while transcribing a segment", registry
+    )
     check("journal-line bracket normalized", b["code"] == "asr.http")
 
     b = build_bundle("zzz.no.such.code", registry)
@@ -269,7 +315,10 @@ def self_test():
     drifted = registry + [("zzz.fake.drift", "Transient", "internal/nope/nope.go")]
     b = build_bundle("zzz.fake.drift", drifted)
     check("contract-only code yields DRIFT", b["verdict"] == "DRIFT")
-    check("DRIFT names the registry test", "TestErrorCodeRegistryIsFresh" in b.get("drift_hint", ""))
+    check(
+        "DRIFT names the registry test",
+        "TestErrorCodeRegistryIsFresh" in b.get("drift_hint", ""),
+    )
 
     failed = [n for n, ok in checks if not ok]
     for n, ok in checks:
@@ -279,10 +328,14 @@ def self_test():
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description="route an error code or journal line to its context bundle")
+    ap = argparse.ArgumentParser(
+        description="route an error code or journal line to its context bundle"
+    )
     ap.add_argument("target", nargs="?", help="error code or journal line")
     ap.add_argument("--json", action="store_true", help="machine-readable bundle")
-    ap.add_argument("--self-test", action="store_true", help="run the pinned self-test scenarios")
+    ap.add_argument(
+        "--self-test", action="store_true", help="run the pinned self-test scenarios"
+    )
     args = ap.parse_args(argv)
 
     if args.self_test:
@@ -292,7 +345,10 @@ def main(argv=None):
 
     registry = parse_registry()
     if not registry:
-        print("error-context: cannot parse the registry block in docs/error-contract.md", file=sys.stderr)
+        print(
+            "error-context: cannot parse the registry block in docs/error-contract.md",
+            file=sys.stderr,
+        )
         return 1
     bundle = build_bundle(args.target, registry)
     print(json.dumps(bundle, indent=2) if args.json else render_human(bundle))
