@@ -58,6 +58,14 @@
           pkgs.codespell
           pkgs.statix
           pkgs.deadnix
+          # The island type gate: `tsc -p . --noEmit` inside the shell is
+          # the only authority over the island tree — editors run
+          # TypeScript 5.x and report phantom errors against a project
+          # checked by the 7.x pin. nodejs is the SAME pin the island-js
+          # flake check uses, so `node --test` locally and in CI cannot
+          # drift.
+          pkgs.typescript
+          pkgs.nodejs
         ]
         ++ goTools;
         env = goEnv;

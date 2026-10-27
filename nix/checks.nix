@@ -190,6 +190,40 @@
               fi
             '';
 
+        # The island TYPE gate: tsconfig.json is the project that must be
+        # green, and it is deliberately a subset — a file joins it only once
+        # its whole import closure is clean (TypeScript checks whatever an
+        # included module imports, so a red file can neither hide behind a
+        # green one nor be smuggled in). The untyped remainder is enumerated
+        # in internal/web/assets/typecheck_pin_test.go, which is what stops
+        # the include from quietly shrinking.
+        #
+        # ALWAYS tsconfig.json — never tsconfig.all.json, which is the
+        # annotation campaign's measuring project and is red by design.
+        # The $out artefact lists what was actually checked, so a gate that
+        # silently stopped covering a file is visible in the build log
+        # rather than trusted.
+        island-typecheck =
+          pkgs.runCommand "island-typecheck-check"
+            {
+              nativeBuildInputs = [ pkgs.typescript ];
+              meta.description = "tsc --strict over the island type-gate project";
+            }
+            ''
+              cd ${self}
+              if ! tsc -p tsconfig.json --noEmit; then
+                echo "island type gate FAILED — run: nix develop -c tsc -p . --noEmit" >&2
+                exit 1
+              fi
+              {
+                echo "tsc green over:"
+                tsc -p tsconfig.json --noEmit --listFiles \
+                  | grep 'internal/web/assets' \
+                  | sed "s|^${self}/||" \
+                  | sort
+              } >$out
+            '';
+
         # The committed AsyncAPI wire-contract document must equal a
         # fresh render from the handler wire types — the contract
         # cannot rot silently against the code (same recipe as
