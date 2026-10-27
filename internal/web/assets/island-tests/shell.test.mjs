@@ -1571,6 +1571,9 @@ test("a failed mode change keeps the pill honest (state unchanged, announced)", 
   globalThis.fetch = async () => ({ ok: false, status: 503 });
   const live = doc.getElementById("wp-live");
   try {
+    // The pill is page-lifetime state: clear the previous test's pill
+    // (seam off) before this header claims a fresh one.
+    doc.dispatch("wp:session-opened", { detail: {} });
     doc.dispatch("wp:session-opened", {
       detail: {
         agentMode: "drafts",
