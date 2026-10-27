@@ -1,5 +1,13 @@
 # Status report — the island type gate is now ENFORCED (T01–T18, partially)
 
+> **SUPERSEDED 2026-10-27 21:30.** This snapshot was taken mid-campaign and its numbers are the
+> 20:30 ones. The campaign finished the same evening: **0** type errors over **26 of 26** served
+> files, `tsc -p . --noEmit` green, `nix flake check` green (all 32 checks, VM tests included),
+> `tsconfig.all.json` deleted, and the debt list replaced by coverage pins. Read the completion
+> record in
+> [docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md](../planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md)
+> §9 — everything below stays as the point-in-time record, including its "not run" list.
+
 **Snapshot: 2026-10-27 20:30 CET.** Working tree: `internal/web/assets/shell.js` mid-edit (this
 session's), everything else committed. Local `HEAD` is `4fe8421`; **12 commits ahead of
 `origin/main`, none pushed**, so CI has not seen any of this train (age at report time: 20 min,
