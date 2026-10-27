@@ -110,6 +110,10 @@ func TestClassifyBootError(t *testing.T) {
 		{"unclassified New wrap stays generic", errors.New("wire server: store exploded"), bootGeneric},
 		{"New wrap under cmd's build-app wrap", fmt.Errorf("build app: %w", errors.New("create data dir: mkdir /var/lib/webphone: not a directory")), bootDataDir},
 		{"tagged inside a join wins", errors.Join(bootErr(bootListen, errors.New("serve: bind: busy")), errors.New("shutdown hiccup")), bootListen},
+		{"tagged inside bootJoin wins", bootJoin(bootErr(bootListen, errors.New("serve: bind: busy")), errors.New("shutdown hiccup")), bootListen},
+		{"bootStep is transparent to prefixes", propagatef("build app: %w", errors.New("create data dir: nope")), bootDataDir},
+		{"bootStep unclassified stays generic", propagatef("wire server: store exploded"), bootGeneric},
+		{"static refusal inherits its bootErr class", bootErr(bootConfigInvalid, staticBootError("passkey mode is not configured")), bootConfigInvalid},
 		{"wrapped tagged error unwraps", bootErr(bootConfigInvalid, errors.New("load config: x")), bootConfigInvalid},
 	}
 	for _, tc := range cases {
