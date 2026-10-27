@@ -10,7 +10,6 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // ContactsMaxPerExtension bounds one extension's personal list (same

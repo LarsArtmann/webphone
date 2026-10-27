@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -224,7 +225,7 @@ func waitForDrafts(t *testing.T, transport *recordingTransport, n int) []push.Dr
 // summaryServerWithPush wires the full summarize chain plus a push
 // seam over the engine's device registry; the registry handle comes
 // back so a test can register devices directly.
-func summaryServerWithPush(t *testing.T, transport *recordingTransport) (*testServer, *client, *readmodels.PushDevices) {
+func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, *readmodels.PushDevices) {
 	t.Helper()
 	stub := newStubReviewAPI(t)
 	engine := newTestEngine(t)
@@ -336,5 +337,55 @@ func TestSummaryDraftPushPrunesDeadDevice(t *testing.T) {
 	}
 	if len(live) != 0 {
 		t.Fatalf("the dead device must be pruned, still %v", live)
+	}
+}
+
+// panicTransport satisfies push.Sender and detonates inside SendDraft:
+// the containment pin for the fire-and-forget fan-out goroutine.
+type panicTransport struct {
+	called atomic.Bool
+}
+
+func (p *panicTransport) Enabled() bool    { return true }
+func (p *panicTransport) Describe() string { return "panic" }
+func (p *panicTransport) Send(context.Context, string, push.Ring) error {
+	return nil
+}
+func (p *panicTransport) SendDraft(context.Context, string, push.Draft) error {
+	p.called.Store(true)
+	panic("push transport exploded mid-send")
+}
+
+// TestSummaryDraftPushPanicDoesNotKillServer pins the goroutine
+// containment (owner ruling 2026-10-27): the fan-out runs OUTSIDE
+// RecoveryMiddleware's reach, so a panicking transport would kill the
+// whole process without the recover guard. The summarize answer must
+// still be 200 and the server must keep serving afterwards.
+func TestSummaryDraftPushPanicDoesNotKillServer(t *testing.T) {
+	transport := &panicTransport{}
+	_, c, devices := summaryServerWithPush(t, transport)
+	ctx := context.Background()
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-panic", "panic", "tok"); err != nil {
+		t.Fatal(err)
+	}
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-panic", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+	resp, _ := postSummaryDraft(t, c, "call-panic")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary answer must not wait on push health: %d, want 200", resp.StatusCode)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for !transport.called.Load() {
+		if time.Now().After(deadline) {
+			t.Fatal("the panicking transport was never invoked")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	// A process without the guard would be dead before this answers.
+	resp2, _ := postSummaryDraft(t, c, "call-panic")
+	if resp2.StatusCode != http.StatusOK {
+		t.Fatalf("server must survive the fan-out panic: %d, want 200", resp2.StatusCode)
 	}
 }

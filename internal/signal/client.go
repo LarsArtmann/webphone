@@ -233,6 +233,17 @@ func (c *Client) call(ctx context.Context, method string, params any, out any) e
 // to waiters by id, `receive` notifications route to the envelope
 // handler.
 func (c *Client) readLoop(conn net.Conn) {
+	// Goroutine containment: a panicking dispatch must not kill the
+	// process; the deferred cleanup still drops the connection so the
+	// next call reconnects.
+	defer func() {
+		if rec := recover(); rec != nil {
+			c.log.Error("signal: read loop PANIC recovered; connection dropped, reconnect on next call", "panic", rec)
+		}
+		c.mu.Lock()
+		c.dropConnLocked(scanner.Err())
+		c.mu.Unlock()
+	}()
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 0, 64*1024), 4<<20)
 	for scanner.Scan() {
@@ -263,9 +274,6 @@ func (c *Client) readLoop(conn net.Conn) {
 			c.log.Debug("signal: unhandled notification", "method", msg.Method)
 		}
 	}
-	c.mu.Lock()
-	c.dropConnLocked(scanner.Err())
-	c.mu.Unlock()
 }
 
 // dispatch unpacks one receive notification into an Envelope.

@@ -10,7 +10,6 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // SnippetsMaxPerExtension bounds one extension's snippet list (the
@@ -191,10 +190,7 @@ func (s *Snippets) Delete(ctx context.Context, owner domain.Extension, id domain
 		return errorfamily.WrapInfrastructuref(err, "readmodels.snippet_delete", "load snippet slot")
 	}
 	if !found || prev.Owner != owner.String() {
-		return errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration (same shape the SQL store used)
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.snippet_missing", "snippet %s", id.String()),
-		)
+		return notFound("readmodels.snippet_missing", "snippet %s", id.String())
 	}
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.SnippetDeleted{}), domain.SnippetDeleted{
 		Key: domain.SnippetKey{ID: id.String()},

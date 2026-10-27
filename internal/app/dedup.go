@@ -53,15 +53,27 @@ func startDedupSweeper(ctx context.Context, log *slog.Logger, window hooks.Dedup
 			case <-ctx.Done():
 				return
 			case now := <-ticker.C:
-				removed, err := window.Sweep(ctx, hooks.DedupCollection, now)
-				if err != nil {
-					log.Warn("dedup sweep failed", "error", err, "collection", hooks.DedupCollection)
-					continue
-				}
-				if removed > 0 {
-					log.Info("dedup sweep", "collection", hooks.DedupCollection, "expired_removed", removed)
-				}
+				sweepOnce(ctx, log, window, now)
 			}
 		}
 	}()
+}
+
+// sweepOnce runs one expired-row reclaim pass. The recover keeps a
+// panicking sweep from killing the whole process (goroutines are
+// outside RecoveryMiddleware's reach); the loop outlives any tick.
+func sweepOnce(ctx context.Context, log *slog.Logger, window hooks.DedupWindow, now time.Time) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.Error("dedup sweep PANIC recovered; tick skipped, sweeper survives", "panic", rec, "collection", hooks.DedupCollection)
+		}
+	}()
+	removed, err := window.Sweep(ctx, hooks.DedupCollection, now)
+	if err != nil {
+		log.Warn("dedup sweep failed", "error", err, "collection", hooks.DedupCollection)
+		return
+	}
+	if removed > 0 {
+		log.Info("dedup sweep", "collection", hooks.DedupCollection, "expired_removed", removed)
+	}
 }

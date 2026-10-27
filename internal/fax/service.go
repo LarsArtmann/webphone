@@ -231,7 +231,16 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	// async posture): a slow or dead Paperless never delays or fails the
 	// webhook ack, and the blob store keeps the original either way.
 	if s.archiver != nil {
-		go s.archiveInbound(job)
+		go func() {
+			// Goroutine containment: a panicking archiver must not kill
+			// the process; the blob store keeps the original either way.
+			defer func() {
+				if rec := recover(); rec != nil {
+					slog.Error("fax: archive PANIC recovered; goroutine contained, process survives", "panic", rec, "fax_id", job.ID.String())
+				}
+			}()
+			s.archiveInbound(job)
+		}()
 	}
 
 	return job, nil

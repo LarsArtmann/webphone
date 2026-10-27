@@ -2,7 +2,6 @@ package readmodels
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // FaxView is the engine-side projection of a fax job row. Unix-nanos
@@ -145,10 +143,7 @@ func (s *Faxes) UpdateStatus(
 	if _, found, err := s.reader.Get(ctx, domain.FaxKey{ID: id.String()}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.fax_update", "load fax job")
 	} else if !found {
-		return errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration (same shape the SQL store used)
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "fax %s", id.String()),
-		)
+		return notFound("readmodels.fax_missing", "fax %s", id.String())
 	}
 
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.FaxStatusAdvanced{}), domain.FaxStatusAdvanced{
@@ -179,10 +174,7 @@ func (s *Faxes) AdvanceIdempotent(
 	if _, found, err := s.reader.Get(ctx, domain.FaxKey{ID: id.String()}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.fax_update", "load fax job")
 	} else if !found {
-		return errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration (same shape the SQL store used)
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "fax %s", id.String()),
-		)
+		return notFound("readmodels.fax_missing", "fax %s", id.String())
 	}
 
 	if err := s.models.ApplyIdempotent(ctx, idemKey, metaengine.EventTypeName(domain.FaxStatusAdvanced{}), domain.FaxStatusAdvanced{
@@ -227,10 +219,7 @@ func (s *Faxes) Get(ctx context.Context, owner domain.Extension, id domain.FaxID
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "readmodels.fax_get", "load fax job")
 	}
 	if !found || view.Owner != owner.String() {
-		return domain.FaxJob{}, errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "fax %s", id.String()),
-		)
+		return domain.FaxJob{}, notFound("readmodels.fax_missing", "fax %s", id.String())
 	}
 	return view.toJob(), nil
 }
@@ -240,10 +229,7 @@ func (s *Faxes) Get(ctx context.Context, owner domain.Extension, id domain.FaxID
 // SQL store's guard).
 func (s *Faxes) ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, error) {
 	if ref == "" {
-		return domain.FaxJob{}, errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "empty provider ref"),
-		)
+		return domain.FaxJob{}, notFound("readmodels.fax_missing", "empty provider ref")
 	}
 	views, err := s.reader.Scan(ctx,
 		metaengine.WithFilter("provider_ref", metaengine.FilterEq, ref),
@@ -253,10 +239,7 @@ func (s *Faxes) ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, e
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "readmodels.fax_by_ref", "resolve fax by provider ref")
 	}
 	if len(views) == 0 {
-		return domain.FaxJob{}, errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration
-			store.ErrNotFound,
-			errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "provider ref %s", ref),
-		)
+		return domain.FaxJob{}, notFound("readmodels.fax_missing", "provider ref %s", ref)
 	}
 	return views[0].toJob(), nil
 }

@@ -31,6 +31,13 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 		return
 	}
 	run := func() {
+		// Loop containment: a panicking sweep must not kill the process,
+		// and the sweeper must outlive any single tick.
+		defer func() {
+			if rec := recover(); rec != nil {
+				slog.Error("retention: sweep PANIC recovered; tick skipped, sweeper survives", "panic", rec)
+			}
+		}()
 		cutoff := time.Now().Add(-window)
 		res, err := store.Sweep(ctx, db, cutoff)
 		if err != nil {

@@ -129,6 +129,15 @@ func (h *Handlers) notifyDraftReady(ctx context.Context, owner domain.Extension,
 	}
 	ctx = context.WithoutCancel(ctx)
 	go func() {
+		// Goroutine containment (owner ruling 2026-10-27): RecoveryMiddleware
+		// cannot see this goroutine, so a panicking transport or registry
+		// would take the whole process down. Recover, log greppably, survive.
+		defer func() {
+			if rec := recover(); rec != nil {
+				slog.Error("push: draft fan-out PANIC recovered; goroutine contained, process survives",
+					"panic", rec, "draft", draftID, "extension", owner.String())
+			}
+		}()
 		ctx, cancel := context.WithTimeout(ctx, draftPushTimeout)
 		defer cancel()
 		fact := push.Draft{Event: push.EventDraftReady, Contact: contact, DraftID: draftID}
