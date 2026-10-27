@@ -262,7 +262,10 @@
       if (sms) {
         var number = sms.getAttribute("data-sms");
         var nav = document.querySelector("[data-tab='messages']");
-        if (nav && typeof (/** @type {HTMLElement} */ (nav).click) === "function") {
+        if (
+          nav &&
+          typeof (/** @type {HTMLElement} */ (nav).click) === "function"
+        ) {
           /** @type {HTMLElement} */ (nav).click();
         }
         var prefill = function () {
@@ -869,7 +872,10 @@
         });
     };
     document.addEventListener("click", function (event) {
-      var btn = closestHTMLElement(eventElement(event), "[data-transcribe-src]";
+      var btn = closestHTMLElement(
+        eventElement(event),
+        "[data-transcribe-src]",
+      );
       if (!btn) return;
       runTranscribe(btn);
     });
@@ -1038,7 +1044,7 @@
       }, 0);
     });
     document.addEventListener("click", function (event) {
-      var chip = closestHTMLElement(eventElement(event), ".wp-jump-latest";
+      var chip = closestHTMLElement(eventElement(event), ".wp-jump-latest");
       if (!chip) return;
       var transcript = document.getElementById("thread-transcript");
       if (transcript) transcript.scrollTop = transcript.scrollHeight;
@@ -2141,7 +2147,7 @@
     });
 
     document.addEventListener("click", function (event) {
-      var remove = closestHTMLElement(eventElement(event), ".wp-chip-x";
+      var remove = closestHTMLElement(eventElement(event), ".wp-chip-x");
       if (!remove) return;
       var form = /** @type {HTMLFormElement | null} */ (
         closestHTMLElement(remove, "form")
