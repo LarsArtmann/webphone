@@ -155,7 +155,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 			slog.Warn("fax: mark failed", "error", updateErr)
 		}
 		s.emit(ctx, domain.FaxAdvanced{Owner: job.Owner, Fax: job.ID})
-		return job, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
+		return job, &gateway.ForwardError{Err: err}
 	}
 
 	// The receipt itself says whether this acceptance is already the

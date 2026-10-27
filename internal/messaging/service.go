@@ -184,7 +184,7 @@ func (s *Service) Send(
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
 		}
-		return msg, fmt.Errorf("gateway: %w", err) //nolint:erraudit // family-neutral propagation: the gateway owns the family (Rejection/Transient by provider answer)
+		return msg, &gateway.ForwardError{Err: err}
 	default:
 		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendAccepted(receipt.ProviderRef))
 		msg = msg.WithDelivery(next)

@@ -127,10 +127,10 @@ func (w *FaxWebhook) SendFax(ctx context.Context, fax OutboundFax) (Receipt, err
 		func(writer *multipart.Writer) error {
 			part, err := createFilePart(writer, "document", "fax.pdf", "application/pdf")
 			if err != nil {
-				return fmt.Errorf("create fax form file: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
+				return formErrf("create fax form file: %w", err)
 			}
 			if _, err := io.Copy(part, pdf); err != nil {
-				return fmt.Errorf("copy fax pdf: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
+				return formErrf("copy fax pdf: %w", err)
 			}
 			return nil
 		})
@@ -182,10 +182,28 @@ func providerForm(kind, owner, to string, addFiles func(*multipart.Writer) error
 		return nil, "", err
 	}
 	if err := writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("close provider form: %w", err) //nolint:erraudit // family-neutral propagation: the caller's gateway.form wrap classifies
+		return nil, "", formErrf("close provider form: %w", err)
 	}
 
 	return strings.NewReader(buf.String()), writer.FormDataContentType(), nil
+}
+
+// formError is the typed product of every provider-envelope build step
+// (field assembly, attachment/file parts, form close). The wrapped
+// cause owns its family — the seam's gateway.form wrap classifies it
+// as Infrastructure at the webhook boundary — and the message text is
+// byte-identical to the fmt.Errorf wrap it replaces.
+type formError struct {
+	err error
+}
+
+func (e *formError) Error() string { return e.err.Error() }
+
+func (e *formError) Unwrap() error { return e.err }
+
+// formErrf builds a formError with context around a cause.
+func formErrf(format string, args ...any) *formError {
+	return &formError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the caller's gateway.form wrap classifies
 }
 
 func messageForm(kind, owner, to, body string, attachments []OutboundAttachment) (io.Reader, string, error) {
@@ -196,16 +214,16 @@ func messageForm(kind, owner, to, body string, attachments []OutboundAttachment)
 		for _, att := range attachments {
 			file, err := os.Open(att.Path)
 			if err != nil {
-				return fmt.Errorf("open attachment %s: %w", att.Name, err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
+				return formErrf("open attachment %s: %w", att.Name, err)
 			}
 			part, err := createFilePart(writer, "attachment", att.Name, att.MimeType)
 			if err != nil {
-				_ = file.Close()                                          //nolint:erraudit // close-after-use: nothing left to do on failure
-				return fmt.Errorf("create attachment form file: %w", err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
+				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				return formErrf("create attachment form file: %w", err)
 			}
 			if _, err := io.Copy(part, file); err != nil {
-				_ = file.Close()                                           //nolint:erraudit // close-after-use: nothing left to do on failure
-				return fmt.Errorf("copy attachment %s: %w", att.Name, err) //nolint:erraudit // family-neutral propagation: the gateway.form wrap at the seam classifies
+				_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+				return formErrf("copy attachment %s: %w", att.Name, err)
 			}
 			_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		}

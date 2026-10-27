@@ -78,6 +78,21 @@ type FaxGateway interface {
 	SendFax(ctx context.Context, fax OutboundFax) (Receipt, error)
 }
 
+// ForwardError is the ONE home for a provider-lane forward failure in
+// the services (fax.Service.drive, messaging.Service.Send): the gateway
+// refused locally (self-send) or the send failed, and the job/message
+// row already carries the failure story. Family-neutral by construction
+// — the wrapped cause owns its verdict (Rejection for a provider answer
+// or a self-send, Transient for transport) — while the "gateway: "
+// prefix keeps the outcome greppable in logs exactly as before.
+type ForwardError struct {
+	Err error
+}
+
+func (e *ForwardError) Error() string { return "gateway: " + e.Err.Error() }
+
+func (e *ForwardError) Unwrap() error { return e.Err }
+
 // NewMessageGateway picks the message gateway by config mode. The
 // switch is exhaustive on purpose: an unknown mode PANICS here instead
 // of silently degrading to loopback — config.validate is the rejection

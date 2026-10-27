@@ -233,6 +233,8 @@ func (c *Client) call(ctx context.Context, method string, params any, out any) e
 // to waiters by id, `receive` notifications route to the envelope
 // handler.
 func (c *Client) readLoop(conn net.Conn) {
+	scanner := bufio.NewScanner(conn)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4<<20)
 	// Goroutine containment: a panicking dispatch must not kill the
 	// process; the deferred cleanup still drops the connection so the
 	// next call reconnects.
@@ -244,8 +246,6 @@ func (c *Client) readLoop(conn net.Conn) {
 		c.dropConnLocked(scanner.Err())
 		c.mu.Unlock()
 	}()
-	scanner := bufio.NewScanner(conn)
-	scanner.Buffer(make([]byte, 0, 64*1024), 4<<20)
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(bytes.TrimSpace(line)) == 0 {

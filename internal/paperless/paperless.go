@@ -40,6 +40,24 @@ const (
 // Compile-time seam conformance.
 var _ fax.Archiver = (*Archiver)(nil)
 
+// archiveError is the typed product of every archive-offer step
+// (metadata ensure, upload, consumption-task poll). The SDK classifies
+// at origin (invalid URL = Rejection, transport = Transient) and the
+// wrapped cause carries that verdict through Unwrap; the message text
+// is byte-identical to the fmt.Errorf wrap it replaces.
+type archiveError struct {
+	err error
+}
+
+func (e *archiveError) Error() string { return e.err.Error() }
+
+func (e *archiveError) Unwrap() error { return e.err }
+
+// archiveErrf builds an archiveError with context around a cause.
+func archiveErrf(format string, args ...any) *archiveError {
+	return &archiveError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+}
+
 // Archiver files inbound faxes into one Paperless-ngx instance.
 type Archiver struct {
 	client *sdk.Client
@@ -93,12 +111,12 @@ func (a *Archiver) ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte
 		CustomFields:   []sdk.CustomFieldValue{{Field: fieldID, Value: job.ID.String()}},
 	})
 	if err != nil {
-		return fmt.Errorf("paperless: upload: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return archiveErrf("paperless: upload: %w", err)
 	}
 
 	outcome, err := a.client.WaitForTask(ctx, taskID, taskPollInterval)
 	if err != nil {
-		return fmt.Errorf("paperless: task: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return archiveErrf("paperless: task: %w", err)
 	}
 	if documentID, _, refused := outcome.Duplicate(); refused { //nolint:erraudit // false positive: Duplicate() returns (int64, bool, bool) — the blank is a bool, not an error
 		a.log.Info("paperless: archived (duplicate already on file, inert)",
@@ -122,15 +140,15 @@ func (a *Archiver) ensureMetadata(ctx context.Context) (sdk.TagID, sdk.DocumentT
 
 	tagID, err := a.client.EnsureTag(ctx, tagName)
 	if err != nil {
-		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure tag: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, archiveErrf("paperless: ensure tag: %w", err)
 	}
 	typeID, err := a.client.EnsureDocumentType(ctx, docTypeName)
 	if err != nil {
-		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure document type: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, archiveErrf("paperless: ensure document type: %w", err)
 	}
 	fieldID, err := a.client.EnsureCustomField(ctx, provenanceField)
 	if err != nil {
-		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, fmt.Errorf("paperless: ensure custom field: %w", err) //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+		return sdk.TagID{}, sdk.DocumentTypeID{}, sdk.CustomFieldID{}, archiveErrf("paperless: ensure custom field: %w", err)
 	}
 
 	a.tagID, a.typeID, a.fieldID, a.ensured = tagID, typeID, fieldID, true
