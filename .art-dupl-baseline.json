@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-25T16:36:53.029017202Z",
+  "recordedAt": "2026-10-27T15:12:38.764247033Z",
   "entries": [
     {
       "hash": "0c8c67c705cc3f0b",
@@ -151,6 +151,14 @@
       "tokens": 4
     },
     {
+      "hash": "3b9c70936be4d51d",
+      "files": [
+        "internal/push/ntfy.go",
+        "internal/push/ntfy.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "403d7df1b9d61e48",
       "files": [
         "internal/web/views/voicemail.templ",
@@ -292,6 +300,7 @@
         "internal/web/views/voicemail.templ",
         "internal/web/views/history.templ",
         "internal/web/views/settings.templ",
+        "internal/web/views/history.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
@@ -302,6 +311,7 @@
         "internal/web/views/fax.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
+        "internal/web/views/history.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ",
@@ -326,10 +336,10 @@
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ",
-        "internal/web/views/error.templ"
+        "internal/web/views/error.templ",
+        "internal/web/views/history.templ"
       ],
-      "tokens": 40
+      "tokens": 42
     },
     {
       "hash": "78dd46cd10c1b449",
@@ -464,12 +474,36 @@
       "tokens": 4
     },
     {
+      "hash": "a2cb19cb8658f016",
+      "files": [
+        "internal/push/fcm.go",
+        "internal/push/fcm.go"
+      ],
+      "tokens": 6
+    },
+    {
+      "hash": "a618b191caffe6a5",
+      "files": [
+        "internal/web/views/history.templ",
+        "internal/web/views/messages.templ"
+      ],
+      "tokens": 2
+    },
+    {
       "hash": "acc48fbcfe662e7e",
       "files": [
         "internal/web/views/voicemail.templ",
         "internal/web/views/messages.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "b2eace62a76c177d",
+      "files": [
+        "internal/push/push.go",
+        "internal/push/push.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "b851d7f8418a6560",
@@ -494,6 +528,14 @@
       "files": [
         "internal/textagent/client.go",
         "internal/textagent/client.go"
+      ],
+      "tokens": 4
+    },
+    {
+      "hash": "c54c916ba9a418d6",
+      "files": [
+        "internal/server/api/note_api.go",
+        "internal/server/api/calls_api.go"
       ],
       "tokens": 4
     },
@@ -540,9 +582,10 @@
       "hash": "d4ae0b94ada94be8",
       "files": [
         "internal/web/views/layout.templ",
+        "internal/web/views/phone.templ",
         "internal/web/views/phone.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "d5e2f7fcd8ee228f",
@@ -616,6 +659,14 @@
       "tokens": 5
     },
     {
+      "hash": "f3432f5254f59e76",
+      "files": [
+        "internal/server/textagent_api.go",
+        "internal/server/textagent_api.go"
+      ],
+      "tokens": 2
+    },
+    {
       "hash": "f5e434bba0d6bd74",
       "files": [
         "internal/web/views/phone.templ",
@@ -630,27 +681,6 @@
         "internal/web/views/enroll.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "f88cfc83646ef359",
-      "files": [
-        "internal/server/contacts_test.go",
-        "internal/server/send_form_test.go",
-        "internal/server/sse_test.go",
-        "internal/server/i18n_test.go",
-        "internal/server/threads_flags_test.go",
-        "internal/server/transcripts_api_test.go",
-        "internal/server/transcribe_test.go",
-        "internal/server/webhooks_test.go",
-        "internal/server/contacts_test.go",
-        "internal/server/contacts_api_test.go",
-        "internal/server/idempotency_test.go",
-        "internal/server/contacts_api_test.go",
-        "internal/server/threads_flags_test.go",
-        "internal/server/transcripts_api_test.go",
-        "internal/server/contacts_api_test.go"
-      ],
-      "tokens": 30
     }
   ]
 }
