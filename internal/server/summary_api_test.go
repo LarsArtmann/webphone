@@ -164,7 +164,6 @@ func TestSummaryDraftOutageIs502(t *testing.T) {
 	}
 }
 
-
 // mustExt parses a test extension or fails the test.
 func mustExt(t *testing.T, raw string) domain.Extension {
 	t.Helper()

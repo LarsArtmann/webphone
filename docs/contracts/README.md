@@ -30,7 +30,10 @@ tree means the committed contract rotted against the code.
   (ring-while-closed; the dialplan must never depend on push health, the
   lane answers 202 inertly when push is unconfigured).
 - **webphone-android** — the push-device registry and the ring contract
-  its CallStyle notification rides.
+  its CallStyle notification rides, plus the `draft_ready` push fact
+  (M14): an internal-only device payload riding the SAME transports and
+  registry (no HTTP surface of its own, hence nothing in either
+  document — the payload shape is pinned by `internal/push` tests).
 
 ## The split rule
 

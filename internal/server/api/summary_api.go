@@ -112,16 +112,18 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.recordSummaryIdem(idemKey)
-	h.notifyDraftReady(r.Context(), sess.Extension, draft)
+	h.notifyDraftReady(r.Context(), sess.Extension, draft.ID, transcript.Remote)
 	writeJSONBody(w, SummaryDraftResponse{ID: draft.ID, Contact: draft.Contact, Text: draft.Text})
 }
 
 // notifyDraftReady fans the draft-ready fact out to the owner's
 // registered push devices — fire-and-forget: the summarize answer must
 // never wait on push health (the ring hook's 202-inert doctrine), and
-// the disabled seam is simply nothing. A transport reporting the device
-// dead prunes the registration on the spot, exactly like the ring lane.
-func (h *Handlers) notifyDraftReady(ctx context.Context, owner domain.Extension, draft *textagent.Draft) {
+// the disabled seam is simply nothing. The contact is the CALL's remote
+// (the handler resolved it from the owner-scoped transcript — the one
+// truth), not the agent's echo; a transport reporting the device dead
+// prunes the registration on the spot, exactly like the ring lane.
+func (h *Handlers) notifyDraftReady(ctx context.Context, owner domain.Extension, draftID, contact string) {
 	if h.deps.Push == nil || !h.deps.Push.Enabled() || h.deps.Devices == nil {
 		return
 	}
@@ -129,7 +131,7 @@ func (h *Handlers) notifyDraftReady(ctx context.Context, owner domain.Extension,
 	go func() {
 		ctx, cancel := context.WithTimeout(ctx, draftPushTimeout)
 		defer cancel()
-		fact := push.Draft{Event: push.EventDraftReady, Contact: draft.Contact, DraftID: draft.ID}
+		fact := push.Draft{Event: push.EventDraftReady, Contact: contact, DraftID: draftID}
 		targets, err := h.deps.Devices.List(ctx, owner)
 		if err != nil {
 			wrapped := errorfamily.WrapInfrastructuref(err, "push.draft_devices", "list draft push targets")

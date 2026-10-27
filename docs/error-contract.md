@@ -335,6 +335,8 @@ a deliberate code change, regenerate:
 | pbx.request                                  | Infrastructure            | internal/pbx/client.go             |
 | pbx.transport                                | Transient                 | internal/pbx/client.go             |
 | pbx.url                                      | Rejection                 | internal/pbx/client.go             |
+| push.draft_devices                           | Infrastructure            | internal/server/api/summary_api.go |
+| push.draft_send                              | Infrastructure            | internal/server/api/summary_api.go |
 | push.fcm_send                                | Infrastructure, Rejection | internal/push/fcm.go               |
 | push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go               |
 | push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go              |
