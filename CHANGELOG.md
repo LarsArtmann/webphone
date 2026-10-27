@@ -29,6 +29,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Backup-unit sandbox parity (2026-10-27, nix-review train): the
+  `webphone-backup` oneshot now runs under the same systemd sandbox as
+  the main unit (the ProtectClock/Hostname/Kernel* family,
+  RestrictAddressFamilies AF_UNIX-only, RestrictRealtime/SUIDSGID,
+  LockPersonality, MemoryDenyWriteExecute, empty CapabilityBoundingSet,
+  SystemCallArchitectures=native, SystemCallFilter @system-service) —
+  it reads the same private data the main unit guards. Verified by the
+  KVM backup VM test, which still runs the oneshot green.
+- NixOS module seam split (2026-10-27, nix-review train): the oauth2 and
+  crm typed seams now live END TO END in `package/oauth2.nix` /
+  `package/crm.nix` (options + eval-time assertions + settings +
+  LoadCredential wiring; the shared https-URL check in `package/lib.nix`),
+  taking `package/nixos-module.nix` from 463 to 291 lines — every module
+  file back under the ~300-line guideline. The webphone-module check
+  rebuilds to byte-identical outputs, pinning the restructure as
+  behavior-preserving.
 - Filter selects render their rows through one component (2026-10-27): the
   History verdict filter spelled out six `<option>` rows and the drafts
   picker one, a seven-member clone group the dedup gate reads as new
@@ -38,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Backup script path quoting (2026-10-27, nix-review train): every
+  interpolated path in the generated backup script is shell-quoted, so a
+  `dataDir`/`destDir` containing spaces can no longer word-split the
+  sqlite `.backup`/rsync/find invocations (golden fixture regenerated).
 - Error-code registry scanning (2026-10-27): a code declared as a named
   constant (`Newf(family, HealthCodeFailed, …)`) was mis-read as the message
   text, which red-ed the registry drift test while the documented row sat
