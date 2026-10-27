@@ -62,9 +62,12 @@ func TestOpenAPISeamSurfacesMatchHandlers(t *testing.T) {
 				t.Errorf("%s %s spec missing documented response %s", w.method, w.path, code)
 			}
 		}
-		for _, code := range []string{"404"} {
-			if !strings.Contains(op.Responses[code].Description, "configured") {
-				t.Errorf("%s %s %s must document the disabled-seam 404 contract", w.method, w.path, code)
+		// The disabled-seam 404 wording is pinned ONLY on surfaces that
+		// document one (the notes surface is always mounted — its
+		// conditional-less rows carry no 404 at all).
+		if _, has404 := op.Responses["404"]; has404 {
+			if !strings.Contains(op.Responses["404"].Description, "configured") {
+				t.Errorf("%s %s must document the disabled-seam 404 contract", w.method, w.path)
 			}
 		}
 		if w.retryAfterCode != "" && !strings.Contains(op.Responses[w.retryAfterCode].Description, "Retry-After") {
