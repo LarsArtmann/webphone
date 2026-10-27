@@ -298,6 +298,8 @@ a deliberate code change, regenerate:
 | crm.call_log.rejected                        | Rejection                 | internal/crm/client.go             |
 | crm.decode                                   | Transient                 | internal/crm/client.go             |
 | crm.encode                                   | Infrastructure            | internal/crm/client.go             |
+| crm.health.failed                            | Transient                 | internal/crm/client.go             |
+| crm.health.unauthorized                      | Rejection                 | internal/crm/client.go             |
 | crm.http                                     | runtime-split             | internal/crm/client.go             |
 | crm.read                                     | Transient                 | internal/crm/client.go             |
 | crm.request                                  | Infrastructure            | internal/crm/client.go             |
