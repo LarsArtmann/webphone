@@ -47,7 +47,7 @@ python3 scripts/error-context.py <code|journal-line>   # the error-code router: 
 scripts/bump-preflight.sh <module> <old> <new>   # pre-read a dependency bump from proxy.golang.org: capped diff, removed exported symbols, usage-site map; fail-open offline (WARN + exit 0)
 scripts/main-red-watch.sh / scripts/daemon-audit.sh   # the watch.yml */15 observers (run there; --dry-run locally): red main files a tracker issue with a DRAFT ledger row; daemon-audit flags guarded-file/drift landings — verdicts stay human
 buildflow                                  # the quality gate; BUILDFLOW_NO_RESULT_CACHE=1 for full (release.sh also gates on `nix run .#vulnix`)
-scripts/whitespace-drift.sh                # after `git add`, before commit: EXIT 1 when the staged diff is partially whitespace-only (the e62fe34 class — formatter-green ≠ CI-formatter-green; says "run nix fmt")
+scripts/whitespace-drift.sh                # after `git add`, before commit: EXIT 1 when the staged diff is partially whitespace-only (the e62fe34 class — formatter-green ≠ CI-formatter-green; says "run nix fmt"); bound as .githooks/pre-commit since 2026-10-27 (T9 selftest: scripts/pre-commit-guard-selftest.sh, `--no-verify` bypasses)
 scripts/push-stall-watch.sh                # exit 1 when the oldest unpushed commit exceeds the manual-push bar's 60-min anchor (--threshold-minutes, --no-fetch); run before invoking the bar
 scripts/module-cache-janitor.sh            # report zero-byte GOMODCACHE `.tmp` corpses (--sweep deletes age-floored ones, --self-test); run when module-cache forensics bite (the wedged-go class)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked

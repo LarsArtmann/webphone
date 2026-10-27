@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Pre-commit drift gate (T9, 2026-10-27).
+#
+# Binds the whitespace-drift staged-diff detector to every human commit:
+# a staged change that is PURELY whitespace in a formatter-owned file
+# (Go, JS/MJS, CSS, Nix — markdown is unowned and excluded) is the
+# e62fe34 class — a hand edit oxfmt accepts but CI's treefmt gate
+# rejects, so the commit lands red on a whitespace-only delta. Blocking
+# here turns that formatter disagreement into a pre-flight failure with
+# the fix named (run: nix fmt).
+#
+# The auto-commit daemon commits WITHOUT hooks (the pma unit overrides
+# core.hooksPath via GIT_CONFIG_* env; see AGENTS.md) — this binds
+# humans and sessions, which is where hand edits come from. A
+# deliberate bypass is always available with `git commit --no-verify`.
+set -euo pipefail
+
+repo="$(git rev-parse --show-toplevel)"
+exec bash "$repo/scripts/whitespace-drift.sh"
