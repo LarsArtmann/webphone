@@ -1,0 +1,27 @@
+direction: right
+
+scaffold: "T01–T06 Scaffold\ntsconfig · globals.d.ts · sip.d.ts\nnix island-typecheck · progress pin"
+leaves: "T07–T10 Leaf modules\ncsrf · config · ui · i18n · notify"
+media: "T11–T13 Media + session\naudio · mic · session · auth · ice · pcsetup"
+callpath: "T14–T15 Call path\nconnection.js · calls.js"
+surfaces: "T16–T18 Surfaces\npanels · transcribe · typeahead · main · state"
+shell: "T19 shell.js\nclassic script, own project"
+pages: "T20 Standalone entries\nenroll · webauthn · theme-preload"
+tests: "T21 island-tests\nnode:test types"
+flip: "T22 checkJs:true\npragma-free, whole tree"
+errors: "T24 Error-surface conventions\ntyped rejection · no silent catch"
+kmp: "T26 KMP spike (android repo)\nsip/ → commonMain, single target"
+gate: "T27 Second-target gate\nWebRTC evidence only — NO target added"
+
+scaffold -> leaves
+leaves -> media
+media -> callpath
+callpath -> surfaces
+surfaces -> shell
+shell -> pages
+pages -> tests
+tests -> flip
+callpath -> errors
+errors -> flip
+flip -> kmp: { style.stroke-dash: 3 }
+kmp -> gate
