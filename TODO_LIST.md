@@ -39,8 +39,12 @@ Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-
    `island-typecheck` nix check + a progress pin (checked-file set never shrinks, no bare
    `@ts-ignore`). Served bytes stay IDENTICAL, so no stack browser E2E is owed. T01–T06 + T23 is
    the scaffold (~4 h); the per-file annotation campaign (T07–T22) is one commit per file.
-2. **Island error-surface conventions (T24)**: absorbs the queued 2026-10-27 status item 3
-   (typed rejection, no silent catch) into the same files the annotations touch.
+2. **Island error-surface conventions (T24) — convention DESIGN only**: the typed rejection shape
+   plus the no-silent-catch rule, worded so the annotations and the error doctrine agree. The
+   runtime half (catch sweep, oxlint gate rules, `error-contract.md` island section) belongs to the
+   sibling plan
+   [docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md](docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md)
+   (T5/T11/T12); de-overlap recorded in both files.
 3. **KMP protocol-layer spike (CONDITIONAL — T26/T27, `~/projects/webphone-android`)**:
    `sip/` → `commonMain`, Android as the ONLY target, then STOP — no second target without a
    linuxX64 WebRTC 3-call audio smoke. Gate: a committed second target in ROADMAP.

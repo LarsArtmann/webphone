@@ -393,9 +393,13 @@
         <li>
           <strong>The real open gap is already queued</strong>: <code>docs/status/2026-10-27_15-57_sse-502-incident-triage-and-error-surface-ruling.md</code>
           item 3 — <em>"TypeScript error-modernization conventions — the island-JS mirror of the Go doctrine (error-contract
-          island section, oxlint rules, typed rejection convention). Nothing started."</em> Tier 1 of this plan absorbs that
-          item (T24) instead of inventing a parallel one. The owner ruling from the same doc ("an unhandled error without a
-          user-visible surface IS a bug") is the doctrine the annotations will encode.
+          island section, oxlint rules, typed rejection convention). Nothing started."</em> This plan owns the
+          <strong>convention design</strong> (T24). The runtime half — the catch sweep, the oxlint gate rules, the
+          <code>error-contract.md</code> island section — is owned by the sibling plan
+          <code>2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md</code> (T5/T11/T12), which cross-references T24
+          rather than designing a rival convention. De-overlap recorded in both files, per the one-home rule. The owner ruling
+          from the same doc ("an unhandled error without a user-visible surface IS a bug") is the doctrine the annotations
+          will encode.
         </li>
       </ul>
       <p>
@@ -517,7 +521,7 @@
             <tr><td>T21</td><td>Opt the 8,050-LOC test suite in (<code>@types/node</code>, node:test globals)</td><td>Tests are where wrong assumptions get frozen; typecheck them too</td><td class="file">island-tests/*.mjs</td><td>0 errors in <code>helpers.mjs</code> + a 5-spec pilot</td><td>100</td><td>3</td></tr>
             <tr><td>T22</td><td>Flip <code>checkJs: true</code> tree-wide; retire the pragma pin</td><td>Ends opt-in asymmetry once coverage is complete</td><td class="file">tsconfig.json, pin test</td><td>Full gate green with no pragma requirement</td><td>60</td><td>3</td></tr>
             <tr><td>T23</td><td>Document the gate (AGENTS.md Commands, README dev, CHANGELOG <code>[Unreleased]</code>, buildflow note)</td><td>A gate nobody can run locally is a gate that rots</td><td class="file">AGENTS.md, README, CHANGELOG</td><td>Command copy-pasteable from AGENTS.md alone</td><td>45</td><td>1</td></tr>
-            <tr><td>T24</td><td>Island error-surface conventions: typed rejection + empty-catch kill (the queued 2026-10-27 item 3)</td><td>Encodes the owner ruling where the annotations are being written anyway</td><td class="file">island/app/*.js, error-contract.md</td><td>No silent catch without a written justification at the site</td><td>100</td><td>3</td></tr>
+            <tr><td>T24</td><td>Island error-surface conventions — <strong>design only</strong>: typed rejection shape + the no-silent-catch rule (queued 2026-10-27 item 3)</td><td>Encodes the owner ruling in the same pass that adds the annotations</td><td class="file">island/app/*.js</td><td>Convention written + one helper + spec; sweep, oxlint rules and the error-contract section stay with the 16:05 plan (T5/T11/T12)</td><td>100</td><td>3</td></tr>
             <tr><td>T25</td><td>Retrofit report: defects the gate caught, annotation cost per file</td><td>Decides whether A's triggers have fired</td><td class="file">docs/status/</td><td>Numbers, not impressions</td><td>45</td><td>3</td></tr>
             <tr><td>T26</td><td><em>android</em>: KMP spike — <code>sip/</code> → <code>commonMain</code>, Android-only target</td><td>Compile-enforces platform purity; prices the seam honestly</td><td class="file">webphone-android shared/</td><td><code>sip/</code> tests green under KMP; build-time delta recorded</td><td>100</td><td>0</td></tr>
             <tr><td>T27</td><td><em>android</em>: second-target gate — WebRTC evidence doc only, NO target added</td><td>Prevents the KMP conversation from re-opening on vibes</td><td class="file">android docs/</td><td>3-call audio smoke defined; go/no-go conditions recorded</td><td>90</td><td>0</td></tr>
@@ -767,12 +771,12 @@
             <tr><td>F088</td><td>README dev section (how to run the gate locally)</td><td>T23</td><td>15</td></tr>
             <tr><td>F089</td><td>CHANGELOG <code>[Unreleased]</code> line (code path changed: a gate exists)</td><td>T23</td><td>10</td></tr>
             <tr><td>F090</td><td><code>.buildflow.yml</code> note: island stays excluded, the gate is a nix check</td><td>T23</td><td>10</td></tr>
-            <tr><td>F091</td><td>Inventory every catch/rejection site in island/app</td><td>T24</td><td>15</td></tr>
-            <tr><td>F092</td><td>Define the typed rejection shape (kind + message)</td><td>T24</td><td>15</td></tr>
+            <tr><td>F091</td><td>Consume the 16:05 plan's catch inventory (T5) as the evidence base — do not re-run it</td><td>T24</td><td>15</td></tr>
+            <tr><td>F092</td><td>Define the typed rejection shape (kind + message), TS-annotatable</td><td>T24</td><td>15</td></tr>
             <tr><td>F093</td><td>One helper module + its node:test spec</td><td>T24</td><td>15</td></tr>
-            <tr><td>F094</td><td>Convert the first five empty catches to surfaced failures</td><td>T24</td><td>15</td></tr>
-            <tr><td>F095</td><td>Add an empty-catch tripwire (oxlint rule or a grep pin)</td><td>T24</td><td>15</td></tr>
-            <tr><td>F096</td><td>Write the island section of <code>docs/error-contract.md</code></td><td>T24</td><td>15</td></tr>
+            <tr><td>F094</td><td>Type the helper so a caught unknown cannot be narrowed by accident</td><td>T24</td><td>15</td></tr>
+            <tr><td>F095</td><td>Hand the convention to the 16:05 plan's oxlint rule task (T11) as its rule spec</td><td>T24</td><td>10</td></tr>
+            <tr><td>F096</td><td>Record the de-overlap line in both plans' errata</td><td>T24</td><td>10</td></tr>
             <tr><td>F097</td><td>Collect the defect list the gate caught</td><td>T25</td><td>15</td></tr>
             <tr><td>F098</td><td>Write the 30-day retrofit report</td><td>T25</td><td>15</td></tr>
             <tr><td>F099</td><td>Decide whether any candidate-A trigger has fired</td><td>T25</td><td>15</td></tr>
