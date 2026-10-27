@@ -423,6 +423,12 @@ func New(deps Deps) http.Handler {
 	protected.Handle("POST /api/calls/{id}/summary-draft", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SummaryDraft)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
+	// The operator's post-call disposition verdict (issue #6): the one
+	// authority that may claim "answered", persisted on the call's
+	// review slot and corrected upstream in the same awaited write.
+	// Session-gated, CSRF via authedFetch, sharing the contacts write
+	// budget (one island POST per user action).
+	protected.Handle("POST /api/calls/{id}/disposition", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.ConfirmCallDisposition)))
 	// The push-device registry the native shells ride (the Android call
 	// shell first): session-gated, CSRF via the same authedFetch dance,
 	// sharing the contacts write budget (the same one-write-per-action
