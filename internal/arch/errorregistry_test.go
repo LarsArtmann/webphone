@@ -112,6 +112,60 @@ func TestErrorCodeRegistryIsFresh(t *testing.T) {
 	}
 }
 
+// namedCodeDeclRe matches a code constant declaration (`HealthCodeFailed =
+// "crm.health.failed"`) — the const form ctorRe cannot see.
+var namedCodeDeclRe = regexp.MustCompile(`(?m)^\s*([A-Z][A-Za-z0-9_]*)\s*=\s*"([^"]+)"\s*$`)
+
+// trailingIdentRe matches the last `, Ident` before the message literal: the
+// position a code occupies in every Newf/Wrapf call shape.
+var trailingIdentRe = regexp.MustCompile(`,\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*$`)
+
+// namedCodeLiterals maps this file's named string constants to their values.
+func namedCodeLiterals(source string) map[string]string {
+	codes := map[string]string{}
+	for _, m := range namedCodeDeclRe.FindAllStringSubmatch(source, -1) {
+		codes[m[1]] = m[2]
+	}
+	return codes
+}
+
+// namedCodeAt resolves the identifier sitting where a code belongs, answering
+// "" when there is none (a non-code argument, or a name this file never
+// declares as a string constant).
+func namedCodeAt(args string, namedCodes map[string]string) string {
+	m := trailingIdentRe.FindStringSubmatch(args)
+	if m == nil {
+		return ""
+	}
+	return namedCodes[m[1]]
+}
+
+// TestNamedCodeResolution pins the const-code form. ctorRe can only see
+// string literals, so a code written as a named constant must be resolved from
+// the file's own const block instead of letting the scanner read the MESSAGE as
+// the code — the mis-parse that red-ed main on 2026-10-27.
+func TestNamedCodeResolution(t *testing.T) {
+	named := namedCodeLiterals(`const (
+		HealthCodeFailed  = "crm.health.failed"
+		healthProbeNumber = "+10000000000"
+	)`)
+	cases := []struct {
+		what string
+		args string
+		want string
+	}{
+		{"named code", "errorfamily.Rejection, HealthCodeFailed,\n\t\t\t", "crm.health.failed"},
+		{"literal family only", "errorfamily.Rejection, ", ""},
+		{"runtime family", "family, ", ""},
+		{"undeclared name", "errorfamily.Transient, someOtherName, ", ""},
+	}
+	for _, tc := range cases {
+		if got := namedCodeAt(tc.args, named); got != tc.want {
+			t.Errorf("%s: namedCodeAt(%q) = %q, want %q", tc.what, tc.args, got, tc.want)
+		}
+	}
+}
+
 // scanErrorFamilyCodes walks every non-test Go file in the repo and
 // extracts the (code → families, first site) map, failing on literals
 // that break the code contract.
@@ -138,8 +192,18 @@ func scanErrorFamilyCodes(t *testing.T) map[string]*codeEntry {
 			return err
 		}
 		rel := strings.TrimPrefix(filepath.ToSlash(path), "../../")
-		for _, m := range ctorRe.FindAllStringSubmatch(string(data), -1) {
+		source := string(data)
+		namedCodes := namedCodeLiterals(source)
+		for _, m := range ctorRe.FindAllStringSubmatch(source, -1) {
 			code := m[4]
+			if !codeShapeRe.MatchString(code) {
+				// A named code constant (`Newf(family, HealthCodeFailed, "…")`)
+				// puts an identifier where ctorRe can only see a literal, so it
+				// would read the MESSAGE as the code. Resolve the identifier at
+				// the code's position against this file's own const block —
+				// naming a code is better practice than repeating the literal.
+				code = namedCodeAt(m[3], namedCodes)
+			}
 			if !codeShapeRe.MatchString(code) {
 				t.Errorf("%s: suspicious errorfamily code %q — want a lowercase <seam>.<op> name (a mis-parse also lands here)", rel, code)
 				continue
