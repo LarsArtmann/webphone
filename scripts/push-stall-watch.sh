@@ -3,8 +3,14 @@
 # the threshold (default 60 minutes) — AGENTS § Conventions' manual-push bar
 # as a runnable check. The daemon's push leg is unobservable while stalled,
 # so the oldest unpushed commit's committer timestamp is the conservative
-# observable anchor (the stall fired twice on 2026-10-12). Wire this into
-# any periodic runner; the exit code and stderr line ARE the alert.
+# observable anchor (the stall fired twice on 2026-10-12). LOCAL-ONLY by
+# structure (T21, 2026-10-27): unpushed commits exist only on the machine
+# that owns the daemon, so GitHub-hosted CI cannot observe a stall (its
+# checkout IS the remote tip — the range origin/main..HEAD is always empty
+# there). Automation means a LOCAL timer next to the daemon, not
+# watch.yml; for humans and sessions the exit code and stderr line ARE
+# the alert (modeled 2026-10-27: a 40-min stall correctly stays silent at
+# the 60-min bar and fires STALL at 30).
 #
 # Usage: scripts/push-stall-watch.sh [--threshold-minutes N] [--no-fetch]
 # Exit codes: 0 in-sync-or-fresh, 1 STALL, 2 setup error.
