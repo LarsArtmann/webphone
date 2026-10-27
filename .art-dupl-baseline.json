@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-27T16:31:12.437638482Z",
+  "recordedAt": "2026-10-27T17:58:55.193768919Z",
   "entries": [
     {
       "hash": "0c8c67c705cc3f0b",
@@ -99,6 +99,14 @@
         "internal/web/views/layout.templ"
       ],
       "tokens": 3
+    },
+    {
+      "hash": "2cd730df12f9342f",
+      "files": [
+        "internal/server/api/disposition_api.go",
+        "internal/server/api/calls_api.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "2da16c2a95e10e62",
@@ -217,6 +225,14 @@
         "internal/web/views/messages.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "5f0d2d5545d5a6df",
+      "files": [
+        "internal/readmodels/callnotes.go",
+        "internal/readmodels/callnotes.go"
+      ],
+      "tokens": 8
     },
     {
       "hash": "5f21776347889e82",
@@ -541,14 +557,6 @@
       "tokens": 4
     },
     {
-      "hash": "c54c916ba9a418d6",
-      "files": [
-        "internal/server/api/note_api.go",
-        "internal/server/api/calls_api.go"
-      ],
-      "tokens": 4
-    },
-    {
       "hash": "c63ffa0e985337dc",
       "files": [
         "internal/web/views/history.templ",
@@ -690,6 +698,35 @@
         "internal/web/views/enroll.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "f87ff9c29e5945fb",
+      "files": [
+        "internal/server/api/disposition_api.go",
+        "internal/server/api/note_api.go"
+      ],
+      "tokens": 2
+    },
+    {
+      "hash": "f88cfc83646ef359",
+      "files": [
+        "internal/server/contacts_test.go",
+        "internal/server/send_form_test.go",
+        "internal/server/disposition_api_test.go",
+        "internal/server/i18n_test.go",
+        "internal/server/threads_flags_test.go",
+        "internal/server/transcripts_api_test.go",
+        "internal/server/transcribe_test.go",
+        "internal/server/webhooks_test.go",
+        "internal/server/contacts_test.go",
+        "internal/server/contacts_api_test.go",
+        "internal/server/idempotency_test.go",
+        "internal/server/contacts_api_test.go",
+        "internal/server/threads_flags_test.go",
+        "internal/server/transcripts_api_test.go",
+        "internal/server/contacts_api_test.go"
+      ],
+      "tokens": 30
     }
   ]
 }
