@@ -347,7 +347,6 @@ a deliberate code change, regenerate:
 | readmodels.contact_delete                    | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.contact_list                      | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go    |
-| readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.enroll_burn                       | Infrastructure            | internal/readmodels/enroll.go      |
 | readmodels.enroll_lookup                     | Infrastructure            | internal/readmodels/enroll.go      |
@@ -358,7 +357,6 @@ a deliberate code change, regenerate:
 | readmodels.fax_get                           | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_insert                        | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_list                          | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_missing                       | Rejection                 | internal/readmodels/faxes.go       |
 | readmodels.fax_sweep                         | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_update                        | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.note_get                          | Infrastructure            | internal/readmodels/callnotes.go   |
@@ -373,7 +371,6 @@ a deliberate code change, regenerate:
 | readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go    |
-| readmodels.snippet_missing                   | Rejection                 | internal/readmodels/snippets.go    |
 | readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.transcript_append                 | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_call                   | Infrastructure            | internal/readmodels/transcripts.go |
