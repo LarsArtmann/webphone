@@ -22,9 +22,20 @@ type SettingsPanelProps struct {
 	PhoneAPI       bool
 	CRM            bool
 	// ASR reports the optional live-transcription seam; ASRDetail names
-	// the provider kind and model (asr.Provider.Describe) when it is on.
-	ASR       bool
-	ASRDetail string
+	// the provider kind and model (asr.Provider.Describe) when it is on,
+	// ASRLocality carries the config-honest trust label (M17: "local" =
+	// loopback/private provider, "remote" = external) that names WHERE
+	// caller audio goes; empty when the seam is off.
+	ASR        bool
+	ASRDetail  string
+	ASRLocality string
+	// Agent reports the optional textagent seam (M17/M13): AgentMode is
+	// the effective draft mode when the bounded probe answered (empty
+	// otherwise — the row still renders, naming the seam's home). The
+	// review API is a loopback stack service by doctrine, so the row
+	// names the processing location config-honestly: it runs HERE.
+	Agent    bool
+	AgentMode string
 	// ChatMatrix/ChatSignal report the optional chat-network lanes. The
 	// rows render ONLY when the lane is configured (passkey-style
 	// conditional): zero config keeps the panel byte-identical.
@@ -189,7 +200,10 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
 		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.crm"), DetailComponent: serviceDetail(props.CRM, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, props.ASRDetail, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		if props.Agent {
+			{Term: T(props.Lang, "settings.agent"), DetailComponent: serviceDetailExtra(true, agentDetail(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		}
 		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
 	}
@@ -237,6 +251,30 @@ templ serviceDetailExtra(on bool, extra, connected, unset string) {
 
 templ exportLink(label string) {
 	<a class="wp-mini" href="/api/export" download>{ label }</a>
+}
+
+// asrDetailWithLocality appends the config-honest processing-location
+// sentence (M17) to the provider line: WHERE caller audio goes is a
+// trust fact, not an implementation detail.
+func asrDetailWithLocality(props SettingsPanelProps) string {
+	if !props.ASR {
+		return props.ASRDetail
+	}
+	if props.ASRLocality == "local" {
+		return props.ASRDetail + " · " + T(props.Lang, "settings.asr.local")
+	}
+	return props.ASRDetail + " · " + T(props.Lang, "settings.asr.remote")
+}
+
+// agentDetail names the draft mode (when the bounded probe answered)
+// and the processing location: the review API is a loopback stack
+// service by doctrine, so the row can name its home config-honestly.
+func agentDetail(props SettingsPanelProps) string {
+	detail := T(props.Lang, "settings.agent.local")
+	if props.AgentMode != "" {
+		detail = T(props.Lang, "settings.agent.detail") + ": " + props.AgentMode + " · " + detail
+	}
+	return detail
 }
 
 // SnippetsSection manages the reply snippets (M21): the list with a
