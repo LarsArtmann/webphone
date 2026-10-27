@@ -294,7 +294,7 @@ func dispositionConfirmed(raw string) bool {
 	return err == nil && disposition != domain.DispositionUnknown
 }
 
-// cdrDirGlyph(cdr pbx.CDR) string {
+func cdrDirGlyph(cdr pbx.CDR) string {
 	if cdrMissed(cdr) {
 		return "✖"
 	}

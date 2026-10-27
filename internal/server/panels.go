@@ -223,11 +223,21 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if outcome != "answered" && outcome != "missed" {
 		outcome = ""
 	}
+	disposition := historyDispositionFilter(r.URL.Query().Get("disposition"))
 	// Transcripts are the extension's OWN records (no phone API needed):
 	// they render even when the CDR half of the tab is disabled or
 	// unreachable. A store failure degrades to no section — the CDR list
 	// must not die with it.
-	transcripts := h.recentTranscripts(r, sess, query)
+	transcripts := h.recentTranscripts(r, sess, query, disposition)
+	if disposition != "" {
+		// A verdict filter cannot address the CDR rows (they carry no call
+		// uuid to join the disposition with — the documented invariant),
+		// so the CDR section stays empty rather than showing rows the
+		// filter did not choose. The transcripts carry the answer.
+		return views.HistoryPanel(views.HistoryPanelProps{
+			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
+		}), nil
+	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
@@ -260,19 +270,26 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 // yield nil — the section simply does not render. An active query turns
 // the fetch into the owner-scoped LIKE search: the section then shows
 // only calls whose transcript text matched (matching lines only — the
-// hint in the view says so).
-func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, query string) []views.TranscriptGroup {
+// hint in the view says so). An active disposition filter narrows the
+// groups to calls whose note slot carries that confirmed verdict (T3)
+// and widens the window, since the verdict lives on the note slot and
+// older transcribed calls must stay reachable for the join.
+func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, query string, disposition domain.Disposition) []views.TranscriptGroup {
 	if h.deps.Transcripts == nil {
 		return nil
+	}
+	window := historyTranscriptGroups
+	if disposition != "" {
+		window = historyFilterFetchSize
 	}
 	var (
 		recent []domain.CallTranscript
 		err    error
 	)
 	if query != "" {
-		recent, err = h.deps.Transcripts.Search(r.Context(), sess.Extension, query, historyTranscriptGroups)
+		recent, err = h.deps.Transcripts.Search(r.Context(), sess.Extension, query, window)
 	} else {
-		recent, err = h.deps.Transcripts.Recent(r.Context(), sess.Extension, historyTranscriptGroups)
+		recent, err = h.deps.Transcripts.Recent(r.Context(), sess.Extension, window)
 	}
 	if err != nil || len(recent) == 0 {
 		if err != nil {
@@ -285,20 +302,37 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 	groups := make([]views.TranscriptGroup, 0, len(recent))
 	for _, tx := range recent {
 		note := ""
+		noteDisposition := ""
 		if h.deps.Notes != nil {
 			if view, err := h.deps.Notes.Get(r.Context(), sess.Extension, tx.CallID); err != nil {
 				slog.Warn("history: note fetch failed", "error", err, "extension", sess.Extension.String())
 			} else if view != nil {
 				note = view.Body
+				noteDisposition = view.Disposition
 			}
+		}
+		if disposition != "" && noteDisposition != disposition.String() {
+			continue
 		}
 		groups = append(groups, views.TranscriptGroup{
 			CallID: tx.CallID,
 			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
-			Lines: tx.Lines, Name: names[tx.Remote], Note: note,
+			Lines: tx.Lines, Name: names[tx.Remote], Note: note, Disposition: noteDisposition,
 		})
 	}
 	return groups
+}
+
+// historyDispositionFilter validates the disposition query param: only
+// the five operator-confirmable verdicts filter; anything else (empty,
+// unknown, garbage) means no filter — a filter param never errors the
+// page, it just doesn't filter.
+func historyDispositionFilter(raw string) domain.Disposition {
+	disposition, err := domain.ParseDisposition(raw)
+	if err != nil || disposition == domain.DispositionUnknown {
+		return ""
+	}
+	return disposition
 }
 
 // historyTranscriptGroups caps the History tab's transcript section: the
