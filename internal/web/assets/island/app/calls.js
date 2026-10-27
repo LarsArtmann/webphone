@@ -13,7 +13,13 @@ import {
   ringbackStop,
   ringToneStop,
 } from "./audio.js";
-import { asrEnabled, asrLocality, agentEnabled, crmEnabled, sipDomain } from "./config.js";
+import {
+  asrEnabled,
+  asrLocality,
+  agentEnabled,
+  crmEnabled,
+  sipDomain,
+} from "./config.js";
 import { authedFetch } from "./auth.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
@@ -269,17 +275,22 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
   const chips = row.querySelectorAll(".disposition-chip");
   for (const chip of chips) chip.disabled = true;
   try {
-    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/disposition`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        disposition: value,
-        number: entry.target,
-        direction: entry.session instanceof SIP.Inviter ? "out" : "in",
-        seconds:
-          entry.startedAt > 0 ? Math.floor((Date.now() - entry.startedAt) / 1000) : 0,
-      }),
-    });
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(id)}/disposition`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          disposition: value,
+          number: entry.target,
+          direction: entry.session instanceof SIP.Inviter ? "out" : "in",
+          seconds:
+            entry.startedAt > 0
+              ? Math.floor((Date.now() - entry.startedAt) / 1000)
+              : 0,
+        }),
+      },
+    );
     if (!res.ok) {
       for (const chip of chips) chip.disabled = false;
       announce(t("dispositionFailed"), "warn");

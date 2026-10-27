@@ -4,7 +4,6 @@ type tok struct{ email string }
 
 func newRej(code, msg string) *efErr { return &efErr{code: code, msg: msg} }
 
-
 func m(o *obj, t string) (tok, error) {
 	if len(t) < 16 {
 		return tok{}, newRej("c", "too short")

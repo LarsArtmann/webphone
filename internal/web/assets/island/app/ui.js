@@ -159,7 +159,8 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
     }
   });
   els.toasts.append(toast);
-  while (els.toasts.children.length > TOAST_MAX) els.toasts.firstChild?.remove();
+  while (els.toasts.children.length > TOAST_MAX)
+    els.toasts.firstChild?.remove();
   setTimeout(dismiss, TOAST_MS[kind] ?? TOAST_MS.info);
 }
 

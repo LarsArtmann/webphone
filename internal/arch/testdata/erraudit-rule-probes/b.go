@@ -6,7 +6,7 @@ type efErr struct{ code, msg string }
 
 func (e *efErr) Error() string { return e.code + ": " + e.msg }
 
-func NewRejection(code, msg string) *efErr  { return &efErr{code: code, msg: msg} }
+func NewRejection(code, msg string) *efErr             { return &efErr{code: code, msg: msg} }
 func WrapRejection(err error, code, msg string) *efErr { return &efErr{code: code, msg: err.Error()} }
 
 func h() error { return NewRejection("x", "y") }
