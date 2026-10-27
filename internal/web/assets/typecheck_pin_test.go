@@ -11,34 +11,30 @@ import (
 	"testing"
 )
 
-// The island type gate (tsconfig.json) checks a SUBSET of the asset tree: a
-// file joins it only once its whole import closure is clean, because
-// TypeScript type-checks every module an included module imports. The files
-// that are not in yet are not hidden — they are the list below, by name, and
-// this test is what makes the gate un-gameable: it refuses a shrunken include,
-// a disabled checkJs/strict, a bare @ts-ignore, an unchecked file that is
-// quietly dropped out of the debt list, or a nix check pointed at the
-// never-green measuring project instead of the gate.
+// The island type gate (tsconfig.json) covers the WHOLE served asset tree: the
+// island's ES modules, the shell glue, the theme preload and the enrollment
+// page. This test is what makes the gate un-gameable — it refuses a shrunken
+// include, a widened exclude, a disabled checkJs/strict, a bare @ts-ignore, an
+// asset file that no include entry reaches, or a nix check pointed somewhere
+// other than the gate.
 //
-// Annotating a file is a two-line change: add it to tsconfig.json's include
-// and delete its name from typecheckDebt.
+// The single carve-out is the vendored sip.js bundle: third-party bytes, served
+// verbatim, never typed. Adding a second exclusion is a test failure by design
+// — excluding a red file is how a gate rots.
 
 // repoRoot is the module root: this package lives three directories below it,
 // and every path below stays repo-relative so it matches tsconfig.json's own
 // include entries byte for byte.
 const repoRoot = "../../.."
 
-// typecheckDebt is the island tree's declared untyped remainder. Every file
-// here must exist and must NOT be reachable from tsconfig.json's include; the
-// only legal edit is DELETE a line (add the file to the include first).
-var typecheckDebt = []string{
-	"internal/web/assets/shell.js",
-}
+// vendoredBundle is the one legal exclusion: the pinned sip.js build.
+const vendoredBundle = "internal/web/assets/vendor/**"
 
 // typecheckConfig is the subset of tsconfig.json this test reasons about.
 type typecheckConfig struct {
 	CompilerOptions map[string]any `json:"compilerOptions"`
 	Include         []string       `json:"include"`
+	Exclude         []string       `json:"exclude"`
 }
 
 func loadTypecheckConfig(t *testing.T, name string) typecheckConfig {

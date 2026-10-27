@@ -93,7 +93,8 @@
   function hasMethod(el, method) {
     return (
       Boolean(el) &&
-      typeof /** @type {Record<string, unknown>} */ (el)[method] === "function"
+      typeof (/** @type {Record<string, unknown>} */ (el)[method]) ===
+        "function"
     );
   }
 
@@ -1380,22 +1381,22 @@
     //     driven swaps (search, composer, drafts) deliberately keep
     //     focus where the user is.
     document.addEventListener("htmx:afterSwap", function (event) {
-    var elt = eventElement(event);
-    if (!hasMethod(elt, "matches")) return;
-    var navigating =
-      elt.hasAttribute && elt.hasAttribute("data-tab")
-      ? true
-      : Boolean(
-        hasMethod(elt, "closest") &&
-          closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"),
-        );
-    if (!navigating) return;
-    var heading = /** @type {HTMLElement | null} */ (
-      document.querySelector("#tab-content h2")
-    );
-    if (!heading || !hasMethod(heading, "focus")) return;
-    heading.setAttribute("tabindex", "-1");
-    heading.focus({ preventScroll: true });
+      var elt = eventElement(event);
+      if (!hasMethod(elt, "matches")) return;
+      var navigating =
+        elt.hasAttribute && elt.hasAttribute("data-tab")
+          ? true
+          : Boolean(
+              hasMethod(elt, "closest") &&
+              closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"),
+            );
+      if (!navigating) return;
+      var heading = /** @type {HTMLElement | null} */ (
+        document.querySelector("#tab-content h2")
+      );
+      if (!heading || !hasMethod(heading, "focus")) return;
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
     });
 
     // 3g. Relative-time tick: thread-list stamps ("3m") go stale while
