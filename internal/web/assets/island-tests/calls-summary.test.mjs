@@ -231,6 +231,27 @@ test("summarize: a missing transcript warns and stays retryable", async () => {
   );
 });
 
+test("summarize: a network-dead ask names the offline cause, not the agent", async () => {
+  const entry = await endedEstablishedCall("call-s1");
+  const btn = entry.dom.querySelector(".summarize-btn");
+  fetchImpl = async () => {
+    throw new TypeError("fetch failed");
+  };
+  btn.click();
+  await flush();
+  assert.equal(btn.disabled, false, "an offline ask stays retryable");
+  assert.equal(btn.textContent, "Summarize → draft SMS");
+  const toasts = [...doc.getElementById("toasts").children].map((el) => el.textContent);
+  assert.ok(
+    toasts.some((text) => /offline/i.test(text)),
+    "the offline toast names the network, not the agent",
+  );
+  assert.ok(
+    toasts.every((text) => !/agent is unreachable/i.test(text)),
+    "the conflated agent toast must not appear for a network death",
+  );
+});
+
 test("close removes the ended card", async () => {
   const entry = await endedEstablishedCall("call-s1");
   const card = entry.dom;

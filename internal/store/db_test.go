@@ -358,8 +358,8 @@ func TestMigrateErrorKeepsCauseAndPath(t *testing.T) {
 	cause := errors.New("no such table")
 	wrapped := wrapMigrate("/var/lib/webphone/webphone.db", cause)
 
-	if wrapped.Error() != cause.Error() {
-		t.Fatalf("message = %q, want cause text", wrapped.Error())
+	if wrapped.Error() != "migrate /var/lib/webphone/webphone.db: no such table" {
+		t.Fatalf("message = %q, want path-prefixed cause", wrapped.Error())
 	}
 	if !errors.Is(wrapped, cause) {
 		t.Fatal("cause not reachable through Unwrap")

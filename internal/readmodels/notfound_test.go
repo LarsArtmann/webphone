@@ -25,7 +25,7 @@ func TestNotFoundKeepsSentinelAndCodedHalves(t *testing.T) {
 	if verdict.Error() != want {
 		t.Fatalf("message = %q, want %q", verdict.Error(), want)
 	}
-	single := notFound(store.ErrNotFound)
+	single := &notFoundError{errs: []error{store.ErrNotFound}}
 	if single.Error() != store.ErrNotFound.Error() {
 		t.Fatalf("single-cause message = %q, want bare cause", single.Error())
 	}
