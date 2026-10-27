@@ -18,11 +18,50 @@ EXECUTED (codec contract read at source, capability assertions held, all
 gates green incl. KVM drill, vendorHash re-pinned, asyncapi regenerated
 content-inertly) · the seven catalog-exporter candidates FILED upstream
 (go-cqrs-lite #91–#97, premises source-verified, dupes searched, drafts in
-docs/drafts/catalog-exporter-2026-10-25/)).
+docs/drafts/catalog-exporter-2026-10-25/)) · GitHub-issue review session:
+all five open issues handled — #5 daemon-audit flag closed as healed
+(flagged commits rewritten away in the day's rebase, tree canonical at
+HEAD), #6–#8 dialer-adoption claims verified with corrections posted and
+triaged into the new section below, #9 Kith switch-on corrected (no crm
+module options exist; webphone slice scoped below)).
 Prior sweep: 2026-10-18 (round-5 resumed execution closed the data-model, metaengine, ASR, and process tails: metaengine row CLOSED — G3 shipped via v2.9.0 (`0f1031d` verified in-tag), F019 Volume hints landed on all five query declarations, F026 adjudicated NOT-DO (no cursor pagination at HEAD to cache); series-3 harvest row executed via round-5 E9–E11; ASR hardening/polish/test-debt bullets closed (#22/#23/#37/#39–#44/#47/#5 + #11/#12); island D-train executed (ef29ea9); module-cache janitor landed + live-swept; upstream templ-components #27 + branching-flow #9/#15/#16 verified ALREADY-FILED-COMPLETED — no duplicate filings; go-modularize §f 1–40 annotated with routing verdicts; carve row LOC refresh 4,056 wiring / 5,204 tree, two methods agree).
 Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList adoption, the first art-dupl `-t 1` deep sweep + baseline + CI dup-gate, the daemon dep-guard commit hook + push-stall watchdog, and ASR test debt #32/#33/#34/#36/#38 — rows updated below; still open from that plan: voicemail transcribe-button test #37, 429-combined-load #5, ASR retry/backoff + toast #43/#44, the docs cluster, the branching-flow unskip re-triage). Same-day prior sweep (SUPERB unified-auth train tails harvest: the 10-52 report's non-gated (f) items executed same-session — stack suite asserts + module-mirror eval check + docs; the owner-gated T13/T15 cluster, the three owner questions, and the hardening tail row below are what remains; 06-55 residuals verified against stack code and routed). Prior sweep: 2026-10-11 (branching-flow sitting harvest: all five dedup open owner calls ratified+recorded — `-t 1`/zero/upstream-FP-filing, settingsRow→ADOPT `display.DefinitionList`, registry=ONE home, quarterly suppressed-set audits, CRM/Paperless routed upstream; new section below + branching-flow#8/#9 filed + the stale branching-flow NO-nolint AGENTS note corrected). Prior sweep: 2026-10-08 (SUPERB ASR train M7 harvest: 16-54/18-15 §f + plan remainders folded into the ASR-follow-ups row below; visual-harness row refreshed to the 18-shot matrix). Prior sweep: 2026-10-06 (docs-health v7: 23:22 §f harvest below; the 2026-09 verdict/decision cohort annotated + archived — 11 files; TODO/ROADMAP/FEATURES citation repoints; briefing rows 36–38). Prior sweep: 2026-10-05 (Pareto-plan execution session). Folded then: the 14:50 mixin-review session §f (daemon-commit verification DONE — remote `5a4f9db`, content intact; QMD `get` diagnosis DONE — crush `#3846`, see Standing watches; compose noise-floor DONE — registry sweep log 16:40; mixin/CRM/Paperless/vcard/errorfamily.Join owner calls → briefing rows 29–32); stack CI verdict recorded (RED by 1h timeout); erraudit re-measured early (tier-1/2a/2b = 0/0/0 after 7 reasoned suppressions; boot surfaces re-graded intact). Prior sweep 2026-10-04 (passkey train-tail session; AGENTS-over-cap row removed, tail code-polish executed, boot-contract runbook patched, `890a526` CI re-dispatched).
 
 ## Open tasks
+
+### Dialer-adoption issues #6–#8 + Kith switch-on #9 (2026-10-27 — claims verified, unimplemented)
+
+Owner-filed adoption candidates from the dialer postmortem
+(matthewdonsemail-lab/dialer PRs #20/#54); every gap claim verified against
+HEAD, corrections posted as issue comments. Separate trains, none started.
+
+1. **Call dispositions** (#6): operator-confirmed taxonomy
+   (`connected`/`voicemail`/`ivr`/`no_answer`/`wrong_number`/`dnc`/`disconnected`)
+   in `internal/domain`, default `connected` on Established, confirm through
+   the CallNote UI; ONE total CDR-status→disposition mapping (unknown ⇒
+   failure class, never answered); awaited write with surfaced failure; carry
+   the disposition in the Kith `call_logged` payload. Correction recorded:
+   `Outcome` IS filled today — the island sends
+   `established ? "answered" : "missed"` (panels.js:78 → calls_api.go:108),
+   so a voicemail call journals as "answered" in Kith right now.
+2. **Per-remote redial cooldown** (#7): opt-in config (1–4h default when on),
+   persisted (Owner, remote) window in the read-model (restart-proof),
+   inline "dial anyway" chip in the typeahead row (never a modal — the #54
+   lesson), state visible in the row. Verified: no cooldown exists today
+   (typeahead.js suggests only; the history ↻ button dials unconditionally).
+3. **AI call review artifact** (#8): remaining scope after the agent-UX
+   train — post-call AUTOMATIC review (today's summarize is click-gated),
+   a persisted artifact (summary/key points/score) rendered in History under
+   the transcript (today: Messages draft only), and an explicit "review not
+   configured" state (today: the button is absent when the seam is off).
+4. **Kith CRM switch-on, webphone slice** (#9): typed module options
+   `crm.{enable,url,token_file}` (LoadCredential pattern like oauth2 — no
+   crm options exist in package/nixos-module.nix today, and its leak guard
+   rejects path-valued settings secrets) + auth-failed surfacing (Settings
+   shows only connected/unset, settings.templ:202; no /healthz crm leg;
+   `ErrUnauthorized` must turn a surface red within one poll cycle). The
+   issue's steps 1/2/4 (PKI trust, token provisioning, e2e verify) are
+   pbx-artmann-side; the cited diagnosis doc lives there too.
 
 ### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
 
