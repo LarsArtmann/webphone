@@ -15,7 +15,7 @@
 import { authedFetch } from "./auth.js";
 import { asrEnabled } from "./config.js";
 import { t } from "./i18n.js";
-import { announce, log } from "./ui.js";
+import { announce, errorMessage, log } from "./ui.js";
 
 export const transcribeEnabled = asrEnabled;
 
@@ -77,7 +77,10 @@ let failureToasted = false;
  * @param {{filename?: string, language?: string}} [options]
  * @returns {Promise<string>}
  */
-export async function transcribeBlob(blob, { filename = "audio.webm", language } = {}) {
+export async function transcribeBlob(
+  blob,
+  { filename = "audio.webm", language } = {},
+) {
   const query = new URLSearchParams();
   if (filename) query.set("filename", filename);
   if (language) query.set("lang", language);
@@ -271,7 +274,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
   try {
     recorder = new MediaRecorder(stream, recorderOptions());
   } catch (err) {
-    log(`live transcription recorder failed: ${err.message}`, "warn");
+    log(`live transcription recorder failed: ${errorMessage(err)}`, "warn");
     releaseCapture(ctx, stream);
     return false;
   }
@@ -309,7 +312,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         recordSegment(id, text);
       }
     } catch (err) {
-      if (/\b429\b/.test(err.message)) {
+      if (/\b429\b/.test(errorMessage(err))) {
         cooldownUntil = Date.now() + COOLDOWN_MS;
         log("transcription rate-limited; pausing segments briefly", "warn");
       } else {
@@ -317,7 +320,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         backoffUntil =
           Date.now() +
           Math.min(BACKOFF_CAP_MS, BACKOFF_BASE_MS * 2 ** (liveFailures - 1));
-        log(`live transcription segment failed: ${err.message}`, "warn");
+        log(`live transcription segment failed: ${errorMessage(err)}`, "warn");
         if (liveFailures >= FAILURE_TOAST_AT && !failureToasted) {
           failureToasted = true;
           announce(t("transcribeUnavailable"), "warn");
@@ -404,8 +407,8 @@ export async function transcribeNow(url, target, { filename } = {}) {
     const text = await transcribeUrl(url, { filename });
     target.textContent = text || t("transcribeEmpty");
   } catch (err) {
-    target.textContent = t("transcribeFailed")(err.message);
-    log(`transcription failed: ${err.message}`, "error");
+    target.textContent = t("transcribeFailed")(errorMessage(err));
+    log(`transcription failed: ${errorMessage(err)}`, "error");
   }
 }
 

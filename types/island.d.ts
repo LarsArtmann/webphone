@@ -61,13 +61,7 @@ type IslandToastKind = "ok" | "error" | "warn" | "info";
 
 /** The view states CALL_TRANSITIONS declares, in one place. */
 type IslandCallViewState =
-  | "ringing"
-  | "active"
-  | "holding"
-  | "resuming"
-  | "held"
-  | "ending"
-  | "ended";
+  "ringing" | "active" | "holding" | "resuming" | "held" | "ending" | "ended";
 
 /** One live call in the island's session table (state.js owns the map). */
 interface IslandCallEntry {
@@ -203,7 +197,11 @@ interface IslandIceSummary {
 interface IslandRegistrationOptionsWire {
   challenge: string;
   user?: { id: string; name?: string; displayName?: string };
-  excludeCredentials?: Array<{ id: string; type?: string; transports?: string[] }>;
+  excludeCredentials?: Array<{
+    id: string;
+    type?: string;
+    transports?: string[];
+  }>;
 }
 
 /** The byte-bearing fields of a PublicKeyCredential response. */
