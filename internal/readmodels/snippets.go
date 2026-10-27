@@ -21,7 +21,7 @@ const SnippetsMaxPerExtension = 100
 // per-owner cap; replacing an existing id stays open. The sentinel
 // homed here with the read-model swap (the SQL snippets store left
 // with its file, the contract stays).
-var ErrSnippetListFull = errors.New("snippet list full") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
+var ErrSnippetListFull = errors.New("snippet list full")
 
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{

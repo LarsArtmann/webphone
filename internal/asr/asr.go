@@ -58,11 +58,11 @@ type Provider interface {
 }
 
 // ErrDisabled is returned when no ASR provider is configured.
-var ErrDisabled = errors.New("asr not configured") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
+var ErrDisabled = errors.New("asr not configured")
 
 // ErrUnauthorized is returned when the provider rejected the bearer token
 // (HTTP 401/403): the integration is half-configured and must surface.
-var ErrUnauthorized = errors.New("asr rejected the bearer token") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
+var ErrUnauthorized = errors.New("asr rejected the bearer token")
 
 // Locality classifies where a provider URL processes caller audio — the
 // config-honest trust label the Settings tab and the caption strip

@@ -203,7 +203,7 @@ func (e *formError) Unwrap() error { return e.err }
 
 // formErrf builds a formError with context around a cause.
 func formErrf(format string, args ...any) *formError {
-	return &formError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the caller's gateway.form wrap classifies
+	return &formError{err: fmt.Errorf(format, args...)}
 }
 
 func messageForm(kind, owner, to, body string, attachments []OutboundAttachment) (io.Reader, string, error) {

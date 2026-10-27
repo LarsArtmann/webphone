@@ -38,7 +38,6 @@ func runContracts(args []string) error {
 			"write "+target))
 	}
 
-	//nolint:erraudit // CLI output stream — write failures are not actionable
 	fmt.Fprintf(os.Stdout, "contracts: wrote %s\n", target)
 	return nil
 }

@@ -34,7 +34,6 @@ func runCatalog(args []string) error {
 			"export eventcatalog tree to "+dir))
 	}
 
-	//nolint:erraudit // CLI output stream — write failures are not actionable
 	fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", dir)
 	return nil
 }

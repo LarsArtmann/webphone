@@ -14,7 +14,7 @@ import (
 )
 
 // ErrNotFound is returned when a row the caller asked for does not exist.
-var ErrNotFound = errors.New("not found") //nolint:erraudit // sentinel: absence is not an error family (plan guardrail #4); classified via init registration
+var ErrNotFound = errors.New("not found")
 
 // Messages is the thread/message persistence.
 type Messages struct {
@@ -541,7 +541,7 @@ func (e *pageError) Unwrap() error { return e.err }
 
 // pageErrf builds a pageError with context around a cause.
 func pageErrf(format string, args ...any) *pageError {
-	return &pageError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	return &pageError{err: fmt.Errorf(format, args...)}
 }
 
 // ListMessagesPage returns one page of a thread's messages, oldest

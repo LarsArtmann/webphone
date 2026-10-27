@@ -43,7 +43,7 @@ func (r *Receiver) Run(ctx context.Context) error {
 	backoff := time.Second
 	for {
 		if ctx.Err() != nil {
-			return nil //nolint:erraudit // shutdown is the designed exit
+			return nil
 		}
 		if err := r.client.Ping(ctx); err != nil {
 			var alive bool

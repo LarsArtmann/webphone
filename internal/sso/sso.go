@@ -111,7 +111,7 @@ func New(cfg Config) (*Client, error) {
 	}
 	mapped, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
 	if err != nil {
-		return nil, errorfamily.WrapRejection(err, "sso.mapping", "build the email→extension mapping") //nolint:erraudit // pure config verdict: nothing failed, no ctx to carry
+		return nil, errorfamily.WrapRejection(err, "sso.mapping", "build the email→extension mapping")
 	}
 	if len(cfg.Scopes) == 0 {
 		cfg.Scopes = []string{oidc.ScopeOpenID, "email", "profile"}

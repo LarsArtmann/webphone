@@ -78,16 +78,16 @@ type Draft struct {
 
 // ErrDisabled is returned when no transport is configured (or the
 // whole seam is nil).
-var ErrDisabled = errors.New("push not configured") //nolint:erraudit // sentinel: identity, not an error family; classified via init registration
+var ErrDisabled = errors.New("push not configured")
 
 // ErrUnauthorized is returned when a transport rejected the credential
 // (HTTP 401/403): the integration is half-configured and must surface.
-var ErrUnauthorized = errors.New("push transport rejected the credential") //nolint:erraudit // sentinel: identity, not an error family; classified via init registration
+var ErrUnauthorized = errors.New("push transport rejected the credential")
 
 // ErrUnregistered is returned when the transport reports the device
 // address as dead (FCM UNREGISTERED, ntfy's 404 lane): the caller
 // should prune the registration — shipping to it again is waste.
-var ErrUnregistered = errors.New("push device no longer registered") //nolint:erraudit // sentinel: identity, not an error family; classified via init registration
+var ErrUnregistered = errors.New("push device no longer registered")
 
 // Sender is one transport's wire: one device address, one ring fact.
 // The ntfy and FCM clients implement it; tests inject fakes.

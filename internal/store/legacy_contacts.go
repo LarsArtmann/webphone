@@ -26,7 +26,7 @@ func FlagPresent(ctx context.Context, db *sql.DB, key string) (bool, error) {
 	var one int
 	err := db.QueryRowContext(ctx, `SELECT 1 FROM app_flags WHERE key = ?`, key).Scan(&one)
 	if err != nil {
-		if err == sql.ErrNoRows { //nolint:erraudit // absence check, not an error path
+		if err == sql.ErrNoRows {
 			return false, nil
 		}
 		return false, errorfamily.WrapInfrastructuref(err, "store.flag_read", "read app flag %s", key)
@@ -40,7 +40,7 @@ func FlagValue(ctx context.Context, db *sql.DB, key string) (string, bool, error
 	var value string
 	err := db.QueryRowContext(ctx, `SELECT value FROM app_flags WHERE key = ?`, key).Scan(&value)
 	if err != nil {
-		if err == sql.ErrNoRows { //nolint:erraudit // absence is an answer, not an error path
+		if err == sql.ErrNoRows {
 			return "", false, nil
 		}
 		return "", false, errorfamily.WrapInfrastructuref(err, "store.flag_read", "read app flag %s", key)

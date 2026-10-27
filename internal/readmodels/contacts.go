@@ -22,7 +22,7 @@ const ContactsMaxPerExtension = 500
 // cap — the same contract the SQL store held before the read-model
 // swap homed the sentinel here (the store's contacts table left with
 // its file, the contract stays).
-var ErrListFull = errors.New("contact list full") //nolint:erraudit // sentinel: identity, not an error family; classified via init registration
+var ErrListFull = errors.New("contact list full")
 
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{

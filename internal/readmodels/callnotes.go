@@ -21,7 +21,7 @@ const NotesMaxPerExtension = 2000
 
 // ErrNoteListFull is returned when a NEW call's note would exceed the
 // per-owner cap; re-saving an existing call's note stays open.
-var ErrNoteListFull = errors.New("call note list full") //nolint:erraudit // sentinel: identity, not an error family (plan guardrail #4); classified via init registration
+var ErrNoteListFull = errors.New("call note list full")
 
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{

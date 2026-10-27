@@ -41,13 +41,13 @@ func wireChatNetworks(
 		client := matrix.New(cfg.Matrix.Homeserver, cfg.Matrix.UserID, cfg.Matrix.AccessToken)
 		bootCtx, cancel := context.WithTimeout(context.Background(), chatBootTimeout)
 		if err := client.Whoami(bootCtx); err != nil {
-			cancel() //nolint:erraudit // boot-path cleanup: the error, not the cancel, is the outcome
+			cancel()
 			if errorfamily.Classify(err) == errorfamily.Rejection {
 				return nil, wrapf("matrix: %w", err)
 			}
 			log.Warn("matrix: homeserver unreachable at boot; the receiver retries in the background", "error", err)
 		} else {
-			cancel() //nolint:erraudit // boot-path cleanup after a completed check
+			cancel()
 		}
 		owner := domain.MustParseExtension(cfg.Matrix.Owner)
 		if err := messagingSvc.RegisterSender(domain.NetworkMatrix, client); err != nil {

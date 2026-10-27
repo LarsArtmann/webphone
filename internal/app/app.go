@@ -125,7 +125,7 @@ type App struct {
 // error whose family varies by cause, so a fixed-family wrap here would
 // clobber the constructor's classification.
 func wrapf(format string, args ...any) error {
-	return fmt.Errorf(format, args...) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	return fmt.Errorf(format, args...)
 }
 
 // New builds the container: registers every service, eagerly

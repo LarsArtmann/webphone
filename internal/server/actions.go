@@ -495,7 +495,7 @@ func (h *handlers) sendFailure(
 	// the log attrs (errorfamily.LogErrorContext: family/code/retryable)
 	// so an unclassified error (defaults to transient) is visible
 	// without changing what the user sees.
-	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s send gateway failure: %w", lane, err), nil) //nolint:erraudit // log-context wrap: the inner error owns the family
+	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s send gateway failure: %w", lane, err), nil)
 	h.renderPanelError(w, r, sess, tab, classifyForUser(err), h.T(r, k.transport))                      //nolint:branching-flow // i18n key plumbing (see k.rejected above)
 }
 

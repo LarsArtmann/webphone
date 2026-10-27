@@ -35,7 +35,7 @@ func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
 		s.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(s.lookupJSON)) //nolint:erraudit // test stub write
+		_, _ = w.Write([]byte(s.lookupJSON))
 		return
 	}
 	if r.URL.Path == "/api/contacts/01M/calls" && r.Method == http.MethodPost {

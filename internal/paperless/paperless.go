@@ -55,7 +55,7 @@ func (e *archiveError) Unwrap() error { return e.err }
 
 // archiveErrf builds an archiveError with context around a cause.
 func archiveErrf(format string, args ...any) *archiveError {
-	return &archiveError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the SDK classifies at origin
+	return &archiveError{err: fmt.Errorf(format, args...)}
 }
 
 // Archiver files inbound faxes into one Paperless-ngx instance.

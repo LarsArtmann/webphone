@@ -40,7 +40,7 @@ func main() {
 // typed bootStepError — an unclassified bootError — so the report's
 // classifier treats it as transparent and walks through to the cause.
 func propagatef(format string, args ...any) *bootStepError {
-	return &bootStepError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	return &bootStepError{err: fmt.Errorf(format, args...)}
 }
 
 // bootStepError is propagatef's product: boot context around an inner

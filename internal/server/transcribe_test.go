@@ -49,7 +49,7 @@ func fakeProvider(t *testing.T, status int, text string) (*httptest.Server, *pro
 			w.WriteHeader(status)
 			return
 		}
-		_ = json.MarshalWrite(w, struct { //nolint:erraudit // test stub write
+		_ = json.MarshalWrite(w, struct {
 			Text string `json:"text"`
 		}{Text: text})
 	}))

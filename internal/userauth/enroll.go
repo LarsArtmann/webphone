@@ -54,7 +54,7 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 	hash := hex.EncodeToString(sum[:])
 	email, rawUserID, expiresAt, found, err := s.enroll.Lookup(ctx, hash)
 	if err != nil {
-		return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_lookup)
+		return EnrollToken{}, err
 	}
 	if !found {
 		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.invalid",
@@ -67,13 +67,13 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 	}
 	if !time.Now().Before(expiresAt) {
 		if err := s.enroll.Burn(ctx, hash); err != nil {
-			return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_burn)
+			return EnrollToken{}, err
 		}
 		return EnrollToken{}, errorfamily.NewRejection("userauth.enroll.expired",
 			"enrollment token expired — mint a fresh one with: webphone -enroll-passkey <email>")
 	}
 	if err := s.enroll.Burn(ctx, hash); err != nil {
-		return EnrollToken{}, err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_burn)
+		return EnrollToken{}, err
 	}
 	return EnrollToken{Email: email, UserID: userID}, nil
 }

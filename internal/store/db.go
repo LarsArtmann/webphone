@@ -43,7 +43,7 @@ func (e *migrateError) Unwrap() error { return e.err }
 
 // wrapMigrate names the database file a failed migration ran against.
 func wrapMigrate(path string, err error) *migrateError {
-	return &migrateError{err: fmt.Errorf("migrate %s: %w", path, err)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
+	return &migrateError{err: fmt.Errorf("migrate %s: %w", path, err)}
 }
 
 // Open opens (creating if needed) the database at path and applies the
@@ -100,7 +100,7 @@ type Database struct {
 func OpenDatabase(path string) (*Database, error) {
 	db, err := Open(path)
 	if err != nil {
-		return nil, err //nolint:erraudit // family-neutral propagation: Open owns the classification
+		return nil, err
 	}
 	return &Database{db: db}, nil
 }

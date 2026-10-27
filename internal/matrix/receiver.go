@@ -134,7 +134,7 @@ func (r *Receiver) Run(ctx context.Context) error {
 	backoff := time.Second
 	for {
 		if err := ctx.Err(); err != nil {
-			return nil //nolint:erraudit // shutdown is the designed exit; nothing to report
+			return nil
 		}
 		since, err := r.cursor.Load(ctx)
 		if err != nil {
@@ -153,7 +153,7 @@ func (r *Receiver) Run(ctx context.Context) error {
 		resp, err := r.client.Sync(ctx, since, timeout)
 		if err != nil {
 			if ctx.Err() != nil {
-				return nil //nolint:erraudit // shutdown is the designed exit
+				return nil
 			}
 			var alive bool
 			backoff, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, backoff, 30*time.Second)
