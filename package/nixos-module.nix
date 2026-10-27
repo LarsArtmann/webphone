@@ -37,6 +37,10 @@ let
   oauth2CredentialName = "webphone-oidc-client-secret";
   oauth2SecretPath = "/run/credentials/webphone.service/${oauth2CredentialName}";
 
+  # --- CRM wiring (services.webphone.crm) — same credential doctrine.
+  crmCredentialName = "webphone-crm-token";
+  crmSecretPath = "/run/credentials/webphone.service/${crmCredentialName}";
+
   # null = derive from the vhost; eval fails closed when neither is
   # available (an external front must declare the registration).
   oauth2RedirectUrl =
@@ -80,7 +84,8 @@ let
     (cfg.settings.auth.oauth2.client_secret_file or "")
   ]
   ++ lib.attrValues (cfg.settings.auth.extension_password_files or { })
-  ++ lib.attrValues (cfg.settings.auth.passkey.extension_password_files or { });
+  ++ lib.attrValues (cfg.settings.auth.passkey.extension_password_files or { })
+  ++ lib.optional (cfg.crm.enable && cfg.crm.tokenFile != null) cfg.crm.tokenFile;
   leakedSecretFiles = lib.count leaksSecretToStore secretFilePaths;
 
   # A typed OIDC config derives passkey mode in the app (the shared
@@ -97,6 +102,7 @@ in
   imports = [
     ./options.nix
     ./options-oauth2.nix
+    ./options-crm.nix
   ];
 
   config = lib.mkIf cfg.enable {
@@ -200,6 +206,37 @@ in
         '';
       }
     ]
+    # Eval-time mirror of the app's fail-closed CRM validation: an
+    # enabled-but-half CRM config must fail `nixos-rebuild`, never boot
+    # a dark seam the operator believes is on.
+    ++ lib.optionals cfg.crm.enable [
+      {
+        assertion = cfg.crm.url != null && bareHTTPS cfg.crm.url;
+        message = ''
+          services.webphone.crm.url must be an absolute https URL (got ${
+            if cfg.crm.url == null then "unset" else cfg.crm.url
+          }): the machine API answers 401 without TLS in any real
+          deployment, and a relative URL cannot resolve.
+        '';
+      }
+      {
+        assertion = cfg.crm.tokenFile != null;
+        message = ''
+          services.webphone.crm.tokenFile is required when enable = true —
+          the bearer token never lives in the world-readable config JSON or
+          the Nix store; point it at the runtime file.
+        '';
+      }
+    ]
+    ++ lib.optionals (!cfg.crm.enable) [
+      {
+        assertion = cfg.crm.url == null && cfg.crm.tokenFile == null;
+        message = ''
+          services.webphone.crm: set enable = true — url or tokenFile
+          without enable would silently do nothing.
+        '';
+      }
+    ]
     # Secret leak guard: Nix path VALUES in settings (accepted by the
     # freeform JSON type) are copied into the world-readable store when
     # the config renders, and a string already pointing there is just as
@@ -207,11 +244,12 @@ in
     ++ lib.optional (leakedSecretFiles > 0) {
       assertion = false;
       message = ''
-        a secret file setting under services.webphone.settings is a Nix path
+        a secret file setting under services.webphone is a Nix path
         (or a /nix/store string): path values are copied into the
         world-readable Nix store when the config renders. Point
-        auth.oauth2.client_secret_file and the extension_password_files at
-        runtime files as plain strings (e.g. /run/secrets/...).
+        auth.oauth2.client_secret_file, the extension_password_files and
+        crm.tokenFile at runtime files as plain strings
+        (e.g. /run/secrets/...).
       '';
     };
 
@@ -262,6 +300,16 @@ in
           };
         })
       ];
+    }
+    // lib.optionalAttrs cfg.crm.enable {
+      # PLAIN definitions, deliberately: a raw settings.crm.* of the same
+      # key makes the eval fail with a conflict (one home per fact), and
+      # when the typed lane is OFF this block is absent entirely — the
+      # raw lane stays untouched.
+      crm = {
+        url = cfg.crm.url;
+        token_file = crmSecretPath;
+      };
     };
 
     users.users.webphone = {
@@ -300,8 +348,16 @@ in
             # no host-side group grant is needed. A missing source file
             # fails the unit start — earlier and louder than the first
             # SSO login.
-            LoadCredential = lib.mkIf cfg.oauth2.enable [
-              "${oauth2CredentialName}:${cfg.oauth2.clientSecretFile}"
+            LoadCredential = lib.mkMerge [
+              (lib.mkIf cfg.oauth2.enable [
+                "${oauth2CredentialName}:${cfg.oauth2.clientSecretFile}"
+              ])
+              # CRM bearer token: the same credential doctrine — systemd
+              # copies the operator's file into the unit's private
+              # credential directory at start, the app reads the copy.
+              (lib.mkIf cfg.crm.enable [
+                "${crmCredentialName}:${cfg.crm.tokenFile}"
+              ])
             ];
             User = "webphone";
             Group = "webphone";
