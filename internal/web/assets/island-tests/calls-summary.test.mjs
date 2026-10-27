@@ -29,7 +29,8 @@ globalThis.SIP = {
         },
       };
     }
-    invite() {
+    invite(options) {
+      this.inviteOptions = options;
       return Promise.resolve();
     }
   },
@@ -250,6 +251,44 @@ test("summarize: a network-dead ask names the offline cause, not the agent", asy
     toasts.every((text) => !/agent is unreachable/i.test(text)),
     "the conflated agent toast must not appear for a network death",
   );
+});
+
+test("a rejected outbound call names the SIP cause on the settled card", async () => {
+  state.userAgent = {};
+  await placeCall("+4930123456");
+  const entry = sessions.get("call-s1");
+  const inviter = entry.session;
+  // The library's order: onReject's state change first, the cause
+  // delegate synchronously after — the reason line defers one
+  // microtask to read it.
+  inviter.inviteOptions.requestDelegate.onReject({ statusCode: 486 });
+  inviter.state = globalThis.SIP.SessionState.Terminated;
+  inviter.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+  assert.equal(sessions.has("call-s1"), false);
+  const card = entry.dom;
+  assert.ok(card.parent, "the ended card stays visible");
+  const reason = card.querySelector(".call-reason-text");
+  assert.ok(reason, "the reason line renders");
+  assert.match(reason.textContent, /Busy/, "a 486 maps to the busy line");
+  assert.ok(
+    [...doc.getElementById("toasts").children].some((el) => /Busy/.test(el.textContent)),
+    "the reason is announced, not silent",
+  );
+});
+
+test("an unknown SIP cause stays an honest failure class with the code", async () => {
+  state.userAgent = {};
+  await placeCall("+4930123456");
+  const entry = sessions.get("call-s1");
+  const inviter = entry.session;
+  inviter.inviteOptions.requestDelegate.onReject({ statusCode: 555 });
+  inviter.state = globalThis.SIP.SessionState.Terminated;
+  inviter.stateChange.listeners.forEach((fn) => fn("Terminated"));
+  await flush();
+  const reason = entry.dom.querySelector(".call-reason-text");
+  assert.ok(reason, "the reason line renders");
+  assert.match(reason.textContent, /code 555/, "the unknown cause carries its code");
 });
 
 test("close removes the ended card", async () => {

@@ -14,8 +14,8 @@ func TestNotFoundKeepsSentinelAndCodedHalves(t *testing.T) {
 	if !errors.Is(verdict, store.ErrNotFound) {
 		t.Fatal("sentinel not errors.Is-matchable through the envelope")
 	}
-	var coded *errorfamily.Error
-	if !errors.As(verdict, &coded) || coded.ErrorCode() != "readmodels.fax_missing" {
+	coded, ok := errors.AsType[*errorfamily.Error](verdict)
+	if !ok || coded.ErrorCode() != "readmodels.fax_missing" {
 		t.Fatalf("coded half lost through the envelope: %v", verdict)
 	}
 	if coded.ErrorFamily() != errorfamily.Rejection {

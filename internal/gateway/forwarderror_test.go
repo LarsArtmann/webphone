@@ -17,18 +17,18 @@ func TestForwardErrorPrefixAndTraversal(t *testing.T) {
 	if !errors.Is(fwd, cause) {
 		t.Fatal("cause not reachable through Unwrap")
 	}
-	var coded *errorfamily.Error
-	if !errors.As(fwd, &coded) || coded.ErrorCode() != "gateway.transport" {
+	coded, ok := errors.AsType[*errorfamily.Error](fwd)
+	if !ok || coded.ErrorCode() != "gateway.transport" {
 		t.Fatalf("coded cause lost: %v", fwd)
 	}
 }
 
 func TestFormErrorPassthrough(t *testing.T) {
-	cause := errors.New("open attachment x: no such file")
+	cause := errors.New("no such file")
 	form := formErrf("open attachment %s: %w", "x", cause)
 
-	if form.Error() != cause.Error() {
-		t.Fatalf("message = %q, want cause text", form.Error())
+	if form.Error() != "open attachment x: no such file" {
+		t.Fatalf("message = %q, want context-prefixed cause", form.Error())
 	}
 	if !errors.Is(form, cause) {
 		t.Fatal("cause not reachable through Unwrap")

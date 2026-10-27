@@ -23,8 +23,8 @@ func TestBootJoinPinsJoinSemantics(t *testing.T) {
 	if joined.Error() != want {
 		t.Fatalf("message = %q, want %q", joined.Error(), want)
 	}
-	var aggregate *bootJoinError
-	if !errors.As(joined, &aggregate) || len(aggregate.errs) != 2 {
+	aggregate, ok := errors.AsType[*bootJoinError](joined)
+	if !ok || len(aggregate.errs) != 2 {
 		t.Fatalf("Unwrap() []error traversal broken: %v", joined)
 	}
 }

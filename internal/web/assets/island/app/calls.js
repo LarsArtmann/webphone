@@ -191,6 +191,7 @@ export function settleEndedCall(id) {
   flushTranscriptSaves(entry);
   if (entry.timer) clearInterval(entry.timer);
   morphToEndedCard(id, entry);
+  showEndedReason(id, entry);
   sessions.delete(id);
   if (state.focusedId === id) {
     const next = sessions.keys().next();
@@ -225,6 +226,61 @@ function morphToEndedCard(id, entry) {
   close.textContent = t("close");
   close.addEventListener("click", () => card.remove());
   controls.append(close);
+}
+
+// failureReasonOf maps one call's outcome to a human reason line for
+// the ended card: the SIP cause first, then the missed-call class for
+// an inbound call that never connected. Established calls ended
+// normally and carry no reason. THE mapping (unknown stays a failure
+// class, never "answered") is the one TODO_LIST #6's disposition work
+// must align with.
+function failureReasonOf(entry) {
+  if (entry.established) return null;
+  if (!(entry.session instanceof SIP.Inviter)) return t("callMissed");
+  const cause = entry.rejectCause || 0;
+  switch (cause) {
+    case 486:
+    case 600:
+    case 603:
+      return t("callBusy");
+    case 404:
+      return t("callNotFound");
+    case 403:
+    case 604:
+      return t("callBlocked");
+    case 480:
+    case 488:
+    case 502:
+    case 503:
+    case 504:
+      return t("callUnreachable");
+    case 487:
+      return t("callCancelled");
+    case 408:
+      return t("callNoAnswer");
+    default:
+      return cause ? t("callFailedCode")(cause) : t("callFailedUnknown");
+  }
+}
+
+// showEndedReason renders the failure reason line on the settled card
+// and announces it once. It runs one microtask after the Terminated
+// state change because the library fires the cause delegate
+// synchronously AFTER the state change this card settled in.
+function showEndedReason(id, entry) {
+  queueMicrotask(() => {
+    if (entry.endedReasonShown) return;
+    const reason = failureReasonOf(entry);
+    if (!reason) return;
+    entry.endedReasonShown = true;
+    announce(reason, "warn");
+    const stateEl = entry.dom && entry.dom.querySelector(".call-state-text");
+    if (!stateEl || !stateEl.parentElement) return;
+    const line = document.createElement("div");
+    line.className = "call-reason-text";
+    line.textContent = reason;
+    stateEl.parentElement.insertBefore(line, stateEl.nextSibling);
+  });
 }
 
 // summarizeButton is the ended card's one AI affordance: the ask is
@@ -1168,7 +1224,18 @@ export async function placeCall(raw) {
   });
   bindSession(inviter, target);
   try {
-    await inviter.invite();
+    // A SIP rejection never rejects invite(): sip.js resolves once the
+    // INVITE is sent, the verdict arrives through the requestDelegate.
+    // The cause lands on the session entry so the ended card can tell
+    // the user WHY the call failed (ONE mapping, failureReasonOf).
+    await inviter.invite({
+      requestDelegate: {
+        onReject: (res) => {
+          const entry = sessions.get(inviter.id);
+          if (entry) entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
+        },
+      },
+    });
     return true;
   } catch (err) {
     log(`invite failed: ${err.message}`, "error");
