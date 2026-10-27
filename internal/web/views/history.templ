@@ -70,12 +70,13 @@ templ HistoryPanel(props HistoryPanelProps) {
 					<option value="missed" selected?={ props.Outcome == "missed" }>{ T(props.Lang, "history.outcome.missed") }</option>
 				</select>
 				<select name="disposition" aria-label={ T(props.Lang, "history.disposition.label") }>
-					<option value="" selected?={ props.Disposition == "" }>{ T(props.Lang, "history.disposition.any") }</option>
-					<option value="answered" selected?={ props.Disposition == "answered" }>{ T(props.Lang, "history.disposition.answered") }</option>
-					<option value="voicemail" selected?={ props.Disposition == "voicemail" }>{ T(props.Lang, "history.disposition.voicemail") }</option>
-					<option value="ivr" selected?={ props.Disposition == "ivr" }>{ T(props.Lang, "history.disposition.ivr") }</option>
-					<option value="missed" selected?={ props.Disposition == "missed" }>{ T(props.Lang, "history.disposition.missed") }</option>
-					<option value="failed" selected?={ props.Disposition == "failed" }>{ T(props.Lang, "history.disposition.failed") }</option>
+					for _, opt := range dispositionFilterOptions {
+						@filterOption(filterOptionProps{
+							Value:    string(opt.Value),
+							Label:    T(props.Lang, opt.LabelKey),
+							Selected: domain.Disposition(props.Disposition) == opt.Value,
+						})
+					}
 				</select>
 				<button type="submit" class="wp-mini">{ T(props.Lang, "history.filter") }</button>
 			</form>

@@ -12,6 +12,28 @@ import (
 // directly with a plain int conversion).
 func fmtInt(n int) string { return strconv.Itoa(n) }
 
+// dispositionFilterOption is one row of the History verdict filter: the
+// wire value the form submits plus the dictionary key for its label.
+// Splitting value from label keeps the option component free of i18n and
+// keeps the option set declarative.
+type dispositionFilterOption struct {
+	Value    domain.Disposition
+	LabelKey string
+}
+
+// dispositionFilterOptions is the ONE home for the verdict-filter rows:
+// the empty "any" row plus the five verdicts an operator can confirm.
+// DispositionUnknown is deliberately absent — it is a machine
+// observation, not a verdict anyone confirms, so it never filters.
+var dispositionFilterOptions = []dispositionFilterOption{
+	{Value: "", LabelKey: "history.disposition.any"},
+	{Value: domain.DispositionAnswered, LabelKey: "history.disposition.answered"},
+	{Value: domain.DispositionVoicemail, LabelKey: "history.disposition.voicemail"},
+	{Value: domain.DispositionIVR, LabelKey: "history.disposition.ivr"},
+	{Value: domain.DispositionMissed, LabelKey: "history.disposition.missed"},
+	{Value: domain.DispositionFailed, LabelKey: "history.disposition.failed"},
+}
+
 // avatarFor derives the two-glyph avatar label for a contact name or
 // phone number: the LAST TWO DIGITS of a number ("61"), the first
 // letters of a name's words ("AK"), or "?" for blanks. The tail — not

@@ -816,7 +816,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 					hx-include="closest form"
 				>
 					for _, mode := range props.Drafts.Modes {
-						<option value={ mode } selected?={ mode == props.Drafts.Mode }>{ mode }</option>
+						@filterOption(filterOptionProps{Value: mode, Label: mode, Selected: mode == props.Drafts.Mode})
 					}
 				</select>
 				if props.Drafts.ModeSource == "runtime" {
