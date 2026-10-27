@@ -304,6 +304,7 @@ a deliberate code change, regenerate:
 | domain.address                               | Rejection                 | internal/domain/network.go         |
 | domain.channel                               | Rejection                 | internal/domain/message.go         |
 | domain.direction                             | Rejection                 | internal/domain/message.go         |
+| domain.disposition                           | Rejection                 | internal/domain/disposition.go     |
 | domain.extension                             | Rejection                 | internal/domain/ids.go             |
 | domain.fax_direction                         | Rejection                 | internal/domain/fax.go             |
 | domain.fax_status                            | Rejection                 | internal/domain/fax.go             |
@@ -534,6 +535,11 @@ side of that bar:
   operator record; the ext's own `console.error("[object Event]")` spam is an
   upstream defect (draft note:
   `docs/research/2026-10-27_htmx-sse-ext-object-event-logging-note.md`).
+- Division of truth, connectivity: `#offline-banner` (role=status) reflects the
+  BROWSER's network (`online`/`offline` events — the machine has no route);
+  the `#wp-sse-live` pill reflects the FEED (server reachable, SSE healthy).
+  A red pill with a hidden banner = server-side trouble; a banner with a red
+  pill = the user's own connection. They never collapse into one signal.
 - Typed-rejection CONVENTION design (checkJs-era) belongs to the sibling plan
   (16:04) task T24; this file owns the runtime surfaces only.
 

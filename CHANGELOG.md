@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Goroutine containment (2026-10-27, error-surface train): every
+  fire-and-forget/background goroutine (the post-call draft fan-out, the fax
+  archive offer, the signal read loop, the retention and dedup sweeps) now
+  recovers its own panics with a greppable log line — a transport bug can no
+  longer kill the whole process; a containment test pins the class.
+- Call-failure reasons (2026-10-27, error-surface train): a call that never
+  connected settles its ended card with a human reason line and an aria-live
+  announce — SIP cause mapped once (busy / number does not exist / blocked /
+  far end did not answer / cancelled / no answer / code / missed class), the
+  same mapping the operator disposition work must align with.
 - Processing-locality labels (2026-10-27, agent UX train): the
   Settings ASR row names where caller audio goes ("processed on this
   server" vs "sent to the external provider", from the same
@@ -269,6 +279,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The post-call summarize toast no longer conflates causes (2026-10-27): a
+  network-dead ask says "you are offline" instead of blaming the AI agent;
+  HTTP failures keep their own message. The SSE pill's tooltip reads
+  "reconnecting…" while the feed retries, and each retry logs a readable
+  failure-count line instead of only the extension's `[object Event]` spam.
 - "Draft with AI" no longer aborts at the panel-read timeout: the
   on-demand draft is a synchronous model round trip inside the agent,
   so it rides a generation-sized budget (`textAgentDraftTimeout`)
