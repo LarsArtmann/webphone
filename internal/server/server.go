@@ -148,6 +148,10 @@ type Deps struct {
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
 	Transcripts *readmodels.Transcripts
+	// Notes is the post-call-note store (owner-scoped, the History
+	// tab's note affordance). Nil (test compositions): the endpoints
+	// answer 503.
+	Notes *readmodels.Notes
 	Messaging   *messaging.Service
 	Fax         *fax.Service
 	PhoneAPI    *pbx.Client
@@ -295,6 +299,7 @@ func New(deps Deps) http.Handler {
 		CallsIdem:   hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 		ASR:         deps.ASR,
 		Transcripts: deps.Transcripts,
+		Notes:       deps.Notes,
 		TextAgent:   deps.TextAgent,
 		Push:        deps.Push,
 		Devices:     deps.PushDevices,
@@ -416,6 +421,8 @@ func New(deps Deps) http.Handler {
 	// authedFetch, sharing the contacts write budget (one island POST per
 	// user action). A disabled seam answers 404.
 	protected.Handle("POST /api/calls/{id}/summary-draft", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SummaryDraft)))
+	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
+	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
 	// The push-device registry the native shells ride (the Android call
 	// shell first): session-gated, CSRF via the same authedFetch dance,
 	// sharing the contacts write budget (the same one-write-per-action

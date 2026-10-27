@@ -50,6 +50,11 @@ type Deps struct {
 	CallsIdem   hooks.Gate
 	ASR         asr.Provider
 	Transcripts *readmodels.Transcripts
+	// Notes is the post-call-note store (readmodels-backed; present
+	// whenever the composition built the engine). Nil: test
+	// compositions only — the handlers answer 503 like the transcript
+	// surface does.
+	Notes *readmodels.Notes
 	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
 	// review API). Nil: the summarize endpoint answers 404 — a client
 	// reads that as "this server does not draft".
