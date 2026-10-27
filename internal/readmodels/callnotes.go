@@ -29,16 +29,18 @@ func init() {
 	})
 }
 
-// CallNoteView is the engine-side projection of one call note.
+// CallNoteView is the engine-side projection of one call's review
+// slot: the freeform note plus the operator's disposition verdict.
 //
 // branching-flow COMPOSITION_mixin (baselined): the engine projection
 // row mirrors the domain fact verbatim (the fold is a plain insert).
 // brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema; CallID is the opaque island token (strong-id wire ruling)
 type CallNoteView struct {
-	Owner     string `json:"owner"`
-	CallID    string `json:"call_id"`
-	Body      string `json:"body"`
-	UpdatedAt int64  `json:"updated_at"`
+	Owner       string `json:"owner"`
+	CallID      string `json:"call_id"`
+	Body        string `json:"body"`
+	Disposition string `json:"disposition"`
+	UpdatedAt   int64  `json:"updated_at"`
 }
 
 // notesCollection names the engine collection (query name).
@@ -48,17 +50,29 @@ const notesCollection = "call_notes"
 type callNoteInput struct{ Key domain.CallNoteKey }
 
 // notesQuery declares the call-notes read model: a keyed projection
-// upserted by CallNoteSaved facts (one slot per owner+call), filtered
-// by owner, sorted by update time (the newest-touched note is the
-// History's first candidate — though the surface reads by call id).
+// upserted by two facts on the SAME (owner, call) slot — CallNoteSaved
+// (the freeform body) and CallDispositionSaved (the operator's
+// verdict). Each fold carries the other field forward from the previous
+// row, so editing one never erases the other; sorted by update time.
 var notesQuery = metaengine.Query[callNoteInput, CallNoteView](notesCollection,
 	metaengine.OnRecord(domain.CallNoteSaved{},
-		func(_ record.Record, e domain.CallNoteSaved) (domain.CallNoteKey, CallNoteView) {
-			return e.Key, CallNoteView{
-				Owner:     e.Owner,
-				CallID:    e.CallID,
-				Body:      e.Body,
-				UpdatedAt: e.UpdatedAt.Unix(),
+		func(_ record.Record, e domain.CallNoteSaved, prev CallNoteView) CallNoteView {
+			return CallNoteView{
+				Owner:       e.Owner,
+				CallID:      e.CallID,
+				Body:        e.Body,
+				Disposition: prev.Disposition,
+				UpdatedAt:   e.UpdatedAt.Unix(),
+			}
+		}),
+	metaengine.OnRecord(domain.CallDispositionSaved{},
+		func(_ record.Record, e domain.CallDispositionSaved, prev CallNoteView) CallNoteView {
+			return CallNoteView{
+				Owner:       e.Owner,
+				CallID:      e.CallID,
+				Body:        prev.Body,
+				Disposition: e.Disposition.String(),
+				UpdatedAt:   e.UpdatedAt.Unix(),
 			}
 		}),
 	metaengine.FilterOnField[CallNoteView]("owner", metaengine.FilterEq),

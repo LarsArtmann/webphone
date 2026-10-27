@@ -31,3 +31,19 @@ type CallNoteSaved struct {
 	Body      string
 	UpdatedAt time.Time
 }
+
+// CallDispositionSaved is the read-model fact for an operator's
+// post-call verdict (issue #6 confirm): the HUMAN answer to "how did
+// this call end" — the one authority that may mint DispositionAnswered.
+// It shares the note's (owner, call) slot but is a separate fact: the
+// verdict drives the CRM correction write and the History filter, while
+// the note stays freeform prose; editing one must never touch the
+// other. The fold carries the slot's existing body forward.
+// brandid-lint:ignore(BD003) island-owned SIP Call-ID: opaque foreign token, verbatim passthrough (strong-id wire ruling)
+type CallDispositionSaved struct {
+	Key         CallNoteKey
+	Owner       string
+	CallID      string
+	Disposition Disposition
+	UpdatedAt   time.Time
+}
