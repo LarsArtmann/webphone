@@ -49,6 +49,7 @@ type Engine struct {
 	snippets *Snippets
 	faxes    *Faxes
 	calls    *Transcripts
+	notes    *Notes
 	enroll   *EnrollTokens
 	devices  *PushDevices
 	db       *sql.DB
@@ -80,7 +81,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, enrollTokensQuery, pushDevicesQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, enrollTokensQuery, pushDevicesQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -94,6 +95,7 @@ func Open(dataDir string) (*Engine, error) {
 		snippets: newSnippets(models),
 		faxes:    newFaxes(models, agg),
 		calls:    newTranscripts(models, agg),
+		notes:    newNotes(models),
 		enroll:   newEnrollTokens(models),
 		devices:  newPushDevices(models),
 		db:       db,
@@ -126,6 +128,9 @@ func (e *Engine) Faxes() *Faxes { return e.faxes }
 // Transcripts returns the engine-backed transcript store (the SQL
 // store's replacement behind the same method contract).
 func (e *Engine) Transcripts() *Transcripts { return e.calls }
+
+// Notes returns the engine-backed post-call-note store (M16).
+func (e *Engine) Notes() *Notes { return e.notes }
 
 // EnrollTokens returns the engine-backed enrollment-token store (the
 // userauth SQL table's replacement; token classification stays in the
