@@ -28,6 +28,24 @@ func init() {
 	})
 }
 
+// migrateError is the typed product of a failed schema migration: the
+// inner error owns its family (the migration ladder classifies each
+// step), and the "migrate <path>" prefix keeps the failing database
+// file greppable in the boot report, byte-identical to the fmt.Errorf
+// wrap it replaces.
+type migrateError struct {
+	err error
+}
+
+func (e *migrateError) Error() string { return e.err.Error() }
+
+func (e *migrateError) Unwrap() error { return e.err }
+
+// wrapMigrate names the database file a failed migration ran against.
+func wrapMigrate(path string, err error) *migrateError {
+	return &migrateError{err: fmt.Errorf("migrate %s: %w", path, err)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
+}
+
 // Open opens (creating if needed) the database at path and applies the
 // schema. Path may be ":memory:" for tests.
 func Open(path string) (*sql.DB, error) {
@@ -54,8 +72,8 @@ func Open(path string) (*sql.DB, error) {
 	defer cancel()
 
 	if err := migrate(ctx, db); err != nil {
-		_ = db.Close()                                      //nolint:erraudit // close-after-use: nothing left to do on failure
-		return nil, fmt.Errorf("migrate %s: %w", path, err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		_ = db.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
+		return nil, wrapMigrate(path, err)
 	}
 
 	slog.Info("store ready", "path", path)

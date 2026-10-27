@@ -229,7 +229,7 @@ func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *c
 	t.Helper()
 	stub := newStubReviewAPI(t)
 	engine := newTestEngine(t)
-	fanout := push.NewFanout(map[string]push.Sender{"recording": transport})
+	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport})
 	provider, _ := fakeProvider(t, http.StatusOK, "hi")
 	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
 		deps.ASR = asrClientFor(t, provider.URL)

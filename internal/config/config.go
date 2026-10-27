@@ -3,7 +3,6 @@
 package config
 
 import (
-	"fmt"
 	"maps"
 	"net"
 	"net/url"
@@ -527,6 +526,19 @@ func defaults() Config {
 	}
 }
 
+// ConfigInvalidError is Load's rejected-config verdict: the cause (a
+// sentinel or an already family-classified validation error) stays
+// authoritative through Unwrap; the prefix keeps every config refusal
+// greppable as a boot-blocking shape in logs, byte-identical to the
+// fmt.Errorf wrap it replaces.
+type ConfigInvalidError struct {
+	err error
+}
+
+func (e *ConfigInvalidError) Error() string { return "config invalid: " + e.err.Error() }
+
+func (e *ConfigInvalidError) Unwrap() error { return e.err }
+
 // Load reads the optional JSON config file (path from WEBPHONE_CONFIG,
 // default /etc/webphone/config.json), then overrides from WEBPHONE_*
 // environment variables (double underscore nests: WEBPHONE_GATEWAY__MODE
@@ -570,7 +582,7 @@ func Load() (Config, error) {
 	if cfg.Gateway.WebhookSecretFile != "" && cfg.Gateway.WebhookSecret != "" {
 		// Shape check BEFORE the file read: both sources set is a config
 		// drift bug regardless of whether the file is readable.
-		return Config{}, fmt.Errorf("config invalid: %w", errGatewaySecretBothSources) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return Config{}, &ConfigInvalidError{err: errGatewaySecretBothSources}
 	}
 	if cfg.Gateway.WebhookSecretFile != "" {
 		data, err := os.ReadFile(cfg.Gateway.WebhookSecretFile)
@@ -589,7 +601,7 @@ func Load() (Config, error) {
 	if cfg.SIP.CredentialSecretFile != "" && cfg.SIP.CredentialSecret != "" {
 		// Shape check BEFORE the file read: both sources set is a config
 		// drift bug regardless of whether the file is readable.
-		return Config{}, fmt.Errorf("config invalid: %w", errSIPSecretBothSources) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return Config{}, &ConfigInvalidError{err: errSIPSecretBothSources}
 	}
 	if cfg.SIP.CredentialSecretFile != "" {
 		data, err := os.ReadFile(cfg.SIP.CredentialSecretFile)
@@ -605,12 +617,12 @@ func Load() (Config, error) {
 
 	auth, err := resolvedAuth(cfg.Auth)
 	if err != nil {
-		return Config{}, fmt.Errorf("config invalid: %w", err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return Config{}, &ConfigInvalidError{err: err}
 	}
 	cfg.Auth = auth
 
 	if err := validate(cfg); err != nil {
-		return Config{}, fmt.Errorf("config invalid: %w", err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return Config{}, &ConfigInvalidError{err: err}
 	}
 
 	return cfg, nil
