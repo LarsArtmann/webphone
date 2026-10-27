@@ -122,3 +122,23 @@ interface IslandHistoryEntry {
   at: number;
   dur: number;
 }
+
+/** The /api/session answer (server.sessionIdentity) as the island reads it. */
+interface IslandSessionIdentity {
+  extension: string;
+  did?: string;
+  display_name?: string;
+  numbers?: string[];
+  password?: string;
+  sip_credential?: string;
+  agent_mode?: string;
+  agent_mode_source?: string;
+  agent_default_mode?: string;
+  agent_modes?: string[];
+}
+
+/** The ringing-stack button handlers ui.js renders (calls.js supplies them). */
+interface IslandIncomingSlotActions {
+  answer(index: number): void;
+  reject(index: number): void;
+}

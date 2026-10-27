@@ -2,9 +2,11 @@
 // graph stays acyclic (calls, ice and connection all need the live
 // session table; none of them may import each other for it).
 
-// id -> { session, target, held, holdPending, holdQueued, muted, startedAt, timer, dom }
+// id -> IslandCallEntry (types/island.d.ts owns the field list).
+/** @type {Map<string, IslandCallEntry>} */
 export const sessions = new Map();
 
+/** @type {IslandState} */
 export const state = {
   focusedId: null,
   // The ringing queue: every unanswered inbound INVITE, OLDEST FIRST
@@ -32,6 +34,7 @@ export const state = {
 // the hoped-for one; applyTransition refuses illegal moves outright so
 // a wiring bug fails loudly (logged + state kept) instead of rendering
 // a lie.
+/** @type {Record<IslandCallViewState, IslandCallViewState[]>} */
 export const CALL_TRANSITIONS = {
   ringing: ["active", "ending", "ended"],
   active: ["holding", "held", "ending", "ended"],
@@ -45,6 +48,11 @@ export const CALL_TRANSITIONS = {
 // applyTransition proposes one move. Illegal proposals keep the current
 // state (changed=false) — the caller logs it; legality questions are
 // answered by the table, never re-derived at call sites.
+/**
+ * @param {IslandCallViewState} current
+ * @param {IslandCallViewState} next
+ * @returns {{ state: IslandCallViewState, changed: boolean }}
+ */
 export function applyTransition(current, next) {
   const legal = (CALL_TRANSITIONS[current] ?? []).includes(next);
   return { state: legal ? next : current, changed: legal };
@@ -55,6 +63,10 @@ export function applyTransition(current, next) {
 // settled hold) — the table's vocabulary maps 1:1 onto them, so the
 // data flow stays single-brained: mutation sites propose through
 // applyTransition, rendering derives through viewStateOf.
+/**
+ * @param {IslandCallEntry | null | undefined} entry
+ * @returns {IslandCallViewState}
+ */
 export function viewStateOf(entry) {
   if (!entry || !entry.session) return "ended";
   const s = entry.session.state;

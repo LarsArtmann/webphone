@@ -59,15 +59,41 @@ export const els = {
   remoteAudio: $("remote-audio"),
 };
 
+/**
+ * One event-log line. English by policy: #log is the operator trail in
+ * both UI languages.
+ * @param {string} message
+ * @param {IslandToastKind} [level]
+ */
 export function log(message, level = "info") {
   const entry = document.createElement("li");
   entry.textContent = `${new Date().toISOString().slice(11, 19)} ${message}`;
   if (level !== "info") entry.dataset.level = level;
   els.log.prepend(entry);
-  while (els.log.children.length > 100) els.log.lastChild.remove();
+  while (els.log.children.length > 100) els.log.lastChild?.remove();
   // Devtools mirror: the on-page log is the operator trail, the browser
   // console is where a user actually looks when something misbehaves.
-  console[level === "info" ? "info" : level]("webphone:", message);
+  const mirror =
+    level === "error"
+      ? console.error
+      : level === "warn"
+        ? console.warn
+        : console.info;
+  mirror("webphone:", message);
+}
+
+/**
+ * The message of a caught unknown. A throw site may throw anything;
+ * the island only ever renders a string, so this is the ONE narrowing
+ * point (a bare `err.message` is a compile error under checkJs and a
+ * `undefined` in the copy when someone throws a string).
+ * @param {unknown} err
+ * @returns {string}
+ */
+export function errorMessage(err) {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return String(err);
 }
 
 // --- toasts: action feedback visible without opening the event log -------
@@ -80,6 +106,7 @@ const TOAST_MS = { info: 4000, ok: 4000, warn: 6000, error: 8000 };
 // library only owns the wire shape). The dispatch-layer vocabulary
 // (success/warning) is accepted too so a future library-emitted toast
 // degrades to the right color instead of plain info.
+/** @type {Record<string, IslandToastKind>} */
 const TOAST_KINDS = {
   ok: "ok",
   error: "error",
@@ -89,6 +116,10 @@ const TOAST_KINDS = {
   warning: "warn",
 };
 
+/**
+ * @param {string} kind
+ * @returns {IslandToastKind}
+ */
 export function toastKindFor(kind) {
   return TOAST_KINDS[kind] || "info";
 }
@@ -99,6 +130,11 @@ export function toastKindFor(kind) {
 // through whatever the screen reader is reading, so that one toast
 // carries role="alert" (aria-live assertive) on the node itself while
 // the host region stays polite for everything else.
+/**
+ * @param {string} message
+ * @param {IslandToastKind} [kind]
+ * @param {{ assertive?: boolean }} [options]
+ */
 export function announce(message, kind = "info", { assertive = false } = {}) {
   // Identical-consecutive dedup: a retry loop (or a repeated identical
   // failure) must not stack look-alike toasts; a different message or an
@@ -123,19 +159,27 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
     }
   });
   els.toasts.append(toast);
-  while (els.toasts.children.length > TOAST_MAX) els.toasts.firstChild.remove();
-  setTimeout(dismiss, TOAST_MS[kind] || TOAST_MS.info);
+  while (els.toasts.children.length > TOAST_MAX) els.toasts.firstChild?.remove();
+  setTimeout(dismiss, TOAST_MS[kind] ?? TOAST_MS.info);
 }
+
+/** @type {ReturnType<typeof setTimeout> | null} */
+let dialErrorTimer = null;
 // Inline dial-form error: the failure lands where the user is looking.
+/** @param {string} message */
 export function showDialError(message) {
   els.dialError.textContent = message;
   els.dialError.hidden = false;
-  clearTimeout(showDialError.timer);
-  showDialError.timer = setTimeout(() => {
+  if (dialErrorTimer) clearTimeout(dialErrorTimer);
+  dialErrorTimer = setTimeout(() => {
     els.dialError.hidden = true;
   }, 6000);
 }
 
+/**
+ * @param {string} state
+ * @param {string} text
+ */
 export function setRegStatus(state, text) {
   els.regStatus.textContent = text;
   els.regStatus.className = `status ${state}`;
@@ -145,6 +189,7 @@ export function setRegStatus(state, text) {
 // now". Visibility is the only API — its text lives in the markup with
 // data-i18n so a language switch re-localizes it; the precise reason
 // stays in the #reg-status pill.
+/** @param {boolean} visible */
 export function setOfflineBanner(visible) {
   els.offlineBanner.hidden = !visible;
 }
@@ -154,6 +199,7 @@ export function setOfflineBanner(visible) {
 // and every banner path funnels through these helpers so the class can
 // never outlive the banner. The dim is visual only: nothing is
 // pointer-blocked, a user mid-task keeps full control.
+/** @param {boolean} active */
 export function setIncomingFocusMode(active) {
   document.documentElement.classList.toggle("wp-incoming-focus", active);
 }
@@ -166,8 +212,10 @@ export function setIncomingFocusMode(active) {
 // pair. The extra-slot buttons ride the actions registry below — ui.js
 // must not import calls.js (calls imports ui; the registry keeps the
 // graph one-way).
+/** @type {IslandIncomingSlotActions | null} */
 let slotActions = null;
 
+/** @param {IslandIncomingSlotActions} actions */
 export function setIncomingSlotActions(actions) {
   slotActions = actions;
 }
@@ -214,6 +262,7 @@ export function hideIncomingBanner() {
   if (els.incomingQueue) els.incomingQueue.replaceChildren();
 }
 
+/** @param {string} number */
 export function dialFromUi(number) {
   els.dest.value = number;
   els.dialForm.requestSubmit();
@@ -225,6 +274,10 @@ export function dialFromUi(number) {
 // module (not the passkey feature module) because BOTH login paths
 // render it — the resume path and the passkey path carry the same
 // fields.
+/**
+ * @param {IslandSessionIdentity} data
+ * @returns {string}
+ */
 export function whoamiLine(data) {
   const numbers = Array.isArray(data.numbers)
     ? data.numbers.filter(Boolean)
@@ -252,6 +305,7 @@ export function initAdvancedToggle() {
   const advanced = $("wp-advanced");
   if (!toggle || !advanced) return;
 
+  /** @param {boolean} collapsed */
   const apply = (collapsed) => {
     advanced.hidden = collapsed;
     toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
