@@ -61,7 +61,7 @@ let
       fragment = "world-readable Nix store";
       extra = validCRM // {
         crm = validCRM.crm // {
-          tokenFile = /nix/store/fake-crm-token;
+          tokenFile = "/nix/store/fake-crm-token";
         };
       };
     };
@@ -129,9 +129,7 @@ in
         unit = ev.config.systemd.services.webphone.serviceConfig;
       in
       if
-        c.settings.crm == raw
-        && !(unit ? LoadCredential)
-        && failedAssertions { settings.crm = raw; } == [ ]
+        c.settings.crm == raw && !(unit ? LoadCredential) && failedAssertions { settings.crm = raw; } == [ ]
       then
         "raw settings.crm passes through untouched when the typed lane is off"
       else

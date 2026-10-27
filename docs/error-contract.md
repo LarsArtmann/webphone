@@ -258,6 +258,8 @@ a deliberate code change, regenerate:
 | config.auth.users                            | Rejection                 | internal/config/config.go          |
 | config.contacts                              | Rejection                 | internal/config/config.go          |
 | config.crm.token                             | Rejection                 | internal/config/config.go          |
+| config.crm.token_file                        | Rejection                 | internal/config/config.go          |
+| config.crm.token_sources                     | Rejection                 | internal/config/config.go          |
 | config.crm.url                               | Rejection                 | internal/config/config.go          |
 | config.csrf.trusted_origins                  | Rejection                 | internal/config/config.go          |
 | config.csrf.trusted_proxies                  | Rejection                 | internal/config/config.go          |
