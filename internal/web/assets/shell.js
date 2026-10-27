@@ -479,7 +479,11 @@
         });
     };
     var cycleAgentMode = function () {
-      if (!agentModeState || !agentModeState.modes || !agentModeState.modes.length)
+      if (
+        !agentModeState ||
+        !agentModeState.modes ||
+        !agentModeState.modes.length
+      )
         return;
       var modes = agentModeState.modes;
       var at = modes.indexOf(agentModeState.mode);

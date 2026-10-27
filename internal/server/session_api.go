@@ -144,16 +144,16 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 // wire identical to the historical map form.
 // brandid-lint:ignore(BD003) wire DTO: config-validated DID rendered verbatim, no id ever flows back in (strong-id ruling)
 type sessionIdentity struct {
-	Extension     string   `description:"The signed-in extension." json:"extension"`
-	DID           string   `description:"Presented PSTN number (config identities), when known." json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
-	DisplayName   string   `description:"The passkey user's display name, when the extension is passkey-mapped." json:"display_name,omitempty"`
-	Numbers       []string `description:"Every number mapped to the passkey user, deduplicated." json:"numbers,omitempty"`
-	Password      string   `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
-	SIPCredential string   `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
-	AgentMode     string   `description:"The textagent's effective draft mode (agent seam on only; empty hides the nav pill)." json:"agent_mode,omitempty"`
-	AgentModeSource string `description:"Where the draft mode comes from: config or a runtime pin." json:"agent_mode_source,omitempty"`
-	AgentDefaultMode string `description:"The configured draft mode a reset restores." json:"agent_default_mode,omitempty"`
-	AgentModes    []string `description:"The draft modes the agent supports, in cycle order." json:"agent_modes,omitempty"`
+	Extension        string   `description:"The signed-in extension." json:"extension"`
+	DID              string   `description:"Presented PSTN number (config identities), when known." json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
+	DisplayName      string   `description:"The passkey user's display name, when the extension is passkey-mapped." json:"display_name,omitempty"`
+	Numbers          []string `description:"Every number mapped to the passkey user, deduplicated." json:"numbers,omitempty"`
+	Password         string   `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
+	SIPCredential    string   `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
+	AgentMode        string   `description:"The textagent's effective draft mode (agent seam on only; empty hides the nav pill)." json:"agent_mode,omitempty"`
+	AgentModeSource  string   `description:"Where the draft mode comes from: config or a runtime pin." json:"agent_mode_source,omitempty"`
+	AgentDefaultMode string   `description:"The configured draft mode a reset restores." json:"agent_default_mode,omitempty"`
+	AgentModes       []string `description:"The draft modes the agent supports, in cycle order." json:"agent_modes,omitempty"`
 }
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
