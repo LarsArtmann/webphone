@@ -7,7 +7,17 @@ import { sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { state } from "./state.js";
 
-export const $ = (id) => document.getElementById(id);
+/**
+ * The DOM handle lookup. Every id it accepts is served markup pinned by
+ * TestServedPageHoldsTheDomContract (docs/dom-contract.md), so the result
+ * is non-null BY CONTRACT and an unknown id is a compile error rather
+ * than a silent `null`.
+ * @template {keyof IslandDomIds} K
+ * @param {K} id
+ * @returns {IslandDomIds[K]}
+ */
+export const $ = (id) =>
+  /** @type {IslandDomIds[K]} */ (document.getElementById(id));
 
 export const els = {
   regStatus: $("reg-status"),
