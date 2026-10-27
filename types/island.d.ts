@@ -268,3 +268,39 @@ interface IslandCaptureController {
   ctx: AudioContext;
   stream: MediaStream;
 }
+
+/** One CDR row as /phone-api/history answers it (FreeSWITCH field names —
+ * the proxy forwards them verbatim, so the island reads them verbatim). */
+interface IslandServerHistoryRow {
+  context?: string;
+  caller_id_number?: string;
+  destination_number?: string;
+  start?: string;
+  billsec?: number;
+}
+
+/** One personal contact as the server store renders it (Contacts tab and
+ * /api/contacts agree). The legacy localStorage rows are the same shape
+ * minus `id`. */
+interface IslandContactRow {
+  id?: string;
+  name: string;
+  number: string;
+}
+
+/** One voicemail message as /phone-api/voicemail/…/messages answers it. */
+interface IslandVoicemailMessage {
+  uuid: string;
+  read: boolean;
+  cid_number?: string;
+  cid_name?: string;
+  seconds: number;
+  /** Epoch SECONDS (the phone API's unit — not milliseconds). */
+  created: number;
+  audio_url: string;
+}
+
+/** The voicemail summary counters (/…/summary). */
+interface IslandVoicemailSummary {
+  new: number;
+}

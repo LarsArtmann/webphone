@@ -19,11 +19,12 @@ import {
 import { t } from "./i18n.js";
 import { transcribeNow } from "./transcribe.js";
 import { initDialTypeahead, setExtraContacts } from "./typeahead.js";
-import { announce, dialFromUi, els, log } from "./ui.js";
+import { announce, dialFromUi, els, errorMessage, log } from "./ui.js";
 
 // Inline SVG icons for JS-created buttons (the island twins of the
 // server's templ-components icons) — platform emoji rendered
 // differently per OS and read as decoration.
+/** @param {string} path @returns {string} */
 const iconSvg = (path) =>
   `<svg class="wp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${path}"></path></svg>`;
 const playIcon = () => iconSvg("M8 5.14v13.72L19 12 8 5.14z");
@@ -41,8 +42,10 @@ const CONTACTS_MAX = 50;
 
 // Server-backed rows (CDR), fetched when the phone API is enabled; kept
 // separate from the local session history so reloads never lose either.
+/** @type {IslandServerHistoryRow[]} */
 let serverHistory = [];
 
+/** @returns {IslandHistoryEntry[]} */
 export function readHistory() {
   try {
     const raw = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
@@ -52,6 +55,7 @@ export function readHistory() {
   }
 }
 
+/** @param {IslandHistoryEntry} entry */
 export function recordHistory(entry) {
   const list = [entry, ...readHistory()].slice(0, HISTORY_MAX);
   localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
@@ -70,6 +74,10 @@ export function recordHistory(entry) {
 // distinguish a human from a voicemail greeting, and claiming "answered"
 // from connection state journaled voicemail as answered (issue #6).
 // An operator confirm upgrades unknown to a specific resolution.
+/**
+ * @param {{dir: "in" | "out", target: string, dur: number, established: boolean}} call
+ * @returns {Promise<void>}
+ */
 export async function recordCrmCall({ dir, target, dur, established }) {
   if (!crmEnabled) return;
   try {
@@ -90,8 +98,8 @@ export async function recordCrmCall({ dir, target, dur, established }) {
       announce(t("crmLogFailed")(detail), "warn");
     }
   } catch (err) {
-    log(`crm call log failed: ${err.message}`, "warn");
-    announce(t("crmLogFailed")(err.message), "warn");
+    log(`crm call log failed: ${errorMessage(err)}`, "warn");
+    announce(t("crmLogFailed")(errorMessage(err)), "warn");
   }
 }
 
@@ -104,10 +112,14 @@ export async function refreshServerHistory() {
     serverHistory = Array.isArray(data.entries) ? data.entries : [];
     renderHistory();
   } catch (err) {
-    log(`server history unavailable: ${err.message}`, "error");
+    log(`server history unavailable: ${errorMessage(err)}`, "error");
   }
 }
 
+/**
+ * @param {{dir: string, target: string, whenText: string, durText: string, number: string}} row
+ * @returns {HTMLLIElement}
+ */
 function makeHistoryRow({ dir, target, whenText, durText, number }) {
   const li = document.createElement("li");
   const dirEl = document.createElement("span");
@@ -155,24 +167,26 @@ export function renderHistory() {
       number: entry.target,
     }),
   );
-  const serverRows = serverHistory.map((row) =>
-    makeHistoryRow({
-      dir: row.context === "public" ? "←" : "→",
-      target:
-        row.context === "public"
-          ? row.caller_id_number
-          : row.destination_number,
+  // The proxy forwards FreeSWITCH's CDR fields verbatim, so any of them can
+  // be ABSENT (a hung-up-before-answer row carries no billsec, a rejected
+  // leg may carry no caller id). Each fallback below is what the operator
+  // reads instead of the word "undefined".
+  const serverRows = serverHistory.map((row) => {
+    const inbound = row.context === "public";
+    const number =
+      (inbound ? row.caller_id_number : row.destination_number) || "—";
+    const billsec = row.billsec || 0;
+    return makeHistoryRow({
+      dir: inbound ? "←" : "→",
+      target: number,
       whenText: row.start || "—",
       durText:
-        row.billsec > 0
-          ? `${Math.floor(row.billsec / 60)}:${String(row.billsec % 60).padStart(2, "0")}`
+        billsec > 0
+          ? `${Math.floor(billsec / 60)}:${String(billsec % 60).padStart(2, "0")}`
           : "—",
-      number:
-        row.context === "public"
-          ? row.caller_id_number
-          : row.destination_number,
-    }),
-  );
+      number,
+    });
+  });
   els.history.replaceChildren(...localRows, ...serverRows);
 }
 
@@ -187,6 +201,7 @@ export function renderHistory() {
 // the next login (the store upserts by number, so re-import cannot
 // duplicate).
 
+/** @returns {IslandContactRow[]} */
 function readPersonalContacts() {
   try {
     const raw = JSON.parse(localStorage.getItem(CONTACTS_KEY) || "[]");
@@ -196,8 +211,10 @@ function readPersonalContacts() {
   }
 }
 
+/** @type {IslandContactRow[]} */
 let personalContacts = [];
 // Seeded once at load; emptied only by a confirmed import.
+/** @type {IslandContactRow[]} */
 let legacyContacts = readPersonalContacts();
 
 export function clearContacts() {
@@ -217,7 +234,7 @@ export async function loadContacts() {
     renderContacts();
     await migrateLegacyContacts();
   } catch (err) {
-    log(`server contacts unavailable: ${err.message}`, "error");
+    log(`server contacts unavailable: ${errorMessage(err)}`, "error");
   }
 }
 document.addEventListener("wp:session-opened", () => {
@@ -233,7 +250,8 @@ document.addEventListener("wp:session-opened", () => {
 // listener keys on — the island's dropdown then re-fetches through its
 // own session credentials, mirroring the voicemail nudge pattern.
 document.addEventListener("htmx:sseMessage", (event) => {
-  if (event.detail && event.detail.type === "contacts") {
+  const detail = /** @type {CustomEvent} */ (event).detail;
+  if (detail && detail.type === "contacts") {
     loadContacts();
   }
 });
@@ -266,12 +284,13 @@ async function migrateLegacyContacts() {
     if (missing.length > 0) await loadContacts();
   } catch (err) {
     log(
-      `local contact import failed (${err.message}); retrying next login`,
+      `local contact import failed (${errorMessage(err)}); retrying next login`,
       "error",
     );
   }
 }
 
+/** @param {string} number @param {string} name */
 function saveLegacyContact(number, name) {
   legacyContacts = [
     { name: name || number, number },
@@ -280,6 +299,7 @@ function saveLegacyContact(number, name) {
   localStorage.setItem(CONTACTS_KEY, JSON.stringify(legacyContacts));
 }
 
+/** @param {string} number @param {string} name @returns {Promise<void>} */
 export async function saveContact(number, name) {
   const clean = String(number).replace(/[^\d+*#a-zA-Z]/g, "");
   if (!clean) return;
@@ -295,8 +315,8 @@ export async function saveContact(number, name) {
   } catch (err) {
     // Server unreachable: keep the pre-migration behavior — the row
     // lands in the local list and migrates on a later login.
-    log(`contact save failed (${err.message}); kept locally`, "error");
-    announce(t("contactSaveFailed")(err.message), "error");
+    log(`contact save failed (${errorMessage(err)}); kept locally`, "error");
+    announce(t("contactSaveFailed")(errorMessage(err)), "error");
     saveLegacyContact(clean, name);
     renderContacts();
   }
@@ -306,29 +326,36 @@ export async function saveContact(number, name) {
 // bridges here: the island owns /api/contacts writes and their
 // feedback, the shell only forwards the gesture.
 document.addEventListener("wp:save-contact", (event) => {
-  const detail = event.detail || {};
+  /** @type {{number?: string, name?: string}} */
+  const detail = /** @type {CustomEvent} */ (event).detail || {};
   if (detail.number) saveContact(detail.number, detail.name || "");
 });
 
+/** @param {string} number */
 function removeLegacyContact(number) {
   legacyContacts = legacyContacts.filter((c) => c.number !== number);
   localStorage.setItem(CONTACTS_KEY, JSON.stringify(legacyContacts));
   renderContacts();
 }
 
+/** @param {IslandContactRow} contact @returns {Promise<void>} */
 async function removeServerContact(contact) {
+  const { id } = contact;
+  // Only a server row carries an id (the caller checks too); a legacy row
+  // has nothing to delete server-side.
+  if (!id) return;
   try {
     const res = await authedFetch(
-      `/api/contacts?id=${encodeURIComponent(contact.id)}`,
+      `/api/contacts?id=${encodeURIComponent(id)}`,
       {
         method: "DELETE",
       },
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    personalContacts = personalContacts.filter((c) => c.id !== contact.id);
+    personalContacts = personalContacts.filter((c) => c.id !== id);
     renderContacts();
   } catch (err) {
-    log(`contact removal failed: ${err.message}`, "error");
+    log(`contact removal failed: ${errorMessage(err)}`, "error");
   }
 }
 
@@ -348,6 +375,11 @@ export function renderContacts() {
     ...personalContacts,
     ...legacyContacts.filter((c) => !serverNumbers.has(c.number)),
   ];
+  /**
+   * @param {IslandContactRow} contact
+   * @param {boolean} shared
+   * @returns {HTMLLIElement}
+   */
   const mk = (contact, shared) => {
     const li = document.createElement("li");
     const name = document.createElement("span");
@@ -387,11 +419,15 @@ export function renderContacts() {
 
 // --- voicemail (phone API) ---------------------------------------------------
 
+/** @type {ReturnType<typeof setTimeout> | null} */
 let voicemailPoll = null;
 
 export async function refreshVoicemail() {
   if (!phoneApiEnabled || !authHeaderValue()) return;
-  const extension = getCredentials().extension;
+  // phoneApiEnabled + a session check precede this (the credentials are
+  // exactly what authHeaderValue() just minted from).
+  const extension = /** @type {{extension: string}} */ (getCredentials())
+    .extension;
   try {
     const headers = { Authorization: authHeaderValue() };
     const [summaryRes, listRes] = await Promise.all([
@@ -421,7 +457,7 @@ export async function refreshVoicemail() {
       return;
     }
     els.vmList.replaceChildren(
-      ...messages.map((msg) => {
+      .../** @type {IslandVoicemailMessage[]} */ (messages).map((msg) => {
         const li = document.createElement("li");
         if (!msg.read) li.className = "unread";
         const caller = document.createElement("span");
@@ -438,8 +474,8 @@ export async function refreshVoicemail() {
         play.innerHTML = playIcon();
         play.addEventListener("click", () => {
           new Audio(msg.audio_url).play().catch((err) => {
-            log(`playback: ${err.message}`, "warn");
-            announce(t("vmPlayFailed")(err.message), "warn");
+            log(`playback: ${errorMessage(err)}`, "warn");
+            announce(t("vmPlayFailed")(errorMessage(err)), "warn");
           });
         });
         const del = document.createElement("button");
@@ -459,8 +495,8 @@ export async function refreshVoicemail() {
             }
             refreshVoicemail();
           } catch (err) {
-            log(`voicemail delete failed: ${err.message}`, "error");
-            announce(t("vmDeleteFailed")(err.message), "error");
+            log(`voicemail delete failed: ${errorMessage(err)}`, "error");
+            announce(t("vmDeleteFailed")(errorMessage(err)), "error");
           }
         });
         li.append(caller, len, when, play, del);
@@ -483,16 +519,16 @@ export async function refreshVoicemail() {
     );
   } catch (err) {
     els.vmStatus.textContent = t("vmAuthFailed");
-    log(`voicemail unavailable: ${err.message}`, "error");
+    log(`voicemail unavailable: ${errorMessage(err)}`, "error");
   }
 }
 
 export function scheduleVoicemailRefresh() {
   if (!phoneApiEnabled) return;
-  clearTimeout(voicemailPoll);
+  if (voicemailPoll !== null) clearTimeout(voicemailPoll);
   voicemailPoll = setTimeout(refreshVoicemail, 1500);
 }
 
 export function cancelVoicemailRefresh() {
-  clearTimeout(voicemailPoll);
+  if (voicemailPoll !== null) clearTimeout(voicemailPoll);
 }

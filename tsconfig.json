@@ -42,6 +42,7 @@
     "internal/web/assets/island/app/ice.js",
     "internal/web/assets/island/app/mic.js",
     "internal/web/assets/island/app/notify.js",
+    "internal/web/assets/island/app/panels.js",
     "internal/web/assets/island/app/pcsetup.js",
     "internal/web/assets/island/app/selftest.js",
     "internal/web/assets/island/app/session.js",
