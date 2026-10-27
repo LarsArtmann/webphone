@@ -8,7 +8,9 @@ import { els } from "./ui.js";
 
 const MAX_SUGGESTIONS = 6;
 
+/** @type {HTMLUListElement | null} */
 let list = null;
+/** @type {PBXSharedContact[]} */
 let entries = [];
 let activeIndex = -1;
 let initialized = false;
@@ -16,14 +18,19 @@ let initialized = false;
 // Per-extension personal contacts (the server store, fed by panels.js
 // once the session exists). A number present in both worlds yields ONE
 // suggestion — the personal name wins, it is the one the user edits.
+/** @type {PBXSharedContact[]} */
 let personalContacts = [];
 
+/** @param {unknown} contacts */
 export function setExtraContacts(contacts) {
   personalContacts = Array.isArray(contacts)
-    ? contacts.filter((contact) => contact && contact.number)
+    ? /** @type {PBXSharedContact[]} */ (
+        contacts.filter((contact) => contact && contact.number)
+      )
     : [];
 }
 
+/** @returns {PBXSharedContact[]} */
 function suggestionSource() {
   const personalNumbers = new Set(personalContacts.map((c) => c.number));
   return [
@@ -36,11 +43,17 @@ function suggestionSource() {
 // with it beats a name that merely contains it, which beats a number
 // that contains it. Ties break by name, then number — stable enough
 // that the list never jumps around while typing.
+/**
+ * @param {PBXSharedContact[]} contacts
+ * @param {unknown} query
+ * @returns {PBXSharedContact[]}
+ */
 export function rankContacts(contacts, query) {
   const q = String(query || "")
     .trim()
     .toLowerCase();
   if (!q) return [];
+  /** @type {Array<{contact: PBXSharedContact, score: number, name: string, number: string}>} */
   const scored = [];
   for (const contact of contacts) {
     const name = String(contact.name || "");
@@ -73,6 +86,7 @@ function hide() {
   }
 }
 
+/** @param {number} next */
 function setActive(next) {
   if (!list || entries.length === 0) return;
   activeIndex = (next + entries.length) % entries.length;
@@ -82,15 +96,20 @@ function setActive(next) {
   });
 }
 
+/** @param {PBXSharedContact} contact */
 function choose(contact) {
   els.dest.value = contact.number;
   hide();
   els.dest.focus();
 }
 
+/** @param {PBXSharedContact[]} matches */
 function render(matches) {
   if (!list) return;
-  list.replaceChildren();
+  // Bound once: a module-level `let` does not stay narrowed inside the
+  // forEach callback below.
+  const box = list;
+  box.replaceChildren();
   entries = matches;
   activeIndex = matches.length > 0 ? 0 : -1;
   matches.forEach((contact, i) => {
@@ -109,9 +128,9 @@ function render(matches) {
       number.textContent = contact.number;
       option.append(number);
     }
-    list.append(option);
+    box.append(option);
   });
-  list.hidden = matches.length === 0;
+  box.hidden = matches.length === 0;
 }
 
 export function initDialTypeahead() {
@@ -133,7 +152,7 @@ export function initDialTypeahead() {
   });
 
   els.dest.addEventListener("keydown", (event) => {
-    if (list.hidden) return;
+    if (!list || list.hidden) return;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActive(activeIndex + 1);
@@ -155,18 +174,22 @@ export function initDialTypeahead() {
   // mousedown, not click: it wins the race against the input's blur and
   // keep the focus in the field (choose() refocuses anyway).
   list.addEventListener("mousedown", (event) => {
-    const option = event.target.closest
-      ? event.target.closest("li[data-index]")
-      : null;
+    const target = /** @type {Element | null} */ (event.target);
+    const option =
+      target && target.closest ? target.closest("li[data-index]") : null;
     if (!option) return;
     event.preventDefault();
-    const contact = entries[Number(option.dataset.index)];
+    const row = /** @type {HTMLElement} */ (option);
+    const contact = entries[Number(row.dataset.index)];
     if (contact) choose(contact);
   });
 
   document.addEventListener("click", (event) => {
-    if (list.hidden) return;
-    const target = event.target;
+    if (!list || list.hidden) return;
+    // A click on (or inside) the dial form keeps the list open; anything
+    // else is "clicked away". event.target may be a text node, hence the
+    // closest guard rather than a bare call.
+    const target = /** @type {Element | null} */ (event.target);
     if (target && target.closest && target.closest("#dial-form")) return;
     hide();
   });
@@ -174,6 +197,7 @@ export function initDialTypeahead() {
 
 // Language switches re-label the island in place; the list's aria-label
 // is the only localized string this module owns.
+/** @param {string} label */
 export function relabelTypeahead(label) {
   if (list) list.setAttribute("aria-label", label);
 }

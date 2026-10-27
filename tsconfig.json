@@ -47,6 +47,7 @@
     "internal/web/assets/island/app/session.js",
     "internal/web/assets/island/app/ssoerror.js",
     "internal/web/assets/island/app/state.js",
+    "internal/web/assets/island/app/typeahead.js",
     "internal/web/assets/island/app/ui.js",
     "internal/web/assets/theme-preload.js"
   ]

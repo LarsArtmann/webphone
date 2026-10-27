@@ -38,7 +38,6 @@ var typecheckDebt = []string{
 	"internal/web/assets/island/app/panels.js",
 	"internal/web/assets/island/app/shortcuts.js",
 	"internal/web/assets/island/app/transcribe.js",
-	"internal/web/assets/island/app/typeahead.js",
 	"internal/web/assets/shell.js",
 }
 
