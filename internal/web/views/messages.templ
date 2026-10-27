@@ -769,6 +769,17 @@ func contactLabel(names map[string]string, contact string) string {
 // and the confidence the autopilot gates on. The panel polls its own
 // partial every 30s and every action re-renders it — the review loop
 // is designed for seconds-per-decision at the desk.
+// draftModeOptions turns the agent's supported modes into picker rows.
+// The rows render through the shared filterOptions component; this
+// function only maps the agent's vocabulary onto it.
+func draftModeOptions(reviews *textagent.Reviews) []filterOption {
+	options := make([]filterOption, 0, len(reviews.Modes))
+	for _, mode := range reviews.Modes {
+		options = append(options, filterOption{Value: mode, Label: mode, Selected: mode == reviews.Mode})
+	}
+	return options
+}
+
 templ DraftsPanel(props DraftsPanelProps) {
 	<section
 		class="wp-panel wp-drafts"
@@ -815,9 +826,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 					hx-swap="outerHTML"
 					hx-include="closest form"
 				>
-					for _, mode := range props.Drafts.Modes {
-						@filterOption(filterOptionProps{Value: mode, Label: mode, Selected: mode == props.Drafts.Mode})
-					}
+					@filterOptions(draftModeOptions(props.Drafts))
 				</select>
 				if props.Drafts.ModeSource == "runtime" {
 					<button type="submit" name="mode" value="reset" class="wp-mini">{ T(props.Lang, "drafts.mode.reset") }</button>

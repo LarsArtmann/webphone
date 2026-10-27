@@ -1,19 +1,21 @@
 package views
 
-// filterOptionProps is the shape of one <select> row. Value is the wire
-// value the form submits ("" = no filter); Label is the already-localised
-// display text, so this component never reaches for a dictionary key.
-type filterOptionProps struct {
+// filterOption is the shape of one <select> row. Value is the wire value
+// the form submits ("" = no filter); Label is the already-localised
+// display text, so the component never reaches for a dictionary key.
+type filterOption struct {
 	Value    string
 	Label    string
 	Selected bool
 }
 
-// filterOption is the ONE home of an <option> row in the filter forms.
-// Two selects that each spell out their rows produce identical token
-// streams, which the dedup gate reads as clones of each other; rendering
-// them through one component keeps the markup in one place and lets the
-// call sites differ by what they actually mean (a verdict, a draft mode).
-templ filterOption(p filterOptionProps) {
-	<option value={ p.Value } selected?={ p.Selected }>{ p.Label }</option>
+// filterOptions is the ONE home of a filter <select>'s rows. Two selects
+// that each spell out their rows produce identical token streams, which
+// the dedup gate reads as clones; rendering them through one component
+// keeps the markup in one place and leaves each call site saying what it
+// actually filters for.
+templ filterOptions(options []filterOption) {
+	for _, option := range options {
+		<option value={ option.Value } selected?={ option.Selected }>{ option.Label }</option>
+	}
 }

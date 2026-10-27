@@ -12,26 +12,38 @@ import (
 // directly with a plain int conversion).
 func fmtInt(n int) string { return strconv.Itoa(n) }
 
-// dispositionFilterOption is one row of the History verdict filter: the
-// wire value the form submits plus the dictionary key for its label.
-// Splitting value from label keeps the option component free of i18n and
-// keeps the option set declarative.
-type dispositionFilterOption struct {
-	Value    domain.Disposition
-	LabelKey string
+// dispositionFilterOptions builds the History verdict filter's rows: the
+// empty "any" row plus the five verdicts an operator can confirm.
+// DispositionUnknown is deliberately absent — it is a machine observation,
+// not a verdict anyone confirms, so it never filters. Labels are resolved
+// here so the option component stays free of i18n.
+func dispositionFilterOptions(lang Lang, current string) []filterOption {
+	options := make([]filterOption, 0, len(dispositionFilterLabels)+1)
+	options = append(options, filterOption{Label: T(lang, "history.disposition.any")})
+	for _, verdict := range dispositionFilterLabels {
+		options = append(options, filterOption{
+			Value:    string(verdict.value),
+			Label:    T(lang, verdict.labelKey),
+			Selected: current == string(verdict.value),
+		})
+	}
+	return options
 }
 
-// dispositionFilterOptions is the ONE home for the verdict-filter rows:
-// the empty "any" row plus the five verdicts an operator can confirm.
-// DispositionUnknown is deliberately absent — it is a machine
-// observation, not a verdict anyone confirms, so it never filters.
-var dispositionFilterOptions = []dispositionFilterOption{
-	{Value: "", LabelKey: "history.disposition.any"},
-	{Value: domain.DispositionAnswered, LabelKey: "history.disposition.answered"},
-	{Value: domain.DispositionVoicemail, LabelKey: "history.disposition.voicemail"},
-	{Value: domain.DispositionIVR, LabelKey: "history.disposition.ivr"},
-	{Value: domain.DispositionMissed, LabelKey: "history.disposition.missed"},
-	{Value: domain.DispositionFailed, LabelKey: "history.disposition.failed"},
+// dispositionFilterLabel pairs a verdict with its dictionary key.
+type dispositionFilterLabel struct {
+	value    domain.Disposition
+	labelKey string
+}
+
+// dispositionFilterLabels is the ONE home of the filterable verdicts, in
+// presentation order.
+var dispositionFilterLabels = []dispositionFilterLabel{
+	{domain.DispositionAnswered, "history.disposition.answered"},
+	{domain.DispositionVoicemail, "history.disposition.voicemail"},
+	{domain.DispositionIVR, "history.disposition.ivr"},
+	{domain.DispositionMissed, "history.disposition.missed"},
+	{domain.DispositionFailed, "history.disposition.failed"},
 }
 
 // avatarFor derives the two-glyph avatar label for a contact name or
