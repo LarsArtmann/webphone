@@ -37,14 +37,22 @@ interface PBXConfig {
 
 interface Window {
   PBX_CONFIG?: PBXConfig;
+  /** htmx 2.x, loaded as a classic script before the island modules. */
+  htmx?: {
+    trigger(target: Element | string, eventName: string): void;
+    ajax(
+      verb: string,
+      path: string,
+      context?: {
+        target?: Element | string;
+        swap?: string;
+        select?: string;
+        values?: Record<string, string>;
+        headers?: Record<string, string>;
+      },
+    ): Promise<unknown>;
+    process(element: Element): void;
+  };
+  /** The E2E diagnostics handle: call id → the live peer connection. */
+  __pcs?: Map<string, RTCPeerConnection>;
 }
-
-/**
- * The classic-script globals the island reads.
- *
- * `shell.js` is NOT a module — it declares these on the global scope and the
- * island modules read them, so they are declared here rather than imported.
- */
-declare const WP_PLAY_SVG: string;
-declare const WP_PAUSE_SVG: string;
-declare const WP_ATTACH_SVG: string;

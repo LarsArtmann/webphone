@@ -49,28 +49,17 @@ const notesCollection = "call_notes"
 // brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
 type callNoteInput struct{ Key domain.CallNoteKey }
 
-// notesQuery declares the call-notes read model: a keyed projection
-// upserted by two facts on the SAME (owner, call) slot — CallNoteSaved
-// (the freeform body) and CallDispositionSaved (the operator's
-// verdict). Each fold carries the other field forward from the previous
-// row, so editing one never erases the other; sorted by update time.
+// notesQuery declares the call-notes read model: ONE slot per
+// (owner, call), upserted by CallNoteSaved facts that snapshot the
+// whole slot (body + disposition — the seam pre-reads and fills both),
+// filtered by owner, sorted by update time.
 var notesQuery = metaengine.Query[callNoteInput, CallNoteView](notesCollection,
 	metaengine.OnRecord(domain.CallNoteSaved{},
-		func(_ record.Record, e domain.CallNoteSaved, prev CallNoteView) CallNoteView {
-			return CallNoteView{
+		func(_ record.Record, e domain.CallNoteSaved) (domain.CallNoteKey, CallNoteView) {
+			return e.Key, CallNoteView{
 				Owner:       e.Owner,
 				CallID:      e.CallID,
 				Body:        e.Body,
-				Disposition: prev.Disposition,
-				UpdatedAt:   e.UpdatedAt.Unix(),
-			}
-		}),
-	metaengine.OnRecord(domain.CallDispositionSaved{},
-		func(_ record.Record, e domain.CallDispositionSaved, prev CallNoteView) CallNoteView {
-			return CallNoteView{
-				Owner:       e.Owner,
-				CallID:      e.CallID,
-				Body:        prev.Body,
 				Disposition: e.Disposition.String(),
 				UpdatedAt:   e.UpdatedAt.Unix(),
 			}
@@ -116,21 +105,28 @@ func (s *Notes) Get(ctx context.Context, owner domain.Extension, callID string) 
 
 // Set upserts the owner's note for one call: the slot is the (owner,
 // call) pair, so a re-save replaces the body and refreshes the stamp —
-// no duplicate rows, no creation-time ceremony. A NEW call's note past
-// the per-owner cap is refused with ErrNoteListFull.
+// no duplicate rows, no creation-time ceremony. The fact snapshots the
+// WHOLE slot: the existing disposition rides along untouched. A NEW
+// call's note past the per-owner cap is refused with ErrNoteListFull.
 func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, _, err := s.claimSlot(ctx, owner, callID); err != nil {
+	existing, _, err := s.claimSlot(ctx, owner, callID)
+	if err != nil {
 		return err
 	}
+	disposition := domain.Disposition("")
+	if existing != nil {
+		disposition = domain.Disposition(existing.Disposition)
+	}
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.CallNoteSaved{}), domain.CallNoteSaved{
-		Key:       domain.CallNoteKey{Owner: owner.String(), CallID: callID},
-		Owner:     owner.String(),
-		CallID:    callID,
-		Body:      body,
-		UpdatedAt: time.Now(),
+		Key:         domain.CallNoteKey{Owner: owner.String(), CallID: callID},
+		Owner:       owner.String(),
+		CallID:      callID,
+		Body:        body,
+		Disposition: disposition,
+		UpdatedAt:   time.Now(),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "apply note save")
 	}
@@ -138,20 +134,27 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 }
 
 // SetDisposition records the operator's post-call verdict on the same
-// (owner, call) slot as the note. It shares the note's cap: a NEW
-// call's verdict past NotesMaxPerExtension is refused — the cap guards
-// the owner's review slots, not just their prose.
+// (owner, call) slot as the note. The fact snapshots the WHOLE slot:
+// the existing note body rides along untouched. It shares the note's
+// cap: a NEW call's verdict past NotesMaxPerExtension is refused — the
+// cap guards the owner's review slots, not just their prose.
 func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, _, err := s.claimSlot(ctx, owner, callID); err != nil {
+	existing, _, err := s.claimSlot(ctx, owner, callID)
+	if err != nil {
 		return err
 	}
-	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.CallDispositionSaved{}), domain.CallDispositionSaved{
+	body := ""
+	if existing != nil {
+		body = existing.Body
+	}
+	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.CallNoteSaved{}), domain.CallNoteSaved{
 		Key:         domain.CallNoteKey{Owner: owner.String(), CallID: callID},
 		Owner:       owner.String(),
 		CallID:      callID,
+		Body:        body,
 		Disposition: disposition,
 		UpdatedAt:   time.Now(),
 	}); err != nil {

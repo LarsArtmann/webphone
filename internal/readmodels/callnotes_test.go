@@ -103,3 +103,74 @@ func TestNotesCapRejectsNewCalls(t *testing.T) {
 		t.Fatalf("re-save over cap must stay open: %v", err)
 	}
 }
+
+// TestDispositionSharesTheNoteSlot pins the operator-verdict seam
+// (issue #6): the verdict lives on the SAME (owner, call) slot as the
+// note, each save carries the other field forward (editing one never
+// erases the other), another owner's call is a different slot, and the
+// cap applies to NEW slots either way.
+func TestDispositionSharesTheNoteSlot(t *testing.T) {
+	engine, err := readmodels.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
+	notes := engine.Notes()
+	ctx := context.Background()
+	owner := mustExtension(t, "1001")
+
+	// Verdict on a call with no note: the slot exists with an empty body.
+	if err := notes.SetDisposition(ctx, owner, "call-9", domain.DispositionVoicemail); err != nil {
+		t.Fatalf("set disposition on noteless call: %v", err)
+	}
+	view, err := notes.Get(ctx, owner, "call-9")
+	if err != nil || view == nil {
+		t.Fatalf("get after disposition: %v %v", view, err)
+	}
+	if view.Disposition != "voicemail" || view.Body != "" {
+		t.Fatalf("disposition slot: %+v", view)
+	}
+
+	// A later note save must NOT erase the verdict.
+	if err := notes.Set(ctx, owner, "call-9", "rueckruf vereinbart"); err != nil {
+		t.Fatalf("set note: %v", err)
+	}
+	view, err = notes.Get(ctx, owner, "call-9")
+	if err != nil || view == nil {
+		t.Fatalf("get after note: %v %v", view, err)
+	}
+	if view.Body != "rueckruf vereinbart" || view.Disposition != "voicemail" {
+		t.Fatalf("note save must carry the verdict forward: %+v", view)
+	}
+
+	// A later verdict must NOT erase the note (and a correction wins).
+	if err := notes.SetDisposition(ctx, owner, "call-9", domain.DispositionAnswered); err != nil {
+		t.Fatalf("correction: %v", err)
+	}
+	view, err = notes.Get(ctx, owner, "call-9")
+	if err != nil || view == nil {
+		t.Fatalf("get after correction: %v %v", view, err)
+	}
+	if view.Body != "rueckruf vereinbart" || view.Disposition != "answered" {
+		t.Fatalf("correction must carry the note forward: %+v", view)
+	}
+
+	// Owner scoping: another extension's slot stays empty.
+	if view, err := notes.Get(ctx, mustExtension(t, "2002"), "call-9"); err != nil || view != nil {
+		t.Fatalf("another owner's verdict slot must be empty: %v %v", view, err)
+	}
+
+	// The cap counts NEW slots either way: a brand-new call over the
+	// cap refuses the verdict too, while an existing slot stays open.
+	for i := range readmodels.NotesMaxPerExtension - 1 {
+		if err := notes.Set(ctx, owner, fmt.Sprintf("dseed-%d", i), "note"); err != nil {
+			t.Fatalf("seed %d: %v", i, err)
+		}
+	}
+	if err := notes.SetDisposition(ctx, owner, "call-over-cap", domain.DispositionMissed); !errors.Is(err, readmodels.ErrNoteListFull) {
+		t.Fatalf("over-cap disposition: %v, want ErrNoteListFull", err)
+	}
+	if err := notes.SetDisposition(ctx, owner, "call-9", domain.DispositionMissed); err != nil {
+		t.Fatalf("existing-slot disposition over cap must stay open: %v", err)
+	}
+}
