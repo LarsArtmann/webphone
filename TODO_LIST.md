@@ -94,7 +94,15 @@ Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-
    (rewrites the island + templ/htmx model) · island → `.ts` with emit (deferred behind three
    named triggers: a justified npm dependency, a JSDoc overhead ceiling, framework adoption).
 
-### Dialer-adoption issues #6–#8 + Kith switch-on #9 (2026-10-27 — claims verified, unimplemented)
+### Dialer-adoption issues #6–#8 + Kith switch-on #9 (2026-10-27 — claims verified; #6 + the #9 config/health slice SHIPPED same evening)
+
+UPDATE 2026-10-27 evening: #6 is SHIPPED — typed `domain.Disposition`
+(answered/missed/voicemail/ivr/failed/unknown per the stop-the-lying
+ruling, NOT the dialer's seven-value set), legacy outcome demotion,
+ended-card confirm, `call_logged` verdict travel, history verdict
+filter + badge. #9's typed `crm` NixOS lane, `crm.token_file`, and the
+`/healthz` CRM leg are SHIPPED. #7/#8 remain unstarted. The per-item
+rows keep their original wording for the audit trail.
 
 Owner-filed adoption candidates from the dialer postmortem
 (matthewdonsemail-lab/dialer PRs #20/#54); every gap claim verified against
@@ -127,6 +135,23 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    `ErrUnauthorized` must turn a surface red within one poll cycle). The
    issue's steps 1/2/4 (PKI trust, token provisioning, e2e verify) are
    pbx-artmann-side; the cited diagnosis doc lives there too.
+
+### Daemon push-stall forensics (2026-10-27 T10 — root cause found, fleet fix pending)
+
+The evening's push stalls are the daemon's push leg dying with its
+PROCESS, and fleet deploys bounce that process: the 20:19:41
+`switch-to-configuration test` (SystemNix) terminated
+`projects-management-automation.service`; pushes stopped 20:09:15,
+resumed 20:40:36 (webphone's oldest unpushed commit waited 30m37s;
+follow-on gaps hit 54m and 70m). The journal logs NOTHING about pushes
+(the T21 LOCAL-timer verdict stands), and the commit-message LLM
+provider (127.0.0.1:52625) refused connections 13:06→20:59 — ~8h of
+heuristic-only messages fleet-wide, though the commit leg itself stayed
+fast (177 ms fails). FLEET ASK (upstream projects-management-automation
++ SystemNix): log the push leg per push/failure; flush pending pushes
+on SIGTERM; push once immediately at startup. Until then, a fleet
+deploy window predicts a push stall — run
+`scripts/push-stall-watch.sh` after every `switch-to-configuration`.
 
 ### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
 
