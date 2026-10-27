@@ -1,19 +1,58 @@
 #!/usr/bin/env bash
-# Pre-commit drift gate (T9, 2026-10-27).
+# Pre-commit gates for hand edits (T9 2026-10-27; JS syntax gate added the
+# same evening).
 #
-# Binds the whitespace-drift staged-diff detector to every human commit:
-# a staged change that is PURELY whitespace in a formatter-owned file
-# (Go, JS/MJS, CSS, Nix — markdown is unowned and excluded) is the
-# e62fe34 class — a hand edit oxfmt accepts but CI's treefmt gate
-# rejects, so the commit lands red on a whitespace-only delta. Blocking
-# here turns that formatter disagreement into a pre-flight failure with
-# the fix named (run: nix fmt).
+# Gate 1 — whitespace drift: a staged change that is PURELY whitespace in
+# a formatter-owned file (Go, JS/MJS, CSS, Nix — markdown is unowned and
+# excluded) is the e62fe34 class: a hand edit oxfmt accepts but CI's
+# treefmt gate rejects, so the commit lands red on a whitespace-only
+# delta. Blocking here turns that formatter disagreement into a
+# pre-flight failure with the fix named (run: nix fmt).
+#
+# Gate 2 — JavaScript syntax: the island type gate and oxlint only run
+# inside `nix flake check`, so a syntax error in a served asset used to
+# survive for hours (three did on 2026-10-27 — one bulk regex broke a call
+# site and the daemon committed the broken state twice). `node --check` on
+# the STAGED blob costs ~40 ms and catches exactly that class. The
+# vendored sip.js bundle is skipped (generated, never hand-edited). Node
+# missing from PATH is a WARN, not a failure: the gate must never block a
+# commit on a toolchain the caller does not have.
 #
 # The auto-commit daemon commits WITHOUT hooks (the pma unit overrides
-# core.hooksPath via GIT_CONFIG_* env; see AGENTS.md) — this binds
-# humans and sessions, which is where hand edits come from. A
-# deliberate bypass is always available with `git commit --no-verify`.
+# core.hooksPath via GIT_CONFIG_* env; see AGENTS.md) — this binds humans
+# and sessions, which is where hand edits come from. A deliberate bypass
+# is always available with `git commit --no-verify`.
 set -euo pipefail
 
 repo="$(git rev-parse --show-toplevel)"
-exec bash "$repo/scripts/whitespace-drift.sh"
+bash "$repo/scripts/whitespace-drift.sh"
+
+node_bin="$(command -v node || true)"
+if [ -z "$node_bin" ]; then
+	echo "pre-commit: node not on PATH — skipped the staged JS syntax gate (enter 'nix develop' to enable it)" >&2
+	exit 0
+fi
+
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+failed=0
+while IFS= read -r path; do
+	case "$path" in
+	internal/web/assets/vendor/*) continue ;;
+	*.js | *.mjs) ;;
+	*) continue ;;
+	esac
+	scratch="$tmpdir/$(basename "$path")"
+	git show ":$path" >"$scratch"
+	if ! "$node_bin" --check "$scratch" >/dev/null 2>"$tmpdir/node-err"; then
+		echo "pre-commit: $path does not parse as JavaScript:" >&2
+		sed "s|$scratch|$path|g" "$tmpdir/node-err" >&2
+		failed=1
+	fi
+done < <(git diff --cached --name-only --diff-filter=ACMR -- internal/web/assets)
+
+if [ "$failed" -ne 0 ]; then
+	echo "pre-commit: fix the syntax error above, or bypass with 'git commit --no-verify'" >&2
+	exit 1
+fi

@@ -30,6 +30,13 @@ const repoRoot = "../../.."
 // vendoredBundle is the one legal exclusion: the pinned sip.js build.
 const vendoredBundle = "internal/web/assets/vendor/**"
 
+// vendoredDir / bundlePath describe what that carve-out must and must not
+// reach: everything under the vendored directory, and the served bundle itself.
+const (
+	vendoredDir = "internal/web/assets/vendor/"
+	bundlePath  = "internal/web/assets/vendor/sip.min.js"
+)
+
 // typecheckConfig is the subset of tsconfig.json this test reasons about.
 type typecheckConfig struct {
 	CompilerOptions map[string]any `json:"compilerOptions"`
@@ -292,11 +299,59 @@ func TestTypeGateCoversEveryAssetSource(t *testing.T) {
 }
 
 // TestTypeGateOnlyExcludesTheVendoredBundle pins the single carve-out. A second
-// exclusion entry is how a red file gets hidden, so it is a test failure.
+// exclusion entry is how a red file gets hidden, so it is a test failure — and
+// the entry itself must cover the vendored directory EXACTLY: a glob that also
+// reaches a hand-written asset would silently un-type it.
 func TestTypeGateOnlyExcludesTheVendoredBundle(t *testing.T) {
 	cfg := loadTypecheckConfig(t, "tsconfig.json")
 	if len(cfg.Exclude) != 1 || cfg.Exclude[0] != vendoredBundle {
 		t.Fatalf("tsconfig.json exclude = %v, want exactly [%q] — excluding anything else hides untyped served code", cfg.Exclude, vendoredBundle)
+	}
+
+	matched := matchedPaths(t, cfg.Exclude)
+	if len(matched) == 0 {
+		t.Fatalf("exclude %q matches nothing — a vacuous carve-out that would let the bundle be typed by accident", vendoredBundle)
+	}
+	var hasBundle bool
+	for _, p := range matched {
+		if p == bundlePath {
+			hasBundle = true
+		}
+		if !strings.HasPrefix(p, vendoredDir) {
+			t.Errorf("exclude %q also reaches %s, which is a hand-written asset — that file would silently leave the gate", vendoredBundle, p)
+		}
+	}
+	if !hasBundle {
+		t.Errorf("exclude %q does not reach %s — the vendored bundle would enter the type program", vendoredBundle, bundlePath)
+	}
+}
+
+// TestTypeGateIncludeStaysAGlob refuses a narrowed include. Listing individual
+// files works right up until the next asset is added and joins the program as
+// an unannotated import; a tree glob cannot miss. The only legal single-file
+// entries point at the declarations (types/), which are the gate's input rather
+// than something it checks.
+func TestTypeGateIncludeStaysAGlob(t *testing.T) {
+	cfg := loadTypecheckConfig(t, "tsconfig.json")
+	var sawAssetGlob bool
+	for _, entry := range cfg.Include {
+		if strings.HasPrefix(entry, "types/") {
+			if !strings.Contains(entry, "**") {
+				t.Errorf("include entry %q names the declarations without a glob — a new .d.ts would silently stop being loaded", entry)
+			}
+			continue
+		}
+		if !strings.HasPrefix(entry, "internal/web/assets/") {
+			t.Errorf("include entry %q is outside the served asset tree — the gate is scoped to what the browser gets", entry)
+			continue
+		}
+		if !strings.Contains(entry, "**") {
+			t.Errorf("include entry %q is a file or single-level pattern; a new asset module would slip in untyped — use a ** glob", entry)
+		}
+		sawAssetGlob = true
+	}
+	if !sawAssetGlob {
+		t.Fatal("tsconfig.json has no ** glob over internal/web/assets — the served tree is not covered")
 	}
 }
 
