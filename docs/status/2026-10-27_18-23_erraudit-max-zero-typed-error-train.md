@@ -172,7 +172,23 @@ Claims verified as of ~19:15 local; the buildflow row below is the first to rot.
    behavior path changed. Build + full tests + vet + erraudit (normal and
    `--max`) cover it; a second smoke would re-verify nothing.
 
-Final buildflow verdict: PENDING — recorded below when the background run lands.
+Final buildflow verdict (19:05 + follow-ups, RESOLVED): **b1 CLOSED with
+attribution, not green** — the fresh run failed exactly 2 steps and both are
+owned elsewhere. (1) `type-check`: 680 findings, 100% in island/shell/enroll
+JS — caused by an UNTRACKED root `tsconfig.json` (born 18:34, strict checkJs
+over the whole island) from the SIBLING session's island type-gate train (its
+own execution-status doc landed at 19:0x); zero findings in any file this
+train touched; their tree, their burn-down. (2) `nix-hash-fix`: no
+dependency bump happened today (last go.mod touch: Oct 25 daemon commits), so
+this is the documented no-bump noise class — g2 stays with the owner.
+Everything this train owns is GREEN: erraudit normal + `--max` exit 0,
+`go build`, full suite 31/31, `go vet`, gofmt, standalone
+`nix build .#checks.x86_64-linux.treefmt` (exit 0 — the first run's
+treefmt cascade is confirmed healed). test-race PASSED this run (+54%
+slower — load, c3's hypothesis, unverified against a quiet machine). The
+timing regressions and the 47-entry baseline staleness (addendum row 5)
+remain owner decisions. Sweep + probes + tests landed via daemon commits
+b838328/4396116 and are PUSHED (origin/main == HEAD as of 19:2x).
 
 ---
 *Rendered per the 2026-10-27 ruling: every claim above names its verification; the push/CI rows are the first to rot.*
