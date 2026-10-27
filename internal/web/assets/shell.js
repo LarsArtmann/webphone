@@ -86,8 +86,7 @@
   function hasMethod(el, method) {
     return (
       Boolean(el) &&
-      typeof (/** @type {Record<string, unknown>} */ (el))[method] ===
-        "function"
+      typeof /** @type {Record<string, unknown>} */ (el)[method] === "function"
     );
   }
 
@@ -465,6 +464,9 @@
         closestHTMLElement(eventElement(event), "[data-note-save]")
       );
       if (!btn) return;
+      // Bound once: the fetch callbacks below run in a later frame, where
+      // the checker can no longer narrow the mutable `btn`.
+      var saveButton = /** @type {HTMLButtonElement} */ (btn);
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
@@ -498,7 +500,7 @@
           );
         })
         .then(function () {
-          btn.disabled = false;
+          saveButton.disabled = false;
         });
     });
     document.addEventListener("click", function (event) {
@@ -506,11 +508,12 @@
         closestHTMLElement(eventElement(event), "[data-note-draft]")
       );
       if (!btn) return;
+      var draftButton = /** @type {HTMLButtonElement} */ (btn);
       var callId = btn.getAttribute("data-note-draft") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
       var note = box;
-      btn.disabled = true;
+      draftButton.disabled = true;
       fetch("/api/calls/" + encodeURIComponent(callId) + "/summary-draft", {
         method: "POST",
         headers: { "X-CSRF-Token": csrfToken() },
@@ -541,7 +544,7 @@
           );
         })
         .then(function () {
-          btn.disabled = false;
+          draftButton.disabled = false;
         });
     });
 
@@ -794,14 +797,15 @@
         // reads as "backdrop" — close. The image and the button swallow
         // their own clicks.
         lightbox.addEventListener("click", function (e) {
-          if (e.target === lightbox) lightbox.close();
+          if (lightbox && e.target === lightbox) lightbox.close();
         });
         document.body.append(lightbox);
       }
       // Bound once: the module-level `var`s are not narrowed inside the
       // listener closures above, and both are assigned by now.
-      var dialog = lightbox;
-      var img = lightboxImg;
+      var dialog = /** @type {HTMLDialogElement | null} */ (lightbox);
+      var img = /** @type {HTMLImageElement | null} */ (lightboxImg);
+      if (!dialog || !img) return;
       img.src = link.getAttribute("href") || "";
       img.alt = link.getAttribute("data-lightbox") || "";
       dialog.showModal();
@@ -983,7 +987,9 @@
     };
     var refreshNav = function () {
       if (!window.htmx) return;
-      var active = document.querySelector("#wp-nav .wp-nav-link.wp-active");
+      var active = /** @type {HTMLElement | null} */ (
+        document.querySelector("#wp-nav .wp-nav-link.wp-active")
+      );
       var source = active
         ? "/partials/nav?active=" + active.dataset.tab
         : "/partials/nav";
@@ -1067,7 +1073,9 @@
       if (transcript.dataset.wasNearBottom === "0") {
         pendingNew += 1;
         var wrap = transcript.parentElement;
-        var chip = wrap && wrap.querySelector(".wp-jump-latest");
+        var chip = /** @type {HTMLElement | null} */ (
+          wrap && wrap.querySelector(".wp-jump-latest")
+        );
         if (chip) {
           jumpChip = chip;
           chip.textContent = "↓ " + pendingNew + " new";
@@ -1110,7 +1118,9 @@
         !list.classList.contains("wp-thread-list")
       )
         return;
-      var input = document.getElementById("wp-thread-search-input");
+      var input = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("wp-thread-search-input")
+      );
       if (input && input.value.trim() !== "") event.preventDefault();
     });
     // The island's language switch re-labels itself and re-fetches the open
@@ -1207,7 +1217,7 @@
     /** @type {ReturnType<typeof setTimeout> | null} */
     var draftTimer = null;
     document.addEventListener("input", function (event) {
-      var area = eventElement(event);
+      var area = /** @type {HTMLTextAreaElement} */ (eventElement(event));
       if (
         !area.closest ||
         !closestHTMLElement(area, "textarea.wp-compose-body")
@@ -1219,7 +1229,9 @@
       }, 300);
     });
     document.addEventListener("htmx:afterSwap", function () {
-      var area = document.querySelector("textarea.wp-compose-body");
+      var area = /** @type {HTMLTextAreaElement | null} */ (
+        document.querySelector("textarea.wp-compose-body")
+      );
       if (!area || area.value !== "") return;
       var draft = null;
       try {
@@ -1596,7 +1608,9 @@
       if (time) {
         time.textContent = vmClock(current) + " / " + vmClock(duration);
       }
-      var canvas = document.getElementById("vm-wave-" + uuid);
+      var canvas = /** @type {HTMLCanvasElement | null} */ (
+        document.getElementById("vm-wave-" + uuid)
+      );
       if (canvas) {
         canvas.setAttribute("aria-valuenow", String(Math.floor(current)));
         var peaks = vmPeaksCache.get(uuid);
@@ -1645,21 +1659,27 @@
       }
     };
 
+    /**
+     * Decode the row's audio once and cache its waveform peaks.
+     * @param {string} uuid
+     * @param {HTMLAudioElement} audio
+     * @returns {Promise<number[] | undefined>}
+     */
     var vmBuildWave = function (uuid, audio) {
       if (vmPeaksCache.has(uuid)) {
         return Promise.resolve(vmPeaksCache.get(uuid));
       }
-      var src = audio.getAttribute ? audio.getAttribute("src") : null;
-      if (
-        typeof fetch !== "function" ||
-        !src ||
-        !(window.AudioContext || window.webkitAudioContext)
-      ) {
+      var src = audio.getAttribute("src");
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if (typeof fetch !== "function" || !src || !Ctor) {
         return Promise.reject(new Error("webaudio unavailable"));
       }
-      if (!vmAudioContext) {
-        var Ctor = window.AudioContext || window.webkitAudioContext;
-        vmAudioContext = new Ctor();
+      // Bound once: the promise callbacks below run in a later frame, where
+      // the checker can no longer narrow the module-level `vmAudioContext`.
+      var context = vmAudioContext;
+      if (!context) {
+        context = new Ctor();
+        vmAudioContext = context;
       }
       return fetch(src)
         .then(function (response) {
@@ -1670,7 +1690,7 @@
         .then(function (buffer) {
           return new Promise(function (resolve, reject) {
             // callback form: the oldest widest-compatible signature
-            vmAudioContext.decodeAudioData(buffer, resolve, reject);
+            context.decodeAudioData(buffer, resolve, reject);
           });
         })
         .then(function (decoded) {
@@ -1680,13 +1700,13 @@
         });
     };
 
-    /** @param {Element} btn */
+    /** @param {HTMLElement} btn */
     var vmTogglePlay = function (btn) {
-      var uuid = btn.getAttribute("data-vm-play");
-      var audio = document.getElementById("vm-audio-" + uuid);
-      if (!audio || typeof audio.play !== "function") return;
+      var uuid = btn.getAttribute("data-vm-play") || "";
+      var audio = audioElement("vm-audio-" + uuid);
+      if (!audio || !hasMethod(audio, "play")) return;
       vmWire(audio, uuid);
-      if (audio.paused === false) {
+      if (!audio.paused) {
         audio.pause();
         return;
       }
@@ -1694,29 +1714,32 @@
       if (
         vmActiveAudio &&
         vmActiveAudio !== audio &&
-        typeof vmActiveAudio.pause === "function"
+        hasMethod(vmActiveAudio, "pause")
       ) {
         vmActiveAudio.pause();
       }
       vmActiveAudio = audio;
       var started = audio.play();
-      if (started && typeof started.catch === "function") {
+      if (started && hasMethod(started, "catch")) {
         started.catch(function () {});
       }
       vmBuildWave(uuid, audio)
         .then(function (peaks) {
           vmPaint(uuid, audio);
-          vmDraw(document.getElementById("vm-wave-" + uuid), peaks, 0);
+          var canvas = /** @type {HTMLCanvasElement | null} */ (
+            document.getElementById("vm-wave-" + uuid)
+          );
+          if (canvas) vmDraw(canvas, peaks || [], 0);
         })
         .catch(function () {
           vmFallback(uuid, audio);
         });
     };
 
-    /** @param {Element} btn */
+    /** @param {HTMLElement} btn */
     var vmCycleSpeed = function (btn) {
-      var uuid = btn.getAttribute("data-vm-speed");
-      var audio = document.getElementById("vm-audio-" + uuid);
+      var uuid = btn.getAttribute("data-vm-speed") || "";
+      var audio = audioElement("vm-audio-" + uuid);
       if (!audio) return;
       var current = Number(audio.playbackRate) || 1;
       var idx = VM_SPEED_LADDER.indexOf(current);
@@ -1764,7 +1787,7 @@
       );
       if (!canvas) return;
       var uuid = canvas.id.slice("vm-wave-".length);
-      var audio = document.getElementById("vm-audio-" + uuid);
+      var audio = audioElement("vm-audio-" + uuid);
       if (!audio) return;
       vmWire(audio, uuid);
       vmSeek(canvas, audio, event.clientX);
@@ -1783,11 +1806,13 @@
 
     // keyboard seek on the scrubber (it carries role=slider + tabindex)
     document.addEventListener("keydown", function (event) {
-      var canvas = closestHTMLElement(eventElement(event), ".wp-vm-wave");
+      var canvas = /** @type {HTMLCanvasElement | null} */ (
+        closestHTMLElement(eventElement(event), ".wp-vm-wave")
+      );
       if (!canvas) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       var uuid = canvas.id.slice("vm-wave-".length);
-      var audio = document.getElementById("vm-audio-" + uuid);
+      var audio = audioElement("vm-audio-" + uuid);
       if (!audio) return;
       var delta = event.key === "ArrowRight" ? 5 : -5;
       audio.currentTime = Math.max(0, (audio.currentTime || 0) + delta);
