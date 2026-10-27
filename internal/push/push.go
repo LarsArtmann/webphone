@@ -50,11 +50,12 @@ func statusOK(code int) bool {
 type Event string
 
 const (
-	EventRing    Event = "ring"
-	EventRingEnd Event = "ring_end"
+	EventRing       Event = "ring"
+	EventRingEnd    Event = "ring_end"
+	EventDraftReady Event = "draft_ready"
 )
 
-// Ring is the one fact this seam ships: which event, the caller, and
+// Ring is the inbound-call fact: which event, the caller, and
 // the PBX call id (the dedup/ordering key the shell correlates a
 // ring_end against its ring by).
 // brandid-lint:ignore(BD003) shell wire contract: the PBX call id is an opaque foreign token (strong-id wire ruling)
@@ -62,6 +63,17 @@ type Ring struct {
 	Event  Event  `json:"event"`
 	From   string `json:"from"`
 	CallID string `json:"call_id"`
+}
+
+// Draft is the draft-ready fact: a follow-up draft (post-call summarize
+// or the agent's own drafting) now waits in the review queue for the
+// owner. The contact names the conversation the draft addresses, so the
+// shell can offer a jump straight into it.
+// brandid-lint:ignore(BD003) shell wire contract: the draft id is a foreign textagent token (strong-id wire ruling)
+type Draft struct {
+	Event   Event  `json:"event"`
+	Contact string `json:"contact"`
+	DraftID string `json:"draft_id"`
 }
 
 // ErrDisabled is returned when no transport is configured (or the
@@ -86,6 +98,8 @@ type Sender interface {
 	Describe() string
 	// Send ships one ring fact to one device address.
 	Send(ctx context.Context, target string, ring Ring) error
+	// SendDraft ships one draft-ready fact to one device address.
+	SendDraft(ctx context.Context, target string, draft Draft) error
 }
 
 // Fanout routes a ring to the sender its transport names. The
@@ -142,4 +156,17 @@ func (f *Fanout) Send(ctx context.Context, transport, target string, ring Ring) 
 		return errorfamily.Newf(errorfamily.Rejection, "push.transport", "no sender configured for transport %q", transport)
 	}
 	return sender.Send(ctx, target, ring)
+}
+
+// SendDraft routes one draft-ready fact to the sender its transport
+// names (the same routing contract as Send).
+func (f *Fanout) SendDraft(ctx context.Context, transport, target string, draft Draft) error {
+	if !f.Enabled() {
+		return ErrDisabled
+	}
+	sender, ok := f.senders[transport]
+	if !ok {
+		return errorfamily.Newf(errorfamily.Rejection, "push.transport", "no sender configured for transport %q", transport)
+	}
+	return sender.SendDraft(ctx, target, draft)
 }

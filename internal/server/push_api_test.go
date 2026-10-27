@@ -19,6 +19,7 @@ type pushStubTransport struct{}
 func (pushStubTransport) Enabled() bool                                 { return true }
 func (pushStubTransport) Describe() string                              { return "stub" }
 func (pushStubTransport) Send(context.Context, string, push.Ring) error { return nil }
+func (pushStubTransport) SendDraft(context.Context, string, push.Draft) error { return nil }
 
 func newPushServer(t *testing.T) *testServer {
 	t.Helper()

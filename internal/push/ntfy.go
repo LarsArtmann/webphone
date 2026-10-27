@@ -91,7 +91,32 @@ func (s *NtfySender) Send(ctx context.Context, topic string, ring Ring) error {
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.ntfy_send", "encode ntfy message")
 	}
+	return s.publish(ctx, body, topic)
+}
 
+// SendDraft publishes one draft-ready fact. Good news is not urgent:
+// the default priority (the ring_end lane's level) — the shell renders
+// the fact, and the stock app shows an ordinary shade entry.
+func (s *NtfySender) SendDraft(ctx context.Context, topic string, draft Draft) error {
+	if !s.Enabled() {
+		return ErrDisabled
+	}
+	body, err := json.Marshal(ntfyMessage{
+		Topic:    topic,
+		Title:    "Draft ready",
+		Message:  string(mustMarshalDraft(draft)),
+		Priority: ntfyPriorityDefault,
+		Tags:     []string{"telephone"},
+	})
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "push.ntfy_send", "encode ntfy message")
+	}
+	return s.publish(ctx, body, topic)
+}
+
+// publish is the ONE ntfy round trip: JSON to the server root, the
+// status mapping every lane shares.
+func (s *NtfySender) publish(ctx context.Context, body []byte, topic string) error {
 	target := s.base.JoinPath("/").String()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, bytes.NewReader(body))
 	if err != nil {
@@ -129,6 +154,15 @@ func mustMarshalRing(ring Ring) []byte {
 	body, err := json.Marshal(ring)
 	if err != nil {
 		return []byte(`{"event":"ring"}`)
+	}
+	return body
+}
+
+// mustMarshalDraft is the draft fact's marshal twin.
+func mustMarshalDraft(draft Draft) []byte {
+	body, err := json.Marshal(draft)
+	if err != nil {
+		return []byte(`{"event":"draft_ready"}`)
 	}
 	return body
 }

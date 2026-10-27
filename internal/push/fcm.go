@@ -169,7 +169,37 @@ func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
 	}
+	return s.post(ctx, payload, accessToken)
+}
 
+// SendDraft ships one draft-ready fact (NORMAL priority — good news
+// is not urgent; the shell owns the rendering).
+func (s *FcmSender) SendDraft(ctx context.Context, target string, draft Draft) error {
+	if !s.Enabled() {
+		return ErrDisabled
+	}
+	accessToken, err := s.fetchAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+	var body fcmMessage
+	body.Message.Token = target
+	body.Message.Data = map[string]string{
+		"event":    string(draft.Event),
+		"contact":  draft.Contact,
+		"draft_id": draft.DraftID,
+	}
+	body.Message.Android.Priority = "NORMAL"
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
+	}
+	return s.post(ctx, payload, accessToken)
+}
+
+// post is the ONE messages:send round trip: the status mapping every
+// lane shares.
+func (s *FcmSender) post(ctx context.Context, payload []byte, accessToken string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.sendURL, bytes.NewReader(payload))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "build fcm request")

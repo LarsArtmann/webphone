@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/textagent"
 )
 
@@ -21,6 +23,11 @@ const summaryDraftTimeout = 95 * time.Second
 // summaryCallIDMax bounds the opaque island Call-ID before it reaches
 // the store scan (a malformed path is a client bug, not a lookup).
 const summaryCallIDMax = 128
+
+// draftPushTimeout bounds one fire-and-forget draft fan-out: the
+// summarize answer never waits on push health, so the goroutine owns
+// its own budget (the transports' own timeouts sit under it).
+const draftPushTimeout = 15 * time.Second
 
 // SummaryDraftRequest is the POST /api/calls/{id}/summary-draft wire
 // shape — the call id rides the path, the body is empty. Named (not

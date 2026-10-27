@@ -25,6 +25,10 @@ func (f *fakeTransport) Send(_ context.Context, _ string, ring push.Ring) error 
 	f.rings = append(f.rings, ring)
 	return f.err
 }
+func (f *fakeTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
+	f.rings = append(f.rings, push.Ring{Event: draft.Event, From: draft.Contact})
+	return f.err
+}
 
 func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, *readmodels.PushDevices) {
 	t.Helper()

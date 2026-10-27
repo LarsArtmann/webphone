@@ -14,6 +14,7 @@ import (
 type fakeSender struct {
 	enabled bool
 	got     []push.Ring
+	drafts  []push.Draft
 	err     error
 }
 
@@ -21,6 +22,10 @@ func (f *fakeSender) Enabled() bool    { return f.enabled }
 func (f *fakeSender) Describe() string { return "fake" }
 func (f *fakeSender) Send(_ context.Context, _ string, ring push.Ring) error {
 	f.got = append(f.got, ring)
+	return f.err
+}
+func (f *fakeSender) SendDraft(_ context.Context, _ string, draft push.Draft) error {
+	f.drafts = append(f.drafts, draft)
 	return f.err
 }
 
