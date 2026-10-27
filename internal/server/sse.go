@@ -115,11 +115,17 @@ func (h *ExtensionHubs) get(extension domain.Extension) *cqrshtmx.Broadcaster {
 func (h *ExtensionHubs) Shutdown() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	streams := 0
 	for key, hub := range h.hubs {
+		streams += hub.Hub().SubscriberCount()
 		hub.Close()
 		delete(h.hubs, key)
 		delete(h.seen, key)
 	}
+	// The greppable incident line: operators correlating a restart window
+	// (proxy 502s) with this log see exactly how many live feeds the
+	// release touched.
+	slog.Info("events: released live SSE streams for shutdown", "hubs", len(h.hubs), "streams", streams)
 }
 
 // sweep deletes hubs that are both untouched for hubIdleTTL and carry no

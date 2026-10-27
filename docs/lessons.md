@@ -861,3 +861,28 @@ pushing.
   Probing with `strings.ToUpper(method)` made the ghost fail loudly.
   Any test whose whole job is catching an absence must be shown to
   fail in its presence.
+- **"Not a bug" verdicts need the same evidence bar as bug verdicts**
+  (2026-10-27, the SSE 502 incident): the first triage round called the
+  console 502s cosmetic and overclaimed a diagnosis ("call hung up by
+  carrier") that the evidence only made plausible. The owner ruling that
+  fell out: an unhandled/uncaught error without a user-visible surface IS
+  a bug (Go AND island JS); "cosmetic console noise" is not a class; and a
+  diagnosis is either evidence-backed or labeled plausible — never
+  presented as fact. Practical anchors: the client-side evidence (502 ×3
+  with backoff recovery + a `Terminated` call right after a 14:02 relock)
+  justified the restart-window HYPOTHESIS, but the host verdict
+  (`systemctl show webphone -p NRestarts`, journal panic grep) is a
+  read-only one-liner that turns it into fact — run it (or hand it to the
+  operator) BEFORE the verdict lands in a report. Corollary that paid off
+  the same day: re-reading "noise" with the new bar surfaced a real
+  crash-the-process class (an unrecovered fire-and-forget goroutine in the
+  live post-call chain) plus five more unprotected goroutine sites.
+- **The stack daemon relock rides webphone main by policy** (2026-10-27,
+  recorded from the 2026-09-20 owner decision): the consuming stack
+  RIDES webphone `main` with a per-train lock bump — so a daemon relock
+  (e.g. the 14:02 `c793a86 → ec5de5e`) mid-workday is POLICY, not an
+  anomaly, and it carries a deploy (restart window) with it. Plan work
+  and incident triage around the pair: relock ⇒ redeploy ⇒ ~5s 502 window
+  on proxied paths. The open owner question (g2: may the stack daemon
+  carry relock bumps unattended?) refines WHO triggers the bump, not the
+  ride itself.

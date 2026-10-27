@@ -487,6 +487,51 @@ a deliberate code change, regenerate:
 
 <!-- error-code-registry: END -->
 
+## 502 from the proxy — deploy-restart signature (2026-10-27)
+
+A burst of `502` on `/events` (and any other proxied path) right after a stack
+daemon relock is the webphone restart window, NOT a crash: the unit runs
+`Restart=on-failure, RestartSec=5`, `ExtensionHubs.Shutdown` releases live SSE
+streams instantly (2026-10-25 feature, working as designed), and Caddy answers
+502 for the ~5s the binary is down. The client's EventSource recreate loop
+(upstream-owned, 500ms→64s backoff, reset on open) re-establishes the feed on
+its own. Triage bar before calling anything a bug: `systemctl show webphone
+-p NRestarts -p ExecMainStartTimestamp` + `journalctl -u webphone | grep -iE
+"panic|fatal"`. A recovered feed announces itself once (the pill's
+announced-drop symmetry); an unrecovering feed is the actual signal.
+
+## Island-JS error surface — every catch lands or justifies (2026-10-27)
+
+Owner ruling (AGENTS.md § Failure → feedback): an unhandled/uncaught error
+without a user-visible surface IS a bug — Go and island JS alike. The island
+side of that bar:
+
+- EVERY `catch`/rejection either lands in a visible surface (toast/announce/
+  pill/banner) or carries a written justification comment at the site. The
+  2026-10-27 sweep classified all 62 sites: surfaced (transcript-save flush,
+  CRM call log, summarize ask, htmx responseError/sendError toasts, session
+  errors), or justified at the site (teardown-path bye/close/resume, poll
+  samples, private-mode storage, warm-mic denial). The sweep log lives in the
+  16:05 plan's execution log.
+- `summarizeCall` failure classes are DISTINCT: 404 = "no transcript",
+  network-dead (status 0) = `summarizeOffline`, other HTTP = `summarizeFailed`.
+  A conflated toast is a bug of the same class.
+- **THE call-failure reason mapping** (the one TODO_LIST #6's disposition work
+  must align with; unknown stays a FAILURE class, never "answered"):
+  486/600/603 → busy · 404 → number does not exist · 403/604 → blocked ·
+  480/488/502/503/504 → far end did not answer · 487 → cancelled · 408 → no
+  answer in time · any other code → `callFailedCode` with the code · inbound
+  non-established → missed class · established → no reason line. Rendered on
+  the ended card (`call-reason-text`) + announced once; the cause is captured
+  from the INVITE `requestDelegate.onReject` (sip.js 0.21.2 resolves `invite()`
+  on send — the verdict never rejects the promise).
+- The readable `htmx:sseError` log line (failure counter + retry note) is the
+  operator record; the ext's own `console.error("[object Event]")` spam is an
+  upstream defect (draft note:
+  `docs/research/2026-10-27_htmx-sse-ext-object-event-logging-note.md`).
+- Typed-rejection CONVENTION design (checkJs-era) belongs to the sibling plan
+  (16:04) task T24; this file owns the runtime surfaces only.
+
 ## Cross-repo sync
 
 The operator-facing semantics of these surfaces — status meanings,

@@ -212,3 +212,55 @@ Coverage check: f1–f50 all mapped (see Table 1 source-items column; f41 → T2
 - Final wave (T22) re-runs the FULL gates; no partial-slice landing.
 
 **Next step: owner GO → execute P0 first (M01–M14), then P1 in table order.**
+
+---
+
+## Execution log (2026-10-27, session after 17:00 — ANNOTATED, not rewritten)
+
+**P0 executed (T2/T3/T4, M06–M14).** All five bare-goroutine sites now carry
+recover() guards: `notifyDraftReady` (summary_api), the retention sweep (per-tick,
+loop survives), the dedup sweeper (extracted `sweepOnce`), the signal readLoop
+(defer merged cleanup so the connection still drops + reconnects), and the fax
+archive offer (wrap at the `go` launch). Containment test
+`TestSummaryDraftPushPanicDoesNotKillServer` pins the class. Sweep verdict:
+`rg "go func("` + named-method goroutines found exactly five sites; handlers stay
+RecoveryMiddleware-covered. `wireChatNetworks` (app/chat.go) currently has NO
+caller — the loop-launch seam it describes does not exist yet; recorded, untouched.
+M47 (`errors.AsType` at summary_api) landed by a concurrent actor mid-train; verified.
+
+**T5/T7/T8 executed — mostly verification (M15–M27).** The three named suspects
+(`flushTranscriptSaves`, the shell.js htmx error listeners, `recordCrmCall`) were
+ALREADY surfaced (announce + toast) by the concurrent 16:04 session's work — verified,
+no double-fix. Empty-catch classification: 11 JUSTIFIED (written justifications added
+where missing: ice.js getStats poll, transcribe analyser setup + resume-retry +
+teardown close, mic warm denial, audioout storage/enumerate, main.js logout bye,
+calls.js REFER accept); `notify.requestPermission` gained a catch+warn;
+`resumeAudio` now warns on a refused resume. 1 BUG fixed: summarizeCall's
+network-dead vs HTTP-failure conflation — `summarizeOffline` (en/de) branch added,
+spec pinned (T6/M19–M21).
+
+**T9 executed (M28–M32).** Verified in the vendored sip.js 0.21.2 tarball: `invite()`
+resolves when the INVITE is SENT; the failure verdict arrives through the
+`requestDelegate.onReject` delegate, synchronously AFTER the Terminated state
+change. The island now captures `statusCode` in placeCall, and `failureReasonOf`
+renders + announces the reason line on the settled card one microtask later. THE
+mapping (486/600/603 busy; 404 not-found; 403/604 blocked; 480/488/502/503/504
+unreachable; 487 cancelled; 408 no-answer; unknown = `callFailedCode`; inbound
+non-established = missed class; established = no reason) is the one TODO_LIST #6's
+disposition work must align with — documented in error-contract.md. Specs pin the
+486 card line + announce and the unknown-code class; helpers.mjs stub gained
+`insertBefore`. M32 verified: session.test.mjs already covers the pill + 3-strike
+toast.
+
+**T10 executed (M33–M34).** Island-side readable `htmx:sseError` log line landed
+(failure counter + retry note). Upstream "[object Event]" defect VERIFIED to source
+(cqrs-htmx v4.14.1 `extensions/sse.min.js:113` passes the raw Event as
+`detail.error`; htmx core `ae()` stringifies it into `console.error`). Draft note:
+`docs/research/2026-10-27_htmx-sse-ext-object-event-logging-note.md` — NOT filed.
+
+**T1/T18 host legs (M01–M05, M51–M54): BLOCKED** — ssh banned in the agent shell;
+the one-liners are handed to the owner. T18's `/version` + `/config.js` legs were
+attempted over HTTPS where possible (see execution log addendum).
+
+Island suite 257/257 green; targeted Go packages green after the concurrent
+readmodels refactor healed.
