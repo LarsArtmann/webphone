@@ -36,3 +36,38 @@ func TestAuthAuditNeverLogsSecrets(t *testing.T) {
 		t.Errorf("journal leaked the submitted password:\n%s", out)
 	}
 }
+
+// TestAgentAuditRidesThePanelActions pins the M18 audit trail: one
+// greppable "agent <event>" line per drafts-panel action with the actor
+// extension and the draft id — success AND failure — and never the
+// draft's body text.
+func TestAgentAuditRidesThePanelActions(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	stub := newStubReviewAPI(t)
+	c := clientWithAgent(t, stub)
+	c.login("1001", "pw")
+
+	if resp, _ := c.do(http.MethodPost, "/messages/drafts/d-7/approve", nil, ""); resp.StatusCode != http.StatusOK {
+		t.Fatalf("approve: %d", resp.StatusCode)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "agent approve") || !strings.Contains(out, `draft=d-7`) || !strings.Contains(out, `extension=1001`) {
+		t.Errorf("journal missing the approve audit line:\n%s", out)
+	}
+	if strings.Contains(out, "Guten Morgen") {
+		t.Errorf("the journal must never carry draft body text:\n%s", out)
+	}
+
+	// A failed action audits its failure honestly.
+	stub.status.Store(http.StatusServiceUnavailable)
+	if resp, _ := c.do(http.MethodPost, "/messages/drafts/d-7/discard", nil, ""); resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("discard against a fail-closed agent: %d", resp.StatusCode)
+	}
+	if !strings.Contains(buf.String(), `agent discard`) || !strings.Contains(buf.String(), `outcome=failed`) {
+		t.Errorf("journal missing the failed-discard audit line:\n%s", buf.String())
+	}
+}
