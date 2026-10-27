@@ -2288,3 +2288,34 @@ dialog.wp-lightbox img {
   white-space: pre-wrap;
   text-wrap: pretty;
 }
+
+/* Post-call note (M16): one box per transcript row — a textarea the
+ * width of the row, the save/prefill mini-buttons trailing. */
+.wp-call-note {
+  margin: 0.5rem 0 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.wp-call-note textarea {
+  width: 100%;
+  min-height: 3.6em;
+  resize: vertical;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.6rem;
+}
+
+.wp-call-note textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.wp-call-note .wp-mini {
+  align-self: flex-start;
+}

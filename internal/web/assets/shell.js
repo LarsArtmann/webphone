@@ -320,6 +320,85 @@
       shellToast("Transcript downloaded.", "ok");
     });
 
+    // 2b7. Post-call notes (M16): [data-note-save] PUTs the row's
+    //      textarea to /api/calls/{id}/note; [data-note-draft] asks the
+    //      summarize chain for a draft and inserts its text for a HUMAN
+    //      edit (the AI never writes the note itself — the save is
+    //      always the owner's keystroke). The server's failure lines
+    //      are already human-phrased; the toasts relay them verbatim.
+    //      English toasts (D3).
+    var noteBodyFor = function (callId) {
+      return document.querySelector('[data-note-body="' + callId + '"]');
+    };
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest) return;
+      var btn = event.target.closest("[data-note-save]");
+      if (!btn) return;
+      var callId = btn.getAttribute("data-note-save") || "";
+      var box = noteBodyFor(callId);
+      if (!box) return;
+      btn.disabled = true;
+      fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken(),
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ body: box.value }),
+      })
+        .then(function (res) {
+          if (res.status === 204) {
+            shellToast("Note saved.", "ok");
+            return;
+          }
+          return res.text().then(function (detail) {
+            shellToast(detail || "Could not save the note (HTTP " + res.status + ").", "warn");
+          });
+        })
+        .catch(function () {
+          shellToast("Could not save the note — check your connection.", "error");
+        })
+        .then(function () {
+          btn.disabled = false;
+        });
+    });
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest) return;
+      var btn = event.target.closest("[data-note-draft]");
+      if (!btn) return;
+      var callId = btn.getAttribute("data-note-draft") || "";
+      var box = noteBodyFor(callId);
+      if (!box) return;
+      btn.disabled = true;
+      fetch("/api/calls/" + encodeURIComponent(callId) + "/summary-draft", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrfToken() },
+        credentials: "same-origin",
+      })
+        .then(function (res) {
+          if (res.status === 200) {
+            return res.json().then(function (draft) {
+              if (draft.duplicate) {
+                shellToast("Already drafted — see Messages.", "info");
+                return;
+              }
+              box.value = draft.text || "";
+              shellToast("Draft inserted — edit before saving.", "ok");
+            });
+          }
+          return res.text().then(function (detail) {
+            shellToast(detail || "Could not draft (HTTP " + res.status + ").", "warn");
+          });
+        })
+        .catch(function () {
+          shellToast("Could not reach the AI agent — check your connection.", "error");
+        })
+        .then(function () {
+          btn.disabled = false;
+        });
+    });
+
     // 2c. Live-call presence: the island dispatches wp:calls-changed after
     //     every call render; the shell mirrors the live call count into
     //     the header so every tab shows the phone is busy. Cards are
