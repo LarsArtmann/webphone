@@ -253,7 +253,10 @@ export function initSseLiveIndicator() {
     // The extension's own console output stringifies the raw event
     // ("[object Event]"); this line is the readable, operator-greppable
     // record of the retry cadence.
-    log(`live feed error; the feed keeps retrying (failure ${sseFailures + 1})`, "warn");
+    log(
+      `live feed error; the feed keeps retrying (failure ${sseFailures + 1})`,
+      "warn",
+    );
     delete pill.dataset.live;
     setPillLabel(false);
     pill.title = t("ssePillDown");

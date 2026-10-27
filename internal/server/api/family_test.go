@@ -18,3 +18,17 @@ func TestSummaryWrapFamilyPin(t *testing.T) {
 	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Transient)
 	errorfamilytest.AssertCode(t, wrapped, "agent.summarize")
 }
+
+// TestPushDraftWrapCodePins locks the draft fan-out's two wrap codes
+// (the fire-and-forget goroutine's only greppable trail): the device
+// list failure and the per-device send failure wrap Infrastructure
+// under push.draft_devices / push.draft_send (summary_api.go).
+func TestPushDraftWrapCodePins(t *testing.T) {
+	devices := errorfamily.WrapInfrastructuref(errors.New("db down"), "push.draft_devices", "list draft push targets")
+	errorfamilytest.AssertFamily(t, devices, errorfamily.Infrastructure)
+	errorfamilytest.AssertCode(t, devices, "push.draft_devices")
+
+	send := errorfamily.WrapInfrastructuref(errors.New("ntfy 500"), "push.draft_send", "ship draft-ready to dev-1")
+	errorfamilytest.AssertFamily(t, send, errorfamily.Infrastructure)
+	errorfamilytest.AssertCode(t, send, "push.draft_send")
+}
