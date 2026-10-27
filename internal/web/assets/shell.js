@@ -1325,7 +1325,9 @@
       }
       record.bubble.classList.remove("wp-opt");
       record.bubble.classList.add("wp-opt-failed");
-      var area = form.querySelector("textarea.wp-compose-body");
+      var area = /** @type {HTMLTextAreaElement | null} */ (
+        form.querySelector("textarea.wp-compose-body")
+      );
       if (area && area.value === "" && record.body) area.value = record.body;
       // M17 J3/J4: the failure surface carries its own recovery. Retry
       // re-submits the reply composer (the draft was restored above, so
@@ -1341,8 +1343,8 @@
       retry.textContent = "Retry";
       retry.addEventListener("click", function () {
         record.bubble.remove();
-        var current = document.querySelector(
-          "form.wp-compose:not(.wp-compose-new)",
+        var current = /** @type {HTMLFormElement | null} */ (
+          document.querySelector("form.wp-compose:not(.wp-compose-new)")
         );
         if (current) current.requestSubmit();
       });
@@ -1373,20 +1375,22 @@
     //     driven swaps (search, composer, drafts) deliberately keep
     //     focus where the user is.
     document.addEventListener("htmx:afterSwap", function (event) {
-      var elt = eventElement(event);
-      if (!elt || !elt.matches) return;
-      var navigating =
-        elt.hasAttribute && elt.hasAttribute("data-tab")
-          ? true
-          : Boolean(
-              elt.closest &&
-              closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"),
-            );
-      if (!navigating) return;
-      var heading = document.querySelector("#tab-content h2");
-      if (!heading || typeof heading.focus !== "function") return;
-      heading.setAttribute("tabindex", "-1");
-      heading.focus({ preventScroll: true });
+    var elt = eventElement(event);
+    if (!hasMethod(elt, "matches")) return;
+    var navigating =
+      elt.hasAttribute && elt.hasAttribute("data-tab")
+      ? true
+      : Boolean(
+        hasMethod(elt, "closest") &&
+          closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"),
+        );
+    if (!navigating) return;
+    var heading = /** @type {HTMLElement | null} */ (
+      document.querySelector("#tab-content h2")
+    );
+    if (!heading || !hasMethod(heading, "focus")) return;
+    heading.setAttribute("tabindex", "-1");
+    heading.focus({ preventScroll: true });
     });
 
     // 3g. Relative-time tick: thread-list stamps ("3m") go stale while
@@ -1398,14 +1402,15 @@
     var tickRelative = function () {
       var nodes = document.querySelectorAll("[data-when]");
       for (var i = 0; i < nodes.length; i++) {
+        var node = /** @type {HTMLElement} */ (nodes[i]);
         var seconds =
-          Math.floor(Date.now() / 1000) - Number(nodes[i].dataset.when || 0);
+          Math.floor(Date.now() / 1000) - Number(node.dataset.when || 0);
         if (!(seconds >= 0)) continue;
-        if (seconds < 60) nodes[i].textContent = "now";
+        if (seconds < 60) node.textContent = "now";
         else if (seconds < 3600)
-          nodes[i].textContent = Math.floor(seconds / 60) + "m";
+          node.textContent = Math.floor(seconds / 60) + "m";
         else if (seconds < 86400)
-          nodes[i].textContent = Math.floor(seconds / 3600) + "h";
+          node.textContent = Math.floor(seconds / 3600) + "h";
       }
     };
     setInterval(tickRelative, 30000);
@@ -1419,10 +1424,10 @@
     var skeleton = null;
     /** @param {Element} elt @returns {boolean} */
     var navigatingSwap = function (elt) {
-      if (!elt || !elt.matches) return false;
+      if (!hasMethod(elt, "matches")) return false;
       return Boolean(
         (elt.hasAttribute && elt.hasAttribute("data-tab")) ||
-        (elt.closest &&
+        (hasMethod(elt, "closest") &&
           closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back")),
       );
     };
@@ -1515,7 +1520,10 @@
 
     /** @param {Element | null} el @returns {Element | null} */
     var vmRowOf = function (el) {
-      return el && el.closest ? closestHTMLElement(el, ".wp-vm-row") : null;
+      if (!el) return null;
+      return hasMethod(el, "closest")
+        ? closestHTMLElement(el, ".wp-vm-row")
+        : null;
     };
 
     /**
@@ -1688,9 +1696,12 @@
           return response.arrayBuffer();
         })
         .then(function (buffer) {
+          // Bound once: the promise callbacks below run in a later frame,
+          // where the checker can no longer narrow `context`.
+          var decoder = /** @type {AudioContext} */ (context);
           return new Promise(function (resolve, reject) {
             // callback form: the oldest widest-compatible signature
-            context.decodeAudioData(buffer, resolve, reject);
+            decoder.decodeAudioData(buffer, resolve, reject);
           });
         })
         .then(function (decoded) {
@@ -1719,20 +1730,23 @@
         vmActiveAudio.pause();
       }
       vmActiveAudio = audio;
+      // Bound once: the promise callbacks below run in a later frame, where
+      // the checker can no longer narrow the nullable lookup.
+      var player = /** @type {HTMLAudioElement} */ (audio);
       var started = audio.play();
       if (started && hasMethod(started, "catch")) {
         started.catch(function () {});
       }
       vmBuildWave(uuid, audio)
         .then(function (peaks) {
-          vmPaint(uuid, audio);
+          vmPaint(uuid, player);
           var canvas = /** @type {HTMLCanvasElement | null} */ (
             document.getElementById("vm-wave-" + uuid)
           );
           if (canvas) vmDraw(canvas, peaks || [], 0);
         })
         .catch(function () {
-          vmFallback(uuid, audio);
+          vmFallback(uuid, player);
         });
     };
 
@@ -1792,9 +1806,10 @@
       vmWire(audio, uuid);
       vmSeek(canvas, audio, event.clientX);
       // drag-to-scrub continues while the pointer is down
+      var scrubber = /** @type {HTMLCanvasElement} */ (canvas);
       /** @param {PointerEvent} moveEvent */
       var move = function (moveEvent) {
-        vmSeek(canvas, audio, moveEvent.clientX);
+        vmSeek(scrubber, audio, moveEvent.clientX);
       };
       var up = function () {
         document.removeEventListener("pointermove", move);
@@ -1831,7 +1846,7 @@
     } catch {
       /* storage unavailable (private mode) — fall through to auto */
     }
-    var themeIndex = THEMES.indexOf(storedTheme);
+    var themeIndex = storedTheme ? THEMES.indexOf(storedTheme) : -1;
     if (themeIndex < 0) themeIndex = 0;
 
     var applyTheme = function () {
@@ -1890,10 +1905,10 @@
     /** @type {HTMLElement | null} */
     var overlayList = null;
     var overlayMode = "commands";
-    /** @type {Array<{label: string, run: () => void}>} */
+    /** @type {Array<{label: string, run?: () => void}>} */
     var overlayItems = [];
     var overlayIndex = 0;
-    /** @type {Element | null} */
+    /** @type {HTMLElement | null} */
     var overlayReturnFocus = null;
 
     var collectCommands = function () {
@@ -1907,7 +1922,7 @@
               link.click();
             },
           });
-        })(links[i]);
+        })(/** @type {HTMLElement} */ (links[i]));
       }
       items.push({
         label: "Call a number",
@@ -1919,7 +1934,9 @@
       items.push({
         label: "New message",
         run: function () {
-          var messages = document.querySelector("[data-tab='messages']");
+          var messages = /** @type {HTMLElement | null} */ (
+            document.querySelector("[data-tab='messages']")
+          );
           if (messages) messages.click();
         },
       });
@@ -1934,10 +1951,13 @@
     };
 
     var renderOverlay = function () {
-      overlayList.replaceChildren();
+      var list = overlayList;
+      var input = overlayInput;
+      if (!list || !input) return;
+      list.replaceChildren();
       overlayItems = [];
       overlayIndex = 0;
-      var query = overlayInput.value.trim().toLowerCase();
+      var query = input.value.trim().toLowerCase();
       var source =
         overlayMode === "commands"
           ? collectCommands()
@@ -1958,16 +1978,17 @@
             runOverlayItem();
           });
         })(j);
-        overlayList.append(li);
+        list.append(li);
       }
     };
 
     /** @param {number} delta */
     var selectOverlay = function (delta) {
-      if (overlayItems.length === 0) return;
+      var list = overlayList;
+      if (!list || overlayItems.length === 0) return;
       overlayIndex =
         (overlayIndex + delta + overlayItems.length) % overlayItems.length;
-      var rows = overlayList.children;
+      var rows = list.children;
       for (var i = 0; i < rows.length; i++) {
         rows[i].className =
           "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
@@ -1982,23 +2003,29 @@
     };
 
     var buildOverlay = function () {
-      overlay = document.createElement("div");
-      overlay.id = "wp-palette";
-      overlay.className = "wp-overlay";
-      overlay.hidden = true;
-      overlay.setAttribute("role", "dialog");
-      overlay.setAttribute("aria-label", "Command palette");
-      overlayInput = document.createElement("input");
-      overlayInput.type = "text";
-      overlayInput.className = "wp-overlay-input";
-      overlayInput.setAttribute("aria-label", "Search commands");
-      overlayInput.placeholder = "Type a command…";
-      overlayList = document.createElement("ul");
-      overlayList.className = "wp-overlay-list";
-      overlay.append(overlayInput, overlayList);
-      document.body.append(overlay);
-      overlayInput.addEventListener("input", renderOverlay);
-      overlayInput.addEventListener("keydown", function (event) {
+      var panel = document.createElement("div");
+      panel.id = "wp-palette";
+      panel.className = "wp-overlay";
+      panel.hidden = true;
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-label", "Command palette");
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "wp-overlay-input";
+      input.setAttribute("aria-label", "Search commands");
+      input.placeholder = "Type a command…";
+      var list = document.createElement("ul");
+      list.className = "wp-overlay-list";
+      panel.append(input, list);
+      document.body.append(panel);
+      // Published before the listeners attach: renderOverlay and the
+      // keydown handler read the module-level homes, and openOverlay binds
+      // its own non-null locals from them.
+      overlay = panel;
+      overlayInput = input;
+      overlayList = list;
+      input.addEventListener("input", renderOverlay);
+      input.addEventListener("keydown", function (event) {
         if (event.key === "ArrowDown") {
           selectOverlay(1);
           event.preventDefault();
@@ -2013,28 +2040,32 @@
           event.preventDefault();
         }
       });
-      overlay.addEventListener("click", function (event) {
-        if (eventElement(event) === overlay) closeOverlay();
+      panel.addEventListener("click", function (event) {
+        if (eventElement(event) === panel) closeOverlay();
       });
     };
 
     /** @param {string} mode */
     var openOverlay = function (mode) {
       if (!overlay) buildOverlay();
+      var panel = overlay;
+      var input = overlayInput;
+      if (!panel || !input) return;
       overlayMode = mode;
-      overlayReturnFocus = document.activeElement;
-      overlay.hidden = false;
-      overlayInput.value = "";
-      overlayInput.placeholder =
+      overlayReturnFocus = /** @type {HTMLElement | null} */ (
+        document.activeElement
+      );
+      panel.hidden = false;
+      input.value = "";
+      input.placeholder =
         mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";
       renderOverlay();
-      overlayInput.focus();
+      input.focus();
     };
 
     var closeOverlay = function () {
       if (overlay) overlay.hidden = true;
-      if (overlayReturnFocus && overlayReturnFocus.focus)
-        overlayReturnFocus.focus();
+      if (overlayReturnFocus) overlayReturnFocus.focus();
       overlayReturnFocus = null;
     };
 
@@ -2051,8 +2082,7 @@
       if (event.key === "?" && !event.ctrlKey && !event.metaKey) {
         var target = eventElement(event);
         if (
-          target &&
-          target.closest &&
+          hasMethod(target, "closest") &&
           closestHTMLElement(
             target,
             "input, textarea, select, [contenteditable='true']",

@@ -202,6 +202,13 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 // so it rides the real lookup endpoint and expects 200-with-no-results.
 const healthProbeNumber = "+42990000000"
 
+// The health probe's verdict codes (the /healthz leg names them in its
+// 503 body; the Settings tri-state classifies the row by them).
+const (
+	HealthCodeUnauthorized = "crm.health.unauthorized"
+	HealthCodeFailed       = "crm.health.failed"
+)
+
 // HealthCheck is the authenticated health leg (issue #9): one cheap
 // lookup round trip against the real endpoint with a never-matching
 // number. 200 (even with zero results) proves reachable AND authorized;
@@ -222,10 +229,10 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusUnauthorized, http.StatusForbidden:
-		return errorfamily.Newf(errorfamily.Rejection, "crm.health.unauthorized",
+		return errorfamily.Newf(errorfamily.Rejection, HealthCodeUnauthorized,
 			"crm: the bearer token was rejected (status %d) — rotate the CRM token credential", resp.StatusCode)
 	default:
-		return errorfamily.Newf(errorfamily.Transient, "crm.health.failed",
+		return errorfamily.Newf(errorfamily.Transient, HealthCodeFailed,
 			"crm: health probe answered status %d", resp.StatusCode)
 	}
 }

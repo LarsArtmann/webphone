@@ -15,6 +15,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
+	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
@@ -390,6 +391,19 @@ func (h *handlers) contactsPanel(r *http.Request, sess session.Session) (templ.C
 	return views.ContactsPanel(views.ContactsPanelProps{Personal: personal, Shared: h.deps.Shared, Lang: h.lang(r)}), nil
 }
 
+// settingsCRM states — the Settings tab's CRM row renderings (T7).
+const (
+	settingsCRMUnset      = "unset"
+	settingsCRMSetup      = "setup"
+	settingsCRMConnected  = "connected"
+	settingsCRMAuthFailed = "auth-failed"
+)
+
+// crmSettingsProbeTimeout bounds the Settings row's CRM health ask —
+// one authenticated round trip, fail-open (the agent-row probe's
+// posture at a tighter budget: the CRM is a loopback/LAN service).
+const crmSettingsProbeTimeout = 2 * time.Second
+
 func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
 	// The snippets section is the tab's one managed list (M21); nil-safe
@@ -441,12 +455,31 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 			}
 		}
 	}
+	// The CRM row (T7) is the bounded-probe tri-state: not configured
+	// (no seam), connected (probe 200), sign-in failed (401/403 — rotate
+	// the token credential), and the fail-open "configured but the probe
+	// did not answer" for transport failure or budget exhaustion — four
+	// renderings because three cannot say that honestly. Same posture as
+	// the agent row's mode probe: bounded, fail-open, never blocking.
+	crmState := settingsCRMUnset
+	if h.deps.CRM != nil && h.deps.CRM.Enabled() {
+		crmState = settingsCRMSetup
+		ctx, cancel := context.WithTimeout(r.Context(), crmSettingsProbeTimeout)
+		err := h.deps.CRM.HealthCheck(ctx)
+		cancel()
+		switch {
+		case err == nil:
+			crmState = settingsCRMConnected
+		case errorfamily.Code(err) == crm.HealthCodeUnauthorized:
+			crmState = settingsCRMAuthFailed
+		}
+	}
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
 		GatewayMode:    string(h.deps.Config.Gateway.Mode),
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
-		CRM:            h.deps.CRM.Enabled(),
+		CRMState:       crmState,
 		ASR:            h.asrOn(),
 		ASRDetail:      asrDetail,
 		ASRLocality:    h.deps.ASRLocality,

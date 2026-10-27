@@ -20,7 +20,11 @@ type SettingsPanelProps struct {
 	WebsocketURL   string
 	GatewayMode    string
 	PhoneAPI       bool
-	CRM            bool
+	// CRMState is the Settings row's honest CRM rendering (T7): "unset"
+	// (no seam — the historical off path), "connected" (bounded probe
+	// 200), "auth-failed" (401/403 — rotate the token credential),
+	// "setup" (configured but the probe did not answer).
+	CRMState string
 	// ASR reports the optional live-transcription seam; ASRDetail names
 	// the provider kind and model (asr.Provider.Describe) when it is on,
 	// ASRLocality carries the config-honest trust label (M17: "local" =
@@ -199,7 +203,7 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.ice"), Detail: fmtInt(props.ICEServers)},
 		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
 		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		{Term: T(props.Lang, "settings.crm"), DetailComponent: serviceDetail(props.CRM, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
 		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
@@ -233,6 +237,23 @@ templ serviceDetail(on bool, connected, unset string) {
 			{ connected }
 		} else {
 			{ unset }
+		}
+	</span>
+}
+
+// crmDetail renders the CRM row's honest state (T7): the four states
+// the bounded probe can distinguish. Unknown state strings fall back to
+// the unset rendering (a stale prop can never claim a live wire).
+templ crmDetail(state string, lang Lang) {
+	<span class={ "wp-service", templ.KV("wp-service-on", state == "connected") }>
+		if state == "connected" {
+			{ T(lang, "settings.connected") }
+		} else if state == "auth-failed" {
+			{ T(lang, "settings.crmAuthFailed") }
+		} else if state == "setup" {
+			{ T(lang, "settings.crmSetup") }
+		} else {
+			{ T(lang, "settings.unset") }
 		}
 	</span>
 }
