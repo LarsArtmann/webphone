@@ -122,26 +122,11 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	key := domain.CallNoteKey{Owner: owner.String(), CallID: callID}
-	_, found, err := s.reader.Get(ctx, key)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "load note slot")
-	}
-	if !found {
-		views, err := s.reader.Scan(ctx,
-			metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
-			metaengine.WithLimit(NotesMaxPerExtension+1),
-		)
-		if err != nil {
-			return errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "count notes for %s", owner.String())
-		}
-		if len(views) >= NotesMaxPerExtension {
-			return errorfamily.WrapRejectionf(ErrNoteListFull, "readmodels.note_list_full",
-				"%s at %d noted calls", owner.String(), NotesMaxPerExtension)
-		}
+	if _, _, err := s.claimSlot(ctx, owner, callID); err != nil {
+		return err
 	}
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.CallNoteSaved{}), domain.CallNoteSaved{
-		Key:       key,
+		Key:       domain.CallNoteKey{Owner: owner.String(), CallID: callID},
 		Owner:     owner.String(),
 		CallID:    callID,
 		Body:      body,
@@ -150,4 +135,55 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 		return errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "apply note save")
 	}
 	return nil
+}
+
+// SetDisposition records the operator's post-call verdict on the same
+// (owner, call) slot as the note. It shares the note's cap: a NEW
+// call's verdict past NotesMaxPerExtension is refused — the cap guards
+// the owner's review slots, not just their prose.
+func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, _, err := s.claimSlot(ctx, owner, callID); err != nil {
+		return err
+	}
+	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.CallDispositionSaved{}), domain.CallDispositionSaved{
+		Key:         domain.CallNoteKey{Owner: owner.String(), CallID: callID},
+		Owner:       owner.String(),
+		CallID:      callID,
+		Disposition: disposition,
+		UpdatedAt:   time.Now(),
+	}); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "readmodels.disposition_save", "apply disposition save")
+	}
+	return nil
+}
+
+// claimSlot loads the slot under the store mutex and enforces the
+// per-owner cap for a NEW call (existing slots always stay open). The
+// caller emits its fact while still holding the mutex.
+func (s *Notes) claimSlot(ctx context.Context, owner domain.Extension, callID string) (*CallNoteView, bool, error) {
+	key := domain.CallNoteKey{Owner: owner.String(), CallID: callID}
+	view, found, err := s.reader.Get(ctx, key)
+	if err != nil {
+		return nil, false, errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "load note slot")
+	}
+	if !found {
+		views, err := s.reader.Scan(ctx,
+			metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+			metaengine.WithLimit(NotesMaxPerExtension+1),
+		)
+		if err != nil {
+			return nil, false, errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "count notes for %s", owner.String())
+		}
+		if len(views) >= NotesMaxPerExtension {
+			return nil, false, errorfamily.WrapRejectionf(ErrNoteListFull, "readmodels.note_list_full",
+				"%s at %d noted calls", owner.String(), NotesMaxPerExtension)
+		}
+	}
+	if !found {
+		return nil, false, nil
+	}
+	return &view, true, nil
 }
