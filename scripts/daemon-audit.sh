@@ -6,7 +6,12 @@
 # This script audits the daemon's landed work instead of trusting the
 # hook: a daemon-pattern commit that touches a guarded file
 # (.buildflow.yml / go.mod / go.sum / go.work* / flake.lock) or carries
-# whitespace drift in a formatter-owned file gets flagged.
+# whitespace drift in a formatter-owned file gets flagged. A daemon-
+# pattern commit that is UNREACHABLE from main (a concurrent session
+# rewrote it away — rebase/amend) is reported ORPHANED and skipped:
+# auditing a ghost would flag work that no longer exists (T8,
+# 2026-10-27 — two trains' landings were swept, then rewritten, in one
+# evening).
 #
 # Advisory: exits 0 on every verdict; flags are SIGNALS (stdout / the
 # ci-red issue lane with --file-issue), never failures — the watch
@@ -57,6 +62,15 @@ self_test() {
 		printf 'package x\nfunc F() {\n        y := 1\n        _ = y\n}\n' >x.go
 		git add -A
 		git commit -qm "chore: auto-commit 2 changed file(s) (heuristic)"
+		# daemon-pattern commit main never sees (the T8 rewritten-away
+		# class): hang it off a detached mid-history HEAD, touching a
+		# GUARDED file so the guard's suppression is observable
+		git switch -q --detach HEAD~1
+		printf 'module scratch\n\ngo 1.26\n' >go.mod
+		git add -A
+		git commit -qm "chore: auto-commit 1 changed file(s) (heuristic)"
+		git rev-parse HEAD >"$tmp/orphan.sha"
+		git switch -q main
 	)
 	local out
 	out=$(cd "$tmp/r" && "$script_dir/daemon-audit.sh" --sha "$(cat "$tmp/gomod.sha")" 2>&1)
@@ -65,6 +79,13 @@ self_test() {
 	assert "1" "$(grep -c 'whitespace drift' <<<"$out")" "daemon commit w/ reindent -> drift flag"
 	out=$(cd "$tmp/r" && "$script_dir/daemon-audit.sh" --sha "$(cat "$tmp/init.sha")" 2>&1)
 	assert "1" "$(grep -c 'SKIP not a daemon-pattern commit' <<<"$out")" "human commit -> SKIP"
+
+	# the T8 rewritten-away class: an orphan daemon commit is reported
+	# ORPHANED and never reaches the FLAGS/issue path — even though it
+	# touches a guarded file
+	out=$(cd "$tmp/r" && "$script_dir/daemon-audit.sh" --sha "$(cat "$tmp/orphan.sha")" 2>&1)
+	assert "1" "$(grep -c 'unreachable from main' <<<"$out")" "orphan daemon commit -> ORPHANED verdict"
+	assert "0" "$(grep -c '^FLAGGED' <<<"$out")" "orphan daemon commit (guarded file) -> suppression before FLAGS"
 
 	echo "daemon-audit self-test: $((checks - failed))/$checks passed"
 	[ "$failed" -eq 0 ]
@@ -108,6 +129,20 @@ case "$SUBJECT" in
 	exit 0
 	;;
 esac
+
+BASE_REF=""
+for ref in origin/main main; do
+	if git rev-parse --verify -q "$ref" >/dev/null 2>&1; then
+		BASE_REF=$ref
+		break
+	fi
+done
+if [ -n "$BASE_REF" ] && ! git merge-base --is-ancestor "$audited_sha" "$BASE_REF" 2>/dev/null; then
+	say "ORPHANED $audited_sha — unreachable from $BASE_REF"
+	say "  this landing was rewritten away (a concurrent session's rebase/amend or a force-move);"
+	say "  auditing a ghost would flag work that no longer exists on $BASE_REF — nothing to do"
+	exit 0
+fi
 
 FLAGS=""
 GUARDED="\.buildflow\.yml|go\.mod|go\.sum|go\.work|go\.work\.sum|flake\.lock"
