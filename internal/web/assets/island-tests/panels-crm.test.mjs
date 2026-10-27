@@ -41,11 +41,15 @@ test("the journal report carries the call facts and a fresh idempotency key", as
 
   assert.equal(callPosts.length, 2, "each ended call reports exactly once");
   const [first, second] = callPosts.map((p) => p.body);
+  // Media flowed, but this side cannot see who picked up: established
+  // reports "unknown", never "answered" (issue #6 — the established
+  // proxy journaled voicemail as answered). Only the operator confirm
+  // upgrades unknown to a specific resolution.
   assert.deepEqual(first, {
     number: "+493012345678",
     direction: "out",
     seconds: 42,
-    outcome: "answered",
+    disposition: "unknown",
     key: first.key,
   });
   assert.match(first.key, UUID_RE, "the key must be a UUID");
@@ -53,7 +57,7 @@ test("the journal report carries the call facts and a fresh idempotency key", as
     number: "+493012345678",
     direction: "in",
     seconds: 0,
-    outcome: "missed",
+    disposition: "missed",
     key: second.key,
   });
   assert.notEqual(first.key, second.key, "every report must carry a fresh key");
