@@ -396,3 +396,41 @@ func TestIdentitySurfacesOwnNumber(t *testing.T) {
 		t.Fatalf("unmapped extension composer must stay identity-free:\n%s", panel2)
 	}
 }
+
+// TestSessionIdentityCarriesAgentMode pins the M13 pill's data wire: the
+// login answer names the textagent's draft mode (mode, source, default,
+// cycle list) when the seam is on, and stays silent without it — an
+// unreachable agent degrades to NO fields, never to a broken login.
+func TestSessionIdentityCarriesAgentMode(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.TextAgent = agentClientFor(t, stub.server.URL)
+	})
+	c := clientFor(t, server)
+	payload, _ := json.Marshal(map[string]string{"extension": "1001", "password": "pw"})
+	resp, body := c.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("session create: %d %s", resp.StatusCode, body)
+	}
+	for _, want := range []string{
+		`"agent_mode":"drafts"`,
+		`"agent_mode_source":"config"`,
+		`"agent_default_mode":"drafts"`,
+		`"agent_modes":["off","drafts","after-hours","full"]`,
+	} {
+		if !strings.Contains(string(body), want) {
+			t.Errorf("identity lacks %s: %s", want, body)
+		}
+	}
+
+	// Seam off: none of the fields exist on the wire.
+	plain := newTestServerWithPhoneAPI(t, "")
+	pc := clientFor(t, plain)
+	resp2, body2 := pc.do(http.MethodPost, "/api/session", payload, "application/json")
+	if resp2.StatusCode != http.StatusCreated {
+		t.Fatalf("seam-off session create: %d %s", resp2.StatusCode, body2)
+	}
+	if strings.Contains(string(body2), "agent_mode") {
+		t.Errorf("seam-off identity must not carry agent fields: %s", body2)
+	}
+}

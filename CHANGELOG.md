@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Post-call summarize chain (2026-10-26, agent UX train): a normally
+  ended call now settles into a muted ended card instead of vanishing —
+  Close always, plus "Summarize → draft SMS" when the textagent seam is
+  on and the call carried media. The ask rides the new session-gated
+  `POST /api/calls/{id}/summary-draft` (owner-scoped transcript read,
+  idempotent replay `duplicate:true`, agent refusal phrasing passed
+  through, dead agent → 502 and retryable). Success and duplicates
+  toast the destination and nudge the nav; a failed ask returns the
+  settled retryable state. Next to the header badges, an agent-mode
+  pill (from the session identity's `agent_mode*` fields; hidden when
+  the seam is off) makes the textagent's draft autonomy glanceable:
+  click cycles the modes, a runtime pin grows a reset chip, every
+  change announces politely — the Messages panel select stays the one
+  settings home.
+
 - Multi-call island train (2026-10-26): the island answers N-deep —
   a second inbound INVITE now QUEUES (ringing-queue state, banner
   stack with per-slot answer/reject, per-caller notifications,
