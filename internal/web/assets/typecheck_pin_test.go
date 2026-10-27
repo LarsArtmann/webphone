@@ -124,25 +124,30 @@ func assetSources(t *testing.T) []string {
 	return files
 }
 
-// includeRoots expands tsconfig.json's include entries against the embedded
-// tree: an entry may be a directory glob or a single file.
-func includeRoots(t *testing.T, include []string) []string {
+// includeRoots expands tsconfig.json's include entries against the tree: an
+// entry may be a directory glob or a single file. Entries matched by `exclude`
+// are removed, because a file the compiler skips is not checked.
+func includeRoots(t *testing.T, cfg typecheckConfig) []string {
 	t.Helper()
+	excluded := map[string]bool{}
+	for _, p := range matchedPaths(t, cfg.Exclude) {
+		excluded[p] = true
+	}
 	seen := map[string]bool{}
-	for _, entry := range include {
+	for _, entry := range cfg.Include {
 		// types/**/*.d.ts is not an asset source: the declarations are the
 		// GATE's own input, not something the gate checks.
 		if strings.HasPrefix(entry, "types/") {
 			continue
 		}
-		matches, err := fs.Glob(os.DirFS(repoRoot), entry)
-		if err != nil {
-			t.Fatalf("include glob %q: %v", entry, err)
-		}
+		matches := matchedPaths(t, []string{entry})
 		if len(matches) == 0 {
-			t.Errorf("include entry %q matches no file — a stale entry silently widens the debt", entry)
+			t.Errorf("include entry %q matches no file — a stale entry silently narrows the gate", entry)
 		}
 		for _, m := range matches {
+			if excluded[m] {
+				continue
+			}
 			seen[m] = true
 		}
 	}
@@ -152,6 +157,75 @@ func includeRoots(t *testing.T, include []string) []string {
 	}
 	sort.Strings(roots)
 	return roots
+}
+
+// matchedPaths expands tsconfig-style globs over the repo's asset tree.
+// os.DirFS+fs.Glob cannot do this: fs.Glob speaks path.Match, where "**" is a
+// single-segment "*" that never crosses a separator — the exact reason the
+// include glob has to be interpreted here instead.
+func matchedPaths(t *testing.T, patterns []string) []string {
+	t.Helper()
+	if len(patterns) == 0 {
+		return nil
+	}
+	matchers := make([]*regexp.Regexp, len(patterns))
+	for i, pattern := range patterns {
+		matchers[i] = globMatcher(t, pattern)
+	}
+	var out []string
+	err := fs.WalkDir(os.DirFS(repoRoot), "internal/web/assets", func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		for _, re := range matchers {
+			if re.MatchString(p) {
+				out = append(out, p)
+				break
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk asset tree: %v", err)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// globMatcher compiles a tsconfig glob: "**/" matches zero or more directories
+// (the TypeScript meaning), "*" stays inside one segment.
+func globMatcher(t *testing.T, pattern string) *regexp.Regexp {
+	t.Helper()
+	var b strings.Builder
+	b.WriteString("^")
+	for i := 0; i < len(pattern); i++ {
+		c := pattern[i]
+		switch {
+		case c == '*' && i+1 < len(pattern) && pattern[i+1] == '*':
+			i++
+			if i+1 < len(pattern) && pattern[i+1] == '/' {
+				i++
+				b.WriteString("(?:[^/]+/)*")
+			} else {
+				b.WriteString(".*")
+			}
+		case c == '*':
+			b.WriteString("[^/]*")
+		case c == '?':
+			b.WriteString("[^/]")
+		default:
+			b.WriteString(regexp.QuoteMeta(string(c)))
+		}
+	}
+	b.WriteString("$")
+	re, err := regexp.Compile(b.String())
+	if err != nil {
+		t.Fatalf("glob %q: %v", pattern, err)
+	}
+	return re
 }
 
 var relativeImportRe = regexp.MustCompile(`from "\./([A-Za-z0-9_.-]+)"`)
@@ -177,11 +251,10 @@ func TestTypeGateConfigIsStillStrict(t *testing.T) {
 
 // TestTypeGateIncludeIsClosed asserts the include is import-closed. A listed
 // file that imports an unlisted one still drags that file into the program, so
-// a non-closed include means the "debt list" would lie about which files are
-// unchecked.
+// an open closure means the include does not say what is checked.
 func TestTypeGateIncludeIsClosed(t *testing.T) {
 	cfg := loadTypecheckConfig(t, "tsconfig.json")
-	roots := includeRoots(t, cfg.Include)
+	roots := includeRoots(t, cfg)
 	listed := make(map[string]bool, len(roots))
 	for _, root := range roots {
 		listed[root] = true
@@ -194,46 +267,36 @@ func TestTypeGateIncludeIsClosed(t *testing.T) {
 		for _, m := range relativeImportRe.FindAllStringSubmatch(string(src), -1) {
 			target := path.Join(path.Dir(root), m[1])
 			if !listed[target] {
-				t.Errorf("%s imports %s, which is NOT in tsconfig.json's include — the import closure is open, so the debt list misreports what is checked", root, target)
+				t.Errorf("%s imports %s, which is NOT in tsconfig.json's include — the import closure is open, so the include misreports what is checked", root, target)
 			}
 		}
 	}
 }
 
-// TestTypeGateDebtMatchesTheTree is the monotonicity pin: the declared debt
-// list must equal exactly the asset tree minus the include, so a file can only
-// leave the debt by being annotated, and no untyped file can exist off the
-// books.
-func TestTypeGateDebtMatchesTheTree(t *testing.T) {
+// TestTypeGateCoversEveryAssetSource is the monotonicity pin: the checked set
+// must equal exactly the asset tree minus the vendored bundle. No untyped file
+// can exist off the books, and no file can be dropped out of the gate without
+// deleting it from the served tree.
+func TestTypeGateCoversEveryAssetSource(t *testing.T) {
 	cfg := loadTypecheckConfig(t, "tsconfig.json")
 	checked := map[string]bool{}
-	for _, root := range includeRoots(t, cfg.Include) {
+	for _, root := range includeRoots(t, cfg) {
 		checked[root] = true
-	}
-	declared := map[string]bool{}
-	for _, name := range typecheckDebt {
-		if declared[name] {
-			t.Errorf("typecheckDebt lists %s twice", name)
-		}
-		declared[name] = true
 	}
 
 	for _, file := range assetSources(t) {
-		switch {
-		case checked[file]:
-			if declared[file] {
-				t.Errorf("%s is BOTH in tsconfig.json's include and in typecheckDebt — delete the debt line", file)
-			}
-		case !declared[file]:
-			t.Errorf("%s is neither checked nor declared as debt: add it to tsconfig.json's include (and make it type-clean) or to typecheckDebt — an untyped file off the books is how the gate rots", file)
+		if !checked[file] {
+			t.Errorf("%s is served but NOT type-checked: widen tsconfig.json's include — an untyped file off the books is how the gate rots", file)
 		}
 	}
-	for name := range declared {
-		if !checked[name] {
-			if _, err := os.Stat(path.Join(repoRoot, name)); err != nil {
-				t.Errorf("typecheckDebt lists %s, which does not exist: %v", name, err)
-			}
-		}
+}
+
+// TestTypeGateOnlyExcludesTheVendoredBundle pins the single carve-out. A second
+// exclusion entry is how a red file gets hidden, so it is a test failure.
+func TestTypeGateOnlyExcludesTheVendoredBundle(t *testing.T) {
+	cfg := loadTypecheckConfig(t, "tsconfig.json")
+	if len(cfg.Exclude) != 1 || cfg.Exclude[0] != vendoredBundle {
+		t.Fatalf("tsconfig.json exclude = %v, want exactly [%q] — excluding anything else hides untyped served code", cfg.Exclude, vendoredBundle)
 	}
 }
 
@@ -260,9 +323,9 @@ func TestTypeGateRefusesBlanketSuppressions(t *testing.T) {
 }
 
 // TestTypeGateNixCheckUsesTheGate pins the wiring: the flake check must read
-// tsconfig.json. Pointing it at tsconfig.all.json (the campaign's measuring
-// project) would either fail forever or, worse, get deleted — and pointing it
-// nowhere is how a gate becomes advisory.
+// tsconfig.json. Pointing it at a second, redder project would either fail
+// forever or, worse, get deleted — and pointing it nowhere is how a gate
+// becomes advisory.
 func TestTypeGateNixCheckUsesTheGate(t *testing.T) {
 	raw, err := os.ReadFile(path.Join(repoRoot, "nix/checks.nix"))
 	if err != nil {
@@ -272,7 +335,9 @@ func TestTypeGateNixCheckUsesTheGate(t *testing.T) {
 	if !strings.Contains(nix, "tsc -p tsconfig.json") && !strings.Contains(nix, "tsc -p tsconfig.json --noEmit") {
 		t.Fatal("nix/checks.nix no longer runs `tsc -p tsconfig.json` — the type gate is unwired")
 	}
-	if strings.Contains(nix, "tsc -p tsconfig.all.json") {
-		t.Fatal("nix/checks.nix runs the measuring project tsconfig.all.json — that project is red by design and must never gate")
+	for _, forbidden := range []string{"tsconfig.all.json", "tsconfig.debt.json"} {
+		if strings.Contains(nix, forbidden) {
+			t.Fatalf("nix/checks.nix runs %s — a second project is red by design and must never gate", forbidden)
+		}
 	}
 }

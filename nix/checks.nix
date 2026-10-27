@@ -191,15 +191,15 @@
             '';
 
         # The island TYPE gate: tsconfig.json is the project that must be
-        # green, and it is deliberately a subset — a file joins it only once
-        # its whole import closure is clean (TypeScript checks whatever an
-        # included module imports, so a red file can neither hide behind a
-        # green one nor be smuggled in). The untyped remainder is enumerated
-        # in internal/web/assets/typecheck_pin_test.go, which is what stops
-        # the include from quietly shrinking.
+        # green, and it covers the WHOLE served asset tree — the island ES
+        # modules, the shell glue, the theme preload and the enrollment page.
+        # TypeScript checks whatever an included module imports, so a red file
+        # can neither hide behind a green one nor be smuggled in; the only
+        # carve-out is the vendored sip.js bundle. Both facts are pinned by
+        # internal/web/assets/typecheck_pin_test.go.
         #
-        # ALWAYS tsconfig.json — never tsconfig.all.json, which is the
-        # annotation campaign's measuring project and is red by design.
+        # ALWAYS tsconfig.json — a second, redder project would either fail
+        # forever or get deleted, and that is how a gate becomes advisory.
         # The $out artefact lists what was actually checked, so a gate that
         # silently stopped covering a file is visible in the build log
         # rather than trusted.
