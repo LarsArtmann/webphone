@@ -217,8 +217,5 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 		}
 		return nil
 	}
-	return errors.Join( //nolint:erraudit // Join keeps the sentinel errors.Is-matchable; family via ErrNotFound registration (same shape the SQL store used)
-		store.ErrNotFound,
-		errorfamily.Newf(errorfamily.Rejection, "readmodels.contact_missing", "contact %s", id.String()),
-	)
+	return notFound("readmodels.contact_missing", "contact %s", id.String())
 }

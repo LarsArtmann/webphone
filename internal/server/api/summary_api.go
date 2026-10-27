@@ -96,8 +96,8 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	draft, err := h.deps.TextAgent.DraftFromTranscript(ctx, transcript.Remote, strings.Join(transcript.Lines, "\n"))
 	if err != nil {
-		var agentErr *textagent.Error
-		if errors.As(err, &agentErr) {
+		agentErr, isAgentErr := errors.AsType[*textagent.Error](err)
+		if isAgentErr {
 			slog.Warn("summary: agent refused the draft",
 				"status", agentErr.Status, "detail", agentErr.Message, "extension", sess.Extension.String())
 			http.Error(w, agentErr.Message, agentErr.Status)
