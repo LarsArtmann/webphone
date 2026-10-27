@@ -43,6 +43,7 @@ import { initDialTypeahead, relabelTypeahead } from "./typeahead.js";
 import {
   announce,
   els,
+  errorMessage,
   initAdvancedToggle,
   log,
   setOfflineBanner,
@@ -56,7 +57,7 @@ import { initDeviceCheck } from "./selftest.js";
 const REMEMBER_KEY = "pbx-extension";
 
 if (localStorage.getItem(REMEMBER_KEY)) {
-  els.ext.value = localStorage.getItem(REMEMBER_KEY);
+  els.ext.value = localStorage.getItem(REMEMBER_KEY) || "";
   els.remember.checked = true;
 }
 renderHistory();
@@ -64,7 +65,7 @@ renderHistory();
 if (els.lang) {
   els.lang.value = getLang();
   els.lang.addEventListener("change", () => {
-    setLang(els.lang.value);
+    setLang(els.lang.value === "de" ? "de" : "en");
     applyI18n();
     renderCalls();
     // Re-fetch the open tab partial so the server-rendered tabs switch
@@ -72,8 +73,9 @@ if (els.lang) {
     // nav lives outside the swap target; shell.js re-labels it on this
     // event.
     const active = document.querySelector(".wp-nav .wp-nav-link.wp-active");
-    if (active && window.htmx) {
-      window.htmx.ajax("GET", active.getAttribute("hx-get"), {
+    const path = active && active.getAttribute("hx-get");
+    if (path && window.htmx) {
+      window.htmx.ajax("GET", path, {
         target: "#tab-content",
         swap: "innerHTML",
       });
@@ -115,11 +117,11 @@ async function resumeSession() {
       // changed since sign-in): the server session is stale — drop it
       // quietly and put the reason where the user is looking.
       await signOutQuiet();
-      els.loginError.textContent = t("resumeRejected")(err.message);
+      els.loginError.textContent = t("resumeRejected")(errorMessage(err));
       els.loginError.hidden = false;
       showLogin();
       log(
-        `resumed credentials rejected; server session dropped (${err.message})`,
+        `resumed credentials rejected; server session dropped (${errorMessage(err)})`,
         "error",
       );
       return;
@@ -129,7 +131,7 @@ async function resumeSession() {
     // state, and let the reconnect backoff own recovery. The tabs
     // stay usable — the server session was never the problem.
     networkOnline();
-    log(`session resumed; SIP unreachable (${err.message})`, "error");
+    log(`session resumed; SIP unreachable (${errorMessage(err)})`, "error");
   }
   // The whoami line honors the session's identity fields (a passkey
   // session carries display_name/numbers; an extension session keeps
@@ -163,7 +165,7 @@ async function resumeSession() {
 showSSOError(t);
 els.loginView.hidden = true;
 resumeSession().catch((err) => {
-  log(`session resume failed: ${err.message}`, "error");
+  log(`session resume failed: ${errorMessage(err)}`, "error");
   showLogin();
 });
 
@@ -206,9 +208,9 @@ els.loginForm.addEventListener("submit", async (event) => {
     // them at submit raced the session POST and 401'd on every login.
     renderContacts();
   } catch (err) {
-    els.loginError.textContent = t("loginError")(err.message);
+    els.loginError.textContent = t("loginError")(errorMessage(err));
     els.loginError.hidden = false;
-    log(`connect failed: ${err.message}`, "error");
+    log(`connect failed: ${errorMessage(err)}`, "error");
   }
 });
 
@@ -217,7 +219,9 @@ els.loginForm.addEventListener("submit", async (event) => {
 // async on purpose, so the DID arrives after the synchronous
 // ext@sipDomain write above — append it once, on the event.
 document.addEventListener("wp:session-opened", (event) => {
-  const did = event.detail && event.detail.did;
+  /** @type {{did?: string}} */
+  const detail = /** @type {CustomEvent} */ (event).detail || {};
+  const did = detail.did;
   if (did && !els.whoami.textContent.includes(did)) {
     els.whoami.textContent += ` · ${did}`;
   }
@@ -238,7 +242,7 @@ function restoreTabsAfterSignIn() {
   if (!window.htmx) return;
   // E3: the shell remembers the last-active tab; a fresh sign-in lands
   // where the user left off (messages when nothing is stored).
-  const stored = localStorage.getItem("wp-last-tab");
+  const stored = localStorage.getItem("wp-last-tab") || "";
   const known = [
     "messages",
     "fax",
@@ -325,12 +329,14 @@ window.addEventListener("online", () => {
 // mapping lives in ui.js (toastKindFor) so the server's vocabulary stays
 // pinned by the island tests.
 document.body.addEventListener("showMessage", (event) => {
-  const detail = event.detail || {};
-  announce(detail.message || "", toastKindFor(detail.kind));
+  /** @type {{message?: string, kind?: string}} */
+  const detail = /** @type {CustomEvent} */ (event).detail || {};
+  announce(detail.message || "", toastKindFor(detail.kind || ""));
 });
 
-els.keypad.querySelectorAll("button[data-tone]").forEach((button) => {
-  button.addEventListener("click", () => sendDtmf(button.dataset.tone));
+els.keypad.querySelectorAll("button[data-tone]").forEach((node) => {
+  const button = /** @type {HTMLButtonElement} */ (node);
+  button.addEventListener("click", () => sendDtmf(button.dataset.tone || ""));
 });
 
 log(`webphone loaded; sip domain ${sipDomain}`);

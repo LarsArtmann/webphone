@@ -42,6 +42,7 @@
     "internal/web/assets/island/app/csrf.js",
     "internal/web/assets/island/app/i18n.js",
     "internal/web/assets/island/app/ice.js",
+    "internal/web/assets/island/app/main.js",
     "internal/web/assets/island/app/mic.js",
     "internal/web/assets/island/app/notify.js",
     "internal/web/assets/island/app/panels.js",
