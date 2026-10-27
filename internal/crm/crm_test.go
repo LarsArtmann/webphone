@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -155,6 +156,65 @@ func TestLogCall(t *testing.T) {
 	stub.logStatus = http.StatusInternalServerError
 	if err := client.LogCall(context.Background(), NewContactRef("01M/contact"), "in", "+49 30 12345678", 0, domain.DispositionUnknown); err == nil {
 		t.Fatal("5xx must surface as an error")
+	}
+}
+
+// TestClientHealthCheck pins the authenticated health leg (issue #9):
+// 200 with zero results proves reachable AND authorized (the probe's
+// never-matching number rides the real lookup endpoint); a rejected
+// token yields the naming rejection; 5xx and transport failures are
+// the transient arms; a disabled client answers ErrDisabled; and the
+// probe never touches the lookup cache.
+func TestClientHealthCheck(t *testing.T) {
+	newStub := func(status int) (*stubCRM, *Client) {
+		stub := &stubCRM{lookupStatus: status}
+		srv := newStubServer(t, stub)
+		client, err := NewClient(srv.URL, "sekrit")
+		if err != nil {
+			t.Fatalf("NewClient: %v", err)
+		}
+		return stub, client
+	}
+
+	ctx := context.Background()
+	// Reachable + authorized (the 200-with-no-results shape).
+	_, ok := newStub(http.StatusOK)
+	if err := ok.HealthCheck(ctx); err != nil {
+		t.Fatalf("200 empty results must be a green leg: %v", err)
+	}
+
+	// Revoked token: the operator reads the fix from the message.
+	_, denied := newStub(http.StatusUnauthorized)
+	err := denied.HealthCheck(ctx)
+	if err == nil || !strings.Contains(err.Error(), "rotate the CRM token credential") {
+		t.Fatalf("401: %v, want the rotate-the-token message", err)
+	}
+
+	// CRM broken (5xx): transient red.
+	_, broken := newStub(http.StatusInternalServerError)
+	if err := broken.HealthCheck(ctx); err == nil {
+		t.Fatal("5xx must redden the leg")
+	}
+
+	// Disabled client: the sentinel (the leg is never registered when
+	// the seam is off; the sentinel keeps do()'s contract).
+	var disabled *Client
+	if err := disabled.HealthCheck(ctx); !errors.Is(err, ErrDisabled) {
+		t.Fatalf("disabled: %v, want ErrDisabled", err)
+	}
+
+	// The probe bypasses the resolver cache: repeat probes hit upstream
+	// every time (a cached verdict would freeze the leg's truth).
+	stub, probe := newStub(http.StatusOK)
+	resolver := NewResolver(probe, nil)
+	_ = resolver
+	for range 3 {
+		if err := probe.HealthCheck(ctx); err != nil {
+			t.Fatalf("probe %d: %v", 1, err)
+		}
+	}
+	if hits := stub.lookupBodies.Load(); hits != 3 {
+		t.Fatalf("probe hit upstream %d times for 3 probes (caching leaked into the health leg)", hits)
 	}
 }
 

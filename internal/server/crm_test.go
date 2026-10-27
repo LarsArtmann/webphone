@@ -18,6 +18,9 @@ type crmStub struct {
 	logBodies  []map[string]any
 	lookupJSON string
 	logStatus  int
+	// lookupStatus defaults to 200 when zero; 401 stands in for a
+	// revoked bearer token (the health leg's revocation pin).
+	lookupStatus int
 
 	// Wire evidence for the cross-repo contract tests: every request's
 	// Authorization header, and the decoded number of every lookup.
@@ -32,9 +35,13 @@ func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/contacts/by-phone" {
 		s.mu.Lock()
 		s.lookupNumbers = append(s.lookupNumbers, r.URL.Query().Get("number"))
+		status := s.lookupStatus
 		s.mu.Unlock()
+		if status == 0 {
+			status = http.StatusOK
+		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(status)
 		_, _ = w.Write([]byte(s.lookupJSON))
 		return
 	}

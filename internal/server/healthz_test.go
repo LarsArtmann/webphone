@@ -128,6 +128,68 @@ func TestHealthzProbesThePasskeyIdentityLayer(t *testing.T) {
 	})
 }
 
+// TestHealthzProbesTheCRMSeam pins the conditional CRM leg (issue #9):
+// a configured CRM joins readiness with an AUTHENTICATED probe — a
+// revoked token reddens healthz naming "crm" on the very next request —
+// while an unconfigured deployment keeps probing exactly the resources
+// it has (no crm check in the body at all).
+func TestHealthzProbesTheCRMSeam(t *testing.T) {
+	t.Run("configured and authorized", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("healthz status %d, want 200 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"crm"`) {
+			t.Errorf("healthz body does not carry the crm check: %s", body)
+		}
+	})
+
+	t.Run("revoked token reddens within one request", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := clientFor(t, server)
+
+		if resp, body := c.do(http.MethodGet, "/healthz", nil, ""); resp.StatusCode != http.StatusOK {
+			t.Fatalf("healthz before revocation: %d (body %s)", resp.StatusCode, body)
+		}
+
+		// The token is revoked: every authenticated round trip 401s.
+		stub.mu.Lock()
+		stub.lookupStatus = http.StatusUnauthorized
+		stub.mu.Unlock()
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusServiceUnavailable {
+			t.Fatalf("healthz after revocation: %d, want 503 (body %s)", resp.StatusCode, body)
+		}
+		if !strings.Contains(string(body), `"crm"`) {
+			t.Errorf("503 body does not name the crm check: %s", body)
+		}
+		if !strings.Contains(string(body), "rotate the CRM token credential") {
+			t.Errorf("503 body does not carry the fix: %s", body)
+		}
+	})
+
+	t.Run("unconfigured deployment carries no crm check", func(t *testing.T) {
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = nil })
+		c := clientFor(t, server)
+
+		resp, body := c.do(http.MethodGet, "/healthz", nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("healthz status %d, want 200 (body %s)", resp.StatusCode, body)
+		}
+		if strings.Contains(string(body), `"crm"`) {
+			t.Errorf("CRM-less deployment must not carry a crm check: %s", body)
+		}
+	})
+}
+
 // failedProjectionProvider reports one worker past its restart budget —
 // the state the real projectionhost reaches when a projection keeps
 // erroring. It stands in for the wired service so the wiring's honesty is

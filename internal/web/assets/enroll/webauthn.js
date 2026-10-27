@@ -60,6 +60,7 @@ const toBytes = (value) =>
  * @returns {Record<string, unknown>}
  */
 export function prepareRegistrationOptions(options) {
+  /** @type {Record<string, unknown>} */
   const prepared = { ...options, challenge: toBytes(options.challenge) };
   if (options.user) {
     prepared.user = { ...options.user, id: toBytes(options.user.id) };
@@ -90,12 +91,13 @@ export function serializeCredential(credential, kind) {
   const source = /** @type {IslandCredentialResponseFields} */ (
     /** @type {unknown} */ (credential.response)
   );
-  /** @type {const} */ const byteFields = /** @type {const} */ ([
+  /** @type {Array<"clientDataJSON" | "authenticatorData" | "signature" | "attestationObject">} */
+  const byteFields = [
     "clientDataJSON",
     "authenticatorData",
     "signature",
     "attestationObject",
-  ]);
+  ];
   for (const key of byteFields) {
     const bytes = source[key];
     if (bytes != null) response[key] = base64url.encode(bytes);
