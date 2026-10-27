@@ -258,32 +258,35 @@ in
         }
       ];
 
-    services.webphone.settings.auth = lib.mkIf cfg.oauth2.enable (lib.mkMerge [
-      (lib.mkIf deriveWebAuthnRP {
-        # mkDefault: an explicitly declared settings.auth.passkey.*
-        # value wins, so an operator pin stays authoritative.
-        passkey = {
-          rp_id = lib.mkDefault cfg.caddy.hostName;
-          rp_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
-        };
-      })
-      {
-        # PLAIN definitions, deliberately: a raw
-        # settings.auth.oauth2.* of the same key makes the eval fail
-        # with a conflict (declare the OIDC client shape ONCE) instead
-        # of one lane silently winning.
-        oauth2 = {
-          issuer = cfg.oauth2.issuer;
-          client_id = cfg.oauth2.clientId;
-          client_secret_file = oauth2SecretPath;
-          redirect_url = oauth2RedirectUrl;
-          scopes = cfg.oauth2.scopes;
-          allowed_groups = cfg.oauth2.allowedGroups;
-        };
-      }
-    ]);
+    services.webphone.settings.auth = lib.mkIf cfg.oauth2.enable (
+      lib.mkMerge [
+        (lib.mkIf deriveWebAuthnRP {
+          # mkDefault: an explicitly declared settings.auth.passkey.*
+          # value wins, so an operator pin stays authoritative.
+          passkey = {
+            rp_id = lib.mkDefault cfg.caddy.hostName;
+            rp_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
+          };
+        })
+        {
+          # PLAIN definitions, deliberately: a raw
+          # settings.auth.oauth2.* of the same key makes the eval fail
+          # with a conflict (declare the OIDC client shape ONCE) instead
+          # of one lane silently winning.
+          oauth2 = {
+            issuer = cfg.oauth2.issuer;
+            client_id = cfg.oauth2.clientId;
+            client_secret_file = oauth2SecretPath;
+            redirect_url = oauth2RedirectUrl;
+            scopes = cfg.oauth2.scopes;
+            allowed_groups = cfg.oauth2.allowedGroups;
+          };
+        }
+      ]
+    );
 
-    systemd.services.webphone.serviceConfig.LoadCredential =
-      lib.mkIf cfg.oauth2.enable [ "${oauth2CredentialName}:${cfg.oauth2.clientSecretFile}" ];
+    systemd.services.webphone.serviceConfig.LoadCredential = lib.mkIf cfg.oauth2.enable [
+      "${oauth2CredentialName}:${cfg.oauth2.clientSecretFile}"
+    ];
   };
 }
