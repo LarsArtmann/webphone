@@ -5,10 +5,14 @@
 // declaration here is global, so a module never imports a type — it just
 // uses it, exactly like the JSDoc annotations that reference it.
 //
-// Every id in IslandDomIds is served markup pinned by
-// TestServedPageHoldsTheDomContract (docs/dom-contract.md is the list's
-// one home). Declaring them means a typo'd id or a renamed element is a
-// compile error instead of a silent `null` at runtime.
+// Every id in IslandDomIds is served markup: docs/dom-contract.md is the
+// list's one home (pinned there by TestServedPageHoldsTheDomContract), and
+// TestIslandDomIdsMirrorTheDomContract refuses an id declared here that the
+// document does not carry — so a rename cannot leave one of the three
+// mirrors behind. The relation is one-directional: the document also lists
+// shell-owned ids (wp-live, wp-tab-skeleton) and the markup-only call-btn,
+// which the island never looks up. Declaring an id means a typo'd lookup is
+// a compile error instead of a silent `null` at runtime.
 
 interface IslandDomIds {
   "reg-status": HTMLElement;

@@ -9,6 +9,15 @@ source of truth, so the test can never drift from the documented
 list. Change the page and this list in the same commit; the test
 fails otherwise.
 
+Two ids are deliberately NOT mirrored in `types/island.d.ts`
+(`wp-live`, `wp-tab-skeleton`) and one is markup-only (`call-btn`):
+the first two are shell-owned affordances (shell.js must work when the
+island scripts fail), and the last is driven by the shell's delegated
+`data-dial` handler, never by a typed `getElementById`. The mirror
+rule is one-directional — every id the island's type declarations
+carry must appear here, not the reverse — and
+`TestIslandDomIdsMirrorTheDomContract` (internal/web/assets) pins it.
+
 Beyond the ids, the contract (asserted in the same test): the script
 references (`/config.js`, `/assets/vendor/sip.min.js`,
 `/assets/island/app/main.js`, `/htmx.min.js`), the `WebPhone` brand,
@@ -62,6 +71,9 @@ ice-panel
 log
 toasts
 remote-audio
+audio-out-wrap
+audio-output
+sso-error
 lang
 wp-live
 wp-tab-skeleton
