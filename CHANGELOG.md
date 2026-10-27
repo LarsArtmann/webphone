@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Honest call dispositions (2026-10-27, issue #6 train): a typed
+  `domain.Disposition` (answered/missed/voicemail/ivr/failed/unknown)
+  replaces the island's `established ? "answered" : "missed"` guess —
+  legacy outcome values demote through a table, so a voicemail call can
+  no longer journal as "answered" in the CRM. The operator confirms on
+  the ended card (chips, saved verdict survives a CRM outage as a
+  retryable 502), the verdict rides the `call_logged` payload verbatim,
+  and the history tab gains a verdict filter plus a confirmed-verdict
+  badge whose unknown/absent state renders no glyph at all.
+- Typed CRM deployment lane (2026-10-27, issue #9 train):
+  `services.telephony.webphone.crm.{enable,url,tokenFile}` in the NixOS
+  module wires the CRM token as a systemd `LoadCredential` secret with
+  eval-time assertions (half shapes, knob-without-enable, store leaks
+  refuse the build); `crm.token_file` joins the app config with the
+  same boot-time read + both-or-neither rule as the webhook and SIP
+  secrets. Off = the raw `settings.crm` lane, untouched.
+- CRM health leg (2026-10-27, issue #9 train): with the CRM seam
+  configured, `/healthz` gains a non-critical `crm` probe (one
+  authenticated round trip against a reserved never-matched number,
+  cache-bypassing); 401/403 names the credential ("rotate the CRM
+  token"), other failures report the transport. The leg is absent when
+  the seam is off — byte-identical `/healthz`.
 - Goroutine containment (2026-10-27, error-surface train): every
   fire-and-forget/background goroutine (the post-call draft fan-out, the fax
   archive offer, the signal read loop, the retention and dedup sweeps) now

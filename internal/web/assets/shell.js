@@ -74,6 +74,38 @@
   // sized by the shared .wp-icon CSS class, tinted by currentColor.
   // Platform emoji rendered differently per OS and read as decoration.
   /**
+   * Whether an element-like value actually answers a DOM method. A real
+   * HTMLElement always does, so `if (el.closest)` reads as dead code to the
+   * checker — but the node:test stubs are plain objects (some answer
+   * matches() and not closest()), so these guards are load-bearing at
+   * runtime. One documented home beats four casts.
+   * @param {unknown} el
+   * @param {string} method
+   * @returns {boolean}
+   */
+  function hasMethod(el, method) {
+    return (
+      Boolean(el) &&
+      typeof (/** @type {Record<string, unknown>} */ (el))[method] ===
+        "function"
+    );
+  }
+
+  /**
+   * The human message of a thrown value. Mirrors the island's errorMessage
+   * (ui.js) so a toast quotes the same text the event log does; a rejection
+   * can be an Error, a string, a plain object, or null, and every one of
+   * those must still render something readable.
+   * @param {unknown} err
+   * @returns {string}
+   */
+  function errorMessage(err) {
+    if (err instanceof Error) return err.message;
+    if (typeof err === "string") return err;
+    return String(err);
+  }
+
+  /**
    * @param {string} path
    * @returns {string}
    */
@@ -232,12 +264,12 @@
     document.addEventListener("click", function (event) {
       var button = closestHTMLElement(eventElement(event), "[data-dial]");
       if (!button) return;
-      dest = /** @type {HTMLInputElement} */ (document.getElementById("dest"));
-      form = /** @type {HTMLFormElement} */ (
+      var dest = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("dest")
+      );
+      var form = /** @type {HTMLFormElement | null} */ (
         document.getElementById("dial-form")
       );
-      var dest = document.getElementById("dest");
-      var form = document.getElementById("dial-form");
       var phoneView = document.getElementById("phone-view");
       if (!dest || !form) return;
       if (phoneView && phoneView.hidden) {

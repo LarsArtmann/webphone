@@ -264,7 +264,7 @@ func TestHistoryDispositionFilter(t *testing.T) {
 	if resp, body := postTranscript(t, c, "call-2", "in", "+4930123456", "second call"); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("transcript 2: %d %s", resp.StatusCode, body)
 	}
-	if resp, body := confirmDisposition(t, c, "call-1", map[string]any{"disposition": "answered"}); resp.StatusCode != http.StatusNoContent {
+	if resp, body := confirmDisposition(t, c, "call-1", map[string]any{"disposition": "answered", "number": "+4989123456", "direction": "in"}); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("confirm: %d %s", resp.StatusCode, body)
 	}
 
