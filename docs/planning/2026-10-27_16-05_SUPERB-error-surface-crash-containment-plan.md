@@ -23,7 +23,7 @@ Source: the 15:57 status report (`docs/status/2026-10-27_15-57_sse-502-incident-
 
 ## De-overlap with the sibling plan (16:04)
 
-`2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.d2` (parallel session) owns the **TS type migration** (tsconfig/checkJs/KMP spike) including its T24 "Error-surface conventions — typed rejection · no silent catch". This plan owns the **runtime behavior**: surfaces, guards, gates, prod verification. Coordination rule: the typed-rejection *convention design* (f36) lands in THEIR T24; our T12 cross-references it instead of designing a rival one. No other overlap.
+`2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.d2` (parallel session) owns the **TS type migration** (tsconfig/checkJs/KMP spike) including its T24 "Error-surface conventions — typed rejection · no silent catch". This plan owns the **runtime behavior**: surfaces, guards, gates, prod verification. Coordination rule: the typed-rejection _convention design_ (f36) lands in THEIR T24; our T12 cross-references it instead of designing a rival one. No other overlap.
 
 ## Pareto breakdown
 
@@ -94,114 +94,114 @@ flowchart TD
 
 Sort key: P0 → P3, then impact, then customer value, then effort.
 
-| # | Task | Tier | Impact | Effort | Customer value | Source items |
-|---|------|------|--------|--------|----------------|--------------|
-| T1 | Host verdict: `systemctl show webphone` (NRestarts/start-timestamp), journal panic/fatal grep, Caddy 502-window correlation, memoryMax check; record verdict in the 15:57 report (ANNOTATE) | 1% | Critical | 30–45 min | Operator truth: incident vs live bug | f29, f30, f31, f32 |
-| T2 | `notifyDraftReady` recover() guard + greppable `agentAudit`-style line (panic = process death today) | 1% | Critical | 30 min | Calls/feeds survive a transport bug | f18 |
-| T3 | Sweep ALL fire-and-forget goroutines under `internal/` (`rg "go func("`); guard every unprotected one | 1% | High | 60–90 min | Same class, whole server | f19 |
-| T4 | Containment test: panicking stub transport must NOT kill the test server | 1% | High | 30–45 min | Regression-proof the fix | f20 |
-| T5 | Island error-path inventory: every empty catch, unhandled rejection, console-only failure classified surfaced/justified/bug | 4% | Critical | 60–90 min | Finds every silent failure | f1, f12 |
-| T6 | summarizeCall: distinct announce for network-dead vs HTTP-failure vs 404 (i18n en+de) + tests | 4% | High | 30–45 min | Honest failure copy on every summarize | f2 |
-| T7 | transcript-flush failure surface (badge, not console) + shell.js htmx error listener user surface + tests | 4% | High | 60 min | No silent data-loss feelings | f6, f7 |
-| T8 | Hygiene batch: deleteSession catch split, CSRF-reload announce, recordCrmCall/push-registration rejection sweep | 4% | Medium | 45–60 min | No unexplained reloads/lost toasts | f8, f9, f12 |
-| T9 | Call-failure REASON on the ended card + aria-live announce (SIP cause → human line; ONE mapping shared with TODO_LIST #6 dispositions) + island tests (incl. SSE pill/toast coverage check) | 20% | High | 90–100 min | "Why did my call fail" answered | f3, f4, f16 |
-| T10 | Readable `htmx:sseError` log line (kill `[object Event]` spam) + upstream note prep for cqrs-htmx (verify-before-filing) | 20% | Medium | 30–45 min | Debuggable feeds | f5, f45 |
-| T11 | island-lint: enable oxlint `no-empty` + `no-unused-vars`; fix findings (dead params calls.js:641/:732) | 20% | High | 45–60 min | Gate carries the contract forever | f10, f11 |
-| T12 | error-contract.md island-JS section (every catch surfaces or justified) + 502-proxy row + cross-ref the sibling plan's typed-rejection T24 + stack-runbook sync | 20% | High | 45–60 min | One home for the ruling | f17, f28, f35, f36, f37 |
-| T13 | lessons.md diagnosis-humility entry + stack daemon-relock policy note (g2 answer recorded) | 20% | Medium | 30 min | Same mistake never twice | f34, f42 |
-| T14 | Shutdown release-count log ("released K /events streams") + restart-window UX story (what stays alive) | 20% | Medium | 45 min | Incidents greppable host-side | f24, f26 |
-| T15 | Verify/pin `push.draft_devices`/`push.draft_send` sentinels in family_test | 20% | Medium | 30 min | Error-code drift stays red | f23 |
-| T16 | erraudit tiers 1+2 early run (SUPERB-train seams) + summary_api `errors.As` → `errors.AsType` | 20% | Medium | 60 min | Tier-2 stays 0 | f21, f22 |
-| T17 | HARVEST: this plan + the 50-item table → TODO_LIST (actionable) / ROADMAP (polish) | 20% | High | 30–45 min | Nothing rots in a snapshot | f50 |
-| T18 | Prod deep-verify: deploy fired + `/version` matches pin, `agent` flag on prod config.js, Caddy /events flush+logging, ring `end` hook fires | tail | High | 60–90 min | Prod serves what we shipped | f33, f43, f44 |
-| T19 | `/events` heartbeat + server `retry:` hint: decide on drop-class evidence, implement if GO | tail | Low | 60–90 min | Long-idle tabs stay live | f25, f27 |
-| T20 | Polish batch: pill retry-state title, summarize-404 copy decision, console.log policy, offline-banner vs pill doc, push-registration restart UX | tail | Low | 60 min | Edges stop leaking | f13, f47, f48, f49, f46 |
-| T21 | History/missed-call correctness: failed-outbound row renders, badge not inflated (note: island already SENDS `answered`/`missed` — verify rendering) | tail | Medium | 30–45 min | History tells the truth | f14, f15 |
-| T22 | Final wave: `go test -count=1 ./...`, island node tests, full buildflow, `nix flake check`, browser E2E if markup changed, CHANGELOG lines, phase commits + CI watch | tail | Critical | 90–100 min | Nothing lands red | f38, f39, f40, f41, f46 |
+| #   | Task                                                                                                                                                                                        | Tier | Impact   | Effort     | Customer value                         | Source items            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | -------- | ---------- | -------------------------------------- | ----------------------- |
+| T1  | Host verdict: `systemctl show webphone` (NRestarts/start-timestamp), journal panic/fatal grep, Caddy 502-window correlation, memoryMax check; record verdict in the 15:57 report (ANNOTATE) | 1%   | Critical | 30–45 min  | Operator truth: incident vs live bug   | f29, f30, f31, f32      |
+| T2  | `notifyDraftReady` recover() guard + greppable `agentAudit`-style line (panic = process death today)                                                                                        | 1%   | Critical | 30 min     | Calls/feeds survive a transport bug    | f18                     |
+| T3  | Sweep ALL fire-and-forget goroutines under `internal/` (`rg "go func("`); guard every unprotected one                                                                                       | 1%   | High     | 60–90 min  | Same class, whole server               | f19                     |
+| T4  | Containment test: panicking stub transport must NOT kill the test server                                                                                                                    | 1%   | High     | 30–45 min  | Regression-proof the fix               | f20                     |
+| T5  | Island error-path inventory: every empty catch, unhandled rejection, console-only failure classified surfaced/justified/bug                                                                 | 4%   | Critical | 60–90 min  | Finds every silent failure             | f1, f12                 |
+| T6  | summarizeCall: distinct announce for network-dead vs HTTP-failure vs 404 (i18n en+de) + tests                                                                                               | 4%   | High     | 30–45 min  | Honest failure copy on every summarize | f2                      |
+| T7  | transcript-flush failure surface (badge, not console) + shell.js htmx error listener user surface + tests                                                                                   | 4%   | High     | 60 min     | No silent data-loss feelings           | f6, f7                  |
+| T8  | Hygiene batch: deleteSession catch split, CSRF-reload announce, recordCrmCall/push-registration rejection sweep                                                                             | 4%   | Medium   | 45–60 min  | No unexplained reloads/lost toasts     | f8, f9, f12             |
+| T9  | Call-failure REASON on the ended card + aria-live announce (SIP cause → human line; ONE mapping shared with TODO_LIST #6 dispositions) + island tests (incl. SSE pill/toast coverage check) | 20%  | High     | 90–100 min | "Why did my call fail" answered        | f3, f4, f16             |
+| T10 | Readable `htmx:sseError` log line (kill `[object Event]` spam) + upstream note prep for cqrs-htmx (verify-before-filing)                                                                    | 20%  | Medium   | 30–45 min  | Debuggable feeds                       | f5, f45                 |
+| T11 | island-lint: enable oxlint `no-empty` + `no-unused-vars`; fix findings (dead params calls.js:641/:732)                                                                                      | 20%  | High     | 45–60 min  | Gate carries the contract forever      | f10, f11                |
+| T12 | error-contract.md island-JS section (every catch surfaces or justified) + 502-proxy row + cross-ref the sibling plan's typed-rejection T24 + stack-runbook sync                             | 20%  | High     | 45–60 min  | One home for the ruling                | f17, f28, f35, f36, f37 |
+| T13 | lessons.md diagnosis-humility entry + stack daemon-relock policy note (g2 answer recorded)                                                                                                  | 20%  | Medium   | 30 min     | Same mistake never twice               | f34, f42                |
+| T14 | Shutdown release-count log ("released K /events streams") + restart-window UX story (what stays alive)                                                                                      | 20%  | Medium   | 45 min     | Incidents greppable host-side          | f24, f26                |
+| T15 | Verify/pin `push.draft_devices`/`push.draft_send` sentinels in family_test                                                                                                                  | 20%  | Medium   | 30 min     | Error-code drift stays red             | f23                     |
+| T16 | erraudit tiers 1+2 early run (SUPERB-train seams) + summary_api `errors.As` → `errors.AsType`                                                                                               | 20%  | Medium   | 60 min     | Tier-2 stays 0                         | f21, f22                |
+| T17 | HARVEST: this plan + the 50-item table → TODO_LIST (actionable) / ROADMAP (polish)                                                                                                          | 20%  | High     | 30–45 min  | Nothing rots in a snapshot             | f50                     |
+| T18 | Prod deep-verify: deploy fired + `/version` matches pin, `agent` flag on prod config.js, Caddy /events flush+logging, ring `end` hook fires                                                 | tail | High     | 60–90 min  | Prod serves what we shipped            | f33, f43, f44           |
+| T19 | `/events` heartbeat + server `retry:` hint: decide on drop-class evidence, implement if GO                                                                                                  | tail | Low      | 60–90 min  | Long-idle tabs stay live               | f25, f27                |
+| T20 | Polish batch: pill retry-state title, summarize-404 copy decision, console.log policy, offline-banner vs pill doc, push-registration restart UX                                             | tail | Low      | 60 min     | Edges stop leaking                     | f13, f47, f48, f49, f46 |
+| T21 | History/missed-call correctness: failed-outbound row renders, badge not inflated (note: island already SENDS `answered`/`missed` — verify rendering)                                        | tail | Medium   | 30–45 min  | History tells the truth                | f14, f15                |
+| T22 | Final wave: `go test -count=1 ./...`, island node tests, full buildflow, `nix flake check`, browser E2E if markup changed, CHANGELOG lines, phase commits + CI watch                        | tail | Critical | 90–100 min | Nothing lands red                      | f38, f39, f40, f41, f46 |
 
 ## Table 2 — Micro-breakdown (≤12 min each, ALL todos, sorted)
 
-| ID | Task | Micro-item (≤12 min) | Impact |
-|----|------|----------------------|--------|
-| M01 | T1 | Host: `systemctl show webphone -p NRestarts -p ExecMainStartTimestamp` | Critical |
-| M02 | T1 | Host: `journalctl -u webphone --since today \| grep -iE "panic\|fatal"` | Critical |
-| M03 | T1 | Correlate restart second with Caddy 502 window (`journalctl -u caddy`) | High |
-| M04 | T1 | Record verdict in 15:57 report (ANNOTATE-style appendix) | Critical |
-| M05 | T1 | Host: check `memoryMax` set/unset; note watermark decision | Medium |
-| M06 | T2 | Add recover() + greppable slog line in `notifyDraftReady` (summary_api.go) | Critical |
-| M07 | T2 | Build + run summary_api tests green | Critical |
-| M08 | T3 | `rg "go func(" internal/` → inventory list | High |
-| M09 | T3 | Classify each site: handler-sync (covered) vs bare goroutine (guard) | High |
-| M10 | T3 | Guards batch 1: `internal/server/api` | High |
-| M11 | T3 | Guards batch 2: push/app loops (matrix/signal receivers) | High |
-| M12 | T3 | Build + targeted package tests green | High |
-| M13 | T4 | Write test: panicking stub transport, server survives | High |
-| M14 | T4 | Run test green; note pin in family test | High |
-| M15 | T5 | `rg "catch" island/app` → empty-catch inventory | Critical |
-| M16 | T5 | Unhandled-promise inventory (`.then` w/o catch, floating awaits) | Critical |
-| M17 | T5 | Classify all: surfaced / justified / BUG (table into plan errata) | Critical |
-| M18 | T5 | Read the three known suspects: flushTranscriptSaves, htmx listener, recordCrmCall | Critical |
-| M19 | T6 | i18n keys: network-dead vs HTTP-failure vs 404 (en+de, parity tests) | High |
-| M20 | T6 | Wire branches in summarizeCall | High |
-| M21 | T6 | Update calls-summary island specs | High |
-| M22 | T7 | flushTranscriptSaves: surface badge if console-only | High |
-| M23 | T7 | shell.js htmx error listener: user surface if log-only | High |
-| M24 | T7 | Island specs for both surfaces | High |
-| M25 | T8 | deleteSession: split 401-expected vs network-dead (or justify at site) | Medium |
-| M26 | T8 | authedFetch: announce before 3-strikes CSRF reload | Medium |
-| M27 | T8 | recordCrmCall + push registration: catch floating rejections | Medium |
-| M28 | T9 | Locate terminate-cause availability in island teardown path | High |
-| M29 | T9 | SIP-cause → reason keys en+de (ONE mapping, coordinate TODO_LIST #6) | High |
-| M30 | T9 | Render reason line on ended card + announce | High |
-| M31 | T9 | Island specs: reason + announce + settled-card regressions | High |
-| M32 | T9 | SSE pill/toast coverage check; add missing specs | Medium |
-| M33 | T10 | document-level `htmx:sseError` readable log handler | Medium |
-| M34 | T10 | Upstream note draft (cite ext lines read 15:5x; verify-before-filing gate) | Medium |
-| M35 | T11 | Enable `no-empty` + `no-unused-vars` in island oxlint.json | High |
-| M36 | T11 | Fix findings: calls.js:641 `target`, :732 `id`, + any new | High |
-| M37 | T11 | island-lint + island-js green via flake check path | High |
-| M38 | T12 | error-contract.md: island-JS section (surface-or-justified rule) | High |
-| M39 | T12 | Add "502 from the proxy" row + cross-ref sibling plan's typed-rejection T24 | High |
-| M40 | T12 | Sync stack runbook § webphone error contract | Medium |
-| M41 | T13 | lessons.md: diagnosis-humility entry (evidence-backed vs plausible) | Medium |
-| M42 | T13 | Stack daemon-relock policy: find ruling or write the note | High |
-| M43 | T14 | Log released-stream count in ExtensionHubs.Shutdown path | Medium |
-| M44 | T14 | Restart-window UX story decision (alive/dead affordances) | Medium |
-| M45 | T15 | Check + pin `push.draft_*` sentinels in family_test | Medium |
-| M46 | T16 | buildflow erraudit tier-1 + tier-2 slices | Medium |
-| M47 | T16 | summary_api.go:100 `errors.As` → `errors.AsType[*textagent.Error]` | Medium |
-| M48 | T16 | Re-measure note (due date stays 2026-11-05) | Low |
-| M49 | T17 | Harvest P0–P1 rows → TODO_LIST | High |
-| M50 | T17 | Harvest polish rows → ROADMAP | Medium |
-| M51 | T18 | Host: confirm deploy fired + `/version` matches pin | High |
-| M52 | T18 | Prod `config.js` `agent` flag on/off | Medium |
-| M53 | T18 | Caddy: /events flush + unbuffered + logging config | Medium |
-| M54 | T18 | Dialplan: ring `state:end` hook actually fires | Low |
-| M55 | T19 | Decide heartbeat necessity on drop-class evidence | Low |
-| M56 | T19 | Implement /events heartbeat comment loop (if GO) | Low |
-| M57 | T19 | Server `retry:` hint (if GO) | Low |
-| M58 | T20 | Pill title retry-state ("retrying in Ns") | Low |
-| M59 | T20 | Summarize-404 copy decision (no-transcript vs seam-off) | Low |
-| M60 | T20 | console.log policy + gate ui.js:60-style logs | Low |
-| M61 | T20 | Offline-banner vs SSE-pill division of truth doc | Low |
-| M62 | T20 | Push-registration restart UX check (CSRF dance retry) | Low |
-| M63 | T21 | Failed-outbound History row renders (island already SENDS outcome — verify render) | Medium |
-| M64 | T21 | Missed-call badge non-inflation spec | Low |
-| M65 | T22 | `go test -count=1 ./...` slice 1 (internal/…) | Critical |
-| M66 | T22 | `go test -count=1 ./...` slice 2 (rest) | Critical |
-| M67 | T22 | Island node:test suite | Critical |
-| M68 | T22 | Full buildflow (slices; BUILDFLOW_NO_RESULT_CACHE=1 if full) | Critical |
-| M69 | T22 | `nix flake check` | Critical |
-| M70 | T22 | Stack browser E2E (ONLY if served markup changed; 445 s budget) | High |
-| M71 | T22 | CHANGELOG `[Unreleased]` lines for code-path deltas | Medium |
-| M72 | T22 | Phase commits + push + `gh run list` CI watch to green | Critical |
+| ID  | Task | Micro-item (≤12 min)                                                               | Impact   |
+| --- | ---- | ---------------------------------------------------------------------------------- | -------- |
+| M01 | T1   | Host: `systemctl show webphone -p NRestarts -p ExecMainStartTimestamp`             | Critical |
+| M02 | T1   | Host: `journalctl -u webphone --since today \| grep -iE "panic\|fatal"`            | Critical |
+| M03 | T1   | Correlate restart second with Caddy 502 window (`journalctl -u caddy`)             | High     |
+| M04 | T1   | Record verdict in 15:57 report (ANNOTATE-style appendix)                           | Critical |
+| M05 | T1   | Host: check `memoryMax` set/unset; note watermark decision                         | Medium   |
+| M06 | T2   | Add recover() + greppable slog line in `notifyDraftReady` (summary_api.go)         | Critical |
+| M07 | T2   | Build + run summary_api tests green                                                | Critical |
+| M08 | T3   | `rg "go func(" internal/` → inventory list                                         | High     |
+| M09 | T3   | Classify each site: handler-sync (covered) vs bare goroutine (guard)               | High     |
+| M10 | T3   | Guards batch 1: `internal/server/api`                                              | High     |
+| M11 | T3   | Guards batch 2: push/app loops (matrix/signal receivers)                           | High     |
+| M12 | T3   | Build + targeted package tests green                                               | High     |
+| M13 | T4   | Write test: panicking stub transport, server survives                              | High     |
+| M14 | T4   | Run test green; note pin in family test                                            | High     |
+| M15 | T5   | `rg "catch" island/app` → empty-catch inventory                                    | Critical |
+| M16 | T5   | Unhandled-promise inventory (`.then` w/o catch, floating awaits)                   | Critical |
+| M17 | T5   | Classify all: surfaced / justified / BUG (table into plan errata)                  | Critical |
+| M18 | T5   | Read the three known suspects: flushTranscriptSaves, htmx listener, recordCrmCall  | Critical |
+| M19 | T6   | i18n keys: network-dead vs HTTP-failure vs 404 (en+de, parity tests)               | High     |
+| M20 | T6   | Wire branches in summarizeCall                                                     | High     |
+| M21 | T6   | Update calls-summary island specs                                                  | High     |
+| M22 | T7   | flushTranscriptSaves: surface badge if console-only                                | High     |
+| M23 | T7   | shell.js htmx error listener: user surface if log-only                             | High     |
+| M24 | T7   | Island specs for both surfaces                                                     | High     |
+| M25 | T8   | deleteSession: split 401-expected vs network-dead (or justify at site)             | Medium   |
+| M26 | T8   | authedFetch: announce before 3-strikes CSRF reload                                 | Medium   |
+| M27 | T8   | recordCrmCall + push registration: catch floating rejections                       | Medium   |
+| M28 | T9   | Locate terminate-cause availability in island teardown path                        | High     |
+| M29 | T9   | SIP-cause → reason keys en+de (ONE mapping, coordinate TODO_LIST #6)               | High     |
+| M30 | T9   | Render reason line on ended card + announce                                        | High     |
+| M31 | T9   | Island specs: reason + announce + settled-card regressions                         | High     |
+| M32 | T9   | SSE pill/toast coverage check; add missing specs                                   | Medium   |
+| M33 | T10  | document-level `htmx:sseError` readable log handler                                | Medium   |
+| M34 | T10  | Upstream note draft (cite ext lines read 15:5x; verify-before-filing gate)         | Medium   |
+| M35 | T11  | Enable `no-empty` + `no-unused-vars` in island oxlint.json                         | High     |
+| M36 | T11  | Fix findings: calls.js:641 `target`, :732 `id`, + any new                          | High     |
+| M37 | T11  | island-lint + island-js green via flake check path                                 | High     |
+| M38 | T12  | error-contract.md: island-JS section (surface-or-justified rule)                   | High     |
+| M39 | T12  | Add "502 from the proxy" row + cross-ref sibling plan's typed-rejection T24        | High     |
+| M40 | T12  | Sync stack runbook § webphone error contract                                       | Medium   |
+| M41 | T13  | lessons.md: diagnosis-humility entry (evidence-backed vs plausible)                | Medium   |
+| M42 | T13  | Stack daemon-relock policy: find ruling or write the note                          | High     |
+| M43 | T14  | Log released-stream count in ExtensionHubs.Shutdown path                           | Medium   |
+| M44 | T14  | Restart-window UX story decision (alive/dead affordances)                          | Medium   |
+| M45 | T15  | Check + pin `push.draft_*` sentinels in family_test                                | Medium   |
+| M46 | T16  | buildflow erraudit tier-1 + tier-2 slices                                          | Medium   |
+| M47 | T16  | summary_api.go:100 `errors.As` → `errors.AsType[*textagent.Error]`                 | Medium   |
+| M48 | T16  | Re-measure note (due date stays 2026-11-05)                                        | Low      |
+| M49 | T17  | Harvest P0–P1 rows → TODO_LIST                                                     | High     |
+| M50 | T17  | Harvest polish rows → ROADMAP                                                      | Medium   |
+| M51 | T18  | Host: confirm deploy fired + `/version` matches pin                                | High     |
+| M52 | T18  | Prod `config.js` `agent` flag on/off                                               | Medium   |
+| M53 | T18  | Caddy: /events flush + unbuffered + logging config                                 | Medium   |
+| M54 | T18  | Dialplan: ring `state:end` hook actually fires                                     | Low      |
+| M55 | T19  | Decide heartbeat necessity on drop-class evidence                                  | Low      |
+| M56 | T19  | Implement /events heartbeat comment loop (if GO)                                   | Low      |
+| M57 | T19  | Server `retry:` hint (if GO)                                                       | Low      |
+| M58 | T20  | Pill title retry-state ("retrying in Ns")                                          | Low      |
+| M59 | T20  | Summarize-404 copy decision (no-transcript vs seam-off)                            | Low      |
+| M60 | T20  | console.log policy + gate ui.js:60-style logs                                      | Low      |
+| M61 | T20  | Offline-banner vs SSE-pill division of truth doc                                   | Low      |
+| M62 | T20  | Push-registration restart UX check (CSRF dance retry)                              | Low      |
+| M63 | T21  | Failed-outbound History row renders (island already SENDS outcome — verify render) | Medium   |
+| M64 | T21  | Missed-call badge non-inflation spec                                               | Low      |
+| M65 | T22  | `go test -count=1 ./...` slice 1 (internal/…)                                      | Critical |
+| M66 | T22  | `go test -count=1 ./...` slice 2 (rest)                                            | Critical |
+| M67 | T22  | Island node:test suite                                                             | Critical |
+| M68 | T22  | Full buildflow (slices; BUILDFLOW_NO_RESULT_CACHE=1 if full)                       | Critical |
+| M69 | T22  | `nix flake check`                                                                  | Critical |
+| M70 | T22  | Stack browser E2E (ONLY if served markup changed; 445 s budget)                    | High     |
+| M71 | T22  | CHANGELOG `[Unreleased]` lines for code-path deltas                                | Medium   |
+| M72 | T22  | Phase commits + push + `gh run list` CI watch to green                             | Critical |
 
 Coverage check: f1–f50 all mapped (see Table 1 source-items column; f41 → T22/E2E decision, f13 → T20/console policy, f46 → T20/T22).
 
 ## Errata (Step-0 corrections, skill mandate)
 
 1. **Sibling plan overlap resolved:** the 16:04 d2 plan (parallel session, in-flight) owns the TS type migration incl. its T24 typed-rejection conventions. Our T12/M39 cross-reference instead of designing a rival convention. Do not merge the plans.
-2. **f14 corrected:** TODO_LIST #6 evidence shows the island ALREADY sends `answered`/`missed` outcomes (panels.js:78 → calls_api.go:108). T21 verifies History *rendering*, not existence; T9's reason mapping must coordinate with #6's disposition taxonomy (ONE total mapping — unknown ⇒ failure class, never "answered").
+2. **f14 corrected:** TODO_LIST #6 evidence shows the island ALREADY sends `answered`/`missed` outcomes (panels.js:78 → calls_api.go:108). T21 verifies History _rendering_, not existence; T9's reason mapping must coordinate with #6's disposition taxonomy (ONE total mapping — unknown ⇒ failure class, never "answered").
 3. **Host-leg blocking:** T1/T18 need ssh, banned in the agent tool shell. The plan assumes the owner runs M01–M05/M51–M54 read-only commands, or grants an explicit ssh lane. Everything else is unblocked.
 
 ## Verification & gates

@@ -27,11 +27,7 @@ type SipSessionStateName =
   | "Terminated";
 
 /** The literal registerer-state vocabulary sip.js emits. */
-type SipRegistererStateName =
-  | "Initial"
-  | "Registered"
-  | "Unregistered"
-  | "Terminated";
+type SipRegistererStateName = "Initial" | "Registered" | "Unregistered" | "Terminated";
 
 /** A sip.js state machine subscriber. */
 interface SipStateChange<StateName> {

@@ -71,6 +71,7 @@ Nothing destroyed, nothing reverted that wasn't mine, no red left behind by this
 ## f) Up to 50 things to do next (Pareto-ordered within tiers)
 
 **Tier 1 — close this train (now)**
+
 1. Wait for/collect the full buildflow re-run verdict (background job) and archive it.
 2. If buildflow names nix-hash-fix as still red: run `nix build .#webphone.goModules --rebuild` + re-pin the vendorHash (the documented recipe), re-run.
 3. Push the one remaining unpushed commit (sibling's callnote work — daemon's job; verify with `git ls-remote`).
@@ -191,4 +192,5 @@ remain owner decisions. Sweep + probes + tests landed via daemon commits
 b838328/4396116 and are PUSHED (origin/main == HEAD as of 19:2x).
 
 ---
-*Rendered per the 2026-10-27 ruling: every claim above names its verification; the push/CI rows are the first to rot.*
+
+_Rendered per the 2026-10-27 ruling: every claim above names its verification; the push/CI rows are the first to rot._

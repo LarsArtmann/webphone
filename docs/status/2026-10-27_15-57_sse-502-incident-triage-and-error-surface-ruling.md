@@ -58,73 +58,73 @@ Ranked by impact. This section is the docs-health HARVEST input — do not let i
 
 **Island error surfaces (executing the ruling):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Sweep `island/app` for empty `catch {}` and unhandled promise rejections; classify each: surfaced+justified vs bug; fix the bugs | Critical | M | Bug |
-| 2 | `summarizeCall` (calls.js:243): distinct announce copy for network-dead (status 0) vs HTTP failure vs 404; i18n en+de | High | S | Bug |
-| 3 | Outbound call failure REASON on the ended card + aria-live announce (SIP cause → human line: 486 busy / 480 no-answer / 404 / 488 / transport) | High | M | Feature |
-| 4 | Island test pinning the reason surface (#3) and the distinct summarize announcements (#2) | High | S | Quality |
-| 5 | Replace `[object Event]` spam: document-level `htmx:sseError` handler logs a readable line; upstream the ext patch to cqrs-htmx (verify-before-filing applies) | Medium | S | Quality |
-| 6 | `flushTranscriptSaves` still-failing saves: verify the surface exceeds console.log; if not, badge the card (M17 surfaces) | High | S | Bug |
-| 7 | shell.js htmx error listener: confirm a failed tab-nav swap during downtime shows a user surface, not a log line; fix + pin | High | S | Bug |
-| 8 | authedFetch: announce before the 3-strikes CSRF reload (it silently drops in-memory state) | Medium | S | Bug |
-| 9 | session.js deleteSession empty catch: split expected-401 (fine) from network-dead (surface) or write the justification at the site | Low | S | Cleanup |
-| 10 | island-lint: enable oxlint `no-empty` + `no-unused-vars` (gate would have caught #9 and the two dead params) | High | S | Quality |
-| 11 | Remove/justify dead params calls.js:641 (`target`) and calls.js:732 (`id`) | Low | S | Cleanup |
-| 12 | Sweep fire-and-forget island calls (recordCrmCall, transcript saves, push registration) for promise-without-catch = unhandled-rejection class | High | S | Bug |
-| 13 | Decide the console.log policy for ui.js:60-style diagnostics (debug-gate or keep) | Low | S | Cleanup |
-| 14 | Verify a failed outbound call lands a History row (or is silently lost — the user saw `Terminated` with no trace question answered) | Medium | S | Bug |
-| 15 | Verify outbound-failed calls don't inflate the missed-call badge | Low | S | Bug |
-| 16 | Island test: SSE pill flip + exactly-one-toast at 3 failures + recovery-notice symmetry — verify existing coverage, add what's missing | Medium | S | Quality |
-| 17 | Document the offline-banner vs SSE-pill division of truth (registration-driven vs feed-driven) in the DOM/error contract | Low | S | Documentation |
+| #  | Task                                                                                                                                                           | Impact   | Effort | Category      |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Sweep `island/app` for empty `catch {}` and unhandled promise rejections; classify each: surfaced+justified vs bug; fix the bugs                               | Critical | M      | Bug           |
+| 2  | `summarizeCall` (calls.js:243): distinct announce copy for network-dead (status 0) vs HTTP failure vs 404; i18n en+de                                          | High     | S      | Bug           |
+| 3  | Outbound call failure REASON on the ended card + aria-live announce (SIP cause → human line: 486 busy / 480 no-answer / 404 / 488 / transport)                 | High     | M      | Feature       |
+| 4  | Island test pinning the reason surface (#3) and the distinct summarize announcements (#2)                                                                      | High     | S      | Quality       |
+| 5  | Replace `[object Event]` spam: document-level `htmx:sseError` handler logs a readable line; upstream the ext patch to cqrs-htmx (verify-before-filing applies) | Medium   | S      | Quality       |
+| 6  | `flushTranscriptSaves` still-failing saves: verify the surface exceeds console.log; if not, badge the card (M17 surfaces)                                      | High     | S      | Bug           |
+| 7  | shell.js htmx error listener: confirm a failed tab-nav swap during downtime shows a user surface, not a log line; fix + pin                                    | High     | S      | Bug           |
+| 8  | authedFetch: announce before the 3-strikes CSRF reload (it silently drops in-memory state)                                                                     | Medium   | S      | Bug           |
+| 9  | session.js deleteSession empty catch: split expected-401 (fine) from network-dead (surface) or write the justification at the site                             | Low      | S      | Cleanup       |
+| 10 | island-lint: enable oxlint `no-empty` + `no-unused-vars` (gate would have caught #9 and the two dead params)                                                   | High     | S      | Quality       |
+| 11 | Remove/justify dead params calls.js:641 (`target`) and calls.js:732 (`id`)                                                                                     | Low      | S      | Cleanup       |
+| 12 | Sweep fire-and-forget island calls (recordCrmCall, transcript saves, push registration) for promise-without-catch = unhandled-rejection class                  | High     | S      | Bug           |
+| 13 | Decide the console.log policy for ui.js:60-style diagnostics (debug-gate or keep)                                                                              | Low      | S      | Cleanup       |
+| 14 | Verify a failed outbound call lands a History row (or is silently lost — the user saw `Terminated` with no trace question answered)                            | Medium   | S      | Bug           |
+| 15 | Verify outbound-failed calls don't inflate the missed-call badge                                                                                               | Low      | S      | Bug           |
+| 16 | Island test: SSE pill flip + exactly-one-toast at 3 failures + recovery-notice symmetry — verify existing coverage, add what's missing                         | Medium   | S      | Quality       |
+| 17 | Document the offline-banner vs SSE-pill division of truth (registration-driven vs feed-driven) in the DOM/error contract                                       | Low      | S      | Documentation |
 
 **Go server hardening:**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 18 | `notifyDraftReady`: add `recover()` guard + greppable audit line (panic = whole-process death today) | Critical | S | Bug |
-| 19 | Sweep ALL fire-and-forget goroutines under `internal/` for recover coverage; guard the unprotected | High | M | Bug |
-| 20 | Test pin: a panicking stub transport in notifyDraftReady must NOT kill the test server | High | S | Quality |
-| 21 | Migrate summary_api.go:100 `errors.As` → `errors.AsType[*textagent.Error]` (go-error-modernization; rides the 11-05 sweep or next touch) | Medium | S | Cleanup |
-| 22 | Re-run erraudit tiers 1+2 early, covering the SUPERB train seams (summary, notes, push draft) — due 2026-11-05 anyway | Medium | M | Quality |
-| 23 | Verify `push.draft_devices` / `push.draft_send` sentinel pins exist in `internal/push/family_test.go`; pin if missing | Medium | S | Quality |
-| 24 | Log a shutdown line counting released live SSE streams ("shutdown: released K /events streams") — makes this incident class greppable host-side | Medium | S | Feature |
-| 25 | Consider `/events` heartbeat comments so intermediary idle timeouts can't kill long-idle streams (separate drop class from restarts) | Medium | M | Feature |
-| 26 | Define ONE downtime UX story: pill + toast + which affordances keep working during the restart window (tab nav? summarize? saves?) | Medium | M | Feature |
-| 27 | Optional: server-driven `retry:` hint on /events to tune client backoff start | Low | S | Feature |
-| 28 | Add a "502 from the proxy (upstream down)" row to docs/error-contract.md — a surface every endpoint can hit | Medium | S | Documentation |
+| #  | Task                                                                                                                                            | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 18 | `notifyDraftReady`: add `recover()` guard + greppable audit line (panic = whole-process death today)                                            | Critical | S      | Bug           |
+| 19 | Sweep ALL fire-and-forget goroutines under `internal/` for recover coverage; guard the unprotected                                              | High     | M      | Bug           |
+| 20 | Test pin: a panicking stub transport in notifyDraftReady must NOT kill the test server                                                          | High     | S      | Quality       |
+| 21 | Migrate summary_api.go:100 `errors.As` → `errors.AsType[*textagent.Error]` (go-error-modernization; rides the 11-05 sweep or next touch)        | Medium   | S      | Cleanup       |
+| 22 | Re-run erraudit tiers 1+2 early, covering the SUPERB train seams (summary, notes, push draft) — due 2026-11-05 anyway                           | Medium   | M      | Quality       |
+| 23 | Verify `push.draft_devices` / `push.draft_send` sentinel pins exist in `internal/push/family_test.go`; pin if missing                           | Medium   | S      | Quality       |
+| 24 | Log a shutdown line counting released live SSE streams ("shutdown: released K /events streams") — makes this incident class greppable host-side | Medium   | S      | Feature       |
+| 25 | Consider `/events` heartbeat comments so intermediary idle timeouts can't kill long-idle streams (separate drop class from restarts)            | Medium   | M      | Feature       |
+| 26 | Define ONE downtime UX story: pill + toast + which affordances keep working during the restart window (tab nav? summarize? saves?)              | Medium   | M      | Feature       |
+| 27 | Optional: server-driven `retry:` hint on /events to tune client backoff start                                                                   | Low      | S      | Feature       |
+| 28 | Add a "502 from the proxy (upstream down)" row to docs/error-contract.md — a surface every endpoint can hit                                     | Medium   | S      | Documentation |
 
 **Prod verification (needs the host; ssh banned in this shell):**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 29 | Run on pbx.artmann.tech: `systemctl show webphone -p NRestarts -p ExecMainStartTimestamp` + `journalctl -u webphone --since today \| grep -iE 'panic\|fatal'` — confirms restart-vs-crash (d1) | Critical | S | Bug |
-| 30 | If ANY panic line appears in the journal: P0, chase the named seam | Critical | S | Bug |
-| 31 | Confirm whether `memoryMax` is set on pbx-prod; decide watermark + alert policy | Medium | S | Cleanup |
-| 32 | Caddy logs for the 502 window: confirm upstream dial failures match the restart second (rules out other drop classes) | Medium | S | Bug |
-| 33 | Verify the 14:02 daemon relock actually deployed (host deploy log) and that prod serves ec5de5e (`/version` vs pin) | High | S | Documentation |
+| #  | Task                                                                                                                                                                                           | Impact   | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 29 | Run on pbx.artmann.tech: `systemctl show webphone -p NRestarts -p ExecMainStartTimestamp` + `journalctl -u webphone --since today \| grep -iE 'panic\|fatal'` — confirms restart-vs-crash (d1) | Critical | S      | Bug           |
+| 30 | If ANY panic line appears in the journal: P0, chase the named seam                                                                                                                             | Critical | S      | Bug           |
+| 31 | Confirm whether `memoryMax` is set on pbx-prod; decide watermark + alert policy                                                                                                                | Medium   | S      | Cleanup       |
+| 32 | Caddy logs for the 502 window: confirm upstream dial failures match the restart second (rules out other drop classes)                                                                          | Medium   | S      | Bug           |
+| 33 | Verify the 14:02 daemon relock actually deployed (host deploy log) and that prod serves ec5de5e (`/version` vs pin)                                                                            | High     | S      | Documentation |
 
 **Process / docs / gates:**
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 34 | Append a lessons.md entry: client-console-only triage must separate evidence-backed from plausible; "not a bug" verdicts need the same evidence bar as bug verdicts | Medium | S | Documentation |
-| 35 | Extend docs/error-contract.md with the island-JS section: every catch surfaces or carries a justification; unhandled = bug (the ruling's contract home) | High | S | Documentation |
-| 36 | Define the island's typed-rejection convention (what an authedFetch rejection carries) — one home, in the same doc | Medium | S | Documentation |
-| 37 | Add the "restart window = SSE 502×N is expected" row to the stack runbook's webphone error contract (keep both in sync) | Medium | S | Documentation |
-| 38 | Full `buildflow` run (only targeted slices ran this session) | High | M | Quality |
-| 39 | `nix flake check` after any island/lint edits (island-lint + island-js gates) | High | M | Quality |
-| 40 | Stack browser E2E re-run after any served-markup change riding these fixes | Medium | M | Quality |
-| 41 | Smoke probe decision: SSE-reconnect-after-restart is client-side EventSource behavior — add a browser-E2E step or document why the python smoke can't cover it | Low | M | Quality |
-| 42 | Resolve g2: is the stack daemon allowed to carry webphone relock bumps? Document the policy wherever it lives | High | S | Documentation |
-| 43 | Ring `end` hook: verify the stack dialplan actually posts it (a missed `end` leaves stale ring pushes) | Low | S | Bug |
-| 44 | Ended card: verify `config.js` `agent` flag propagation on prod once ec5de5e is confirmed deployed (#33) | Medium | S | Bug |
-| 45 | If filing the `[object Event]` ext noise upstream: check cqrs-htmx issues first, verify the ext path (already read this session), draft in github-voice | Low | S | Documentation |
-| 46 | After the fix wave: re-run smoke + island tests + full buildflow; screenshot harness if markup changed | High | M | Quality |
-| 47 | Decide whether summarize's 404 copy should distinguish no-transcript from seam-off (both 404 by design today) | Low | S | Feature |
-| 48 | Optional polish: pill title shows retry state ("retrying in Ns") during backoff | Low | S | Feature |
-| 49 | Verify push registration UX survives a server restart mid-registration (CSRF dance retry) | Low | S | Bug |
-| 50 | HARVEST this table into TODO_LIST.md / ROADMAP.md per docs-health (do not let it rot here) | High | S | Documentation |
+| #  | Task                                                                                                                                                                | Impact | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 34 | Append a lessons.md entry: client-console-only triage must separate evidence-backed from plausible; "not a bug" verdicts need the same evidence bar as bug verdicts | Medium | S      | Documentation |
+| 35 | Extend docs/error-contract.md with the island-JS section: every catch surfaces or carries a justification; unhandled = bug (the ruling's contract home)             | High   | S      | Documentation |
+| 36 | Define the island's typed-rejection convention (what an authedFetch rejection carries) — one home, in the same doc                                                  | Medium | S      | Documentation |
+| 37 | Add the "restart window = SSE 502×N is expected" row to the stack runbook's webphone error contract (keep both in sync)                                             | Medium | S      | Documentation |
+| 38 | Full `buildflow` run (only targeted slices ran this session)                                                                                                        | High   | M      | Quality       |
+| 39 | `nix flake check` after any island/lint edits (island-lint + island-js gates)                                                                                       | High   | M      | Quality       |
+| 40 | Stack browser E2E re-run after any served-markup change riding these fixes                                                                                          | Medium | M      | Quality       |
+| 41 | Smoke probe decision: SSE-reconnect-after-restart is client-side EventSource behavior — add a browser-E2E step or document why the python smoke can't cover it      | Low    | M      | Quality       |
+| 42 | Resolve g2: is the stack daemon allowed to carry webphone relock bumps? Document the policy wherever it lives                                                       | High   | S      | Documentation |
+| 43 | Ring `end` hook: verify the stack dialplan actually posts it (a missed `end` leaves stale ring pushes)                                                              | Low    | S      | Bug           |
+| 44 | Ended card: verify `config.js` `agent` flag propagation on prod once ec5de5e is confirmed deployed (#33)                                                            | Medium | S      | Bug           |
+| 45 | If filing the `[object Event]` ext noise upstream: check cqrs-htmx issues first, verify the ext path (already read this session), draft in github-voice             | Low    | S      | Documentation |
+| 46 | After the fix wave: re-run smoke + island tests + full buildflow; screenshot harness if markup changed                                                              | High   | M      | Quality       |
+| 47 | Decide whether summarize's 404 copy should distinguish no-transcript from seam-off (both 404 by design today)                                                       | Low    | S      | Feature       |
+| 48 | Optional polish: pill title shows retry state ("retrying in Ns") during backoff                                                                                     | Low    | S      | Feature       |
+| 49 | Verify push registration UX survives a server restart mid-registration (CSRF dance retry)                                                                           | Low    | S      | Bug           |
+| 50 | HARVEST this table into TODO_LIST.md / ROADMAP.md per docs-health (do not let it rot here)                                                                          | High   | S      | Documentation |
 
 ## g) Questions I cannot answer myself
 

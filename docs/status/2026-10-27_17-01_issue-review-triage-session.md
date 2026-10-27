@@ -13,13 +13,13 @@ present in origin/main history).
 
 ## Per-issue verdicts (all evidence re-verifiable at HEAD)
 
-| Issue | Verdict | Correction established | Action taken |
-|---|---|---|---|
-| #5 daemon-audit: HEAD touched guarded paths | **Stale flag** | Flagged commits a829483/a3cb626 were orphaned by the day's concurrent-session rebase; content re-landed authored (6cbee7c, 8a891af); tree canonical — `nix fmt` 0 changed, drift sweep of last 12 commits clean at HEAD | Commented + **closed** |
-| #6 Call dispositions | Gap real, body wrong on one fact | `Outcome` IS filled: island `recordCrmCall` sends `established ? "answered" : "missed"` → `CRM.LogCall`. So a voicemail call journals as "answered" in Kith **today** — sharper than the issue claimed | Commented, triaged |
-| #7 Redial cooldown | Claims all true | No cooldown anywhere: `typeahead.js` suggests only; history ↻ button dials unconditionally | Commented, triaged |
-| #8 AI review artifact | Half superseded by the same-day agent-UX train (landed AFTER the issue was filed) | Remaining: click-gated → automatic; Messages draft → persisted artifact; seam-off = button absent → explicit "not configured" | Commented, triaged |
-| #9 Kith switch-on | Body wrong on module claim | NixOS module exposes **no** crm options; leak guard rejects path-valued settings secrets; diagnosis doc lives in **pbx-artmann**, not here; Settings shows only connected/unset; no /healthz crm leg | Commented, triaged |
+| Issue                                       | Verdict                                                                           | Correction established                                                                                                                                                                                                  | Action taken           |
+| ------------------------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| #5 daemon-audit: HEAD touched guarded paths | **Stale flag**                                                                    | Flagged commits a829483/a3cb626 were orphaned by the day's concurrent-session rebase; content re-landed authored (6cbee7c, 8a891af); tree canonical — `nix fmt` 0 changed, drift sweep of last 12 commits clean at HEAD | Commented + **closed** |
+| #6 Call dispositions                        | Gap real, body wrong on one fact                                                  | `Outcome` IS filled: island `recordCrmCall` sends `established ? "answered" : "missed"` → `CRM.LogCall`. So a voicemail call journals as "answered" in Kith **today** — sharper than the issue claimed                  | Commented, triaged     |
+| #7 Redial cooldown                          | Claims all true                                                                   | No cooldown anywhere: `typeahead.js` suggests only; history ↻ button dials unconditionally                                                                                                                              | Commented, triaged     |
+| #8 AI review artifact                       | Half superseded by the same-day agent-UX train (landed AFTER the issue was filed) | Remaining: click-gated → automatic; Messages draft → persisted artifact; seam-off = button absent → explicit "not configured"                                                                                           | Commented, triaged     |
+| #9 Kith switch-on                           | Body wrong on module claim                                                        | NixOS module exposes **no** crm options; leak guard rejects path-valued settings secrets; diagnosis doc lives in **pbx-artmann**, not here; Settings shows only connected/unset; no /healthz crm leg                    | Commented, triaged     |
 
 Comments: issuecomment-6444357992 (#6), -6444358597 (#7), -6444359222 (#8), -6444359812 (#9).
 
@@ -119,6 +119,7 @@ feature epics (rows 1–27) are ALREADY triaged into TODO_LIST.md by this sessio
 needs items 28–50.
 
 **#6 Call dispositions (issue #6)**
+
 1. Domain disposition vocabulary + ONE total CDR→disposition mapping (unknown ⇒ failure class) — Critical, M, Feature
 2. Operator post-hangup confirm UI riding the CallNote slot — High, M, Feature
 3. Island stops treating media-establish as "answered" once confirm exists — High, S, Feature
@@ -193,7 +194,7 @@ needs items 28–50.
 
 ---
 
-*Report by Crush (glm-5.3-flash) per the issue-review session of 2026-10-27. Format override
+_Report by Crush (glm-5.3-flash) per the issue-review session of 2026-10-27. Format override
 flag: written as `.md` per explicit user instruction; the status-report skill's canonical
 format is HTML. Section (f) items 1–31 are already triaged into TODO_LIST.md (commit `271e9d4`);
-HARVEST scope is 32–50. WAITING FOR INSTRUCTIONS.*
+HARVEST scope is 32–50. WAITING FOR INSTRUCTIONS._

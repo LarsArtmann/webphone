@@ -173,6 +173,7 @@ commits and the sibling plan's commit are on top; the 18:27 watch run green).
 ## f) NEXT 50 (plan-relevant; several already live in TODO_LIST — cited, not duplicated)
 
 **Owner, single ssh pass (P0):**
+
 1. Run the M01–M05 one-liner; paste output; I record the verdict (M04) in the 15:57 report.
 2. Caddy `/events` flush + unbuffered + logging check (M53).
 3. Dialplan `state:end` ring-hook probe (M54).
@@ -200,18 +201,18 @@ commits and the sibling plan's commit are on top; the 18:27 watch run green).
 18. Sweep remaining `console.warn` sites for the `webphone:` prefix convention.
 19. `fail fast` on i18n parity in CI ordering (already gated; keep an eye after keys churn).
 20. Audit the `wireChatNetworks` dead wiring — either launch it behind config or delete it
-    (it is the chat lanes' missing P0-class launch seam, unguarded by design until it
-    exists).
+(it is the chat lanes' missing P0-class launch seam, unguarded by design until it
+exists).
 
 **Server follow-ups:**
 21. Give `notifyDraftReady`'s prune/remove arm the same containment scrutiny under the
-    disposition train's changes (they touched calls_api/note_api nearby).
+disposition train's changes (they touched calls_api/note_api nearby).
 22. Consider a `recover()`-style guard policy note in AGENTS (every `go func(` gets one or
-    a written justification — mirrors the island ruling; would have made T3 mechanical).
+a written justification — mirrors the island ruling; would have made T3 mechanical).
 23. Add `retention`/`dedup` sweep-loop panic tests (the loops are guarded; untested).
 24. Pin the signal readLoop reconnect-after-panic behavior in a spec.
 25. Registry drift: the disposition train's next codes (pre-warn them about the
-    same-commit rule — they hit it once today).
+same-commit rule — they hit it once today).
 
 **Docs:**
 26. Verify the stack runbook patch actually committed there (tri-repo end-state).
@@ -224,41 +225,41 @@ commits and the sibling plan's commit are on top; the 18:27 watch run green).
 31. Add the fast pre-push trio as a `scripts/` helper (arch registry + island + oxlint).
 32. Consider `oxlint` warnings→errors for island-tests (currently non-gating noise).
 33. `setImmediate` in island-tests' oxlint globals (kills 12 warning rows if tests ever
-    enter the gate).
+enter the gate).
 34. Evaluate gating `island-tests/` under the same oxlint config as `island/app`.
 35. helpers.mjs stub: consider `insertAdjacentElement` (shell.js copy-chip uses it; only
-    the try/catch shields it today).
+the try/catch shields it today).
 
 **Cross-train coordination:**
 36. De-overlap check with the sibling TS plan's T24 once they word the typed-rejection
-    convention — my error-contract island section must reference, not rival it.
+convention — my error-contract island section must reference, not rival it.
 37. After their `disposition` payload lands in Kith, reconcile #6's taxonomy with MY
-    reason mapping (unknown ⇒ failure class — already aligned in error-contract).
+reason mapping (unknown ⇒ failure class — already aligned in error-contract).
 38. Watch the disposition train's remaining reds (calls_api/crm_test were in-flight at
-    19:31 — not mine, but main's bar is mine to keep).
+19:31 — not mine, but main's bar is mine to keep).
 39. The `feat(crm)` CI run that fixed their stale test — verify it stayed green (it did:
-    superseded by later green runs).
+superseded by later green runs).
 40. When they ship the type gate, re-run `nix flake check` (new check lands in it).
 
 **Polish backlog (from T20 tails + judgment):**
 41. Real backoff-synced pill countdown (blocked on upstream timer exposure — ROADMAP).
 42. `summarizeDraft` button: consider a spinner glyph (busy state is text-only).
 43. The ended card's reason line has no visual token yet (plain div, `call-reason-text`);
-    consider a muted style token in island/style.css + app.css mirrored blocks.
+consider a muted style token in island/style.css + app.css mirrored blocks.
 44. `ssePillRetry` title never resets to `ssePillDown` if the ext stops retrying silently
-    (CLOSED-source state) — acceptable, but a `sseClose` handler already covers the
-    visible path; verify once on a long outage.
+(CLOSED-source state) — acceptable, but a `sseClose` handler already covers the
+visible path; verify once on a long outage.
 45. History: failed-outbound rows could carry the reason mapping server-side too (one
-    mapping, two surfaces — coordinate with #6's disposition write).
+mapping, two surfaces — coordinate with #6's disposition write).
 46. `resumeAudio`'s warn fires per gesture-retry; consider dedup within a call.
 47. The `insertBefore` helper stub: mirror the real DOM's pre-child validation? (YAGNI —
-    note only.)
+note only.)
 48. error-contract: the island section cites the plan's execution log for the sweep
-    detail — fold the classification TABLE into the contract when the plan ages out.
+detail — fold the classification TABLE into the contract when the plan ages out.
 49. Consider making the incident "triage bar" (systemctl+journal one-liner) a stack
-    runbook top-level checklist item (it is inside the webphone section today).
+runbook top-level checklist item (it is inside the webphone section today).
 50. Re-run the stack browser E2E at the next SERVED-markup change (not owed now; the
-    discipline note stands).
+discipline note stands).
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER
 
