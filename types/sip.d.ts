@@ -20,11 +20,14 @@ interface SipUri {
 
 /** The literal session-state vocabulary sip.js emits. */
 type SipSessionStateName =
-  "Initial" | "Establishing" | "Established" | "Terminating" | "Terminated";
+  | "Initial"
+  | "Establishing"
+  | "Established"
+  | "Terminating"
+  | "Terminated";
 
 /** The literal registerer-state vocabulary sip.js emits. */
-type SipRegistererStateName =
-  "Initial" | "Registered" | "Unregistered" | "Terminated";
+type SipRegistererStateName = "Initial" | "Registered" | "Unregistered" | "Terminated";
 
 /** A sip.js state machine subscriber. */
 interface SipStateChange<StateName> {
@@ -109,11 +112,7 @@ declare const SIP: {
     new (options?: unknown): SipUserAgent;
     makeURI(uri: string): SipUri | undefined;
   };
-  Inviter: new (
-    userAgent: SipUserAgent,
-    target: string | SipUri,
-    options?: unknown,
-  ) => SipInviter;
+  Inviter: new (userAgent: SipUserAgent, target: string | SipUri, options?: unknown) => SipInviter;
   Registerer: new (userAgent: SipUserAgent, options?: unknown) => SipRegisterer;
   SessionState: {
     Initial: "Initial";

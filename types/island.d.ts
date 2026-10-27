@@ -61,7 +61,13 @@ type IslandToastKind = "ok" | "error" | "warn" | "info";
 
 /** The view states CALL_TRANSITIONS declares, in one place. */
 type IslandCallViewState =
-  "ringing" | "active" | "holding" | "resuming" | "held" | "ending" | "ended";
+  | "ringing"
+  | "active"
+  | "holding"
+  | "resuming"
+  | "held"
+  | "ending"
+  | "ended";
 
 /** One live call in the island's session table (state.js owns the map). */
 interface IslandCallEntry {
@@ -311,11 +317,8 @@ interface IslandVoicemailSummary {
 /** Every island message key. Derived from t()'s own parameter type, so
  * i18n.js's `en` table stays the ONE home for the key list — this alias is
  * only what other modules can name. */
-type IslandMessageKey = Parameters<
-  typeof import("../internal/web/assets/island/app/i18n.js").t
->[0];
+type IslandMessageKey = Parameters<typeof import("../internal/web/assets/island/app/i18n.js").t>[0];
 
 /** The dock chip / card `data-state` vocabulary. It is the CALL_TRANSITIONS
  * vocabulary minus the settled "ended" (an ended call has no live chip). */
-type IslandCallDockState =
-  "ringing" | "established" | "holding" | "held" | "resuming" | "ending";
+type IslandCallDockState = "ringing" | "established" | "holding" | "held" | "resuming" | "ending";

@@ -21,6 +21,7 @@ import { sessions, state } from "./state.js";
 import {
   announce,
   els,
+  errorMessage,
   hideIncomingBanner,
   log,
   renderIncomingSlots,
@@ -28,9 +29,12 @@ import {
   setRegStatus,
 } from "./ui.js";
 
+/** @type {SipRegisterer | null} */
 let registerer = null;
 let reconnectAttempts = 0;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let reconnectTimer = null;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let reconnectCycleTimer = null;
 let stopping = false;
 // True while a wedged user agent is being torn down and rebuilt;
@@ -59,6 +63,7 @@ const RECONNECT_CYCLE_DEADLINE_MS = 15000;
 
 // Every offline-truth pill flips the banner on: the pill carries the
 // precise reason, the banner is the loud "you cannot call right now".
+/** @param {string} text */
 function setOfflinePill(text) {
   setRegStatus("status-offline", text);
   setOfflineBanner(true);
@@ -73,6 +78,7 @@ export function networkOnline() {
   if (!reconnectTimer) scheduleReconnect();
 }
 
+/** @param {string} extension @param {string} password @returns {Promise<void>} */
 export async function connect(extension, password) {
   stopping = false;
   reconnectAttempts = 0;
@@ -96,7 +102,18 @@ function scheduleReconnect() {
   }, delay * 1000);
 }
 
+/**
+ * withTimeout bounds one promise. The loser of the race is cleared, so a
+ * settled attempt never leaves a timer armed (a leaked one would reject an
+ * already-resolved promise — harmless, but it keeps the event loop awake).
+ * @template T
+ * @param {Promise<T>} promise
+ * @param {number} ms
+ * @param {string} label
+ * @returns {Promise<T>}
+ */
 function withTimeout(promise, ms, label) {
+  /** @type {ReturnType<typeof setTimeout>} */
   let timer;
   return Promise.race([
     promise.then(
@@ -126,7 +143,7 @@ function armReconnectCycleDeadline() {
     if (stopping || resetting) return;
     log("reconnect cycle exceeded its deadline — forcing rebuild");
     rebuildConnection("reconnect cycle deadline exceeded").catch((err) => {
-      log(`rebuild failed: ${err.message}`);
+      log(`rebuild failed: ${errorMessage(err)}`);
       scheduleReconnect();
     });
   }, RECONNECT_CYCLE_DEADLINE_MS);
@@ -141,6 +158,7 @@ function clearReconnectCycleDeadline() {
 
 // Tear the wedged agent down and build a fresh one (the page-reload
 // recovery path without losing the UI state).
+/** @param {string} reason @returns {Promise<void>} */
 async function rebuildConnection(reason) {
   if (resetting) {
     log(`reconnect watchdog: ${reason} — rebuild already in progress`);
@@ -169,7 +187,7 @@ async function rebuildConnection(reason) {
       "stop timed out",
     );
   } catch (err) {
-    log(`old agent stop: ${err.message}`);
+    log(`old agent stop: ${errorMessage(err)}`);
   }
   try {
     await withTimeout(
@@ -185,10 +203,15 @@ async function rebuildConnection(reason) {
 async function attemptReconnect() {
   armReconnectCycleDeadline();
   try {
+    // Bound once: `state.userAgent` is nullable and the await boundary
+    // invalidates the narrowing of a live module field.
+    const agent = state.userAgent;
+    const registered = registerer;
+    if (!agent || !registered) throw new Error("not connected");
     await withTimeout(
       (async () => {
-        await state.userAgent.reconnect();
-        await registerer.register();
+        await agent.reconnect();
+        await registered.register();
       })(),
       RECONNECT_ATTEMPT_TIMEOUT_MS,
       "reconnect timed out",
@@ -208,20 +231,21 @@ async function attemptReconnect() {
     }
     log("transport reconnected; re-registered");
   } catch (err) {
-    log(`reconnect failed: ${err.message}`);
+    log(`reconnect failed: ${errorMessage(err)}`);
     // A hung attempt or a Terminated registerer leaves the agent
     // unusable (retrying register() on a Terminated registerer throws
     // forever); rebuild it.
+    const message = errorMessage(err);
     const unusable =
-      err.message.includes("timed out") ||
+      message.includes("timed out") ||
       registerer?.state === SIP.RegistererState.Terminated;
     if (unusable) {
       try {
-        await rebuildConnection(err.message);
+        await rebuildConnection(message);
         reconnectAttempts = 0;
         return;
       } catch (resetErr) {
-        log(`rebuild failed: ${resetErr.message}`);
+        log(`rebuild failed: ${errorMessage(resetErr)}`);
       }
     }
     scheduleReconnect();
@@ -248,7 +272,10 @@ async function buildConnection() {
     authorizationUsername: extension,
     authorizationPassword: password,
     transportOptions: { server: websocketUrl },
-    sessionDescriptionHandlerFactory: (session, options) => {
+    sessionDescriptionHandlerFactory: (
+      /** @type {SipSession} */ session,
+      /** @type {unknown} */ options,
+    ) => {
       const handler = baseDescriptionHandlerFactory(session, options);
       instrumentSessionDescriptionHandler(handler);
       return handler;
@@ -263,7 +290,7 @@ async function buildConnection() {
     logBuiltinEnabled: true,
     logLevel: "warn",
     delegate: {
-      onDisconnect: (error) => {
+      onDisconnect: (/** @type {Error | null} */ error) => {
         if (stopping || resetting) return;
         // Surface WHY the transport died — the pill is the first place
         // a user looks when audio goes quiet; "offline" alone hides
@@ -274,7 +301,7 @@ async function buildConnection() {
         setOfflinePill(reason);
         if (error) scheduleReconnect();
       },
-      onInvite: (invitation) => {
+      onInvite: (/** @type {SipInvitation} */ invitation) => {
         warmMic();
         const from = (invitation.remoteIdentity &&
           invitation.remoteIdentity.uri) || {
@@ -290,11 +317,12 @@ async function buildConnection() {
         // announcement already reached them; stealing keystrokes would
         // be hostile).
         const active = document.activeElement;
+        const focused = /** @type {HTMLElement | null} */ (active);
         const midType =
-          active &&
-          (active.tagName === "INPUT" ||
-            active.tagName === "TEXTAREA" ||
-            active.isContentEditable);
+          focused &&
+          (focused.tagName === "INPUT" ||
+            focused.tagName === "TEXTAREA" ||
+            focused.isContentEditable);
         if (!midType) els.accept.focus();
         // Assertive announcement (M17 J9): a hidden→visible swap of the
         // banner is invisible to screen readers — the ringing call is
@@ -308,7 +336,7 @@ async function buildConnection() {
         notifyIncoming(caller);
         ringToneStart();
         titleFlashStart();
-        invitation.stateChange.addListener((state2) => {
+        invitation.stateChange.addListener((/** @type {SipSessionStateName} */ state2) => {
           if (state2 !== SIP.SessionState.Terminated) return;
           // An answered (or deliberately rejected) invite left the queue
           // already; a Terminated arrival only means "the caller gave
@@ -372,12 +400,12 @@ async function buildConnection() {
     }
     rebuildConnection("registration lost after it was established").catch(
       (err) => {
-        log(`rebuild failed: ${err.message}`);
+        log(`rebuild failed: ${errorMessage(err)}`);
         scheduleReconnect();
       },
     );
   };
-  registerer.stateChange.addListener((regState) => {
+  registerer.stateChange.addListener((/** @type {string} */ regState) => {
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
       wasRegistered = true;

@@ -18,8 +18,7 @@ import { prepareRegistrationOptions, serializeCredential } from "./webauthn.js";
  * @param {K} id
  * @returns {IslandEnrollDomIds[K]}
  */
-const $ = (id) =>
-  /** @type {IslandEnrollDomIds[K]} */ (document.getElementById(id));
+const $ = (id) => /** @type {IslandEnrollDomIds[K]} */ (document.getElementById(id));
 
 const form = $("enroll-form");
 const tokenInput = $("enroll-token");
@@ -101,10 +100,7 @@ async function enroll() {
       `&credential_name=${encodeURIComponent(credentialName)}`;
     const finished = await postJSON(
       "/api/auth/passkey/enroll/finish" + query,
-      serializeCredential(
-        /** @type {PublicKeyCredential} */ (credential),
-        "registration",
-      ),
+      serializeCredential(/** @type {PublicKeyCredential} */ (credential), "registration"),
     );
     if (!finished.ok) {
       showError(enrollError(finished.status));
@@ -121,8 +117,7 @@ async function enroll() {
 // it is the network message, never "HTTP 0". Every other status rides
 // the one anti-oracle failure message.
 /** @param {number} status @returns {string} */
-const enrollError = (status) =>
-  status === 0 ? t("enrollNetFailed") : t("enrollFailed")(status);
+const enrollError = (status) => (status === 0 ? t("enrollNetFailed") : t("enrollFailed")(status));
 
 // postJSON is the one fetch shape this page uses: JSON body, CSRF
 // header, parsed JSON answer. Never throws — network failures come back
