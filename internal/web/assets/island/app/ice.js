@@ -37,10 +37,14 @@ function noteFirstMedia(pc, bytesReceived) {
  */
 function setupLine(pc, firstMediaAt) {
   const setup = setupSummary(pc);
-  if (!setup) return null;
+  // gatheringStartedAt is the baseline every "+X s" is measured from: an
+  // instrumented PC whose gathering had not started yet cannot express a
+  // setup story, and rendering one would print "NaN s" (the type gate
+  // caught this hole — previously reachable only in theory).
+  if (!setup || setup.gatheringStartedAt == null) return null;
+  const baseline = setup.gatheringStartedAt;
   /** @param {number} ts */
-  const secondsFrom = (ts) =>
-    `${((ts - setup.gatheringStartedAt) / 1000).toFixed(1)} s`;
+  const secondsFrom = (ts) => `${((ts - baseline) / 1000).toFixed(1)} s`;
   const parts = [];
   if (setup.gatherMs != null) parts.push(`gather ${setup.gatherMs} ms`);
   else if (setup.gatherCapped)

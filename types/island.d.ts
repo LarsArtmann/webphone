@@ -198,3 +198,28 @@ interface IslandIceSummary {
   codec: string;
   bytesReceived: number;
 }
+
+/** The WebAuthn ceremony JSON the enroll endpoints exchange (enroll/webauthn.js). */
+interface IslandRegistrationOptionsWire {
+  challenge: string;
+  user?: { id: string; name?: string; displayName?: string };
+  excludeCredentials?: Array<{ id: string; type?: string; transports?: string[] }>;
+}
+
+/** The byte-bearing fields of a PublicKeyCredential response. */
+interface IslandCredentialResponseFields {
+  clientDataJSON?: ArrayBuffer;
+  authenticatorData?: ArrayBuffer;
+  signature?: ArrayBuffer;
+  attestationObject?: ArrayBuffer;
+  userHandle?: ArrayBuffer | null;
+  transports?: string[];
+}
+
+/** One serialized credential as the enroll finish endpoints parse it. */
+interface IslandSerializedCredential {
+  id: string;
+  rawId: string;
+  type: string;
+  response: Record<string, string | string[]>;
+}

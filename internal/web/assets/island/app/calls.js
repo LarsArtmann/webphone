@@ -13,7 +13,7 @@ import {
   ringbackStop,
   ringToneStop,
 } from "./audio.js";
-import { asrEnabled, asrLocality, agentEnabled, sipDomain } from "./config.js";
+import { asrEnabled, asrLocality, agentEnabled, crmEnabled, sipDomain } from "./config.js";
 import { authedFetch } from "./auth.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
@@ -218,6 +218,9 @@ function morphToEndedCard(id, entry) {
   const controls = card.querySelector(".controls");
   if (!controls) return;
   controls.replaceChildren();
+  if (crmEnabled) {
+    controls.append(dispositionRow(id, entry));
+  }
   if (agentEnabled && entry.established) {
     controls.append(summarizeButton(id));
   }
@@ -226,6 +229,74 @@ function morphToEndedCard(id, entry) {
   close.textContent = t("close");
   close.addEventListener("click", () => card.remove());
   controls.append(close);
+}
+
+// dispositionRow is the operator-confirm affordance (issue #6): three
+// chips answering "how did this call end" — the ONE authority that may
+// upgrade the auto-report's honest "unknown" to a claimed answer (the
+// island cannot see who picked up; only the human can). Success
+// collapses the row to the saved verdict; a failure keeps the chips
+// clickable (the server kept the verdict on 502 — only the CRM
+// correction is retryable; re-click re-POSTs the same verdict, which
+// the server dedupes per call+verdict).
+export function dispositionRow(id, entry) {
+  const row = document.createElement("div");
+  row.className = "disposition-row";
+  const ask = document.createElement("span");
+  ask.className = "disposition-ask";
+  ask.textContent = t("dispositionAsk");
+  row.append(ask);
+  for (const [value, key] of [
+    ["answered", "dispositionAnswered"],
+    ["voicemail", "dispositionVoicemail"],
+    ["ivr", "dispositionIvr"],
+  ]) {
+    const chip = document.createElement("button");
+    chip.className = "ghost disposition-chip";
+    chip.dataset.disposition = value;
+    chip.textContent = t(key);
+    chip.addEventListener("click", () => {
+      confirmDisposition(row, id, entry, value, key).catch((err) =>
+        log(`disposition confirm failed: ${err.message}`, "warn"),
+      );
+    });
+    row.append(chip);
+  }
+  return row;
+}
+
+async function confirmDisposition(row, id, entry, value, labelKey) {
+  const chips = row.querySelectorAll(".disposition-chip");
+  for (const chip of chips) chip.disabled = true;
+  try {
+    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/disposition`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        disposition: value,
+        number: entry.target,
+        direction: entry.session instanceof SIP.Inviter ? "out" : "in",
+        seconds:
+          entry.startedAt > 0 ? Math.floor((Date.now() - entry.startedAt) / 1000) : 0,
+      }),
+    });
+    if (!res.ok) {
+      for (const chip of chips) chip.disabled = false;
+      announce(t("dispositionFailed"), "warn");
+      return;
+    }
+    row.replaceChildren(
+      Object.assign(document.createElement("span"), {
+        className: "disposition-ask",
+        textContent: t("dispositionSaved")(t(labelKey)),
+      }),
+    );
+    announce(t("dispositionSaved")(t(labelKey)));
+  } catch (err) {
+    for (const chip of chips) chip.disabled = false;
+    announce(t("dispositionFailed"), "warn");
+    throw err;
+  }
 }
 
 // failureReasonOf maps one call's outcome to a human reason line for

@@ -203,6 +203,12 @@ export const I18N = {
     callFailedCode: (code) => `Call failed (code ${code}).`,
     callFailedUnknown: "The call failed before it connected.",
     summarizeSettled: "Draft in Messages",
+    dispositionAsk: "How did this call end?",
+    dispositionAnswered: "Answered",
+    dispositionVoicemail: "Voicemail",
+    dispositionIvr: "IVR",
+    dispositionSaved: (label) => `Verdict saved: ${label}`,
+    dispositionFailed: "Saving the verdict failed — try again.",
   },
   de: {
     regState: "Registrierungsstatus",
@@ -405,6 +411,13 @@ export const I18N = {
     callFailedCode: (code) => `Anruf fehlgeschlagen (Code ${code}).`,
     callFailedUnknown: "Der Anruf ist vor dem Verbinden fehlgeschlagen.",
     summarizeSettled: "Entwurf in Nachrichten",
+    dispositionAsk: "Wie endete dieses Gespräch?",
+    dispositionAnswered: "Angenommen",
+    dispositionVoicemail: "Voicemail",
+    dispositionIvr: "Automat",
+    dispositionSaved: (label) => `Einschätzung gespeichert: ${label}`,
+    dispositionFailed:
+      "Speichern der Einschätzung fehlgeschlagen — bitte erneut versuchen.",
   },
 };
 

@@ -14,9 +14,15 @@
 // so a tab-only breakage is visible in the island's own history.
 
 import { t } from "./i18n.js";
-import { announce, log } from "./ui.js";
+import { announce, errorMessage, log } from "./ui.js";
 import { csrfToken } from "./csrf.js";
 
+/**
+ * @param {string} extension
+ * @param {string} password
+ * @param {{ quiet?: boolean }} [options]
+ * @returns {Promise<string | null>} the derived REGISTER credential, when brokering is on
+ */
 export async function createSession(
   extension,
   password,
@@ -80,8 +86,10 @@ export async function createSession(
     return sipCredential;
   } catch (err) {
     if (!quiet) announce(t("sessionNetFailed"), "warn");
-    log(`server session failed (${err.message})`, "error");
-    console.warn("webphone: server session not created (" + err.message + ")");
+    log(`server session failed (${errorMessage(err)})`, "error");
+    console.warn(
+      "webphone: server session not created (" + errorMessage(err) + ")",
+    );
     return null;
   }
 }
@@ -95,7 +103,9 @@ export async function createSession(
 // wp:session-opened with the caller's detail (did, displayName,
 // numbers — whatever the identity surface knows). Returns false when it
 // fell back to the reload; true otherwise.
+/** @param {Record<string, unknown>} [detail] @returns {Promise<boolean>} */
 export async function adoptServerSession(detail = {}) {
+  /** @type {unknown} */
   let adoptionError = null;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -109,12 +119,12 @@ export async function adoptServerSession(detail = {}) {
   }
   if (adoptionError) {
     log(
-      `csrf adoption failed (${adoptionError.message}); reloading page`,
+      `csrf adoption failed (${errorMessage(adoptionError)}); reloading page`,
       "error",
     );
     console.warn(
       "webphone: CSRF token adoption failed (" +
-        adoptionError.message +
+        errorMessage(adoptionError) +
         "), reloading",
     );
     // The fresh server session survives a reload (cookie); the served
@@ -219,6 +229,7 @@ export function initSseLiveIndicator() {
   // indicator (role="img" + localized label) that flips with the feed,
   // and the label — not the toast — is the quiet always-present surface.
   pill.setAttribute("role", "img");
+  /** @param {boolean} live */
   const setPillLabel = (live) =>
     pill.setAttribute("aria-label", t(live ? "ssePillLive" : "ssePillDown"));
   setPillLabel(false);

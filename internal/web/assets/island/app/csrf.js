@@ -3,7 +3,8 @@
 // with it; every module that POSTs (island session/passkey surfaces and
 // the standalone enroll page) imports this reader — the meta is shared
 // state, not a private copy per feature.
+/** @returns {string} */
 export function csrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute("content") : "";
+  return (meta && meta.getAttribute("content")) || "";
 }
