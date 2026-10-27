@@ -232,9 +232,7 @@
     document.addEventListener("click", function (event) {
       var button = closestHTMLElement(eventElement(event), "[data-dial]");
       if (!button) return;
-      dest = /** @type {HTMLInputElement} */ (
-        document.getElementById("dest")
-      );
+      dest = /** @type {HTMLInputElement} */ (document.getElementById("dest"));
       form = /** @type {HTMLFormElement} */ (
         document.getElementById("dial-form")
       );

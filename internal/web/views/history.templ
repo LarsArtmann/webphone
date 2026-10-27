@@ -6,6 +6,7 @@ import (
 
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 )
 
@@ -20,6 +21,11 @@ type HistoryPanelProps struct {
 	Query   string
 	Dir     string
 	Outcome string
+	// Disposition is the operator-confirmed verdict filter (T3): only the
+	// five confirmable verdicts filter; empty means no filter. It
+	// addresses the transcripts section (the only rows carrying a call
+	// uuid to join the verdict with).
+	Disposition string
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
@@ -63,6 +69,14 @@ templ HistoryPanel(props HistoryPanelProps) {
 					<option value="answered" selected?={ props.Outcome == "answered" }>{ T(props.Lang, "history.outcome.answered") }</option>
 					<option value="missed" selected?={ props.Outcome == "missed" }>{ T(props.Lang, "history.outcome.missed") }</option>
 				</select>
+				<select name="disposition" aria-label={ T(props.Lang, "history.disposition.label") }>
+					<option value="" selected?={ props.Disposition == "" }>{ T(props.Lang, "history.disposition.any") }</option>
+					<option value="answered" selected?={ props.Disposition == "answered" }>{ T(props.Lang, "history.disposition.answered") }</option>
+					<option value="voicemail" selected?={ props.Disposition == "voicemail" }>{ T(props.Lang, "history.disposition.voicemail") }</option>
+					<option value="ivr" selected?={ props.Disposition == "ivr" }>{ T(props.Lang, "history.disposition.ivr") }</option>
+					<option value="missed" selected?={ props.Disposition == "missed" }>{ T(props.Lang, "history.disposition.missed") }</option>
+					<option value="failed" selected?={ props.Disposition == "failed" }>{ T(props.Lang, "history.disposition.failed") }</option>
+				</select>
 				<button type="submit" class="wp-mini">{ T(props.Lang, "history.filter") }</button>
 			</form>
 		}
@@ -71,10 +85,14 @@ templ HistoryPanel(props HistoryPanelProps) {
 			<p class="wp-empty">{ T(props.Lang, "history.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "history.needsAPI.post") }</p>
 		}
 		if props.Enabled && len(props.Entries) == 0 {
-			// Honest empty state (M17 J8): an active outcome filter with no
-			// rows must not claim nothing was ever recorded.
+			// Honest empty state (M17 J8): an active filter with no rows
+			// must not claim nothing was ever recorded. The disposition
+			// filter gets its own message — it speaks about verdicts, not
+			// records.
 			{{ emptyKey := "history.empty"
-			   if props.Outcome != "" {
+			   if props.Disposition != "" {
+			     emptyKey = "history.emptyDisposition"
+			   } else if props.Outcome != "" {
 			     emptyKey = "history.emptyFiltered"
 			   } }}
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, emptyKey), Icon: icons.Clock})
@@ -113,6 +131,9 @@ type TranscriptGroup struct {
 	// Note is the owner's saved post-call note (optional; empty renders
 	// an empty editor box).
 	Note string
+	// Disposition is the operator-confirmed verdict on the note slot
+	// (T3; empty = never confirmed — renders no badge).
+	Disposition string
 }
 
 templ TranscriptSection(props HistoryPanelProps) {
@@ -135,6 +156,13 @@ templ TranscriptSection(props HistoryPanelProps) {
 						}
 					</span>
 					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.Names) }</strong>
+					// Confirmed-verdict badge (T3): renders ONLY for the five
+					// operator-confirmable verdicts — unknown or absent renders
+					// NOTHING (never a success glyph for an unconfirmed call,
+					// the stop-the-lying ruling).
+					if dispositionConfirmed(group.Disposition) {
+						<span class="wp-disposition-chip">{ T(props.Lang, "history.disposition."+group.Disposition) }</span>
+					}
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
@@ -257,7 +285,16 @@ templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 	</article>
 }
 
-func cdrDirGlyph(cdr pbx.CDR) string {
+// dispositionConfirmed reports whether a transcript group carries an
+// operator-confirmed verdict — the badge renders ONLY for these five;
+// unknown and absent render nothing (the stop-the-lying ruling: an
+// unconfirmed call never shows a success marker).
+func dispositionConfirmed(raw string) bool {
+	disposition, err := domain.ParseDisposition(raw)
+	return err == nil && disposition != domain.DispositionUnknown
+}
+
+// cdrDirGlyph(cdr pbx.CDR) string {
 	if cdrMissed(cdr) {
 		return "✖"
 	}
