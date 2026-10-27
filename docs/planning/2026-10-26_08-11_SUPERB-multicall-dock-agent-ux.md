@@ -248,3 +248,50 @@ flowchart TD
 ## 7. Deliberately not (YAGNI)
 
 Translation captions, semantic/embedding transcript search, per-call equalizers, PiP multi-window, an answering bot — all heavy, none with a demonstrated user. Revisit triggers live in ROADMAP.md if ever needed.
+
+## 8. Errata round two (train execution, 2026-10-26/27)
+
+8. **M15 transcript search ALREADY SHIPPED** — `GET /api/transcripts?q=`
+   owner-scoped substring search, the filter-aware History input and the
+   filter-aware empty state all predate the train (History search train).
+   Zero work; F087–F092 verified against the shipped surface.
+9. **M16 notes home: readmodels, not the store ladder** — the plan's
+   "store migration v6" wording is superseded: History-surface data lives
+   in the readmodels engine since the T07/T09 swaps (the store's v3
+   `call_transcripts` table is the retired SQL shape, kept only for the
+   migration ladder). Notes ship as a declarative engine collection
+   (`call_notes`) next to the transcripts they annotate — no webphone.db
+   migration. The cap REJECTS (409) instead of trimming: hand-written
+   content is never silently expunged, superseding the plan's
+   "scalar-bounded trim" wording.
+10. **M18 durable journal NO-GO** — the usermgmt auth-audit journal is
+    the identity layer's store (agent approvals are not auth events;
+    writing there crosses the seam); an app_flags window would be a
+    lossy hand-rolled journal. The structured `agent <event>` journal
+    line IS the audit home (F106 shipped, F107 decided, F108's Settings
+    last-N row DEFERRED — it needs a durable read model; the trigger is
+    an operator who greps the journal today).
+11. **M19 attended transfer NO-GO (this host)** — F111 verified: the
+    island's REFER+NOTIFY path is shipped and the dock's consult-flow
+    sketch is below; the stack's `modules/freeswitch.nix` carries NO
+    `Replaces`-aware dialplan handling (the only mentions are overlay
+    wording), and this host has no FreeSWITCH lab (no `fs_cli`, no FS
+    service), so F112's loopback smoke could not run. NOT-DO documented;
+    the spike's full evidence: `docs/research/2026-10-27_attended-transfer-spike.md`.
+    Re-open trigger: an FS lab (the stack's VM tests grow an
+    attended-REFER scenario) — then the island work is a small delta on
+    the shipped REFER path.
+
+### M19 consult-flow sketch (F113, for the GO day)
+
+Two-call gesture in the dock: (1) hold the live call (existing hold
+machine — the held blip already shows); (2) dial the consult target —
+the second call lands in the dock as its own entry; (3) on the consult
+leg's Established, the transfer row of the CONSULT call offers "Bridge
+to held" — sending REFER with Replaces toward the held dialog and
+parsing the NOTIFY sipfrag exactly like the shipped blind path; (4) the
+NOTIFY verdict tears down both local legs on success (the PBX bridged
+them server-side). No new island state machine: hold + the existing
+transfer pending path compose; the only new UI is the "Bridge to held"
+button scoped to the case where exactly one held + one established
+consult call exist.
