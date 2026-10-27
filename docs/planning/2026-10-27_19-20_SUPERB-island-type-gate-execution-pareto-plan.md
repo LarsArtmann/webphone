@@ -1,5 +1,11 @@
 # Island type gate — execution plan (Pareto, two levels of granularity)
 
+> **STATUS 2026-10-27 21:00 — EXECUTED AND CLOSED.** The whole plan landed the same evening:
+> `tsc -p . --noEmit` is green over all 26 served asset files, `tsconfig.all.json` is deleted, the
+> debt list is replaced by stronger coverage pins, and the nix `island-typecheck` check enforces
+> it. Read §9 Errata for the two corrections the execution forced (the subset was never blind in
+> the way §0 claimed, and T19 replaced the debt list instead of emptying it).
+
 **Snapshot: 2026-10-27 19:20 CET**, HEAD `c08c36f`, tree clean except two files owned by a
 **concurrent session** (`AGENTS.md`, `docs/status/2026-10-27_18-23_erraudit-max-zero-typed-error-train.md`
 — do not touch, do not commit). Every number below was measured at that minute with the command
@@ -30,6 +36,15 @@ unchecked module into a checked one, so a wrong export shape in `calls.js` surfa
 whatever checked file consumes it. The debt is not hidden — the pin test enumerates the 10
 unchecked files by name, so the number can only go down, and adding a file is the campaign's whole
 loop.
+
+> **ERRATUM (2026-10-27 21:00, measured).** The sentence above is false in the one direction that
+> mattered. TypeScript does not merely "infer through" an imported module — it FULLY CHECKS it and
+> reports THAT module's errors. Including only `ui.js`, for instance, produced 79 errors, all of
+> them in `i18n.js`. Consequences, both applied: `i18n.js` (the universal dependency) had to be
+> typed FIRST because it blocked 17 files at once, and the pin test now asserts the include is
+> import-CLOSED (`TestTypeGateIncludeIsClosed`) so a file can never be listed while silently
+> dragging a red neighbour into the program. The subset did stay honest — it was just honest about
+> a different set of files than this paragraph claimed.
 
 **Why no `// @ts-check` pragmas.** A pragma line changes the byte that is served;
 "island sources are served verbatim" is a live repo invariant. `checkJs: true` + an explicit
@@ -445,7 +460,22 @@ no second type checker, no CI job beyond the nix check.
 
 ---
 
-## 9. Errata against the 16:04 plan (`2026-10-27_16-04_SUPERB-…-pareto-plan.html`)
+## 9. Errata
+
+**2026-10-27 21:00 — T19 executed; the campaign is over.** `tsconfig.json` now includes the whole
+served tree (`internal/web/assets/**/*.js` + `types/**/*.d.ts`) with exactly one exclusion
+(`internal/web/assets/vendor/**`, the vendored sip.js bundle). `tsconfig.all.json` is DELETED: with
+the gate green the measuring project measured nothing. The debt list is gone from
+`internal/web/assets/typecheck_pin_test.go`, replaced by two stronger pins —
+`TestTypeGateCoversEveryAssetSource` (every embedded asset source must be in the checked set) and
+`TestTypeGateOnlyExcludesTheVendoredBundle` (a second exclusion is a test failure, because excluding
+a red file is how a gate rots). Measured end state: `tsc -p . --noEmit` exits 0 over 26 files,
+`nix build .#checks.x86_64-linux.island-typecheck` is green, 260 island specs pass.
+
+**2026-10-27 21:00 — §0 erratum, see the block in §"Why (b) is not a lie".** The subset was never
+blind, but adding a file DID drag its imports in fully checked; the import-closure pin is the
+correction.
+ against the 16:04 plan (`2026-10-27_16-04_SUPERB-…-pareto-plan.html`)
 
 | 16:04 said                                                           | Now                                                                                    | Why                                                                                            |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |

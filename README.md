@@ -749,7 +749,8 @@ nix develop                     # Go, templ, golangci-lint, esbuild, …
 templ generate ./internal/web/views/   # after editing .templ files
 go test ./...                          # json/v2 stable since Go 1.27
 buildflow                       # the quality gate (format, lint, audit, checks)
-nix flake check                 # package build + tests in the sandbox + treefmt
+nix flake check                 # package build + tests in the sandbox + treefmt + island gates
+tsc -p . --noEmit               # the island/browser type gate (inside nix develop)
 nix build .#webphone --system aarch64-linux   # cross-builds (pure Go)
 ./update.sh [version]           # repin vendored sip.js (esbuild IIFE bundle)
 ```
@@ -761,6 +762,16 @@ flake-parts modules under [`nix/`](nix/).
 The island sources live in `internal/web/assets/island/app/` (ES modules,
 served as-is, CSP-strict); their DOM element ids are a published contract
 (see [AGENTS.md](AGENTS.md)) driven by the consuming stack's browser E2E.
+
+Every served JavaScript file — the island modules, the shell glue, the theme
+preload and the enrolment page, 26 of them — is type-checked by
+`tsconfig.json` under `--checkJs --strict`: `tsc -p . --noEmit` must exit 0,
+and `nix flake check` runs the same project as `island-typecheck`. The only
+carve-out is the vendored sip.js bundle. Because the served tree *is* the
+source tree (`//go:embed all:island`), no `@ts-check` pragma is allowed — it
+would change a served byte; the project's `include` does the same job. Only
+`tsc` counts: an editor's bundled compiler is a different version and will
+report errors that do not exist.
 
 ## License
 

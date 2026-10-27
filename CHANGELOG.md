@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Island type gate (2026-10-27): every served JavaScript file — the SIP
+  island's ES modules, the shell glue, the theme preload and the enrolment
+  page, 26 files — is now checked by `tsc --checkJs --strict`
+  (`tsconfig.json`, wired as the `island-typecheck` flake check). The
+  campaign retired 680 type errors to zero and, along the way, fixed real
+  defects the compiler could see and nobody had: a failure reason compared
+  against a number that was declared as a string (so the reason switch could
+  never match), a declined passkey prompt dereferencing `null`, three
+  screens rendering "undefined" from optional fields, and a dial-button
+  handler that assigned to undeclared variables (a strict-mode
+  `ReferenceError` on every click). The project's own pins refuse a shrunken
+  include, a second exclusion, a disabled `strict`/`checkJs`, or a bare
+  `@ts-ignore`; the vendored sip.js bundle is the single carve-out.
+- `errorMessage` in the shell glue (2026-10-27): a thrown value is narrowed
+  in one place — Error, string, plain object or null all render something
+  readable — so the transcription failure line can no longer print
+  "undefined".
+
+### Fixed
+
+- Error-code registry scanning (2026-10-27): a code declared as a named
+  constant (`Newf(family, HealthCodeFailed, …)`) was mis-read as the message
+  text, which red-ed the registry drift test while the documented row sat
+  unreachable. The scanner now resolves the identifier from the file's own
+  const block — naming a code is the better practice, so the tool follows
+  the code rather than the other way round.
+
 - Honest call dispositions (2026-10-27, issue #6 train): a typed
   `domain.Disposition` (answered/missed/voicemail/ivr/failed/unknown)
   replaces the island's `established ? "answered" : "missed"` guess —
