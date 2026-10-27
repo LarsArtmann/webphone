@@ -166,7 +166,9 @@
     //     persist the flag and flip the class so the collapse takes
     //     effect immediately, without a reload.
     document.addEventListener("click", function (event) {
-      var button = closestHTMLElement(eventElement(event), ".wp-welcome-dismiss");
+      var button = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), ".wp-welcome-dismiss")
+      );
       if (!button) return;
       try {
         localStorage.setItem("wp-welcome-dismissed", "1");
@@ -220,12 +222,18 @@
         }
       });
       host.append(toast);
-      while (host.children.length > 4) host.firstChild.remove();
+      while (host.children.length > 4) host.firstChild?.remove();
       setTimeout(dismiss, 6000);
     };
     document.addEventListener("click", function (event) {
       var button = closestHTMLElement(eventElement(event), "[data-dial]");
       if (!button) return;
+      var dest = /** @type {HTMLInputElement} */ (
+        document.getElementById("dest")
+      );
+      var form = /** @type {HTMLFormElement} */ (
+        document.getElementById("dial-form")
+      );
       var dest = document.getElementById("dest");
       var form = document.getElementById("dial-form");
       var phoneView = document.getElementById("phone-view");
@@ -239,7 +247,7 @@
         );
         return;
       }
-      dest.value = button.getAttribute("data-dial");
+      dest.value = button.getAttribute("data-dial") || "";
       form.requestSubmit();
     });
 
@@ -254,14 +262,16 @@
       if (sms) {
         var number = sms.getAttribute("data-sms");
         var nav = document.querySelector("[data-tab='messages']");
-        if (nav) nav.click();
+        if (nav && typeof (/** @type {HTMLElement} */ (nav).click) === "function") {
+          /** @type {HTMLElement} */ (nav).click();
+        }
         var prefill = function () {
           document.removeEventListener("htmx:afterSwap", prefill);
-          var to = document.querySelector(
-            "form.wp-compose-new input[name='to']",
+          var to = /** @type {HTMLInputElement | null} */ (
+            document.querySelector("form.wp-compose-new input[name='to']")
           );
           if (to) {
-            to.value = number;
+            to.value = number || "";
             to.focus();
           }
         };
@@ -289,7 +299,9 @@
     //      with its last row. A failed delete keeps the row and says
     //      so; erasure must never LOOK done when it is not.
     document.addEventListener("click", function (event) {
-      var btn = closestHTMLElement(eventElement(event), "[data-delete-transcript]");
+      var btn = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), "[data-delete-transcript]")
+      );
       if (!btn) return;
       var callId = btn.getAttribute("data-delete-transcript");
       var confirmText =
@@ -328,7 +340,6 @@
     //      handler, clipboard API only (secure context — the stack
     //      fronts TLS), honest toasts either way. English (D3).
     document.addEventListener("click", function (event) {
-      if (!eventElement(event).closest) return;
       var btn =
         closestHTMLElement(eventElement(event), "[data-copy-transcript]") ||
         closestHTMLElement(eventElement(event), "[data-copy-target]");
@@ -370,8 +381,9 @@
     //      no server round trip (the rendered row is the truth), works
     //      when island scripts fail. English toasts (D3).
     document.addEventListener("click", function (event) {
-      if (!eventElement(event).closest) return;
-      var btn = closestHTMLElement(eventElement(event), "[data-download-transcript]");
+      var btn = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), "[data-download-transcript]")
+      );
       if (!btn) return;
       var row = closestHTMLElement(btn, ".wp-transcript-call");
       var node = row && row.querySelector(".wp-transcript-text");
@@ -410,8 +422,9 @@
       );
     };
     document.addEventListener("click", function (event) {
-      if (!eventElement(event).closest) return;
-      var btn = closestHTMLElement(eventElement(event), "[data-note-save]");
+      var btn = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), "[data-note-save]")
+      );
       if (!btn) return;
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
@@ -449,8 +462,9 @@
         });
     });
     document.addEventListener("click", function (event) {
-      if (!eventElement(event).closest) return;
-      var btn = closestHTMLElement(eventElement(event), "[data-note-draft]");
+      var btn = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), "[data-note-draft]")
+      );
       if (!btn) return;
       var callId = btn.getAttribute("data-note-draft") || "";
       var box = noteBodyFor(callId);
@@ -551,10 +565,10 @@
       renderMissedBadge();
     });
     document.addEventListener("click", function (event) {
-      var link =
-        eventElement(event) && eventElement(event).closest
-          ? closestHTMLElement(eventElement(event), "[data-tab='history']")
-          : null;
+      var link = closestHTMLElement(
+        eventElement(event),
+        "[data-tab='history']",
+      );
       if (!link) return;
       missedCount = 0;
       renderMissedBadge();
@@ -692,18 +706,18 @@
     //     closest() finds the compose box; a fill from the picker also
     //     closes the disclosure.
     document.addEventListener("click", function (event) {
-      var snippet =
-        eventElement(event) && eventElement(event).closest
-          ? closestHTMLElement(eventElement(event), "[data-snippet]")
-          : null;
+      var snippet = closestHTMLElement(eventElement(event), "[data-snippet]");
       if (!snippet) return;
       var form = closestHTMLElement(snippet, "form.wp-compose");
-      var body = form ? form.querySelector("textarea.wp-compose-body") : null;
+      var body = /** @type {HTMLTextAreaElement | null} */ (
+        form ? form.querySelector("textarea.wp-compose-body") : null
+      );
       if (!body) return;
-      body.value = snippet.getAttribute("data-snippet");
+      body.value = snippet.getAttribute("data-snippet") || "";
       body.focus();
       var details = closestHTMLElement(snippet, "details");
-      if (details) details.open = false;
+      var disclosure = /** @type {HTMLDetailsElement | null} */ (details);
+      if (disclosure) disclosure.open = false;
     });
 
     // 2f. Attachment lightbox (M21.1): an image attachment link carries
@@ -717,10 +731,7 @@
     /** @type {HTMLImageElement | null} */
     var lightboxImg = null;
     document.addEventListener("click", function (event) {
-      var link =
-        eventElement(event) && eventElement(event).closest
-          ? closestHTMLElement(eventElement(event), "a[data-lightbox]")
-          : null;
+      var link = closestHTMLElement(eventElement(event), "a[data-lightbox]");
       if (!link) return;
       event.preventDefault();
       if (!lightbox) {
@@ -735,7 +746,7 @@
         close.textContent = "✕ Close";
         close.setAttribute("aria-label", "Close");
         close.addEventListener("click", function () {
-          lightbox.close();
+          if (lightbox) lightbox.close();
         });
         lightbox.append(close);
         // A click on the dialog itself (the padding around the image)
@@ -746,9 +757,13 @@
         });
         document.body.append(lightbox);
       }
-      lightboxImg.src = link.getAttribute("href");
-      lightboxImg.alt = link.getAttribute("data-lightbox") || "";
-      lightbox.showModal();
+      // Bound once: the module-level `var`s are not narrowed inside the
+      // listener closures above, and both are assigned by now.
+      var dialog = lightbox;
+      var img = lightboxImg;
+      img.src = link.getAttribute("href") || "";
+      img.alt = link.getAttribute("data-lightbox") || "";
+      dialog.showModal();
     });
 
     // 2b. data-reload buttons (error panel): full reload, same as the old
@@ -799,8 +814,9 @@
     var runTranscribe = function (btn) {
       var src = btn.getAttribute("data-transcribe-src");
       var targetId = btn.getAttribute("data-transcribe-target");
-      var target = targetId ? document.getElementById(targetId) : null;
-      if (!src || !target) return Promise.resolve();
+      var found = targetId ? document.getElementById(targetId) : null;
+      if (!src || !found) return Promise.resolve();
+      var target = found;
       /** @param {string} text */
       var render = function (text) {
         target.hidden = false;
@@ -853,9 +869,7 @@
         });
     };
     document.addEventListener("click", function (event) {
-      var btn = eventElement(event).closest
-        ? closestHTMLElement(eventElement(event), "[data-transcribe-src]")
-        : null;
+      var btn = closestHTMLElement(eventElement(event), "[data-transcribe-src]";
       if (!btn) return;
       runTranscribe(btn);
     });
@@ -1024,10 +1038,7 @@
       }, 0);
     });
     document.addEventListener("click", function (event) {
-      var chip =
-        eventElement(event) && eventElement(event).closest
-          ? closestHTMLElement(eventElement(event), ".wp-jump-latest")
-          : null;
+      var chip = closestHTMLElement(eventElement(event), ".wp-jump-latest";
       if (!chip) return;
       var transcript = document.getElementById("thread-transcript");
       if (transcript) transcript.scrollTop = transcript.scrollHeight;
@@ -1152,7 +1163,11 @@
     var draftTimer = null;
     document.addEventListener("input", function (event) {
       var area = eventElement(event);
-      if (!area.closest || !closestHTMLElement(area, "textarea.wp-compose-body")) return;
+      if (
+        !area.closest ||
+        !closestHTMLElement(area, "textarea.wp-compose-body")
+      )
+        return;
       if (draftTimer) clearTimeout(draftTimer);
       draftTimer = setTimeout(function () {
         saveDraft(currentDraftId(), area.value);
@@ -1189,7 +1204,8 @@
     //     is transient by design.
     var optPending = new WeakMap();
     document.addEventListener("htmx:beforeRequest", function (event) {
-      var form = (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      var form =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (form.classList.contains("wp-compose-new")) return;
       var transcript = document.getElementById("thread-transcript");
@@ -1286,9 +1302,11 @@
     document.addEventListener("htmx:responseError", rollbackOptimistic);
     document.addEventListener("htmx:sendError", rollbackOptimistic);
     document.addEventListener("htmx:afterRequest", function (event) {
-      var form = (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      var form =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
-      if (eventDetail(event) && eventDetail(event).successful) optPending.delete(form);
+      if (eventDetail(event) && eventDetail(event).successful)
+        optPending.delete(form);
     });
 
     // 3f. Focus lands on the new panel's heading after a navigation
@@ -1303,7 +1321,10 @@
       var navigating =
         elt.hasAttribute && elt.hasAttribute("data-tab")
           ? true
-          : Boolean(elt.closest && closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"));
+          : Boolean(
+              elt.closest &&
+              closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back"),
+            );
       if (!navigating) return;
       var heading = document.querySelector("#tab-content h2");
       if (!heading || typeof heading.focus !== "function") return;
@@ -1344,7 +1365,8 @@
       if (!elt || !elt.matches) return false;
       return Boolean(
         (elt.hasAttribute && elt.hasAttribute("data-tab")) ||
-        (elt.closest && closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back")),
+        (elt.closest &&
+          closestHTMLElement(elt, ".wp-thread-rowwrap, .wp-back")),
       );
     };
     document.addEventListener("htmx:beforeRequest", function (event) {
@@ -1660,13 +1682,16 @@
     };
 
     document.addEventListener("click", function (event) {
-      if (!eventElement(event) || !eventElement(event).closest) return;
-      var play = closestHTMLElement(eventElement(event), ".wp-vm-play");
+      var play = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), ".wp-vm-play")
+      );
       if (play) {
         vmTogglePlay(play);
         return;
       }
-      var speed = closestHTMLElement(eventElement(event), ".wp-vm-speed");
+      var speed = /** @type {HTMLButtonElement | null} */ (
+        closestHTMLElement(eventElement(event), ".wp-vm-speed")
+      );
       if (speed) vmCycleSpeed(speed);
     });
 
@@ -1689,8 +1714,9 @@
     };
 
     document.addEventListener("pointerdown", function (event) {
-      if (!eventElement(event) || !eventElement(event).closest) return;
-      var canvas = closestHTMLElement(eventElement(event), ".wp-vm-wave");
+      var canvas = /** @type {HTMLCanvasElement | null} */ (
+        closestHTMLElement(eventElement(event), ".wp-vm-wave")
+      );
       if (!canvas) return;
       var uuid = canvas.id.slice("vm-wave-".length);
       var audio = document.getElementById("vm-audio-" + uuid);
@@ -1712,7 +1738,6 @@
 
     // keyboard seek on the scrubber (it carries role=slider + tabindex)
     document.addEventListener("keydown", function (event) {
-      if (!eventElement(event) || !eventElement(event).closest) return;
       var canvas = closestHTMLElement(eventElement(event), ".wp-vm-wave");
       if (!canvas) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -1958,7 +1983,10 @@
         if (
           target &&
           target.closest &&
-          closestHTMLElement(target, "input, textarea, select, [contenteditable='true']")
+          closestHTMLElement(
+            target,
+            "input, textarea, select, [contenteditable='true']",
+          )
         )
           return;
         event.preventDefault();
@@ -2050,10 +2078,16 @@
 
     document.addEventListener("keydown", function (event) {
       var area = eventElement(event);
-      if (!area || !area.closest || !closestHTMLElement(area, "textarea.wp-compose-body"))
+      if (
+        !area ||
+        !area.closest ||
+        !closestHTMLElement(area, "textarea.wp-compose-body")
+      )
         return;
       if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
-      var form = closestHTMLElement(area, "form");
+      var form = /** @type {HTMLFormElement | null} */ (
+        closestHTMLElement(area, "form")
+      );
       if (!form || !form.requestSubmit) return; // degrade: Enter inserts a newline
       event.preventDefault();
       form.requestSubmit();
@@ -2061,7 +2095,11 @@
 
     document.addEventListener("input", function (event) {
       var area = eventElement(event);
-      if (!area || !area.closest || !closestHTMLElement(area, "textarea.wp-compose-body"))
+      if (
+        !area ||
+        !area.closest ||
+        !closestHTMLElement(area, "textarea.wp-compose-body")
+      )
         return;
       var form = closestHTMLElement(area, "form");
       if (form) updateSegcount(form, area.value);
@@ -2091,21 +2129,23 @@
 
     document.addEventListener("change", function (event) {
       var input = eventElement(event);
-      if (!input || !input.closest || !closestHTMLElement(input, ".wp-compose")) return;
+      if (!input || !input.closest || !closestHTMLElement(input, ".wp-compose"))
+        return;
       if (String(input.type || "") !== "file") return;
       if (typeof DataTransfer === "undefined") return;
-      var form = closestHTMLElement(input, "form");
+      var form = /** @type {HTMLFormElement | null} */ (
+        closestHTMLElement(input, "form")
+      );
       var box = form && form.querySelector(".wp-attach");
       if (box) renderAttachChips(input, box);
     });
 
     document.addEventListener("click", function (event) {
-      var remove =
-        eventElement(event) && eventElement(event).closest
-          ? closestHTMLElement(eventElement(event), ".wp-chip-x")
-          : null;
+      var remove = closestHTMLElement(eventElement(event), ".wp-chip-x";
       if (!remove) return;
-      var form = closestHTMLElement(remove, "form");
+      var form = /** @type {HTMLFormElement | null} */ (
+        closestHTMLElement(remove, "form")
+      );
       var input = form && form.querySelector('input[type="file"]');
       var box = form && form.querySelector(".wp-attach");
       if (!input || !box || typeof DataTransfer === "undefined") return;
