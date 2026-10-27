@@ -132,9 +132,12 @@ func textAgentActionError(err error) (int, string) {
 // textAgentPanelAction runs one drafts-panel action under the panel
 // timeout: the session gate, the error contract (agent verdict → panel
 // banner), the optional success toast, and the panel refresh live here so
-// every action answers the same way.
+// every action answers the same way. The auditEvent names the greppable
+// journal line (M18: one agentAudit per action, success or failure —
+// empty disables the line; the draft id rides the path when the action
+// names one).
 func (h *handlers) textAgentPanelAction(
-	w http.ResponseWriter, r *http.Request, key, toastKey string, action func(context.Context) error,
+	w http.ResponseWriter, r *http.Request, key, toastKey, auditEvent string, action func(context.Context) error,
 ) {
 	sess, ok := h.textAgentSession(w, r)
 	if !ok {
@@ -144,8 +147,14 @@ func (h *handlers) textAgentPanelAction(
 	defer cancel()
 	if err := action(ctx); err != nil {
 		status, detail := textAgentActionError(err)
+		if auditEvent != "" {
+			agentAudit(auditEvent, sess.Extension.String(), r.PathValue("id"), "failed")
+		}
 		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, key)+": "+detail)
 		return
+	}
+	if auditEvent != "" {
+		agentAudit(auditEvent, sess.Extension.String(), r.PathValue("id"), "ok")
 	}
 	if toastKey != "" {
 		notifyToast(w, "ok", h.T(r, toastKey))
@@ -159,7 +168,7 @@ func (h *handlers) textAgentPanelAction(
 // rides the panel-error contract so the banner lands where the owner
 // looks.
 func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
-	h.textAgentPanelAction(w, r, "drafts.approve", "toast.messageSent", func(ctx context.Context) error {
+	h.textAgentPanelAction(w, r, "drafts.approve", "toast.messageSent", "approve", func(ctx context.Context) error {
 		_, err := h.deps.TextAgent.Approve(ctx, r.PathValue("id"), r.FormValue("text"))
 		return err
 	})
@@ -167,7 +176,7 @@ func (h *handlers) approveDraft(w http.ResponseWriter, r *http.Request) {
 
 // discardDraft drops a pending draft without sending.
 func (h *handlers) discardDraft(w http.ResponseWriter, r *http.Request) {
-	h.textAgentPanelAction(w, r, "drafts.discard", "", func(ctx context.Context) error {
+	h.textAgentPanelAction(w, r, "drafts.discard", "", "discard", func(ctx context.Context) error {
 		return h.deps.TextAgent.Discard(ctx, r.PathValue("id"))
 	})
 }
@@ -227,7 +236,7 @@ func (h *handlers) aiDraft(w http.ResponseWriter, r *http.Request) {
 // safety gates are unchanged — the mode only decides whether a confident
 // draft may send itself.
 func (h *handlers) setDraftMode(w http.ResponseWriter, r *http.Request) {
-	h.textAgentPanelAction(w, r, "drafts.mode.label", "drafts.mode.changed", func(ctx context.Context) error {
+	h.textAgentPanelAction(w, r, "drafts.mode.label", "drafts.mode.changed", "mode", func(ctx context.Context) error {
 		var err error
 		if r.FormValue("mode") == "reset" {
 			_, err = h.deps.TextAgent.ResetMode(ctx)
