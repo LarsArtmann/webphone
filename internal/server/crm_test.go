@@ -343,7 +343,9 @@ func TestAPICallLoggingContract(t *testing.T) {
 // a terminated call must (a) reach the CRM machine API with the
 // configured bearer token on every request, (b) carry the number
 // VERBATIM (E.164, post-sanitize — the CRM owns all matching), and
-// (c) journal exactly the four island-contract fields.
+// (c) journal exactly the four island-contract fields with the
+// observed disposition (media flowed ⇒ unknown — never a claimed
+// answer; issue #6).
 func TestAPICallLoggingIslandWireContract(t *testing.T) {
 	stub := &crmStub{}
 	resolver := crmResolverFor(t, stub)
@@ -352,7 +354,7 @@ func TestAPICallLoggingIslandWireContract(t *testing.T) {
 
 	resp, body := postJSONRaw(t, c, "/api/calls", map[string]any{
 		"number": "+493012345678", "direction": "out", "seconds": 42,
-		"outcome": "completed", "key": "71111111-1111-4111-8111-111111111111",
+		"disposition": "unknown", "key": "71111111-1111-4111-8111-111111111111",
 	})
 	if resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("island-shaped report: %d %s", resp.StatusCode, body)
@@ -374,7 +376,7 @@ func TestAPICallLoggingIslandWireContract(t *testing.T) {
 	}
 	got := stub.logBodies[0]
 	if len(got) != 4 || got["direction"] != "out" || got["number"] != "+493012345678" ||
-		got["seconds"] != float64(42) || got["outcome"] != "completed" {
+		got["seconds"] != float64(42) || got["outcome"] != "unknown" {
 		t.Fatalf("journaled body must be exactly the island contract: %+v", got)
 	}
 }
