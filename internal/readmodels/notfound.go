@@ -3,7 +3,6 @@ package readmodels
 import (
 	"strings"
 
-	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -37,11 +36,10 @@ func (e *notFoundError) Error() string {
 
 func (e *notFoundError) Unwrap() []error { return e.errs }
 
-// notFound builds the miss verdict for one op: sentinel plus the op's
-// coded Rejection ("readmodels.<collection>_missing" family).
-func notFound(code, format string, args ...any) *notFoundError {
-	return &notFoundError{errs: []error{
-		store.ErrNotFound,
-		errorfamily.Newf(errorfamily.Rejection, code, format, args...),
-	}}
+// notFound builds the miss verdict for one op: the ErrNotFound sentinel
+// plus the op's coded Rejection. The errorfamily constructor stays at
+// the call site so the arch registry scan sees every code literal; this
+// one home owns only the sentinel pairing.
+func notFound(coded error) *notFoundError {
+	return &notFoundError{errs: []error{store.ErrNotFound, coded}}
 }

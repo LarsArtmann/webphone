@@ -216,5 +216,5 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 		}
 		return nil
 	}
-	return notFound("readmodels.contact_missing", "contact %s", id.String())
+	return notFound(errorfamily.Newf(errorfamily.Rejection, "readmodels.contact_missing", "contact %s", id.String()))
 }

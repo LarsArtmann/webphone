@@ -190,7 +190,7 @@ func (s *Snippets) Delete(ctx context.Context, owner domain.Extension, id domain
 		return errorfamily.WrapInfrastructuref(err, "readmodels.snippet_delete", "load snippet slot")
 	}
 	if !found || prev.Owner != owner.String() {
-		return notFound("readmodels.snippet_missing", "snippet %s", id.String())
+		return notFound(errorfamily.Newf(errorfamily.Rejection, "readmodels.snippet_missing", "snippet %s", id.String()))
 	}
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.SnippetDeleted{}), domain.SnippetDeleted{
 		Key: domain.SnippetKey{ID: id.String()},

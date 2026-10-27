@@ -415,6 +415,7 @@ a deliberate code change, regenerate:
 | sso.mapping                                  | Rejection                 | internal/sso/sso.go                |
 | sso.nonce                                    | Infrastructure            | internal/sso/sso.go                |
 | sso.nonce.mismatch                           | Rejection                 | internal/sso/sso.go                |
+| sso.random_token                             | Infrastructure            | internal/sso/sso.go                |
 | sso.redirect_url                             | Rejection                 | internal/sso/sso.go                |
 | sso.state                                    | Infrastructure            | internal/sso/sso.go                |
 | sso.state.mismatch                           | Rejection                 | internal/server/sso_api.go         |
