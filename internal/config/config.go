@@ -316,13 +316,17 @@ func (p Passkey) Enabled() bool {
 // set together (a URL without a token cannot authenticate; a token without
 // a URL has nowhere to go) — config validation fails closed on half a
 // configuration so a typo can never silently disable or enable the client.
+// TokenFile is the systemd-credential form of Token (at-most-one-of:
+// the NixOS module wires LoadCredential through it, keeping the bearer
+// out of the world-readable config JSON).
 // branching-flow DUPLICATE_TYPE+COMPOSITION_mixin (baselined):
 // independent seam twin of Paperless by owner ruling 2026-10-11 —
 // URL+Token stays per-seam both-or-neither; detector noise routed
 // upstream.
 type CRM struct {
-	URL   string `json:"url" koanf:"url"`
-	Token string `json:"token" koanf:"token"`
+	URL       string `json:"url" koanf:"url"`
+	Token     string `json:"token" koanf:"token"`
+	TokenFile string `json:"token_file,omitempty" koanf:"token_file"`
 }
 
 // Paperless configures the optional Paperless-ngx archive for inbound
@@ -486,6 +490,13 @@ var errGatewaySecretBothSources error = errorfamily.NewRejection("config.gateway
 // the deployment's config before the service can start.
 var errSIPSecretBothSources error = errorfamily.NewRejection("config.sip.credential_secret_sources", "sip: set at most one of credential_secret / credential_secret_file")
 
+// errCRMTokenBothSources: exactly-one-of crm.token / crm.token_file —
+// the same one-fact-one-source drift argument as the gateway and SIP
+// secret pairs.
+// Classified Rejection: the operator must fix
+// the deployment's config before the service can start.
+var errCRMTokenBothSources error = errorfamily.NewRejection("config.crm.token_sources", "crm: set at most one of token / token_file")
+
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
 // empty, ice_servers entries ship verbatim; once set, /config.js derives a
@@ -613,6 +624,27 @@ func Load() (Config, error) {
 			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.sip.credential_secret_file", "sip.credential_secret_file %s is empty", cfg.SIP.CredentialSecretFile)
 		}
 		cfg.SIP.CredentialSecret = secret
+	}
+
+	// crm.token / crm.token_file: at-most-one-of, same drift argument as
+	// the gateway and SIP secret pairs. The file form is the systemd
+	// credential the NixOS module wires (LoadCredential), so the bearer
+	// never sits in the world-readable config JSON.
+	if cfg.CRM.TokenFile != "" && cfg.CRM.Token != "" {
+		// Shape check BEFORE the file read: both sources set is a config
+		// drift bug regardless of whether the file is readable.
+		return Config{}, &ConfigInvalidError{err: errCRMTokenBothSources}
+	}
+	if cfg.CRM.TokenFile != "" {
+		data, err := os.ReadFile(cfg.CRM.TokenFile)
+		if err != nil {
+			return Config{}, errorfamily.WrapRejectionf(err, "config.crm.token_file", "crm.token_file %s", cfg.CRM.TokenFile)
+		}
+		token := strings.TrimSpace(string(data))
+		if token == "" {
+			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.crm.token_file", "crm.token_file %s is empty", cfg.CRM.TokenFile)
+		}
+		cfg.CRM.Token = token
 	}
 
 	auth, err := resolvedAuth(cfg.Auth)
@@ -770,6 +802,8 @@ func validate(cfg Config) error {
 	switch {
 	case cfg.CRM.URL == "" && cfg.CRM.Token == "":
 		// Both unset: nothing to check — the tail validates the next seam.
+		// (A token_file without a URL is already this arm: the file read
+		// resolved into Token, so url-empty-with-token lands below.)
 	case cfg.CRM.URL == "":
 		return errorfamily.NewRejection("config.crm.url", "crm.token is set without crm.url: the integration needs both (or neither)")
 	case cfg.CRM.Token == "":

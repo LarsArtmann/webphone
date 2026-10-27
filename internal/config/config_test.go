@@ -604,6 +604,50 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 	}
 }
 
+// TestLoadResolvesCRMTokenFile pins the credential form (the NixOS
+// module's LoadCredential lane): the file resolves into Token
+// (whitespace trimmed), both sources together are the one-fact drift
+// rejection, and an empty or missing file fails the boot loudly —
+// never a client that authenticates with garbage.
+func TestLoadResolvesCRMTokenFile(t *testing.T) {
+	scrubEnv(t)
+	tokenFile := filepath.Join(t.TempDir(), "crm-token")
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+
+	// Missing file: loud boot failure naming the setting.
+	t.Setenv("WEBPHONE_CRM__URL", "https://crm.example.org")
+	t.Setenv("WEBPHONE_CRM__TOKEN_FILE", tokenFile)
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "crm.token_file") {
+		t.Fatalf("missing token file: %v, want a crm.token_file rejection", err)
+	}
+
+	// Empty file: same loud failure.
+	if err := os.WriteFile(tokenFile, []byte("   \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "is empty") {
+		t.Fatalf("empty token file: %v, want the empty rejection", err)
+	}
+
+	// Valid file: resolves into Token (trimmed).
+	if err := os.WriteFile(tokenFile, []byte("  sekrit-from-credential \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load with token file: %v", err)
+	}
+	if cfg.CRM.Token != "sekrit-from-credential" {
+		t.Fatalf("resolved token: %q", cfg.CRM.Token)
+	}
+
+	// Both sources: the drift rejection fires BEFORE the read.
+	t.Setenv("WEBPHONE_CRM__TOKEN", "inline")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "at most one of token / token_file") {
+		t.Fatalf("both sources: %v, want the token_sources rejection", err)
+	}
+}
+
 // TestLoadValidatesPaperlessConfig pins the archive seam's fail-closed
 // posture, copied from the CRM seam: half a configuration is a startup
 // error, never a silently disabled (or broken) archive, and the URL must
