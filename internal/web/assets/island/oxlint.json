@@ -14,7 +14,10 @@
     "nursery": "off"
   },
   "rules": {
-    "no-undef": "error"
+    "no-undef": "error",
+    "no-empty": "error",
+    "no-unused-vars": "error",
+    "no-console": ["error", { "allow": ["info", "warn", "error"] }]
   },
   "globals": {
     "SIP": "readonly",

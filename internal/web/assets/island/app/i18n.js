@@ -150,6 +150,7 @@ export const I18N = {
     sseRestored: "Live tab updates restored.",
     ssePillLive: "Live tab updates: connected",
     ssePillDown: "Live tab updates: not connected",
+    ssePillRetry: "Live tab updates: reconnecting…",
     resuming: "resuming session…",
     resumeRejected: (message) =>
       `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
@@ -350,6 +351,7 @@ export const I18N = {
     sseRestored: "Live-Aktualisierungen wiederhergestellt.",
     ssePillLive: "Live-Aktualisierungen: verbunden",
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
+    ssePillRetry: "Live-Aktualisierungen: verbinde neu…",
     resuming: "Sitzung wird fortgesetzt…",
     resumeRejected: (message) =>
       `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,

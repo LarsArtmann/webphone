@@ -259,7 +259,7 @@ export function initSseLiveIndicator() {
     );
     delete pill.dataset.live;
     setPillLabel(false);
-    pill.title = t("ssePillDown");
+    pill.title = t("ssePillRetry");
     sseFailures += 1;
     if (sseFailures === SSE_FAILURES_BEFORE_TOAST) {
       sseAnnouncedDrop = true;
