@@ -190,7 +190,8 @@ export const I18N = {
     summarizeDuplicate: "Already drafted — see Messages.",
     summarizeNoTranscript: "No transcript for that call.",
     summarizeFailed: "The AI agent is unreachable right now.",
-    summarizeOffline: "You are offline — the draft request never left the browser.",
+    summarizeOffline:
+      "You are offline — the draft request never left the browser.",
     callMissed: "Missed call — the caller gave up before it was answered.",
     callBusy: "Busy — the line was not free.",
     callNotFound: "Not reachable — the number does not exist.",
@@ -389,8 +390,10 @@ export const I18N = {
     summarizeDuplicate: "Bereits entworfen — siehe Nachrichten.",
     summarizeNoTranscript: "Keine Mitschrift für diesen Anruf.",
     summarizeFailed: "Der KI-Agent ist gerade nicht erreichbar.",
-    summarizeOffline: "Sie sind offline — die Entwurfsanfrage hat den Browser nie verlassen.",
-    callMissed: "Verpasster Anruf — der Anrufer hat aufgelegt, bevor jemand geantwortet hat.",
+    summarizeOffline:
+      "Sie sind offline — die Entwurfsanfrage hat den Browser nie verlassen.",
+    callMissed:
+      "Verpasster Anruf — der Anrufer hat aufgelegt, bevor jemand geantwortet hat.",
     callBusy: "Besetzt — die Leitung war nicht frei.",
     callNotFound: "Nicht erreichbar — die Nummer existiert nicht.",
     callBlocked: "Anruf nicht erlaubt — von der Gegenseite blockiert.",

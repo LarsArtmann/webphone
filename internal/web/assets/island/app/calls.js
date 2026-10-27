@@ -1232,7 +1232,8 @@ export async function placeCall(raw) {
       requestDelegate: {
         onReject: (res) => {
           const entry = sessions.get(inviter.id);
-          if (entry) entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
+          if (entry)
+            entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
         },
       },
     });

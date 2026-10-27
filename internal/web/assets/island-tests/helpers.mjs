@@ -150,6 +150,12 @@ export function installBrowserGlobals() {
         this.append(kid);
         return kid;
       },
+      insertBefore(kid, ref) {
+        const i = ref ? this.children.indexOf(ref) : -1;
+        if (i >= 0) this.children.splice(i, 0, kid);
+        else this.append(kid);
+        return kid;
+      },
     };
     // classList with real-DOM semantics: add/remove/toggle mutate the
     // element's className string (reads always derive from it), so code
