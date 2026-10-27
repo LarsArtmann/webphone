@@ -492,13 +492,18 @@ a deliberate code change, regenerate:
 A burst of `502` on `/events` (and any other proxied path) right after a stack
 daemon relock is the webphone restart window, NOT a crash: the unit runs
 `Restart=on-failure, RestartSec=5`, `ExtensionHubs.Shutdown` releases live SSE
-streams instantly (2026-10-25 feature, working as designed), and Caddy answers
-502 for the ~5s the binary is down. The client's EventSource recreate loop
-(upstream-owned, 500ms→64s backoff, reset on open) re-establishes the feed on
-its own. Triage bar before calling anything a bug: `systemctl show webphone
--p NRestarts -p ExecMainStartTimestamp` + `journalctl -u webphone | grep -iE
-"panic|fatal"`. A recovered feed announces itself once (the pill's
-announced-drop symmetry); an unrecovering feed is the actual signal.
+streams instantly (2026-10-25 feature, working as designed — the release logs
+`events: released live SSE streams for shutdown` with hub/stream counts), and
+Caddy answers 502 for the ~5s the binary is down. The client's EventSource
+recreate loop (upstream-owned, 500ms→64s backoff, reset on open) re-establishes
+the feed on its own. What stays alive during the window: the session cookie
+(and the tab), the shell markup, and any text the user typed into composers
+(draft persistence); what dies with the process: the SIP registration and
+therefore every live call. Triage bar before calling anything a bug:
+`systemctl show webphone -p NRestarts -p ExecMainStartTimestamp` +
+`journalctl -u webphone | grep -iE "panic|fatal"`. A recovered feed announces
+itself once (the pill's announced-drop symmetry); an unrecovering feed is the
+actual signal.
 
 ## Island-JS error surface — every catch lands or justifies (2026-10-27)
 
