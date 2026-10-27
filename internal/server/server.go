@@ -151,12 +151,12 @@ type Deps struct {
 	// Notes is the post-call-note store (owner-scoped, the History
 	// tab's note affordance). Nil (test compositions): the endpoints
 	// answer 503.
-	Notes *readmodels.Notes
-	Messaging   *messaging.Service
-	Fax         *fax.Service
-	PhoneAPI    *pbx.Client
-	Hubs        *ExtensionHubs
-	Shared      []domain.SharedContact
+	Notes     *readmodels.Notes
+	Messaging *messaging.Service
+	Fax       *fax.Service
+	PhoneAPI  *pbx.Client
+	Hubs      *ExtensionHubs
+	Shared    []domain.SharedContact
 	// CRM is the OPTIONAL Ledger CRM integration (name enrichment + call
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.

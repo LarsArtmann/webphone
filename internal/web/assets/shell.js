@@ -353,11 +353,17 @@
             return;
           }
           return res.text().then(function (detail) {
-            shellToast(detail || "Could not save the note (HTTP " + res.status + ").", "warn");
+            shellToast(
+              detail || "Could not save the note (HTTP " + res.status + ").",
+              "warn",
+            );
           });
         })
         .catch(function () {
-          shellToast("Could not save the note — check your connection.", "error");
+          shellToast(
+            "Could not save the note — check your connection.",
+            "error",
+          );
         })
         .then(function () {
           btn.disabled = false;
@@ -388,11 +394,17 @@
             });
           }
           return res.text().then(function (detail) {
-            shellToast(detail || "Could not draft (HTTP " + res.status + ").", "warn");
+            shellToast(
+              detail || "Could not draft (HTTP " + res.status + ").",
+              "warn",
+            );
           });
         })
         .catch(function () {
-          shellToast("Could not reach the AI agent — check your connection.", "error");
+          shellToast(
+            "Could not reach the AI agent — check your connection.",
+            "error",
+          );
         })
         .then(function () {
           btn.disabled = false;

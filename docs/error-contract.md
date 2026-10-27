@@ -222,6 +222,7 @@ a deliberate code change, regenerate:
 | Code                                         | Families                  | First site                         |
 | -------------------------------------------- | ------------------------- | ---------------------------------- |
 | agent.summarize                              | Transient                 | internal/server/api/summary_api.go |
+| api.note_save                                | Infrastructure            | internal/server/api/note_api.go    |
 | asr.decode                                   | Transient                 | internal/asr/asr.go                |
 | asr.empty                                    | Rejection                 | internal/asr/asr.go                |
 | asr.encode                                   | Infrastructure            | internal/asr/asr.go                |
@@ -360,6 +361,9 @@ a deliberate code change, regenerate:
 | readmodels.fax_missing                       | Rejection                 | internal/readmodels/faxes.go       |
 | readmodels.fax_sweep                         | Infrastructure            | internal/readmodels/faxes.go       |
 | readmodels.fax_update                        | Infrastructure            | internal/readmodels/faxes.go       |
+| readmodels.note_get                          | Infrastructure            | internal/readmodels/callnotes.go   |
+| readmodels.note_list_full                    | Rejection                 | internal/readmodels/callnotes.go   |
+| readmodels.note_save                         | Infrastructure            | internal/readmodels/callnotes.go   |
 | readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go  |
 | readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go  |
 | readmodels.push_list                         | Infrastructure            | internal/readmodels/push.go        |

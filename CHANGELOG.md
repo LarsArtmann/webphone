@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Post-call notes (2026-10-27, agent UX train): every History
+  transcript row grows a freeform note box — Save rides the new
+  session-gated `GET/PUT /api/calls/{id}/note` (one slot per owner+call
+  in the readmodels engine, idempotent upsert, empty body clears, a
+  full note list is a 409 because hand-written content is never
+  silently expunged). A "Prefill from AI draft" button rides the
+  summarize chain and inserts the draft text for a human edit — the AI
+  never writes the note itself; the save is always the owner's
+  keystroke. Notes live in `readmodels.db`, so the existing backup and
+  restore path carries them.
 - Post-call summarize chain (2026-10-26, agent UX train): a normally
   ended call now settles into a muted ended card instead of vanishing —
   Close always, plus "Summarize → draft SMS" when the textagent seam is

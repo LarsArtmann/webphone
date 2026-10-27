@@ -1592,3 +1592,122 @@ test("a failed mode change keeps the pill honest (state unchanged, announced)", 
     restore();
   }
 });
+
+// M16: the post-call note handlers. [data-note-save] PUTs the row's
+// textarea; [data-note-draft] inserts the summarize draft's text for a
+// HUMAN edit — the AI never writes the note itself.
+const noteRow = (callId, note) => {
+  const row = doc.createElement();
+  doc.body.append(row);
+  // noteBodyFor routes through document.querySelector; route attribute
+  // lookups into this row's tree (the stub's default answers null).
+  const realQS = doc.querySelector;
+  doc.querySelector = (selector) => {
+    const match = /^\[data-note-body="(.+)"\]$/.exec(selector);
+    if (!match) return realQS(selector);
+    const walk = (node) => {
+      for (const kid of node.children) {
+        if (kid.getAttribute && kid.getAttribute("data-note-body") === match[1]) {
+          return kid;
+        }
+        const found = walk(kid);
+        if (found) return found;
+      }
+      return null;
+    };
+    return walk(doc.body);
+  };
+  const box = doc.createElement();
+  box.id = "wp-note-body-" + callId;
+  box.setAttribute("data-note-body", callId);
+  box.value = note || "";
+  box.parent = row;
+  row.children.push(box);
+  const save = doc.createElement();
+  save.selector = "[data-note-save]";
+  save.setAttribute("data-note-save", callId);
+  save.parent = row;
+  row.children.push(save);
+  const draft = doc.createElement();
+  draft.selector = "[data-note-draft]";
+  draft.setAttribute("data-note-draft", callId);
+  draft.parent = row;
+  row.children.push(draft);
+  return { row, box, save, draft };
+};
+
+test("data-note-save PUTs the textarea body and toasts the verdict", async () => {
+  const { box, save } = noteRow("call-x1", "old text");
+  const puts = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (options.method === "PUT") {
+      puts.push({ url, body: options.body });
+      return { status: 204, text: async () => "" };
+    }
+    return realFetch(url, options);
+  };
+  try {
+    box.value = "rueckruf am freitag";
+    doc.dispatch("click", { target: save });
+    await settle();
+    assert.equal(save.disabled, false, "the row unsets its busy state");
+    assert.equal(puts.length, 1);
+    assert.match(puts[0].url, /\/api\/calls\/call-x1\/note$/);
+    assert.deepEqual(JSON.parse(puts[0].body), { body: "rueckruf am freitag" });
+    assert.match(toasts().children.at(-1).textContent, /Note saved/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("data-note-draft inserts the draft text for a human edit; duplicate announces", async () => {
+  const first = noteRow("call-x2", "");
+  const second = noteRow("call-x3", "");
+  const posts = [];
+  const realFetch = globalThis.fetch;
+  let answer = { status: 200, body: { id: "d-1", text: "Danke fuer das Gespraech!" } };
+  globalThis.fetch = async (url, options = {}) => {
+    if (options.method === "POST" && String(url).includes("/summary-draft")) {
+      posts.push(String(url));
+      return {
+        status: answer.status,
+        json: async () => answer.body,
+        text: async () => "",
+      };
+    }
+    return realFetch(url, options);
+  };
+  try {
+    doc.dispatch("click", { target: first.draft });
+    await settle();
+    assert.equal(posts.length, 1);
+    assert.equal(first.box.value, "Danke fuer das Gespraech!");
+    assert.match(toasts().children.at(-1).textContent, /edit before saving/);
+
+    answer = { status: 200, body: { duplicate: true } };
+    doc.dispatch("click", { target: second.draft });
+    await settle();
+    assert.equal(second.box.value, "", "a duplicate inserts nothing");
+    assert.match(toasts().children.at(-1).textContent, /Already drafted/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("a failed note save relays the server's human phrasing", async () => {
+  const { save } = noteRow("call-x4", "");
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    status: 409,
+    text: async () => "the note list is full — delete another note first",
+  });
+  try {
+    doc.dispatch("click", { target: save });
+    await settle();
+    assert.match(toasts().children.at(-1).textContent, /note list is full/);
+    assert.equal(save.disabled, false, "the busy state always clears");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
