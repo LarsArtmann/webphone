@@ -59,7 +59,15 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
    the live deployment (browser E2E owed only if served markup changed — it did
    not: all surfaces are island-JS-created).
 
-### Language stance: island type gate GO, Go→JS + full KMP rejected (2026-10-27 plan, unstarted)
+### Language stance: island type gate SHIPPED, Go→JS + full KMP rejected (2026-10-27 plan)
+
+> **Item 1 CLOSED 2026-10-27 21:00** — the gate is enforced and green over all 26 served asset
+> files (`tsc -p . --noEmit`, wired as `island-typecheck`), with 680 type errors retired and ten
+> real defects fixed on the way. `tsconfig.all.json` is deleted and the debt list was replaced by
+> stronger coverage pins. Execution record:
+> [docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md](docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md)
+> §9. Item 2 (the error-surface conventions) landed in the same train; items 3–4 stay open.
+
 
 Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
 (the plan owns the task count; this row points at it). **Priority:** High · **Effort:** M.

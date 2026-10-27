@@ -478,8 +478,7 @@
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
-      var note = box;
-      btn.disabled = true;
+      saveButton.disabled = true;
       fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
         method: "PUT",
         headers: {
