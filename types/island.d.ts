@@ -51,6 +51,9 @@ interface IslandDomIds {
   "wp-adv-toggle": HTMLButtonElement;
   "wp-advanced": HTMLElement;
   "wp-devtest-btn": HTMLButtonElement;
+  "sso-error": HTMLElement;
+  "audio-out-wrap": HTMLElement;
+  "audio-output": HTMLSelectElement;
 }
 
 /** The island's four feedback kinds (ui.js owns the vocabulary). */
@@ -141,4 +144,57 @@ interface IslandSessionIdentity {
 interface IslandIncomingSlotActions {
   answer(index: number): void;
   reject(index: number): void;
+}
+
+/** The pcsetup.js setup-timing marks (one per peer connection). */
+interface IslandSetupMarks {
+  gatheringStartedAt: number | null;
+  gatheringEndedAt: number | null;
+  iceConnectedAt: number | null;
+}
+
+/** What setupSummary reports to ice.js's rendering. */
+interface IslandSetupSummary {
+  gatherMs: number | null;
+  gatherCapped: boolean;
+  gatheringStartedAt: number | null;
+  iceConnectedAt: number | null;
+}
+
+/**
+ * The subset of an RTCStats dictionary the ICE panel reads. The DOM lib
+ * hands `RTCStatsReport.get()` back as `any`; declaring the shape keeps
+ * a renamed/removed stat field a compile error instead of "?" on the
+ * panel (RTCStats dictionaries are a moving target across browsers).
+ */
+interface IslandRtcStat {
+  id?: string;
+  type?: string;
+  kind?: string;
+  state?: string;
+  selected?: boolean;
+  nominated?: boolean;
+  selectedCandidatePairId?: string;
+  localCandidateId?: string;
+  remoteCandidateId?: string;
+  candidateType?: string;
+  currentRoundTripTime?: number;
+  packetsLost?: number;
+  jitter?: number;
+  bytesReceived?: number;
+  mimeType?: string;
+}
+
+/** The ICE panel's one-tick aggregate. */
+interface IslandIceSummary {
+  iceState: RTCIceConnectionState;
+  selectedPair: string | null;
+  selectedPairData: IslandRtcStat | null;
+  localType: string;
+  remoteType: string;
+  rtt: number | null;
+  packetsLost: number;
+  jitter: number | null;
+  codec: string;
+  bytesReceived: number;
 }

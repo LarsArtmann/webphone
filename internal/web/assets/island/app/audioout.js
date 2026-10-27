@@ -7,7 +7,7 @@
 // break a call.
 
 import { t } from "./i18n.js";
-import { els, log } from "./ui.js";
+import { $, els, errorMessage, log } from "./ui.js";
 
 const SINK_KEY = "wp-sink";
 // Chrome aliases ("default", "communications") point at the system
@@ -18,6 +18,10 @@ let initialized = false;
 
 // physicalOutputs filters the enumeration down to real, addressable
 // output devices (aliases excluded so one-speaker machines stay picker-free).
+/**
+ * @param {MediaDeviceInfo[]} devices
+ * @returns {MediaDeviceInfo[]}
+ */
 export function physicalOutputs(devices) {
   return devices.filter(
     (device) =>
@@ -36,6 +40,7 @@ function storedSink() {
   }
 }
 
+/** @param {string} deviceId */
 function persistSink(deviceId) {
   try {
     localStorage.setItem(SINK_KEY, deviceId);
@@ -49,8 +54,8 @@ export function initAudioOutput() {
   initialized = true;
 
   const audio = els.remoteAudio;
-  const wrap = document.getElementById("audio-out-wrap");
-  const select = document.getElementById("audio-output");
+  const wrap = $("audio-out-wrap");
+  const select = $("audio-output");
   if (!audio || !wrap || !select) return;
   if (typeof audio.setSinkId !== "function") return;
   if (
@@ -60,12 +65,13 @@ export function initAudioOutput() {
     return;
   }
 
+  /** @param {string} deviceId */
   const apply = (deviceId) => {
     if (!deviceId) return;
     const verdict = audio.setSinkId(deviceId);
     if (verdict && typeof verdict.then === "function") {
       verdict.catch((err) =>
-        log(`audio output switch failed: ${err.message}`, "error"),
+        log(`audio output switch failed: ${errorMessage(err)}`, "error"),
       );
     }
   };

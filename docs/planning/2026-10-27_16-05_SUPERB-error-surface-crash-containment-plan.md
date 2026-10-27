@@ -264,3 +264,35 @@ attempted over HTTPS where possible (see execution log addendum).
 
 Island suite 257/257 green; targeted Go packages green after the concurrent
 readmodels refactor healed.
+
+### Execution-log addendum (evening, ~18:45 — final wave verdicts)
+
+- **T18 remote legs (M51/M52): DONE over HTTPS, no ssh** — `https://pbx.artmann.tech/version`
+  serves `v2.9.0` at commit `ec5de5e` (the 14:02 relock: the deploy FIRED, prod runs the
+  relocked main) and `/config.js` carries `"agent":true` (the summarize seam is LIVE on
+  prod). M53 (Caddy flush/logging) + M54 (dialplan ring-end hook) stay BLOCKED on the
+  owner's read-only ssh pass (TODO_LIST row 1).
+- **T19 (M55–M57): NO-GO recorded** — recovery is guaranteed by the upstream recreate
+  loop; no long-idle drop class has ever been observed. Reopen trigger recorded in
+  TODO_LIST. M56/M57 not triggered (their own evidence gate).
+- **T20 (M58–M62)**: pill retry title landed (`ssePillRetry` en/de); summarize-404 copy
+  decision RESOLVED (the button only exists when the seam is on, so 404 can only mean
+  no-transcript — current copy is exact); console policy gated (`no-console` allowing
+  info/warn/error — the `ui.js` log helper's leveled mirrors); offline-banner vs pill
+  division documented in error-contract.md; push-registration restart UX is N/A in this
+  repo (webphone-android owns registration).
+- **T21 (M63/M64): verified, no code change** — failed-outbound rows render in both
+  History sources (dur 0 → "—"); the missed badge cannot inflate (one dispatch per
+  call; sip.js `stateTransition` throws on a second Terminated — verified in the
+  vendored tarball). The concurrent disposition train later changed the CRM payload to
+  `disposition` (TODO_LIST #6 work, landed ~18:10); its stale test was fixed in-flight
+  by that session and the suite is green again.
+- **T22 final wave**: full `go test -count=1 ./...` GREEN (all packages, including the
+  123 s arch suite); island suite 248/248; `buildflow -s erraudit` 0 findings;
+  `buildflow -s oxlint` clean on the gated scope under the NEW rules; the FULL buildflow
+  run surfaced the concurrent disposition train's mid-flight failures (an unregistered
+  `readmodels.disposition_save` registry row — fixed with the same-commit `-update`
+  regeneration — and a transient undefined domain type that healed with their next
+  commit); `nix flake check` verdict recorded below when it lands. M70 browser E2E NOT
+  owed: zero served-markup changes (all new surfaces are island-JS-created; the DOM
+  contract test passed inside the full suite).

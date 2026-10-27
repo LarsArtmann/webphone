@@ -92,7 +92,10 @@ func TestCallDispositionVerdictSurvivesCRMOutage(t *testing.T) {
 	}
 
 	// The verdict is on the slot: the retry after the CRM heals
-	// journals exactly once (the failed attempt stayed retryable).
+	// journals the correction again — the idem key was never recorded
+	// on the failed attempt, so a re-write is the only safe correction
+	// (the stub journals before answering, so the 502 attempt already
+	// left one received-but-failed entry; the retry ADDS the second).
 	stub.mu.Lock()
 	stub.logStatus = http.StatusNoContent
 	stub.mu.Unlock()
@@ -101,8 +104,19 @@ func TestCallDispositionVerdictSurvivesCRMOutage(t *testing.T) {
 	}
 	stub.mu.Lock()
 	defer stub.mu.Unlock()
-	if len(stub.logBodies) != 1 {
-		t.Fatalf("retry must journal exactly the correction: %d entries", len(stub.logBodies))
+	if len(stub.logBodies) != 2 {
+		t.Fatalf("retry must journal the correction: %d entries", len(stub.logBodies))
+	}
+	if got := stub.logBodies[1]["outcome"]; got != "answered" {
+		t.Fatalf("retry verdict: %q", got)
+	}
+	// A further replay is now deduped by the recorded key.
+	c2 := signIn(t, server)
+	if resp, _ := confirmDisposition(t, c2, "call-d2", body); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("post-retry replay: %d (want inert 204)", resp.StatusCode)
+	}
+	if len(stub.logBodies) != 2 {
+		t.Fatalf("post-retry replay must not journal again: %d entries", len(stub.logBodies))
 	}
 }
 

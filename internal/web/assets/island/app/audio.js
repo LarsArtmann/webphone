@@ -1,3 +1,5 @@
+import { errorMessage } from "./ui.js";
+
 // Locally generated tones: US ringback for outgoing legs (2s on / 4s off
 // at 440+480 Hz) and a distinct faster internal ring for incoming calls,
 // so an incoming call is audible even while a ringback plays.
@@ -9,10 +11,14 @@
 // ringback and ring patterns stay audibly distinct by frequency and
 // rhythm, not by context.
 
+/** @type {AudioContext | null} */
 let ctx = null;
+/** @type {ReturnType<typeof setInterval> | null} */
 let ringbackTimer = null;
+/** @type {ReturnType<typeof setInterval> | null} */
 let ringToneTimer = null;
 
+/** @returns {AudioContext} */
 function audioCtx() {
   ctx = ctx || new AudioContext();
   return ctx;
@@ -21,13 +27,14 @@ function audioCtx() {
 // Bring the shared context from suspended to running. Call from gesture
 // handlers (accept/reject/dial in calls.js); a no-op promise when the
 // context already runs.
+/** @returns {Promise<void>} */
 export function resumeAudio() {
   const audio = audioCtx();
   if (audio.state === "suspended" && audio.resume)
     return audio.resume().catch((err) => {
       // Autoplay policy can refuse a resume without a fresh gesture;
       // the next user gesture retries. Operator-visible, not a toast.
-      console.warn(`webphone: audio resume failed: ${err.message}`);
+      console.warn(`webphone: audio resume failed: ${errorMessage(err)}`);
     });
   return Promise.resolve();
 }

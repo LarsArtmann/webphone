@@ -1,13 +1,17 @@
+/** @type {MediaStream | null} */
 let warmStream = null;
 let warmToken = 0;
+/** @type {ReturnType<typeof setTimeout> | null} */
 let warmTimer = null;
 
+/** @param {MediaStream} stream */
 function trackEnded(stream) {
   return () => {
     if (warmStream === stream) warmStream = null;
   };
 }
 
+/** @param {MediaStream} stream */
 function adopt(stream) {
   warmStream = stream;
   for (const track of stream.getTracks()) {
@@ -15,6 +19,7 @@ function adopt(stream) {
   }
 }
 
+/** @param {MediaStream} stream */
 function discard(stream) {
   for (const track of stream.getTracks()) track.stop();
 }
@@ -30,6 +35,10 @@ function clearWarmTimer() {
 // guard means an expired timer can never kill a LATER warm (e.g. the
 // incoming-call one, which carries no TTL — a ring may outlast any
 // sensible dial window).
+/**
+ * @param {MediaStream} stream
+ * @param {number} ttlMs
+ */
 function scheduleWarmExpiry(stream, ttlMs) {
   clearWarmTimer();
   warmTimer = setTimeout(() => {
@@ -43,6 +52,7 @@ function scheduleWarmExpiry(stream, ttlMs) {
 // returned to the device — the caller expresses how long its intent
 // stays fresh (dial focus: seconds-to-a-minute; incoming ring: no TTL,
 // the caller-gave-up/reject paths own the release).
+/** @param {number} [ttlMs] */
 export function warmMic(ttlMs = 0) {
   if (warmStream || warmToken) return;
   const mediaDevices = navigator.mediaDevices;
@@ -74,6 +84,7 @@ export function releaseWarmMic() {
   clearWarmTimer();
 }
 
+/** @returns {MediaStream | null} */
 export function takeWarmMic() {
   const stream = warmStream;
   warmStream = null;
@@ -82,6 +93,10 @@ export function takeWarmMic() {
   return stream;
 }
 
+/**
+ * @param {MediaStreamConstraints} [constraints]
+ * @returns {Promise<MediaStream>}
+ */
 export function micMediaStreamFactory(constraints) {
   if (constraints && !constraints.audio && !constraints.video) {
     return Promise.resolve(new MediaStream());

@@ -4,8 +4,13 @@
 import { csrfToken } from "./csrf.js";
 import { announce } from "./ui.js";
 
+/** @type {{ extension: string, password: string } | null} */
 let credentials = null;
 
+/**
+ * @param {string} extension
+ * @param {string} password
+ */
 export function setCredentials(extension, password) {
   credentials = { extension, password };
 }
@@ -14,15 +19,22 @@ export function clearCredentials() {
   credentials = null;
 }
 
+/** @returns {{ extension: string, password: string } | null} */
 export function getCredentials() {
   return credentials;
 }
 
+/** @returns {string} */
 export function authHeaderValue() {
   if (!credentials) return "";
   return `Basic ${btoa(`${credentials.extension}:${credentials.password}`)}`;
 }
 
+/**
+ * @param {string} path
+ * @param {RequestInit} [options]
+ * @returns {Promise<Response>}
+ */
 export async function authedFetch(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (credentials) headers.set("Authorization", authHeaderValue());
@@ -42,6 +54,10 @@ export async function authedFetch(path, options = {}) {
 // to hide this from the user; surface it once per response instead.
 // No automatic retry — callers keep their own semantics; the user sees
 // why the panel did not refresh and how long the backoff lasts.
+/**
+ * @param {Response} res
+ * @param {string} path
+ */
 export function noteThrottled(res, path) {
   if (res.status !== 429) return;
   const waitSeconds = Number.parseInt(res.headers.get("Retry-After") || "", 10);

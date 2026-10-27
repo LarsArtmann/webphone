@@ -75,7 +75,14 @@ export function viewStateOf(entry) {
     if (entry.holdPending === "resuming") return "resuming";
     return entry.held ? "held" : "active";
   }
-  if (s === "Establishing" || s === "Progress") return "ringing";
+  // "Progress" is DEFENSIVE: sip.js 0.21 has no such SessionState (the
+  // pinned bundle was checked — 180 Ringing is an onProgress callback,
+  // not a state), but a future bundle might add one and the pipeline's
+  // view must treat any early/answering state as ringing rather than
+  // falling through to "ended". The cast keeps the comparison type-honest
+  // instead of widening the union with a state the bundle cannot emit.
+  if (s === "Establishing" || /** @type {string} */ (s) === "Progress")
+    return "ringing";
   if (s === "Terminating") return "ending";
   return "ended";
 }

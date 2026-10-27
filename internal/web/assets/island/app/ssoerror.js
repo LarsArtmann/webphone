@@ -3,6 +3,9 @@
 // bar (history.replaceState) so a reload or a shared link never
 // re-shows a stale failure. Without JS the card element stays hidden —
 // the strip is address-bar hygiene, never a render dependency.
+/**
+ * @param {(key: string) => string} t
+ */
 export function showSSOError(t) {
   const params = new URLSearchParams(location.search ?? "");
   const code = params.get("sso_error");

@@ -20,7 +20,11 @@ export async function runDeviceCheck() {
     for (const track of tracks) track.stop();
     log(`device check: microphone OK${label}`);
   } catch (err) {
-    const reason = err && err.name ? err.name : "error";
+    // A rejected getUserMedia throws a DOMException (or, in a broken
+    // embedder, anything at all): read the name defensively, never
+    // assume an Error.
+    const failure = /** @type {{ name?: string }} */ (err);
+    const reason = failure && failure.name ? failure.name : "error";
     log(`device check: microphone FAILED — ${reason}`, "error");
     return;
   }
@@ -36,6 +40,7 @@ export async function runDeviceCheck() {
 
 // initDeviceCheck wires the button: the check runs disabled-while-
 // pending so a double click cannot stack two acquisitions.
+/** @returns {void} */
 export function initDeviceCheck() {
   const button = $("wp-devtest-btn");
   if (!button) return;

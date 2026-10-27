@@ -11,8 +11,14 @@ import { els } from "./ui.js";
 // First-media timestamps per peer connection: the polled counterpart to
 // pcsetup's event marks (setup timing needs both — events catch the
 // sub-second gathering phase, only the poll sees bytes actually flow).
+/** @type {WeakMap<RTCPeerConnection, number>} */
 const firstMediaByPC = new WeakMap();
 
+/**
+ * @param {RTCPeerConnection} pc
+ * @param {number} bytesReceived
+ * @returns {number | null}
+ */
 function noteFirstMedia(pc, bytesReceived) {
   if (bytesReceived > 0 && !firstMediaByPC.has(pc)) {
     firstMediaByPC.set(pc, Date.now());
@@ -24,9 +30,15 @@ function noteFirstMedia(pc, bytesReceived) {
 // (gather duration, ICE connect) and the first-media timestamp, all
 // measured from gathering start — the moment media setup began. On the
 // answering side that is effectively accept→speak.
+/**
+ * @param {RTCPeerConnection} pc
+ * @param {number | null} firstMediaAt
+ * @returns {string | null}
+ */
 function setupLine(pc, firstMediaAt) {
   const setup = setupSummary(pc);
   if (!setup) return null;
+  /** @param {number} ts */
   const secondsFrom = (ts) =>
     `${((ts - setup.gatheringStartedAt) / 1000).toFixed(1)} s`;
   const parts = [];
@@ -39,11 +51,22 @@ function setupLine(pc, firstMediaAt) {
   return parts.length ? `setup: ${parts.join("  ·  ")}` : null;
 }
 
+/**
+ * @param {RTCStatsReport} stats
+ * @param {string} candidateId
+ * @returns {string}
+ */
 function candidateTypeOf(stats, candidateId) {
-  const candidate = stats.get(candidateId);
+  const candidate = /** @type {IslandRtcStat | undefined} */ (
+    stats.get(candidateId)
+  );
   return candidate ? `${candidate.candidateType || "?"}` : "?";
 }
 
+/**
+ * @param {IslandIceSummary} summary
+ * @returns {string[]}
+ */
 function iceHints(summary) {
   const hints = [];
   const pair = summary.selectedPair ? summary.selectedPairData : null;
@@ -148,6 +171,7 @@ async function updateIcePanel() {
   );
 }
 
+/** @type {ReturnType<typeof setInterval> | null} */
 let iceTimer = null;
 
 export function startIcePanel() {

@@ -9,8 +9,13 @@
 // (the rendering) both reach it without importing each other — the
 // calls/ice/connection independence the arch test enforces.
 
+/** @type {WeakMap<RTCPeerConnection, IslandSetupMarks>} */
 const timings = new WeakMap();
 
+/**
+ * @param {RTCPeerConnection} pc
+ * @returns {IslandSetupMarks}
+ */
 function marksFor(pc) {
   let marks = timings.get(pc);
   if (!marks) {
@@ -27,6 +32,7 @@ function marksFor(pc) {
 // instrumentSessionDescriptionHandler attaches the setup-timing
 // listeners to the handler's peer connection. Call it the moment the
 // factory returns the handler — the PC exists from construction.
+/** @param {SipSessionDescriptionHandler} sdh */
 export function instrumentSessionDescriptionHandler(sdh) {
   const pc = sdh && sdh.peerConnection;
   if (!pc || !pc.addEventListener) return;
@@ -66,6 +72,10 @@ const GATHER_CAP_MS = 1000;
 //     waiting; the call rides partial candidates)
 //   - gatheringStartedAt: the baseline other phases are measured from
 //   - iceConnectedAt: when ICE first reported connected/completed
+/**
+ * @param {RTCPeerConnection | null} pc
+ * @returns {IslandSetupSummary | null}
+ */
 export function setupSummary(pc) {
   const marks = pc ? timings.get(pc) : null;
   if (!marks) return null;

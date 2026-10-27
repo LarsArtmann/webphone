@@ -12,6 +12,10 @@ import {
 import { state } from "./state.js";
 import { log } from "./ui.js";
 
+/**
+ * @param {KeyboardEvent} event
+ * @returns {boolean}
+ */
 function typingTarget(event) {
   const target = event.target;
   if (!(target instanceof Element)) return true;

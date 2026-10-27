@@ -2,7 +2,7 @@
 // audible half (ring tone) lives in audio.js.
 
 import { sipDomain } from "./config.js";
-import { log } from "./ui.js";
+import { errorMessage, log } from "./ui.js";
 
 // Ask once per device, from the login click (a user gesture — browsers
 // refuse permission prompts without one).
@@ -14,7 +14,7 @@ export function requestNotifications() {
         log(`notifications ${state}`);
       })
       .catch((err) => {
-        log(`notification permission failed: ${err.message}`, "warn");
+        log(`notification permission failed: ${errorMessage(err)}`, "warn");
       });
   } else {
     log(`notifications ${Notification.permission}`);
@@ -24,6 +24,7 @@ export function requestNotifications() {
 // One notification PER CALLER: the tag carries the caller so two
 // simultaneous rings are two shade entries (the stock ntfy/Chrome
 // behavior replaces same-tag notifications only).
+/** @param {string} from */
 export function notifyIncoming(from) {
   if (!("Notification" in window) || Notification.permission !== "granted")
     return;
@@ -34,11 +35,12 @@ export function notifyIncoming(from) {
     });
     n.addEventListener("click", () => window.focus());
   } catch (err) {
-    log(`notification failed: ${err.message}`);
+    log(`notification failed: ${errorMessage(err)}`);
   }
 }
 
 const originalTitle = document.title;
+/** @type {ReturnType<typeof setInterval> | null} */
 let titleFlashTimer = null;
 
 export function titleFlashStart() {
