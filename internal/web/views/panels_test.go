@@ -606,3 +606,35 @@ func TestSettingsPanelCRMStates(t *testing.T) {
 		t.Errorf("an unknown CRMState must render the unset fallback: %s", page)
 	}
 }
+
+// TestHistoryVerdictFilterRendersEveryOption pins the verdict filter's
+// rows: one per confirmable verdict plus the empty "any" row, with the
+// `selected` attribute on exactly the echoed filter. The rows used to be
+// six hand-written <option> tags, which the dedup gate read as clones of
+// the drafts picker; they render through the shared filterOptions
+// component now, so this test is what keeps the option set complete.
+func TestHistoryVerdictFilterRendersEveryOption(t *testing.T) {
+	t.Parallel()
+
+	rendered := renderComponent(t, HistoryPanel(HistoryPanelProps{
+		Enabled: true, Lang: LangEN, Disposition: "missed",
+	}))
+
+	for _, row := range []string{
+		`<option value="">Any verdict</option>`,
+		`<option value="answered">Answered</option>`,
+		`<option value="voicemail">Voicemail</option>`,
+		`<option value="ivr">IVR</option>`,
+		`<option value="missed" selected>Missed</option>`,
+		`<option value="failed">Failed</option>`,
+	} {
+		if !strings.Contains(rendered, row) {
+			t.Errorf("verdict filter must render %s; rendered:\n%s", row, rendered)
+		}
+	}
+	// DispositionUnknown is a machine observation, never something an
+	// operator filters for — it must not become a row.
+	if strings.Contains(rendered, `value="unknown"`) {
+		t.Errorf("the verdict filter must not offer the unknown disposition; rendered:\n%s", rendered)
+	}
+}

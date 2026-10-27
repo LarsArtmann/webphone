@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   readable — so the transcription failure line can no longer print
   "undefined".
 
+### Changed
+
+- Filter selects render their rows through one component (2026-10-27): the
+  History verdict filter spelled out six `<option>` rows and the drafts
+  picker one, a seven-member clone group the dedup gate reads as new
+  duplication. Both now feed a shared `filterOptions` component from typed
+  option builders, so the row markup exists once and the rendered bytes are
+  unchanged (pinned by a Go test).
+
 ### Fixed
 
 - Error-code registry scanning (2026-10-27): a code declared as a named

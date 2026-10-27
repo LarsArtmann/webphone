@@ -62,10 +62,13 @@ jobs:
           .#checks.x86_64-linux.webphone-module
 
   # Ratified dedup ritual (2026-10-11): the -t 1 deep sweep's accepted
-  # clones live in .art-dupl-baseline.json (58 groups, recorded 2026-10-12
-  # with tool v0.7.2). This gate fails only on clone groups NEW since the
-  # baseline; re-baselining is a deliberate registry-protocol act, never a
-  # way to silence a red.
+  # clones live in .art-dupl-baseline.json (78 groups, re-recorded
+  # 2026-10-27 with THIS pinned tool). This gate fails only on clone groups
+  # NEW since the baseline; re-baselining is a deliberate registry-protocol
+  # act, never a way to silence a red. Re-record ONLY with the pinned
+  # version: a baseline written by the local v0.9.x build carries hashes
+  # v0.7.2 never produces, so every future run reds on phantom groups
+  # (docs/dedup-registry.md, sweep log 2026-10-27).
   dup-gate:
     name: art-dupl check (new clones only)
     runs-on: ubuntu-latest
