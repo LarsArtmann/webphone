@@ -190,6 +190,7 @@ export const I18N = {
     summarizeDuplicate: "Already drafted — see Messages.",
     summarizeNoTranscript: "No transcript for that call.",
     summarizeFailed: "The AI agent is unreachable right now.",
+    summarizeOffline: "You are offline — the draft request never left the browser.",
     summarizeSettled: "Draft in Messages",
   },
   de: {
@@ -379,6 +380,7 @@ export const I18N = {
     summarizeDuplicate: "Bereits entworfen — siehe Nachrichten.",
     summarizeNoTranscript: "Keine Mitschrift für diesen Anruf.",
     summarizeFailed: "Der KI-Agent ist gerade nicht erreichbar.",
+    summarizeOffline: "Sie sind offline — die Entwurfsanfrage hat den Browser nie verlassen.",
     summarizeSettled: "Entwurf in Nachrichten",
   },
 };

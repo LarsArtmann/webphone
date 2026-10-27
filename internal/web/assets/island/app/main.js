@@ -261,6 +261,8 @@ function restoreTabsAfterSignIn() {
 els.logout.addEventListener("click", async () => {
   try {
     [...sessions.values()].forEach(({ session }) => {
+      // Logout tears the page down next: a failed bye has no surface
+      // left to render and the server ends the call anyway.
       session.bye().catch(() => {});
     });
     if (state.userAgent) await state.userAgent.stop().catch(() => {});

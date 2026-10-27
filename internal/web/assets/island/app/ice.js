@@ -77,6 +77,8 @@ async function updateIcePanel() {
   try {
     stats = await pc.getStats();
   } catch {
+    // getStats is a per-tick poll: one failed sample skips one ICE
+    // summary and the next tick retries. Nothing user-visible is lost.
     return;
   }
   const summary = {

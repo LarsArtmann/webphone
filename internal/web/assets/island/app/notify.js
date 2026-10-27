@@ -9,9 +9,13 @@ import { log } from "./ui.js";
 export function requestNotifications() {
   if (!("Notification" in window)) return;
   if (Notification.permission === "default") {
-    Notification.requestPermission().then((state) => {
-      log(`notifications ${state}`);
-    });
+    Notification.requestPermission()
+      .then((state) => {
+        log(`notifications ${state}`);
+      })
+      .catch((err) => {
+        log(`notification permission failed: ${err.message}`, "warn");
+      });
   } else {
     log(`notifications ${Notification.permission}`);
   }

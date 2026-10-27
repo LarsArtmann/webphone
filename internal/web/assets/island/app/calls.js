@@ -267,6 +267,7 @@ async function summarizeCall(id, btn) {
   btn.disabled = false;
   btn.textContent = t("summarizeDraft");
   if (status === 404) announce(t("summarizeNoTranscript"), "warn");
+  else if (status === 0) announce(t("summarizeOffline"), "warn");
   else announce(t("summarizeFailed"), "error");
 }
 
@@ -802,6 +803,8 @@ function toggleTransferRow(card, id) {
 function referOnNotify(notification) {
   const body = (notification.request && notification.request.body) || "";
   const status = body.match(/^SIP\/2\.0 (\d{3})/m);
+  // accept() rejects only on prompt dismissal; the transfer verdict
+  // below carries the user surface.
   notification.accept().catch(() => {});
   if (status && /^2/.test(status[1])) {
     log(t("transferComplete"));

@@ -173,6 +173,8 @@ function attachSilenceProbe(ctx, dest) {
       return Math.sqrt(sum / window.length) < SILENCE_RMS;
     };
   } catch {
+    // Analyser setup only feeds the silence heuristic; capture itself
+    // still starts when this returns null.
     return null;
   }
 }
@@ -201,6 +203,8 @@ function ensureRunning(ctx) {
   if (!ctx || typeof ctx.resume !== "function") return;
   const retry = () => {
     if (ctx.state === "closed") return;
+    // A refused resume waits for the next pointerdown/keydown retry —
+    // the "waiting for a click" warn above is the visible surface.
     ctx.resume().catch(() => {});
   };
   if (ctx.state === "suspended") {
@@ -307,6 +311,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
 // test stubs honest.
 function releaseCapture(ctx, stream) {
   if (ctx && typeof ctx.close === "function") {
+    // Teardown: a refused close dies with the page anyway.
     ctx.close().catch(() => {});
   }
   if (stream && stream.getTracks) {

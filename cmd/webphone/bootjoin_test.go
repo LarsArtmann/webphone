@@ -15,8 +15,8 @@ func TestBootJoinPinsJoinSemantics(t *testing.T) {
 	if bootJoin(nil, nil) != nil {
 		t.Fatal("all-nil input: want nil")
 	}
-	if got := bootJoin(nil, a); got != a {
-		t.Fatalf("single survivor: want the bare error, got %v", got)
+	if got := bootJoin(nil, a); got == nil || got.Error() != "alpha" {
+		t.Fatalf("single survivor: want Join-parity wrapper, got %v", got)
 	}
 	joined := bootJoin(a, nil, b)
 	want := "alpha\nbeta"

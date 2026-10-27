@@ -23,7 +23,12 @@ function audioCtx() {
 // context already runs.
 export function resumeAudio() {
   const audio = audioCtx();
-  if (audio.state === "suspended" && audio.resume) return audio.resume();
+  if (audio.state === "suspended" && audio.resume)
+    return audio.resume().catch((err) => {
+      // Autoplay policy can refuse a resume without a fresh gesture;
+      // the next user gesture retries. Operator-visible, not a toast.
+      console.warn(`webphone: audio resume failed: ${err.message}`);
+    });
   return Promise.resolve();
 }
 

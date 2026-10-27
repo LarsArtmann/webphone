@@ -31,6 +31,7 @@ function storedSink() {
   try {
     return localStorage.getItem(SINK_KEY) || "";
   } catch {
+    // Private-mode storage: degrade to the browser's default output.
     return "";
   }
 }
@@ -102,6 +103,8 @@ export function initAudioOutput() {
         if (select.value) apply(select.value);
       })
       .catch(() => {
+        // Device enumeration failure: hide the picker; audio still plays
+        // on the browser default.
         wrap.hidden = true;
       });
   };

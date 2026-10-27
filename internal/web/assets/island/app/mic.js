@@ -58,7 +58,10 @@ export function warmMic(ttlMs = 0) {
       adopt(stream);
       if (ttlMs > 0) scheduleWarmExpiry(stream, ttlMs);
     })
-    .catch(() => {})
+    .catch(() => {
+      // Denial surfaces through the call setup path; warming is
+      // best-effort pre-acquisition.
+    })
     .finally(() => {
       if (token === warmToken) warmToken = 0;
     });
