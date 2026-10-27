@@ -77,6 +77,7 @@ test("a failed POST keeps the chips clickable for the retry", async () => {
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
     if (String(input).includes("/disposition")) {
+      dispositionPosts.push({ url: String(input), body: null });
       return { ok: false, status: 502, headers: new Headers() };
     }
     return { ok: true, status: 204, headers: new Headers() };

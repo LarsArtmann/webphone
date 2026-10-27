@@ -542,6 +542,20 @@ button.small {
   opacity: 0.85;
 }
 
+/* Operator disposition confirm (issue #6): the ask line plus the three
+   verdict chips ride the .controls flex row; the ask is muted copy. */
+.disposition-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.disposition-ask {
+  color: var(--text-muted);
+  font-size: 0.92em;
+}
+
 .call-card.wp-ended-card[data-state] .call-state-text::before {
   background: var(--border);
   animation: none;
