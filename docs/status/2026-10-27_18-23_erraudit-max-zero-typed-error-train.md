@@ -136,5 +136,43 @@ Nothing destroyed, nothing reverted that wasn't mine, no red left behind by this
 2. **The nix-hash-fix red in buildflow with no dependency bump in this train**: treat it as the documented stale-pin signal and re-pin vendorHash now, or is that red explained by the concurrent sessions' uncommitted tree (in which case I should NOT chase it and wait for a quiet tree)?
 3. **Upstream filing**: do you want the opaque `errorfamily.Wrapf` heuristic reported upstream (go-finding/erraudit) with my minimal two-package repro, or do we treat it as accepted tool behavior and just document the footgun in-repo (option 5/46 above)?
 
+## h) Resolution addendum — follow-up session, 2026-10-27 evening
+
+Claims verified as of ~19:15 local; the buildflow row below is the first to rot.
+
+1. **b3 CLOSED** — the decoded-rule war story (construction-shaped rule, probe
+   methodology, registry-scan trap, nolint decay) is in `docs/lessons.md`
+   "Tooling traps", and the probe module is COMMITTED at
+   `internal/arch/testdata/erraudit-rule-probes/` (README pins each clause +
+   the tool build it was observed on). Closes e1 too.
+2. **c2 CLOSED** — `TestNotFoundVerdictSurvivesLiveEngineCall` drives a real
+   engine (`Open(t.TempDir())`) through `Contacts.Delete` on a missing id:
+   `errors.Is(err, store.ErrNotFound)` matches (the exact contract
+   `actions.go`/`panels.go` consume) and the coded half stays `AsType`-able.
+   The LSP "unused notFoundError" diagnostics were stale — vet + tests say so.
+3. **NEW: dead-nolint sweep DONE, beyond the narrow grep** —
+   `erraudit nolint-audit` over the whole repo: 109 directives, 41 stale.
+   Removed 37 (incl. every "family-neutral propagation" comment whose helper
+   now returns a specific type — the audit proves typed constructors decay
+   their own suppressions within hours). Kept 4: `crm/client.go` ×3 +
+   `crm_test.go` ×1 (sibling session owns that seam). Verified inert:
+   normal-mode lint exit 0, `--max` exit 0, `go vet` clean, full suite 31/31.
+4. **g1 PARTIAL ANSWER (state moved)** — the daemon's push-leg RECOVERED
+   (17:42 CI run pushed ba20a1c); exactly one unpushed daemon commit remains
+   (d6cf7b1, committed 18:42). No bar invocation needed while pushes flow;
+   the stall arm anchors at 19:42 if it wedges again.
+5. **BASELINE STALENESS (new finding, owner-decision)** — the fresh buildflow
+   run warns "none of the 47 accepted finding entries matched any remaining
+   finding": the typed-error conversions evidently dissolved the sites the
+   branching-flow baseline pinned. Not regenerating autonomously — the
+   baseline is tier-3 owner territory and the daemon has mangled policy files
+   before; the verdict lands with the final buildflow row below.
+6. **Smoke NOT re-run, with reasoning** — the delta since the train's green
+   smoke (48+4+8) is comment-only strips, one new test, testdata + docs: no
+   behavior path changed. Build + full tests + vet + erraudit (normal and
+   `--max`) cover it; a second smoke would re-verify nothing.
+
+Final buildflow verdict: PENDING — recorded below when the background run lands.
+
 ---
 *Rendered per the 2026-10-27 ruling: every claim above names its verification; the push/CI rows are the first to rot.*
