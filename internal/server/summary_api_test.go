@@ -1,11 +1,17 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/push"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // postSummaryDraft is the island's summarize ask: the call id rides the
@@ -155,5 +161,146 @@ func TestSummaryDraftOutageIs502(t *testing.T) {
 	resp, _ := postSummaryDraft(t, hc, "call-dead")
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatalf("dead agent: %d, want 502", resp.StatusCode)
+	}
+}
+
+
+// mustExt parses a test extension or fails the test.
+func mustExt(t *testing.T, raw string) domain.Extension {
+	t.Helper()
+	owner, err := domain.ParseExtension(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return owner
+}
+
+// recordingTransport satisfies push.Sender and records the draft facts
+// shipped through it (the M14 fan-out specs).
+type recordingTransport struct {
+	enabled bool
+	drafts  []push.Draft
+	err     error
+}
+
+func (r *recordingTransport) Enabled() bool    { return r.enabled }
+func (r *recordingTransport) Describe() string { return "recording" }
+func (r *recordingTransport) Send(context.Context, string, push.Ring) error {
+	return nil
+}
+func (r *recordingTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
+	r.drafts = append(r.drafts, draft)
+	return r.err
+}
+
+// summaryServerWithPush wires the full summarize chain plus a push
+// seam over the engine's device registry; the registry handle comes
+// back so a test can register devices directly.
+func summaryServerWithPush(t *testing.T, transport *recordingTransport) (*testServer, *client, *readmodels.PushDevices) {
+	t.Helper()
+	stub := newStubReviewAPI(t)
+	engine := newTestEngine(t)
+	fanout := push.NewFanout(map[string]push.Sender{"recording": transport})
+	provider, _ := fakeProvider(t, http.StatusOK, "hi")
+	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
+		deps.ASR = asrClientFor(t, provider.URL)
+		deps.TextAgent = agentClientFor(t, stub.server.URL)
+		deps.Push = fanout
+		deps.PushDevices = engine.PushDevices()
+	})
+	return server, clientFor(t, server), engine.PushDevices()
+}
+
+// waitDraftFlush gives the fire-and-forget fan-out goroutine its
+// scheduling window.
+func waitDraftFlush() { time.Sleep(50 * time.Millisecond) }
+
+// TestSummaryDraftPushesOnlyWhenSeamOn: a fanout with no live transport
+// ships nothing, and the summarize answer is unaffected either way.
+func TestSummaryDraftPushesOnlyWhenSeamOn(t *testing.T) {
+	transport := &recordingTransport{enabled: false}
+	_, c, _ := summaryServerWithPush(t, transport)
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-p1", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+	resp, _ := postSummaryDraft(t, c, "call-p1")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary: %d", resp.StatusCode)
+	}
+	waitDraftFlush()
+	if len(transport.drafts) != 0 {
+		t.Fatalf("a disabled transport must receive nothing, got %v", transport.drafts)
+	}
+}
+
+// TestSummaryDraftFansOutToRegisteredDevices: the draft-ready fact
+// reaches every registered device of the OWNING extension only, with
+// the agent's draft id and the contact on the wire.
+func TestSummaryDraftFansOutToRegisteredDevices(t *testing.T) {
+	transport := &recordingTransport{enabled: true}
+	server, c, devices := summaryServerWithPush(t, transport)
+	ctx := context.Background()
+	for _, device := range []string{"dev-1", "dev-2"} {
+		if err := devices.Upsert(ctx, mustExt(t, "1001"), device, "recording", "tok-"+device); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// Another extension's device must never receive owner 1001's fact.
+	other := clientFor(t, server)
+	other.login("2002", "pw")
+	if err := devices.Upsert(ctx, mustExt(t, "2002"), "dev-other", "recording", "tok-other"); err != nil {
+		t.Fatal(err)
+	}
+
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-p2", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+	resp, body := postSummaryDraft(t, c, "call-p2")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary: %d %s", resp.StatusCode, body)
+	}
+	waitDraftFlush()
+	if len(transport.drafts) != 2 {
+		t.Fatalf("expected 2 draft facts (owner's two devices), got %d: %+v", len(transport.drafts), transport.drafts)
+	}
+	for _, fact := range transport.drafts {
+		if fact.Event != push.EventDraftReady || fact.Contact != "+4989123456" || fact.DraftID != "d-ond" {
+			t.Fatalf("draft fact mismatch: %+v", fact)
+		}
+	}
+	// The other extension's device row survives untouched (owner scoping
+	// at the registry, not a broadcast).
+	live, err := devices.List(ctx, mustExt(t, "2002"))
+	if err != nil || len(live) != 1 {
+		t.Fatalf("other owner's device must survive: %v %v", live, err)
+	}
+}
+
+// TestSummaryDraftPushPrunesDeadDevice: a transport verdict of
+// ErrUnregistered prunes the registration exactly like the ring lane.
+func TestSummaryDraftPushPrunesDeadDevice(t *testing.T) {
+	transport := &recordingTransport{enabled: true, err: push.ErrUnregistered}
+	_, c, devices := summaryServerWithPush(t, transport)
+	ctx := context.Background()
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-dead", "recording", "tok-dead"); err != nil {
+		t.Fatal(err)
+	}
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-p3", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+	resp, _ := postSummaryDraft(t, c, "call-p3")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary: %d", resp.StatusCode)
+	}
+	waitDraftFlush()
+	live, err := devices.List(ctx, mustExt(t, "1001"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(live) != 0 {
+		t.Fatalf("the dead device must be pruned, still %v", live)
 	}
 }

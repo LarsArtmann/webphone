@@ -59,6 +59,31 @@ func TestFanoutRoutesPerTransport(t *testing.T) {
 	errorfamilytest.AssertCode(t, err, "push.transport")
 }
 
+// TestFanoutSendDraftRoutesPerTransport pins the draft lane's routing:
+// same transport table, same disabled sentinel, same unknown-transport
+// Rejection — the draft fact is a peer of the ring fact, not a special.
+func TestFanoutSendDraftRoutesPerTransport(t *testing.T) {
+	ntfy := &fakeSender{enabled: true}
+	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: ntfy})
+	draft := push.Draft{Event: push.EventDraftReady, Contact: "+15550000001", DraftID: "d-1"}
+	if err := fanout.SendDraft(context.Background(), push.TransportNtfy, "topic", draft); err != nil {
+		t.Fatal(err)
+	}
+	if len(ntfy.drafts) != 1 || ntfy.drafts[0].DraftID != "d-1" {
+		t.Fatalf("drafts %v", ntfy.drafts)
+	}
+
+	if err := (&push.Fanout{}).SendDraft(context.Background(), push.TransportNtfy, "t", draft); !errors.Is(err, push.ErrDisabled) {
+		t.Fatalf("disabled fanout: %v", err)
+	}
+	err := fanout.SendDraft(context.Background(), "apns", "t", draft)
+	if err == nil {
+		t.Fatal("unknown transport must reject")
+	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
+	errorfamilytest.AssertCode(t, err, "push.transport")
+}
+
 func TestFanoutDropsDeadSenders(t *testing.T) {
 	dead := &fakeSender{enabled: false}
 	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: dead})

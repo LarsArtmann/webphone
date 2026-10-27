@@ -110,3 +110,49 @@ func TestValidNtfyTopic(t *testing.T) {
 		}
 	}
 }
+
+// TestNtfySendDraftPublishesDraftJSON pins the draft-ready lane's wire:
+// the fact rides the message field as compact JSON, priority stays at
+// the default (good news is not urgent), the title names the news for
+// the stock app's shade.
+func TestNtfySendDraftPublishesDraftJSON(t *testing.T) {
+	var gotBody map[string]any
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read body: %v", err)
+		}
+		if err := json.Unmarshal(raw, &gotBody); err != nil {
+			t.Errorf("decode body: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	sender, err := push.NewNtfySender(server.URL, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	draft := push.Draft{Event: push.EventDraftReady, Contact: "+15550000002", DraftID: "d-9"}
+	if err := sender.SendDraft(context.Background(), "wp-topic", draft); err != nil {
+		t.Fatalf("send draft: %v", err)
+	}
+
+	if gotBody["title"] != "Draft ready" {
+		t.Fatalf("title %v, want Draft ready", gotBody["title"])
+	}
+	if gotBody["priority"].(float64) != 3 {
+		t.Fatalf("priority %v, want 3 (default)", gotBody["priority"])
+	}
+	message, ok := gotBody["message"].(string)
+	if !ok {
+		t.Fatalf("message %v is not a string", gotBody["message"])
+	}
+	var fact map[string]any
+	if err := json.Unmarshal([]byte(message), &fact); err != nil {
+		t.Fatalf("message is not JSON: %v (%s)", err, message)
+	}
+	if fact["event"] != "draft_ready" || fact["contact"] != "+15550000002" || fact["draft_id"] != "d-9" {
+		t.Fatalf("draft fact mismatch: %v", fact)
+	}
+}
