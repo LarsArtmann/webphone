@@ -349,6 +349,29 @@ and the evidence. Newest last is NOT enforced — group by topic.
   every placeCall test fires the Terminated teardown explicitly — set
   state, fire the listener, flush, then ASSERT the session left the
   map — the assertion doubles as the hang-proof.
+- erraudit's `generic_return` rule is CONSTRUCTION-shaped, not
+  signature-shaped (2026-10-27, zero-typed-error train; probes
+  preserved at `internal/arch/testdata/erraudit-rule-probes/`): the
+  detector flags a function only when it returns bare `error` AND
+  constructs a stdlib error (`errors.New`/`fmt.Errorf`/`errors.Join`)
+  anywhere in its body — nested closures and composite literals count.
+  Pure propagation, `New`-prefixed names and specific-error returns are
+  exempt; same-package callees are analyzed (a typed local constructor
+  keeps its CALLER clean), but an OPAQUE cross-package constructor
+  named exactly `Wrapf` still flags the caller — that name heuristic
+  alone flagged `VerifyEnrollToken`, which constructed nothing. Method:
+  reverse-engineering a linter from its findings is guesswork; the
+  7-file probe module settled each clause in minutes and now pins the
+  behavior against future tool builds. Two adjacent traps: (1) the arch
+  error-registry test greps `errorfamily.*` CONSTRUCTOR SHAPES — a code
+  hidden inside a local wrapper reds `TestErrorCodeRegistryIsFresh`, so
+  `errorfamily.Newf` must stay at call sites; (2) `--max`/
+  `--no-suppress` bypasses every `//nolint`, so suppressions are not a
+  conversion path — but the flip side is nolint DECAY: once a helper
+  returns a specific type, its "family-neutral propagation" nolint
+  suppresses nothing. `erraudit nolint-audit` caught 41 of 109
+  directives stale within hours of the train; run it after any
+  error-path refactor.
 
 ## Telephony
 

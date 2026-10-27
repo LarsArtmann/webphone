@@ -1,10 +1,12 @@
 package readmodels
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -28,5 +30,22 @@ func TestNotFoundKeepsSentinelAndCodedHalves(t *testing.T) {
 	single := &notFoundError{errs: []error{store.ErrNotFound}}
 	if single.Error() != store.ErrNotFound.Error() {
 		t.Fatalf("single-cause message = %q, want bare cause", single.Error())
+	}
+}
+
+func TestNotFoundVerdictSurvivesLiveEngineCall(t *testing.T) {
+	engine := openTestEngine(t)
+	ctx := context.Background()
+
+	err := engine.Contacts().Delete(ctx, domain.MustParseExtension("1001"), domain.GenerateContactID())
+	if err == nil {
+		t.Fatal("delete of a nonexistent contact returned nil")
+	}
+	if !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("live miss verdict not sentinel-matchable: %v", err)
+	}
+	coded, ok := errors.AsType[*errorfamily.Error](err)
+	if !ok || coded.ErrorCode() != "readmodels.contact_missing" {
+		t.Fatalf("coded half lost on the live path: %v", err)
 	}
 }
