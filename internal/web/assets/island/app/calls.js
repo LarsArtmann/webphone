@@ -45,6 +45,7 @@ import {
 import {
   announce,
   els,
+  errorMessage,
   hideIncomingBanner,
   log,
   renderIncomingSlots,
@@ -64,6 +65,7 @@ function outgoingCount() {
   return n;
 }
 
+/** @param {string} id */
 function attachRemoteAudio(id) {
   const entry = sessions.get(id);
   if (!entry || !entry.session.sessionDescriptionHandler) return;
@@ -78,11 +80,17 @@ function attachRemoteAudio(id) {
   // call at a time (held calls carry no receiver audio).
   els.remoteAudio.volume = entry.volume ?? 1;
   els.remoteAudio.play().catch((err) => {
-    log(`audio playback blocked: ${err.message}`, "warn");
+    log(`audio playback blocked: ${errorMessage(err)}`, "warn");
     announce(t("audioBlocked"), "warn");
   });
 }
 
+/**
+ * setTracks flips one call's media directions through the 0.21 hold helpers.
+ * Both flags are optional: a caller that only mutes passes `send` alone.
+ * @param {IslandCallEntry} entry
+ * @param {{recv?: boolean, send?: boolean}} tracks
+ */
 function setTracks(entry, { recv, send }) {
   const sdh = entry.session.sessionDescriptionHandler;
   if (!sdh) return;
@@ -92,6 +100,7 @@ function setTracks(entry, { recv, send }) {
     sdh.enableSenderTracks(send);
 }
 
+/** @param {string} id @param {boolean} hold */
 async function holdSession(id, hold) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
@@ -119,8 +128,11 @@ async function holdSession(id, hold) {
     // the provider never receives (and hallucinates on) silence.
     pauseLiveTranscription(id, hold);
   } catch (err) {
-    log(`hold toggle failed: ${err.message}`, "error");
-    announce(t(hold ? "holdFailed" : "resumeFailed")(err.message), "error");
+    log(`hold toggle failed: ${errorMessage(err)}`, "error");
+    announce(
+      t(hold ? "holdFailed" : "resumeFailed")(errorMessage(err)),
+      "error",
+    );
   } finally {
     entry.holdPending = null;
     const queued = entry.holdQueued;
@@ -137,6 +149,7 @@ async function holdSession(id, hold) {
   }
 }
 
+/** @param {string} id */
 function focusSession(id) {
   if (!sessions.has(id)) return;
   state.focusedId = id;
@@ -154,6 +167,7 @@ function focusSession(id) {
   renderCalls();
 }
 
+/** @param {string} id */
 export function teardownSession(id) {
   const entry = sessions.get(id);
   if (!entry) return;
@@ -185,6 +199,7 @@ export function teardownSession(id) {
 // DOM outlives the call, the state does not. Error-path teardowns
 // (failed setup, watchdog rebuilds) keep teardownSession's instant
 // removal — a card for a call that never lived offers nothing.
+/** @param {string} id */
 export function settleEndedCall(id) {
   const entry = sessions.get(id);
   if (!entry) return;
@@ -210,6 +225,7 @@ export function settleEndedCall(id) {
 // morphToEndedCard turns one live call card into its settled ended
 // shape: the ended state line, the post-call action row, and the
 // wp-ended-card hook the stylesheet uses to mute the card.
+/** @param {string} id @param {IslandCallEntry} entry */
 function morphToEndedCard(id, entry) {
   const card = entry.dom;
   if (!card) return;
@@ -245,6 +261,7 @@ function morphToEndedCard(id, entry) {
 // clickable (the server kept the verdict on 502 — only the CRM
 // correction is retryable; re-click re-POSTs the same verdict, which
 // the server dedupes per call+verdict).
+/** @param {string} id @param {IslandCallEntry} entry @returns {HTMLDivElement} */
 export function dispositionRow(id, entry) {
   const row = document.createElement("div");
   row.className = "disposition-row";
@@ -252,18 +269,20 @@ export function dispositionRow(id, entry) {
   ask.className = "disposition-ask";
   ask.textContent = t("dispositionAsk");
   row.append(ask);
-  for (const [value, key] of [
+  /** @type {Array<[string, IslandMessageKey]>} */
+  const chips = [
     ["answered", "dispositionAnswered"],
     ["voicemail", "dispositionVoicemail"],
     ["ivr", "dispositionIvr"],
-  ]) {
+  ];
+  for (const [value, key] of chips) {
     const chip = document.createElement("button");
     chip.className = "ghost disposition-chip";
     chip.dataset.disposition = value;
     chip.textContent = t(key);
     chip.addEventListener("click", () => {
       confirmDisposition(row, id, entry, value, key).catch((err) =>
-        log(`disposition confirm failed: ${err.message}`, "warn"),
+        log(`disposition confirm failed: ${errorMessage(err)}`, "warn"),
       );
     });
     row.append(chip);
@@ -271,8 +290,18 @@ export function dispositionRow(id, entry) {
   return row;
 }
 
+/**
+ * @param {HTMLElement} row
+ * @param {string} id
+ * @param {IslandCallEntry} entry
+ * @param {string} value
+ * @param {IslandMessageKey} labelKey
+ * @returns {Promise<void>}
+ */
 async function confirmDisposition(row, id, entry, value, labelKey) {
-  const chips = row.querySelectorAll(".disposition-chip");
+  const chips = /** @type {NodeListOf<HTMLButtonElement>} */ (
+    row.querySelectorAll(".disposition-chip")
+  );
   for (const chip of chips) chip.disabled = true;
   try {
     const res = await authedFetch(
@@ -316,6 +345,7 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
 // normally and carry no reason. THE mapping (unknown stays a failure
 // class, never "answered") is the one TODO_LIST #6's disposition work
 // must align with.
+/** @param {IslandCallEntry} entry @returns {string | null} */
 function failureReasonOf(entry) {
   if (entry.established) return null;
   if (!(entry.session instanceof SIP.Inviter)) return t("callMissed");
@@ -349,6 +379,7 @@ function failureReasonOf(entry) {
 // and announces it once. It runs one microtask after the Terminated
 // state change because the library fires the cause delegate
 // synchronously AFTER the state change this card settled in.
+/** @param {string} id @param {IslandCallEntry} entry */
 function showEndedReason(id, entry) {
   queueMicrotask(() => {
     if (entry.endedReasonShown) return;
@@ -370,6 +401,7 @@ function showEndedReason(id, entry) {
 // click must not double-speak), and every settle is honest — success
 // and duplicates point at Messages (nav nudge), a failure returns the
 // SETTLED retryable state with the reason as a toast.
+/** @param {string} id @returns {HTMLButtonElement} */
 function summarizeButton(id) {
   const btn = document.createElement("button");
   btn.className = "ghost summarize-btn";
@@ -378,6 +410,7 @@ function summarizeButton(id) {
   return btn;
 }
 
+/** @param {string} id @param {HTMLButtonElement} btn @returns {Promise<void>} */
 async function summarizeCall(id, btn) {
   btn.disabled = true;
   btn.textContent = t("summarizing");
@@ -414,6 +447,7 @@ export function teardownAll() {
   state.focusedId = null;
 }
 
+/** @param {number} startedAt @returns {string} */
 function durationLabel(startedAt) {
   const sec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
@@ -422,6 +456,10 @@ function durationLabel(startedAt) {
 // liveStateLine derives the card/chip state line for one entry — the
 // ONE derivation both surfaces read (the dock chip and the expanded
 // card can never disagree about what a call is doing).
+/**
+ * @param {IslandCallEntry} entry
+ * @returns {{dataState: IslandCallDockState, text: string}}
+ */
 function liveStateLine(entry) {
   const sessionState = entry.session.state;
   if (sessionState === SIP.SessionState.Established) {
@@ -449,7 +487,9 @@ function liveStateLine(entry) {
 // holdPending/holdQueued pending machine, so the swap stays honest (the
 // UI shows the work; a mid-flight toggle queues, never lies).
 
+/** @type {Map<string, HTMLDivElement>} */
 const dockChips = new Map();
+/** @type {HTMLDivElement | null} */
 let dockEl = null;
 
 function renderCallDock() {
@@ -463,6 +503,9 @@ function renderCallDock() {
     return;
   }
   if (!dockEl) dockEl = createCallDock();
+  // Bound once: the forEach callbacks below are closures, so the module-level
+  // `let` does not stay narrowed inside them.
+  const dock = dockEl;
   dockChips.forEach((chip, id) => {
     if (!sessions.has(id)) {
       chip.remove();
@@ -474,12 +517,13 @@ function renderCallDock() {
     if (!chip) {
       chip = buildDockChip(id, entry);
       dockChips.set(id, chip);
-      dockEl.append(chip);
+      dock.append(chip);
     }
     updateDockChip(chip, id, entry);
   });
 }
 
+/** @returns {HTMLDivElement} */
 function createCallDock() {
   const dock = document.createElement("div");
   dock.id = "wp-call-dock";
@@ -490,6 +534,7 @@ function createCallDock() {
   return dock;
 }
 
+/** @param {string} id @param {IslandCallEntry} entry @returns {HTMLDivElement} */
 function buildDockChip(id, entry) {
   const chip = document.createElement("div");
   chip.className = "wp-dock-chip";
@@ -513,17 +558,19 @@ function buildDockChip(id, entry) {
   return chip;
 }
 
+/** @param {HTMLDivElement} chip @param {string} id @param {IslandCallEntry} entry */
 function updateDockChip(chip, id, entry) {
   const { dataState, text } = liveStateLine(entry);
   chip.dataset.state = dataState;
   chip.classList.toggle("focused", id === state.focusedId);
-  const pill = chip.children[2];
+  const pill = /** @type {HTMLElement} */ (chip.children[2]);
   pill.textContent = text;
 }
 
 // chipAvatar mirrors the server's desk-phone vernacular: a hue-bucketed
 // disc showing the number's LAST TWO DIGITS (never a country signum).
 // Classes, never inline styles — the strict CSP silently drops those.
+/** @param {string} target @returns {HTMLSpanElement} */
 function chipAvatar(target) {
   const digits = String(target).replace(/\D/g, "");
   const label =
@@ -537,6 +584,7 @@ function chipAvatar(target) {
   return av;
 }
 
+/** @param {string} target @returns {HTMLSpanElement} */
 function chipName(target) {
   const name = document.createElement("span");
   name.className = "wp-chip-name";
@@ -549,7 +597,9 @@ export function renderCalls() {
   sessions.forEach((entry, id) => {
     if (!entry.dom) return;
     const { dataState, text } = liveStateLine(entry);
-    const stateEl = entry.dom.querySelector(".call-state-text");
+    const stateEl = /** @type {HTMLElement} */ (
+      entry.dom.querySelector(".call-state-text")
+    );
     stateEl.textContent = text;
     entry.dom.dataset.state = dataState;
     announceCallState(entry, dataState);
@@ -557,20 +607,26 @@ export function renderCalls() {
     // Dock mode: the chips carry the other calls; only the focused call
     // keeps its expanded card. A single call renders the plain card.
     entry.dom.hidden = sessions.size > 1 && id !== state.focusedId;
-    const holdBtn = entry.dom.querySelector(".hold-btn");
+    const holdBtn = /** @type {HTMLButtonElement} */ (
+      entry.dom.querySelector(".hold-btn")
+    );
     holdBtn.disabled = Boolean(entry.holdPending);
     holdBtn.textContent = entry.holdPending
       ? t(entry.holdPending === "holding" ? "callHolding" : "callResuming")
       : entry.held
         ? t("resume")
         : t("hold");
-    const muteBtn = entry.dom.querySelector(".mute-btn");
+    const muteBtn = /** @type {HTMLButtonElement} */ (
+      entry.dom.querySelector(".mute-btn")
+    );
     muteBtn.textContent = entry.muted ? t("unmute") : t("mute");
     const focusBtn = entry.dom.querySelector(".focus-btn");
     if (focusBtn) focusBtn.textContent = t("focus");
     const endBtn = entry.dom.querySelector(".hangup-btn");
     if (endBtn) endBtn.textContent = t("end");
-    const slider = entry.dom.querySelector(".volume-slider");
+    const slider = /** @type {HTMLInputElement | null} */ (
+      entry.dom.querySelector(".volume-slider")
+    );
     if (slider) slider.value = String(Math.round((entry.volume ?? 1) * 100));
     const transcribeBtn = entry.dom.querySelector(".transcribe-btn");
     if (transcribeBtn)
@@ -584,12 +640,10 @@ export function renderCalls() {
       );
     }
   });
-  const established =
-    state.focusedId &&
-    sessions.get(state.focusedId) &&
-    sessions.get(state.focusedId).session.state ===
-      SIP.SessionState.Established;
-  els.keypad.hidden = !established;
+  const focused = state.focusedId ? sessions.get(state.focusedId) : undefined;
+  els.keypad.hidden = !(
+    focused && focused.session.state === SIP.SessionState.Established
+  );
   // ice.js listens for this (calls and ice never import each other —
   // the module-graph invariant the arch test enforces).
   document.dispatchEvent(new CustomEvent("wp:calls-changed"));
@@ -601,6 +655,7 @@ export function renderCalls() {
 // established it ticks once per second — announcing those would be
 // noise, not signal (screen readers get ringing/connected/ended as
 // discrete events instead).
+/** @param {IslandCallEntry} entry @param {IslandCallDockState} dataState */
 function announceCallState(entry, dataState) {
   if (entry.announcedState === dataState) return;
   entry.announcedState = dataState;
@@ -613,6 +668,7 @@ function announceCallState(entry, dataState) {
   }
 }
 
+/** @param {string} id @param {string} target @returns {HTMLDivElement} */
 function addCallCard(id, target) {
   const card = document.createElement("div");
   card.className = "call-card";
@@ -627,6 +683,12 @@ function addCallCard(id, target) {
   head.append(stateEl, targetEl);
   const controls = document.createElement("div");
   controls.className = "controls";
+  /**
+   * @param {string} label
+   * @param {string} cls
+   * @param {(event: MouseEvent) => void} onClick
+   * @returns {HTMLButtonElement}
+   */
   const mkBtn = (label, cls, onClick) => {
     const b = document.createElement("button");
     b.textContent = label;
@@ -729,6 +791,7 @@ function addCallCard(id, target) {
 // when the browser cannot capture (no MediaRecorder/AudioContext, or no
 // media yet) the transcript shows an honest "unsupported" notice instead
 // of a silent dead button.
+/** @param {string} id @param {HTMLElement} target */
 function toggleTranscription(id, target) {
   const entry = sessions.get(id);
   if (!entry) return;
@@ -744,6 +807,7 @@ function toggleTranscription(id, target) {
 // startCallTranscription is the ONE start path (auto-start on connect
 // and the manual toggle both ride it): it wires segment text to
 // onCallTranscript and passes the UI language as the provider hint.
+/** @param {string} id @param {IslandCallEntry} entry @returns {boolean} */
 function startCallTranscription(id, entry) {
   return startLiveTranscription(
     id,
@@ -759,6 +823,7 @@ function startCallTranscription(id, entry) {
 // itself when the ASR seam is on (owner decision 2026-10-07) — the
 // button remains the honest manual override. An honest notice replaces
 // a silent failure to start.
+/** @param {string} id @param {IslandCallEntry} entry */
 function ensureTranscription(id, entry) {
   if (!asrEnabled) return;
   const target = entry.dom && entry.dom.querySelector(".call-transcript");
@@ -777,6 +842,7 @@ function ensureTranscription(id, entry) {
 // re-read, never the live card). The strip renders via the
 // transcribe.js segment subscription — this path never touches the DOM
 // (one renderer per surface).
+/** @param {string} id @param {IslandCallEntry} entry @param {string} text */
 function onCallTranscript(id, entry, text) {
   announce(clipForAnnounce(text), "info");
   queueTranscriptSave(entry, {
@@ -796,22 +862,27 @@ function onCallTranscript(id, entry, text) {
 // nagging at the ~15 segments/minute cadence.
 const TRANSCRIPT_SAVE_QUEUE_CAP = 50;
 
+/** @param {IslandCallEntry} entry @param {IslandTranscriptSegment} segment */
 function queueTranscriptSave(entry, segment) {
-  entry.transcriptSaveQueue ??= [];
-  entry.transcriptSaveQueue.push(segment);
-  if (entry.transcriptSaveQueue.length > TRANSCRIPT_SAVE_QUEUE_CAP) {
-    entry.transcriptSaveQueue.shift();
+  const queue = (entry.transcriptSaveQueue ??= []);
+  queue.push(segment);
+  if (queue.length > TRANSCRIPT_SAVE_QUEUE_CAP) {
+    queue.shift();
   }
   flushTranscriptSaves(entry);
 }
 
+/** @param {IslandCallEntry} entry */
 function flushTranscriptSaves(entry) {
   if (entry.transcriptSaveFlushing || !entry.transcriptSaveQueue?.length)
     return;
   entry.transcriptSaveFlushing = true;
-  saveTranscriptSegment(entry.transcriptSaveQueue[0])
+  const queue = /** @type {IslandTranscriptSegment[]} */ (
+    entry.transcriptSaveQueue
+  );
+  saveTranscriptSegment(queue[0])
     .then(() => {
-      entry.transcriptSaveQueue.shift();
+      queue.shift();
       entry.transcriptSaved = (entry.transcriptSaved || 0) + 1;
       entry.transcriptSaveFlushing = false;
       showTranscriptSaved(entry);
@@ -819,10 +890,10 @@ function flushTranscriptSaves(entry) {
     })
     .catch((err) => {
       entry.transcriptSaveFlushing = false;
-      log(`transcript save failed: ${err.message}`, "warn");
+      log(`transcript save failed: ${errorMessage(err)}`, "warn");
       if (!entry.transcriptSaveWarned) {
         entry.transcriptSaveWarned = true;
-        announce(t("transcriptSaveFailed")(err.message), "warn");
+        announce(t("transcriptSaveFailed")(errorMessage(err)), "warn");
       }
     });
 }
@@ -831,8 +902,11 @@ function flushTranscriptSaves(entry) {
 // save surfaces a persistent "saved to History" count on the card and
 // announces once per call — the live transcript must not read as a
 // card-only artifact that vanishes on hangup.
+/** @param {IslandCallEntry} entry */
 function showTranscriptSaved(entry) {
-  const marker = entry.dom && entry.dom.querySelector(".call-transcript-saved");
+  const marker = /** @type {HTMLElement | null} */ (
+    entry.dom && entry.dom.querySelector(".call-transcript-saved")
+  );
   if (marker) {
     marker.textContent = t("transcriptSavedToHistory")(entry.transcriptSaved);
     marker.hidden = false;
@@ -845,6 +919,7 @@ function showTranscriptSaved(entry) {
 
 // clipForAnnounce bounds what the live region reads per segment: a
 // full paragraph would jam the SR queue at the ~15 segments/minute cadence.
+/** @param {string} text @returns {string} */
 function clipForAnnounce(text) {
   const clipped = text.length > 140 ? `${text.slice(0, 139)}…` : text;
   return t("transcriptDelta")(clipped);
@@ -854,13 +929,14 @@ function clipForAnnounce(text) {
 // bounded LINE divs (CAPTION_LINE_CAP, scalar-bounded like the server
 // store cap) — a marathon call cannot grow the strip. The durable whole
 // lives server-side (History) regardless.
+/** @param {HTMLElement} target @param {string} text */
 function appendTranscript(target, text) {
   if (!text) return;
   const line = document.createElement("div");
   line.className = "wp-caption-line";
   line.textContent = text;
   target.append(line);
-  while (target.children.length > CAPTION_LINE_CAP) target.firstChild.remove();
+  while (target.children.length > CAPTION_LINE_CAP) target.firstChild?.remove();
   target.scrollTop = target.scrollHeight;
 }
 
@@ -868,6 +944,7 @@ function appendTranscript(target, text) {
 // card is presentation only — clearing it never touches the stored
 // History transcript (nor the per-call segment log), and the announce
 // says exactly that scope.
+/** @param {HTMLElement} target */
 function clearCardTranscript(target) {
   if (!target.children.length && !target.textContent) {
     announce(t("transcribeEmpty"), "warn");
@@ -880,10 +957,10 @@ function clearCardTranscript(target) {
 // transcriptText reads the call's words for the clipboard: the line
 // divs join with spaces (the browser DOM would concatenate bare); a
 // plain text node (the unsupported notice) passes through.
+/** @param {HTMLElement} target @returns {string} */
 function transcriptText(target) {
   if (!target.children.length) return (target.textContent || "").trim();
-  return target.children
-    .map((line) => line.textContent)
+  return Array.from(target.children, (line) => line.textContent)
     .join(" ")
     .trim();
 }
@@ -892,6 +969,7 @@ function transcriptText(target) {
 // clipboard (secure context — the stack fronts TLS). Honest feedback
 // either way: an empty transcript announces that instead of copying
 // nothing, a missing clipboard API announces the manual fallback.
+/** @param {HTMLElement} target */
 function copyCardTranscript(target) {
   const text = transcriptText(target);
   if (!text) {
@@ -910,6 +988,7 @@ function copyCardTranscript(target) {
 }
 
 // Transfer row: inline destination input with blind/attended actions.
+/** @param {HTMLElement} card @param {string} id */
 function toggleTransferRow(card, id) {
   const existing = card.querySelector(".transfer-row");
   if (existing) {
@@ -938,6 +1017,7 @@ function toggleTransferRow(card, id) {
   input.focus();
 }
 
+/** @param {SipNotification} notification */
 function referOnNotify(notification) {
   const body = (notification.request && notification.request.body) || "";
   const status = body.match(/^SIP\/2\.0 (\d{3})/m);
@@ -954,6 +1034,7 @@ function referOnNotify(notification) {
   announce(t("transferFailed")(detail), "error");
 }
 
+/** @param {string} id @param {string} destination @returns {Promise<void>} */
 async function blindTransfer(id, destination) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
@@ -971,17 +1052,19 @@ async function blindTransfer(id, destination) {
     log(`blind transfer ${entry.target} → ${target} sent`);
   } catch (err) {
     entry.transferring = false;
-    log(t("transferFailed")(err.message), "error");
-    announce(t("transferFailed")(err.message), "error");
+    log(t("transferFailed")(errorMessage(err)), "error");
+    announce(t("transferFailed")(errorMessage(err)), "error");
     renderCalls();
   }
 }
 
+/** @param {string} id @returns {Promise<void>} */
 async function attendedTransfer(id) {
   const entry = sessions.get(id);
   if (!entry || entry.session.state !== SIP.SessionState.Established) return;
   // The other ESTABLISHED call is the consult leg; Replaces points at
   // its dialog so the network bridges the two far ends.
+  /** @type {IslandCallEntry | null} */
   let partner = null;
   sessions.forEach((other, otherId) => {
     if (
@@ -991,7 +1074,10 @@ async function attendedTransfer(id) {
     )
       partner = other;
   });
-  if (!partner) {
+  // The forEach above ran in a closure, so TypeScript still sees the
+  // initializer (`null`) here — the cast names what the closure wrote.
+  const other = /** @type {IslandCallEntry | null} */ (partner);
+  if (!other) {
     log(t("transferNoPartner"), "warn");
     announce(t("transferNoPartner"), "warn");
     return;
@@ -999,12 +1085,12 @@ async function attendedTransfer(id) {
   entry.transferring = true;
   renderCalls();
   try {
-    await entry.session.refer(partner.session, { onNotify: referOnNotify });
-    log(`attended transfer ${entry.target} ↔ ${partner.target} sent`);
+    await entry.session.refer(other.session, { onNotify: referOnNotify });
+    log(`attended transfer ${entry.target} ↔ ${other.target} sent`);
   } catch (err) {
     entry.transferring = false;
-    log(t("transferFailed")(err.message), "error");
-    announce(t("transferFailed")(err.message), "error");
+    log(t("transferFailed")(errorMessage(err)), "error");
+    announce(t("transferFailed")(errorMessage(err)), "error");
     renderCalls();
   }
 }
@@ -1013,16 +1099,18 @@ async function attendedTransfer(id) {
 // prove real media flows (bytes on the wire), not just signaling.
 window.__pcs = window.__pcs || new Map();
 
+/** @param {SipSession} newSession @param {string} target */
 export function bindSession(newSession, target) {
   newSession.stateChange.addListener((sessionState) => {
     if (sessionState === SIP.SessionState.Established) {
       const pc =
         newSession.sessionDescriptionHandler &&
         newSession.sessionDescriptionHandler.peerConnection;
-      if (pc) window.__pcs.set(newSession.id, pc);
+      if (pc && window.__pcs) window.__pcs.set(newSession.id, pc);
     }
   });
   const id = newSession.id;
+  /** @type {IslandCallEntry} */
   const entry = {
     session: newSession,
     target,
@@ -1042,7 +1130,9 @@ export function bindSession(newSession, target) {
   // segments render as bounded lines; the subscription dies with the
   // card (teardownSession unsubscribes and clears the log).
   if (asrEnabled) {
-    const target = entry.dom.querySelector(".call-transcript");
+    const target = /** @type {HTMLElement | null} */ (
+      entry.dom.querySelector(".call-transcript")
+    );
     if (target) {
       entry.captionUnsub = subscribeCallSegments(id, (text) =>
         appendTranscript(target, text),
@@ -1059,6 +1149,7 @@ export function bindSession(newSession, target) {
     // against CALL_TRANSITIONS. A refused arrival (Established twice,
     // traffic after ended) is a wiring bug — logged loudly here, the
     // view-state derivation below stays single-sourced either way.
+    /** @type {Partial<Record<SipSessionStateName, IslandCallViewState>>} */
     const sipToView = {
       [SIP.SessionState.Established]: "active",
       [SIP.SessionState.Terminating]: "ending",
@@ -1134,6 +1225,7 @@ export function bindSession(newSession, target) {
   renderCalls();
 }
 
+/** @param {string} id @returns {Promise<void>} */
 export async function hangup(id) {
   const entry = sessions.get(id);
   if (!entry) return;
@@ -1152,8 +1244,8 @@ export async function hangup(id) {
       await current.reject();
     }
   } catch (err) {
-    log(`hangup: ${err.message}`, "error");
-    announce(t("hangupFailed")(err.message), "error");
+    log(`hangup: ${errorMessage(err)}`, "error");
+    announce(t("hangupFailed")(errorMessage(err)), "error");
     teardownSession(id);
   }
 }
@@ -1161,8 +1253,11 @@ export async function hangup(id) {
 // DTMF feedback (A8): the pressed key pulses — on INVOCATION, not
 // delivery, so keyboard-triggered tones flash too and the press is
 // acknowledged instantly; the #log line records the verdict.
+/** @param {string} tone */
 function flashKey(tone) {
-  const key = els.keypad.querySelector(`button[data-tone="${tone}"]`);
+  const key = /** @type {HTMLElement | null} */ (
+    els.keypad.querySelector(`button[data-tone="${tone}"]`)
+  );
   if (!key || !key.classList) return;
   key.classList.remove("wp-key-sent");
   void key.offsetWidth; // restart the animation on rapid repeats
@@ -1172,10 +1267,14 @@ function flashKey(tone) {
 // The transient tones-sent trail under the keypad: the last ≤12 digits,
 // fading to hidden after 3 s of silence. #log stays the durable record;
 // this is the in-the-moment confirmation for mid-call menus.
+/** @type {string[]} */
 let tonesSent = [];
+/** @type {ReturnType<typeof setTimeout> | null} */
 let tonesTimer = null;
 
+/** @param {string} tone */
 function noteToneSent(tone) {
+  /** @type {HTMLElement | null} */
   let trail = document.getElementById("wp-tones");
   if (!trail) {
     trail = document.createElement("p");
@@ -1195,6 +1294,7 @@ function noteToneSent(tone) {
   }, 3000);
 }
 
+/** @param {string} tone */
 export function sendDtmf(tone) {
   const entry = state.focusedId && sessions.get(state.focusedId);
   if (!entry || entry.session.state !== SIP.SessionState.Established) {
@@ -1218,8 +1318,8 @@ export function sendDtmf(tone) {
       noteToneSent(tone);
     })
     .catch((err) => {
-      log(`dtmf failed: ${err.message}`, "error");
-      announce(t("dtmfFailed")(err.message), "error");
+      log(`dtmf failed: ${errorMessage(err)}`, "error");
+      announce(t("dtmfFailed")(errorMessage(err)), "error");
     });
 }
 
@@ -1228,6 +1328,7 @@ export function sendDtmf(tone) {
 // apps add them around telephone numbers) and formatting (spaces,
 // dashes, parentheses), and makeURI rejects all of it. ONE home for the
 // charset — placeCall dials it, initDialHint previews it.
+/** @param {string} raw @returns {string} */
 export function sanitizeDialable(raw) {
   return raw.replace(/[^\d+*#a-zA-Z]/g, "");
 }
@@ -1268,6 +1369,7 @@ export function initDialWarm() {
 // placeCall returns whether an INVITE actually went out, so the dial
 // form can clear itself ONLY then (a validation error keeps the typed
 // text for editing).
+/** @param {string} raw @returns {Promise<boolean>} */
 export async function placeCall(raw) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).
@@ -1312,7 +1414,9 @@ export async function placeCall(raw) {
     // the user WHY the call failed (ONE mapping, failureReasonOf).
     await inviter.invite({
       requestDelegate: {
-        onReject: (res) => {
+        onReject: (
+          /** @type {{statusCode?: number} | null | undefined} */ res,
+        ) => {
           const entry = sessions.get(inviter.id);
           if (entry)
             entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
@@ -1321,8 +1425,8 @@ export async function placeCall(raw) {
     });
     return true;
   } catch (err) {
-    log(`invite failed: ${err.message}`, "error");
-    showDialError(t("callFailed")(err.message));
+    log(`invite failed: ${errorMessage(err)}`, "error");
+    showDialError(t("callFailed")(errorMessage(err)));
     teardownSession(inviter.id);
     return false;
   }
@@ -1332,7 +1436,7 @@ export async function placeCall(raw) {
 // buttons and the incoming-call banner share the same primitives).
 
 export function toggleMuteFocused() {
-  const entry = sessions.get(state.focusedId);
+  const entry = state.focusedId ? sessions.get(state.focusedId) : undefined;
   if (!entry) return;
   entry.muted = !entry.muted;
   setTracks(entry, { send: !entry.held && !entry.muted });
@@ -1340,6 +1444,7 @@ export function toggleMuteFocused() {
 }
 
 export function toggleHoldFocused() {
+  if (!state.focusedId) return;
   const entry = sessions.get(state.focusedId);
   if (entry) holdSession(state.focusedId, !entry.held);
 }
@@ -1352,6 +1457,7 @@ export function hangupFocused() {
 // sessions are skipped (a ring is answered or rejected, not focused).
 // The move announces politely with the remote party's name so a screen
 // reader user knows whose voice just came up.
+/** @param {number} step */
 export function cycleFocus(step) {
   const established = [...sessions.entries()].filter(
     ([, entry]) => entry.session.state === SIP.SessionState.Established,
@@ -1362,6 +1468,7 @@ export function cycleFocus(step) {
     established[
       (Math.max(at, 0) + step + established.length) % established.length
     ];
+  if (!next) return;
   focusSession(next[0]);
   announce(t("focusChanged")(next[1].target), "info");
 }
@@ -1373,9 +1480,16 @@ export function cycleFocus(step) {
 // An explicit INVITE (the banner stack's per-slot buttons) targets that
 // exact slot, so a button can never reject a different caller than the
 // one it labels.
+/**
+ * @param {SipInvitation | number | undefined} target
+ *   undefined = the queue head, a number = the slot index, a SipInvitation
+ *   = that exact ring (the banner stack's per-slot buttons).
+ * @returns {IslandIncomingSession | null}
+ */
 function takeIncomingEntry(target) {
   const queue = state.incomingSessions;
   if (!queue.length) return null;
+  /** @type {number} */
   let at;
   if (target === undefined) at = 0;
   else if (typeof target === "number") at = target;
@@ -1398,6 +1512,7 @@ function settleIncomingAfterRemoval() {
   titleFlashStop();
 }
 
+/** @param {SipInvitation | number} [target] @returns {boolean} */
 export function answerIncoming(target) {
   const entry = takeIncomingEntry(target);
   if (!entry) return false;
@@ -1413,14 +1528,16 @@ export function answerIncoming(target) {
       },
     })
     .catch((err) => {
-      log(`accept failed: ${err.message}`, "error");
-      announce(t("acceptFailed")(err.message), "error");
+      log(`accept failed: ${errorMessage(err)}`, "error");
+      announce(t("acceptFailed")(errorMessage(err)), "error");
       teardownSession(entry.invitation.id);
     });
   return true;
 }
 
+/** @param {SipInvitation | number} [target] */
 export function rejectIncoming(target) {
+  /** @type {IslandIncomingSession | null | undefined} */
   let entry;
   if (target === undefined) {
     const queue = state.incomingSessions;

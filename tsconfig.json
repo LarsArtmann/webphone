@@ -36,6 +36,7 @@
     "internal/web/assets/island/app/audio.js",
     "internal/web/assets/island/app/audioout.js",
     "internal/web/assets/island/app/auth.js",
+    "internal/web/assets/island/app/calls.js",
     "internal/web/assets/island/app/config.js",
     "internal/web/assets/island/app/csrf.js",
     "internal/web/assets/island/app/i18n.js",

@@ -20,14 +20,11 @@ interface SipUri {
 
 /** The literal session-state vocabulary sip.js emits. */
 type SipSessionStateName =
-  | "Initial"
-  | "Establishing"
-  | "Established"
-  | "Terminating"
-  | "Terminated";
+  "Initial" | "Establishing" | "Established" | "Terminating" | "Terminated";
 
 /** The literal registerer-state vocabulary sip.js emits. */
-type SipRegistererStateName = "Initial" | "Registered" | "Unregistered" | "Terminated";
+type SipRegistererStateName =
+  "Initial" | "Registered" | "Unregistered" | "Terminated";
 
 /** A sip.js state machine subscriber. */
 interface SipStateChange<StateName> {
@@ -41,6 +38,13 @@ interface SipSessionDescriptionHandler {
   /** 0.21 media-hold helpers; optional because a custom handler may omit them. */
   enableReceiverTracks?(enabled: boolean): void;
   enableSenderTracks?(enabled: boolean): void;
+}
+
+/** One in-dialog NOTIFY (the REFER verdict rides this). */
+interface SipNotification {
+  /** The raw sipfrag body ("SIP/2.0 200 OK\r\n…"); absent on a bare notify. */
+  request?: { body?: string };
+  accept(): Promise<void>;
 }
 
 /** A live SIP dialog (inviter or invitation). */
@@ -58,10 +62,21 @@ interface SipSession {
   unhold(options?: unknown): Promise<void>;
   mute(options?: unknown): void;
   unmute(options?: unknown): void;
+  /** INFO with a body — the DTMF relay and mid-call signalling path. */
+  info(options?: unknown): Promise<void>;
+  /** REFER: a SipUri for a blind transfer, the partner SipSession for
+   * attended (the network bridges via Replaces). */
+  refer(
+    target: SipSession | SipUri,
+    options?: { onNotify?: (notification: SipNotification) => void },
+  ): Promise<void>;
 }
 
 /** An outbound dialog. */
-interface SipInviter extends SipSession {}
+interface SipInviter extends SipSession {
+  /** Aborts an INVITE that has no final answer yet. */
+  cancel(): Promise<void>;
+}
 
 /** An inbound dialog. */
 interface SipInvitation extends SipSession {}
@@ -94,7 +109,11 @@ declare const SIP: {
     new (options?: unknown): SipUserAgent;
     makeURI(uri: string): SipUri | undefined;
   };
-  Inviter: new (userAgent: SipUserAgent, target: string, options?: unknown) => SipInviter;
+  Inviter: new (
+    userAgent: SipUserAgent,
+    target: string | SipUri,
+    options?: unknown,
+  ) => SipInviter;
   Registerer: new (userAgent: SipUserAgent, options?: unknown) => SipRegisterer;
   SessionState: {
     Initial: "Initial";

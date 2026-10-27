@@ -79,9 +79,10 @@ interface IslandCallEntry {
   dom: HTMLElement;
   volume?: number;
   transferring?: boolean;
-  rejectCause?: string;
+  /** The SIP status code that ended a failed outbound INVITE (0 = none). */
+  rejectCause?: number;
   endedReasonShown?: boolean;
-  announcedState?: IslandCallViewState;
+  announcedState?: IslandCallDockState;
   captionUnsub?: () => void;
   transcriptSaveQueue?: IslandTranscriptSegment[];
   transcriptSaveFlushing?: boolean;
@@ -136,8 +137,10 @@ interface IslandSessionIdentity {
 
 /** The ringing-stack button handlers ui.js renders (calls.js supplies them). */
 interface IslandIncomingSlotActions {
-  answer(index: number): void;
-  reject(index: number): void;
+  /** answerIncoming also takes an exact SipInvitation and returns whether it
+   * answered, so the stricter signal types are what the registry accepts. */
+  answer(target?: SipInvitation | number): void;
+  reject(target?: SipInvitation | number): void;
 }
 
 /** The pcsetup.js setup-timing marks (one per peer connection). */
@@ -304,3 +307,15 @@ interface IslandVoicemailMessage {
 interface IslandVoicemailSummary {
   new: number;
 }
+
+/** Every island message key. Derived from t()'s own parameter type, so
+ * i18n.js's `en` table stays the ONE home for the key list — this alias is
+ * only what other modules can name. */
+type IslandMessageKey = Parameters<
+  typeof import("../internal/web/assets/island/app/i18n.js").t
+>[0];
+
+/** The dock chip / card `data-state` vocabulary. It is the CALL_TRANSITIONS
+ * vocabulary minus the settled "ended" (an ended call has no live chip). */
+type IslandCallDockState =
+  "ringing" | "established" | "holding" | "held" | "resuming" | "ending";
