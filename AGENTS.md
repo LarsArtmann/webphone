@@ -51,7 +51,8 @@ scripts/whitespace-drift.sh                # after `git add`, before commit: EXI
 scripts/push-stall-watch.sh                # exit 1 when the oldest unpushed commit exceeds the manual-push bar's 60-min anchor (--threshold-minutes, --no-fetch); run before invoking the bar; LOCAL-only by structure — GitHub CI checks out the remote tip and cannot see unpushed local commits, so a LOCAL timer is the only automation home (T21 modeling: the 2026-10-27 40-min stall correctly stayed silent at the 60-min bar, fires STALL at 30)
 scripts/module-cache-janitor.sh            # report zero-byte GOMODCACHE `.tmp` corpses (--sweep deletes age-floored ones, --self-test); run when module-cache forensics bite (the wedged-go class)
 nix run .#vulnix                           # vulnix over the RUNTIME closure; verdict logic = `webphone-vulnix-triage` CLI, fixture-checked
-nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + kvm-gated backup VM test
+nix flake check                            # package + tests in sandbox + treefmt + island-lint + island-js + island-typecheck + kvm-gated backup VM test
+nix develop -c tsc -p . --noEmit           # THE island type gate (also `nix build .#checks.x86_64-linux.island-typecheck`); the ONLY authority — an editor's bundled TS is a different compiler and reports phantom errors (vtsls/TS 5.x saw ~1.6k of them beside a green gate)
 nix build .#checks.x86_64-linux.webphone-module   # ONE check without the whole flake check (also: webphone-backup-drill; webphone-backup is KVM-gated)
 nix run nixpkgs#nodejs -- --test --test-force-exit internal/web/assets/island-tests/*.test.mjs   # island JS tests alone (stubs in island-tests/helpers.mjs). Host `node` also runs them.
 nix build .#webphone --system aarch64-linux   # cross-builds — verify by ELF bytes, never exit code alone (docs/lessons.md)

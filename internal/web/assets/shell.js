@@ -917,7 +917,7 @@
           if (text) plantCopyChip();
         })
         .catch(function (err) {
-          render("Transcription failed (" + err.message + ")");
+          render("Transcription failed (" + errorMessage(err) + ")");
         });
     };
     document.addEventListener("click", function (event) {
@@ -2285,6 +2285,7 @@
       module.exports.vmPeaks = vmPeaks;
       module.exports.vmClock = vmClock;
       module.exports.agentModeOpened = agentModeOpened;
+      module.exports.errorMessage = errorMessage;
     }
   } catch (err) {
     var logList = document.getElementById("log");
