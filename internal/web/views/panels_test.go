@@ -577,3 +577,32 @@ func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
 		}
 	}
 }
+
+// TestSettingsPanelCRMStates byte-pins the CRM row's four honest
+// renderings (T7): unset keeps the historical off-path text,
+// connected names the live wire, auth-failed names the fix (rotate the
+// token), and the fail-open setup state says configured-but-unanswered
+// instead of pretending either of the other two.
+func TestSettingsPanelCRMStates(t *testing.T) {
+	for state, want := range map[string]string{
+		"unset":       "not configured",
+		"connected":   "connected",
+		"auth-failed": "sign-in failed — rotate the CRM token",
+		"setup":       "configured (unreachable)",
+	} {
+		page := renderComponent(t, SettingsPanel(SettingsPanelProps{
+			SIPDomain: "pbx.test", Lang: LangEN, CRMState: state,
+		}))
+		if !strings.Contains(page, want) {
+			t.Errorf("CRMState %q must render %q: %s", state, want, page)
+		}
+	}
+	// A stale/unknown state string falls back to the unset rendering —
+	// it can never claim a live wire.
+	page := renderComponent(t, SettingsPanel(SettingsPanelProps{
+		SIPDomain: "pbx.test", Lang: LangEN, CRMState: "garbage",
+	}))
+	if !strings.Contains(page, "not configured") || strings.Contains(page, ">connected<") {
+		t.Errorf("an unknown CRMState must render the unset fallback: %s", page)
+	}
+}

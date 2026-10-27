@@ -74,6 +74,13 @@
   // sized by the shared .wp-icon CSS class, tinted by currentColor.
   // Platform emoji rendered differently per OS and read as decoration.
   /**
+   * The agent-mode slice the island forwards on wp:session-opened (the
+   * session identity's agent fields). Shell-local on purpose: only this
+   * file's pill renders it, so types/island.d.ts does not own it.
+   * @typedef {{mode: string, source: string, defaultMode: string, modes: string[]}} AgentModeState
+   */
+
+  /**
    * Whether an element-like value actually answers a DOM method. A real
    * HTMLElement always does, so `if (el.closest)` reads as dead code to the
    * checker — but the node:test stubs are plain objects (some answer
@@ -632,7 +639,7 @@
     var agentPill = null;
     /** @type {HTMLButtonElement | null} */
     var agentReset = null;
-    /** @type {IslandAgentModeState | null} */
+    /** @type {AgentModeState | null} */
     var agentModeState = null;
     /** @param {string} text */
     var announceLive = function (text) {
@@ -686,7 +693,8 @@
     };
     /** @param {string} value */
     var postAgentMode = function (value) {
-      if (!agentModeState) return;
+      var state = /** @type {AgentModeState} */ (agentModeState);
+      if (!state) return;
       fetch("/messages/drafts/mode", {
         method: "POST",
         headers: { "X-CSRF-Token": csrfToken() },
@@ -696,15 +704,12 @@
         .then(function (res) {
           if (!res.ok) throw new Error("HTTP " + res.status);
           if (value === "reset") {
-            agentModeState.mode = agentModeState.defaultMode;
-            agentModeState.source = "config";
-            announceLive(
-              "AI drafts back to " + agentModeState.defaultMode + ".",
-            );
+            state.mode = state.defaultMode;
+            state.source = "config";
+            announceLive("AI drafts back to " + state.defaultMode + ".");
           } else {
-            agentModeState.mode = value;
-            agentModeState.source =
-              value === agentModeState.defaultMode ? "config" : "runtime";
+            state.mode = value;
+            state.source = value === state.defaultMode ? "config" : "runtime";
             announceLive("AI drafts set to " + value + ".");
           }
           renderAgentPill();
@@ -1807,9 +1812,10 @@
       vmSeek(canvas, audio, event.clientX);
       // drag-to-scrub continues while the pointer is down
       var scrubber = /** @type {HTMLCanvasElement} */ (canvas);
+      var scrubAudio = /** @type {HTMLAudioElement} */ (audio);
       /** @param {PointerEvent} moveEvent */
       var move = function (moveEvent) {
-        vmSeek(scrubber, audio, moveEvent.clientX);
+        vmSeek(scrubber, scrubAudio, moveEvent.clientX);
       };
       var up = function () {
         document.removeEventListener("pointermove", move);
@@ -2155,7 +2161,9 @@
     // not block).
     /** @param {HTMLFormElement} form @param {string} body */
     function updateSegcount(form, body) {
-      var counter = form.querySelector(".wp-segcount");
+      var counter = /** @type {HTMLElement | null} */ (
+        form.querySelector(".wp-segcount")
+      );
       if (!counter) return;
       var segments = smsSegments(body);
       var bytes = bodyBytes(body);
@@ -2194,14 +2202,16 @@
     });
 
     document.addEventListener("input", function (event) {
-      var area = eventElement(event);
+      var area = /** @type {HTMLTextAreaElement} */ (eventElement(event));
       if (
         !area ||
         !area.closest ||
         !closestHTMLElement(area, "textarea.wp-compose-body")
       )
         return;
-      var form = closestHTMLElement(area, "form");
+      var form = /** @type {HTMLFormElement | null} */ (
+        closestHTMLElement(area, "form")
+      );
       if (form) updateSegcount(form, area.value);
     });
 
@@ -2228,7 +2238,7 @@
     }
 
     document.addEventListener("change", function (event) {
-      var input = eventElement(event);
+      var input = /** @type {HTMLInputElement} */ (eventElement(event));
       if (!input || !input.closest || !closestHTMLElement(input, ".wp-compose"))
         return;
       if (String(input.type || "") !== "file") return;
@@ -2236,7 +2246,9 @@
       var form = /** @type {HTMLFormElement | null} */ (
         closestHTMLElement(input, "form")
       );
-      var box = form && form.querySelector(".wp-attach");
+      var box = /** @type {HTMLElement | null} */ (
+        form && form.querySelector(".wp-attach")
+      );
       if (box) renderAttachChips(input, box);
     });
 
@@ -2246,36 +2258,42 @@
       var form = /** @type {HTMLFormElement | null} */ (
         closestHTMLElement(remove, "form")
       );
-      var input = form && form.querySelector('input[type="file"]');
-      var box = form && form.querySelector(".wp-attach");
+      var input = /** @type {HTMLInputElement | null} */ (
+        form && form.querySelector('input[type="file"]')
+      );
+      var box = /** @type {HTMLElement | null} */ (
+        form && form.querySelector(".wp-attach")
+      );
       if (!input || !box || typeof DataTransfer === "undefined") return;
       var index = Number(remove.dataset.index);
       var transfer = new DataTransfer();
-      for (var i = 0; i < input.files.length; i++) {
-        if (i !== index) transfer.items.add(input.files[i]);
+      var files = input.files || [];
+      for (var i = 0; i < files.length; i++) {
+        if (i !== index) transfer.items.add(files[i]);
       }
       input.files = transfer.files;
       renderAttachChips(input, box);
     });
+    // Test seam only: on the wire this file is a classic script where
+    // `module` does not exist, so the guard is a no-op in the browser. It
+    // sits INSIDE the try on purpose: the five seams exist only once the
+    // wiring above completed, and a load that threw must publish nothing.
+    if (typeof module !== "undefined" && module.exports) {
+      module.exports.restoreLastTab = restoreLastTab;
+      module.exports.refreshNav = refreshNav;
+      module.exports.vmPeaks = vmPeaks;
+      module.exports.vmClock = vmClock;
+      module.exports.agentModeOpened = agentModeOpened;
+    }
   } catch (err) {
     var logList = document.getElementById("log");
     if (logList) {
       var entry = document.createElement("li");
-      entry.textContent = "shell load failed: " + (err && err.message);
+      entry.textContent = "shell load failed: " + errorMessage(err);
       entry.dataset.level = "error";
       logList.prepend(entry);
     }
     if (window.console && console.error)
       console.error("webphone: shell load failed", err);
-  }
-
-  // Test seam only: on the wire this file is a classic script where
-  // `module` does not exist, so the guard is a no-op in the browser.
-  if (typeof module !== "undefined" && module.exports) {
-    module.exports.restoreLastTab = restoreLastTab;
-    module.exports.refreshNav = refreshNav;
-    module.exports.vmPeaks = vmPeaks;
-    module.exports.vmClock = vmClock;
-    module.exports.agentModeOpened = agentModeOpened;
   }
 })();

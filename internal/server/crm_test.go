@@ -515,3 +515,37 @@ func TestConfigJSCarriesCRMKey(t *testing.T) {
 		t.Errorf("config.js must carry the crm key even when off: %.200s", cfg)
 	}
 }
+
+// TestSettingsPanelCRMTriState pins the Settings row's bounded-probe
+// tri-state (T7): connected on a 200 probe, sign-in failed names the
+// rotated-token fix on 401, a failing transport falls open to the
+// honest configured-but-unanswered rendering, and no CRM at all keeps
+// the historical not-configured row.
+func TestSettingsPanelCRMTriState(t *testing.T) {
+	cases := []struct {
+		name         string
+		lookupStatus int
+		want         string
+		notWant      string
+	}{
+		{"connected", http.StatusOK, ">connected<", "sign-in failed"},
+		{"auth failed", http.StatusUnauthorized, "sign-in failed — rotate the CRM token", ">connected<"},
+		{"transport failure", http.StatusInternalServerError, "configured (unreachable)", ">connected<"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			stub := &crmStub{lookupStatus: tc.lookupStatus}
+			resolver := crmResolverFor(t, stub)
+			server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+			c := signIn(t, server)
+			_, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+			page := string(body)
+			if !strings.Contains(page, tc.want) {
+				t.Errorf("settings page missing %q: %.600s", tc.want, page)
+			}
+			if strings.Contains(page, tc.notWant) {
+				t.Errorf("settings page must not render %q: %.600s", tc.notWant, page)
+			}
+		})
+	}
+}
