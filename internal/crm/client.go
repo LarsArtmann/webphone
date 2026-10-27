@@ -18,6 +18,8 @@ import (
 
 	id "github.com/larsartmann/go-branded-id"
 	"github.com/larsartmann/go-error-family"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // Sentinel families (family-adoption train, 2026-09-30), mirroring
@@ -194,14 +196,17 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 }
 
 // LogCall appends one call activity to the CRM contact (204 expected).
-// The ref is the Match's own ID: only a real lookup can mint one.
-func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error { //nolint:branching-flow // the number travels VERBATIM by domain intent (the CRM owns matching); direction is the CRM's wire vocabulary
+// The ref is the Match's own ID: only a real lookup can mint one. The
+// disposition travels verbatim — the CRM renders the outcome string
+// as-is, so an honest "unknown" must arrive as unknown, never
+// pre-resolved to a guess.
+func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, disposition domain.Disposition) error { //nolint:branching-flow // the number travels VERBATIM by domain intent (the CRM owns matching); direction is the CRM's wire vocabulary
 	payload := struct {
 		Direction string `json:"direction"`
 		Number    string `json:"number"`
 		Seconds   int    `json:"seconds"`
 		Outcome   string `json:"outcome,omitempty"`
-	}{Direction: direction, Number: number, Seconds: seconds, Outcome: outcome}
+	}{Direction: direction, Number: number, Seconds: seconds, Outcome: disposition.String()}
 
 	encoded, err := json.Marshal(payload)
 	if err != nil {

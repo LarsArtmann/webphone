@@ -48,7 +48,9 @@
       if (tab) {
         try {
           localStorage.setItem("wp-last-tab", tab);
-        } catch (err) {}
+        } catch {
+          // Private-mode storage: the tab memory is best-effort.
+        }
       }
     });
 
@@ -67,7 +69,7 @@
       var stored;
       try {
         stored = localStorage.getItem("wp-last-tab");
-      } catch (err) {
+      } catch {
         return;
       }
       if (!stored || stored === "messages") return;
@@ -103,7 +105,9 @@
       if (!button) return;
       try {
         localStorage.setItem("wp-welcome-dismissed", "1");
-      } catch (err) {}
+      } catch {
+        // Private-mode storage: the dismissal still applies to this page.
+      }
       document.documentElement.classList.add("wp-welcome-dismissed");
     });
 
@@ -726,7 +730,10 @@
           chip.setAttribute("data-copy-target", target.id);
           chip.textContent = "Copy";
           target.insertAdjacentElement("afterend", chip);
-        } catch {}
+        } catch {
+          // A detached target only loses its copy chip; the copy command
+          // path stays intact.
+        }
       };
       render("Transcribing…");
       return fetch(src, { credentials: "same-origin" })
@@ -1036,7 +1043,7 @@
         } else {
           localStorage.removeItem(draftKey(draftId));
         }
-      } catch (err) {
+      } catch {
         /* storage unavailable — drafts are best-effort */
       }
     };
@@ -1055,7 +1062,7 @@
       var draft = null;
       try {
         draft = localStorage.getItem(draftKey(currentDraftId()));
-      } catch (err) {
+      } catch {
         return;
       }
       if (draft) area.value = draft;
@@ -1580,7 +1587,7 @@
     var storedTheme = null;
     try {
       storedTheme = localStorage.getItem(THEME_KEY);
-    } catch (err) {
+    } catch {
       /* storage unavailable (private mode) — fall through to auto */
     }
     var themeIndex = THEMES.indexOf(storedTheme);
@@ -1610,7 +1617,7 @@
         themeIndex = (themeIndex + 1) % THEMES.length;
         try {
           localStorage.setItem(THEME_KEY, THEMES[themeIndex]);
-        } catch (err) {
+        } catch {
           /* best-effort persistence only */
         }
         applyTheme();

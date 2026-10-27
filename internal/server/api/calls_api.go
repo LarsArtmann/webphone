@@ -42,7 +42,8 @@ type CallLogRequest struct {
 	Number    string `description:"The remote number the call was made with, e.g. +4917012345678." json:"number"`
 	Direction string `description:"Call direction: in or out." json:"direction"`
 	Seconds   int    `description:"Duration in seconds; negative values are clamped to 0." json:"seconds"`
-	Outcome   string `description:"answered or missed." json:"outcome"`
+	Disposition string `description:"How the call ended: answered|missed|voicemail|ivr|failed|unknown. The island reports only what it observed: missed (never connected) or unknown (media flowed; human vs voicemail is undetermined). answered arrives only via an operator confirm." json:"disposition,omitempty"`
+	Outcome   string `description:"Legacy island field, demoted via the legacy table (answered→unknown); superseded by disposition." json:"outcome,omitempty"`
 	Key       string `description:"Island-generated idempotency key (UUID, max 128 chars). A retry with the same key answers 204 without journaling again; a failed (502) attempt stays retryable. Absent or empty means no dedupe." json:"key"`
 }
 
@@ -61,6 +62,16 @@ func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 	if body.Direction != "in" && body.Direction != "out" {
 		http.Error(w, "direction must be in or out", http.StatusBadRequest)
 		return
+	}
+
+	disposition := domain.LegacyOutcomeDisposition(body.Outcome)
+	if body.Disposition != "" {
+		d, err := domain.ParseDisposition(body.Disposition)
+		if err != nil {
+			http.Error(w, "disposition must be one of answered, missed, voicemail, ivr, failed, unknown", http.StatusBadRequest)
+			return
+		}
+		disposition = d
 	}
 
 	phone, err := domain.ParsePhone(body.Number)
@@ -105,7 +116,7 @@ func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 		body.Seconds = 0
 	}
 
-	if err := h.deps.CRM.LogCall(r.Context(), match.ID, body.Direction, phone.String(), body.Seconds, body.Outcome); err != nil {
+	if err := h.deps.CRM.LogCall(r.Context(), match.ID, body.Direction, phone.String(), body.Seconds, disposition); err != nil {
 		slog.Warn("crm: call logging failed", "error", err, "extension", sess.Extension.String())
 		http.Error(w, "the CRM could not record the call", http.StatusBadGateway)
 		return

@@ -65,6 +65,11 @@ export function recordHistory(entry) {
 // the user expects the call in their CRM and must not lose it silently.
 // Every report carries a fresh UUID key so a browser-level retry or
 // double-fire replays the SAME key and the server journals the call once.
+// The disposition reports only what this side observed: a call that never
+// carried media is "missed"; one that did is "unknown" — media cannot
+// distinguish a human from a voicemail greeting, and claiming "answered"
+// from connection state journaled voicemail as answered (issue #6).
+// An operator confirm upgrades unknown to a specific resolution.
 export async function recordCrmCall({ dir, target, dur, established }) {
   if (!crmEnabled) return;
   try {
@@ -75,7 +80,7 @@ export async function recordCrmCall({ dir, target, dur, established }) {
         number: target,
         direction: dir,
         seconds: dur > 0 ? dur : 0,
-        outcome: established ? "answered" : "missed",
+        disposition: established ? "unknown" : "missed",
         key: crypto.randomUUID(),
       }),
     });

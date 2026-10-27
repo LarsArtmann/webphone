@@ -626,7 +626,7 @@ function addCallCard(id, target) {
         copyCardTranscript(transcript),
       ),
       mkBtn(t("clearTranscript"), "ghost clear-transcript-btn", () =>
-        clearCardTranscript(id, transcript),
+        clearCardTranscript(transcript),
       ),
     );
   } else {
@@ -666,7 +666,7 @@ function startCallTranscription(id, entry, target) {
   return startLiveTranscription(
     id,
     entry,
-    (text) => onCallTranscript(id, entry, target, text),
+    (text) => onCallTranscript(id, entry, text),
     {
       language: getLang(),
     },
@@ -695,7 +695,7 @@ function ensureTranscription(id, entry) {
 // re-read, never the live card). The strip renders via the
 // transcribe.js segment subscription — this path never touches the DOM
 // (one renderer per surface).
-function onCallTranscript(id, entry, target, text) {
+function onCallTranscript(id, entry, text) {
   announce(clipForAnnounce(text), "info");
   queueTranscriptSave(entry, {
     callId: id,
@@ -786,7 +786,7 @@ function appendTranscript(target, text) {
 // card is presentation only — clearing it never touches the stored
 // History transcript (nor the per-call segment log), and the announce
 // says exactly that scope.
-function clearCardTranscript(id, target) {
+function clearCardTranscript(target) {
   if (!target.children.length && !target.textContent) {
     announce(t("transcribeEmpty"), "warn");
     return;

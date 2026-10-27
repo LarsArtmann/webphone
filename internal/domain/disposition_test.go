@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"errors"
 	"testing"
 
-	"github.com/larsartmann/go-errorfamily"
+	"github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 )
 
 func TestParseDisposition(t *testing.T) {
@@ -19,9 +19,10 @@ func TestParseDisposition(t *testing.T) {
 	}
 
 	_, err := ParseDisposition("answered ")
-	if !errors.Is(err, errorfamily.Rejection) {
-		t.Fatalf("foreign string must be a Rejection, got %v", err)
+	if err == nil {
+		t.Fatal("foreign strings must refuse")
 	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 	_, err = ParseDisposition("Answered")
 	if err == nil {
 		t.Fatal("the vocabulary is lowercase-exact; capitalizations must refuse")
