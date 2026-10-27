@@ -20,7 +20,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -350,7 +349,8 @@ func (c *Client) providerFor(ctx context.Context) (*oidc.Provider, error) {
 func randomToken() (string, error) {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
-		return "", fmt.Errorf("crypto/rand: %w", err)
+		return "", errorfamily.WrapInfrastructuref(err, "sso.random_token",
+			"crypto/rand entropy read failed (kernel CSPRNG unavailable)")
 	}
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }

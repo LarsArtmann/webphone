@@ -5,11 +5,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -36,10 +36,30 @@ func main() {
 // inner error whose family varies by cause (config mistakes are
 // Rejections, storage failures Infrastructure), so a fixed-family
 // wrap here would clobber the constructor's classification. The inner
-// error owns the family; this only adds context.
-func propagatef(format string, args ...any) error {
-	return fmt.Errorf(format, args...) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+// error owns the family; this only adds context. The product is the
+// typed bootStepError — an unclassified bootError — so the report's
+// classifier treats it as transparent and walks through to the cause.
+func propagatef(format string, args ...any) *bootStepError {
+	return &bootStepError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
 }
+
+// bootStepError is propagatef's product: boot context around an inner
+// error whose family (if any) stays authoritative. Unclassified on
+// purpose — bootreport's classifier walks through it.
+type bootStepError struct {
+	err error
+}
+
+func (e *bootStepError) Error() string { return e.err.Error() }
+
+func (e *bootStepError) Unwrap() error { return e.err }
+
+// staticBootError is a designed one-shot refusal with a fixed message
+// (no cause to wrap, no family to propagate): the bootError class owns
+// the five-part operator surface, so the text is the whole error.
+type staticBootError string
+
+func (e staticBootError) Error() string { return string(e) }
 
 // enrollPasskey serves the `-enroll-passkey <email>` one-shot: it must
 // run under the SAME config and data dir as the server (the sqlite
@@ -54,10 +74,10 @@ func enrollPasskey(email string) error {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
 	}
 	if !cfg.Auth.Passkey.Enabled() {
-		return bootErr(bootConfigInvalid, errors.New("passkey mode is not configured (auth.passkey.*) — enable and map the email before enrolling")) //nolint:erraudit // boot root cause: bootErr owns the 5-part operator surface; no inner family to propagate
+		return bootErr(bootConfigInvalid, staticBootError("passkey mode is not configured (auth.passkey.*) — enable and map the email before enrolling"))
 	}
 	if _, mapped := cfg.Auth.Passkey.Users[email]; !mapped {
-		return bootErr(bootConfigInvalid, fmt.Errorf("email %q is not mapped in auth.passkey.users — add it to the config first", email)) //nolint:erraudit // boot root cause: bootErr owns the 5-part operator surface; no inner family to propagate
+		return bootErr(bootConfigInvalid, staticBootError(fmt.Sprintf("email %q is not mapped in auth.passkey.users — add it to the config first", email)))
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -181,7 +201,7 @@ func run() error {
 		ShutdownTimeout:   30 * time.Second,
 	}, application.Handler)
 	if err != nil {
-		return errors.Join(bootErr(bootListen, err), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
+		return bootJoin(bootErr(bootListen, err), application.Shutdown())
 	}
 
 	slog.Info("listening", "addr", cfg.Addr)
@@ -189,7 +209,7 @@ func run() error {
 
 	select {
 	case err := <-errCh:
-		return errors.Join(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
+		return bootJoin(bootErr(bootListen, propagatef("serve: %w", err)), application.Shutdown())
 	case <-ctx.Done():
 		slog.Info("shutting down")
 		// Order matters: the SSE hubs close FIRST (every live /events
@@ -199,8 +219,52 @@ func run() error {
 		// the container closes the dashboard pusher and the SQLite handle.
 		application.Hubs.Shutdown()
 		if err := httpServer.Shutdown(context.WithoutCancel(ctx)); err != nil {
-			return errors.Join(propagatef("http shutdown: %w", err), application.Shutdown()) //nolint:erraudit // aggregate of independently-stamped errors; errorfamily has no Join
+			return bootJoin(propagatef("http shutdown: %w", err), application.Shutdown())
 		}
 		return application.Shutdown()
 	}
+}
+
+// bootJoinError aggregates independently-stamped boot failures (the
+// listener's verdict plus the app container's shutdown verdict). It
+// reproduces errors.Join's message format (one line per cause, nils
+// dropped) and traversal (Unwrap() []error), so the boot report's
+// AsType classifier finds the tagged bootError inside exactly as
+// before.
+type bootJoinError struct {
+	errs []error
+}
+
+func (e *bootJoinError) Error() string {
+	switch len(e.errs) {
+	case 0:
+		return ""
+	case 1:
+		return e.errs[0].Error()
+	}
+	var b strings.Builder
+	for i, err := range e.errs {
+		if i > 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString(err.Error())
+	}
+	return b.String()
+}
+
+func (e *bootJoinError) Unwrap() []error { return e.errs }
+
+// bootJoin aggregates boot failures, dropping nils like errors.Join;
+// an all-nil input answers nil.
+func bootJoin(errs ...error) error {
+	kept := make([]error, 0, len(errs))
+	for _, err := range errs {
+		if err != nil {
+			kept = append(kept, err)
+		}
+	}
+	if len(kept) == 0 {
+		return nil
+	}
+	return &bootJoinError{errs: kept}
 }

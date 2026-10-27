@@ -527,6 +527,23 @@ func (s *Messages) AttachmentByID(
 	}, nil
 }
 
+// pageError is the typed product of a failed transcript page read (the
+// row scan or its attachment hydration). The inner error owns its
+// family; the message text is byte-identical to the fmt.Errorf wraps
+// it replaces.
+type pageError struct {
+	err error
+}
+
+func (e *pageError) Error() string { return e.err.Error() }
+
+func (e *pageError) Unwrap() error { return e.err }
+
+// pageErrf builds a pageError with context around a cause.
+func pageErrf(format string, args ...any) *pageError {
+	return &pageError{err: fmt.Errorf(format, args...)} //nolint:erraudit // family-neutral propagation: the inner error owns the family
+}
+
 // ListMessagesPage returns one page of a thread's messages, oldest
 // first. Page 0 is the newest window; hasMore reports whether older
 // pages exist beyond it.
@@ -544,7 +561,7 @@ func (s *Messages) ListMessagesPage(
 		LIMIT ? OFFSET ?
 	`, []any{owner.String(), threadID.String(), limit + 1, page * limit}, scanMessage)
 	if err != nil {
-		return nil, false, fmt.Errorf("list messages page %d of thread %s: %w", page, threadID, err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return nil, false, pageErrf("list messages page %d of thread %s: %w", page, threadID, err)
 	}
 
 	hasMore := len(msgs) > limit
@@ -552,7 +569,7 @@ func (s *Messages) ListMessagesPage(
 		msgs = msgs[:limit]
 	}
 	if err := s.attachAttachments(ctx, msgs); err != nil {
-		return nil, false, fmt.Errorf("attach attachments to thread %s messages: %w", threadID, err) //nolint:erraudit // family-neutral propagation: the inner error owns the family
+		return nil, false, pageErrf("attach attachments to thread %s messages: %w", threadID, err)
 	}
 
 	// Query was newest-first for the LIMIT; the UI wants a chat transcript,

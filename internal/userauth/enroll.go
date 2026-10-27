@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
@@ -61,8 +62,8 @@ func (s *Service) VerifyEnrollToken(ctx context.Context, token string) (EnrollTo
 	}
 	userID, err := identitymodel.ParseUserID(rawUserID)
 	if err != nil {
-		return EnrollToken{}, errorfamily.Wrapf(err, errorfamily.Corruption, "userauth.enroll.userid",
-			"stored enrollment token names an invalid user id %q", rawUserID)
+		return EnrollToken{}, errorfamily.WrapCorruption(err, "userauth.enroll.userid",
+			fmt.Sprintf("stored enrollment token names an invalid user id %q", rawUserID))
 	}
 	if !time.Now().Before(expiresAt) {
 		if err := s.enroll.Burn(ctx, hash); err != nil {

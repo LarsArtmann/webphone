@@ -24,12 +24,12 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-health"
@@ -608,5 +608,33 @@ func (a *App) Shutdown() error {
 	for _, err := range report.Errors {
 		errs = append(errs, err)
 	}
-	return errors.Join(errs...) //nolint:erraudit // aggregate of container-shutdown errors; each carries its own family, errorfamily has no Join
+	return &ShutdownError{errs: errs}
 }
+
+// ShutdownError aggregates the container's per-service shutdown
+// failures. The aggregate stays family-neutral — every wrapped cause
+// carries its own code and family — and it traverses like errors.Join's
+// product (Unwrap() []error, one line per cause), so sentinel matching
+// and family classification see every half.
+type ShutdownError struct {
+	errs []error
+}
+
+func (e *ShutdownError) Error() string {
+	switch len(e.errs) {
+	case 0:
+		return ""
+	case 1:
+		return e.errs[0].Error()
+	}
+	var b strings.Builder
+	for i, err := range e.errs {
+		if i > 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString(err.Error())
+	}
+	return b.String()
+}
+
+func (e *ShutdownError) Unwrap() []error { return e.errs }
