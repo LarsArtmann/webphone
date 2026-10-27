@@ -506,11 +506,7 @@ test("the live card's transcript DOM is capped, keeping the newest tail (#41)", 
     await flush();
   }
   const transcriptEl = entry.dom.querySelector(".call-transcript");
-  assert.equal(
-    transcriptEl.children.length,
-    30,
-    "the strip stays bounded at 30 lines",
-  );
+  assert.equal(transcriptEl.children.length, 30, "the strip stays bounded at 30 lines");
   assert.equal(
     transcriptEl.children[0].textContent,
     "seg-6",

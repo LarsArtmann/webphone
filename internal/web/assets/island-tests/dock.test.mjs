@@ -21,9 +21,8 @@ globalThis.SIP = {
 };
 
 const { sessions, state } = await import("../island/app/state.js");
-const { bindSession, cycleFocus, focusSession, renderCalls } = await import(
-  "../island/app/calls.js"
-);
+const { bindSession, cycleFocus, focusSession, renderCalls } =
+  await import("../island/app/calls.js");
 const { t } = await import("../island/app/i18n.js");
 
 const makeCard = () => ({
@@ -102,17 +101,12 @@ test("N=2 renders two chips plus one expanded focused card", () => {
   assert.equal(dock.children[0].id, `wp-dock-chip-${a}`);
   assert.equal(dock.children[1].id, `wp-dock-chip-${b}`);
   assert.match(dock.children[0].children[1].textContent, /\+493011111111/);
-  assert.equal(
-    sessions.get(a).dom.hidden,
-    false,
-    "the focused call keeps its expanded card",
+  assert.equal(sessions.get(a).dom.hidden, false, "the focused call keeps its expanded card");
+  assert.equal(sessions.get(b).dom.hidden, true, "the other call collapses into its chip");
+  assert.match(
+    dock.children[1].children[2].textContent,
+    new RegExp(t("onHold").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
   );
-  assert.equal(
-    sessions.get(b).dom.hidden,
-    true,
-    "the other call collapses into its chip",
-  );
-  assert.match(dock.children[1].children[2].textContent, new RegExp(t("onHold").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 });
 
 test("a single call renders no dock (plain card stays)", () => {
@@ -136,11 +130,7 @@ test("the chip click is hold & take through the hold pending machine", async () 
   const dockRow = dockEl();
   const chip = dockRow.children.find((kid) => kid.id === `wp-dock-chip-${b}`);
   chip.click();
-  assert.equal(
-    sessions.get(b).holdQueued,
-    false,
-    "the resume wish queues behind the pending hold",
-  );
+  assert.equal(sessions.get(b).holdQueued, false, "the resume wish queues behind the pending hold");
   sessions.get(b).holdPending = null;
 
   // A settled chip take: focus moves, the other call is held.
@@ -210,7 +200,10 @@ test("[ ] cycles established calls and announces the party; rings are skipped", 
   cycleFocus(1);
   assert.equal(state.focusedId, b, "forward lands on the other ESTABLISHED call");
   assert.match(lastToast().textContent, /\+493022222222/);
-  assert.match(lastToast().textContent, new RegExp(t("focusChanged")("+493022222222").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(
+    lastToast().textContent,
+    new RegExp(t("focusChanged")("+493022222222").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+  );
 
   cycleFocus(-1);
   assert.equal(state.focusedId, a, "back lands on the first call, never the ring");

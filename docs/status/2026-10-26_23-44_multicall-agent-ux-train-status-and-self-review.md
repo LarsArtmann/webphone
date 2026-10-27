@@ -9,6 +9,7 @@ Phases 1–3 of the 20-task plan (ring queue, call dock, live captions — the 1
 ## a) FULLY DONE
 
 **M1–M3 — Ring queue (the 1% → 51%)**
+
 - `state.js`: `incomingSessions: []` replaces the single-slot `incomingSession`; oldest-first invariant documented (F001).
 - `connection.js onInvite`: appends every invite to the queue; per-invite `stateChange` listener removes exactly its own slot on remote cancel; ring tone continues per remaining invite; missed-call dispatch + history row per cancelled caller (F002, F010).
 - `calls.js`: `answerIncoming(target)` pops the OLDEST (A key, pinned Accept); `rejectIncoming(target)` defaults to the NEWEST (Esc) with an explicit-target form for the per-slot buttons; warm mic released only on reject-to-empty (F003, F004).
@@ -19,6 +20,7 @@ Phases 1–3 of the 20-task plan (ring queue, call dock, live captions — the 1
 - Specs: new `ring-queue.test.mjs` (queue, oldest/newest semantics, per-slot buttons, Esc-never-live-call, missed-call contract); `connection.test.mjs` second-invite test REWRITTEN to pin queueing instead of rejection (F005, F012–F015).
 
 **M4–M7 — Call dock (completes the 4% → 64%)**
+
 - Dock strip when N>1: `#wp-call-dock` with one chip per call (`wp-dock-chip-<callId>`: hue-bucketed avatar showing last-two-digits, caller name, live state pill; whole chip = hold & take via `focusSession`'s existing holdPending/holdQueued machine) + exactly one expanded focused card, non-focused cards hidden; N≤1 renders the plain card, no dock (F017–F021).
 - `liveStateLine` extracted — the ONE state-line derivation shared by chip and card (no split brain).
 - Per-call volume slider on the expanded card → `entry.volume` → shared remote-audio element, level remembered per entry and re-applied on every `attachRemoteAudio` (F026).
@@ -27,22 +29,27 @@ Phases 1–3 of the 20-task plan (ring queue, call dock, live captions — the 1
 - Specs: new `dock.test.mjs` — N=2 chips + one expanded card, single-call no-dock, hold & take queues behind a pending hold (`holdQueued` pin), pill mirrors state, volume persists, cycling skips rings (F022–F023, F029, F033).
 
 **M9–M10 — Live captions (completes the 20% → 80%)**
+
 - `transcribe.js`: per-call bounded segment log (`CAPTION_LINE_CAP = 30`) + `subscribeCallSegments`/`callSegments`/`clearCallSegments` fan-out; segments recorded once in the recorder path (F045).
 - `calls.js`: caption strip on ASR-enabled cards (`wp-captions-<callId>`, head with i18n title + config-honest locality chip, `aria-hidden` — the announce path already speaks each segment, no double-speak); inner `.call-transcript` upgraded from an 8000-char blob to bounded line divs; copy reads joined lines; clear empties strip; teardown unsubscribes + clears the log; `.call-transcript-saved` behavior untouched (F046–F049, F051, F053).
 - i18n: `captionsTitle`/`captionsLocal`/`captionsRemote` en+de (F054).
 - Specs: `calls-transcribe.test.mjs` rewritten for line semantics (7 tests), new `captions-off.test.mjs` (seam off → NO caption surface at all), aria-hidden pinned in the auto-start spec (F050, F056).
 
 **M17 backend half — locality**
+
 - `asr.LocalityOf(url)` classifier (loopback/RFC1918/.lan/.home.arpa/dotless = local, else remote; unparseable = remote-honest) + `Deps.ASRLocality` wired through `internal/app` (`asrLocality(cfg)`, empty when seam off) + `PBX_CONFIG.asrLocality` in configJS (F101 server half, F102 island half done in captions).
 
 **M8 — DOM contract batch gate (mostly done)**
+
 - `docs/dom-contract.md`: `incoming-queue` added to the pinned block; a new "Runtime-created ids" notes section documents `wp-call-dock`, `wp-dock-chip-<callId>`, `wp-captions-<callId>`, `wp-incoming-slot-<n>` (JS-created ids can never be in served bytes, so they stay OUT of the pinned block deliberately).
 - `TestServedPageHoldsTheDomContract` green; `scripts/webphone-smoke.py` greps nothing affected; stack `browser-e2e.py` drives `#incoming-from`/`#accept-btn` which are preserved verbatim (F040–F043).
 
 **M15 — transcript search: ALREADY SHIPPED (errata, zero work needed)**
+
 - Verified at HEAD: History panel already carries `q` filtering + `Transcripts.Search` + "Transcript matches for:" view + `TestHistoryTranscriptSearchMatchesOwnerScopedAndHinted`. F087–F092 are no-ops; this is a plan errata the implementation confirmed (the plan's own round-1 brainstorm missed it).
 
 **Housekeeping**
+
 - CHANGELOG `[Unreleased]` entry covering queue + dock + captions + locality (F057-adjacent).
 - `nix fmt` run (12 files processed, 3 reformatted); full island suite 240/240; server+views+asr Go tests green; `go build ./...` clean.
 
@@ -85,6 +92,7 @@ Phases 1–3 of the 20-task plan (ring queue, call dock, live captions — the 1
 ## f) NEXT 50 (ordered by impact)
 
 **Phase 4 finish (blockers first)**
+
 1. Fix `TestSummaryDraftOutageIs502` (harness boots without Transcripts — reseed or reuse `clientWithAgent` wiring).
 2. Run `go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update` (registers `agent.summarize`) in the SAME commit as the summary code.
 3. Commit M11 as ONE narrative commit (`feat: post-call transcript summarize via the review-API draft op` + body carrying the F059 verdict).

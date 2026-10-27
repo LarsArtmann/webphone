@@ -27,12 +27,12 @@ template adds what a fix attempt needs:
 
 ## Runtime decision menu
 
-| Runtime | Mechanics | Secrets needed | Cost profile | Notes |
-|---|---|---|---|---|
-| claude-code-action | GitHub Action, comments `@claude fix` on the issue | Anthropic key as repo secret | per-attempt API cost | sandboxed to the PR; well-trodden |
-| Devin | cloud session fed the evidence pack URL | Devin API key | seat/credits | strongest autonomy, least repo-native |
-| Crush headless on a self-hosted runner | `crush run` with the issue body as prompt | local provider (this host's stack) | zero marginal API cost | self-hosted doctrine fits; needs a runner with nix + KVM for the gates |
-| (do nothing — the shipped state) | human reads the issue | none | zero | the default until GO |
+| Runtime                                | Mechanics                                          | Secrets needed                     | Cost profile           | Notes                                                                  |
+| -------------------------------------- | -------------------------------------------------- | ---------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| claude-code-action                     | GitHub Action, comments `@claude fix` on the issue | Anthropic key as repo secret       | per-attempt API cost   | sandboxed to the PR; well-trodden                                      |
+| Devin                                  | cloud session fed the evidence pack URL            | Devin API key                      | seat/credits           | strongest autonomy, least repo-native                                  |
+| Crush headless on a self-hosted runner | `crush run` with the issue body as prompt          | local provider (this host's stack) | zero marginal API cost | self-hosted doctrine fits; needs a runner with nix + KVM for the gates |
+| (do nothing — the shipped state)       | human reads the issue                              | none                               | zero                   | the default until GO                                                   |
 
 Every option funnels into ONE invariant: the agent opens a DRAFT PR —
 it never pushes main, never re-baselines, never marks a flake "closed"

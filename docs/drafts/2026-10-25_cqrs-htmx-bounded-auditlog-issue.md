@@ -26,16 +26,16 @@ and can be bounded without losing durability.
 ## Design / ## Automation steps (repo)
 
 - [ ] Cap the entries slice (ring buffer or trim-on-append), newest
-  retained; default sized so a compliance glance at the last hours
-  survives
+      retained; default sized so a compliance glance at the last hours
+      survives
 - [ ] Expose cap + dropped-count on the projection status if cheap
 - [ ] README: one line — the projection is a bounded recent-window,
-  the journal is the durable record
+      the journal is the durable record
 
 ## To verify
 
 - [ ] Test projects >cap events and asserts the cap plus
-  newest-retention
+      newest-retention
 - [ ] webphone re-audit flips the AuditLog row from N/A to adoptable
 
 Out of scope: persisting AuditLog to SQL — the journal already is the

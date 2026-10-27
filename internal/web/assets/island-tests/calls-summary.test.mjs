@@ -157,9 +157,7 @@ test("summarize: busy state, success toast, nav nudge, settled button", async ()
   assert.equal(btn.disabled, true, "the row is busy immediately");
   assert.equal(btn.textContent, "Summarizing…");
   await flush();
-  const ask = fetchCalls.find((c) =>
-    String(c.url).includes("/summary-draft"),
-  );
+  const ask = fetchCalls.find((c) => String(c.url).includes("/summary-draft"));
   assert.ok(ask, "the island asked the summary endpoint");
   assert.equal(ask.options.method, "POST");
   assert.ok(
@@ -228,9 +226,7 @@ test("summarize: a missing transcript warns and stays retryable", async () => {
   await flush();
   assert.equal(btn.disabled, false);
   assert.ok(
-    [...doc.getElementById("toasts").children].some((el) =>
-      /No transcript/i.test(el.textContent),
-    ),
+    [...doc.getElementById("toasts").children].some((el) => /No transcript/i.test(el.textContent)),
     "the 404 lands as its own honest toast",
   );
 });

@@ -14,18 +14,18 @@ user-instruction-wins rule, flagged here per the same rule.
 
 ## a) FULLY DONE
 
-| Work | Evidence |
-|---|---|
-| **M1–M2 error-context router** (`scripts/error-context.py`): journal line in → bundle out (registry row, seam files first-site-first, family-test pin, lessons/ledger mentions, last-5 commits; `--json`) | `--self-test` 37/37; README troubleshooting entry; AGENTS Commands line |
-| **M3–M5 reproduce-first gate** (`scripts/reproduce-first-check.sh` + advisory `reproduce-first` CI job): a fix train's new `*_test.go` diff must FAIL on the merge base | `--self-test` 3/3 (REPRODUCES/SKIP/NO-REPRO scratch repos); `continue-on-error` advisory posture pinned in the job comment |
-| **M6–M9 the observers** (`watch.yml` */15 cron → `main-red-watch.sh`, `daemon-audit.sh`, new `whitespace-drift.sh --ref` mode) | self-tests 8/8 + 3/3; drift `--ref` verified against a real indentation-shift commit (the e62fe34 class) |
-| **M10–M11 bump-preflight** (`scripts/bump-preflight.sh`): proxy zips → capped diff, removed exported symbols, usage-site map | `--self-test` 4/4; verified on two REAL histories (go-health v0.5.0→v0.5.1, go-error-family v0.11.0→v0.12.0 — the latter renders the actual `Unwrap` diff) |
-| **M12–M13 incident-bundle** (`scripts/incident-bundle.sh`): traces/runs/commits windows + error-context sweep → drafted bundle with TBD-verdict lessons/CHANGELOG/ledger skeletons | `--self-test` 6/6; runbook pointer inside every bundle |
-| **M14–M15 error-drill VM test** (`webphone-error-drill`, KVM-gated): designed boot failure renders the 5-part block (`class=data-dir`), exit 1, NRestarts>1; `/hooks` fail-closed 503; wedged blob store → `/healthz` 503 naming `blob-dir`, recovers on unwedge | built green locally in ~20s VM time (run during the session); KVM-gated so consumer CI never runs it |
-| **M16–M17 gated sketches** (LLM prose gate; agent dispatch): scan inventory, runtime/cost decision menus, owner-GO trigger criteria — nothing wired | `docs/drafts/gated-sketches/2026-10-26_*.md` |
-| **M18–M20 docs + verification + closeout** | CHANGELOG Added bullet; README one-liner; AGENTS 174/377 with Commands lines + bump-bullet pre-read clause; TODO_LIST flipped to SHIPPED-with-evidence; plan §7 errata annotated; `nix fmt` 0-changed; full `buildflow` rc=0; all 8 fast checks exit 0; red-watch dry-run `NONE conclusion=success`; final push verified `git ls-remote` == local |
-| **Red-main incident repair** (run 40301017699): three island test-side breaks from the concurrent multicall train, invisible ~2.5h because six daemon commits landed with zero CI runs | fixed same day (233/233 island tests); ledger row for 40301017699 written; successor runs 40311328217 + 40313259454 green |
-| **Live bug found by the shipped machinery, fixed within the session**: watch.yml's explicit `permissions:` block omitted `actions: read` → `gh run list` 403'd under `set -e` → all four first-night watch runs (17:02–17:53Z) RED | diagnosed from triggers+perms (log API is 403 for this token); fixed in `c793a86`, CI 40385454030 green. The watch workflow failing = its DESIGNED semantics ("red means the watcher itself is broken") |
+| Work                                                                                                                                                                                                                                                             | Evidence                                                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1–M2 error-context router** (`scripts/error-context.py`): journal line in → bundle out (registry row, seam files first-site-first, family-test pin, lessons/ledger mentions, last-5 commits; `--json`)                                                        | `--self-test` 37/37; README troubleshooting entry; AGENTS Commands line                                                                                                                                                                                                                                                                           |
+| **M3–M5 reproduce-first gate** (`scripts/reproduce-first-check.sh` + advisory `reproduce-first` CI job): a fix train's new `*_test.go` diff must FAIL on the merge base                                                                                          | `--self-test` 3/3 (REPRODUCES/SKIP/NO-REPRO scratch repos); `continue-on-error` advisory posture pinned in the job comment                                                                                                                                                                                                                        |
+| **M6–M9 the observers** (`watch.yml` */15 cron → `main-red-watch.sh`, `daemon-audit.sh`, new `whitespace-drift.sh --ref` mode)                                                                                                                                   | self-tests 8/8 + 3/3; drift `--ref` verified against a real indentation-shift commit (the e62fe34 class)                                                                                                                                                                                                                                          |
+| **M10–M11 bump-preflight** (`scripts/bump-preflight.sh`): proxy zips → capped diff, removed exported symbols, usage-site map                                                                                                                                     | `--self-test` 4/4; verified on two REAL histories (go-health v0.5.0→v0.5.1, go-error-family v0.11.0→v0.12.0 — the latter renders the actual `Unwrap` diff)                                                                                                                                                                                        |
+| **M12–M13 incident-bundle** (`scripts/incident-bundle.sh`): traces/runs/commits windows + error-context sweep → drafted bundle with TBD-verdict lessons/CHANGELOG/ledger skeletons                                                                               | `--self-test` 6/6; runbook pointer inside every bundle                                                                                                                                                                                                                                                                                            |
+| **M14–M15 error-drill VM test** (`webphone-error-drill`, KVM-gated): designed boot failure renders the 5-part block (`class=data-dir`), exit 1, NRestarts>1; `/hooks` fail-closed 503; wedged blob store → `/healthz` 503 naming `blob-dir`, recovers on unwedge | built green locally in ~20s VM time (run during the session); KVM-gated so consumer CI never runs it                                                                                                                                                                                                                                              |
+| **M16–M17 gated sketches** (LLM prose gate; agent dispatch): scan inventory, runtime/cost decision menus, owner-GO trigger criteria — nothing wired                                                                                                              | `docs/drafts/gated-sketches/2026-10-26_*.md`                                                                                                                                                                                                                                                                                                      |
+| **M18–M20 docs + verification + closeout**                                                                                                                                                                                                                       | CHANGELOG Added bullet; README one-liner; AGENTS 174/377 with Commands lines + bump-bullet pre-read clause; TODO_LIST flipped to SHIPPED-with-evidence; plan §7 errata annotated; `nix fmt` 0-changed; full `buildflow` rc=0; all 8 fast checks exit 0; red-watch dry-run `NONE conclusion=success`; final push verified `git ls-remote` == local |
+| **Red-main incident repair** (run 40301017699): three island test-side breaks from the concurrent multicall train, invisible ~2.5h because six daemon commits landed with zero CI runs                                                                           | fixed same day (233/233 island tests); ledger row for 40301017699 written; successor runs 40311328217 + 40313259454 green                                                                                                                                                                                                                         |
+| **Live bug found by the shipped machinery, fixed within the session**: watch.yml's explicit `permissions:` block omitted `actions: read` → `gh run list` 403'd under `set -e` → all four first-night watch runs (17:02–17:53Z) RED                               | diagnosed from triggers+perms (log API is 403 for this token); fixed in `c793a86`, CI 40385454030 green. The watch workflow failing = its DESIGNED semantics ("red means the watcher itself is broken")                                                                                                                                           |
 
 ## b) PARTIALLY DONE
 
@@ -153,6 +153,7 @@ it is honest:
 ## f) NEXT — up to 50, sorted by impact (brainstorm for HARVEST, not a commitment list)
 
 **Verify/close the shipped train**
+
 1. Observe the first GREEN `watch.yml` cron run (check `gh run list
    --workflow watch.yml` after the next :15/:30/:45/:00 UTC tick) — the
    fix's live proof.
@@ -184,73 +185,73 @@ it is honest:
 
 **Owner decisions pending (blocking work, not tasks I can start)**
 11. Blocking-flip GO: how many clean advisory PR trains before
-    `reproduce-first` blocks; where the counter lives (tracker issue?).
+`reproduce-first` blocks; where the counter lives (tracker issue?).
 12. Agent dispatch GO: yes/no, runtime (claude-code-action / Devin / Crush
-    headless), secrets custody, per-red budget.
+headless), secrets custody, per-red budget.
 13. LLM prose-gate GO: yes/no, option A (local) vs B (hosted) vs C
-    (agent-side only).
+(agent-side only).
 14. Fleet-side pma fix: stop the systemd unit from exporting
-    `GIT_CONFIG_*=/var/empty` so daemon commits run the repo hooks
-    (nix-config module change; re-binds the daemon fleet-wide).
+`GIT_CONFIG_*=/var/empty` so daemon commits run the repo hooks
+(nix-config module change; re-binds the daemon fleet-wide).
 15. Watch notification channel: label-only today — should ci-red issues
-    also ping a channel/email you actually read?
+also ping a channel/email you actually read?
 
 **Tooling hardening (small, high-value)**
 16. `daemon-audit`: audit the last N daemon commits in the window, not
-    just the tip — the six-commit gap class would only trip the tip check
-    if the LAST commit is dirty.
+just the tip — the six-commit gap class would only trip the tip check
+if the LAST commit is dirty.
 17. `main-red-watch`: on EXISTS, still append the run id to the existing
-    issue if that run is NEWER than the issue's last-commented run
-    (today: same-run dedup only).
+issue if that run is NEWER than the issue's last-commented run
+(today: same-run dedup only).
 18. `bump-preflight`: diff the `.mod` files too (declared-dependency
-    drift, not just source).
+drift, not just source).
 19. `incident-bundle`: accept `--run-id` to anchor the gh window on the
-    failing run instead of a time window.
+failing run instead of a time window.
 20. `error-context`: `--open` to print an editor-ready file:line shortlist
-    (agent ergonomics; cheap).
+(agent ergonomics; cheap).
 21. `whitespace-drift --ref`: self-test inside the script (it is verified
-    manually twice today; pin it like the others).
+manually twice today; pin it like the others).
 22. reproduce-first: emit the verdict as a GitHub step summary table when
-    run in CI (grep-friendly prefix exists; the table is free).
+run in CI (grep-friendly prefix exists; the table is free).
 23. watch.yml: `timeout-minutes` is set; add `--limit` caps on every gh
-    call to bound worst-case API latency.
+call to bound worst-case API latency.
 24. Add `actions: read`-class allowlist audit to the train checklist
-    (process item, one AGENTS line).
+(process item, one AGENTS line).
 25. Consider a `watch.yml` manual "selftest" dispatch mode that runs both
-    scripts against fixtures in CI (proves the runner env, not just local
-    env).
+scripts against fixtures in CI (proves the runner env, not just local
+env).
 
 **Adjacent trains (other sessions/owners — listed for completeness)**
 26. Multicall-dock P1: agent chain (M11–M13 of that plan).
 27. Multicall-dock P1/P2 tails (M14–M20 of that plan).
 28. cqrs-htmx bounded AuditLog projection (upstream ask, AGENTS-documented).
 29. `nix flake check` full local run on a quiet machine (drill eval +
-    sandbox legs together; today only targeted legs ran).
+sandbox legs together; today only targeted legs ran).
 30. `webphone-backup-drill` rebuild sanity after the vm-tests.nix edit
-    (same file; untouched path, cheap re-proof).
+(same file; untouched path, cheap re-proof).
 31. TODO_LIST HARVEST of this report's (f) section per docs-health.
 
 **Hygiene/debt (non-urgent)**
 32. Retire the `REPRODUCE_FIRST_LOCAL=1` env guard once the CI job proves
-    itself (or keep and document — decide at blocking-flip time).
+itself (or keep and document — decide at blocking-flip time).
 33. Consider archiving the four RED watch runs' lessons into the ci-flake
-    ledger as one row (infra class: permissions allowlist).
+ledger as one row (infra class: permissions allowlist).
 34. `error-context`: registry parse assumes the generated block's table
-    shape — pin a format assertion into `--self-test` so a generator
-    change screams here too.
+shape — pin a format assertion into `--self-test` so a generator
+change screams here too.
 35. `incident-bundle`: slug collision handling (two incidents same minute)
-    — today the timestamp suffix saves us; assert it.
+— today the timestamp suffix saves us; assert it.
 36. Review whether `main-red-watch` should early-exit when the failing run
-    is older than the newest green (stale-red suppression).
+is older than the newest green (stale-red suppression).
 37. Document the watch.yml cron-delay reality (GitHub fires late; the
-    "*/15" is an upper bound, not a promise) in the workflow comment.
+"*/15" is an upper bound, not a promise) in the workflow comment.
 38. Deduplicate the recurrence-grep needles (job names today; consider
-    failing-step names via `gh run view --json jobs` deep-linking).
+failing-step names via `gh run view --json jobs` deep-linking).
 39. Keep `.art-dupl-baseline` honesty: five new shell scripts added — the
-    dup-gate only sees Go, but a quick manual `art-dupl` glance at
-    scripts/ would keep the dedup-registry spirit.
+dup-gate only sees Go, but a quick manual `art-dupl` glance at
+scripts/ would keep the dedup-registry spirit.
 40. After the first real incident: revisit README's incident-runbook
-    rewrite (currently deferred by plan §6) with the bundle as evidence.
+rewrite (currently deferred by plan §6) with the bundle as evidence.
 
 (Items 41–50 intentionally left empty — the honest list is 40; padding a
 brainstorm to a round number would violate the routing rigor the skill
@@ -274,6 +275,6 @@ demands.)
 
 ---
 
-*Prepared per the status-report skill with two operator overrides (`.md`
+_Prepared per the status-report skill with two operator overrides (`.md`
 format, top-50/top-3 instead of top-25/top-1) — both instructed in the
-request, flagged here. Then: waiting for instructions.*
+request, flagged here. Then: waiting for instructions._

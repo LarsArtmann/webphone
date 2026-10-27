@@ -16,21 +16,21 @@ findings land as PR annotations or a job-summary table.
 
 ## Scan surface inventory (verified against the repo at sketch time)
 
-| Surface | Where | Volume class | Notes |
-|---|---|---|---|
-| Island i18n values | `internal/web/views/i18n.go` (en/de maps) | ~hundreds of keys | parity tests exist; an LLM gate adds QUALITY checks, not parity |
-| `http.Error` texts | `internal/server/**` (api, passkey_api, transcribe) | ~40 sites | the 2026-10-23 ruling keeps these plain-text; copy quality still applies |
-| Boot report copy | `cmd/webphone/bootreport.go` | 6 classes × 5 parts | already English-only, golden-pinned; gate would check clarity drift |
-| Server validation reasons | services (`Rejection` errors' messages) | distributed | the `<seam>.<op>` codes are the stable keys; prose rides alongside |
-| HTML error panels | `internal/web/views` (`errorBanner`, `panelError`) | few | templ copy, en/de |
+| Surface                   | Where                                               | Volume class        | Notes                                                                    |
+| ------------------------- | --------------------------------------------------- | ------------------- | ------------------------------------------------------------------------ |
+| Island i18n values        | `internal/web/views/i18n.go` (en/de maps)           | ~hundreds of keys   | parity tests exist; an LLM gate adds QUALITY checks, not parity          |
+| `http.Error` texts        | `internal/server/**` (api, passkey_api, transcribe) | ~40 sites           | the 2026-10-23 ruling keeps these plain-text; copy quality still applies |
+| Boot report copy          | `cmd/webphone/bootreport.go`                        | 6 classes × 5 parts | already English-only, golden-pinned; gate would check clarity drift      |
+| Server validation reasons | services (`Rejection` errors' messages)             | distributed         | the `<seam>.<op>` codes are the stable keys; prose rides alongside       |
+| HTML error panels         | `internal/web/views` (`errorBanner`, `panelError`)  | few                 | templ copy, en/de                                                        |
 
 ## Runtime / cost options
 
-| Option | Runtime | Cost profile | Notes |
-|---|---|---|---|
-| A: local model via the ASR seam's box | self-hosted (Speaches-class server) | zero marginal, needs a runner with the model | repo doctrine prefers local (GDPR posture); adds infra |
-| B: hosted API on-demand | CI calls an OpenAI-compatible endpoint | cents per run, only on diff'd copy files | needs API key secret + budget cap; sender-data review for copy (no caller data — only dev-authored strings) |
-| C: pre-commit, agent-side | Crush/similar reads the contract during trains | zero CI cost, no enforcement | weakest guarantee, zero infra |
+| Option                                | Runtime                                        | Cost profile                                 | Notes                                                                                                       |
+| ------------------------------------- | ---------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| A: local model via the ASR seam's box | self-hosted (Speaches-class server)            | zero marginal, needs a runner with the model | repo doctrine prefers local (GDPR posture); adds infra                                                      |
+| B: hosted API on-demand               | CI calls an OpenAI-compatible endpoint         | cents per run, only on diff'd copy files     | needs API key secret + budget cap; sender-data review for copy (no caller data — only dev-authored strings) |
+| C: pre-commit, agent-side             | Crush/similar reads the contract during trains | zero CI cost, no enforcement                 | weakest guarantee, zero infra                                                                               |
 
 ## Detect-only contract (if built)
 

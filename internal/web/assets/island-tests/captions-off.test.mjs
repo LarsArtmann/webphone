@@ -59,21 +59,9 @@ test("an ASR-off boot renders no caption surface on the call card", async () => 
   const dom = entry.dom;
 
   assert.equal(dom.querySelector(".wp-captions"), null, "no caption strip");
-  assert.equal(
-    dom.querySelector(".copy-transcript-btn"),
-    null,
-    "no copy affordance",
-  );
-  assert.equal(
-    dom.querySelector(".clear-transcript-btn"),
-    null,
-    "no clear affordance",
-  );
-  assert.equal(
-    dom.querySelector(".transcribe-btn"),
-    null,
-    "no transcribe affordance",
-  );
+  assert.equal(dom.querySelector(".copy-transcript-btn"), null, "no copy affordance");
+  assert.equal(dom.querySelector(".clear-transcript-btn"), null, "no clear affordance");
+  assert.equal(dom.querySelector(".transcribe-btn"), null, "no transcribe affordance");
   assert.ok(
     dom.querySelector(".call-transcript"),
     "the bare transcript node remains (the pre-caption shape)",

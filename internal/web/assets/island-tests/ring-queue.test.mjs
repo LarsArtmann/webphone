@@ -47,9 +47,7 @@ globalThis.AudioContext = class {
 };
 
 const { sessions, state } = await import("../island/app/state.js");
-const { answerIncoming, rejectIncoming, teardownAll } = await import(
-  "../island/app/calls.js"
-);
+const { answerIncoming, rejectIncoming, teardownAll } = await import("../island/app/calls.js");
 const { initShortcuts } = await import("../island/app/shortcuts.js");
 const connection = await import("../island/app/connection.js");
 
@@ -171,11 +169,7 @@ test("two concurrent invites queue; the banner stack shows both", async () => {
 
   second.stateChange.fire(globalThis.SIP.SessionState.Terminated);
   assert.equal(state.incomingSessions.length, 0);
-  assert.equal(
-    doc.getElementById("incoming-call").hidden,
-    true,
-    "an empty queue hides the banner",
-  );
+  assert.equal(doc.getElementById("incoming-call").hidden, true, "an empty queue hides the banner");
 });
 
 test("answer takes the OLDEST ring; Esc rejects the NEWEST", async () => {
