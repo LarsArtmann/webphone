@@ -6,6 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // Cache tuning: names change rarely (contact edits), and a phone page holds
@@ -199,8 +201,8 @@ func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]strin
 
 // LogCall forwards one call activity to the CRM (no caching — a call is a
 // fact, not a lookup).
-func (r *Resolver) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, outcome string) error { //nolint:branching-flow // pass-through forwarder of Client.LogCall (the verbatim-number ruling, see there)
-	return r.client.LogCall(ctx, contactID, direction, number, seconds, outcome)
+func (r *Resolver) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, disposition domain.Disposition) error { //nolint:branching-flow // pass-through forwarder of Client.LogCall (the verbatim-number ruling, see there)
+	return r.client.LogCall(ctx, contactID, direction, number, seconds, disposition)
 }
 
 func errIsMiss(err error) bool { return err == ErrNotFound || err == ErrDisabled }

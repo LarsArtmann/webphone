@@ -92,7 +92,7 @@ func TestAPICallLoggingContract(t *testing.T) {
 		c := signIn(t, server)
 
 		status, body := report(t, c, map[string]any{
-			"number": "+493012345678", "direction": "in", "seconds": 123, "outcome": "answered",
+			"number": "+493012345678", "direction": "in", "seconds": 123, "disposition": "unknown",
 		})
 		if status != http.StatusNoContent {
 			t.Fatalf("report: %d %s", status, body)
@@ -106,8 +106,70 @@ func TestAPICallLoggingContract(t *testing.T) {
 		}
 
 		got := stub.logBodies[0]
-		if got["direction"] != "in" || got["seconds"] != float64(123) || got["outcome"] != "answered" {
+		if got["direction"] != "in" || got["seconds"] != float64(123) || got["outcome"] != "unknown" {
 			t.Fatalf("forwarded facts: %+v", got)
+		}
+	})
+
+	t.Run("disposition travels verbatim through to the CRM", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+
+		if status, body := report(t, c, map[string]any{
+			"number": "+493012345678", "direction": "out", "disposition": "missed",
+		}); status != http.StatusNoContent {
+			t.Fatalf("report: %d %s", status, body)
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if got := stub.logBodies[0]["outcome"]; got != "missed" {
+			t.Fatalf("forwarded disposition: %q (want missed)", got)
+		}
+	})
+
+	t.Run("legacy outcome field demotes answered to unknown", func(t *testing.T) {
+		// A stale island tab still reports the retired outcome field. Its
+		// "answered" was connection-derived and cannot be trusted (issue
+		// #6), so the handler demotes it; "missed" survives.
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+
+		if status, body := report(t, c, map[string]any{
+			"number": "+493012345678", "direction": "in", "outcome": "answered",
+		}); status != http.StatusNoContent {
+			t.Fatalf("legacy report: %d %s", status, body)
+		}
+
+		stub.mu.Lock()
+		got := stub.logBodies[0]["outcome"]
+		stub.mu.Unlock()
+		if got != "unknown" {
+			t.Fatalf("legacy answered must demote to unknown upstream, got %q", got)
+		}
+	})
+
+	t.Run("foreign disposition values are refused", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
+		c := signIn(t, server)
+
+		status, _ := report(t, c, map[string]any{
+			"number": "+493012345678", "direction": "in", "disposition": "picked-up",
+		})
+		if status != http.StatusBadRequest {
+			t.Fatalf("foreign disposition: %d (want 400)", status)
+		}
+
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		if len(stub.logBodies) != 0 {
+			t.Fatalf("a refused report must never journal: %+v", stub.logBodies)
 		}
 	})
 

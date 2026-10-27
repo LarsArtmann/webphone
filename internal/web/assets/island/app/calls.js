@@ -653,7 +653,7 @@ function toggleTranscription(id, target) {
   if (isTranscribing(id)) {
     stopLiveTranscription(id);
     announce(t("transcribeStopped"), "info");
-  } else if (!startCallTranscription(id, entry, target)) {
+  } else if (!startCallTranscription(id, entry)) {
     target.textContent = t("transcribeUnsupported");
   }
   renderCalls();
@@ -662,7 +662,7 @@ function toggleTranscription(id, target) {
 // startCallTranscription is the ONE start path (auto-start on connect
 // and the manual toggle both ride it): it wires segment text to
 // onCallTranscript and passes the UI language as the provider hint.
-function startCallTranscription(id, entry, target) {
+function startCallTranscription(id, entry) {
   return startLiveTranscription(
     id,
     entry,
@@ -681,7 +681,7 @@ function ensureTranscription(id, entry) {
   if (!asrEnabled) return;
   const target = entry.dom && entry.dom.querySelector(".call-transcript");
   if (!target || isTranscribing(id)) return;
-  if (startCallTranscription(id, entry, target)) {
+  if (startCallTranscription(id, entry)) {
     announce(t("transcribeStarted"), "info");
     renderCalls();
   } else {

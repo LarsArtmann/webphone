@@ -283,6 +283,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Typed error products at every erraudit `--max` site (2026-10-27,
+  error-surface train): every function that constructed an anonymous
+  stdlib error (`errors.New`/`fmt.Errorf`/`errors.Join`) now builds a
+  specific typed error — `gateway.ForwardError` (the shared
+  provider-lane forward failure for fax + messaging), the gateway
+  formError, the paperless archiveError, the store migrateError and
+  pageError, the config ConfigInvalidError, the app ShutdownError and
+  the boot path's bootStepError/staticBootError/bootJoinError, plus a
+  one-home `notFound` verdict in readmodels (sentinel + coded
+  Rejection, errors.Join format and traversal preserved). Messages are
+  byte-identical, sentinel matching and family classification see
+  every cause through Unwrap, and the sso entropy failure gained the
+  coded `sso.random_token` (Infrastructure) in place of a bare
+  crypto/rand wrap. Function signatures stay the idiomatic `error` —
+  no interface or caller churn.
+
 - metaengine v4.19.0 → v4.20.0 (2026-10-25, with go-cqrs-lite/id
   v4.7.3): the codec-contract train. The readmodels seam is untouched —
   no direct stream-codec use (the engine owns encoding inside the

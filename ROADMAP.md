@@ -12,6 +12,12 @@ Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
   `.buildflow.yml` key list has no per-step-args mechanism, and a
   repo-local coverage script would duplicate a step BuildFlow already
   orchestrates. Fleet-wide value → belongs upstream.
+- Backoff-synced SSE-pill countdown title (recorded 2026-10-27, from the
+  error-surface plan's T20): the pill says "reconnecting…" statically today; a
+  real "retrying in Ns" needs the htmx SSE extension to expose its internal
+  backoff timer (500ms→64s, reset on open) as event detail or a config mirror —
+  an upstream ask (cqrs-htmx/htmx ext), not island-guessable without drift.
+  Rides the same upstream conversation as the `[object Event]` log fix draft.
 - sip.js: no 0.22 exists; upstream is dormant at 0.21.2 (an
   unreleased 0.21.3 tag adds only a SimpleUser option). Evaluation:
   `docs/reviews/archived/2026-09-18_sip-js-0.22-evaluation.md`. Revisit only on

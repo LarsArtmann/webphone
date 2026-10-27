@@ -29,6 +29,36 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Error-surface + crash-containment plan (2026-10-27 — P0–P2 SHIPPED, host legs + evidence-gated tails open)
+
+Plan + execution log: [docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md](docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md).
+Shipped same-session (see the plan's execution log + CHANGELOG): recover() guards on ALL
+five bare-goroutine sites + containment test, the island catch sweep (1 bug fixed:
+summarize network-dead split; justifications at every silent site), the call-failure
+reason card + THE SIP-cause mapping (error-contract.md, coordinates with #6 below),
+oxlint `no-empty`/`no-unused-vars`/`no-console(allow info·warn·error)` gates + finding
+fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType, the
+502-proxy + island-JS error-contract sections (+ stack runbook sync), lessons entries.
+**Priority:** High · **Effort:** S remainder.
+
+1. **Host-leg verdicts (OWNER, read-only ssh — banned in the agent shell)**: run
+   `ssh root@pbx.artmann.tech 'systemctl show webphone -p NRestarts -p ExecMainStartTimestamp; journalctl -u webphone --since today | grep -iE "panic|fatal"'`
+   and paste the output; a panic line reopens P0 forensics on the named seam. Same
+   pass covers the Caddy /events flush+logging config check and the dialplan
+   `state:end` ring-hook probe (plan M03/M53/M54). Prod `/version` already verified
+   REMOTELY: v2.9.0 at `ec5de5e` (deploy fired; `agent:true` live).
+2. **`/events` heartbeat + server `retry:` hint — NO-GO until drop-class evidence**
+   (plan T19): recovery is guaranteed by the upstream recreate loop; no long-idle
+   drop has ever been observed. Reopen trigger: a journal/SSE-log pattern showing
+   feeds dying while the process stayed up.
+3. **Upstream filing (owner + github-voice)**: the htmx SSE ext `console.error("[object
+   Event]")` defect — diagnosis source-verified, draft note ready:
+   [docs/research/2026-10-27_htmx-sse-ext-object-event-logging-note.md](docs/research/2026-10-27_htmx-sse-ext-object-event-logging-note.md).
+4. **Post-deploy deep-verify (plan T18/T22 tail)**: after the next release reaches
+   prod, confirm the reason card + offline toast + reconnect pill title render on
+   the live deployment (browser E2E owed only if served markup changed — it did
+   not: all surfaces are island-JS-created).
+
 ### Language stance: island type gate GO, Go→JS + full KMP rejected (2026-10-27 plan, unstarted)
 
 Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
