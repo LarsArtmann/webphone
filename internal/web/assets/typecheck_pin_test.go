@@ -23,6 +23,11 @@ import (
 // Annotating a file is a two-line change: add it to tsconfig.json's include
 // and delete its name from typecheckDebt.
 
+// repoRoot is the module root: this package lives three directories below it,
+// and every path below stays repo-relative so it matches tsconfig.json's own
+// include entries byte for byte.
+const repoRoot = "../../.."
+
 // typecheckDebt is the island tree's declared untyped remainder. Every file
 // here must exist and must NOT be reachable from tsconfig.json's include; the
 // only legal edit is DELETE a line (add the file to the include first).
@@ -46,7 +51,7 @@ type typecheckConfig struct {
 
 func loadTypecheckConfig(t *testing.T, name string) typecheckConfig {
 	t.Helper()
-	raw, err := os.ReadFile(name)
+	raw, err := os.ReadFile(path.Join(repoRoot, name))
 	if err != nil {
 		t.Fatalf("read %s: %v", name, err)
 	}
@@ -142,7 +147,7 @@ func includeRoots(t *testing.T, include []string) []string {
 		if strings.HasPrefix(entry, "types/") {
 			continue
 		}
-		matches, err := fs.Glob(os.DirFS("."), entry)
+		matches, err := fs.Glob(os.DirFS(repoRoot), entry)
 		if err != nil {
 			t.Fatalf("include glob %q: %v", entry, err)
 		}
@@ -167,7 +172,7 @@ var relativeImportRe = regexp.MustCompile(`from "\./([A-Za-z0-9_.-]+)"`)
 // campaign rests on. Turning any of them off would let every existing error
 // disappear without a single file being annotated.
 func TestTypeGateConfigIsStillStrict(t *testing.T) {
-	cfg := loadTypecheckConfig(t, "../../../tsconfig.json")
+	cfg := loadTypecheckConfig(t, "tsconfig.json")
 	for _, want := range []string{"checkJs", "strict", "noEmit", "allowJs"} {
 		got, ok := cfg.CompilerOptions[want]
 		if !ok {
@@ -187,14 +192,14 @@ func TestTypeGateConfigIsStillStrict(t *testing.T) {
 // a non-closed include means the "debt list" would lie about which files are
 // unchecked.
 func TestTypeGateIncludeIsClosed(t *testing.T) {
-	cfg := loadTypecheckConfig(t, "../../../tsconfig.json")
+	cfg := loadTypecheckConfig(t, "tsconfig.json")
 	roots := includeRoots(t, cfg.Include)
 	listed := make(map[string]bool, len(roots))
 	for _, root := range roots {
 		listed[root] = true
 	}
 	for _, root := range roots {
-		src, err := os.ReadFile(root)
+		src, err := os.ReadFile(path.Join(repoRoot, root))
 		if err != nil {
 			t.Fatalf("read %s: %v", root, err)
 		}
@@ -212,7 +217,7 @@ func TestTypeGateIncludeIsClosed(t *testing.T) {
 // leave the debt by being annotated, and no untyped file can exist off the
 // books.
 func TestTypeGateDebtMatchesTheTree(t *testing.T) {
-	cfg := loadTypecheckConfig(t, "../../../tsconfig.json")
+	cfg := loadTypecheckConfig(t, "tsconfig.json")
 	checked := map[string]bool{}
 	for _, root := range includeRoots(t, cfg.Include) {
 		checked[root] = true
@@ -237,7 +242,7 @@ func TestTypeGateDebtMatchesTheTree(t *testing.T) {
 	}
 	for name := range declared {
 		if !checked[name] {
-			if _, err := os.Stat(name); err != nil {
+			if _, err := os.Stat(path.Join(repoRoot, name)); err != nil {
 				t.Errorf("typecheckDebt lists %s, which does not exist: %v", name, err)
 			}
 		}
@@ -251,7 +256,7 @@ func TestTypeGateDebtMatchesTheTree(t *testing.T) {
 // @ts-expect-error with an explanation, and this test tolerates it.
 func TestTypeGateRefusesBlanketSuppressions(t *testing.T) {
 	for _, file := range assetSources(t) {
-		src, err := os.ReadFile(file)
+		src, err := os.ReadFile(path.Join(repoRoot, file))
 		if err != nil {
 			t.Fatalf("read %s: %v", file, err)
 		}
@@ -271,7 +276,7 @@ func TestTypeGateRefusesBlanketSuppressions(t *testing.T) {
 // project) would either fail forever or, worse, get deleted — and pointing it
 // nowhere is how a gate becomes advisory.
 func TestTypeGateNixCheckUsesTheGate(t *testing.T) {
-	raw, err := os.ReadFile("../../../nix/checks.nix")
+	raw, err := os.ReadFile(path.Join(repoRoot, "nix/checks.nix"))
 	if err != nil {
 		t.Fatalf("read nix/checks.nix: %v", err)
 	}
