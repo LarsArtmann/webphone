@@ -168,11 +168,17 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    inline "dial anyway" chip in the typeahead row (never a modal — the #54
    lesson), state visible in the row. Verified: no cooldown exists today
    (typeahead.js suggests only; the history ↻ button dials unconditionally).
-3. **AI call review artifact** (#8): remaining scope after the agent-UX
-   train — post-call AUTOMATIC review (today's summarize is click-gated),
-   a persisted artifact (summary/key points/score) rendered in History under
-   the transcript (today: Messages draft only), and an explicit "review not
-   configured" state (today: the button is absent when the seam is off).
+3. **AI call review artifact** (#8): UPDATE 2026-10-28 (multi-actor train
+   read at HEAD): MOSTLY SHIPPED by the concurrent dialer train — the
+   post-call review is AUTOMATIC (`settleEndedCall` dispatches
+   `POST /api/calls/{id}/review`, 202 detached, idempotent with the manual
+   button; island calls.js), the artifact IS persisted
+   (`domain.ReviewState` pending/present/failed via readmodels
+   `call_reviews`, rendered in History — `TestHistoryTranscriptReviewStates`
+   pins the four renderings incl. the not-configured chip). Remaining
+   open slice: the summary/points/score DIMENSIONS the plan named (today
+   the artifact stores the draft text + confidence only) — reopen only if
+   the operator asks for richer artifacts.
 4. **Kith CRM switch-on, webphone slice** (#9): typed module options
    `crm.{enable,url,token_file}` (LoadCredential pattern like oauth2 — no
    crm options exist in package/nixos-module.nix today, and its leak guard
@@ -181,6 +187,45 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    `ErrUnauthorized` must turn a surface red within one poll cycle). The
    issue's steps 1/2/4 (PKI trust, token provisioning, e2e verify) are
    pbx-artmann-side; the cited diagnosis doc lives there too.
+
+### Multi-actor HITL (2026-10-28 — substrate SHIPPED same evening; escalation tiers below)
+
+Plan + HITL ladder + actor model:
+[docs/planning/2026-10-28_21-54_SUPERB-multi-actor-hitl-pareto-plan.html](docs/planning/2026-10-28_21-54_SUPERB-multi-actor-hitl-pareto-plan.html).
+SHIPPED in the same train: session `LoginEmail` (passkey/OIDC mint,
+guarded migration, byte-parity for extension logins), audit lines naming
+the human actor (`agent *` + logout; `TestAgentAuditNamesTheHumanActor`
+pins both shapes), `authmap.MappedByLogin` whoami preference +
+deterministic shared-extension lookup, drafts-panel pending age
+(`draftAge`, foreign-wire tolerant). **Priority:** per-row · **Effort:**
+per-row.
+
+1. **Extension switcher (D1)**: `authmap.User.Extensions` already models
+   N lines per human but `SessionExtension()` pins to the first —
+   `POST /api/session/switch` re-mints for another mapped extension
+   (password file + directory verify + CSRF rotation; island re-REGISTER +
+   hub resubscribe + config.js refetch). Owner GO; train-sized.
+2. **Veto-window mode / HITL L2 (D2)**: draft auto-sends after T unless a
+   human vetoes; the missing rung between approve-everything (L1) and
+   confidence-gated autopilot (L3, shipped agent-side). Lives in the
+   stack's textagent (send policy) — webphone side only surfaces age +
+   countdown (the age substrate landed). Owner GO + stack train.
+3. **Agent registry + scoped machine tokens (D3)**: today ONE machine
+   actor (the textagent bearer secret, loopback). Named agents with
+   scopes (draft/read/send) + per-agent audit prefixes + an API-token
+   lane for agents-as-users. Owner GO; security review first.
+4. **Delegation + roles (D4)**: approve-on-behalf-of, per-contact scopes,
+   admin/member split — needs the actor substrate (shipped) AND a second
+   real user first. Owner call.
+5. **Durable audit read model (D5, F107 reopen trigger)**: multi-actor
+   makes in-UI audit history a real operator need; the journal-line home
+   stands until then.
+6. **Branching-flow baseline staleness (observed 2026-10-28 train-start
+   buildflow)**: `.buildflow-baseline.json`'s 78 accepted entries matched
+   nothing in 3 consecutive runs (morning session's governed baseline —
+   suspect host-absolute IDs again). Re-record from THIS checkout with
+   `buildflow -s branching-flow --save-baseline` or retire it; owned by
+   the branching-flow governance row, not this train.
 
 ### Daemon push-stall forensics (2026-10-27 T10 — root cause found, fleet fix pending)
 

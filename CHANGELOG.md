@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sessions remember who minted them — the multi-user substrate
+  (2026-10-28): passkey and OIDC logins persist their login email on the
+  session row (`sessions.login_email`, guarded idempotent migration;
+  empty for the classic extension login, byte-parity). The agent-action
+  audit lines (`agent approve/discard/mode/auto_review`) and the logout
+  line name the HUMAN actor (`actor=<email>`) alongside the extension —
+  two people sharing one line are finally distinguishable in the
+  journal. whoami resolution prefers the session's own mapped user via
+  the new `authmap.MappedByLogin` (a shared extension's plain lookup is
+  now deterministic, sorted by email — it was Go-map random before), and
+  the drafts panel renders each pending draft's age (`· 2h`, raw agent
+  stamp on hover) — the review-urgency signal a future veto-window mode
+  will surface. Design + tiers: docs/planning/2026-10-28_21-54_SUPERB-multi-actor-hitl-pareto-plan.html.
 - Composing a NEW conversation now rides the network the address shape names
   (2026-10-28, chat lane v2): `domain.ParseComposedAddress` detects the two
   unambiguous chat-network shapes — a Matrix `@localpart:server` and a Session
