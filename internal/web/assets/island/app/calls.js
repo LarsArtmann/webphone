@@ -467,9 +467,12 @@ async function dispatchAutoReview(id, btn) {
   let status = 0;
   let duplicate = false;
   try {
-    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/review`, {
-      method: "POST",
-    });
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(id)}/review`,
+      {
+        method: "POST",
+      },
+    );
     status = res.status;
     if (res.ok) {
       const body = await res.json().catch(() => ({}));
