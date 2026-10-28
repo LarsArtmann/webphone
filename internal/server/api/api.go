@@ -10,6 +10,7 @@ package api
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/crm"
@@ -77,6 +78,11 @@ type Handlers struct {
 	// a provider round trip, so the ceiling is the product's honest
 	// memory bound for the whole surface.
 	transcribeSlots chan struct{}
+	// reviewInFlight holds the automatic review jobs' idem keys for
+	// their whole run (issue #8): the idem window records successes
+	// only, so the guard is what keeps a racing manual click from
+	// drafting twice. Zero value ready.
+	reviewInFlight sync.Map
 }
 
 // New builds the JSON endpoint handlers.

@@ -421,6 +421,13 @@ func New(deps Deps) http.Handler {
 	// authedFetch, sharing the contacts write budget (one island POST per
 	// user action). A disabled seam answers 404.
 	protected.Handle("POST /api/calls/{id}/summary-draft", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SummaryDraft)))
+	// The AUTOMATIC review dispatch (issue #8): the island fires it once
+	// when a media call settles; the job runs detached (WithoutCancel +
+	// its own budget) so closing the tab cannot abort it. Shares the
+	// summarize idempotency key with the manual button — exactly one of
+	// them ever drafts. Session-gated, CSRF via authedFetch, contacts
+	// budget; a disabled seam answers 404.
+	protected.Handle("POST /api/calls/{id}/review", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DispatchCallReview)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
 	// The operator's post-call disposition verdict (issue #6): the one
