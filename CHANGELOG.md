@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- An advisory Tailwind-artifact freshness lane in CI (2026-10-28): the
+  committed `tw.css`/`login.css` had drifted from their inputs (the agent-UX
+  and review trains changed views without rebuilding; a 10-25 refresh had
+  shipped 15 unreferenced utilities the other way). The new `tw-freshness`
+  job rebuilds both artifacts via `scripts/build-tw-css.sh` — byte-stable by
+  construction: flake-locked tailwind, module-cache sources pinned by go.mod,
+  staged tree — and diffs against the committed bytes. Advisory like
+  `reproduce-first` (the daemon pushes in-flight view edits before a train's
+  tail rebuilds); both artifacts were rebuilt and committed with the lane.
+- The shell's time reads go through one injectable clock seam (2026-10-28):
+  `shell.js` read the error-throttle clock through an optional
+  `window.__wpClock` global that no spec ever installed, while the specs
+  monkey-patched `Date.now` to fake the throttle window. All time reads (the
+  throttle and the relative-time tick) now go through one replaceable holder
+  exported on the module seam; the specs drive the holder and the global is
+  deleted (type-gate plan item 19).
+
 - Island type gate (2026-10-27): every served JavaScript file — the SIP
   island's ES modules, the shell glue, the theme preload and the enrolment
   page, 26 files — is now checked by `tsc --checkJs --strict`

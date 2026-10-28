@@ -111,3 +111,29 @@ jobs:
 
       - name: Reproduce the fix train's tests on the merge base
         run: nix develop .#ci -c scripts/reproduce-first-check.sh --base origin/main --head HEAD
+
+  # Tailwind artifact freshness (loginpage-adoption tail, 2026-10-25):
+  # nothing failed when the committed tw.css/login.css drifted from their
+  # inputs — the 10-25 refresh carried 15 additive utilities no view
+  # referenced, and the agent-UX + review trains later changed views
+  # without rebuilding. The build is byte-stable by construction (flake-
+  # locked nixpkgs tailwind, module-cache sources pinned by go.mod, staged
+  # tree, formatter-normalized output), so a rebuild MUST reproduce the
+  # committed bytes. ADVISORY for the same reason reproduce-first is: the
+  # auto-commit daemon pushes in-flight view edits before a train's tail
+  # rebuilds the artifacts, so blocking would red main mid-train; flip to
+  # blocking (delete continue-on-error) after clean advisory trains.
+  tw-freshness:
+    name: tw.css/login.css freshness (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Rebuild both Tailwind artifacts and diff against the committed bytes
+        run: |
+          nix develop -c scripts/build-tw-css.sh
+          git diff --exit-code -- internal/web/assets/tw.css internal/web/assets/login.css
