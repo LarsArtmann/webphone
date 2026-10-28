@@ -101,6 +101,7 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 			slog.Warn("summary: agent refused the draft",
 				"status", agentErr.Status, "detail", agentErr.Message, "extension", sess.Extension.String())
 			http.Error(w, agentErr.Message, agentErr.Status)
+			h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 			return
 		}
 		// The agent's transport wrapped its own codes; this seam's own
@@ -108,10 +109,12 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 		wrapped := errorfamily.WrapTransientf(err, "agent.summarize", "summarize call %s", callID)
 		slog.Warn("summary: agent unreachable", "error", wrapped, "extension", sess.Extension.String())
 		http.Error(w, "the AI agent is unreachable right now", http.StatusBadGateway)
+		h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 		return
 	}
 
 	h.recordSummaryIdem(idemKey)
+	h.recordReviewArtifact(sess.Extension, callID, domain.ReviewPresent, draft.ID, draft.Text, draft.Language, draft.Confidence)
 	h.notifyDraftReady(r.Context(), sess.Extension, draft.ID, transcript.Remote)
 	writeJSONBody(w, SummaryDraftResponse{ID: draft.ID, Contact: draft.Contact, Text: draft.Text})
 }

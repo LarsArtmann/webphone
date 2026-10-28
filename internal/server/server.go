@@ -434,6 +434,10 @@ func New(deps Deps) http.Handler {
 	// them ever drafts. Session-gated, CSRF via authedFetch, contacts
 	// budget; a disabled seam answers 404.
 	protected.Handle("POST /api/calls/{id}/review", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DispatchCallReview)))
+	// The review artifact read (issue #8): History/the island poll the
+	// stored state (pending/present/failed). Session-gated, read
+	// budget; the empty body IS the absent answer.
+	protected.Handle("GET /api/calls/{id}/review", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallReview)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
 	// The operator's post-call disposition verdict (issue #6): the one

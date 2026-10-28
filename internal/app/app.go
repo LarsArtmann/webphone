@@ -409,6 +409,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Contacts:    engine.Contacts(),
 			Snippets:    engine.Snippets(),
 			Transcripts: engine.Transcripts(),
+			Notes:       engine.Notes(),
+			Reviews:     engine.Reviews(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),
