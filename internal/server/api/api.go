@@ -38,6 +38,10 @@ type Server interface {
 	// NotifyContactsChanged nudges the extension's surfaces with the
 	// payload-less "contacts" SSE event.
 	NotifyContactsChanged(extension domain.Extension)
+	// AuditAgent writes one greppable agent-action audit line (the
+	// ONE home of the vocabulary is the server's agentAudit; the JSON
+	// lane reaches it through this seam).
+	AuditAgent(event, actor, draftID, outcome string)
 }
 
 // Deps are the seams the JSON endpoints ride on, wired by

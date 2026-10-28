@@ -98,7 +98,7 @@ func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, cal
 		if rec := recover(); rec != nil {
 			slog.Error("review: job PANIC recovered; goroutine contained, process survives",
 				"panic", rec, "call", callID, "extension", owner.String())
-			agentAudit("auto_review", owner.String(), callID, "failed")
+			h.deps.Server.AuditAgent("auto_review", owner.String(), callID, "failed")
 		}
 	}()
 	ctx, cancel := context.WithTimeout(ctx, summaryDraftTimeout)
@@ -115,11 +115,11 @@ func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, cal
 			wrapped := errorfamily.WrapTransientf(err, "agent.summarize", "automatic summarize call %s", callID)
 			slog.Warn("review: agent unreachable for the automatic draft", "error", wrapped, "extension", owner.String())
 		}
-		agentAudit("auto_review", owner.String(), callID, outcome)
+		h.deps.Server.AuditAgent("auto_review", owner.String(), callID, outcome)
 		return
 	}
 
 	h.recordSummaryIdem(idemKey)
-	agentAudit("auto_review", owner.String(), draft.ID, "ok")
+	h.deps.Server.AuditAgent("auto_review", owner.String(), draft.ID, "ok")
 	h.notifyDraftReady(ctx, owner, draft.ID, remote)
 }
