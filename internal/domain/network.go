@@ -100,6 +100,25 @@ func MustParseAddress(network Network, raw string) Address {
 	return must(ParseAddress(network, raw))
 }
 
+// ParseComposedAddress is the compose-form door: it detects the network
+// from the address SHAPE and defers to ParseAddress for the rule. The
+// two chat-network shapes are unambiguous (@localpart:server is matrix,
+// 05+64 hex is session); everything else is the sms dialable lane.
+// Signal stays compose-born-inbound on purpose: its addresses are phone
+// numbers, indistinguishable from sms by shape — a Signal conversation
+// starts from its inbound message and continues in that thread
+// (chat-networks plan, lane v2).
+func ParseComposedAddress(raw string) (Address, error) {
+	trimmed := strings.TrimSpace(raw)
+	if addr, err := ParseAddress(NetworkMatrix, trimmed); err == nil {
+		return addr, nil
+	}
+	if addr, err := ParseAddress(NetworkSession, trimmed); err == nil {
+		return addr, nil
+	}
+	return ParseAddress(NetworkSMS, trimmed)
+}
+
 // Network reports the network the address rides.
 func (a Address) Network() Network { return a.network }
 

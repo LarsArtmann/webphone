@@ -57,8 +57,10 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The destination is derived, never trusted: a reply addresses its
-	// own thread's stored remote (any network); a new conversation is
-	// telephony — the compose form's number field is the sms lane.
+	// own thread's stored remote (any network); a new conversation rides
+	// the network the ADDRESS SHAPE names — a chat-network address
+	// (@local:server matrix, 05… session) routes through the sender
+	// registry, everything else is the sms lane (ParseComposedAddress).
 	threadParam := r.URL.Query().Get("thread")
 	var to domain.Address
 	if threadParam != "" {
@@ -74,7 +76,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		to = thread.Remote
 	} else {
-		parsed, err := domain.ParseAddress(domain.NetworkSMS, r.FormValue("to"))
+		parsed, err := domain.ParseComposedAddress(r.FormValue("to"))
 		if err != nil {
 			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.invalidTo"))
 			return
