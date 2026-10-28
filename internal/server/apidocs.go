@@ -362,6 +362,15 @@ var openAPIContract = sync.OnceValues(func() ([]byte, error) {
 	return body, nil
 })
 
+// RenderOpenAPIContract is the pure render behind GET /openapi.json,
+// exported for one-shot tooling: `webphone catalog` embeds the spec next
+// to the exported service page so the federation hub links the wire
+// contract from the inventory surface. No config, no database, no
+// network — same contract bytes the live server serves.
+func RenderOpenAPIContract() ([]byte, error) {
+	return openAPIContract()
+}
+
 func openapiHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := openAPIContract()
 	if err != nil {

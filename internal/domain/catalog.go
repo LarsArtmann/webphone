@@ -100,7 +100,28 @@ func BuildCatalog() *catalog.Catalog {
 		Name:  "Lars Artmann",
 		Email: "git@lars.software",
 	})
-	builder.ConfigureService(catalogServiceID, catalog.ServiceOwners("lars"))
+	builder.ConfigureService(catalogServiceID, catalog.ServiceOwners("lars"),
+		// Wire-contract cross-links (hub inventory page): the catalog
+		// command renders BOTH spec files into <out>/eventcatalog/
+		// specifications/ next to this service page — the AsyncAPI doc
+		// from server.RenderWireContractsYAML (the /hooks/* lanes,
+		// receipts, SSE) and the OpenAPI doc from
+		// server.RenderOpenAPIContract (the session-gated HTTP API).
+		// Paths are catalog-root-relative per EventCatalog's
+		// specifications frontmatter convention.
+		catalog.ServiceSpecifications(
+			catalog.Specification{
+				Type: "asyncapi",
+				Path: "/specifications/asyncapi.yaml",
+				Name: "Webphone wire contracts (hooks, receipts, SSE)",
+			},
+			catalog.Specification{
+				Type: "openapi",
+				Path: "/specifications/openapi.json",
+				Name: "Session-gated HTTP API",
+			},
+		),
+	)
 
 	// Same domain id pbx-lens declares: the hub unions both sources'
 	// services into one telephony graph (first-source-wins on the body,
