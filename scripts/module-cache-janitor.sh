@@ -8,6 +8,12 @@
 # hung go processes sit in locks_lock_inode_wait on the module-cache
 # flock while their artifacts stay behind.
 #
+# Second class (2026-10-28): a zero-byte FINAL artifact under @v/ — the
+# full-disk corruption that makes `go` report a checksum mismatch (which
+# reads as a supply-chain attack, while sum.golang.org confirms go.sum is
+# right). Reported, never swept: repairing means deleting the corpse and
+# re-downloading, a deliberate act.
+#
 # Safety: default is REPORT-ONLY. --sweep deletes ONLY files that are
 # zero-byte AND older than the age floor (default 60 min), so an
 # in-flight download's .tmp is never touched. Non-zero .tmp files are
