@@ -237,11 +237,13 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		// filter did not choose. The transcripts carry the answer.
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
+			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
+			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	// A filter needs a wider window than the unfiltered top-30 view.
@@ -253,6 +255,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	if err != nil {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Error: h.T(r, "history.unreachable"), Lang: lang,
+			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	entries := filterCDRs(page.Entries, query, dir, outcome)
@@ -263,6 +266,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
 		Names: h.crmNames(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
+		AgentEnabled: h.textAgentOn(),
 	}), nil
 }
 

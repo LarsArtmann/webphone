@@ -578,6 +578,44 @@ func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
 	}
 }
 
+// TestHistoryTranscriptReviewStates pins the automatic review's four
+// honest renderings (issue #8, T13/T14): present shows the draft text
+// plus its confidence, pending/failed name their state, and a row with
+// NO review renders the not-configured chip ONLY when the seam is off —
+// with the seam on, no review just means nobody asked for one.
+func TestHistoryTranscriptReviewStates(t *testing.T) {
+	group := func(state, text string, confidence int) TranscriptGroup {
+		return TranscriptGroup{
+			CallID: "call-1", Remote: "+4989123456", Direction: "in",
+			Lines: []string{"hello"}, ReviewState: state, ReviewText: text, ReviewConfidence: confidence,
+		}
+	}
+	render := func(g TranscriptGroup, agentEnabled bool) string {
+		return renderComponent(t, HistoryPanel(HistoryPanelProps{
+			Enabled: true, Lang: LangEN, AgentEnabled: agentEnabled, Transcripts: []TranscriptGroup{g},
+		}))
+	}
+
+	present := render(group("present", "Guten Morgen", 90), true)
+	for _, want := range []string{"wp-call-review", "Guten Morgen", "Confidence:", "90%"} {
+		if !strings.Contains(present, want) {
+			t.Errorf("present review must render %q: %s", want, present)
+		}
+	}
+	if pending := render(group("pending", "", 0), true); !strings.Contains(pending, "in progress") {
+		t.Errorf("pending review must name its state: %s", pending)
+	}
+	if failed := render(group("failed", "", 0), true); !strings.Contains(failed, "failed") {
+		t.Errorf("failed review must name its state: %s", failed)
+	}
+	if chip := render(group("", "", 0), false); !strings.Contains(chip, "not configured") {
+		t.Errorf("no review + seam off must render the not-configured chip: %s", chip)
+	}
+	if silent := render(group("", "", 0), true); strings.Contains(silent, "wp-call-review") || strings.Contains(silent, "not configured") {
+		t.Errorf("no review + seam on must render nothing (nobody asked): %s", silent)
+	}
+}
+
 // TestSettingsPanelCRMStates byte-pins the CRM row's four honest
 // renderings (T7): unset keeps the historical off-path text,
 // connected names the live wire, auth-failed names the fix (rotate the
