@@ -229,3 +229,59 @@ entry point.
    corrupted by a full disk, then emptied by another process, and re-extraction there produced files Go
    could not read; I finished on an isolated cache. A full rebuild re-downloads gigabytes and breaks
    other agents' builds while it runs — operator call.
+
+---
+
+## 10. Addendum (written 11:00 CET, after the report above was pushed)
+
+The report above said "CI green". Between writing it and pushing it, **three more things happened**, and
+the honest final state is: **main is red again, and this time it is not mine to fix.**
+
+### 10.1 A second foreign red, which I did fix
+
+`ci.yml` run 40664380193 (`f5996e3`) failed `art-dupl`: a new clone group inside
+`internal/web/views/history.templ` (the post-call review card's `pending` and `failed` arms rendered the
+identical `<div class="wp-call-review"><p class="wp-muted">…` shape with only the dictionary key
+differing). Extracted to a `reviewStatusLine(lang, key)` component — a UI tweak to one arm can no longer
+skip the other. Verified with the CI-pinned detector: **0 new clone groups** (baseline 80), and
+`go test ./internal/web/views ./internal/server` green. The daemon committed it inside `3584652`, where
+the `art-dupl` job is **green**.
+
+### 10.2 What is red now, and why I stopped
+
+`ci.yml` run 40666424112 (`3584652`) fails two jobs, and **neither is a defect I introduced**:
+
+| Job | Failure | Owner |
+|---|---|---|
+| `fast flake checks` | `treefmt-check` wants to reformat `internal/server/server.go` | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
+| `go test -race` | `TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract | same train; regenerating the registry now would describe code that is not in HEAD |
+
+Concrete in-flight signals in the working tree at 10:55 CET — none of them mine:
+
+- `internal/server/server.go` modified past HEAD (the format-gate failure is inside this delta);
+- `scripts/whitespace-drift.sh` **being rewritten to be formatter-aware** — the exact P1 fix this report's
+  §6.2 recommends, someone is already implementing it;
+- `internal/readmodels/dialwindows_test.go` **untracked and not compiling** (unused import, arity
+  mismatch against a 3-value `dials.Attempt`), so `go test ./internal/readmodels` fails locally while the
+  committed tree is fine.
+
+`nix fmt` in this tree changes `server.go`; committing that would carry the other session's half-written
+edit, and running the registry `-update` would register codes that do not exist in HEAD. Both are exactly
+the collision the repo's concurrent-session rule forbids, so **I committed nothing further** and this
+report is the hand-off.
+
+### 10.3 What I did verify, on the tree as committed
+
+- `nix build .#webphone` green from the re-pinned hash, and the **live smoke on that binary**: 48 +
+  restart 4 + boot-failure 8, **zero failures**.
+- `art-dupl` (pinned v0.7.2, `-t 1`): **0 new groups** after the extraction.
+- `go test ./internal/web/views ./internal/server`: green.
+- `scripts/main-red-watch.sh --self-test`: **9/9**, and the live dry run now inspects `CI`, not `watch`.
+- `scripts/error-context.py --self-test`: **37/37**.
+
+### 10.4 The one thing I would do differently, restated
+
+I wrote "CI green" before the run finished for the *next* commit. A status report should carry, per
+claim, the run id **and** "verified at HH:MM"; mine carried the run id for the previous commit and the
+greenness of a tree that had already moved. That is the same class of error as the six-hour red: a true
+statement about the past presented as a statement about now.
