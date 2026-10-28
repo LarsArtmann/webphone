@@ -59,7 +59,19 @@ interface Window {
   __pcs?: Map<string, RTCPeerConnection>;
   /**
    * Injectable clock for the shell's node:test specs (shell.js reads it at
-   * call time, so a test can install a fake after the script loaded).
+   * call time, so a test can install a fake after the script loaded). `now`
+   * is REQUIRED: an object without it is not a clock, and declaring it
+   * optional forced a duck check that could not narrow the call.
    */
-  __wpClock?: { now?: () => number };
+  __wpClock?: { now: () => number };
 }
+
+/**
+ * The CommonJS seam the shell's node:test specs use to reach helpers that are
+ * otherwise closure-private (`typeof module !== "undefined"` guards it, so the
+ * browser never sees it). Declared separately from Window because this is a
+ * module-scope binding, not a page global. Before this declaration the seam
+ * compiled only by accident — the `typeof` guard tolerates an unknown name —
+ * so a typo inside `module.exports` would have been invisible to the gate.
+ */
+declare var module: { exports: Record<string, unknown> } | undefined;

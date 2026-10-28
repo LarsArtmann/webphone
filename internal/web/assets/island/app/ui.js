@@ -86,7 +86,11 @@ export function log(message, level = "info") {
  * The message of a caught unknown. A throw site may throw anything;
  * the island only ever renders a string, so this is the ONE narrowing
  * point (a bare `err.message` is a compile error under checkJs and a
- * `undefined` in the copy when someone throws a string).
+ * `undefined` in the copy when someone throws a string). The shell glue
+ * carries a deliberate twin (`errorMessage` in assets/shell.js): the two
+ * live in different module systems — an ES module cannot import the
+ * classic-script IIFE — so they stay separate by construction, and both
+ * must narrow the same way.
  * @param {unknown} err
  * @returns {string}
  */

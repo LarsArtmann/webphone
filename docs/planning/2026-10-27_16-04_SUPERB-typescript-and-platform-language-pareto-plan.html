@@ -368,6 +368,25 @@
       </div>
 
       <h2><span class="num">02</span>Errata — what was already adjudicated (read before ranking)</h2>
+      <p
+        class="callout"
+        style="border-left: 4px solid #b45309; padding: 0.75rem 1rem; background: #fffbeb"
+      >
+        <strong>ERRATUM (2026-10-27, after execution) — this plan's per-file
+        <code>// @ts-check</code> pragma recommendation is IMPOSSIBLE and was never used.</strong>
+        The island sources are embedded with <code>//go:embed all:island</code> and served VERBATIM,
+        so a pragma in a served file is a served-byte change — it would have altered the asset three
+        independent pin sites grep. The executed gate instead sets <code>checkJs</code> +
+        <code>include: ["types/**/*.d.ts", "internal/web/assets/**/*.js"]</code> in
+        <code>tsconfig.json</code>, which checks the same files with zero byte changes and is pinned by
+        <code>internal/web/assets/typecheck_pin_test.go</code> (it refuses a pragma: no
+        <code>@ts-check</code> is legal in a served file). Second correction from the same execution:
+        a checked SUBSET is not blind but it is also not ordered as this plan assumed — TypeScript
+        fully checks every module an included module imports, so <code>i18n.js</code> blocked 17 files
+        at once and had to be typed first. See the execution record:
+        <code>docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md</code>
+        §9 Errata and <code>docs/type-gate.md</code>.
+      </p>
       <p>Rule from the planning discipline: a plan that re-dispatches decided work is worse than no plan. Four prior rulings bind this one.</p>
       <ul>
         <li>

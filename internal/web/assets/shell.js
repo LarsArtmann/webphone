@@ -1203,10 +1203,9 @@
     // window.__wpClock.now; the browser default is Date.now. Resolved at
     // CALL time so a test can install the fake after this script loads.
     var now = function () {
-      if (hasMethod(window.__wpClock, "now")) {
-        return window.__wpClock.now();
-      }
-      return Date.now();
+      // The test clock is an OPTIONAL global: the presence check narrows it,
+      // so the call needs no cast.
+      return window.__wpClock ? window.__wpClock.now() : Date.now();
     };
     /** @param {string} message */
     var showThrottledError = function (message) {

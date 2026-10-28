@@ -219,7 +219,10 @@ export function settleEndedCall(id) {
   // The button is the status surface: queued while the job runs,
   // back to the manual affordance on failure.
   if (agentEnabled && entry.established) {
-    const summarizeBtn = card.querySelector(".summarize-btn");
+    const card = entry.dom;
+    const summarizeBtn = /** @type {HTMLButtonElement | null} */ (
+      card ? card.querySelector(".summarize-btn") : null
+    );
     if (summarizeBtn) dispatchAutoReview(id, summarizeBtn);
   }
   sessions.delete(id);
