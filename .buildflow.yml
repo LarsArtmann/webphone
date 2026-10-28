@@ -9,17 +9,24 @@
 # `scripts/buildflow.sh` (self-healing wrapper) or `nix develop -c
 # buildflow`.
 #
-# Findings baseline for branching-flow (see the UNSKIPPED note below):
-# the 19 type-node findings (mixin/dupe/large-struct) cannot carry
-# //nolint directives — v0.6.4 ignores every nolint placement on
-# TypeDecl nodes (five placements verified 2026-10-11; upstream
-# LarsArtmann/branching-flow#12) — so they live here as accepted noise,
-# each with its ruling documented as a `branching-flow ... (baselined)`
-# comment at the site. Findings that DO honor nolints (statements,
-# fields, signatures) are suppressed in-code with reasons instead.
-# Baseline refresh: save from the SDK side only
-# (`buildflow -s branching-flow --save-baseline`) — the CLI emits
-# different finding IDs (upstream branching-flow#13).
+# Findings baseline for branching-flow — RETIRED 2026-10-28, file
+# DELETED. It held 47 accepts keyed by HOST-ABSOLUTE paths (`/home/lars/
+# …`), so it could never match another checkout or CI, and BuildFlow
+# reported "none of the 47 matched any remaining finding" for three runs
+# straight: a suppression file that suppresses nothing is worse than none,
+# because it looks like a reviewed set. The current scan reports 104
+# findings (2.2x the retired 47) — blessing that set would have recorded
+# 57 never-reviewed findings as accepted, so it is TRIAGE FIRST (TODO_LIST
+# row) and only then `buildflow -s branching-flow --save-baseline`.
+# Meanwhile nothing regresses: branching-flow findings sit under the
+# severity cap (see GATE COMPLETION below), so they warn, never gate.
+# The type-node findings that CANNOT carry //nolint (v0.6.4 ignores every
+# placement on TypeDecl nodes — five verified 2026-10-11, upstream
+# LarsArtmann/branching-flow#12) keep their `branching-flow … (baselined)`
+# ruling comment at the site; that comment, not a JSON id, is the record.
+# Refresh ids from the SDK side only (`buildflow -s branching-flow
+# --save-baseline`) — the standalone CLI emits different ids (upstream
+# #13).
 #
 # GATE COMPLETION (pending tooling): the installed BuildFlow (25b07c4)
 # caps SDK detector findings at warning severity, so new

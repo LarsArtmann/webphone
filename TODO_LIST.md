@@ -47,9 +47,15 @@ Evidence: [docs/status/2026-10-27_22-00_island-type-gate-complete-status.md](doc
 - **OPEN — `__wpClock` is still an ad-hoc global.** No spec installs it today (dead machinery); the
   declaration is now strict (`now` is required) so a partial fake cannot pass, but the plan's #19
   (an injectable `now()` passed at construction) is unstarted.
-- **OPEN — `.buildflow-baseline.json` review.** 47 accepted entries were recorded by a locally built
-  detector; BuildFlow warns that none matched in the last three runs. Re-record from this checkout and
-  delete the entries that no longer exist (correct) rather than blessing the current scan (cheap).
+- **OPEN — branching-flow findings triage (the baseline was retired 2026-10-28).** The 47-entry
+  `.buildflow-baseline.json` was keyed by HOST-ABSOLUTE paths and matched NOTHING for three runs
+  straight while the live scan reports 104 findings — a suppression file that suppresses nothing
+  looks like a reviewed set, so it was deleted (rationale in `.buildflow.yml`). Triage before
+  re-recording: `branching-flow all . --format json --output /tmp/bf.json` (this CLI; the SDK side
+  emits different ids, upstream #13), rule-groups first (`COMPOSITION_mixin` 28 in the retired set,
+  then dupe/large-struct/phantom), each finding either fixed, suppressed in code with a reason, or
+  accepted with a site comment; ONLY then `buildflow -s branching-flow --save-baseline`. Nothing
+  gates in the meantime (severity cap).
 - **DECLINED with reason — do not re-litigate without new evidence:**
   - _Split `shell.js` at its seams_ (voicemail player / palette / composer). The gate now makes a
     split SAFE (a broken import is a compile error), but the classic-script load order is a
