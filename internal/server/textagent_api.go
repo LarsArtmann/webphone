@@ -145,7 +145,7 @@ func (h *handlers) textAgentPanelAction(
 	}
 	audit := func(outcome string) {
 		if auditEvent != "" {
-			agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), outcome)
+			h.agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), outcome)
 		}
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)

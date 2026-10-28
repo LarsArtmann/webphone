@@ -59,6 +59,11 @@ type SettingsPanelProps struct {
 	SharedContacts int
 	// Snippets are the owner's reply snippets (M21), oldest first.
 	Snippets []domain.Snippet
+	// AgentAuditRows feeds AgentAuditSection (D5): the owner's newest
+	// agent-action audit rows (the durable read model behind the
+	// journal line). Rendered when rows exist OR the agent seam is on
+	// (history outlives a seam toggle); identifiers only.
+	AgentAuditRows []AgentAuditRow
 	// Passkeys shapes the passkey management section (A2): Available
 	// only when the identity layer is wired AND the extension has a
 	// mapped account.
@@ -77,6 +82,9 @@ templ SettingsPanel(props SettingsPanelProps) {
 			@PushDevicesSection(props.PushDevices, props.Lang)
 		}
 		@SnippetsSection(props.Snippets, props.Lang)
+		if len(props.AgentAuditRows) > 0 || props.Agent {
+			@AgentAuditSection(props.AgentAuditRows, props.Lang)
+		}
 		if props.Passkeys.Available {
 			@PasskeysSection(props.Passkeys)
 		}
@@ -110,6 +118,39 @@ type PushDeviceRow struct {
 	ID        string
 	Transport string
 	UpdatedAt time.Time
+}
+
+// AgentAuditRow is one durable agent-action audit row in the Settings
+// history (D5): who acted (the login email, else the line itself), the
+// event vocabulary (approve, discard, mode, auto_review…), the subject
+// (draft/call id) when one was named, the outcome, the stamp.
+// Identifiers only — the same contract as the journal line.
+//
+// brandid-lint:ignore(BD003) view row: audit tokens are the journal-line
+// vocabulary, not domain entities (strong-id wire ruling).
+type AgentAuditRow struct {
+	Actor   string
+	Event   string
+	Subject string
+	Outcome string
+	At     time.Time
+}
+
+templ AgentAuditSection(rows []AgentAuditRow, lang Lang) {
+	<h3 class="wp-settings-head" id="wp-agent-audit-head">{ T(lang, "settings.audit.title") }</h3>
+	<p class="wp-empty">{ T(lang, "settings.audit.subtitle") }</p>
+	if len(rows) == 0 {
+		<p class="wp-empty" id="wp-agent-audit-empty">{ T(lang, "settings.audit.empty") }</p>
+	} else {
+		<ul class="wp-snippet-manage" id="wp-agent-audit-list">
+			for _, row := range rows {
+				<li class="wp-snippet-row">
+					<span class="wp-snippet-body">{ row.label(lang) }{ " · " + row.Outcome }{ " · " + row.Subject }</span>
+					<span class="wp-muted">{ formatFor(lang, row.At.Local(), "02.01. 15:04", "Jan 2, 3:04PM") }</span>
+				</li>
+			}
+		</ul>
+	}
 }
 
 // PasskeysSection manages the mapped account's passkeys (A2): the

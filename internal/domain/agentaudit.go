@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/sixafter/nanoid"
+)
 
 // AgentAuditKey identifies one agent-action audit row in the read-model
 // store. Audit rows are APPEND-ONLY facts (never upserted), so every

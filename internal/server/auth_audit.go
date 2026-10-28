@@ -1,6 +1,11 @@
 package server
 
-import "log/slog"
+import (
+	"context"
+	"log/slog"
+
+	"github.com/larsartmann/webphone/internal/domain"
+)
 
 // authAudit is the ONE home of the semantic auth events (A3): one
 // greppable slog line per login, denied login, logout, passkey
@@ -25,14 +30,17 @@ func authAudit(event string, key, value, outcome string) {
 // (the classic extension login) keeps the historical line shape
 // byte-identical; the actor attr only appears when there is one.
 //
-// Durable-journal decision (F107): the usermgmt auth-audit journal is
-// the IDENTITY layer's store — agent approvals are not auth events, and
-// writing them there would cross the seam; an app_flags window would be
-// a lossy hand-rolled journal. The structured journal line IS the audit
-// home (journald persists it with the rest of the unit's log); a
-// durable read model becomes worth building only when an operator needs
-// in-UI history — the trigger is recorded in the plan errata.
-func agentAudit(event, actorEmail, extension, draftID, outcome string) {
+// Durable read model (D5, 2026-10-28 — the F107 trigger ARMED by the
+// multi-actor substrate): the journal line stays the operator-grep
+// surface, and the row DUAL-WRITES into the readmodels agent-audit
+// store so Settings can answer "who approved what, when" without
+// journal archaeology. The identity seam stays untouched (agent
+// approvals are still not auth events); a nil store (test
+// compositions) degrades to the line alone — the audit never blocks
+// the action it records, and a store failure WARNs, never fails.
+//
+//nolint:branching-flow // journal-line builder: the raw strings ARE the audit-log vocabulary
+func (h *handlers) agentAudit(event, actorEmail, extension, draftID, outcome string) {
 	attrs := make([]any, 0, 8)
 	attrs = append(attrs, "extension", extension)
 	if actorEmail != "" && actorEmail != extension {
@@ -43,4 +51,14 @@ func agentAudit(event, actorEmail, extension, draftID, outcome string) {
 	}
 	attrs = append(attrs, "outcome", outcome)
 	slog.Info("agent "+event, attrs...)
+	if h.deps.AgentAudit == nil {
+		return
+	}
+	owner, err := domain.ParseExtension(extension)
+	if err != nil {
+		return // the line logged what it could; a foreign shape never reaches the store
+	}
+	if err := h.deps.AgentAudit.Append(context.Background(), owner, actorEmail, event, draftID, outcome); err != nil {
+		slog.Warn("agent audit row not stored (the journal line stands)", "error", err, "event", event, "extension", extension)
+	}
 }
