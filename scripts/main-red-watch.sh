@@ -105,6 +105,10 @@ self_test() {
 	assert "EXISTS 7" "$(decide "$red" "$same" "-1")" "issue already tracks this run -> EXISTS"
 	assert "COMMENT 9" "$(decide "$red" "[]" "9")" "newer red, open ci-red issue -> COMMENT"
 
+	# The listing must stay scoped to ci.yml: the watch lane's own runs are
+	# green even when the verdicts it prints are red (the 2026-10-28 silence).
+	assert "yes" "$(grep -c -- '--workflow=ci.yml' "$0" | awk '{print ($1 > 0) ? "yes" : "no"}')" "run listing is scoped to the CI workflow"
+
 	local body
 	body=$(render_body 113 "https://example/run/113" "fix: x" "fast flake checks" "- docs/lessons.md:1: prior class" "n/a" "2026-10-26")
 	assert "1" "$(grep -c 'red main — run 113' <<<"$body")" "body names the run"
@@ -129,7 +133,12 @@ command -v gh >/dev/null 2>&1 || {
 GH_REPO="${GH_REPO:-LarsArtmann/webphone}"
 export GH_REPO GH_TOKEN
 
-LIST_JSON=$(gh run list --branch main --limit 1 --json databaseId,conclusion,displayTitle,headSha,url)
+# SCOPED to the CI workflow on purpose: `--branch main --limit 1` alone
+# returns whichever run is newest, and the `watch` cron lane ALWAYS commits a
+# green run (its steps are advisory by design). On 2026-10-28 that made this
+# watcher report NONE for six hours while ci.yml sat red on the same sha —
+# twelve green `watch` runs, one red CI run, no issue filed.
+LIST_JSON=$(gh run list --branch main --workflow=ci.yml --limit 1 --json databaseId,conclusion,displayTitle,headSha,url)
 SAME_JSON=$(gh issue list --state open --search "in:title red-main run" --json number,title 2>/dev/null || echo "[]")
 RED_NUM=$(open_ci_red_issue)
 [ -n "$RED_NUM" ] || RED_NUM=-1
