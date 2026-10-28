@@ -192,7 +192,7 @@ func TestAutoReviewInFlightGuardDeduplicates(t *testing.T) {
 		t.Fatalf("seed transcript: %d", resp.StatusCode)
 	}
 
-	resp, body := postReview(t, c, "call-race")
+	resp, _ := postReview(t, c, "call-race")
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("first dispatch: %d, want 202", resp.StatusCode)
 	}
@@ -200,7 +200,7 @@ func TestAutoReviewInFlightGuardDeduplicates(t *testing.T) {
 	var got struct {
 		Duplicate bool `json:"duplicate"`
 	}
-	resp, body = postReview(t, c, "call-race")
+	resp, body := postReview(t, c, "call-race")
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("in-flight dispatch: %d, want 202", resp.StatusCode)
 	}
