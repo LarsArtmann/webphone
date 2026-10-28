@@ -316,9 +316,11 @@ func (c *Client) resolve(id string, result jsontext.Value, rpcErr *struct {
 		return
 	}
 	if rpcErr != nil {
+		//nolint:branching-flow // ch is buffered(1) and never closed — the send can neither block nor panic
 		ch <- rpcResult{err: errorfamily.Newf(errorfamily.Rejection, "signal.rpc", "signal: %s", rpcErr.Message)}
 		return
 	}
+	//nolint:branching-flow // ch is buffered(1) and never closed — the send can neither block nor panic
 	ch <- rpcResult{result: result}
 }
 

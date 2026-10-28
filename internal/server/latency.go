@@ -56,7 +56,7 @@ func (l *latencyRecorder) Record(_, path string, status int, d time.Duration) {
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.counts[idx]++
+	l.counts[idx]++ //nolint:branching-flow // counts is sized len(latencyBuckets)+1 and idx defaults to the overflow bucket, so the index is always in range
 	l.sum += secs
 	l.total++
 	l.classes[status/100]++
@@ -77,10 +77,10 @@ func (l *latencyRecorder) writePrometheus(b *strings.Builder) {
 	fmt.Fprintf(b, "# TYPE webphone_http_request_duration_seconds histogram\n")
 	var cumulative uint64
 	for i, bound := range latencyBuckets {
-		cumulative += counts[i]
+		cumulative += counts[i] //nolint:branching-flow // i ranges over latencyBuckets, which sizes counts
 		fmt.Fprintf(b, "webphone_http_request_duration_seconds_bucket{le=\"%g\"} %d\n", bound, cumulative)
 	}
-	cumulative += counts[len(latencyBuckets)]
+	cumulative += counts[len(latencyBuckets)] //nolint:branching-flow // the overflow bucket exists: counts is sized len(latencyBuckets)+1
 	fmt.Fprintf(b, "webphone_http_request_duration_seconds_bucket{le=\"+Inf\"} %d\n", cumulative)
 	fmt.Fprintf(b, "webphone_http_request_duration_seconds_sum %g\n", sum)
 	fmt.Fprintf(b, "webphone_http_request_duration_seconds_count %d\n", total)

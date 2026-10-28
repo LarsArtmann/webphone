@@ -66,7 +66,7 @@ func (o *outcomes) snapshot() OutcomeSnapshot {
 	defer o.mu.Unlock()
 	var total time.Duration
 	for i := range o.ringFilled {
-		total += o.ring[i]
+		total += o.ring[i] //nolint:branching-flow // ringFilled only grows to len(ring) inside record(), so the index is bounded by construction
 	}
 	avg := time.Duration(0)
 	if o.ringFilled > 0 {

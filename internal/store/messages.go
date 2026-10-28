@@ -410,6 +410,7 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 		}
 		_ = rows.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		for i, msg := range chunk {
+			//nolint:branching-flow // chunk is a contiguous slice of msgs (msgs[a:b]), so len(chunk) <= len(msgs) by construction
 			msgs[len(msgs)-len(chunk)+i].Attachments = byMessage[msg.ID.String()]
 		}
 	}

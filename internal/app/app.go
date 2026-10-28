@@ -548,6 +548,7 @@ func SSOConfig(a config.Auth) sso.Config {
 		for _, raw := range user.Extensions {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
+				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
 				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
 			}
 			extensions = append(extensions, ext)
