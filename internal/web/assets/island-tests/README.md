@@ -19,9 +19,9 @@ binary.
 - **`location.reload` throws** by design: the island never unloads
   (AGENTS invariant), so any test path reaching reload is a bug in the
   module or the spec — fail loudly.
-- **Clock injection:** `shell.js`'s throttle reads
-  `window.__wpClock.now()` when present, else `Date.now`. Specs install
-  a fake through the seam instead of monkey-patching `Date.now`.
+- **Clock injection:** `shell.js` reads time through ONE holder
+  (`shellApi.clock.now`, exported on the module seam) — specs replace the
+  holder's `now` instead of monkey-patching `Date.now`.
 - **Module isolation is per FILE.** Each `.test.mjs` gets a fresh module
   registry per process; within a file, module state (e.g. the SSE
   failure counter in `session.js`) is shared — reset it explicitly at

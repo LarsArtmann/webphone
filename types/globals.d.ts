@@ -57,13 +57,6 @@ interface Window {
   };
   /** The E2E diagnostics handle: call id → the live peer connection. */
   __pcs?: Map<string, RTCPeerConnection>;
-  /**
-   * Injectable clock for the shell's node:test specs (shell.js reads it at
-   * call time, so a test can install a fake after the script loaded). `now`
-   * is REQUIRED: an object without it is not a clock, and declaring it
-   * optional forced a duck check that could not narrow the call.
-   */
-  __wpClock?: { now: () => number };
 }
 
 /**

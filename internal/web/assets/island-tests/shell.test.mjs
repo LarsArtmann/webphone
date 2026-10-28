@@ -16,6 +16,18 @@ await import("../shell.js");
 // the exported seam directly.
 const shellApi = (await import("../shell.js")).default;
 
+// The shell's clock seam (island-tests README): specs replace the holder's
+// now instead of monkey-patching Date.now.
+const withClock = (offsetMs, fn) => {
+  const realNow = shellApi.clock.now;
+  shellApi.clock.now = () => realNow() + offsetMs;
+  try {
+    fn();
+  } finally {
+    shellApi.clock.now = realNow;
+  }
+};
+
 const toasts = () => doc.getElementById("toasts");
 const fakeXhr = (status, headers = {}) => ({
   status,
@@ -50,43 +62,28 @@ test("the throttle collapses an error storm into one toast", () => {
 });
 
 test("after the throttle window the next failure toasts again", () => {
-  const realNow = Date.now;
-  const base = realNow();
-  try {
-    Date.now = () => base + 10_000;
+  withClock(10_000, () => {
     doc.dispatch("htmx:sendError", {});
     const toast = toasts().children.at(-1);
     assert.equal(toast.className, "toast toast-error");
     assert.match(toast.textContent, /network request failed/i);
-  } finally {
-    Date.now = realNow;
-  }
+  });
 });
 
 test("429 toasts the client-correctable feedback (slow down)", () => {
-  const realNow = Date.now;
-  const base = realNow();
-  try {
-    Date.now = () => base + 30_000;
+  withClock(30_000, () => {
     doc.dispatch("htmx:responseError", { detail: { xhr: fakeXhr(429) } });
     const toast = toasts().children.at(-1);
     assert.match(toast.textContent, /too many requests/i);
     assert.match(toast.textContent, /wait a moment/i);
-  } finally {
-    Date.now = realNow;
-  }
+  });
 });
 
 test("statuses without server feedback get an honest generic toast", () => {
-  const realNow = Date.now;
-  const base = realNow();
-  try {
-    Date.now = () => base + 60_000;
+  withClock(60_000, () => {
     doc.dispatch("htmx:responseError", { detail: { xhr: fakeXhr(500) } });
     assert.match(toasts().children.at(-1).textContent, /HTTP 500/);
-  } finally {
-    Date.now = realNow;
-  }
+  });
 });
 
 // 3d. Per-thread draft persistence (plan T21d): composer text survives

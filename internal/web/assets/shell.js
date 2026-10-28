@@ -1192,17 +1192,19 @@
     //     refreshes included), so the throttle collapses the storm into
     //     one toast instead of hiding its own message.
     var lastErrorToast = 0;
-    // Injectable clock (plan T19): node:test passes a fake via
-    // window.__wpClock.now; the browser default is Date.now. Resolved at
-    // CALL time so a test can install the fake after this script loads.
-    var now = function () {
-      // The test clock is an OPTIONAL global: the presence check narrows it,
-      // so the call needs no cast.
-      return window.__wpClock ? window.__wpClock.now() : Date.now();
+    // The shell's clock seam (type-gate plan item 19): every time read in
+    // this file goes through ONE replaceable holder, so specs drive time
+    // through the exported seam instead of monkey-patching Date.now or
+    // installing a window global. Call-time indirection keeps the holder
+    // swappable after this script loaded.
+    var clock = {
+      now: function () {
+        return Date.now();
+      },
     };
     /** @param {string} message */
     var showThrottledError = function (message) {
-      var nowMs = now();
+      var nowMs = clock.now();
       if (nowMs - lastErrorToast < 8000) return;
       lastErrorToast = nowMs;
       shellToast(message, "error");
@@ -1457,7 +1459,7 @@
       for (var i = 0; i < nodes.length; i++) {
         var node = /** @type {HTMLElement} */ (nodes[i]);
         var seconds =
-          Math.floor(Date.now() / 1000) - Number(node.dataset.when || 0);
+          Math.floor(clock.now() / 1000) - Number(node.dataset.when || 0);
         if (!(seconds >= 0)) continue;
         if (seconds < 60) node.textContent = "now";
         else if (seconds < 3600)
@@ -2337,6 +2339,7 @@
       module.exports.vmClock = vmClock;
       module.exports.agentModeOpened = agentModeOpened;
       module.exports.errorMessage = errorMessage;
+      module.exports.clock = clock;
     }
   } catch (err) {
     var logList = document.getElementById("log");
