@@ -17,10 +17,16 @@ import (
 // stubReviewAPI is the review-API stand-in the handlers' tests ride on:
 // scripted status + payload per route, a call log the assertions read.
 type stubReviewAPI struct {
-	server  *httptest.Server
-	calls   atomic.Int32
-	status  atomic.Int32
-	payload string
+	server *httptest.Server
+	calls  atomic.Int32
+	// draftCalls counts ONLY POST /draft — the drafting path. `calls`
+	// counts every request, which is fine for "the seam was reached" but
+	// useless for "the agent drafted exactly once": the server also reads
+	// /reviews (the drafts panel and the session identity's agent-mode
+	// probe) without drafting anything.
+	draftCalls atomic.Int32
+	status     atomic.Int32
+	payload    string
 }
 
 func newStubReviewAPI(t *testing.T) *stubReviewAPI {
@@ -35,6 +41,9 @@ func newStubReviewAPI(t *testing.T) *stubReviewAPI {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		stub.calls.Add(1)
+		if strings.HasSuffix(r.URL.Path, "/draft") {
+			stub.draftCalls.Add(1)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(int(stub.status.Load()))
 		if stub.status.Load() >= 400 {

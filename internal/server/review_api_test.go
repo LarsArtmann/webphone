@@ -73,8 +73,8 @@ func TestAutoReviewDispatchRoundTrip(t *testing.T) {
 		}
 		return g2.Duplicate
 	})
-	if calls := stub.calls.Load(); calls != 1 {
-		t.Errorf("agent must be drafted exactly once, got %d calls", calls)
+	if calls := stub.draftCalls.Load(); calls != 1 {
+		t.Errorf("agent must be drafted exactly once, got %d draft calls (of %d requests)", calls, stub.calls.Load())
 	}
 }
 
@@ -102,8 +102,8 @@ func TestAutoReviewDispatchSeamOffAndScoping(t *testing.T) {
 	if resp, _ := postReview(t, c2, "call-unknown"); resp.StatusCode != http.StatusNotFound {
 		t.Errorf("unknown call: %d, want 404", resp.StatusCode)
 	}
-	if calls := stub.calls.Load(); calls != 0 {
-		t.Errorf("no dispatch may reach the agent on 404 paths, got %d calls", calls)
+	if calls := stub.draftCalls.Load(); calls != 0 {
+		t.Errorf("no dispatch may reach the agent on 404 paths, got %d draft calls (of %d requests)", calls, stub.calls.Load())
 	}
 }
 
