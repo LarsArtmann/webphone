@@ -30,7 +30,7 @@ func runContracts(args []string) error {
 
 	if err := os.MkdirAll(*output, 0o755); err != nil { //nolint:branching-flow // flag.String never returns a nil pointer
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.contracts",
-			"create the contracts output directory "+*output))
+			"create the contracts output directory "+*output)) //nolint:branching-flow // flag.String never returns a nil pointer
 	}
 	target := filepath.Join(*output, "asyncapi.yaml") //nolint:branching-flow // flag.String never returns a nil pointer
 	if err := os.WriteFile(target, body, 0o644); err != nil {

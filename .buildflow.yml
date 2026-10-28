@@ -39,9 +39,18 @@
 # Global `strict: true` was measured 2026-10-11 and REJECTED: 604
 # pre-existing warning findings (bandit 335, govulncheck 94, art-dupl
 # 74, …) trip it — strict is fleet-wide, not per-tool.
-# baseline: RETIRED 2026-10-28 — the key is gone, the file is deleted (see
-# the baseline note above). Re-add `baseline: .buildflow-baseline.json` only
-# AFTER the branching-flow triage, together with the file the SDK side writes.
+# baseline: RE-ESTABLISHED 2026-10-28 after the triage the retirement
+# demanded: every statement/signature finding is a reasoned nolint at its
+# site (36 suppressions across 24 files), the 78 accepted leftovers are
+# TypeDecl-class decided architecture (branded-id generics, typed error
+# products, the catalog mirrors' parity test, the six single-implementer
+# Deps seams) plus 2 FLAG_PARAM sites the detector cannot nolint (both
+# ruled at their signatures). CAVEAT inherited from upstream #13: the CLI
+# writes HOST-ABSOLUTE ids, so the suppression binds to THIS checkout —
+# from a moved clone or CI, re-run `buildflow -s branching-flow
+# --save-baseline` (findings stay under the severity cap everywhere, so a
+# non-matching baseline warns, never gates).
+baseline: .buildflow-baseline.json
 #
 # tool_paths: govulncheck must be built with the module's Go (1.27).
 # BuildFlow resolved a stale go1.26-built nix store copy whose

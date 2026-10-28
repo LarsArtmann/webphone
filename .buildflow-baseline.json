@@ -2347,14 +2347,14 @@
       }
     },
     {
-      "id": "branching-flow:FLAG_PARAM:/home/lars/projects/webphone/internal/domain/disposition.go:75",
+      "id": "branching-flow:FLAG_PARAM:/home/lars/projects/webphone/internal/domain/disposition.go:73",
       "rule": "FLAG_PARAM",
       "toolName": "branching-flow",
       "message": "DispositionFromEnd: bool param \"established\", bool parameter is not last, positional confusion for callers. Move to end or use an options struct.",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/domain/disposition.go",
-        "line": 75,
+        "line": 73,
         "column": 0,
         "offset": 0
       },
@@ -2375,14 +2375,14 @@
       }
     },
     {
-      "id": "branching-flow:FLAG_PARAM:/home/lars/projects/webphone/internal/server/internal_directory.go:42",
+      "id": "branching-flow:FLAG_PARAM:/home/lars/projects/webphone/internal/server/internal_directory.go:40",
       "rule": "FLAG_PARAM",
       "toolName": "branching-flow",
       "message": "machineSurface: bool param \"enabled\", bool parameter is not last, positional confusion for callers. Move to end or use an options struct.",
       "severity": "info",
       "position": {
         "file": "/home/lars/projects/webphone/internal/server/internal_directory.go",
-        "line": 42,
+        "line": 40,
         "column": 0,
         "offset": 0
       },
@@ -2557,54 +2557,23 @@
         "methodCount": "2",
         "severity": "low"
       }
-    },
-    {
-      "id": "branching-flow:NIL_POINTER_DEREF:/home/lars/projects/webphone/cmd/webphone/contracts.go:33:45",
-      "rule": "NIL_POINTER_DEREF",
-      "toolName": "branching-flow",
-      "message": "Pointer dereference of 'output' may panic if nil",
-      "severity": "warning",
-      "position": {
-        "file": "/home/lars/projects/webphone/cmd/webphone/contracts.go",
-        "line": 33,
-        "column": 45,
-        "offset": 0
-      },
-      "category": "correctness",
-      "tags": [
-        "panic",
-        "original-severity-error"
-      ],
-      "fixStrategy": "suggest",
-      "suggestion": "Add nil check before dereference: if ptr != nil { ... }",
-      "confidence": 0.95,
-      "metadata": {
-        "description": "Pointer dereference of 'output' may panic if nil",
-        "detectionType": "nil_deref",
-        "function": "main",
-        "package": "main",
-        "severityDisplay": "high",
-        "suggestion": "Add nil check before dereference: if ptr != nil { ... }",
-        "typeDisplay": "Nil Dereference"
-      }
     }
   ],
   "summary": {
-    "total": 79,
+    "total": 78,
     "bySeverity": {
       "info": 60,
-      "warning": 19
+      "warning": 18
     },
     "byCategory": {
-      "correctness": 1,
       "duplication": 16,
       "structure": 54,
       "type-safety": 8
     },
     "byFixStrategy": {
-      "suggest": 79
+      "suggest": 78
     },
-    "filesAffected": 47,
+    "filesAffected": 46,
     "filesScanned": 0,
     "suppressed": 0
   },
