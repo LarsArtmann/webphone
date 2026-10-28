@@ -62,8 +62,14 @@ func (t Token) IsZero() bool { return t.value == "" }
 type Session struct {
 	Extension domain.Extension
 	Password  string
-	CreatedAt time.Time
-	ExpiresAt time.Time
+	// LoginEmail is the authenticated identity behind a passwordless
+	// login (passkey or OIDC); empty for the classic extension login.
+	// It is the multi-user substrate: with two humans sharing one
+	// extension, this field is the only way an audit line can name WHO
+	// acted — the extension alone cannot.
+	LoginEmail string
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
 }
 
 // PBXCredentials derives the phone-api credentials this session carries —
@@ -75,7 +81,7 @@ func (s Session) PBXCredentials() pbx.Credentials {
 // Store is the session persistence seam: mint, look up, renew, drop.
 // Attach/Require are package-level functions over any Store.
 type Store interface {
-	Create(extension domain.Extension, password string) (Token, error)
+	Create(extension domain.Extension, password, loginEmail string) (Token, error)
 	Get(token Token) (Session, bool)
 	// Renew applies one sliding-renewal decision (see renewDue) and
 	// returns the refreshed session; ok=false when the token is absent,
@@ -177,8 +183,9 @@ func mintToken() (Token, error) {
 
 // makeSession mints a token and the Session around it; the birth
 // invariant (ExpiresAt = CreatedAt + ttl) has this single home, shared
-// by both store backends.
-func makeSession(extension domain.Extension, password string, ttl time.Duration, now func() time.Time) (Token, Session, error) {
+// by both store backends. loginEmail is empty for extension logins
+// (byte-parity with every pre-identity session).
+func makeSession(extension domain.Extension, password, loginEmail string, ttl time.Duration, now func() time.Time) (Token, Session, error) {
 	token, err := mintToken()
 	if err != nil {
 		return Token{}, Session{}, err
@@ -187,14 +194,15 @@ func makeSession(extension domain.Extension, password string, ttl time.Duration,
 	return token, Session{
 		Extension: extension,
 		Password:  password,
+		LoginEmail: loginEmail,
 		CreatedAt: at,
 		ExpiresAt: at.Add(ttl),
 	}, nil
 }
 
 // Create mints a session for the extension and returns its token.
-func (s *MemStore) Create(extension domain.Extension, password string) (Token, error) {
-	token, sess, err := makeSession(extension, password, s.ttl, s.now)
+func (s *MemStore) Create(extension domain.Extension, password, loginEmail string) (Token, error) {
+	token, sess, err := makeSession(extension, password, loginEmail, s.ttl, s.now)
 	if err != nil {
 		return Token{}, err
 	}
