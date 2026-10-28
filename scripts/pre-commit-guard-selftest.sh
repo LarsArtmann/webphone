@@ -96,7 +96,11 @@ run_case "the vendored bundle bypasses the syntax gate" 0
 # it — the scratch repo's HEAD is deliberately gofmt-dirty to stage one).
 # The adjudication resolves the treefmt config from the REAL repo (script
 # location), so these need nix; like the node cases they WARN+skip without.
+# The throwaway index must NOT leak into the scratch repo (it is a separate
+# repository with its own index and HEAD).
+unset GIT_INDEX_FILE
 scratch="$(mktemp -d)"
+trap 'rm -rf "$tmp" "$scratch"' EXIT
 printf 'package x\n\ntype S struct {\nA int\nBB string\n}\n' >"$scratch/a.go"
 (
 	cd "$scratch" || exit 1
@@ -107,7 +111,8 @@ printf 'package x\n\ntype S struct {\nA int\nBB string\n}\n' >"$scratch/a.go"
 run_ws_case() { # name expect staged-content
 	local name="$1" expect="$2" content="$3" got=0
 	printf '%s' "$content" >"$scratch/a.go"
-	(cd "$scratch" && git add a.go && bash "$repo/scripts/whitespace-drift.sh") \
+	(cd "$scratch" && unset GIT_INDEX_FILE && git add a.go && \
+		bash "$repo/scripts/whitespace-drift.sh") \
 		>/dev/null 2>&1 || got=$?
 	if [ "$got" -ne "$expect" ]; then
 		fail "$name: expected exit $expect, got $got"
@@ -116,29 +121,17 @@ run_ws_case() { # name expect staged-content
 if command -v nix >/dev/null 2>&1 && \
 	(cd "$repo" && nix eval --raw .#formatter.x86_64-linux >/dev/null 2>&1); then
 	# Staged = gofmt-canonical alignment of the dirty base (formatter
-	# output, whitespace-only delta) => acquit.
+	# output, whitespace-only delta) => acquit. Canonical bytes verified
+	# against the config's own gofmt: tab-indented, name-aligned fields.
 	run_ws_case "formatter-produced whitespace delta is allowed" 0 \
-		'package x
-
-type S struct {
-A  int
-BB string
-}
-'
+		$'package x\n\ntype S struct {\n\tA  int\n\tBB string\n}\n'
 	# Staged = a hand misalignment the formatter would rewrite => refuse.
 	run_ws_case "hand whitespace drift is still refused" 1 \
-		'package x
-
-type S struct {
-A   int
-BB string
-}
-'
+		$'package x\n\ntype S struct {\n\tA   int\n\tBB string\n}\n'
 	ws_cases=2
 else
 	echo "pre-commit-guard-selftest: WARN — nix/treefmt unavailable, whitespace adjudication cases skipped" >&2
 	ws_cases=0
 fi
 
-unset GIT_INDEX_FILE
 echo "pre-commit-guard-selftest: $((6 + ws_cases)) passed"
