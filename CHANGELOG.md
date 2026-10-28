@@ -70,6 +70,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The whitespace-drift pre-commit gate no longer refuses formatter output
+  (2026-10-28): a staged diff whose whitespace-only lines were the formatter's
+  reflow of a neighbouring construct used to trip the byte heuristic and force
+  `--no-verify`. The gate now materializes the diverging staged blobs into a
+  temp tree and asks the flake's own treefmt (the exact config CI's format
+  check runs) whether the bytes are canonical — clean acquits, anything else
+  keeps the refusal. The daemon-audit `--ref` mode adjudicates landed commits
+  the same way, so a formatter reflow no longer files a false drift flag;
+  the selftest pins both directions (8 cases).
 - The voicemail waveform cache no longer grows without bound (2026-10-28): the
   panel decoded a 48-bar waveform per call and kept it forever in a `Map`,
   which is a slow leak in a page that stays open all day. Oldest-first

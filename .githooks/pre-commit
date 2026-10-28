@@ -7,7 +7,10 @@
 # excluded) is the e62fe34 class: a hand edit oxfmt accepts but CI's
 # treefmt gate rejects, so the commit lands red on a whitespace-only
 # delta. Blocking here turns that formatter disagreement into a
-# pre-flight failure with the fix named (run: nix fmt).
+# pre-flight failure with the fix named (run: nix fmt). Since 2026-10-28
+# the gate first asks CI's own treefmt (over the materialized staged
+# blobs) whether the bytes are canonical — formatter reflow output of a
+# neighbouring construct acquits instead of forcing --no-verify.
 #
 # Gate 2 — JavaScript syntax: the island type gate and oxlint only run
 # inside `nix flake check`, so a syntax error in a served asset used to
