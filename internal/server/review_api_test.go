@@ -167,12 +167,12 @@ func TestAutoReviewFailureStaysRetryable(t *testing.T) {
 func TestAutoReviewInFlightGuardDeduplicates(t *testing.T) {
 	entered := make(chan struct{})
 	release := make(chan struct{})
-	called := 0
+	draftCalls := 0
 	agentMux := http.NewServeMux()
 	agentMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		called++
 		w.Header().Set("Content-Type", "application/json")
 		if strings.HasSuffix(r.URL.Path, "/draft") {
+			draftCalls++
 			select {
 			case entered <- struct{}{}:
 			case <-time.After(time.Second):
@@ -216,7 +216,7 @@ func TestAutoReviewInFlightGuardDeduplicates(t *testing.T) {
 		r2, _ := postReview(t, c, "call-race")
 		return r2 != nil && r2.StatusCode == http.StatusAccepted
 	})
-	if called != 1 {
-		t.Errorf("agent must be drafted exactly once despite the mid-flight replay, got %d calls", called)
+	if draftCalls != 1 {
+		t.Errorf("agent must be drafted exactly once despite the mid-flight replay, got %d calls", draftCalls)
 	}
 }

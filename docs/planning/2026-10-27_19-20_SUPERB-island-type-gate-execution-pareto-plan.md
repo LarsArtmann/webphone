@@ -475,7 +475,7 @@ a red file is how a gate rots). Measured end state: `tsc -p . --noEmit` exits 0 
 **2026-10-27 21:00 — §0 erratum, see the block in §"Why (b) is not a lie".** The subset was never
 blind, but adding a file DID drag its imports in fully checked; the import-closure pin is the
 correction.
- against the 16:04 plan (`2026-10-27_16-04_SUPERB-…-pareto-plan.html`)
+against the 16:04 plan (`2026-10-27_16-04_SUPERB-…-pareto-plan.html`)
 
 | 16:04 said                                                           | Now                                                                                    | Why                                                                                            |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |

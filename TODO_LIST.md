@@ -51,17 +51,17 @@ Evidence: [docs/status/2026-10-27_22-00_island-type-gate-complete-status.md](doc
   detector; BuildFlow warns that none matched in the last three runs. Re-record from this checkout and
   delete the entries that no longer exist (correct) rather than blessing the current scan (cheap).
 - **DECLINED with reason — do not re-litigate without new evidence:**
-  - *Split `shell.js` at its seams* (voicemail player / palette / composer). The gate now makes a
+  - _Split `shell.js` at its seams_ (voicemail player / palette / composer). The gate now makes a
     split SAFE (a broken import is a compile error), but the classic-script load order is a
     served-byte contract the stack E2E greps, and the payoff is readability only. Reopen with an E2E
     budget.
-  - *Type-check `island-tests/*.mjs`.* Needs `@types/node` (not in the devshell) plus a third
+  - _Type-check `island-tests/*.mjs`._ Needs `@types/node` (not in the devshell) plus a third
     tsconfig, and the specs' stubs are deliberately partial duck types — the checker would fight the
     design the `hasMethod` doctrine rests on.
-  - *Move the shell's copy into a typed key map.* The shell must work when the island scripts fail
+  - _Move the shell's copy into a typed key map._ The shell must work when the island scripts fail
     (that is why it is a classic script); a shared map adds a load-order dependency in the one place
     the shell's independence is the point.
-  - *`tsc --explainFiles` in CI.* The coverage pin derives the checked set from the EMBEDDED tree, so
+  - _`tsc --explainFiles` in CI._ The coverage pin derives the checked set from the EMBEDDED tree, so
     a file that stops being included fails the pin — proved 2026-10-28 by narrowing the include to a
     single file (both coverage pins failed with an actionable message).
 
@@ -103,7 +103,6 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
 > stronger coverage pins. Execution record:
 > [docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md](docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md)
 > §9. Item 2 (the error-surface conventions) landed in the same train; items 3–4 stay open.
-
 
 Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
 (the plan owns the task count; this row points at it). **Priority:** High · **Effort:** M.
@@ -184,10 +183,11 @@ follow-on gaps hit 54m and 70m). The journal logs NOTHING about pushes
 provider (127.0.0.1:52625) refused connections 13:06→20:59 — ~8h of
 heuristic-only messages fleet-wide, though the commit leg itself stayed
 fast (177 ms fails). FLEET ASK (upstream projects-management-automation
-+ SystemNix): log the push leg per push/failure; flush pending pushes
-on SIGTERM; push once immediately at startup. Until then, a fleet
-deploy window predicts a push stall — run
-`scripts/push-stall-watch.sh` after every `switch-to-configuration`.
+
+- SystemNix): log the push leg per push/failure; flush pending pushes
+  on SIGTERM; push once immediately at startup. Until then, a fleet
+  deploy window predicts a push stall — run
+  `scripts/push-stall-watch.sh` after every `switch-to-configuration`.
 
 ### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
 

@@ -106,9 +106,7 @@ test("composer drafts persist per thread and restore after re-render", async () 
   };
   const realQuerySelector = doc.querySelector.bind(doc);
   doc.querySelector = (selector) =>
-    selector === "textarea.wp-compose-body"
-      ? composer
-      : realQuerySelector(selector);
+    selector === "textarea.wp-compose-body" ? composer : realQuerySelector(selector);
 
   composer.value = "hallo draft";
   doc.dispatch("input", { target: composer });
@@ -124,8 +122,7 @@ test("composer drafts persist per thread and restore after re-render", async () 
   const sendForm = {
     matches: (selector) => selector === "form",
     hasAttribute: () => false,
-    querySelector: (selector) =>
-      selector === "textarea.wp-compose-body" ? composer : null,
+    querySelector: (selector) => (selector === "textarea.wp-compose-body" ? composer : null),
   };
   composer.value = "hallo draft";
   doc.dispatch("htmx:afterRequest", {
@@ -166,9 +163,7 @@ test("drafts survive thread navigation without cross-contamination", async () =>
   };
   const realQuerySelector = doc.querySelector.bind(doc);
   doc.querySelector = (selector) =>
-    selector === "textarea.wp-compose-body"
-      ? composer
-      : realQuerySelector(selector);
+    selector === "textarea.wp-compose-body" ? composer : realQuerySelector(selector);
 
   // Type in thread A, then navigate to thread B.
   transcript.dataset.thread = "t-a";
@@ -225,8 +220,7 @@ test("data-sms prefills the new-message composer after the tab swap", () => {
 
   doc.dispatch("click", {
     target: {
-      closest: (sel) =>
-        sel === "[data-sms]" ? { getAttribute: () => "+4930" } : null,
+      closest: (sel) => (sel === "[data-sms]" ? { getAttribute: () => "+4930" } : null),
     },
   });
   assert.ok(navClicked, "the messages nav was clicked");
@@ -254,8 +248,7 @@ test("data-save-contact bridges to the island's wp:save-contact event", () => {
       closest: (sel) =>
         sel === "[data-save-contact]"
           ? {
-              getAttribute: (name) =>
-                name === "data-save-contact" ? "+441632960961" : null,
+              getAttribute: (name) => (name === "data-save-contact" ? "+441632960961" : null),
             }
           : null,
     },
@@ -353,11 +346,7 @@ test("missed calls badge in the header and clear when History opens", () => {
   assert.equal(actions.children[0], badge, "badge leads the header actions");
 
   doc.dispatch("wp:call-missed", {});
-  assert.equal(
-    badge.textContent,
-    "missed · 2",
-    "counts accumulate on one node",
-  );
+  assert.equal(badge.textContent, "missed · 2", "counts accumulate on one node");
 
   const historyNav = {
     closest: (sel) => (sel === "[data-tab='history']" ? historyNav : null),
@@ -450,14 +439,8 @@ test("the reply composer appends a pending bubble the moment it submits", () => 
   assert.match(bubble.className, /\bwp-bubble\b/);
   assert.match(bubble.className, /\bwp-out\b/);
   assert.match(bubble.className, /\bwp-opt\b/);
-  assert.match(
-    bubble.querySelector(".wp-bubble-body").textContent,
-    /optimistic hello/,
-  );
-  assert.match(
-    bubble.querySelector(".wp-status").className,
-    /wp-status-queued/,
-  );
+  assert.match(bubble.querySelector(".wp-bubble-body").textContent, /optimistic hello/);
+  assert.match(bubble.querySelector(".wp-status").className, /wp-status-queued/);
   assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
 });
 
@@ -488,10 +471,7 @@ test("a failed send flips the optimistic bubble to failed and restores the draft
   doc.dispatch("htmx:responseError", { target: form });
   const bubble = transcript.children.at(-1);
   assert.match(bubble.className, /\bwp-opt-failed\b/);
-  assert.match(
-    bubble.querySelector(".wp-status").className,
-    /wp-status-failed/,
-  );
+  assert.match(bubble.querySelector(".wp-status").className, /wp-status-failed/);
   assert.match(bubble.querySelector(".wp-status").textContent, /failed/);
   assert.equal(area.value, "optimistic hello", "the draft comes back");
   // A validation failure (HX-Trigger) still rolls the bubble back via
@@ -596,8 +576,7 @@ const fireOn = (el, type, props = {}) =>
   (el.listeners[type] ?? []).forEach((fn) =>
     fn({ target: el, preventDefault: () => {}, ...props }),
   );
-const findOverlay = () =>
-  doc.body.children.find((el) => el.id === "wp-palette");
+const findOverlay = () => doc.body.children.find((el) => el.id === "wp-palette");
 
 test("Ctrl+K opens the palette, filters, runs, and closes", () => {
   const clicked = [];
@@ -679,8 +658,7 @@ test("? opens the shortcut help outside typing fields", () => {
   doc.dispatch("keydown", {
     key: "?",
     target: {
-      closest: (sel) =>
-        sel === "input, textarea, select, [contenteditable='true']" ? {} : null,
+      closest: (sel) => (sel === "input, textarea, select, [contenteditable='true']" ? {} : null),
     },
     preventDefault: () => {
       throw new Error("preventDefault should not fire while typing");
@@ -730,8 +708,7 @@ test("a partial swap moves aria-current to the clicked nav link", () => {
   const other = doc.createElement();
   other.className = "wp-nav-link";
   const nav = doc.createElement();
-  nav.querySelectorAll = (selector) =>
-    selector === ".wp-nav-link" ? [clicked, other] : [];
+  nav.querySelectorAll = (selector) => (selector === ".wp-nav-link" ? [clicked, other] : []);
   clicked.closest = (selector) => (selector === ".wp-nav" ? nav : null);
 
   doc.dispatch("htmx:afterRequest", { target: clicked });
@@ -762,11 +739,7 @@ test("a settled send is never rolled back by a later error", () => {
   });
   doc.dispatch("htmx:responseError", { target: form });
   assert.match(bubble.className, /\bwp-opt\b/, "still the pending bubble");
-  assert.doesNotMatch(
-    bubble.className,
-    /wp-opt-failed/,
-    "no rollback after success",
-  );
+  assert.doesNotMatch(bubble.className, /wp-opt-failed/, "no rollback after success");
   assert.match(bubble.querySelector(".wp-status").textContent, /sending/);
 });
 
@@ -774,8 +747,7 @@ test("a tab navigation stores the last-active tab (E3)", () => {
   localStorage.removeItem("wp-last-tab");
   const nav = doc.createElement();
   nav.className = "wp-nav";
-  nav.querySelectorAll = (selector) =>
-    selector === ".wp-nav-link" ? [link] : [];
+  nav.querySelectorAll = (selector) => (selector === ".wp-nav-link" ? [link] : []);
   const link = doc.createElement();
   link.setAttribute("data-tab", "voicemail");
   link.className = "wp-nav-link";
@@ -883,9 +855,7 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
   link.scrollIntoView = (opts) => scrolled.push(opts);
   const realQuerySelector = doc.querySelector;
   doc.querySelector = (selector) =>
-    selector === "#wp-nav .wp-nav-link.wp-active"
-      ? link
-      : realQuerySelector.call(doc, selector);
+    selector === "#wp-nav .wp-nav-link.wp-active" ? link : realQuerySelector.call(doc, selector);
 
   shellApi.refreshNav();
 
@@ -957,11 +927,7 @@ test("vmPeaks reduces PCM to max-abs bars", () => {
   assert.deepEqual(two, [1, 0.5], "each bar is the max abs of its slice");
 
   const carried = shellApi.vmPeaks([0.5], 3);
-  assert.deepEqual(
-    carried,
-    [0.5, 0.5, 0.5],
-    "bars beyond the samples carry the neighbor",
-  );
+  assert.deepEqual(carried, [0.5, 0.5, 0.5], "bars beyond the samples carry the neighbor");
 });
 
 test("vmClock renders the server's m:ss shape", () => {
@@ -988,16 +954,8 @@ test("the play button drives the audio and falls back honestly", async () => {
   assert.deepEqual(audio.playCalls, ["play"], "the click starts the audio");
   // The fallback rides vmBuildWave's rejection — a microtask later.
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(
-    audio.controls,
-    true,
-    "without WebAudio the native UI takes over",
-  );
-  assert.equal(
-    play.hidden,
-    true,
-    "the custom play button hides in the fallback",
-  );
+  assert.equal(audio.controls, true, "without WebAudio the native UI takes over");
+  assert.equal(play.hidden, true, "the custom play button hides in the fallback");
   const toast = toasts().children.at(-1);
   assert.match(toast.textContent, /built-in player controls/);
 });
@@ -1012,34 +970,16 @@ test("playing marks the row, swaps the label, and clears unread + badge", () => 
   // The play listener was wired lazily on first interaction.
   const onPlay = audio.listeners.play[0];
   onPlay();
-  assert.ok(
-    row.classList.contains("wp-playing"),
-    "C3: the row is marked playing",
-  );
-  assert.match(
-    String(play.innerHTML),
-    /<svg/,
-    "the pause control is an inline SVG icon",
-  );
-  assert.equal(
-    play.getAttribute("aria-label"),
-    "Pause",
-    "label swaps per the session language",
-  );
-  assert.ok(
-    !row.classList.contains("wp-unread"),
-    "C9: unread styling drops on play",
-  );
+  assert.ok(row.classList.contains("wp-playing"), "C3: the row is marked playing");
+  assert.match(String(play.innerHTML), /<svg/, "the pause control is an inline SVG icon");
+  assert.equal(play.getAttribute("aria-label"), "Pause", "label swaps per the session language");
+  assert.ok(!row.classList.contains("wp-unread"), "C9: unread styling drops on play");
   assert.equal(badge.textContent, "1", "C9: the nav badge mirrors the clear");
 
   const onPause = audio.listeners.pause[0];
   onPause();
   assert.ok(!row.classList.contains("wp-playing"));
-  assert.match(
-    String(play.innerHTML),
-    /<svg/,
-    "the play control is an inline SVG icon",
-  );
+  assert.match(String(play.innerHTML), /<svg/, "the play control is an inline SVG icon");
   assert.equal(play.getAttribute("aria-label"), "Play");
 
   badge.hidden = true;
@@ -1118,9 +1058,7 @@ test("an image attachment opens the singleton lightbox, not a navigation", () =>
   const dialog = doc.body.children.find((child) => child.id === "wp-lightbox");
   assert.ok(dialog, "the dialog exists");
   assert.ok(dialog.opened, "showModal ran");
-  const image = dialog.children.find(
-    (child) => child.src === "/attachments/Att:first",
-  );
+  const image = dialog.children.find((child) => child.src === "/attachments/Att:first");
   assert.ok(image, "the full-size blob src landed on the dialog image");
   assert.equal(image.alt, "pic.png");
 
@@ -1135,9 +1073,7 @@ test("an image attachment opens the singleton lightbox, not a navigation", () =>
     1,
     "one dialog, not one per image",
   );
-  const imageAfter = dialog.children.find(
-    (child) => child.src === "/attachments/Att:second",
-  );
+  const imageAfter = dialog.children.find((child) => child.src === "/attachments/Att:second");
   assert.ok(imageAfter, "the singleton's image src follows the click");
   assert.equal(imageAfter.alt, "other.png");
 
@@ -1213,9 +1149,7 @@ test("auto-start transcribes rendered audio once per src+target, only with the s
   const target = doc.getElementById("vm-transcript-auto");
   const originalQuerySelectorAll = doc.querySelectorAll;
   doc.querySelectorAll = (selector) =>
-    selector === "[data-transcribe-src]"
-      ? [btn]
-      : originalQuerySelectorAll(selector);
+    selector === "[data-transcribe-src]" ? [btn] : originalQuerySelectorAll(selector);
   const waitDebounce = () => new Promise((resolve) => setTimeout(resolve, 400));
 
   // Seam off (no PBX_CONFIG.asr): renders never POST on their own.
@@ -1227,8 +1161,7 @@ test("auto-start transcribes rendered audio once per src+target, only with the s
   globalThis.window.PBX_CONFIG = { asr: true };
   doc.dispatch("htmx:afterSwap", {});
   await waitDebounce();
-  const seamPosts = () =>
-    calls.filter((c) => String(c.url).startsWith("/api/transcribe"));
+  const seamPosts = () => calls.filter((c) => String(c.url).startsWith("/api/transcribe"));
   assert.equal(seamPosts().length, 1);
   assert.equal(target.textContent, "auto text");
 
@@ -1302,16 +1235,12 @@ test("auto-runs serialize: the next clip starts only after the previous run sett
   }
   const originalQuerySelectorAll = doc.querySelectorAll;
   doc.querySelectorAll = (selector) =>
-    selector === "[data-transcribe-src]"
-      ? [btnA, btnB]
-      : originalQuerySelectorAll(selector);
+    selector === "[data-transcribe-src]" ? [btnA, btnB] : originalQuerySelectorAll(selector);
   globalThis.window.PBX_CONFIG = { asr: true };
 
   doc.dispatch("htmx:afterSwap", {});
   await new Promise((resolve) => setTimeout(resolve, 400));
-  const firstSeamAt = calls.findIndex((url) =>
-    url.includes("filename=ser-a.wav"),
-  );
+  const firstSeamAt = calls.findIndex((url) => url.includes("filename=ser-a.wav"));
   assert.ok(firstSeamAt >= 0, "the first clip's seam POST started");
   await settle();
   assert.equal(
@@ -1322,21 +1251,10 @@ test("auto-runs serialize: the next clip starts only after the previous run sett
 
   releaseFirst();
   await settle(20);
-  const secondAudioAt = calls.findIndex((url) =>
-    url.startsWith("/vm-audio/2001/ser-b"),
-  );
-  assert.ok(
-    secondAudioAt > firstSeamAt,
-    "the second run starts only after the first settles",
-  );
-  assert.equal(
-    doc.getElementById("vm-transcript-ser-a").textContent,
-    "first done",
-  );
-  assert.equal(
-    doc.getElementById("vm-transcript-ser-b").textContent,
-    "second done",
-  );
+  const secondAudioAt = calls.findIndex((url) => url.startsWith("/vm-audio/2001/ser-b"));
+  assert.ok(secondAudioAt > firstSeamAt, "the second run starts only after the first settles");
+  assert.equal(doc.getElementById("vm-transcript-ser-a").textContent, "first done");
+  assert.equal(doc.getElementById("vm-transcript-ser-b").textContent, "second done");
 
   delete globalThis.window.PBX_CONFIG;
   doc.querySelectorAll = originalQuerySelectorAll;
@@ -1395,25 +1313,14 @@ test("a 429 is retried once after Retry-After; a second 429 fails honestly", asy
   doc.dispatch("click", { target: okBtn });
   doc.dispatch("click", { target: failBtn });
   await settle();
-  assert.equal(
-    ok429Attempts,
-    1,
-    "first attempt answered 429, retry still pending",
-  );
+  assert.equal(ok429Attempts, 1, "first attempt answered 429, retry still pending");
   assert.equal(fail429Attempts, 1, "no retry before the Retry-After delay");
 
   await new Promise((resolve) => setTimeout(resolve, 1300));
   await settle();
   assert.equal(ok429Attempts, 2, "exactly one retry after the delay");
-  assert.equal(
-    doc.getElementById("vm-transcript-retry-ok").textContent,
-    "healed text",
-  );
-  assert.equal(
-    fail429Attempts,
-    2,
-    "the second 429 also gets exactly one retry",
-  );
+  assert.equal(doc.getElementById("vm-transcript-retry-ok").textContent, "healed text");
+  assert.equal(fail429Attempts, 2, "the second 429 also gets exactly one retry");
   assert.match(
     doc.getElementById("vm-transcript-retry-fail").textContent,
     /HTTP 429/,
@@ -1468,17 +1375,9 @@ test("data-delete-transcript confirms, DELETEs, and removes the row only on succ
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "/api/transcripts?call=call-x");
   assert.equal(calls[0].options.method, "DELETE");
-  assert.equal(
-    calls[0].options.headers["X-CSRF-Token"],
-    "",
-    "the CSRF header rides the delete",
-  );
+  assert.equal(calls[0].options.headers["X-CSRF-Token"], "", "the CSRF header rides the delete");
   assert.equal(section.children.length, 1, "a failed delete keeps the row");
-  assert.match(
-    toasts().children.at(-1).textContent,
-    /could not delete/i,
-    "the failure says so",
-  );
+  assert.match(toasts().children.at(-1).textContent, /could not delete/i, "the failure says so");
 
   // Success: the row goes, and the emptied section goes with it.
   globalThis.fetch = async (url, options = {}) => {
@@ -1565,11 +1464,7 @@ test("data-download-transcript saves the row's transcript as a text file", async
   await settle();
   assert.equal(blobs.length, 1, "one blob was offered for object-URLing");
   assert.equal(await blobs[0].text(), "guten tag wie gehts");
-  assert.deepEqual(
-    revoked,
-    ["blob:1"],
-    "the object URL is revoked after the save",
-  );
+  assert.deepEqual(revoked, ["blob:1"], "the object URL is revoked after the save");
   assert.match(toasts().children.at(-1).textContent, /transcript downloaded/i);
 
   // An empty row says so instead of saving an empty file.
@@ -1577,10 +1472,7 @@ test("data-download-transcript saves the row's transcript as a text file", async
   doc.dispatch("click", { target: btn });
   await settle();
   assert.equal(blobs.length, 1);
-  assert.match(
-    toasts().children.at(-1).textContent,
-    /nothing to download yet/i,
-  );
+  assert.match(toasts().children.at(-1).textContent, /nothing to download yet/i);
 
   delete globalThis.URL.createObjectURL;
   delete globalThis.URL.revokeObjectURL;
@@ -1621,10 +1513,7 @@ test("a real transcription plants a copy chip; empty results plant nothing", asy
     if (!match) return realQS(selector);
     const walk = (node) => {
       for (const kid of node.children) {
-        if (
-          kid.getAttribute &&
-          kid.getAttribute("data-copy-target") === match[1]
-        ) {
+        if (kid.getAttribute && kid.getAttribute("data-copy-target") === match[1]) {
           return kid;
         }
         const found = walk(kid);
@@ -1634,8 +1523,7 @@ test("a real transcription plants a copy chip; empty results plant nothing", asy
     };
     return walk(doc.body);
   };
-  const chips = () =>
-    holder.children.filter((c) => c.hasAttribute("data-copy-target"));
+  const chips = () => holder.children.filter((c) => c.hasAttribute("data-copy-target"));
 
   // "No speech detected" is honest feedback, not text: no chip.
   reply = { text: "" };
@@ -1715,11 +1603,7 @@ test("the agent pill shows the mode, cycles on click, and resets a pin", async (
     const pill = actions.children.find((el) => el.id === "agent-mode-pill");
     assert.ok(pill, "idle mode shows the pill");
     assert.equal(pill.textContent, "AI drafts: drafts");
-    assert.equal(
-      pill.classList.contains("pinned"),
-      false,
-      "config mode is not pinned",
-    );
+    assert.equal(pill.classList.contains("pinned"), false, "config mode is not pinned");
     assert.equal(
       actions.children.some((el) => el.id === "agent-mode-reset"),
       false,
@@ -1776,11 +1660,7 @@ test("a failed mode change keeps the pill honest (state unchanged, announced)", 
     const pill = actions.children.find((el) => el.id === "agent-mode-pill");
     pill.click();
     await settle();
-    assert.match(
-      pill.textContent,
-      /AI drafts: drafts$/,
-      "the mode did not move",
-    );
+    assert.match(pill.textContent, /AI drafts: drafts$/, "the mode did not move");
     assert.match(live.textContent, /Could not change the AI drafts mode/);
   } finally {
     globalThis.fetch = realFetch;
@@ -1802,10 +1682,7 @@ const noteRow = (callId, note) => {
     if (!match) return realQS(selector);
     const walk = (node) => {
       for (const kid of node.children) {
-        if (
-          kid.getAttribute &&
-          kid.getAttribute("data-note-body") === match[1]
-        ) {
+        if (kid.getAttribute && kid.getAttribute("data-note-body") === match[1]) {
           return kid;
         }
         const found = walk(kid);

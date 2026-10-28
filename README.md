@@ -767,7 +767,7 @@ Every served JavaScript file — the island modules, the shell glue, the theme
 preload and the enrolment page, 26 of them — is type-checked by
 `tsconfig.json` under `--checkJs --strict`: `tsc -p . --noEmit` must exit 0,
 and `nix flake check` runs the same project as `island-typecheck`. The only
-carve-out is the vendored sip.js bundle. Because the served tree *is* the
+carve-out is the vendored sip.js bundle. Because the served tree _is_ the
 source tree (`//go:embed all:island`), no `@ts-check` pragma is allowed — it
 would change a served byte; the project's `include` does the same job. Only
 `tsc` counts: an editor's bundled compiler is a different version and will

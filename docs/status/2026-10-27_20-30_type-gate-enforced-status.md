@@ -20,13 +20,13 @@ measured locally, and names what was **not** run (§8).
 
 ## 0. The four numbers
 
-| Metric                                                 | Before this session | Now                         |
-| ------------------------------------------------------ | ------------------- | --------------------------- |
-| Type errors over the whole asset tree                  | **680**             | **79** (−601, −88 %)        |
-| Asset files covered by a **green, enforced** type gate | **0** (red, unwired)| **25 of 26**                |
-| Type-gate nix checks + pin assertions                  | 0 + 0               | **1 check, 5 pin tests**    |
-| Island behaviour tests                                 | 260 pass            | **260 pass** (unchanged)    |
-| `go test ./...`                                        | not run since edits | **green**                   |
+| Metric                                                 | Before this session  | Now                      |
+| ------------------------------------------------------ | -------------------- | ------------------------ |
+| Type errors over the whole asset tree                  | **680**              | **79** (−601, −88 %)     |
+| Asset files covered by a **green, enforced** type gate | **0** (red, unwired) | **25 of 26**             |
+| Type-gate nix checks + pin assertions                  | 0 + 0                | **1 check, 5 pin tests** |
+| Island behaviour tests                                 | 260 pass             | **260 pass** (unchanged) |
+| `go test ./...`                                        | not run since edits  | **green**                |
 
 The one remaining file is `shell.js` (79 errors, down from 280). It is the **single declared
 debt** in `typecheckDebt`, and the pin test refuses to let that list grow.
@@ -48,14 +48,14 @@ Three artifacts, each verified by running it:
    instead of being trusted. **Proven to bite**: a one-character identifier typo in a checked
    module failed the check with 26 errors; reverting made it green.
 2. **`internal/web/assets/typecheck_pin_test.go`** — five assertions, each **proven to bite**:
-   | Assertion | How it was proven |
-   |---|---|
-   | `checkJs`/`strict`/`noEmit`/`allowJs` still true | flipped `checkJs` to false → FAIL |
-   | every `include` entry resolves to ≥1 file | ran before the include matched → FAIL |
-   | the include's **import closure is closed** | new assertion; see §4 |
-   | `typecheckDebt` == (asset tree − include) | dropped a name → FAIL |
-   | no bare `@ts-ignore`/`@ts-nocheck` | appended one → FAIL |
-   | the nix check reads `tsconfig.json`, never `.all.json` | static check |
+   | Assertion                                              | How it was proven                     |
+   | ------------------------------------------------------ | ------------------------------------- |
+   | `checkJs`/`strict`/`noEmit`/`allowJs` still true       | flipped `checkJs` to false → FAIL     |
+   | every `include` entry resolves to ≥1 file              | ran before the include matched → FAIL |
+   | the include's **import closure is closed**             | new assertion; see §4                 |
+   | `typecheckDebt` == (asset tree − include)              | dropped a name → FAIL                 |
+   | no bare `@ts-ignore`/`@ts-nocheck`                     | appended one → FAIL                   |
+   | the nix check reads `tsconfig.json`, never `.all.json` | static check                          |
 3. **`nix/devshell.nix`** — `typescript` + `nodejs` in the default shell, so the gate is one
    command for the next person.
 
@@ -63,20 +63,20 @@ Three artifacts, each verified by running it:
 
 ## 2. Per-file ledger
 
-| File | Started | Now | Gate |
-|---|---:|---:|---|
-| `enroll/webauthn.js` | 4 | 0 | ✅ (first fix: my own `@type {const}` bug — not valid JSDoc) |
-| `enroll/enroll.js` | 28 | 0 | ✅ |
-| `island/app/i18n.js` | 79 | 0 | ✅ |
-| `island/app/typeahead.js` | 30 | 0 | ✅ |
-| `island/app/transcribe.js` | 41 | 0 | ✅ |
-| `island/app/panels.js` | 46 | 0 | ✅ |
-| `island/app/calls.js` | 126 | 0 | ✅ |
-| `island/app/connection.js` | 34 | 0 | ✅ |
-| `island/app/main.js` | 12 | 0 | ✅ |
-| `island/app/shortcuts.js` | 0 | 0 | ✅ (joined once its closure went clean) |
-| the 15 files already clean at session start | 0 | 0 | ✅ |
-| **`shell.js`** | **280** | **79** | ⛔ only debt |
+| File                                        | Started |    Now | Gate                                                         |
+| ------------------------------------------- | ------: | -----: | ------------------------------------------------------------ |
+| `enroll/webauthn.js`                        |       4 |      0 | ✅ (first fix: my own `@type {const}` bug — not valid JSDoc) |
+| `enroll/enroll.js`                          |      28 |      0 | ✅                                                           |
+| `island/app/i18n.js`                        |      79 |      0 | ✅                                                           |
+| `island/app/typeahead.js`                   |      30 |      0 | ✅                                                           |
+| `island/app/transcribe.js`                  |      41 |      0 | ✅                                                           |
+| `island/app/panels.js`                      |      46 |      0 | ✅                                                           |
+| `island/app/calls.js`                       |     126 |      0 | ✅                                                           |
+| `island/app/connection.js`                  |      34 |      0 | ✅                                                           |
+| `island/app/main.js`                        |      12 |      0 | ✅                                                           |
+| `island/app/shortcuts.js`                   |       0 |      0 | ✅ (joined once its closure went clean)                      |
+| the 15 files already clean at session start |       0 |      0 | ✅                                                           |
+| **`shell.js`**                              | **280** | **79** | ⛔ only debt                                                 |
 
 Error mix left (all in `shell.js`): TS2339 ×36 · TS18047 ×14 · TS2740 ×10 · TS2454 ×5 ·
 TS2345 ×5 · TS2774 ×4 · TS7006 ×2 · tail. Every remaining one is a **DOM element subtype**
@@ -87,7 +87,7 @@ that a closure drops — no logic left to discover.
 
 ## 3. Ten real defects the gate found (not cosmetics)
 
-Each was a compile error *because the declared type was true and the code was not*:
+Each was a compile error _because the declared type was true and the code was not_:
 
 1. **`rejectCause` was declared `string`, assigned a SIP status code number.** The failure-reason
    switch (`486`/`404`/`403`/`480`/`487`/`408`) could therefore never match, and the operator's
@@ -122,11 +122,11 @@ Each was a compile error *because the declared type was true and the code was no
 ## 4. The plan's §0 was wrong — measured, corrected, documented
 
 The 19:20 plan chose "checked-subset `include` + a pin naming the debt", justified by:
-*"TypeScript still infers types through an unchecked module into a checked one"* — i.e. the
+_"TypeScript still infers types through an unchecked module into a checked one"_ — i.e. the
 subset would not be blind.
 
 **That premise is false in the direction that matters.** TypeScript **fully checks** every module
-an included module imports, and reports *that module's* errors. Measured proof:
+an included module imports, and reports _that module's_ errors. Measured proof:
 
 ```
 tsconfig include = types/** + island/app/ui.js
@@ -213,16 +213,16 @@ AGENTS is T21 and is now overdue — it cost attention every single file.
 
 ## 6. What is left in `shell.js` (79 errors, grouped by fix shape)
 
-| Cluster | ~Count | Fix |
-|---|---:|---|
-| voicemail media/canvas (`vm*`, `audio`, `canvas`, `peaks`) | 30 | type the id lookups as `HTMLAudioElement`/`HTMLCanvasElement`; `vmBuildWave(uuid, audio)` params |
-| command palette (`overlay`, `overlayInput`, `overlayList`, `overlayItems`) | 13 | bind locals after `buildOverlay()`, one `run` field on the item shape |
-| composer drafts + segcount (`.value`, `.requestSubmit`, `.files`, `.type`) | 20 | `HTMLInputElement`/`HTMLTextAreaElement`/`HTMLFormElement` casts at the lookup |
-| leftover vacuous `!x.closest` guards (TS2774) | 4 | delete — the helper made them impossible |
-| agent pill (`IslandAgentModeState` typedef) | 3 | add the typedef, drop the `.type` on a created button |
-| `window.__wpClock` test seam | 3 | declare it in `types/globals.d.ts` |
-| `TS2454` "used before assigned" on 5 test-seam exports | 5 | declare them `| undefined` (they genuinely are, if the load-boundary try throws) |
-| misc (`errorMessage`, `.hidden`, `.click`) | 4 | the established one-home patterns |
+| Cluster                                                                    | ~Count | Fix                                                                                              |
+| -------------------------------------------------------------------------- | -----: | ------------------------------------------------------------------------------------------------ |
+| voicemail media/canvas (`vm*`, `audio`, `canvas`, `peaks`)                 |     30 | type the id lookups as `HTMLAudioElement`/`HTMLCanvasElement`; `vmBuildWave(uuid, audio)` params |
+| command palette (`overlay`, `overlayInput`, `overlayList`, `overlayItems`) |     13 | bind locals after `buildOverlay()`, one `run` field on the item shape                            |
+| composer drafts + segcount (`.value`, `.requestSubmit`, `.files`, `.type`) |     20 | `HTMLInputElement`/`HTMLTextAreaElement`/`HTMLFormElement` casts at the lookup                   |
+| leftover vacuous `!x.closest` guards (TS2774)                              |      4 | delete — the helper made them impossible                                                         |
+| agent pill (`IslandAgentModeState` typedef)                                |      3 | add the typedef, drop the `.type` on a created button                                            |
+| `window.__wpClock` test seam                                               |      3 | declare it in `types/globals.d.ts`                                                               |
+| `TS2454` "used before assigned" on 5 test-seam exports                     |      5 | declare them `                                                                                   |
+| misc (`errorMessage`, `.hidden`, `.click`)                                 |      4 | the established one-home patterns                                                                |
 
 None of these is a design question. It is one focused sitting.
 
@@ -230,34 +230,34 @@ None of these is a design question. It is one focused sitting.
 
 ## 7. Plan tasks not started
 
-| Task | State |
-|---|---|
-| **T19** flip include to the whole tree, delete the debt list + `tsconfig.all.json` | blocked on `shell.js` reaching 0 — nothing else |
-| **T20** `errorMessage` sweep + micro-test | partially done inline (transcribe/panels/calls/connection/main adopt it); the sweep + test remain |
-| **T21** AGENTS.md stance (377-line cap) | not started — and now the single most valuable doc task (§5.4) |
-| **T22** README dev section + CHANGELOG line + `.buildflow.yml` note | not started |
-| **T23** ROADMAP triggers + the 16:04 plan's three defects **+ this report's §4 erratum** | not started |
-| **T24** typed-rejection design | not started |
-| **T25** island-tests typing verdict | not started |
-| **T26** full verification run | **partially** run, see §8 |
-| **T27** 30-day retrofit report | not started (nothing to retrofit yet) |
-| **T28–T29** android KMP | Tier 0, untouched, by design |
+| Task                                                                                     | State                                                                                             |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **T19** flip include to the whole tree, delete the debt list + `tsconfig.all.json`       | blocked on `shell.js` reaching 0 — nothing else                                                   |
+| **T20** `errorMessage` sweep + micro-test                                                | partially done inline (transcribe/panels/calls/connection/main adopt it); the sweep + test remain |
+| **T21** AGENTS.md stance (377-line cap)                                                  | not started — and now the single most valuable doc task (§5.4)                                    |
+| **T22** README dev section + CHANGELOG line + `.buildflow.yml` note                      | not started                                                                                       |
+| **T23** ROADMAP triggers + the 16:04 plan's three defects **+ this report's §4 erratum** | not started                                                                                       |
+| **T24** typed-rejection design                                                           | not started                                                                                       |
+| **T25** island-tests typing verdict                                                      | not started                                                                                       |
+| **T26** full verification run                                                            | **partially** run, see §8                                                                         |
+| **T27** 30-day retrofit report                                                           | not started (nothing to retrofit yet)                                                             |
+| **T28–T29** android KMP                                                                  | Tier 0, untouched, by design                                                                      |
 
 ---
 
 ## 8. Unverified — stated plainly
 
-| Claim | Status |
-|---|---|
-| `tsc -p .` (the gate) green | **verified**, exit 0, repeatedly |
-| `nix build .#checks.x86_64-linux.island-typecheck` | **verified** green, 25-file artefact |
-| `nix flake check` (the whole suite) | **NOT RUN** this session |
-| `buildflow` | **NOT RUN** this session |
-| `python3 scripts/webphone-smoke.py` | **NOT RUN** |
-| `scripts/ui-capture.py` (24-shot visual harness) | **NOT RUN** |
-| `go test -count=1 ./...` | **verified** green (after fixing the two pins in §5.3) |
-| island `node --test` (260 specs) | **verified** green after every file |
-| push / CI verdict | **none** — 12 commits unpushed (§0) |
+| Claim                                              | Status                                                 |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| `tsc -p .` (the gate) green                        | **verified**, exit 0, repeatedly                       |
+| `nix build .#checks.x86_64-linux.island-typecheck` | **verified** green, 25-file artefact                   |
+| `nix flake check` (the whole suite)                | **NOT RUN** this session                               |
+| `buildflow`                                        | **NOT RUN** this session                               |
+| `python3 scripts/webphone-smoke.py`                | **NOT RUN**                                            |
+| `scripts/ui-capture.py` (24-shot visual harness)   | **NOT RUN**                                            |
+| `go test -count=1 ./...`                           | **verified** green (after fixing the two pins in §5.3) |
+| island `node --test` (260 specs)                   | **verified** green after every file                    |
+| push / CI verdict                                  | **none** — 12 commits unpushed (§0)                    |
 
 `nix flake check` and `buildflow` are the two that could still surprise: treefmt has already
 reformatted `shell.js` once mid-edit, and BuildFlow's oxfmt owns everything outside
@@ -301,5 +301,5 @@ always, in the same breath as the verification command.
 
 ---
 
-*Written 2026-10-27 20:30 CET at `HEAD 4fe8421` + one uncommitted file (`shell.js`, mid-annotation).
-Every number above was produced by a command whose output is quoted or reproducible from §8.*
+_Written 2026-10-27 20:30 CET at `HEAD 4fe8421` + one uncommitted file (`shell.js`, mid-annotation).
+Every number above was produced by a command whose output is quoted or reproducible from §8._
