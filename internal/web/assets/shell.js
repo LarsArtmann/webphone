@@ -27,8 +27,7 @@
     // handler down with it.
     if (
       target &&
-      (typeof target.closest === "function" ||
-        typeof target.matches === "function")
+      (hasMethod(target, "closest") || hasMethod(target, "matches"))
     ) {
       return target;
     }
@@ -67,6 +66,57 @@
    */
   function audioElement(id) {
     return /** @type {HTMLAudioElement | null} */ (document.getElementById(id));
+  }
+
+  /**
+   * One of the voicemail panel's wave canvases by id. Twin of audioElement:
+   * the <canvas> is server-rendered under that id, so the lookup is the only
+   * untyped step.
+   * @param {string} id
+   * @returns {HTMLCanvasElement | null}
+   */
+  function canvasElement(id) {
+    return /** @type {HTMLCanvasElement | null} */ (
+      document.getElementById(id)
+    );
+  }
+
+  /**
+   * The scrubber canvas a pointer/key event landed on (the panel marks it
+   * with .wp-vm-wave), typed as the canvas it is.
+   * @param {Element} el
+   * @param {string} selector
+   * @returns {HTMLCanvasElement | null}
+   */
+  function canvasIn(el, selector) {
+    return /** @type {HTMLCanvasElement | null} */ (
+      closestHTMLElement(el, selector)
+    );
+  }
+
+  /**
+   * The form an element belongs to, typed. Every delegated handler here acts
+   * on markup templ renders as a real <form>.
+   * @param {Element} el
+   * @returns {HTMLFormElement | null}
+   */
+  function closestForm(el) {
+    return /** @type {HTMLFormElement | null} */ (
+      closestHTMLElement(el, "form")
+    );
+  }
+
+  /**
+   * The textarea a selector resolves to inside a scope (the composer body,
+   * a call's note box). Templ renders each of them as <textarea>.
+   * @param {ParentNode} scope
+   * @param {string} selector
+   * @returns {HTMLTextAreaElement | null}
+   */
+  function textareaIn(scope, selector) {
+    return /** @type {HTMLTextAreaElement | null} */ (
+      scope.querySelector(selector)
+    );
   }
 
   // Inline SVG icon markup (the JS-created twins of the server's
@@ -305,7 +355,7 @@
         var nav = document.querySelector("[data-tab='messages']");
         if (
           nav &&
-          typeof (/** @type {HTMLElement} */ (nav).click) === "function"
+          hasMethod(nav, "click")
         ) {
           /** @type {HTMLElement} */ (nav).click();
         }
@@ -352,7 +402,7 @@
       var callId = btn.getAttribute("data-delete-transcript") || "";
       var confirmText =
         btn.getAttribute("data-confirm") || "Delete this transcript?";
-      if (typeof window.confirm === "function" && !window.confirm(confirmText))
+      if (hasMethod(window, "confirm") && !window.confirm(confirmText))
         return;
       fetch("/api/transcripts?call=" + encodeURIComponent(callId), {
         method: "DELETE",
@@ -463,8 +513,9 @@
      * @returns {HTMLTextAreaElement | null}
      */
     var noteBodyFor = function (callId) {
-      return /** @type {HTMLTextAreaElement | null} */ (
-        document.querySelector('[data-note-body="' + callId + '"]')
+      return textareaIn(
+        document,
+        '[data-note-body="' + callId + '"]',
       );
     };
     document.addEventListener("click", function (event) {
@@ -1152,7 +1203,7 @@
     // window.__wpClock.now; the browser default is Date.now. Resolved at
     // CALL time so a test can install the fake after this script loads.
     var now = function () {
-      if (window.__wpClock && typeof window.__wpClock.now === "function") {
+      if (hasMethod(window.__wpClock, "now")) {
         return window.__wpClock.now();
       }
       return Date.now();
@@ -1621,9 +1672,7 @@
       if (time) {
         time.textContent = vmClock(current) + " / " + vmClock(duration);
       }
-      var canvas = /** @type {HTMLCanvasElement | null} */ (
-        document.getElementById("vm-wave-" + uuid)
-      );
+      var canvas = canvasElement("vm-wave-" + uuid);
       if (canvas) {
         canvas.setAttribute("aria-valuenow", String(Math.floor(current)));
         var peaks = vmPeaksCache.get(uuid);
@@ -1745,9 +1794,7 @@
       vmBuildWave(uuid, audio)
         .then(function (peaks) {
           vmPaint(uuid, player);
-          var canvas = /** @type {HTMLCanvasElement | null} */ (
-            document.getElementById("vm-wave-" + uuid)
-          );
+          var canvas = canvasElement("vm-wave-" + uuid);
           if (canvas) vmDraw(canvas, peaks || [], 0);
         })
         .catch(function () {
@@ -1801,9 +1848,7 @@
     };
 
     document.addEventListener("pointerdown", function (event) {
-      var canvas = /** @type {HTMLCanvasElement | null} */ (
-        closestHTMLElement(eventElement(event), ".wp-vm-wave")
-      );
+      var canvas = canvasIn(eventElement(event), ".wp-vm-wave");
       if (!canvas) return;
       var uuid = canvas.id.slice("vm-wave-".length);
       var audio = audioElement("vm-audio-" + uuid);
@@ -1827,9 +1872,7 @@
 
     // keyboard seek on the scrubber (it carries role=slider + tabindex)
     document.addEventListener("keydown", function (event) {
-      var canvas = /** @type {HTMLCanvasElement | null} */ (
-        closestHTMLElement(eventElement(event), ".wp-vm-wave")
-      );
+      var canvas = canvasIn(eventElement(event), ".wp-vm-wave");
       if (!canvas) return;
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
       var uuid = canvas.id.slice("vm-wave-".length);
@@ -2193,9 +2236,7 @@
       )
         return;
       if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
-      var form = /** @type {HTMLFormElement | null} */ (
-        closestHTMLElement(area, "form")
-      );
+      var form = closestForm(area);
       if (!form || !form.requestSubmit) return; // degrade: Enter inserts a newline
       event.preventDefault();
       form.requestSubmit();
@@ -2209,9 +2250,7 @@
         !closestHTMLElement(area, "textarea.wp-compose-body")
       )
         return;
-      var form = /** @type {HTMLFormElement | null} */ (
-        closestHTMLElement(area, "form")
-      );
+      var form = closestForm(area);
       if (form) updateSegcount(form, area.value);
     });
 
@@ -2243,9 +2282,7 @@
         return;
       if (String(input.type || "") !== "file") return;
       if (typeof DataTransfer === "undefined") return;
-      var form = /** @type {HTMLFormElement | null} */ (
-        closestHTMLElement(input, "form")
-      );
+      var form = closestForm(input);
       var box = /** @type {HTMLElement | null} */ (
         form && form.querySelector(".wp-attach")
       );
@@ -2255,9 +2292,7 @@
     document.addEventListener("click", function (event) {
       var remove = closestHTMLElement(eventElement(event), ".wp-chip-x");
       if (!remove) return;
-      var form = /** @type {HTMLFormElement | null} */ (
-        closestHTMLElement(remove, "form")
-      );
+      var form = closestForm(remove);
       var input = /** @type {HTMLInputElement | null} */ (
         form && form.querySelector('input[type="file"]')
       );
