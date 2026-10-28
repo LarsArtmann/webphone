@@ -37,6 +37,9 @@ type handlers struct {
 	// Passkey enrollment ceremonies (token-gated by design; the bucket
 	// only fences runaway clients, the one-time token is the real gate).
 	passkeyLimiter *httputil.KeyedRateLimiter
+	// Line switches (D1): session-gated + CSRF-gated, but PBX-bound — a
+	// tight bucket keeps a looping client off the directory.
+	switchLimiter *httputil.KeyedRateLimiter
 	// loginPageHandler is the library-owned passkey login page
 	// (cqrs-htmx/loginpage), built ONLY when the identity layer is wired;
 	// nil keeps /login on the styled 404 (mode off, or the page build

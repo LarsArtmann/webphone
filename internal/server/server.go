@@ -69,6 +69,11 @@ const (
 	hookBurst     = 60
 	contactsLimit = 60
 	contactsBurst = 60
+	// Line switches (D1): session-gated + CSRF-gated, but each POST
+	// directory-verifies against the PBX — the bucket fences a runaway
+	// client from hammering the directory, not an attacker.
+	switchLimit = 6
+	switchBurst = 3
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -279,6 +284,7 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
+		switchLimiter:     newKeyedRateLimiter(switchLimit, switchBurst),
 		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
 		loginPageHandler:  loginPage,
@@ -391,6 +397,12 @@ func New(deps Deps) http.Handler {
 		protected.Handle("POST /api/auth/passkey/enroll/finish",
 			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollFinish)))
 		protected.HandleFunc("GET /enroll", h.enrollPage)
+		// The line switcher (D1): re-mints the session for another
+		// extension mapped to the signed-in user. Registered with the
+		// identity layer — a deployment without mapped logins has no
+		// session that could switch (the handler still self-gates).
+		protected.Handle("POST /api/session/switch",
+			h.switchLimiter.Middleware()(http.HandlerFunc(h.switchExtension)))
 		// Settings-tab passkey management (A2): list lives in the
 		// settings partial; revoke is session-gated + CSRF-protected and
 		// owner-matched against the session extension's mapping.
