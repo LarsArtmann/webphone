@@ -57,6 +57,14 @@ func testCatalogService(t *testing.T, svc catalog.Service) {
 		t.Errorf("len(Commands) = %d, want 0 (webphone writes are HTTP, not messages)", len(svc.Commands))
 	}
 
+	wantSpecs := []catalog.Specification{
+		{Type: "asyncapi", Path: "/specifications/asyncapi.yaml", Name: "Webphone wire contracts (hooks, receipts, SSE)"},
+		{Type: "openapi", Path: "/specifications/openapi.json", Name: "Session-gated HTTP API"},
+	}
+	if !slices.Equal(svc.Specifications, wantSpecs) {
+		t.Errorf("Service.Specifications = %v, want %v (the hub inventory page links the wire contracts through these)", svc.Specifications, wantSpecs)
+	}
+
 	wantEventIDs := []string{
 		"message.received",
 		"message.delivery.advanced",

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The federation hub's inventory page now links webphone's wire contracts
+  (2026-10-28): the exported eventcatalog service page carries an
+  EventCatalog `specifications` block, and `webphone catalog` renders BOTH
+  spec files into the export tree — the AsyncAPI doc from the same pure
+  generator behind `webphone contracts` and the OpenAPI doc from the pure
+  render behind `GET /openapi.json` (newly exported as
+  `server.RenderOpenAPIContract`). Pinned by a cmd-level test (spec bytes +
+  frontmatter references) and a domain-level specification pin.
 - An advisory Tailwind-artifact freshness lane in CI (2026-10-28): the
   committed `tw.css`/`login.css` had drifted from their inputs (the agent-UX
   and review trains changed views without rebuilding; a 10-25 refresh had
