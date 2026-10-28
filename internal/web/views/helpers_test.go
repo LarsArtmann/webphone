@@ -126,12 +126,12 @@ func TestFullStampCarriesDateYearAndTime(t *testing.T) {
 func TestDraftAgeLabelsAndTolerance(t *testing.T) {
 	now := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
 	cases := map[string]string{
-		now.Format(time.RFC3339):             "now",
+		now.Format(time.RFC3339):                       "now",
 		now.Add(-7 * time.Minute).Format(time.RFC3339): "7m",
 		now.Add(-3 * time.Hour).Format(time.RFC3339):   "3h",
-		now.Add(-60 * time.Hour).Format(time.RFC3339): "2d",
-		"":            "",
-		"not-a-time":  "",
+		now.Add(-60 * time.Hour).Format(time.RFC3339):  "2d",
+		"":           "",
+		"not-a-time": "",
 		now.Add(time.Minute).Format(time.RFC3339): "",
 	}
 	for created, want := range cases {

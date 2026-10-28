@@ -400,6 +400,7 @@ a deliberate code change, regenerate:
 | readmodels.transcript_trim                   | Infrastructure            | internal/readmodels/transcripts.go |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go         |
 | session.migrate                              | Infrastructure            | internal/session/sqlite.go         |
+| session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go         |
 | session.nil_db                               | Infrastructure            | internal/session/sqlite.go         |
 | session.sweep                                | Infrastructure            | internal/session/sqlite.go         |
 | session.token                                | Infrastructure            | internal/session/service.go        |

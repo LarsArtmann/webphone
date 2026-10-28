@@ -226,6 +226,7 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 	prevLog := slog.Default()
 	slog.SetDefault(slog.New(slog.NewTextHandler(&audit, nil)))
 	t.Cleanup(func() { slog.SetDefault(prevLog) })
+	c.adoptCsrfToken() // the mint rotated the CSRF token
 	if resp, body := c.do(http.MethodDelete, "/api/session", nil, ""); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("logout: %d %s", resp.StatusCode, body)
 	}

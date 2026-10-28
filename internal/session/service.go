@@ -192,11 +192,11 @@ func makeSession(extension domain.Extension, password, loginEmail string, ttl ti
 	}
 	at := now()
 	return token, Session{
-		Extension: extension,
-		Password:  password,
+		Extension:  extension,
+		Password:   password,
 		LoginEmail: loginEmail,
-		CreatedAt: at,
-		ExpiresAt: at.Add(ttl),
+		CreatedAt:  at,
+		ExpiresAt:  at.Add(ttl),
 	}, nil
 }
 

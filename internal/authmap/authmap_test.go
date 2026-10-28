@@ -54,7 +54,7 @@ func TestMappedByExtensionReverseResolves(t *testing.T) {
 func TestMappedByLoginAndSharedExtensionDeterminism(t *testing.T) {
 	ext := domain.MustParseExtension("1001")
 	m, err := New(map[string]User{
-		"zoe@example.com":  {Email: "zoe@example.com", DisplayName: "Zoe", Extensions: []domain.Extension{ext}},
+		"zoe@example.com":   {Email: "zoe@example.com", DisplayName: "Zoe", Extensions: []domain.Extension{ext}},
 		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Extensions: []domain.Extension{ext}},
 	}, map[string]string{"1001": fileWith(t, "secret")})
 	if err != nil {
