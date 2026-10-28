@@ -50,6 +50,7 @@ type Engine struct {
 	faxes    *Faxes
 	calls    *Transcripts
 	notes    *Notes
+	reviews  *Reviews
 	enroll   *EnrollTokens
 	devices  *PushDevices
 	db       *sql.DB
@@ -96,6 +97,7 @@ func Open(dataDir string) (*Engine, error) {
 		faxes:    newFaxes(models, agg),
 		calls:    newTranscripts(models, agg),
 		notes:    newNotes(models),
+		reviews:  newReviews(models),
 		enroll:   newEnrollTokens(models),
 		devices:  newPushDevices(models),
 		db:       db,
@@ -131,6 +133,10 @@ func (e *Engine) Transcripts() *Transcripts { return e.calls }
 
 // Notes returns the engine-backed post-call-note store (M16).
 func (e *Engine) Notes() *Notes { return e.notes }
+
+// Reviews returns the engine-backed post-call-review store (issue #8:
+// the automatic review's durable artifact slot).
+func (e *Engine) Reviews() *Reviews { return e.reviews }
 
 // EnrollTokens returns the engine-backed enrollment-token store (the
 // userauth SQL table's replacement; token classification stays in the

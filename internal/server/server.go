@@ -148,6 +148,11 @@ type Deps struct {
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
 	Transcripts *readmodels.Transcripts
+	// Reviews is the post-call-review store (owner-scoped, the
+	// automatic review's durable artifact slot, issue #8). Nil (test
+	// compositions): the endpoints answer 503 and the job skips its
+	// writes.
+	Reviews *readmodels.Reviews
 	// Notes is the post-call-note store (owner-scoped, the History
 	// tab's note affordance). Nil (test compositions): the endpoints
 	// answer 503.
@@ -299,6 +304,7 @@ func New(deps Deps) http.Handler {
 		CallsIdem:   hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
 		ASR:         deps.ASR,
 		Transcripts: deps.Transcripts,
+		Reviews:     deps.Reviews,
 		Notes:       deps.Notes,
 		TextAgent:   deps.TextAgent,
 		Push:        deps.Push,

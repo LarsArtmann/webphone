@@ -60,6 +60,11 @@ type Deps struct {
 	// compositions only — the handlers answer 503 like the transcript
 	// surface does.
 	Notes *readmodels.Notes
+	// Reviews is the post-call-review store (readmodels-backed; the
+	// automatic review's durable artifact slot, issue #8). Nil: test
+	// compositions only — the artifact endpoints answer 503 and the
+	// job skips the writes.
+	Reviews *readmodels.Reviews
 	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
 	// review API). Nil: the summarize endpoint answers 404 — a client
 	// reads that as "this server does not draft".
