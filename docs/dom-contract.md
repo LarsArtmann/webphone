@@ -73,12 +73,34 @@ toasts
 remote-audio
 audio-out-wrap
 audio-output
-sso-error
 lang
 wp-live
 wp-tab-skeleton
 
 <!-- dom-contract:end -->
+
+## Conditional ids
+
+Rendered only under the named seam; the always-on block above stays
+complete without them. The fenced list below is the machine-readable
+counterpart (the type-declaration mirror in `types/island.d.ts` is
+checked against BOTH blocks) — keep it in step with the prose sections
+that follow.
+
+<!-- dom-contract-conditional:begin -->
+
+sso-login
+sso-error
+
+<!-- dom-contract-conditional:end -->
+
+## Conditional ids (SSO lane)
+
+Rendered when the deployment configures the OIDC lane
+(`auth.oauth2.*`): `sso-login` (the Pocket ID front-door link) and
+`sso-error` (its failure line). The island's `ssoerror.js` writes into
+the latter, which is why the id is declared in its typed lookups even
+though the markup is conditional.
 
 ## Conditional ids (passkey mode)
 

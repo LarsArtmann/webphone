@@ -392,25 +392,33 @@ func islandDomIDs(t *testing.T) []string {
 	return ids
 }
 
-// documentedDomIDs reads the fenced id block of docs/dom-contract.md, the list's
-// one home (the same block internal/server parses).
+// documentedDomIDs reads BOTH fenced id blocks of docs/dom-contract.md: the
+// always-on contract (parsed by internal/server too) and the conditional one.
+// The island declares handles for ids from either block — `sso-error` exists
+// only when the OIDC lane is configured, yet its typed lookup is still worth
+// declaring — so the mirror is checked against the union.
 func documentedDomIDs(t *testing.T) map[string]bool {
 	t.Helper()
 	raw, err := os.ReadFile(path.Join(repoRoot, "docs", "dom-contract.md"))
 	if err != nil {
 		t.Fatalf("read docs/dom-contract.md: %v", err)
 	}
-	const beginMark, endMark = "<!-- dom-contract:begin -->", "<!-- dom-contract:end -->"
-	body := string(raw)
-	begin := strings.Index(body, beginMark)
-	end := strings.Index(body, endMark)
-	if begin < 0 || end < begin {
-		t.Fatal("docs/dom-contract.md lost its dom-contract markers")
+	fences := [][2]string{
+		{"<!-- dom-contract:begin -->", "<!-- dom-contract:end -->"},
+		{"<!-- dom-contract-conditional:begin -->", "<!-- dom-contract-conditional:end -->"},
 	}
+	body := string(raw)
 	ids := map[string]bool{}
-	for _, line := range strings.Split(body[begin+len(beginMark):end], "\n") {
-		if id := strings.TrimSpace(line); id != "" {
-			ids[id] = true
+	for _, fence := range fences {
+		begin := strings.Index(body, fence[0])
+		end := strings.Index(body, fence[1])
+		if begin < 0 || end < begin {
+			t.Fatalf("docs/dom-contract.md lost its %q markers", fence[0])
+		}
+		for _, line := range strings.Split(body[begin+len(fence[0]):end], "\n") {
+			if id := strings.TrimSpace(line); id != "" {
+				ids[id] = true
+			}
 		}
 	}
 	if len(ids) < 20 {
