@@ -29,6 +29,42 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Island type gate tails (2026-10-27/28 — gate SHIPPED and CI-WIRED; refinements below)
+
+The gate itself is done and enforced: 680 type errors → 0 over 26 served files, `island-typecheck`
+now runs in CI's `fast-checks` job (it was green locally and unwired in CI until 2026-10-28), the
+how-to is [docs/type-gate.md](docs/type-gate.md), and the pins from `typecheck_pin_test.go` grew from
+5 to 10 assertions (excluded glob reaches the bundle and nothing else, no narrowed include, the
+`IslandDomIds` mirror of docs/dom-contract.md, plus a `globMatcher` table test).
+Evidence: [docs/status/2026-10-27_22-00_island-type-gate-complete-status.md](docs/status/2026-10-27_22-00_island-type-gate-complete-status.md).
+
+- **OPEN — the whitespace-drift hook cannot tell formatter output from hand edits.** On 2026-10-28 it
+  refused a commit whose only whitespace delta was prettier's reflow of a neighbouring call
+  (`nix fmt` was a no-op, so the content WAS formatter-clean); the commit needed `--no-verify`, which
+  is exactly the habit the hook exists to avoid. Candidate fixes: compare the staged blob against
+  `treefmt --ci` for those paths, or treat an idempotent `nix fmt` as proof and drop the byte
+  heuristic. Not urgent (CI still gates), but it is a false-positive generator.
+- **OPEN — `__wpClock` is still an ad-hoc global.** No spec installs it today (dead machinery); the
+  declaration is now strict (`now` is required) so a partial fake cannot pass, but the plan's #19
+  (an injectable `now()` passed at construction) is unstarted.
+- **OPEN — `.buildflow-baseline.json` review.** 47 accepted entries were recorded by a locally built
+  detector; BuildFlow warns that none matched in the last three runs. Re-record from this checkout and
+  delete the entries that no longer exist (correct) rather than blessing the current scan (cheap).
+- **DECLINED with reason — do not re-litigate without new evidence:**
+  - *Split `shell.js` at its seams* (voicemail player / palette / composer). The gate now makes a
+    split SAFE (a broken import is a compile error), but the classic-script load order is a
+    served-byte contract the stack E2E greps, and the payoff is readability only. Reopen with an E2E
+    budget.
+  - *Type-check `island-tests/*.mjs`.* Needs `@types/node` (not in the devshell) plus a third
+    tsconfig, and the specs' stubs are deliberately partial duck types — the checker would fight the
+    design the `hasMethod` doctrine rests on.
+  - *Move the shell's copy into a typed key map.* The shell must work when the island scripts fail
+    (that is why it is a classic script); a shared map adds a load-order dependency in the one place
+    the shell's independence is the point.
+  - *`tsc --explainFiles` in CI.* The coverage pin derives the checked set from the EMBEDDED tree, so
+    a file that stops being included fails the pin — proved 2026-10-28 by narrowing the include to a
+    single file (both coverage pins failed with an actionable message).
+
 ### Error-surface + crash-containment plan (2026-10-27 — P0–P2 SHIPPED, host legs + evidence-gated tails open)
 
 Plan + execution log: [docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md](docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md).

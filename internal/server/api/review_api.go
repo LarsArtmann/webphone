@@ -12,9 +12,13 @@ import (
 	"github.com/larsartmann/webphone/internal/textagent"
 )
 
-// reviewDispatchResponse is the 202 answer: the automatic review job
+// ReviewDispatchRequest is the dispatch ask: the call id rides the
+// path, the body is empty (the transcript is the input).
+type ReviewDispatchRequest struct{}
+
+// ReviewDispatchResponse is the 202 answer: the automatic review job
 // was accepted (or already exists — duplicate names the replay).
-type reviewDispatchResponse struct {
+type ReviewDispatchResponse struct {
 	Dispatched bool `description:"True when the review job was accepted." json:"dispatched"`
 	Duplicate  bool `description:"True when this call already has a review (done or in flight)." json:"duplicate,omitempty"`
 }
@@ -57,7 +61,8 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 
 	idemKey := sess.Extension.String() + ":summary:" + callID
 	if h.deps.CallsIdem.Seen(idemKey) {
-		writeJSONBody(w, reviewDispatchResponse{Dispatched: true, Duplicate: true})
+		w.WriteHeader(http.StatusAccepted)
+		writeJSONBody(w, ReviewDispatchResponse{Dispatched: true, Duplicate: true})
 		return
 	}
 	// In-flight guard: the idem window records successes only, so two
@@ -65,7 +70,8 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 	// Seen and draft twice. The guard holds the slot for the job's whole
 	// run; the job releases it on every exit path.
 	if _, busy := h.reviewInFlight.LoadOrStore(idemKey, struct{}{}); busy {
-		writeJSONBody(w, reviewDispatchResponse{Dispatched: true, Duplicate: true})
+		w.WriteHeader(http.StatusAccepted)
+		writeJSONBody(w, ReviewDispatchResponse{Dispatched: true, Duplicate: true})
 		return
 	}
 
@@ -84,7 +90,8 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 
 	jobCtx := context.WithoutCancel(r.Context())
 	go h.runReviewJob(jobCtx, sess.Extension, callID, transcript.Remote, strings.Join(transcript.Lines, "\n"), idemKey)
-	writeJSONBody(w, reviewDispatchResponse{Dispatched: true})
+	w.WriteHeader(http.StatusAccepted)
+	writeJSONBody(w, ReviewDispatchResponse{Dispatched: true})
 }
 
 // runReviewJob is the detached automatic review: draft from the
