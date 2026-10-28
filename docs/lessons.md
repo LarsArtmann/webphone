@@ -909,3 +909,40 @@ pushing.
   on proxied paths. The open owner question (g2: may the stack daemon
   carry relock bumps unattended?) refines WHO triggers the bump, not the
   ride itself.
+- **A subset gate drags its imports in FULLY — and a plan's unmeasured claim
+  costs hours** (2026-10-27, island type gate). The 19:20 plan asserted that a
+  checked SUBSET "is not blind", because TypeScript "infers through" unchecked
+  modules. True in form, backwards in implication: TypeScript fully type-checks
+  every module an included module imports, and reports THAT module's errors —
+  so including only `ui.js` produced 79 errors, all of them in `i18n.js`, which
+  was blocking 17 files at once. Two hours of sequencing were spent before the
+  measurement (`tsc -p . --listFiles`, then a one-file include) was run. Rule:
+  a plan that asserts a TOOL's behaviour owes a measurement beside it; the
+  plan's numbers were right, its one unmeasured claim was wrong, and the claim
+  is now an ERRATUM in both planning docs. Consequences that outlived the
+  campaign: the include is one `**` glob (a file list would miss the next
+  asset), the exclude list is pinned to exactly one vendored glob (excluding a
+  red file is how a gate rots), and the measured-debt list was DELETED rather
+  than kept as a fixture.
+- **Nothing gated the served JavaScript at commit time, and the daemon
+  committed a broken file twice** (2026-10-27). A blanket regex over
+  `shell.js` (2300 lines) rewrote `eventElement` into itself (infinite
+  recursion) and mangled three call sites into syntax errors; the auto-commit
+  daemon committed the broken state twice while only `nix flake check` — run
+  hours later — would have noticed. `node --check` catches that class in ~40 ms,
+  which is now gate 2 of `.githooks/pre-commit` (staged blobs only, vendored
+  bundle skipped, node-missing fails OPEN with a warning because a hook must
+  never block a commit on a toolchain the caller does not have). Three cases
+  pinned in `scripts/pre-commit-guard-selftest.sh`.
+- **The module cache is shared state, and a full disk corrupts it invisibly**
+  (2026-10-28). A `no space left on device` during `go build` left zero-byte
+  `@v/*.mod` files in `GOMODCACHE`: the checksum then reads as
+  `SECURITY ERROR … downloaded h1:G7mAY… vs go.sum h1:4V+yj…`, which looks like
+  a supply-chain attack and is not one — `sum.golang.org/lookup/<module>@<ver>`
+  settles it in one fetch (the go.sum value was correct). Repair path that
+  worked: trash the zero-byte files (47 `.mod`, 147 `.info`, 18 `.zip`) and
+  `go mod download`; when the extracted trees are also truncated, use a
+  SEPARATE `GOMODCACHE` for the session instead of fighting a cache other
+  agents are concurrently rewriting. `scripts/module-cache-janitor.sh` reports
+  the zero-byte class but does not detect zero-byte `.mod`/`.info` (it looks
+  for `.tmp`) — extend it before trusting a green report.

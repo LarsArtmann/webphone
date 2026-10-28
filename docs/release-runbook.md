@@ -22,7 +22,14 @@ re-run the formatter if it moved styled files.
    train (2026-10-08: a daemon commit truncated 69 `skip_steps` lines and
    sat undetected ~16 h); then `BUILDFLOW_NO_RESULT_CACHE=1 buildflow`,
    `nix develop -c go test -count=1 ./...`, `nix flake check`,
-   `python3 scripts/webphone-smoke.py`. If the train bumped
+   `python3 scripts/webphone-smoke.py`. The type gate now rides
+   `nix flake check` (`island-typecheck`), and a red one is a RELEASE
+   blocker like a red test: the served JavaScript is checked by
+   `tsc --checkJs --strict` over every asset file, so run
+   `TSC=$(nix build --no-link --print-out-paths nixpkgs#typescript)/bin/tsc
+   && $TSC -p . --noEmit` directly when you want the error text instead of
+   a sandbox failure (see docs/type-gate.md). A webphone bump that reds the
+   type check is a STACK-VISIBLE event too. If the train bumped
    cqrs-htmx or go-sse: also re-run `BenchmarkHubFanOut` and append a
    dated table to
    `docs/reviews/2026-09-18_hub-fanout-baseline.md` (MD1 rule; next
