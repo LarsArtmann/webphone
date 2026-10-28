@@ -1,8 +1,16 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-27T21:59:30.835821117Z",
+  "recordedAt": "2026-10-28T02:21:46.500542434Z",
   "entries": [
+    {
+      "hash": "090feb586e2e0439",
+      "files": [
+        "internal/server/api/review_api.go",
+        "internal/server/api/review_api.go"
+      ],
+      "tokens": 4
+    },
     {
       "hash": "0c8c67c705cc3f0b",
       "files": [
@@ -681,6 +689,14 @@
         "internal/server/textagent_api.go"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "f3c57ca57d68f6f8",
+      "files": [
+        "internal/readmodels/callreviews.go",
+        "internal/readmodels/callnotes.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "f5e434bba0d6bd74",
