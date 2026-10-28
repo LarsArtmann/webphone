@@ -411,6 +411,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Transcripts: engine.Transcripts(),
 			Notes:       engine.Notes(),
 			Reviews:     engine.Reviews(),
+			Dials:       engine.DialWindows(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),

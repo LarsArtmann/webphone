@@ -189,13 +189,9 @@ templ TranscriptSection(props HistoryPanelProps) {
 					}
 				</div>
 			} else if group.ReviewState == "pending" {
-				<div class="wp-call-review">
-					<p class="wp-muted">{ T(props.Lang, "history.review.pending") }</p>
-				</div>
+				@reviewStatusLine(props.Lang, "history.review.pending")
 			} else if group.ReviewState == "failed" {
-				<div class="wp-call-review">
-					<p class="wp-muted">{ T(props.Lang, "history.review.failed") }</p>
-				</div>
+				@reviewStatusLine(props.Lang, "history.review.failed")
 			} else if !props.AgentEnabled {
 				<p class="wp-muted wp-review-unconfigured">{ T(props.Lang, "history.review.notConfigured") }</p>
 			}
@@ -322,6 +318,17 @@ templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 // operator-confirmed verdict — the badge renders ONLY for these five;
 // unknown and absent render nothing (the stop-the-lying ruling: an
 // unconfirmed call never shows a success marker).
+// reviewStatusLine renders the one-line status a call's review slot carries
+// before (pending) or instead of (failed) a draft: the same card shell, a
+// different dictionary key. Two arms spelled it out byte for byte, which the
+// dedup gate reads as a clone — and more importantly, a UI tweak to one arm
+// would silently skip the other.
+templ reviewStatusLine(lang Lang, key string) {
+	<div class="wp-call-review">
+		<p class="wp-muted">{ T(lang, key) }</p>
+	</div>
+}
+
 func dispositionConfirmed(raw string) bool {
 	disposition, err := domain.ParseDisposition(raw)
 	return err == nil && disposition != domain.DispositionUnknown

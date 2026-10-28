@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // dialGateMax bounds the dialable remote string (the island sanitizes

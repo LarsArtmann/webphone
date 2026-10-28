@@ -153,6 +153,9 @@ type Deps struct {
 	// compositions): the endpoints answer 503 and the job skips its
 	// writes.
 	Reviews *readmodels.Reviews
+	// Dials is the dial-cooldown window store (issue #7). Nil (test
+	// compositions): the gate answers 503.
+	Dials *readmodels.DialWindows
 	// Notes is the post-call-note store (owner-scoped, the History
 	// tab's note affordance). Nil (test compositions): the endpoints
 	// answer 503.
@@ -305,6 +308,8 @@ func New(deps Deps) http.Handler {
 		ASR:         deps.ASR,
 		Transcripts: deps.Transcripts,
 		Reviews:     deps.Reviews,
+		Dials:       deps.Dials,
+		DialCooldown: deps.Config.Dial.Cooldown,
 		Notes:       deps.Notes,
 		TextAgent:   deps.TextAgent,
 		Push:        deps.Push,
@@ -438,6 +443,12 @@ func New(deps Deps) http.Handler {
 	// stored state (pending/present/failed). Session-gated, read
 	// budget; the empty body IS the absent answer.
 	protected.Handle("GET /api/calls/{id}/review", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallReview)))
+	// The advisory dial-cooldown gate (issue #7): one check+record
+	// transaction per dial attempt, consulted BEFORE the SIP invite.
+	// A disabled cooldown answers 404 (the island dials without
+	// asking); a store failure answers 502 and the island dials anyway
+	// (the gate advises, it never traps).
+	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialGate)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
 	// The operator's post-call disposition verdict (issue #6): the one

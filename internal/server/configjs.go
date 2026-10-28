@@ -51,17 +51,17 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		SIPCredential bool                   `json:"sipCredential"`
 		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
-		SIPDomain:     h.deps.Config.SIPDomain,
-		WebsocketPath: h.deps.Config.WebsocketPath,
-		ICEServers:    iceServers,
-		PhoneAPI:      h.deps.PhoneAPI.Enabled(),
-		CRM:           h.deps.CRM.Enabled(),
-		ASR:           h.asrOn(),
-		Agent:         h.deps.TextAgent != nil,
+		SIPDomain:           h.deps.Config.SIPDomain,
+		WebsocketPath:       h.deps.Config.WebsocketPath,
+		ICEServers:          iceServers,
+		PhoneAPI:            h.deps.PhoneAPI.Enabled(),
+		CRM:                 h.deps.CRM.Enabled(),
+		ASR:                 h.asrOn(),
+		Agent:               h.deps.TextAgent != nil,
 		DialCooldownSeconds: int(h.deps.Config.Dial.Cooldown.Seconds()),
-		ASRLocality:   h.deps.ASRLocality,
-		SIPCredential: h.deps.Config.SIP.DerivedCredentials(),
-		Contacts:      h.deps.Shared,
+		ASRLocality:         h.deps.ASRLocality,
+		SIPCredential:       h.deps.Config.SIP.DerivedCredentials(),
+		Contacts:            h.deps.Shared,
 	}
 
 	payload, err := json.Marshal(pbxConfig)

@@ -155,7 +155,7 @@ func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, r
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_override_arm", "arm override")
 	}
-	return s.trimOverrides(ctx, owner.String())
+	return s.trimWindows(ctx, owner.String())
 }
 
 // Last returns the slot's last allowed dial (found=false when none).
