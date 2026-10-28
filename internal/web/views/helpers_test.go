@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 func TestAvatarForNumberTailDigits(t *testing.T) {
@@ -137,6 +138,24 @@ func TestDraftAgeLabelsAndTolerance(t *testing.T) {
 	for created, want := range cases {
 		if got := draftAge(created, now); got != want {
 			t.Errorf("draftAge(%q) = %q, want %q", created, got, want)
+		}
+	}
+}
+
+// TestDraftMetaShape pins the composed meta line: language and
+// confidence always, the age appended only when it parses (a foreign
+// timestamp never leaks a bare separator into the panel).
+func TestDraftMetaShape(t *testing.T) {
+	now := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
+	cases := map[string]string{
+		now.Add(-3 * time.Hour).Format(time.RFC3339): "pl · 80% · 3h",
+		"":        "pl · 80%",
+		"garbage": "pl · 80%",
+	}
+	for created, want := range cases {
+		draft := textagent.Draft{Language: "pl", Confidence: 80, CreatedAt: created}
+		if got := draftMeta(draft, now); got != want {
+			t.Errorf("draftMeta(CreatedAt=%q) = %q, want %q", created, got, want)
 		}
 	}
 }

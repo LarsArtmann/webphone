@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // fmtInt renders counts for templ (templ children cannot call strconv
@@ -217,4 +218,17 @@ func draftAge(created string, now time.Time) string {
 	default:
 		return strconv.Itoa(int(age.Hours()/24)) + "d"
 	}
+}
+
+// draftMeta composes the drafts-panel meta line: language and
+// confidence always, the pending age appended when the agent's
+// timestamp parses. Composing in Go keeps the templ fragment flat (the
+// conditional separator was a detector clone of the mode-runtime line)
+// and gives the shape one tested home.
+func draftMeta(draft textagent.Draft, now time.Time) string {
+	meta := draft.Language + " · " + fmtInt(draft.Confidence) + "%"
+	if age := draftAge(draft.CreatedAt, now); age != "" {
+		meta += " · " + age
+	}
+	return meta
 }

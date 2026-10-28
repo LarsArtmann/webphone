@@ -74,9 +74,24 @@ COMP="vendor/github.com/larsartmann/templ-components"
 LOGIN="vendor/github.com/larsartmann/cqrs-htmx/loginpage/v4"
 
 # Resolve the pinned module sources from the module cache (requires the
-# dev shell's go; a missing module means go.mod and the inputs disagree).
-# icons is its OWN module (templ-components/icons), not a subdir.
-moddir() { go list -m -f "{{.Dir}}" "$1"; }
+# dev shell's go). A COLD cache (fresh CI runner, new machine) answers
+# an EMPTY Dir — heal it with an explicit download instead of cp-ing
+# from "/"; a module that still resolves empty means go.mod and the
+# inputs disagree. icons is its OWN module (templ-components/icons),
+# not a subdir.
+moddir() {
+	local dir
+	dir="$(go list -m -f "{{.Dir}}" "$1" 2>/dev/null || true)"
+	if [ -z "$dir" ]; then
+		go mod download "$1" >/dev/null
+		dir="$(go list -m -f "{{.Dir}}" "$1" 2>/dev/null || true)"
+	fi
+	if [ -z "$dir" ]; then
+		echo "build-tw-css: module $1 resolved no source dir — is it in go.mod?" >&2
+		exit 1
+	fi
+	printf '%s' "$dir"
+}
 TC_DIR="$(moddir github.com/larsartmann/templ-components)"
 ICONS_DIR="$(moddir github.com/larsartmann/templ-components/icons)"
 LP_DIR="$(moddir github.com/larsartmann/cqrs-htmx/loginpage/v4)"

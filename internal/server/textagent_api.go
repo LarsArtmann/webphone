@@ -143,19 +143,20 @@ func (h *handlers) textAgentPanelAction(
 	if !ok {
 		return
 	}
+	audit := func(outcome string) {
+		if auditEvent != "" {
+			agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), outcome)
+		}
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), textAgentPanelTimeout)
 	defer cancel()
 	if err := action(ctx); err != nil {
 		status, detail := textAgentActionError(err)
-		if auditEvent != "" {
-			agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), "failed")
-		}
+		audit("failed")
 		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, key)+": "+detail)
 		return
 	}
-	if auditEvent != "" {
-		agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), "ok")
-	}
+	audit("ok")
 	if toastKey != "" {
 		notifyToast(w, "ok", h.T(r, toastKey))
 	}

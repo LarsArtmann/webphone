@@ -842,10 +842,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 					<header class="wp-draft-head">
 						<span class="wp-draft-contact">{ contactLabel(props.Names, draft.Contact) }</span>
 						<span class="wp-draft-meta" title={ draft.CreatedAt }>
-							{ draft.Language } · { fmtInt(draft.Confidence) }%
-							if age := draftAge(draft.CreatedAt, time.Now()); age != "" {
-								{ " · " + age }
-							}
+							{ draftMeta(draft, time.Now()) }
 							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
 								<span class="wp-draft-flag">☎</span>
 							}
