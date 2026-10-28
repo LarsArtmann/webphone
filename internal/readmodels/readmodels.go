@@ -54,6 +54,7 @@ type Engine struct {
 	dials    *DialWindows
 	enroll   *EnrollTokens
 	devices  *PushDevices
+	agents   *AgentAudit
 	db       *sql.DB
 	closed   bool
 }
@@ -83,7 +84,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, enrollTokensQuery, pushDevicesQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, enrollTokensQuery, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -102,6 +103,7 @@ func Open(dataDir string) (*Engine, error) {
 		dials:    newDialWindows(models),
 		enroll:   newEnrollTokens(models),
 		devices:  newPushDevices(models),
+		agents:   newAgentAudit(models),
 		db:       db,
 	}, nil
 }
@@ -135,6 +137,10 @@ func (e *Engine) Transcripts() *Transcripts { return e.calls }
 
 // Notes returns the engine-backed post-call-note store (M16).
 func (e *Engine) Notes() *Notes { return e.notes }
+
+// AgentAudit returns the engine-backed agent-action audit store (D5,
+// the durable read model behind the journal line).
+func (e *Engine) AgentAudit() *AgentAudit { return e.agents }
 
 // Reviews returns the engine-backed post-call-review store (issue #8:
 // the automatic review's durable artifact slot).

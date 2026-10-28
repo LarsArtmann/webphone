@@ -164,8 +164,13 @@ type Deps struct {
 	// Notes is the post-call-note store (owner-scoped, the History
 	// tab's note affordance). Nil (test compositions): the endpoints
 	// answer 503.
-	Notes     *readmodels.Notes
-	Messaging *messaging.Service
+	Notes *readmodels.Notes
+	// AgentAudit is the durable agent-action audit read model (D5):
+	// the journal line stays the grep surface, this store answers
+	// "who approved what, when" in Settings. Nil (test compositions):
+	// the dual-write degrades to the line alone.
+	AgentAudit *readmodels.AgentAudit
+	Messaging  *messaging.Service
 	Fax       *fax.Service
 	PhoneAPI  *pbx.Client
 	Hubs      *ExtensionHubs
