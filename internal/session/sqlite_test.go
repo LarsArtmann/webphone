@@ -317,3 +317,52 @@ func TestSQLiteActiveTokensListsLiveOnly(t *testing.T) {
 		t.Fatalf("unknown extension listed %d tokens, want 0", n)
 	}
 }
+
+// TestSQLiteStoreCarriesLoginEmailAcrossRestart pins the multi-user
+// substrate's persistence: the login email minted with a session
+// survives the restart (the audit lanes read it back to name the HUMAN
+// actor), an empty email round-trips as empty (byte-parity with every
+// extension-login row), and the reopen itself re-runs the guarded
+// column migration idempotently.
+func TestSQLiteStoreCarriesLoginEmailAcrossRestart(t *testing.T) {
+	ext := testExtension(t)
+	path := filepath.Join(t.TempDir(), "sessions.db")
+
+	boot1, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store1, err := NewSQLiteStore(boot1, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	withEmail, err := store1.Create(ext, "pw", "lars@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	plain, err := store1.Create(ext, "pw", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := boot1.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	boot2, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = boot2.Close() }()
+	store2, err := NewSQLiteStore(boot2, time.Hour)
+	if err != nil {
+		t.Fatalf("reopen (guarded ALTER must be idempotent): %v", err)
+	}
+	got, ok := store2.Get(withEmail)
+	if !ok || got.LoginEmail != "lars@example.com" {
+		t.Fatalf("email session after restart = (%v, %v), want lars@example.com", got.LoginEmail, ok)
+	}
+	legacy, ok := store2.Get(plain)
+	if !ok || legacy.LoginEmail != "" {
+		t.Fatalf("extension-login session after restart = (%v, %v), want empty email", legacy.LoginEmail, ok)
+	}
+}

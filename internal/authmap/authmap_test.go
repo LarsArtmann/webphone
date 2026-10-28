@@ -46,6 +46,43 @@ func TestMappedByExtensionReverseResolves(t *testing.T) {
 	}
 }
 
+// TestMappedByLoginAndSharedExtensionDeterminism pins the multi-user
+// rules (2026-10-28): on a SHARED extension the plain reverse lookup is
+// deterministic (sorted emails — Go map order must never pick whoami),
+// while a session that knows its own login email resolves THAT human —
+// each session names its own person, never a coin flip.
+func TestMappedByLoginAndSharedExtensionDeterminism(t *testing.T) {
+	ext := domain.MustParseExtension("1001")
+	m, err := New(map[string]User{
+		"zoe@example.com":  {Email: "zoe@example.com", DisplayName: "Zoe", Extensions: []domain.Extension{ext}},
+		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Extensions: []domain.Extension{ext}},
+	}, map[string]string{"1001": fileWith(t, "secret")})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	for i := 0; i < 20; i++ {
+		user, ok := m.MappedByExtension(ext)
+		if !ok || user.Email != "alice@example.com" {
+			t.Fatalf("MappedByExtension iteration %d = (%v, %v), want deterministic alice", i, user.Email, ok)
+		}
+	}
+
+	if user, ok := m.MappedByLogin(ext, "zoe@example.com"); !ok || user.DisplayName != "Zoe" {
+		t.Fatalf("MappedByLogin(zoe) = (%v, %v), want Zoe", user.DisplayName, ok)
+	}
+	if user, ok := m.MappedByLogin(ext, ""); !ok || user.DisplayName != "Alice" {
+		t.Fatalf("MappedByLogin(empty) = (%v, %v), want the deterministic fallback Alice", user.DisplayName, ok)
+	}
+	if user, ok := m.MappedByLogin(ext, "stale@example.com"); !ok || user.DisplayName != "Alice" {
+		t.Fatalf("MappedByLogin(stale email) = (%v, %v), want fallback Alice — a stale identity must not win", user.DisplayName, ok)
+	}
+	other := domain.MustParseExtension("1002")
+	if user, ok := m.MappedByLogin(other, "alice@example.com"); ok {
+		t.Fatalf("MappedByLogin(email not mapping the session extension) = %v, want no match", user.Email)
+	}
+}
+
 func TestSIPPasswordTrimsAndFailsClosed(t *testing.T) {
 	ext := domain.MustParseExtension("1000")
 	file := fileWith(t, "  dir-password\n")

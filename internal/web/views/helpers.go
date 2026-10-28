@@ -191,3 +191,30 @@ func formatStamp(lang Lang, t time.Time) string {
 func fullStamp(lang Lang, t time.Time) string {
 	return formatFor(lang, t, "02.01.2006 15:04", "Jan 2, 2006, 3:04PM")
 }
+
+// draftAge renders a pending draft's age as a language-neutral relative
+// label ("now", "7m", "3h", "2d") — the review-urgency signal the
+// supervised-agent panel needs (a draft pending for hours reads very
+// differently than one pending for seconds, and a future veto-window
+// mode will surface exactly this number). created is the agent's
+// RFC3339 string; unparseable or empty answers "" (the meta line simply
+// omits the age — a foreign wire shape never breaks the panel).
+func draftAge(created string, now time.Time) string {
+	parsed, err := time.Parse(time.RFC3339, created)
+	if err != nil {
+		return ""
+	}
+	age := now.Sub(parsed)
+	switch {
+	case age < 0:
+		return ""
+	case age < time.Minute:
+		return "now"
+	case age < time.Hour:
+		return strconv.Itoa(int(age.Minutes())) + "m"
+	case age < 24*time.Hour:
+		return strconv.Itoa(int(age.Hours())) + "h"
+	default:
+		return strconv.Itoa(int(age.Hours()/24)) + "d"
+	}
+}

@@ -387,3 +387,33 @@ func TestMemStoreActiveTokensListsLiveOnly(t *testing.T) {
 		t.Fatalf("after logout ActiveTokens(ext) = %v, want none", got)
 	}
 }
+
+// TestMemStoreCarriesLoginEmail pins the multi-user substrate on the
+// in-memory store: the minted identity reads back on Get and Renew, and
+// the empty email (classic extension login) round-trips empty.
+func TestMemStoreCarriesLoginEmail(t *testing.T) {
+	store := NewMemStore(time.Hour)
+	ext := testExtension(t)
+
+	token, err := store.Create(ext, "pw", "zoe@example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, ok := store.Get(token)
+	if !ok || got.LoginEmail != "zoe@example.com" {
+		t.Fatalf("Get = (%v, %v), want zoe@example.com", got.LoginEmail, ok)
+	}
+	renewed, ok := store.Renew(token, 2*time.Hour, 4*time.Hour)
+	if !ok || renewed.LoginEmail != "zoe@example.com" {
+		t.Fatalf("Renew = (%v, %v), want the email preserved", renewed.LoginEmail, ok)
+	}
+
+	plain, err := store.Create(ext, "pw", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacy, ok := store.Get(plain)
+	if !ok || legacy.LoginEmail != "" {
+		t.Fatalf("empty email round-trip = (%v, %v), want empty", legacy.LoginEmail, ok)
+	}
+}

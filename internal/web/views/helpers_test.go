@@ -119,6 +119,28 @@ func TestFullStampCarriesDateYearAndTime(t *testing.T) {
 	}
 }
 
+// TestDraftAgeLabelsAndTolerance pins the pending-draft age ladder and
+// its foreign-wire tolerance: every bucket renders its label, and a
+// missing/malformed/future CreatedAt answers "" (the meta line omits
+// the age — a bad agent string never breaks the panel).
+func TestDraftAgeLabelsAndTolerance(t *testing.T) {
+	now := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
+	cases := map[string]string{
+		now.Format(time.RFC3339):             "now",
+		now.Add(-7 * time.Minute).Format(time.RFC3339): "7m",
+		now.Add(-3 * time.Hour).Format(time.RFC3339):   "3h",
+		now.Add(-60 * time.Hour).Format(time.RFC3339): "2d",
+		"":            "",
+		"not-a-time":  "",
+		now.Add(time.Minute).Format(time.RFC3339): "",
+	}
+	for created, want := range cases {
+		if got := draftAge(created, now); got != want {
+			t.Errorf("draftAge(%q) = %q, want %q", created, got, want)
+		}
+	}
+}
+
 // TestFormatForSwitchesAndDefaults pins the one home of the language
 // switch itself: German takes the de layout, EVERY other lang takes the
 // en layout (English is the default, so a future lang value degrades to

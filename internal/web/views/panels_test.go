@@ -11,6 +11,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // hostile doubles as content and escaping probe: every panel must render
@@ -574,6 +575,38 @@ func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
 		}))
 		if strings.Contains(page, "wp-disposition-chip") {
 			t.Errorf("disposition %q must render no badge (never a success glyph): %s", absent, page)
+		}
+	}
+}
+
+// TestDraftsPanelShowsPendingAge pins the review-urgency signal
+// (2026-10-28 multi-actor train): a pending draft renders its age in the
+// meta line with the raw agent stamp on hover, and a missing/malformed
+// CreatedAt omits the age without breaking the panel (foreign-wire
+// tolerance).
+func TestDraftsPanelShowsPendingAge(t *testing.T) {
+	reviews := func(created string) *textagent.Reviews {
+		return &textagent.Reviews{Drafts: []textagent.Draft{{
+			ID: "d-1", Contact: "4989123456", Text: "Guten Morgen", Language: "de",
+			Confidence: 90, CreatedAt: created,
+		}}}
+	}
+	aged := renderComponent(t, DraftsPanel(DraftsPanelProps{
+		Drafts: reviews(time.Now().Add(-2 * time.Hour).UTC().Format(time.RFC3339)), Lang: LangEN,
+	}))
+	if !strings.Contains(aged, " · 2h") {
+		t.Errorf("a two-hour-old draft must render its age: %s", aged)
+	}
+	if !strings.Contains(aged, `title="`) {
+		t.Errorf("the meta line must carry the raw stamp on hover: %s", aged)
+	}
+	for _, bad := range []string{"", "yesterday-ish"} {
+		page := renderComponent(t, DraftsPanel(DraftsPanelProps{Drafts: reviews(bad), Lang: LangEN}))
+		if !strings.Contains(page, "Guten Morgen") {
+			t.Errorf("CreatedAt %q must not break the panel: %s", bad, page)
+		}
+		if strings.Contains(page, "m</span>") || strings.Contains(page, "h</span>") {
+			t.Errorf("CreatedAt %q must omit the age label: %s", bad, page)
 		}
 	}
 }

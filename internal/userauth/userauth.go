@@ -215,9 +215,18 @@ func (s *Service) Resolve(email string) (MappedUser, bool) {
 // MappedByExtension reverse-resolves: which mapped user (if any) a
 // session extension belongs to. Powers the display identity on the
 // extension login too — a mapped user gets their name and numbers in
-// the whoami line regardless of how they signed in.
+// the whoami line regardless of how they signed in. Deterministic on
+// shared extensions (see authmap).
 func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, bool) {
 	return s.mapped.MappedByExtension(extension)
+}
+
+// MappedByLogin resolves the identity a SESSION should display: the
+// session's own login email when it maps to the session's extension,
+// else the deterministic extension lookup (see authmap — the one home
+// of the rule).
+func (s *Service) MappedByLogin(extension domain.Extension, loginEmail string) (MappedUser, bool) {
+	return s.mapped.MappedByLogin(extension, loginEmail)
 }
 
 // SIPPassword reads the extension's directory password from its

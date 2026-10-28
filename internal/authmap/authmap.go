@@ -76,19 +76,38 @@ func (m *Map) Resolve(email string) (User, bool) {
 }
 
 // MappedByExtension reverse-resolves: which mapped user (if any) a session
-// extension belongs to. Powers the display identity on the extension login
-// too — a mapped user gets their name and numbers in the whoami line
-// regardless of how they signed in.
+// extension belongs to. Deterministic by construction (emails iterated in
+// sorted order — Go map order is random, and a shared extension must not
+// change whoami identity between boots). This is the FALLBACK resolver:
+// a session that knows its own login email resolves through
+// MappedByLogin instead.
 func (m *Map) MappedByExtension(extension domain.Extension) (User, bool) {
 	if m == nil {
 		return User{}, false
 	}
-	for _, user := range m.users {
-		if slices.Contains(user.Extensions, extension) {
-			return user, true
+	for _, email := range slices.Sorted(maps.Keys(m.users)) {
+		if slices.Contains(m.users[email].Extensions, extension) {
+			return m.users[email], true
 		}
 	}
 	return User{}, false
+}
+
+// MappedByLogin resolves the identity a SESSION should display: the
+// session's own login email when it maps to the session's extension
+// (the multi-user substrate — on a shared extension, each session names
+// its own human), falling back to the deterministic extension lookup
+// for extension logins, stale emails, and unmapped accounts.
+func (m *Map) MappedByLogin(extension domain.Extension, loginEmail string) (User, bool) {
+	if m == nil {
+		return User{}, false
+	}
+	if loginEmail != "" {
+		if user, ok := m.Resolve(loginEmail); ok && slices.Contains(user.Extensions, extension) {
+			return user, true
+		}
+	}
+	return m.MappedByExtension(extension)
 }
 
 // SIPPassword reads the extension's directory password from its

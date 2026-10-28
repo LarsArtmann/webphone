@@ -7,6 +7,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -215,6 +216,21 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 	}
 	if !strings.Contains(string(body), `"extension":"1000"`) || !strings.Contains(string(body), pkPassword) {
 		t.Errorf("resume body %q lost the session credentials", body)
+	}
+
+	// The multi-user substrate (2026-10-28): the session row remembers
+	// WHO minted it. The logout audit line is the observable probe — a
+	// passkey session logs out under its email, an extension session
+	// under its extension, so two humans on one line stay distinguishable.
+	var audit bytes.Buffer
+	prevLog := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&audit, nil)))
+	t.Cleanup(func() { slog.SetDefault(prevLog) })
+	if resp, body := c.do(http.MethodDelete, "/api/session", nil, ""); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("logout: %d %s", resp.StatusCode, body)
+	}
+	if !strings.Contains(audit.String(), "auth logout") || !strings.Contains(audit.String(), "email="+pkEmail) {
+		t.Errorf("logout audit must name the passkey actor %s:\n%s", pkEmail, audit.String())
 	}
 }
 
