@@ -22,6 +22,8 @@ import (
 func TestErrListFullClassifiesRejection(t *testing.T) {
 	errorfamilytest.AssertFamily(t, readmodels.ErrListFull, errorfamily.Rejection)
 	errorfamilytest.AssertFamily(t, readmodels.ErrSnippetListFull, errorfamily.Rejection)
+	errorfamilytest.AssertFamily(t, readmodels.ErrNoteListFull, errorfamily.Rejection)
+	errorfamilytest.AssertFamily(t, readmodels.ErrReviewListFull, errorfamily.Rejection)
 }
 
 func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {
