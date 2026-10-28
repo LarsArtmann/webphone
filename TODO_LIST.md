@@ -190,14 +190,18 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    open slice: the summary/points/score DIMENSIONS the plan named (today
    the artifact stores the draft text + confidence only) — reopen only if
    the operator asks for richer artifacts.
-4. **Kith CRM switch-on, webphone slice** (#9): typed module options
-   `crm.{enable,url,token_file}` (LoadCredential pattern like oauth2 — no
-   crm options exist in package/nixos-module.nix today, and its leak guard
-   rejects path-valued settings secrets) + auth-failed surfacing (Settings
-   shows only connected/unset, settings.templ:202; no /healthz crm leg;
-   `ErrUnauthorized` must turn a surface red within one poll cycle). The
-   issue's steps 1/2/4 (PKI trust, token provisioning, e2e verify) are
-   pbx-artmann-side; the cited diagnosis doc lives there too.
+4. **Kith CRM switch-on, webphone slice** (#9) — WEBPHONE SIDE FULLY
+   SHIPPED (2026-10-27/28; verified at HEAD 2026-10-28 evening): typed
+   `crm` module lane + `crm.token_file` (LoadCredential), the `/healthz`
+   CRM leg (a revoked token reddens healthz naming "crm" on the very
+   next request — pinned in healthz_test.go), and the Settings
+   auth-failed surface (`crmDetail` renders FOUR states: unset /
+   configured / connected / AUTH-FAILED via `crm.HealthCodeUnauthorized`
+   on the bounded per-render probe — panels.go settingsCRMAuthFailed).
+   The issue's steps 1/2/4 (PKI trust, token provisioning, e2e verify)
+   remain pbx-artmann-side cross-repo work; the cited diagnosis doc
+   lives there too. (The row's earlier "no auth-failed surfacing"
+   wording was stale — the T7 four-state work had landed it.)
 
 ### Multi-actor HITL (2026-10-28 — substrate SHIPPED same evening; escalation tiers below)
 
