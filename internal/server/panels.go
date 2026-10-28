@@ -506,9 +506,43 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
+		AgentAuditRows: h.agentAuditRows(r, sess),
 		Passkeys:       h.passkeySectionProps(sess.Extension),
 		Lang:           h.lang(r),
 	}), nil
+}
+
+// agentAuditRows reads the durable agent-action audit window for the
+// Settings history (D5): the owner's newest rows, actor resolved to
+// the login email when the row names one and the line itself otherwise
+// (the multi-actor substrate — the row says WHO, not just which line).
+// A nil store or a read failure degrades to no section input: the
+// journal line remains the audit truth, the panel never lies with a
+// half list.
+func (h *handlers) agentAuditRows(r *http.Request, sess session.Session) []views.AgentAuditRow {
+	if h.deps.AgentAudit == nil {
+		return nil
+	}
+	rows, err := h.deps.AgentAudit.Recent(r.Context(), sess.Extension, 20)
+	if err != nil {
+		slog.Warn("settings: agent audit rows unavailable", "error", err)
+		return nil
+	}
+	out := make([]views.AgentAuditRow, 0, len(rows))
+	for _, row := range rows {
+		actor := row.Actor
+		if actor == "" {
+			actor = sess.Extension.String()
+		}
+		out = append(out, views.AgentAuditRow{
+			Actor:   actor,
+			Event:   row.Event,
+			Subject: row.Subject,
+			Outcome: row.Outcome,
+			At:      time.Unix(row.At, 0),
+		})
+	}
+	return out
 }
 
 // renderTab adapts the builder result for the shell.

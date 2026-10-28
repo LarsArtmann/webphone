@@ -145,12 +145,20 @@ templ AgentAuditSection(rows []AgentAuditRow, lang Lang) {
 		<ul class="wp-snippet-manage" id="wp-agent-audit-list">
 			for _, row := range rows {
 				<li class="wp-snippet-row">
-					<span class="wp-snippet-body">{ row.label(lang) }{ " · " + row.Outcome }{ " · " + row.Subject }</span>
+					<span class="wp-snippet-body">{ row.line() }</span>
 					<span class="wp-muted">{ formatFor(lang, row.At.Local(), "02.01. 15:04", "Jan 2, 3:04PM") }</span>
 				</li>
 			}
 		</ul>
 	}
+}
+
+func (r AgentAuditRow) line() string {
+	line := r.Actor + " · " + r.Event + " · " + r.Outcome
+	if r.Subject != "" {
+		line += " · " + r.Subject
+	}
+	return line
 }
 
 // PasskeysSection manages the mapped account's passkeys (A2): the

@@ -125,6 +125,11 @@ extension has a mapped account) renders `wp-passkeys-head`,
 `wp-passkeys-list` (the enrolled list with revoke buttons); absent
 markup means the mode is off or the extension has no mapped account.
 
+Settings agent-action history (D5; rows exist OR the textagent seam is
+on) renders `wp-agent-audit-head` and either `wp-agent-audit-empty`
+(no rows yet, seam on) or `wp-agent-audit-list` (the newest audit
+rows); absent markup means the seam is off with no recorded history.
+
 With the mode on, the extension login moves INSIDE a
 `details.passkey-breakglass` disclosure (summary: "Use extension and
 password instead") but keeps its own ids and behavior unchanged.
