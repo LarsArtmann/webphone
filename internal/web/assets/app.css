@@ -2303,6 +2303,22 @@ dialog.wp-lightbox img {
   text-wrap: pretty;
 }
 
+/* Post-call review artifact (issue #8, T13): the AI's assessment under
+ * the transcript — label, draft text, confidence line. */
+.wp-call-review {
+  margin: 0.5rem 0 0.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.wp-call-review .wp-review-text {
+  margin: 0;
+  border-inline-start: 2px solid var(--border);
+  padding-inline-start: 0.6rem;
+  white-space: pre-wrap;
+}
+
 /* Post-call note (M16): one box per transcript row — a textarea the
  * width of the row, the save/prefill mini-buttons trailing. */
 .wp-call-note {
