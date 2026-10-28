@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Composing a NEW conversation now rides the network the address shape names
+  (2026-10-28, chat lane v2): `domain.ParseComposedAddress` detects the two
+  unambiguous chat-network shapes — a Matrix `@localpart:server` and a Session
+  `05…` id — and routes them through the sender registry, everything else
+  staying the sms dialable lane. The compose form's field (placeholder and
+  aria label in both languages) names the Matrix form; the `inputmode="tel"`
+  hint is gone. Signal stays compose-born-inbound by design: its phone-shaped
+  addresses are indistinguishable from sms, so a Signal conversation starts
+  from its inbound message and continues in that thread.
+- Matrix read receipts now advance outbound delivery (2026-10-28, chat lane
+  v2): the sync receiver consumes the room's `m.receipt` ephemera and a
+  peer's `m.read` on the homeserver event id — the sender's provider ref —
+  flips the outbound bubble to delivered through the SAME
+  `messaging.Service.DeliveryReceipt` path a provider webhook takes (verdicts
+  are legal from every state by the delivery machine's own table). Own read
+  echoes are skipped; receipts for events webphone never correlated
+  (inbound messages, other clients) answer `store.ErrNotFound` and are benign.
+  The `chatloop.Sink` contract grew the `RemoteRead` leg — compile-time
+  complete, both receivers' fakes carry it.
 - The federation hub's inventory page now links webphone's wire contracts
   (2026-10-28): the exported eventcatalog service page carries an
   EventCatalog `specifications` block, and `webphone catalog` renders BOTH

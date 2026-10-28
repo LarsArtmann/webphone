@@ -198,6 +198,11 @@ func (s *inSink) Receive(_ context.Context, inbound domain.InboundMessage) (doma
 	return domain.Message{}, nil
 }
 
+// RemoteRead is the Sink's receipt leg: the signal receiver never emits
+// read markers today, so the test fake proves the interface is
+// satisfied without inventing protocol behavior.
+func (*inSink) RemoteRead(context.Context, string) error { return nil }
+
 type inReceipts struct {
 	mu  sync.Mutex
 	got []string

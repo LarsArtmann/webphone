@@ -184,10 +184,11 @@ func TestHomeserverVerdictsClassify(t *testing.T) {
 	}
 }
 
-// sink captures inbound deliveries.
+// sink captures inbound deliveries and read receipts.
 type sink struct {
 	mu       sync.Mutex
 	received []domain.InboundMessage
+	reads    []string
 }
 
 func (s *sink) Receive(_ context.Context, inbound domain.InboundMessage) (domain.Message, error) {
@@ -195,6 +196,13 @@ func (s *sink) Receive(_ context.Context, inbound domain.InboundMessage) (domain
 	defer s.mu.Unlock()
 	s.received = append(s.received, inbound)
 	return domain.Message{}, nil
+}
+
+func (s *sink) RemoteRead(_ context.Context, providerRef string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.reads = append(s.reads, providerRef)
+	return nil
 }
 
 // cursor is an in-memory Cursor.
@@ -263,6 +271,38 @@ func TestIngestDeliversDMTextAndSkipsEncrypted(t *testing.T) {
 	}
 	if in.Owner.String() != "1001" {
 		t.Fatalf("owner wrong: %s", in.Owner)
+	}
+}
+
+func TestIngestTurnsPeerReadReceiptsIntoDeliveryAdvances(t *testing.T) {
+	_, server := newHomeserver(t)
+	c := New(server.URL, "@webphone:example.org", "tok")
+	got := &sink{}
+	r := NewReceiver(c, domain.MustParseExtension("1001"), got, &cursor{}, slog.Default())
+
+	resp := syncResponse{}
+	payload := `{
+		"next_batch": "s2",
+		"account_data": {"events": [
+			{"type": "m.direct", "content": {"@peer:example.org": ["!dm1:example.org"]}}
+		]},
+		"rooms": {"join": {"!dm1:example.org": {"timeline": {"events": []}, "ephemeral": {"events": [
+			{"type": "m.receipt", "content": {
+				"$mine:example.org": {"m.read": {"@peer:example.org": {"ts": 1760000005000}}},
+				"$theirs:example.org": {"m.read": {"@webphone:example.org": {"ts": 1760000006000}}}
+			}}
+		]}}}}
+	}`
+	if err := json.Unmarshal([]byte(payload), &resp); err != nil {
+		t.Fatal(err)
+	}
+	r.ingest(t.Context(), resp)
+
+	if len(got.reads) != 1 || got.reads[0] != "$mine:example.org" {
+		t.Fatalf("exactly the peer's read of our event must advance (self-read skipped), got %v", got.reads)
+	}
+	if len(got.received) != 0 {
+		t.Fatalf("receipts deliver no inbound messages, got %d", len(got.received))
 	}
 }
 
