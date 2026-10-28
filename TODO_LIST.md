@@ -163,11 +163,22 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    `Outcome` IS filled today — the island sends
    `established ? "answered" : "missed"` (panels.js:78 → calls_api.go:108),
    so a voicemail call journals as "answered" in Kith right now.
-2. **Per-remote redial cooldown** (#7): opt-in config (1–4h default when on),
-   persisted (Owner, remote) window in the read-model (restart-proof),
-   inline "dial anyway" chip in the typeahead row (never a modal — the #54
-   lesson), state visible in the row. Verified: no cooldown exists today
-   (typeahead.js suggests only; the history ↻ button dials unconditionally).
+2. **Per-remote redial cooldown** (#7) — SHIPPED 2026-10-28 (seam by the
+   morning dialer train, island + tests + docs completed by the
+   whole-list evening session): `dial.cooldown` (off = byte-identical),
+   readmodels `dial_windows`/`dial_overrides` (restart-proof, backed
+   up), `POST /api/dials` check+record gate (denied asks record
+   NOTHING — a retry loop cannot extend its own window; the verdict
+   carries `last_at` + `window`), one consult in `placeCall` covering
+   EVERY dial path (form submit, redial, click-to-dial), the inline
+   state line + one-shot "Dial anyway" chip under the dial form (never
+   a modal), 404/unreachable dial anyway with the off verdict latched.
+   Pins: dialgate_test.go (3 e2e cases) + dialgate.test.mjs (6).
+   DECLINED for now: a pre-dial cooldown badge in the typeahead ROW
+   would need a peek (read-only) endpoint — the gate's check RECORDS,
+   so typing must never consult it; reopen when an operator asks.
+   (Was: no cooldown exists today — true at the 2026-10-27
+   verification; the morning train landed the seam.)
 3. **AI call review artifact** (#8): UPDATE 2026-10-28 (multi-actor train
    read at HEAD): MOSTLY SHIPPED by the concurrent dialer train — the
    post-call review is AUTOMATIC (`settleEndedCall` dispatches

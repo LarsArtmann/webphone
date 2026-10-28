@@ -67,7 +67,7 @@ func TestDialGateOverrideSpendsOnce(t *testing.T) {
 		return resp
 	}
 
-	post(`{"remote":"+17155550132"}`)                  // allowed, recorded
+	post(`{"remote":"+17155550132"}`) // allowed, recorded
 	if post(`{"remote":"+17155550132"}`).StatusCode != http.StatusOK {
 		t.Fatal("window ask")
 	}

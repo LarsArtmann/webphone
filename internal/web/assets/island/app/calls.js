@@ -1421,10 +1421,6 @@ export function initDialWarm() {
   els.dest.addEventListener("focus", () => warmMic(DIAL_WARM_TTL_MS));
 }
 
-// placeCall returns whether an INVITE actually went out, so the dial
-// form can clear itself ONLY then (a validation error keeps the typed
-// text for editing).
-/** @param {string} raw @returns {Promise<boolean>} */
 // The dial-cooldown chip (issue #7): a denied gate verdict renders
 // INLINE under the dial form — the state line (last call age, remaining
 // window) plus ONE "Dial anyway" chip whose click spends the remote's
@@ -1477,6 +1473,11 @@ function remainingLabel(seconds) {
   return `${Math.ceil(seconds / 3600)}h`;
 }
 
+// placeCall returns whether an INVITE actually went out, so the dial
+// form can clear itself ONLY then (a validation error keeps the typed
+// text for editing). force skips the dial gate (the spent-override
+// re-run).
+/** @param {string} raw @param {{ force?: boolean }} [options] @returns {Promise<boolean>} */
 export async function placeCall(raw, { force = false } = {}) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).

@@ -29,32 +29,32 @@ let gateOff = false;
  * @returns {Promise<DialGateVerdict | null>}
  */
 export async function consultDialGate(remote) {
-	if (gateOff) return null;
-	try {
-		const res = await fetch("/api/dials", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRF-Token": csrfToken(),
-			},
-			body: JSON.stringify({ remote }),
-		});
-		if (res.status === 404) {
-			gateOff = true;
-			return null;
-		}
-		if (!res.ok) {
-			// 502/503: the gate itself failed — dial anyway, but say so.
-			log(`dial gate unavailable (HTTP ${res.status}); dialing anyway`, "warn");
-			return null;
-		}
-		const data = await res.json();
-		if (!data || typeof data.allowed !== "boolean") return null;
-		return data;
-	} catch (err) {
-		log("dial gate unreachable; dialing anyway", "warn");
-		return null;
-	}
+  if (gateOff) return null;
+  try {
+    const res = await fetch("/api/dials", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken(),
+      },
+      body: JSON.stringify({ remote }),
+    });
+    if (res.status === 404) {
+      gateOff = true;
+      return null;
+    }
+    if (!res.ok) {
+      // 502/503: the gate itself failed — dial anyway, but say so.
+      log(`dial gate unavailable (HTTP ${res.status}); dialing anyway`, "warn");
+      return null;
+    }
+    const data = await res.json();
+    if (!data || typeof data.allowed !== "boolean") return null;
+    return data;
+  } catch (err) {
+    log("dial gate unreachable; dialing anyway", "warn");
+    return null;
+  }
 }
 
 /**
@@ -64,30 +64,30 @@ export async function consultDialGate(remote) {
  * @returns {Promise<boolean>}
  */
 export async function overrideDialGate(remote) {
-	try {
-		const res = await fetch("/api/dials", {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRF-Token": csrfToken(),
-			},
-			body: JSON.stringify({ remote, override: true }),
-		});
-		if (!res.ok) return false;
-		const data = await res.json();
-		return Boolean(data && data.allowed);
-	} catch {
-		return false;
-	}
+  try {
+    const res = await fetch("/api/dials", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken(),
+      },
+      body: JSON.stringify({ remote, override: true }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data && data.allowed);
+  } catch {
+    return false;
+  }
 }
 
 // agoLabel phrases a past unix stamp the draftAge way — neutral labels
 // ("now", "47m", "2h") so the line reads identically in both languages.
 /** @param {number} unixSeconds @returns {string} */
 export function agoLabel(unixSeconds) {
-	const seconds = Math.max(0, Date.now() / 1000 - unixSeconds);
-	if (seconds < 60) return "now";
-	if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-	if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-	return `${Math.floor(seconds / 86400)}d`;
+  const seconds = Math.max(0, Date.now() / 1000 - unixSeconds);
+  if (seconds < 60) return "now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
 }

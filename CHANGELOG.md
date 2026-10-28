@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Per-remote redial cooldown, advisory with a one-shot override
+  (issue #7, 2026-10-28): `dial.cooldown` (a duration, off by default
+  = byte-identical product) arms a per-(extension, remote) window in
+  readmodels (`dial_windows` + `dial_overrides`, restart-proof, rides
+  the backup set). Every dial path funnels through one pre-invite ask
+  (`POST /api/dials`): allowed records the attempt; a remote inside its
+  window is denied — nothing recorded, a retry loop cannot extend the
+  window it fights — and the island renders the state INLINE (last
+  call age + time left) with a "Dial anyway" chip whose click spends
+  the remote's one-shot override server-side, never a modal. The gate
+  advises, it never traps: 404 (off), a store failure, or an
+  unreachable server all dial anyway, and the off verdict is latched
+  for the page's life. Denied verdicts carry `last_at` + `window` so
+  the phrasing needs no guessing.
 - Line switcher for mapped multi-line users (D1, 2026-10-28): the
   session identity now carries every extension mapped to the signed-in
   user (`extensions`), and more than one renders a JS-created select

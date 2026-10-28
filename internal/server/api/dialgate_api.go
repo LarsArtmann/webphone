@@ -27,8 +27,8 @@ type DialGateRequest struct {
 // brandid-lint:ignore(BD003) wire DTO: the remote rides the request, the stamp is the slot's last attempt (strong-id wire ruling)
 type DialGateResponse struct {
 	Allowed bool  `description:"True when the dial may proceed (the attempt is recorded)." json:"allowed"`
-	LastAt   int64 `description:"Unix seconds of the slot's last allowed dial (denied asks only)." json:"last_at,omitempty"`
-	Window   int64 `description:"The configured cooldown window in seconds (denied asks only; powers the remaining-wait phrasing)." json:"window,omitempty"`
+	LastAt  int64 `description:"Unix seconds of the slot's last allowed dial (denied asks only)." json:"last_at,omitempty"`
+	Window  int64 `description:"The configured cooldown window in seconds (denied asks only; powers the remaining-wait phrasing)." json:"window,omitempty"`
 }
 
 // DialGate is the advisory pre-invite gate (issue #7): one
