@@ -346,6 +346,18 @@ func (s *Service) DeliveryReceipt(
 	return msg, nil
 }
 
+// RemoteRead applies a peer's read marker to the outbound message the
+// provider ref names (chatloop.Sink's receipt leg): a read is the
+// strongest delivery verdict the network offers, so the bubble flips to
+// delivered through the SAME DeliveryReceipt path a provider webhook
+// takes. Receipts also arrive for events webphone never correlated, so
+// store.ErrNotFound answers verbatim for the receiver to treat as
+// benign.
+func (s *Service) RemoteRead(ctx context.Context, providerRef string) error {
+	_, err := s.DeliveryReceipt(ctx, providerRef, domain.StatusDelivered, "")
+	return err
+}
+
 // selfSendRejection applies the telephony self-send guard to an sms
 // destination (see gateway.SelfSendRejection); every other network
 // returns nil by construction.

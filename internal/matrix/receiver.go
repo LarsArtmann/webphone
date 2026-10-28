@@ -2,6 +2,8 @@ package matrix
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/store"
 )
 
 // syncResponse is the slice of GET /sync this seam consumes: the
@@ -34,6 +37,26 @@ type roomSync struct {
 	Timeline struct {
 		Events []roomEvent `json:"events"`
 	} `json:"timeline"`
+	// Ephemeral carries the room's read receipts (m.receipt): the
+	// peer's m.read marker on OUR event id is the outbound message's
+	// strongest delivery verdict (lane v2).
+	Ephemeral struct {
+		Events []ephemeralEvent `json:"events"`
+	} `json:"ephemeral"`
+}
+
+// ephemeralEvent is one room-ephemeral event; only m.receipt is
+// consumed, so the content stays raw until the type is known.
+type ephemeralEvent struct {
+	Type    string          `json:"type"`
+	Content json.RawMessage `json:"content"`
+}
+
+// receiptContent is m.receipt's nested map: event id → receipt type →
+// reader → metadata. Only the reader KEYS matter (self-reads are
+// skipped); the ts is parsed for shape honesty and unused.
+type receiptContent map[string]map[string]map[string]struct {
+	TS int64 `json:"ts"`
 }
 
 // brandid-lint:ignore(BD003) homeserver wire shape: matrix event ids are foreign tokens (strong-id wire ruling)
@@ -189,6 +212,42 @@ func (r *Receiver) ingest(ctx context.Context, resp syncResponse) {
 				continue
 			}
 			r.ingestEvent(ctx, peer, ev)
+		}
+		if isDM {
+			r.ingestReceipts(ctx, joined.Ephemeral.Events)
+		}
+	}
+}
+
+// ingestReceipts turns m.receipt ephemera into outbound delivery
+// advances: a peer's m.read on an event id names OUR message in that
+// room (the sender records the homeserver event id as provider_ref),
+// so the receipt is a Delivered verdict through the same machine a
+// provider webhook rides. Receipts for events webphone never
+// correlated (inbound messages, other clients' history) answer
+// store.ErrNotFound and are benign by construction.
+func (r *Receiver) ingestReceipts(ctx context.Context, events []ephemeralEvent) {
+	for _, ev := range events {
+		if ev.Type != "m.receipt" {
+			continue
+		}
+		var content receiptContent
+		if err := json.Unmarshal(ev.Content, &content); err != nil {
+			r.log.Warn("matrix: unreadable m.receipt content", "error", err)
+			continue
+		}
+		for eventID, byType := range content {
+			for reader := range byType["m.read"] {
+				if reader == r.client.userID {
+					continue // our own read echo is not a delivery fact
+				}
+				if err := r.sink.RemoteRead(ctx, eventID); err != nil {
+					if errors.Is(err, store.ErrNotFound) {
+						continue
+					}
+					r.log.Warn("matrix: apply read receipt", "event", eventID, "error", err)
+				}
+			}
 		}
 	}
 }

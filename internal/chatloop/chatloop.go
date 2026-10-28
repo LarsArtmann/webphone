@@ -19,6 +19,13 @@ import (
 // a copy of it.
 type Sink interface {
 	Receive(ctx context.Context, inbound domain.InboundMessage) (domain.Message, error)
+
+	// RemoteRead advances the outbound message the provider ref names to
+	// delivered: a peer's read marker (Matrix m.read) is the strongest
+	// delivery fact the network offers, so it rides the SAME delivery
+	// machine as provider verdicts. An uncorrelated ref answers
+	// store.ErrNotFound for the receiver to treat as benign.
+	RemoteRead(ctx context.Context, providerRef string) error
 }
 
 // Sleep waits d or until ctx ends; false means ctx ended first. The
