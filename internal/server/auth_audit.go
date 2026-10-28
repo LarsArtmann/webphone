@@ -16,8 +16,14 @@ func authAudit(event string, key, value, outcome string) {
 // agentAudit is the agent-action branch of the same audit trail (M18):
 // one greppable slog line per drafts-panel action (approve, discard,
 // mode pin/reset — every path that changes what the agent may send or
-// HAS sent) with the actor extension, the draft id when the action
+// HAS sent) with the acting extension, the draft id when the action
 // names one, and the outcome. Identifiers only, like authAudit.
+//
+// The multi-user substrate (2026-10-28): actorEmail names the HUMAN
+// behind a passwordless session — with two people sharing one
+// extension, the extension attr alone cannot say who approved. Empty
+// (the classic extension login) keeps the historical line shape
+// byte-identical; the actor attr only appears when there is one.
 //
 // Durable-journal decision (F107): the usermgmt auth-audit journal is
 // the IDENTITY layer's store — agent approvals are not auth events, and
@@ -26,10 +32,15 @@ func authAudit(event string, key, value, outcome string) {
 // home (journald persists it with the rest of the unit's log); a
 // durable read model becomes worth building only when an operator needs
 // in-UI history — the trigger is recorded in the plan errata.
-func agentAudit(event, actor, draftID, outcome string) {
-	if draftID != "" {
-		slog.Info("agent "+event, "extension", actor, "draft", draftID, "outcome", outcome)
-		return
+func agentAudit(event, actorEmail, extension, draftID, outcome string) {
+	attrs := make([]any, 0, 8)
+	attrs = append(attrs, "extension", extension)
+	if actorEmail != "" && actorEmail != extension {
+		attrs = append(attrs, "actor", actorEmail)
 	}
-	slog.Info("agent "+event, "extension", actor, "outcome", outcome)
+	if draftID != "" {
+		attrs = append(attrs, "draft", draftID)
+	}
+	attrs = append(attrs, "outcome", outcome)
+	slog.Info("agent "+event, attrs...)
 }

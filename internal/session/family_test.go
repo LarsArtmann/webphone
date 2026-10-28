@@ -48,7 +48,7 @@ func TestSessionStoreFailuresAreInfrastructure(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.Create(domain.MustParseExtension("1001"), "pw"); err == nil {
+	if _, err := s.Create(domain.MustParseExtension("1001"), "pw", ""); err == nil {
 		t.Fatal("Create on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)

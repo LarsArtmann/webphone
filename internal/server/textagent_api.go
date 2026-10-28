@@ -148,13 +148,13 @@ func (h *handlers) textAgentPanelAction(
 	if err := action(ctx); err != nil {
 		status, detail := textAgentActionError(err)
 		if auditEvent != "" {
-			agentAudit(auditEvent, sess.Extension.String(), r.PathValue("id"), "failed")
+			agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), "failed")
 		}
 		h.renderPanelError(w, r, sess, views.TabMessages, status, h.T(r, key)+": "+detail)
 		return
 	}
 	if auditEvent != "" {
-		agentAudit(auditEvent, sess.Extension.String(), r.PathValue("id"), "ok")
+		agentAudit(auditEvent, sess.LoginEmail, sess.Extension.String(), r.PathValue("id"), "ok")
 	}
 	if toastKey != "" {
 		notifyToast(w, "ok", h.T(r, toastKey))

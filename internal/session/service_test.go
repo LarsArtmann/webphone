@@ -44,7 +44,7 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 	store := NewMemStore(50 * time.Millisecond)
 	store.now = clk.Now
 
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 
 	// The map still holds the dead entry (expiry is lazy until here);
 	// the next Create sweeps it.
-	if _, err := store.Create(ext, "pw"); err != nil {
+	if _, err := store.Create(ext, "pw", ""); err != nil {
 		t.Fatal(err)
 	}
 	store.mu.Lock()
@@ -71,7 +71,7 @@ func TestSessionTTLExpiryAndSweep(t *testing.T) {
 	}
 
 	// A young session survives a sweep that ran in the same window.
-	token2, err := store.Create(ext, "pw")
+	token2, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,7 +217,7 @@ func TestMemStoreRenew(t *testing.T) {
 	ext := testExtension(t)
 	store := NewMemStore(time.Hour)
 
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,7 +273,7 @@ func TestAttachSlidesAndReIssuesCookie(t *testing.T) {
 	store := NewMemStore(time.Hour)
 	lifetime := Lifetime{Idle: time.Hour, Max: 30 * 24 * time.Hour}
 
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,7 +317,7 @@ func TestAttachSlidesAndReIssuesCookie(t *testing.T) {
 func TestAttachWithoutLifetimeDisablesRenewal(t *testing.T) {
 	ext := testExtension(t)
 	store := NewMemStore(time.Hour)
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -343,7 +343,7 @@ func TestAttachWithoutLifetimeDisablesRenewal(t *testing.T) {
 func TestRequireSlides(t *testing.T) {
 	ext := testExtension(t)
 	store := NewMemStore(time.Hour)
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -371,11 +371,11 @@ func TestMemStoreActiveTokensListsLiveOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := NewMemStore(time.Hour)
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Create(other, "pw"); err != nil {
+	if _, err := store.Create(other, "pw", ""); err != nil {
 		t.Fatal(err)
 	}
 	got := store.ActiveTokens(ext)

@@ -116,7 +116,10 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	if !h.verifyDirectoryCredentials(w, r, extension, password) {
 		return
 	}
-	token, err := h.mintSession(w, r, extension, password)
+	// The session remembers WHO minted it (the multi-user substrate):
+	// the audit lanes read this back on every later action — the
+	// extension alone cannot distinguish two humans on a shared line.
+	token, err := h.mintSession(w, r, extension, password, mapped.Email)
 	if err != nil {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
@@ -128,7 +131,7 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 	// posture as the resume endpoint — the credential stays out of every
 	// cache.
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(r.Context(), extension)
+	response := h.sessionIdentityResponse(r.Context(), extension, mapped.Email)
 	if h.deps.Config.SIP.DerivedCredentials() {
 		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
 	} else {

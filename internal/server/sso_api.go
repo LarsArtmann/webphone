@@ -106,7 +106,9 @@ func (h *handlers) ssoCallback(w http.ResponseWriter, r *http.Request) {
 	if !h.verifyDirectoryCredentials(w, r, extension, password) {
 		return
 	}
-	if _, err := h.mintSession(w, r, extension, password); err != nil {
+	// The session remembers WHO minted it (the multi-user substrate):
+	// passkey and OIDC logins carry the same identity field.
+	if _, err := h.mintSession(w, r, extension, password, mapped.Email); err != nil {
 		slog.Error("webphone: oidc session mint failed", "error", err, "extension", extension.String())
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return

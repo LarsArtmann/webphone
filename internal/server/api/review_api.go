@@ -88,7 +88,7 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 
 	jobCtx := context.WithoutCancel(r.Context())
 	h.recordReviewArtifact(sess.Extension, callID, domain.ReviewPending, "", "", "", 0)
-	go h.runReviewJob(jobCtx, sess.Extension, callID, transcript.Remote, strings.Join(transcript.Lines, "\n"), idemKey)
+	go h.runReviewJob(jobCtx, sess.Extension, sess.LoginEmail, callID, transcript.Remote, strings.Join(transcript.Lines, "\n"), idemKey)
 	w.WriteHeader(http.StatusAccepted)
 	writeJSONBody(w, ReviewDispatchResponse{Dispatched: true})
 }
@@ -107,15 +107,18 @@ func answerReviewDuplicate(w http.ResponseWriter) {
 // runReviewJob is the detached automatic review: draft from the
 // transcript exactly like the manual button's synchronous path (ONE
 // drafting path — the job adds no second vocabulary), then record idem
-// and fan the draft-ready push. Every exit releases the in-flight slot;
-// a panic is contained (the goroutine doctrine) and audited as failed.
-func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, callID, remote, text, idemKey string) {
+// and fan the draft-ready push. actorEmail is the dispatching session's
+// login identity (multi-user substrate) — the audit line names the human
+// who triggered the review, not just their line. Every exit releases
+// the in-flight slot; a panic is contained (the goroutine doctrine) and
+// audited as failed.
+func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, actorEmail, callID, remote, text, idemKey string) {
 	defer h.reviewInFlight.Delete(idemKey)
 	defer func() {
 		if rec := recover(); rec != nil {
 			slog.Error("review: job PANIC recovered; goroutine contained, process survives",
 				"panic", rec, "call", callID, "extension", owner.String())
-			h.deps.Server.AuditAgent("auto_review", owner.String(), callID, "failed")
+			h.deps.Server.AuditAgent("auto_review", actorEmail, owner.String(), callID, "failed")
 		}
 	}()
 	ctx, cancel := context.WithTimeout(ctx, summaryDraftTimeout)
@@ -132,14 +135,14 @@ func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, cal
 			wrapped := errorfamily.WrapTransientf(err, "agent.summarize", "automatic summarize call %s", callID)
 			slog.Warn("review: agent unreachable for the automatic draft", "error", wrapped, "extension", owner.String())
 		}
-		h.deps.Server.AuditAgent("auto_review", owner.String(), callID, outcome)
+		h.deps.Server.AuditAgent("auto_review", actorEmail, owner.String(), callID, outcome)
 		h.recordReviewArtifact(owner, callID, domain.ReviewFailed, "", "", "", 0)
 		return
 	}
 
 	h.recordSummaryIdem(idemKey)
 	h.recordReviewArtifact(owner, callID, domain.ReviewPresent, draft.ID, draft.Text, draft.Language, draft.Confidence)
-	h.deps.Server.AuditAgent("auto_review", owner.String(), draft.ID, "ok")
+	h.deps.Server.AuditAgent("auto_review", actorEmail, owner.String(), draft.ID, "ok")
 	h.notifyDraftReady(ctx, owner, draft.ID, remote) //nolint:branching-flow // contact display string: the agent's echo of the call remote, not a domain Phone
 }
 

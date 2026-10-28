@@ -45,7 +45,7 @@ func TestSQLiteSessionStoreSurvivesRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token, err := store1.Create(ext, "dir-pw")
+	token, err := store1.Create(ext, "dir-pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestSQLiteSessionTTLExpiryAndSweep(t *testing.T) {
 	}
 	store.now = clk.Now
 
-	dying, err := store.Create(ext, "pw")
+	dying, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func TestSQLiteSessionTTLExpiryAndSweep(t *testing.T) {
 	}
 
 	// A session minted after the sweep is untouched by the earlier expiry.
-	fresh, err := store.Create(ext, "pw")
+	fresh, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,12 +135,12 @@ func TestSQLiteSessionSweepOnCreate(t *testing.T) {
 	}
 	store.now = clk.Now
 
-	stale, err := store.Create(ext, "pw")
+	stale, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
 	clk.Advance(60 * time.Millisecond)
-	if _, err := store.Create(ext, "pw"); err != nil {
+	if _, err := store.Create(ext, "pw", ""); err != nil {
 		t.Fatal(err)
 	}
 	var count int
@@ -160,7 +160,7 @@ func TestSQLiteSessionDeleteLogout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestSQLiteSessionRenewExtendsAndCaps(t *testing.T) {
 	const idle = time.Hour
 	const maxAge = 30 * 24 * time.Hour
 
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -291,14 +291,14 @@ func TestSQLiteActiveTokensListsLiveOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token, err := store.Create(ext, "pw")
+	token, err := store.Create(ext, "pw", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Create(ext, "pw"); err != nil {
+	if _, err := store.Create(ext, "pw", ""); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Create(other, "pw"); err != nil {
+	if _, err := store.Create(other, "pw", ""); err != nil {
 		t.Fatal(err)
 	}
 	got := store.ActiveTokens(ext)

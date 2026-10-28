@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-error-family"
@@ -29,9 +30,19 @@ const sessionsSchema = `CREATE TABLE IF NOT EXISTS sessions (
 	token      TEXT PRIMARY KEY,
 	extension  TEXT NOT NULL,
 	password   TEXT NOT NULL,
+	login_email TEXT NOT NULL DEFAULT '',
 	created_at INTEGER NOT NULL,
 	expires_at INTEGER NOT NULL
 )`
+
+// sessionsLoginEmailColumn upgrades pre-identity tables (the multi-user
+// substrate, 2026-10-28): existing rows keep the empty default, which
+// reads as "classic extension login" — exactly the actor they had. The
+// sessions table lives outside the store/db.go migration ladder (this
+// package owns its schema with IF NOT EXISTS DDL at open), so the column
+// upgrade follows the same self-contained, idempotent pattern: a guarded
+// ALTER whose "duplicate column" failure is the already-migrated verdict.
+const sessionsLoginEmailColumn = `ALTER TABLE sessions ADD COLUMN login_email TEXT NOT NULL DEFAULT ''`
 
 const sessionsExpiryIndex = `CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at)`
 
@@ -53,14 +64,19 @@ func NewSQLiteStore(db *sql.DB, ttl time.Duration) (*SQLiteStore, error) {
 			return nil, errorfamily.WrapInfrastructuref(err, "session.migrate", "migrate sessions")
 		}
 	}
+	if _, err := db.Exec(sessionsLoginEmailColumn); err != nil {
+		if !strings.Contains(err.Error(), "duplicate column") {
+			return nil, errorfamily.WrapInfrastructuref(err, "session.migrate_login_email", "add sessions.login_email")
+		}
+	}
 	return &SQLiteStore{db: db, ttl: ttl, now: time.Now}, nil
 }
 
 // Create mints a session row and returns its token. Expired rows are
 // swept alongside, so restarts across long downtimes cannot accumulate
 // corpses.
-func (s *SQLiteStore) Create(extension domain.Extension, password string) (Token, error) {
-	token, sess, err := makeSession(extension, password, s.ttl, s.now)
+func (s *SQLiteStore) Create(extension domain.Extension, password, loginEmail string) (Token, error) {
+	token, sess, err := makeSession(extension, password, loginEmail, s.ttl, s.now)
 	if err != nil {
 		return Token{}, err
 	}
@@ -72,9 +88,9 @@ func (s *SQLiteStore) Create(extension domain.Extension, password string) (Token
 		return Token{}, errorfamily.WrapInfrastructuref(err, "session.sweep", "sweep sessions")
 	}
 	if _, err := s.db.Exec(
-		`INSERT INTO sessions (token, extension, password, created_at, expires_at)
-		 VALUES (?, ?, ?, ?, ?)`,
-		token.String(), extension.String(), password, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
+		`INSERT INTO sessions (token, extension, password, login_email, created_at, expires_at)
+			 VALUES (?, ?, ?, ?, ?, ?)`,
+		token.String(), extension.String(), password, sess.LoginEmail, now.UnixMilli(), sess.ExpiresAt.UnixMilli(),
 	); err != nil {
 		return Token{}, errorfamily.WrapInfrastructuref(err, "session.insert", "insert session")
 	}
@@ -86,13 +102,13 @@ func (s *SQLiteStore) Create(extension domain.Extension, password string) (Token
 // resurrect on the first read after boot).
 func (s *SQLiteStore) Get(token Token) (Session, bool) {
 	var (
-		extension, password string
-		created, expires    int64
+		extension, password, loginEmail string
+		created, expires                int64
 	)
 	err := s.db.QueryRow(
-		`SELECT extension, password, created_at, expires_at
-		 FROM sessions WHERE token = ?`, token.String(),
-	).Scan(&extension, &password, &created, &expires)
+		`SELECT extension, password, login_email, created_at, expires_at
+			 FROM sessions WHERE token = ?`, token.String(),
+	).Scan(&extension, &password, &loginEmail, &created, &expires)
 	if err != nil {
 		// Auth stays fail-closed on ANY error, but a driver failure
 		// (locked/busy/degraded box) is NOT "unknown token": swallow it
@@ -104,10 +120,11 @@ func (s *SQLiteStore) Get(token Token) (Session, bool) {
 		return Session{}, false
 	}
 	sess := Session{
-		Extension: domain.MustParseExtension(extension),
-		Password:  password,
-		CreatedAt: time.UnixMilli(created),
-		ExpiresAt: time.UnixMilli(expires),
+		Extension:  domain.MustParseExtension(extension),
+		Password:   password,
+		LoginEmail: loginEmail,
+		CreatedAt:  time.UnixMilli(created),
+		ExpiresAt:  time.UnixMilli(expires),
 	}
 	if !s.now().Before(sess.ExpiresAt) {
 		_, _ = s.db.Exec(`DELETE FROM sessions WHERE token = ?`, token.String()) //nolint:erraudit // best-effort hygiene; the read verdict above already returned dead

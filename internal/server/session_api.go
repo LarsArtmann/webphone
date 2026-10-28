@@ -62,12 +62,15 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	if !h.verifyDirectoryCredentials(w, r, extension, body.Password) {
 		return
 	}
-	token, err := h.mintSession(w, r, extension, body.Password)
+	// The classic extension login has no identity beyond the extension
+	// itself: the session's LoginEmail stays empty (byte-parity with
+	// every pre-identity session row).
+	token, err := h.mintSession(w, r, extension, body.Password, "")
 	if err != nil {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	response := h.sessionIdentityResponse(r.Context(), extension)
+	response := h.sessionIdentityResponse(r.Context(), extension, "")
 	// Derived mode: the 201 answer carries the session-derived REGISTER
 	// credential (never the typed password); the browser registers with
 	// it. no-store keeps it out of every cache.
@@ -120,8 +123,8 @@ func (h *handlers) verifyDirectoryCredentials(w http.ResponseWriter, r *http.Req
 // token via GET /api/csrf — the no-reload login needs that adoption
 // step because the served page carries the old masked token. Returns
 // the minted token (the derived-credential input).
-func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password string) (session.Token, error) {
-	token, err := h.deps.Sessions.Create(extension, password)
+func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension domain.Extension, password, loginEmail string) (session.Token, error) {
+	token, err := h.deps.Sessions.Create(extension, password, loginEmail)
 	if err != nil {
 		return session.Token{}, err //nolint:wrapcheck // classified by the store seam; the caller answers 500
 	}
@@ -158,11 +161,16 @@ type sessionIdentity struct {
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
 // session tells the client about itself (see sessionIdentity).
-func (h *handlers) sessionIdentityResponse(ctx context.Context, extension domain.Extension) sessionIdentity {
+// loginEmail is the session's authenticated identity when it has one
+// (passkey/OIDC): the whoami resolution prefers THAT user — on a shared
+// extension the session must name its own human, not a map-order guess
+// (the MappedByExtension fallback stays deterministic but cannot know
+// which person is signed in). Empty = the classic extension login.
+func (h *handlers) sessionIdentityResponse(ctx context.Context, extension domain.Extension, loginEmail string) sessionIdentity {
 	response := sessionIdentity{Extension: extension.String()}
 	response.DID = h.identityFor(extension)
 	if h.deps.UserAuth != nil {
-		if mapped, ok := h.deps.UserAuth.MappedByExtension(extension); ok {
+		if mapped, ok := h.deps.UserAuth.MappedByLogin(extension, loginEmail); ok {
 			response.DisplayName = mapped.DisplayName
 			response.Numbers = h.numbersFor(mapped)
 		}
@@ -224,7 +232,7 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(r.Context(), sess.Extension)
+	response := h.sessionIdentityResponse(r.Context(), sess.Extension, sess.LoginEmail)
 	// Credential policy (see sessionIdentity): derived mode answers the
 	// session-derived REGISTER credential — the directory password never
 	// reaches the browser — while legacy mode keeps the historical
@@ -240,7 +248,13 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 // destroySession signs the tab session out (island logout).
 func (h *handlers) destroySession(w http.ResponseWriter, r *http.Request) {
 	if sess, ok := h.deps.Sessions.Get(session.TokenFromRequest(r)); ok {
-		authAudit("logout", "extension", sess.Extension.String(), "ok")
+		// The logout line names the HUMAN when the session has one
+		// (passkey/OIDC) — same identity-event parity as the login lines.
+		if sess.LoginEmail != "" {
+			authAudit("logout", "email", sess.LoginEmail, "ok")
+		} else {
+			authAudit("logout", "extension", sess.Extension.String(), "ok")
+		}
 	}
 	h.deps.Sessions.Delete(session.TokenFromRequest(r))
 	session.ClearCookie(w, h.cookies)

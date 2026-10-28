@@ -41,8 +41,10 @@ type Server interface {
 	NotifyContactsChanged(extension domain.Extension)
 	// AuditAgent writes one greppable agent-action audit line (the
 	// ONE home of the vocabulary is the server's agentAudit; the JSON
-	// lane reaches it through this seam).
-	AuditAgent(event, actor, draftID, outcome string)
+	// lane reaches it through this seam). actorEmail carries the
+	// session's login identity when it has one (multi-user substrate);
+	// extension always rides its own attr.
+	AuditAgent(event, actorEmail, extension, draftID, outcome string)
 }
 
 // Deps are the seams the JSON endpoints ride on, wired by
