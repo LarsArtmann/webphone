@@ -397,6 +397,18 @@ button.small {
   font-variant-numeric: tabular-nums;
 }
 
+/* Line switcher (D1): JS-created next to the whoami line for mapped
+   multi-line users only. */
+.whoami .wp-ext-switch {
+  margin-left: 8px;
+  font-size: 0.8rem;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1px 4px;
+}
+
 /* Audio output picker: hidden by default, unhidden by audioout.js only
    when setSinkId exists and more than one physical output was found. */
 .audio-out {

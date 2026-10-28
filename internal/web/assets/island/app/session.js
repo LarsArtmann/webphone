@@ -16,6 +16,7 @@
 import { t } from "./i18n.js";
 import { announce, errorMessage, log } from "./ui.js";
 import { csrfToken } from "./csrf.js";
+import { sessions, viewStateOf } from "./state.js";
 
 /**
  * @param {string} extension
@@ -302,5 +303,91 @@ async function adoptFreshCsrfToken() {
       "hx-headers",
       JSON.stringify({ "X-CSRF-Token": data.token }),
     );
+  }
+}
+
+// --- line switcher (D1) -----------------------------------------------------
+
+// hasLiveCall answers whether any call is still on the line (ringing,
+// active, held — anything but ended): the switch reloads the page, and
+// a reload must never silently drop a call. It reads the shared state
+// table (state.js) — session.js must not import the call modules.
+/** @returns {boolean} */
+function hasLiveCall() {
+  for (const entry of sessions.values()) {
+    if (viewStateOf(entry) !== "ended") return true;
+  }
+  return false;
+}
+
+// renderLineSwitcher draws the whoami line's switcher when the session's
+// user maps to MORE THAN ONE extension (the identity's extensions list;
+// single-line and extension logins render nothing — the served markup
+// stays untouched). Selecting another line POSTs /api/session/switch and
+// reloads: the boot probe then re-registers, resubscribes and re-renders
+// every surface for the new line — one boot path, no half-switched
+// state. Failures announce and reset the select; a live call blocks the
+// switch outright (the reload would tear it down).
+/** @param {IslandSessionIdentity} data */
+export function renderLineSwitcher(data) {
+  const whoami = document.querySelector(".whoami");
+  if (!whoami) return;
+  document.getElementById("wp-ext-switch")?.remove();
+  const extensions = Array.isArray(data.extensions)
+    ? data.extensions.filter(Boolean)
+    : [];
+  if (extensions.length < 2) return;
+  const select = document.createElement("select");
+  select.id = "wp-ext-switch";
+  select.className = "wp-ext-switch";
+  select.setAttribute("aria-label", t("lineSwitchLabel"));
+  select.title = t("lineSwitchLabel");
+  for (const extension of extensions) {
+    const option = document.createElement("option");
+    option.value = extension;
+    option.textContent = extension;
+    if (extension === data.extension) option.selected = true;
+    select.append(option);
+  }
+  select.addEventListener("change", () => {
+    const target = select.value;
+    if (!target || target === data.extension) return;
+    if (hasLiveCall()) {
+      announce(t("switchBlockedByCall"), "warn");
+      select.value = data.extension;
+      return;
+    }
+    switchLine(target, data.extension, select);
+  });
+  whoami.append(select);
+}
+
+/** @param {string} target @param {string} current @param {{ value: string }} select */
+async function switchLine(target, current, select) {
+  try {
+    const res = await fetch("/api/session/switch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken(),
+      },
+      body: JSON.stringify({ extension: target }),
+    });
+    if (!res.ok) {
+      announce(t("switchFailed")(res.status), "warn");
+      select.value = current;
+      log(`line switch failed (HTTP ${res.status})`, "error");
+      return;
+    }
+    log(`line switched ${current} -> ${target}; reloading`);
+    announce(t("switchDone")(target), "ok");
+    // The switch rotated the CSRF cookie and killed the old session
+    // row; the reload re-runs the boot probe against the NEW cookie —
+    // registration, SSE and every panel follow from that one path.
+    window.location.reload();
+  } catch (err) {
+    announce(t("switchFailed")(errorMessage(err)), "warn");
+    select.value = current;
+    log(`line switch failed (${errorMessage(err)})`, "error");
   }
 }

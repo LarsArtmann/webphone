@@ -165,6 +165,10 @@ export const I18N = {
       `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
     sessionNetFailed:
       "Could not reach the server for tab sign-in — calls keep working.",
+    lineSwitchLabel: "Line",
+    switchBlockedByCall: "End the call before switching lines.",
+    switchFailed: (status) => `Could not switch lines (HTTP ${status}).`,
+    switchDone: (line) => `Switched to line ${line}.`,
     sseDropped:
       "Live tab updates lost — check the connection; calls keep working.",
     sseRestored: "Live tab updates restored.",
@@ -373,6 +377,12 @@ export const I18N = {
       `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
     sessionNetFailed:
       "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
+    lineSwitchLabel: "Nebenstelle",
+    switchBlockedByCall:
+      "Anruf beenden, bevor die Nebenstelle gewechselt wird.",
+    switchFailed: (status) =>
+      `Nebenstellen-Wechsel fehlgeschlagen (HTTP ${status}).`,
+    switchDone: (line) => `Auf Nebenstelle ${line} gewechselt.`,
     sseDropped:
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
     sseRestored: "Live-Aktualisierungen wiederhergestellt.",

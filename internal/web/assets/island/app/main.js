@@ -35,6 +35,7 @@ import {
   destroySession,
   fetchLiveSession,
   initSseLiveIndicator,
+  renderLineSwitcher,
   signOutQuiet,
 } from "./session.js";
 import { initShortcuts } from "./shortcuts.js";
@@ -137,6 +138,9 @@ async function resumeSession() {
   // session carries display_name/numbers; an extension session keeps
   // the plain ext@sipDomain line) — one renderer for both.
   els.whoami.textContent = whoamiLine(session);
+  // The line switcher renders only for a multi-line mapped user (D1);
+  // single-line and extension sessions render nothing.
+  renderLineSwitcher(session);
   els.loginView.hidden = true;
   els.phoneView.hidden = false;
   connectLiveUpdates();

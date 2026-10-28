@@ -137,6 +137,10 @@ interface IslandSessionIdentity {
   did?: string;
   display_name?: string;
   numbers?: string[];
+  /** Every extension mapped to the signed-in user (mapped logins only);
+   * more than one renders the line switcher. The switch endpoint
+   * re-validates membership server-side — this list is a suggestion. */
+  extensions?: string[];
   password?: string;
   sip_credential?: string;
   agent_mode?: string;
