@@ -51,6 +51,7 @@ type Engine struct {
 	calls    *Transcripts
 	notes    *Notes
 	reviews  *Reviews
+	dials    *DialWindows
 	enroll   *EnrollTokens
 	devices  *PushDevices
 	db       *sql.DB
@@ -82,7 +83,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close()
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, enrollTokensQuery, pushDevicesQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, enrollTokensQuery, pushDevicesQuery)
 	if err != nil {
 		_ = db.Close()
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -98,6 +99,7 @@ func Open(dataDir string) (*Engine, error) {
 		calls:    newTranscripts(models, agg),
 		notes:    newNotes(models),
 		reviews:  newReviews(models),
+		dials:    newDialWindows(models),
 		enroll:   newEnrollTokens(models),
 		devices:  newPushDevices(models),
 		db:       db,
@@ -137,6 +139,10 @@ func (e *Engine) Notes() *Notes { return e.notes }
 // Reviews returns the engine-backed post-call-review store (issue #8:
 // the automatic review's durable artifact slot).
 func (e *Engine) Reviews() *Reviews { return e.reviews }
+
+// DialWindows returns the engine-backed dial-cooldown store (issue #7:
+// the (owner, remote) window plus one-shot overrides).
+func (e *Engine) DialWindows() *DialWindows { return e.dials }
 
 // EnrollTokens returns the engine-backed enrollment-token store (the
 // userauth SQL table's replacement; token classification stays in the

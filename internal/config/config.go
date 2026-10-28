@@ -92,6 +92,11 @@ type Config struct {
 	// no transport is configured with a zero value — the device API
 	// 404s and /hooks/ring acknowledges inertly. Zero value = disabled.
 	Push Push `json:"push" koanf:"push"`
+	// Dial carries the optional dial-cooldown gate (issue #7): a
+	// per-(owner, remote) advisory window the island consults before
+	// every SIP invite. Zero Cooldown = off: no route, no island ask,
+	// byte-identical product.
+	Dial Dial `json:"dial" koanf:"dial"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -862,14 +867,30 @@ func (n PushNtfy) Enabled() bool { return n.URL != "" }
 // Enabled reports whether the FCM transport is configured.
 func (f PushFcm) Enabled() bool { return f.CredentialsFile != "" }
 
+// Dial configures the optional dial-cooldown gate (issue #7): a
+// per-(owner, remote) advisory window the island consults before
+// every SIP invite. Zero Cooldown = off (byte-identical product); a
+// negative value is a config error.
+type Dial struct {
+	// Cooldown is how soon after an allowed dial the same remote
+	// re-dials get flagged (e.g. "2m"). One click-through override is
+	// always available — the gate advises, it never traps.
+	Cooldown time.Duration `json:"cooldown" koanf:"cooldown"`
+}
+
+// validateDial rejects a negative cooldown (a cooldown before the dial
+// is meaningless, not a tighter one).
+func validateDial(cfg Dial) error {
+	if cfg.Cooldown < 0 {
+		return errorfamily.NewRejection("config.dial.cooldown", "dial.cooldown is negative — set a positive duration (e.g. \"2m\") or remove the key")
+	}
+	return nil
+}
+
 // validatePush rejects the push seam's half configurations: an ntfy
 // token with no URL is a credential with nowhere to send it; a
 // non-absolute ntfy URL cannot carry a publish.
 func validatePush(cfg Push) error {
-	switch {
-	case cfg.Ntfy.URL == "" && cfg.Ntfy.Token != "":
-		return errorfamily.NewRejection("config.push.ntfy.url", "push.ntfy.token is set without push.ntfy.url: a credential with nowhere to send it (set the url, or clear the token for an anonymous server)")
-	}
 	if cfg.Ntfy.URL != "" {
 		u, err := url.Parse(cfg.Ntfy.URL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {

@@ -42,3 +42,14 @@ type DialOverrideSaved struct {
 	Consumed bool
 	At       time.Time
 }
+
+// DialWindowExpunged removes one cooldown slot (the cap trim — system
+// facts, never user content).
+type DialWindowExpunged struct {
+	Key DialWindowKey
+}
+
+// DialOverrideExpunged removes one override slot (the cap trim).
+type DialOverrideExpunged struct {
+	Key DialWindowKey
+}
