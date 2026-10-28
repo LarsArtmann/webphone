@@ -69,11 +69,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   interpolated path in the generated backup script is shell-quoted, so a
   `dataDir`/`destDir` containing spaces can no longer word-split the
   sqlite `.backup`/rsync/find invocations (golden fixture regenerated).
-- The automatic post-call review's settle hook read an out-of-scope card and
-  announced a message key the dictionaries did not carry (2026-10-28): the
-  button lookup now goes through the session entry's own DOM handle, and
-  `reviewQueued` exists in both languages — an accepted review says so instead
-  of throwing on the way to the toast.
+- The automatic post-call review's settle hook read a card that is not in its
+  scope (2026-10-28): the button lookup now goes through the session entry's
+  own DOM handle, and the `reviewQueued` label the queued state needs exists in
+  both languages — so an accepted review says so instead of throwing on the way
+  to the toast, and a duplicate replay reports as already drafted.
 - Error-code registry scanning (2026-10-27): a code declared as a named
   constant (`Newf(family, HealthCodeFailed, …)`) was mis-read as the message
   text, which red-ed the registry drift test while the documented row sat

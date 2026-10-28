@@ -213,7 +213,6 @@ export const I18N = {
     summarizeFailed: "The AI agent is unreachable right now.",
     summarizeOffline:
       "You are offline — the draft request never left the browser.",
-    reviewQueued: "Review queued — the draft follows in Messages.",
     callMissed: "Missed call — the caller gave up before it was answered.",
     callBusy: "Busy — the line was not free.",
     callNotFound: "Not reachable — the number does not exist.",
@@ -422,7 +421,6 @@ export const I18N = {
     summarizeFailed: "Der KI-Agent ist gerade nicht erreichbar.",
     summarizeOffline:
       "Sie sind offline — die Entwurfsanfrage hat den Browser nie verlassen.",
-    reviewQueued: "Prüfung eingereiht — der Entwurf folgt in Nachrichten.",
     callMissed:
       "Verpasster Anruf — der Anrufer hat aufgelegt, bevor jemand geantwortet hat.",
     callBusy: "Besetzt — die Leitung war nicht frei.",

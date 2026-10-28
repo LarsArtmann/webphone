@@ -771,7 +771,13 @@ carve-out is the vendored sip.js bundle. Because the served tree *is* the
 source tree (`//go:embed all:island`), no `@ts-check` pragma is allowed — it
 would change a served byte; the project's `include` does the same job. Only
 `tsc` counts: an editor's bundled compiler is a different version and will
-report errors that do not exist.
+report errors that do not exist. How to annotate a new file (the three
+patterns, the two forbidden escapes): [docs/type-gate.md](docs/type-gate.md).
+
+Nothing here runs on `make`: the flake is the task runner. `nix flake check`
+is the whole gate suite (build, tests, treefmt, island JS/lint/type checks,
+the module eval), `nix fmt` the formatter, `buildflow` the lint/audit pass,
+and `nix develop` prints the four commands a contributor needs on entry.
 
 ## License
 

@@ -353,10 +353,7 @@
       if (sms) {
         var number = sms.getAttribute("data-sms");
         var nav = document.querySelector("[data-tab='messages']");
-        if (
-          nav &&
-          hasMethod(nav, "click")
-        ) {
+        if (nav && hasMethod(nav, "click")) {
           /** @type {HTMLElement} */ (nav).click();
         }
         var prefill = function () {
@@ -402,8 +399,7 @@
       var callId = btn.getAttribute("data-delete-transcript") || "";
       var confirmText =
         btn.getAttribute("data-confirm") || "Delete this transcript?";
-      if (hasMethod(window, "confirm") && !window.confirm(confirmText))
-        return;
+      if (hasMethod(window, "confirm") && !window.confirm(confirmText)) return;
       fetch("/api/transcripts?call=" + encodeURIComponent(callId), {
         method: "DELETE",
         credentials: "same-origin",
@@ -513,10 +509,7 @@
      * @returns {HTMLTextAreaElement | null}
      */
     var noteBodyFor = function (callId) {
-      return textareaIn(
-        document,
-        '[data-note-body="' + callId + '"]',
-      );
+      return textareaIn(document, '[data-note-body="' + callId + '"]');
     };
     document.addEventListener("click", function (event) {
       var btn = /** @type {HTMLButtonElement | null} */ (
