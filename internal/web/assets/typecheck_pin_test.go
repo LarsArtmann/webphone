@@ -355,6 +355,88 @@ func TestTypeGateIncludeStaysAGlob(t *testing.T) {
 	}
 }
 
+// islandDomIDs parses the ids the gate declares for the island's typed lookups
+// (types/island.d.ts, interface IslandDomIds). Both quoted and bare property
+// names are legal in the declaration, so both are read.
+func islandDomIDs(t *testing.T) []string {
+	t.Helper()
+	raw, err := os.ReadFile(path.Join(repoRoot, "types", "island.d.ts"))
+	if err != nil {
+		t.Fatalf("read types/island.d.ts: %v", err)
+	}
+	const open = "interface IslandDomIds {"
+	body := string(raw)
+	begin := strings.Index(body, open)
+	if begin < 0 {
+		t.Fatalf("types/island.d.ts lost %q", open)
+	}
+	end := strings.Index(body[begin:], "\n}")
+	if end < 0 {
+		t.Fatal("types/island.d.ts has an unterminated IslandDomIds interface")
+	}
+	var ids []string
+	for _, line := range strings.Split(body[begin+len(open):begin+end], "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "//") {
+			continue
+		}
+		name, _, ok := strings.Cut(line, ":")
+		if !ok {
+			t.Fatalf("cannot parse IslandDomIds member %q", line)
+		}
+		ids = append(ids, strings.Trim(strings.TrimSpace(name), `"`))
+	}
+	if len(ids) < 20 {
+		t.Fatalf("types/island.d.ts declares only %d island ids — truncated?", len(ids))
+	}
+	return ids
+}
+
+// documentedDomIDs reads the fenced id block of docs/dom-contract.md, the list's
+// one home (the same block internal/server parses).
+func documentedDomIDs(t *testing.T) map[string]bool {
+	t.Helper()
+	raw, err := os.ReadFile(path.Join(repoRoot, "docs", "dom-contract.md"))
+	if err != nil {
+		t.Fatalf("read docs/dom-contract.md: %v", err)
+	}
+	const beginMark, endMark = "<!-- dom-contract:begin -->", "<!-- dom-contract:end -->"
+	body := string(raw)
+	begin := strings.Index(body, beginMark)
+	end := strings.Index(body, endMark)
+	if begin < 0 || end < begin {
+		t.Fatal("docs/dom-contract.md lost its dom-contract markers")
+	}
+	ids := map[string]bool{}
+	for _, line := range strings.Split(body[begin+len(beginMark):end], "\n") {
+		if id := strings.TrimSpace(line); id != "" {
+			ids[id] = true
+		}
+	}
+	if len(ids) < 20 {
+		t.Fatalf("docs/dom-contract.md carries only %d ids — truncated?", len(ids))
+	}
+	return ids
+}
+
+// TestIslandDomIdsMirrorTheDomContract pins the third mirror of the island's id
+// list. The document is the source, the served markup is asserted against it by
+// internal/server, and the type declarations are what the COMPILER checks — so a
+// renamed element has to move in all three, or typing catches the stale one here
+// instead of a month later as a silent null.
+//
+// The relation is one-directional on purpose: the document also lists
+// shell-owned ids (wp-live, wp-tab-skeleton) and the markup-only call-btn, which
+// the island never looks up by id and therefore has no typed handle for.
+func TestIslandDomIdsMirrorTheDomContract(t *testing.T) {
+	documented := documentedDomIDs(t)
+	for _, id := range islandDomIDs(t) {
+		if !documented[id] {
+			t.Errorf("types/island.d.ts declares id %q, which docs/dom-contract.md does not carry — a renamed element would keep type-checking against a phantom id", id)
+		}
+	}
+}
+
 // TestTypeGateRefusesBlanketSuppressions keeps the escape hatch honest: a bare
 // @ts-ignore or @ts-nocheck silences every error on the next line (or in the
 // whole file) with no reason recorded, which is exactly the "green by
@@ -393,6 +475,38 @@ func TestTypeGateNixCheckUsesTheGate(t *testing.T) {
 	for _, forbidden := range []string{"tsconfig.all.json", "tsconfig.debt.json"} {
 		if strings.Contains(nix, forbidden) {
 			t.Fatalf("nix/checks.nix runs %s — a second project is red by design and must never gate", forbidden)
+		}
+	}
+}
+
+// TestGlobMatcher pins the tsconfig glob semantics the coverage pins rely on:
+// "**/" spans zero or more directories (TypeScript's meaning), "*" stays within
+// one segment. This matcher once returned nothing for every pattern — Go's
+// fs.Glob speaks path.Match, where "**" cannot cross a separator — and the
+// coverage pin then "passed" over an empty set.
+func TestGlobMatcher(t *testing.T) {
+	cases := []struct {
+		pattern, path string
+		want          bool
+	}{
+		{"internal/web/assets/**/*.js", "internal/web/assets/shell.js", true},
+		{"internal/web/assets/**/*.js", "internal/web/assets/island/app/main.js", true},
+		{"internal/web/assets/**/*.js", "internal/web/assets/island/app/deep/x.js", true},
+		{"internal/web/assets/**/*.js", "internal/web/assets/style.css", false},
+		{"internal/web/assets/**/*.js", "internal/web/assets/island/app/main.ts", false},
+		{"internal/web/assets/vendor/**", "internal/web/assets/vendor/sip.min.js", true},
+		{"internal/web/assets/vendor/**", "internal/web/assets/vendor/nested/x.txt", true},
+		{"internal/web/assets/vendor/**", "internal/web/assets/shell.js", false},
+		{"types/**/*.d.ts", "types/island.d.ts", true},
+		{"types/**/*.d.ts", "types/nested/island.d.ts", true},
+		{"types/*.d.ts", "types/nested/island.d.ts", false},
+		{"*.js", "shell.js", true},
+		{"*.js", "app/shell.js", false},
+	}
+	for _, tc := range cases {
+		re := globMatcher(t, tc.pattern)
+		if got := re.MatchString(tc.path); got != tc.want {
+			t.Errorf("globMatcher(%q).MatchString(%q) = %v, want %v", tc.pattern, tc.path, got, tc.want)
 		}
 	}
 }

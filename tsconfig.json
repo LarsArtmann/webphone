@@ -10,6 +10,11 @@
 // No `// @ts-check` pragmas anywhere: island sources are served verbatim, so a
 // pragma would change a served byte. checkJs + include gives the same checking
 // with zero served-byte changes.
+//
+// VERIFIED GREEN ON: TypeScript 7.0.2 (the devshell pin; `nix build
+// nixpkgs#typescript`). The strictness this gate relies on is a compiler
+// behaviour, so a devshell bump owes a green `tsc -p . --noEmit` plus the
+// `island-typecheck` flake check before it lands.
 {
   "compilerOptions": {
     "allowJs": true,
