@@ -220,3 +220,104 @@ func TestAutoReviewInFlightGuardDeduplicates(t *testing.T) {
 		t.Errorf("agent must be drafted exactly once despite the mid-flight replay, got %d calls", draftCalls)
 	}
 }
+
+// getReview reads the stored review artifact for one call.
+func getReview(t *testing.T, c *client, callID string) (*http.Response, []byte) {
+	t.Helper()
+	return c.do(http.MethodGet, "/api/calls/"+callID+"/review", nil, "")
+}
+
+// TestCallReviewArtifactLifecycle pins the durable artifact end to end:
+// the dispatch writes pending, the job's draft lands present with its
+// dims, an outage REPLACES the state with failed, the absent call is
+// the empty body, and another owner's call id reads empty too.
+func TestCallReviewArtifactLifecycle(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	srv := serverWithAgentAndASR(t, stub.server.URL)
+	c := clientFor(t, srv)
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-art", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+
+	// Absent: the empty body IS the answer (notes precedent).
+	resp, body := getReview(t, c, "call-art")
+	if resp.StatusCode != http.StatusOK || len(body) != 0 {
+		t.Fatalf("absent artifact: %d %.100s, want 200 empty", resp.StatusCode, body)
+	}
+
+	if resp, _ := postReview(t, c, "call-art"); resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("dispatch: %d", resp.StatusCode)
+	}
+	var got struct {
+		State      string `json:"state"`
+		DraftID    string `json:"draft_id"`
+		Text       string `json:"text"`
+		Language   string `json:"language"`
+		Confidence int    `json:"confidence"`
+	}
+	waitFor(t, func() bool {
+		r2, b2 := getReview(t, c, "call-art")
+		if r2.StatusCode != http.StatusOK {
+			t.Errorf("artifact read: %d", r2.StatusCode)
+			return true
+		}
+		if err := json.Unmarshal(b2, &got); err != nil {
+			return false
+		}
+		return got.State == "present"
+	})
+	if got.DraftID != "d-ond" || got.Text != "Guten Morgen" || got.Language != "de" || got.Confidence != 90 {
+		t.Errorf("present dims must ride the artifact: %+v", got)
+	}
+
+	// An outage on a SECOND call replaces the state with failed.
+	stub.status.Store(http.StatusServiceUnavailable)
+	if resp, _ := postTranscript(t, c, "call-art2", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript 2: %d", resp.StatusCode)
+	}
+	if resp, _ := postReview(t, c, "call-art2"); resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("dispatch 2: %d", resp.StatusCode)
+	}
+	waitFor(t, func() bool {
+		_, b2 := getReview(t, c, "call-art2")
+		var g2 struct {
+			State string `json:"state"`
+		}
+		if err := json.Unmarshal(b2, &g2); err != nil {
+			return false
+		}
+		return g2.State == "failed"
+	})
+
+	// Owner scoping: another extension's artifact reads empty (the
+	// same server — the seam is ON, so a 404 here would be a scoping
+	// lie, not the disabled-seam answer).
+	other := clientFor(t, srv)
+	other.login("2002", "pw")
+	resp, body = getReview(t, other, "call-art")
+	if resp.StatusCode != http.StatusOK || len(body) != 0 {
+		t.Errorf("another owner's artifact: %d %.100s, want 200 empty", resp.StatusCode, body)
+	}
+}
+
+// TestCallReviewGetSeamOffAndGuards: the disabled-seam 404, the invalid
+// id 400, and the nil-store 503 (test compositions).
+func TestCallReviewGetSeamOffAndGuards(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+	if resp, _ := getReview(t, c, "call-1"); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("artifact with the seam off: %d, want 404", resp.StatusCode)
+	}
+
+	stub := newStubReviewAPI(t)
+	srv := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.TextAgent = agentClientFor(t, stub.server.URL)
+		d.Reviews = nil
+	})
+	gc := clientFor(t, srv)
+	gc.login("1001", "pw")
+	if resp, _ := getReview(t, gc, "call-1"); resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("nil review store: %d, want 503", resp.StatusCode)
+	}
+}
