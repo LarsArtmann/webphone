@@ -38,6 +38,10 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		// call card grows the summarize affordance (M12). Off by
 		// default; the post-call row then carries only Close.
 		Agent bool `json:"agent"`
+		// DialCooldownSeconds is the advisory dial-cooldown window
+		// (issue #7): 0/absent = no gate — the island dials without
+		// asking; positive = the island asks POST /api/dials first.
+		DialCooldownSeconds int `json:"dialCooldownSeconds,omitempty"`
 		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
 		ASRLocality string `json:"asrLocality,omitempty"`
@@ -54,6 +58,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		CRM:           h.deps.CRM.Enabled(),
 		ASR:           h.asrOn(),
 		Agent:         h.deps.TextAgent != nil,
+		DialCooldownSeconds: int(h.deps.Config.Dial.Cooldown.Seconds()),
 		ASRLocality:   h.deps.ASRLocality,
 		SIPCredential: h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:      h.deps.Shared,

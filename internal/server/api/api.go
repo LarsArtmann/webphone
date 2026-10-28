@@ -76,6 +76,13 @@ type Deps struct {
 	// Devices is the registered-device store (readmodels-backed;
 	// present whenever the composition built the engine).
 	Devices *readmodels.PushDevices
+	// Dials is the dial-cooldown window store (readmodels-backed;
+	// present whenever the composition built the engine). Nil: test
+	// compositions only — the gate answers 503.
+	Dials *readmodels.DialWindows
+	// DialCooldown is the advisory window length (issue #7). Zero:
+	// the gate route 404s and the island never asks.
+	DialCooldown time.Duration
 }
 
 // Handlers is the carved JSON surface: one construction per server,

@@ -819,6 +819,9 @@ func validate(cfg Config) error {
 			return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
 		}
 	}
+	if err := validateDial(cfg.Dial); err != nil {
+		return err
+	}
 	return validatePush(cfg.Push)
 }
 
@@ -891,6 +894,10 @@ func validateDial(cfg Dial) error {
 // token with no URL is a credential with nowhere to send it; a
 // non-absolute ntfy URL cannot carry a publish.
 func validatePush(cfg Push) error {
+	switch {
+	case cfg.Ntfy.URL == "" && cfg.Ntfy.Token != "":
+		return errorfamily.NewRejection("config.push.ntfy.url", "push.ntfy.token is set without push.ntfy.url: a credential with nowhere to send it (set the url, or clear the token for an anonymous server)")
+	}
 	if cfg.Ntfy.URL != "" {
 		u, err := url.Parse(cfg.Ntfy.URL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
