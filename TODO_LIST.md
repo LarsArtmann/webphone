@@ -245,11 +245,18 @@ per-row.
    makes in-UI audit history a real operator need; the journal-line home
    stands until then.
 6. **Branching-flow baseline staleness (observed 2026-10-28 train-start
-   buildflow)**: `.buildflow-baseline.json`'s 78 accepted entries matched
-   nothing in 3 consecutive runs (morning session's governed baseline —
-   suspect host-absolute IDs again). Re-record from THIS checkout with
-   `buildflow -s branching-flow --save-baseline` or retire it; owned by
-   the branching-flow governance row, not this train.
+   buildflow)** — VERIFIED HEALTHY at HEAD (2026-10-28 evening, whole-list
+   session): the 11:20 re-establishment (`ba6e189`, 78 entries) is LIVE —
+   74/78 ids match current findings exactly; the earlier "matched nothing
+   in 3 runs" observation described the PRE-re-establishment state and is
+   retired. Current drift (expected cadence work, findings are non-gating
+   warnings under the SDK severity cap): 4 baseline entries healed away,
+   7 live findings are new since 11:20 (the day's trains: D1's
+   `session_api.go` DUPLICATE_TYPE + Deps-grown `server.go` large-struct,
+   the chat trains' `matrix/receiver.go` + `chatloop.go` sites). The next
+   governance triage sweep (per-site rationale or fix for the 7, then
+   `buildflow -s branching-flow --save-baseline` from THIS checkout)
+   owns absorbing them — not re-baselined unilaterally here.
 
 ### Daemon push-stall forensics (2026-10-27 T10 — root cause found, fleet fix pending)
 
