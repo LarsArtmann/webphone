@@ -5,7 +5,18 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-28 (whole-list execution session, concurrent with the dialer train):
+Last sweep: 2026-10-28 EVENING (multi-actor whole-list session): the morning red-CI fix
+(clone groups: draftMeta helper + panel-audit closure; build-tw-css cold-cache heal; CI verified
+green on 2ce711c) · **D1 line switcher SHIPPED** (POST /api/session/switch, extensions wire
+field, JS-created #wp-ext-switch, 6+5 pins) · **#7 redial cooldown COMPLETED** (island leg +
+last_at/window verdict fields + e2e pins + docs; the morning train had landed the seam) ·
+**D5 durable agent-audit read model SHIPPED** (readmodels agent_audit + dual-write + Settings
+Recent-agent-actions section, error codes registered same-commit) · **#9 residual verified
+FULLY SHIPPED at HEAD** (stale row corrected) · **row 6 baseline verified HEALTHY** (74/78
+live; the "matched nothing" observation was pre-re-establishment; 7 new findings left for the
+governance triage cadence) · **D3 kept security-review-gated with a ready v1 design sketch**;
+D2 stays stack-side (webphone's age substrate already landed).
+Prior sweep: 2026-10-28 (whole-list execution session, concurrent with the dialer train):
 whitespace-drift formatter adjudication + `__wpClock` clock seam + branching-flow
 triage (36 reasoned nolints + fresh 78-entry governed baseline) SHIPPED · advisory
 tw-freshness CI lane + drifted artifacts rebuilt SHIPPED · chat lane v2 (compose-new
@@ -237,7 +248,20 @@ per-row.
 3. **Agent registry + scoped machine tokens (D3)**: today ONE machine
    actor (the textagent bearer secret, loopback). Named agents with
    scopes (draft/read/send) + per-agent audit prefixes + an API-token
-   lane for agents-as-users. Owner GO; security review first.
+   lane for agents-as-users. Owner GO; security review first. V1
+   DESIGN (ready for that review — nothing below is implemented):
+   config `auth.agents: [{name, token_file, scopes: [read|draft|send]}]`
+   (LoadCredential like oauth2/crm — never a raw token in config);
+   a `RequireAgent(scope)` middleware answering `Authorization: Bearer`
+   with constant-time compares, initially LOOPBACK-ONLY (the textagent
+   posture — widen only with the stack's mTLS/TLS front); audit lines
+   carry `actor=agent:<name>` through the EXISTING agentAudit
+   vocabulary (the D5 durable rows inherit it for free); scope classes
+   map to route families (read → GET /api/*, draft → review/draft ops,
+   send → approve/send). NO second machine consumer exists yet (the
+   textagent is the only one) — the registry's value materializes when
+   one does, so the security review can also rule "defer until the
+   second agent is real".
 4. **Delegation + roles (D4)**: approve-on-behalf-of, per-contact scopes,
    admin/member split — needs the actor substrate (shipped) AND a second
    real user first. Owner call.
