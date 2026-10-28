@@ -265,6 +265,7 @@ a deliberate code change, regenerate:
 | config.csrf.trusted_proxies                  | Rejection                 | internal/config/config.go          |
 | config.data_dir                              | Rejection                 | internal/config/config.go          |
 | config.defaults                              | Orchestration             | internal/config/config.go          |
+| config.dial.cooldown                         | Rejection                 | internal/config/config.go          |
 | config.env                                   | Rejection                 | internal/config/config.go          |
 | config.file                                  | Rejection                 | internal/config/config.go          |
 | config.gateway.mode                          | Rejection                 | internal/config/config.go          |
@@ -354,6 +355,12 @@ a deliberate code change, regenerate:
 | readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go    |
+| readmodels.dial_attempt                      | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_override_arm                 | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_override_consume             | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_override_load                | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_trim                         | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_window_load                  | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.disposition_save                  | Infrastructure            | internal/readmodels/callnotes.go   |
 | readmodels.enroll_burn                       | Infrastructure            | internal/readmodels/enroll.go      |
 | readmodels.enroll_lookup                     | Infrastructure            | internal/readmodels/enroll.go      |
