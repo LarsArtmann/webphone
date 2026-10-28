@@ -21,7 +21,10 @@ func TestDialWindowsGate(t *testing.T) {
 	dials := engine.DialWindows()
 	ctx := context.Background()
 	owner := mustExtension(t, "1001")
-	cooldown := 50 * time.Millisecond
+	// The window stamps at unix-second granularity (the engine row's
+	// At column), so the test cooldown must be comfortably above one
+	// second to be meaningful.
+	cooldown := 2 * time.Second
 
 	allowed, _, err := dials.Attempt(ctx, owner, "+4989123456", cooldown)
 	if err != nil || !allowed {
@@ -34,7 +37,7 @@ func TestDialWindowsGate(t *testing.T) {
 	if stamp.IsZero() {
 		t.Fatal("a denied ask carries the slot's last-at stamp")
 	}
-	time.Sleep(60 * time.Millisecond)
+	time.Sleep(2100 * time.Millisecond)
 	allowed, _, err = dials.Attempt(ctx, owner, "+4989123456", cooldown)
 	if err != nil || !allowed {
 		t.Fatalf("post-expiry dial must allow: %v %v", allowed, err)

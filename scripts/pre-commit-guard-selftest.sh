@@ -90,5 +90,55 @@ b=$(git hash-object -w "$tmp/vendor.js")
 git update-index --add --cacheinfo "100644,$b,internal/web/assets/vendor/sip.min.js"
 run_case "the vendored bundle bypasses the syntax gate" 0
 
+# Cases 7-8 (2026-10-28): whitespace-drift's formatter adjudication, in a
+# THROWAWAY repo (the real repo's HEAD is formatter-clean by CI, so a
+# whitespace-only staged delta that IS canonical cannot be staged against
+# it — the scratch repo's HEAD is deliberately gofmt-dirty to stage one).
+# The adjudication resolves the treefmt config from the REAL repo (script
+# location), so these need nix; like the node cases they WARN+skip without.
+scratch="$(mktemp -d)"
+printf 'package x\n\ntype S struct {\nA int\nBB string\n}\n' >"$scratch/a.go"
+(
+	cd "$scratch" || exit 1
+	git init -q .
+	git add a.go
+	git -c user.email=selftest@local -c user.name=selftest commit -qm dirty-base
+)
+run_ws_case() { # name expect staged-content
+	local name="$1" expect="$2" content="$3" got=0
+	printf '%s' "$content" >"$scratch/a.go"
+	(cd "$scratch" && git add a.go && bash "$repo/scripts/whitespace-drift.sh") \
+		>/dev/null 2>&1 || got=$?
+	if [ "$got" -ne "$expect" ]; then
+		fail "$name: expected exit $expect, got $got"
+	fi
+}
+if command -v nix >/dev/null 2>&1 && \
+	(cd "$repo" && nix eval --raw .#formatter.x86_64-linux >/dev/null 2>&1); then
+	# Staged = gofmt-canonical alignment of the dirty base (formatter
+	# output, whitespace-only delta) => acquit.
+	run_ws_case "formatter-produced whitespace delta is allowed" 0 \
+		'package x
+
+type S struct {
+A  int
+BB string
+}
+'
+	# Staged = a hand misalignment the formatter would rewrite => refuse.
+	run_ws_case "hand whitespace drift is still refused" 1 \
+		'package x
+
+type S struct {
+A   int
+BB string
+}
+'
+	ws_cases=2
+else
+	echo "pre-commit-guard-selftest: WARN — nix/treefmt unavailable, whitespace adjudication cases skipped" >&2
+	ws_cases=0
+fi
+
 unset GIT_INDEX_FILE
-echo "pre-commit-guard-selftest: 6 passed"
+echo "pre-commit-guard-selftest: $((6 + ws_cases)) passed"
