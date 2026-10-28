@@ -479,8 +479,11 @@ async function dispatchAutoReview(id, btn) {
     status = 0;
   }
   if (status === 202) {
-    announce(t("reviewQueued"), "ok");
-    btn.textContent = t("reviewQueued");
+    // A duplicate replay means the job was already queued (or the manual
+    // button won the race): say so instead of pretending it just started.
+    const label = t(duplicate ? "summarizeDuplicate" : "reviewQueued");
+    announce(label, "ok");
+    btn.textContent = label;
     return;
   }
   btn.disabled = false;

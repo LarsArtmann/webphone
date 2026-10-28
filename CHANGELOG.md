@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in one place — Error, string, plain object or null all render something
   readable — so the transcription failure line can no longer print
   "undefined".
+- A JavaScript syntax gate in the pre-commit hook (2026-10-28): every staged
+  file under `internal/web/assets/` is checked with `node --check` before the
+  commit lands (vendored bundle skipped; a missing node is a warning, never a
+  block). The island type gate and oxlint only run inside `nix flake check`, so
+  a syntax error used to survive for hours — three did, and the auto-commit
+  daemon committed one of them twice. `scripts/pre-commit-guard-selftest.sh`
+  pins six cases now, including the ES-module and vendored-skip boundaries.
+- `docs/type-gate.md` (2026-10-28): how to add a served file without breaking
+  the type gate — the three annotation patterns, the two forbidden escapes,
+  the commands, and the two properties the pins defend (no excluded red file,
+  no narrowed include).
 
 ### Changed
 
@@ -58,6 +69,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   interpolated path in the generated backup script is shell-quoted, so a
   `dataDir`/`destDir` containing spaces can no longer word-split the
   sqlite `.backup`/rsync/find invocations (golden fixture regenerated).
+- The automatic post-call review's settle hook read an out-of-scope card and
+  announced a message key the dictionaries did not carry (2026-10-28): the
+  button lookup now goes through the session entry's own DOM handle, and
+  `reviewQueued` exists in both languages — an accepted review says so instead
+  of throwing on the way to the toast.
 - Error-code registry scanning (2026-10-27): a code declared as a named
   constant (`Newf(family, HealthCodeFailed, …)`) was mis-read as the message
   text, which red-ed the registry drift test while the documented row sat

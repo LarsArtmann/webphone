@@ -1398,8 +1398,13 @@
       retry.textContent = "Retry";
       retry.addEventListener("click", function () {
         record.bubble.remove();
+        // Scoped to the messages panel: the contacts add/import forms are
+        // also .wp-compose, so a document-wide query can rebuild the wrong
+        // composer (or none) when both are open.
         var current = /** @type {HTMLFormElement | null} */ (
-          document.querySelector("form.wp-compose:not(.wp-compose-new)")
+          document.querySelector(
+            "#messages-panel form.wp-compose:not(.wp-compose-new)",
+          )
         );
         if (current) current.requestSubmit();
       });
@@ -1508,7 +1513,23 @@
     //     when waveform decoding is impossible (no WebAudio/fetch) the
     //     honest fallback hands playback back to the browser's native
     //     controls instead of a dead scrubber.
-    var vmPeaksCache = new Map(); // uuid -> peak array (48 bars)
+    // uuid -> peak array (48 bars). CAPPED: the panel can hold hundreds of
+    // rows over a long-lived session, and each entry is a decoded waveform
+    // the page never releases. Oldest-first eviction — a re-decode is cheap
+    // (the audio is already cached by the browser), an unbounded Map is a
+    // slow leak.
+    var vmPeaksCache = new Map();
+    var VM_PEAKS_MAX = 48;
+    /** @param {string} uuid @param {number[]} peaks */
+    var vmCachePeaks = function (uuid, peaks) {
+      vmPeaksCache.delete(uuid); // re-insert so the Map stays LRU-ordered
+      vmPeaksCache.set(uuid, peaks);
+      while (vmPeaksCache.size > VM_PEAKS_MAX) {
+        var oldest = vmPeaksCache.keys().next();
+        if (oldest.done) break;
+        vmPeaksCache.delete(oldest.value);
+      }
+    };
     var vmWired = new WeakSet(); // audio elements with listeners attached
     /** @type {HTMLAudioElement | null} */
     var vmActiveAudio = null; // single-active-player invariant
@@ -1759,7 +1780,7 @@
         })
         .then(function (decoded) {
           var peaks = vmPeaks(decoded.getChannelData(0), VM_BARS);
-          vmPeaksCache.set(uuid, peaks);
+          vmCachePeaks(uuid, peaks);
           return peaks;
         });
     };
@@ -1952,9 +1973,13 @@
     var overlayInput = null;
     /** @type {HTMLElement | null} */
     var overlayList = null;
-    var overlayMode = "commands";
     /** @type {Array<{label: string, run?: () => void}>} */
     var overlayItems = [];
+    // The unfiltered row set for the CURRENT open. Built once per open rather
+    // than per keystroke: collectCommands() walks the nav and allocates a
+    // closure per link, and renderOverlay runs on every input event.
+    /** @type {Array<{label: string, run?: () => void}>} */
+    var overlaySource = [];
     var overlayIndex = 0;
     /** @type {HTMLElement | null} */
     var overlayReturnFocus = null;
@@ -2006,12 +2031,7 @@
       overlayItems = [];
       overlayIndex = 0;
       var query = input.value.trim().toLowerCase();
-      var source =
-        overlayMode === "commands"
-          ? collectCommands()
-          : HELP_ITEMS.map(function (pair) {
-              return { label: pair[0] + " — " + pair[1] };
-            });
+      var source = overlaySource;
       for (var i = 0; i < source.length; i++) {
         if (query && source[i].label.toLowerCase().indexOf(query) < 0) continue;
         overlayItems.push(source[i]);
@@ -2099,7 +2119,12 @@
       var panel = overlay;
       var input = overlayInput;
       if (!panel || !input) return;
-      overlayMode = mode;
+      overlaySource =
+        mode === "commands"
+          ? collectCommands()
+          : HELP_ITEMS.map(function (pair) {
+              return { label: pair[0] + " — " + pair[1] };
+            });
       overlayReturnFocus = /** @type {HTMLElement | null} */ (
         document.activeElement
       );

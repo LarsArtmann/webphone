@@ -69,6 +69,16 @@
         ]
         ++ goTools;
         env = goEnv;
+        # Discoverability (2026-10-28): the three gates a contributor needs
+        # are not guessable from the package list — the type gate is not a
+        # `go` subcommand, and the island specs run under node.
+        shellHook = ''
+          echo "webphone dev shell — $(go version | cut -d' ' -f3)"
+          echo "  type gate : tsc -p . --noEmit        (the ONLY authority; see docs/type-gate.md)"
+          echo "  island    : node --test --test-force-exit internal/web/assets/island-tests/*.test.mjs"
+          echo "  go tests  : go test -count=1 ./..."
+          echo "  format    : nix fmt      everything: nix flake check"
+        '';
       };
 
       # A minimal CI shell: only the build/test tools (Go, templ) with

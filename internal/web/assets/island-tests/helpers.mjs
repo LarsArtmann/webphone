@@ -2,6 +2,13 @@
 // ui.js resolves every DOM-contract id at import time; i18n.js reads
 // localStorage + navigator.language at import time. Keep the stubs as
 // small as the tests demand — they are not a DOM implementation.
+//
+// DELIBERATE ASYMMETRY, do not "fix" it: the stubs are plain objects, and
+// some answer matches()/closest() while others do not. The shell's
+// `hasMethod(el, name)` guard exists because of exactly that — a real
+// HTMLElement always answers both, so `if (el.closest)` reads as dead code
+// to the type checker while remaining load-bearing here. If a stub gains
+// every method, the guard's tests stop proving anything.
 export function installBrowserGlobals() {
   const registry = new Map();
   const docListeners = new Map();

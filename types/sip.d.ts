@@ -7,6 +7,13 @@
 // makes a 0.21 → 0.22 upgrade visible as a compile error instead of a
 // runtime `undefined is not a function`.
 //
+// PROVENANCE: read by hand from `internal/web/assets/vendor/sip.min.js`
+// (the pinned 0.21.2 bundle, pinned again by `internal/web/assets/assets.go`
+// and by `./update.sh`, which re-fetches, re-bundles and swaps the file).
+// `update.sh` does NOT re-derive this declaration — a bump means re-reading
+// the bundle's public surface against the island's call sites, which is the
+// one deliberate manual step in that script.
+//
 // Scope note: option bags are typed `unknown` on purpose. sip.js's
 // option surface is large, versioned with the bundle, and not the
 // contract this repo owns; the RETURN shapes and the state machine are.
