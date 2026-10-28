@@ -520,11 +520,15 @@ test("the failed bubble offers Retry and Dismiss affordances", () => {
   assert.equal(dismiss.textContent, "Dismiss");
 
   // Retry: the failed bubble goes away and the CURRENT reply composer
-  // (the draft was restored into it) submits again.
+  // (the draft was restored into it) submits again. The selector is
+  // PANEL-SCOPED on purpose — the contacts add/import forms carry
+  // .wp-compose too, so a document-wide query could rebuild the wrong
+  // composer; the stub mirrors the scoped string so that narrowing is
+  // pinned here and cannot be undone silently.
   const realQuerySelector = doc.querySelector.bind(doc);
   const submits = [];
   doc.querySelector = (selector) =>
-    selector === "form.wp-compose:not(.wp-compose-new)"
+    selector === "#messages-panel form.wp-compose:not(.wp-compose-new)"
       ? { requestSubmit: () => submits.push(1) }
       : realQuerySelector(selector);
   for (const fn of retry.listeners.click ?? []) fn();

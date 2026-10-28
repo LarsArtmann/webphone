@@ -29,6 +29,10 @@ func (contextSessionGate) RequireSession(w http.ResponseWriter, r *http.Request)
 
 func (contextSessionGate) NotifyContactsChanged(domain.Extension) {}
 
+// AuditAgent: the fuzz fake mirrors the Server seam but has no audit sink —
+// the contacts lane never calls it (the agent lanes do).
+func (contextSessionGate) AuditAgent(event, actor, draftID, outcome string) {}
+
 // Fuzz target (plan T18, 2026-09-20): a hostile client bashing the
 // contacts JSON API must never produce a 5xx — every malformed body is a
 // 400 (decode) or 422 (bad number), and a valid body is 204. The handler

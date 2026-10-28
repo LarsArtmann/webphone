@@ -221,7 +221,7 @@ a deliberate code change, regenerate:
 
 | Code                                         | Families                  | First site                         |
 | -------------------------------------------- | ------------------------- | ---------------------------------- |
-| agent.summarize                              | Transient                 | internal/server/api/summary_api.go |
+| agent.summarize                              | Transient                 | internal/server/api/review_api.go  |
 | api.note_save                                | Infrastructure            | internal/server/api/note_api.go    |
 | asr.decode                                   | Transient                 | internal/asr/asr.go                |
 | asr.empty                                    | Rejection                 | internal/asr/asr.go                |

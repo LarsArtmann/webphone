@@ -40,6 +40,12 @@ jobs:
 
   # Fast flake checks without the VM suites (module-check/vm-tests stay
   # consumer-side; they need KVM and tens of minutes).
+  #
+  # island-typecheck belongs HERE, not only in a full `nix flake check`:
+  # until 2026-10-28 the type gate was green locally and unwired in CI, so
+  # a contributor's `go test ./...` and the CI run both stayed ignorant of a
+  # red served asset (`typecheck_pin_test.go` guards the CONFIG, never the
+  # compiler verdict).
   fast-checks:
     name: fast flake checks (format, island, lints)
     runs-on: ubuntu-latest
@@ -56,6 +62,7 @@ jobs:
           .#checks.x86_64-linux.format
           .#checks.x86_64-linux.island-js
           .#checks.x86_64-linux.island-lint
+          .#checks.x86_64-linux.island-typecheck
           .#checks.x86_64-linux.statix
           .#checks.x86_64-linux.deadnix
           .#checks.x86_64-linux.vulnix-triage
