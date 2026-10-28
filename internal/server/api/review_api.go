@@ -61,8 +61,7 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 
 	idemKey := sess.Extension.String() + ":summary:" + callID
 	if h.deps.CallsIdem.Seen(idemKey) {
-		w.WriteHeader(http.StatusAccepted)
-		writeJSONBody(w, ReviewDispatchResponse{Dispatched: true, Duplicate: true})
+		answerReviewDuplicate(w)
 		return
 	}
 	// In-flight guard: the idem window records successes only, so two
@@ -70,8 +69,7 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 	// Seen and draft twice. The guard holds the slot for the job's whole
 	// run; the job releases it on every exit path.
 	if _, busy := h.reviewInFlight.LoadOrStore(idemKey, struct{}{}); busy {
-		w.WriteHeader(http.StatusAccepted)
-		writeJSONBody(w, ReviewDispatchResponse{Dispatched: true, Duplicate: true})
+		answerReviewDuplicate(w)
 		return
 	}
 
@@ -93,6 +91,17 @@ func (h *Handlers) DispatchCallReview(w http.ResponseWriter, r *http.Request) {
 	go h.runReviewJob(jobCtx, sess.Extension, callID, transcript.Remote, strings.Join(transcript.Lines, "\n"), idemKey)
 	w.WriteHeader(http.StatusAccepted)
 	writeJSONBody(w, ReviewDispatchResponse{Dispatched: true})
+}
+
+// answerReviewDuplicate is the ONE answer for "this job is already queued"
+// — the idem replay and the in-flight guard both mean the work is running
+// or done, and both must look identical to the caller (202, duplicate:true).
+// Two arms spelled the same three lines; one helper keeps them from drifting
+// apart, which is the failure mode a caller would see as an inconsistent
+// retry contract.
+func answerReviewDuplicate(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusAccepted)
+	writeJSONBody(w, ReviewDispatchResponse{Dispatched: true, Duplicate: true})
 }
 
 // runReviewJob is the detached automatic review: draft from the
