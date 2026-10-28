@@ -514,6 +514,18 @@ button.small {
   overflow-wrap: anywhere;
 }
 
+/* Dial-cooldown chip (issue #7): the denied gate verdict renders inline
+   under the dial form — state line plus the one-shot override button
+   (the .wp-mini look comes from the shell's app.css). */
+.wp-dial-cooldown {
+  margin: 6px 0 0;
+  color: var(--warn);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* --- call cards ----------------------------------------------------------- */
 
 .call-state {

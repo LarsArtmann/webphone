@@ -169,6 +169,10 @@ export const I18N = {
     switchBlockedByCall: "End the call before switching lines.",
     switchFailed: (status) => `Could not switch lines (HTTP ${status}).`,
     switchDone: (line) => `Switched to line ${line}.`,
+    cooldownNotice: (lastAgo, left) =>
+      `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
+    dialAnyway: "Dial anyway",
+    cooldownOverrideFailed: "Could not override the cooldown — try again.",
     sseDropped:
       "Live tab updates lost — check the connection; calls keep working.",
     sseRestored: "Live tab updates restored.",
@@ -383,6 +387,11 @@ export const I18N = {
     switchFailed: (status) =>
       `Nebenstellen-Wechsel fehlgeschlagen (HTTP ${status}).`,
     switchDone: (line) => `Auf Nebenstelle ${line} gewechselt.`,
+    cooldownNotice: (lastAgo, left) =>
+      `Letzter Anruf vor ${lastAgo} — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`,
+    dialAnyway: "Trotzdem anrufen",
+    cooldownOverrideFailed:
+      "Abkühlung konnte nicht umgangen werden — erneut versuchen.",
     sseDropped:
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
     sseRestored: "Live-Aktualisierungen wiederhergestellt.",

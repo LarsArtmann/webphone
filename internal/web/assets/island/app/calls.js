@@ -21,6 +21,7 @@ import {
   sipDomain,
 } from "./config.js";
 import { authedFetch } from "./auth.js";
+import { agoLabel, consultDialGate, overrideDialGate } from "./dialgate.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
@@ -1424,7 +1425,59 @@ export function initDialWarm() {
 // form can clear itself ONLY then (a validation error keeps the typed
 // text for editing).
 /** @param {string} raw @returns {Promise<boolean>} */
-export async function placeCall(raw) {
+// The dial-cooldown chip (issue #7): a denied gate verdict renders
+// INLINE under the dial form — the state line (last call age, remaining
+// window) plus ONE "Dial anyway" chip whose click spends the remote's
+// one-shot override server-side and re-runs the dial. Never a modal
+// (the #54 lesson). JS-created, so the served markup and the DOM
+// contract stay untouched.
+function hideDialCooldown() {
+  document.getElementById("wp-dial-cooldown")?.remove();
+}
+
+/** @param {string} target @param {{ allowed: boolean, last_at?: number, window?: number }} verdict */
+function showDialCooldown(target, verdict) {
+  hideDialCooldown();
+  const line = document.createElement("p");
+  line.id = "wp-dial-cooldown";
+  line.className = "hint wp-dial-cooldown";
+  line.setAttribute("role", "status");
+  const lastAgo = verdict.last_at ? agoLabel(verdict.last_at) : "";
+  line.textContent = t("cooldownNotice")(
+    lastAgo,
+    verdict.window && verdict.last_at
+      ? remainingLabel(verdict.window - (Date.now() / 1000 - verdict.last_at))
+      : "",
+  );
+  const anyway = document.createElement("button");
+  anyway.type = "button";
+  anyway.className = "wp-mini";
+  anyway.textContent = t("dialAnyway");
+  anyway.addEventListener("click", async () => {
+    anyway.disabled = true;
+    const allowed = await overrideDialGate(target);
+    if (allowed) {
+      hideDialCooldown();
+      placeCall(target, { force: true });
+    } else {
+      announce(t("cooldownOverrideFailed"), "warn");
+      anyway.disabled = false;
+    }
+  });
+  line.append(anyway);
+  els.dialError.parentElement?.insertAdjacentElement("afterend", line);
+}
+
+// remainingLabel phrases the wait left in the window ("43m") — neutral
+// labels, the agoLabel convention.
+/** @param {number} seconds */
+function remainingLabel(seconds) {
+  if (seconds <= 0) return "";
+  if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
+  return `${Math.ceil(seconds / 3600)}h`;
+}
+
+export async function placeCall(raw, { force = false } = {}) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).
   resumeAudio().catch(() => {});
@@ -1454,6 +1507,21 @@ export async function placeCall(raw) {
     showDialError(t("invalidDest"));
     return false;
   }
+
+  // The advisory dial gate (issue #7): every dial path funnels here
+  // (form submit AND the redial/click-to-dial helpers submit the same
+  // form), so one consult covers them all. force is the spent-override
+  // re-run — the gate already said yes. A null verdict (seam off,
+  // unreachable) dials: the gate advises, it never traps.
+  if (!force) {
+    const verdict = await consultDialGate(target);
+    if (verdict && !verdict.allowed) {
+      log(`dial gate: ${target} is cooling down; showing the override chip`);
+      showDialCooldown(target, verdict);
+      return false;
+    }
+  }
+  hideDialCooldown();
 
   const inviter = new SIP.Inviter(userAgent, uri, {
     sessionDescriptionHandlerOptions: {
