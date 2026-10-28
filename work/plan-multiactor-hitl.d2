@@ -1,0 +1,38 @@
+direction: right
+
+tier1: Multi-actor substrate (this train) {
+  m1: M1 session carries LoginEmail {
+    shape: rectangle
+  }
+  m2: M2 mint sites thread the identity
+  m3: M3 audit actor rule\nemail | extension
+  m4: M4 whoami prefers\nthe session's own user
+  m5: M5 deterministic\nshared-extension identity
+  m1 -> m2 -> m3
+  m1 -> m4
+  m5 -> m4
+}
+
+tier2: Partial-loop surfaces (this train) {
+  m6: M6 drafts pending-age\nreview urgency visible
+  m8: M8 docs + backlog rows\nTODO/CHANGELOG/AGENTS
+  m3 -> m6
+}
+
+tier3: Escalation design (owner + stack gated) {
+  d2s: D2 veto-window mode\nL2: auto-send after T unless vetoed\n(stack/textagent ask)
+  d1s: D1 extension switcher\nmulti-extension users
+  d3s: D3 agent registry\nscoped machine tokens
+  d4s: D4 delegation + roles\napprove-on-behalf-of
+  d5s: D5 durable audit read model\nF107 trigger reassessed
+}
+
+tier4: Fleet horizon {
+  f1: agent-to-agent lanes
+  f2: quorum approvals
+  f3: per-agent autonomy budgets
+}
+
+tier1 -> tier2: actor truth first
+tier2 -> tier3: surfaces prove the need
+tier3 -> tier4
