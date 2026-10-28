@@ -376,6 +376,9 @@ a deliberate code change, regenerate:
 | readmodels.push_list_full                    | Rejection                 | internal/readmodels/push.go        |
 | readmodels.push_remove                       | Infrastructure            | internal/readmodels/push.go        |
 | readmodels.push_upsert                       | Infrastructure            | internal/readmodels/push.go        |
+| readmodels.review_get                        | Infrastructure            | internal/readmodels/callreviews.go |
+| readmodels.review_list_full                  | Rejection                 | internal/readmodels/callreviews.go |
+| readmodels.review_save                       | Infrastructure            | internal/readmodels/callreviews.go |
 | readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go    |
