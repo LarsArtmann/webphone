@@ -37,7 +37,7 @@ type NtfySender struct {
 // NewNtfySender builds the sender; baseURL like "https://ntfy.example.org".
 // The token is optional (a public self-hosted server needs none) and is
 // sent as a Bearer when set. An empty baseURL means "not configured".
-func NewNtfySender(baseURL, token string) (*NtfySender, error) {
+func NewNtfySender(baseURL, token string) (*NtfySender, error) { //nolint:branching-flow // config primitives, fail-closed at New
 	if baseURL == "" {
 		return &NtfySender{}, nil
 	}

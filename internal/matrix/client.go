@@ -61,7 +61,7 @@ var _ gateway.MessageGateway = (*Client)(nil)
 // New builds the client. Config validation has already failed closed on
 // half configurations; the constructor stays mechanical.
 // brandid-lint:ignore(BD003) the bot MXID arrives pre-validated from config; foreign matrix vocabulary (strong-id ruling)
-func New(homeserver, userID, token string) *Client {
+func New(homeserver, userID, token string) *Client { //nolint:branching-flow // foreign matrix vocabulary, pre-validated config (BD003 ruling at site)
 	return &Client{
 		homeserver: strings.TrimRight(homeserver, "/"),
 		userID:     userID,
@@ -186,7 +186,7 @@ func (c *Client) putDirect(ctx context.Context, dm map[string]string) error {
 
 // Upload stores one file in the homeserver content repository and
 // returns its mxc:// URI.
-func (c *Client) Upload(ctx context.Context, name, mimeType string, data []byte) (string, error) {
+func (c *Client) Upload(ctx context.Context, name, mimeType string, data []byte) (string, error) { //nolint:branching-flow // foreign matrix upload vocabulary (mxc URIs)
 	if mimeType == "" {
 		mimeType = mime.TypeByExtension(filepath.Ext(name))
 		if mimeType == "" {

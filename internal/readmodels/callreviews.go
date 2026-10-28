@@ -116,7 +116,7 @@ func (s *Reviews) Get(ctx context.Context, owner domain.Extension, callID string
 // (owner, call) pair, so a save REPLACES the row wholesale (pending →
 // present → failed all ride the same door). A NEW call's review past
 // the per-owner cap is refused with ErrReviewListFull.
-func (s *Reviews) Set(ctx context.Context, owner domain.Extension, callID string, state domain.ReviewState, draftID, text, language string, confidence int) error {
+func (s *Reviews) Set(ctx context.Context, owner domain.Extension, callID string, state domain.ReviewState, draftID, text, language string, confidence int) error { //nolint:branching-flow // engine-layer seam: readmodels facts/keys stay raw strings (readmodels ruling)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

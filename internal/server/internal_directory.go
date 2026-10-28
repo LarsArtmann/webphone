@@ -37,6 +37,8 @@ func loopbackPeer(r *http.Request) bool {
 // machineSurface is the loopback-only machine-surface prologue: a disabled
 // seam answers like a missing surface (missing picks that surface's own
 // 404), then a non-loopback peer is refused before any secret matters.
+//
+//nolint:branching-flow // machineSurface bool-last is a recorded open-roadmap item (2026-10-25 type-safety review); the enabled gate is the seam's whole contract
 func machineSurface(
 	w http.ResponseWriter, r *http.Request, enabled bool, missing func(http.ResponseWriter, *http.Request),
 ) bool {

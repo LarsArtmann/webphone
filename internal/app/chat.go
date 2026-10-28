@@ -35,6 +35,7 @@ func wireChatNetworks(
 	cfg config.Config, injector *do.RootScope, db *sql.DB, log *slog.Logger,
 ) ([]func(context.Context) error, error) {
 	var loops []func(context.Context) error
+	//nolint:branching-flow // MustInvoke in the composition root is doctrine (DO-1 fail-fast miswires); arch-test pins it to internal/app
 	messagingSvc := do.MustInvoke[*messaging.Service](injector)
 
 	if cfg.Matrix.Enabled() {

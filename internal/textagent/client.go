@@ -241,7 +241,7 @@ const SummarizeHintCap = 6000
 // call's transcript (the post-call summarize chain). It rides the same
 // /draft op as DraftFor — the hint carries the framed transcript — so
 // the review API needs no new endpoint.
-func (c *Client) DraftFromTranscript(ctx context.Context, to, transcript string) (*Draft, error) {
+func (c *Client) DraftFromTranscript(ctx context.Context, to, transcript string) (*Draft, error) { //nolint:branching-flow // agent wire params: the phone is the call's remote echoed back, the transcript is hint text
 	trimmed := transcript
 	if len(trimmed) > SummarizeHintCap {
 		trimmed = "… " + trimmed[len(trimmed)-SummarizeHintCap:]

@@ -476,6 +476,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return nil, wrapf("wire server: %w", err)
 	}
 
+	//nolint:branching-flow // MustInvoke in the composition root is doctrine (DO-1 fail-fast miswires); arch-test pins it to internal/app
 	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector)}, nil
 }
 

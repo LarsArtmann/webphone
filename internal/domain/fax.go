@@ -116,7 +116,7 @@ func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath str
 
 // NewInboundFaxJob builds the row Receive persists: the received FACT —
 // direction in, status received, no lifecycle, stamps equal at birth.
-func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, providerRef string, pages int, at time.Time) FaxJob {
+func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, providerRef string, pages int, at time.Time) FaxJob { //nolint:branching-flow // DocumentPath->domain.RelPath is a recorded open-roadmap item (2026-10-25 review); providerRef is a foreign provider token
 	return FaxJob{
 		ID:           id,
 		Owner:        owner,

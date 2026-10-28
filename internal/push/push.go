@@ -147,7 +147,7 @@ func (f *Fanout) Describe() string {
 // Send routes one ring fact to the sender its transport names. An
 // unknown transport is a Rejection (the registry and the fanout
 // disagreed — an operator problem, not a transport outage).
-func (f *Fanout) Send(ctx context.Context, transport, target string, ring Ring) error {
+func (f *Fanout) Send(ctx context.Context, transport, target string, ring Ring) error { //nolint:branching-flow // push.Transport defined type is a recorded open-roadmap item (2026-10-25 review)
 	if !f.Enabled() {
 		return ErrDisabled
 	}
@@ -160,7 +160,7 @@ func (f *Fanout) Send(ctx context.Context, transport, target string, ring Ring) 
 
 // SendDraft routes one draft-ready fact to the sender its transport
 // names (the same routing contract as Send).
-func (f *Fanout) SendDraft(ctx context.Context, transport, target string, draft Draft) error {
+func (f *Fanout) SendDraft(ctx context.Context, transport, target string, draft Draft) error { //nolint:branching-flow // push.Transport defined type is a recorded open-roadmap item (2026-10-25 review)
 	if !f.Enabled() {
 		return ErrDisabled
 	}

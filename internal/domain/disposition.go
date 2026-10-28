@@ -70,6 +70,8 @@ var endFactDispositions = map[callEndFact]Disposition{
 // disposition. The table is total over its fact axis (2×2), so the
 // lookup cannot miss; tightening a row to answer more precisely is an
 // owner call — edit the rows here and nowhere else.
+//
+//nolint:branching-flow // bool-first reads as the fact axis of the 2x2 table (established × media); reordering for the linter would invert the documented axis order
 func DispositionFromEnd(established bool, seconds int) Disposition {
 	return endFactDispositions[callEndFact{established: established, mediaTime: seconds > 0}]
 }

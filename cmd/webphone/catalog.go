@@ -23,10 +23,10 @@ func runCatalog(args []string) error {
 	plain := fs.Bool("plain", false, "emit plain frontmatter-ID refs (governance lint exports)")
 	_ = fs.Parse(args)
 
-	dir := filepath.Join(*output, "eventcatalog")
+	dir := filepath.Join(*output, "eventcatalog") //nolint:branching-flow // flag.String never returns a nil pointer
 
 	var opts []eventcatalog.Option
-	if *plain {
+	if *plain { //nolint:branching-flow // flag.Bool never returns a nil pointer
 		opts = append(opts, eventcatalog.WithPlainRefIDs())
 	}
 

@@ -168,7 +168,7 @@ func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branchi
 // wire (#21): the multipart body and the {"text"} response are the same
 // shape, the endpoint path is /inference. Unknown form fields (model,
 // language) are ignored by the server, so the body stays shared.
-func NewWhisperCppClient(baseURL, token, model string) (*Client, error) {
+func NewWhisperCppClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // config primitives validated at load; parse-at-the-door ruling (strong-id/BD003 class)
 	client, err := NewClient(baseURL, token, model)
 	if err != nil {
 		return nil, err

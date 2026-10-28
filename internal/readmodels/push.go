@@ -85,7 +85,7 @@ func newPushDevices(models *metaengine.Store) *PushDevices {
 // device id replaces its transport/token row (rotation); a NEW device
 // id past the per-owner cap is refused with the ErrListFull contract.
 // brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys engine rows (strong-id wire ruling)
-func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error {
+func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error { //nolint:branching-flow // engine-layer seam: readmodels facts/keys stay raw strings (readmodels ruling)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

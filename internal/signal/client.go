@@ -75,7 +75,7 @@ type Envelope struct {
 
 // New builds the client. dial is injectable so tests drive a fake
 // socket; nil dials the configured unix socket path.
-func New(socketPath, account string, log *slog.Logger) *Client {
+func New(socketPath, account string, log *slog.Logger) *Client { //nolint:branching-flow // foreign signal-cli vocabulary, config-validated
 	if log == nil {
 		log = slog.Default()
 	}

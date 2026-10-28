@@ -108,7 +108,7 @@ func (s *Notes) Get(ctx context.Context, owner domain.Extension, callID string) 
 // no duplicate rows, no creation-time ceremony. The fact snapshots the
 // WHOLE slot: the existing disposition rides along untouched. A NEW
 // call's note past the per-owner cap is refused with ErrNoteListFull.
-func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) error {
+func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) error { //nolint:branching-flow // engine-layer seam: readmodels facts/keys stay raw strings (readmodels ruling)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -167,7 +167,7 @@ const RetryAfterHint = "1"
 // no early-exit on the first mismatched byte and no secret-length leak,
 // the same bar the CRM seam holds its bearer token to. `unavailable` is
 // the 503 body when the deployment has no secret configured.
-func BearerGate(secret, unavailable string, next http.Handler) http.Handler {
+func BearerGate(secret, unavailable string, next http.Handler) http.Handler { //nolint:branching-flow // secret parse-at-the-door; the BearerGate secret/unavailable pair is baseline-ruled (2026-10-25 review)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if secret == "" {
 			w.Header().Set("Retry-After", RetryAfterHint)

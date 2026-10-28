@@ -115,7 +115,7 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 
 	h.recordSummaryIdem(idemKey)
 	h.recordReviewArtifact(sess.Extension, callID, domain.ReviewPresent, draft.ID, draft.Text, draft.Language, draft.Confidence)
-	h.notifyDraftReady(r.Context(), sess.Extension, draft.ID, transcript.Remote)
+	h.notifyDraftReady(r.Context(), sess.Extension, draft.ID, transcript.Remote) //nolint:branching-flow // contact display string: the agent's echo of the call remote, not a domain Phone
 	writeJSONBody(w, SummaryDraftResponse{ID: draft.ID, Contact: draft.Contact, Text: draft.Text})
 }
 

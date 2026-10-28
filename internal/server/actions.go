@@ -616,7 +616,7 @@ func (h *handlers) RequireSession(w http.ResponseWriter, r *http.Request) (sessi
 // AuditAgent routes the JSON lane's agent-action audit lines through
 // the api.Server seam (issue #8's automatic review audits from the api
 // package); agentAudit stays the ONE vocabulary home.
-func (h *handlers) AuditAgent(event, actor, draftID, outcome string) {
+func (h *handlers) AuditAgent(event, actor, draftID, outcome string) { //nolint:branching-flow // journal-line builder: the raw strings ARE the audit-log vocabulary
 	agentAudit(event, actor, draftID, outcome)
 }
 

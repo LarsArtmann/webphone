@@ -155,7 +155,7 @@ func (c *Client) Challenge(ctx context.Context) (Challenge, error) {
 // (signature, issuer, audience, expiry, nonce) and resolves the mapped
 // identity plus its SIP directory password. Every failure is a
 // classification-carrying error, actionable in the journal.
-func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (authmap.User, string, error) {
+func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (authmap.User, string, error) { //nolint:branching-flow // OAuth2 protocol tokens (code/verifier/nonce), not domain concepts
 	empty := authmap.User{}
 	if code == "" {
 		return empty, "", errorfamily.NewRejection("sso.code", "the IdP redirected back without an authorization code")

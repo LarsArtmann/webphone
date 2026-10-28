@@ -140,7 +140,7 @@ func (h *Handlers) runReviewJob(ctx context.Context, owner domain.Extension, cal
 	h.recordSummaryIdem(idemKey)
 	h.recordReviewArtifact(owner, callID, domain.ReviewPresent, draft.ID, draft.Text, draft.Language, draft.Confidence)
 	h.deps.Server.AuditAgent("auto_review", owner.String(), draft.ID, "ok")
-	h.notifyDraftReady(ctx, owner, draft.ID, remote)
+	h.notifyDraftReady(ctx, owner, draft.ID, remote) //nolint:branching-flow // contact display string: the agent's echo of the call remote, not a domain Phone
 }
 
 // recordReviewArtifact upserts the review slot (issue #8's durable

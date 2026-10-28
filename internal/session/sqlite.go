@@ -161,7 +161,7 @@ func (s *SQLiteStore) ActiveTokens(extension domain.Extension) []Token {
 		if err := rows.Scan(&token); err != nil {
 			return nil
 		}
-		out = append(out, ParseToken(token))
+		out = append(out, ParseToken(token)) //nolint:branching-flow // the raw credential blob by design: at-rest accepted, swept on read (sessions ruling)
 	}
 	if err := rows.Err(); err != nil {
 		return nil
