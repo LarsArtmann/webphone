@@ -200,11 +200,20 @@ deterministic shared-extension lookup, drafts-panel pending age
 (`draftAge`, foreign-wire tolerant). **Priority:** per-row · **Effort:**
 per-row.
 
-1. **Extension switcher (D1)**: `authmap.User.Extensions` already models
-   N lines per human but `SessionExtension()` pins to the first —
-   `POST /api/session/switch` re-mints for another mapped extension
-   (password file + directory verify + CSRF rotation; island re-REGISTER +
-   hub resubscribe + config.js refetch). Owner GO; train-sized.
+1. **Extension switcher (D1)** — SHIPPED 2026-10-28 (whole-list
+   execution session): `POST /api/session/switch` re-mints the session
+   for another extension mapped to the SAME login email (fresh
+   password-file read + directory verify + CSRF rotation + old row
+   deleted after the mint; tight PBX-bound rate bucket; `auth switch`
+   audit line names the human move; extension logins refused, own-line
+   switch an idempotent no-op, 404 with the identity layer off). The
+   session identity carries `extensions`; more than one renders a
+   JS-created select by the whoami line (no served-markup delta, no DOM
+   contract change); selecting a line POSTs + reloads through the ONE
+   boot path (re-REGISTER, hub resubscribe, panels — the no-reload
+   sequence stays future polish), and a LIVE CALL blocks the switch.
+   Pinned: session_switch_test.go (6 cases) + session-switch.test.mjs
+   (5 cases).
 2. **Veto-window mode / HITL L2 (D2)**: draft auto-sends after T unless a
    human vetoes; the missing rung between approve-everything (L1) and
    confidence-gated autopilot (L3, shipped agent-side). Lives in the

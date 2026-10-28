@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Line switcher for mapped multi-line users (D1, 2026-10-28): the
+  session identity now carries every extension mapped to the signed-in
+  user (`extensions`), and more than one renders a JS-created select
+  next to the whoami line. `POST /api/session/switch` (session-gated,
+  CSRF, tight PBX-bound rate bucket, registered only when the identity
+  layer is wired) re-mints the session for another extension mapped to
+  the SAME login email: the target's directory password is sourced
+  fresh from its password file, directory-verified, the old session row
+  deleted after the successful mint, CSRF rotated, and one
+  `auth switch email=… 1000 -> 1001` audit line records the human move.
+  The client reloads — the boot probe re-registers, resubscribes and
+  re-renders every surface for the new line (one boot path, no
+  half-switched state); a live call blocks the switch (the reload would
+  tear it down); extension logins never switch (they authenticated
+  exactly one line); switching to the current line is an idempotent
+  no-op.
 - Sessions remember who minted them — the multi-user substrate
   (2026-10-28): passkey and OIDC logins persist their login email on the
   session row (`sessions.login_email`, guarded idempotent migration;
