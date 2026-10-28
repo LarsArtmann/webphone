@@ -613,6 +613,13 @@ func (h *handlers) RequireSession(w http.ResponseWriter, r *http.Request) (sessi
 	return sess, true
 }
 
+// AuditAgent routes the JSON lane's agent-action audit lines through
+// the api.Server seam (issue #8's automatic review audits from the api
+// package); agentAudit stays the ONE vocabulary home.
+func (h *handlers) AuditAgent(event, actor, draftID, outcome string) {
+	agentAudit(event, actor, draftID, outcome)
+}
+
 // requireThread resolves the live session and the {id} path thread in one
 // prologue. missing picks the surface's own not-found answer: a bare
 // http.NotFound for JSON callers, h.notFound for the HTMX shell.

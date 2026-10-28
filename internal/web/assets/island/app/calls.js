@@ -213,6 +213,15 @@ export function settleEndedCall(id) {
   if (entry.timer) clearInterval(entry.timer);
   morphToEndedCard(id, entry);
   showEndedReason(id, entry);
+  // The AUTOMATIC review (issue #8): a media call's settle dispatches
+  // the review job server-side (202, detached, idempotent with the
+  // manual button) — the operator stops clicking for the standard path.
+  // The button is the status surface: queued while the job runs,
+  // back to the manual affordance on failure.
+  if (agentEnabled && entry.established) {
+    const summarizeBtn = card.querySelector(".summarize-btn");
+    if (summarizeBtn) dispatchAutoReview(id, summarizeBtn);
+  }
   sessions.delete(id);
   if (state.focusedId === id) {
     const next = sessions.keys().next();
@@ -433,6 +442,42 @@ async function summarizeCall(id, btn) {
     announce(duplicate ? t("summarizeDuplicate") : t("summarizeReady"), "ok");
     document.dispatchEvent(new CustomEvent("wp:drafts-changed"));
     btn.textContent = t("summarizeSettled");
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = t("summarizeDraft");
+  if (status === 404) announce(t("summarizeNoTranscript"), "warn");
+  else if (status === 0) announce(t("summarizeOffline"), "warn");
+  else announce(t("summarizeFailed"), "error");
+}
+
+// dispatchAutoReview fires the AUTOMATIC review ask once per settle
+// (issue #8): the server detaches the job and answers 202 — duplicate
+// names the idem replay when the manual button won the race, or the
+// job is already running. The button is the status surface: queued
+// text while accepted, back to the manual affordance on failure (the
+// failure is the server's too — the job audited and stayed retryable).
+/** @param {string} id @param {HTMLButtonElement} btn @returns {Promise<void>} */
+async function dispatchAutoReview(id, btn) {
+  btn.disabled = true;
+  btn.textContent = t("summarizing");
+  let status = 0;
+  let duplicate = false;
+  try {
+    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/review`, {
+      method: "POST",
+    });
+    status = res.status;
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      duplicate = body.duplicate === true;
+    }
+  } catch {
+    status = 0;
+  }
+  if (status === 202) {
+    announce(t("reviewQueued"), "ok");
+    btn.textContent = t("reviewQueued");
     return;
   }
   btn.disabled = false;
