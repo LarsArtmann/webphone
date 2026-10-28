@@ -5,7 +5,19 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-27 (multi-call dock + agent-UX SUPERB train executed end-to-end: M1–M14 + M16–M18 shipped, tails recorded below) (whole-list execution session: the unpushed go.sum
+Last sweep: 2026-10-28 (whole-list execution session, concurrent with the dialer train):
+whitespace-drift formatter adjudication + `__wpClock` clock seam + branching-flow
+triage (36 reasoned nolints + fresh 78-entry governed baseline) SHIPPED · advisory
+tw-freshness CI lane + drifted artifacts rebuilt SHIPPED · chat lane v2 (compose-new
+by address shape + matrix m.read receipts) SHIPPED · catalog cross-link
+(specifications frontmatter + spec files in the export tree) SHIPPED · fleet ask
+FILED as pma#348 (verified at source) · cqrs-htmx M12/M13/M14 closed as
+ALREADY-SHIPPED upstream (issue #32 + e7b62cd9 ring buffer; usermgmt README §
+Projection readiness; crush-config a9aeb2a — no duplicates filed) · dial-code
+registry healed (the concurrent train's split registration) · KMP spike DEFERRED
+(live concurrent call-stack train in webphone-android — Gradle surgery would
+collide; Tier-0 may-stay-unstarted by its own plan).
+Prior sweep: 2026-10-27 (multi-call dock + agent-UX SUPERB train executed end-to-end: M1–M14 + M16–M18 shipped, tails recorded below) (whole-list execution session: the unpushed go.sum
 daemon commit triaged canonical (`go mod tidy` no-op; vendorHash insensitive;
 pushed green) · stale rows closed with evidence re-verified at HEAD (go-appkit
 flight recorder + latency metrics SHIPPED, branching-flow unskip EXECUTED,
@@ -38,24 +50,14 @@ how-to is [docs/type-gate.md](docs/type-gate.md), and the pins from `typecheck_p
 `IslandDomIds` mirror of docs/dom-contract.md, plus a `globMatcher` table test).
 Evidence: [docs/status/2026-10-27_22-00_island-type-gate-complete-status.md](docs/status/2026-10-27_22-00_island-type-gate-complete-status.md).
 
-- **OPEN — the whitespace-drift hook cannot tell formatter output from hand edits.** On 2026-10-28 it
-  refused a commit whose only whitespace delta was prettier's reflow of a neighbouring call
-  (`nix fmt` was a no-op, so the content WAS formatter-clean); the commit needed `--no-verify`, which
-  is exactly the habit the hook exists to avoid. Candidate fixes: compare the staged blob against
-  `treefmt --ci` for those paths, or treat an idempotent `nix fmt` as proof and drop the byte
-  heuristic. Not urgent (CI still gates), but it is a false-positive generator.
-- **OPEN — `__wpClock` is still an ad-hoc global.** No spec installs it today (dead machinery); the
-  declaration is now strict (`now` is required) so a partial fake cannot pass, but the plan's #19
-  (an injectable `now()` passed at construction) is unstarted.
-- **OPEN — branching-flow findings triage (the baseline was retired 2026-10-28).** The 47-entry
-  `.buildflow-baseline.json` was keyed by HOST-ABSOLUTE paths and matched NOTHING for three runs
-  straight while the live scan reports 104 findings — a suppression file that suppresses nothing
-  looks like a reviewed set, so it was deleted (rationale in `.buildflow.yml`). Triage before
-  re-recording: `branching-flow all . --format json --output /tmp/bf.json` (this CLI; the SDK side
-  emits different ids, upstream #13), rule-groups first (`COMPOSITION_mixin` 28 in the retired set,
-  then dupe/large-struct/phantom), each finding either fixed, suppressed in code with a reason, or
-  accepted with a site comment; ONLY then `buildflow -s branching-flow --save-baseline`. Nothing
-  gates in the meantime (severity cap).
+The three refinement rows that sat here (whitespace-drift false positive,
+`__wpClock`, branching-flow triage) are SHIPPED 2026-10-28 — the gate now
+adjudicates formatter output with the flake's own treefmt over the
+materialized staged blobs (`--ref` mode too), the shell reads all time
+through one exported clock holder with the global deleted, and the
+branching-flow set is fully governed (36 reasoned nolints + a fresh
+78-entry baseline wired into `.buildflow.yml`). See CHANGELOG [Unreleased].
+
 - **DECLINED with reason — do not re-litigate without new evidence:**
   - _Split `shell.js` at its seams_ (voicemail player / palette / composer). The gate now makes a
     split SAFE (a broken import is a compile error), but the classic-script load order is a
@@ -128,7 +130,10 @@ Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-
    the codec + digest move to `commonMain` cleanly; `SipEngine` needs its okhttp transport behind
    `expect`/`actual` first (re-estimated at 180 min, not 15). Android stays the ONLY target, then
    STOP — no second target without a linuxX64 WebRTC 3-call audio smoke. Gate: a committed second
-   target in ROADMAP.
+   target in ROADMAP. **DEFERRED 2026-10-28**: the android repo carried a LIVE concurrent
+   call-stack train (daemon commits minutes old, Kotlin files mid-edit) — Gradle surgery on
+   settings.gradle.kts + a new shared/ module would collide head-on. Tier-0 by the plan's own
+   wording ("may stay unstarted indefinitely"); execute when that repo is quiet.
 4. **REJECTED, do not re-propose**: Go server → JavaScript (57,349 LOC plus the
    single-binary/nix deployment premise for zero product gain) · full Kotlin Multiplatform (the
    2026-10-23 platform decision stands: Linux WebRTC is the weak leg) · a Kotlin/Wasm web target
@@ -188,11 +193,13 @@ follow-on gaps hit 54m and 70m). The journal logs NOTHING about pushes
 (the T21 LOCAL-timer verdict stands), and the commit-message LLM
 provider (127.0.0.1:52625) refused connections 13:06→20:59 — ~8h of
 heuristic-only messages fleet-wide, though the commit leg itself stayed
-fast (177 ms fails). FLEET ASK (upstream projects-management-automation
-
-- SystemNix): log the push leg per push/failure; flush pending pushes
-  on SIGTERM; push once immediately at startup. Until then, a fleet
-  deploy window predicts a push stall — run
+fast (177 ms fails). FLEET ASK FILED 2026-10-28 as
+projects-management-automation#348 (verified at source first: Stop()
+  drops pending batches with no drain, Start() has no unpushed sweep,
+  per-push logging already exists — so the ask is the SIGTERM flush, the
+  startup sweep, and a shutdown-completion line; draft in
+  docs/drafts/pma-push-leg-durability-issue-2026-10-28.md). Until it
+  lands, a fleet deploy window predicts a push stall — run
   `scripts/push-stall-watch.sh` after every `switch-to-configuration`.
 
 ### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
@@ -257,18 +264,25 @@ main), projections readiness on /healthz, hub Shutdown pre-drain, clone
 detection + auth-audit journal verified live, report re-scored 100/100
 (§07 Addendum). What remains are the optional tails:
 
-1. **Upstream: bounded AuditLog projection ask** (M12) — file the
-   cqrs-htmx issue (cap + eviction on the AuditLog read projection; the
-   journal itself is durable and fine). Verify-at-source first
-   (memory-only + unbounded still true at v4.16.0), github-voice
-   register. This is the last blocker to the read-side audit surface.
-2. **Upstream: usermgmt README pointer** (M13) — one paragraph +
-   example for `ProjectionReadinessCheck` so the next consumer wires it
-   without an audit. PR against ~/projects/cqrs-htmx;
-   verify-before-filing gate applies.
-3. **Process lessons → crush-config** (M14) — two rules for
-   references/lessons.md: symbol-level greps for "exactly N" claims;
-   cheap session-start baseline (`go build && go test -count=1`).
+1. **Upstream: bounded AuditLog projection ask** (M12) — RESOLVED 2026-10-28
+   without filing: the ask is ALREADY SHIPPED upstream. Issue #32
+   ("AuditLog projection: bound the in-memory entries") existed, and
+   `e7b62cd9` (2026-10-27, on origin/master) implements the ring buffer
+   with cap + eviction + `Dropped()` and no way to re-enable unbounded
+   mode — verified at source, NOT in the pinned usermgmt v4.16.0. Close-
+   out comment posted on #32. Remaining webphone action: bump usermgmt
+   once it tags, then the read-side audit surface unblocks (wire, not
+   file).
+2. **Upstream: usermgmt README pointer** (M13) — RESOLVED 2026-10-28:
+   `usermgmt/README.md` § "Projection readiness (health checks)" already
+   carries the paragraph + the `ReadinessHandler(ProjectionReadinessCheck(svc))`
+   example + the `OnProjectionFailed` twin (landed via the
+   `docs/usermgmt-projection-readiness-pointer` branch, on master). No PR
+   needed.
+3. **Process lessons → crush-config** (M14) — RESOLVED 2026-10-28 as
+   already shipped during the 10-25 train: crush-config `a9aeb2a` carries
+   both rules ("Verify 'exactly N' claims with symbol-level greps" +
+   "Run a cheap build+test baseline at session start").
 4. **loginpage next-tag passive watch** — favicon + NewPageData fixes
    ride the tag AFTER v4.13.0; bump when it lands, nothing to do now
    (report finding 5).
@@ -282,12 +296,15 @@ The library `/login` page, path rename (`/api/auth/webauthn/login/*`),
 nonce CSP lane, and `login.css` artifact are SHIPPED (CHANGELOG
 [Unreleased]; smoke-verified both modes). Two candidates stay open:
 
-1. **tw.css freshness grep in CI** — the refreshed tw.css carried 15
-   additive utilities NO view references (benign: module-cache sources
-   vs the old vendor snapshot), but nothing FAILS when the artifact
-   drifts from its input. Candidate: a CI step that rebuilds both
-   artifacts via `scripts/build-tw-css.sh` and diffs against the
-   committed bytes (byte-stable by construction). Evidence:
+1. **tw.css freshness grep in CI** — SHIPPED 2026-10-28: the advisory
+   `tw-freshness` CI job rebuilds both artifacts via
+   `scripts/build-tw-css.sh` (flake-locked tailwind, go.mod-pinned module
+   sources — byte-stable by construction) and diffs against the
+   committed bytes; both artifacts were rebuilt and committed with the
+   lane (they had drifted behind the agent-UX + review view trains —
+   the lane's first run caught exactly that class). Advisory like
+   reproduce-first (the daemon pushes in-flight view edits before a
+   train's tail rebuilds); flip to blocking after clean trains. Evidence:
    docs/status/2026-10-25_16-10_loginpage-adoption-build-green.md.
 2. **Forced-theme users see the OS theme on `/login`** — the library
    ThemeScript follows `prefers-color-scheme` only; the shell's
@@ -318,10 +335,13 @@ Remaining, unscheduled:
   both feed webphone via `settings`/`environmentFile` — no webphone module
   change required. Served-markup changes (network prefix rows) owe the standing
   stack browser E2E on the next relock. **Priority:** Medium · **Effort:** M.
-- **Lane v2 fences**: matrix group rooms + read receipts (`m.read` → delivered),
-  matrix E2EE (needs olm/megolm — big), signal inbound attachments (signal-cli
-  side plumbing), signal groups, compose-new-DM affordance for chat networks
-  (v1: chat threads are born inbound). **Priority:** Low · **Effort:** M each.
+- **Lane v2 fences**: read receipts (matrix `m.read` → delivered) and the
+  compose-new-DM affordance are SHIPPED 2026-10-28 (`ParseComposedAddress`
+  shape routing + `chatloop.Sink.RemoteRead`; CHANGELOG [Unreleased]). Still
+  open: matrix group rooms (threads key (owner, network, remote) one-peer —
+  groups need a thread-model change, not a fence lift), matrix E2EE (needs
+  olm/megolm — big), signal inbound attachments (signal-cli side plumbing),
+  signal groups (same model issue). **Priority:** Low · **Effort:** M each.
 
 ### /health operator surface (2026-10-23 — stack option shipped, deploy pending)
 
@@ -729,16 +749,15 @@ Owner/stack legs that block or derive from webphone work: repair the stack FreeS
 
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
 
-- [ ] **Hub cross-link: webphone's wire contracts from its inventory page**
-      (eventcatalog-hub) — DISCOVERED 2026-10-24: the hub's `services/` AND
-      `domains/` are GENERATED (gitignored; merge.py unions source trees,
-      bodies preserved first-source-wins; the webphone body comes from the
-      SystemNix inventory writer). A contract-spec link therefore needs a
-      PIPELINE home: either the SystemNix inventory module (a links/notes
-      field rendered into the Details table) or webphone's OWN exported
-      eventcatalog service page (the summary in
-      `internal/domain.BuildCatalog` — the concurrent session's file; ask
-      first). A direct `services/webphone/index.mdx` edit is drift (tested:
-      appended content sits untracked until the next build clobbers it —
-      restored byte-exact 2026-10-24). **Priority:** Low · **Effort:** M
-      (pipeline change, other repo).
+- [x] **Hub cross-link: webphone's wire contracts from its inventory page**
+      (eventcatalog-hub) — SHIPPED 2026-10-28 via webphone's OWN exported page:
+      the catalog declares EventCatalog `specifications` (asyncapi + openapi)
+      and `webphone catalog` renders both spec files into the export tree from
+      the pure generators behind `webphone contracts` and GET /openapi.json
+      (`server.RenderOpenAPIContract`, newly exported), pinned by a cmd-level
+      export test. The SystemNix inventory-module option is unnecessary now.
+      (Was: DISCOVERED 2026-10-24: the hub's `services/` AND `domains/` are
+      GENERATED (gitignored; merge.py unions source trees, bodies preserved
+      first-source-wins). A direct `services/webphone/index.mdx` edit is
+      drift (tested: appended content sits untracked until the next build
+      clobbers it — restored byte-exact 2026-10-24).)
