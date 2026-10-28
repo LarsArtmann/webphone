@@ -442,6 +442,33 @@ func TestSettingsPushSection(t *testing.T) {
 	}
 }
 
+// TestSettingsAgentAuditSection pins the D5 surface: the section
+// renders when rows exist OR the agent seam is on (history outlives a
+// seam toggle), rows name actor · event · outcome · subject with a
+// stamp, and the empty state exists. Zero rows with the seam off keeps
+// the panel byte-identical.
+func TestSettingsAgentAuditSection(t *testing.T) {
+	off := renderComponent(t, SettingsPanel(SettingsPanelProps{Lang: LangEN}))
+	if strings.Contains(off, "Recent agent actions") {
+		t.Errorf("audit section rendered with no rows and the seam off: %s", off)
+	}
+	withRows := renderComponent(t, SettingsPanel(SettingsPanelProps{
+		AgentAuditRows: []AgentAuditRow{{
+			Actor: "lars@example.com", Event: "approve", Subject: "d-9", Outcome: "ok",
+			At: time.Date(2026, 10, 28, 22, 15, 0, 0, time.UTC),
+		}},
+		Lang: LangEN,
+	}))
+	if !strings.Contains(withRows, `id="wp-agent-audit-list"`) ||
+		!strings.Contains(withRows, "lars@example.com · approve · ok · d-9") {
+		t.Errorf("audit row missing its line: %s", withRows)
+	}
+	seamOn := renderComponent(t, SettingsPanel(SettingsPanelProps{Agent: true, Lang: LangEN}))
+	if !strings.Contains(seamOn, `id="wp-agent-audit-empty"`) || !strings.Contains(seamOn, "No agent actions recorded yet.") {
+		t.Errorf("seam on with no rows must show the empty state: %s", seamOn)
+	}
+}
+
 // TestImageAttachmentCarriesLightboxAttr: the inline image attachment
 // anchor carries data-lightbox (shell.js opens the dialog on it); a
 // non-image attachment never does.

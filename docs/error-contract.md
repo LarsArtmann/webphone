@@ -348,6 +348,9 @@ a deliberate code change, regenerate:
 | push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go               |
 | push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go              |
 | push.transport                               | Rejection                 | internal/push/push.go              |
+| readmodels.agent_audit_append                | Infrastructure            | internal/readmodels/agentaudit.go  |
+| readmodels.agent_audit_recent                | Infrastructure            | internal/readmodels/agentaudit.go  |
+| readmodels.agent_audit_trim                  | Infrastructure            | internal/readmodels/agentaudit.go  |
 | readmodels.close                             | Infrastructure            | internal/readmodels/readmodels.go  |
 | readmodels.contact_count                     | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.contact_delete                    | Infrastructure            | internal/readmodels/contacts.go    |

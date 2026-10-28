@@ -136,7 +136,7 @@ func (s *AgentAudit) Recent(ctx context.Context, owner domain.Extension, limit i
 	}
 	views, err := s.reader.Scan(ctx,
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
-		metaengine.WithSort("seq", false),
+		metaengine.WithSort("seq", true),
 		metaengine.WithLimit(limit),
 	)
 	if err != nil {

@@ -171,10 +171,10 @@ type Deps struct {
 	// the dual-write degrades to the line alone.
 	AgentAudit *readmodels.AgentAudit
 	Messaging  *messaging.Service
-	Fax       *fax.Service
-	PhoneAPI  *pbx.Client
-	Hubs      *ExtensionHubs
-	Shared    []domain.SharedContact
+	Fax        *fax.Service
+	PhoneAPI   *pbx.Client
+	Hubs       *ExtensionHubs
+	Shared     []domain.SharedContact
 	// CRM is the OPTIONAL Ledger CRM integration (name enrichment + call
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.

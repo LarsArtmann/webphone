@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Durable agent-action audit read model (D5, 2026-10-28 — the F107
+  trigger armed by the multi-actor substrate): every `agentAudit` line
+  now DUAL-WRITES into a readmodels `agent_audit` collection
+  (append-only, owner-scoped, 500/extension cap with the
+  oldest-first trim, rides readmodels.db and its backups). Settings
+  grows a "Recent agent actions" section (`wp-agent-audit-*`,
+  conditional on rows-or-seam) answering "who approved what, when"
+  without journal archaeology — actor (login email, else the line),
+  event, outcome, subject, stamp; the greppable journal line stays
+  the operator-grep surface, a nil store degrades to the line alone,
+  and the identity seam (usermgmt.db) remains untouched.
 - Per-remote redial cooldown, advisory with a one-shot override
   (issue #7, 2026-10-28): `dial.cooldown` (a duration, off by default
   = byte-identical product) arms a per-(extension, remote) window in

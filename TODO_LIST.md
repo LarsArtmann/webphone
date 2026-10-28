@@ -241,9 +241,17 @@ per-row.
 4. **Delegation + roles (D4)**: approve-on-behalf-of, per-contact scopes,
    admin/member split — needs the actor substrate (shipped) AND a second
    real user first. Owner call.
-5. **Durable audit read model (D5, F107 reopen trigger)**: multi-actor
-   makes in-UI audit history a real operator need; the journal-line home
-   stands until then.
+5. **Durable audit read model (D5, F107 reopen trigger)** — SHIPPED
+   2026-10-28 (whole-list execution session): readmodels `agent_audit`
+   (append-only, owner-scoped, 500/extension oldest-first trim) +
+   `agentAudit` DUAL-WRITE (the greppable line stays; a store failure
+   WARNs, never blocks the action) + the Settings "Recent agent
+   actions" section (`wp-agent-audit-*`, rows-or-seam conditional,
+   actor resolved to the login email). Pins: agentaudit_test.go (store)
+   + TestAgentAuditDualWritesTheDurableRow + TestSettingsAgentAuditSection.
+   The LOGIN-event durable journal stays usermgmt's (identity seam
+   untouched); an in-UI login-history surface would need an upstream
+   read API — reopen on an operator ask.
 6. **Branching-flow baseline staleness (observed 2026-10-28 train-start
    buildflow)** — VERIFIED HEALTHY at HEAD (2026-10-28 evening, whole-list
    session): the 11:20 re-establishment (`ba6e189`, 78 entries) is LIVE —
