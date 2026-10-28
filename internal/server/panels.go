@@ -312,6 +312,14 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 				noteDisposition = view.Disposition
 			}
 		}
+		reviewState, reviewText, reviewConfidence := "", "", 0
+		if h.deps.Reviews != nil {
+			if view, err := h.deps.Reviews.Get(r.Context(), sess.Extension, tx.CallID); err != nil {
+				slog.Warn("history: review fetch failed", "error", err, "extension", sess.Extension.String())
+			} else if view != nil {
+				reviewState, reviewText, reviewConfidence = view.State, view.Text, view.Confidence
+			}
+		}
 		if disposition != "" && noteDisposition != disposition.String() {
 			continue
 		}
@@ -319,6 +327,7 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 			CallID: tx.CallID,
 			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
 			Lines: tx.Lines, Name: names[tx.Remote], Note: note, Disposition: noteDisposition,
+			ReviewState: reviewState, ReviewText: reviewText, ReviewConfidence: reviewConfidence,
 		})
 	}
 	return groups

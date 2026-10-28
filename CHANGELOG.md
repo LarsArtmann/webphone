@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `go-health` bumped to v0.8.1 (2026-10-28) — the CI-green re-cut the rest of
+  the fleet runs. The bump shipped without its vendored-module hash, which is
+  the class that has red-ed main three times now; the hash was re-derived from
+  this checkout and the build plus a live smoke (48 + 4 + 8, zero failures) are
+  green on the resulting binary.
 - Backup-unit sandbox parity (2026-10-27, nix-review train): the
   `webphone-backup` oneshot now runs under the same systemd sandbox as
   the main unit (the ProtectClock/Hostname/Kernel* family,
@@ -65,6 +70,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The voicemail waveform cache no longer grows without bound (2026-10-28): the
+  panel decoded a 48-bar waveform per call and kept it forever in a `Map`,
+  which is a slow leak in a page that stays open all day. Oldest-first
+  eviction at 48 entries; a re-decode is cheap because the browser already has
+  the audio. The command palette also builds its rows once per open instead of
+  on every keystroke, and the failed-send Retry looks the composer up inside
+  the messages panel (the contacts forms share the `.wp-compose` class).
+- The automatic review dispatch answers a queued job from one place
+  (2026-10-28): the idem replay and the in-flight guard spelled the same
+  202 + `duplicate:true` answer twice, so a retry contract could drift between
+  them; both now call `answerReviewDuplicate`.
 - Backup script path quoting (2026-10-27, nix-review train): every
   interpolated path in the generated backup script is shell-quoted, so a
   `dataDir`/`destDir` containing spaces can no longer word-split the

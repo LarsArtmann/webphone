@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -26,6 +27,11 @@ type HistoryPanelProps struct {
 	// addresses the transcripts section (the only rows carrying a call
 	// uuid to join the verdict with).
 	Disposition string
+	// AgentEnabled mirrors the textagent seam's presence (T14): when
+	// false, transcript rows without a stored review render the
+	// not-configured chip — the review affordance's absence is visible,
+	// never a silent nothing.
+	AgentEnabled bool
 	// Names maps phone numbers to CRM contact names (optional integration);
 	// unresolved numbers render verbatim.
 	Names map[string]string
@@ -129,6 +135,13 @@ type TranscriptGroup struct {
 	// Disposition is the operator-confirmed verdict on the note slot
 	// (T3; empty = never confirmed — renders no badge).
 	Disposition string
+	// ReviewState is the automatic post-call review's lifecycle state
+	// (issue #8, T13): pending/present/failed; empty = no review was
+	// ever asked for this call. ReviewText/ReviewConfidence carry the
+	// present state's draft dims.
+	ReviewState      string
+	ReviewText       string
+	ReviewConfidence int
 }
 
 templ TranscriptSection(props HistoryPanelProps) {
@@ -161,6 +174,31 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+			// The automatic review's durable artifact (issue #8, T13): the
+			// AI's assessment renders under the transcript in its lifecycle
+			// state. A row with NO review renders the not-configured chip
+			// only when the seam is off (T14 — the absence is visible,
+			// never silent); with the seam on, no review just means nobody
+			// asked for one.
+			if group.ReviewState == "present" {
+				<div class="wp-call-review">
+					<p class="wp-review-label wp-muted">{ T(props.Lang, "history.review.label") }</p>
+					<p class="wp-review-text">{ group.ReviewText }</p>
+					if group.ReviewConfidence > 0 {
+						<p class="wp-muted">{ T(props.Lang, "history.review.confidence") } { fmt.Sprintf("%d%%", group.ReviewConfidence) }</p>
+					}
+				</div>
+			} else if group.ReviewState == "pending" {
+				<div class="wp-call-review">
+					<p class="wp-muted">{ T(props.Lang, "history.review.pending") }</p>
+				</div>
+			} else if group.ReviewState == "failed" {
+				<div class="wp-call-review">
+					<p class="wp-muted">{ T(props.Lang, "history.review.failed") }</p>
+				</div>
+			} else if !props.AgentEnabled {
+				<p class="wp-muted wp-review-unconfigured">{ T(props.Lang, "history.review.notConfigured") }</p>
+			}
 				// Copy affordance: the button only marks the row — shell.js
 				// owns the clipboard write + toast (works when island scripts
 				// fail; label localized here, toast English by D3).
