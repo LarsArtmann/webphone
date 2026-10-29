@@ -130,7 +130,9 @@ immediately documented eight previously undocumented keys) and generation-closin
    the next call falls back to the autonomous mode; `hangup` waits 30 s + 10 s and then fails with a
    named exit code. webphone's textagent has a 3 s probe and a 502 toast (covers unreachable, not
    "accepted then silent") and no designed fallback for the human waiting on a draft. Design input
-   for D3; still owner-GO + security-review gated.
+   for D3 LANDED 2026-10-29 (M18/F75-F77):
+   `docs/planning/2026-10-29_16-17_D3-agent-liveness-design.md` — liveness ladder, slot release,
+   named exit codes, and the webphone seam map; still owner-GO + security-review gated.
 4. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
    operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
    (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
