@@ -18,7 +18,8 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 			target="_blank"
 			rel="noopener noreferrer"
 			title={ T(lang, "crm.open") }
-		>{ displayName(number, contacts) }<span class="wp-sr-only"> ({ T(lang, "crm.open") })</span></a>
+			aria-label={ displayName(number, contacts) + ", " + T(lang, "crm.open") }
+		>{ displayName(number, contacts) }</a>
 	} else {
 		{ displayName(number, contacts) }
 	}

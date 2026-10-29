@@ -66,33 +66,25 @@ Source: [docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md](do
 CRM-side `GET /api/contacts/{id}/context`, the outcome-vocabulary bridge) is
 SHIPPED and green; these are the deliberately deferred edges.
 
-1. **Visual proof (M13, `blocked` on harness work)**: `scripts/ui-capture.py`
-   has no fake-CRM mode, so neither the context strip nor a linked caller name
-   has a screenshot. Build a `--crm` flag (stub server + seeded thread) and
-   shoot the strip light/dark before claiming visual correctness — `ui-shots/`
-   is untracked, so nothing notices a missing shot.
-2. **Contrast measurement**: `.wp-crm-key` / `.wp-crm-muted` were never
-   measured against AA in either theme; the tokens came from the existing
-   palette, which is not the same as a measured verdict.
-3. **Two surfaces still render plain names**: voicemail's `vmCaller` returns
+1. **Two surfaces still render plain names**: voicemail's `vmCaller` returns
    mixed name/number text (split it before wrapping) and the drafts panel's
    `contactLabel` is unlinked. Three surfaces link, two do not — an
    inconsistency a user will read as a bug.
-4. **"Add to CRM" for misses**: today a caller the CRM does not know is a dead
+2. **"Add to CRM" for misses**: today a caller the CRM does not know is a dead
    end. The affordance is a link into the CRM's create form (still no
    browser→CRM traffic, no contact creation in the phone).
-5. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
+3. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
    a batch product collapses it to one. Owner-side (Kith) work, worth doing
    when a list ever exceeds ~20 numbers per render.
-6. **Contract snapshot test**: pin webphone's exact `/context` request + parse
+4. **Contract snapshot test**: pin webphone's exact `/context` request + parse
    against the producer's published shape, so the vocabulary-break class (a
    closed set drifting under a consumer that keeps sending the old value)
    fails in CI instead of on a customer's answered call.
-7. **Full `nix flake check` as ONE gate**: the KVM-gated
+5. **Full `nix flake check` as ONE gate**: the KVM-gated
    `webphone-backup`, `webphone-backup-drill` and `webphone-module` checks were
    not part of this train's verdict set (each verified individually when it
    last changed).
-8. **Kith side (`blocked` on Q3, below)**: CHANGELOG entry + the generated wire
+6. **Kith side (`blocked` on Q3, below)**: CHANGELOG entry + the generated wire
    reference (`/docs`, OpenAPI) for `GET /api/contacts/{id}/context`; the
    branch is 16 commits ahead of `origin/master` and mixes another session's
    claim/outreach work, whose `internal/catalog` gate is red.

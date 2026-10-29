@@ -26,13 +26,23 @@ func TestCRMNameLinkIsTheOneLinkHome(t *testing.T) {
 		`target="_blank"`,
 		`rel="noopener noreferrer"`,
 		"Ada Lovelace",
-		// The screen-reader suffix names the destination: a bare "Ada
-		// Lovelace" link in a heading does not say where it goes.
-		"Open in the CRM",
+		// The accessible NAME carries the destination. It rides aria-label,
+		// not a visually-hidden suffix: the first attempt used a made-up
+		// `wp-sr-only` class, so "(Open in the CRM)" rendered visibly inside
+		// the 24px heading (caught by the visual harness, not by any gate).
+		// aria-label cannot be styled wrong.
+		`aria-label="Ada Lovelace, Open in the CRM"`,
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("linked name missing %q; got:\n%s", want, page)
 		}
+	}
+
+	// Nothing may render the destination phrase as VISIBLE text: the link's
+	// label is the name, and a hidden-text workaround is how the last defect
+	// got in.
+	if strings.Contains(page, ">(") {
+		t.Errorf("the link must not carry a visible parenthesised suffix:\n%s", page)
 	}
 
 	plain := renderComponent(t, crmNameLink("+493012345678",

@@ -497,8 +497,12 @@ def capture(
                         "document.querySelectorAll('details.wp-transcript-call')"
                         ".forEach((d) => d.setAttribute('open', ''))"
                     )
+                # A marker is a selector, a (selector, copy) tuple, or a
+                # LIST of those pins (a surface that proves two things).
                 pins = SURFACE_MARKERS[name]
-                if isinstance(pins, tuple):
+                if isinstance(pins, str):
+                    pins = [(pins, None)]
+                elif isinstance(pins, tuple):
                     pins = [pins]
                 for marker, expected_text in pins:
                     if not driver.find_elements("css selector", marker):

@@ -59,8 +59,9 @@ nix build .#webphone --system aarch64-linux   # cross-builds — verify by ELF b
 ./update.sh [version]              # repin vendored sip.js (fetch → esbuild IIFE → swap)
 PYSEL=$(nix build --no-link --print-out-paths --impure --expr '(builtins.getFlake "path:'"$(pwd)"'").inputs.nixpkgs.legacyPackages.x86_64-linux.python312.withPackages (ps: [ ps.selenium ])') && \
 nix shell nixpkgs#chromium nixpkgs#chromedriver "$PYSEL" \
-  --command python3 scripts/ui-capture.py --binary $(nix build --no-link --print-out-paths .#webphone)/bin/webphone
+  --command python3 scripts/ui-capture.py --binary $(nix build --no-link --print-out-paths .#webphone)/bin/webphone [--crm]
                                      # T23 visual harness: 24 shots (12 surfaces × light/dark, the styled 404 included) into ui-shots/ (ASR-on; M13 surfaces included; passkey-ON boot since 2026-10-25 — the two ANONYMOUS /login surfaces shot cookie-less with CDP prefers-color-scheme emulation); LOCAL-ONLY by budget decision;
+                                     # `--crm` boots a fake Kith machine API (by-phone + /context + calls, bearer-gated) beside the app and adds the `crm-context` surface, which ASSERTS the linked caller name + the strip's facts in the DOM before shooting — the only way to prove either visually (2026-10-29: it caught a made-up `wp-sr-only` class that had rendered "(Open in the CRM)" INSIDE the thread heading);
                                      # asserts DOM per shot, waits on the island call view (the resume reveal races short sleeps); the PYSEL dance: nix ≥2.34 parses
                                      # paren attrpaths like nixpkgs#python312.withPackages(ps: …) as PATHS — build the env via the flake's locked nixpkgs instead
 ```
