@@ -58,9 +58,9 @@ type Task struct {
 // newer CRM must not break an older phone), and every field except id/name is
 // optional.
 type contextWire struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Company   string `json:"company"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Company   string   `json:"company"`
 	Tags      []string `json:"tags"`
 	OpenDeals []struct {
 		Title      string `json:"title"`
@@ -68,9 +68,9 @@ type contextWire struct {
 		ValueCents int64  `json:"value_cents"`
 		Currency   string `json:"currency"`
 	} `json:"open_deals"`
-	OpenDealCount  int    `json:"open_deal_count"`
-	OpenTasks      int    `json:"open_tasks"`
-	NextTask       *struct {
+	OpenDealCount int `json:"open_deal_count"`
+	OpenTasks     int `json:"open_tasks"`
+	NextTask      *struct {
 		Title   string `json:"title"`
 		DueAt   string `json:"due_at"`
 		Overdue bool   `json:"overdue"`

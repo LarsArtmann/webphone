@@ -249,6 +249,14 @@ CRM must run with `-api-token <same-token>`):
   link into the CRM's own contact page, opened in a new tab so the SIP
   island is never unloaded. Unset = plain names, byte-identical to a
   deployment without links; a number with no CRM match stays raw text.
+- **Contact context** (`GET /api/contacts/{id}/context` on the CRM): opening
+  a conversation with a known contact shows one quiet line of what is
+  outstanding, their company, the deals in flight with values, the open
+  follow-up count with the next one due, and the last touch. Fetched for that
+  ONE contact, cached two minutes, and silently absent when the CRM does not
+  publish it or cannot be reached. Lists never fetch context (they show
+  identity only), because N contacts of facts per page is a stampede for data
+  nobody reads at list density.
 
 The CRM owns the contact, the phone owns the conversation: webphone stores
 no CRM records (the in-process cache is a render-time memo, not a

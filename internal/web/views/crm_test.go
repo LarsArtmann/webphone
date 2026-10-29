@@ -171,7 +171,7 @@ func TestDealValue(t *testing.T) {
 	}{
 		{CRMDeal{ValueCents: 1200000, Currency: "EUR"}, "EUR 12,000"},
 		{CRMDeal{ValueCents: 1200050, Currency: "EUR"}, "EUR 12,000.50"},
-		{CRMDeal{ValueCents: 99}, "EUR 0.99"},   // empty currency falls back
+		{CRMDeal{ValueCents: 99}, "EUR 0.99"}, // empty currency falls back
 		{CRMDeal{ValueCents: 0, Currency: "GBP"}, "GBP 0"},
 		{CRMDeal{ValueCents: 123456789, Currency: "USD"}, "USD 1,234,567.89"},
 	}

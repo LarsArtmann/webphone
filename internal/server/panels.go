@@ -263,14 +263,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		// filter did not choose. The transcripts carry the answer.
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
-			CRM: h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
-			CRM: h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}

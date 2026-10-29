@@ -159,6 +159,20 @@ above stays complete without them, and the E2E must not assume them:
 
 ## Notes
 
+### Optional integration ids (served only when configured — 2026-10-29)
+
+Conditional by construction, so the E2E must not assume them:
+
+- `wp-crm-context` — the CRM's context line under an open conversation's head
+  (company, deals in flight, outstanding follow-up, last touch). Present ONLY
+  when the optional CRM is configured AND publishes context for the caller;
+  absent entirely for a disabled CRM, an unknown number, a CRM without the
+  product, or an unreachable CRM. No empty shell is ever rendered.
+- `.wp-crm-link` — a resolved caller's name rendered as a link into the CRM's
+  own contact page (class, not id; it appears wherever the label is the
+  contact name and the container is not itself a link: thread head, fax row,
+  CDR row). Present ONLY when `crm.contact_url` is configured.
+
 ### Layout ids (served, but NOT required — 2026-10-29)
 
 These are in the served bytes of every signed-in shell but are deliberately
