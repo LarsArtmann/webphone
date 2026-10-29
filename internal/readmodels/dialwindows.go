@@ -170,6 +170,50 @@ func (s *DialWindows) Last(ctx context.Context, owner domain.Extension, remote s
 	return time.Unix(win.At, 0), true, nil
 }
 
+// DialSlotsMaxPerResponse bounds the ACTIVE-slot listing (the typeahead's
+// cooldown decoration) — the owner's cap is 500 rows, but a page only
+// phrases the freshest ones; oldest-first beyond this bound is invisible
+// state, exactly like the trim posture.
+const DialSlotsMaxPerResponse = 50
+
+// ActiveSlot is one live cooldown window: the remote is inside its
+// cooldown until LastAt+Window.
+//
+// branching-flow COMPOSITION_mixin (baselined): mirrors DialWindowView
+// plus the window length the verdict needs (the engine row stores only
+// the stamp). brandid-lint:ignore(BD003) wire DTO: the remote is the dialable string (strong-id wire ruling)
+type ActiveSlot struct {
+	Remote string `json:"remote"`
+	LastAt int64  `json:"last_at"`
+	Window int64  `json:"window"`
+}
+
+// Active returns the owner's cooldown windows still inside their window
+// (newest first), for the typeahead's row decoration. Expired slots are
+// skipped lazily — the Attempt path is what expunges/replaces rows; this
+// read never writes.
+func (s *DialWindows) Active(ctx context.Context, owner domain.Extension, cooldown time.Duration) ([]ActiveSlot, error) {
+	wins, err := s.windows.Scan(ctx,
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithSort("at", true),
+		metaengine.WithLimit(DialSlotsMaxPerResponse),
+	)
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.dial_window_load", "scan active windows")
+	}
+	now := time.Now()
+	slots := make([]ActiveSlot, 0, len(wins))
+	windowSecs := int64(cooldown / time.Second)
+	for _, v := range wins {
+		last := time.Unix(v.At, 0)
+		if now.Sub(last) >= cooldown {
+			continue
+		}
+		slots = append(slots, ActiveSlot{Remote: v.Remote, LastAt: v.At, Window: windowSecs})
+	}
+	return slots, nil
+}
+
 func (s *DialWindows) recordAttempt(ctx context.Context, owner domain.Extension, remote string, at time.Time) error {
 	if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.DialAttempted{}), domain.DialAttempted{
 		Key:    domain.DialWindowKey{Owner: owner.String(), Remote: remote},

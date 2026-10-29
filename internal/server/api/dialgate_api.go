@@ -42,6 +42,52 @@ type DialGateResponse struct {
 //   - 503 when the window store is nil (test compositions).
 //   - 502 on a store failure: the island dials anyway (the gate is
 //     advisory — a phone must dial), but the failure is logged.
+// DialSlotView is one active cooldown window in the typeahead's
+// decoration payload.
+// brandid-lint:ignore(BD003) wire DTO: the remote is the dialable string (strong-id wire ruling)
+type DialSlotView struct {
+	Remote string `description:"The sanitized remote inside its cooldown window." json:"remote"`
+	LastAt int64  `description:"Unix seconds of the slot's last allowed dial." json:"last_at"`
+	Window int64  `description:"The configured cooldown window in seconds." json:"window"`
+}
+
+// DialSlotsResponse lists the owner's ACTIVE cooldown windows (newest
+// first) — the typeahead decorates matching contact rows with the
+// remaining wait instead of state nobody can see.
+type DialSlotsResponse struct {
+	Slots []DialSlotView `description:"Active windows, newest first (empty when none are live)." json:"slots"`
+}
+
+// DialSlots serves the owner's active cooldown windows (issue #7: the
+// typeahead-row state). Same gate shape as the POST: 404 when the
+// cooldown is off, 503 when the store is nil, 502 on a store failure —
+// the island hides the decoration on failure, it never blocks a dial.
+func (h *Handlers) DialSlots(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.deps.Server.RequireSession(w, r)
+	if !ok {
+		return
+	}
+	if h.deps.DialCooldown <= 0 {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	if h.deps.Dials == nil {
+		http.Error(w, "dial window store unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	slots, err := h.deps.Dials.Active(r.Context(), sess.Extension, h.deps.DialCooldown)
+	if err != nil {
+		slog.Warn("dial-gate: active-slot scan failed", "error", err, "extension", sess.Extension.String())
+		http.Error(w, "could not read the dial windows", http.StatusBadGateway)
+		return
+	}
+	views := make([]DialSlotView, len(slots))
+	for i, s := range slots {
+		views[i] = DialSlotView{Remote: s.Remote, LastAt: s.LastAt, Window: s.Window}
+	}
+	writeJSONBody(w, DialSlotsResponse{Slots: views})
+}
+
 func (h *Handlers) DialGate(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.deps.Server.RequireSession(w, r)
 	if !ok {
