@@ -394,7 +394,8 @@ test("a laggy segment warns once per streak and a punctual segment re-arms the w
   // on-demand 429 spec uses) so the only active gate is the lag itself.
   let offset = 60_000;
   Date.now = () => realNow() + offset;
-  let resolveSeg;  const laggyFetch = () =>
+  let resolveSeg;
+  const laggyFetch = () =>
     new Promise((resolve) => {
       resolveSeg = resolve;
     });
@@ -448,8 +449,16 @@ test("a laggy segment warns once per streak and a punctual segment re-arms the w
     // The re-arm announce rides the toast only when the first lag toast
     // is no longer the newest one (ui.js dedups identical-consecutive
     // toasts by design); the LOG warn is the always-fires surface.
-    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 2, "a recovered-then-lagging provider warns again");
-    assert.deepEqual(texts, ["one", "two", "three", "four"], "capture and delivery continue through every streak");
+    assert.equal(
+      warns.filter((w) => /lagging/i.test(w)).length,
+      2,
+      "a recovered-then-lagging provider warns again",
+    );
+    assert.deepEqual(
+      texts,
+      ["one", "two", "three", "four"],
+      "capture and delivery continue through every streak",
+    );
   } finally {
     console.warn = originalWarn;
     Date.now = realNow;
@@ -483,7 +492,11 @@ test("a punctual provider never trips the lag warn (L8)", async () => {
     recorder.emit({ size: 10, type: "audio/webm" });
     recorder.emit({ size: 10, type: "audio/webm" });
     await flush();
-    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 0, "segments inside the cadence never warn");
+    assert.equal(
+      warns.filter((w) => /lagging/i.test(w)).length,
+      0,
+      "segments inside the cadence never warn",
+    );
     assert.equal(lagToastCount(), toastsBefore, "no lag toast arrives inside the cadence");
   } finally {
     console.warn = originalWarn;

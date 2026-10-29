@@ -214,7 +214,10 @@ class _FakeCRMHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 - http.server's spelling
         if not self._authorized():
             return
-        if urllib.parse.urlsplit(self.path).path == f"/api/contacts/{FAKE_CRM_CONTACT_ID}/calls":
+        if (
+            urllib.parse.urlsplit(self.path).path
+            == f"/api/contacts/{FAKE_CRM_CONTACT_ID}/calls"
+        ):
             self.send_response(204)
             self.send_header("Content-Length", "0")
             self.end_headers()
@@ -581,11 +584,15 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
     if expanded["islandDisplay"] == "none":
         failures.append("the island column must be visible while expanded")
     if expanded["ariaExpanded"] != "true":
-        failures.append(f"aria-expanded must be 'true', got {expanded['ariaExpanded']!r}")
+        failures.append(
+            f"aria-expanded must be 'true', got {expanded['ariaExpanded']!r}"
+        )
     if not (expanded["toggleLabel"] or "").strip():
         failures.append("the collapse control has no visible label (undiscoverable)")
     if expanded["nameTruncated"]:
-        failures.append(f"the rail still ellipsizes the name ({expanded['nameText']!r})")
+        failures.append(
+            f"the rail still ellipsizes the name ({expanded['nameText']!r})"
+        )
     if expanded["rowHeight"] is not None and expanded["rowHeight"] > 90:
         failures.append(f"the rail row grew to {expanded['rowHeight']}px")
 
@@ -598,15 +605,22 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
             f"the collapsed island must be display:none, got {collapsed['islandDisplay']!r}"
         )
     if collapsed["ariaExpanded"] != "false":
-        failures.append(f"aria-expanded must be 'false', got {collapsed['ariaExpanded']!r}")
+        failures.append(
+            f"aria-expanded must be 'false', got {collapsed['ariaExpanded']!r}"
+        )
     if collapsed["splitDir"] != "row":
-        failures.append(f"the split must survive the collapse, got {collapsed['splitDir']!r}")
+        failures.append(
+            f"the split must survive the collapse, got {collapsed['splitDir']!r}"
+        )
     if collapsed["colWidth"] <= expanded["colWidth"] + 300:
         failures.append(
             "the collapsed column must reclaim the island width "
             f"({expanded['colWidth']} -> {collapsed['colWidth']})"
         )
-    if driver.execute_script("return localStorage.getItem('wp-island-collapsed')") != "1":
+    if (
+        driver.execute_script("return localStorage.getItem('wp-island-collapsed')")
+        != "1"
+    ):
         failures.append("the collapse preference was not persisted")
     driver.save_screenshot(os.path.join(out_dir, "zz-thread-collapsed.png"))
 
@@ -636,7 +650,9 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
             "Math.round(c.getBoundingClientRect().width)];"
         )
         want = "row" if col_width >= 704 else "column"
-        print(f"layout: viewport {width} -> column {col_width} -> {direction} (want {want})")
+        print(
+            f"layout: viewport {width} -> column {col_width} -> {direction} (want {want})"
+        )
         if direction != want:
             failures.append(
                 f"at viewport {width} the column is {col_width}px so the split "
@@ -762,7 +778,9 @@ def main() -> int:
         if only is not None:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
-            known = {name for name, _ in TABS} | {name for name, _ in ANONYMOUS_SURFACES}
+            known = {name for name, _ in TABS} | {
+                name for name, _ in ANONYMOUS_SURFACES
+            }
             if "crm-context" in only and not args.crm:
                 print(
                     "surface 'crm-context' needs --crm: without the fake CRM the "
