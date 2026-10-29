@@ -537,3 +537,48 @@ test("three consecutive live failures toast once, back off, and reset on success
     transcribe.stopLiveTranscription("fail-streak");
   }
 });
+
+test("a segment that lands after capture stopped saves but does not re-log", async () => {
+  globalThis.__recorders = [];
+  fetchCalls = [];
+  // Earlier specs can leave the shared backoff/cooldown armed; a clock
+  // past every window keeps this spec about staleness alone.
+  const realNow = Date.now;
+  const base = realNow();
+  Date.now = () => base + 3_600_000;
+  let release = () => {};
+  fetchImpl = () =>
+    new Promise((resolve) => {
+      release = () =>
+        resolve({ ok: true, status: 200, json: async () => ({ text: "late words" }) });
+    });
+
+  const pc = {
+    getReceivers: () => [{ track: { kind: "audio" } }],
+    getSenders: () => [{ track: { kind: "audio" } }],
+  };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  const texts = [];
+
+  assert.equal(
+    transcribe.startLiveTranscription("call-late", entry, (t) => texts.push(t)),
+    true,
+  );
+  const recorder = globalThis.__recorders[0];
+  recorder.emit({ size: 10, type: "audio/webm" });
+  await flush();
+  assert.equal(fetchCalls.length, 1, "the segment reached the provider");
+
+  // The call settles while the segment is still in flight.
+  transcribe.stopLiveTranscription("call-late");
+  release();
+  await flush();
+
+  assert.deepEqual(texts, ["late words"], "the sink still sees it: the save queue owns the tail");
+  assert.deepEqual(
+    transcribe.callSegments("call-late"),
+    [],
+    "the settled call's live log must not be recreated by a late generation",
+  );
+  Date.now = realNow;
+});

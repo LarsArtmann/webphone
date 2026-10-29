@@ -308,8 +308,16 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       backoffUntil = 0;
       failureToasted = false;
       if (text) {
+        // A stop can race an in-flight segment: once capture is torn
+        // down, a late result must not repaint a call the island has
+        // already settled. The text still reaches onText, because the
+        // caller's save queue keeps it (attribution is by call id, and
+        // the audio really was heard); only this page's live log drops
+        // it, which is also what stops a dead call's entry from being
+        // recreated forever in a long-lived tab.
+        const stale = live.get(id) !== controller;
         onText(text);
-        recordSegment(id, text);
+        if (!stale) recordSegment(id, text);
       }
     } catch (err) {
       if (/\b429\b/.test(errorMessage(err))) {

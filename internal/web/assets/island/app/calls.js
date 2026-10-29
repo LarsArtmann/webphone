@@ -899,7 +899,10 @@ function ensureTranscription(id, entry) {
 // (one renderer per surface).
 /** @param {string} id @param {IslandCallEntry} entry @param {string} text */
 function onCallTranscript(id, entry, text) {
-  announce(clipForAnnounce(text), "info");
+  // A segment that lands after the call settled still saves (the audio
+  // was heard, and the durable History row wants the tail), but it must
+  // not announce a caption for a call the operator already hung up.
+  if (sessions.get(id) === entry) announce(clipForAnnounce(text), "info");
   queueTranscriptSave(entry, {
     callId: id,
     direction: entry.session instanceof SIP.Inviter ? "out" : "in",
