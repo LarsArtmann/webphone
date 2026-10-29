@@ -365,9 +365,11 @@ re-derive it from the code:
 - **T17 shipped as the inline cooldown chip, not a typeahead-row
   state.** The dial area grows the state line (last call age + window
   remaining) plus one "Dial anyway" chip under the form — the #54
-  no-modal lesson applied to placement. The typeahead-row rendering
-  stays the open placement question (owner ruling pending; the
-  JS-created ids keep the DOM contract untouched either way).
+  no-modal lesson applied to placement. The owner ruling (2026-10-29)
+  landed the typeahead-row state TOO: `GET /api/dials` lists the
+  owner's active windows and the typeahead decorates matching rows
+  with the remaining wait — both placements live (the JS-created ids
+  keep the DOM contract untouched either way).
 - **T18 caught two product bugs, not just coverage gaps:** the gate
   answered allowed asks WITH the denied ask's cooldown state
   (contradicting its own DTO contract), and `/config.js` shipped a

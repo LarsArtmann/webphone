@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Cooldown state in the dial typeahead rows (2026-10-29, issue #7 owner
+  ruling): `GET /api/dials` lists the signed-in extension's ACTIVE cooldown
+  windows (newest first, capped, expired windows skipped lazily), and the
+  dial typeahead decorates matching contact rows with the remaining wait —
+  the state is visible where the number is PICKED, not only after the gate
+  denies the dial. The cache is server truth (refreshed debounced and after
+  every gate consult; a local guess would lie after a reload or on the
+  second device), a failed fetch hides the decoration — it never blocks a
+  dial — and the remaining-window phrasing moved to one home in
+  dialgate.js shared by the chip and the rows.
 - Durable automatic call review with its History render (2026-10-28, issue
   #8 train): a media call that settles with the textagent seam on now
   dispatches the same AI draft the manual summarize button asks for as a
