@@ -316,6 +316,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         // it, which is also what stops a dead call's entry from being
         // recreated forever in a long-lived tab.
         const stale = live.get(id) !== controller;
+        console.log('DBG segment', id, 'stale=', stale, 'liveHas=', live.has(id));
         onText(text);
         if (!stale) recordSegment(id, text);
       }

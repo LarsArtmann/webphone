@@ -553,6 +553,7 @@ test("the card's clear button wipes the live view without touching capture (#39)
   entry.session.state = globalThis.SIP.SessionState.Established;
   entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
   await flush();
+  console.log("DBG copy isTranscribing=", isTranscribing("call-t1"), "recorders=", globalThis.__recorders.length);
   const recorder = globalThis.__recorders.at(-1);
   recorder.emit({ size: 8, type: "audio/webm" });
   await flush(2);
@@ -611,4 +612,64 @@ test("a confirmed save surfaces the saved-to-History count, announced once", asy
   entry.session.state = globalThis.SIP.SessionState.Terminated;
   entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
   await flush();
+});
+
+test("a segment that lands after the call ended still saves but never announces", async () => {
+  state.userAgent = {};
+  // Shared module state: an earlier spec may have left the transcribe
+  // backoff armed. A clock past every window keeps this about staleness.
+  const realNow = Date.now;
+  const base = realNow();
+  Date.now = () => base + 7_200_000;
+  try {
+    assert.equal(await placeCall("+4930999"), true);
+    const entry = sessions.get("call-t1");
+    let release = () => {};
+    fetchCalls = [];
+    fetchImpl = (url) => {
+      if (String(url).startsWith("/api/transcribe")) {
+        return new Promise((resolve) => {
+          release = () =>
+            resolve({
+              ok: true,
+              status: 200,
+              json: async () => ({ text: "late tail" }),
+            });
+        });
+      }
+      return Promise.resolve({ ok: true, status: 204 });
+    };
+
+    entry.session.state = globalThis.SIP.SessionState.Established;
+    entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+    await flush();
+
+    const recorder = globalThis.__recorders.at(-1);
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+
+    // The call ends while the provider is still answering.
+    entry.session.state = globalThis.SIP.SessionState.Terminated;
+    entry.session.stateChange.listeners.forEach((fn) => fn("Terminated"));
+    await flush();
+    assert.equal(sessions.has("call-t1"), false, "the call is settled");
+
+    release();
+    await flush();
+
+    const saves = fetchCalls
+      .filter((call) => call.url === "/api/transcripts")
+      .map((call) => JSON.parse(call.options.body));
+    assert.equal(saves.length, 1, "the tail still reaches the durable store");
+    assert.equal(saves[0].text, "late tail");
+    assert.equal(saves[0].callId, "call-t1", "attribution survives the race");
+    assert.ok(
+      ![...doc.getElementById("toasts").children].some((el) =>
+        /late tail/i.test(el.textContent),
+      ),
+      "a settled call must not speak a caption for audio nobody is on",
+    );
+  } finally {
+    Date.now = realNow;
+  }
 });
