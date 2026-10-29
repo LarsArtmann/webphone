@@ -90,11 +90,11 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 	}
 	defer drainClose(resp)
 
-	switch {
-	case resp.StatusCode == http.StatusOK:
-	case resp.StatusCode == http.StatusNotFound:
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNotFound:
 		return Context{}, ErrNoContext
-	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+	case http.StatusUnauthorized, http.StatusForbidden:
 		return Context{}, ErrUnauthorized
 	default:
 		// Local variable, not a call argument: the registry scan needs to
