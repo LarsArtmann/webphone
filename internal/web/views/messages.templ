@@ -236,7 +236,7 @@ templ ThreadHead(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:top"
 			hx-push-url="/messages"
 		>← All messages</a>
-		<h2>{ networkLabel(props.Thread.Remote.Network()) }{ displayName(props.Thread.Remote.String(), props.CRM) }</h2>
+		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)</h2>
 		if props.Thread.Archived {
 			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
 		} else {
@@ -445,7 +445,14 @@ type ThreadViewProps struct {
 	// PrefillDraft carries an AI-drafted reply into the composer (the
 	// ai-draft round trip re-renders the thread panel).
 	PrefillDraft string
-	Lang         Lang
+	// CRMContext is the CRM's published context for THIS conversation's
+	// contact (company, open deals, outstanding task, last touch). nil
+	// means "nothing to say" — integration off, unknown caller, endpoint
+	// not published, or CRM unreachable — and renders no strip at all.
+	// Deliberately not a list-level prop: context is fetched one contact
+	// at a time, only where a human studies that one contact.
+	CRMContext *CRMContext
+	Lang       Lang
 }
 
 // ThreadView is the Messages tab in its open-conversation shape: a
@@ -528,6 +535,8 @@ templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, cont
 // boundary to target.
 templ ThreadDetail(props ThreadViewProps) {
 		@ThreadHead(props)
+
+		@crmContextStrip(props.CRMContext, props.Lang)
 
 		@panelError(props.Error)
 		if isSelfThread(props.Identity, props.Thread.Remote) {
@@ -840,8 +849,8 @@ type DraftsPanelProps struct {
 
 // contactLabel renders a draft's contact with the CRM name when known.
 func contactLabel(contacts CRMContacts, contact string) string {
-	if name, ok := contacts[contact]; ok && name != "" {
-		return name + " · +" + contact
+	if known, ok := contacts[contact]; ok && known.Name != "" {
+		return known.Name + " · +" + contact
 	}
 	return "+" + contact
 }

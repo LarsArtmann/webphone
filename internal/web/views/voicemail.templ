@@ -160,8 +160,8 @@ templ VoicemailRow(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang, as
 
 func vmCaller(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang) string {
 	if msg.CIDNumber != "" {
-		if name, ok := contacts[msg.CIDNumber]; ok && name != "" {
-			return name
+		if contact, ok := contacts[msg.CIDNumber]; ok && contact.Name != "" {
+			return contact.Name
 		}
 	}
 	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber {

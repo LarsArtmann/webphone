@@ -125,5 +125,5 @@ func crmTaskDue(ctx CRMContext, lang Lang) string {
 		return T(lang, "crm.overdue")
 	}
 
-	return T(lang, "crm.duePrefix") + ctx.NextTaskDue.Format("2 Jan")
+	return T(lang, "crm.duePrefix") + " " + ctx.NextTaskDue.Format("2 Jan")
 }

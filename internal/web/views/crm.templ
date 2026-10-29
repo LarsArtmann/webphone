@@ -31,38 +31,38 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 // inside would cost a CRM round trip per pin/unpin and could be blanked by
 // a toggle. Rendering nothing when there is nothing to say is the whole
 // degradation contract — no empty shell, no placeholder, no spinner.
-templ crmContextStrip(ctx *CRMContext, lang Lang) {
+templ crmContextStrip(crm *CRMContext, lang Lang) {
 	if ctx != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
-			if ctx.Company != "" {
+			if crm.Company != "" {
 				<span class="wp-crm-chip">
 					<span class="wp-crm-key">{ T(lang, "crm.company") }</span>
-					<span>{ ctx.Company }</span>
+					<span>{ crm.Company }</span>
 				</span>
 			}
-			for _, deal := range ctx.Deals {
+			for _, deal := range crm.Deals {
 				<span class="wp-crm-chip">
 					<span class="wp-crm-key">{ T(lang, "crm.deal") } · { deal.Stage }</span>
 					<span>{ deal.Title }</span>
 					<span class="wp-muted">{ dealValue(deal) }</span>
 				</span>
 			}
-			if ctx.MoreDeals > 0 {
-				<span class="wp-crm-chip wp-crm-more">{ T(lang, "crm.moreDealsPrefix") }{ fmtInt(ctx.MoreDeals) }</span>
+			if crm.MoreDeals > 0 {
+				<span class="wp-crm-chip wp-crm-more">+{ fmtInt(crm.MoreDeals) }</span>
 			}
-			if ctx.OpenTasks > 0 {
+			if crm.OpenTasks > 0 {
 				<span class="wp-crm-chip">
 					<span class="wp-crm-key">{ T(lang, "crm.tasks") }</span>
-					<span>{ fmtInt(ctx.OpenTasks) }</span>
-					if ctx.NextTask != "" {
-						<span class="wp-muted">{ ctx.NextTask } · { crmTaskDue(ctx, lang) }</span>
+					<span>{ fmtInt(crm.OpenTasks) }</span>
+					if crm.NextTask != "" {
+						<span class="wp-muted">{ crm.NextTask } · { crmTaskDue(*crm, lang) }</span>
 					}
 				</span>
 			}
-			if !ctx.LastActivity.IsZero() {
+			if !crm.LastActivity.IsZero() {
 				<span class="wp-crm-chip wp-crm-muted">
 					<span class="wp-crm-key">{ T(lang, "crm.lastActivity") }</span>
-					<span>{ relativeTime(ctx.LastActivity, lang) }</span>
+					<span>{ relativeTime(crm.LastActivity, lang) }</span>
 				</span>
 			}
 		</aside>

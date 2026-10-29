@@ -299,7 +299,7 @@ templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
 			aria-hidden="true"
 		>{ cdrDirGlyph(cdr) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
-			<strong class="wp-thread-remote">{ displayName(cdrTarget(cdr), contacts) }</strong>
+			<strong class="wp-thread-remote">@crmNameLink(cdrTarget(cdr), contacts, lang)</strong>
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
 		</span>
 		if dial := CDRDialTarget(cdr); dial != "" {
