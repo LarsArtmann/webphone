@@ -18,9 +18,10 @@ type VoicemailPanelProps struct {
 	Summary  pbx.VoicemailSummary
 	Messages []pbx.VoicemailMessage
 	Error    string
-	// Names maps phone numbers to CRM contact names (optional integration);
+	// CRM carries the optional CRM integration's answers for the numbers
+	// this panel renders (name + deep link); an absent number renders raw;
 	// unresolved numbers render verbatim.
-	Names map[string]string
+	CRM CRMContacts
 	// ASR gates the per-row transcribe button on the speech-to-text seam:
 	// with no provider configured the affordance must not exist.
 	ASR  bool
@@ -59,7 +60,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 			</p>
 		}
 		for _, msg := range props.Messages {
-			@VoicemailRow(msg, props.Names, props.Lang, props.ASR)
+			@VoicemailRow(msg, props.CRM, props.Lang, props.ASR)
 		}
 		// The empty rung is only the truth when the read SUCCEEDED: an
 		// unreachable provider leaves the message list empty for lack of an
@@ -70,7 +71,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 	</section>
 }
 
-templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang, asr bool) {
+templ VoicemailRow(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang, asr bool) {
 	// Stable ids are the idiomorph persistence contract: the panel re-fetch
 	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
 	// any element whose id exists in BOTH trees morphing it in place — so a
@@ -88,7 +89,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang,
 	// the fallback surface, which is why it stays in the DOM either way.
 	<article class={ "wp-row wp-vm-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
 		<span class="wp-thread-text">
-			<strong class="wp-thread-remote">{ vmCaller(msg, names, lang) }</strong>
+			<strong class="wp-thread-remote">{ vmCaller(msg, contacts, lang) }</strong>
 			<span class="wp-muted">{ vmWhen(msg.Created, lang) } · { fmtInt(msg.Seconds) }s</span>
 		</span>
 		<span class="wp-row-actions">
@@ -157,9 +158,9 @@ templ VoicemailRow(msg pbx.VoicemailMessage, names map[string]string, lang Lang,
 	</article>
 }
 
-func vmCaller(msg pbx.VoicemailMessage, names map[string]string, lang Lang) string {
+func vmCaller(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang) string {
 	if msg.CIDNumber != "" {
-		if name, ok := names[msg.CIDNumber]; ok && name != "" {
+		if name, ok := contacts[msg.CIDNumber]; ok && name != "" {
 			return name
 		}
 	}

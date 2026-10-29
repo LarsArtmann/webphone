@@ -32,9 +32,9 @@ type HistoryPanelProps struct {
 	// not-configured chip — the review affordance's absence is visible,
 	// never a silent nothing.
 	AgentEnabled bool
-	// Names maps phone numbers to CRM contact names (optional integration);
-	// unresolved numbers render verbatim.
-	Names map[string]string
+	// CRM carries the optional CRM integration's answers for the numbers
+	// this panel renders (name + deep link); an absent number renders raw.
+	CRM CRMContacts
 	// Transcripts are the extension's own live-call transcript groups
 	// (owner-scoped store, newest call first). They render as their own
 	// section — the CDR rows carry no call uuid, so joining the two lists
@@ -110,7 +110,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 				@dayHead(props.Lang, group.Day, len(group.Rows))
 			}
 			for _, cdr := range group.Rows {
-				@CDRRow(cdr, props.Names, props.Lang)
+				@CDRRow(cdr, props.CRM, props.Lang)
 			}
 		}
 		if len(props.Transcripts) > 0 {
@@ -167,7 +167,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 							↑
 						}
 					</span>
-					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.Names) }</strong>
+					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.CRM) }</strong>
 					// Confirmed-verdict badge (T3): renders ONLY for the five
 					// operator-confirmable verdicts — unknown or absent renders
 					// NOTHING (never a success glyph for an unconfirmed call,
@@ -292,14 +292,14 @@ func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
 	return groups
 }
 
-templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
+templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
 	<article class={ "wp-row", templ.KV("wp-row-missed", cdrMissed(cdr)) }>
 		<span
 			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
 			aria-hidden="true"
 		>{ cdrDirGlyph(cdr) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
-			<strong class="wp-thread-remote">{ displayName(cdrTarget(cdr), names) }</strong>
+			<strong class="wp-thread-remote">{ displayName(cdrTarget(cdr), contacts) }</strong>
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
 		</span>
 		if dial := CDRDialTarget(cdr); dial != "" {
@@ -309,7 +309,7 @@ templ CDRRow(cdr pbx.CDR, names map[string]string, lang Lang) {
 				<button
 					class="wp-mini"
 					data-save-contact={ dial }
-					data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), names)) }
+					data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
 					aria-label={ T(lang, "contacts.saveAs") }
 					title={ T(lang, "contacts.saveAs") }
 				>☆</button>

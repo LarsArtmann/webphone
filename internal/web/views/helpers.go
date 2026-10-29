@@ -118,9 +118,13 @@ func avatarHueClass(nameOrNumber string) string {
 // or the number is unknown. The number itself stays on the functional
 // attributes (data-dial, hidden inputs, avatar seed) — only the visible
 // label switches to the name.
-func displayName(number string, names map[string]string) string {
-	if name, ok := names[number]; ok && name != "" {
-		return name
+//
+// Plain text on purpose: this same helper feeds attributes (data-name,
+// aria-label, avatar seeds), so it must never emit markup. Linked names ride
+// crmNameLink, the ONE place a CRM link is built.
+func displayName(number string, contacts CRMContacts) string {
+	if contact, ok := contacts[number]; ok && contact.Name != "" {
+		return contact.Name
 	}
 	return number
 }

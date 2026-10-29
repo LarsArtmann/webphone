@@ -16,8 +16,9 @@ type FaxPanelProps struct {
 	Error string
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	// Names maps phone numbers to CRM contact names (optional integration).
-	Names map[string]string
+	// CRM carries the optional CRM integration's answers for the numbers
+	// this panel renders (name + deep link); an absent number renders raw.
+	CRM CRMContacts
 	Lang  Lang
 }
 
@@ -53,7 +54,7 @@ templ FaxPanel(props FaxPanelProps) {
 			<div class="wp-attach" hidden></div>
 		</form>
 		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
-			@FaxList(props.Jobs, props.Names, props.Lang)
+			@FaxList(props.Jobs, props.CRM, props.Lang)
 		</div>
 	</section>
 }
@@ -66,22 +67,22 @@ templ faxSendIndicator() {
 
 // FaxList renders the fax rows (or the empty state). It is the payload of
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
-templ FaxList(jobs []domain.FaxJob, names map[string]string, lang Lang) {
+templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, lang Lang) {
 	if len(jobs) == 0 {
 		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "fax.empty"), Icon: icons.Document})
 	}
 	for _, job := range jobs {
-		@FaxRow(job, names, lang)
+		@FaxRow(job, contacts, lang)
 	}
 }
 
-templ FaxRow(job domain.FaxJob, names map[string]string, lang Lang) {
+templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract
 	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
-			<strong class="wp-thread-remote">{ displayName(job.Remote.String(), names) }</strong>
+			<strong class="wp-thread-remote">{ displayName(job.Remote.String(), contacts) }</strong>
 			<span class="wp-muted">
 				{ formatStamp(lang, job.CreatedAt) }
 				{ " " }

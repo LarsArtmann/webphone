@@ -27,9 +27,9 @@ type ThreadsPanelProps struct {
 	Error         string
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	// Names maps phone numbers to CRM contact names (optional integration);
-	// unresolved numbers render verbatim.
-	Names map[string]string
+	// CRM carries the optional CRM integration's answers for the numbers
+	// this panel renders (name + deep link); an absent number renders raw.
+	CRM CRMContacts
 	// TextAgent gates every AI affordance on the seam: with no client
 	// wired (nil Deps.TextAgent) the drafts panel and the compose
 	// button must not exist.
@@ -105,12 +105,12 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 					Icon:  icons.Search,
 				})
 			} else {
-				@ThreadsList(props.Threads, props.Names, props.Lang)
+				@ThreadsList(props.Threads, props.CRM, props.Lang)
 			}
 		</div>
 		@identityLine(props.Lang, props.Identity)
 		if props.TextAgent {
-			@DraftsPanel(DraftsPanelProps{Drafts: props.Drafts, Error: props.DraftsError, Names: props.Names, Lang: props.Lang})
+			@DraftsPanel(DraftsPanelProps{Drafts: props.Drafts, Error: props.DraftsError, CRM: props.CRM, Lang: props.Lang})
 		}
 		@NewMessageForm("", props.PrefillBody, props.Lang, props.TextAgent)
 	</section>
@@ -119,16 +119,16 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 // ThreadsList renders the thread rows (or the empty state). It is the
 // payload of the SSE "threads" event, so it must stay swap-safe: no
 // wrapper element, no composer.
-templ ThreadsList(threads []store.ThreadSummary, names map[string]string, lang Lang) {
+templ ThreadsList(threads []store.ThreadSummary, contacts CRMContacts, lang Lang) {
 	if len(threads) == 0 {
 		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox})
 	}
 	for _, summary := range threads {
-		@ThreadRow(summary, names, lang)
+		@ThreadRow(summary, contacts, lang)
 	}
 }
 
-templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang) {
+templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
 	// The wrapper carries the STABLE id (design D14): idiomorph persists
 	// nodes by id, and the row grows stateful flag buttons (M22) — without
 	// the id a live push could rebuild the row mid-click.
@@ -141,9 +141,9 @@ templ ThreadRow(summary store.ThreadSummary, names map[string]string, lang Lang)
 			hx-swap="innerHTML show:window:top"
 			hx-push-url={ "/messages/" + summary.Thread.ID.String() }
 		>
-			<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
+			<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), contacts)) }</span>
 			<span class="wp-thread-text">
-				<span class="wp-thread-remote">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
+				<span class="wp-thread-remote">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), contacts) }</span>
 				<span class="wp-thread-preview">
 				if summary.LastAttachment {
 					@icons.Icon(icons.Document, "wp-icon wp-icon-text")
@@ -236,7 +236,7 @@ templ ThreadHead(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:top"
 			hx-push-url="/messages"
 		>← All messages</a>
-		<h2>{ networkLabel(props.Thread.Remote.Network()) }{ displayName(props.Thread.Remote.String(), props.Names) }</h2>
+		<h2>{ networkLabel(props.Thread.Remote.Network()) }{ displayName(props.Thread.Remote.String(), props.CRM) }</h2>
 		if props.Thread.Archived {
 			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
 		} else {
@@ -432,8 +432,9 @@ type ThreadViewProps struct {
 	Snippets []domain.Snippet
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
-	// Names maps phone numbers to CRM contact names (optional integration).
-	Names map[string]string
+	// CRM carries the optional CRM integration's answers for the numbers
+	// this panel renders (name + deep link); an absent number renders raw.
+	CRM CRMContacts
 	// ASR gates the audio-attachment transcribe buttons on the
 	// speech-to-text seam: with no provider configured the affordance
 	// must not exist.
@@ -460,7 +461,7 @@ type ThreadViewProps struct {
 templ ThreadView(props ThreadViewProps) {
 	<section class={ "wp-panel", templ.KV("wp-msg-split", len(props.Rail) > 0) } id="messages-panel">
 		if len(props.Rail) > 0 {
-			@ConversationRail(props.Rail, props.Thread.ID, props.Names, props.Lang)
+			@ConversationRail(props.Rail, props.Thread.ID, props.CRM, props.Lang)
 		}
 		<div class="wp-msg-detail">
 			@ThreadDetail(props)
@@ -479,7 +480,7 @@ templ ThreadView(props ThreadViewProps) {
 // the head must re-render, and the transcript must be re-read owner-scoped.
 // Targeting only the detail column would leave a stale aria-current
 // behind — the honest cost is one list re-read per switch.
-templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, names map[string]string, lang Lang) {
+templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, contacts CRMContacts, lang Lang) {
 	<nav class="wp-msg-rail" id="wp-conversation-rail" aria-label={ T(lang, "threads.rail") }>
 		for _, summary := range rail {
 			<a
@@ -491,7 +492,7 @@ templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, name
 				hx-push-url={ "/messages/" + summary.Thread.ID.String() }
 				aria-current={ currentAttr(summary.Thread.ID == current) }
 			>
-				<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
+				<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), contacts)) }</span>
 				<span class="wp-rail-text">
 					// The NAME owns the first line's width: the peer's number
 					// or contact name is the one thing that identifies a
@@ -501,7 +502,7 @@ templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, name
 					// conversation), the timestamp drops to the preview line
 					// where it is context, not identity.
 					<span class="wp-rail-top">
-						<span class="wp-rail-name">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
+						<span class="wp-rail-name">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), contacts) }</span>
 						if summary.Thread.Unread > 0 && !summary.Thread.Muted {
 							<span class="wp-nav-badge" aria-label={ badgeCount(lang, summary.Thread.Unread, "nav.unread") }>{ fmtInt(summary.Thread.Unread) }</span>
 						}
@@ -831,15 +832,15 @@ func dayHeadLabel(lang Lang, t time.Time) string {
 type DraftsPanelProps struct {
 	Drafts *textagent.Reviews
 	Error  string
-	// Names maps phone numbers to CRM contact names (same feed as the
+	// CRM carries the optional CRM integration's answers (same feed as the
 	// thread rows); unresolved numbers render verbatim.
-	Names map[string]string
+	CRM CRMContacts
 	Lang  Lang
 }
 
 // contactLabel renders a draft's contact with the CRM name when known.
-func contactLabel(names map[string]string, contact string) string {
-	if name, ok := names[contact]; ok && name != "" {
+func contactLabel(contacts CRMContacts, contact string) string {
+	if name, ok := contacts[contact]; ok && name != "" {
 		return name + " · +" + contact
 	}
 	return "+" + contact
@@ -923,7 +924,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 			for _, draft := range props.Drafts.Drafts {
 				<article class="wp-draft" id={ "wp-draft-" + draft.ID }>
 					<header class="wp-draft-head">
-						<span class="wp-draft-contact">{ contactLabel(props.Names, draft.Contact) }</span>
+						<span class="wp-draft-contact">{ contactLabel(props.CRM, draft.Contact) }</span>
 						<span class="wp-draft-meta" title={ draft.CreatedAt }>
 							{ draftMeta(draft, time.Now()) }
 							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
@@ -972,12 +973,12 @@ templ DraftsPanel(props DraftsPanelProps) {
 				<footer class="wp-drafts-foot">
 					for _, frozen := range props.Drafts.Frozen {
 						<p class="wp-drafts-note">
-							⚠ { contactLabel(props.Names, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
+							⚠ { contactLabel(props.CRM, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
 						</p>
 					}
 					for _, suppressed := range props.Drafts.Suppressed {
 						<p class="wp-drafts-note">
-							⊗ { contactLabel(props.Names, suppressed.Contact) }: { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
+							⊗ { contactLabel(props.CRM, suppressed.Contact) }: { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
 						</p>
 					}
 				</footer>

@@ -1,0 +1,70 @@
+package views
+
+// crmNameLink is the ONE place a CRM link is built. It renders the
+// contact's published name as a link into the CRM's own UI when the
+// deployment configured a deep-link template, and the plain name otherwise
+// — so zero CRM config renders byte-identically to the pre-integration
+// product, and a miss never grows a dead affordance.
+//
+// Sites must be non-anchor containers (a heading, a row <article>): an <a>
+// inside the list's row link would be invalid HTML and a nested hit target.
+templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
+	if url := crmProfileURL(number, contacts); url != "" {
+		<a
+			class="wp-crm-link"
+			href={ url }
+			target="_blank"
+			rel="noopener noreferrer"
+			title={ T(lang, "crm.open") }
+		>{ displayName(number, contacts) }<span class="wp-sr-only"> — { T(lang, "crm.open") }</span></a>
+	} else {
+		{ displayName(number, contacts) }
+	}
+}
+
+// crmContextStrip renders the CRM's published context for the one contact
+// the surface is about: the company, the open deals, the outstanding task
+// count, and when the CRM last saw activity with them.
+//
+// It sits BESIDE the panel head, never inside it: ThreadHead is a hot
+// outerHTML swap target (flag toggles re-render exactly it), and a strip
+// inside would cost a CRM round trip per pin/unpin and could be blanked by
+// a toggle. Rendering nothing when there is nothing to say is the whole
+// degradation contract — no empty shell, no placeholder, no spinner.
+templ crmContextStrip(ctx *CRMContext, lang Lang) {
+	if ctx != nil {
+		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
+			if ctx.Company != "" {
+				<span class="wp-crm-chip">
+					<span class="wp-crm-key">{ T(lang, "crm.company") }</span>
+					<span>{ ctx.Company }</span>
+				</span>
+			}
+			for _, deal := range ctx.Deals {
+				<span class="wp-crm-chip">
+					<span class="wp-crm-key">{ T(lang, "crm.deal") } · { deal.Stage }</span>
+					<span>{ deal.Title }</span>
+					<span class="wp-muted">{ dealValue(deal) }</span>
+				</span>
+			}
+			if ctx.MoreDeals > 0 {
+				<span class="wp-crm-chip wp-crm-more">{ T(lang, "crm.moreDealsPrefix") }{ fmtInt(ctx.MoreDeals) }</span>
+			}
+			if ctx.OpenTasks > 0 {
+				<span class="wp-crm-chip">
+					<span class="wp-crm-key">{ T(lang, "crm.tasks") }</span>
+					<span>{ fmtInt(ctx.OpenTasks) }</span>
+					if ctx.NextTask != "" {
+						<span class="wp-muted">{ ctx.NextTask } · { crmTaskDue(ctx, lang) }</span>
+					}
+				</span>
+			}
+			if !ctx.LastActivity.IsZero() {
+				<span class="wp-crm-chip wp-crm-muted">
+					<span class="wp-crm-key">{ T(lang, "crm.lastActivity") }</span>
+					<span>{ relativeTime(ctx.LastActivity, lang) }</span>
+				</span>
+			}
+		</aside>
+	}
+}
