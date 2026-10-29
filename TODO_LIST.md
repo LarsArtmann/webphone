@@ -545,7 +545,10 @@ Remaining, unscheduled:
   mautrix-go goolm is the only pure-Go path, no official rust-sdk Go
   bindings exist (verified at source); recommends P2 OlmMachine-bridge,
   decrypt-first; owner owes P1/P2/P3 + crypto-store-backup + trust-posture
-  rulings), signal inbound attachments (signal-cli side plumbing),
+  rulings), signal inbound attachments — **SHIPPED 2026-10-29** (M12/F55-F57:
+`signal.attachments_dir` arms them, per-attachment failures keep the text,
+fence stays byte-identical without the key; the signal-cli side is just a
+directory mount, the consuming stack owes nothing),
   signal groups (inherit the spike's Sender design verbatim once ruled).
   **Priority:** Low · **Effort:** M each.
 
