@@ -165,6 +165,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   duplication. Both now feed a shared `filterOptions` component from typed
   option builders, so the row markup exists once and the rendered bytes are
   unchanged (pinned by a Go test).
+- Dedup baseline carries four adjudicated template groups (2026-10-29): the
+  10-28 agent-audit section and the P2 island toggle plus rail row landed
+  clone groups the gate correctly flagged; all four were ruled intentional
+  parallel markup (registry rows in docs/dedup-registry.md) and the baseline
+  was re-recorded with the CI-pinned detector so the clone gate is green
+  again — no template bytes changed.
 
 ### Fixed
 
