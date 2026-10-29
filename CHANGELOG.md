@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Caption-lag honesty for live transcription (2026-10-29): each segment now
+  carries its real capture stamp (persisted rows previously shared the call
+  start, so History could not show when words were actually said), and when
+  the provider answers a segment more than three capture cycles late the
+  operator hears one polite announcement per lag streak — a slow provider
+  no longer drifts the captions silently. A punctual segment re-arms the
+  warn, and capture itself never pauses.
 - Messages master–detail on wide layouts (2026-10-29): opening a conversation
   keeps the conversation LIST beside it instead of replacing the tab, so
   switching threads no longer costs the reader their place. The rail marks the
