@@ -502,6 +502,16 @@ button.small {
   color: var(--accent-strong);
 }
 
+/* Cooldown state lives IN the row (issue #7): a contact inside its
+   window says so where the number is picked. Same muted register as
+   the number, but never accent-colored: the state is informational,
+   not interactive (the override lives under the dial form). */
+.wp-typeahead .typeahead-cooldown {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .dial-error {
   color: var(--danger);
   margin: 8px 0 0;

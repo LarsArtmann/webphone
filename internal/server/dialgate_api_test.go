@@ -174,3 +174,84 @@ func TestDialGateStoreFailureIs502(t *testing.T) {
 		t.Errorf("dead store: %d, want 502", resp.StatusCode)
 	}
 }
+
+// TestDialGateSlotsListing pins the typeahead's decoration source
+// (GET /api/dials, issue #7): the owner's ACTIVE windows come back
+// newest first with the window length; the off state answers the same
+// disabled-seam 404 as the POST, another owner's windows are
+// invisible, and a dead store is the honest 502.
+func TestDialGateSlotsListing(t *testing.T) {
+	srv := dialServer(t, time.Hour)
+	c := clientFor(t, srv)
+	c.login("1001", "pw")
+
+	// No dials yet: an empty slots array, not an error.
+	resp, body := c.do(http.MethodGet, "/api/dials", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("empty listing: %d", resp.StatusCode)
+	}
+	var got struct {
+		Slots []struct {
+			Remote string `json:"remote"`
+			LastAt int64  `json:"last_at"`
+			Window int64  `json:"window"`
+		} `json:"slots"`
+	}
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode empty listing: %v", err)
+	}
+	if len(got.Slots) != 0 {
+		t.Errorf("fresh session must list no windows, got %+v", got.Slots)
+	}
+
+	// Two allowed dials: both windows listed, newest first.
+	for _, remote := range []string{"+4989123456", "+4930123456"} {
+		if r, _ := postDial(t, c, `{"remote":"`+remote+`"}`); r.StatusCode != http.StatusOK {
+			t.Fatalf("seed dial %s: %d", remote, r.StatusCode)
+		}
+	}
+	resp, body = c.do(http.MethodGet, "/api/dials", nil, "")
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode listing: %v", err)
+	}
+	if len(got.Slots) != 2 {
+		t.Fatalf("listed windows: %d, want 2 (%s)", len(got.Slots), body)
+	}
+	if got.Slots[0].Remote != "+4930123456" || got.Slots[1].Remote != "+4989123456" {
+		t.Errorf("newest-first ordering violated: %s before %s", got.Slots[0].Remote, got.Slots[1].Remote)
+	}
+	if got.Slots[0].Window != 3600 {
+		t.Errorf("window must carry the cooldown seconds, got %d", got.Slots[0].Window)
+	}
+
+	// Owner scoping: another extension sees none of these.
+	other := clientFor(t, srv)
+	other.login("2002", "pw")
+	resp, body = other.do(http.MethodGet, "/api/dials", nil, "")
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode other listing: %v", err)
+	}
+	if len(got.Slots) != 0 {
+		t.Errorf("another owner's windows must be invisible, got %+v", got.Slots)
+	}
+
+	// The off state answers the POST's 404 on the GET too.
+	off := newClient(t)
+	off.login("1001", "pw")
+	if resp, _ := off.do(http.MethodGet, "/api/dials", nil, ""); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("gate off: %d, want 404", resp.StatusCode)
+	}
+
+	// A dead store is the honest 502.
+	dead := newTestEngine(t)
+	closed := dead.DialWindows()
+	if err := dead.Shutdown(); err != nil {
+		t.Fatalf("close engine: %v", err)
+	}
+	deadSrv := dialServer(t, time.Hour, func(d *Deps) { d.Dials = closed })
+	deadClient := clientFor(t, deadSrv)
+	deadClient.login("1001", "pw")
+	if resp, _ := deadClient.do(http.MethodGet, "/api/dials", nil, ""); resp.StatusCode != http.StatusBadGateway {
+		t.Errorf("dead store: %d, want 502", resp.StatusCode)
+	}
+}

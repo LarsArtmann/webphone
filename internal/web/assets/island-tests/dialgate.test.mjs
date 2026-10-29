@@ -90,3 +90,48 @@ test("the cooldown notice names the wait", () => {
   assert.equal(t("cooldownNotice")("47m", "13m"), "Last call 47m ago — redial paused (13m left).");
   assert.equal(t("dialAnyway"), "Dial anyway");
 });
+
+test("the slots cache feeds cooldownFor with normalized matching", async () => {
+  const now = Math.floor(Date.now() / 1000);
+  let slotsFetched = 0;
+  useFetch((url) => {
+    if (url === "/api/dials") {
+      slotsFetched += 1;
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          slots: [
+            { remote: "+4989123456", last_at: now - 600, window: 3600 },
+          ],
+        }),
+      };
+    }
+    throw new Error("unexpected fetch " + url);
+  });
+  await dialgate.refreshDialSlots(true);
+  assert.ok(slotsFetched >= 1, "the slots endpoint was asked");
+
+  // A display form of the same number matches the stored remote.
+  const slot = dialgate.cooldownFor("+49 (89) 123456");
+  assert.ok(slot, "display form matches the sanitized remote");
+  assert.equal(slot.window, 3600);
+  assert.equal(dialgate.cooldownFor("+1715"), null, "unmatched numbers decorate nothing");
+  assert.equal(dialgate.cooldownFor(""), null, "blank input matches nothing");
+
+  // The remainder phrases neutral units and drains with the stamp.
+  const left = dialgate.cooldownRemainder(slot);
+  assert.ok(left === "50m" || left === "49m", `remainder near 50m, got ${left}`);
+  assert.equal(
+    dialgate.cooldownRemainder({ last_at: now - 7200, window: 3600 }),
+    "",
+    "an expired slot phrases nothing",
+  );
+
+  // A failed refresh keeps the previous cache (degrade to hidden).
+  useFetch(() => {
+    throw new Error("network gone");
+  });
+  await dialgate.refreshDialSlots(true);
+  assert.ok(dialgate.cooldownFor("+4989123456"), "failed refresh keeps server truth");
+});

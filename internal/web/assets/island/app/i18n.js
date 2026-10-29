@@ -173,6 +173,7 @@ export const I18N = {
       `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
     dialAnyway: "Dial anyway",
     cooldownOverrideFailed: "Could not override the cooldown — try again.",
+    cooldownRow: (left) => `cooling down${left ? ` · ${left} left` : ""}`,
     sseDropped:
       "Live tab updates lost — check the connection; calls keep working.",
     sseRestored: "Live tab updates restored.",
@@ -392,6 +393,7 @@ export const I18N = {
     dialAnyway: "Trotzdem anrufen",
     cooldownOverrideFailed:
       "Abkühlung konnte nicht umgangen werden — erneut versuchen.",
+    cooldownRow: (left) => `Abklingzeit${left ? ` · noch ${left}` : ""}`,
     sseDropped:
       "Live-Aktualisierungen verloren — Verbindung prüfen; Anrufe funktionieren weiter.",
     sseRestored: "Live-Aktualisierungen wiederhergestellt.",

@@ -108,3 +108,74 @@ func TestDialWindowsRestartSurvival(t *testing.T) {
 		t.Fatalf("the window must survive the restart: %v %v", allowed, err)
 	}
 }
+
+// TestDialWindowsActive pins the typeahead's decoration source (issue
+// #7): Active lists the owner's windows still inside their cooldown
+// (newest first), skips expired ones lazily, scopes by owner, and
+// never writes.
+func TestDialWindowsActive(t *testing.T) {
+	engine, err := readmodels.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
+	dials := engine.DialWindows()
+	ctx := context.Background()
+	owner := mustExtension(t, "1001")
+	cooldown := time.Hour
+
+	if allowed, _, err := dials.Attempt(ctx, owner, "+4989123456", cooldown); err != nil || !allowed {
+		t.Fatalf("first dial: %v %v", allowed, err)
+	}
+	if allowed, _, err := dials.Attempt(ctx, owner, "+4930123456", cooldown); err != nil || !allowed {
+		t.Fatalf("second dial: %v %v", allowed, err)
+	}
+
+	slots, err := dials.Active(ctx, owner, cooldown)
+	if err != nil {
+		t.Fatalf("active scan: %v", err)
+	}
+	if len(slots) != 2 {
+		t.Fatalf("active slots: %d, want 2 (%+v)", len(slots), slots)
+	}
+	if slots[0].Remote != "+4930123456" || slots[1].Remote != "+4989123456" {
+		t.Errorf("newest-first ordering violated: %s before %s", slots[0].Remote, slots[1].Remote)
+	}
+	for _, slot := range slots {
+		if slot.Window != int64(time.Hour/time.Second) {
+			t.Errorf("slot window must carry the cooldown in seconds, got %d", slot.Window)
+		}
+		if slot.LastAt <= 0 {
+			t.Errorf("slot must carry the last-at stamp, got %d", slot.LastAt)
+		}
+	}
+
+	// Owner scoping: the other extension's window is invisible here.
+	other := mustExtension(t, "2002")
+	if _, _, err := dials.Attempt(ctx, other, "+4989123456", cooldown); err != nil {
+		t.Fatalf("other owner dial: %v", err)
+	}
+	theirs, err := dials.Active(ctx, other, cooldown)
+	if err != nil {
+		t.Fatalf("other owner scan: %v", err)
+	}
+	if len(theirs) != 1 {
+		t.Fatalf("other owner slots: %d, want 1", len(theirs))
+	}
+
+	// Expired windows drop out lazily.
+	short := 2 * time.Second
+	if allowed, _, err := dials.Attempt(ctx, owner, "+4970123", short); err != nil || !allowed {
+		t.Fatalf("short-window dial: %v %v", allowed, err)
+	}
+	time.Sleep(2100 * time.Millisecond)
+	slots, err = dials.Active(ctx, owner, short)
+	if err != nil {
+		t.Fatalf("post-expiry scan: %v", err)
+	}
+	for _, slot := range slots {
+		if slot.Remote == "+4970123" {
+			t.Errorf("expired slot must not be listed: %+v", slot)
+		}
+	}
+}
