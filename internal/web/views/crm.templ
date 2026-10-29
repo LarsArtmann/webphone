@@ -24,6 +24,15 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	}
 }
 
+// remoteLabel is the ONE home of a row's remote-party label: the resolved
+// name, linked into the CRM when a template is configured, in the row's
+// canonical strong. Fax rows and History's CDR rows both render exactly this,
+// and two hand-kept copies would drift the day one of them gains an
+// attribute.
+templ remoteLabel(number string, contacts CRMContacts, lang Lang) {
+	<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
+}
+
 // crmContextItem is the ONE home of a context item's shape: a muted uppercase
 // key, the value, and an optional muted tail. Four hand-kept copies of this
 // markup would drift the day one of them gains an attribute, and the detector
