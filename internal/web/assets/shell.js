@@ -1944,6 +1944,58 @@
       });
     }
 
+    // 4b. Collapsible phone panel: the island's 320–400px column is the
+    //     product while you are calling and dead weight while you read a
+    //     thread, a fax list or settings. The class lands on <html> (not
+    //     .wp-root) because theme-preload.js applies the stored state
+    //     before first paint — the grid's column count changes, so a late
+    //     apply would flash the wide grid and snap.
+    //
+    //     Collapsing HIDES the column but never tears the island down: the
+    //     SIP registration, the call cards and every island module keep
+    //     running. CSS force-re-expands the column while a call card is
+    //     live (`:has(.call-card)`) — hiding the phone mid-call is never
+    //     what the user meant, and a hidden RTCPeerConnection would look
+    //     exactly like a dropped call.
+    var ISLAND_KEY = "wp-island-collapsed";
+    var islandToggle = document.getElementById("wp-island-toggle");
+
+    /** @param {boolean} collapsed */
+    var applyIslandCollapsed = function (collapsed) {
+      if (collapsed) {
+        document.documentElement.classList.add("wp-island-collapsed");
+      } else {
+        document.documentElement.classList.remove("wp-island-collapsed");
+      }
+      if (islandToggle) {
+        // aria-expanded is the state channel: the button's accessible NAME
+        // stays constant ("Toggle the phone panel"), which is what makes
+        // the control legible in a screen-reader control list.
+        islandToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      }
+    };
+
+    // Re-assert the pre-paint class so aria-expanded matches what is on
+    // screen (theme-preload.js cannot touch the button — it has not been
+    // parsed yet at that point).
+    applyIslandCollapsed(
+      document.documentElement.classList.contains("wp-island-collapsed"),
+    );
+
+    if (islandToggle) {
+      islandToggle.addEventListener("click", function () {
+        var collapsed = !document.documentElement.classList.contains(
+          "wp-island-collapsed",
+        );
+        try {
+          localStorage.setItem(ISLAND_KEY, collapsed ? "1" : "0");
+        } catch {
+          /* best-effort persistence only */
+        }
+        applyIslandCollapsed(collapsed);
+      });
+    }
+
     // 5. Command palette (Ctrl/Cmd-K) and shortcut help (?): one
     //    lazily-built overlay, two modes. The palette lists the tabs
     //    plus a few shell actions and filters as you type; the help

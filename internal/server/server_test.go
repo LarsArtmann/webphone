@@ -158,6 +158,7 @@ func newTestServerWithConfig(
 		Transcripts: transcripts,
 		Notes:       engine.Notes(),
 		Reviews:     engine.Reviews(),
+		Dials:       engine.DialWindows(),
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:    phoneAPI,

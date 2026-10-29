@@ -411,7 +411,7 @@ func chipLabel(body string) string {
 	return string(runes[:27]) + "…"
 }
 
-// ThreadView is one open conversation: transcript and reply composer.
+// ThreadViewProps carries one open conversation plus the master rail.
 type ThreadViewProps struct {
 	Thread   domain.Thread
 	Messages []domain.Message
@@ -420,6 +420,12 @@ type ThreadViewProps struct {
 	// reports older pages beyond the window.
 	Page    int
 	HasMore bool
+	// Rail is the master list the split view shows beside the
+	// conversation (P1). Empty means "no rail": the conversation still
+	// renders, the split stays stacked, and nothing is lost — a failed
+	// list read degrades to the pre-split single-column shape instead of
+	// hiding the conversation behind an error.
+	Rail []store.ThreadSummary
 	// Snippets are the owner's reply snippets (M21): quick ones render
 	// as chips, all of them sit behind the picker — above the REPLY
 	// composer only (a new conversation never needs canned answers).
@@ -441,9 +447,78 @@ type ThreadViewProps struct {
 	Lang         Lang
 }
 
+// ThreadView is the Messages tab in its open-conversation shape: a
+// master–detail container. The rail (left) lists every conversation, the
+// detail column (right) is the conversation itself.
+//
+// The split is a CONTAINER QUERY on .wp-main-col (app.css), not a viewport
+// media query: the tab column's width is `viewport − island − padding`, so
+// widening it by collapsing the phone panel must widen the split too. When
+// the column is too narrow the rail is display:none and the detail's back
+// link is the way back — byte-identical to the pre-split behavior, no
+// second render path to drift.
 templ ThreadView(props ThreadViewProps) {
-	<section class="wp-panel" id="messages-panel">
+	<section class={ "wp-panel", templ.KV("wp-msg-split", len(props.Rail) > 0) } id="messages-panel">
+		if len(props.Rail) > 0 {
+			@ConversationRail(props.Rail, props.Thread.ID, props.Names, props.Lang)
+		}
+		<div class="wp-msg-detail">
+			@ThreadDetail(props)
+		</div>
+	</section>
+}
+
+// ConversationRail is the master pane: one row per active conversation,
+// the open one marked with aria-current. It deliberately carries NONE of
+// the list row's organization affordances (pin/mute/archive/dial) — those
+// belong to the conversation head, and a rail that also reorganized the
+// list would be a second, disagreeing home for them.
+//
+// Rows swap #tab-content (not the detail column) so the whole split
+// re-renders in one server round trip: the rail must re-mark aria-current,
+// the head must re-render, and the transcript must be re-read owner-scoped.
+// Targeting only the detail column would leave a stale aria-current
+// behind — the honest cost is one list re-read per switch.
+templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, names map[string]string, lang Lang) {
+	<nav class="wp-msg-rail" id="wp-conversation-rail" aria-label={ T(lang, "threads.rail") }>
+		for _, summary := range rail {
+			<a
+				class={ "wp-rail-row", templ.KV("wp-active", summary.Thread.ID == current), templ.KV("wp-unread", summary.Thread.Unread > 0 && !summary.Thread.Muted) }
+				href={ "/messages/" + summary.Thread.ID.String() }
+				hx-get={ "/partials/messages/" + summary.Thread.ID.String() }
+				hx-target="#tab-content"
+				hx-swap="innerHTML show:window:top"
+				hx-push-url={ "/messages/" + summary.Thread.ID.String() }
+				aria-current={ currentAttr(summary.Thread.ID == current) }
+			>
+				<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
+				<span class="wp-rail-text">
+					<span class="wp-rail-name">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
+					<span class="wp-rail-preview">{ threadPreview(summary, lang) }</span>
+				</span>
+				<span class="wp-rail-side">
+					<span
+						class="wp-thread-when"
+						title={ fullStamp(lang, summary.Thread.LastActivityAt) }
+						data-when={ fmtInt(int(summary.Thread.LastActivityAt.Unix())) }
+					>{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
+					if summary.Thread.Unread > 0 && !summary.Thread.Muted {
+						<span class="wp-nav-badge" aria-label={ badgeCount(lang, summary.Thread.Unread, "nav.unread") }>{ fmtInt(summary.Thread.Unread) }</span>
+					}
+				</span>
+			</a>
+		}
+	</nav>
+}
+
+// ThreadDetail is the detail column: the conversation head, its
+// transcript, and the reply composer. Split out of ThreadView so the
+// master–detail container (which owns the rail) and the conversation stay
+// separately readable — and so a future detail-only swap has a component
+// boundary to target.
+templ ThreadDetail(props ThreadViewProps) {
 		@ThreadHead(props)
+
 		@panelError(props.Error)
 		if isSelfThread(props.Identity, props.Thread.Remote) {
 			<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
@@ -522,7 +597,6 @@ templ ThreadView(props ThreadViewProps) {
 			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "compose.send")})
 			<div class="wp-attach" hidden></div>
 		</form>
-	</section>
 }
 
 // Transcript renders the message bubbles, oldest first, with day
