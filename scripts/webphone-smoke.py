@@ -642,6 +642,136 @@ def asr_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def dialgate_scenario(binary: str, workdir: str) -> int:
+    """The advisory dial gate (issue #7) end-to-end on a self-booted server.
+
+    Two boots prove both halves of the opt-in contract: with
+    WEBPHONE_DIAL__COOLDOWN set, the first ask for a remote is allowed
+    (and recorded), the immediate replay is denied with the cooldown
+    state the island phrases (last_at + window), the one-shot override
+    re-opens exactly one dial, and /config.js advertises the window;
+    with zero config the route answers the disabled-seam 404 and
+    /config.js stays silent (byte-identical off).
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("dialgate scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    def login_csrf(base: str) -> Smoke:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("dialgate: login accepted", s.login(), "POST /api/session != 201")
+        return s
+
+    # OFF boot: the mounted route answers 404, /config.js stays silent.
+    srv, base = boot({}, "data-dialgate-off")
+    try:
+        s = login_csrf(base)
+        status, _, _ = s.request(
+            "POST", "/api/dials", b'{"remote":"+4917012345678"}', "application/json"
+        )
+        c.ok("dialgate: off answers 404", status == 404, f"status {status}")
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "dialgate: config.js silent when off",
+            b"dialCooldownSeconds" not in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+    finally:
+        stop_server(srv)
+
+    # ON boot: allow -> deny with state -> override -> denied again.
+    srv, base = boot({"WEBPHONE_DIAL__COOLDOWN": "1h"}, "data-dialgate-on")
+    try:
+        s = login_csrf(base)
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "dialgate: config.js advertises the window",
+            b'"dialCooldownSeconds":3600' in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        status, body, _ = s.request(
+            "POST", "/api/dials", b'{"remote":"+4917012345678"}', "application/json"
+        )
+        c.ok(
+            "dialgate: first ask allowed",
+            status == 200 and b'"allowed":true' in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+        status, body, _ = s.request(
+            "POST", "/api/dials", b'{"remote":"+4917012345678"}', "application/json"
+        )
+        c.ok(
+            "dialgate: replay denied with state",
+            status == 200
+            and b'"allowed":false' in body
+            and b'"window":3600' in body
+            and b'"last_at"' in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+        status, body, _ = s.request(
+            "POST",
+            "/api/dials",
+            b'{"remote":"+4917012345678","override":true}',
+            "application/json",
+        )
+        c.ok(
+            "dialgate: override allowed",
+            status == 200 and b'"allowed":true' in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+        status, body, _ = s.request(
+            "POST", "/api/dials", b'{"remote":"+4917012345678"}', "application/json"
+        )
+        c.ok(
+            "dialgate: override is one-shot",
+            status == 200 and b'"allowed":false' in body,
+            f"{status} {body[:120].decode('utf-8', 'replace')}",
+        )
+    finally:
+        stop_server(srv)
+
+    print(f"dialgate scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -1215,6 +1345,7 @@ def main() -> int:
         rc = max(rc, restart_scenario(binary, workdir, port, env))
         rc = max(rc, boot_failure_scenario(binary, workdir, free_port()))
         rc = max(rc, asr_scenario(binary, workdir))
+        rc = max(rc, dialgate_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()
