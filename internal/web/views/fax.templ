@@ -82,7 +82,7 @@ templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
 		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
 		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
-			<strong class="wp-thread-remote">@crmNameLink(job.Remote.String(), contacts, lang)</strong>
+			@remoteLabel(job.Remote.String(), contacts, lang)
 			<span class="wp-muted">
 				{ formatStamp(lang, job.CreatedAt) }
 				{ " " }

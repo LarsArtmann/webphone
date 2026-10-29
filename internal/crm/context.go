@@ -95,12 +95,8 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return Context{}, ErrUnauthorized
 	default:
-		family := errorfamily.Transient
-		if resp.StatusCode < 500 {
-			family = errorfamily.Rejection
-		}
-
-		return Context{}, errorfamily.Newf(family, "crm.context", "crm: context failed with status %d", resp.StatusCode)
+		return Context{}, errorfamily.Newf(statusFamily(resp.StatusCode), "crm.context",
+			"crm: context failed with status %d", resp.StatusCode)
 	}
 
 	var buf bytes.Buffer

@@ -302,21 +302,35 @@ Sorted by priority score = (customer value × risk removed) ÷ effort.
 
 | # | Task | Status | Evidence |
 | --- | --- | --- | --- |
-| M1 | Red-tree baseline | ⏳ PENDING | |
-| M2 | Kith producer | ⏳ PENDING | |
-| M3 | Kith tests | ⏳ PENDING | |
-| M4 | webphone context client | ⏳ PENDING | |
-| M5 | Resolver cache | ⏳ PENDING | |
-| M6 | Server wiring | ⏳ PENDING | |
-| M7 | CSS | ⏳ PENDING | |
-| M8 | Config tests | ⏳ PENDING | |
-| M9 | View tests | ⏳ PENDING | |
-| M10 | Server tests | ⏳ PENDING | |
-| M11 | Docs | ⏳ PENDING | |
-| M12 | Gates | ⏳ PENDING | |
-| M13 | Visual proof | ⏳ PENDING | |
-| M14 | Dedup | ⏳ PENDING | |
-| M15 | Commits + push | ⏳ PENDING | |
+| M1 | Red-tree baseline | ✅ DONE | `panels_test.go` asserts through `props.CRM`; the nil-guard bug (`if ctx != nil` was templ's render context, not the strip param) was caught by the first test run and fixed; `go vet ./...` green |
+| M2 | Kith producer | ✅ DONE | `internal/machineapi/context.go` + route behind `gate`; `go build ./...` green |
+| M3 | Kith tests | ✅ DONE | `context_test.go`: full fact set, ghost id 404, 401 arms, cross-contact deal isolation. Package: **52 BDD specs + unit tests green** |
+| M4 | webphone context client | ✅ DONE | `internal/crm/context.go` (`Context`, `Deal`, `Task`, `ErrNoContext`, `ContactContext`) |
+| M5 | Resolver cache | ✅ DONE | `ContextOf` (2 min positive / 15 min absent / 256 cap, failures never cached); pinned by 3 tests incl. the no-cache-on-500 arm |
+| M6 | Server wiring | ✅ DONE | `crmContextFor` (telephony-only) + `crmContextView`; `ThreadViewProps.CRMContext` populated in `threadPanelPrefilled` |
+| M7 | CSS | ✅ DONE | `.wp-crm-link`, `.wp-crm-context`, `.wp-crm-item`, `.wp-crm-key`, `.wp-crm-muted`; `login.css`+`tw.css` rebuilt via `scripts/build-tw-css.sh` |
+| M8 | Config tests | ✅ DONE | 3 rejection arms + 2 accept cases in `TestLoadValidatesCRMConfig` |
+| M9 | View tests | ✅ DONE | `internal/web/views/crm_test.go`: link target/rel, nil strip renders NOTHING, fact rendering, overdue, escaping, `formatThousands` (found a real `-,999` sign bug), `dealValue`, `crmTaskDue` |
+| M10 | Server tests | ✅ DONE | `internal/server/crm_context_test.go`: projection, strip end-to-end, 404 ⇒ no strip, 5xx ⇒ no strip and no error banner |
+| M11 | Docs | ✅ DONE | error registry (+4 codes), AGENTS data-mesh invariant, CHANGELOG (3 Added / 1 Changed), dom-contract optional ids, README |
+| M12 | Gates | ✅ DONE | `templ generate` 0 updates, `nix fmt` 4 changed then clean, `go test ./...` green, `tsc` green, island 283/283, 5 flake checks, `buildflow` (see §6) |
+| M13 | Visual proof | ⛔ NOT RUN | the harness has no fake CRM; the strip is proven by server tests + CSS review instead. Named trigger: the next stack browser-E2E session |
+| M14 | Dedup | ⏳ see §6 | below |
+| M15 | Commits + push | ✅ DONE | see the commit trail; CI watched |
+
+### 5.1 Two cross-repo findings this train produced
+
+1. **The CRM closed its call-outcome vocabulary and the phone was still
+   speaking the old one.** `contact.ParseOutcome` now accepts only
+   `connected|voicemail|ivr|no_answer|wrong_number|dnc|disconnected`; webphone
+   was sending `answered|missed|unknown`. Every answered call would have been
+   rejected with 400, surfaced in the island as a 502 toast. Fixed with
+   `internal/crm/vocabulary.go` (one table + a test that fails if either side
+   gains an unmapped value) and pinned across five Go tests.
+2. **Kith's own suite was red on that change** (two specs asserting freeform
+   outcomes). Aligned them to the closed vocabulary, and one Kith handler had a
+   `byte`/`int` type error from a parallel edit that blocked the build; fixed
+   minimally (`var matched int`) without touching the intent.
 
 ---
 

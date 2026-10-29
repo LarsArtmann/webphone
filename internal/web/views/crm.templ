@@ -24,6 +24,20 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	}
 }
 
+// crmContextItem is the ONE home of a context item's shape: a muted uppercase
+// key, the value, and an optional muted tail. Four hand-kept copies of this
+// markup would drift the day one of them gains an attribute, and the detector
+// rightly calls four copies of one shape a clone.
+templ crmContextItem(key, value, tail string) {
+	<span class="wp-crm-item">
+		<span class="wp-crm-key">{ key }</span>
+		<span>{ value }</span>
+		if tail != "" {
+			<span class="wp-crm-muted">{ tail }</span>
+		}
+	</span>
+}
+
 // crmContextStrip renders the CRM's published context for the one contact
 // the surface is about: the company, the open deals, the outstanding task
 // count, and when the CRM last saw activity with them.
@@ -42,40 +56,36 @@ templ crmContextStrip(crm *CRMContext, lang Lang) {
 	if crm != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
 			if crm.Company != "" {
-				<span class="wp-crm-item">
-					<span class="wp-crm-key">{ T(lang, "crm.company") }</span>
-					<span>{ crm.Company }</span>
-				</span>
+				@crmContextItem(T(lang, "crm.company"), crm.Company, "")
 			}
 			for _, deal := range crm.Deals {
-				<span class="wp-crm-item">
-					<span class="wp-crm-key">{ T(lang, "crm.deal") } · { deal.Stage }</span>
-					<span>{ deal.Title }</span>
-					<span class="wp-crm-muted">{ dealValue(deal) }</span>
-				</span>
+				@crmContextItem(T(lang, "crm.deal")+" · "+deal.Stage, deal.Title, dealValue(deal))
 			}
 			if crm.MoreDeals > 0 {
 				<span class="wp-crm-item wp-crm-muted">+{ fmtInt(crm.MoreDeals) }</span>
 			}
 			if crm.OpenTasks > 0 {
-				<span class="wp-crm-item">
-					<span class="wp-crm-key">{ T(lang, "crm.tasks") }</span>
-					<span>{ fmtInt(crm.OpenTasks) }</span>
-					if crm.NextTask != "" {
-						if due := crmTaskDue(*crm, lang); due != "" {
-							<span class="wp-crm-muted">{ crm.NextTask } · { due }</span>
-						} else {
-							<span class="wp-crm-muted">{ crm.NextTask }</span>
-						}
-					}
-				</span>
+				@crmContextItem(T(lang, "crm.tasks"), fmtInt(crm.OpenTasks), crmNextTaskTail(*crm, lang))
 			}
 			if !crm.LastActivity.IsZero() {
-				<span class="wp-crm-item wp-crm-muted">
-					<span class="wp-crm-key">{ T(lang, "crm.lastActivity") }</span>
-					<span>{ relativeTime(crm.LastActivity, lang) }</span>
-				</span>
+				@crmContextItem(T(lang, "crm.lastActivity"), relativeTime(crm.LastActivity, lang), "")
 			}
 		</aside>
 	}
+}
+
+// crmNextTaskTail is the next follow-up's one-line description: its title,
+// plus the due phrase when the CRM published a due date. Built here rather
+// than in the template so the " · " separator cannot dangle when there is no
+// due date to show.
+func crmNextTaskTail(ctx CRMContext, lang Lang) string {
+	if ctx.NextTask == "" {
+		return ""
+	}
+
+	if due := crmTaskDue(ctx, lang); due != "" {
+		return ctx.NextTask + " · " + due
+	}
+
+	return ctx.NextTask
 }

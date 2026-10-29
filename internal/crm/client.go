@@ -171,11 +171,8 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Person, erro
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return Person{}, ErrUnauthorized
 	case resp.StatusCode != http.StatusOK:
-		family := errorfamily.Transient
-		if resp.StatusCode < 500 {
-			family = errorfamily.Rejection
-		}
-		return Person{}, errorfamily.Newf(family, "crm.http", "crm: lookup failed with status %d", resp.StatusCode)
+		return Person{}, errorfamily.Newf(statusFamily(resp.StatusCode), "crm.http",
+			"crm: lookup failed with status %d", resp.StatusCode)
 	}
 
 	var buf bytes.Buffer
@@ -291,4 +288,15 @@ func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, n
 func drainClose(resp *http.Response) {
 	_, _ = io.Copy(io.Discard, resp.Body) //nolint:erraudit // best-effort drain; reuse beats the read error
 	_ = resp.Body.Close()                 //nolint:erraudit // best-effort pool return
+}
+
+// statusFamily classifies an unexpected CRM status: a 4xx is the caller's
+// problem (a Rejection the operator can fix), anything else is the seam being
+// unwell (Transient, worth a retry). One home, so every CRM call agrees.
+func statusFamily(status int) errorfamily.Family {
+	if status < 500 {
+		return errorfamily.Rejection
+	}
+
+	return errorfamily.Transient
 }
