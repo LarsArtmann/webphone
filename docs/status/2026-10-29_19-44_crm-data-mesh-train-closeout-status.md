@@ -293,3 +293,19 @@ Other corrections carried in this pass:
   asymmetry with no user-visible explanation.
 - `docs/error-contract.md` gained the missing quiet-class row (CRM context
   absent), and its closing count corrected from five to six.
+
+### Gate evidence for this addendum (frozen tree, 20:40)
+
+`go build` + `go vet` clean · `go test -count=1 ./...` green over 31 packages
+(the reflective and guard pins included) · `tsc -p . --noEmit` clean · island
+283/283 · `nix fmt` 0 changed · five fast flake checks green · **`nix flake
+check` all checks passed** (this is the §f item 5 "one gate" verdict: the
+KVM-gated `webphone-backup`, `webphone-backup-drill`, `webphone-error-drill`
+and `webphone-module` all ran) · `art-dupl` 0 new clones (baseline 86) ·
+`buildflow` every step green · smoke 49 + 4 + 8 + 9 + 9 passed, 0 failed.
+
+One defect surfaced by the full gate, not by the diff: `webphone-error-drill`
+failed twice on an untouched boot path because a single-shot
+`systemctl show … ExecMainStatus` read raced the unit's own `Restart=1s` loop.
+Fixed in the check (retried assertion, taxonomy asserted first); rule recorded
+in docs/lessons.md § Nix. No product change.

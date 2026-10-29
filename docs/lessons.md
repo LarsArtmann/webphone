@@ -79,6 +79,21 @@ and the evidence. Newest last is NOT enforced — group by topic.
 
 ## Nix
 
+- Single-shot status asserts lose to a restart loop (2026-10-29): the
+  KVM-gated `webphone-error-drill` VM check asserted
+  `systemctl show webphone-drill -p ExecMainStatus` equals 1 AFTER five
+  `journalctl` greps, against a unit running `Restart=always
+  -p RestartSec=1`. systemd resets ExecMainStatus on every new cycle, so
+  the window is ~1 s and five subprocess spawns were enough to miss it:
+  the check failed twice in a row on a tree whose boot path was
+  untouched (no product defect, a TEST race). Fixed by moving the
+  taxonomy assert FIRST and wrapping it in `wait_until_succeeds`, which
+  is the general rule: with an auto-restarting unit, every observation of
+  a per-cycle property must be a RETRY over multiple cycles, never one
+  read. Corollary for readers: a red `nix flake check` is not
+  automatically your regression — read the failing assertion's
+  mechanics before hunting your diff (the same run's five sibling checks
+  and all 31 Go packages were green).
 - Cross-build trust trap (2026-09-20): `nix build --system
   aarch64-linux` prints "ignoring the client-specified setting
   'system' … not a trusted user" — and on truly restricted paths it
