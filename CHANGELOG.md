@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The CRM integration speaks to the CRM only about phone numbers (2026-10-29):
+  a Matrix or Session conversation no longer has its address sent to the CRM's
+  number lookup, which answered such a value with an error that was never
+  cached and so repeated on every render. Signal conversations, whose
+  addresses ARE phone numbers, now get the same CRM context as SMS instead of
+  a name with no context beside it.
 - The CRM seam carries contact identity, not just a name (2026-10-29): the
   integration now returns the CRM's own contact reference alongside the display
   name, which is what makes a resolved caller reachable at all. Views receive a

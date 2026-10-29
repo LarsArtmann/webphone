@@ -84,10 +84,12 @@ SHIPPED and green; these are the deliberately deferred edges.
    `webphone-backup`, `webphone-backup-drill` and `webphone-module` checks were
    not part of this train's verdict set (each verified individually when it
    last changed).
-6. **Kith side (`blocked` on Q3, below)**: CHANGELOG entry + the generated wire
-   reference (`/docs`, OpenAPI) for `GET /api/contacts/{id}/context`; the
-   branch is 16 commits ahead of `origin/master` and mixes another session's
-   claim/outreach work, whose `internal/catalog` gate is red.
+6. **Kith side (`blocked` on Q3, below)**: the endpoint's docs landed
+   (README, FEATURES, CHANGELOG); `/docs` is generated from the EventCatalog and
+   does NOT cover machine-API REST routes, so no generated-wire entry is owed.
+   What remains is the PUSH: the branch is 16 commits ahead of `origin/master`
+   and mixes another session's claim/outreach work, whose `internal/catalog`
+   gate is red.
 
 **Owner questions (still open):**
 

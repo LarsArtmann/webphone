@@ -259,3 +259,37 @@ window (a product guess, not a measurement).
 **Not checked at all:** the stack's browser E2E against the new markup; the
 KVM-gated backup checks; whether Kith's catalog drift also needs an entry for
 my endpoint once their train lands.
+
+---
+
+## Addendum — the Tier-0 tail, executed the same evening (20:30)
+
+Everything this report called "speculation, labelled" and the §f items 1–2 are
+now measured rather than guessed. Superseded claims are corrected inline below
+rather than silently edited:
+
+| Report claim | Now |
+| --- | --- |
+| "that the strip looks right (no screenshot)" | **Measured.** `scripts/ui-capture.py --crm` boots a bearer-gated fake Kith machine API beside the app and adds the `crm-context` surface. Two shots (`ui-shots/0*-crm-context-{light,dark}.png`) and three DOM pins: `.wp-crm-link` + the name, `#wp-crm-context` + company, and the deal title. Running it WITHOUT `--crm` exits 2 with a message, so the proof cannot silently degrade. |
+| "that the contrast passes AA (not measured)" | **Measured**, worst case 5.17:1. `--muted` on `--surface` is 5.85:1 (light) / 6.89:1 (dark); on `--bg` 5.17:1 / 7.46:1. All ≥ 4.5:1, so `.wp-crm-key`/`.wp-crm-muted` clear AA at their ~12px size in both themes. |
+| the visual gap was cosmetic risk only | **It was a real defect.** The first shot showed `Ada Lovelace(Open in the CRM)` underlined INSIDE the 24px thread heading: the link's screen-reader suffix used a made-up `wp-sr-only` class (the owned utility is `.sr-only`), so the hidden text rendered visibly. Fixed by moving the destination into `aria-label` (unstyleable, cannot leak), pinned by `TestCRMNameLinkIsTheOneLinkHome`. No gate catches a wrong class name; only a picture does. |
+
+Other corrections carried in this pass:
+
+- `crm.Context` lost `Name`, `Tags` **and `Ref`**: nothing read them. `Ref` is
+  the interesting one — dropping it makes strip redirection structurally
+  impossible (the value no longer exists off the wire), which is stronger than
+  the test that used to guard it. `TestEveryCRMContextFieldIsRead` (AST-precise,
+  sees only selectors off `published`) now fails when a field lands unread.
+- The telephony guard was SMS-only while the identity feed asked about EVERY
+  network: a Matrix thread's raw address reached `/api/contacts/by-phone`,
+  which answers **400** for a value with no digits — a failure the resolver does
+  not cache, so every render repeated it. Found while writing the pin for item
+  7; `domain.Address.IsPhoneShaped()` is now the one rule, `crmNumberFor` the
+  one projection, and `TestMatrixThreadNeverReachesTheCRM` fails without the fix
+  (verified by reverting it: `[@ada:example.org +493012345678]`).
+- Signal is now ELIGIBLE for the strip (its addresses are phone numbers) —
+  previously it got a linked name from the identity product and no context, an
+  asymmetry with no user-visible explanation.
+- `docs/error-contract.md` gained the missing quiet-class row (CRM context
+  absent), and its closing count corrected from five to six.
