@@ -21,7 +21,13 @@ import {
   sipDomain,
 } from "./config.js";
 import { authedFetch } from "./auth.js";
-import { agoLabel, consultDialGate, overrideDialGate } from "./dialgate.js";
+import {
+  agoLabel,
+  consultDialGate,
+  cooldownRemainder,
+  overrideDialGate,
+  refreshDialSlots,
+} from "./dialgate.js";
 import { getLang, t } from "./i18n.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
@@ -1446,7 +1452,7 @@ function showDialCooldown(target, verdict) {
   line.textContent = t("cooldownNotice")(
     lastAgo,
     verdict.window && verdict.last_at
-      ? remainingLabel(verdict.window - (Date.now() / 1000 - verdict.last_at))
+      ? cooldownRemainder(verdict)
       : "",
   );
   const anyway = document.createElement("button");
@@ -1466,15 +1472,6 @@ function showDialCooldown(target, verdict) {
   });
   line.append(anyway);
   els.dialError.parentElement?.insertAdjacentElement("afterend", line);
-}
-
-// remainingLabel phrases the wait left in the window ("43m") — neutral
-// labels, the agoLabel convention.
-/** @param {number} seconds */
-function remainingLabel(seconds) {
-  if (seconds <= 0) return "";
-  if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
-  return `${Math.ceil(seconds / 3600)}h`;
 }
 
 // placeCall returns whether an INVITE actually went out, so the dial
@@ -1520,6 +1517,7 @@ export async function placeCall(raw, { force = false } = {}) {
   // unreachable) dials: the gate advises, it never traps.
   if (!force) {
     const verdict = await consultDialGate(target);
+    void refreshDialSlots(true);
     if (verdict && !verdict.allowed) {
       log(`dial gate: ${target} is cooling down; showing the override chip`);
       showDialCooldown(target, verdict);

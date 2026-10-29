@@ -81,6 +81,84 @@ export async function overrideDialGate(remote) {
   }
 }
 
+// --- typeahead row state (GET /api/dials) --------------------------------
+//
+// The typeahead decorates contact rows that are inside their cooldown
+// window. The slots cache is SERVER TRUTH, fetched debounced: a local
+// guess (localStorage of recent dials) would lie after a reload or on
+// the second device. A failed fetch hides the decoration — it never
+// blocks or lies.
+
+/** @type {{remote: string, last_at: number, window: number}[]} */
+let slots = [];
+let slotsFetchedAt = 0;
+
+const SLOTS_TTL_MS = 30_000;
+
+/**
+ * Fetch the owner's active cooldown windows (debounced). Never
+ * rejects: failures leave the previous cache (or an empty one) and the
+ * decoration simply stays hidden.
+ * @param {boolean} [force] skip the debounce window (after a dial)
+ * @returns {Promise<void>}
+ */
+export async function refreshDialSlots(force = false) {
+  if (gateOff) return;
+  if (!force && Date.now() - slotsFetchedAt < SLOTS_TTL_MS) return;
+  slotsFetchedAt = Date.now();
+  try {
+    const res = await fetch("/api/dials", {
+      headers: { "X-CSRF-Token": csrfToken() },
+    });
+    if (res.status === 404) {
+      gateOff = true;
+      return;
+    }
+    if (!res.ok) return;
+    const data = await res.json();
+    slots = Array.isArray(data && data.slots) ? data.slots : [];
+  } catch {
+    // Unreachable: keep the previous cache; the decoration degrades to
+    // hidden (the advisory contract — a phone must dial).
+  }
+}
+
+/**
+ * The active cooldown slot for a contact's display number, or null.
+ * Both sides normalize to the dialable alphabet before comparing (the
+ * server stores the sanitized remote; contacts carry display forms).
+ * @param {string} raw the contact's display number
+ * @returns {{remote: string, last_at: number, window: number} | null}
+ */
+export function cooldownFor(raw) {
+  const needle = normalizeDialable(raw);
+  if (!needle) return null;
+  for (const slot of slots) {
+    if (normalizeDialable(slot.remote) === needle) return slot;
+  }
+  return null;
+}
+
+/** @param {string} value @returns {string} */
+function normalizeDialable(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^\d+*#a-z]/g, "");
+}
+
+/**
+ * The wait left in a slot's window ("43m"), or "" when it has run out.
+ * Neutral labels, the agoLabel convention.
+ * @param {{last_at: number, window: number}} slot
+ * @returns {string}
+ */
+export function cooldownRemainder(slot) {
+  const left = slot.window - (Date.now() / 1000 - slot.last_at);
+  if (left <= 0) return "";
+  if (left < 3600) return `${Math.ceil(left / 60)}m`;
+  return `${Math.ceil(left / 3600)}h`;
+}
+
 // agoLabel phrases a past unix stamp the draftAge way — neutral labels
 // ("now", "47m", "2h") so the line reads identically in both languages.
 /** @param {number} unixSeconds @returns {string} */

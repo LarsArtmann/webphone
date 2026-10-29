@@ -4,6 +4,8 @@
 // contacts, no dial form, no JS). Pure client-side over config data.
 
 import { sharedContacts } from "./config.js";
+import { cooldownFor, cooldownRemainder, refreshDialSlots } from "./dialgate.js";
+import { t } from "./i18n.js";
 import { els } from "./ui.js";
 
 const MAX_SUGGESTIONS = 6;
@@ -128,9 +130,21 @@ function render(matches) {
       number.textContent = contact.number;
       option.append(number);
     }
+    // Cooldown state lives IN the row (issue #7): a contact inside its
+    // window says so where the number is picked, not only after the
+    // gate denies the dial. The cache is server truth, refreshed
+    // debounced; a failed/absent fetch decorates nothing.
+    const slot = cooldownFor(contact.number);
+    if (slot) {
+      const cooldown = document.createElement("span");
+      cooldown.className = "typeahead-cooldown";
+      cooldown.textContent = t("cooldownRow")(cooldownRemainder(slot));
+      option.append(cooldown);
+    }
     box.append(option);
   });
   box.hidden = matches.length === 0;
+  void refreshDialSlots();
 }
 
 export function initDialTypeahead() {

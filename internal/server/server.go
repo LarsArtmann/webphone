@@ -466,6 +466,10 @@ func New(deps Deps) http.Handler {
 	// asking); a store failure answers 502 and the island dials anyway
 	// (the gate advises, it never traps).
 	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialGate)))
+	// The typeahead's row decoration (issue #7): the owner's ACTIVE
+	// cooldown windows, newest first. Same disabled-seam 404; the
+	// island hides the decoration when this fails.
+	protected.Handle("GET /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialSlots)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
 	// The operator's post-call disposition verdict (issue #6): the one
