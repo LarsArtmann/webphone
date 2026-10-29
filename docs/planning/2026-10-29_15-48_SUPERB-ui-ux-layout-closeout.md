@@ -373,44 +373,67 @@ Sorted in execution order (which is also priority order inside each tier).
 
 ## 4. Execution ledger
 
-Updated as each task lands — a ledger filled in before the work is done is
-the same lie as a pre-filled gate table.
+| #   | Task                                   | Status      | Evidence (actual, at 2026-10-29 17:0x)                                                                                              |
+| --- | -------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| T1  | Plan doc correction                    | ✅ DONE     | D5 `DataState` row → REJECTED with the reason; §4 P3 row → ladder fix; new §4.1 "Corrections applied after the fact"                |
+| T2  | CHANGELOG entries                      | ✅ DONE     | `[Unreleased]`: 3× Added (master–detail, collapsible island, geometry tokens) + 1× Changed (history/voicemail honesty)               |
+| T3  | AGENTS invariants + dom-contract Notes | ✅ DONE     | AGENTS "Layout asks the CONTAINER" bullet + DOM-contract id bullet; `docs/dom-contract.md` § "Layout ids (served, but NOT required)" |
+| T4  | Dedup registry ruling                  | ✅ DONE     | Rulings already recorded at 10-29 (`island-toggle glyph pair`, `thread row vs rail row tails`); re-verified below, no re-litigation    |
+| T5  | buildflow                              | ✅ DONE     | **exit 0**. Root cause of the earlier red was NOT my CSS authoring but a STALE `login.css` (it inlines app.css) + the treefmt cache  |
+| T6  | Island toggle discoverability          | ✅ DONE     | Labelled control "Phone panel" / "Telefonbereich"; browser probe reads `toggleLabel: 'Phone panel'`                                 |
+| T7  | Rail information priority              | ✅ DONE     | `nameTruncated: false`, full `+441632960961` visible, row 62px; name line owns the width, stamp moved to the preview line            |
+| T8  | Rail keyboard navigation               | ⛔ DROPPED  | **Premise was wrong**: no tab list has arrow-key nav (only the palette + dial typeahead do), so the rail already has native tab-order parity. Adding it to the rail alone would create the inconsistency it was meant to fix |
+| T9  | In-browser proof of collapse           | ✅ DONE     | Folded into the harness as `check_thread_layout()`, driven by `--surface thread`: PASS on collapse, persistence, and 6 boundary widths |
+| T10 | ui-shots untracked + `--surface`       | ✅ DONE     | `.gitignore` entry + `git rm --cached` (24 blobs); `--surface` with name validation; a filtered run no longer purges the matrix      |
+| T11 | island-js pipefail                     | ✅ DONE     | `… > $out` replaces `… \| tee $out`; the check now FAILS on a red spec — proved by catching a real 4 ms race in `calls-transcribe`   |
+| T12 | Smoke                                  | ✅ DONE     | `smoke: 49 passed, 0 failed` · restart 4/0 · boot-failure 8/0 · asr 9/0 · dialgate 9/0                                              |
+| T13 | art-dupl                               | ✅ DONE     | CI-pinned `v0.7.2 -t 1`: 82 shown groups = the 82-entry baseline → 0 new. Local `v0.9.1` reports "47 new" — the documented trap    |
+| T14 | Release runbook obligation             | ✅ DONE     | `docs/release-runbook.md` §2b "Served-markup obligation (standing)"                                                                |
+| T15–T20 | Long tail                          | ⏸ PARKED   | each carries a named trigger; none is justified today                                                                               |
 
-| #       | Task                                   | Status     | Evidence                                          |
-| ------- | -------------------------------------- | ---------- | ------------------------------------------------- |
-| T1      | Plan doc correction                    | ⏳ PENDING | —                                                 |
-| T2      | CHANGELOG entries                      | ⏳ PENDING | —                                                 |
-| T3      | AGENTS invariants + dom-contract Notes | ⏳ PENDING | —                                                 |
-| T4      | Dedup registry ruling                  | ⏳ PENDING | —                                                 |
-| T5      | buildflow                              | ⏳ PENDING | —                                                 |
-| T6      | Island toggle discoverability          | ⏳ PENDING | —                                                 |
-| T7      | Rail information priority              | ⏳ PENDING | —                                                 |
-| T8      | Rail keyboard navigation               | ⏳ PENDING | —                                                 |
-| T9      | Browser proof of collapse              | ⏳ PENDING | —                                                 |
-| T10     | ui-shots untracked + `--surface`       | ⏳ PENDING | —                                                 |
-| T11     | island-js pipefail                     | ⏳ PENDING | —                                                 |
-| T12     | Smoke                                  | ⏳ PENDING | —                                                 |
-| T13     | art-dupl                               | ⏳ PENDING | —                                                 |
-| T14     | Release runbook obligation             | ⏳ PENDING | —                                                 |
-| T15–T20 | Long tail                              | ⏸ PARKED   | each has a named trigger; none is justified today |
+### 4.1 Three findings worth more than the tasks themselves
 
----
+1. **`app.css` is not the only place the shell's CSS lives.** `login.css`
+   INLINES `app.css` (the library page takes one stylesheet), so every
+   `app.css` edit makes `login.css` stale and reds the format check. The
+   rebuild (`scripts/build-tw-css.sh`) is mandatory after any `app.css`
+   change — this cost two gate cycles to discover.
+2. **Two formatters disagreed about one declaration.** The bare
+   `grid-template-columns: minmax(…, …) minmax(0, 1fr)` is long enough that
+   prettier must choose where to break, and the flake's check and the local
+   formatter chose differently — an artifact that could satisfy only one.
+   The fix was to remove the choice, not to pick a side: the pair is now the
+   `--island-col` token, and the declaration is short enough to be
+   unambiguous.
+3. **The gate that cannot fail was hiding a real defect.** With `tee` in the
+   pipe, `island-js` was green while `calls-transcribe` asserted
+   `startedAt === entry.startedAt` against a value the code documents as the
+   SEGMENT stamp — a 4 ms race. Fixing the pipe exposed it immediately. The
+   spec now asserts the field set exactly and bounds the stamp to the call
+   window.
 
 ## 5. Gate evidence
 
-| Gate                          | Verdict |
-| ----------------------------- | ------- |
-| `templ generate`              | pending |
-| `go build ./...`              | pending |
-| `go test -count=1 ./...`      | pending |
-| `tsc -p . --noEmit`           | pending |
-| island `node --test` suite    | pending |
-| `nix fmt`                     | pending |
-| `nix build .#checks…island-*` | pending |
-| `buildflow`                   | pending |
-| `nix flake check`             | pending |
-| `scripts/webphone-smoke.py`   | pending |
+| Gate                                        | Verdict                                                             |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| `templ generate`                            | ok (2 updates)                                                       |
+| `go build ./...`                            | ok                                                                   |
+| `go test -count=1 ./...`                    | 31 packages ok, 0 failures                                           |
+| `tsc -p . --noEmit`                         | ok                                                                   |
+| island `node --test` suite                  | 283 tests, 283 pass, 0 fail                                          |
+| `nix fmt`                                   | 922 traversed / 374 emitted / 0 changed                              |
+| `checks.island-js`                          | green (and now able to go red — see §4.1.3)                          |
+| `checks.island-lint`                        | green                                                                |
+| `checks.island-typecheck`                   | green                                                                |
+| `checks.treefmt`                            | green                                                                |
+| `checks.contracts-fresh`                    | green                                                                |
+| `nix build .#webphone`                      | ok                                                                   |
+| `buildflow`                                 | **exit 0**                                                           |
+| `scripts/ui-capture.py --surface thread`    | 2 shots + `layout: PASS`                                             |
+| `scripts/webphone-smoke.py`                 | 49/4/8/9/9 passed, 0 failed                                          |
 
-Numbers are deliberately not written in advance: a plan that pre-fills gate
-results is a plan that lies when a gate fails. §4/§5 are filled from actual
-runs.
+**Not run, and why:** the full `nix flake check` (the KVM-gated backup VM
+tests and `webphone-module` were exercised individually only where listed
+above), and the consuming stack's browser E2E — that one is now written into
+the release runbook as a standing obligation precisely because it cannot be
+run from this repo.

@@ -562,6 +562,26 @@ side of that bar:
 - Typed-rejection CONVENTION design (checkJs-era) belongs to the sibling plan
   (16:04) task T24; this file owns the runtime surfaces only.
 
+## Detection column — how anyone would KNOW a quiet class happened (2026-10-29)
+
+The sections above answer "what does the operator SEE when the system
+speaks". Five failure classes are quiet BY DESIGN or by drift — they
+answer "how would anyone know" (the ai-phone failure-table question,
+M16/F69-F70). Each row: the class, why it is quiet, its detection
+signature, and the surface that carries it.
+
+| quiet class | why quiet | detection signature |
+|---|---|---|
+| **Caption lag** (L8, shipped 2026-10-29) | a slow provider degrades freshness, nothing errors | one polite announce + one `webphone: live transcription lagging: segment answered Ns after capture` warn PER STREAK (island `transcribe.js`); a punctual segment re-arms. A provider failing outright is the LOUD failure-streak toast instead |
+| **Daemon push stall** (pma#348) | the daemon's push leg dies with its PROCESS — nothing is left to log | `scripts/push-stall-watch.sh` (the LOCAL 60-min timer is the ONLY automation home — GitHub CI checks out the remote tip and cannot see unpushed commits) + `git log origin/main..HEAD --format=%cI \| tail -1` |
+| **Push-transport death** (ring-while-closed) | `/hooks/ring` answers 202 inertly ON PURPOSE — the dialplan must never depend on push health | `push.ntfy_send` / `push.fcm_send` log codes per failed publish; an `ErrUnregistered` verdict PRUNES the device row — so the tell is the `push_devices` row count dropping (the list never echoes tokens) while the phone stays silent |
+| **ASR degrading to empty** | a provider returning `""` (no speech detected) is a SUCCESS — no failure path fires | the live loop skips empty-text saves silently, so the signature is the ABSENCE: `skipped a near-silent segment` lines while the operator IS talking, and the History transcript section not growing during a spoken call |
+| **CRM outage** | enrichment is read-only and nil-safe; a dead CRM must never touch the call | the Settings tri-state goes red (deployed seam), the island toasts the 502 once per failed `recordCrmCall`; the quiet residue is the resolver's 5-min negative cache masking RECOVERY — the tell on the CRM side is `call_logged` journal rows stopping |
+
+The column's contract: a new quiet class gets a row here at the same
+commit that ships it (the caption-lag row landed with the feature).
+Rows 2–5 are pre-existing classes retroactively documented.
+
 ## Cross-repo sync
 
 The operator-facing semantics of these surfaces — status meanings,
@@ -574,4 +594,6 @@ taxonomy (2026-10-02) join the sync set; the stack-side patch text is
 prepared in
 `docs/planning/2026-10-02_11-05_boot-contract-stack-runbook-patch.md`
 and applies under the tri-repo ritual (webphone first, clean stack
-tree, then relock).
+tree, then relock). The § "Detection column" rows (2026-10-29) join
+the sync set too: the daemon-stall and CRM rows describe fleet/stack
+sides the runbook owns, so the next runbook pass carries the table.
