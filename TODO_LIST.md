@@ -78,13 +78,29 @@ with the verification comment on #6.
    deploy the pbx-artmann train, then verify the acceptance bar (inbound
    caller name; `call_logged` on the contact journal; a revoked token turns
    the Settings tri-state red).
-2. **Stack browser E2E after the UI trains (release-runbook obligation)**:
-   served markup changed across the disposition filter (T3), the Settings
-   CRM tri-state (T7), the review dispatch, the History review states
-   (T13) and the dial cooldown chip (T17) — the stack's
-   `tests/browser-e2e.py` drives the island through the DOM contract and
-   owes one re-run (budget 445s; the ~90s transfer-step death is a known
-   flake mode, re-run once before digging).
+2. **Stack browser E2E after the UI trains — DONE 2026-10-29 16:05**:
+   re-run against the local tree (`nix build -L .#telephony-browser
+   --override-input webphone path:~/projects/webphone`, stack rev
+   unchanged) with the FULL owed markup set in the tree (disposition
+   filter, CRM tri-state, review dispatch, History review states, dial
+   cooldown chip): `CALL-ESTABLISHED` reached, VM test green. The
+   release-runbook line "a markup change owes a stack E2E re-run" stays
+   as standing policy (M03/F16).
+3. **History review-state SSE nudge (F89 — DESIGNED, not landed; island
+   collision)**: pending review rows stay stale until the next History
+   fetch. Seam map, ready to execute: the `domain.CallReviewSaved` fact
+   already exists (readmodels folds it); `server.Notifier.Project` is the
+   ONE notification-policy home (add `case domain.CallReviewSaved:` → a
+   payload-less nudge on the `contacts`/`voicemail` pattern, new
+   `sseEventReview` in `sse.go`); the write path is the review API
+   handler (`review_api.go` after `Reviews.Set` succeeds), so `api.Deps`
+   needs a `Notify(domain.Event)` callback wired in the `api.Deps{}`
+   literal in `server.go` (the hand-copy field — see the wiring-parity
+   note); island arm = add the event name to the main.js SSE list (the
+   `voicemail` line) with refreshNav on it. Tests: `notifier_test.go`
+   case + island stub event. NOT landed 2026-10-29: the concurrent
+   UI-UX train owns island/shell edits right now; land this in a quiet
+   window (~30 min total).
 
 ### ai-phone steal-list (2026-10-29 deep dive — 2 SHIPPED, 5 actions open)
 

@@ -119,6 +119,12 @@ templ ShellBody(props ShellProps) {
 			// island IS the login card, and hiding it would hide the only
 			// actionable thing on the page. shell.js §4b owns the toggle;
 			// theme-preload.js applies the stored state before first paint.
+			//
+			// A LABELLED control, not a bare glyph: a 30px chevron wedged
+			// between the identity pill and the theme toggle is a feature
+			// nobody finds, and an unfound feature delivers nothing. The
+			// chevron pair still carries the direction (both rendered, swapped
+			// by CSS per state) and aria-expanded carries the state.
 			if props.SignedIn != "" {
 				<button
 					id="wp-island-toggle"
@@ -130,7 +136,7 @@ templ ShellBody(props ShellProps) {
 				>
 					<span class="wp-island-toggle-hide">@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
 					<span class="wp-island-toggle-show">@icons.Icon(icons.ChevronRight, "wp-icon")</span>
-					<span class="sr-only">{ T(props.Lang, "shell.island.toggle") }</span>
+					<span class="wp-island-toggle-label">{ T(props.Lang, "shell.island.toggle") }</span>
 				</button>
 			}
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
