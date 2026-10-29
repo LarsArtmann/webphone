@@ -16,6 +16,19 @@ re-run the formatter if it moved styled files.
 2. **Bump `webphoneVersion`** in flake.nix (package version AND the
    `/version` ldflags injection — one let-binding; keep it equal to
    the new tag).
+2b. **Served-markup obligation (standing)**: ANY train that changed the
+   served bytes — a tab panel, the shell, an island asset, `app.css` —
+   owes a fresh run of the consuming stack's browser E2E
+   (`tests/browser-e2e.py` in nix-international-telephony, budget 445s).
+   It cannot run from this repo, so it is the ONE gate that is routinely
+   forgotten: the last layout train (2026-10-29, master-detail split +
+   collapsible island + three new ids) shipped without it, and the
+   obligation travelled only in a status doc. Record the run in the
+   stack session that bumps this repo; if the E2E is red, the bump is
+   blocked, not deferred. DOM-contract ids to check against:
+   `docs/dom-contract.md` (pinned block + § Notes for the 2026-10-29
+   layout ids).
+
 3. **Gates**: prelude `nix develop -c buildflow doctor` — the
    toolchain/policy verdict BEFORE the gate runs, so a stale binary or a
    mangled `.buildflow.yml` fails the prelude instead of the middle of a
