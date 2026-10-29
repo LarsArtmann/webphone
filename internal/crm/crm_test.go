@@ -142,15 +142,18 @@ func TestLogCall(t *testing.T) {
 	}
 
 	got := stub.logCalls[0]
-	if got["direction"] != "in" || got["seconds"] != float64(123) || got["outcome"] != "answered" {
+	if got["direction"] != "in" || got["seconds"] != float64(123) || got["outcome"] != "connected" {
 		t.Fatalf("forwarded body: %+v", got)
 	}
 
+	// An honest unknown carries NO outcome: the CRM's vocabulary has no
+	// "unknown", and claiming no_answer for a call whose media flowed would
+	// write a lie into the customer's journal.
 	if err := client.LogCall(context.Background(), NewContactRef("01M/contact"), "in", "+49 30 12345678", 45, domain.DispositionUnknown); err != nil {
 		t.Fatalf("log unknown-disposition call: %v", err)
 	}
-	if got := stub.logCalls[1]["outcome"]; got != "unknown" {
-		t.Fatalf("unknown disposition must travel verbatim (the CRM renders it as-is), got %q", got)
+	if outcome, present := stub.logCalls[1]["outcome"]; present {
+		t.Fatalf("unknown disposition must omit the outcome, got %v", outcome)
 	}
 
 	stub.logStatus = http.StatusInternalServerError

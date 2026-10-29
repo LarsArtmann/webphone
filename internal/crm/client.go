@@ -258,7 +258,7 @@ func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, n
 		Number    string `json:"number"`
 		Seconds   int    `json:"seconds"`
 		Outcome   string `json:"outcome,omitempty"`
-	}{Direction: direction, Number: number, Seconds: seconds, Outcome: disposition.String()}
+	}{Direction: direction, Number: number, Seconds: seconds, Outcome: crmOutcome(disposition)}
 
 	encoded, err := json.Marshal(payload)
 	if err != nil {

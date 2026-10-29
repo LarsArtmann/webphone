@@ -26,6 +26,12 @@ type crmStub struct {
 	// Authorization header, and the decoded number of every lookup.
 	auths         []string
 	lookupNumbers []string
+
+	// contextJSON/contextStatus answer GET /api/contacts/01M/context. The
+	// default is a 404: a CRM that predates the context product must leave
+	// the phone rendering no strip at all.
+	contextJSON   string
+	contextStatus int
 }
 
 func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +49,19 @@ func (s *crmStub) handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
 		_, _ = w.Write([]byte(s.lookupJSON))
+		return
+	}
+	if r.URL.Path == "/api/contacts/01M/context" && r.Method == http.MethodGet {
+		s.mu.Lock()
+		status := s.contextStatus
+		body := s.contextJSON
+		s.mu.Unlock()
+		if status == 0 {
+			status = http.StatusNotFound
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
 		return
 	}
 	if r.URL.Path == "/api/contacts/01M/calls" && r.Method == http.MethodPost {
@@ -113,8 +132,13 @@ func TestAPICallLoggingContract(t *testing.T) {
 		}
 
 		got := stub.logBodies[0]
-		if got["direction"] != "in" || got["seconds"] != float64(123) || got["outcome"] != "unknown" {
+		// "unknown" has no honest CRM counterpart, so the bridge omits the
+		// outcome rather than guessing no_answer (vocabulary.go).
+		if got["direction"] != "in" || got["seconds"] != float64(123) {
 			t.Fatalf("forwarded facts: %+v", got)
+		}
+		if outcome, present := got["outcome"]; present {
+			t.Fatalf("unknown disposition must omit the outcome, got %v", outcome)
 		}
 	})
 

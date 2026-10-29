@@ -257,6 +257,7 @@ a deliberate code change, regenerate:
 | config.auth.passkey.users                    | Rejection                 | internal/config/config.go          |
 | config.auth.users                            | Rejection                 | internal/config/config.go          |
 | config.contacts                              | Rejection                 | internal/config/config.go          |
+| config.crm.contact_url                       | Rejection                 | internal/config/config.go          |
 | config.crm.token                             | Rejection                 | internal/config/config.go          |
 | config.crm.token_file                        | Rejection                 | internal/config/config.go          |
 | config.crm.token_sources                     | Rejection                 | internal/config/config.go          |
@@ -298,6 +299,9 @@ a deliberate code change, regenerate:
 | config.webhook_secret_file                   | Rejection                 | internal/config/config.go          |
 | crm.call_log.failed                          | Transient                 | internal/crm/client.go             |
 | crm.call_log.rejected                        | Rejection                 | internal/crm/client.go             |
+| crm.context                                  | runtime-split             | internal/crm/context.go            |
+| crm.context_decode                           | Transient                 | internal/crm/context.go            |
+| crm.context_read                             | Transient                 | internal/crm/context.go            |
 | crm.decode                                   | Transient                 | internal/crm/client.go             |
 | crm.encode                                   | Infrastructure            | internal/crm/client.go             |
 | crm.health.failed                            | Transient                 | internal/crm/client.go             |
