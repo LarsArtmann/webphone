@@ -1420,6 +1420,67 @@ a:focus-visible {
   white-space: nowrap;
 }
 
+/* Optional CRM integration (P4/P5): a resolved caller's name becomes a link
+ * into the CRM's own contact page, and the open conversation gains a context
+ * line (company, deals in flight, the follow-up that is due, the last touch).
+ *
+ * Both only ever render when a CRM is CONFIGURED, so a zero-config
+ * deployment is byte-identical to the pre-integration product. They own no
+ * colours of their own (tokens only), which is what makes them work in both
+ * themes without a second block.
+ *
+ * The link must not read as a generic hyperlink inside an <h2>: it keeps the
+ * heading's colour and earns a dotted underline (a quiet "this goes
+ * elsewhere"), turning solid on hover/focus. focus-visible gets the accent
+ * ring so keyboard users can see where they are. */
+.wp-crm-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+}
+
+.wp-crm-link:hover,
+.wp-crm-link:focus-visible {
+  border-bottom-style: solid;
+}
+
+.wp-crm-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The context line: one wrapping row of key-plus-value items over a
+ * hairline, never a card of chips (inside a panel everything is a flat row).
+ * It wraps instead of scrolling, because a horizontal scroller would hide a
+ * fact the user does not know exists. */
+.wp-crm-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding-top: 10px;
+  border-top: var(--hairline);
+  font-size: 0.875em;
+}
+
+.wp-crm-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wp-crm-key {
+  color: var(--muted);
+  font-size: 0.85em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wp-crm-muted {
+  color: var(--muted);
+}
+
 /* Direction chip: inbound/outbound at a glance without reading text. */
 .wp-dir-chip {
   width: 38px;

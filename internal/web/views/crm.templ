@@ -2,12 +2,14 @@ package views
 
 // crmNameLink is the ONE place a CRM link is built. It renders the
 // contact's published name as a link into the CRM's own UI when the
-// deployment configured a deep-link template, and the plain name otherwise
-// — so zero CRM config renders byte-identically to the pre-integration
-// product, and a miss never grows a dead affordance.
+// deployment configured a deep-link template, and the plain name otherwise:
+// zero CRM config renders byte-identically to the pre-integration product,
+// and a miss never grows a dead affordance.
 //
 // Sites must be non-anchor containers (a heading, a row <article>): an <a>
 // inside the list's row link would be invalid HTML and a nested hit target.
+// The link opens in a NEW TAB on purpose, so the SIP island (registration,
+// a live call) is never unloaded by a navigation.
 templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	if url := crmProfileURL(number, contacts); url != "" {
 		<a
@@ -16,7 +18,7 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 			target="_blank"
 			rel="noopener noreferrer"
 			title={ T(lang, "crm.open") }
-		>{ displayName(number, contacts) }<span class="wp-sr-only"> — { T(lang, "crm.open") }</span></a>
+		>{ displayName(number, contacts) }<span class="wp-sr-only"> ({ T(lang, "crm.open") })</span></a>
 	} else {
 		{ displayName(number, contacts) }
 	}
@@ -27,40 +29,45 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 // count, and when the CRM last saw activity with them.
 //
 // It sits BESIDE the panel head, never inside it: ThreadHead is a hot
-// outerHTML swap target (flag toggles re-render exactly it), and a strip
+// outerHTML swap target (flag toggles re-render exactly it), so a strip
 // inside would cost a CRM round trip per pin/unpin and could be blanked by
-// a toggle. Rendering nothing when there is nothing to say is the whole
-// degradation contract — no empty shell, no placeholder, no spinner.
+// a toggle.
+//
+// Deliberately NOT a row of chips or boxes: inside a panel the design
+// language is a flat row, never a box-in-box. This is one wrapping line of
+// key-plus-value items over a hairline, and rendering NOTHING when there is
+// nothing to say is the whole degradation contract: no empty shell, no
+// placeholder, no spinner.
 templ crmContextStrip(crm *CRMContext, lang Lang) {
 	if crm != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
 			if crm.Company != "" {
-				<span class="wp-crm-chip">
+				<span class="wp-crm-item">
 					<span class="wp-crm-key">{ T(lang, "crm.company") }</span>
 					<span>{ crm.Company }</span>
 				</span>
 			}
 			for _, deal := range crm.Deals {
-				<span class="wp-crm-chip">
+				<span class="wp-crm-item">
 					<span class="wp-crm-key">{ T(lang, "crm.deal") } · { deal.Stage }</span>
 					<span>{ deal.Title }</span>
-					<span class="wp-muted">{ dealValue(deal) }</span>
+					<span class="wp-crm-muted">{ dealValue(deal) }</span>
 				</span>
 			}
 			if crm.MoreDeals > 0 {
-				<span class="wp-crm-chip wp-crm-more">+{ fmtInt(crm.MoreDeals) }</span>
+				<span class="wp-crm-item wp-crm-muted">+{ fmtInt(crm.MoreDeals) }</span>
 			}
 			if crm.OpenTasks > 0 {
-				<span class="wp-crm-chip">
+				<span class="wp-crm-item">
 					<span class="wp-crm-key">{ T(lang, "crm.tasks") }</span>
 					<span>{ fmtInt(crm.OpenTasks) }</span>
 					if crm.NextTask != "" {
-						<span class="wp-muted">{ crm.NextTask } · { crmTaskDue(*crm, lang) }</span>
+						<span class="wp-crm-muted">{ crm.NextTask } · { crmTaskDue(*crm, lang) }</span>
 					}
 				</span>
 			}
 			if !crm.LastActivity.IsZero() {
-				<span class="wp-crm-chip wp-crm-muted">
+				<span class="wp-crm-item wp-crm-muted">
 					<span class="wp-crm-key">{ T(lang, "crm.lastActivity") }</span>
 					<span>{ relativeTime(crm.LastActivity, lang) }</span>
 				</span>
