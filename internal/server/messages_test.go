@@ -643,3 +643,56 @@ func TestThreadSearchFiltersPanel(t *testing.T) {
 		t.Fatalf("empty q must list every thread: %.400s", list)
 	}
 }
+
+// TestThreadPartialRendersConversationRail pins the Messages master–detail
+// split (P1): an open conversation renders the RAIL beside it, the rail
+// lists every active conversation exactly once, and exactly one row carries
+// aria-current="page" — the one being read. The split's visibility is a CSS
+// container query (app.css), so the SERVER contract is "both panes are
+// always in the payload"; a client that cannot show two columns falls back
+// to the single-column layout without a second render path.
+func TestThreadPartialRendersConversationRail(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+
+	deliverInbound(t, server, "+441632960961", "rail alpha")
+	deliverInbound(t, server, "+491601234567", "rail beta")
+
+	_, list := c.do(http.MethodGet, "/partials/messages", nil, "")
+	rows := regexp.MustCompile(`class="wp-thread-row[^"]*" href="/messages/([^"]+)"`).FindAllSubmatch(list, -1)
+	if len(rows) != 2 {
+		t.Fatalf("expected two threads, got %d: %.400s", len(rows), list)
+	}
+	openID, otherID := string(rows[0][1]), string(rows[1][1])
+
+	_, body := c.do(http.MethodGet, "/partials/messages/"+openID, nil, "")
+	view := string(body)
+
+	if !strings.Contains(view, "wp-msg-split") {
+		t.Fatalf("open conversation lost the split container: %.400s", view)
+	}
+	if !strings.Contains(view, `id="wp-conversation-rail"`) {
+		t.Fatalf("open conversation lost the rail: %.400s", view)
+	}
+	// Both conversations are in the rail, the open one last-rendered state
+	// aside; the other one is one click away.
+	if !strings.Contains(view, `href="/messages/`+otherID+`"`) {
+		t.Fatalf("rail must offer the other conversation: %.600s", view)
+	}
+	if got := strings.Count(view, `aria-current="page"`); got != 1 {
+		t.Fatalf("exactly one rail row may be current, got %d: %.600s", got, view)
+	}
+	// The current row is the OPEN conversation, not merely some row: the
+	// rail marks aria-current on the anchor that points at openID.
+	current := regexp.MustCompile(`href="/messages/([^"]+)"[^>]*aria-current="page"`).FindStringSubmatch(view)
+	if current == nil || string(current[1]) != openID {
+		t.Fatalf("aria-current must mark the open thread %q: %v", openID, current)
+	}
+
+	// A conversation with no readable rail still renders: the rail is an
+	// enhancement, and an empty Rail must not take the split down with it.
+	_, plain := c.do(http.MethodGet, "/partials/messages", nil, "")
+	if strings.Contains(string(plain), "wp-msg-split") {
+		t.Fatalf("the list view must not claim the split container: %.400s", plain)
+	}
+}

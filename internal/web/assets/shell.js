@@ -1971,7 +1971,10 @@
         // aria-expanded is the state channel: the button's accessible NAME
         // stays constant ("Toggle the phone panel"), which is what makes
         // the control legible in a screen-reader control list.
-        islandToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        islandToggle.setAttribute(
+          "aria-expanded",
+          collapsed ? "false" : "true",
+        );
       }
     };
 
