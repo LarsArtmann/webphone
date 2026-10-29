@@ -99,7 +99,7 @@ func (h *Handlers) ConfirmCallDisposition(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	match, found := h.deps.CRM.Resolve(r.Context(), phone.String())
+	person, found := h.deps.CRM.Resolve(r.Context(), phone.String())
 	if !found {
 		slog.Debug("crm: disposition not corrected; no contact for number", "extension", sess.Extension.String())
 		h.recordCallIdem(idemKey)
@@ -107,7 +107,7 @@ func (h *Handlers) ConfirmCallDisposition(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.deps.CRM.LogCall(r.Context(), match.ID, body.Direction, phone.String(), body.Seconds, disposition); err != nil {
+	if err := h.deps.CRM.LogCall(r.Context(), person.Ref, body.Direction, phone.String(), body.Seconds, disposition); err != nil {
 		slog.Warn("crm: disposition correction failed", "error", err, "extension", sess.Extension.String())
 		http.Error(w, "the CRM could not record the correction", http.StatusBadGateway)
 		return

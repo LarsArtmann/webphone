@@ -75,7 +75,7 @@ func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, 
 	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
 		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
-		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, n.crm.Names(ctx, numbers), lang))
+		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, crmContacts(n.crm.People(ctx, numbers), n.crm), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
 	}
@@ -97,7 +97,7 @@ func (n *Notifier) faxesChanged(ctx context.Context, owner domain.Extension) {
 		return
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, n.crm.Names(ctx, numbers), n.hubs.Lang(owner)))
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, crmContacts(n.crm.People(ctx, numbers), n.crm), n.hubs.Lang(owner)))
 }
 
 func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event EventName, component templ.Component) {

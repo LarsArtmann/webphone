@@ -101,7 +101,7 @@ func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	match, found := h.deps.CRM.Resolve(r.Context(), phone.String())
+	person, found := h.deps.CRM.Resolve(r.Context(), phone.String())
 	if !found {
 		// Deliberate: an unknown caller gets no CRM journal entry. The
 		// integration never mints contacts; the number still lives in the
@@ -116,7 +116,7 @@ func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 		body.Seconds = 0
 	}
 
-	if err := h.deps.CRM.LogCall(r.Context(), match.ID, body.Direction, phone.String(), body.Seconds, disposition); err != nil {
+	if err := h.deps.CRM.LogCall(r.Context(), person.Ref, body.Direction, phone.String(), body.Seconds, disposition); err != nil {
 		slog.Warn("crm: call logging failed", "error", err, "extension", sess.Extension.String())
 		http.Error(w, "the CRM could not record the call", http.StatusBadGateway)
 		return

@@ -130,9 +130,6 @@ type TranscriptGroup struct {
 	Direction string // "in" | "out"
 	StartedAt time.Time
 	Lines     []string
-	// Name is the CRM-resolved contact name (optional); empty renders
-	// the raw remote.
-	Name string
 	// Note is the owner's saved post-call note (optional; empty renders
 	// an empty editor box).
 	Note string
@@ -167,7 +164,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 							↑
 						}
 					</span>
-					<strong>{ displayName(firstNonEmpty(group.Name, group.Remote), props.CRM) }</strong>
+					<strong>{ displayName(group.Remote, props.CRM) }</strong>
 					// Confirmed-verdict badge (T3): renders ONLY for the five
 					// operator-confirmable verdicts — unknown or absent renders
 					// NOTHING (never a success glyph for an unconfirmed call,

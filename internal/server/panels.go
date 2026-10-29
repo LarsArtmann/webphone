@@ -250,6 +250,11 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	// unreachable. A store failure degrades to no section — the CDR list
 	// must not die with it.
 	transcripts := h.recentTranscripts(r, sess, query, disposition)
+	// One CRM directory for the whole panel: the transcript section and the
+	// CDR list draw names from the SAME map, so a caller reads identically
+	// in both halves (the group payload carries no name of its own any
+	// more: one home per fact).
+	transcriptNumbers := crmNumbers(transcripts, func(group views.TranscriptGroup) string { return group.Remote })
 	if disposition != "" {
 		// A verdict filter cannot address the CDR rows (they carry no call
 		// uuid to join the disposition with — the documented invariant),
@@ -257,12 +262,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		// filter did not choose. The transcripts carry the answer.
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
+			CRM: h.crmDirectory(r.Context(), transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
+			CRM: h.crmDirectory(r.Context(), transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
@@ -283,6 +290,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		entries = entries[:historyPageSize]
 	}
 	numbers := crmNumbers(entries, views.CDRDialTarget)
+	numbers = append(numbers, transcriptNumbers...)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
 		CRM: h.crmDirectory(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
@@ -322,8 +330,6 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 		}
 		return nil
 	}
-	numbers := crmNumbers(recent, func(tx domain.CallTranscript) string { return tx.Remote })
-	contacts := h.crmDirectory(r.Context(), numbers)
 	groups := make([]views.TranscriptGroup, 0, len(recent))
 	for _, tx := range recent {
 		note := ""
@@ -350,7 +356,7 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 		groups = append(groups, views.TranscriptGroup{
 			CallID: tx.CallID,
 			Remote: tx.Remote, Direction: string(tx.Direction), StartedAt: tx.StartedAt,
-			Lines: tx.Lines, Name: names[tx.Remote], Note: note, Disposition: noteDisposition,
+			Lines: tx.Lines, Note: note, Disposition: noteDisposition,
 			ReviewState: reviewState, ReviewText: reviewText, ReviewConfidence: reviewConfidence,
 		})
 	}
