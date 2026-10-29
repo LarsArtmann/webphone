@@ -24,13 +24,15 @@ var ErrNoContext = errors.New("crm has no context for this contact")
 //
 // It is a SNAPSHOT of a published product, never a replica: the phone keeps it
 // only in the render-time cache below, never in SQLite, never in an event.
-// Every field except Name is optional; a CRM that publishes less simply yields
-// a thinner answer, and the view renders fewer chips.
+// Every field is optional; a CRM that publishes less simply yields a thinner
+// answer, and the view renders fewer chips.
+//
+// Identity is deliberately ABSENT here. The strip's job is context; who the
+// caller is arrives from the identity product as a crm.Person, so a name field
+// on this type would be a second, disagreeable home for the same fact.
 type Context struct {
 	Ref       ContactRef
-	Name      string
 	Company   string
-	Tags      []string
 	Deals     []Deal
 	DealCount int
 	OpenTasks int
@@ -54,14 +56,12 @@ type Task struct {
 	Overdue bool
 }
 
-// contextWire is the producer's wire shape. Unknown fields are tolerated (a
-// newer CRM must not break an older phone), and every field except id/name is
-// optional.
+// contextWire is the producer's wire shape, narrowed to the facts the strip
+// renders. Unknown fields are tolerated and EXPECTED (a newer CRM must not
+// break an older phone) — the producer's id/name/tags/email arrive here and are
+// dropped on purpose, because identity belongs to the lookup product.
 type contextWire struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Company   string   `json:"company"`
-	Tags      []string `json:"tags"`
+	Company   string `json:"company"`
 	OpenDeals []struct {
 		Title      string `json:"title"`
 		Stage      string `json:"stage"`
@@ -123,9 +123,7 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 func (w contextWire) toContext(ref ContactRef) Context {
 	out := Context{
 		Ref:       ref,
-		Name:      w.Name,
 		Company:   w.Company,
-		Tags:      w.Tags,
 		DealCount: max(w.OpenDealCount, len(w.OpenDeals)),
 		OpenTasks: max(w.OpenTasks, 0),
 	}

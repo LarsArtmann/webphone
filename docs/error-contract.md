@@ -570,7 +570,7 @@ side of that bar:
 ## Detection column — how anyone would KNOW a quiet class happened (2026-10-29)
 
 The sections above answer "what does the operator SEE when the system
-speaks". Five failure classes are quiet BY DESIGN or by drift — they
+speaks". Six failure classes are quiet BY DESIGN or by drift — they
 answer "how would anyone know" (the ai-phone failure-table question,
 M16/F69-F70). Each row: the class, why it is quiet, its detection
 signature, and the surface that carries it.
@@ -582,10 +582,12 @@ signature, and the surface that carries it.
 | **Push-transport death** (ring-while-closed) | `/hooks/ring` answers 202 inertly ON PURPOSE — the dialplan must never depend on push health | `push.ntfy_send` / `push.fcm_send` log codes per failed publish; an `ErrUnregistered` verdict PRUNES the device row — so the tell is the `push_devices` row count dropping (the list never echoes tokens) while the phone stays silent |
 | **ASR degrading to empty** | a provider returning `""` (no speech detected) is a SUCCESS — no failure path fires | the live loop skips empty-text saves silently, so the signature is the ABSENCE: `skipped a near-silent segment` lines while the operator IS talking, and the History transcript section not growing during a spoken call |
 | **CRM outage** | enrichment is read-only and nil-safe; a dead CRM must never touch the call | the Settings tri-state goes red (deployed seam), the island toasts the 502 once per failed `recordCrmCall`; the quiet residue is the resolver's 5-min negative cache masking RECOVERY — the tell on the CRM side is `call_logged` journal rows stopping |
+| **CRM context absent** (shipped 2026-10-29) | the contact-context strip is fail-open BY DESIGN — an old CRM with no `/context` route (404), a revoked token (401), and a 5xx all degrade to NO markup: no banner, no toast, no retry affordance, so a permanently broken seam looks exactly like a contact the CRM knows nothing about | one `crm: context failed; no strip` DEBUG line per fetch carrying the wrapped `crm.context_read` / `crm.context_decode` code — transport and shape failures are NOT cached, so a healed CRM shows the strip on the next conversation open. The 401 arm logs `crm: context unauthorized; no strip` instead and caches ABSENCE for 15 min; its loud twin is the Settings tri-state / `/healthz` CRM leg going red while the strip silently stops asking. A 404 caches absence too and leaves no log line — that arm IS the intended old-CRM handshake |
 
 The column's contract: a new quiet class gets a row here at the same
 commit that ships it (the caption-lag row landed with the feature).
-Rows 2–5 are pre-existing classes retroactively documented.
+Rows 2–5 are pre-existing classes retroactively documented; rows 1 and
+6 landed with their features.
 
 ## Cross-repo sync
 
