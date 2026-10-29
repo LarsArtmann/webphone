@@ -952,12 +952,25 @@ pushing.
   multi-line `minmax(...)` form (canonical since the 10-14 treefmt-nix pin),
   while every local `nix fmt` run reported `formatted 0 files (0 changed)` —
   in **37 ms over 373 files**, i.e. the formatters never ran; treefmt v2's
-  cache short-circuited on file fingerprints (`~/.cache/treefmt` did not even
-  exist — the cache lives somewhere non-obvious and was not worth the hunt
-  once the direct fix worked). The fix sequence that worked: reproduce with
+  cache short-circuited on file fingerprints (cache HUNTED 2026-10-29 16:20:
+  it lives at `~/.cache/treefmt/eval-cache/*.db`, one sqlite db per config
+  hash). The fix sequence that worked: reproduce with
   `nix build -L .#checks.x86_64-linux.format` (the sandbox has no cache),
   then run the flake wrapper's raw treefmt directly with the flake config —
   `--ci` mode in v2 REWRITES files before failing, which produced the
   canonical bytes (diff index matched CI's own `dfd8a88..1391d92`). Rule:
   the check derivation is the authority; `nix fmt` is a best-effort fixer,
   never a green-ticket.
+- **The trap is not just diagnostic — it eats WRITES too** (2026-10-29
+  16:15, same day). `scripts/build-tw-css.sh`'s final `nix fmt <artifacts>`
+  step answered "formatted 0 files in 7ms" on non-canonical rebuilt bytes
+  (fresh mtime, cache still claimed clean), so a CERTIFIED rebuild shipped
+  expanded `grid-template-columns` and red-ed the format check at HEAD —
+  the same file ping-ponged three commits in one afternoon (concurrent
+  session canonicalized, my cache-blind rebuild reverted it). Bypasses,
+  both verified live on a lying file: `TREEFMT_NO_CACHE=1 nix fmt …`
+  (276 ms, collapses — the script now hardcodes this) and raw treefmt
+  `--ci`; `-c/--clear-cache` exists (`--help`-verified, resets the eval
+  cache) but the env flag is the surgical per-invocation fix. Detection
+  signature: "formatted N files in <100ms" where N>0 files were passed —
+  7 ms is a skip, 276 ms is prettier actually running.

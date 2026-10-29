@@ -162,6 +162,9 @@ grep -qF '.dark' internal/web/assets/login.css
 # A raw rebuild re-breaks the treefmt format gate (prettier owns *.css);
 # hand the fresh artifacts straight to the formatter. SCOPED to the
 # artifacts on purpose: a repo-wide nix fmt would trample concurrent
-# in-flight edits.
-nix fmt internal/web/assets/tw.css internal/web/assets/login.css
+# in-flight edits. TREEFMT_NO_CACHE=1 is LOAD-BEARING (2026-10-29): the
+# v2 evaluation cache answered "0 changed in 7ms" on non-canonical
+# artifact bytes, shipping a rebuild that reds the format check; the
+# flag forces the formatter to actually run (276ms, collapses the file).
+TREEFMT_NO_CACHE=1 nix fmt internal/web/assets/tw.css internal/web/assets/login.css
 echo "rebuilt internal/web/assets/{tw,login}.css with locked nixpkgs $rev"
