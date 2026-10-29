@@ -35,7 +35,7 @@ import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
   CAPTION_LINE_CAP,
   callSegments,
-  clearCallSegments,
+  closeCallSegments,
   isTranscribing,
   pauseLiveTranscription,
   saveTranscriptSegment,
@@ -174,7 +174,7 @@ export function teardownSession(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
-  clearCallSegments(id);
+  closeCallSegments(id);
   // The call's undelivered transcript segments get one last flush
   // attempt before the entry goes away (the queue drains in the
   // background; a still-failing save stays logged, never blocking).
@@ -208,8 +208,9 @@ export function settleEndedCall(id) {
   if (entry.captionUnsub) entry.captionUnsub();
   // The segment STORE dies with the live call (it feeds the next live
   // card's pre-render); the ended card's strip lines live in the DOM and
-  // keep serving Copy/Clear after it.
-  clearCallSegments(id);
+  // keep serving Copy/Clear after it. Closing, not clearing, is what
+  // keeps a segment still in flight from resurrecting the entry.
+  closeCallSegments(id);
   flushTranscriptSaves(entry);
   if (entry.timer) clearInterval(entry.timer);
   morphToEndedCard(id, entry);

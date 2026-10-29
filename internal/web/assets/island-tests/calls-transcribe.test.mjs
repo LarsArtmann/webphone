@@ -553,7 +553,6 @@ test("the card's clear button wipes the live view without touching capture (#39)
   entry.session.state = globalThis.SIP.SessionState.Established;
   entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
   await flush();
-  console.log("DBG copy isTranscribing=", isTranscribing("call-t1"), "recorders=", globalThis.__recorders.length);
   const recorder = globalThis.__recorders.at(-1);
   recorder.emit({ size: 8, type: "audio/webm" });
   await flush(2);

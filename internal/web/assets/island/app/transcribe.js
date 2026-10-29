@@ -256,6 +256,8 @@ function ensureRunning(ctx) {
  */
 export function startLiveTranscription(id, entry, onText, { language } = {}) {
   if (!transcribeEnabled || live.has(id)) return false;
+  // A new capture for this id reopens the log a settle closed.
+  settledCallIds.delete(id);
   if (typeof MediaRecorder === "undefined") {
     log("live transcription unsupported: no MediaRecorder", "warn");
     return false;
@@ -308,17 +310,15 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       backoffUntil = 0;
       failureToasted = false;
       if (text) {
-        // A stop can race an in-flight segment: once capture is torn
-        // down, a late result must not repaint a call the island has
-        // already settled. The text still reaches onText, because the
-        // caller's save queue keeps it (attribution is by call id, and
-        // the audio really was heard); only this page's live log drops
-        // it, which is also what stops a dead call's entry from being
-        // recreated forever in a long-lived tab.
-        const stale = live.get(id) !== controller;
-        console.log('DBG segment', id, 'stale=', stale, 'liveHas=', live.has(id));
+        // A settle can race an in-flight segment. The text still reaches
+        // onText, because the caller's save queue keeps it (attribution
+        // is by call id and the audio really was heard), but a settled
+        // call's live log is closed to late writes: see
+        // closeCallSegments. Without that, every hung-up call whose last
+        // segment landed late would leave a log entry in a long-lived
+        // tab for the rest of the shift.
         onText(text);
-        if (!stale) recordSegment(id, text);
+        recordSegment(id, text);
       }
     } catch (err) {
       if (/\b429\b/.test(errorMessage(err))) {
@@ -437,9 +437,16 @@ export const CAPTION_LINE_CAP = 30;
 const segmentLogs = new Map();
 /** @type {Map<string, Set<(text: string) => void>>} */
 const segmentSubs = new Map();
+// settledCallIds closes the live log of a call whose capture is over: a
+// segment still in flight when the call ends saves through onText, but
+// must not resurrect the id's log entry (a busy tab would accumulate one
+// per hung-up call). A new capture for the same id reopens it.
+/** @type {Set<string>} */
+const settledCallIds = new Set();
 
 /** @param {string} id @param {string} text */
 function recordSegment(id, text) {
+  if (settledCallIds.has(id)) return;
   let entries = segmentLogs.get(id);
   if (!entries) {
     entries = [];
@@ -457,10 +464,19 @@ export function callSegments(id) {
   return [...(segmentLogs.get(id) ?? [])];
 }
 
-// clearCallSegments drops one call's log (teardown, explicit clear).
+// clearCallSegments drops one call's log (the card's explicit Clear).
 /** @param {string} id */
 export function clearCallSegments(id) {
   segmentLogs.delete(id);
+}
+
+// closeCallSegments drops the log AND shuts it against the segments a
+// capture that is still in flight will deliver. Teardown uses this;
+// the card's Clear uses clearCallSegments, which leaves capture alive.
+/** @param {string} id */
+export function closeCallSegments(id) {
+  segmentLogs.delete(id);
+  settledCallIds.add(id);
 }
 
 // subscribeCallSegments wires one listener to a call's future segments
