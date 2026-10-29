@@ -68,9 +68,9 @@ func wireChatNetworks(
 		// The socket may legitimately not exist yet at boot (service
 		// ordering); the receiver's ping loop reconnects with backoff,
 		// so the boot check would only duplicate it. Wiring is enough.
-		receiver := signal.NewReceiver(client, owner, messagingSvc, messagingSvc, log)
+		receiver := signal.NewReceiver(client, owner, messagingSvc, messagingSvc, cfg.Signal.AttachmentsDir, log)
 		loops = append(loops, receiver.Run)
-		log.Info("signal lane wired", "socket", cfg.Signal.SocketPath, "account", cfg.Signal.Account, "owner", cfg.Signal.Owner)
+		log.Info("signal lane wired", "socket", cfg.Signal.SocketPath, "account", cfg.Signal.Account, "owner", cfg.Signal.Owner, "attachments_dir", cfg.Signal.AttachmentsDir)
 	}
 
 	return loops, nil

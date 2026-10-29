@@ -220,7 +220,7 @@ func TestReceivePushBecomesInboundAndReceipts(t *testing.T) {
 	c := New(socketPathOf(d), "+4915112345678", slog.Default())
 	got := &inSink{}
 	receipts := &inReceipts{}
-	r := NewReceiver(c, domain.MustParseExtension("1001"), got, receipts, slog.Default())
+	r := NewReceiver(c, domain.MustParseExtension("1001"), got, receipts, "", slog.Default())
 	r.client.OnEnvelope(r.handle)
 	if err := c.Ping(t.Context()); err != nil {
 		t.Fatal(err)
@@ -268,7 +268,7 @@ func TestGroupMessagesAreSkippedLoudly(t *testing.T) {
 	d := startFakeDaemon(t)
 	c := New(socketPathOf(d), "+4915112345678", slog.Default())
 	got := &inSink{}
-	r := NewReceiver(c, domain.MustParseExtension("1001"), got, &inReceipts{}, slog.Default())
+	r := NewReceiver(c, domain.MustParseExtension("1001"), got, &inReceipts{}, "", slog.Default())
 	r.client.OnEnvelope(r.handle)
 	if err := c.Ping(t.Context()); err != nil {
 		t.Fatal(err)
@@ -293,4 +293,82 @@ func TestGroupMessagesAreSkippedLoudly(t *testing.T) {
 
 func socketPathOf(d *fakeDaemon) string {
 	return d.ln.Addr().String()
+}
+
+func TestInboundAttachmentsArmFromTheConfiguredDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "att-id-1"), []byte("PNG!"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	newReceiver := func(attachmentsDir string) (*Receiver, *inSink, *fakeDaemon) {
+		d := startFakeDaemon(t)
+		c := New(socketPathOf(d), "+4915112345678", slog.Default())
+		got := &inSink{}
+		r := NewReceiver(c, domain.MustParseExtension("1001"), got, &inReceipts{}, attachmentsDir, slog.Default())
+		r.client.OnEnvelope(r.handle)
+		if err := c.Ping(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		return r, got, d
+	}
+	waitInbound := func(t *testing.T, got *inSink) domain.InboundMessage {
+		t.Helper()
+		deadline := time.After(5 * time.Second)
+		for {
+			got.mu.Lock()
+			n := len(got.got)
+			got.mu.Unlock()
+			if n == 1 {
+				got.mu.Lock()
+				in := got.got[0]
+				got.mu.Unlock()
+				return in
+			}
+			select {
+			case <-deadline:
+				t.Fatalf("inbound must arrive, got %d", n)
+			case <-time.After(5 * time.Millisecond):
+			}
+		}
+	}
+
+	t.Run("armed: the file rides the message", func(t *testing.T) {
+		_, got, d := newReceiver(dir)
+		d.push(t, `{"source":"+491599887766","timestamp":1760000000003,"dataMessage":{"timestamp":1760000000003,"message":"see pic","attachments":[{"id":"att-id-1","contentType":"image/png","filename":"pic.png","size":4}]}}`)
+		in := waitInbound(t, got)
+		if in.Body != "see pic" || len(in.Attachments) != 1 {
+			t.Fatalf("message+attachment must land: %+v", in)
+		}
+		att := in.Attachments[0]
+		if att.Name != "pic.png" || att.MimeType != "image/png" || string(att.Bytes) != "PNG!" {
+			t.Fatalf("attachment wrong: %+v", att)
+		}
+	})
+
+	t.Run("fenced without a directory: text lands, attachment skipped loudly", func(t *testing.T) {
+		_, got, d := newReceiver("")
+		d.push(t, `{"source":"+491599887766","timestamp":1760000000004,"dataMessage":{"timestamp":1760000000004,"message":"the text survives","attachments":[{"id":"att-id-1","contentType":"image/png","filename":"pic.png","size":4}]}}`)
+		in := waitInbound(t, got)
+		if in.Body != "the text survives" || len(in.Attachments) != 0 {
+			t.Fatalf("fenced attachment must not block the text: %+v", in)
+		}
+	})
+
+	t.Run("missing file: text lands, attachment skipped", func(t *testing.T) {
+		_, got, d := newReceiver(dir)
+		d.push(t, `{"source":"+491599887766","timestamp":1760000000005,"dataMessage":{"timestamp":1760000000005,"message":"file vanished","attachments":[{"id":"gone","contentType":"image/png","size":4}]}}`)
+		in := waitInbound(t, got)
+		if in.Body != "file vanished" || len(in.Attachments) != 0 {
+			t.Fatalf("a vanished file must not block the text: %+v", in)
+		}
+	})
+
+	t.Run("oversized and id-less attachments skip without a read", func(t *testing.T) {
+		_, got, d := newReceiver(dir)
+		d.push(t, `{"source":"+491599887766","timestamp":1760000000006,"dataMessage":{"timestamp":1760000000006,"message":"guard rails","attachments":[{"id":"big","contentType":"application/octet-stream","size":11000000},{"id":"","contentType":"text/plain"}]}}`)
+		in := waitInbound(t, got)
+		if len(in.Attachments) != 0 {
+			t.Fatalf("oversized/id-less attachments must skip: %+v", in.Attachments)
+		}
+	})
 }

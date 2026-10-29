@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/errorfamily"
 )
 
 // ReceiptSink applies delivery verdicts to outbound rows correlated by

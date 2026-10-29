@@ -284,6 +284,7 @@ a deliberate code change, regenerate:
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
 | config.session_ttl                           | Rejection                 | internal/config/config.go          |
 | config.signal.account                        | Rejection                 | internal/config/config.go          |
+| config.signal.attachments_dir                | Rejection                 | internal/config/config.go          |
 | config.signal.owner                          | Rejection                 | internal/config/config.go          |
 | config.signal.socket_path                    | Rejection                 | internal/config/config.go          |
 | config.sip.credential_secret_file            | Rejection                 | internal/config/config.go          |
