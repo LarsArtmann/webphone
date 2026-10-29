@@ -322,6 +322,12 @@ func TestComposerCarriesSegmentCounterAndTextarea(t *testing.T) {
 	if got := strings.Count(list, `class="wp-segcount"`); got != 1 {
 		t.Errorf("new-message composer: %d segment counters, want 1", got)
 	}
+	if !strings.Contains(list, `hx-post="/messages/send"`) {
+		t.Error("new-message composer does not post to /messages/send")
+	}
+	if !regexp.MustCompile(`<input\s+name="to"[^>]*\brequired\b`).MatchString(list) {
+		t.Error("new-message composer: no required to= input — the lane-v2 compose-new door is gone")
+	}
 
 	form, contentType := multipartBody(t, map[string]string{"to": "+441632960961", "body": "clock"}, nil)
 	resp, body := c.do(http.MethodPost, "/messages/send", form, contentType)
