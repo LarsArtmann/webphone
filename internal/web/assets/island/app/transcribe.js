@@ -70,6 +70,17 @@ let liveFailures = 0;
 let backoffUntil = 0;
 let failureToasted = false;
 
+// Caption-lag honesty (L8): a provider slower than the 4 s cadence makes
+// captions drift behind the conversation with no signal — the operator
+// reads a caption as "now" while it describes seconds-old audio. A
+// segment is laggy when it answers more than 3× the capture cadence
+// after its audio window closed; the first laggy segment of a streak
+// warns (once), and a punctual segment resets the streak so a recovered
+// provider re-arms the warn.
+const LAG_WARN_MS = 12_000;
+let lagStreak = 0;
+let lagToasted = false;
+
 // transcribeBlob posts one encoded audio blob and returns the trimmed
 // text ("" when the provider heard nothing).
 /**
@@ -250,7 +261,7 @@ function ensureRunning(ctx) {
 /**
  * @param {string} id
  * @param {IslandCallEntry} entry
- * @param {(text: string) => void} onText
+ * @param {(text: string, capturedAt: number) => void} onText
  * @param {{language?: string}} [options]
  * @returns {boolean}
  */
@@ -285,6 +296,10 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
   live.set(id, controller);
   recorder.addEventListener("dataavailable", async (event) => {
     if (!event.data || event.data.size === 0) return;
+    // The capture stamp: when this segment's audio WINDOW closed. It is
+    // the honest segment start (the persisted row's startedAt) and the
+    // t0 of the lag measurement below.
+    const capturedAt = Date.now();
     // 429 cooldown (any surface can arm it) and transient-failure backoff
     // share this gate: skip the segment cycles until the window passes.
     // Capture keeps running; the budget recovers; no retry storm. One warn
@@ -309,6 +324,25 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       liveFailures = 0;
       backoffUntil = 0;
       failureToasted = false;
+      // Caption-lag honesty (L8): measure the segment's round trip and
+      // warn once per laggy streak. The announce is the visible surface
+      // (owner ruling: a silent degradation is a bug); the log line
+      // carries the number for the operator reading #log.
+      const lag = Date.now() - capturedAt;
+      if (lag > LAG_WARN_MS) {
+        lagStreak += 1;
+        if (!lagToasted) {
+          lagToasted = true;
+          log(
+            `live transcription lagging: segment answered ${Math.round(lag / 1000)}s after capture`,
+            "warn",
+          );
+          announce(t("transcribeLag"), "warn");
+        }
+      } else {
+        lagStreak = 0;
+        lagToasted = false;
+      }
       if (text) {
         // A settle can race an in-flight segment. The text still reaches
         // onText, because the caller's save queue keeps it (attribution
@@ -317,7 +351,7 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         // closeCallSegments. Without that, every hung-up call whose last
         // segment landed late would leave a log entry in a long-lived
         // tab for the rest of the shift.
-        onText(text);
+        onText(text, capturedAt);
         recordSegment(id, text);
       }
     } catch (err) {

@@ -398,9 +398,137 @@ def capture(
                 driver.save_screenshot(target)
                 print(f"captured {target}")
                 shots += 1
+                if name == "thread" and theme == "light":
+                    # Layout facts belong here, not in a second script: a
+                    # screenshot proves a surface RENDERS, not that the
+                    # collapse reclaims width or that the master-detail split
+                    # flips at the container threshold. Measured as COMPUTED
+                    # STYLE, once per pass, on the surface that carries both
+                    # panes (2026-10-29 closeout; a standalone proof script
+                    # duplicated this config and hung for three hours).
+                    check_thread_layout(driver, base, thread_path, out_dir)
     finally:
         driver.quit()
     return shots
+
+
+def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> None:
+    """Assert the collapsible island and the Messages master-detail.
+
+    Every claim asserted here is one a screenshot cannot make: which grid
+    direction is live, whether the column is really removed, whether the
+    preference survives a navigation, and where the container query flips.
+    """
+    # Imported here, not at module scope: selenium lives only in the capture
+    # env (see the AGENTS run recipe), and this module is imported by nothing
+    # else — but keeping the import local mirrors capture()'s own arrangement.
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    probe_js = """
+    const col = document.querySelector('.wp-main-col');
+    const split = document.querySelector('.wp-msg-split');
+    const rail = document.querySelector('.wp-msg-rail');
+    const island = document.querySelector('.wp-island');
+    const toggle = document.getElementById('wp-island-toggle');
+    const nameEl = document.querySelector('.wp-rail-name');
+    const row = document.querySelector('.wp-rail-row');
+    return {
+      collapsed: document.documentElement.classList.contains('wp-island-collapsed'),
+      colWidth: Math.round(col.getBoundingClientRect().width),
+      splitDir: split ? getComputedStyle(split).flexDirection : null,
+      railDisplay: rail ? getComputedStyle(rail).display : null,
+      islandDisplay: island ? getComputedStyle(island).display : null,
+      ariaExpanded: toggle ? toggle.getAttribute('aria-expanded') : null,
+      toggleLabel: toggle ? toggle.textContent.trim() : null,
+      rowHeight: row ? Math.round(row.getBoundingClientRect().height) : null,
+      nameTruncated: nameEl ? nameEl.scrollWidth > nameEl.clientWidth + 1 : null,
+      nameText: nameEl ? nameEl.textContent.trim() : null,
+    };
+    """
+    failures: list[str] = []
+
+    expanded = driver.execute_script(probe_js)
+    print(f"layout: expanded {expanded}")
+    if expanded["splitDir"] != "row":
+        failures.append(f"the split must be a row, got {expanded['splitDir']!r}")
+    if expanded["islandDisplay"] == "none":
+        failures.append("the island column must be visible while expanded")
+    if expanded["ariaExpanded"] != "true":
+        failures.append(f"aria-expanded must be 'true', got {expanded['ariaExpanded']!r}")
+    if not (expanded["toggleLabel"] or "").strip():
+        failures.append("the collapse control has no visible label (undiscoverable)")
+    if expanded["nameTruncated"]:
+        failures.append(f"the rail still ellipsizes the name ({expanded['nameText']!r})")
+    if expanded["rowHeight"] is not None and expanded["rowHeight"] > 90:
+        failures.append(f"the rail row grew to {expanded['rowHeight']}px")
+
+    driver.find_element("id", "wp-island-toggle").click()
+    time.sleep(0.6)
+    collapsed = driver.execute_script(probe_js)
+    print(f"layout: collapsed {collapsed}")
+    if collapsed["islandDisplay"] != "none":
+        failures.append(
+            f"the collapsed island must be display:none, got {collapsed['islandDisplay']!r}"
+        )
+    if collapsed["ariaExpanded"] != "false":
+        failures.append(f"aria-expanded must be 'false', got {collapsed['ariaExpanded']!r}")
+    if collapsed["splitDir"] != "row":
+        failures.append(f"the split must survive the collapse, got {collapsed['splitDir']!r}")
+    if collapsed["colWidth"] <= expanded["colWidth"] + 300:
+        failures.append(
+            "the collapsed column must reclaim the island width "
+            f"({expanded['colWidth']} -> {collapsed['colWidth']})"
+        )
+    if driver.execute_script("return localStorage.getItem('wp-island-collapsed')") != "1":
+        failures.append("the collapse preference was not persisted")
+    driver.save_screenshot(os.path.join(out_dir, "zz-thread-collapsed.png"))
+
+    # Reload: the pre-paint class must survive navigation.
+    driver.get(base + thread_path)
+    WebDriverWait(driver, 12).until(
+        lambda d: d.find_element("css selector", "#wp-thread-head").is_displayed()
+    )
+    time.sleep(0.5)
+    after = driver.execute_script(probe_js)
+    print(f"layout: after reload {after}")
+    if after["islandDisplay"] != "none" or after["ariaExpanded"] != "false":
+        failures.append(
+            "the stored collapse did not survive a reload "
+            f"(display={after['islandDisplay']!r}, aria={after['ariaExpanded']!r})"
+        )
+
+    # Boundary widths around the 44rem (704px) container threshold: prove the
+    # query flips exactly there and never leaves a dead band or an oscillation.
+    for width in (640, 680, 700, 704, 720, 780):
+        driver.set_window_size(width, 900)
+        time.sleep(0.45)
+        direction, col_width = driver.execute_script(
+            "const s=document.querySelector('.wp-msg-split');"
+            "const c=document.querySelector('.wp-main-col');"
+            "return [s?getComputedStyle(s).flexDirection:null,"
+            "Math.round(c.getBoundingClientRect().width)];"
+        )
+        want = "row" if col_width >= 704 else "column"
+        print(f"layout: viewport {width} -> column {col_width} -> {direction} (want {want})")
+        if direction != want:
+            failures.append(
+                f"at viewport {width} the column is {col_width}px so the split "
+                f"must be {want}, got {direction!r}"
+            )
+    driver.set_window_size(1280, 900)
+
+    # Leave the workspace expanded: the collapse is a preference, and a proof
+    # run must not change what the next pass starts from.
+    driver.find_element("id", "wp-island-toggle").click()
+    time.sleep(0.3)
+    if driver.execute_script(
+        "return document.documentElement.classList.contains('wp-island-collapsed')"
+    ):
+        failures.append("the island did not expand again after the proof")
+
+    if failures:
+        raise AssertionError("layout proof failed:\n  - " + "\n  - ".join(failures))
+    print("layout: PASS (collapse, persistence, split threshold)")
 
 
 def main() -> int:

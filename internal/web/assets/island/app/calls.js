@@ -874,7 +874,7 @@ function startCallTranscription(id, entry) {
   return startLiveTranscription(
     id,
     entry,
-    (text) => onCallTranscript(id, entry, text),
+    (text, capturedAt) => onCallTranscript(id, entry, text, capturedAt),
     {
       language: getLang(),
     },
@@ -904,8 +904,13 @@ function ensureTranscription(id, entry) {
 // re-read, never the live card). The strip renders via the
 // transcribe.js segment subscription — this path never touches the DOM
 // (one renderer per surface).
-/** @param {string} id @param {IslandCallEntry} entry @param {string} text */
-function onCallTranscript(id, entry, text) {
+/**
+ * @param {string} id
+ * @param {IslandCallEntry} entry
+ * @param {string} text
+ * @param {number} capturedAt
+ */
+function onCallTranscript(id, entry, text, capturedAt) {
   // A segment that lands after the call settled still saves (the audio
   // was heard, and the durable History row wants the tail), but it must
   // not announce a caption for a call the operator already hung up.
@@ -914,7 +919,11 @@ function onCallTranscript(id, entry, text) {
     callId: id,
     direction: entry.session instanceof SIP.Inviter ? "out" : "in",
     remote: entry.target,
-    startedAt: entry.startedAt,
+    // The segment's honest capture stamp (when its audio window closed),
+    // not the call start every segment used to share — the wire contract
+    // says "segment start" and History renders it as one. The >0 guard
+    // keeps stub-produced segments (no stamp) at the old fallback.
+    startedAt: capturedAt > 0 ? capturedAt : entry.startedAt,
     text,
   });
 }
