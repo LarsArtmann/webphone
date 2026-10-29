@@ -286,10 +286,9 @@ h3 {
 
 .wp-body {
   display: grid;
-  grid-template-columns: minmax(
-      var(--island-w-min),
-      var(--island-w-max)
-    ) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(var(--island-w-min), var(--island-w-max))
+    minmax(0, 1fr);
   gap: var(--shell-gap);
   padding: 28px 32px;
   align-items: start;
