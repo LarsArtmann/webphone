@@ -364,3 +364,34 @@ Sorted by priority score = (customer value × risk removed) ÷ effort.
 | Q2 | `crm.contact_url` as its own knob, or derived from a CRM vhost in the NixOS module? | Its own knob; the module can derive it later without a breaking change |
 | Q3 | Should SMS/voicemail/fax facts reach the CRM timeline? | Not in this train: privacy + noise dimensions need an explicit ruling |
 | Q4 | Strip on History's per-call detail? | No: it would multiply context fetches across a page of rows |
+
+---
+
+## 6. Gate evidence (actual runs, 2026-10-29 18:1x–19:0x)
+
+| Gate | Verdict |
+| --- | --- |
+| `templ generate ./internal/web/views/` | 0 updates at the end (the new `crm.templ` + `remoteLabel` + `crmContextItem` generated cleanly) |
+| `go build ./...` (webphone) | ok |
+| `go test -count=1 ./...` (webphone) | **green**, 32 packages (the red `panels_test` and the four vocabulary pins fixed in this train) |
+| `go test -race` on `internal/crm`, `internal/web/views`, `internal/server` | ok (server: 71 s) |
+| `tsc -p . --noEmit` | ok (the only type authority) |
+| island `node --test` | **283 pass, 0 fail** |
+| `nix fmt` | 0 changed after stabilisation (938 traversed / 383 emitted) |
+| `scripts/build-tw-css.sh` | rebuilt `tw.css` + `login.css` (the `app.css` inline) |
+| `checks.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}` | all five green (store paths returned) |
+| `scripts/webphone-smoke.py` | `smoke: 49 passed, 0 failed` · restart 4/0 · boot-failure 8/0 |
+| `art-dupl@v0.7.2 check . -t 1` | start: 6 new groups → 2 EXTRACTED (`crm.statusFamily`, `views.remoteLabel` + `views.crmContextItem`) → 4 accepted as markup-shape coincidences → baseline 83 → 86, `check` = **0 new** |
+| `buildflow` (full, no cache) | see below |
+| Kith `go test ./internal/machineapi/` | **green**: 52 BDD specs + the new context suite (full fact set, ghost-id 404, 401 arms, cross-contact isolation) |
+
+### 6.1 Two gates that earned their keep during this train
+
+1. **`go test` caught a nil-pointer panic the compiler could not.** The strip's
+   guard read `if ctx != nil`, which templ compiled against its own
+   `context.Context` parameter: always true, so the first render with no
+   context dereferenced a nil pointer. The component now guards its own
+   parameter, and the test that found it stays.
+2. **`formatThousands` shipped a `-,999` bug** (the sign was treated as a
+   digit). The table test written in the same change found it; the fix strips
+   the sign first.
