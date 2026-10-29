@@ -145,6 +145,7 @@ in the JSON file.
 | `crm.url`                               | _empty_ = disabled        | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                                                                                                                                                                                                                                                               |
 | `crm.token`                             | _empty_                   | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                                                                                                                                                                     |
 | `crm.token_file`                        | _empty_                   | Read the CRM bearer from a runtime file (the NixOS module's systemd `LoadCredential` lane) instead of `crm.token`; at most one of the two may be set                                                                                                                                                                                                          |
+| `crm.contact_url`                       | _empty_ = no links        | Deep-link template into the CRM's own UI; `{id}` is replaced with the CRM contact id (e.g. `https://crm.example/contacts/{id}`). Needs `crm.url`; a template without `{id}` refuses the boot                                                                                                                                                                    |
 | `paperless.url`                         | _empty_ = disabled        | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                                                                                                                                                                     |
 | `paperless.token`                       | _empty_                   | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                                                                                                                                                                    |
 | `asr.provider`                          | `openai`                  | Provider kind: `openai` (any `/v1/audio/transcriptions` server), `whispercpp` (native whisper.cpp `/inference` server), or `google` (Cloud Speech-to-Text V2)                                                                                                                                                                                                 |
@@ -244,6 +245,15 @@ CRM must run with `-api-token <same-token>`):
   matching CRM contact (`call_logged`: "Incoming call from +49… (2m 03s
   — answered)"). Unknown numbers are deliberately NOT logged — the
   integration never mints contacts.
+- **Deep links** (`crm.contact_url`): a resolved caller's name becomes a
+  link into the CRM's own contact page, opened in a new tab so the SIP
+  island is never unloaded. Unset = plain names, byte-identical to a
+  deployment without links; a number with no CRM match stays raw text.
+
+The CRM owns the contact, the phone owns the conversation: webphone stores
+no CRM records (the in-process cache is a render-time memo, not a
+replica), never creates contacts, and renders each surface exactly as well
+as before when the CRM is unreachable.
 
 Enable it on both sides: webphone gets `crm.url` + `crm.token`, the CRM
 gets `-api-token <same value>` (its machine API is unmounted without
