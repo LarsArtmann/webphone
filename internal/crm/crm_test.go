@@ -35,7 +35,7 @@ func (s *stubCRM) handler(w http.ResponseWriter, r *http.Request) {
 		s.lookupBodies.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(s.lookupStatus)
-		_, _ = w.Write([]byte(s.lookupJSON)) //nolint:erraudit // test stub write
+		_, _ = w.Write([]byte(s.lookupJSON))
 	case r.Method == http.MethodPost && r.URL.Path == "/api/contacts/01M/contact/calls":
 		var got map[string]any
 		_ = json.UnmarshalRead(r.Body, &got) //nolint:errcheck // test stub decode
