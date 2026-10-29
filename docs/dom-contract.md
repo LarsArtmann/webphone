@@ -159,6 +159,32 @@ above stays complete without them, and the E2E must not assume them:
 
 ## Notes
 
+### Layout ids (served, but NOT required — 2026-10-29)
+
+These are in the served bytes of every signed-in shell but are deliberately
+absent from the pinned block above: the block is "ids every served full shell
+MUST carry", and a contract that grows every time a surface gains an
+affordance stops being a contract. They are documented here so the E2E author
+can find them:
+
+- `wp-island` — the phone column (`<aside>`). Its width is the shell's
+  `--island-w-*` token range; it is `display: none` while the root carries
+  `wp-island-collapsed`, EXCEPT when it holds a live `.call-card` (a call
+  always re-expands the column).
+- `wp-island-toggle` — the header button that collapses/expands the phone
+  column (rendered only when signed in; signed out the island IS the login
+  card). `aria-controls="wp-island"`; `aria-expanded` is the state channel and
+  is re-asserted on load so it matches the pre-paint class.
+- `wp-conversation-rail` — the Messages master pane (`<nav aria-label>`); one
+  `a.wp-rail-row` per active conversation, the open one carrying
+  `aria-current="page"`. Hidden below the `44rem` container threshold, where
+  the conversation's "All messages" link is the way back.
+- `wp-msg-detail` — the Messages conversation column (head + transcript +
+  composer). The panel keeps its id `messages-panel`, which now names the
+  master–detail CONTAINER rather than either pane.
+
+Behaviour/rationale: AGENTS.md § Architecture invariants, first bullet.
+
 ### Runtime-created ids (NOT in the served-bytes block above)
 
 The multi-call train (2026-10-26) adds ids the island creates at

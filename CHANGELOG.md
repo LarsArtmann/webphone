@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Messages master–detail on wide layouts (2026-10-29): opening a conversation
+  keeps the conversation LIST beside it instead of replacing the tab, so
+  switching threads no longer costs the reader their place. The rail marks the
+  open conversation for assistive tech, and a failed list read degrades to the
+  previous single-column conversation rather than hiding it behind an error.
+  The split engages from the tab COLUMN's width (a CSS container query), so
+  collapsing the phone panel widens it automatically — one layout, no second
+  render path, and narrow windows keep the exact pre-change behaviour.
+- Collapsible phone panel (2026-10-29): a header control hides the phone column
+  on desktop so a wide tab gets the full page width. The choice is remembered
+  per browser and applied before first paint (no layout flash), and a live call
+  always re-expands the panel because hiding the phone mid-call is never what
+  the user meant. The phone itself is untouched — collapsing hides the column,
+  never the registration.
+- Shell geometry tokens (2026-10-29): the island's column bounds, the content
+  ceiling and the shell gap are now custom properties, so the collapse and the
+  grid cannot drift apart.
+
 - Cooldown state in the dial typeahead rows (2026-10-29, issue #7 owner
   ruling): `GET /api/dials` lists the signed-in extension's ACTIVE cooldown
   windows (newest first, capped, expired windows skipped lazily), and the
@@ -163,6 +181,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- History and Voicemail no longer claim emptiness they cannot know (2026-10-29):
+  when the phone API cannot be reached, the panels show the error alone instead
+  of pairing it with "no calls recorded" / "no voicemail" or a zeroed counter.
+  An unreachable provider means unknown, not empty.
 - `go-health` bumped to v0.8.1 (2026-10-28) — the CI-green re-cut the rest of
   the fleet runs. The bump shipped without its vendored-module hash, which is
   the class that has red-ed main three times now; the hash was re-derived from
