@@ -5,7 +5,13 @@ the docs sweep landed via daemon commit `3f8b1ca` (2026-10-29 01:40) and was the
 BUILT UPON by a later session's 2026-10-29 sweep (docpin tests — not mine, untouched);
 9 overnight commits sat unpushed past the 60-min bar and were pushed manually at
 report time (`dc5a4a0..0d2fb36`, anchor 2026-10-29 01:40, ~9.7 h) — **the CI run
-for that push is IN FLIGHT and unverified**. The session ran concurrent with the
+for that push is IN FLIGHT and unverified**. *(Annotated 2026-10-29 12:20 by the
+follow-up session: that run, 40857662429, was RED — the daemon had committed
+`layout.templ` ahead of its i18n key (healed by the next commit) plus the first
+two clone groups; both classes were fixed and CI went green on 40862216157.
+The missing final-gate evidence also closed: full buildflow re-run with
+`--failed-only` over the fixed tree = exit 0, log `/tmp/buildflow-retry-2026-10-29.log`.)*
+The session ran concurrent with the
 dialer train (#7/#8) in `internal/server`, `views/`, `readmodels/` — dodged by file
 selection throughout.
 
