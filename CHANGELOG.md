@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Durable automatic call review with its History render (2026-10-28, issue
+  #8 train): a media call that settles with the textagent seam on now
+  dispatches the same AI draft the manual summarize button asks for as a
+  detached job (`POST /api/calls/{id}/review`, 202 — replay answers
+  `duplicate:true` without a second agent round trip, an outage stays
+  retryable because the idem window records successes only), the verdict
+  lands in a readmodels `call_reviews` slot (one per owner+call, wholesale
+  replace semantics, 2000/extension REJECT cap like the notes — never
+  silent eviction, rides readmodels.db and its backups), `GET
+  /api/calls/{id}/review` reads it back (present with draft dims, pending
+  while the job runs, failed on a refusal/outage; absent is the empty
+  body), and the History tab renders the state under the transcript —
+  draft text + confidence when present, honest pending/failed lines
+  otherwise, a "review not configured" chip when the seam is off, nothing
+  when there is no review to show.
 - Durable agent-action audit read model (D5, 2026-10-28 — the F107
   trigger armed by the multi-actor substrate): every `agentAudit` line
   now DUAL-WRITES into a readmodels `agent_audit` collection
@@ -174,6 +189,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The dial gate's allowed verdict leaked cooldown state and the off state
+  leaked a config key (2026-10-29): an allowed answer carried the denied
+  ask's `last_at` + `window` echo (contradicting the endpoint's own DTO
+  contract — those are the cooldown-phrasing state of a DENIED verdict),
+  and `/config.js` shipped a zero `dialCooldownSeconds` when the gate was
+  off because encoding/json/v2's `omitempty` keeps zero numbers, breaking
+  the opt-in-off byte-identical promise. Allowed verdicts are now exactly
+  `{"allowed":true}` and the config key is present only when a cooldown is
+  configured.
 - Live transcripts stop repainting a settled call (2026-10-29): a
   segment still in flight when the call ends no longer announces a
   caption for a call nobody is on, and no longer re-creates the call's
