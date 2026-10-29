@@ -573,10 +573,47 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 			wantErr: "not an absolute http(s) URL",
 		},
 		{
+			// A deep link into a CRM this deployment cannot query would be a
+			// dead affordance: names would link into someone else's system.
+			name: "contact url without a crm",
+			env: map[string]string{
+				"WEBPHONE_CRM__CONTACT_URL": "https://crm.example.org/contacts/{id}",
+			},
+			wantErr: "crm.contact_url is set without crm.url",
+		},
+		{
+			// A template without {id} sends every caller to the same page,
+			// which is worse than no link at all.
+			name: "contact url without the id placeholder",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":         "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN":       "sekrit",
+				"WEBPHONE_CRM__CONTACT_URL": "https://crm.example.org/contacts",
+			},
+			wantErr: "must contain the {id} placeholder",
+		},
+		{
+			name: "contact url that is not absolute",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":         "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN":       "sekrit",
+				"WEBPHONE_CRM__CONTACT_URL": "/contacts/{id}",
+			},
+			wantErr: "not an absolute http(s) URL template",
+		},
+		{
 			name: "valid crm section loads",
 			env: map[string]string{
 				"WEBPHONE_CRM__URL":   "https://crm.example.org",
 				"WEBPHONE_CRM__TOKEN": "sekrit",
+			},
+		},
+		{
+			name: "valid crm section with deep links",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":         "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN":       "sekrit",
+				"WEBPHONE_CRM__CONTACT_URL": "https://crm.example.org/contacts/{id}",
 			},
 		},
 	}
@@ -594,6 +631,9 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 				}
 				if cfg.CRM.URL != tc.env["WEBPHONE_CRM__URL"] || cfg.CRM.Token != "sekrit" {
 					t.Errorf("crm block: %+v", cfg.CRM)
+				}
+				if cfg.CRM.ContactURL != tc.env["WEBPHONE_CRM__CONTACT_URL"] {
+					t.Errorf("crm.contact_url = %q, want %q", cfg.CRM.ContactURL, tc.env["WEBPHONE_CRM__CONTACT_URL"])
 				}
 				return
 			}

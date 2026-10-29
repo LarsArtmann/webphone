@@ -62,7 +62,11 @@ templ crmContextStrip(crm *CRMContext, lang Lang) {
 					<span class="wp-crm-key">{ T(lang, "crm.tasks") }</span>
 					<span>{ fmtInt(crm.OpenTasks) }</span>
 					if crm.NextTask != "" {
-						<span class="wp-crm-muted">{ crm.NextTask } · { crmTaskDue(*crm, lang) }</span>
+						if due := crmTaskDue(*crm, lang); due != "" {
+							<span class="wp-crm-muted">{ crm.NextTask } · { due }</span>
+						} else {
+							<span class="wp-crm-muted">{ crm.NextTask }</span>
+						}
 					}
 				</span>
 			}

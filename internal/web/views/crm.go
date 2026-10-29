@@ -87,14 +87,23 @@ func dealValue(deal CRMDeal) string {
 	return currency + " " + formatThousands(major)
 }
 
-// formatThousands groups an integer with no locale dependency.
+// formatThousands groups an integer with no locale dependency (no i18n money
+// library in this build, and a wrong symbol is worse than a plain code). The
+// sign is stripped FIRST: grouping the sign as a digit produced "-,999".
 func formatThousands(n int64) string {
 	digits := fmt.Sprintf("%d", n)
+
+	sign := ""
+	if strings.HasPrefix(digits, "-") {
+		sign, digits = "-", digits[1:]
+	}
+
 	if len(digits) <= 3 {
-		return digits
+		return sign + digits
 	}
 
 	var b strings.Builder
+
 	head := len(digits) % 3
 	if head > 0 {
 		b.WriteString(digits[:head])
@@ -108,7 +117,7 @@ func formatThousands(n int64) string {
 		b.WriteString(digits[i : i+3])
 	}
 
-	return b.String()
+	return sign + b.String()
 }
 
 // crmTaskDue is the strip's due phrase: "overdue" or "due 2 Nov". A plain
@@ -123,6 +132,12 @@ func crmTaskDue(ctx CRMContext, lang Lang) string {
 
 	if ctx.Overdue {
 		return T(lang, "crm.overdue")
+	}
+
+	// An undated task has no due phrase at all: formatting the zero time
+	// would print "due 1 Jan" (year 1) and make the UI look broken.
+	if ctx.NextTaskDue.IsZero() {
+		return ""
 	}
 
 	return T(lang, "crm.duePrefix") + " " + ctx.NextTaskDue.Format("2 Jan")
