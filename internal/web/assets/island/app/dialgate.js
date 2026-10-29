@@ -7,7 +7,7 @@
 // chip whose click spends the remote's one-shot override server-side.
 
 import { csrfToken } from "./csrf.js";
-import { log } from "./ui.js";
+import { errorMessage, log } from "./ui.js";
 
 // One 404 pins the seam off for this page's life: every later dial
 // skips the round-trip (the server would answer 404 forever — the
@@ -52,7 +52,7 @@ export async function consultDialGate(remote) {
     if (!data || typeof data.allowed !== "boolean") return null;
     return data;
   } catch (err) {
-    log("dial gate unreachable; dialing anyway", "warn");
+    log(`dial gate unreachable (${errorMessage(err)}); dialing anyway`, "warn");
     return null;
   }
 }

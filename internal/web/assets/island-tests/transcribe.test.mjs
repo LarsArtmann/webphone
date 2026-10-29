@@ -569,8 +569,10 @@ test("a segment that lands after capture stopped saves but does not re-log", asy
   await flush();
   assert.equal(fetchCalls.length, 1, "the segment reached the provider");
 
-  // The call settles while the segment is still in flight.
+  // The call settles while the segment is still in flight: teardown
+  // stops capture and closes the log (closeCallSegments).
   transcribe.stopLiveTranscription("call-late");
+  transcribe.closeCallSegments("call-late");
   release();
   await flush();
 

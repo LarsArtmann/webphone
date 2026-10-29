@@ -300,6 +300,12 @@ test("the card's copy button copies the accumulated transcript honestly", async 
   state.userAgent = {};
   assert.equal(await placeCall("+49123998877"), true);
   const entry = sessions.get("call-t1");
+  // Establish the call: capture starts with media, and this spec speaks
+  // through ITS OWN recorder (an earlier spec's capture would be a
+  // stopped one, and a settled call's log is closed to late writes).
+  entry.session.state = globalThis.SIP.SessionState.Established;
+  entry.session.stateChange.listeners.forEach((fn) => fn("Established"));
+  await flush();
   const transcriptEl = entry.dom.querySelector(".call-transcript");
   const copyBtn = entry.dom.querySelector(".copy-transcript-btn");
   assert.ok(copyBtn, "the ASR-gated card carries the copy affordance");
