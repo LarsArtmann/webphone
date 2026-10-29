@@ -210,14 +210,21 @@
               "journalctl -u webphone-drill --no-pager | grep -q 'boot failed (class=data-dir'",
               timeout=60,
             )
+            # Exit taxonomy FIRST, and RETRIED: Restart=always resets
+            # ExecMainStatus to 0 the moment a new cycle starts, so a
+            # single-shot read races the 1s restart loop (the 2026-10-29
+            # flake: five journalctl greps in between were enough to lose
+            # the window). Every failed cycle re-exposes ExecMainStatus=1,
+            # so retrying observes one instead of hoping to win a race.
+            machine.wait_until_succeeds(
+              "systemctl show webphone-drill -p ExecMainStatus "
+              "| grep -q 'ExecMainStatus=1'",
+              timeout=30,
+            )
             for marker in ("WHAT:", "REASSURE:", "WHY:", "FIX:", "ESCAPE:"):
                 machine.succeed(
                   f"journalctl -u webphone-drill --no-pager | grep -q '{marker}'"
                 )
-            machine.succeed(
-              "systemctl show webphone-drill -p ExecMainStatus "
-              "| grep -q 'ExecMainStatus=1'"
-            )
             machine.wait_until_succeeds(
               "test \"$(systemctl show webphone-drill -p NRestarts --value)\" -gt 1",
               timeout=30,
