@@ -22,12 +22,12 @@ func configLeafPaths(t *testing.T) []string {
 	var out []string
 	var walk func(rt reflect.Type, prefix string)
 	walk = func(rt reflect.Type, prefix string) {
-		for i := range rt.NumField() {
-			field := rt.Field(i)
+		for field := range rt.Fields() {
+			field := field
 			if field.PkgPath != "" {
 				continue
 			}
-			name := strings.Split(field.Tag.Get("koanf"), ",")[0]
+			name, _, _ := strings.Cut(field.Tag.Get("koanf"), ",")
 			if name == "" || name == "-" {
 				continue
 			}
@@ -42,7 +42,7 @@ func configLeafPaths(t *testing.T) []string {
 			out = append(out, path)
 		}
 	}
-	walk(reflect.TypeOf(Config{}), "")
+	walk(reflect.TypeFor[Config](), "")
 	sort.Strings(out)
 	return out
 }
@@ -70,9 +70,9 @@ func readmeConfigRows(t *testing.T) [][]string {
 	}
 	var rows [][]string
 	inSection := false
-	for _, line := range strings.Split(string(data), "\n") {
-		if strings.HasPrefix(line, "## ") {
-			inSection = strings.TrimSpace(strings.TrimPrefix(line, "## ")) == "Configuration"
+	for line := range strings.SplitSeq(string(data), "\n") {
+		if after, ok := strings.CutPrefix(line, "## "); ok {
+			inSection = strings.TrimSpace(after) == "Configuration"
 			continue
 		}
 		if !inSection || !strings.HasPrefix(line, "| `") {

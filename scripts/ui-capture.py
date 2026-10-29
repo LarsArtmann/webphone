@@ -69,8 +69,8 @@ import sys
 import threading
 import time
 import urllib.parse
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SEED_THREADS = [
     ("+441632960961", "Contract question", "Can you send the revised contract?"),
@@ -197,7 +197,7 @@ class _FakeCRMHandler(BaseHTTPRequestHandler):
     loudly here rather than quietly render the no-CRM product and pass.
     """
 
-    def do_GET(self) -> None:  # noqa: N802 - http.server's spelling
+    def do_GET(self) -> None:
         if not self._authorized():
             return
         path = urllib.parse.urlsplit(self.path).path
@@ -211,7 +211,7 @@ class _FakeCRMHandler(BaseHTTPRequestHandler):
             return
         self._json(404, {"error": "no such route"})
 
-    def do_POST(self) -> None:  # noqa: N802 - http.server's spelling
+    def do_POST(self) -> None:
         if not self._authorized():
             return
         if (
@@ -240,7 +240,7 @@ class _FakeCRMHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def log_message(self, format: str, *args: object) -> None:  # noqa: A002 - http.server's signature
+    def log_message(self, format: str, *args: object) -> None:
         # Silence: the harness's stdout is the shot ledger, not access logs.
         return
 

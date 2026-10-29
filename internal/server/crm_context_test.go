@@ -285,11 +285,11 @@ func TestEveryCRMContextFieldIsRead(t *testing.T) {
 		return true
 	})
 
-	typ := reflect.TypeOf(crm.Context{})
+	typ := reflect.TypeFor[crm.Context]()
 	unread := make([]string, 0, typ.NumField())
 
-	for i := range typ.NumField() {
-		if name := typ.Field(i).Name; !read[name] {
+	for field := range typ.Fields() {
+		if name := field.Name; !read[name] {
 			unread = append(unread, name)
 		}
 	}

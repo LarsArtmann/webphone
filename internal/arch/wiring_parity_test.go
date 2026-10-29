@@ -61,8 +61,8 @@ func TestAppWiresEveryServerDep(t *testing.T) {
 	}
 
 	typ := reflect.TypeFor[server.Deps]()
-	for i := range typ.NumField() {
-		name := typ.Field(i).Name
+	for field := range typ.Fields() {
+		name := field.Name
 		if omitted[name] || wired[name] {
 			continue
 		}

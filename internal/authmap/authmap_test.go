@@ -61,7 +61,7 @@ func TestMappedByLoginAndSharedExtensionDeterminism(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		user, ok := m.MappedByExtension(ext)
 		if !ok || user.Email != "alice@example.com" {
 			t.Fatalf("MappedByExtension iteration %d = (%v, %v), want deterministic alice", i, user.Email, ok)

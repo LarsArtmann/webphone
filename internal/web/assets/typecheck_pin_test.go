@@ -375,7 +375,7 @@ func islandDomIDs(t *testing.T) []string {
 		t.Fatal("types/island.d.ts has an unterminated IslandDomIds interface")
 	}
 	var ids []string
-	for _, line := range strings.Split(body[begin+len(open):begin+end], "\n") {
+	for line := range strings.SplitSeq(body[begin+len(open):begin+end], "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "//") {
 			continue
@@ -415,7 +415,7 @@ func documentedDomIDs(t *testing.T) map[string]bool {
 		if begin < 0 || end < begin {
 			t.Fatalf("docs/dom-contract.md lost its %q markers", fence[0])
 		}
-		for _, line := range strings.Split(body[begin+len(fence[0]):end], "\n") {
+		for line := range strings.SplitSeq(body[begin+len(fence[0]):end], "\n") {
 			if id := strings.TrimSpace(line); id != "" {
 				ids[id] = true
 			}

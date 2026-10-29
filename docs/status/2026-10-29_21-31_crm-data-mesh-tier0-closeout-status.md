@@ -7,10 +7,10 @@ session; every gate row below was run on the tree it names, not assumed.
 §f, i.e. the seven blocking/high-value items plus everything that fell out of
 them. Nothing outside this train was researched.
 
-| Repo | HEAD | State |
-| --- | --- | --- |
-| webphone | `366944d3` | clean, pushed, **CI `40942091650` green** (7m57s) |
-| Kith CRM | `3590e01` | clean, **2 commits ahead of `origin/master`, NOT pushed** (owner question Q3 below) |
+| Repo     | HEAD       | State                                                                               |
+| -------- | ---------- | ----------------------------------------------------------------------------------- |
+| webphone | `366944d3` | clean, pushed, **CI `40942091650` green** (7m57s)                                   |
+| Kith CRM | `3590e01`  | clean, **2 commits ahead of `origin/master`, NOT pushed** (owner question Q3 below) |
 
 10 commits landed this session, 21 files, +622/−86.
 
@@ -40,7 +40,7 @@ quiet class gets a row. The context strip had shipped without one. Added:
 
 - All three removed. `Ref` is the interesting one: while it existed, a payload
   could have been trusted for identity; with it gone, strip redirection is
-  *structurally* impossible rather than test-guarded. `toContext()` no longer
+  _structurally_ impossible rather than test-guarded. `toContext()` no longer
   takes a ref; the wire optionally carries producer identity fields that the
   consumer now provably ignores.
 - New pin `TestEveryCRMContextFieldIsRead` (`internal/server/crm_context_test.go`):
@@ -112,14 +112,14 @@ name; only a picture does.**
 
 Computed from the live tokens, sRGB luminance, both themes:
 
-| pair | ratio | verdict |
-| --- | --- | --- |
-| light `--muted` on `--surface` | 5.85:1 | AA |
-| light `--muted` on `--bg` | 5.17:1 | AA (worst case) |
-| light `--text` on `--surface` | 17.84:1 | AA |
-| dark `--muted` on `--surface` | 6.89:1 | AA |
-| dark `--muted` on `--bg` | 7.46:1 | AA |
-| dark `--text` on `--surface` | 15.00:1 | AA |
+| pair                           | ratio   | verdict         |
+| ------------------------------ | ------- | --------------- |
+| light `--muted` on `--surface` | 5.85:1  | AA              |
+| light `--muted` on `--bg`      | 5.17:1  | AA (worst case) |
+| light `--text` on `--surface`  | 17.84:1 | AA              |
+| dark `--muted` on `--surface`  | 6.89:1  | AA              |
+| dark `--muted` on `--bg`       | 7.46:1  | AA              |
+| dark `--text` on `--surface`   | 15.00:1 | AA              |
 
 `.wp-crm-key` / `.wp-crm-muted` clear 4.5:1 at their ~12px size in both themes.
 
@@ -159,21 +159,21 @@ automatically your regression.
 
 ### 9. Gates actually run (frozen tree, 20:40)
 
-| Gate | Result |
-| --- | --- |
-| `go build` + `go vet ./...` | clean |
-| `go test -count=1 ./...` | **31/31 packages ok** |
-| `tsc -p . --noEmit` | clean |
-| island `node --test` | **283 pass, 0 fail** |
-| `nix fmt` | 0 changed |
-| 5 fast flake checks | green |
-| **`nix flake check`** | **all checks passed** (KVM-gated backup, backup-drill, error-drill, module) |
-| `art-dupl check -t 1` | 0 new clones, baseline 86 |
-| `buildflow` | every step green (exit 0) |
-| smoke | 49 + 4 + 8 + 9 + 9 passed, **0 failed** |
-| `error-context.py --self-test` | 37/37 |
-| visual matrix `--crm` | 26/26 shots, all DOM pins |
-| CI `40942091650` | success |
+| Gate                           | Result                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| `go build` + `go vet ./...`    | clean                                                                       |
+| `go test -count=1 ./...`       | **31/31 packages ok**                                                       |
+| `tsc -p . --noEmit`            | clean                                                                       |
+| island `node --test`           | **283 pass, 0 fail**                                                        |
+| `nix fmt`                      | 0 changed                                                                   |
+| 5 fast flake checks            | green                                                                       |
+| **`nix flake check`**          | **all checks passed** (KVM-gated backup, backup-drill, error-drill, module) |
+| `art-dupl check -t 1`          | 0 new clones, baseline 86                                                   |
+| `buildflow`                    | every step green (exit 0)                                                   |
+| smoke                          | 49 + 4 + 8 + 9 + 9 passed, **0 failed**                                     |
+| `error-context.py --self-test` | 37/37                                                                       |
+| visual matrix `--crm`          | 26/26 shots, all DOM pins                                                   |
+| CI `40942091650`               | success                                                                     |
 
 ---
 
@@ -189,13 +189,13 @@ automatically your regression.
    `.buildflow-baseline.json` has 78 accepted-noise entries matching nothing
    (third run in a row), six timing regressions (+85% on `test-race`, +217% on
    `golangci-lint`) from host load, and the `nix-build-verify` 86% failure-rate
-   warning. Untouched by me, and now *measured* rather than folklore.
+   warning. Untouched by me, and now _measured_ rather than folklore.
 3. **Kith commit hygiene.** My three doc files landed as
    `chore: auto-commit …` (the daemon won the race twice); I authored one good
    message but the working tree was already clean. History reads worse than the
    change.
 4. **The `crm-context` harness surface is undocumented in `docs/dom-contract.md`
-   verification terms** — the *ids* are documented, but nothing says the visual
+   verification terms** — the _ids_ are documented, but nothing says the visual
    harness asserts them. AGENTS carries the command; the doc contract does not
    cross-reference it.
 5. **Em dash sweep.** I used one em dash in a Nix comment by accident and
@@ -234,7 +234,7 @@ automatically your regression.
    lost, not code.
 3. **First `--surface crm-context --crm` run crashed** on a marker-unpacking
    bug (`ValueError: not enough values to unpack`) because I generalised the
-   marker shape for `crm-context` without re-testing the *string* surfaces I
+   marker shape for `crm-context` without re-testing the _string_ surfaces I
    had just broken. Caught by the very next run, but it is the same class of
    mistake as #1: changing a shared shape and only testing the new consumer.
 4. **I burned two `nix flake check` runs (~8 min each) before reading the
@@ -289,6 +289,7 @@ Ordered roughly by value/cost. Nothing here is speculative research; each row
 came out of this session's work.
 
 **Correctness / contracts**
+
 1. Contract snapshot test: pin the exact `/context` request and the parse
    against Kith's published shape (both repos' fixtures as one artifact).
 2. Vocabulary-bridge test on the PRODUCER side: assert Kith rejects our OLD
@@ -307,70 +308,70 @@ came out of this session's work.
 
 **Verification debt**
 8. Refresh or retire `.buildflow-baseline.json` (78 unmatched accepted-noise
-   entries, 3 consecutive runs).
+entries, 3 consecutive runs).
 9. Investigate `nix-build-verify`'s 86% failure history (19/22) — either fix or
-   exclude with a written reason.
+exclude with a written reason.
 10. Re-run the timing-regression comparison on an idle host to separate load
-    noise from real regressions (`test-race` +85%).
+noise from real regressions (`test-race` +85%).
 11. Add the `crm-context` surface to whatever list the next visual pass uses as
-    its "expected shots" baseline (currently `shots >= 22`, which would let a
-    missing CRM shot pass unnoticed).
+its "expected shots" baseline (currently `shots >= 22`, which would let a
+missing CRM shot pass unnoticed).
 12. Record the AA measurement as a repeatable script (the numbers live in a
-    status doc today; a 20-line script would make it a gate).
+status doc today; a 20-line script would make it a gate).
 
 **UI completeness**
 13. Voicemail `vmCaller`: split name vs number, then link the name.
 14. Drafts panel `contactLabel`: link it.
 15. "Add to CRM" affordance for misses (link into the CRM create form; still
-    no browser→CRM traffic).
+no browser→CRM traffic).
 16. Show the CRM link on the History transcript SUMMARY or explicitly document
-    why not (a link inside `<summary>` steals the toggle click) — today it is
-    silent.
+why not (a link inside `<summary>` steals the toggle click) — today it is
+silent.
 17. Consider a CRM badge on list rows so a linked name is not mistaken for a
-    local contact.
+local contact.
 18. Empty/degraded state for the strip when the CRM is known but publishes
-    nothing (today: nothing at all; is that right for a *known* contact?).
+nothing (today: nothing at all; is that right for a _known_ contact?).
 19. German copy review of the eight `crm.*` keys (only English was eyeballed).
 20. Dark-mode review of the dotted underline (contrast passes; the 1px dotted
-    border may read as noise at 12px).
+border may read as noise at 12px).
 
 **Producer (Kith)**
 21. Push the two local commits once Q3 is answered.
 22. Batch `by-phone?numbers=` product for lists.
 23. Decide whether `/context` should include `last_activity` for contacts with
-    no journal rows (currently omitted vs zero, undocumented).
+no journal rows (currently omitted vs zero, undocumented).
 24. Document the `/context` cache windows (2 min / 15 min absence / 256 cap) in
-    the README integration section, not only in webphone's plan doc.
+the README integration section, not only in webphone's plan doc.
 25. Add a `/context` example to `docs/ops/RESTORE-DRILL.md` if that drill is
-    meant to prove the phone integration end to end.
+meant to prove the phone integration end to end.
 26. Kith: a machine-API OpenAPI (or a hand-written wire table) since `/docs`
-    covers only the EventCatalog.
+covers only the EventCatalog.
 
 **Harness / tooling**
 27. Add `--crm` to the AGENTS smoke section too (only the visual section
-    carries it).
+carries it).
 28. Make `ui-capture.py` fail when `--crm` is passed but no shot pins the link
-    (guard against a future surface rename silently dropping the proof).
+(guard against a future surface rename silently dropping the proof).
 29. Give the fake CRM a second contact with NO context, and shoot the absence
-    case (proves the "no strip" contract visually, not just in Go tests).
+case (proves the "no strip" contract visually, not just in Go tests).
 30. Seed a Matrix thread in the harness so the phone-shaped filter is visible
-    in the product, not only in tests.
+in the product, not only in tests.
 31. Extract the fake CRM into `scripts/fake_crm.py` if a second consumer
-    appears (today it is 60 lines in the harness; not worth splitting yet).
+appears (today it is 60 lines in the harness; not worth splitting yet).
 32. `--surface` typo guard exists; extend the same loudness to a typo'd marker
-    key (unknown surface name in `SURFACE_MARKERS` would `KeyError`).
+key (unknown surface name in `SURFACE_MARKERS` would `KeyError`).
 
 **Process**
 33. Commit per coherent change in the same tool call as its verification (stop
-    losing messages to the daemon).
+losing messages to the daemon).
 34. Add a `docs/status` snapshot-rot header convention check (the 19:44 report's
-    push claims were stale within an hour).
+push claims were stale within an hour).
 35. Sweep pre-existing em dashes in files touched by a change (Kith FEATURES
-    does it widely).
+does it widely).
 36. `dprint check` for Kith markdown belongs in any cross-repo doc edit
-    checklist.
+checklist.
 37. Run `nix flake check` at TRAIN START, not only at end (it surfaced a race
-    that had nothing to do with this work).
+that had nothing to do with this work).
 38. After any scripted edit, grep for the new text before running a long gate.
 39. Never pipe gate output through a filter that can eat the failure line.
 40. Record gate verdicts in the plan doc BEFORE pushing.
@@ -380,21 +381,21 @@ came out of this session's work.
 42. Q2: may the strip become actionable (complete a task / move a deal)?
 43. Q3: how is Kith pushed (whole branch / cherry-pick / leave it)?
 44. Decide whether CRM context should also appear on History call detail
-    (currently defaulted NO).
+(currently defaulted NO).
 45. Decide whether the phone may ever WRITE to the CRM beyond call metadata +
-    notes.
+notes.
 46. Decide whether `crm.contact_url` stays a separate knob or is derived from a
-    CRM vhost setting.
+CRM vhost setting.
 
 **Housekeeping**
 47. `docs/dom-contract.md`: cross-reference the visual harness assertion for
-    the optional CRM ids.
+the optional CRM ids.
 48. AGENTS: the CRM bullet is long; consider moving the vocabulary table into
-    `docs/error-contract.md` or a `docs/crm-contract.md` (rule vs evidence).
+`docs/error-contract.md` or a `docs/crm-contract.md` (rule vs evidence).
 49. Keep `ui-shots/` untracked (it is gitignored) but decide whether the two
-    CRM shots should live in `docs/` as proof artifacts.
+CRM shots should live in `docs/` as proof artifacts.
 50. Re-read the 19:44 report's "Verified by reading only" list — three entries
-    are now measurable and two were never re-verified.
+are now measurable and two were never re-verified.
 
 ---
 
@@ -402,7 +403,7 @@ came out of this session's work.
 
 **Q1 — Do message bodies ever reach the CRM?**
 Today only call metadata (direction/number/seconds/outcome) crosses. Sending
-SMS/voicemail/fax *content* would make the phone a producer of the CRM's
+SMS/voicemail/fax _content_ would make the phone a producer of the CRM's
 relationship history. That is a privacy and noise decision I cannot infer from
 the code: the seam is built to carry it, the product does not.
 

@@ -11,13 +11,13 @@ measures what the CALLER hears.
 ai-phone's rule is the calibration: **t0 is the last speech, and the
 silence is INSIDE the budget.** For webphone the caller-perceived ladder:
 
-| mark | definition | source seam |
-|------|------------|-------------|
-| **t_dial** | the operator presses the dial affordance (`data-dial` handler / `wp:dial` submit) | shell.js delegated handler, `calls.js` invite path (`entry.session.invite()`, calls.js:131) |
-| **t_invite_ok** | sip.js resolves the INVITE send (0.21.2 resolves `invite()` on SEND — see the call-failure mapping note in error-contract.md) | the `invite()` promise resolution |
-| **t_progress** | first SIP 1xx with SDP (ringing/early media) | session state change to `Establishing` + `progress` event |
-| **t_media** | first REMOTE audio actually rendered — `pc.getReceivers()[0].track.mute` flipping false, or the ICE `connected` + track unmute pair | `ice.js` state sync + track events |
-| **t_asr_rt** | ASR segment round trip: `capturedAt` (the M15 stamp) → `onText` arrival | `transcribe.js` — the lag measurement ALREADY computes `Date.now() - capturedAt`; the lag warn is its threshold form |
+| mark            | definition                                                                                                                          | source seam                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **t_dial**      | the operator presses the dial affordance (`data-dial` handler / `wp:dial` submit)                                                   | shell.js delegated handler, `calls.js` invite path (`entry.session.invite()`, calls.js:131)                          |
+| **t_invite_ok** | sip.js resolves the INVITE send (0.21.2 resolves `invite()` on SEND — see the call-failure mapping note in error-contract.md)       | the `invite()` promise resolution                                                                                    |
+| **t_progress**  | first SIP 1xx with SDP (ringing/early media)                                                                                        | session state change to `Establishing` + `progress` event                                                            |
+| **t_media**     | first REMOTE audio actually rendered — `pc.getReceivers()[0].track.mute` flipping false, or the ICE `connected` + track unmute pair | `ice.js` state sync + track events                                                                                   |
+| **t_asr_rt**    | ASR segment round trip: `capturedAt` (the M15 stamp) → `onText` arrival                                                             | `transcribe.js` — the lag measurement ALREADY computes `Date.now() - capturedAt`; the lag warn is its threshold form |
 
 The headline number for a placed call is `t_media − t_dial`; for a
 received call it is `t_media − t_invite_in`. The ASR round trip is the
@@ -61,5 +61,5 @@ on the WSS, ICE crossing, FreeSWITCH answer supervision) BEFORE any
 instrumentation grows. If p95 < 2 s, file the number and STOP — the
 metric does not owe a permanent home.
 
-*Context: the ai-phone steal-list L3 row (TODO_LIST); the M15 lag warn
-shipped the ASR half of this spike already.*
+_Context: the ai-phone steal-list L3 row (TODO_LIST); the M15 lag warn
+shipped the ASR half of this spike already._

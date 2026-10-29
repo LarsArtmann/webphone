@@ -253,19 +253,19 @@ lane — theirs, not mine).
 38. Errata hygiene: the plan's §349 "UNVERIFIED external claims" line is
     stale (T19 verified everything) — annotate per docs-health.
 39. Consider a `docs/secrets-map.md` (owner-private? repo-public placeholder
-   names only) mapping each consumer → secret name → where it lives; today's
-   archaeology took three repos.
+    names only) mapping each consumer → secret name → where it lives; today's
+    archaeology took three repos.
 40. The token staging used `install -m 600` (no umask juggling after the
-   shell rejected it) — note the mvdan/sh `umask` builtin gap in the
-   concurrent-session habit row next time AGENTS.md is touched.
+    shell rejected it) — note the mvdan/sh `umask` builtin gap in the
+    concurrent-session habit row next time AGENTS.md is touched.
 41. `refreshDialSlots` debounce constant (30 s) is untested — pin it with a
-   fake clock if the typeahead tests ever grow timing assertions.
+    fake clock if the typeahead tests ever grow timing assertions.
 42. If the shared-token posture stays: a rotation drill (new token → sops →
-   restart → push-secrets → tri-state green) belongs in the release runbook
-   as a once-a-year rehearsal.
+    restart → push-secrets → tri-state green) belongs in the release runbook
+    as a once-a-year rehearsal.
 43. If a webphone-only token is chosen: the Kith server takes ONE -api-token
-   today — per-consumer tokens would need a Kith change (list of tokens or
-   per-scope tokens); file it against the crm repo if ruled.
+    today — per-consumer tokens would need a Kith change (list of tokens or
+    per-scope tokens); file it against the crm repo if ruled.
 44. The layout train's 16:33 CI failure (healed 16:46) — owning session
     should confirm the heal was their fix, not a flake.
 45. `dialgate_api_test.go`'s 3.4 s expiry test: consider `t.Parallel()` for
@@ -274,15 +274,15 @@ lane — theirs, not mine).
     each hold their own — acceptable (server truth on next consult), document
     if multi-tab use ever reports it.
 47. Post-deploy: grep the PBX journal for `dial-gate:` WARN lines once — the
-   dead-store path has never run in production; one clean deploy proves the
-   logging shape.
+    dead-store path has never run in production; one clean deploy proves the
+    logging shape.
 48. `TestDialGateSlotsListing` asserts `"window":3600` — if the default
     cooldown ever changes in tests, this is the line to find.
 49. Status-corpus: this is the second same-day report; if the cadence holds,
-   the index-file question (declined earlier as YAGNI) reopens at ~30 files.
+    the index-file question (declined earlier as YAGNI) reopens at ~30 files.
 50. Personal checklist (from 14:09 §e, still open): grep-before-write for
-   test names, eval-not-parse for Nix, fetch/python probe before assumption
-   — ratify into AGENTS.md hard-won rules or drop.
+    test names, eval-not-parse for Nix, fetch/python probe before assumption
+    — ratify into AGENTS.md hard-won rules or drop.
 
 ## g) Questions I cannot answer myself
 

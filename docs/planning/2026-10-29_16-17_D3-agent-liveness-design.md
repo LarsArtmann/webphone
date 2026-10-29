@@ -18,12 +18,12 @@ recovery. That is the class the D3 lane must design for.
 
 ai-phone's numbers, kept as the starting calibration (F75):
 
-| t (since accept) | action | webphone adaptation |
-|------|--------|---------------------|
-| 1.5 s | first filler ("one moment") | the DRAFT lane already shows a pending pill; the CALL lane would speak it |
-| 10 s | second filler (status honesty) | same voice line, distinct text so the caller hears progress |
-| 25 s | polite goodbye + BYE | the ladder TERMINATES the call rather than hanging up silently — the anti-goal is an open channel with a dead brain |
-| 30 s + 10 s | (hangup op) two-stage wait, then named failure | maps to the agent-session teardown below |
+| t (since accept) | action                                         | webphone adaptation                                                                                                 |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1.5 s            | first filler ("one moment")                    | the DRAFT lane already shows a pending pill; the CALL lane would speak it                                           |
+| 10 s             | second filler (status honesty)                 | same voice line, distinct text so the caller hears progress                                                         |
+| 25 s             | polite goodbye + BYE                           | the ladder TERMINATES the call rather than hanging up silently — the anti-goal is an open channel with a dead brain |
+| 30 s + 10 s      | (hangup op) two-stage wait, then named failure | maps to the agent-session teardown below                                                                            |
 
 Two webphone deltas, stated openly:
 
@@ -64,13 +64,13 @@ register in the same commit per the registry-freshness rule.
 
 ## 4. webphone seam mapping (F77)
 
-| ai-phone concept | webphone seam today | D3 v1 change |
-|------------------|---------------------|--------------|
-| relay liveness probe | `fillAgentMode` 3 s bounded probe (fail-open) | reuse as the heartbeat primitive; a failed probe must FLIP the pill (today it silently drops the pill) |
-| filler scheduler | none | a ladder table in the textagent client context, mirroring the machine-table doctrine (rows, not branches) |
-| slot release on EOF | none (draft lane is stateless HTTP) | the D3 supervisor owns slots; draft lane gains the deadline above |
-| hangup exit codes | `textagent.http` + `agent.summarize` | the four codes above; family pins in `textagent/family_test.go` |
-| BYE authority | island-owned SIP | stack-side BYE on webphone instruction (M19 spike's server-side execution finding) |
+| ai-phone concept     | webphone seam today                           | D3 v1 change                                                                                              |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| relay liveness probe | `fillAgentMode` 3 s bounded probe (fail-open) | reuse as the heartbeat primitive; a failed probe must FLIP the pill (today it silently drops the pill)    |
+| filler scheduler     | none                                          | a ladder table in the textagent client context, mirroring the machine-table doctrine (rows, not branches) |
+| slot release on EOF  | none (draft lane is stateless HTTP)           | the D3 supervisor owns slots; draft lane gains the deadline above                                         |
+| hangup exit codes    | `textagent.http` + `agent.summarize`          | the four codes above; family pins in `textagent/family_test.go`                                           |
+| BYE authority        | island-owned SIP                              | stack-side BYE on webphone instruction (M19 spike's server-side execution finding)                        |
 
 ## 5. What this doc deliberately does NOT decide
 
@@ -82,5 +82,5 @@ register in the same commit per the registry-freshness rule.
   default: 10 min, surfaced as `ReviewFailed` + the F89 nudge).
 - Voice synthesis/filler audio (out of scope; the stack owns media).
 
-*Prior art: oxnw/ai-phone relay mode (the steal-list deep dive,
-`docs/research/2026-10-29_ai-phone-deep-dive.html`).*
+_Prior art: oxnw/ai-phone relay mode (the steal-list deep dive,
+`docs/research/2026-10-29_ai-phone-deep-dive.html`)._

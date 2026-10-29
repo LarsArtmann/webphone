@@ -26,7 +26,7 @@ func TestAgentAuditAppendRecentAndCap(t *testing.T) {
 		t.Fatalf("empty recent = %v %v; want nil, nil", rows, err)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		if err := audit.Append(ctx, owner, "lars@example.com", "approve", "d-1", "ok"); err != nil {
 			t.Fatalf("append %d: %v", i, err)
 		}
@@ -54,7 +54,7 @@ func TestAgentAuditAppendRecentAndCap(t *testing.T) {
 	}
 
 	// The cap trims the OLDEST rows (system facts, transcripts posture).
-	for i := 0; i < AgentAuditMaxPerExtension+5; i++ {
+	for i := range AgentAuditMaxPerExtension + 5 {
 		if err := audit.Append(ctx, owner, "", "approve", "d", "ok"); err != nil {
 			t.Fatalf("flood append %d: %v", i, err)
 		}

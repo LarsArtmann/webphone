@@ -83,7 +83,7 @@ defect (treefmt v2 cache defeats artifact rebuilds).
     Standing-watches entry updated (next monthly 2026-12-05).
 12. **M27 bucket groom** — erraudit watch row refreshed; announcements
     row gains its gate ("next release train is the trigger"); typeahead
-    + KMP rows verified already-gated.
+    - KMP rows verified already-gated.
 13. **M14 tag watch (F61)** — cqrs-htmx latest tag v4.14.1 predates our
     usermgmt v4.16.0 pin; no bump owed. Watch continues weekly.
 14. **M06 buildflow WARN disposition** — the one failed step (treefmt)
@@ -227,6 +227,7 @@ defect (treefmt v2 cache defeats artifact rebuilds).
 ## f) NEXT (up to 50, sorted by impact)
 
 **The unlock (one human sitting):**
+
 1. Answer the six rulings in `docs/planning/2026-10-29_15-53_SUPERB-owner-decision-packet.md` — unlocks 2–8 below.
 2. M07–M09 A1 tranches (group rooms model → receiver → UI/E2E).
 3. M10–M11 E2EE P2 tranches (OlmMachine bridge → decrypt lane; F54 backup decision rides it).

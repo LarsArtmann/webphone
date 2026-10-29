@@ -23,19 +23,19 @@ for our own markup.
 The buzzword is only useful if it changes a decision. Four principles, each
 mapped to a decision this repo must make:
 
-| Principle | What it forbids | What it requires here |
-| --- | --- | --- |
-| **Domain ownership** | Copying another domain's facts into your store | Webphone keeps ZERO contact records from the CRM. No name cache in SQLite, no CRM contact id in `readmodels`, no CRM name in an event. The 6h TTL cache is a *render-time* memo, not a replica. |
-| **Data as a product** | Reaching into the owner's internals (its SQLite, its event store, its HTML pages) | The CRM publishes *endpoints* with a stable shape. Webphone consumes those and nothing else. A consumer that scrapes `/rest/opportunities` and joins by contact id is re-implementing the owner's join — REJECTED (see D4). |
-| **Self-serve platform** | A new fact requiring a new seam | The consumer-side plumbing (client → resolver → cache → view projection) must make "one more CRM fact on screen" a small diff: one wire type, one cache entry, one view prop. |
-| **Federated governance** | One side dictating the other's validation; silent half-configs | Each side validates at its own door. Both-or-neither config. Bearer token never in a URL. Every degradation is *visible or documented*, never silent-and-unexplained. |
+| Principle                | What it forbids                                                                   | What it requires here                                                                                                                                                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Domain ownership**     | Copying another domain's facts into your store                                    | Webphone keeps ZERO contact records from the CRM. No name cache in SQLite, no CRM contact id in `readmodels`, no CRM name in an event. The 6h TTL cache is a _render-time_ memo, not a replica.                             |
+| **Data as a product**    | Reaching into the owner's internals (its SQLite, its event store, its HTML pages) | The CRM publishes _endpoints_ with a stable shape. Webphone consumes those and nothing else. A consumer that scrapes `/rest/opportunities` and joins by contact id is re-implementing the owner's join — REJECTED (see D4). |
+| **Self-serve platform**  | A new fact requiring a new seam                                                   | The consumer-side plumbing (client → resolver → cache → view projection) must make "one more CRM fact on screen" a small diff: one wire type, one cache entry, one view prop.                                               |
+| **Federated governance** | One side dictating the other's validation; silent half-configs                    | Each side validates at its own door. Both-or-neither config. Bearer token never in a URL. Every degradation is _visible or documented_, never silent-and-unexplained.                                                       |
 
 ### 1.1 What the boundary must never become
 
 - **No browser→CRM traffic.** The CRM is on the LAN and holds no CORS
   policy; exposing it to the phone's browser would move the trust boundary
   into the client. Webphone proxies, always.
-- **No write amplification.** Webphone journals *phone facts* (calls,
+- **No write amplification.** Webphone journals _phone facts_ (calls,
   dispositions). It does not write contact records, deals, or tasks — those
   are the CRM's aggregate, and its machine API already owns the ops.
 - **No UI lying about freshness.** The strip says what it knows and when
@@ -50,17 +50,17 @@ Read: `internal/crm/{client,resolver}.go` (1031 lines with tests),
 `internal/server/api/{calls,disposition}_api.go`,
 `internal/web/views/helpers.go`, and Kith's `internal/machineapi`.
 
-| # | Finding | Damage |
-| --- | --- | --- |
-| F1 | `Resolver.Names` returns `map[number]string`. `Match` already carries the CRM `ContactRef` — the resolver **throws the identity away**. | The UI can never link to the person it just named. Every surface is a dead end. |
-| F2 | The seam publishes exactly one fact: a display name. | A phone that knows *who* but not *what is outstanding* cannot help the human act. The CRM's value (deals, tasks, last touch) never reaches the screen. |
-| F3 | No navigation out. Even with an id, there is no deep link. | "Who is this?" is answered; "show me the deal" requires manual CRM search. |
-| F4 | Failures are uniform and invisible: disabled, no-match, down, 401 → all `ok=false`. | Correct for rendering (raw number), wrong for governance: the operator cannot tell "not in the CRM" from "the mesh is broken". |
-| F5 | `by-phone` returns the first match and drops email, phones, company. | The consumer's contract is narrower than the producer's data. Acceptable — the product is what is *published*, not what is *stored*. |
-| F6 | `displayName(number, names)` is the only CRM-aware render helper. | Fine as a helper, but there is nowhere for a second fact to go without a second helper family. |
-| F7 | `calls` + `disposition` are journaled; SMS/voicemail/fax are not. | The CRM's timeline sees half of the communication domain. This is a **product decision**, not a bug — recorded as an owner question (§7 Q3). |
+| #  | Finding                                                                                                                                 | Damage                                                                                                                                                 |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F1 | `Resolver.Names` returns `map[number]string`. `Match` already carries the CRM `ContactRef` — the resolver **throws the identity away**. | The UI can never link to the person it just named. Every surface is a dead end.                                                                        |
+| F2 | The seam publishes exactly one fact: a display name.                                                                                    | A phone that knows _who_ but not _what is outstanding_ cannot help the human act. The CRM's value (deals, tasks, last touch) never reaches the screen. |
+| F3 | No navigation out. Even with an id, there is no deep link.                                                                              | "Who is this?" is answered; "show me the deal" requires manual CRM search.                                                                             |
+| F4 | Failures are uniform and invisible: disabled, no-match, down, 401 → all `ok=false`.                                                     | Correct for rendering (raw number), wrong for governance: the operator cannot tell "not in the CRM" from "the mesh is broken".                         |
+| F5 | `by-phone` returns the first match and drops email, phones, company.                                                                    | The consumer's contract is narrower than the producer's data. Acceptable — the product is what is _published_, not what is _stored_.                   |
+| F6 | `displayName(number, names)` is the only CRM-aware render helper.                                                                       | Fine as a helper, but there is nowhere for a second fact to go without a second helper family.                                                         |
+| F7 | `calls` + `disposition` are journaled; SMS/voicemail/fax are not.                                                                       | The CRM's timeline sees half of the communication domain. This is a **product decision**, not a bug — recorded as an owner question (§7 Q3).           |
 
-**Root cause (one, not seven):** the seam's *type* is a lossy projection
+**Root cause (one, not seven):** the seam's _type_ is a lossy projection
 (`number → string`). Identity, provenance, and freshness are destroyed at
 the boundary, so no amount of view work can recover them. Fix the type
 first; everything else becomes small.
@@ -85,7 +85,7 @@ Views get `views.CRMContacts` = `map[number]views.CRMContact{Name, URL}`.
 `URL` is `""` unless a deep-link template is configured. One conversion
 home (`handlers.crmContacts`), no view ever imports `internal/crm`.
 
-Rationale: views own *render targets*; the seam owns *domain identity*. The
+Rationale: views own _render targets_; the seam owns _domain identity_. The
 two shapes differ on purpose (the view needs a URL, the seam needs a ref),
 so this is a projection, not a duplicate type.
 
@@ -150,14 +150,14 @@ with a privacy dimension — see Q3.
 ## 4. The contract (consumer's declaration)
 
 What webphone requires of the CRM, and what it does when the requirement is
-unmet. This is the artifact that makes the integration *governable*: the
+unmet. This is the artifact that makes the integration _governable_: the
 consumer states its baseline, the producer states its product.
 
-| Product | Endpoint | Required since | Absent means |
-| --- | --- | --- | --- |
-| Identity lookup | `GET /api/contacts/by-phone?number=` | v1 (existing) | No names anywhere; raw numbers (today's zero-config product). |
-| Call journal | `POST /api/contacts/{id}/calls` | v1 (existing) | Island toast on 502; verdict still stored locally. |
-| Contact context | `GET /api/contacts/{id}/context` | v2 (this train) | No strip. Cached negative, one debug line, no toast. |
+| Product         | Endpoint                             | Required since  | Absent means                                                  |
+| --------------- | ------------------------------------ | --------------- | ------------------------------------------------------------- |
+| Identity lookup | `GET /api/contacts/by-phone?number=` | v1 (existing)   | No names anywhere; raw numbers (today's zero-config product). |
+| Call journal    | `POST /api/contacts/{id}/calls`      | v1 (existing)   | Island toast on 502; verdict still stored locally.            |
+| Contact context | `GET /api/contacts/{id}/context`     | v2 (this train) | No strip. Cached negative, one debug line, no toast.          |
 
 `/context` response shape webphone consumes (unknown fields tolerated,
 missing optional fields tolerated):
@@ -166,18 +166,26 @@ missing optional fields tolerated):
 {
   "company": "Analytical Engines Ltd",
   "open_deals": [
-    { "title": "Retainer 2027", "stage": "proposal", "value_cents": 1200000, "currency": "EUR" }
+    {
+      "title": "Retainer 2027",
+      "stage": "proposal",
+      "value_cents": 1200000,
+      "currency": "EUR"
+    }
   ],
   "open_deal_count": 4,
   "open_tasks": 2,
-  "next_task": { "title": "Send the revised offer", "due_at": "2026-11-02T09:00:00Z" },
+  "next_task": {
+    "title": "Send the revised offer",
+    "due_at": "2026-11-02T09:00:00Z"
+  },
   "last_activity_at": "2026-10-24T11:03:00Z"
 }
 ```
 
 Consumption rules: every field is optional and individually skippable; `404`
 means "no context for this contact / not published"; any 5xx or transport
-error is a *degradation*, never an error surface in the phone's UI. The ref
+error is a _degradation_, never an error surface in the phone's UI. The ref
 comes from the REQUEST, never from a payload field, so a CRM cannot redirect
 a strip onto another contact.
 
@@ -193,16 +201,16 @@ forward-compatibility rule a test rather than a promise.
 
 ## 5. Pareto — the steps, in order
 
-| Tier | Step | Why first |
-| --- | --- | --- |
-| **1% → 51%** | S1 `crm.Person` + `People()` (identity survives) | The root defect. Every later step is cheap only because of it. |
-| | S2 Spike scope: honest review of every call site | Prevents a half-migrated seam. |
-| **4% → 64%** | S3 `crm.contact_url` + validation | Turns the recovered identity into a reachable one. |
-| | S4 `views.CRMContacts` + link rendering on all 6 surfaces | Daily-visible: a name you can click. |
-| **20% → 80%** | S5 `/context` client + negative cache + fail-open | Second fact class without a second seam. |
-| | S6 Kith publishes `/api/contacts/{id}/context` | The product that makes S5 real. |
-| | S7 Strip in the thread detail (i18n en+de) | "Who + what's outstanding" at the moment of a conversation. |
-| **tail** | S8 Docs/gates: AGENTS, error contract, CHANGELOG, dom-contract | The rule must outlive the session. |
+| Tier          | Step                                                           | Why first                                                      |
+| ------------- | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| **1% → 51%**  | S1 `crm.Person` + `People()` (identity survives)               | The root defect. Every later step is cheap only because of it. |
+|               | S2 Spike scope: honest review of every call site               | Prevents a half-migrated seam.                                 |
+| **4% → 64%**  | S3 `crm.contact_url` + validation                              | Turns the recovered identity into a reachable one.             |
+|               | S4 `views.CRMContacts` + link rendering on all 6 surfaces      | Daily-visible: a name you can click.                           |
+| **20% → 80%** | S5 `/context` client + negative cache + fail-open              | Second fact class without a second seam.                       |
+|               | S6 Kith publishes `/api/contacts/{id}/context`                 | The product that makes S5 real.                                |
+|               | S7 Strip in the thread detail (i18n en+de)                     | "Who + what's outstanding" at the moment of a conversation.    |
+| **tail**      | S8 Docs/gates: AGENTS, error contract, CHANGELOG, dom-contract | The rule must outlive the session.                             |
 
 ### 5.1 Execution graph
 
@@ -221,23 +229,23 @@ flowchart LR
 
 ### 5.2 Micro steps (each ≤ 12 min, verifiable)
 
-| # | Step | Verify |
-| --- | --- | --- |
-| S1.1 | Rename `Match`→`Person`, `Names`→`People` in the client/resolver | `go build ./internal/crm` |
-| S1.2 | Update resolver tests to the typed shape | `go test ./internal/crm` |
-| S2.1 | Migrate `notifier`, `panels`, `actions`, `textagent_api` | `go build ./...` |
-| S3.1 | Add `crm.contact_url` to config + validation | `go test ./internal/config` |
-| S3.2 | Register `config.crm.contact_url` | registry test |
-| S4.1 | `views.CRMContacts` + `handlers.crmContacts` conversion | `go build` |
-| S4.2 | Migrate the 6 view prop structs | `go test ./internal/web/views` |
-| S4.3 | `crmNameLink` component, used where a link is meaningful | rendered-props test |
-| S5.1 | `Context` type + client call + sentinels | `go test ./internal/crm` |
-| S5.2 | Resolver cache with negative TTL + single-flight reuse | `go test ./internal/crm` |
-| S6.1 | Kith handler + route | `go test ./internal/machineapi` |
-| S6.2 | Kith BDD: context of a real contact, 404 for a ghost id | Kith suite |
-| S7.1 | Strip component + i18n both maps | i18n parity test |
-| S7.2 | Server wiring on the thread panel only | server test |
-| S8.1 | AGENTS invariant + error contract + CHANGELOG | gates |
+| #    | Step                                                             | Verify                          |
+| ---- | ---------------------------------------------------------------- | ------------------------------- |
+| S1.1 | Rename `Match`→`Person`, `Names`→`People` in the client/resolver | `go build ./internal/crm`       |
+| S1.2 | Update resolver tests to the typed shape                         | `go test ./internal/crm`        |
+| S2.1 | Migrate `notifier`, `panels`, `actions`, `textagent_api`         | `go build ./...`                |
+| S3.1 | Add `crm.contact_url` to config + validation                     | `go test ./internal/config`     |
+| S3.2 | Register `config.crm.contact_url`                                | registry test                   |
+| S4.1 | `views.CRMContacts` + `handlers.crmContacts` conversion          | `go build`                      |
+| S4.2 | Migrate the 6 view prop structs                                  | `go test ./internal/web/views`  |
+| S4.3 | `crmNameLink` component, used where a link is meaningful         | rendered-props test             |
+| S5.1 | `Context` type + client call + sentinels                         | `go test ./internal/crm`        |
+| S5.2 | Resolver cache with negative TTL + single-flight reuse           | `go test ./internal/crm`        |
+| S6.1 | Kith handler + route                                             | `go test ./internal/machineapi` |
+| S6.2 | Kith BDD: context of a real contact, 404 for a ghost id          | Kith suite                      |
+| S7.1 | Strip component + i18n both maps                                 | i18n parity test                |
+| S7.2 | Server wiring on the thread panel only                           | server test                     |
+| S8.1 | AGENTS invariant + error contract + CHANGELOG                    | gates                           |
 
 ---
 
@@ -285,15 +293,15 @@ would multiply context fetches across a page of rows. Default: no.
 
 Filled from actual runs, never pre-filled.
 
-| # | Step | Status | Evidence |
-| --- | --- | --- | --- |
-| S1 | `Person` / `People` | ✅ DONE | `crm.Person{Ref,Name}`; `Resolver.People()`; `go build ./internal/crm` green |
-| S2 | Call-site migration | ✅ DONE | notifier, panels, actions, textagent, calls_api, disposition_api; `go build ./...` green |
-| S3 | `crm.contact_url` | ⚠️ PARTIAL | field + `validateCRMContactURL` shipped; **no test**; registry entry missing |
-| S4 | Link rendering | ⚠️ PARTIAL | `CRM CRMContacts` on 5 prop structs; `crmNameLink` on thread head / fax / CDR; **no CSS** |
-| S5 | Context client | ⛔ NOT STARTED | type + strip component exist; nothing produces a `CRMContext` (dead code) |
-| S6 | Kith `/context` | ⛔ NOT STARTED | read-only research done; Kith builds |
-| S7 | Strip | ⚠️ PARTIAL | component + i18n + `ThreadViewProps.CRMContext` wired; **no producer, no CSS, no test** |
-| S8 | Docs + gates | ⛔ NOT STARTED | **test tree RED** (`panels_test.go` references the removed `TranscriptGroup.Name`) |
+| #  | Step                | Status         | Evidence                                                                                  |
+| -- | ------------------- | -------------- | ----------------------------------------------------------------------------------------- |
+| S1 | `Person` / `People` | ✅ DONE        | `crm.Person{Ref,Name}`; `Resolver.People()`; `go build ./internal/crm` green              |
+| S2 | Call-site migration | ✅ DONE        | notifier, panels, actions, textagent, calls_api, disposition_api; `go build ./...` green  |
+| S3 | `crm.contact_url`   | ⚠️ PARTIAL      | field + `validateCRMContactURL` shipped; **no test**; registry entry missing              |
+| S4 | Link rendering      | ⚠️ PARTIAL      | `CRM CRMContacts` on 5 prop structs; `crmNameLink` on thread head / fax / CDR; **no CSS** |
+| S5 | Context client      | ⛔ NOT STARTED | type + strip component exist; nothing produces a `CRMContext` (dead code)                 |
+| S6 | Kith `/context`     | ⛔ NOT STARTED | read-only research done; Kith builds                                                      |
+| S7 | Strip               | ⚠️ PARTIAL      | component + i18n + `ThreadViewProps.CRMContext` wired; **no producer, no CSS, no test**   |
+| S8 | Docs + gates        | ⛔ NOT STARTED | **test tree RED** (`panels_test.go` references the removed `TranscriptGroup.Name`)        |
 
 Snapshot and the full honesty audit: [docs/status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md).

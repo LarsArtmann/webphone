@@ -16,7 +16,7 @@ re-run the formatter if it moved styled files.
 2. **Bump `webphoneVersion`** in flake.nix (package version AND the
    `/version` ldflags injection — one let-binding; keep it equal to
    the new tag).
-2b. **Served-markup obligation (standing)**: ANY train that changed the
+   2b. **Served-markup obligation (standing)**: ANY train that changed the
    served bytes — a tab panel, the shell, an island asset, `app.css` —
    owes a fresh run of the consuming stack's browser E2E
    (`tests/browser-e2e.py` in nix-international-telephony, budget 445s).
