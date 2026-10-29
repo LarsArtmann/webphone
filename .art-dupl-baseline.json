@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-29T10:46:33.952018882Z",
+  "recordedAt": "2026-10-29T15:44:17.505746394Z",
   "entries": [
     {
       "hash": "090feb586e2e0439",
@@ -10,6 +10,14 @@
         "internal/server/api/review_api.go"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "0c6045e3beea51ce",
+      "files": [
+        "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ"
+      ],
+      "tokens": 2
     },
     {
       "hash": "0c8c67c705cc3f0b",
@@ -404,11 +412,20 @@
       "hash": "78dd46cd10c1b449",
       "files": [
         "internal/web/views/messages.templ",
-        "internal/web/views/history.templ",
         "internal/web/views/messages.templ",
+        "internal/web/views/history.templ",
         "internal/web/views/fax.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "82933255f2d17f39",
+      "files": [
+        "internal/web/views/layout.templ",
+        "internal/web/views/messages.templ",
+        "internal/web/views/messages.templ"
+      ],
+      "tokens": 6
     },
     {
       "hash": "852667b5420b2d84",
@@ -573,10 +590,9 @@
         "internal/web/views/settings.templ",
         "internal/web/views/history.templ",
         "internal/web/views/settings.templ",
-        "internal/web/views/messages.templ",
         "internal/web/views/messages.templ"
       ],
-      "tokens": 12
+      "tokens": 10
     },
     {
       "hash": "bc0b8f2f3f03e5ff",
@@ -667,14 +683,6 @@
       "tokens": 2
     },
     {
-      "hash": "e495982391932ee6",
-      "files": [
-        "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ"
-      ],
-      "tokens": 4
-    },
-    {
       "hash": "e6714ae6d67509f0",
       "files": [
         "internal/web/views/layout.templ",
@@ -698,11 +706,12 @@
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
+        "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/messages.templ"
       ],
-      "tokens": 7
+      "tokens": 8
     },
     {
       "hash": "f284a893cb53f85c",
