@@ -59,6 +59,33 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### issue #9 + SUPERB execution tails (2026-10-29 closeout train)
+
+Harvested from the SUPERB execution plan (T22-T24 + the owed-debt sweep). The
+dial-gate seam (#7) is SHIPPED end-to-end: server gate + island chip + API
+tests + smoke scenario + the apidocs/registry landing; the automatic review
+(#8) shipped server + History render; the external-claims debt (T19) closed
+with the verification comment on #6.
+
+1. **Kith CRM live e2e (#9 — OWNER-GATED, `blocked`)**: the pbx-artmann host
+   wiring landed (`5df19b5` — dnsblockd CA into the system trust bundle via
+   `security.pki.certificateFiles`, `services.telephony.webphone.crm` at
+   https://crm.home.lan, the `webphone_crm_token` secret slot in
+   generate.sh; issue #9's `trustedCertificateAuthorities` option name does
+   not exist in nixpkgs and is corrected in the #9 comment). Owner steps:
+   mint the Kith API token, write it to
+   `~/.pbx-prod-secrets/webphone_crm_token`, run `scripts/push-secrets.sh`,
+   deploy the pbx-artmann train, then verify the acceptance bar (inbound
+   caller name; `call_logged` on the contact journal; a revoked token turns
+   the Settings tri-state red).
+2. **Stack browser E2E after the UI trains (release-runbook obligation)**:
+   served markup changed across the disposition filter (T3), the Settings
+   CRM tri-state (T7), the review dispatch, the History review states
+   (T13) and the dial cooldown chip (T17) — the stack's
+   `tests/browser-e2e.py` drives the island through the DOM contract and
+   owes one re-run (budget 445s; the ~90s transfer-step death is a known
+   flake mode, re-run once before digging).
+
 ### ai-phone steal-list (2026-10-29 deep dive — 2 SHIPPED, 5 actions open)
 
 Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
@@ -68,7 +95,7 @@ immediately documented eight previously undocumented keys) and generation-closin
 (`closeCallSegments` + the announce guard, two island specs).
 
 1. **Config typo strictness (L7, sharpest).** koanf `Unmarshal`
-   (`internal/config/config.go:594`) silently drops unknown keys from the JSON file AND from
+   (the koanf `Unmarshal` inside `config.Load`) silently drops unknown keys from the JSON file AND from
    `WEBPHONE_*`, so a typo turns a seam off instead of failing the boot. Design is constrained by
    the surface itself: strict (error) for the FILE, warn-only for the ENVIRONMENT, because a dozen
    `WEBPHONE_*` variables are operational and not config keys (`WEBPHONE_CONFIG`,
@@ -218,7 +245,7 @@ HEAD, corrections posted as issue comments. Separate trains, none started.
    failure class, never answered); awaited write with surfaced failure; carry
    the disposition in the Kith `call_logged` payload. Correction recorded:
    `Outcome` IS filled today — the island sends
-   `established ? "answered" : "missed"` (panels.js:78 → calls_api.go:108),
+   `established ? "answered" : "missed"` (the island's `recordCrmCall` → `api.Handlers.LogCall`),
    so a voicemail call journals as "answered" in Kith right now.
 2. **Per-remote redial cooldown** (#7) — SHIPPED 2026-10-28 (seam by the
    morning dialer train, island + tests + docs completed by the

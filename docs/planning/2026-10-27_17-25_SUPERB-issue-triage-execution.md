@@ -350,3 +350,51 @@ flowchart TD
   exists precisely to close that debt before more weight rides on them.
 - Issue #8's body predates the same-day agent-UX train; its remaining scope is recorded in
   TODO_LIST and reflected in T11–T15 — do NOT re-implement the summarize/draft chain.
+
+## Errata — execution deltas (2026-10-29, closeout train)
+
+What execution changed against the plan, so the next reader does not
+re-derive it from the code:
+
+- **T12 shipped GET-only, deliberately.** The plan's M70 sketched
+  GET/PUT artifact endpoints; the review artifact is written by the
+  SYSTEM (the detached job at the exits + SummaryDraft on both
+  refusal and unreachable), never hand-edited — a PUT would have made
+  the AI verdict look owner-owned. The notes surface keeps the
+  owner-writable PUT (its content IS the owner's).
+- **T17 shipped as the inline cooldown chip, not a typeahead-row
+  state.** The dial area grows the state line (last call age + window
+  remaining) plus one "Dial anyway" chip under the form — the #54
+  no-modal lesson applied to placement. The typeahead-row rendering
+  stays the open placement question (owner ruling pending; the
+  JS-created ids keep the DOM contract untouched either way).
+- **T18 caught two product bugs, not just coverage gaps:** the gate
+  answered allowed asks WITH the denied ask's cooldown state
+  (contradicting its own DTO contract), and `/config.js` shipped a
+  zero `dialCooldownSeconds` key when the gate was off
+  (encoding/json/v2's `omitempty` keeps zero numbers — the pointer
+  form is the fix). Both fixed + pinned (2026-10-29).
+- **T19 verified every external claim EXACT at source** (dialer PR
+  #20: 12/40 + 5 non-human, total mapping, unknown→FAILED, awaited
+  write, 24h hardcoded; PR #54: 9-in-12s, Calling-from-click,
+  prompt-modal removal; README "Every call is reviewed"; the matching
+  Kith issue = LarsArtmann/crm#4). Verification comment posted on #6.
+  pbx-artmann's tracker has no open issues to review.
+- **T22's premise drifted the day it was written:** the CRM moved to
+  `crm.home.lan` over the NetBird mesh (evo-x2 Caddy, same dnsblockd
+  CA), and nixpkgs has NO `security.pki.trustedCertificateAuthorities`
+  option — the real knob is `security.pki.certificateFiles` (system
+  bundle; issue #9 body corrected in its comment thread). Host wiring
+  landed in pbx-artmann (`5df19b5`).
+- **T23's stack leg already existed** — the module's
+  `services.telephony.webphone.crm.{enable,url,tokenFile}` plumbing
+  shipped with the typed CRM lane; execution added the HOST wiring +
+  the `webphone_crm_token` secrets-pipeline slot. The token itself is
+  owner-minted (push-secrets picks the key up automatically;
+  `webphone` is already in the restart list).
+- **T24 is deploy-gated**, not code-gated: the acceptance bar needs a
+  deployed host, a real token and a real call. Harvested into
+  TODO_LIST's issue-#9 row with the owner steps spelled out.
+- **The M62 95s budget and the T17 §g placement question remain the
+  two unanswered owner items** from the session-3 report §g; defaults
+  recorded there stand until answered.
