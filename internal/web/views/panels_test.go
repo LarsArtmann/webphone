@@ -553,14 +553,18 @@ func TestVoicemailRowTranscribeButtonGatedOnASR(t *testing.T) {
 
 // TestHistoryPanelRendersTranscriptGroups: the extension's own transcript
 // records render as their own section (newest call first, lines joined in
-// spoken order) — they are NOT joined onto CDR rows (no shared key).
+// spoken order) — they are NOT joined onto CDR rows (no shared key). The
+// CRM name arrives through the panel's ONE directory map (props.CRM), never
+// through the group payload: two homes for one fact would let a caller read
+// differently in the two halves of the same tab.
 func TestHistoryPanelRendersTranscriptGroups(t *testing.T) {
 	props := HistoryPanelProps{
 		Enabled: true,
 		Transcripts: []TranscriptGroup{
 			{Remote: "+4930111", Direction: "out", StartedAt: time.Unix(1760000100, 0), Lines: []string{"second", "call"}},
-			{Remote: "+4989", Direction: "in", StartedAt: time.Unix(1760000000, 0), Lines: []string{"guten", "tag"}, Name: "Erika"},
+			{Remote: "+4989", Direction: "in", StartedAt: time.Unix(1760000000, 0), Lines: []string{"guten", "tag"}},
 		},
+		CRM:  CRMContacts{"+4989": {Name: "Erika"}},
 		Lang: LangEN,
 	}
 	page := renderComponent(t, HistoryPanel(props))
