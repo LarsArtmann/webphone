@@ -97,9 +97,16 @@ type ContactRef = id.ID[ContactRefBrand, string]
 // the wire shape is the CRM's contract).
 func NewContactRef(raw string) ContactRef { return id.NewID[ContactRefBrand](raw) }
 
-// Match is one contact hit for a phone number.
-type Match struct {
-	ID   ContactRef
+// Person is the CRM's answer for one phone number: the opaque contact
+// reference the CRM owns, plus the name it publishes for display.
+//
+// The ref is why this type exists instead of a bare name. A name alone
+// named people the phone could never REACH — no deep link into the CRM,
+// no second fact to ask for. The seam's original projection
+// (number → name) destroyed identity at the boundary, and no amount of
+// view work could recover it.
+type Person struct {
+	Ref  ContactRef
 	Name string
 }
 
@@ -152,38 +159,38 @@ type lookupResponse struct {
 // ErrNotFound on zero matches; the number travels verbatim because the
 // CRM owns the whole matching contract (digit normalization, trunk and
 // country-code suffix tolerance).
-func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error) {
+func (c *Client) LookupByPhone(ctx context.Context, number string) (Person, error) {
 	resp, err := c.do(ctx, http.MethodGet, "/api/contacts/by-phone",
 		url.Values{"number": {number}}, nil)
 	if err != nil {
-		return Match{}, err
+		return Person{}, err
 	}
 	defer drainClose(resp)
 
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
-		return Match{}, ErrUnauthorized
+		return Person{}, ErrUnauthorized
 	case resp.StatusCode != http.StatusOK:
 		family := errorfamily.Transient
 		if resp.StatusCode < 500 {
 			family = errorfamily.Rejection
 		}
-		return Match{}, errorfamily.Newf(family, "crm.http", "crm: lookup failed with status %d", resp.StatusCode)
+		return Person{}, errorfamily.Newf(family, "crm.http", "crm: lookup failed with status %d", resp.StatusCode)
 	}
 
 	var buf bytes.Buffer
 
 	if _, err := buf.ReadFrom(resp.Body); err != nil {
-		return Match{}, errorfamily.WrapTransientf(err, "crm.read", "crm: read response")
+		return Person{}, errorfamily.WrapTransientf(err, "crm.read", "crm: read response")
 	}
 
 	var parsed lookupResponse
 	if err := json.Unmarshal(buf.Bytes(), &parsed); err != nil {
-		return Match{}, errorfamily.WrapTransientf(err, "crm.decode", "crm: decode lookup response")
+		return Person{}, errorfamily.WrapTransientf(err, "crm.decode", "crm: decode lookup response")
 	}
 
 	if len(parsed.Results) == 0 {
-		return Match{}, ErrNotFound
+		return Person{}, ErrNotFound
 	}
 
 	first := parsed.Results[0]
@@ -192,7 +199,7 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Match, error
 		name = first.Email
 	}
 
-	return Match{ID: NewContactRef(first.ID), Name: name}, nil
+	return Person{Ref: NewContactRef(first.ID), Name: name}, nil
 }
 
 // healthProbeNumber is the health probe's lookup argument: a
@@ -238,7 +245,7 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 }
 
 // LogCall appends one call activity to the CRM contact (204 expected).
-// The ref is the Match's own ID: only a real lookup can mint one. The
+// The ref is the Person's own: only a real lookup can mint one. The
 // disposition travels verbatim — the CRM renders the outcome string
 // as-is, so an honest "unknown" must arrive as unknown, never
 // pre-resolved to a guess.

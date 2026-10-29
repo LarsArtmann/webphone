@@ -20,10 +20,10 @@ const (
 	maxEntries  = 1024
 )
 
-// cacheEntry is one resolved number. A miss stores a zero Match with
+// cacheEntry is one resolved number. A miss stores a zero Person with
 // miss=true so both states share the TTL mechanics.
 type cacheEntry struct {
-	match   Match
+	person  Person
 	miss    bool
 	fetched time.Time
 }
@@ -42,9 +42,9 @@ type lookupCounters struct {
 // request per caller (a history page rendering while another tab renders
 // must cost the CRM one lookup, not two).
 type lookupFlight struct {
-	done  chan struct{}
-	match Match
-	ok    bool
+	done   chan struct{}
+	person Person
+	ok     bool
 }
 
 // Resolver answers "who is this number?" with a process-local TTL cache in
