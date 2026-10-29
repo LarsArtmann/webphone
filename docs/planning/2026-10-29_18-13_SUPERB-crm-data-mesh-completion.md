@@ -382,7 +382,7 @@ Sorted by priority score = (customer value × risk removed) ÷ effort.
 | `checks.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}` | all five green (store paths returned) |
 | `scripts/webphone-smoke.py` | `smoke: 49 passed, 0 failed` · restart 4/0 · boot-failure 8/0 |
 | `art-dupl@v0.7.2 check . -t 1` | start: 6 new groups → 2 EXTRACTED (`crm.statusFamily`, `views.remoteLabel` + `views.crmContextItem`) → 4 accepted as markup-shape coincidences → baseline 83 → 86, `check` = **0 new** |
-| `buildflow` (full, no cache) | see below |
+| `buildflow` (full, no cache) | **passed with warnings**: `v2 results: 69 success, 0 failed, 0 skipped (+4 via config)`. The warnings are the two known, pre-existing classes: the stale accepted-noise baseline (78 entries matching nothing for 3 runs) and step-timing regressions (host load; `test-race` 55s -> 102s). Neither is caused by this train, and both are already ticketed |
 | Kith `go test ./internal/machineapi/` | **green**: 52 BDD specs + the new context suite (full fact set, ghost-id 404, 401 arms, cross-contact isolation) |
 
 ### 6.1 Two gates that earned their keep during this train
