@@ -192,13 +192,25 @@ test("live transcription auto-starts on connect, persists segments, and tears do
   assert.equal(strip.getAttribute("aria-hidden"), "true");
   const saved = fetchCalls.find((c) => c.url === "/api/transcripts");
   assert.ok(saved, "segment persisted via POST /api/transcripts");
-  assert.deepEqual(JSON.parse(saved.options.body), {
+  // `startedAt` is the SEGMENT's capture stamp (calls.js onCallTranscript:
+  // the wire contract says "segment start", History renders it as one), not
+  // the call start, so it cannot be compared to entry.startedAt — doing so
+  // made this spec a 4 ms race. The race was INVISIBLE until 2026-10-29:
+  // the island-js flake check piped node through `tee`, so a red spec still
+  // produced a green derivation. Assert the field set exactly, then bound
+  // the stamp to the call window (it is Date.now() at segment close).
+  const { startedAt: segmentStamp, ...fields } = JSON.parse(saved.options.body);
+  assert.deepEqual(fields, {
     callId: "call-t1",
     direction: "out",
     remote: "+4930123456",
-    startedAt: entry.startedAt,
     text: "hello world",
   });
+  assert.equal(typeof segmentStamp, "number", "the stamp is a number");
+  assert.ok(
+    segmentStamp >= entry.startedAt && segmentStamp <= Date.now(),
+    `the segment stamp must sit inside the call window: ${segmentStamp} ∉ [${entry.startedAt}, ${Date.now()}]`,
+  );
   assert.ok(
     [...doc.getElementById("toasts").children].some((el) =>
       /Transcript: hello world/i.test(el.textContent),

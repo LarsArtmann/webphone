@@ -378,6 +378,108 @@ test("a 429 from the seam cools the live loop down (segments skipped, capture al
   transcribe.stopLiveTranscription("cooldown-check");
 });
 
+test("a laggy segment warns once per streak and a punctual segment re-arms the warn (L8)", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  const pc = { getReceivers: () => [], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  const texts = [];
+  transcribe.startLiveTranscription("lag-check", entry, (t) => texts.push(t));
+  const recorder = globalThis.__recorders[0];
+
+  const realNow = Date.now;
+  // Prior specs in this file arm the module-level cooldown/backoff gates
+  // with REAL-clock deadlines; start past all of them (the same trick the
+  // on-demand 429 spec uses) so the only active gate is the lag itself.
+  let offset = 60_000;
+  Date.now = () => realNow() + offset;
+  let resolveSeg;
+  const laggyFetch = () =>
+    new Promise((resolve) => {
+      resolveSeg = resolve;
+    });
+  const answer = (word) =>
+    resolveSeg({ ok: true, status: 200, json: async () => ({ text: word }) });
+
+  const warns = [];
+  const originalWarn = console.warn;
+  console.warn = (...parts) => warns.push(parts.join(" "));
+  try {
+    // Segment 1: answered 30s after its window closed — the first laggy
+    // segment of the streak warns (visible announce + log warn).
+    fetchImpl = laggyFetch;
+    recorder.emit({ size: 10, type: "audio/webm" });
+    offset += 30_000;
+    await flush();
+    answer("one");
+    await flush();
+    const toastTexts = () =>
+      [...globalThis.document.getElementById("toasts").children].map((el) => el.textContent);
+    assert.equal(toastTexts().filter((t) => /lagging/i.test(t)).length, 1, "the first laggy segment announces once");
+    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 1);
+
+    // Segment 2: still laggy — the streak continues SILENTLY (one warn
+    // per streak, not one per segment).
+    fetchImpl = laggyFetch;
+    recorder.emit({ size: 10, type: "audio/webm" });
+    offset += 30_000;
+    await flush();
+    answer("two");
+    await flush();
+    assert.equal(toastTexts().filter((t) => /lagging/i.test(t)).length, 1, "a continuing streak does not re-announce");
+    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 1);
+
+    // Segment 3: punctual — the streak ends, the warn re-arms.
+    fetchImpl = async () => ({ ok: true, status: 200, json: async () => ({ text: "three" }) });
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 1);
+
+    // Segment 4: laggy again — a NEW streak warns again.
+    fetchImpl = laggyFetch;
+    recorder.emit({ size: 10, type: "audio/webm" });
+    offset += 30_000;
+    await flush();
+    answer("four");
+    await flush();
+    assert.equal(toastTexts().filter((t) => /lagging/i.test(t)).length, 2, "a recovered-then-lagging provider re-announces");
+    assert.deepEqual(texts, ["one", "two", "three", "four"], "capture and delivery continue through every streak");
+  } finally {
+    console.warn = originalWarn;
+    Date.now = realNow;
+    transcribe.stopLiveTranscription("lag-check");
+  }
+});
+
+test("a punctual provider never trips the lag warn (L8)", async () => {
+  globalThis.__recorders = [];
+  globalThis.__contexts = [];
+  fetchCalls = [];
+  const realNow = Date.now;
+  let offset = 60_000;
+  Date.now = () => realNow() + offset;
+  const pc = { getReceivers: () => [], getSenders: () => [] };
+  const entry = { session: { sessionDescriptionHandler: { peerConnection: pc } } };
+  fetchImpl = async () => ({ ok: true, status: 200, json: async () => ({ text: "snappy" }) });
+  transcribe.startLiveTranscription("cadence-check", entry, () => {});
+  const warns = [];
+  const originalWarn = console.warn;
+  console.warn = (...parts) => warns.push(parts.join(" "));
+  try {
+    const recorder = globalThis.__recorders[0];
+    recorder.emit({ size: 10, type: "audio/webm" });
+    recorder.emit({ size: 10, type: "audio/webm" });
+    await flush();
+    assert.equal(warns.filter((w) => /lagging/i.test(w)).length, 0, "segments inside the cadence never warn");
+    const toasts = [...globalThis.document.getElementById("toasts").children];
+    assert.equal(toasts.filter((el) => /lagging/i.test(el.textContent)).length, 0);
+  } finally {
+    console.warn = originalWarn;
+    transcribe.stopLiveTranscription("cadence-check");
+  }
+});
+
 test("transcribeNow renders busy, text, empty and failure states into its target", async () => {
   let release;
   const gate = new Promise((resolve) => {
