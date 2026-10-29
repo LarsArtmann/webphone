@@ -946,3 +946,18 @@ pushing.
   agents are concurrently rewriting. `scripts/module-cache-janitor.sh` reports
   the zero-byte class but does not detect zero-byte `.mod`/`.info` (it looks
   for `.tmp`) — extend it before trusting a green report.
+- **`nix fmt` saying "formatted 0 files" is not evidence the tree is canonical**
+  (2026-10-29). The daemon carried a hand-shaped `.wp-body` grid rule in
+  `app.css` past the format gate: CI's sandboxed treefmt reded on the
+  multi-line `minmax(...)` form (canonical since the 10-14 treefmt-nix pin),
+  while every local `nix fmt` run reported `formatted 0 files (0 changed)` —
+  in **37 ms over 373 files**, i.e. the formatters never ran; treefmt v2's
+  cache short-circuited on file fingerprints (`~/.cache/treefmt` did not even
+  exist — the cache lives somewhere non-obvious and was not worth the hunt
+  once the direct fix worked). The fix sequence that worked: reproduce with
+  `nix build -L .#checks.x86_64-linux.format` (the sandbox has no cache),
+  then run the flake wrapper's raw treefmt directly with the flake config —
+  `--ci` mode in v2 REWRITES files before failing, which produced the
+  canonical bytes (diff index matched CI's own `dfd8a88..1391d92`). Rule:
+  the check derivation is the authority; `nix fmt` is a best-effort fixer,
+  never a green-ticket.
