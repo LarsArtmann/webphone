@@ -246,9 +246,12 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 
 // LogCall appends one call activity to the CRM contact (204 expected).
 // The ref is the Person's own: only a real lookup can mint one. The
-// disposition travels verbatim — the CRM renders the outcome string
-// as-is, so an honest "unknown" must arrive as unknown, never
-// pre-resolved to a guess.
+// disposition is TRANSLATED into the CRM's closed outcome vocabulary (see
+// vocabulary.go): the phone's observed dispositions and the CRM's
+// relationship outcomes are different closed sets, and sending ours verbatim
+// made the CRM reject every answered call. The number still travels verbatim
+// (the CRM owns matching), and an honest unknown arrives as "no disposition
+// recorded" rather than a guessed outcome.
 func (c *Client) LogCall(ctx context.Context, contactID ContactRef, direction, number string, seconds int, disposition domain.Disposition) error { //nolint:branching-flow // the number travels VERBATIM by domain intent (the CRM owns matching); direction is the CRM's wire vocabulary
 	payload := struct {
 		Direction string `json:"direction"`

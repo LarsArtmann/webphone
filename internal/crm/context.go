@@ -4,26 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json/v2"
+	"errors"
 	"net/http"
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
 )
 
-// ErrNoContext is returned when the CRM publishes no context for a contact:
-// a 404, which covers both "this contact no longer exists" and "this CRM build
+// ErrNoContext is returned when the CRM publishes no context for a contact: a
+// 404, which covers both "this contact no longer exists" and "this CRM build
 // predates the context product". Both mean the same thing to a caller: render
-// nothing. It is deliberately NOT a Rejection guess or an infrastructure
-// failure; absence is a normal state of an optional integration.
-var ErrNoContext = errNoContext{}
-
-type errNoContext struct{}
-
-// Error implements the error interface.
-func (errNoContext) Error() string { return "crm has no context for this contact" }
-
-// Is lets errors.Is(err, ErrNoContext) work through wraps.
-func (errNoContext) Is(target error) bool { _, ok := target.(errNoContext); return ok }
+// nothing. Absence is a normal state of an optional integration, never an
+// error surface in the phone's UI.
+var ErrNoContext = errors.New("crm has no context for this contact")
 
 // Context is the CRM's published context for one contact, as far as the phone
 // can see it: the company they belong to, the deals in flight, the follow-up
@@ -160,4 +153,105 @@ func (w contextWire) toContext(ref ContactRef) Context {
 	}
 
 	return out
+}
+
+// Context cache tuning. The strip is read once per opened conversation, and
+// the facts it shows move far faster than a contact's name: a deal changes
+// stage, a task gets completed. So the positive window is deliberately short,
+// and a MISS ("not published", "contact gone") is remembered longer — asking a
+// CRM without the endpoint on every page view would be the loudest possible
+// way to poll a missing product.
+const (
+	contextTTL        = 2 * time.Minute
+	contextAbsentTTL  = 15 * time.Minute
+	contextMaxEntries = 256
+)
+
+// contextEntry is one cached answer. absent is the "nothing to say" state: no
+// context published, the contact is gone, or the CRM refused the token.
+type contextEntry struct {
+	context Context
+	absent  bool
+	fetched time.Time
+}
+
+// ContextOf resolves the CRM's published context for one contact, memoized for
+// a short window. nil/false means "nothing to say" and covers every
+// degradation: seam off, no contact, endpoint not published, CRM unreachable.
+//
+// No single-flight here on purpose: a page holds ONE contact's strip, so there
+// is no fan-out to join, and the names single-flight exists precisely because
+// a list page resolves tens of numbers.
+func (r *Resolver) ContextOf(ctx context.Context, ref ContactRef) (*Context, bool) {
+	if !r.Enabled() || ref.Get() == "" {
+		return nil, false
+	}
+
+	if entry, fresh := r.cachedContext(ref.Get()); fresh {
+		if entry.absent {
+			return nil, false
+		}
+
+		out := entry.context
+
+		return &out, true
+	}
+
+	parsed, err := r.client.ContactContext(ctx, ref)
+
+	switch {
+	case err == nil:
+		r.rememberContext(ref.Get(), contextEntry{context: parsed, fetched: time.Now()})
+
+		return &parsed, true
+	case errors.Is(err, ErrNoContext):
+		r.rememberContext(ref.Get(), contextEntry{absent: true, fetched: time.Now()})
+	case errors.Is(err, ErrUnauthorized):
+		// A revoked token is a real condition the health leg names loudly;
+		// the strip stays silent and stops asking for a while.
+		r.log.Debug("crm: context unauthorized; no strip", "ref", ref)
+
+		r.rememberContext(ref.Get(), contextEntry{absent: true, fetched: time.Now()})
+	default:
+		// Transport/shape failures are NOT cached: the next open retries.
+		r.log.Debug("crm: context failed; no strip", "ref", ref, "error", err)
+	}
+
+	return nil, false
+}
+
+func (r *Resolver) cachedContext(ref string) (contextEntry, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	entry, ok := r.contexts[ref]
+	if !ok {
+		return contextEntry{}, false
+	}
+
+	ttl := contextTTL
+	if entry.absent {
+		ttl = contextAbsentTTL
+	}
+
+	if time.Since(entry.fetched) > ttl {
+		delete(r.contexts, ref)
+
+		return contextEntry{}, false
+	}
+
+	return entry, true
+}
+
+func (r *Resolver) rememberContext(ref string, entry contextEntry) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Same bound-and-reset policy as the name cache: a decoration memo, not a
+	// store worth an LRU.
+	if len(r.contexts) >= contextMaxEntries {
+		r.contexts = make(map[string]contextEntry, contextMaxEntries)
+	}
+
+	r.contexts[ref] = entry
 }

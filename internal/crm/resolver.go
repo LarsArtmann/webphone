@@ -66,6 +66,10 @@ type Resolver struct {
 	mu       sync.Mutex
 	cache    map[string]cacheEntry
 	inflight map[string]*lookupFlight
+	// contexts memoizes contact-context answers by CRM ref (see ContextOf).
+	// A separate map from the number-keyed cache: a phone number and a CRM
+	// contact id are different key spaces and must never collide.
+	contexts map[string]contextEntry
 
 	lookups lookupCounters
 }
@@ -86,6 +90,7 @@ func NewResolver(client *Client, profileURL string, log *slog.Logger) *Resolver 
 		log:        log,
 		cache:      make(map[string]cacheEntry),
 		inflight:   make(map[string]*lookupFlight),
+		contexts:   make(map[string]contextEntry),
 	}
 }
 
