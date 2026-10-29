@@ -34,6 +34,14 @@ voicemail rows — PBX-owned — so the attachment variant is the
 deterministic stand-in; the island's live call card needs a real SIP
 call and stays covered by the island node specs).
 
+CRM extension (2026-10-29): `--crm` boots a fake Kith machine API beside
+the app and turns the seam on (url + token + a `contact_url` template),
+so the CRM surfaces become EVIDENCE instead of claims: the `crm-context`
+surface asserts the linked caller name (`.wp-crm-link`) AND the contact
+context strip (`#wp-crm-context`) in the DOM before the shot. Without the
+flag the seam stays off and the surface is skipped, which keeps the
+default matrix exactly what a zero-config deployment renders.
+
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
 without a KVM VM, and a KVM browser VM here would duplicate the stack's
@@ -58,8 +66,10 @@ import json
 import os
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
+import threading
 import time
 import urllib.parse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import urllib.request
 
 SEED_THREADS = [
@@ -93,6 +103,7 @@ SEED_CONTACTS = [("Marta Jensen", "+441632960961")]
 TABS = [
     ("messages", "/messages"),
     ("thread", None),  # first thread, resolved after seeding
+    ("crm-context", None),  # the same thread WITH the fake CRM on (--crm only)
     ("media-transcribe", None),  # the attachment thread, resolved after seeding
     ("fax", "/fax"),
     ("voicemail", "/voicemail"),
@@ -110,6 +121,14 @@ TABS = [
 SURFACE_MARKERS = {
     "messages": ".wp-thread-row",  # seeded threads render rows
     "thread": "#wp-thread-head",  # the open conversation head
+    # The two halves of the CRM integration, asserted in the DOM: the caller
+    # name is a LINK into the CRM, and the context strip carries the CRM's
+    # published facts. A tuple list keeps both pins on one surface.
+    "crm-context": [
+        (".wp-crm-link", "Ada Lovelace"),
+        ("#wp-crm-context", "Analytical Engines Ltd"),
+        ("#wp-crm-context", "Retainer 2027"),
+    ],
     "media-transcribe": "[data-transcribe-src]",  # audio attachment button (ASR on)
     "fax": ".wp-compose-fax",  # the compose form is always present
     "voicemail": "#voicemail-panel",
@@ -136,6 +155,104 @@ ANONYMOUS_MARKERS = {
     "login-card": ("#passkey-login", "Sign in with passkey"),
     "login-page": ("#lp-login-form", None),
 }
+
+
+FAKE_CRM_TOKEN = "ui-capture-crm-token"  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
+FAKE_CRM_CONTACT_ID = "01VISUALCONTACT0000000000"
+# One contact the phone can describe: a company, a valuable deal with a
+# counted tail, an outstanding task that is not yet due, and a recent touch.
+FAKE_CRM_CONTEXT = {
+    "id": FAKE_CRM_CONTACT_ID,
+    "name": "Ada Lovelace",
+    "company": "Analytical Engines Ltd",
+    "open_deals": [
+        {
+            "title": "Retainer 2027",
+            "stage": "proposal",
+            "value_cents": 1200000,
+            "currency": "EUR",
+        }
+    ],
+    "open_deal_count": 3,
+    "open_tasks": 2,
+    "next_task": {"title": "Send the revised offer", "due_at": "2027-11-02T09:00:00Z"},
+    "last_activity_at": "2026-10-24T11:03:00Z",
+}
+FAKE_CRM_LOOKUP = {
+    "results": [
+        {
+            "id": FAKE_CRM_CONTACT_ID,
+            "first_name": "Ada",
+            "last_name": "Lovelace",
+            "email": "ada@example.org",
+        }
+    ]
+}
+
+
+class _FakeCRMHandler(BaseHTTPRequestHandler):
+    """The Kith machine API, reduced to the three routes the phone calls.
+
+    Every answer is bearer-gated: a harness whose token is wrong must fail
+    loudly here rather than quietly render the no-CRM product and pass.
+    """
+
+    def do_GET(self) -> None:  # noqa: N802 - http.server's spelling
+        if not self._authorized():
+            return
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/api/contacts/by-phone":
+            self._json(200, FAKE_CRM_LOOKUP)
+
+            return
+        if path == f"/api/contacts/{FAKE_CRM_CONTACT_ID}/context":
+            self._json(200, FAKE_CRM_CONTEXT)
+
+            return
+        self._json(404, {"error": "no such route"})
+
+    def do_POST(self) -> None:  # noqa: N802 - http.server's spelling
+        if not self._authorized():
+            return
+        if urllib.parse.urlsplit(self.path).path == f"/api/contacts/{FAKE_CRM_CONTACT_ID}/calls":
+            self.send_response(204)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+            return
+        self._json(404, {"error": "no such route"})
+
+    def _authorized(self) -> bool:
+        if self.headers.get("Authorization") == f"Bearer {FAKE_CRM_TOKEN}":
+            return True
+        self._json(401, {"error": "unauthorized"})
+
+        return False
+
+    def _json(self, status: int, payload: dict[str, object]) -> None:
+        body = json.dumps(payload).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002 - http.server's signature
+        # Silence: the harness's stdout is the shot ledger, not access logs.
+        return
+
+
+def start_fake_crm() -> tuple[str, str]:
+    """Boot the fake machine API on an ephemeral loopback port.
+
+    Returns (base url, token). The server is a daemon thread, so it dies with
+    the process; the caller needs no shutdown bookkeeping.
+    """
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeCRMHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    host, port = server.server_address[0], server.server_address[1]
+
+    return f"http://{host}:{port}", FAKE_CRM_TOKEN
 
 
 def seed(base: str) -> tuple[str | None, str | None, str]:
@@ -256,6 +373,7 @@ def capture(
     attach_thread_path: str | None,
     session: str,
     only: set[str] | None = None,
+    crm_on: bool = False,
 ) -> int:
     # Selenium lives only in the capture env (see the AGENTS run recipe
     # and mypy.ini) — never in the lint shell.
@@ -346,10 +464,15 @@ def capture(
             for name, path in TABS:
                 if only is not None and name not in only:
                     continue
-                if name == "thread":
+                if name in ("thread", "crm-context"):
                     path = thread_path
                 if name == "media-transcribe":
                     path = attach_thread_path
+                if name == "crm-context" and not crm_on:
+                    # Without the seam there is nothing to prove: the strip
+                    # does not exist and the caller name is plain text. A
+                    # filtered run of this surface errors in main() instead.
+                    continue
                 if path is None:
                     # An unresolved deep link (seed came up empty) skips
                     # the surface rather than shooting an error page.
@@ -374,26 +497,26 @@ def capture(
                         "document.querySelectorAll('details.wp-transcript-call')"
                         ".forEach((d) => d.setAttribute('open', ''))"
                     )
-                marker = SURFACE_MARKERS[name]
-                expected_text = None
-                if isinstance(marker, tuple):
-                    marker, expected_text = marker
-                if not driver.find_elements("css selector", marker):
-                    raise AssertionError(
-                        f"surface {name!r} at {path} is missing {marker!r} — "
-                        f"url={driver.current_url} anonymous_shell="
-                        f"{bool(driver.find_elements('id', 'login-form'))} — "
-                        "the shot would not be evidence; aborting"
-                    )
-                if (
-                    expected_text
-                    and expected_text
-                    not in driver.find_element("css selector", "body").text
-                ):
-                    raise AssertionError(
-                        f"surface {name!r} rendered without {expected_text!r} — "
-                        "the marker matched but the copy is wrong; aborting"
-                    )
+                pins = SURFACE_MARKERS[name]
+                if isinstance(pins, tuple):
+                    pins = [pins]
+                for marker, expected_text in pins:
+                    if not driver.find_elements("css selector", marker):
+                        raise AssertionError(
+                            f"surface {name!r} at {path} is missing {marker!r} — "
+                            f"url={driver.current_url} anonymous_shell="
+                            f"{bool(driver.find_elements('id', 'login-form'))} — "
+                            "the shot would not be evidence; aborting"
+                        )
+                    if (
+                        expected_text
+                        and expected_text
+                        not in driver.find_element("css selector", "body").text
+                    ):
+                        raise AssertionError(
+                            f"surface {name!r} rendered without {expected_text!r} — "
+                            "the marker matched but the copy is wrong; aborting"
+                        )
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)
                 print(f"captured {target}")
@@ -534,6 +657,13 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", default="/tmp/webphone-bin")  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
+    parser.add_argument(
+        "--crm",
+        action="store_true",
+        # Turns on a fake Kith machine API beside the app (see module docstring):
+        # the ONE way to shoot a CRM-linked caller name and the context strip.
+        help="boot a fake CRM so crm-context surfaces render (link + strip)",
+    )
     parser.add_argument("--port", type=int, default=18097)
     parser.add_argument("--out-dir", default="ui-shots")
     parser.add_argument(
@@ -594,6 +724,15 @@ def main() -> int:
             }
         },
     }
+    if args.crm:
+        crm_url, crm_token = start_fake_crm()
+        config["crm"] = {
+            "url": crm_url,
+            "token": crm_token,
+            # The human UI lives on a different origin than the machine API in
+            # every real deployment, so the template is config, never inferred.
+            "contact_url": "https://crm.example/contacts/{id}",
+        }
     with open(os.path.join(data_dir, "ext1001.pass"), "w", encoding="utf-8") as fh:
         fh.write("ui-capture-fixture\n")  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
     config_path = os.path.join(data_dir, "ui-capture-config.json")
@@ -620,6 +759,14 @@ def main() -> int:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
             known = {name for name, _ in TABS} | {name for name, _ in ANONYMOUS_SURFACES}
+            if "crm-context" in only and not args.crm:
+                print(
+                    "surface 'crm-context' needs --crm: without the fake CRM the "
+                    "strip does not exist and the shot would prove nothing",
+                    file=sys.stderr,
+                )
+
+                return 2
             unknown = sorted(only - known)
             if unknown:
                 print(
@@ -629,7 +776,13 @@ def main() -> int:
                 )
                 return 2
         shots = capture(
-            base, args.out_dir, thread_path, attach_thread_path, session, only
+            base,
+            args.out_dir,
+            thread_path,
+            attach_thread_path,
+            session,
+            only,
+            crm_on=args.crm,
         )
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
         if only is not None:
