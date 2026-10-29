@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Inbound Signal attachments (2026-10-29): setting `signal.attachments_dir`
+  to signal-cli's received-attachment directory arms inbound media — files
+  arrive in Messages like MMS (5 per message, 10 MiB each, honest
+  content type; per-attachment failures keep the text, nothing drops a
+  whole message over one bad file). Without the key the attachment fence
+  stays exactly as it was: skipped loudly, text-only.
 - Caption-lag honesty for live transcription (2026-10-29): each segment now
   carries its real capture stamp (persisted rows previously shared the call
   start, so History could not show when words were actually said), and when
