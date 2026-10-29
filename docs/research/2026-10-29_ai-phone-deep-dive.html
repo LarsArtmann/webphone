@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Agents in Error Management — Practice Scan 2026-10-26</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>DEEP DIVE</span>
+      <span>2026-10-29</span>
+      <span>CRUSH SESSION &middot; WEBPHONE</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#baseline">Repo baseline</a>
+          <a href="#what">What ai-phone is</a>
+          <a href="#ten">Ten mechanics</a>
+          <a href="#shipped">Shipped today</a>
+          <a href="#shortlist">Shortlist</a>
+          <a href="#not">What does not transfer</a>
+          <a href="#behind">Where it is behind</a>
+          <a href="#appendix">Verification</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">DEEP DIVE &middot; 2026-10-29</div>
+          <h1>ai-phone, read against webphone</h1>
+          <p class="subtitle">
+            A SIP daemon that answers and places real calls with local speech
+            models, written by someone solving the same audio, latency and
+            honesty problems from the opposite end: the server instead of the
+            browser. Ten mechanics worth stealing, two shipped the same
+            session, and the honest list of what does not travel.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Source: oxnw/ai-phone, main @ 2026-10-28</span>
+            <span class="tag">10 mechanics, 5 open actions</span>
+            <span class="tag teal">2 shipped &middot; 1 pre-existing defect healed</span>
+          </div>
+        </header>
+
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">10</div>
+            <div class="label">Mechanics examined</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">2</div>
+            <div class="label">Shipped this session</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">5</div>
+            <div class="label">Open actions filed</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">6</div>
+            <div class="label">Do not transfer</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            ai-phone is a two-day-old public repo (created 2026-10-27, 124
+            stars and 23 forks at this snapshot) whose documentation set is
+            unusually mature for its age: a ~1,200-line
+            <code>architecture.md</code>, a read-first
+            <code>architecture-essentials.md</code> that declares six numbered
+            invariants as settled, and a decision log where every row is tagged
+            <strong>[D]</strong> decided, <strong>[P]</strong> proposed or
+            <strong>[V]</strong> verified against source. It is a different
+            product from webphone (server-side SIP, local MLX models, one call
+            at a time, no browser UI), which is exactly why it is worth
+            reading: its problems are webphone's problems at a different
+            layer, and where it solves them it does so with mechanisms, not
+            slogans.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            The single most transferable thing in the repo is not telephony. It
+            is the habit of pairing every claimed invariant with the mechanism
+            that enforces it, and then pinning the prose to the code so the
+            claim cannot rot. Two of those pairs were missing here and are
+            shipped now: a docs-versus-code pin over the configuration table
+            (which immediately found eight undocumented config keys) and a
+            generation-closing rule for live transcripts that race a hang-up.
+            The remaining five actions are filed, ranked, with the sharpest one
+            being that this repo&rsquo;s config silently ignores typo&rsquo;d
+            keys in both the JSON file and the environment.
+          </div>
+          <p>
+            <strong>Fit, stated up front:</strong> webphone&rsquo;s ratified
+            ruling stands — all Go-side telephony is rejected, the stack owns
+            SIP and FreeSWITCH, the island is the phone. Nothing here reopens
+            that. What travels is discipline about asynchronous audio, about
+            what a &ldquo;settled&rdquo; artifact is, and about the config and
+            documentation surfaces that decide whether an operator&rsquo;s
+            intent reaches the running process at all.
+          </p>
+        </section>
+
+        <section id="baseline">
+          <h2><span class="num">&#9670;</span>The baseline this repo already owns</h2>
+          <p>
+            Every mechanic below is graded against what webphone ships today,
+            so this list is not a to-do written from ignorance. Verified in
+            this session against source:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <strong>Error family + codes.</strong> Total families, stable
+              <code>&lt;seam&gt;.&lt;op&gt;</code> codes, a generated registry
+              block and a freshness test. ai-phone reports exit codes and
+              prose; the machine-routing surface here is ahead.
+            </div>
+            <div class="strength">
+              <strong>Seam gating with fail-closed halves.</strong> CRM,
+              Paperless, ASR, textagent, Matrix, Signal, push and both auth
+              lanes each refuse a half configuration at boot, and each seam is
+              byte-identical when unset. ai-phone&rsquo;s
+              <em>unknown keys are errors</em> rule is the one piece of that
+              doctrine this repo has not adopted.
+            </div>
+            <div class="strength">
+              <strong>Owner scoping and durable records.</strong> Every query
+              is extension-scoped; transcripts, notes and agent audits live in
+              owner-keyed stores. ai-phone&rsquo;s trust boundary is a 0600
+              unix socket for a single user.
+            </div>
+            <div class="strength">
+              <strong>Gates.</strong> <code>nix flake check</code> (package,
+              tests, treefmt, island-lint, island-typecheck, module eval,
+              KVM-gated backup drill), plus a duplicate baseline and the
+              erraudit tiers. ai-phone&rsquo;s CI is two macOS jobs and pytest.
+            </div>
+            <div class="strength">
+              <strong>Caller-data doctrine.</strong> Local ASR preferred,
+              US-inference APIs ruled a GDPR no for caller audio. ai-phone
+              reaches the same conclusion from the other direction (offline
+              model, no runtime downloads, no telemetry) — useful prior art,
+              not a new ruling.
+            </div>
+            <div class="strength">
+              <strong>Asynchronous transcription is already careful.</strong>
+              Four-second MediaRecorder segments, a near-silence gate before
+              spending a request, a shared 429 cooldown, exponential backoff, a
+              bounded per-call save queue and a bounded caption strip. Almost
+              every &ldquo;audio is unreliable&rdquo; lesson in ai-phone has a
+              counterpart here.
+            </div>
+          </div>
+        </section>
+
+        <section id="what">
+          <h2><span class="num">01</span>What ai-phone actually is</h2>
+          <p>
+            One daemon, one or more SIP lines, one call at a time across them.
+            It registers to a trunk or answers at a plain SIP address, then runs
+            speech-to-text, a language model and text-to-speech on the host by
+            default. The layering rule is the load-bearing part:
+            <strong>L1 knows nothing about models, L3 knows nothing about
+            SIP, L2 owns the conversation.</strong>
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>What it is</th>
+                  <th>Discipline</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>L1 telephony</strong></td>
+                  <td>PJSIP 2.17 via pjsua2, SWIG extension built on the host by the install script; null audio device; media port at 16 kHz</td>
+                  <td>The PJSIP thread never blocks: media callbacks copy 640-byte frames into 2-second shared-memory rings and return</td>
+                </tr>
+                <tr>
+                  <td><strong>L2 pipeline</strong></td>
+                  <td>Hand-rolled asyncio TurnController: VAD, endpointing, barge-in, clause chunking, resampling, timers</td>
+                  <td>Owns the conversation state machine and every timer; one controller per call</td>
+                </tr>
+                <tr>
+                  <td><strong>L3 workers</strong></td>
+                  <td>Three child processes, one model each (parakeet STT, Qwen3.5 4-bit LLM via mlx-lm, Kokoro or Phonon TTS)</td>
+                  <td>Audio crosses in shared memory, never pickled; control is JSON; a crashed worker is restarted, capped at three per ten minutes</td>
+                </tr>
+                <tr>
+                  <td><strong>L4 control</strong></td>
+                  <td>Unix socket at mode 0600, newline-delimited JSON, one request per connection; CLI is a thin client</td>
+                  <td>Every request shape-checked before the daemon sees it; the daemon, not the server, decides &ldquo;busy&rdquo;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The measured numbers matter because they are stated against a
+            budget rather than as marketing: the M1 gate measured
+            <strong>874 ms p50 / 1438 ms p95</strong> from last speech to first
+            audible RTP frame over 20 LAN calls, and the README publishes the
+            <em>latest</em> run at <strong>1.50 s median under memory
+            pressure, which missed the one-second target</strong>. That is the
+            same posture webphone&rsquo;s honesty contract demands of its own
+            surfaces, applied to a README.
+          </p>
+        </section>
+
+        <section id="ten">
+          <h2><span class="num">02</span>Ten mechanics, graded against this repo</h2>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">L1 &middot; ADOPTED TODAY</span>
+            <h3>Pin the prose to the code, or the prose will lie</h3>
+            <p>
+              <code>tests/unit/test_docs_match_code.py</code> names the model
+              catalog in three documents, holds one extraction pattern per
+              place, and fails when any of them drifts from
+              <code>models.CATALOG</code>. Three details make it good: each
+              failure message carries a <em>&ldquo;if the wording moved, move
+              this test&rsquo;s pattern with it&rdquo;</em> hint; a
+              belt-and-braces test asserts the three documents agree with
+              <em>each other</em>, so a pattern pointed at stale text cannot
+              pass silently; and a fourth test asserts the keys are shaped so
+              the patterns can match them at all.
+            </p>
+            <p>
+              This repo had one such lane (the generated error-code registry)
+              and none over its largest documented surface: the configuration
+              table. Shipped in this session as
+              <code>internal/config/docpin_test.go</code> with three
+              assertions — every documented key exists as a
+              <code>koanf</code> path in the struct tree, every leaf key
+              appears in an operator document, and the config-owned defaults
+              match the table. It found eight undocumented keys on its first
+              run (see <a href="#shipped">Shipped today</a>). Both arms were
+              proven load-bearing by breaking them deliberately: renaming one
+              documented key and deleting one documented row each failed the
+              right test with the right message.
+            </p>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">L2 &middot; ADOPTED TODAY</span>
+            <h3>Every asynchronous generation has an id, and stale results are dropped</h3>
+            <p>
+              ai-phone&rsquo;s fourth invariant: every generation carries a
+              <code>gen_id</code>; cancelling means all three workers drop that
+              id, the outbound ring is flushed, late results with a stale id
+              are discarded, and the partial reply stays in history marked
+              <code>[interrupted]</code> so the model knows what the caller
+              heard.
+            </p>
+            <p>
+              webphone already keys transcript segments by call id, so
+              attribution across a hang-up was safe. What was missing was the
+              other half: a segment still in flight when the call settled still
+              repainted a live surface — it announced a caption for a call the
+              operator had hung up, and re-created the call&rsquo;s in-memory
+              segment log, one entry per call, for the rest of the tab&rsquo;s
+              life. Shipped: <code>closeCallSegments</code> closes a settled
+              call&rsquo;s log to late writes (a new capture for the same id
+              reopens it), and the per-segment announce now requires the entry
+              to still be in the session map. The segment itself still saves:
+              the audio really was heard, and the durable History row wants
+              the tail. Two pins cover both halves, including the assertion
+              that the tail reaches <code>/api/transcripts</code> with the
+              right call id.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <span class="severity severity-nice">L3 &middot; OPEN</span>
+            <h3>Measure latency from the caller&rsquo;s clock, not the server&rsquo;s</h3>
+            <p>
+              Its t0 is the timestamp of the <em>last VAD-positive chunk</em>,
+              not the moment the endpointer fires, and the report states why:
+              &ldquo;the 300 ms of silence is inside the budget, not excluded
+              from it.&rdquo; Every turn writes one JSON line with five stage
+              timestamps plus overrun and underrun counters, and a small script
+              prints p50/p95 per stage for the gate.
+            </p>
+            <p>
+              webphone measures HTTP request durations into a histogram and
+              request counts by status class. Both are honest and neither is
+              what the person holding the phone experiences. There is no
+              &ldquo;dial press to first audible media&rdquo; number anywhere,
+              and the ASR segment round trip — the thing that decides whether
+              captions are live or a transcript — is untimed. Filed as an open
+              action, not implemented: a per-call media metric needs island
+              work and a decision about where it is reported.
+            </p>
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>L4 &middot; VALIDATED</strong>
+            <br />
+            <strong>An invariant without a mechanism is a wish.</strong> Each of
+            the six invariants names its enforcer: the ring buffers for
+            &ldquo;the PJSIP thread never blocks&rdquo;, the
+            <code>gen_id</code> for cancellation, <code>turns.jsonl</code> for
+            &ldquo;measured, not claimed&rdquo;. webphone is largely built this
+            way already (machine tables own lifecycle legality, an arch test
+            owns the module graph, the DOM contract is parsed by a test). The
+            value of the comparison is the two places it is <em>not</em> yet
+            true, both listed here: config typos (L7) and caption drift (L8).
+          </div>
+
+          <div class="card card-warning">
+            <span class="severity severity-nice">L5 &middot; NOTE FOR D3</span>
+            <h3>Enforce safety at the chokepoint every client shares</h3>
+            <p>
+              Emergency numbers are refused and the daily limit is counted
+              <em>in the daemon</em>, with the reason written down: &ldquo;so
+              every client is covered&rdquo;. Two details are worth more than
+              the rule. First, the counter is reserved before the act and
+              written atomically (temp file, fsync, rename), malformed reads as
+              zero, and <strong>if the count cannot be written after dialling,
+              the call is hung up immediately and refused</strong> &mdash; no
+              attempt escapes the budget. Second, a control-socket client
+              cannot talk its way past it; the server only validates the shape
+              of a request, the daemon owns the claim.
+            </p>
+            <p>
+              webphone already puts refusals at the deepest seam
+              (<code>SelfSendRejection</code> in the gateway, session gating in
+              the handlers) rather than at the route. The transferable part is
+              for the planned agent-token lane (D3): scope enforcement has to
+              live where every caller passes, and a budget that cannot be
+              recorded must refuse the action rather than optimistically
+              proceed. Recorded, not filed separately — D3&rsquo;s owner call
+              and security review still gate it.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <span class="severity severity-nice">L6 &middot; OPEN (D3 input)</span>
+            <h3>A remote brain needs a liveness contract, not a timeout</h3>
+            <p>
+              Relay mode lets any shell-capable AI hold the conversation: one
+              JSON object per command over the local socket. The interesting
+              part is what happens when the AI stalls or dies. The caller hears
+              &ldquo;One moment.&rdquo; at 1.5 s, &ldquo;Still with you, one
+              moment.&rdquo; at 10 s, then a polite goodbye and BYE at 25 s.
+              A dead <code>listen</code> client frees the listener slot the
+              moment its socket reports EOF, so the next incoming call falls
+              back to the autonomous agent instead of queueing behind a
+              corpse. <code>hangup</code> waits 30 s and then 10 s more, and
+              fails with a named exit code rather than pretending.
+            </p>
+            <p>
+              webphone&rsquo;s textagent seam has a bounded 3-second probe and
+              a visible 502 toast, which covers &ldquo;the agent is
+              unreachable&rdquo;. It does not cover &ldquo;the agent accepted
+              the request and then went quiet&rdquo;, and there is no designed
+              fallback for the human waiting on a draft. Filed as an open
+              action to shape D3&rsquo;s liveness rules from this prior art
+              before the agent-token design is built.
+            </p>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">L7 &middot; OPEN &middot; SHARPEST GAP</span>
+            <h3>Unknown configuration keys must not be silent</h3>
+            <p>
+              ai-phone validates a typed schema at startup and
+              &ldquo;unknown keys are errors&rdquo;. webphone loads through
+              koanf and <code>Unmarshal</code> at
+              <code>internal/config/config.go:594</code>, which quietly drops
+              any key it does not recognise, from the JSON file and from the
+              <code>WEBPHONE_*</code> environment alike. The consequence is
+              the worst failure shape this codebase has: a typo does not fail
+              the boot, it turns a seam off. Write
+              <code>WEBPHONE_ASR__TOKEN</code> after mistyping the URL and the
+              half-configuration refusal fires loudly; mistype the token key
+              itself and the provider is simply anonymous, or the seam simply
+              never enables, with no line anywhere saying so.
+            </p>
+            <p>
+              Filed with the design already constrained: strict for the config
+              <em>file</em> (a closed namespace, an operator&rsquo;s
+              hand-written artifact) and warn-only for the environment, because
+              a dozen operational <code>WEBPHONE_*</code> variables are not
+              config keys at all (<code>WEBPHONE_CONFIG</code>,
+              <code>WEBPHONE_DEBUG_TIMING</code>,
+              <code>WEBPHONE_RELEASE_MAX_LOAD</code> and friends), and a
+              false reject there would be an outage on every deployment. The
+              NixOS module writes a freeform <code>settings</code> map, so the
+              file half is an owner call: it changes boot semantics for a
+              deployment that carries an extra key today.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <span class="severity severity-nice">L8 &middot; OPEN</span>
+            <h3>Count the things you would need in an argument</h3>
+            <p>
+              Receive overruns, transmit underruns, per-stage
+              milliseconds, warm-start timings and a resident-memory check are
+              all part of the turn record, because each one answers a question
+              somebody will eventually ask under pressure (&ldquo;is the model
+              too slow, the network, or the disk?&rdquo;).
+            </p>
+            <p>
+              webphone&rsquo;s live transcription has one invisible failure
+              class of exactly this kind: if the provider takes longer than
+              the four-second segment cadence, segments queue in the recorder
+              and captions drift further and further behind the conversation
+              with no counter, no warning and no timestamp on the segment
+              path. Everything else about that loop is careful (silence gate,
+              cooldown, backoff, bounded queues), which is what makes the
+              missing lag measure stand out. Filed as an open action.
+            </p>
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>L9 &middot; VALIDATED, one gap</strong>
+            <br />
+            <strong>Failure tables need a detection column.</strong>
+            ai-phone&rsquo;s &sect;13 lists every failure with <em>Detection</em> and
+            <em>Recovery</em>; webphone&rsquo;s
+            <code>docs/error-contract.md</code> maps failure to
+            <em>visible surface</em>. Those are different questions. &ldquo;What
+            does the operator see&rdquo; is answered well here; &ldquo;how
+            would anyone know it happened&rdquo; is only answered where a
+            counter or a probe exists. Worth adding a detection column for the
+            silent classes at the next pass over that document, with L8&rsquo;s
+            caption drift as the first row.
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>L10 &middot; VALIDATED</strong>
+            <br />
+            <strong>Publish the rejected alternatives, and the number you
+            missed.</strong> The stack table carries a &ldquo;Not this&rdquo;
+            column naming the libraries that were evaluated and dropped
+            (pyVoIP, Asterisk, LiveKit, Pipecat, Ollama), each with the reason
+            that killed it; the decision log records reversals with the date.
+            The README states the missed latency target in the same sentence as
+            the passing ones. Both habits match what this repo already does in
+            its research reports and its honesty contract &mdash; read it as
+            confirmation that the style survives contact with a second author,
+            not as a new rule.
+          </div>
+        </section>
+
+        <section id="shipped">
+          <h2><span class="num">03</span>Shipped this session</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Change</th>
+                  <th>Home</th>
+                  <th>Pin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Docs-versus-code configuration pin: documented keys exist, every leaf key is documented, config-owned defaults match the table</td>
+                  <td><code>internal/config/docpin_test.go</code></td>
+                  <td>Three tests; each arm verified by breaking it (a renamed README key and a deleted README row both fail the right test)</td>
+                </tr>
+                <tr>
+                  <td>Eight undocumented config keys documented (<code>crm.token_file</code>, four <code>matrix.*</code>, three <code>signal.*</code>)</td>
+                  <td>README configuration table</td>
+                  <td>Column widths kept aligned; <code>scripts/md-table-shape.py</code> reports zero findings</td>
+                </tr>
+                <tr>
+                  <td>Settled calls close their segment log to late writes; a late segment saves but does not announce</td>
+                  <td><code>transcribe.js</code> (<code>closeCallSegments</code>), <code>calls.js</code> (announce guard)</td>
+                  <td>One <code>node:test</code> spec per half, plus the durable-tail assertion (call id preserved)</td>
+                </tr>
+                <tr>
+                  <td>Pre-existing island-lint failure healed: an unused catch binding in the dial gate now logs the error message instead</td>
+                  <td><code>dialgate.js</code></td>
+                  <td><code>oxlint</code> exit 0 over the island, the shell and the theme preload</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            A note on the third row, because it is the one a future session will
+            be tempted to undo: the copy-transcript spec depended on a
+            <em>previous</em> spec&rsquo;s capture, so its segments arrived
+            through a stopped recorder. That worked only because nothing had
+            ever asked whether a recorder was current. The spec now establishes
+            its own call before speaking, which is what it always claimed to do.
+          </p>
+        </section>
+
+        <section id="shortlist">
+          <h2><span class="num">04</span>Pareto shortlist</h2>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Action</th>
+                  <th>Effort</th>
+                  <th>Risk</th>
+                  <th>Verdict</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Configuration typo strictness: error on unknown keys in the config file, warn on unknown <code>WEBPHONE_*</code> variables</td>
+                  <td>Small</td>
+                  <td class="no">Boot-semantics change for module deployments; owner call</td>
+                  <td>Filed first: a silent seam is the worst failure shape here</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Live-caption lag signal: stamp each segment, warn when the queue falls behind real time</td>
+                  <td>Small</td>
+                  <td class="yes">Island-only, gated by the type check and the node suite</td>
+                  <td>Filed: the one silent failure class left in the ASR loop</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Agent liveness contract for D3: filler, timeout, slot release, named refusal instead of a hang</td>
+                  <td>Medium</td>
+                  <td class="no">Waits on D3&rsquo;s owner GO and security review</td>
+                  <td>Filed as design input, not as code</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Detection column in the error contract, for the failures no surface can reveal</td>
+                  <td>Small</td>
+                  <td class="yes">Documentation only</td>
+                  <td>Filed: cheap, and it is where L8 and L7 become visible</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Caller-perceived latency beside the HTTP histogram (dial press to first audible media)</td>
+                  <td>Medium</td>
+                  <td class="no">Needs a reporting home and an island metric; no consumer exists yet</td>
+                  <td>Filed, lowest of the five: measure before instrumenting everywhere</td>
+                </tr>
+                <tr>
+                  <td>&mdash;</td>
+                  <td>Self-hosted AI receptionist (answers when nobody is listening)</td>
+                  <td>Large</td>
+                  <td class="no">Contradicts the ratified &ldquo;no Go-side telephony&rdquo; ruling if built here</td>
+                  <td>Not filed: belongs in the stack (FreeSWITCH sidecar), which is exactly the architecture ai-phone validates</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="not">
+          <h2><span class="num">05</span>What does not transfer</h2>
+          <div class="grid-2">
+            <div class="card card-problem">
+              <h3>The stack</h3>
+              <p>
+                Python, uv, a locally built SWIG extension over PJSUA2, MLX
+                models, an AGPL-3.0 licence, macOS on Apple Silicon only. None
+                of it can live in a single-binary Go deployment, and the GPL
+                lineage of PJSIP would relicense the product. The architecture
+                is the lesson; the implementation is a different animal.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>Server-side call control</h3>
+              <p>
+                Its whole model is a daemon holding the SIP dialog
+                &mdash; including a one-call-at-a-time lock across all lines.
+                webphone&rsquo;s island holds several calls at once and the
+                stack terminates SIP. Adopting the lock would be a regression;
+                adopting the layering rule would not.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>Its trust model</h3>
+              <p>
+                One user, one 0600 socket, transcripts readable by any process
+                of that user, English only, no account model, no roles. This
+                repo is multi-actor with owner-scoped stores, passkey/OIDC
+                identity and a durable agent-audit journal; that distance is
+                the product.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>Its configuration surface</h3>
+              <p>
+                One YAML file with a typed schema is a clean place to demand
+                strictness. webphone&rsquo;s surface is environment plus JSON
+                plus a freeform NixOS <code>settings</code> map, which is why
+                L7 lands as two rules with different severity rather than one.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>Its latency budget</h3>
+              <p>
+                Mouth-to-ear depends on local models and a phone leg. The
+                number that matters here is the ASR segment round trip against
+                a remote provider, and it is bounded by a different physics:
+                four-second segments, one HTTP request each.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>Its docs volume</h3>
+              <p>
+                A 1,200-line architecture document works for a project with one
+                author and no module boundaries. This repo already answered that
+                question differently: a capped AGENTS.md of rules with evidence
+                moved into <code>docs/</code>. Copy the routing table, not the
+                length.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="behind">
+          <h2><span class="num">06</span>Where ai-phone is behind this repo</h2>
+          <p>
+            Stated so the comparison is not a one-way compliment. Reading the
+            repo as a peer, these are the places webphone is ahead, and any
+            future adopter of its ideas should keep them:
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Axis</th>
+                  <th>ai-phone</th>
+                  <th>webphone</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Identity and actors</td>
+                  <td>None beyond the filesystem; one human, one process</td>
+                  <td>Passkey and OIDC, mapped extensions, owner-scoped everything, durable agent audit</td>
+                </tr>
+                <tr>
+                  <td>Product surface</td>
+                  <td>Calls only; SMS is post-launch, no UI</td>
+                  <td>Messages, MMS, fax, voicemail, history, contacts, settings; a native shell lane</td>
+                </tr>
+                <tr>
+                  <td>Gates</td>
+                  <td>Two pytest jobs on one OS; its own README says live carrier acceptance is pending</td>
+                  <td>Flake check across package, tests, formatters, island lint, island type check, module eval, KVM backup drill; duplicate baseline; error tiers</td>
+                </tr>
+                <tr>
+                  <td>Durability</td>
+                  <td>State files under the home directory; no backup story</td>
+                  <td>Documented snapshot and restore with a drilled VM test; three SQLite homes</td>
+                </tr>
+                <tr>
+                  <td>Accessibility and i18n</td>
+                  <td>Terminal output only</td>
+                  <td>Polite live regions, keyboard contract, aria-current mirroring, two locales with parity tests</td>
+                </tr>
+                <tr>
+                  <td>Machine contracts</td>
+                  <td>Exit codes and prose</td>
+                  <td>Error families with stable codes, generated OpenAPI and AsyncAPI, typed wire DTOs</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">07</span>Appendix &mdash; verification status</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Claim</th>
+                  <th>Status</th>
+                  <th>How</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Repo metadata (created 2026-10-27, 124 stars, 23 forks, 6 open issues, AGPL-3.0, Python, ~2.1 MB)</td>
+                  <td>[V]</td>
+                  <td>GitHub REST API at this session&rsquo;s snapshot</td>
+                </tr>
+                <tr>
+                  <td>Architecture claims (layers, ring buffers, 640-byte frames, 16 kHz internal, gen_id semantics, barge-in thresholds, timers, relay fillers, safety rules, config strictness)</td>
+                  <td>[V]</td>
+                  <td>Read at source: <code>architecture-essentials.md</code>, <code>architecture.md</code>, <code>config.example.yaml</code>, <code>README.md</code>, <code>docs/usage.md</code>, <code>tests/unit/test_docs_match_code.py</code></td>
+                </tr>
+                <tr>
+                  <td>Measured latency (874 ms p50 / 1438 ms p95 at the M1 gate; 1.50 s median on the latest run, target missed)</td>
+                  <td>[D] in their docs</td>
+                  <td>Quoted from their README and decision log; these are the authors&rsquo; measurements on their hardware, not independently reproduced</td>
+                </tr>
+                <tr>
+                  <td>webphone gaps (koanf silently ignores unknown keys; HTTP-only latency metrics; no caption lag measure; late segment announced after hang-up)</td>
+                  <td>[V]</td>
+                  <td>Read and exercised in this session; the last one is pinned by the two new island specs</td>
+                </tr>
+                <tr>
+                  <td>The two shipped changes</td>
+                  <td>[V]</td>
+                  <td><code>go test ./internal/config/</code>, the island node suite (274 specs), <code>tsc -p . --noEmit</code>, oxlint, and deliberate-break checks on the new pins</td>
+                </tr>
+                <tr>
+                  <td>What was not run</td>
+                  <td>&mdash;</td>
+                  <td>Their test suite, their daemon, any live SIP call; no ai-phone code was executed, only read</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-10-29 &middot; Deep dive, no rulings implied beyond
+            the two shipped pins &middot; External claims read at source and
+            tagged [V] / [D]; webphone claims exercised in-session and pinned
+            where cheap &middot; Five open actions carry their own rows in
+            TODO_LIST.md
+          </p>
+        </footer>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

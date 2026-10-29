@@ -52,6 +52,45 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### ai-phone steal-list (2026-10-29 deep dive — 2 SHIPPED, 5 actions open)
+
+Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
+(oxnw/ai-phone read at source; the report carries the ten mechanics and the six declines).
+Shipped the same session: the docs-versus-code config pin (`internal/config/docpin_test.go`, which
+immediately documented eight previously undocumented keys) and generation-closing for live transcripts
+(`closeCallSegments` + the announce guard, two island specs).
+
+1. **Config typo strictness (L7, sharpest).** koanf `Unmarshal`
+   (`internal/config/config.go:594`) silently drops unknown keys from the JSON file AND from
+   `WEBPHONE_*`, so a typo turns a seam off instead of failing the boot. Design is constrained by
+   the surface itself: strict (error) for the FILE, warn-only for the ENVIRONMENT, because a dozen
+   `WEBPHONE_*` variables are operational and not config keys (`WEBPHONE_CONFIG`,
+   `WEBPHONE_DEBUG_TIMING`, `WEBPHONE_RELEASE_MAX_LOAD`, `WEBPHONE_SSE_OOB`, …) and a false reject
+   is an outage on every deployment. Owner call: the NixOS module writes a freeform `settings` map,
+   so file-strictness changes boot semantics for a deployment carrying an extra key today. Pairs
+   with the `docpin_test.go` key tree (same reflection helper can feed the allowed-key set).
+2. **Live-caption lag signal (L8).** The segment loop is careful everywhere else (silence gate,
+   shared 429 cooldown, exponential backoff, bounded save queue, bounded strip) but a provider
+   slower than the 4 s cadence makes captions drift with no warning and no timestamp on the segment
+   path. Stamp each segment and warn (once per streak) when the queue passes a lag threshold; island
+   only, gated by `tsc -p . --noEmit` + the node suite.
+3. **Agent liveness contract for D3 (L6).** Prior art worth borrowing before the agent-token lane is
+   designed: ai-phone's relay mode answers a stalled client with a filler at 1.5 s, another at 10 s,
+   a polite goodbye and BYE at 25 s; a dead `listen` client frees the listener slot on socket EOF so
+   the next call falls back to the autonomous mode; `hangup` waits 30 s + 10 s and then fails with a
+   named exit code. webphone's textagent has a 3 s probe and a 502 toast (covers unreachable, not
+   "accepted then silent") and no designed fallback for the human waiting on a draft. Design input
+   for D3; still owner-GO + security-review gated.
+4. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
+   operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
+   (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
+   classes at the next pass over that document; row 1 of it is the caption lag above.
+5. **Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing
+   measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
+   sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
+   budget. Lowest of the five: needs a reporting home and an island metric, so measure the question
+   before instrumenting everything.
+
 ### Island type gate tails (2026-10-27/28 — gate SHIPPED and CI-WIRED; refinements below)
 
 The gate itself is done and enforced: 680 type errors → 0 over 26 served files, `island-typecheck`
