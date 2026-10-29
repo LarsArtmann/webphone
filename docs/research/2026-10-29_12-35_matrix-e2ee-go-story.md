@@ -49,7 +49,10 @@ daemon, keeping the hand-rolled 356-line CS-API client
 - **P2 — OlmMachine bridge (RECOMMENDED).** Keep our sync loop and receiver;
   construct a minimal `*mautrix.Client` (same homeserver/token) that ONLY
   the machine uses for its own to-device uploads; `NewOlmMachine` takes the
-  concrete client type (verified), our loop stays the driver feeding it sync
+  concrete client type (verified at source 2026-10-29 15:53, `crypto/machine.go`:
+  `func NewOlmMachine(client *mautrix.Client, log *zerolog.Logger, cryptoStore Store, stateStore StateStore) *OlmMachine`
+  — this closes the F46 overclaim confession in the 14-22 report), our loop
+  stays the driver feeding it sync
   data. One module dep; the machine owns the hard 20% (olm sessions, key
   requests, ratchets); we keep our wire client and fences.
 - **P3 — goolm primitives only.** Import just `crypto/goolm` and hand-wire
