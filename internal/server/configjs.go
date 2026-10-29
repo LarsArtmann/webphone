@@ -27,6 +27,11 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		expiry := time.Now().Add(h.deps.Config.TURN.TTL)
 		iceServers = turnRESTCredentials(iceServers, h.deps.Config.TURN.Secret, expiry)
 	}
+	var cooldownSeconds *int
+	if h.deps.Config.Dial.Cooldown > 0 {
+		secs := int(h.deps.Config.Dial.Cooldown.Seconds())
+		cooldownSeconds = &secs
+	}
 	pbxConfig := struct {
 		SIPDomain     string             `json:"sipDomain"`
 		WebsocketPath string             `json:"websocketPath"`
@@ -39,9 +44,12 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		// default; the post-call row then carries only Close.
 		Agent bool `json:"agent"`
 		// DialCooldownSeconds is the advisory dial-cooldown window
-		// (issue #7): 0/absent = no gate — the island dials without
+		// (issue #7): absent = no gate — the island dials without
 		// asking; positive = the island asks POST /api/dials first.
-		DialCooldownSeconds int `json:"dialCooldownSeconds,omitempty"`
+		// A POINTER because encoding/json/v2's omitempty keeps zero
+		// NUMBERS: the opt-in-off contract needs the key ABSENT, not
+		// zero.
+		DialCooldownSeconds *int               `json:"dialCooldownSeconds,omitempty"`
 		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
 		ASRLocality string `json:"asrLocality,omitempty"`
@@ -58,7 +66,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		CRM:                 h.deps.CRM.Enabled(),
 		ASR:                 h.asrOn(),
 		Agent:               h.deps.TextAgent != nil,
-		DialCooldownSeconds: int(h.deps.Config.Dial.Cooldown.Seconds()),
+		DialCooldownSeconds: cooldownSeconds,
 		ASRLocality:         h.deps.ASRLocality,
 		SIPCredential:       h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:            h.deps.Shared,

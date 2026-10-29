@@ -96,7 +96,23 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		_ = err
 	}
 	h.unread.Drop(sess.Extension)
-	names := h.crmNames(r.Context(), []string{thread.Remote.String()})
+	// The master rail (P1): the same active-thread list the Messages
+	// landing view shows, rendered beside the conversation. A failed read
+	// degrades to NO rail — the conversation is the page's subject, and
+	// hiding it behind a list error would be a regression against the
+	// pre-split single-column shape. The failure is LOGGED (never
+	// swallowed) because "the split silently stopped splitting" is exactly
+	// the class of invisible breakage the error-surface ruling forbids.
+	rail, railErr := h.deps.Messaging.Threads(r.Context(), sess.Extension)
+	if railErr != nil {
+		errorfamily.LogErrorContext(r.Context(), fmt.Errorf("conversation rail: %w", railErr), nil)
+		rail = nil
+	}
+	numbers := append(
+		[]string{thread.Remote.String()},
+		crmNumbers(rail, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })...,
+	)
+	names := h.crmNames(r.Context(), numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);
 	// nil-safe: hand-composed test Deps may carry no snippet store.
 	var snippets []domain.Snippet
@@ -106,7 +122,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		}
 	}
 	return views.ThreadView(views.ThreadViewProps{
-		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets,
+		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets, Rail: rail,
 		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
 		ASR: h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
 	}), nil

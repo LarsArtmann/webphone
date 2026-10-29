@@ -34,6 +34,15 @@
   --radius-sm: 6px;
   --radius: 9px;
   --radius-lg: 12px;
+  /* Shell geometry (theme-invariant). The island's column bounds and the
+   * content ceiling live here so the collapse (P2), the grid and the
+   * Messages split cannot disagree — one number, one home. The collapsed
+   * state removes the column outright rather than shrinking it to a sliver:
+   * a 40px strip of dead chrome is worse than no strip. */
+  --island-w-min: 320px;
+  --island-w-max: 400px;
+  --content-max: 1400px;
+  --shell-gap: 28px;
 }
 
 :root[data-theme="dark"] {
@@ -277,13 +286,13 @@ h3 {
 
 .wp-body {
   display: grid;
-  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: minmax(var(--island-w-min), var(--island-w-max)) minmax(0, 1fr);
+  gap: var(--shell-gap);
   padding: 28px 32px;
   align-items: start;
   flex: 1;
   width: 100%;
-  max-width: 1400px;
+  max-width: var(--content-max);
   margin: 0 auto;
 }
 
@@ -297,6 +306,95 @@ h3 {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  /* The tab column is a CONTAINER, not a viewport slice: its width is
+   * `viewport − island − gap − padding`, so collapsing the island widens
+   * it without the viewport changing at all. Every component-level layout
+   * decision inside the tabs (the Messages master–detail split) therefore
+   * asks the COLUMN, via @container — a @media query here would be wrong
+   * the moment the island collapses. Page-level chrome (the mobile bottom
+   * tab bar, island stacking) still tracks the viewport with @media,
+   * because that is genuinely what it follows. */
+  container-type: inline-size;
+  container-name: tabcol;
+}
+
+/* --- collapsible island (P2) --------------------------------------------- */
+
+/* Desktop-only: on phones the island is part of the single-column flow and
+ * its order/sticky rules already handle a live call, so a second collapse
+ * mechanism there would only create a second set of edge cases. The class
+ * lives on <html> (theme-preload.js applies it before first paint) and
+ * shell.js §4b owns the toggle. */
+@media (min-width: 901px) {
+  .wp-island-collapsed .wp-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wp-island-collapsed .wp-island {
+    display: none;
+  }
+
+  /* A live call always wins the width argument: the phone is the product,
+   * and a hidden RTCPeerConnection is indistinguishable from a dead one.
+   * :has() keeps the evaluation in CSS, so toggling the preference can
+   * never strand a call in a `display: none` column. */
+  .wp-island-collapsed .wp-body:has(.wp-island .call-card) {
+    grid-template-columns:
+      minmax(var(--island-w-min), var(--island-w-max))
+      minmax(0, 1fr);
+  }
+
+  .wp-island-collapsed .wp-body:has(.wp-island .call-card) .wp-island {
+    display: block;
+  }
+}
+
+/* The toggle itself: a quiet square icon button in the header actions. The
+ * chevron pair is both-rendered and swapped by CSS (the collapsed class is
+ * on <html>) — re-rendering icons from JS would mean shipping the SVG paths
+ * a second time. Collapsed, the button points back the other way because
+ * its whole job is "bring the phone back". */
+.wp-icon-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+@media (min-width: 901px) {
+  .wp-icon-toggle {
+    display: inline-flex;
+  }
+}
+
+.wp-icon-toggle:hover,
+.wp-icon-toggle:focus-visible {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.wp-island-toggle-show {
+  display: none;
+}
+
+.wp-island-collapsed .wp-island-toggle-hide {
+  display: none;
+}
+
+.wp-island-collapsed .wp-island-toggle-show {
+  display: inline-flex;
 }
 
 /* --- navigation ---------------------------------------------------------- */
@@ -1467,6 +1565,118 @@ a:focus-visible {
   font-size: 0.9em;
 }
 
+/* --- messages master–detail (P1) ------------------------------------------ */
+
+/* ThreadView renders a conversation RAIL beside the open conversation. The
+ * rail asks the tab COLUMN how wide it is (@container on .wp-main-col), not
+ * the viewport — collapsing the phone panel widens the column without the
+ * viewport changing, and the split must follow. Below the threshold the rail
+ * is display:none and the detail column's back link is the way back, which
+ * is exactly the pre-split behavior: one render path, two layouts. */
+.wp-msg-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.wp-msg-rail {
+  display: none;
+  min-width: 0;
+}
+
+@container tabcol (min-width: 44rem) {
+  .wp-msg-split {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 22px;
+  }
+
+  .wp-msg-split > .wp-msg-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 0 0 auto;
+    width: clamp(230px, 30%, 320px);
+    padding-inline-end: 18px;
+    border-inline-end: var(--hairline);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Track the panel's own height so the rail never grows the surface
+     * beyond the transcription column beside it. */
+    max-height: clamp(360px, calc(100dvh - 260px), 940px);
+  }
+}
+
+.wp-rail-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+}
+
+.wp-rail-row:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+/* The open conversation is a SELECTED row, not a hovered one: accent-soft
+ * fill + a heavy peer name, the same vocabulary the list row uses for
+ * unread so the two panes do not teach two different emphasis languages. */
+.wp-rail-row.wp-active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+}
+
+.wp-rail-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wp-rail-name {
+  font-weight: 600;
+  font-size: 0.92em;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Muted rows keep the name readable but drop the weight: muted is
+ * presentation-only (the badge is the truth), so the row must still look
+ * like a conversation, not a disabled control. */
+.wp-rail-row:not(.wp-unread) .wp-rail-name {
+  font-weight: 500;
+}
+
+.wp-rail-preview {
+  font-size: 0.82em;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-rail-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
 .wp-transcript-wrap {
   position: relative;
   width: min(46rem, 100%);
@@ -1799,22 +2009,28 @@ a:focus-visible {
     min-height: clamp(430px, calc(100dvh - 190px), 1020px);
   }
 
-  .wp-panel:has(> .wp-transcript-wrap) > .wp-transcript-wrap {
+  /* The detail column owns the conversation's vertical rhythm: the panel
+   * itself is now the master–detail CONTAINER, so the transcript-grows and
+   * the composer-pins rules moved one level in (P1). */
+  .wp-msg-detail > .wp-transcript-wrap {
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
-  .wp-panel:has(> .wp-transcript-wrap) > .wp-transcript-wrap > .wp-transcript {
+  .wp-msg-detail > .wp-transcript-wrap > .wp-transcript {
     flex: 1 1 auto;
     max-height: none;
   }
 
   /* The pinned composer belongs to the messages surfaces ONLY (list +
    * open thread share the panel id): the contacts add/import forms are
-   * also .wp-compose and must flow normally after the panel head. */
-  #messages-panel > .wp-compose {
+   * also .wp-compose and must flow normally after the panel head. The
+   * reply composer lives inside the detail column now, so it is a
+   * GRANDCHILD — hence the explicit descendant shape instead of `>`. */
+  #messages-panel > .wp-compose,
+  #messages-panel > .wp-msg-detail > .wp-compose {
     margin-top: auto;
   }
 }

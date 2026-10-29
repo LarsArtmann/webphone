@@ -81,5 +81,10 @@ func (h *Handlers) DialGate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not consult the dial gate", http.StatusBadGateway)
 		return
 	}
-	writeJSONBody(w, DialGateResponse{Allowed: allowed, LastAt: stamp.Unix(), Window: int64(h.deps.DialCooldown / time.Second)})
+	resp := DialGateResponse{Allowed: allowed}
+	if !allowed {
+		resp.LastAt = stamp.Unix()
+		resp.Window = int64(h.deps.DialCooldown / time.Second)
+	}
+	writeJSONBody(w, resp)
 }
