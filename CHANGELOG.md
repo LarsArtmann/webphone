@@ -168,6 +168,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Live transcripts stop repainting a settled call (2026-10-29): a
+  segment still in flight when the call ends no longer announces a
+  caption for a call nobody is on, and no longer re-creates the call's
+  in-memory segment log (one entry per hung-up call, for the rest of the
+  tab's life). Teardown now CLOSES the log (`closeCallSegments`, which a
+  new capture for the same id reopens) instead of only clearing it;
+  the segment itself still saves, because the audio really was heard and
+  the durable History row wants the tail. The dial gate's unreachable
+  log line also names the cause instead of dropping it.
 - The whitespace-drift pre-commit gate no longer refuses formatter output
   (2026-10-28): a staged diff whose whitespace-only lines were the formatter's
   reflow of a neighbouring construct used to trip the byte heuristic and force

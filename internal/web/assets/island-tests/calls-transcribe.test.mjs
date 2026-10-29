@@ -669,9 +669,7 @@ test("a segment that lands after the call ended still saves but never announces"
     assert.equal(saves[0].text, "late tail");
     assert.equal(saves[0].callId, "call-t1", "attribution survives the race");
     assert.ok(
-      ![...doc.getElementById("toasts").children].some((el) =>
-        /late tail/i.test(el.textContent),
-      ),
+      ![...doc.getElementById("toasts").children].some((el) => /late tail/i.test(el.textContent)),
       "a settled call must not speak a caption for audio nobody is on",
     );
   } finally {

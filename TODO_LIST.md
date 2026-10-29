@@ -5,7 +5,14 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-28 EVENING (multi-actor whole-list session): the morning red-CI fix
+Last sweep: 2026-10-29 (ai-phone deep dive — external prior art read at source): the
+docs-versus-code configuration pin SHIPPED (`internal/config/docpin_test.go`: documented keys must
+exist, every key must be documented, config-owned defaults must match) and it immediately documented
+EIGHT undocumented keys (`crm.token_file` + the four `matrix.*` + three `signal.*`); generation-closing
+for live transcripts SHIPPED (late segment saves but no longer announces or re-creates a settled
+call's log, two island specs); a pre-existing island-lint failure in the dial gate healed; the report
+and its five open actions live in the new section below.
+Prior sweep: 2026-10-28 EVENING (multi-actor whole-list session): the morning red-CI fix
 (clone groups: draftMeta helper + panel-audit closure; build-tw-css cold-cache heal; CI verified
 green on 2ce711c) · **D1 line switcher SHIPPED** (POST /api/session/switch, extensions wire
 field, JS-created #wp-ext-switch, 6+5 pins) · **#7 redial cooldown COMPLETED** (island leg +
